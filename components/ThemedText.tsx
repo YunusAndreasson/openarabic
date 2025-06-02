@@ -3,7 +3,13 @@ import React, { useMemo, memo } from 'react';
 import type { StyleProp, TextStyle } from 'react-native';
 import { Text, StyleSheet } from 'react-native';
 
-import { LAYOUT, getArabicTextStyle, FONTS } from '@/constants/layout';
+import {
+  LAYOUT,
+  getArabicTextStyle,
+  FONTS,
+  TYPOGRAPHY_HIERARCHY,
+  getEnhancedOpacity,
+} from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import type { ThemedTextProps } from '@/types/ui/text.types';
@@ -11,19 +17,20 @@ import type { ThemedTextProps } from '@/types/ui/text.types';
 /**
  * ThemedText component provides consistent typography across the app
  * with automatic theming support and various text styles.
+ * Enhanced with sophisticated color relationships and micro-typography optimizations.
  *
  * @example
  * // Default body text with theme colors
  * <ThemedText>Regular text</ThemedText>
  *
- * // Title text
+ * // Title text with enhanced typography
  * <ThemedText type="heading1">Title</ThemedText>
  *
- * // Semantic variants
+ * // Semantic variants with optimized colors
  * <ThemedText variant="error">Error message</ThemedText>
  *
- * // Custom color from theme
- * <ThemedText colorName="link">Link text</ThemedText>
+ * // Custom semantic color from enhanced system
+ * <ThemedText colorName="authorText">Author byline</ThemedText>
  */
 function ThemedTextComponent({
   style,
@@ -41,7 +48,7 @@ function ThemedTextComponent({
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
-  // Get text color based on props
+  // Enhanced text color function with semantic color support
   const getTextColor = (
     colors: ReturnType<typeof useColors>,
     variant?: ThemedTextProps['variant'],
@@ -57,24 +64,33 @@ function ThemedTextComponent({
         success: colors.success,
         info: colors.info,
         primary: colors.text,
-        secondary: isDarkMode ? colors.secondaryText : colors.authorText,
-        subtle: isDarkMode ? colors.secondaryText : colors.authorText,
-        disabled: colors.tabIconDefault,
+        secondary: colors.secondaryText,
+        subtle: colors.textTertiary,
+        disabled: colors.disabled,
       } as const;
       return variantColorMap[variant];
     }
     return !skipDefaultColor ? colors.text : undefined;
   };
 
-  // Get base style for text type
+  // Enhanced base style function with micro-typography optimizations
   const getBaseStyle = (type: ThemedTextProps['type']) => {
-    if (type === 'body') return styles.body;
-    if (type === 'heading1') return styles.heading1;
-    if (type === 'heading2') return styles.heading2;
-    return styles[type as keyof typeof styles] || styles.body;
+    const baseStyles = {
+      body: styles.body,
+      bodyBold: styles.bodyBold,
+      caption: styles.caption,
+      heading1: styles.heading1,
+      heading2: styles.heading2,
+      heading3: styles.heading3,
+      label: styles.label,
+      link: styles.link,
+      overline: styles.overline,
+    };
+
+    return baseStyles[type as keyof typeof baseStyles] || styles.body;
   };
 
-  // Consolidated style computation
+  // Consolidated style computation with enhanced opacity handling
   const { finalStyle } = useMemo(() => {
     const textColor = getTextColor(colors, variant, colorName, skipDefaultColor, isDarkMode);
 
@@ -91,8 +107,16 @@ function ThemedTextComponent({
     }
 
     const baseStyle = getBaseStyle(type);
+
+    // Apply enhanced opacity for better contrast
+    let enhancedStyle: TextStyle = {};
+    if (baseStyle && 'opacity' in baseStyle && typeof baseStyle.opacity === 'number') {
+      enhancedStyle.opacity = getEnhancedOpacity(baseStyle.opacity, isDarkMode);
+    }
+
     const computedStyle = [
       baseStyle,
+      enhancedStyle,
       textColor && { color: textColor },
       weight && { fontWeight: weight },
       align && { textAlign: align },
@@ -126,61 +150,91 @@ function ThemedTextComponent({
 // Memoize the component to prevent unnecessary rerenders
 export const ThemedText = memo(ThemedTextComponent);
 
-// Typography styles object using consistent line height calculations
+// Enhanced typography styles with micro-adjustments and semantic relationships
 const styles = StyleSheet.create({
-  // Base text styles with consistent line height patterns
+  // Base text styles with enhanced micro-typography
   body: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    lineHeight:
+      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
     fontFamily: FONTS.ENGLISH,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.REGULAR,
+    letterSpacing:
+      TYPOGRAPHY_HIERARCHY.LETTER_SPACING.NORMAL +
+      TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.RENDERING.SPACING_BOOST,
+    opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY,
   },
   bodyBold: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: 'bold',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+    lineHeight:
+      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
     fontFamily: FONTS.ENGLISH,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT,
+    opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY,
   },
   caption: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
     fontFamily: FONTS.ENGLISH,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
+    opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.TERTIARY,
   },
   heading1: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
-    fontWeight: '700',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.TIGHT,
     fontFamily: FONTS.ENGLISH,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.EXTRA_TIGHT,
+    opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY,
   },
   heading2: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '600',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
+    lineHeight:
+      LAYOUT.TYPOGRAPHY.SCALE.XXLARGE *
+      TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.SECTION_HEADER.lineHeightMultiplier,
     fontFamily: FONTS.ENGLISH,
+    letterSpacing:
+      TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.SECTION_HEADER.letterSpacing,
+    opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY,
   },
   heading3: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    fontWeight: '600',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+    lineHeight:
+      LAYOUT.TYPOGRAPHY.SCALE.LARGE *
+      TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.lineHeightMultiplier,
     fontFamily: FONTS.ENGLISH,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
+    opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY,
   },
   label: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '600',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
     fontFamily: FONTS.ENGLISH,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
+    opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.SECONDARY,
   },
   link: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    lineHeight:
+      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
     textDecorationLine: 'underline',
     fontFamily: FONTS.ENGLISH,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.NORMAL,
+    opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.ACCENT,
   },
   overline: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    fontWeight: '600',
-    letterSpacing: 1,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.EXTRA_LOOSE,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
     textTransform: 'uppercase',
     fontFamily: FONTS.ENGLISH,
+    opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.TERTIARY,
   },
 });

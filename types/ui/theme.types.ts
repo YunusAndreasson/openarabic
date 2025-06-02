@@ -13,6 +13,13 @@ export interface ThemeColors {
   englishText: string;
   arabicText: string;
   authorText: string;
+
+  // Enhanced typography-specific colors for sophisticated text relationships
+  headingText: string; // Primary heading color - rich and commanding
+  subtitleText: string; // Sophisticated subtitle balance between primary and secondary
+  metadataText: string; // Refined metadata color - perfect hierarchy balance
+  captionText: string; // Enhanced caption color for optimal readability
+
   tint: string;
   tabIconDefault: string;
   tabIconSelected: string;

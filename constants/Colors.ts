@@ -4,133 +4,145 @@ import type { ThemeColors } from '../types/ui/theme.types';
 export const Colors = {
   light: {
     primary: '#2A3441', // Deep charcoal - sophisticated primary
-    background: '#F8FAF9', // Subtle greenish tint to pure white background
-    text: '#1A2B1F', // Rich dark text with subtle green undertone
-    secondaryText: '#4A5D52', // Balanced secondary text with green tint
-    textTertiary: '#6B7B6E', // Darkened slightly for better contrast
-    border: '#E2F0E8', // Subtle light borders with green tint
-    card: '#FDFEFD', // Pure white cards with barely visible green tint
-    cardBorder: '#F5FAF7', // Very subtle card borders with green tint
+    background: '#F9FBF9', // Enhanced subtle greenish tint with more warmth
+    text: '#1B2C20', // Richer dark text with enhanced green undertone
+    secondaryText: '#485A4F', // Refined secondary text with deeper warmth
+    textTertiary: '#697968', // Enhanced contrast while maintaining warmth
+    border: '#E5F2E9', // More pronounced green tint for subtle definition
+    card: '#FEFFFE', // Pure white cards with enhanced subtle green warmth
+    cardBorder: '#F7FBF8', // More noticeable card borders while remaining subtle
     error: '#C44536', // Warm terracotta red - natural and organic
     success: '#4A7C59', // Deep forest green - natural success
     warning: '#B8860B', // Dark goldenrod - organic gold tone
-    englishText: '#4A5D52', // Consistent with secondaryText
-    arabicText: '#1A2B1F', // Consistent with main text
-    authorText: '#718B7E', // Consistent with textTertiary
-    tint: '#5A7C65', // Sophisticated sage green - balanced saturation for clear interactivity
-    tabIconDefault: '#9BB0A3', // Darkened for better contrast when inactive
-    tabIconSelected: '#5A7C65', // Sophisticated sage green - consistent with tint
-    icon: '#718B7E', // Consistent with textTertiary
-    disabled: '#CBD8D0', // Light disabled state with green tint
-    imagePlaceholder: '#F5FAF7', // Consistent with cardBorder
+    englishText: '#485A4F', // Enhanced consistency with refined secondaryText
+    arabicText: '#1B2C20', // Enhanced consistency with richer main text
+    authorText: '#758A7B', // Warmer and more sophisticated author styling
+    tint: '#5A7C65', // Sophisticated sage green - balanced saturation
+    tabIconDefault: '#9BB0A3', // Enhanced contrast for inactive states
+    tabIconSelected: '#5A7C65', // Consistent with enhanced tint
+    icon: '#758A7B', // Warmer icon color matching enhanced authorText
+    disabled: '#D0D9D3', // Refined disabled state with better green harmony
+    imagePlaceholder: '#F7FBF8', // Consistent with enhanced cardBorder
     transparent: 'transparent',
-    overlay: 'rgba(248, 250, 249, 0.85)', // Light overlay with green tint
-    modalOverlay: 'rgba(248, 250, 249, 0.97)', // Strong light modal overlay with green tint
-    borderOverlay: 'rgba(47, 125, 50, 0.06)', // Refined forest green overlay
-    buttonOverlay: 'rgba(47, 125, 50, 0.08)', // Refined forest green button overlay - used for ripples
-    buttonOverlayActive: 'rgba(47, 125, 50, 0.12)', // Active refined forest green button overlay
-    buttonBorderOverlay: 'rgba(255, 255, 255, 0.15)', // Light button border overlay
+    overlay: 'rgba(249, 251, 249, 0.88)', // Enhanced light overlay with more green
+    modalOverlay: 'rgba(249, 251, 249, 0.96)', // Stronger modal overlay
+    borderOverlay: 'rgba(47, 125, 50, 0.05)', // More subtle refined overlay
+    buttonOverlay: 'rgba(47, 125, 50, 0.06)', // Enhanced button overlay subtlety
+    buttonOverlayActive: 'rgba(47, 125, 50, 0.10)', // Enhanced active state
+    buttonBorderOverlay: 'rgba(255, 255, 255, 0.18)', // Slightly enhanced border
     shadow: '#2A3441', // Consistent with primary
-    elevation1: '#FDFEFD', // Pure white elevation with green tint
-    elevation2: '#F5FAF7', // Subtle elevation with green tint
-    elevation3: '#EDF5F0', // Medium elevation with green tint
+    elevation1: '#FEFFFE', // Enhanced pure white elevation
+    elevation2: '#F7FBF8', // Enhanced subtle elevation
+    elevation3: '#EDF5F0', // Enhanced medium elevation with more green
     white: '#FFFFFF',
     black: '#000000',
-    textOverlay: 'rgba(47, 125, 50, 0.04)', // Very subtle refined forest green text overlay - used for ripples
-    textShadowDark: 'rgba(42, 52, 65, 0.75)', // Dark shadow
-    textShadowLight: 'rgba(255, 255, 255, 0.75)', // Light shadow
-    info: '#6B8471', // Muted sage-gray - earth-toned alternative to blue
-    backdropOverlay: 'rgba(42, 52, 65, 0.6)', // Increased opacity for better modal focus
-    contrastOverlay: 'rgba(42, 52, 65, 0.3)', // Increased for better text contrast
-    socialIconBg: 'rgba(107, 154, 122, 0.10)', // Muted sage green social background
+    textOverlay: 'rgba(47, 125, 50, 0.03)', // More subtle text overlay
+    textShadowDark: 'rgba(42, 52, 65, 0.75)', // Consistent dark shadow
+    textShadowLight: 'rgba(255, 255, 255, 0.75)', // Consistent light shadow
+    info: '#6B8471', // Muted sage-gray - enhanced earth-toned alternative
+    backdropOverlay: 'rgba(42, 52, 65, 0.65)', // Enhanced modal focus
+    contrastOverlay: 'rgba(42, 52, 65, 0.28)', // Enhanced text contrast
+    socialIconBg: 'rgba(107, 154, 122, 0.08)', // More subtle social background
     // Article reading specific colors
-    audioHighlight: '#FDFEFD', // Pure white highlight with green tint
-    audioHighlightBorder: '#E2F0E8', // Consistent border with green tint
-    wordTooltipBg: '#FDFEFD', // Pure white tooltip with green tint
-    wordTooltipText: '#1A2B1F', // Consistent text with green tint
-    wordTooltipBorder: '#E2F0E8', // Consistent border with green tint
-    wordTooltipShadow: 'rgba(42, 52, 65, 0.12)', // Subtle shadow
-    wordSelectionUnderline: 'rgba(47, 125, 50, 0.25)', // Refined forest green selection
-    wordDueUnderline: 'rgba(184, 134, 11, 0.4)', // Organic gold for due words
-    audioControlBg: '#FDFEFD', // Pure white controls with green tint
-    audioControlBorder: '#E2F0E8', // Consistent border with green tint
-    audioControlShadow: 'rgba(42, 52, 65, 0.08)', // Subtle shadow
+    audioHighlight: '#FEFFFE', // Enhanced highlight with subtle green
+    audioHighlightBorder: '#E5F2E9', // Enhanced border with more green
+    wordTooltipBg: '#FEFFFE', // Enhanced tooltip background
+    wordTooltipText: '#1B2C20', // Enhanced tooltip text consistency
+    wordTooltipBorder: '#E5F2E9', // Enhanced tooltip border
+    wordTooltipShadow: 'rgba(42, 52, 65, 0.10)', // More subtle tooltip shadow
+    wordSelectionUnderline: 'rgba(47, 125, 50, 0.22)', // Enhanced selection visibility
+    wordDueUnderline: 'rgba(184, 134, 11, 0.38)', // Enhanced due word visibility
+    audioControlBg: '#FEFFFE', // Enhanced audio control background
+    audioControlBorder: '#E5F2E9', // Enhanced audio control border
+    audioControlShadow: 'rgba(42, 52, 65, 0.06)', // Enhanced audio shadow
     // Navigation branding colors
-    navigationRipple: 'rgba(47, 125, 50, 0.10)', // Refined forest green ripple for navigation elements
-    headerOverlay: 'rgba(248, 250, 249, 0.94)', // Slightly green-tinted header overlay
-    tabBarOverlay: 'rgba(248, 250, 249, 0.85)', // Balanced opacity for blur visibility with good contrast
+    navigationRipple: 'rgba(47, 125, 50, 0.08)', // More refined navigation ripple
+    headerOverlay: 'rgba(249, 251, 249, 0.95)', // Enhanced header overlay
+    tabBarOverlay: 'rgba(249, 251, 249, 0.88)', // Enhanced tab bar overlay
 
     // Semantic UI colors for better UX
-    progressIndicator: '#6B8471', // Muted sage-gray - earth-toned progress indication
-    progressBackground: 'rgba(107, 132, 113, 0.15)', // Subtle earth-toned progress track
-    interactiveSecondary: '#718B7E', // Muted gray for secondary interactive elements with green tint
-    completionSuccess: '#4A7C59', // Deep forest green for completion states
-    repeatActive: '#B8860B', // Dark goldenrod for repeat/loop states
+    progressIndicator: '#6B8471', // Enhanced earth-toned progress
+    progressBackground: 'rgba(107, 132, 113, 0.12)', // More subtle progress track
+    interactiveSecondary: '#758A7B', // Enhanced secondary interactive with warmth
+    completionSuccess: '#4A7C59', // Deep forest green for completion
+    repeatActive: '#B8860B', // Enhanced goldenrod for active states
+
+    // Enhanced typography-specific colors for sophisticated text relationships
+    headingText: '#1B2C20', // Primary heading color - rich and commanding
+    subtitleText: '#556A5C', // Sophisticated subtitle balance between primary and secondary
+    metadataText: '#637A6F', // Refined metadata color - perfect hierarchy balance
+    captionText: '#6E7F74', // Enhanced caption color for optimal readability
   } as ThemeColors,
   dark: {
-    primary: '#F0F4F1', // Warm off-white with subtle green undertone
-    background: '#0E1310', // Deep charcoal with green-brown undertone
-    text: '#F0F4F1', // Warm off-white with subtle green undertone
-    secondaryText: '#D4D8D5', // Muted sage with warmth and green tint
-    textTertiary: '#A8B0A8', // Balanced green-gray
-    border: '#2A312B', // Rich charcoal with green-brown undertone
-    card: '#1A211B', // Dark forest with brown undertone
-    cardBorder: '#2A312B', // Rich charcoal border
-    error: '#D4735A', // Warm terracotta - softer in dark mode
-    success: '#6B9A7A', // Sage green - natural and calming
-    warning: '#D4A574', // Warm gold - organic and rich
-    englishText: '#D4D8D5', // Consistent with secondaryText
-    arabicText: '#F0F4F1', // Consistent with main text
-    authorText: '#A8B0A8', // Consistent with textTertiary
-    tint: '#7A9B85', // Balanced sage green - clear contrast in dark mode without being harsh
-    tabIconDefault: '#6C746C', // Neutral with green-brown undertone
-    tabIconSelected: '#7A9B85', // Balanced sage green - consistent with tint
-    icon: '#A8B0A8', // Consistent with textTertiary
-    disabled: '#3A423A', // Muted dark with green-brown undertone
-    imagePlaceholder: '#2A312B', // Consistent with border
+    primary: '#F2F5F3', // Enhanced warm off-white with richer green undertone
+    background: '#0D1210', // Deeper charcoal with enhanced green-brown warmth
+    text: '#F2F5F3', // Enhanced warm off-white consistency
+    secondaryText: '#D6DBD7', // Enhanced sage with more warmth and richness
+    textTertiary: '#ABB3AB', // Enhanced balanced green-gray with more sophistication
+    border: '#293129', // Enhanced rich charcoal with deeper green-brown
+    card: '#191F1A', // Enhanced dark forest with richer brown undertone
+    cardBorder: '#293129', // Enhanced rich charcoal border consistency
+    error: '#D77559', // Enhanced warm terracotta - richer in dark mode
+    success: '#6FA07D', // Enhanced sage green - more vibrant yet natural
+    warning: '#D9A876', // Enhanced warm gold - richer and more organic
+    englishText: '#D6DBD7', // Enhanced consistency with refined secondaryText
+    arabicText: '#F2F5F3', // Enhanced consistency with enriched main text
+    authorText: '#ABB3AB', // Enhanced consistency with sophisticated textTertiary
+    tint: '#7DA188', // Enhanced balanced sage green - richer without harshness
+    tabIconDefault: '#6E766E', // Enhanced neutral with green-brown sophistication
+    tabIconSelected: '#7DA188', // Enhanced balanced sage consistency
+    icon: '#ABB3AB', // Enhanced icon color with sophisticated balance
+    disabled: '#3C443C', // Enhanced muted dark with sophisticated green-brown
+    imagePlaceholder: '#293129', // Enhanced consistency with border
     transparent: 'transparent',
-    overlay: 'rgba(14, 19, 16, 0.85)', // Dark forest overlay
-    modalOverlay: 'rgba(14, 19, 16, 0.95)', // Darker forest modal
-    borderOverlay: 'rgba(107, 154, 122, 0.08)', // Muted sage green border overlay
-    buttonOverlay: 'rgba(107, 154, 122, 0.10)', // Muted sage green button overlay - used for ripples
-    buttonOverlayActive: 'rgba(107, 154, 122, 0.15)', // Active muted sage green overlay
-    buttonBorderOverlay: 'rgba(240, 244, 241, 0.15)', // Warm sage button border
-    shadow: '#000000', // Pure black for depth
-    elevation1: '#1A211B', // Dark forest with brown undertone
-    elevation2: '#2A312B', // Rich charcoal
-    elevation3: '#363E36', // Medium charcoal with green-brown
+    overlay: 'rgba(13, 18, 16, 0.88)', // Enhanced dark forest overlay
+    modalOverlay: 'rgba(13, 18, 16, 0.96)', // Enhanced darker forest modal
+    borderOverlay: 'rgba(107, 154, 122, 0.06)', // Enhanced muted overlay subtlety
+    buttonOverlay: 'rgba(107, 154, 122, 0.08)', // Enhanced button overlay
+    buttonOverlayActive: 'rgba(107, 154, 122, 0.12)', // Enhanced active overlay
+    buttonBorderOverlay: 'rgba(242, 245, 243, 0.12)', // Enhanced warm sage border
+    shadow: '#000000', // Pure black for enhanced depth
+    elevation1: '#191F1A', // Enhanced dark forest consistency
+    elevation2: '#293129', // Enhanced rich charcoal
+    elevation3: '#383F38', // Enhanced medium charcoal with green-brown richness
     white: '#FFFFFF',
     black: '#000000',
-    textOverlay: 'rgba(107, 154, 122, 0.06)', // Muted sage green text overlay - used for ripples
-    textShadowDark: 'rgba(0, 0, 0, 0.75)', // Dark shadow
-    textShadowLight: 'rgba(240, 244, 241, 0.75)', // Light warm sage shadow
-    info: '#8BA593', // Muted sage with earth undertones - dark theme
-    backdropOverlay: 'rgba(14, 19, 16, 0.8)', // Increased opacity for better modal focus
-    contrastOverlay: 'rgba(0, 0, 0, 0.5)', // Increased for better contrast
-    socialIconBg: 'rgba(107, 154, 122, 0.10)', // Muted sage green social background
+    textOverlay: 'rgba(107, 154, 122, 0.04)', // Enhanced muted sage text overlay
+    textShadowDark: 'rgba(0, 0, 0, 0.75)', // Consistent dark shadow
+    textShadowLight: 'rgba(242, 245, 243, 0.75)', // Enhanced light warm sage shadow
+    info: '#8DA795', // Enhanced sage with more sophisticated earth undertones
+    backdropOverlay: 'rgba(13, 18, 16, 0.82)', // Enhanced modal focus
+    contrastOverlay: 'rgba(0, 0, 0, 0.48)', // Enhanced contrast overlay
+    socialIconBg: 'rgba(107, 154, 122, 0.08)', // Enhanced social background subtlety
     // Article reading specific colors
-    audioHighlight: '#2A312B', // Rich charcoal highlight
-    audioHighlightBorder: '#363E36', // Medium charcoal border
-    wordTooltipBg: '#2A312B', // Rich charcoal tooltip
-    wordTooltipText: '#F0F4F1', // Warm off-white text
-    wordTooltipBorder: '#363E36', // Medium charcoal border
-    wordTooltipShadow: 'rgba(0, 0, 0, 0.4)', // Tooltip shadow
-    wordSelectionUnderline: 'rgba(107, 154, 122, 0.30)', // Muted sage green selection
-    wordDueUnderline: 'rgba(212, 165, 116, 0.5)', // Warm gold for due words
-    audioControlBg: '#2A312B', // Rich charcoal audio controls
-    audioControlBorder: '#363E36', // Medium charcoal border
-    audioControlShadow: 'rgba(0, 0, 0, 0.3)', // Audio control shadow
+    audioHighlight: '#293129', // Enhanced rich charcoal highlight
+    audioHighlightBorder: '#383F38', // Enhanced medium charcoal border
+    wordTooltipBg: '#293129', // Enhanced rich charcoal tooltip
+    wordTooltipText: '#F2F5F3', // Enhanced warm off-white text
+    wordTooltipBorder: '#383F38', // Enhanced medium charcoal border
+    wordTooltipShadow: 'rgba(0, 0, 0, 0.38)', // Enhanced tooltip shadow
+    wordSelectionUnderline: 'rgba(107, 154, 122, 0.28)', // Enhanced selection visibility
+    wordDueUnderline: 'rgba(217, 168, 118, 0.48)', // Enhanced warm gold visibility
+    audioControlBg: '#293129', // Enhanced rich charcoal audio controls
+    audioControlBorder: '#383F38', // Enhanced medium charcoal border
+    audioControlShadow: 'rgba(0, 0, 0, 0.28)', // Enhanced audio shadow
     // Navigation branding colors
-    navigationRipple: 'rgba(107, 154, 122, 0.12)', // Muted sage green ripple for navigation elements
-    headerOverlay: 'rgba(14, 19, 16, 0.92)', // Slightly green-tinted header overlay
-    tabBarOverlay: 'rgba(14, 19, 16, 0.85)', // Balanced opacity for blur visibility with good contrast
+    navigationRipple: 'rgba(107, 154, 122, 0.10)', // Enhanced navigation ripple
+    headerOverlay: 'rgba(13, 18, 16, 0.94)', // Enhanced header overlay
+    tabBarOverlay: 'rgba(13, 18, 16, 0.88)', // Enhanced tab bar overlay
 
     // Semantic UI colors for better UX
-    progressIndicator: '#8BA593', // Muted sage with earth undertones - earth-toned progress indication
-    progressBackground: 'rgba(139, 165, 147, 0.20)', // Subtle earth-toned progress track
-    interactiveSecondary: '#A8B0A8', // Balanced green-gray for secondary interactive elements
-    completionSuccess: '#6B9A7A', // Sage green for completion states
-    repeatActive: '#D4A574', // Warm gold for repeat/loop states
+    progressIndicator: '#8DA795', // Enhanced earth-toned progress with richness
+    progressBackground: 'rgba(141, 167, 149, 0.18)', // Enhanced subtle progress track
+    interactiveSecondary: '#ABB3AB', // Enhanced secondary interactive sophistication
+    completionSuccess: '#6FA07D', // Enhanced sage green for completion
+    repeatActive: '#D9A876', // Enhanced warm gold for active states
+
+    // Enhanced typography-specific colors for sophisticated text relationships
+    headingText: '#F2F5F3', // Primary heading color - warm and authoritative
+    subtitleText: '#DDE2DE', // Enhanced subtitle balance for dark mode hierarchy
+    metadataText: '#C4CBC5', // Refined metadata with enhanced warmth
+    captionText: '#B8C0B9', // Enhanced caption color for optimal dark mode readability
   } as ThemeColors,
 };
 

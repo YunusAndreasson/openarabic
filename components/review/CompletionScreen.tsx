@@ -236,13 +236,13 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
 
       <View style={styles.textContainer}>
         <Animated.View entering={FadeInUp.delay(400).duration(300)}>
-          <ThemedText type="heading2" variant="primary" style={styles.titleText}>
+          <ThemedText type="heading2" colorName="headingText" style={styles.titleText}>
             {title}
           </ThemedText>
         </Animated.View>
 
         <Animated.View entering={FadeInUp.delay(600).duration(300)}>
-          <ThemedText type="heading3" variant="secondary" style={styles.subtitleText}>
+          <ThemedText type="heading3" colorName="subtitleText" style={styles.subtitleText}>
             {subtitle}
           </ThemedText>
         </Animated.View>

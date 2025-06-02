@@ -3,8 +3,9 @@ import { StyleSheet, View } from 'react-native';
 import type { ViewStyle, StyleProp } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY, getEnhancedOpacity } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
 
 import BaseCard from './BaseCard';
 import { ThemedText } from './ThemedText';
@@ -35,6 +36,8 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   children,
 }) => {
   const colors = useColors();
+  const isDarkMode = useIsDarkMode();
+
   const activeCardStyle = React.useMemo(
     () =>
       active
@@ -47,6 +50,31 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
     [active]
   );
 
+  // Enhanced title and author styles with semantic colors
+  const titleStyle = React.useMemo(
+    () => ({
+      marginBottom: LAYOUT.SPACING.TINY,
+      fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+      letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
+      lineHeight:
+        LAYOUT.TYPOGRAPHY.SCALE.LARGE *
+        TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.lineHeightMultiplier,
+      opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY, isDarkMode),
+    }),
+    [isDarkMode]
+  );
+
+  const authorStyle = React.useMemo(
+    () => ({
+      marginRight: LAYOUT.SPACING.TINY,
+      fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
+      letterSpacing:
+        TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.AUTHOR_BYLINE.letterSpacing,
+      opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.SECONDARY, isDarkMode),
+    }),
+    [isDarkMode]
+  );
+
   return (
     <View style={[styles.cardContainer, containerStyle]}>
       <BaseCard
@@ -56,7 +84,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
       >
         <View style={styles.cardContent}>
           <View style={styles.textContent}>
-            <ThemedText type="body" weight="bold" style={styles.titleText}>
+            <ThemedText type="heading3" colorName="headingText" style={titleStyle}>
               {title}
             </ThemedText>
             <View style={styles.metaRow}>
@@ -64,7 +92,8 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
               <ThemedText
                 type="label"
                 numberOfLines={1}
-                style={[styles.authorText, { color: colors.authorText }]}
+                colorName="authorText"
+                style={authorStyle}
                 skipDefaultColor
               >
                 {author}
@@ -92,9 +121,6 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
 const styles = StyleSheet.create({
   arrowIcon: {
     opacity: LAYOUT.OPACITY.MEDIUM,
-  },
-  authorText: {
-    marginRight: LAYOUT.SPACING.TINY,
   },
   card: {
     overflow: 'hidden',
@@ -126,8 +152,5 @@ const styles = StyleSheet.create({
   textContent: {
     flex: 1,
     paddingRight: LAYOUT.SPACING.SMALL,
-  },
-  titleText: {
-    marginBottom: LAYOUT.SPACING.TINY,
   },
 });

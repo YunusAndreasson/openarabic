@@ -10,6 +10,113 @@ export const FONTS = {
   ARABIC: 'Madina', // Font for Arabic text
 } as const;
 
+// Typography hierarchy constants - Following Apple HIG and Material Design principles
+export const TYPOGRAPHY_HIERARCHY = {
+  // Weight scale for better hierarchy - Enhanced for Figtree
+  WEIGHTS: {
+    REGULAR: '400' as const,
+    MEDIUM: '500' as const,
+    SEMIBOLD: '600' as const,
+    BOLD: '700' as const,
+    HEAVY: '800' as const,
+  },
+
+  // Sophisticated color hierarchy with semantic relationships
+  COLOR_HIERARCHY: {
+    PRIMARY: 1.0, // Main headings and primary content - maximum prominence
+    SECONDARY: 0.85, // Secondary information - enhanced from 0.8 for better contrast
+    TERTIARY: 0.65, // Metadata, captions - enhanced from 0.6 for readability
+    SUBTLE: 0.5, // Disabled states - enhanced from 0.45 for accessibility
+    ACCENT: 0.75, // Special accent content - new level for highlighted metadata
+  },
+
+  // Advanced letter spacing optimized for Figtree characteristics
+  LETTER_SPACING: {
+    EXTRA_TIGHT: Platform.OS === 'ios' ? -0.6 : -0.3, // For large headings - enhanced impact
+    TIGHT: Platform.OS === 'ios' ? -0.4 : -0.2, // Standard tight for headings
+    NORMAL: 0, // Body text default
+    RELAXED: Platform.OS === 'ios' ? 0.3 : 0.2, // Metadata and captions
+    LOOSE: Platform.OS === 'ios' ? 0.5 : 0.3, // Overlines and labels
+    EXTRA_LOOSE: Platform.OS === 'ios' ? 0.8 : 0.4, // Special cases - enhanced readability
+  },
+
+  // Enhanced line height ratios for optimal readability
+  LINE_HEIGHT_MULTIPLIERS: {
+    EXTRA_TIGHT: 1.1, // For large display text
+    TIGHT: 1.2, // Standard headings
+    NORMAL: 1.4, // Body text - optimized for Figtree
+    LOOSE: 1.6, // Captions and metadata
+    EXTRA_LOOSE: 1.8, // Special long-form content
+  },
+
+  // Semantic color mappings for different content types
+  SEMANTIC_COLORS: {
+    PRIMARY_CONTENT: 'text', // Main titles, headings
+    SECONDARY_CONTENT: 'secondaryText', // Authors, supporting info
+    TERTIARY_CONTENT: 'textTertiary', // Metadata, timestamps
+    ACCENT_CONTENT: 'tint', // Interactive elements, links
+    AUTHOR_CONTENT: 'authorText', // Specific author styling
+    ENGLISH_CONTENT: 'englishText', // English text specific
+    ARABIC_CONTENT: 'arabicText', // Arabic text specific
+    SUCCESS_CONTENT: 'success', // Positive states
+    WARNING_CONTENT: 'warning', // Due words, attention needed
+    INFO_CONTENT: 'info', // Neutral information
+
+    // Enhanced sophisticated typography colors
+    HEADING_CONTENT: 'headingText', // Primary heading color - rich and commanding
+    SUBTITLE_CONTENT: 'subtitleText', // Sophisticated subtitle balance
+    METADATA_CONTENT: 'metadataText', // Refined metadata color - perfect hierarchy
+    CAPTION_CONTENT: 'captionText', // Enhanced caption color for optimal readability
+  } as const,
+
+  // Micro-typography enhancements
+  MICRO_ADJUSTMENTS: {
+    // Platform-specific font rendering optimizations
+    RENDERING: {
+      // iOS tends to render fonts slightly bolder
+      WEIGHT_COMPENSATION: Platform.OS === 'ios' ? -50 : 0, // Subtract 50 from font weight on iOS
+      // Android benefits from slightly increased letter spacing
+      SPACING_BOOST: Platform.OS === 'android' ? 0.05 : 0,
+    },
+
+    // Content-specific adjustments
+    CONTENT_TYPES: {
+      CARD_TITLE: {
+        letterSpacing: Platform.OS === 'ios' ? -0.2 : -0.1, // Slightly less tight for smaller font size
+        lineHeightMultiplier: 1.2, // Slightly tighter for better vertical rhythm with smaller text
+      },
+      SECTION_HEADER: {
+        letterSpacing: Platform.OS === 'ios' ? -0.5 : -0.25, // Extra tight for section headers
+        lineHeightMultiplier: 1.1, // Very tight for impact
+      },
+      METADATA: {
+        letterSpacing: Platform.OS === 'ios' ? 0.4 : 0.25, // Extra relaxed for metadata
+        lineHeightMultiplier: 1.3, // Compact but readable
+      },
+      AUTHOR_BYLINE: {
+        letterSpacing: Platform.OS === 'ios' ? 0.2 : 0.15, // Slightly relaxed
+        lineHeightMultiplier: 1.25, // Tight but breathable
+      },
+    },
+  },
+
+  // Advanced contrast and accessibility improvements
+  ACCESSIBILITY: {
+    // Enhanced contrast ratios for better readability
+    MIN_CONTRAST_RATIOS: {
+      LARGE_TEXT: 3.0, // 18pt+ or 14pt+ bold
+      NORMAL_TEXT: 4.5, // Standard text
+      ENHANCED: 7.0, // AAA compliance for critical content
+    },
+
+    // Dynamic opacity adjustments based on theme
+    DYNAMIC_OPACITY: {
+      LIGHT_THEME_BOOST: 0.05, // Slightly increase opacity in light theme
+      DARK_THEME_BOOST: 0.08, // More boost needed in dark theme
+    },
+  },
+} as const;
+
 // Add constants for CollapsibleHeader component
 export const HEADER_HEIGHT = 50;
 export const HEADER_IMAGE_HEIGHT = 350;
@@ -57,8 +164,8 @@ export const LAYOUT = {
     SMALL: 8, // Standard small spacing
     MEDIUM: 12, // Base spacing for most layouts
     LARGE: 16, // Increased spacing for grouping sections
-    XLARGE: 20, // Extra roomy spacing
-    XXLARGE: 24, // Maximum default spacing
+    XLARGE: 20, // For emphasized body text and larger secondary headings (no longer used for heading3)
+    XXLARGE: 22, // NEW - for section headers (better hierarchy)
   },
 
   /**
@@ -158,21 +265,21 @@ export const LAYOUT = {
     },
   },
 
-  // Typography scale
+  // Typography scale - Refined for better hierarchy
   TYPOGRAPHY: {
     SCALE: {
       TINY: 11, // Increased from 10 - Apple HIG minimum for accessibility
       SMALL: 13, // Increased from 12 - better readability for captions
       MEDIUM: 15, // Unchanged - for body text
-      LARGE: 17, // For emphasized body or small headings
-      XLARGE: 20, // Unchanged - for heading3
-      XXLARGE: 24, // Unchanged - for heading2
-      HUGE: 30, // Reduced from 32 for heading1 (less overwhelming)
+      LARGE: 17, // For card titles (heading3) and emphasized body text
+      XLARGE: 20, // For larger secondary headings and emphasized content
+      XXLARGE: 22, // NEW - for section headers (better hierarchy)
+      HUGE: 28, // Refined - for main headings (was 30)
     },
     LINE_HEIGHT: {
       TIGHT: 1.2,
-      NORMAL: 1.5,
-      LOOSE: 1.8,
+      NORMAL: 1.4, // Reduced from 1.5 for better density with Figtree
+      LOOSE: 1.6, // Reduced from 1.8 for better readability
       ARABIC: 2.2, // Specific multiplier for Arabic text to prevent clipping
     },
   },
@@ -333,4 +440,121 @@ export const getArabicTextStyle = (
     textAlignVertical: 'center',
     ...additionalStyles,
   };
+};
+
+// Advanced typography utility functions
+export const createTypographyStyle = (
+  fontSize: number,
+  type: 'heading' | 'body' | 'caption' | 'metadata' | 'author',
+  importance: 'primary' | 'secondary' | 'tertiary' | 'accent' = 'primary'
+): TextStyle => {
+  const baseStyle: TextStyle = {
+    fontFamily: FONTS.ENGLISH,
+    fontSize,
+  };
+
+  // Apply type-specific adjustments
+  switch (type) {
+    case 'heading':
+      return {
+        ...baseStyle,
+        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
+        letterSpacing:
+          TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.SECTION_HEADER.letterSpacing,
+        lineHeight:
+          fontSize *
+          TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.SECTION_HEADER.lineHeightMultiplier,
+        opacity:
+          importance === 'primary'
+            ? TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY
+            : TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.SECONDARY,
+      };
+
+    case 'body':
+      return {
+        ...baseStyle,
+        fontWeight:
+          importance === 'primary'
+            ? TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD
+            : TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
+        letterSpacing:
+          TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
+        lineHeight:
+          fontSize *
+          TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.lineHeightMultiplier,
+        opacity:
+          TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY[
+            importance.toUpperCase() as keyof typeof TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY
+          ],
+      };
+
+    case 'caption':
+      return {
+        ...baseStyle,
+        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
+        letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
+        lineHeight: fontSize * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
+        opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.TERTIARY,
+      };
+
+    case 'metadata':
+      return {
+        ...baseStyle,
+        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
+        letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.METADATA.letterSpacing,
+        lineHeight:
+          fontSize *
+          TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.METADATA.lineHeightMultiplier,
+        opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.TERTIARY,
+      };
+
+    case 'author':
+      return {
+        ...baseStyle,
+        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
+        letterSpacing:
+          TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.AUTHOR_BYLINE.letterSpacing,
+        lineHeight:
+          fontSize *
+          TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.AUTHOR_BYLINE.lineHeightMultiplier,
+        opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.SECONDARY,
+      };
+
+    default:
+      return baseStyle;
+  }
+};
+
+// Semantic color getter with theme awareness
+export const getSemanticColor = (
+  colorType: keyof typeof TYPOGRAPHY_HIERARCHY.SEMANTIC_COLORS,
+  isDarkMode: boolean = false
+): string => {
+  const colorName = TYPOGRAPHY_HIERARCHY.SEMANTIC_COLORS[colorType];
+  // This returns the color name to be resolved by the theme system
+  return colorName;
+};
+
+// Enhanced opacity calculator with theme-aware adjustments
+export const getEnhancedOpacity = (
+  baseOpacity: number,
+  isDarkMode: boolean = false,
+  isInteractive: boolean = false
+): number => {
+  let adjustedOpacity = baseOpacity;
+
+  // Apply theme-specific boosts
+  if (isDarkMode) {
+    adjustedOpacity += TYPOGRAPHY_HIERARCHY.ACCESSIBILITY.DYNAMIC_OPACITY.DARK_THEME_BOOST;
+  } else {
+    adjustedOpacity += TYPOGRAPHY_HIERARCHY.ACCESSIBILITY.DYNAMIC_OPACITY.LIGHT_THEME_BOOST;
+  }
+
+  // Boost interactive elements slightly
+  if (isInteractive) {
+    adjustedOpacity += 0.05;
+  }
+
+  // Clamp to valid range
+  return Math.min(1.0, Math.max(0.0, adjustedOpacity));
 };

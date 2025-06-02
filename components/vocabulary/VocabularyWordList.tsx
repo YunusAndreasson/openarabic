@@ -5,11 +5,11 @@ import { FlashList } from '@shopify/flash-list';
 import { BlurView } from 'expo-blur';
 import type { ComponentProps, JSX } from 'react';
 import React, { memo, useCallback } from 'react';
-import type { ViewStyle } from 'react-native';
+import type { ViewStyle, TextStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY, getEnhancedOpacity } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -62,14 +62,41 @@ const WordItem = memo(
       statusIcon = 'time';
     }
 
+    // Enhanced styles with semantic colors
+    const wordTextStyle = React.useMemo(
+      () => ({
+        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+        letterSpacing:
+          TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
+        lineHeight:
+          LAYOUT.TYPOGRAPHY.SCALE.LARGE *
+          TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.lineHeightMultiplier,
+        opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY, isDarkMode),
+      }),
+      [isDarkMode]
+    );
+
+    const translationTextStyle = React.useMemo(
+      () => ({
+        opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.SECONDARY, isDarkMode),
+        letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
+      }),
+      [isDarkMode]
+    );
+
     return (
       <ThemedCard variant="basic" onPress={onPress} style={styles.wordCard}>
         <View style={styles.wordInfo}>
-          <ThemedText type="heading3" numberOfLines={1}>
+          <ThemedText
+            type="heading3"
+            colorName="headingText"
+            numberOfLines={1}
+            style={wordTextStyle}
+          >
             {word}
           </ThemedText>
           <View style={styles.translationContainer}>
-            <ThemedText type="body" variant="secondary">
+            <ThemedText type="body" colorName="secondaryText" style={translationTextStyle}>
               {english}
             </ThemedText>
           </View>
@@ -81,7 +108,7 @@ const WordItem = memo(
                 styles.statusBackground,
                 {
                   backgroundColor: isMastered
-                    ? colors.elevation3
+                    ? colors.success
                     : isOverdue
                       ? colors.warning
                       : colors.info,
@@ -112,8 +139,23 @@ export function VocabularyWordList({
   onWordPress,
 }: VocabularyWordListProps): JSX.Element {
   const colors = useColors();
+  const isDarkMode = useIsDarkMode();
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
+
+  // Enhanced title style
+  const titleStyle = React.useMemo(
+    () => ({
+      fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
+      letterSpacing:
+        TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.SECTION_HEADER.letterSpacing,
+      lineHeight:
+        LAYOUT.TYPOGRAPHY.SCALE.XXLARGE *
+        TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.SECTION_HEADER.lineHeightMultiplier,
+      opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY, isDarkMode),
+    }),
+    [isDarkMode]
+  );
 
   // Memoize the render item function to prevent recreating on each render
   const renderItem = useCallback<ListRenderItem<StudyWord>>(
@@ -131,10 +173,12 @@ export function VocabularyWordList({
     return (
       <View style={styles.container}>
         <View style={styles.titleContainer}>
-          <ThemedText type="heading3">{title}</ThemedText>
+          <ThemedText type="heading2" colorName="headingText" style={titleStyle}>
+            {title}
+          </ThemedText>
         </View>
         <View style={styles.emptyContainer}>
-          <ThemedText type="body" variant="disabled">
+          <ThemedText type="body" colorName="captionText">
             No words
           </ThemedText>
         </View>
@@ -145,7 +189,9 @@ export function VocabularyWordList({
   return (
     <View style={styles.container}>
       <View style={styles.titleContainer}>
-        <ThemedText type="heading3">{title}</ThemedText>
+        <ThemedText type="heading2" colorName="headingText" style={titleStyle}>
+          {title}
+        </ThemedText>
       </View>
       <FlashList
         data={words}
@@ -174,7 +220,7 @@ export function VocabularyWordList({
   );
 }
 
-// Define the styles with proper TypeScript types
+// Define the styles with proper TypeScript types and enhanced styling
 const styles = StyleSheet.create({
   container: {
     flex: 1,

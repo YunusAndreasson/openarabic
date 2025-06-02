@@ -3,8 +3,9 @@ import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { LAYOUT } from '../constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY, getEnhancedOpacity } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
+import { useIsDarkMode } from '../hooks/useThemeDetection';
 
 import { ThemedText } from './ThemedText';
 
@@ -17,8 +18,9 @@ interface SectionTitleProps {
 }
 
 /**
- * A minimal, refined section title component
- * Clean typography with perfectly balanced spacing
+ * A minimal, refined section title component with sophisticated typography colors
+ * Clean typography with perfectly balanced spacing and enhanced micro-typography
+ * Now uses dedicated heading and subtitle colors for maximum polish and hierarchy
  * Supports optional subtitle and info button for enhanced sections
  */
 const SectionTitle: React.FC<SectionTitleProps> = ({
@@ -29,15 +31,42 @@ const SectionTitle: React.FC<SectionTitleProps> = ({
   isFirstSection = false,
 }) => {
   const colors = useColors();
+  const isDarkMode = useIsDarkMode();
+
+  // Enhanced styles with sophisticated typography colors and micro-typography
+  const titleStyle = React.useMemo(
+    () => ({
+      marginBottom: 0,
+      fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
+      letterSpacing:
+        TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.SECTION_HEADER.letterSpacing,
+      lineHeight:
+        LAYOUT.TYPOGRAPHY.SCALE.XXLARGE *
+        TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.SECTION_HEADER.lineHeightMultiplier,
+      opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY, isDarkMode),
+    }),
+    [isDarkMode]
+  );
+
+  const subtitleStyle = React.useMemo(
+    () => ({
+      lineHeight:
+        LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
+      marginTop: LAYOUT.SPACING.TINY,
+      opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.TERTIARY, isDarkMode),
+      letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
+    }),
+    [isDarkMode]
+  );
 
   return (
     <View style={[styles.container, isFirstSection && styles.firstSection, containerStyle]}>
       <View style={styles.titleGroup}>
-        <ThemedText type="heading2" weight="bold" style={styles.titleText}>
+        <ThemedText type="heading2" colorName="headingText" style={titleStyle}>
           {title}
         </ThemedText>
         {subtitle && (
-          <ThemedText type="caption" variant="secondary" style={styles.subtitleText}>
+          <ThemedText type="caption" colorName="subtitleText" style={subtitleStyle}>
             {subtitle}
           </ThemedText>
         )}
@@ -77,14 +106,6 @@ const styles = StyleSheet.create({
   titleGroup: {
     flex: 1,
     marginRight: LAYOUT.SPACING.SMALL,
-  },
-  titleText: {
-    marginBottom: 0,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
-  },
-  subtitleText: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
-    marginTop: LAYOUT.SPACING.TINY,
   },
   infoIcon: {
     padding: LAYOUT.SPACING.SMALL,

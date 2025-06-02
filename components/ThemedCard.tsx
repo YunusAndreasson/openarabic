@@ -5,7 +5,7 @@ import { StyleSheet, View, Platform, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { DEFAULT_IMAGES } from '@/constants/images';
-import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY, getEnhancedOpacity } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import type {
@@ -26,6 +26,7 @@ import { TimeAgo, SummaryIndicator } from './index/ArticleHelpers';
 /**
  * ThemedCard is a reusable card component that can display content in different variants.
  * It supports both light and dark themes, handles loading states, and provides smooth animations.
+ * Enhanced with sophisticated color relationships and micro-typography optimizations.
  *
  * The component is optimized for performance with memoization and proper image loading handling.
  * It uses Reanimated 3's built-in animations for optimal performance.
@@ -82,6 +83,11 @@ const styles = StyleSheet.create({
         paddingBottom: LAYOUT.SPACING.MEDIUM + 4, // Add extra padding at bottom for Android
       },
     }),
+  },
+  dueWordsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: LAYOUT.SPACING.TINY,
   },
   gradient: {
     ...StyleSheet.absoluteFillObject,
@@ -191,21 +197,54 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
     [gradientColors]
   );
 
-  // Common text styles that can be reused
+  // Enhanced text styles with semantic colors and sophisticated typography
   const titleStyle = useMemo(
     () => ({
-      letterSpacing: isDarkMode ? 0.2 : -0.2,
-      lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.3,
-      opacity: isDarkMode ? 0.98 : 1,
+      fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+      letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
+      lineHeight:
+        LAYOUT.TYPOGRAPHY.SCALE.LARGE *
+        TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.lineHeightMultiplier,
+      opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY, isDarkMode),
+    }),
+    [isDarkMode]
+  );
+
+  const authorStyle = useMemo(
+    () => ({
+      fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
+      letterSpacing:
+        TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.AUTHOR_BYLINE.letterSpacing,
+      opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.SECONDARY, isDarkMode),
     }),
     [isDarkMode]
   );
 
   const summaryStyle = useMemo(
     () => ({
-      lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.6,
-      opacity: isDarkMode ? 0.95 : 0.9,
-      letterSpacing: isDarkMode ? 0.1 : 0,
+      lineHeight:
+        LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
+      letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
+      opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.TERTIARY, isDarkMode),
+    }),
+    [isDarkMode]
+  );
+
+  const metadataStyle = useMemo(
+    () => ({
+      fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
+      letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.METADATA.letterSpacing,
+      opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.TERTIARY, isDarkMode),
+    }),
+    [isDarkMode]
+  );
+
+  // Enhanced due words style with accent color
+  const dueWordsStyle = useMemo(
+    () => ({
+      fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+      letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
+      opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.ACCENT, isDarkMode, true),
     }),
     [isDarkMode]
   );
@@ -223,8 +262,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
   const hideDifficulty = isCompactVariant(props) ? props.hideDifficulty : false;
   const lastOpenedAt = isCompactVariant(props) ? props.lastOpenedAt : undefined;
 
-  // Memoize article content. Depends only on props used in the view so
-  // irrelevant prop changes don't trigger recomputation
+  // Memoize article content with enhanced typography
   const articleContent = useMemo(() => {
     if (!isArticle) return null;
     return (
@@ -274,10 +312,9 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
         <View style={styles.contentContainer}>
           <View style={styles.titleContainer}>
             <ThemedText
-              type="body"
-              weight="bold"
+              type="heading3"
               numberOfLines={2}
-              colorName="text"
+              colorName="headingText"
               style={titleStyle}
             >
               {title}
@@ -286,7 +323,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
           {author ? (
             <View style={styles.authorContainer}>
-              <ThemedText type="label" colorName="secondaryText" numberOfLines={1}>
+              <ThemedText type="label" colorName="authorText" numberOfLines={1} style={authorStyle}>
                 {author}
               </ThemedText>
             </View>
@@ -296,7 +333,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             <View style={styles.summaryContainer}>
               <ThemedText
                 type="caption"
-                colorName="secondaryText"
+                colorName="captionText"
                 {...(!props.fullSummary ? { numberOfLines: 3 } : {})}
                 style={summaryStyle}
               >
@@ -318,11 +355,11 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
     summary,
     gradientProps,
     titleStyle,
+    authorStyle,
     summaryStyle,
   ]);
 
-  // Memoize compact article content. Depends only on the compact article props
-  // used in the view so unrelated prop changes don't rerender the content
+  // Memoize compact article content with enhanced colors
   const compactArticleContent = useMemo(() => {
     if (!isCompact) return null;
     return (
@@ -371,43 +408,42 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
         <View style={styles.contentContainer}>
           <View style={styles.titleContainer}>
             <ThemedText
-              type="body"
-              weight="bold"
+              type="heading3"
               numberOfLines={2}
-              colorName="text"
+              colorName="headingText"
               style={titleStyle}
             >
               {article?.title}
             </ThemedText>
           </View>
 
-          {/* Author information for compact cards */}
+          {/* Enhanced author information with semantic colors */}
           {article?.author ? (
             <View style={styles.authorContainer}>
-              <ThemedText type="caption" colorName="textTertiary" numberOfLines={1}>
+              <ThemedText
+                type="caption"
+                colorName="metadataText"
+                numberOfLines={1}
+                style={metadataStyle}
+              >
                 {article.author.name}
               </ThemedText>
             </View>
           ) : null}
 
-          {/* Due word count indicator as simple text with icon */}
+          {/* Enhanced due word count indicator with accent styling */}
           {isCompactVariant(props) && props.dueWordCount ? (
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginTop: LAYOUT.SPACING.TINY,
-              }}
-            >
+            <View style={styles.dueWordsContainer}>
               <Ionicons name="sync-outline" size={14} color={colors.warning} />
               <ThemedText
                 type="caption"
-                style={{
-                  color: colors.warning,
-                  fontWeight: '600',
-                  fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-                  marginLeft: 4,
-                }}
+                colorName="warning"
+                style={[
+                  dueWordsStyle,
+                  {
+                    marginLeft: LAYOUT.SPACING.TINY,
+                  },
+                ]}
                 skipDefaultColor
               >
                 {props.dueWordCount} due {props.dueWordCount === 1 ? 'word' : 'words'}
@@ -418,9 +454,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           <View style={styles.cardFooter}>
             {showTimeAgo ? (
               <TimeAgo date={lastOpenedAt || article?.created_at || ''} />
-            ) : isCompactVariant(props) &&
-              props.dueWordCount ? // Don't show reading time when there are due words - only show due word count above
-            null : (
+            ) : isCompactVariant(props) && props.dueWordCount ? null : ( // Don't show reading time when there are due words - only show due word count above
               // Always show summary indicator when not showing time ago or due words
               <SummaryIndicator summary={article?.summary || null} />
             )}
@@ -437,8 +471,9 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
     lastOpenedAt,
     gradientProps,
     titleStyle,
+    metadataStyle,
+    dueWordsStyle,
     colors.warning,
-    colors.textTertiary,
   ]);
 
   // Memoize compact content

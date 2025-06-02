@@ -89,7 +89,12 @@ export const TimePicker = memo(
           >
             {/* Header */}
             <View style={styles.header}>
-              <ThemedText type="heading3" weight="bold" style={styles.title}>
+              <ThemedText
+                type="heading3"
+                weight="bold"
+                colorName="headingText"
+                style={styles.title}
+              >
                 {title}
               </ThemedText>
               <TouchableOpacity
@@ -105,7 +110,12 @@ export const TimePicker = memo(
 
             {/* Time Display */}
             <View style={styles.timeDisplay}>
-              <ThemedText type="heading1" weight="bold" style={styles.timeText}>
+              <ThemedText
+                type="heading1"
+                weight="bold"
+                colorName="subtitleText"
+                style={styles.timeText}
+              >
                 {formatTime(selectedHour, selectedMinute)}
               </ThemedText>
             </View>
