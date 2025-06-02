@@ -636,7 +636,7 @@ const styles = StyleSheet.create({
     paddingRight: LAYOUT.SPACING.SMALL,
   },
   actionIconContainer: {
-    padding: LAYOUT.SPACING.TINY,
+    padding: LAYOUT.SPACING.XSMALL,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -647,7 +647,7 @@ const styles = StyleSheet.create({
     opacity: LAYOUT.OPACITY.MEDIUM,
     minWidth: LAYOUT.SPACING.XLARGE,
     textAlign: 'center',
-    marginRight: LAYOUT.SPACING.TINY,
+    marginRight: LAYOUT.SPACING.XSMALL,
   },
 
   // Section Styles
@@ -734,10 +734,10 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.SMALL,
   },
   actionLinksContainer: {
-    marginBottom: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   socialLinksContainer: {
-    marginBottom: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
 
   // Preferences Styles
@@ -821,7 +821,7 @@ const styles = StyleSheet.create({
     paddingRight: LAYOUT.SPACING.SMALL,
   },
   socialIconContainer: {
-    padding: LAYOUT.SPACING.TINY,
+    padding: LAYOUT.SPACING.XSMALL,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -832,7 +832,7 @@ const styles = StyleSheet.create({
     opacity: LAYOUT.OPACITY.MEDIUM,
     minWidth: LAYOUT.SPACING.XLARGE,
     textAlign: 'center',
-    marginRight: LAYOUT.SPACING.TINY,
+    marginRight: LAYOUT.SPACING.XSMALL,
   },
 
   // App Footer Styles
@@ -844,16 +844,16 @@ const styles = StyleSheet.create({
   },
   appFooterContent: {
     alignItems: 'center',
-    gap: LAYOUT.SPACING.TINY,
+    gap: LAYOUT.SPACING.XSMALL,
   },
   versionText: {
     letterSpacing: 0.4,
-    opacity: 0.6,
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
   copyrightText: {
     letterSpacing: 0.3,
-    opacity: 0.4,
-    fontSize: 11,
+    opacity: LAYOUT.OPACITY.MEDIUM,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
   },
 });
 
