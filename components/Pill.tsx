@@ -11,6 +11,13 @@ import { useIsDarkMode } from '../hooks/useThemeDetection';
 
 import { ThemedText } from './ThemedText';
 
+// Opacity constants for category pills
+const CATEGORY_OPACITY = {
+  SELECTED: 'CC', // 80% opacity
+  BLUR_DARK: '99', // 60% opacity for dark mode blur effect
+  BLUR_LIGHT: 'B3', // 70% opacity for light mode blur effect
+} as const;
+
 /**
  * A unified pill component that can be used for filters, categories, and other selectable items
  */
@@ -179,11 +186,11 @@ const getCategoryStyle = (
 ) => ({
   backgroundColor: isSelected
     ? isDarkMode
-      ? `${colors.tint}CC` // 80% opacity for selected state
-      : `${colors.tint}CC`
+      ? `${colors.tint}${CATEGORY_OPACITY.SELECTED}` // 80% opacity for selected state
+      : `${colors.tint}${CATEGORY_OPACITY.SELECTED}`
     : isDarkMode
-      ? `${colors.elevation2}99` // 60% opacity for blur-like effect
-      : `${colors.elevation1}B3`, // 70% opacity for blur-like effect
+      ? `${colors.elevation2}${CATEGORY_OPACITY.BLUR_DARK}` // 60% opacity for blur-like effect
+      : `${colors.elevation1}${CATEGORY_OPACITY.BLUR_LIGHT}`, // 70% opacity for blur-like effect
   borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   paddingVertical: LAYOUT.SPACING.TINY + 2,

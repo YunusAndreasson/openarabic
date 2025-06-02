@@ -12,6 +12,9 @@ import { useSimpleAudioPlayer } from '@/hooks/useSimpleAudioPlayer';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { lightFeedback } from '@/utils/haptics';
 
+// Audio configuration
+const AUDIO_DELAY_BETWEEN_LANGUAGES = 300; // Minimal delay for immediate English playback
+
 interface StrugglingWordsProps {
   words: StudyWord[];
   isLoading?: boolean;
@@ -207,11 +210,11 @@ const StrugglingWordsSection = memo(({ words = [], isLoading = false }: Struggli
     if (arabicUrl) {
       await playAudio(arabicUrl);
 
-      // Play English audio after a short delay if available
+      // Play English audio after a minimal delay if available
       if (englishUrl) {
         setTimeout(() => {
           playAudio(englishUrl);
-        }, 1500); // 1.5 second delay between Arabic and English
+        }, AUDIO_DELAY_BETWEEN_LANGUAGES); // Minimal delay for immediate English playback
       }
     } else if (englishUrl) {
       // Fallback to just English if no Arabic

@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { articlesService } from '@/services/articles';
@@ -9,7 +9,7 @@ import { LAYOUT } from '../../constants/layout';
 import ThemedCard from '../ThemedCard';
 import SectionTitle from '../SectionTitle';
 
-interface DailyPickSectionProps {
+interface FeaturedSectionProps {
   article: Article;
   onPress: (article: Article) => void;
   showTitle?: boolean;
@@ -18,19 +18,19 @@ interface DailyPickSectionProps {
 /**
  * A section displaying the featured article
  */
-const DailyPickSection: React.FC<DailyPickSectionProps> = ({
+const FeaturedSection: React.FC<FeaturedSectionProps> = ({
   article,
   onPress,
   showTitle = true,
 }) => {
-  // Use queryClient for prefetching
+  // Use queryClient for prefetching on press
   const queryClient = useQueryClient();
 
   // Handle the press with prefetching
   const handlePress = useCallback(() => {
     if (!article) return;
 
-    // Always prefetch article data with no caching
+    // Prefetch article data on press for immediate loading
     queryClient.prefetchQuery({
       queryKey: ['article', article.id],
       queryFn: () => articlesService.getArticleById(article.id),
@@ -42,20 +42,6 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
     // Call the original onPress handler
     onPress(article);
   }, [article, onPress, queryClient]);
-
-  // Featured article should be pre-loaded at startup since it's important
-  // This ensures it's ready when the user sees it
-  useEffect(() => {
-    if (article) {
-      queryClient.prefetchQuery({
-        queryKey: ['article', article.id],
-        queryFn: () => articlesService.getArticleById(article.id),
-        staleTime: 0, // No caching
-        gcTime: 0, // No cache retention
-        retry: 3,
-      });
-    }
-  }, [article, queryClient]);
 
   // Skip rendering if no article
   if (!article) return null;
@@ -88,6 +74,6 @@ const styles = StyleSheet.create({
   },
 });
 
-DailyPickSection.displayName = 'DailyPickSection';
+FeaturedSection.displayName = 'FeaturedSection';
 
-export default DailyPickSection;
+export default FeaturedSection;

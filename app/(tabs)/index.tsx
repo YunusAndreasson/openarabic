@@ -2,13 +2,13 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import React, { useEffect, useState, useCallback, useMemo, JSX } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleSection } from '@/components/article';
 import ArticleList from '@/components/index/ArticleList';
-import DailyPickSection from '@/components/index/DailyPickSection';
+import FeaturedSection from '@/components/index/FeaturedSection';
 import FilterSection from '@/components/index/FilterSection';
 import LatestTextsSection from '@/components/index/LatestTextsSection';
 import StrugglingWordsSection from '@/components/index/StrugglingWordsSection';
@@ -143,7 +143,7 @@ export default function ArticlesScreen(): JSX.Element {
 
   const { lastOpenedArticles = {} } = useAppSelectorMemo(state => state.readingList);
 
-  const { dailyPick } = useAppSelectorMemo(state => state.featuredContent);
+  const { dailyPick: featured } = useAppSelectorMemo(state => state.featuredContent);
 
   const filteredArticles = useMemo(() => {
     return filterArticles(articlesData, null, null);
@@ -235,28 +235,28 @@ export default function ArticlesScreen(): JSX.Element {
     if (articlesError || articlesData.length === 0) return;
 
     const today = new Date().toISOString().split('T')[0] || '';
-    if (dailyPick.date !== today) {
-      const dailyPickArticle = getDailyPickArticle(articlesData, getDayOfYear());
-      if (dailyPickArticle?.id) {
+    if (featured.date !== today) {
+      const featuredArticle = getDailyPickArticle(articlesData, getDayOfYear());
+      if (featuredArticle?.id) {
         if (today) {
-          dispatch(setDailyPick({ articleId: Number(dailyPickArticle.id), date: today }));
+          dispatch(setDailyPick({ articleId: Number(featuredArticle.id), date: today }));
         }
       }
     }
-  }, [articlesData, articlesError, dailyPick.date, dispatch]);
+  }, [articlesData, articlesError, featured.date, dispatch]);
 
-  const DailyPick = useMemo(() => {
+  const Featured = useMemo(() => {
     if (articlesError || articlesData.length === 0) return null;
 
-    let dailyPickArticle: Article | null = null;
-    if (dailyPick.articleId !== null) {
-      dailyPickArticle = articlesData.find(article => article.id === dailyPick.articleId) || null;
+    let featuredArticle: Article | null = null;
+    if (featured.articleId !== null) {
+      featuredArticle = articlesData.find(article => article.id === featured.articleId) || null;
     }
 
-    return dailyPickArticle ? (
-      <DailyPickSection article={dailyPickArticle} onPress={handleArticlePress} showTitle={true} />
+    return featuredArticle ? (
+      <FeaturedSection article={featuredArticle} onPress={handleArticlePress} showTitle={true} />
     ) : null;
-  }, [articlesData, articlesError, handleArticlePress, dailyPick.articleId]);
+  }, [articlesData, articlesError, handleArticlePress, featured.articleId]);
 
   const ContinueReadingSection = useMemo(() => {
     if (continueReadingArticles.length === 0) return null;
@@ -423,7 +423,7 @@ export default function ArticlesScreen(): JSX.Element {
     }
 
     const orderedSections = [
-      { id: 'daily-pick', component: DailyPick },
+      { id: 'featured', component: Featured },
       { id: 'struggling-words', component: StrugglingWordsComponent },
       { id: 'learning-section', component: learningSection },
       { id: 'latest-texts', component: latestTextsSectionComponent },
@@ -446,7 +446,7 @@ export default function ArticlesScreen(): JSX.Element {
     hasEnoughArticles,
     hasEnoughDifficultArticles,
     hasAnyStudyWords,
-    DailyPick,
+    Featured,
     StrugglingWordsComponent,
     DueWordsSection,
     DifficultWordsSection,
