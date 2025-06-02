@@ -65,7 +65,7 @@ export const useArticleMutations = (
         // Then refetch to ensure consistency
         refetchReadingListStatus();
         queryClient.invalidateQueries({ queryKey: ['readingList', userId] });
-        showToast('Saved for listening');
+        showToast('Saved for listening', undefined, 'success');
       },
       onError: (error: Error) => {
         const errorMessage = error.message;
@@ -73,9 +73,9 @@ export const useArticleMutations = (
           errorMessage.includes('reading_list_position_unique') ||
           errorMessage.includes('duplicate key value')
         ) {
-          showToast('Already saved for listening');
+          showToast('Already saved for listening', undefined, 'info');
         } else {
-          showToast('Failed to save for listening');
+          showToast('Failed to save for listening', undefined, 'error');
         }
       },
     }),
@@ -94,10 +94,10 @@ export const useArticleMutations = (
         // Then refetch to ensure consistency
         refetchReadingListStatus();
         queryClient.invalidateQueries({ queryKey: ['readingList', userId] });
-        showToast('Removed from listening');
+        showToast('Removed from listening list', undefined, 'info');
       },
       onError: () => {
-        // Error handled silently
+        showToast('Failed to remove from listening list', undefined, 'error');
       },
     }),
     [queryClient, refetchReadingListStatus, showToast]
@@ -133,7 +133,7 @@ export const useArticleMutations = (
           queryClient.setQueryData(['studyWords', userId], context.previousStudyWords);
         }
         handleError(error);
-        showToast('Error updating study list');
+        showToast('Error updating study list', undefined, 'error');
         queryClient.invalidateQueries({ queryKey: ['studyWords', userId] });
       },
       onSuccess: (_: boolean, { userId }: { userId: string }) => {
@@ -188,7 +188,7 @@ export const useArticleMutations = (
           queryClient.setQueryData(['studyWords', userId], context.previousStudyWords);
         }
         handleError(error);
-        showToast('Error updating study list');
+        showToast('Error updating study list', undefined, 'error');
         queryClient.invalidateQueries({ queryKey: ['studyWords', userId] });
       },
       onSuccess: (_: boolean, { userId }: { userId: string }) => {
@@ -253,7 +253,7 @@ export const useArticleMutations = (
           const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
 
           if (refreshError || !refreshData.session) {
-            showToast('Please sign in to manage your reading list');
+            showToast('Please sign in to manage your reading list', undefined, 'info');
             router.replace('/auth');
             return;
           }
@@ -297,7 +297,7 @@ export const useArticleMutations = (
           const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
 
           if (refreshError || !refreshData.session) {
-            showToast('Please sign in to add words to your study list');
+            showToast('Please sign in to add words to your study list', undefined, 'info');
             router.replace('/auth');
             return;
           }
@@ -330,7 +330,7 @@ export const useArticleMutations = (
           const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
 
           if (refreshError || !refreshData.session) {
-            showToast('Please sign in to add roots to your study list');
+            showToast('Please sign in to add roots to your study list', undefined, 'info');
             router.replace('/auth');
             return;
           }
@@ -340,7 +340,7 @@ export const useArticleMutations = (
             { userId: refreshData.session.user.id, rootId },
             {
               onError: () => {
-                showToast('Error updating study list');
+                showToast('Error updating study list', undefined, 'error');
               },
             }
           );
@@ -352,7 +352,7 @@ export const useArticleMutations = (
           { userId: session.user.id, rootId },
           {
             onError: () => {
-              showToast('Error updating study list');
+              showToast('Error updating study list', undefined, 'error');
             },
           }
         );

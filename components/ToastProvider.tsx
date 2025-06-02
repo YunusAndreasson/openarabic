@@ -2,10 +2,11 @@ import React, { createContext, useCallback, useContext, useState, useEffect, use
 
 import { setGlobalToastHandler } from '../utils/errorHandling';
 
-import { Toast } from './Toast';
+import { Toast, type ToastType } from './Toast';
 
 interface ToastContextType {
-  showToast: (message: string, duration?: number) => void;
+  showToast: (message: string, duration?: number, type?: ToastType) => void;
+  showImportantToast: (message: string, duration?: number) => void;
 }
 
 const ToastContext = createContext<ToastContextType | null>(null);
@@ -23,13 +24,24 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     visible: false,
     message: '',
     duration: undefined as number | undefined,
+    type: 'info' as ToastType,
   });
 
-  const showToast = useCallback((message: string, duration?: number) => {
+  const showToast = useCallback((message: string, duration?: number, type: ToastType = 'info') => {
     setToastState({
       visible: true,
       message,
       duration,
+      type,
+    });
+  }, []);
+
+  const showImportantToast = useCallback((message: string, duration: number = 4000) => {
+    setToastState({
+      visible: true,
+      message,
+      duration,
+      type: 'important',
     });
   }, []);
 
@@ -47,7 +59,10 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   }, [showToast]);
 
-  const contextValue = useMemo(() => ({ showToast }), [showToast]);
+  const contextValue = useMemo(
+    () => ({ showToast, showImportantToast }),
+    [showToast, showImportantToast]
+  );
 
   return (
     <ToastContext.Provider value={contextValue}>
@@ -57,6 +72,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         message={toastState.message}
         duration={toastState.duration}
         onClose={handleClose}
+        type={toastState.type}
       />
     </ToastContext.Provider>
   );

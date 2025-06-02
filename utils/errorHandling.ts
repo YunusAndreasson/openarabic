@@ -1,12 +1,22 @@
 /* eslint-disable no-console */
 import * as Sentry from '@sentry/react-native';
 
-// Store toast handler globally
-let globalToastHandler: ((message: string, duration?: number) => void) | null = null;
+// Store toast handler globally - updated to support types
+let globalToastHandler:
+  | ((
+      message: string,
+      duration?: number,
+      type?: 'info' | 'success' | 'error' | 'important'
+    ) => void)
+  | null = null;
 
 // Function to set the toast handler (call this in your ToastProvider)
 export const setGlobalToastHandler = (
-  handler: (message: string, duration?: number) => void
+  handler: (
+    message: string,
+    duration?: number,
+    type?: 'info' | 'success' | 'error' | 'important'
+  ) => void
 ): void => {
   globalToastHandler = handler;
 };
@@ -18,6 +28,8 @@ interface ErrorOptions {
   toastMessage?: string;
   // Toast duration in ms (default: 2500)
   toastDuration?: number;
+  // Toast type for visual styling
+  toastType?: 'info' | 'success' | 'error' | 'important';
   // Whether to track in Mixpanel
   trackAnalytics?: boolean;
   // Custom analytics event name (default: 'Error Occurred')
@@ -32,6 +44,7 @@ interface ErrorOptions {
 
 const DEFAULT_OPTIONS: ErrorOptions = {
   showToast: true,
+  toastType: 'error', // Default to error type for error handler
   trackAnalytics: true,
   captureSentry: true,
   sentrySeverity: 'error',
@@ -49,10 +62,15 @@ const captureInSentry = (errorObj: Error, sentrySeverity?: string): void => {
   }
 };
 
-const showToastMessage = (errorObj: Error, message?: string, duration?: number): void => {
+const showToastMessage = (
+  errorObj: Error,
+  message?: string,
+  duration?: number,
+  type?: 'info' | 'success' | 'error' | 'important'
+): void => {
   if (globalToastHandler) {
     const toastMessage = message || errorObj.message;
-    globalToastHandler(toastMessage, duration);
+    globalToastHandler(toastMessage, duration, type);
   }
 };
 
@@ -74,7 +92,7 @@ export const handleError = async (
     }
 
     if (opts.showToast) {
-      showToastMessage(errorObj, opts.toastMessage, opts.toastDuration);
+      showToastMessage(errorObj, opts.toastMessage, opts.toastDuration, opts.toastType);
     }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (_handlingError) {
@@ -86,6 +104,7 @@ export const handleError = async (
 export const handleAuthError = (error: Error | string): Promise<void> =>
   handleError(error, {
     toastMessage: 'Authentication error occurred',
+    toastType: 'error',
     analyticsEventName: 'Auth_Error',
     sentrySeverity: 'warning',
   });
@@ -93,6 +112,7 @@ export const handleAuthError = (error: Error | string): Promise<void> =>
 export const handleNetworkError = (error: Error | string): Promise<void> =>
   handleError(error, {
     toastMessage: 'Network error occurred',
+    toastType: 'error',
     analyticsEventName: 'Network_Error',
     sentrySeverity: 'warning',
   });
@@ -100,6 +120,7 @@ export const handleNetworkError = (error: Error | string): Promise<void> =>
 export const handleAPIError = (error: Error | string): Promise<void> =>
   handleError(error, {
     toastMessage: 'Service temporarily unavailable',
+    toastType: 'error',
     analyticsEventName: 'API_Error',
     sentrySeverity: 'error',
   });
