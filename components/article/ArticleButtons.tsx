@@ -187,9 +187,7 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
               <TouchableOpacity
                 onPress={onBookmarkPress}
                 style={StyleSheet.absoluteFill}
-                accessibilityLabel={
-                  isInReadingList ? 'Remove from listening' : 'Save for listening'
-                }
+                accessibilityLabel={isInReadingList ? 'Remove bookmark' : 'Bookmark article'}
               >
                 <View
                   style={[
@@ -198,7 +196,7 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
                   ]}
                 >
                   <IconWithShadow
-                    name={isInReadingList ? 'headset' : 'headset-outline'}
+                    name={isInReadingList ? 'bookmark' : 'bookmark-outline'}
                     size={22}
                   />
                 </View>

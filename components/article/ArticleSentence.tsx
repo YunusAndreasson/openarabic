@@ -156,10 +156,10 @@ function ArticleSentenceComponent({
   return (
     <View style={[styles.container, containerStyle]}>
       <Animated.View style={backgroundStyle} />
-      <View style={styles.wordsContainer}>{renderedWords}</View>
       {settings.showEnglish && sentence.english && (
         <Animated.Text style={englishTextStyle}>{sentence.english}</Animated.Text>
       )}
+      <View style={styles.wordsContainer}>{renderedWords}</View>
     </View>
   );
 }
@@ -172,8 +172,8 @@ const styles = StyleSheet.create({
   },
   englishText: {
     fontFamily: 'Philosopher',
-    paddingBottom: LAYOUT.SPACING.SMALL,
-    paddingTop: LAYOUT.SPACING.TINY,
+    paddingBottom: LAYOUT.SPACING.TINY,
+    paddingTop: LAYOUT.SPACING.SMALL,
   },
   sentenceBackground: {
     ...StyleSheet.absoluteFillObject,
@@ -185,9 +185,9 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: LAYOUT.SPACING.TINY,
     justifyContent: 'flex-start',
-    minHeight: LAYOUT.SPACING.XLARGE * 2,
+    minHeight: LAYOUT.SPACING.XLARGE * 1.5,
     paddingRight: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.TINY,
     width: '100%',
   },
 });

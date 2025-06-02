@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
     justifyContent: 'center',
     paddingHorizontal: LAYOUT.SPACING.MICRO,
-    paddingVertical: 4,
+    paddingVertical: 2,
   },
   wordView: {},
 });

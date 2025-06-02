@@ -374,7 +374,7 @@ export default function ListenScreen(): JSX.Element {
 
           <View style={styles.noteContainer}>
             <Ionicons
-              name="headset-outline"
+              name="information-circle-outline"
               size={16}
               color={colors.interactiveSecondary}
               style={styles.noteIcon}
