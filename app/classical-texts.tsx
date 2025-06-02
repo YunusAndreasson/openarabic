@@ -31,7 +31,7 @@ const ClassicalTextsScreen: React.FC = () => {
           headerTransparent: false,
           headerTitleAlign: 'left',
           headerTintColor: colors.tint,
-          headerBackTitle: 'Science',
+          headerBackTitle: 'Settings',
           headerBackTitleStyle: {
             fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
           },
@@ -65,16 +65,10 @@ const ClassicalTextsScreen: React.FC = () => {
             <ThemedText type="heading1" weight="bold" style={styles.customHeaderTitle}>
               Why Classical Texts Work Best
             </ThemedText>
-            <ThemedText type="body" variant="secondary" style={styles.customHeaderSubtitle}>
-              The optimal path to Arabic fluency through authentic content
-            </ThemedText>
           </View>
 
           {/* Introduction */}
           <View style={styles.section}>
-            <ThemedText type="heading2" weight="bold" style={styles.sectionTitle}>
-              Why Classical Texts
-            </ThemedText>
             <ThemedText type="body" style={styles.bodyText}>
               Classical Islamic texts with translations provide optimal conditions for Arabic
               acquisition through comprehensible input.
@@ -444,10 +438,6 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.2,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.3,
     marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  customHeaderSubtitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.1,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.5,
   },
 });
 

@@ -31,7 +31,7 @@ const LearningMethodScreen: React.FC = () => {
           headerTransparent: false,
           headerTitleAlign: 'left',
           headerTintColor: colors.tint,
-          headerBackTitle: 'Science',
+          headerBackTitle: 'Settings',
           headerBackTitleStyle: {
             fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
           },
@@ -65,16 +65,10 @@ const LearningMethodScreen: React.FC = () => {
             <ThemedText type="heading1" weight="bold" style={styles.customHeaderTitle}>
               The Science of Language Learning
             </ThemedText>
-            <ThemedText type="body" variant="secondary" style={styles.customHeaderSubtitle}>
-              Understanding how your brain naturally acquires Arabic
-            </ThemedText>
           </View>
 
           {/* Introduction */}
           <View style={styles.section}>
-            <ThemedText type="heading2" weight="bold" style={styles.sectionTitle}>
-              How Language Acquisition Works
-            </ThemedText>
             <ThemedText type="body" style={styles.bodyText}>
               Language acquisition occurs through understanding meaningful messages, not grammar
               instruction. According to Krashen's Input Hypothesis, the brain naturally identifies
@@ -471,10 +465,6 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.2,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.3,
     marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  customHeaderSubtitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.1,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.5,
   },
 });
 
