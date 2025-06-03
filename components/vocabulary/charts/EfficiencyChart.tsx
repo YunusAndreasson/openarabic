@@ -155,9 +155,9 @@ export const EfficiencyChart = memo(
         performanceZones,
         dataPoints: points,
         insights: {
-          currentEfficiency: Math.round(currentEfficiency * 10) / 10,
+          currentEfficiency: Math.round(currentEfficiency),
           trend,
-          weeklyAverage: Math.round(recentAvg * 10) / 10,
+          weeklyAverage: Math.round(recentAvg),
         },
       };
     }, [efficiencyData, chartColors]);
@@ -288,10 +288,10 @@ export const EfficiencyChart = memo(
                   key={`data-point-${index}`}
                   x={point.x}
                   y={point.y}
-                  value={`${Math.round(point.efficiency * 10) / 10}%`}
+                  value={`${Math.round(point.efficiency)}%`}
                   label={data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   onPress={showTooltip}
-                  accessibilityLabel={`Data point: ${Math.round(point.efficiency * 10) / 10}% efficiency on ${data.date.toLocaleDateString()}`}
+                  accessibilityLabel={`Data point: ${Math.round(point.efficiency)}% efficiency on ${data.date.toLocaleDateString()}`}
                 />
               );
             })}

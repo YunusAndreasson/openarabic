@@ -182,7 +182,7 @@ export const RetrievabilityChart = memo(
         dangerZones,
         dataPoints: points,
         insights: {
-          currentRetrievability: Math.round(currentRetrievability * 10) / 10,
+          currentRetrievability: Math.round(currentRetrievability),
           trend,
           criticalWords,
         },
@@ -366,10 +366,10 @@ export const RetrievabilityChart = memo(
                   key={`data-point-${index}`}
                   x={point.x}
                   y={point.y}
-                  value={`${Math.round(point.retrievability * 10) / 10}%`}
+                  value={`${Math.round(point.retrievability)}%`}
                   label={dateLabel}
                   onPress={showTooltip}
-                  accessibilityLabel={`Data point: ${Math.round(point.retrievability * 10) / 10}% retention on ${dateLabel}`}
+                  accessibilityLabel={`Data point: ${Math.round(point.retrievability)}% retention on ${dateLabel}`}
                 />
               );
             })}

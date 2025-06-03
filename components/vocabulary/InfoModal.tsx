@@ -83,32 +83,32 @@ const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
   streak: {
     title: 'Daily Habit',
     subtitle:
-      'Your consistency in daily vocabulary practice.\n\nDaily practice is the foundation of effective spaced repetition. Even 5 minutes daily beats sporadic long sessions.',
+      'Your consistency in daily vocabulary practice.\n\nDaily practice is the foundation of effective spaced repetition. Even 5 minutes daily beats sporadic long sessions for memory retention.',
     sections: [
       {
-        title: 'Current Streak',
+        title: 'Why Daily Practice Matters',
         content:
-          'Days in a row you have practiced vocabulary.\n\nWhy it matters:\nConsistent daily practice creates neural pathways that make learning automatic. Your brain adapts to expect and process new information at regular intervals.\n\nBuilding streaks:\nStart small with just 5 words per day. Consistency beats intensity. Missing one day breaks the streak, but you can always start fresh.',
+          'Consistent daily practice optimizes memory formation:\n\nSpaced intervals prevent forgetting curves\nDaily exposure strengthens neural pathways\nRegular practice builds automatic recall\nConsistent timing helps memory consolidation\n\nResearch shows daily practice is 3x more effective than cramming sessions.',
         icon: 'flame',
       },
       {
-        title: 'Activity Timeline',
+        title: 'Memory & Spaced Repetition',
         content:
-          'Visual representation of your last 7 days of practice.\n\nGreen dots show active days\nYellow dots show missed days\nConnected dots show consecutive practice\n\nUse this to identify patterns in your study habits and maintain momentum.',
+          'Your brain forgets information predictably without reinforcement.\n\nDaily practice fights the forgetting curve\nOptimal spacing requires consistent timing\nSkipping days disrupts memory consolidation\nRegular practice builds long-term retention\n\nConsistency is more important than session length.',
         icon: 'analytics',
       },
       {
-        title: 'Best Streak',
+        title: 'Building Your Streak',
         content:
-          'Your longest consecutive practice period.\n\nThis shows your capability for sustained learning. Use it as motivation to beat your personal record.\n\nRemember: Every expert was once a beginner who refused to give up.',
+          'Start small and build momentum:\n\nBegin with just 2-3 words daily\nLink practice to existing routines\nConsistency beats intensity for retention\nMissing one day breaks the memory rhythm\n\nEvery streak begins with a single day of practice.',
         icon: 'trophy',
       },
     ],
     tips: [
-      'Practice 2-3 words daily to build momentum',
-      'Link practice to existing daily routines',
-      'Focus on consistency over perfection',
-      'Celebrate small wins to maintain motivation',
+      'Daily practice is 3x more effective than weekly cramming',
+      'Even 5 minutes daily builds stronger memories than long irregular sessions',
+      'Consistent timing helps your brain expect and retain information',
+      'Missing days forces you to relearn instead of building on progress',
     ],
   },
   mastery: {

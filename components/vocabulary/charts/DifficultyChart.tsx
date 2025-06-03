@@ -144,7 +144,7 @@ export const DifficultyChart = memo(
         buckets,
         hasData: true,
         insights: {
-          averageDifficulty: Math.round(averageDifficulty * 100) / 100,
+          averageDifficulty: Math.round(averageDifficulty),
           hardWords,
           distribution,
           dominantLevel,
@@ -385,7 +385,7 @@ export const DifficultyChart = memo(
           {onDifficultyPress && difficultyData.buckets.some(b => b.count > 0) && (
             <Animated.View style={styles.hintSection} entering={FadeInUp.delay(500).duration(400)}>
               <ThemedText style={[styles.subtleHintText, { color: colors.secondaryText }]}>
-                Tap bars to explore
+                Tap bars to explore words
               </ThemedText>
             </Animated.View>
           )}

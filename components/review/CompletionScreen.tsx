@@ -183,7 +183,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
 
     // Stability improvement
     if (metrics.averageStabilityIncrease > 0) {
-      const avgIncrease = Math.round(metrics.averageStabilityIncrease * 10) / 10;
+      const avgIncrease = Math.round(metrics.averageStabilityIncrease);
       encouragingFacts.push({
         text: `+${avgIncrease} days average memory strength boost!`,
         icon: 'bar-chart',
@@ -194,7 +194,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
 
     // Session efficiency
     if (sessionDuration > 0 && metrics.wordsReviewed >= 10) {
-      const wordsPerMinute = Math.round((metrics.wordsReviewed / sessionDuration) * 10) / 10;
+      const wordsPerMinute = Math.round(metrics.wordsReviewed / sessionDuration);
       encouragingFacts.push({
         text: `${wordsPerMinute} words/min - efficient learning!`,
         icon: 'speedometer',

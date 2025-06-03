@@ -176,10 +176,10 @@ export const MasteryChart = memo(
         milestones,
         dataPoints: points,
         insights: {
-          currentRate: Math.round(currentRate * 10) / 10,
+          currentRate: Math.round(currentRate),
           trend,
           totalMastered,
-          weeklyChange: Math.round(change * 10) / 10,
+          weeklyChange: Math.round(change),
         },
       };
     }, [masteryData]);
@@ -232,6 +232,7 @@ export const MasteryChart = memo(
             rightStat={{
               value: chartData.insights.totalMastered,
               label: 'mastered',
+              color: chartColors.performance.excellent,
               onPress: onStatPress ? () => onStatPress('mastered') : undefined,
             }}
           />
@@ -408,10 +409,10 @@ export const MasteryChart = memo(
                   key={`data-point-${index}`}
                   x={point.x}
                   y={point.y}
-                  value={`${Math.round(point.rate * 10) / 10}%`}
+                  value={`${Math.round(point.rate)}%`}
                   label={data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   onPress={showTooltip}
-                  accessibilityLabel={`Data point: ${Math.round(point.rate * 10) / 10}% mastery on ${data.date.toLocaleDateString()}`}
+                  accessibilityLabel={`Data point: ${Math.round(point.rate)}% mastery on ${data.date.toLocaleDateString()}`}
                 />
               );
             })}

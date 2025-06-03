@@ -245,7 +245,7 @@ export const VocabularyStatCards = memo(
 
         {/* Consistency Section */}
         <View>
-          <SectionTitle title="Daily Habit" />
+          <SectionTitle title="Daily Habit" onInfoPress={handleStreakInfo} />
           <StreakCard
             currentStreak={currentStreak}
             longestStreak={longestStreak}
