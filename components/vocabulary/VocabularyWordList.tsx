@@ -1,18 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useHeaderHeight } from '@react-navigation/elements';
-import type { ListRenderItem } from '@shopify/flash-list';
-import { FlashList } from '@shopify/flash-list';
+import { FlashList, ListRenderItem } from '@shopify/flash-list';
 import { BlurView } from 'expo-blur';
-import type { ComponentProps, JSX } from 'react';
-import React, { memo, useCallback } from 'react';
-import type { ViewStyle, TextStyle } from 'react-native';
-import { StyleSheet, View } from 'react-native';
+import React, { memo, useCallback, JSX } from 'react';
+import type { ComponentProps } from 'react';
+import { View, StyleSheet, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LAYOUT, TYPOGRAPHY_HIERARCHY, getEnhancedOpacity } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { isMasteredWord, isLearningWord, isDueWord } from '@/utils/wordClassification';
 
 import ThemedCard from '../ThemedCard';
 import { ThemedText } from '../ThemedText';
@@ -37,11 +36,10 @@ const WordItem = memo(
     const isDarkMode = useIsDarkMode();
     const word = studyWord.root?.letters || '...';
     const english = studyWord.root?.meaning || '...';
-    const isMastered = studyWord.fsrs_state === 2 && (studyWord.fsrs_stability ?? 0) >= 5;
+    const isMastered = isMasteredWord(studyWord);
     const isReview = studyWord.fsrs_state === 2 && (studyWord.fsrs_stability ?? 0) < 5;
-    const isLearning = studyWord.fsrs_state === 1 || studyWord.fsrs_state === 3; // Learning or Relearning
-    const isNew = studyWord.fsrs_state === 0;
-    const isOverdue = studyWord.fsrs_due ? new Date(studyWord.fsrs_due) < new Date() : false;
+    const isLearning = isLearningWord(studyWord) && !isReview; // Learning but not in review
+    const isOverdue = isDueWord(studyWord);
 
     let statusLabel = 'New';
     let statusIcon = 'star';

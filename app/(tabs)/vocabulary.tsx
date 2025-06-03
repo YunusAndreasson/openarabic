@@ -5,6 +5,7 @@ import React, { useState, useCallback, JSX } from 'react';
 import { StyleSheet, RefreshControl, ScrollView, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import BottomControls from '@/components/BottomControls';
 import { ThemedView } from '@/components/ThemedView';
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
 import { VocabularyStatCards } from '@/components/vocabulary/VocabularyStatCards';
@@ -18,7 +19,9 @@ import { useVocabularyChartData } from '@/hooks/useVocabularyChartData';
 import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import type { StatCategory } from '@/types/vocabulary.types';
 import { mediumFeedback } from '@/utils/haptics';
-import BottomControls from '@/components/BottomControls';
+import { isStrugglingWord } from '@/utils/wordClassification';
+
+import SessionOptionsModal from '../../components/vocabulary/SessionOptionsModal';
 
 export default function VocabularyScreen(): JSX.Element {
   const { user } = useAuth();
@@ -28,8 +31,9 @@ export default function VocabularyScreen(): JSX.Element {
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
 
-  // Add state for refresh control
+  // Add state for refresh control and session options modal
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showSessionOptions, setShowSessionOptions] = useState(false);
 
   // Use the navigation with debounce hook
   const { navigateTo } = useNavigationWithDebounce();
@@ -188,18 +192,41 @@ export default function VocabularyScreen(): JSX.Element {
         />
       </ScrollView>
       <BottomControls
-        primaryLabel="Practice"
-        onPrimaryPress={stats.dueWords > 0 ? handleStartReview : () => {}}
-        primaryVariant={stats.dueWords > 0 ? 'filled' : 'outlined'}
-        primaryDisabled={stats.dueWords === 0}
-        primaryAccessibilityLabel={
-          stats.dueWords > 0 ? `Practice ${stats.dueWords} words` : 'No words due for practice'
-        }
-        secondaryLabel="Listen"
-        onSecondaryPress={handleStartListen}
-        secondaryVariant="outlined"
-        secondaryDisabled={false}
-        secondaryAccessibilityLabel="Listen to your words"
+        primaryLabel="Start Session"
+        onPrimaryPress={() => setShowSessionOptions(true)}
+        primaryVariant="filled"
+        primaryDisabled={false}
+        primaryAccessibilityLabel="Start learning session - choose practice or listen mode"
+      />
+
+      {/* Session Options Modal */}
+      <SessionOptionsModal
+        visible={showSessionOptions}
+        onClose={() => setShowSessionOptions(false)}
+        dueWordsCount={stats.dueWords}
+        strugglingWordsCount={validStudyWords.filter(word => isStrugglingWord(word)).length}
+        onStartPractice={(wordType: 'due' | 'struggling') => {
+          if (wordType === 'due') {
+            handleStartReview();
+          } else {
+            // Navigate to review with struggling words filter
+            navigateTo({
+              pathname: '/review',
+              params: { fromRemember: 'true' },
+            });
+          }
+        }}
+        onStartListen={(wordType: 'due' | 'struggling') => {
+          if (wordType === 'due') {
+            handleStartListen();
+          } else {
+            // Navigate to listen with struggling words filter
+            navigateTo({
+              pathname: '/listen',
+              params: { fromRemember: 'true' },
+            });
+          }
+        }}
       />
     </ThemedView>
   );
@@ -214,8 +241,8 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     alignItems: 'center',
-    paddingVertical: LAYOUT.SPACING.TINY,
     marginBottom: LAYOUT.SPACING.SMALL,
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH, // Subtle loading indicator
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
+    paddingVertical: LAYOUT.SPACING.TINY, // Subtle loading indicator
   },
 });

@@ -1,25 +1,26 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { memo, useMemo, useState, useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 
-import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 import SectionTitle from '@/components/SectionTitle';
+import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
+import { isStrugglingWord } from '@/utils/wordClassification';
 
 import { LAYOUT } from '../../constants/layout';
-import { useColors } from '../../hooks/useColors';
 import { useAuth } from '../../hooks/useAuth';
+import { useColors } from '../../hooks/useColors';
 import { useStreakData } from '../../hooks/useStreakData';
 import { useVocabularyChartData } from '../../hooks/useVocabularyChartData';
 import { lightFeedback } from '../../utils/haptics';
 
-import { LearningGauge } from './LearningGauge';
 import { InfoModal, type InfoModalType } from './InfoModal';
+import { LearningGauge } from './LearningGauge';
 import { StatCard } from './StatCard';
 import { StreakCard } from './StreakCard';
-import { MasteryChart } from './charts/MasteryChart';
-import { EfficiencyChart } from './charts/EfficiencyChart';
-import { RetrievabilityChart } from './charts/RetrievabilityChart';
 import { DifficultyChart } from './charts/DifficultyChart';
+import { EfficiencyChart } from './charts/EfficiencyChart';
+import { MasteryChart } from './charts/MasteryChart';
+import { RetrievabilityChart } from './charts/RetrievabilityChart';
 
 interface VocabularyStatCardsProps {
   masteredWords?: number;
@@ -92,17 +93,8 @@ export const VocabularyStatCards = memo(
       let needsAttention = 0;
 
       validatedInput.studyWords.forEach(word => {
-        // Words that need attention based on FSRS metrics
-        const difficulty = word.fsrs_difficulty ?? 5.0;
-        const lapses = word.fsrs_lapses ?? 0;
-        const stability = word.fsrs_stability ?? 0;
-        const state = word.fsrs_state;
-
-        const isHighDifficultyWithLapses = difficulty > 6.0 && lapses > 0;
-        const isStrugglingInLearning = (state === 1 || state === 2) && lapses > 1;
-        const isUnstableAndDifficult = stability < 7 && difficulty > 5.0 && lapses > 0;
-
-        if (isHighDifficultyWithLapses || isStrugglingInLearning || isUnstableAndDifficult) {
+        // Words that need attention based on FSRS metrics - using centralized function
+        if (isStrugglingWord(word)) {
           needsAttention++;
         }
       });
@@ -322,13 +314,13 @@ export const VocabularyStatCards = memo(
 VocabularyStatCards.displayName = 'VocabularyStatCards';
 
 const styles = StyleSheet.create({
+  lastSection: {
+    marginBottom: LAYOUT.SPACING.XXLARGE,
+  },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: LAYOUT.SPACING.MEDIUM,
     justifyContent: 'space-between',
-  },
-  lastSection: {
-    marginBottom: LAYOUT.SPACING.XXLARGE,
   },
 });
