@@ -47,48 +47,75 @@ export const LearningGauge = memo(
     // Calculate learning state with clear, actionable insights
     const gaugeState: GaugeState = useMemo(() => {
       const reviewLoad = dueWords / Math.max(totalWords, 1);
+      const completionRate = masteredWords / Math.max(totalWords, 1);
 
-      // HEAVY: High review burden - focus needed
-      if (dueWords > 15 || reviewLoad > 0.25) {
+      // CRITICAL OVERLOAD: Too many due words - cognitive science explanation
+      if (dueWords >= 20) {
         return {
           level: 'heavy',
-          action: 'Review First',
-          insight: `Stop. Complete ${dueWords} overdue reviews to clear your mental workspace.`,
-          icon: 'stop-circle',
+          action: 'Focus on Reviews',
+          insight: `Clear ${dueWords} reviews first. Working memory can only process 7±2 items effectively - high review load blocks new learning.`,
+          icon: 'warning',
           color: colors.error,
         };
       }
 
-      // MODERATE: Some review burden - balanced approach
-      if (dueWords > 5 || (reviewLoad > 0.1 && totalWords > 20)) {
+      // HIGH LOAD: Significant review burden - spaced repetition science
+      if (dueWords >= 10 || reviewLoad > 0.3) {
+        return {
+          level: 'heavy',
+          action: 'Review First',
+          insight: `Complete ${dueWords} reviews before adding words. Overdue reviews weaken memory consolidation of existing vocabulary.`,
+          icon: 'alarm',
+          color: colors.error,
+        };
+      }
+
+      // MODERATE LOAD: Some burden - optimized learning approach
+      if (dueWords >= 5 || (reviewLoad > 0.15 && totalWords > 15)) {
         return {
           level: 'moderate',
-          action: 'Review Then Add',
-          insight: `Pause. Complete ${dueWords} reviews first, then add a few new words.`,
-          icon: 'pause-circle',
+          action: 'Balanced Approach',
+          insight: `Handle ${dueWords} reviews, then add 2-3 words. This maintains optimal spacing intervals while preventing cognitive overload.`,
+          icon: 'scale',
           color: colors.warning,
         };
       }
 
-      // OPTIMAL: Low review burden - perfect for learning
-      if (totalWords < 10) {
+      // BEGINNER: Building foundation
+      if (totalWords < 15) {
         return {
           level: 'optimal',
-          action: 'Add New Words',
-          insight: 'Go. Add new words to build your vocabulary foundation.',
-          icon: 'play-circle',
+          action: 'Build Foundation',
+          insight: `Add 5-8 new words daily. Your brain can efficiently process new vocabulary without interference from review load.`,
+          icon: 'school',
           color: colors.success,
         };
       }
 
+      // ADVANCED: High mastery - sophisticated strategy
+      if (completionRate > 0.7) {
+        return {
+          level: 'optimal',
+          action: 'Expand Vocabulary',
+          insight:
+            dueWords === 0
+              ? `Perfect timing for new words. Strong mastery rate creates optimal conditions for vocabulary expansion.`
+              : `Complete ${dueWords} quick reviews, then add new words. Your high retention rate allows aggressive growth.`,
+          icon: 'trending-up',
+          color: colors.success,
+        };
+      }
+
+      // OPTIMAL: Perfect conditions
       return {
         level: 'optimal',
         action: 'Add New Words',
         insight:
           dueWords === 0
-            ? 'Go. Add new words. Your brain is ready for new learning.'
-            : `Go. Complete ${dueWords} review${dueWords === 1 ? '' : 's'} first, then add new words.`,
-        icon: 'play-circle',
+            ? `Ideal learning window. Your memory system is clear and ready for new vocabulary acquisition.`
+            : `Quick ${dueWords}-word review, then add new vocabulary. Perfect conditions for memory consolidation.`,
+        icon: 'checkmark-circle',
         color: colors.success,
       };
     }, [dueWords, learningWords, totalWords, masteredWords, colors]);

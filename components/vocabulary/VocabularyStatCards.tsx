@@ -4,7 +4,7 @@ import { View, StyleSheet } from 'react-native';
 
 import SectionTitle from '@/components/SectionTitle';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
-import { isStrugglingWord } from '@/utils/wordClassification';
+import { getStrugglingWordsCount } from '@/utils/wordClassification';
 
 import { LAYOUT } from '../../constants/layout';
 import { useAuth } from '../../hooks/useAuth';
@@ -90,14 +90,7 @@ export const VocabularyStatCards = memo(
         };
       }
 
-      let needsAttention = 0;
-
-      validatedInput.studyWords.forEach(word => {
-        // Words that need attention based on FSRS metrics - using centralized function
-        if (isStrugglingWord(word)) {
-          needsAttention++;
-        }
-      });
+      const needsAttention = getStrugglingWordsCount(validatedInput.studyWords);
 
       return {
         totalWords: Math.max(validatedInput.studyWords.length, stats.totalWords),
@@ -196,28 +189,26 @@ export const VocabularyStatCards = memo(
       [handleInfoPress]
     );
 
+    // New handler for Learning Progress section
+    const handleProgressInfo = useCallback(() => handleInfoPress('progress'), [handleInfoPress]);
+
     return (
       <View>
-        {/* Recommendation Section */}
+        {/* Start with Motivation - Daily Habit */}
         <View>
-          <SectionTitle
-            title="What To Do Next"
-            isFirstSection={true}
-            onInfoPress={handleRecommendationInfo}
-          />
-          <LearningGauge
-            dueWords={validatedData.due}
-            learningWords={validatedData.learning}
-            totalWords={validatedData.total}
-            masteredWords={validatedData.mastered}
+          <SectionTitle title="Your Streak" onInfoPress={handleStreakInfo} isFirstSection={true} />
+          <StreakCard
+            currentStreak={currentStreak}
+            longestStreak={longestStreak}
+            lastSevenDaysActivity={lastSevenDaysActivity}
+            onInfoPress={handleStreakInfo}
             hideTitle={true}
-            onInfoPress={handleRecommendationInfo}
           />
         </View>
 
-        {/* Progress Section */}
+        {/* Progress Overview + Smart Guidance */}
         <View>
-          <SectionTitle title="Your Words" />
+          <SectionTitle title="Learning Progress" onInfoPress={handleProgressInfo} />
           <View style={styles.statsGrid}>
             {statCards.map(card => (
               <StatCard
@@ -233,21 +224,21 @@ export const VocabularyStatCards = memo(
               />
             ))}
           </View>
+
+          {/* Integrated Smart Recommendation */}
+          <View style={styles.recommendationContainer}>
+            <LearningGauge
+              dueWords={validatedData.due}
+              learningWords={validatedData.learning}
+              totalWords={validatedData.total}
+              masteredWords={validatedData.mastered}
+              hideTitle={true}
+              onInfoPress={handleRecommendationInfo}
+            />
+          </View>
         </View>
 
-        {/* Consistency Section */}
-        <View>
-          <SectionTitle title="Daily Habit" onInfoPress={handleStreakInfo} />
-          <StreakCard
-            currentStreak={currentStreak}
-            longestStreak={longestStreak}
-            lastSevenDaysActivity={lastSevenDaysActivity}
-            onInfoPress={handleStreakInfo}
-            hideTitle={true}
-          />
-        </View>
-
-        {/* Individual Chart Sections */}
+        {/* Detailed Analytics */}
         <View>
           <SectionTitle
             title="Memory Strength"
@@ -322,5 +313,8 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: LAYOUT.SPACING.MEDIUM,
     justifyContent: 'space-between',
+  },
+  recommendationContainer: {
+    marginTop: LAYOUT.SPACING.MEDIUM,
   },
 });

@@ -47,3 +47,15 @@ export function isLearningWord(word: StudyWord): boolean {
     (word.fsrs_state === 2 && (word.fsrs_stability ?? 0) < 5) // Review but unstable
   );
 }
+
+/**
+ * Calculate the count of struggling words from a list of study words
+ */
+export const getStrugglingWordsCount = (studyWords: StudyWord[]): number => {
+  if (!Array.isArray(studyWords) || studyWords.length === 0) {
+    return 0;
+  }
+
+  return studyWords.filter(word => word != null && word.root_id != null && isStrugglingWord(word))
+    .length;
+};

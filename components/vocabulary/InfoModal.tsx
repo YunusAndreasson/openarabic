@@ -29,7 +29,8 @@ export type InfoModalType =
   | 'retrievability'
   | 'difficulty'
   | 'efficiency'
-  | 'recommendation';
+  | 'recommendation'
+  | 'progress';
 
 interface InfoModalProps {
   visible: boolean;
@@ -81,7 +82,7 @@ const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
     ],
   },
   streak: {
-    title: 'Daily Habit',
+    title: 'Your Streak',
     subtitle:
       'Your consistency in daily vocabulary practice.\n\nDaily practice is the foundation of effective spaced repetition. Even 5 minutes daily beats sporadic long sessions for memory retention.',
     sections: [
@@ -233,6 +234,43 @@ const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
       'Study when mentally fresh',
       'Use spaced intervals, not cramming',
       'Quality practice over quantity',
+    ],
+  },
+  progress: {
+    title: 'Learning Progress',
+    subtitle:
+      'Your vocabulary journey across different learning stages.\n\nThese stats show how words move through your memory system from initial learning to long-term mastery.',
+    sections: [
+      {
+        title: 'Due Words (Red)',
+        content:
+          "Words ready for review right now.\n\nWhy they matter:\nThese words are at the optimal spacing interval for strengthening memory\nDelaying review causes memory decay and forces relearning\nReviewing on time builds stronger, longer-lasting memories\n\nWhat to do:\nPrioritize these in your study session - they're your highest-impact practice.",
+        icon: 'alarm-outline',
+      },
+      {
+        title: 'Learning Words (Blue)',
+        content:
+          "Words you're actively building memory for.\n\nWhy they matter:\nThese are in the critical formation stage of memory\nRegular practice moves them toward mastery\nSkipping practice sends them back to the beginning\n\nWhat to do:\nMaintain consistent practice to keep these progressing forward.",
+        icon: 'school-outline',
+      },
+      {
+        title: 'Mastered Words (Green)',
+        content:
+          "Words that have reached long-term memory.\n\nWhy they matter:\nThese represent real learning achievement - vocabulary you truly own\nThey require minimal review and are ready for natural use\nThis is your measure of actual progress\n\nWhat to do:\nCelebrate this number - it's your real vocabulary growth!",
+        icon: 'checkmark-circle-outline',
+      },
+      {
+        title: 'Struggling Words (Red)',
+        content:
+          'Words that consistently challenge you.\n\nWhy they matter:\nThese need special attention to break through difficulty barriers\nIgnoring them creates permanent knowledge gaps\nFocused practice can turn struggles into strengths\n\nWhat to do:\nDedicate extra time to these - breakthrough is often just one good session away.',
+        icon: 'alert-circle',
+      },
+    ],
+    tips: [
+      'Due words are your highest-impact practice - prioritize them',
+      'Learning words need consistent practice to progress',
+      'Mastered count is your true measure of vocabulary growth',
+      'Struggling words become strengths with focused attention',
     ],
   },
 };

@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Dimensions,
   TouchableWithoutFeedback,
-  Platform,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -177,7 +176,7 @@ export default memo(function SessionOptionsModal({
 
               {/* Options Grid */}
               <View style={styles.optionsContainer}>
-                {sessionOptions.map((option, index) => (
+                {sessionOptions.map(option => (
                   <TouchableOpacity
                     key={option.id}
                     onPress={option.disabled ? undefined : option.onPress}

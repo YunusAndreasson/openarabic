@@ -19,7 +19,7 @@ import { useVocabularyChartData } from '@/hooks/useVocabularyChartData';
 import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import type { StatCategory } from '@/types/vocabulary.types';
 import { mediumFeedback } from '@/utils/haptics';
-import { isStrugglingWord } from '@/utils/wordClassification';
+import { getStrugglingWordsCount } from '@/utils/wordClassification';
 
 import SessionOptionsModal from '../../components/vocabulary/SessionOptionsModal';
 
@@ -148,7 +148,7 @@ export default function VocabularyScreen(): JSX.Element {
   const validStudyWords = studyWords?.filter(word => word != null && word.root_id != null) ?? [];
 
   // Calculate session availability for better UX
-  const strugglingWordsCount = validStudyWords.filter(word => isStrugglingWord(word)).length;
+  const strugglingWordsCount = getStrugglingWordsCount(studyWords ?? []);
   const totalPracticableWords = stats.dueWords + strugglingWordsCount;
   const hasAnyWordsToStudy = totalPracticableWords > 0;
 
