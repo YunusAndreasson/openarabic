@@ -42,6 +42,8 @@ export interface BaseButtonProps
   size?: ButtonSize;
   /** Text weight for the button text */
   textWeight?: ButtonTextWeight;
+  /** Whether to disable the press animation */
+  disablePressAnimation?: boolean;
 }
 
 /**

@@ -8,8 +8,9 @@ import { StyleSheet, View, RefreshControl, ActivityIndicator } from 'react-nativ
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ArticleCard } from '@/components/ArticleCard';
-import { AudioProgressBar } from '@/components/AudioProgressBar';
 import BottomControls from '@/components/BottomControls';
+import EmptyState from '@/components/EmptyState';
+import NowPlayingCard from '@/components/NowPlayingCard';
 import SectionTitle from '@/components/SectionTitle';
 import SleepTimer from '@/components/SleepTimer';
 import SortingControls from '@/components/SortingControls';
@@ -29,7 +30,7 @@ import { articlesService } from '@/services/articles';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { readingListService } from '@/services/readingList';
 import { handleError } from '@/utils/errorHandling';
-import { mediumFeedback } from '@/utils/haptics';
+import { mediumFeedback, lightFeedback } from '@/utils/haptics';
 
 import type { Article } from '../../types/articles.types';
 import type { Tables } from '../../types/database.types';
@@ -73,11 +74,6 @@ const itemStyles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 1,
   },
-  metaContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginLeft: LAYOUT.SPACING.XSMALL,
-  },
 });
 
 // Helper functions moved outside component to avoid recreation on every render
@@ -100,23 +96,16 @@ const ITEM_HEIGHT = 120; // Increased from 80 to account for AudioProgressBar
 const BookmarkListItem = memo(
   ({
     item,
-    progress,
-    duration,
     isActive,
     dueWordCount = 0,
     onPress,
-    audioState,
   }: {
     item: ReadingListItem;
-    progress: number;
-    duration: number;
     isActive: boolean;
     dueWordCount?: number;
     onPress: (id: number) => void;
-    audioState: string;
   }) => {
     const colors = useColors();
-    const isPlaying = isActive && audioState === AUDIO_STATES.PLAYING;
 
     // Memoize dynamic styles that depend on colors
     const dynamicStyles = useMemo(
@@ -164,45 +153,28 @@ const BookmarkListItem = memo(
         author={item.articles?.author?.name || 'Unknown Scholar'}
         leftMeta={leftMetaContent}
         meta={
-          <View style={itemStyles.metaContainer}>
-            {/* Days ago */}
-            <ThemedText
-              type="caption"
-              style={{
-                color: colors.textTertiary,
-                fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-                fontWeight: '500',
-              }}
-              skipDefaultColor
-            >
-              {getDaysAgo(item.added_at)}
-            </ThemedText>
-          </View>
+          <ThemedText
+            type="caption"
+            style={{
+              color: colors.textTertiary,
+              fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+              fontWeight: '500',
+            }}
+            skipDefaultColor
+          >
+            · {getDaysAgo(item.added_at)}
+          </ThemedText>
         }
         onPress={() => onPress(item.article_id)}
         active={isActive}
-      >
-        {isActive && duration > 0 && (
-          <AudioProgressBar
-            progress={progress}
-            duration={duration}
-            isPlaying={isPlaying}
-            showTimeRemaining={true}
-            compact={false}
-          />
-        )}
-      </ArticleCard>
+      />
     );
   },
   (prevProps, nextProps) => {
-    const shouldUpdate =
-      prevProps.isActive !== nextProps.isActive ||
-      prevProps.dueWordCount !== nextProps.dueWordCount ||
-      prevProps.audioState !== nextProps.audioState ||
-      (nextProps.isActive &&
-        (prevProps.progress !== nextProps.progress || prevProps.duration !== nextProps.duration));
-
-    return !shouldUpdate;
+    // Only re-render if active state or due word count changes
+    return (
+      prevProps.isActive === nextProps.isActive && prevProps.dueWordCount === nextProps.dueWordCount
+    );
   }
 );
 
@@ -240,8 +212,11 @@ export default function BookmarksScreen(): JSX.Element {
 
   // --- State Hooks ---
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
-  // playbackMode: 'none' | 'all' | 'shuffle'
-  const [playbackMode, setPlaybackMode] = useState<'none' | 'all' | 'shuffle'>('none');
+  // playbackMode: 'none' | 'all'
+  const [playbackMode, setPlaybackMode] = useState<'none' | 'all'>('none');
+
+  // Add state to track when we're starting playback (to show player immediately)
+  const [isStartingPlayback, setIsStartingPlayback] = useState(false);
 
   // Sorting state - default to the natural database sort (most recently added)
   const [currentSort, setCurrentSort] = useState<BookmarkSortOption>('recent');
@@ -250,6 +225,18 @@ export default function BookmarksScreen(): JSX.Element {
   // Sleep timer state
   const [showSleepTimer, setShowSleepTimer] = useState(false);
 
+  // Delay showing empty state to prevent flash
+  const [canShowEmpty, setCanShowEmpty] = useState(false);
+
+  // Wait 300ms before allowing empty state to show
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCanShowEmpty(true);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   // Get due words data for sorting
   const { dueWordRootIds, isLoading: isDueWordsLoading } = useArticlesByDueWords(user?.id, 0);
 
@@ -257,6 +244,13 @@ export default function BookmarksScreen(): JSX.Element {
   const enhancedAudioPlayer = useEnhancedAudioPlayer();
   const { progress, duration, metadata, audioState, currentTrackIndex, actions } =
     enhancedAudioPlayer;
+
+  // Clear starting playback state once audio actually starts
+  useEffect(() => {
+    if (isStartingPlayback && audioState !== AUDIO_STATES.IDLE) {
+      setIsStartingPlayback(false);
+    }
+  }, [isStartingPlayback, audioState]);
 
   // Sleep timer functionality
   const sleepTimer = useSleepTimer(() => {
@@ -482,7 +476,19 @@ export default function BookmarksScreen(): JSX.Element {
   );
   // --- End Derived State & Memos ---
 
-  // Memoize the loading state calculation to avoid unnecessary re-renders
+  // Since data is preloaded at app level, we can rely on it being available
+  // Only show loading screen for initial uncached load (fallback only)
+  const shouldShowInitialLoading = useMemo(() => {
+    // Only show loading if we truly don't have any data and are actively loading
+    return (
+      !isDataCached &&
+      isReadingListLoading &&
+      !isReadingListFetching &&
+      sortedReadingList.length === 0
+    );
+  }, [isDataCached, isReadingListLoading, isReadingListFetching, sortedReadingList.length]);
+
+  // Legacy loading state for backwards compatibility with existing loading hook
   const shouldBeLoading = useMemo(
     () => (!isDataCached && isReadingListLoading) || isEnhancedTracksLoading,
     [isDataCached, isReadingListLoading, isEnhancedTracksLoading]
@@ -533,42 +539,32 @@ export default function BookmarksScreen(): JSX.Element {
   const isCurrentlyPlaying = audioState !== AUDIO_STATES.IDLE;
 
   const handlePlayAll = useCallback(async () => {
+    // Prevent multiple presses during transition
+    if (isStartingPlayback) return;
+
     if (isCurrentlyPlaying && playbackMode === 'all') {
       await actions.stopPlayback();
       setPlaybackMode('none');
+      setIsStartingPlayback(false);
     } else if (sortedEnhancedTracks.length) {
       try {
-        await actions.startEnhancedPlayback(sortedEnhancedTracks, 0);
+        // Set starting state immediately for instant UI feedback
+        setIsStartingPlayback(true);
         setPlaybackMode('all');
+        await actions.startEnhancedPlayback(sortedEnhancedTracks, 0);
       } catch (error) {
+        // Reset state on error
+        setIsStartingPlayback(false);
+        setPlaybackMode('none');
         handleError(error as Error);
       }
     }
   }, [
+    isStartingPlayback,
     isCurrentlyPlaying,
     playbackMode,
     sortedEnhancedTracks,
     actions.startEnhancedPlayback,
-    actions.stopPlayback,
-  ]);
-
-  const handleShuffle = useCallback(async () => {
-    if (isCurrentlyPlaying && playbackMode === 'shuffle') {
-      await actions.stopPlayback();
-      setPlaybackMode('none');
-    } else if (sortedEnhancedTracks.length) {
-      try {
-        await actions.startEnhancedShufflePlayback(sortedEnhancedTracks);
-        setPlaybackMode('shuffle');
-      } catch (error) {
-        handleError(error as Error);
-      }
-    }
-  }, [
-    isCurrentlyPlaying,
-    playbackMode,
-    sortedEnhancedTracks,
-    actions.startEnhancedShufflePlayback,
     actions.stopPlayback,
   ]);
 
@@ -646,14 +642,39 @@ export default function BookmarksScreen(): JSX.Element {
     return countMap;
   }, [dedupedReadingList, dueWordRootIds, isDueWordsLoading, articleDetailsMap, countDueWords]);
 
+  // Get current article for now playing card
+  const currentArticle = useMemo(() => {
+    // If starting playback, use the first article from sorted list
+    if (isStartingPlayback && sortedReadingList.length > 0) {
+      return sortedReadingList[0]?.articles || null;
+    }
+
+    if (!metadata.articleId || !sortedReadingList.length) return null;
+    const currentItem = sortedReadingList.find(item => item.article_id === metadata.articleId);
+    return currentItem?.articles || null;
+  }, [isStartingPlayback, sortedReadingList, metadata.articleId]);
+
+  // Check if we have any texts to show controls for
+  const hasArticles = sortedReadingList.length > 0;
+
+  // Check if player should be visible (either starting or actually playing)
+  const shouldShowPlayer = useMemo(() => {
+    return (
+      (isStartingPlayback && !!currentArticle) ||
+      (audioState !== AUDIO_STATES.IDLE && !!currentArticle)
+    );
+  }, [isStartingPlayback, audioState, currentArticle]);
+
+  // Since data is preloaded, only show empty state when we definitively have no articles
+  // and we've waited long enough to prevent flashing
+  const shouldShowEmpty = !hasArticles && canShowEmpty;
+
   // Show loading screen only during initial uncached load
-  if (!isDataCached && isReadingListLoading && !isReadingListFetching) {
+  if (shouldShowInitialLoading) {
     return (
       <ThemedView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.tint} />
-        <ThemedText style={{ marginTop: LAYOUT.SPACING.MEDIUM }}>
-          Loading listening queue...
-        </ThemedText>
+        <ThemedText style={{ marginTop: LAYOUT.SPACING.MEDIUM }}>Loading saved texts...</ThemedText>
       </ThemedView>
     );
   }
@@ -680,37 +701,56 @@ export default function BookmarksScreen(): JSX.Element {
             return (
               <BookmarkListItem
                 item={item}
-                progress={progress}
-                duration={duration}
                 isActive={isActive}
                 dueWordCount={dueWordCount}
                 onPress={handleArticlePress}
-                audioState={audioState}
               />
             );
           }}
           estimatedItemSize={ITEM_HEIGHT}
           contentContainerStyle={{
             paddingTop: headerHeight,
-            paddingBottom: insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM, // Reduced since controls are closer
+            paddingBottom: hasArticles
+              ? insets.bottom +
+                LAYOUT.BOTTOM_BAR.HEIGHT +
+                LAYOUT.SPACING.MEDIUM +
+                (shouldShowPlayer ? 120 + LAYOUT.SPACING.MEDIUM : LAYOUT.BUTTON.HEIGHT.LARGE)
+              : insets.bottom + LAYOUT.SPACING.MEDIUM,
             paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
           }}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
-            <View>
-              <SectionTitle title="Sort" isFirstSection={true} />
-              <SortingControls
-                currentSort={currentSort}
-                sortDirection={sortDirection}
-                onSortChange={handleSortChange}
-                options={sortOptions}
-              />
+            hasArticles ? (
               <View>
-                <SectionTitle title="Saved Articles" />
+                <SectionTitle title="Sort" isFirstSection={true} />
+                <SortingControls
+                  currentSort={currentSort}
+                  sortDirection={sortDirection}
+                  onSortChange={handleSortChange}
+                  options={sortOptions}
+                />
+                <View>
+                  <SectionTitle title="Saved Texts" />
+                </View>
               </View>
-            </View>
+            ) : null
           }
-          ListEmptyComponent={null}
+          ListEmptyComponent={
+            shouldShowEmpty ? (
+              <EmptyState
+                title="No Saved Texts"
+                description="Build a queue of texts to listen to on-demand"
+                submessage="Tap the bookmark icon on any text. Return here to play them with hands-free controls."
+                icon="bookmarks-outline"
+                iconSize={72}
+                colors={colors}
+                containerStyle={{
+                  paddingTop: LAYOUT.SPACING.XLARGE,
+                  paddingBottom: LAYOUT.SPACING.LARGE,
+                }}
+              />
+            ) : null
+          }
           drawDistance={ITEM_HEIGHT * 5}
           overrideItemLayout={layout => {
             layout.size = ITEM_HEIGHT;
@@ -729,41 +769,79 @@ export default function BookmarksScreen(): JSX.Element {
         />
       </ThemedView>
 
-      <BottomControls
-        primaryLabel={isCurrentlyPlaying && playbackMode === 'all' ? 'Stop' : 'Play'}
-        onPrimaryPress={handlePlayAll}
-        primaryVariant="filled"
-        primaryDisabled={false}
-        primaryAccessibilityLabel={
-          isCurrentlyPlaying && playbackMode === 'all' ? 'Stop playback' : 'Play all saved articles'
-        }
-        secondaryLabel={isCurrentlyPlaying && playbackMode === 'shuffle' ? 'Stop' : 'Shuffle'}
-        onSecondaryPress={handleShuffle}
-        secondaryVariant="outlined"
-        secondaryDisabled={false}
-        secondaryAccessibilityLabel={
-          isCurrentlyPlaying && playbackMode === 'shuffle'
-            ? 'Stop shuffle playback'
-            : 'Play saved articles in random order'
-        }
-        showTimerButton={isCurrentlyPlaying}
+      {/* Only show bottom controls when there are texts to play but no active player */}
+      {hasArticles && !shouldShowPlayer && !isStartingPlayback && (
+        <BottomControls
+          primaryLabel={isCurrentlyPlaying && playbackMode === 'all' ? 'Stop' : 'Play All'}
+          onPrimaryPress={handlePlayAll}
+          primaryVariant="filled"
+          primaryDisabled={false}
+          primaryAccessibilityLabel={
+            isCurrentlyPlaying && playbackMode === 'all' ? 'Stop playback' : 'Play all saved texts'
+          }
+          showTimerButton={isCurrentlyPlaying}
+          onTimerPress={() => {
+            mediumFeedback();
+            setShowSleepTimer(true);
+          }}
+          isTimerActive={sleepTimer.state.isActive}
+          timerAccessibilityLabel="Open sleep timer"
+          primaryDisablePressAnimation={true}
+        />
+      )}
+
+      {/* Now Playing Card - shows when audio is playing with integrated controls */}
+      <NowPlayingCard
+        isVisible={shouldShowPlayer}
+        audioState={isStartingPlayback ? AUDIO_STATES.LOADING : audioState}
+        article={currentArticle}
+        progress={isStartingPlayback ? 0 : progress}
+        duration={isStartingPlayback ? 0 : duration}
+        isPlaying={!isStartingPlayback && audioState === AUDIO_STATES.PLAYING}
+        showTimerButton={true}
+        isTimerActive={sleepTimer.state.isActive}
+        onPress={() => {
+          if (currentArticle) {
+            router.push(`/article/${currentArticle.id}`);
+          }
+        }}
+        onPlayPause={() => {
+          if (isStartingPlayback) {
+            // If still starting, allow canceling
+            lightFeedback();
+            setIsStartingPlayback(false);
+            setPlaybackMode('none');
+            actions.stopPlayback();
+          } else if (audioState === AUDIO_STATES.PLAYING) {
+            lightFeedback();
+            actions.stopPlayback();
+            setPlaybackMode('none');
+          } else {
+            // If stopped, restart playback from current position
+            if (sortedEnhancedTracks.length && currentTrackIndex >= 0) {
+              actions.startEnhancedPlayback(sortedEnhancedTracks, currentTrackIndex);
+              setPlaybackMode('all');
+            }
+          }
+        }}
         onTimerPress={() => {
           mediumFeedback();
           setShowSleepTimer(true);
         }}
-        isTimerActive={sleepTimer.state.isActive}
         timerAccessibilityLabel="Open sleep timer"
       />
 
-      {/* Sleep Timer Modal */}
-      <SleepTimer
-        isVisible={showSleepTimer}
-        onClose={() => setShowSleepTimer(false)}
-        onTimerSet={handleSleepTimerSet}
-        onTimerCancel={handleSleepTimerCancel}
-        remainingTime={sleepTimer.state.remainingTime}
-        isActive={sleepTimer.state.isActive}
-      />
+      {/* Sleep Timer Modal - only show when there are texts and timer is active/visible */}
+      {hasArticles && (
+        <SleepTimer
+          isVisible={showSleepTimer}
+          onClose={() => setShowSleepTimer(false)}
+          onTimerSet={handleSleepTimerSet}
+          onTimerCancel={handleSleepTimerCancel}
+          remainingTime={sleepTimer.state.remainingTime}
+          isActive={sleepTimer.state.isActive}
+        />
+      )}
     </ThemedView>
   );
 }

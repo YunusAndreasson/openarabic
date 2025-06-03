@@ -16,6 +16,7 @@ export type BottomControlsProps = {
   primaryVariant?: 'filled' | 'outlined';
   primaryDisabled?: boolean;
   primaryAccessibilityLabel?: string;
+  primaryDisablePressAnimation?: boolean;
   secondaryLabel?: string;
   onSecondaryPress?: () => void;
   secondaryVariant?: 'filled' | 'outlined';
@@ -35,6 +36,7 @@ const BottomControls = memo<BottomControlsProps>(
     primaryVariant = 'filled',
     primaryDisabled = false,
     primaryAccessibilityLabel,
+    primaryDisablePressAnimation,
     secondaryLabel,
     onSecondaryPress,
     secondaryVariant = 'outlined',
@@ -147,7 +149,9 @@ const BottomControls = memo<BottomControlsProps>(
                 />
               </View>
             )}
-            <View style={styles.buttonContainer}>
+            <View
+              style={hasSecondaryButton ? styles.buttonContainer : styles.fullWidthButtonContainer}
+            >
               <ThemedButton
                 title={primaryLabel}
                 onPress={onPrimaryPress}
@@ -155,6 +159,7 @@ const BottomControls = memo<BottomControlsProps>(
                 style={styles.button}
                 disabled={primaryDisabled}
                 accessibilityLabel={primaryAccessibilityLabel || primaryLabel}
+                disablePressAnimation={primaryDisablePressAnimation}
               />
             </View>
           </View>
@@ -237,6 +242,9 @@ const styles = StyleSheet.create({
     marginLeft: LAYOUT.SPACING.XTINY,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     letterSpacing: 0.2,
+  },
+  fullWidthButtonContainer: {
+    width: '100%',
   },
 });
 

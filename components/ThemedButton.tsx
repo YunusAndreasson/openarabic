@@ -127,6 +127,7 @@ function ThemedButtonComponent({
   innerContainerStyle,
   size = 'medium',
   textWeight = 'bold',
+  disablePressAnimation = false,
   ...props
 }: ThemedButtonProps): JSX.Element {
   const colors = useColors();
@@ -155,12 +156,12 @@ function ThemedButtonComponent({
   return (
     <AnimatedTouchable
       // @ts-expect-error - Known type issue with Reanimated's animated style
-      style={[buttonStyle, animatedStyle]}
+      style={[buttonStyle, disablePressAnimation ? {} : animatedStyle]}
       disabled={disabled || loading}
       // Removed activeOpacity to allow custom animation to show
       onPress={handlePress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
+      onPressIn={disablePressAnimation ? undefined : handlePressIn}
+      onPressOut={disablePressAnimation ? undefined : handlePressOut}
       {...props}
     >
       <View style={[styles.innerContainer, innerContainerStyle]}>
