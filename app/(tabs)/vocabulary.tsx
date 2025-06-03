@@ -147,6 +147,29 @@ export default function VocabularyScreen(): JSX.Element {
   // Filter valid study words for components that still need them
   const validStudyWords = studyWords?.filter(word => word != null && word.root_id != null) ?? [];
 
+  // Calculate session availability for better UX
+  const strugglingWordsCount = validStudyWords.filter(word => isStrugglingWord(word)).length;
+  const totalPracticableWords = stats.dueWords + strugglingWordsCount;
+  const hasAnyWordsToStudy = totalPracticableWords > 0;
+
+  // Smart button labeling based on available content
+  const getButtonLabel = () => {
+    if (!hasAnyWordsToStudy) return 'No Words Available';
+    if (totalPracticableWords === 1) return 'Practice 1 Word';
+    if (totalPracticableWords <= 20) return `Practice ${totalPracticableWords} Words`;
+    return 'Start Session';
+  };
+
+  const getAccessibilityLabel = () => {
+    if (!hasAnyWordsToStudy) return 'No words available for practice';
+
+    const parts = [];
+    if (stats.dueWords > 0) parts.push(`${stats.dueWords} due words`);
+    if (strugglingWordsCount > 0) parts.push(`${strugglingWordsCount} challenging words`);
+
+    return `Start practice session with ${parts.join(' and ')} available`;
+  };
+
   // Main content
   return (
     <ThemedView
@@ -192,11 +215,11 @@ export default function VocabularyScreen(): JSX.Element {
         />
       </ScrollView>
       <BottomControls
-        primaryLabel="Start Session"
+        primaryLabel={getButtonLabel()}
         onPrimaryPress={() => setShowSessionOptions(true)}
-        primaryVariant="filled"
-        primaryDisabled={false}
-        primaryAccessibilityLabel="Start learning session - choose practice or listen mode"
+        primaryVariant={hasAnyWordsToStudy ? 'filled' : 'outlined'}
+        primaryDisabled={!hasAnyWordsToStudy}
+        primaryAccessibilityLabel={getAccessibilityLabel()}
       />
 
       {/* Session Options Modal */}
@@ -204,7 +227,7 @@ export default function VocabularyScreen(): JSX.Element {
         visible={showSessionOptions}
         onClose={() => setShowSessionOptions(false)}
         dueWordsCount={stats.dueWords}
-        strugglingWordsCount={validStudyWords.filter(word => isStrugglingWord(word)).length}
+        strugglingWordsCount={strugglingWordsCount}
         onStartPractice={(wordType: 'due' | 'struggling') => {
           if (wordType === 'due') {
             handleStartReview();

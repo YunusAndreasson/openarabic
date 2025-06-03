@@ -102,37 +102,28 @@ export default memo(function SessionOptionsModal({
   const sessionOptions: SessionOption[] = [
     {
       id: 'practice-due',
-      title: 'Practice Due Words',
-      subtitle: `Review ${dueWordsCount} words that need attention`,
-      icon: 'school',
+      title: `Practice ${dueWordsCount} Due Words`,
+      subtitle: `Stay on track with words ready for review`,
+      icon: 'alarm-outline',
       iconColor: colors.warning,
       onPress: () => handleOptionPress(() => onStartPractice('due')),
       disabled: dueWordsCount === 0,
     },
     {
       id: 'practice-struggling',
-      title: 'Practice Hard Words',
-      subtitle: `Focus on ${strugglingWordsCount} challenging words`,
-      icon: 'fitness',
+      title: `Practice ${strugglingWordsCount} Hard Words`,
+      subtitle: `Focus on words you find challenging`,
+      icon: 'alert-circle',
       iconColor: colors.error,
       onPress: () => handleOptionPress(() => onStartPractice('struggling')),
       disabled: strugglingWordsCount === 0,
     },
     {
-      id: 'listen-due',
-      title: 'Listen to Due Words',
-      subtitle: `Audio practice with ${dueWordsCount} due words`,
-      icon: 'headset',
-      iconColor: colors.info,
-      onPress: () => handleOptionPress(() => onStartListen('due')),
-      disabled: dueWordsCount === 0,
-    },
-    {
       id: 'listen-struggling',
-      title: 'Listen to Hard Words',
-      subtitle: `Audio practice with ${strugglingWordsCount} hard words`,
+      title: `Listen to ${strugglingWordsCount} Hard Words`,
+      subtitle: `Hear pronunciation on the go`,
       icon: 'volume-high',
-      iconColor: colors.success,
+      iconColor: colors.error,
       onPress: () => handleOptionPress(() => onStartListen('struggling')),
       disabled: strugglingWordsCount === 0,
     },
@@ -169,10 +160,10 @@ export default memo(function SessionOptionsModal({
               <View style={[styles.header, { borderBottomColor: colors.borderOverlay }]}>
                 <View style={styles.headerContent}>
                   <ThemedText type="heading2" weight="bold" style={styles.title}>
-                    Start Learning Session
+                    Choose Practice Mode
                   </ThemedText>
                   <ThemedText type="body" variant="secondary" style={styles.subtitle}>
-                    Choose your session type and focus area
+                    Select how you want to study your vocabulary
                   </ThemedText>
                 </View>
                 <TouchableOpacity
@@ -247,14 +238,6 @@ export default memo(function SessionOptionsModal({
                     </BaseCard>
                   </TouchableOpacity>
                 ))}
-              </View>
-
-              {/* Help Text */}
-              <View style={[styles.helpContainer, { borderTopColor: colors.borderOverlay }]}>
-                <ThemedText type="caption" variant="subtle" style={styles.helpText}>
-                  💡 Practice sessions test your recall, while listen sessions reinforce
-                  pronunciation and comprehension
-                </ThemedText>
               </View>
             </View>
           </Animated.View>
@@ -356,14 +339,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 24,
     height: 24,
-  },
-  helpContainer: {
-    borderTopWidth: 1,
-    padding: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-  },
-  helpText: {
-    textAlign: 'center',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.4,
   },
 });
