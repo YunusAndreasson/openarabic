@@ -4,7 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import Animated from 'react-native-reanimated';
 import { useQueryClient } from '@tanstack/react-query';
-import { useHeaderHeight } from '@react-navigation/elements';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
@@ -41,7 +40,6 @@ export default function ListenScreen(): JSX.Element {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const colors = useColors();
-  const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
 
   // State
@@ -54,7 +52,6 @@ export default function ListenScreen(): JSX.Element {
 
   // Refs
   const maxProgressRef = useRef(0);
-  const lastProgressUpdateRef = useRef(Date.now());
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selectedTracksRef = useRef<EnhancedAudioTrack[]>([]);
   const lastAudioStateRef = useRef('');
@@ -94,9 +91,6 @@ export default function ListenScreen(): JSX.Element {
     // Update current word if needed (only when moving to a different word)
     if (wordIndex !== currentWordIndex && wordIndex >= 0) {
       fadeOut();
-
-      // Update timestamp for progress tracking
-      lastProgressUpdateRef.current = Date.now();
 
       setTimeout(() => {
         setCurrentWordIndex(wordIndex);
@@ -179,7 +173,6 @@ export default function ListenScreen(): JSX.Element {
           setWordList(uniqueWords);
 
           // Reset progress tracking
-          lastProgressUpdateRef.current = Date.now();
           maxProgressRef.current = 0;
           setCurrentWordIndex(0);
           lastAudioStateRef.current = 'idle';
@@ -230,7 +223,7 @@ export default function ListenScreen(): JSX.Element {
         handleError(error instanceof Error ? error : new Error('Failed to restart audio playback'));
       });
     }, 500);
-  }, [actions, setIsComplete, setCurrentWordIndex, setProgressAnimationKey]);
+  }, [actions]);
 
   // Handle completion when last track ends
   useEffect(() => {
@@ -247,13 +240,7 @@ export default function ListenScreen(): JSX.Element {
       // Reset the flag
       playbackCompletedRef.current = false;
     }
-  }, [
-    audioState,
-    playbackCompletedRef.current,
-    repeatEnabled,
-    handleRestartPlayback,
-    wordList.length,
-  ]);
+  }, [audioState, repeatEnabled, handleRestartPlayback, wordList.length]);
 
   // Close and cleanup
   const handleClose = useCallback(() => {
@@ -346,12 +333,8 @@ export default function ListenScreen(): JSX.Element {
   }
 
   return (
-    <ThemedView
-      style={styles.container}
-      includeBottomInset={false}
-      safeAreaEdges={['left', 'right']}
-    >
-      <View style={[styles.contentContainer, { paddingTop: headerHeight }]}>
+    <ThemedView style={styles.container} useSafeArea={true}>
+      <View style={styles.contentContainer}>
         <ListenHeader
           progress={progress}
           maxProgress={maxProgress}
@@ -398,6 +381,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'space-between',
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: 0,
     width: '100%',
   },
   footer: {
