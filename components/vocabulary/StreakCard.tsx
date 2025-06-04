@@ -30,23 +30,23 @@ export const StreakCard = memo(
   }: StreakCardProps) => {
     const colors = useColors();
 
-    // Day indicator size - smaller for less visual weight
-    const pointRadius = 2;
-    const pointStroke = 1.5;
-    const dotRadius = pointRadius + pointStroke; // Total visible radius with stroke
+    // Enhanced day indicator size for better visibility
+    const pointRadius = 3; // Increased from 2 for better visual impact
+    const pointStroke = 2; // Increased from 1.5 for better definition
+    const dotRadius = pointRadius + pointStroke;
 
-    // Canvas dimensions with proper spacing to avoid cut-off dots
-    const actualMargin = dotRadius + 2; // Add 2px extra buffer for safety
+    // Enhanced canvas dimensions with better spacing
+    const actualMargin = dotRadius + 4; // Increased buffer for better spacing
     const canvasWidth =
       Dimensions.get('window').width -
       LAYOUT.SCREEN_EDGE_PADDING * 2 -
       LAYOUT.CARD.PADDING.MEDIUM * 2;
-    const timelineHeight = 24; // Reduced height for less prominence
+    const timelineHeight = 32; // Increased from 24 for better breathing room
 
     // Calculate usable width for dot placement
     const usableWidth = canvasWidth - 2 * actualMargin;
 
-    // Use 7 days of activity data for cleaner visualization
+    // Use 7 days of activity data for visualization
     const extendedActivity = [...lastSevenDaysActivity];
     const defaultDayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -65,37 +65,43 @@ export const StreakCard = memo(
     // Calculate spacing to stretch across the usable width
     const dotSpacing = usableWidth / (dayCount - 1);
 
-    // Colors
+    // Enhanced colors with better contrast
     const activeColor = colors.success;
-    const inactiveColor = colors.warning;
+    const inactiveColor = colors.buttonOverlay; // Softer color for inactive days
     const lineBaseColor = colors.borderOverlay;
+    const connectionColor = colors.success; // Use success color for connections
 
-    // Calculate day positions for path creation with proper margin
+    // Calculate day positions with proper margin
     const dayPositions = normalizedActivity.map((day, index) => ({
       x: actualMargin + index * dotSpacing,
       y: timelineHeight / 2,
       active: day.active,
+      dayName: day.dayName,
     }));
 
-    // Generate subtitle based on streak
+    // Enhanced subtitle with more encouragement
     const subtitle =
       currentStreak === 0
         ? 'Study today to start your streak'
         : currentStreak >= 7
           ? 'Amazing consistency! Keep it up'
-          : 'Great progress! Keep going';
+          : currentStreak >= 3
+            ? 'Great momentum! Keep going'
+            : 'Building consistency daily';
 
     return (
       <BaseCard style={styles.card} includePressAnimation={false} shadowSize="small">
-        <View style={[styles.container, { padding: LAYOUT.CARD.PADDING.MEDIUM }]}>
+        <View style={[styles.container, { padding: LAYOUT.CARD.PADDING.LARGE }]}>
           {!hideTitle && (
-            <CardHeader title="Streak" subtitle={subtitle} onInfoPress={onInfoPress} />
+            <View style={styles.headerSection}>
+              <CardHeader title="Streak" subtitle={subtitle} onInfoPress={onInfoPress} />
+            </View>
           )}
 
           <View style={styles.content}>
-            {/* Timeline visualization using React Native Views instead of Skia Canvas */}
+            {/* Enhanced Timeline visualization */}
             <View style={[styles.timelineContainer, { height: timelineHeight }]}>
-              {/* Base line */}
+              {/* Base line with improved styling */}
               <View
                 style={[
                   styles.baseLine,
@@ -104,11 +110,12 @@ export const StreakCard = memo(
                     top: timelineHeight / 2 - 0.5,
                     width: canvasWidth - 2 * actualMargin,
                     left: actualMargin,
+                    opacity: 0.6, // Subtle base line
                   },
                 ]}
               />
 
-              {/* Day indicators */}
+              {/* Enhanced day indicators */}
               {dayPositions.map((day, index) => (
                 <View
                   key={`day-${index}`}
@@ -121,6 +128,12 @@ export const StreakCard = memo(
                       height: (pointRadius + pointStroke) * 2,
                       borderRadius: pointRadius + pointStroke,
                       backgroundColor: colors.card,
+                      // Enhanced shadow for better depth
+                      shadowColor: colors.shadow,
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: day.active ? 0.15 : 0.05,
+                      shadowRadius: 2,
+                      elevation: day.active ? 2 : 1,
                     },
                   ]}
                 >
@@ -133,13 +146,15 @@ export const StreakCard = memo(
                         borderRadius: pointRadius,
                         backgroundColor: day.active ? activeColor : inactiveColor,
                         margin: pointStroke,
+                        // Enhanced visual feedback for active days
+                        opacity: day.active ? 1 : 0.4,
                       },
                     ]}
                   />
                 </View>
               ))}
 
-              {/* Connection lines between active days */}
+              {/* Enhanced connection lines between active days */}
               {dayPositions.map((day, index) => {
                 if (
                   index < dayPositions.length - 1 &&
@@ -156,9 +171,11 @@ export const StreakCard = memo(
                           styles.connectionLine,
                           {
                             left: day.x,
-                            top: day.y - 0.75,
+                            top: day.y - 1, // Better centered line
                             width: lineWidth,
-                            backgroundColor: activeColor,
+                            backgroundColor: connectionColor,
+                            height: 2, // Thicker connection line
+                            opacity: 0.8,
                           },
                         ]}
                       />
@@ -169,21 +186,81 @@ export const StreakCard = memo(
               })}
             </View>
 
-            {/* Streak information - both current and longest */}
+            {/* Day labels for better context */}
+            <View style={styles.dayLabels}>
+              {dayPositions.map((day, index) => (
+                <View
+                  key={`label-${index}`}
+                  style={[
+                    styles.dayLabel,
+                    {
+                      left: day.x - 12, // Center the label under the dot
+                      width: 24,
+                    },
+                  ]}
+                >
+                  <ThemedText
+                    type="caption"
+                    variant="secondary"
+                    style={[
+                      styles.dayLabelText,
+                      {
+                        color: day.active ? colors.text : colors.secondaryText,
+                        opacity: day.active ? 0.8 : 0.5,
+                        fontWeight: day.active ? '600' : '400',
+                      },
+                    ]}
+                  >
+                    {day.dayName.slice(0, 1)} {/* Show just first letter */}
+                  </ThemedText>
+                </View>
+              ))}
+            </View>
+
+            {/* Enhanced streak information with better visual hierarchy */}
             <View style={styles.streakInfo}>
               <View style={styles.streakDetail}>
-                <ThemedText type="body" weight="bold" style={styles.streakValue}>
-                  {longestStreak} {longestStreak === 1 ? 'day' : 'days'}
+                <ThemedText
+                  type="heading2"
+                  weight="bold"
+                  style={[
+                    styles.streakValue,
+                    {
+                      color: longestStreak > 0 ? colors.success : colors.secondaryText,
+                      letterSpacing: -0.2,
+                    },
+                  ]}
+                >
+                  {longestStreak}
                 </ThemedText>
-                <ThemedText type="caption" variant="secondary" style={styles.streakLabel}>
-                  Longest streak
+                <ThemedText
+                  type="caption"
+                  variant="secondary"
+                  style={[styles.streakLabel, { opacity: 0.8 }]}
+                >
+                  Best streak
                 </ThemedText>
               </View>
+
               <View style={styles.streakDetailRight}>
-                <ThemedText type="body" weight="bold" style={styles.streakValue}>
-                  {currentStreak} {currentStreak === 1 ? 'day' : 'days'}
+                <ThemedText
+                  type="heading2"
+                  weight="bold"
+                  style={[
+                    styles.streakValue,
+                    {
+                      color: currentStreak > 0 ? colors.tint : colors.secondaryText,
+                      letterSpacing: -0.2,
+                    },
+                  ]}
+                >
+                  {currentStreak}
                 </ThemedText>
-                <ThemedText type="caption" variant="secondary" style={styles.streakLabel}>
+                <ThemedText
+                  type="caption"
+                  variant="secondary"
+                  style={[styles.streakLabel, { opacity: 0.8 }]}
+                >
                   Current streak
                 </ThemedText>
               </View>
@@ -208,9 +285,13 @@ const styles = StyleSheet.create({
   content: {
     width: '100%',
   },
+  headerSection: {
+    marginBottom: LAYOUT.SPACING.MEDIUM, // Better spacing after header
+  },
   timelineContainer: {
     position: 'relative',
     width: '100%',
+    marginBottom: LAYOUT.SPACING.SMALL, // Space before day labels
   },
   baseLine: {
     position: 'absolute',
@@ -228,24 +309,48 @@ const styles = StyleSheet.create({
   },
   connectionLine: {
     position: 'absolute',
-    height: 1,
+  },
+  dayLabels: {
+    position: 'relative',
+    height: 20, // Fixed height for day labels
+    marginBottom: LAYOUT.SPACING.LARGE, // Better spacing before streak info
+  },
+  dayLabel: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayLabelText: {
+    fontSize: 10,
+    textAlign: 'center',
+    lineHeight: 14,
+    includeFontPadding: false,
   },
   streakInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: LAYOUT.SPACING.SMALL, // Reduced spacing for tighter grouping
+    alignItems: 'center',
+    paddingTop: LAYOUT.SPACING.MEDIUM, // Better visual separation
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.06)', // Subtle divider
   },
   streakDetail: {
     alignItems: 'flex-start',
+    flex: 1,
   },
   streakDetailRight: {
     alignItems: 'flex-end',
+    flex: 1,
   },
   streakLabel: {
-    // Using caption type, no custom font size needed
     marginTop: LAYOUT.SPACING.TINY,
+    fontSize: 11,
+    lineHeight: 14,
+    includeFontPadding: false,
   },
   streakValue: {
-    // Using body type, no custom line height needed
+    fontSize: 24,
+    lineHeight: 28,
+    includeFontPadding: false,
   },
 });

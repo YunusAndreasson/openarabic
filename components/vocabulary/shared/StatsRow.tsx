@@ -38,7 +38,11 @@ const StatItem = memo(({ stat }: { stat: StatItemProps }) => {
         <ThemedText
           type="heading2"
           weight="bold"
-          style={[styles.progressValue, stat.color && { color: stat.color }]}
+          style={[
+            styles.progressValue,
+            stat.color && { color: stat.color },
+            { letterSpacing: -0.2 },
+          ]}
         >
           {stat.value}
         </ThemedText>
@@ -47,11 +51,15 @@ const StatItem = memo(({ stat }: { stat: StatItemProps }) => {
             name="chevron-forward"
             size={16}
             color={colors.secondaryText}
-            style={styles.chevronIcon}
+            style={[styles.chevronIcon, { opacity: 0.8 }]}
           />
         )}
       </View>
-      <ThemedText type="caption" variant="secondary" style={styles.progressLabel}>
+      <ThemedText
+        type="caption"
+        variant="secondary"
+        style={[styles.progressLabel, { opacity: 0.85 }]}
+      >
         {stat.label}
       </ThemedText>
     </View>
@@ -61,8 +69,14 @@ const StatItem = memo(({ stat }: { stat: StatItemProps }) => {
     return (
       <TouchableOpacity
         onPress={handlePress}
-        style={styles.tappableStat}
-        activeOpacity={0.7}
+        style={[
+          styles.tappableStat,
+          {
+            backgroundColor: colors.buttonOverlay + '08',
+            borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+          },
+        ]}
+        activeOpacity={0.65}
         accessibilityRole="button"
         accessibilityLabel={`${stat.value} ${stat.label}`}
         accessibilityHint="Tap to view related words"
@@ -81,6 +95,7 @@ export const StatsRow = memo(({ leftStat, rightStat }: StatsRowProps) => {
   return (
     <View style={styles.progressStatsRow}>
       <StatItem stat={leftStat} />
+      <View style={styles.statsSeparator} />
       <StatItem stat={rightStat} />
     </View>
   );
@@ -94,9 +109,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.XSMALL,
   },
   progressStat: {
     alignItems: 'flex-start',
+    flex: 1,
   },
   statValueRow: {
     flexDirection: 'row',
@@ -104,18 +121,28 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.XSMALL,
   },
   tappableStat: {
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-    padding: LAYOUT.SPACING.XSMALL,
-    margin: -LAYOUT.SPACING.XSMALL,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    padding: LAYOUT.SPACING.SMALL,
+    margin: -LAYOUT.SPACING.SMALL,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   progressValue: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.1,
+    includeFontPadding: false,
   },
   chevronIcon: {
-    marginLeft: LAYOUT.SPACING.XSMALL,
-    marginTop: 2,
+    marginLeft: LAYOUT.SPACING.SMALL,
+    marginTop: 1,
   },
   progressLabel: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.4,
+    includeFontPadding: false,
+  },
+  statsSeparator: {
+    width: 1,
+    height: 20,
+    backgroundColor: 'transparent',
+    marginHorizontal: LAYOUT.SPACING.MEDIUM,
   },
 });

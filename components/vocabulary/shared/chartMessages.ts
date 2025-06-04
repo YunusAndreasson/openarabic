@@ -31,10 +31,20 @@ export const CHART_LABELS = {
   TREND: 'trend',
 } as const;
 
-// Standardized stat value formatters
+// Standardized stat value formatters with enhanced polish
 export const formatStatValue = {
-  percentage: (value: number): string => `${Math.round(value)}%`,
-  count: (value: number): string => value.toString(),
+  percentage: (value: number): string => {
+    // Enhanced formatting with proper spacing and consistency
+    const rounded = Math.round(value);
+    return `${rounded}%`;
+  },
+  count: (value: number): string => {
+    // Better number formatting for large counts
+    if (value >= 1000) {
+      return `${(value / 1000).toFixed(1)}k`;
+    }
+    return value.toString();
+  },
   days: (value: number): string => `${value}d`,
   decimal: (value: number, places: number = 1): string => value.toFixed(places),
 } as const;

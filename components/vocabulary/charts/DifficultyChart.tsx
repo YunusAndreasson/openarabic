@@ -360,10 +360,24 @@ export const DifficultyChart = memo(
           <View style={styles.labelsContainer}>
             {difficultyData.buckets.map((bucket, index) => (
               <View key={`label-${index}`} style={styles.labelItem}>
-                <ThemedText style={[styles.labelText, { color: colors.secondaryText }]}>
+                <ThemedText
+                  style={[
+                    styles.labelText,
+                    { color: colors.secondaryText },
+                    // Enhanced typography
+                    { letterSpacing: 0.2, fontWeight: '600' },
+                  ]}
+                >
                   {bucket.label}
                 </ThemedText>
-                <ThemedText style={[styles.labelCount, { color: colors.text }]}>
+                <ThemedText
+                  style={[
+                    styles.labelCount,
+                    { color: colors.text },
+                    // Better visual hierarchy
+                    { letterSpacing: -0.1, fontWeight: '700' },
+                  ]}
+                >
                   {bucket.count > 0 ? `${Math.round(bucket.percentage)}%` : '0%'}
                 </ThemedText>
               </View>
@@ -373,7 +387,14 @@ export const DifficultyChart = memo(
           {/* Interaction Hint */}
           {onDifficultyPress && difficultyData.buckets.some(b => b.count > 0) && (
             <View style={styles.hintSection}>
-              <ThemedText style={[styles.subtleHintText, { color: colors.secondaryText }]}>
+              <ThemedText
+                style={[
+                  styles.subtleHintText,
+                  { color: colors.secondaryText },
+                  // Enhanced subtle styling
+                  { letterSpacing: 0.1, fontWeight: '500' },
+                ]}
+              >
                 Tap bars to explore words
               </ThemedText>
             </View>
@@ -424,20 +445,31 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
+    // Enhanced readability
+    lineHeight: 16,
+    includeFontPadding: false,
   },
   labelCount: {
     fontSize: 14,
     fontWeight: '700',
     textAlign: 'center',
     marginTop: 2,
+    // Enhanced readability
+    lineHeight: 18,
+    includeFontPadding: false,
   },
   hintSection: {
     alignItems: 'center',
     marginTop: 12,
+    // Better visual separation
+    paddingTop: 8,
   },
   subtleHintText: {
     fontSize: 11,
     fontStyle: 'italic',
     opacity: 0.7,
+    // Enhanced readability
+    lineHeight: 14,
+    includeFontPadding: false,
   },
 });

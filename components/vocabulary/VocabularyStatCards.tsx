@@ -196,9 +196,9 @@ export const VocabularyStatCards = memo(
     const handleProgressInfo = useCallback(() => handleInfoPress('progress'), [handleInfoPress]);
 
     return (
-      <View>
+      <View style={styles.container}>
         {/* Start with Motivation - Daily Habit */}
-        <View>
+        <View style={styles.section}>
           <SectionTitle title="Your Streak" onInfoPress={handleStreakInfo} isFirstSection={true} />
           <StreakCard
             currentStreak={currentStreak}
@@ -210,7 +210,7 @@ export const VocabularyStatCards = memo(
         </View>
 
         {/* Progress Overview + Smart Guidance */}
-        <View>
+        <View style={styles.section}>
           <SectionTitle title="Learning Progress" onInfoPress={handleProgressInfo} />
           <View style={styles.statsGrid}>
             {statCards.map(card => (
@@ -242,62 +242,64 @@ export const VocabularyStatCards = memo(
         </View>
 
         {/* Detailed Analytics */}
-        <View>
-          <SectionTitle
-            title="Memory Strength"
-            subtitle="Track how well you remember each word"
-            onInfoPress={handleMasteryInfo}
-          />
-          <MasteryChart
-            studyWords={validatedInput.studyWords}
-            onInfoPress={handleMasteryInfo}
-            onStatPress={onStatPress}
-            hideTitle={true}
-          />
-        </View>
+        <View style={styles.analyticsSection}>
+          <View style={styles.chartContainer}>
+            <SectionTitle
+              title="Memory Strength"
+              subtitle="Track how well you remember each word"
+              onInfoPress={handleMasteryInfo}
+            />
+            <MasteryChart
+              studyWords={validatedInput.studyWords}
+              onInfoPress={handleMasteryInfo}
+              onStatPress={onStatPress}
+              hideTitle={true}
+            />
+          </View>
 
-        <View>
-          <SectionTitle
-            title="Learning Speed"
-            subtitle="See how fast you master new vocabulary"
-            onInfoPress={handleEfficiencyInfo}
-          />
-          <EfficiencyChart
-            studyWords={validatedInput.studyWords}
-            onInfoPress={handleEfficiencyInfo}
-            learningWords={validatedData.learning}
-            onStatPress={onStatPress}
-            hideTitle={true}
-          />
-        </View>
+          <View style={styles.chartContainer}>
+            <SectionTitle
+              title="Learning Speed"
+              subtitle="See how fast you master new vocabulary"
+              onInfoPress={handleEfficiencyInfo}
+            />
+            <EfficiencyChart
+              studyWords={validatedInput.studyWords}
+              onInfoPress={handleEfficiencyInfo}
+              learningWords={validatedData.learning}
+              onStatPress={onStatPress}
+              hideTitle={true}
+            />
+          </View>
 
-        <View>
-          <SectionTitle
-            title="Memory Retention"
-            subtitle="Monitor which words you're forgetting"
-            onInfoPress={handleRetrievabilityInfo}
-          />
-          <RetrievabilityChart
-            studyWords={validatedInput.studyWords}
-            onInfoPress={handleRetrievabilityInfo}
-            onStatPress={onStatPress}
-            hideTitle={true}
-          />
-        </View>
+          <View style={styles.chartContainer}>
+            <SectionTitle
+              title="Memory Retention"
+              subtitle="Monitor which words you're forgetting"
+              onInfoPress={handleRetrievabilityInfo}
+            />
+            <RetrievabilityChart
+              studyWords={validatedInput.studyWords}
+              onInfoPress={handleRetrievabilityInfo}
+              onStatPress={onStatPress}
+              hideTitle={true}
+            />
+          </View>
 
-        <View style={styles.lastSection}>
-          <SectionTitle
-            title="Challenge Level"
-            subtitle="Identify your most difficult words"
-            onInfoPress={handleDifficultyInfo}
-          />
-          <DifficultyChart
-            studyWords={validatedInput.studyWords}
-            onInfoPress={handleDifficultyInfo}
-            onDifficultyPress={onStatPress}
-            onStatPress={onStatPress}
-            hideTitle={true}
-          />
+          <View style={[styles.chartContainer, styles.lastChart]}>
+            <SectionTitle
+              title="Challenge Level"
+              subtitle="Identify your most difficult words"
+              onInfoPress={handleDifficultyInfo}
+            />
+            <DifficultyChart
+              studyWords={validatedInput.studyWords}
+              onInfoPress={handleDifficultyInfo}
+              onDifficultyPress={onStatPress}
+              onStatPress={onStatPress}
+              hideTitle={true}
+            />
+          </View>
         </View>
 
         {/* Info Modal */}
@@ -310,7 +312,10 @@ export const VocabularyStatCards = memo(
 VocabularyStatCards.displayName = 'VocabularyStatCards';
 
 const styles = StyleSheet.create({
-  lastSection: {
+  container: {
+    flex: 1,
+  },
+  section: {
     marginBottom: LAYOUT.SPACING.XXLARGE,
   },
   statsGrid: {
@@ -321,5 +326,14 @@ const styles = StyleSheet.create({
   },
   recommendationContainer: {
     marginTop: LAYOUT.SPACING.MEDIUM,
+  },
+  analyticsSection: {
+    marginBottom: LAYOUT.SPACING.XXLARGE,
+  },
+  chartContainer: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  lastChart: {
+    marginBottom: 0,
   },
 });

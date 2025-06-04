@@ -1,5 +1,5 @@
 import React, { memo, ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, ActivityIndicator } from 'react-native';
 
 import BaseCard from '../../BaseCard';
 import { ThemedText } from '../../ThemedText';
@@ -122,14 +122,20 @@ export const BaseChart = memo(
         <View style={styles.content}>
           {/* Header Section */}
           {!hideTitle && (
-            <View>
+            <View style={styles.headerSection}>
               <CardHeader title={title} subtitle={subtitle} onInfoPress={onInfoPress} />
             </View>
           )}
 
           {/* Stats Section */}
           {leftStat && rightStat && (
-            <View style={styles.statsSection}>
+            <View
+              style={[
+                styles.statsSection,
+                // Better visual separation when no header
+                !hideTitle ? {} : { marginTop: CHART_LAYOUT.ELEMENT_SPACING / 2 },
+              ]}
+            >
               <StatsRow leftStat={leftStat} rightStat={rightStat} />
             </View>
           )}
@@ -137,18 +143,33 @@ export const BaseChart = memo(
           {/* Loading State */}
           {isLoading && (
             <View style={[styles.loadingState, { height: contentHeight }]}>
-              <ThemedText style={[styles.emptyText, { color: colors.secondaryText }]}>
-                Loading...
+              <ActivityIndicator size="small" color={colors.tint} style={styles.loadingIndicator} />
+              <ThemedText style={[styles.loadingText, { color: colors.secondaryText }]}>
+                Loading chart...
               </ThemedText>
             </View>
           )}
 
           {/* Chart Content */}
-          {!isLoading && <View style={styles.chartSection}>{children}</View>}
+          {!isLoading && (
+            <View
+              style={[
+                styles.chartSection,
+                // Subtle background for better chart separation
+                {
+                  backgroundColor: colors.background + '40',
+                  borderRadius: 8,
+                  overflow: 'hidden',
+                },
+              ]}
+            >
+              {children}
+            </View>
+          )}
 
           {/* Footer Section */}
           {legendItems && timeRange && !isLoading && (
-            <View>
+            <View style={styles.footerSection}>
               <ChartFooter legendItems={legendItems} timeRange={timeRange} />
             </View>
           )}
@@ -164,23 +185,49 @@ const styles = StyleSheet.create({
   content: {
     padding: CHART_LAYOUT.CONTENT_PADDING,
   },
+  headerSection: {
+    marginBottom: CHART_LAYOUT.ELEMENT_SPACING * 0.75, // Tighter spacing
+  },
   statsSection: {
     marginBottom: CHART_LAYOUT.ELEMENT_SPACING,
   },
   chartSection: {
     position: 'relative',
+    // Enhanced visual separation
+    marginVertical: CHART_LAYOUT.ELEMENT_SPACING / 2,
+  },
+  footerSection: {
+    marginTop: CHART_LAYOUT.ELEMENT_SPACING / 2,
   },
   emptyState: {
     justifyContent: 'center',
     alignItems: 'center',
+    // Better visual hierarchy
+    paddingHorizontal: CHART_LAYOUT.ELEMENT_SPACING,
   },
   loadingState: {
     justifyContent: 'center',
     alignItems: 'center',
+    // Better visual hierarchy
+    paddingHorizontal: CHART_LAYOUT.ELEMENT_SPACING,
+  },
+  loadingIndicator: {
+    marginBottom: CHART_LAYOUT.ELEMENT_SPACING / 2,
   },
   emptyText: {
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
+    // Better typography
+    letterSpacing: 0.1,
+    opacity: 0.8,
+  },
+  loadingText: {
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 16,
+    // Better typography
+    letterSpacing: 0.1,
+    opacity: 0.7,
   },
 });
