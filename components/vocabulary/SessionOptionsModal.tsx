@@ -103,7 +103,7 @@ export default memo(function SessionOptionsModal({
       id: 'practice-due',
       title: `Practice ${dueWordsCount} Due Words`,
       subtitle: `Stay on track with words ready for review`,
-      icon: 'alarm-outline',
+      icon: 'checkmark-circle-outline',
       iconColor: colors.warning,
       onPress: () => handleOptionPress(() => onStartPractice('due')),
       disabled: dueWordsCount === 0,
@@ -112,7 +112,7 @@ export default memo(function SessionOptionsModal({
       id: 'practice-struggling',
       title: `Practice ${strugglingWordsCount} Hard Words`,
       subtitle: `Focus on words you find challenging`,
-      icon: 'alert-circle',
+      icon: 'trending-up-outline',
       iconColor: colors.error,
       onPress: () => handleOptionPress(() => onStartPractice('struggling')),
       disabled: strugglingWordsCount === 0,
@@ -121,12 +121,15 @@ export default memo(function SessionOptionsModal({
       id: 'listen-struggling',
       title: `Listen to ${strugglingWordsCount} Hard Words`,
       subtitle: `Hear pronunciation on the go`,
-      icon: 'volume-high',
-      iconColor: colors.error,
+      icon: 'headset-outline',
+      iconColor: colors.info,
       onPress: () => handleOptionPress(() => onStartListen('struggling')),
       disabled: strugglingWordsCount === 0,
     },
   ];
+
+  // Check if we have any available options
+  const hasAvailableOptions = sessionOptions.some(option => !option.disabled);
 
   if (!visible) {
     return null;
@@ -176,67 +179,87 @@ export default memo(function SessionOptionsModal({
 
               {/* Options Grid */}
               <View style={styles.optionsContainer}>
-                {sessionOptions.map(option => (
-                  <TouchableOpacity
-                    key={option.id}
-                    onPress={option.disabled ? undefined : option.onPress}
-                    disabled={option.disabled}
-                    style={[styles.optionButton, option.disabled && styles.disabledOption]}
-                    activeOpacity={0.7}
-                  >
-                    <BaseCard
-                      style={[styles.optionCard, option.disabled && { opacity: 0.5 }]}
-                      shadowSize="small"
-                      includePressAnimation={false}
-                    >
-                      <View style={styles.optionContent}>
-                        <View
+                {!hasAvailableOptions ? (
+                  <View style={styles.emptyState}>
+                    <ThemedText type="body" variant="secondary" style={styles.emptyText}>
+                      No words available for practice right now.
+                    </ThemedText>
+                    <ThemedText type="caption" variant="secondary" style={styles.emptySubtext}>
+                      Come back after studying some new words!
+                    </ThemedText>
+                  </View>
+                ) : (
+                  sessionOptions.map((option, index) => {
+                    const isPrimaryAction = index === 0 && !option.disabled; // Due words is primary when available
+
+                    return (
+                      <TouchableOpacity
+                        key={option.id}
+                        onPress={option.disabled ? undefined : option.onPress}
+                        disabled={option.disabled}
+                        style={[styles.optionButton, isPrimaryAction && styles.primaryOption]}
+                        activeOpacity={0.7}
+                      >
+                        <BaseCard
                           style={[
-                            styles.iconContainer,
-                            { backgroundColor: option.iconColor + '20' },
+                            styles.optionCard,
+                            isPrimaryAction && styles.primaryCard,
+                            option.disabled && styles.disabledCard,
                           ]}
+                          shadowSize={isPrimaryAction ? 'medium' : 'small'}
+                          includePressAnimation={false}
                         >
-                          <Ionicons
-                            name={option.icon}
-                            size={24}
-                            color={option.disabled ? colors.textTertiary : option.iconColor}
-                          />
-                        </View>
-                        <View style={styles.textContainer}>
-                          <ThemedText
-                            type="body"
-                            weight="bold"
-                            style={[
-                              styles.optionTitle,
-                              option.disabled && { color: colors.textTertiary },
-                            ]}
-                            numberOfLines={2}
-                          >
-                            {option.title}
-                          </ThemedText>
-                          <ThemedText
-                            type="caption"
-                            variant="secondary"
-                            style={[
-                              styles.optionSubtitle,
-                              option.disabled && { color: colors.textTertiary },
-                            ]}
-                            numberOfLines={2}
-                          >
-                            {option.subtitle}
-                          </ThemedText>
-                        </View>
-                        <View style={styles.chevronContainer}>
-                          <Ionicons
-                            name="chevron-forward"
-                            size={16}
-                            color={option.disabled ? colors.textTertiary : colors.secondaryText}
-                          />
-                        </View>
-                      </View>
-                    </BaseCard>
-                  </TouchableOpacity>
-                ))}
+                          <View style={styles.optionContent}>
+                            <View
+                              style={[
+                                styles.iconContainer,
+                                { backgroundColor: option.iconColor + '20' },
+                                isPrimaryAction && styles.primaryIconContainer,
+                              ]}
+                            >
+                              <Ionicons
+                                name={option.icon}
+                                size={isPrimaryAction ? 26 : 24}
+                                color={option.disabled ? colors.textTertiary : option.iconColor}
+                              />
+                            </View>
+                            <View style={styles.textContainer}>
+                              <ThemedText
+                                type={isPrimaryAction ? 'heading3' : 'body'}
+                                weight="bold"
+                                style={[
+                                  styles.optionTitle,
+                                  option.disabled && { color: colors.textTertiary },
+                                ]}
+                                numberOfLines={2}
+                              >
+                                {option.title}
+                              </ThemedText>
+                              <ThemedText
+                                type="caption"
+                                variant="secondary"
+                                style={[
+                                  styles.optionSubtitle,
+                                  option.disabled && { color: colors.textTertiary },
+                                ]}
+                                numberOfLines={2}
+                              >
+                                {option.subtitle}
+                              </ThemedText>
+                            </View>
+                            <View style={styles.chevronContainer}>
+                              <Ionicons
+                                name="chevron-forward"
+                                size={isPrimaryAction ? 18 : 16}
+                                color={option.disabled ? colors.textTertiary : colors.secondaryText}
+                              />
+                            </View>
+                          </View>
+                        </BaseCard>
+                      </TouchableOpacity>
+                    );
+                  })
+                )}
               </View>
             </View>
           </Animated.View>
@@ -302,11 +325,18 @@ const styles = StyleSheet.create({
   optionButton: {
     width: '100%',
   },
-  disabledOption: {
-    opacity: 0.6,
+  primaryOption: {
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   optionCard: {
     width: '100%',
+  },
+  primaryCard: {
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  disabledCard: {
+    opacity: 0.6,
   },
   optionContent: {
     flexDirection: 'row',
@@ -338,5 +368,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 24,
     height: 24,
+  },
+  primaryIconContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: LAYOUT.SPACING.XLARGE,
+  },
+  emptyText: {
+    marginBottom: LAYOUT.SPACING.TINY,
+  },
+  emptySubtext: {
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
   },
 });
