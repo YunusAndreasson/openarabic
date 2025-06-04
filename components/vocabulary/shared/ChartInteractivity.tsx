@@ -28,8 +28,7 @@
  */
 
 import React, { useState, useEffect, memo, useCallback } from 'react';
-import { StyleSheet, TouchableOpacity } from 'react-native';
-import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
@@ -55,7 +54,7 @@ export const ChartTooltip = memo<ChartTooltipProps>(({ tooltip, maxWidth }) => {
   if (!tooltip.visible) return null;
 
   return (
-    <Animated.View
+    <View
       style={[
         styles.tooltip,
         {
@@ -66,14 +65,12 @@ export const ChartTooltip = memo<ChartTooltipProps>(({ tooltip, maxWidth }) => {
           shadowColor: colors.shadow,
         },
       ]}
-      entering={FadeInUp.duration(200)}
-      exiting={FadeOutDown.duration(150)}
     >
       <ThemedText style={[styles.tooltipValue, { color: colors.text }]}>{tooltip.value}</ThemedText>
       <ThemedText style={[styles.tooltipLabel, { color: colors.secondaryText }]}>
         {tooltip.label}
       </ThemedText>
-    </Animated.View>
+    </View>
   );
 });
 

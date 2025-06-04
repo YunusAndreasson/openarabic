@@ -1,11 +1,9 @@
-import React, { memo, useMemo, useEffect, useCallback } from 'react';
+import React, { memo, useMemo, useCallback } from 'react';
 import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withTiming,
   withSpring,
-  FadeInUp,
   runOnJS,
 } from 'react-native-reanimated';
 import { Canvas, Group, Rect, LinearGradient, vec } from '@shopify/react-native-skia';
@@ -13,13 +11,10 @@ import { Canvas, Group, Rect, LinearGradient, vec } from '@shopify/react-native-
 import { useColors } from '@/hooks/useColors';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 import { lightFeedback } from '@/utils/haptics';
-import { LAYOUT } from '@/constants/layout';
 
-import BaseCard from '../../BaseCard';
-import { CardHeader } from '../shared/CardHeader';
+import { BaseChart, ChartCanvas, type DataPoint } from '../shared';
 import { ThemedText } from '../../ThemedText';
-import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, CHART_LAYOUT } from '../shared/constants';
-import { StatsRow } from '../shared/StatsRow';
+import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, FSRS_DIFFICULTY_THRESHOLDS } from '../shared/constants';
 import { useChartColors } from '../shared/chartColors';
 
 interface DifficultyChartProps {
@@ -50,9 +45,6 @@ export const DifficultyChart = memo(
   }: DifficultyChartProps) => {
     const colors = useColors();
     const chartColors = useChartColors();
-
-    // Simplified animation values for bars
-    const chartOpacity = useSharedValue(0);
 
     // Calculate difficulty distribution
     const difficultyData = useMemo(() => {
@@ -101,14 +93,14 @@ export const DifficultyChart = memo(
         const difficulty = word.fsrs_difficulty ?? 5.0;
         totalDifficulty += difficulty;
 
-        if (difficulty >= 8.0) {
+        if (difficulty >= FSRS_DIFFICULTY_THRESHOLDS.MEDIUM) {
           hardWords++;
         }
 
-        // Categorize into buckets
-        if (difficulty < 6.5) {
+        // Categorize into buckets using standardized thresholds
+        if (difficulty < FSRS_DIFFICULTY_THRESHOLDS.EASY) {
           buckets[0]!.count++;
-        } else if (difficulty < 8.0) {
+        } else if (difficulty < FSRS_DIFFICULTY_THRESHOLDS.MEDIUM) {
           buckets[1]!.count++;
         } else {
           buckets[2]!.count++;
@@ -169,28 +161,15 @@ export const DifficultyChart = memo(
         return `${Math.round(hardPercentage)}% struggling words - focus on review`;
       }
 
-      // For balanced distribution, provide more nuanced feedback
-      if (averageDifficulty < 6.0) {
+      // For balanced distribution, provide more nuanced feedback with standardized thresholds
+      if (averageDifficulty < FSRS_DIFFICULTY_THRESHOLDS.EASY) {
         return 'Mostly manageable - ready for harder material';
-      } else if (averageDifficulty > 8.5) {
+      } else if (averageDifficulty > FSRS_DIFFICULTY_THRESHOLDS.MEDIUM + 0.5) {
         return 'High difficulty - prioritize review sessions';
       } else {
         return 'Well-balanced difficulty spread';
       }
     }, [difficultyData.insights, difficultyData.hasData, studyWords.length]);
-
-    // Simplified animations
-    useEffect(() => {
-      if (difficultyData.hasData) {
-        // Fade in the chart
-        chartOpacity.value = withTiming(1, { duration: 400 });
-      }
-    }, [difficultyData.hasData]);
-
-    // Animated styles for chart
-    const chartAnimatedStyle = useAnimatedStyle(() => ({
-      opacity: chartOpacity.value,
-    }));
 
     // Handle bar press with haptic feedback - memoized for performance
     const handleBarPress = useCallback(
@@ -203,194 +182,201 @@ export const DifficultyChart = memo(
       [onDifficultyPress]
     );
 
-    if (!difficultyData.hasData) {
-      return (
-        <BaseCard shadowSize="small" includePressAnimation={false}>
-          <View style={styles.difficultyContent}>
-            {!hideTitle && (
-              <CardHeader title="Challenge Level" subtitle={subtitle} onInfoPress={onInfoPress} />
-            )}
-            <View style={styles.emptyState}>
-              <ThemedText style={[styles.emptyText, { color: colors.secondaryText }]}>
-                Study words to see which ones challenge you most
-              </ThemedText>
-            </View>
-          </View>
-        </BaseCard>
-      );
-    }
+    // Prepare data points for interactive tooltips
+    const dataPoints: DataPoint[] = useMemo(() => {
+      if (!difficultyData.hasData) return [];
+
+      return difficultyData.buckets.map((bucket, index) => {
+        const barWidth = (GRAPH_WIDTH / difficultyData.buckets.length) * 0.75;
+        const barSpacing = (GRAPH_WIDTH / difficultyData.buckets.length) * 0.25;
+        const x = index * (GRAPH_WIDTH / difficultyData.buckets.length) + barSpacing / 2;
+
+        // Calculate bar center for tooltip positioning
+        const centerX = x + barWidth / 2;
+        const maxBarHeight = GRAPH_HEIGHT_LARGE - 24;
+        const barHeight = Math.max((bucket.percentage / 100) * maxBarHeight, 2);
+        const barY = GRAPH_HEIGHT_LARGE - barHeight - 12;
+        const centerY = barY + barHeight / 2;
+
+        return {
+          x: centerX,
+          y: centerY,
+          value: `${Math.round(bucket.percentage)}%`,
+          label: `${bucket.label} (${bucket.count} words)`,
+          data: bucket,
+        };
+      });
+    }, [difficultyData]);
 
     return (
-      <BaseCard shadowSize="small" includePressAnimation={false}>
-        <Animated.View style={[styles.difficultyContent, chartAnimatedStyle]}>
-          {!hideTitle && (
-            <Animated.View entering={FadeInUp.delay(100).duration(400)}>
-              <CardHeader title="Challenge Level" subtitle={subtitle} onInfoPress={onInfoPress} />
-            </Animated.View>
-          )}
-
-          {/* Stats Row - Tightly coupled with chart for visual hierarchy */}
-          <Animated.View style={styles.statsSection} entering={FadeInUp.delay(200).duration(400)}>
-            <StatsRow
-              leftStat={{
-                value: difficultyData.insights.dominantLevel?.label ?? 'Balanced',
-                label: difficultyData.insights.dominantLevel
-                  ? `${Math.round(difficultyData.insights.dominantLevel.percentage)}% are this hard`
-                  : 'difficulty spread',
-                color: difficultyData.insights.dominantLevel?.color ?? colors.secondaryText,
-              }}
-              rightStat={{
-                value: studyWords.length,
-                label: 'total words',
-                color: colors.secondaryText,
-                onPress:
-                  onStatPress && studyWords.length > 0 ? () => onStatPress('total') : undefined,
-              }}
-            />
-          </Animated.View>
-
-          {/* Chart Container - Optimized for visual grouping */}
-          <Animated.View style={styles.chartSection} entering={FadeInUp.delay(300).duration(500)}>
-            {/* Main Chart Canvas */}
-            <View style={styles.graphContainer}>
-              <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_LARGE }}>
-                <Group>
-                  {difficultyData.buckets.map((bucket, index) => {
-                    const barWidth = (GRAPH_WIDTH / difficultyData.buckets.length) * 0.75; // Slightly wider bars
-                    const barSpacing = (GRAPH_WIDTH / difficultyData.buckets.length) * 0.25;
-                    const x =
-                      index * (GRAPH_WIDTH / difficultyData.buckets.length) + barSpacing / 2;
-
-                    // Optimized bar height calculation with better proportions
-                    const maxBarHeight = GRAPH_HEIGHT_LARGE - 24; // More breathing room
-                    const barHeight = Math.max((bucket.percentage / 100) * maxBarHeight, 2); // Minimum height for visibility
-                    const barY = GRAPH_HEIGHT_LARGE - barHeight - 12; // Better baseline
-
-                    return (
-                      <Group key={`difficulty-bar-${index}`}>
-                        {/* Enhanced main bar with better visual depth */}
-                        <Rect x={x} y={barY} width={barWidth} height={barHeight}>
-                          <LinearGradient
-                            start={vec(0, 0)}
-                            end={vec(0, barHeight)}
-                            colors={[
-                              chartColors.withOpacity(bucket.color, 0.95),
-                              bucket.color,
-                              chartColors.withOpacity(bucket.color, 0.8),
-                            ]}
-                          />
-                        </Rect>
-
-                        {/* Refined highlight for better depth perception */}
-                        <Rect
-                          x={x + 1}
-                          y={barY + 1}
-                          width={barWidth - 2}
-                          height={Math.min(barHeight / 3, 6)}
-                          color={chartColors.withOpacity(colors.background, 0.25)}
-                        />
-
-                        {/* Subtle interactive indicator for tappable bars */}
-                        {bucket.count > 0 && onDifficultyPress && (
-                          <Rect
-                            x={x}
-                            y={barY}
-                            width={barWidth}
-                            height={barHeight}
-                            style="stroke"
-                            strokeWidth={1.5}
-                            color={chartColors.withOpacity(bucket.color, 0.7)}
-                          />
-                        )}
-
-                        {/* Subtle shadow for depth */}
-                        <Rect
-                          x={x + 1}
-                          y={barY + barHeight - 1}
-                          width={barWidth - 2}
-                          height={1}
-                          color={chartColors.withOpacity(colors.shadow, 0.15)}
-                        />
-                      </Group>
-                    );
-                  })}
-                </Group>
-              </Canvas>
-
-              {/* Interactive overlays with optimized touch targets */}
-              {onDifficultyPress &&
-                difficultyData.buckets.map((bucket, index) => {
+      <BaseChart
+        title="Challenge Level"
+        subtitle={subtitle}
+        onInfoPress={onInfoPress}
+        hideTitle={hideTitle}
+        hasData={difficultyData.hasData}
+        leftStat={{
+          value: difficultyData.insights.dominantLevel?.label ?? 'Balanced',
+          label: difficultyData.insights.dominantLevel
+            ? `${Math.round(difficultyData.insights.dominantLevel.percentage)}% are this hard`
+            : 'difficulty spread',
+          color: difficultyData.insights.dominantLevel?.color ?? colors.secondaryText,
+        }}
+        rightStat={{
+          value: studyWords.length,
+          label: 'total words',
+          color: colors.secondaryText,
+          onPress: onStatPress && studyWords.length > 0 ? () => onStatPress('total') : undefined,
+        }}
+        contentHeight={GRAPH_HEIGHT_LARGE + 60} // Extra height for labels
+        emptyStateText="Study words to see which ones challenge you most"
+      >
+        <View>
+          {/* Chart Container */}
+          <View style={styles.chartContainer}>
+            <ChartCanvas
+              dataPoints={dataPoints}
+              enableTooltips={true}
+              width={GRAPH_WIDTH}
+              height={GRAPH_HEIGHT_LARGE}
+              accessibilityLabel="Difficulty distribution chart showing the percentage of words in each difficulty category"
+            >
+              {/* Main Chart Canvas */}
+              <Group>
+                {difficultyData.buckets.map((bucket, index) => {
                   const barWidth = (GRAPH_WIDTH / difficultyData.buckets.length) * 0.75;
                   const barSpacing = (GRAPH_WIDTH / difficultyData.buckets.length) * 0.25;
                   const x = index * (GRAPH_WIDTH / difficultyData.buckets.length) + barSpacing / 2;
 
-                  const pressAnimation = useSharedValue(1);
-
-                  const animatedStyle = useAnimatedStyle(() => ({
-                    transform: [{ scale: pressAnimation.value }],
-                  }));
+                  // Optimized bar height calculation with better proportions
+                  const maxBarHeight = GRAPH_HEIGHT_LARGE - 24;
+                  const barHeight = Math.max((bucket.percentage / 100) * maxBarHeight, 2);
+                  const barY = GRAPH_HEIGHT_LARGE - barHeight - 12;
 
                   return (
-                    <AnimatedTouchableOpacity
-                      key={`difficulty-touch-${index}`}
-                      style={[
-                        styles.barTouchArea,
-                        animatedStyle,
-                        {
-                          left: x - 4, // Expanded touch area
-                          width: barWidth + 8, // Larger touch target
-                          backgroundColor: bucket.count > 0 ? colors.buttonOverlay : 'transparent',
-                          borderRadius: 6,
-                        },
-                      ]}
-                      onPressIn={() => {
-                        if (bucket.count > 0) {
-                          pressAnimation.value = withSpring(0.96, { damping: 20, stiffness: 400 });
-                        }
-                      }}
-                      onPressOut={() => {
-                        pressAnimation.value = withSpring(1, { damping: 20, stiffness: 400 });
-                      }}
-                      onPress={() => handleBarPress(bucket.category, bucket.count)}
-                      activeOpacity={bucket.count > 0 ? 0.75 : 1}
-                      disabled={bucket.count === 0}
-                      accessibilityLabel={`${bucket.label} difficulty: ${Math.round(bucket.percentage)}% of words`}
-                      accessibilityRole="button"
-                      accessibilityHint={
-                        bucket.count > 0
-                          ? 'Tap to view words in this difficulty category'
-                          : 'No words in this category'
-                      }
-                    />
+                    <Group key={`difficulty-bar-${index}`}>
+                      {/* Enhanced main bar with better visual depth */}
+                      <Rect x={x} y={barY} width={barWidth} height={barHeight}>
+                        <LinearGradient
+                          start={vec(0, 0)}
+                          end={vec(0, barHeight)}
+                          colors={[
+                            chartColors.withOpacity(bucket.color, 0.95),
+                            bucket.color,
+                            chartColors.withOpacity(bucket.color, 0.8),
+                          ]}
+                        />
+                      </Rect>
+
+                      {/* Refined highlight for better depth perception */}
+                      <Rect
+                        x={x + 1}
+                        y={barY + 1}
+                        width={barWidth - 2}
+                        height={Math.min(barHeight / 3, 6)}
+                        color={chartColors.withOpacity(colors.background, 0.25)}
+                      />
+
+                      {/* Subtle interactive indicator for tappable bars */}
+                      {bucket.count > 0 && onDifficultyPress && (
+                        <Rect
+                          x={x}
+                          y={barY}
+                          width={barWidth}
+                          height={barHeight}
+                          style="stroke"
+                          strokeWidth={1.5}
+                          color={chartColors.withOpacity(bucket.color, 0.7)}
+                        />
+                      )}
+
+                      {/* Subtle shadow for depth */}
+                      <Rect
+                        x={x + 1}
+                        y={barY + barHeight - 1}
+                        width={barWidth - 2}
+                        height={1}
+                        color={chartColors.withOpacity(colors.shadow, 0.15)}
+                      />
+                    </Group>
                   );
                 })}
-            </View>
+              </Group>
+            </ChartCanvas>
 
-            {/* Labels Section - Grouped with chart for proximity */}
-            <View style={styles.labelsContainer}>
-              {difficultyData.buckets.map((bucket, index) => (
-                <View key={`label-${index}`} style={styles.labelItem}>
-                  <ThemedText style={[styles.labelText, { color: colors.secondaryText }]}>
-                    {bucket.label}
-                  </ThemedText>
-                  <ThemedText style={[styles.labelCount, { color: colors.text }]}>
-                    {bucket.count > 0 ? `${Math.round(bucket.percentage)}%` : '0%'}
-                  </ThemedText>
-                </View>
-              ))}
-            </View>
-          </Animated.View>
+            {/* Interactive overlays with optimized touch targets - positioned within chart container */}
+            {onDifficultyPress &&
+              difficultyData.buckets.map((bucket, index) => {
+                const barWidth = (GRAPH_WIDTH / difficultyData.buckets.length) * 0.75;
+                const barSpacing = (GRAPH_WIDTH / difficultyData.buckets.length) * 0.25;
+                const x = index * (GRAPH_WIDTH / difficultyData.buckets.length) + barSpacing / 2;
 
-          {/* Interaction Hint - Separated for clear hierarchy */}
+                const pressAnimation = useSharedValue(1);
+
+                const animatedStyle = useAnimatedStyle(() => ({
+                  transform: [{ scale: pressAnimation.value }],
+                }));
+
+                return (
+                  <AnimatedTouchableOpacity
+                    key={`difficulty-touch-${index}`}
+                    style={[
+                      styles.barTouchArea,
+                      animatedStyle,
+                      {
+                        left: x - 4,
+                        width: barWidth + 8,
+                        backgroundColor: bucket.count > 0 ? colors.buttonOverlay : 'transparent',
+                        borderRadius: 6,
+                      },
+                    ]}
+                    onPressIn={() => {
+                      if (bucket.count > 0) {
+                        pressAnimation.value = withSpring(0.96, { damping: 20, stiffness: 400 });
+                      }
+                    }}
+                    onPressOut={() => {
+                      pressAnimation.value = withSpring(1, { damping: 20, stiffness: 400 });
+                    }}
+                    onPress={() => handleBarPress(bucket.category, bucket.count)}
+                    activeOpacity={bucket.count > 0 ? 0.75 : 1}
+                    disabled={bucket.count === 0}
+                    accessibilityLabel={`${bucket.label} difficulty: ${Math.round(bucket.percentage)}% of words`}
+                    accessibilityRole="button"
+                    accessibilityHint={
+                      bucket.count > 0
+                        ? 'Tap to view words in this difficulty category'
+                        : 'No words in this category'
+                    }
+                  />
+                );
+              })}
+          </View>
+
+          {/* Labels Section - Grouped with chart for proximity */}
+          <View style={styles.labelsContainer}>
+            {difficultyData.buckets.map((bucket, index) => (
+              <View key={`label-${index}`} style={styles.labelItem}>
+                <ThemedText style={[styles.labelText, { color: colors.secondaryText }]}>
+                  {bucket.label}
+                </ThemedText>
+                <ThemedText style={[styles.labelCount, { color: colors.text }]}>
+                  {bucket.count > 0 ? `${Math.round(bucket.percentage)}%` : '0%'}
+                </ThemedText>
+              </View>
+            ))}
+          </View>
+
+          {/* Interaction Hint */}
           {onDifficultyPress && difficultyData.buckets.some(b => b.count > 0) && (
-            <Animated.View style={styles.hintSection} entering={FadeInUp.delay(500).duration(400)}>
+            <View style={styles.hintSection}>
               <ThemedText style={[styles.subtleHintText, { color: colors.secondaryText }]}>
                 Tap bars to explore words
               </ThemedText>
-            </Animated.View>
+            </View>
           )}
-        </Animated.View>
-      </BaseCard>
+        </View>
+      </BaseChart>
     );
   }
 );
@@ -398,31 +384,16 @@ export const DifficultyChart = memo(
 DifficultyChart.displayName = 'DifficultyChart';
 
 const styles = StyleSheet.create({
-  difficultyContent: {
-    padding: CHART_LAYOUT.CONTENT_PADDING,
-  },
-  emptyState: {
-    height: GRAPH_HEIGHT_LARGE + 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  graphContainer: {
+  chartContainer: {
     height: GRAPH_HEIGHT_LARGE,
-    marginBottom: 12, // Tighter coupling with labels
-    marginHorizontal: CHART_LAYOUT.GRAPH_MARGIN_HORIZONTAL,
-    paddingVertical: CHART_LAYOUT.GRAPH_MARGIN_VERTICAL,
+    width: GRAPH_WIDTH,
     position: 'relative',
+    alignSelf: 'center',
   },
   barTouchArea: {
     position: 'absolute',
     top: 0,
-    bottom: 0,
-    height: '100%',
+    height: GRAPH_HEIGHT_LARGE,
     ...Platform.select({
       ios: {
         shadowColor: 'rgba(0,0,0,0.06)',
@@ -438,44 +409,32 @@ const styles = StyleSheet.create({
   labelsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    alignItems: 'flex-start', // Better alignment
-    marginTop: 4, // Closer to chart for proximity
-    paddingHorizontal: 8, // Better alignment with bars
+    alignItems: 'flex-start',
+    marginTop: 8,
+    paddingHorizontal: 8,
   },
   labelItem: {
-    flexDirection: 'column',
     alignItems: 'center',
     flex: 1,
-    minHeight: 36, // Consistent height for visual stability
   },
   labelText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+    fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
-    marginBottom: 3, // Tighter spacing for grouping
-    letterSpacing: 0.2, // Better readability
   },
   labelCount: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '700',
     textAlign: 'center',
-    lineHeight: 16, // Better vertical rhythm
-  },
-  subtleHintText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    fontWeight: '500',
-    textAlign: 'center',
-    opacity: 0.7,
-    letterSpacing: 0.1, // Subtle refinement
-  },
-  statsSection: {
-    marginBottom: CHART_LAYOUT.ELEMENT_SPACING,
-  },
-  chartSection: {
-    position: 'relative',
+    marginTop: 2,
   },
   hintSection: {
-    marginTop: 12,
     alignItems: 'center',
+    marginTop: 12,
+  },
+  subtleHintText: {
+    fontSize: 11,
+    fontStyle: 'italic',
+    opacity: 0.7,
   },
 });

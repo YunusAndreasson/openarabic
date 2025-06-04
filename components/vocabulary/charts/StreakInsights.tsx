@@ -1,17 +1,14 @@
 import React, { memo, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 
-import { LAYOUT } from '@/constants/layout';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { useStreakData } from '@/hooks/useStreakData';
 
-import BaseCard from '../../BaseCard';
+import { BaseChart, ChartCanvas, type DataPoint } from '../shared';
 import { ThemedText } from '../../ThemedText';
-import { CardHeader } from '../shared/CardHeader';
-import { StatsRow } from '../shared/StatsRow';
 import { useChartColors } from '../shared/chartColors';
-import { CHART_LAYOUT } from '../shared/constants';
+import { LAYOUT } from '@/constants/layout';
 
 interface StreakInsightsProps {
   onInfoPress: () => void;
@@ -51,6 +48,26 @@ export const StreakInsights = memo(({ onInfoPress }: StreakInsightsProps) => {
     return 'Building momentum';
   }, [streakData.currentStreak]);
 
+  // Prepare data points for interactive tooltips on activity dots
+  const dataPoints: DataPoint[] = useMemo(() => {
+    const dotWidth = 50; // Approximate width per dot
+    const containerWidth = 300; // Approximate container width
+    const spacing = containerWidth / streakData.lastSevenDaysActivity.length;
+
+    return streakData.lastSevenDaysActivity.map((day, index) => {
+      const x = index * spacing + spacing / 2;
+      const y = 20; // Center of dots
+
+      return {
+        x,
+        y,
+        value: day.active ? 'Active' : 'Inactive',
+        label: `${day.dayName}: ${day.active ? 'Studied' : 'No study'}`,
+        data: day,
+      };
+    });
+  }, [streakData.lastSevenDaysActivity]);
+
   // Activity dots for last 7 days with enhanced styling using consistent colors
   const activityDots = useMemo(() => {
     return streakData.lastSevenDaysActivity.map((day, index) => {
@@ -59,7 +76,7 @@ export const StreakInsights = memo(({ onInfoPress }: StreakInsightsProps) => {
 
       return (
         <View key={`activity-${index}`} style={styles.activityDot}>
-          <View
+          <TouchableOpacity
             style={[
               styles.dot,
               {
@@ -73,6 +90,9 @@ export const StreakInsights = memo(({ onInfoPress }: StreakInsightsProps) => {
                 elevation: isActive ? 2 : 0,
               },
             ]}
+            accessible={true}
+            accessibilityLabel={`${day.dayName}: ${day.active ? 'Active day' : 'Inactive day'}`}
+            accessibilityRole="button"
           />
           <ThemedText type="caption" variant="subtle" style={styles.dayLabel}>
             {day.dayName}
@@ -82,55 +102,63 @@ export const StreakInsights = memo(({ onInfoPress }: StreakInsightsProps) => {
     });
   }, [streakData.lastSevenDaysActivity, chartColors]);
 
+  const hasStreakData = streakData.lastSevenDaysActivity.length > 0;
+
   return (
-    <BaseCard style={styles.streakCard} shadowSize="small" includePressAnimation={false}>
-      <View style={styles.streakContent}>
-        <CardHeader title="Streak" subtitle={subtitle} onInfoPress={onInfoPress} />
-
-        <StatsRow
-          leftStat={{
-            value: streakData.currentStreak,
-            label: 'current',
-            color: streakStatus.color,
-          }}
-          rightStat={{
-            value: streakData.longestStreak,
-            label: 'best',
-          }}
-        />
-
+    <BaseChart
+      title="Streak"
+      subtitle={subtitle}
+      onInfoPress={onInfoPress}
+      hasData={hasStreakData}
+      leftStat={{
+        value: streakData.currentStreak,
+        label: 'current',
+        color: streakStatus.color,
+      }}
+      rightStat={{
+        value: streakData.longestStreak,
+        label: 'best',
+        color: chartColors.performance.excellent,
+      }}
+      contentHeight={100}
+      emptyStateText="Start studying to track your streak"
+    >
+      <ChartCanvas
+        dataPoints={dataPoints}
+        enableTooltips={true}
+        height={100}
+        accessibilityLabel="Weekly activity streak showing last 7 days of study progress"
+      >
         {/* Clean activity visualization */}
         <View style={[styles.activitySection, { borderTopColor: chartColors.ui.grid }]}>
           <View style={styles.activityRow}>{activityDots}</View>
         </View>
-      </View>
-    </BaseCard>
+      </ChartCanvas>
+    </BaseChart>
   );
 });
 
 StreakInsights.displayName = 'StreakInsights';
 
 const styles = StyleSheet.create({
-  streakCard: {},
-  streakContent: {
-    padding: CHART_LAYOUT.CONTENT_PADDING,
-  },
   activitySection: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.SMALL,
+    paddingBottom: LAYOUT.SPACING.SMALL,
   },
   activityRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 10,
   },
   activityDot: {
     alignItems: 'center',
     flex: 1,
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 8 / 2,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     marginBottom: LAYOUT.SPACING.TINY,
   },
   dayLabel: {

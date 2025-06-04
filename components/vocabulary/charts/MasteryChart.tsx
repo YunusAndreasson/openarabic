@@ -1,25 +1,7 @@
 import React, { memo, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
-import {
-  Canvas,
-  Path,
-  Circle,
-  Group,
-  Shadow,
-  Skia,
-  Rect,
-  LinearGradient,
-  vec,
-} from '@shopify/react-native-skia';
+import { Path, Circle, Group, Skia, Rect, LinearGradient, vec } from '@shopify/react-native-skia';
 
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
-
-import BaseCard from '../../BaseCard';
-import { CardHeader } from '../shared/CardHeader';
-import { ChartFooter } from '../shared/ChartFooter';
-import { ChartTooltip, DataPointOverlay, useChartTooltip } from '../shared/ChartInteractivity';
-import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_14, CHART_LAYOUT } from '../shared/constants';
-import { StatsRow } from '../shared/StatsRow';
 import {
   generateDateRange,
   createStandardizedPerformanceZones,
@@ -27,6 +9,8 @@ import {
   createAreaFillPath,
 } from '../shared/utils';
 import { useChartColors } from '../shared/chartColors';
+import { BaseChart, ChartCanvas, type DataPoint } from '../shared';
+import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_14 } from '../shared/constants';
 
 interface MasteryChartProps {
   studyWords: StudyWord[];
@@ -38,7 +22,6 @@ interface MasteryChartProps {
 export const MasteryChart = memo(
   ({ studyWords = [], onInfoPress, onStatPress, hideTitle = false }: MasteryChartProps) => {
     const chartColors = useChartColors();
-    const { tooltip, showTooltip } = useChartTooltip();
 
     // Add top padding to prevent dots from being cut off
     const TOP_PADDING = 8; // Space for circle radius + shadow
@@ -80,7 +63,6 @@ export const MasteryChart = memo(
       if (masteryData.length === 0) {
         return {
           masteryPath: '',
-          smoothPath: '',
           hasData: false,
           insights: { currentRate: 0, trend: 'stable' as const, totalMastered: 0 },
           milestones: [],
@@ -94,7 +76,6 @@ export const MasteryChart = memo(
       if (!hasData) {
         return {
           masteryPath: '',
-          smoothPath: '',
           hasData: false,
           insights: { currentRate: 0, trend: 'stable' as const, totalMastered: 0 },
           milestones: [],
@@ -169,9 +150,7 @@ export const MasteryChart = memo(
 
       return {
         masteryPath: path.toSVGString(),
-        smoothPath: path.toSVGString(),
         hasData: true, // We know we have data at this point
-        maxRate,
         performanceZones,
         milestones,
         dataPoints: points,
@@ -200,247 +179,149 @@ export const MasteryChart = memo(
       );
     }, [chartData.insights]);
 
-    if (!chartData.hasData) {
-      return (
-        <BaseCard shadowSize="small" includePressAnimation={false}>
-          <View style={styles.masteryContent}>
-            {!hideTitle && (
-              <CardHeader
-                title="Mastery"
-                subtitle="Study some words to see your progress"
-                onInfoPress={onInfoPress}
-              />
-            )}
-          </View>
-        </BaseCard>
-      );
-    }
+    // Prepare data points for interactive tooltips
+    const dataPoints: DataPoint[] = useMemo(() => {
+      return chartData.dataPoints
+        .map((point, index) => {
+          const data = masteryData[index];
+          if (!data) return null;
+
+          return {
+            x: point.x,
+            y: point.y,
+            value: `${Math.round(point.rate)}%`,
+            label: data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            data: data,
+          } as DataPoint;
+        })
+        .filter((point): point is DataPoint => point !== null);
+    }, [chartData.dataPoints, masteryData]);
 
     return (
-      <BaseCard shadowSize="small" includePressAnimation={false}>
-        <View style={styles.masteryContent}>
-          {!hideTitle && (
-            <CardHeader title="Mastery" subtitle={subtitle} onInfoPress={onInfoPress} />
-          )}
+      <BaseChart
+        title="Mastery"
+        subtitle={subtitle}
+        onInfoPress={onInfoPress}
+        hideTitle={hideTitle}
+        hasData={chartData.hasData}
+        leftStat={{
+          value: `${chartData.insights.currentRate}%`,
+          label: 'strength',
+          color: chartColors.getPerformanceColor(chartData.insights.currentRate),
+        }}
+        rightStat={{
+          value: chartData.insights.totalMastered,
+          label: 'mastered',
+          color: chartColors.performance.excellent,
+          onPress: onStatPress ? () => onStatPress('mastered') : undefined,
+        }}
+        legendItems={[
+          {
+            type: 'line',
+            color: chartColors.ui.dataLine,
+            label: 'Mastery',
+          },
+        ]}
+        timeRange="Past 14 days"
+        contentHeight={GRAPH_HEIGHT_LARGE}
+        emptyStateText="Study some words to see your progress"
+      >
+        <ChartCanvas
+          dataPoints={dataPoints}
+          enableTooltips={true}
+          accessibilityLabel="Mastery progression chart showing learning progress over the past 14 days"
+        >
+          {/* Standardized performance zones background */}
+          <Group>
+            {chartData.performanceZones?.map((zone, index) => (
+              <Rect
+                key={`performance-zone-${index}`}
+                x={0}
+                y={zone.y}
+                width={GRAPH_WIDTH}
+                height={zone.height}
+                color={chartColors.withOpacity(zone.color, 0.12)}
+              />
+            ))}
+          </Group>
 
-          <StatsRow
-            leftStat={{
-              value: `${chartData.insights.currentRate}%`,
-              label: 'strength',
-              color: chartColors.getPerformanceColor(chartData.insights.currentRate),
-            }}
-            rightStat={{
-              value: chartData.insights.totalMastered,
-              label: 'mastered',
-              color: chartColors.performance.excellent,
-              onPress: onStatPress ? () => onStatPress('mastered') : undefined,
-            }}
-          />
-
-          {/* Enhanced Mastery Graph with advanced Skia features */}
-          <View style={styles.graphContainer}>
-            <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_LARGE }}>
-              {/* Vertical grid lines for 14-day indication */}
-              <Group>
-                {/* Vertical grid lines for each day */}
-                {masteryData.map((_, index) => {
-                  const x = (index / Math.max(1, masteryData.length - 1)) * GRAPH_WIDTH;
-                  return (
-                    <Rect
-                      key={`day-grid-${index}`}
-                      x={x - 0.5}
-                      y={TOP_PADDING}
-                      width={1}
-                      height={GRAPH_HEIGHT_LARGE - TOP_PADDING}
-                      color={chartColors.withOpacity(chartColors.ui.border, 0.12)}
-                    />
-                  );
-                })}
-              </Group>
-
-              {/* Standardized performance zones background */}
-              <Group>
-                {chartData.performanceZones?.map((zone, index) => (
-                  <Rect
-                    key={`performance-zone-${index}`}
-                    x={0}
-                    y={zone.y}
-                    width={GRAPH_WIDTH}
-                    height={zone.height}
-                    color={chartColors.withOpacity(zone.color, 0.12)}
-                  />
-                ))}
-              </Group>
-
-              {/* Area fill under the mastery line with gradient */}
-              <Group>
-                {chartData.smoothPath && chartData.dataPoints.length > 0 && (
-                  <Path
-                    path={createAreaFillPath(chartData.smoothPath, GRAPH_WIDTH, GRAPH_HEIGHT_LARGE)}
-                  >
-                    <LinearGradient
-                      start={vec(0, TOP_PADDING)}
-                      end={vec(0, GRAPH_HEIGHT_LARGE)}
-                      colors={chartColors.getAreaFillGradient('mastery')}
-                      positions={[0, 0.25, 0.65, 1]}
-                    />
-                  </Path>
-                )}
-
-                {(!chartData.smoothPath || chartData.smoothPath.length === 0) &&
-                  chartData.dataPoints.length > 1 && (
-                    <Group>
-                      {(() => {
-                        const firstPoint = chartData.dataPoints[0];
-                        const lastPoint = chartData.dataPoints[chartData.dataPoints.length - 1];
-
-                        if (!firstPoint || !lastPoint) return null;
-
-                        let areaPath = `M ${firstPoint.x} ${GRAPH_HEIGHT_LARGE}`;
-                        chartData.dataPoints.forEach(point => {
-                          areaPath += ` L ${point.x} ${point.y}`;
-                        });
-                        areaPath += ` L ${lastPoint.x} ${GRAPH_HEIGHT_LARGE} Z`;
-
-                        return (
-                          <Path path={areaPath}>
-                            <LinearGradient
-                              start={vec(0, TOP_PADDING)}
-                              end={vec(0, GRAPH_HEIGHT_LARGE)}
-                              colors={chartColors.getAreaFillGradient('mastery')}
-                              positions={[0, 0.25, 0.65, 1]}
-                            />
-                          </Path>
-                        );
-                      })()}
-                    </Group>
-                  )}
-              </Group>
-
-              {/* Main mastery line */}
-              <Group>
-                {chartData.smoothPath && chartData.dataPoints.length > 0 && (
-                  <Group>
-                    <Path
-                      path={chartData.smoothPath}
-                      style="stroke"
-                      strokeWidth={3}
-                      strokeCap="round"
-                      strokeJoin="round"
-                      color={chartColors.ui.dataLine}
-                    >
-                      <Shadow
-                        dx={0}
-                        dy={2}
-                        blur={6}
-                        color={chartColors.getDataPointGlow('mastery')}
-                      />
-                    </Path>
-
-                    {/* Data points with enhanced styling */}
-                    {chartData.dataPoints.map((point, index) => (
-                      <Group key={`mastery-point-${index}`}>
-                        {/* Subtle glow ring */}
-                        <Circle
-                          cx={point.x}
-                          cy={point.y}
-                          r={6}
-                          color={chartColors.getDataPointGlow('mastery')}
-                        />
-                        {/* Main data point */}
-                        <Circle cx={point.x} cy={point.y} r={4} color={chartColors.ui.dataLine}>
-                          <Shadow
-                            dx={0}
-                            dy={1}
-                            blur={3}
-                            color={chartColors.getDataPointGlow('mastery')}
-                          />
-                        </Circle>
-                      </Group>
-                    ))}
-                  </Group>
-                )}
-              </Group>
-
-              {/* Enhanced milestone indicators */}
-              <Group>
-                {chartData.milestones.map((milestone, index) => (
-                  <Group key={`milestone-${index}`}>
-                    {/* Milestone glow */}
-                    <Circle
-                      cx={milestone.x}
-                      cy={milestone.y}
-                      r={9}
-                      color={chartColors.withOpacity(chartColors.performance.excellent, 0.2)}
-                    />
-                    {/* Milestone ring */}
-                    <Circle
-                      cx={milestone.x}
-                      cy={milestone.y}
-                      r={7}
-                      color={chartColors.withOpacity(chartColors.performance.excellent, 0.4)}
-                    />
-                    {/* Milestone center */}
-                    <Circle
-                      cx={milestone.x}
-                      cy={milestone.y}
-                      r={5}
-                      color={chartColors.performance.excellent}
-                    >
-                      <Shadow
-                        dx={0}
-                        dy={2}
-                        blur={4}
-                        color={chartColors.withOpacity(chartColors.performance.excellent, 0.5)}
-                      />
-                    </Circle>
-                  </Group>
-                ))}
-              </Group>
-            </Canvas>
-
-            {/* Interactive data point overlays using reusable component */}
-            {chartData.dataPoints.map((point, index) => {
-              const data = masteryData[index];
-              if (!data) return null;
-
-              return (
-                <DataPointOverlay
-                  key={`data-point-${index}`}
-                  x={point.x}
-                  y={point.y}
-                  value={`${Math.round(point.rate)}%`}
-                  label={data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  onPress={showTooltip}
-                  accessibilityLabel={`Data point: ${Math.round(point.rate)}% mastery on ${data.date.toLocaleDateString()}`}
+          {/* Area fill under the mastery line with gradient */}
+          <Group>
+            {chartData.masteryPath && chartData.dataPoints.length > 0 && (
+              <Path
+                path={createAreaFillPath(chartData.masteryPath, GRAPH_WIDTH, GRAPH_HEIGHT_LARGE)}
+              >
+                <LinearGradient
+                  start={vec(0, TOP_PADDING)}
+                  end={vec(0, GRAPH_HEIGHT_LARGE)}
+                  colors={chartColors.getAreaFillGradient('mastery')}
+                  positions={[0, 0.25, 0.65, 1]}
                 />
-              );
-            })}
+              </Path>
+            )}
+          </Group>
 
-            {/* Reusable tooltip component */}
-            <ChartTooltip tooltip={tooltip} maxWidth={GRAPH_WIDTH} />
-          </View>
+          {/* Main mastery line */}
+          <Group>
+            {chartData.masteryPath && chartData.dataPoints.length > 0 && (
+              <Path
+                path={chartData.masteryPath}
+                style="stroke"
+                strokeWidth={3}
+                strokeCap="round"
+                strokeJoin="round"
+                color={chartColors.ui.dataLine}
+              />
+            )}
 
-          <ChartFooter
-            legendItems={[{ type: 'line', color: chartColors.ui.dataLine, label: 'Mastery' }]}
-            timeRange="Past 14 days"
-          />
-        </View>
-      </BaseCard>
+            {/* Data points with enhanced styling */}
+            {chartData.dataPoints.map((point, index) => (
+              <Group key={`mastery-point-${index}`}>
+                {/* Subtle glow ring */}
+                <Circle
+                  cx={point.x}
+                  cy={point.y}
+                  r={6}
+                  color={chartColors.getDataPointGlow('mastery')}
+                />
+                {/* Main data point */}
+                <Circle cx={point.x} cy={point.y} r={4} color={chartColors.ui.dataLine} />
+              </Group>
+            ))}
+          </Group>
+
+          {/* Enhanced milestone indicators */}
+          <Group>
+            {chartData.milestones.map((milestone, index) => (
+              <Group key={`milestone-${index}`}>
+                {/* Milestone glow */}
+                <Circle
+                  cx={milestone.x}
+                  cy={milestone.y}
+                  r={9}
+                  color={chartColors.withOpacity(chartColors.performance.excellent, 0.2)}
+                />
+                {/* Milestone ring */}
+                <Circle
+                  cx={milestone.x}
+                  cy={milestone.y}
+                  r={7}
+                  color={chartColors.withOpacity(chartColors.performance.excellent, 0.4)}
+                />
+                {/* Milestone center */}
+                <Circle
+                  cx={milestone.x}
+                  cy={milestone.y}
+                  r={5}
+                  color={chartColors.performance.excellent}
+                />
+              </Group>
+            ))}
+          </Group>
+        </ChartCanvas>
+      </BaseChart>
     );
   }
 );
 
 MasteryChart.displayName = 'MasteryChart';
-
-const styles = StyleSheet.create({
-  masteryContent: {
-    padding: CHART_LAYOUT.CONTENT_PADDING,
-  },
-  graphContainer: {
-    height: GRAPH_HEIGHT_LARGE,
-    marginBottom: CHART_LAYOUT.ELEMENT_SPACING,
-    marginHorizontal: CHART_LAYOUT.GRAPH_MARGIN_HORIZONTAL,
-    paddingVertical: CHART_LAYOUT.GRAPH_MARGIN_VERTICAL,
-  },
-});

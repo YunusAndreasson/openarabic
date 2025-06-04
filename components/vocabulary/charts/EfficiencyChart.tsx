@@ -1,15 +1,5 @@
 import React, { memo, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
-import {
-  Canvas,
-  Path,
-  Circle,
-  Group,
-  Skia,
-  Rect,
-  LinearGradient,
-  vec,
-} from '@shopify/react-native-skia';
+import { Path, Circle, Group, Skia, Rect, LinearGradient, vec } from '@shopify/react-native-skia';
 
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
@@ -21,13 +11,8 @@ import {
   createAreaFillPath,
 } from '../shared/utils';
 import { useChartColors } from '../shared/chartColors';
-
-import BaseCard from '../../BaseCard';
-import { CardHeader } from '../shared/CardHeader';
-import { ChartFooter } from '../shared/ChartFooter';
-import { ChartTooltip, DataPointOverlay, useChartTooltip } from '../shared/ChartInteractivity';
-import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_14, CHART_LAYOUT } from '../shared/constants';
-import { StatsRow } from '../shared/StatsRow';
+import { BaseChart, ChartCanvas, type DataPoint } from '../shared';
+import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_14 } from '../shared/constants';
 
 interface EfficiencyChartProps {
   studyWords: StudyWord[];
@@ -38,7 +23,6 @@ interface EfficiencyChartProps {
 export const EfficiencyChart = memo(
   ({ studyWords = [], onInfoPress, hideTitle = false }: EfficiencyChartProps) => {
     const chartColors = useChartColors();
-    const { tooltip, showTooltip } = useChartTooltip();
 
     // Calculate efficiency data over the last 14 days
     const efficiencyData = useMemo(() => {
@@ -69,7 +53,6 @@ export const EfficiencyChart = memo(
       if (efficiencyData.length === 0) {
         return {
           efficiencyPath: '',
-          smoothPath: '',
           hasData: false,
           insights: { currentEfficiency: 0, trend: 'stable' as const, weeklyAverage: 0 },
           performanceZones: [],
@@ -82,7 +65,6 @@ export const EfficiencyChart = memo(
       if (!hasData) {
         return {
           efficiencyPath: '',
-          smoothPath: '',
           hasData: false,
           insights: { currentEfficiency: 0, trend: 'stable' as const, weeklyAverage: 0 },
           performanceZones: [],
@@ -149,9 +131,7 @@ export const EfficiencyChart = memo(
 
       return {
         efficiencyPath: path.toSVGString(),
-        smoothPath: path.toSVGString(),
         hasData,
-        maxEfficiency,
         performanceZones,
         dataPoints: points,
         insights: {
@@ -172,160 +152,122 @@ export const EfficiencyChart = memo(
       );
     }, [chartData.insights]);
 
-    if (!chartData.hasData) {
-      return (
-        <BaseCard shadowSize="small" includePressAnimation={false}>
-          <View style={styles.efficiencyContent}>
-            {!hideTitle && (
-              <CardHeader
-                title="Learning Speed"
-                subtitle="Study words to track your progress"
-                onInfoPress={onInfoPress}
-              />
-            )}
-          </View>
-        </BaseCard>
-      );
-    }
+    // Prepare data points for interactive tooltips
+    const dataPoints: DataPoint[] = useMemo(() => {
+      return chartData.dataPoints
+        .map((point, index) => {
+          const data = efficiencyData[index];
+          if (!data || data.wordCount === 0) return null;
+
+          return {
+            x: point.x,
+            y: point.y,
+            value: `${Math.round(point.efficiency)}%`,
+            label: data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            data: data,
+          } as DataPoint;
+        })
+        .filter((point): point is DataPoint => point !== null);
+    }, [chartData.dataPoints, efficiencyData]);
 
     return (
-      <BaseCard shadowSize="small" includePressAnimation={false}>
-        <View style={styles.efficiencyContent}>
-          {!hideTitle && (
-            <CardHeader title="Learning Speed" subtitle={subtitle} onInfoPress={onInfoPress} />
-          )}
+      <BaseChart
+        title="Learning Speed"
+        subtitle={subtitle}
+        onInfoPress={onInfoPress}
+        hideTitle={hideTitle}
+        hasData={chartData.hasData}
+        leftStat={{
+          value: `${chartData.insights.currentEfficiency}%`,
+          label: 'speed',
+          color: chartColors.getPerformanceColor(chartData.insights.currentEfficiency),
+        }}
+        rightStat={{
+          value: `${chartData.insights.weeklyAverage}%`,
+          label: 'average',
+          color: chartColors.getPerformanceColor(chartData.insights.weeklyAverage),
+        }}
+        legendItems={[
+          {
+            type: 'line',
+            color: chartColors.ui.dataLine,
+            label: 'Efficiency',
+          },
+        ]}
+        timeRange="Past 14 days"
+        contentHeight={GRAPH_HEIGHT_LARGE}
+        emptyStateText="Study words to track your progress"
+      >
+        <ChartCanvas
+          dataPoints={dataPoints}
+          enableTooltips={true}
+          accessibilityLabel="Learning efficiency chart showing progress over the past 14 days"
+        >
+          {/* Performance zones background */}
+          <Group>
+            {chartData.performanceZones.map((zone, index) => (
+              <Rect
+                key={`performance-zone-${index}`}
+                x={0}
+                y={zone.y}
+                width={GRAPH_WIDTH}
+                height={zone.height}
+                color={chartColors.withOpacity(zone.color, 0.12)}
+              />
+            ))}
+          </Group>
 
-          <StatsRow
-            leftStat={{
-              value: `${chartData.insights.currentEfficiency}%`,
-              label: 'speed',
-              color: chartColors.getPerformanceColor(chartData.insights.currentEfficiency),
-            }}
-            rightStat={{
-              value: `${chartData.insights.weeklyAverage}%`,
-              label: 'average',
-              color: chartColors.getPerformanceColor(chartData.insights.weeklyAverage),
-            }}
-          />
-
-          {/* Enhanced Efficiency Chart */}
-          <View style={styles.graphContainer}>
-            <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_LARGE }}>
-              {/* Performance zones background */}
-              <Group>
-                {chartData.performanceZones.map((zone, index) => (
-                  <Rect
-                    key={`performance-zone-${index}`}
-                    x={0}
-                    y={zone.y}
-                    width={GRAPH_WIDTH}
-                    height={zone.height}
-                    color={chartColors.withOpacity(zone.color, 0.1)}
-                  />
-                ))}
-              </Group>
-
-              {/* Area fill under the efficiency line with gradient */}
-              <Group>
-                {chartData.efficiencyPath && (
-                  <Path
-                    path={createAreaFillPath(
-                      chartData.efficiencyPath,
-                      GRAPH_WIDTH,
-                      GRAPH_HEIGHT_LARGE
-                    )}
-                  >
-                    <LinearGradient
-                      start={vec(0, 0)}
-                      end={vec(0, GRAPH_HEIGHT_LARGE)}
-                      colors={chartColors.getAreaFillGradient('efficiency')}
-                      positions={[0, 0.3, 0.7, 1]}
-                    />
-                  </Path>
-                )}
-              </Group>
-
-              {/* Efficiency line */}
-              <Group>
-                <Path
-                  path={chartData.efficiencyPath}
-                  style="stroke"
-                  strokeWidth={3}
-                  strokeCap="round"
-                  strokeJoin="round"
-                  color={chartColors.ui.dataLine}
+          {/* Area fill under the efficiency line with gradient */}
+          <Group>
+            {chartData.efficiencyPath && (
+              <Path
+                path={createAreaFillPath(chartData.efficiencyPath, GRAPH_WIDTH, GRAPH_HEIGHT_LARGE)}
+              >
+                <LinearGradient
+                  start={vec(0, 0)}
+                  end={vec(0, GRAPH_HEIGHT_LARGE)}
+                  colors={chartColors.getAreaFillGradient('efficiency')}
+                  positions={[0, 0.3, 0.7, 1]}
                 />
+              </Path>
+            )}
+          </Group>
 
-                {/* Data points with enhanced styling */}
-                {chartData.dataPoints.map((point, index) => {
-                  const data = efficiencyData[index];
-                  if (!data || data.wordCount === 0) return null;
+          {/* Efficiency line */}
+          <Group>
+            <Path
+              path={chartData.efficiencyPath}
+              style="stroke"
+              strokeWidth={3}
+              strokeCap="round"
+              strokeJoin="round"
+              color={chartColors.ui.dataLine}
+            />
 
-                  return (
-                    <Group key={`efficiency-point-${index}`}>
-                      {/* Subtle glow ring */}
-                      <Circle
-                        cx={point.x}
-                        cy={point.y}
-                        r={6}
-                        color={chartColors.getDataPointGlow('efficiency')}
-                      />
-                      {/* Main data point */}
-                      <Circle cx={point.x} cy={point.y} r={4} color={chartColors.ui.dataLine} />
-                    </Group>
-                  );
-                })}
-              </Group>
-            </Canvas>
-
-            {/* Interactive data point overlays */}
+            {/* Data points with enhanced styling */}
             {chartData.dataPoints.map((point, index) => {
               const data = efficiencyData[index];
               if (!data || data.wordCount === 0) return null;
 
               return (
-                <DataPointOverlay
-                  key={`data-point-${index}`}
-                  x={point.x}
-                  y={point.y}
-                  value={`${Math.round(point.efficiency)}%`}
-                  label={data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  onPress={showTooltip}
-                  accessibilityLabel={`Data point: ${Math.round(point.efficiency)}% efficiency on ${data.date.toLocaleDateString()}`}
-                />
+                <Group key={`efficiency-point-${index}`}>
+                  {/* Subtle glow ring */}
+                  <Circle
+                    cx={point.x}
+                    cy={point.y}
+                    r={6}
+                    color={chartColors.getDataPointGlow('efficiency')}
+                  />
+                  {/* Main data point */}
+                  <Circle cx={point.x} cy={point.y} r={4} color={chartColors.ui.dataLine} />
+                </Group>
               );
             })}
-
-            {/* Reusable tooltip component */}
-            <ChartTooltip tooltip={tooltip} maxWidth={GRAPH_WIDTH} />
-          </View>
-
-          <ChartFooter
-            legendItems={[
-              {
-                type: 'line',
-                color: chartColors.ui.dataLine,
-                label: 'Efficiency',
-              },
-            ]}
-            timeRange="Past 14 days"
-          />
-        </View>
-      </BaseCard>
+          </Group>
+        </ChartCanvas>
+      </BaseChart>
     );
   }
 );
 
 EfficiencyChart.displayName = 'EfficiencyChart';
-
-const styles = StyleSheet.create({
-  efficiencyContent: {
-    padding: CHART_LAYOUT.CONTENT_PADDING,
-  },
-  graphContainer: {
-    height: GRAPH_HEIGHT_LARGE,
-    marginBottom: CHART_LAYOUT.ELEMENT_SPACING,
-    marginHorizontal: CHART_LAYOUT.GRAPH_MARGIN_HORIZONTAL,
-    paddingVertical: CHART_LAYOUT.GRAPH_MARGIN_VERTICAL,
-  },
-});

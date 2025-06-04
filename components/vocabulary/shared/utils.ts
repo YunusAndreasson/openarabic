@@ -1,10 +1,6 @@
 import type { StudyWord } from '@/types/vocabulary.types';
 
-import {
-  MASTERY_STABILITY_THRESHOLD,
-  PERFORMANCE_THRESHOLDS,
-  PERFORMANCE_ZONES,
-} from './constants';
+import { MASTERY_STABILITY_THRESHOLD, PERFORMANCE_THRESHOLDS } from './constants';
 
 // Generate date range for charts
 export const generateDateRange = (days: number) => {
@@ -137,7 +133,7 @@ export const createStandardizedPerformanceZones = (
 
   return [
     {
-      name: PERFORMANCE_ZONES.EXCELLENT,
+      name: 'Excellent',
       min: PERFORMANCE_THRESHOLDS.EXCELLENT,
       max: 100,
       color: chartColors.performance.excellent,
@@ -145,7 +141,7 @@ export const createStandardizedPerformanceZones = (
       height: ((100 - PERFORMANCE_THRESHOLDS.EXCELLENT) / 100) * availableHeight,
     },
     {
-      name: PERFORMANCE_ZONES.GOOD,
+      name: 'Good',
       min: PERFORMANCE_THRESHOLDS.GOOD,
       max: PERFORMANCE_THRESHOLDS.EXCELLENT,
       color: chartColors.performance.good,
@@ -154,7 +150,7 @@ export const createStandardizedPerformanceZones = (
         ((PERFORMANCE_THRESHOLDS.EXCELLENT - PERFORMANCE_THRESHOLDS.GOOD) / 100) * availableHeight,
     },
     {
-      name: PERFORMANCE_ZONES.FAIR,
+      name: 'Fair',
       min: PERFORMANCE_THRESHOLDS.FAIR,
       max: PERFORMANCE_THRESHOLDS.GOOD,
       color: chartColors.performance.moderate,
@@ -162,7 +158,7 @@ export const createStandardizedPerformanceZones = (
       height: ((PERFORMANCE_THRESHOLDS.GOOD - PERFORMANCE_THRESHOLDS.FAIR) / 100) * availableHeight,
     },
     {
-      name: PERFORMANCE_ZONES.POOR,
+      name: 'Poor',
       min: PERFORMANCE_THRESHOLDS.POOR,
       max: PERFORMANCE_THRESHOLDS.FAIR,
       color: chartColors.performance.poor,

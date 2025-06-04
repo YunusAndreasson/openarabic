@@ -1,30 +1,7 @@
 import React, { memo, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
-import {
-  Canvas,
-  Path,
-  Circle,
-  Group,
-  Skia,
-  Rect,
-  LinearGradient,
-  vec,
-} from '@shopify/react-native-skia';
+import { Path, Circle, Group, Skia, Rect, LinearGradient, vec } from '@shopify/react-native-skia';
 
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
-
-import BaseCard from '../../BaseCard';
-import { CardHeader } from '../shared/CardHeader';
-import { ChartFooter } from '../shared/ChartFooter';
-import { ChartTooltip, DataPointOverlay, useChartTooltip } from '../shared/ChartInteractivity';
-import {
-  GRAPH_WIDTH,
-  GRAPH_HEIGHT_LARGE,
-  DAYS_14,
-  CRITICAL_RETRIEVABILITY_THRESHOLD,
-  CHART_LAYOUT,
-} from '../shared/constants';
-import { StatsRow } from '../shared/StatsRow';
 import {
   calculateRetrievability,
   createStandardizedPerformanceZones,
@@ -32,6 +9,13 @@ import {
   createAreaFillPath,
 } from '../shared/utils';
 import { useChartColors } from '../shared/chartColors';
+import { BaseChart, ChartCanvas, type DataPoint } from '../shared';
+import {
+  GRAPH_WIDTH,
+  GRAPH_HEIGHT_LARGE,
+  DAYS_14,
+  CRITICAL_RETRIEVABILITY_THRESHOLD,
+} from '../shared/constants';
 
 interface RetrievabilityChartProps {
   studyWords: StudyWord[];
@@ -43,7 +27,6 @@ interface RetrievabilityChartProps {
 export const RetrievabilityChart = memo(
   ({ studyWords = [], onInfoPress, onStatPress, hideTitle = false }: RetrievabilityChartProps) => {
     const chartColors = useChartColors();
-    const { tooltip, showTooltip } = useChartTooltip();
 
     // Calculate retrievability forecast over the next 14 days
     const retrievabilityData = useMemo(() => {
@@ -89,7 +72,6 @@ export const RetrievabilityChart = memo(
       if (retrievabilityData.length === 0) {
         return {
           retrievabilityPath: '',
-          smoothPath: '',
           hasData: false,
           insights: { currentRetrievability: 0, trend: 'stable' as const, criticalWords: 0 },
           dangerZones: [],
@@ -102,7 +84,6 @@ export const RetrievabilityChart = memo(
       if (!hasData) {
         return {
           retrievabilityPath: '',
-          smoothPath: '',
           hasData: false,
           insights: { currentRetrievability: 0, trend: 'stable' as const, criticalWords: 0 },
           dangerZones: [],
@@ -176,9 +157,7 @@ export const RetrievabilityChart = memo(
 
       return {
         retrievabilityPath: path.toSVGString(),
-        smoothPath: path.toSVGString(),
         hasData,
-        maxRetrievability,
         dangerZones,
         dataPoints: points,
         insights: {
@@ -199,211 +178,156 @@ export const RetrievabilityChart = memo(
       if (criticalWords > 10) {
         return `${criticalWords} words need review soon`;
       }
-      if (criticalWords > 5) {
-        return `${criticalWords} words getting forgotten`;
-      }
-
-      return generatePerformanceSubtitle(currentRetrievability, 'memory retention');
+      return generatePerformanceSubtitle(
+        currentRetrievability,
+        'memory retention',
+        chartData.insights.trend as 'improving' | 'declining' | 'stable'
+      );
     }, [chartData.insights]);
 
-    if (!chartData.hasData) {
-      return (
-        <BaseCard shadowSize="small" includePressAnimation={false}>
-          <View style={styles.retrievabilityContent}>
-            {!hideTitle && (
-              <CardHeader
-                title="Memory Decay"
-                subtitle="Study words to track memory retention"
-                onInfoPress={onInfoPress}
-              />
-            )}
-          </View>
-        </BaseCard>
-      );
-    }
+    // Prepare data points for interactive tooltips
+    const dataPoints: DataPoint[] = useMemo(() => {
+      return chartData.dataPoints
+        .map((point, index) => {
+          const data = retrievabilityData[index];
+          if (!data || data.wordCount === 0) return null;
+
+          return {
+            x: point.x,
+            y: point.y,
+            value: `${Math.round(point.retrievability)}%`,
+            label: data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            data: data,
+          } as DataPoint;
+        })
+        .filter((point): point is DataPoint => point !== null);
+    }, [chartData.dataPoints, retrievabilityData]);
 
     return (
-      <BaseCard shadowSize="small" includePressAnimation={false}>
-        <View style={styles.retrievabilityContent}>
-          {!hideTitle && (
-            <CardHeader title="Memory Decay" subtitle={subtitle} onInfoPress={onInfoPress} />
-          )}
+      <BaseChart
+        title="Memory"
+        subtitle={subtitle}
+        onInfoPress={onInfoPress}
+        hideTitle={hideTitle}
+        hasData={chartData.hasData}
+        leftStat={{
+          value: `${chartData.insights.currentRetrievability}%`,
+          label: 'retention',
+          color: chartColors.memory.strong,
+        }}
+        rightStat={{
+          value: chartData.insights.criticalWords,
+          label: 'critical',
+          color: chartColors.memory.weak,
+          onPress: onStatPress ? () => onStatPress('needsAttention') : undefined,
+        }}
+        legendItems={[
+          {
+            type: 'line',
+            color: chartColors.ui.dataLine,
+            label: 'Memory retention',
+          },
+        ]}
+        timeRange="Next 14 days"
+        contentHeight={GRAPH_HEIGHT_LARGE}
+        emptyStateText="Study words to see memory tracking"
+      >
+        <ChartCanvas
+          dataPoints={dataPoints}
+          enableTooltips={true}
+          accessibilityLabel="Memory retention forecast showing expected retention over the next 14 days"
+        >
+          {/* Memory zones background */}
+          <Group>
+            {chartData.dangerZones.map((zone, index) => (
+              <Rect
+                key={`memory-zone-${index}`}
+                x={0}
+                y={zone.y}
+                width={GRAPH_WIDTH}
+                height={zone.height}
+                color={chartColors.withOpacity(zone.color, 0.12)}
+              />
+            ))}
+          </Group>
 
-          <StatsRow
-            leftStat={{
-              value: `${chartData.insights.currentRetrievability}%`,
-              label: 'remembered',
-              color: chartColors.getRetrievabilityColor(
-                chartData.insights.currentRetrievability / 100
-              ),
-            }}
-            rightStat={{
-              value: chartData.insights.criticalWords,
-              label: 'fading',
-              color:
-                chartData.insights.criticalWords > 5
-                  ? chartColors.memory.weak
-                  : chartColors.memory.strong,
-              onPress:
-                onStatPress && chartData.insights.criticalWords > 0
-                  ? () => onStatPress('needsAttention')
-                  : undefined,
-            }}
-          />
+          {/* Critical threshold line */}
+          <Group>
+            <Rect
+              x={0}
+              y={
+                GRAPH_HEIGHT_LARGE -
+                ((CRITICAL_RETRIEVABILITY_THRESHOLD * 100) / 100) * GRAPH_HEIGHT_LARGE
+              }
+              width={GRAPH_WIDTH}
+              height={1}
+              color={chartColors.withOpacity(chartColors.memory.weak, 0.5)}
+            />
+          </Group>
 
-          {/* Enhanced Retrievability Graph */}
-          <View style={styles.graphContainer}>
-            <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_LARGE }}>
-              {/* Memory zones background - more prominent */}
-              <Group>
-                {chartData.dangerZones.map((zone, index) => (
-                  <Group key={`zone-group-${index}`}>
-                    {/* Zone background */}
-                    <Rect
-                      x={0}
-                      y={zone.y}
-                      width={GRAPH_WIDTH}
-                      height={zone.height}
-                      color={chartColors.withOpacity(zone.color, 0.12)}
-                    />
-                  </Group>
-                ))}
-              </Group>
-
-              {/* Grid lines - prominent for better 14-day indication */}
-              <Group>
-                {/* Vertical grid lines for 14-day indication */}
-                <Group>
-                  {/* Vertical grid lines for each day */}
-                  {retrievabilityData.map((_, index) => {
-                    const x = (index / Math.max(1, retrievabilityData.length - 1)) * GRAPH_WIDTH;
-                    return (
-                      <Rect
-                        key={`day-grid-${index}`}
-                        x={x - 0.5}
-                        y={0}
-                        width={1}
-                        height={GRAPH_HEIGHT_LARGE}
-                        color={chartColors.withOpacity(chartColors.ui.border, 0.12)}
-                      />
-                    );
-                  })}
-                </Group>
-              </Group>
-
-              {/* Area fill under the retrievability line with gradient */}
-              <Group>
-                {chartData.smoothPath && (
-                  <Path
-                    path={createAreaFillPath(chartData.smoothPath, GRAPH_WIDTH, GRAPH_HEIGHT_LARGE)}
-                  >
-                    <LinearGradient
-                      start={vec(0, 0)}
-                      end={vec(0, GRAPH_HEIGHT_LARGE)}
-                      colors={chartColors.getAreaFillGradient('retrievability')}
-                      positions={[0, 0.35, 0.75, 1]}
-                    />
-                  </Path>
+          {/* Area fill under the retrievability line */}
+          <Group>
+            {chartData.retrievabilityPath && (
+              <Path
+                path={createAreaFillPath(
+                  chartData.retrievabilityPath,
+                  GRAPH_WIDTH,
+                  GRAPH_HEIGHT_LARGE
                 )}
-              </Group>
+              >
+                <LinearGradient
+                  start={vec(0, 0)}
+                  end={vec(0, GRAPH_HEIGHT_LARGE)}
+                  colors={chartColors.getAreaFillGradient('retrievability')}
+                  positions={[0, 0.3, 0.7, 1]}
+                />
+              </Path>
+            )}
+          </Group>
 
-              {/* Retrievability line */}
-              <Group>
-                {chartData.smoothPath && (
-                  <Path
-                    path={chartData.smoothPath}
-                    style="stroke"
-                    strokeWidth={3}
-                    strokeCap="round"
-                    strokeJoin="round"
-                    color={chartColors.ui.dataLine}
-                  />
-                )}
+          {/* Main retrievability line */}
+          <Group>
+            <Path
+              path={chartData.retrievabilityPath}
+              style="stroke"
+              strokeWidth={3}
+              strokeCap="round"
+              strokeJoin="round"
+              color={chartColors.ui.dataLine}
+            />
 
-                {/* Data points for forecast visualization with enhanced styling */}
-                {chartData.dataPoints.map((point, index) => {
-                  const data = retrievabilityData[index];
-                  if (!data || data.wordCount === 0) return null;
-
-                  // Show different styling for current day vs forecast
-                  const isToday = index === 0;
-                  const glowOpacity = isToday ? 0.6 : 0.3;
-
-                  return (
-                    <Group key={`retrievability-point-${index}`}>
-                      {/* Subtle glow ring */}
-                      <Circle
-                        cx={point.x}
-                        cy={point.y}
-                        r={isToday ? 7 : 6}
-                        color={chartColors.withOpacity(chartColors.ui.dataLine, glowOpacity)}
-                      />
-                      {/* Main data point */}
-                      <Circle
-                        cx={point.x}
-                        cy={point.y}
-                        r={isToday ? 5 : 4}
-                        color={chartColors.ui.dataLine}
-                      />
-                    </Group>
-                  );
-                })}
-              </Group>
-            </Canvas>
-
-            {/* Interactive data point overlays */}
+            {/* Data points with enhanced styling */}
             {chartData.dataPoints.map((point, index) => {
               const data = retrievabilityData[index];
               if (!data || data.wordCount === 0) return null;
 
-              const isToday = index === 0;
-              const dateLabel = isToday
-                ? 'Today'
-                : data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+              // Color code points based on criticality
+              const pointColor =
+                point.retrievability < CRITICAL_RETRIEVABILITY_THRESHOLD * 100
+                  ? chartColors.memory.weak
+                  : point.retrievability < 85
+                    ? chartColors.memory.fading
+                    : chartColors.memory.strong;
 
               return (
-                <DataPointOverlay
-                  key={`data-point-${index}`}
-                  x={point.x}
-                  y={point.y}
-                  value={`${Math.round(point.retrievability)}%`}
-                  label={dateLabel}
-                  onPress={showTooltip}
-                  accessibilityLabel={`Data point: ${Math.round(point.retrievability)}% retention on ${dateLabel}`}
-                />
+                <Group key={`retrievability-point-${index}`}>
+                  {/* Subtle glow ring */}
+                  <Circle
+                    cx={point.x}
+                    cy={point.y}
+                    r={6}
+                    color={chartColors.withOpacity(pointColor, 0.3)}
+                  />
+                  {/* Main data point */}
+                  <Circle cx={point.x} cy={point.y} r={4} color={pointColor} />
+                </Group>
               );
             })}
-
-            {/* Reusable tooltip component */}
-            <ChartTooltip tooltip={tooltip} maxWidth={GRAPH_WIDTH} />
-          </View>
-
-          <ChartFooter
-            legendItems={[
-              {
-                type: 'line',
-                color: chartColors.ui.dataLine,
-                label: 'Retention',
-              },
-            ]}
-            timeRange="Next 14 days"
-          />
-        </View>
-      </BaseCard>
+          </Group>
+        </ChartCanvas>
+      </BaseChart>
     );
   }
 );
 
 RetrievabilityChart.displayName = 'RetrievabilityChart';
-
-const styles = StyleSheet.create({
-  retrievabilityContent: {
-    padding: CHART_LAYOUT.CONTENT_PADDING,
-  },
-  graphContainer: {
-    height: GRAPH_HEIGHT_LARGE,
-    marginBottom: CHART_LAYOUT.ELEMENT_SPACING,
-    marginHorizontal: CHART_LAYOUT.GRAPH_MARGIN_HORIZONTAL,
-    paddingVertical: CHART_LAYOUT.GRAPH_MARGIN_VERTICAL,
-  },
-});
