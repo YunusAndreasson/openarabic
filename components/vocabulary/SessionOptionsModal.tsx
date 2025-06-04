@@ -230,7 +230,7 @@ export default memo(function SessionOptionsModal({
                           <Ionicons
                             name="chevron-forward"
                             size={16}
-                            color={option.disabled ? colors.textTertiary : colors.textSecondary}
+                            color={option.disabled ? colors.textTertiary : colors.secondaryText}
                           />
                         </View>
                       </View>
