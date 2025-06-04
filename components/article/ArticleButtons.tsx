@@ -66,12 +66,12 @@ const styles = StyleSheet.create({
   buttonShadow: {
     ...Platform.select({
       ios: {
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: LAYOUT.OPACITY.LIGHT,
-        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: LAYOUT.OPACITY.XLIGHT,
+        shadowRadius: 2,
       },
       android: {
-        elevation: LAYOUT.ELEVATION.SMALL,
+        elevation: 1,
       },
     }),
   },
@@ -110,20 +110,17 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
     borderWidth: 0,
   };
 
-  // Semi-transparent overlay for better contrast
+  // More subtle semi-transparent overlay to reduce visual prominence
   const overlayStyle = {
     backgroundColor: isDarkMode
-      ? 'rgba(26, 33, 27, 0.25)' // Much more transparent dark overlay
-      : 'rgba(253, 254, 253, 0.35)', // Much more transparent light overlay
+      ? 'rgba(26, 33, 27, 0.12)' // Much more transparent dark overlay
+      : 'rgba(253, 254, 253, 0.18)', // Much more transparent light overlay
   };
 
-  // Icon color with better contrast and subtle shadow
-  const iconColor = colors.text;
-  const iconShadowStyle = {
-    textShadowColor: isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(42, 52, 65, 0.6)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  };
+  // More subtle icon color with reduced contrast for better text focus
+  const iconColor = isDarkMode
+    ? 'rgba(255, 255, 255, 0.75)' // Slightly transparent white in dark mode
+    : 'rgba(60, 60, 67, 0.75)'; // Slightly transparent dark in light mode
 
   const shadowColorStyle = Platform.OS === 'ios' ? { shadowColor: colors.shadow } : {};
 
@@ -135,18 +132,18 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
     size: number;
   }) => (
     <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-      {/* Shadow layer */}
+      {/* More subtle shadow layer */}
       <Ionicons
         name={name}
         size={size}
-        color={isDarkMode ? 'rgba(0, 0, 0, 0.8)' : 'rgba(42, 52, 65, 0.6)'}
+        color={isDarkMode ? 'rgba(0, 0, 0, 0.4)' : 'rgba(42, 52, 65, 0.3)'}
         style={{
           position: 'absolute',
-          top: 1,
+          top: 0.5,
           left: 0,
         }}
       />
-      {/* Main icon */}
+      {/* Main icon with reduced opacity */}
       <Ionicons name={name} size={size} color={iconColor} />
     </View>
   );
@@ -154,7 +151,7 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
   const ButtonWrapper = ({ children, style }: { children: React.ReactNode; style?: ViewStyle }) => (
     <View style={[style, blurButtonStyle, styles.buttonShadow, shadowColorStyle]}>
       <BlurView
-        intensity={isDarkMode ? 35 : 25}
+        intensity={isDarkMode ? 20 : 15} // Reduced blur intensity for more transparency
         tint={isDarkMode ? 'dark' : 'light'}
         style={styles.blurContainer}
       />
