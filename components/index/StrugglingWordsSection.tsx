@@ -1,7 +1,13 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useState, useCallback } from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { State } from 'ts-fsrs';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 
 import BaseCard from '@/components/BaseCard';
 import SectionTitle from '@/components/SectionTitle';
@@ -22,7 +28,8 @@ interface StrugglingWordsProps {
 
 interface WordCardProps {
   word: StudyWord;
-  onPlayAudio: (url: string | null, englishUrl?: string | null) => void;
+  onPlayAudio: (url: string | null, englishUrl?: string | null, wordId?: string) => void;
+  isPlaying: boolean;
 }
 
 interface DifficultyInfo {
@@ -30,6 +37,7 @@ interface DifficultyInfo {
   color: string;
   icon: any; // Using 'any' type to match original implementation
   label: string;
+  backgroundColor: string;
 }
 
 // Difficulty categories with minimal information
@@ -116,26 +124,78 @@ const calculateWordDifficulty = (
   const categoryIndex = Math.min(Math.max(0, level - 1), DIFFICULTY_CATEGORIES.length - 1);
   const category = DIFFICULTY_CATEGORIES[categoryIndex];
 
-  // Color based on difficulty
-  let color;
-  if (level === 5) color = colors.error;
-  else if (level === 4)
-    color = colors.warning; // Pure warning color for level 4
-  else if (level === 3)
-    color = colors.warning; // Use pure warning color for consistency
-  else if (level === 2) color = colors.info;
-  else color = colors.success;
+  // Color based on difficulty with background variants
+  let color, backgroundColor;
+  if (level === 5) {
+    color = colors.error;
+    backgroundColor = colors.error + '10';
+  } else if (level === 4) {
+    color = colors.warning;
+    backgroundColor = colors.warning + '10';
+  } else if (level === 3) {
+    color = colors.warning;
+    backgroundColor = colors.warning + '08';
+  } else if (level === 2) {
+    color = colors.info;
+    backgroundColor = colors.info + '10';
+  } else {
+    color = colors.success;
+    backgroundColor = colors.success + '10';
+  }
 
   return {
     level,
     color,
+    backgroundColor,
     icon: category?.icon || 'sync',
     label: category?.label || 'Review soon',
   };
 };
 
-const WordCard = memo(({ word, onPlayAudio }: WordCardProps) => {
+// Animated Sound Wave Component
+const SoundWave = memo(({ isPlaying, color }: { isPlaying: boolean; color: string }) => {
+  const scale1 = useSharedValue(0.3);
+  const scale2 = useSharedValue(0.5);
+  const scale3 = useSharedValue(0.7);
+
+  React.useEffect(() => {
+    if (isPlaying) {
+      scale1.value = withRepeat(withTiming(1, { duration: 400 }), -1, true);
+      scale2.value = withRepeat(withTiming(1, { duration: 500 }), -1, true);
+      scale3.value = withRepeat(withTiming(1, { duration: 600 }), -1, true);
+    } else {
+      scale1.value = withTiming(0.3, { duration: 200 });
+      scale2.value = withTiming(0.5, { duration: 200 });
+      scale3.value = withTiming(0.7, { duration: 200 });
+    }
+  }, [isPlaying]);
+
+  const wave1Style = useAnimatedStyle(() => ({
+    transform: [{ scaleY: scale1.value }],
+  }));
+
+  const wave2Style = useAnimatedStyle(() => ({
+    transform: [{ scaleY: scale2.value }],
+  }));
+
+  const wave3Style = useAnimatedStyle(() => ({
+    transform: [{ scaleY: scale3.value }],
+  }));
+
+  return (
+    <View style={styles.soundWaveContainer}>
+      <Animated.View style={[styles.soundWave, { backgroundColor: color }, wave1Style]} />
+      <Animated.View style={[styles.soundWave, { backgroundColor: color }, wave2Style]} />
+      <Animated.View style={[styles.soundWave, { backgroundColor: color }, wave3Style]} />
+    </View>
+  );
+});
+
+SoundWave.displayName = 'SoundWave';
+
+const WordCard = memo(({ word, onPlayAudio, isPlaying }: WordCardProps) => {
   const colors = useColors();
+  const pressOpacity = useSharedValue(1);
 
   // Get the Arabic text from the root
   const arabicText = word.root?.letters || '';
@@ -145,56 +205,95 @@ const WordCard = memo(({ word, onPlayAudio }: WordCardProps) => {
   // Calculate difficulty info
   const difficultyInfo = calculateWordDifficulty(word, colors);
 
-  const handlePress = () => {
+  const handlePressIn = useCallback(() => {
+    pressOpacity.value = withTiming(0.7, {
+      duration: 100,
+    });
+  }, []);
+
+  const handlePressOut = useCallback(() => {
+    pressOpacity.value = withTiming(1, {
+      duration: 150,
+    });
+  }, []);
+
+  const handlePress = useCallback(() => {
     lightFeedback();
     // Play both Arabic and English audio from the root if available
     if (word.root?.audio_url || word.root?.audio_url_en) {
-      onPlayAudio(word.root.audio_url, word.root.audio_url_en);
+      onPlayAudio(word.root.audio_url, word.root.audio_url_en, `word-${word.root_id}`);
     }
-  };
+  }, [word, onPlayAudio]);
+
+  const pressStyle = useAnimatedStyle(() => ({
+    opacity: pressOpacity.value,
+  }));
 
   return (
-    <TouchableOpacity
-      onPress={handlePress}
-      activeOpacity={0.75}
-      accessibilityRole="button"
-      accessibilityLabel={`Practice word: ${arabicText}, meaning: ${englishText}`}
-      accessibilityHint="Tap to hear pronunciation"
-    >
-      <BaseCard style={styles.wordCard} shadowSize="small">
-        <View style={styles.wordCardContent}>
-          <ThemedText
-            type="arabic"
-            style={styles.arabicText}
-            arabicFontSize={26}
-            colorName="arabicText"
-          >
-            {arabicText}
-          </ThemedText>
+    <View style={styles.cardContainer}>
+      <TouchableOpacity
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={1}
+        style={styles.touchableArea}
+        accessibilityRole="button"
+        accessibilityLabel={`Practice word: ${arabicText}, meaning: ${englishText}`}
+        accessibilityHint="Tap to hear pronunciation"
+      >
+        <Animated.View style={pressStyle}>
+          <BaseCard style={styles.wordCard} shadowSize="small">
+            {/* Inner border effect when playing - no layout impact */}
+            {isPlaying && (
+              <View style={[styles.innerBorder, { borderColor: difficultyInfo.color + '40' }]} />
+            )}
 
-          <ThemedText type="caption" colorName="textTertiary" style={styles.englishText}>
-            {englishText}
-          </ThemedText>
+            <View style={styles.wordCardContent}>
+              <ThemedText
+                type="arabic"
+                style={styles.arabicText}
+                arabicFontSize={26}
+                colorName="arabicText"
+              >
+                {arabicText}
+              </ThemedText>
 
-          {/* Minimal Difficulty Indicator */}
-          <View style={styles.difficultyContainer}>
-            <Ionicons
-              name={difficultyInfo.icon}
-              size={14}
-              color={difficultyInfo.color}
-              style={styles.difficultyIcon}
-            />
-            <ThemedText
-              type="caption"
-              style={[styles.difficultyText, { color: difficultyInfo.color }]}
-              skipDefaultColor
-            >
-              {difficultyInfo.label}
-            </ThemedText>
-          </View>
-        </View>
-      </BaseCard>
-    </TouchableOpacity>
+              <ThemedText type="caption" colorName="textTertiary" style={styles.englishText}>
+                {englishText}
+              </ThemedText>
+
+              {/* Enhanced Difficulty Indicator */}
+              <View
+                style={[
+                  styles.difficultyContainer,
+                  { backgroundColor: difficultyInfo.backgroundColor },
+                ]}
+              >
+                <View style={styles.difficultyContent}>
+                  {isPlaying ? (
+                    <SoundWave isPlaying={isPlaying} color={difficultyInfo.color} />
+                  ) : (
+                    <Ionicons
+                      name={difficultyInfo.icon}
+                      size={14}
+                      color={difficultyInfo.color}
+                      style={styles.difficultyIcon}
+                    />
+                  )}
+                  <ThemedText
+                    type="caption"
+                    style={[styles.difficultyText, { color: difficultyInfo.color }]}
+                    skipDefaultColor
+                  >
+                    {isPlaying ? 'Playing...' : difficultyInfo.label}
+                  </ThemedText>
+                </View>
+              </View>
+            </View>
+          </BaseCard>
+        </Animated.View>
+      </TouchableOpacity>
+    </View>
   );
 });
 
@@ -204,23 +303,38 @@ const StrugglingWordsSection = memo(({ words = [], isLoading = false }: Struggli
   const displayedWords = useMemo(() => words.slice(0, 10), [words]);
   const { playAudio } = useSimpleAudioPlayer();
   const colors = useColors();
+  const [playingWordId, setPlayingWordId] = useState<string | null>(null);
 
   // Enhanced audio play function that plays both Arabic and English
-  const playWordAudio = async (arabicUrl: string | null, englishUrl?: string | null) => {
-    if (arabicUrl) {
-      await playAudio(arabicUrl);
-
-      // Play English audio after a minimal delay if available
-      if (englishUrl) {
-        setTimeout(() => {
-          playAudio(englishUrl);
-        }, AUDIO_DELAY_BETWEEN_LANGUAGES); // Minimal delay for immediate English playback
+  const playWordAudio = useCallback(
+    async (arabicUrl: string | null, englishUrl?: string | null, wordId?: string) => {
+      if (wordId) {
+        setPlayingWordId(wordId);
       }
-    } else if (englishUrl) {
-      // Fallback to just English if no Arabic
-      await playAudio(englishUrl);
-    }
-  };
+
+      if (arabicUrl) {
+        await playAudio(arabicUrl);
+
+        // Play English audio after a minimal delay if available
+        if (englishUrl) {
+          setTimeout(() => {
+            playAudio(englishUrl);
+          }, AUDIO_DELAY_BETWEEN_LANGUAGES);
+        }
+      } else if (englishUrl) {
+        // Fallback to just English if no Arabic
+        await playAudio(englishUrl);
+      }
+
+      // Clear playing state after audio duration (estimate 2-3 seconds)
+      if (wordId) {
+        setTimeout(() => {
+          setPlayingWordId(null);
+        }, 2500);
+      }
+    },
+    [playAudio]
+  );
 
   if (isLoading) {
     return (
@@ -254,7 +368,12 @@ const StrugglingWordsSection = memo(({ words = [], isLoading = false }: Struggli
         contentContainerStyle={styles.scrollContent}
       >
         {displayedWords.map(word => (
-          <WordCard key={`word-${word.root_id}`} word={word} onPlayAudio={playWordAudio} />
+          <WordCard
+            key={`word-${word.root_id}`}
+            word={word}
+            onPlayAudio={playWordAudio}
+            isPlaying={playingWordId === `word-${word.root_id}`}
+          />
         ))}
       </ScrollView>
     </View>
@@ -270,9 +389,26 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingRight: LAYOUT.SPACING.MEDIUM,
   },
-  wordCard: {
+  cardContainer: {
     width: 145,
     marginRight: LAYOUT.SPACING.MEDIUM,
+    position: 'relative',
+  },
+  touchableArea: {
+    flex: 1,
+  },
+  wordCard: {
+    width: '100%',
+  },
+  innerBorder: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderWidth: 2,
+    borderRadius: 12,
+    pointerEvents: 'none', // Ensure it doesn't interfere with touch events
   },
   wordCardContent: {
     padding: LAYOUT.SPACING.MEDIUM,
@@ -288,11 +424,15 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.SMALL,
   },
   difficultyContainer: {
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginTop: LAYOUT.SPACING.MICRO,
+  },
+  difficultyContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: LAYOUT.SPACING.MICRO,
-    opacity: 0.9,
   },
   difficultyIcon: {
     marginRight: 4,
@@ -301,6 +441,20 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     textAlign: 'center',
     fontWeight: '600',
+  },
+  soundWaveContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 6,
+    width: 16,
+    height: 14,
+  },
+  soundWave: {
+    width: 2,
+    height: 14,
+    marginHorizontal: 1,
+    borderRadius: 1,
   },
   loadingContainer: {
     height: 100,
