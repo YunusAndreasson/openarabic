@@ -11,9 +11,9 @@ import { PERFORMANCE_THRESHOLDS } from './constants';
 // Standardized terminology
 export const CHART_LABELS = {
   // Performance metrics - with clear time indicators for zero confusion
-  STRENGTH: 'recent strength', // Latest from 14-day progression
+  STRENGTH: 'recent strength', // Latest from 7-day progression
   RETENTION: "today's retention", // Today's memory forecast
-  SPEED: 'recent learning speed', // Latest from 14-day efficiency data
+  SPEED: 'recent learning speed', // Latest from 7-day efficiency data
   DIFFICULTY: 'overall challenge level', // Analysis across all words
 
   // Word categories
@@ -278,11 +278,4 @@ export const EMPTY_STATE_MESSAGES = {
   retrievability: 'Review words to monitor retention',
   difficulty: 'Study words to identify challenge levels',
   general: 'Study words to see your progress',
-} as const;
-
-// Standardized error messages
-export const ERROR_MESSAGES = {
-  loadError: 'Unable to load chart data',
-  noData: 'No data available',
-  processingError: 'Error processing data',
 } as const;

@@ -1,14 +1,15 @@
-import React, { memo, ReactNode } from 'react';
+import React, { memo, type ReactNode } from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
 
 import BaseCard from '../../BaseCard';
 import { ThemedText } from '../../ThemedText';
+import { LAYOUT } from '@/constants/layout';
+import { useColors } from '@/hooks/useColors';
+
 import { CardHeader } from './CardHeader';
 import { StatsRow } from './StatsRow';
 import { ChartFooter } from './ChartFooter';
 import { CHART_LAYOUT } from './constants';
-import { useColors } from '@/hooks/useColors';
-import type { StatCategory } from '@/types/vocabulary.types';
 
 export interface LegendItemProps {
   type: 'bar' | 'line' | 'area' | 'dot';
@@ -48,10 +49,6 @@ interface BaseChartProps {
   contentHeight?: number;
   emptyStateText?: string;
   errorText?: string;
-
-  // Animation props
-  enableAnimation?: boolean;
-  animationDelay?: number;
 }
 
 /**
@@ -72,11 +69,9 @@ export const BaseChart = memo(
     rightStat,
     legendItems,
     timeRange,
-    contentHeight = 140, // Default chart height
+    contentHeight = 180, // Updated to match increased graph height
     emptyStateText = 'Study words to see your progress',
     errorText = 'Unable to load chart data',
-    enableAnimation = false,
-    animationDelay = 0,
   }: BaseChartProps) => {
     const colors = useColors();
 
@@ -151,21 +146,7 @@ export const BaseChart = memo(
           )}
 
           {/* Chart Content */}
-          {!isLoading && (
-            <View
-              style={[
-                styles.chartSection,
-                // Subtle background for better chart separation
-                {
-                  backgroundColor: colors.background + '40',
-                  borderRadius: 8,
-                  overflow: 'hidden',
-                },
-              ]}
-            >
-              {children}
-            </View>
-          )}
+          {!isLoading && <View style={styles.chartSection}>{children}</View>}
 
           {/* Footer Section */}
           {legendItems && timeRange && !isLoading && (
@@ -186,48 +167,50 @@ const styles = StyleSheet.create({
     padding: CHART_LAYOUT.CONTENT_PADDING,
   },
   headerSection: {
-    marginBottom: CHART_LAYOUT.ELEMENT_SPACING * 0.75, // Tighter spacing
+    marginBottom: CHART_LAYOUT.ELEMENT_SPACING, // 16px - good separation from title
   },
   statsSection: {
-    marginBottom: CHART_LAYOUT.ELEMENT_SPACING,
+    marginBottom: CHART_LAYOUT.ELEMENT_SPACING * 0.75, // Reduced from 1.25x to 0.75x (12px)
+    paddingHorizontal: CHART_LAYOUT.ELEMENT_SPACING * 0.25, // Gentle horizontal grouping
+    paddingVertical: CHART_LAYOUT.ELEMENT_SPACING * 0.25, // Reduced vertical padding (4px)
   },
   chartSection: {
     position: 'relative',
-    // Enhanced visual separation
-    marginVertical: CHART_LAYOUT.ELEMENT_SPACING / 2,
+    // Tighter spacing for better stats-chart proximity
+    marginVertical: CHART_LAYOUT.ELEMENT_SPACING * 0.5, // Reduced from 0.75x to 0.5x (8px)
+    paddingVertical: CHART_LAYOUT.ELEMENT_SPACING * 0.25, // Reduced internal padding (4px)
   },
   footerSection: {
-    marginTop: CHART_LAYOUT.ELEMENT_SPACING / 2,
+    marginTop: CHART_LAYOUT.ELEMENT_SPACING * 0.75, // Slightly reduced (12px)
+    paddingTop: CHART_LAYOUT.ELEMENT_SPACING * 0.25,
   },
   emptyState: {
     justifyContent: 'center',
     alignItems: 'center',
-    // Better visual hierarchy
-    paddingHorizontal: CHART_LAYOUT.ELEMENT_SPACING,
+    paddingHorizontal: CHART_LAYOUT.ELEMENT_SPACING * 1.5,
+    paddingVertical: CHART_LAYOUT.ELEMENT_SPACING,
   },
   loadingState: {
     justifyContent: 'center',
     alignItems: 'center',
-    // Better visual hierarchy
-    paddingHorizontal: CHART_LAYOUT.ELEMENT_SPACING,
+    paddingHorizontal: CHART_LAYOUT.ELEMENT_SPACING * 1.5,
+    paddingVertical: CHART_LAYOUT.ELEMENT_SPACING,
   },
   loadingIndicator: {
-    marginBottom: CHART_LAYOUT.ELEMENT_SPACING / 2,
+    marginBottom: CHART_LAYOUT.ELEMENT_SPACING,
   },
   emptyText: {
     fontSize: 14,
     textAlign: 'center',
-    lineHeight: 20,
-    // Better typography
-    letterSpacing: 0.1,
-    opacity: 0.8,
+    lineHeight: 22,
+    letterSpacing: 0.2,
+    opacity: 0.75,
   },
   loadingText: {
     fontSize: 12,
     textAlign: 'center',
-    lineHeight: 16,
-    // Better typography
-    letterSpacing: 0.1,
-    opacity: 0.7,
+    lineHeight: 18,
+    letterSpacing: 0.15,
+    opacity: 0.65,
   },
 });

@@ -6,10 +6,10 @@ import { LAYOUT } from '@/constants/layout';
 export const SCREEN_WIDTH = Dimensions.get('window').width;
 export const GRAPH_WIDTH =
   SCREEN_WIDTH - LAYOUT.SCREEN_EDGE_PADDING * 2 - LAYOUT.CARD.PADDING.MEDIUM * 2;
-export const GRAPH_HEIGHT_LARGE = 140;
+export const GRAPH_HEIGHT_LARGE = 180; // Increased from 140px for better visual prominence
 
-// Time periods
-export const DAYS_14 = 14;
+// Time periods - optimized for mobile clarity and user comprehension
+export const DAYS_7 = 7; // Weekly view for better mobile experience and cognitive load
 
 // FSRS thresholds - aligned with FSRS algorithm standards
 export const MASTERY_STABILITY_THRESHOLD = 5; // Days - minimum stability for mastery
@@ -33,10 +33,6 @@ export const FSRS_DIFFICULTY_THRESHOLDS = {
 export const CHART_LAYOUT = {
   // Card content padding - consistent across all charts
   CONTENT_PADDING: LAYOUT.CARD.PADDING.MEDIUM, // 12px
-
-  // Graph container margins - eliminates conflicting margins
-  GRAPH_MARGIN_HORIZONTAL: 0, // No horizontal margin for perfect alignment
-  GRAPH_MARGIN_VERTICAL: LAYOUT.SPACING.SMALL, // 8px top/bottom
 
   // Chart spacing within cards
   ELEMENT_SPACING: LAYOUT.SPACING.LARGE, // 16px between major elements

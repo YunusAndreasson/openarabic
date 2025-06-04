@@ -1,4 +1,5 @@
 import React, { memo, useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { Path, Circle, Group, Skia, Rect, LinearGradient, vec } from '@shopify/react-native-skia';
 
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
@@ -12,13 +13,16 @@ import {
 } from '../shared/utils';
 import { useChartColors } from '../shared/chartColors';
 import { BaseChart, ChartCanvas, type DataPoint } from '../shared';
-import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_14 } from '../shared/constants';
+import { ThemedText } from '../../ThemedText';
+import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_7 } from '../shared/constants';
 import {
   generateChartSubtitle,
   createStandardizedStats,
   CHART_LABELS,
   EMPTY_STATE_MESSAGES,
 } from '../shared/chartMessages';
+import { LAYOUT } from '@/constants/layout';
+import { useColors } from '@/hooks/useColors';
 
 interface EfficiencyChartProps {
   studyWords: StudyWord[];
@@ -37,10 +41,11 @@ export const EfficiencyChart = memo(
     onStatPress,
   }: EfficiencyChartProps) => {
     const chartColors = useChartColors();
+    const colors = useColors();
 
-    // Calculate efficiency data over the last 14 days
+    // Calculate efficiency data over the last 7 days
     const efficiencyData = useMemo(() => {
-      const dates = generateDateRange(DAYS_14);
+      const dates = generateDateRange(DAYS_7);
 
       return dates.map(date => {
         let totalEfficiency = 0;
@@ -127,8 +132,8 @@ export const EfficiencyChart = memo(
       }));
 
       // Calculate insights
-      const recent = efficiencyData.slice(-7).filter(d => d.wordCount > 0);
-      const older = efficiencyData.slice(-14, -7).filter(d => d.wordCount > 0);
+      const recent = efficiencyData.slice(-4); // Last 4 days for 7-day period
+      const older = efficiencyData.slice(-7, -4); // Previous 3 days for comparison
 
       const currentEfficiency = recent[recent.length - 1]?.averageEfficiency || 0;
       const recentAvg =
@@ -222,7 +227,7 @@ export const EfficiencyChart = memo(
         <ChartCanvas
           dataPoints={dataPoints}
           enableTooltips={true}
-          accessibilityLabel="Learning efficiency chart showing progress over the past 14 days"
+          accessibilityLabel="Learning efficiency chart showing progress over the past 7 days"
         >
           {/* Performance zones background */}
           <Group>
@@ -286,9 +291,68 @@ export const EfficiencyChart = memo(
             })}
           </Group>
         </ChartCanvas>
+
+        {/* Day labels for better context */}
+        <View style={styles.dayLabels}>
+          {chartData.dataPoints.map((point, index) => {
+            const data = efficiencyData[index];
+            if (!data) return null;
+
+            const dayName = data.date.toLocaleDateString('en-US', { weekday: 'short' });
+            return (
+              <View
+                key={`day-label-${index}`}
+                style={[
+                  styles.dayLabel,
+                  {
+                    left: point.x - 12, // Center under the data point
+                    width: 24,
+                  },
+                ]}
+              >
+                <ThemedText
+                  type="caption"
+                  variant="secondary"
+                  style={[
+                    styles.dayLabelText,
+                    {
+                      color: colors.secondaryText,
+                      opacity: 0.7,
+                    },
+                  ]}
+                >
+                  {dayName.slice(0, 1)} {/* First letter of day */}
+                </ThemedText>
+              </View>
+            );
+          })}
+        </View>
       </BaseChart>
     );
   }
 );
 
 EfficiencyChart.displayName = 'EfficiencyChart';
+
+const styles = StyleSheet.create({
+  dayLabels: {
+    position: 'relative',
+    height: 24,
+    marginTop: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.XSMALL,
+  },
+  dayLabel: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 20,
+    height: 20,
+  },
+  dayLabelText: {
+    fontSize: 10,
+    textAlign: 'center',
+    lineHeight: 14,
+    includeFontPadding: false,
+    fontWeight: '500',
+  },
+});

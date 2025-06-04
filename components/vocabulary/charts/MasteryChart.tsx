@@ -1,4 +1,5 @@
 import React, { memo, useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { Path, Circle, Group, Skia, Rect, LinearGradient, vec } from '@shopify/react-native-skia';
 
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
@@ -10,10 +11,11 @@ import {
 } from '../shared/utils';
 import { useChartColors } from '../shared/chartColors';
 import { BaseChart, ChartCanvas, type DataPoint } from '../shared';
+import { ThemedText } from '../../ThemedText';
 import {
   GRAPH_WIDTH,
   GRAPH_HEIGHT_LARGE,
-  DAYS_14,
+  DAYS_7,
   MASTERY_STABILITY_THRESHOLD,
 } from '../shared/constants';
 import {
@@ -22,6 +24,8 @@ import {
   CHART_LABELS,
   EMPTY_STATE_MESSAGES,
 } from '../shared/chartMessages';
+import { LAYOUT } from '@/constants/layout';
+import { useColors } from '@/hooks/useColors';
 
 interface MasteryChartProps {
   studyWords: StudyWord[];
@@ -33,13 +37,14 @@ interface MasteryChartProps {
 export const MasteryChart = memo(
   ({ studyWords = [], onInfoPress, onStatPress, hideTitle = false }: MasteryChartProps) => {
     const chartColors = useChartColors();
+    const colors = useColors();
 
     // Add top padding to prevent dots from being cut off
     const TOP_PADDING = 8; // Space for circle radius + shadow
 
-    // Calculate mastery progression over the last 14 days
+    // Calculate mastery progression over the last 7 days
     const masteryData = useMemo(() => {
-      const dates = generateDateRange(DAYS_14);
+      const dates = generateDateRange(DAYS_7);
 
       return dates.map(date => {
         let masteredCount = 0;
@@ -137,8 +142,8 @@ export const MasteryChart = memo(
         .filter(m => m.achieved);
 
       // Calculate insights with better trend analysis
-      const recent = masteryData.slice(-7);
-      const older = masteryData.slice(-14, -7);
+      const recent = masteryData.slice(-4); // Last 4 days for 7-day period
+      const older = masteryData.slice(-7, -4); // Previous 3 days for comparison
 
       const currentRate = recent[recent.length - 1]?.masteryRate || 0;
       const recentAvg =
@@ -244,7 +249,7 @@ export const MasteryChart = memo(
         <ChartCanvas
           dataPoints={dataPoints}
           enableTooltips={true}
-          accessibilityLabel="Mastery progression chart showing learning progress over the past 14 days"
+          accessibilityLabel="Mastery progression chart showing learning progress over the past 7 days"
         >
           {/* Standardized performance zones background */}
           <Group>
@@ -334,9 +339,68 @@ export const MasteryChart = memo(
             ))}
           </Group>
         </ChartCanvas>
+
+        {/* Day labels for better context */}
+        <View style={styles.dayLabels}>
+          {chartData.dataPoints.map((point, index) => {
+            const data = masteryData[index];
+            if (!data) return null;
+
+            const dayName = data.date.toLocaleDateString('en-US', { weekday: 'short' });
+            return (
+              <View
+                key={`day-label-${index}`}
+                style={[
+                  styles.dayLabel,
+                  {
+                    left: point.x - 12, // Center under the data point
+                    width: 24,
+                  },
+                ]}
+              >
+                <ThemedText
+                  type="caption"
+                  variant="secondary"
+                  style={[
+                    styles.dayLabelText,
+                    {
+                      color: colors.secondaryText,
+                      opacity: 0.7,
+                    },
+                  ]}
+                >
+                  {dayName.slice(0, 1)} {/* First letter of day */}
+                </ThemedText>
+              </View>
+            );
+          })}
+        </View>
       </BaseChart>
     );
   }
 );
 
 MasteryChart.displayName = 'MasteryChart';
+
+const styles = StyleSheet.create({
+  dayLabels: {
+    position: 'relative',
+    height: 24,
+    marginTop: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.XSMALL,
+  },
+  dayLabel: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 20,
+    height: 20,
+  },
+  dayLabelText: {
+    fontSize: 10,
+    textAlign: 'center',
+    lineHeight: 14,
+    includeFontPadding: false,
+    fontWeight: '500',
+  },
+});

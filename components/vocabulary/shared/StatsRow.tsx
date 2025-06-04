@@ -108,17 +108,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.XSMALL,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.XSMALL,
   },
   progressStat: {
     alignItems: 'flex-start',
     flex: 1,
+    minHeight: 48,
   },
   statValueRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: LAYOUT.SPACING.XSMALL,
+    minHeight: 24,
   },
   tappableStat: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
@@ -130,6 +132,7 @@ const styles = StyleSheet.create({
   progressValue: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.1,
     includeFontPadding: false,
+    marginBottom: 2,
   },
   chevronIcon: {
     marginLeft: LAYOUT.SPACING.SMALL,
@@ -138,11 +141,12 @@ const styles = StyleSheet.create({
   progressLabel: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.4,
     includeFontPadding: false,
+    marginTop: 1,
   },
   statsSeparator: {
     width: 1,
-    height: 20,
+    height: 32,
     backgroundColor: 'transparent',
-    marginHorizontal: LAYOUT.SPACING.MEDIUM,
+    marginHorizontal: LAYOUT.SPACING.LARGE,
   },
 });

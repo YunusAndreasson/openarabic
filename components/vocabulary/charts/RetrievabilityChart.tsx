@@ -1,4 +1,5 @@
 import React, { memo, useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { Path, Circle, Group, Skia, Rect, LinearGradient, vec } from '@shopify/react-native-skia';
 
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
@@ -10,10 +11,11 @@ import {
 } from '../shared/utils';
 import { useChartColors } from '../shared/chartColors';
 import { BaseChart, ChartCanvas, type DataPoint } from '../shared';
+import { ThemedText } from '../../ThemedText';
 import {
   GRAPH_WIDTH,
   GRAPH_HEIGHT_LARGE,
-  DAYS_14,
+  DAYS_7,
   CRITICAL_RETRIEVABILITY_THRESHOLD,
 } from '../shared/constants';
 import {
@@ -22,6 +24,8 @@ import {
   CHART_LABELS,
   EMPTY_STATE_MESSAGES,
 } from '../shared/chartMessages';
+import { LAYOUT } from '@/constants/layout';
+import { useColors } from '@/hooks/useColors';
 
 interface RetrievabilityChartProps {
   studyWords: StudyWord[];
@@ -33,14 +37,15 @@ interface RetrievabilityChartProps {
 export const RetrievabilityChart = memo(
   ({ studyWords = [], onInfoPress, onStatPress, hideTitle = false }: RetrievabilityChartProps) => {
     const chartColors = useChartColors();
+    const colors = useColors();
 
-    // Calculate retrievability forecast over the next 14 days
+    // Calculate retrievability forecast over the next 7 days
     const retrievabilityData = useMemo(() => {
       const today = new Date();
       const dates: Date[] = [];
 
       // Generate future dates for forecast
-      for (let i = 0; i < DAYS_14; i++) {
+      for (let i = 0; i < DAYS_7; i++) {
         const date = new Date(today);
         date.setDate(today.getDate() + i);
         dates.push(date);
@@ -132,16 +137,16 @@ export const RetrievabilityChart = memo(
       );
 
       // Calculate insights
-      const week1 = retrievabilityData.slice(0, 7);
-      const week2 = retrievabilityData.slice(7, 14);
+      const firstHalf = retrievabilityData.slice(0, 4); // First 4 days
+      const secondHalf = retrievabilityData.slice(4, 7); // Last 3 days
 
       const currentRetrievability = retrievabilityData[0]?.averageRetrievability || 0;
-      const week1Avg =
-        week1.reduce((sum, day) => sum + day.averageRetrievability, 0) / week1.length;
-      const week2Avg =
-        week2.reduce((sum, day) => sum + day.averageRetrievability, 0) / week2.length;
+      const firstHalfAvg =
+        firstHalf.reduce((sum, day) => sum + day.averageRetrievability, 0) / firstHalf.length;
+      const secondHalfAvg =
+        secondHalf.reduce((sum, day) => sum + day.averageRetrievability, 0) / secondHalf.length;
 
-      const change = week1Avg - week2Avg;
+      const change = firstHalfAvg - secondHalfAvg;
       const trend = change > 3 ? 'improving' : change < -3 ? 'declining' : 'stable';
       const criticalWords = retrievabilityData[0]?.criticalWords || 0;
 
@@ -225,7 +230,7 @@ export const RetrievabilityChart = memo(
         <ChartCanvas
           dataPoints={dataPoints}
           enableTooltips={true}
-          accessibilityLabel="Memory retention forecast showing expected retention over the next 14 days"
+          accessibilityLabel="Memory retention forecast showing expected retention over the next 7 days"
         >
           {/* Performance zones background - same as other charts */}
           <Group>
@@ -293,9 +298,71 @@ export const RetrievabilityChart = memo(
             })}
           </Group>
         </ChartCanvas>
+
+        {/* Day labels for better context */}
+        <View style={styles.dayLabels}>
+          {chartData.dataPoints.map((point, index) => {
+            const data = retrievabilityData[index];
+            if (!data || data.wordCount === 0) return null;
+
+            const dayName = data.date.toLocaleDateString('en-US', { weekday: 'short' });
+            const isToday = index === 0;
+            return (
+              <View
+                key={`day-label-${index}`}
+                style={[
+                  styles.dayLabel,
+                  {
+                    left: point.x - 12, // Center under the data point
+                    width: 24,
+                  },
+                ]}
+              >
+                <ThemedText
+                  type="caption"
+                  variant="secondary"
+                  style={[
+                    styles.dayLabelText,
+                    {
+                      color: isToday ? colors.tint : colors.secondaryText,
+                      opacity: isToday ? 0.9 : 0.7,
+                      fontWeight: isToday ? '600' : '400',
+                    },
+                  ]}
+                >
+                  {isToday ? 'T' : dayName.slice(0, 1)}{' '}
+                  {/* 'T' for today, first letter for others */}
+                </ThemedText>
+              </View>
+            );
+          })}
+        </View>
       </BaseChart>
     );
   }
 );
 
 RetrievabilityChart.displayName = 'RetrievabilityChart';
+
+const styles = StyleSheet.create({
+  dayLabels: {
+    position: 'relative',
+    height: 24,
+    marginTop: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.XSMALL,
+  },
+  dayLabel: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 20,
+    height: 20,
+  },
+  dayLabelText: {
+    fontSize: 10,
+    textAlign: 'center',
+    lineHeight: 14,
+    includeFontPadding: false,
+    fontWeight: '500',
+  },
+});
