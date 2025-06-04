@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, View, Platform, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { ViewStyle } from 'react-native';
 
@@ -75,10 +74,6 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  blurContainer: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
   buttonOverlay: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
@@ -113,8 +108,8 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
   // More subtle semi-transparent overlay to reduce visual prominence
   const overlayStyle = {
     backgroundColor: isDarkMode
-      ? 'rgba(26, 33, 27, 0.12)' // Much more transparent dark overlay
-      : 'rgba(253, 254, 253, 0.18)', // Much more transparent light overlay
+      ? 'rgba(26, 33, 27, 0.18)' // Slightly increased opacity for better contrast without blur
+      : 'rgba(253, 254, 253, 0.25)', // Slightly increased opacity for better contrast without blur
   };
 
   // More subtle icon color with reduced contrast for better text focus
@@ -150,11 +145,6 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
 
   const ButtonWrapper = ({ children, style }: { children: React.ReactNode; style?: ViewStyle }) => (
     <View style={[style, blurButtonStyle, styles.buttonShadow, shadowColorStyle]}>
-      <BlurView
-        intensity={isDarkMode ? 20 : 15} // Reduced blur intensity for more transparency
-        tint={isDarkMode ? 'dark' : 'light'}
-        style={styles.blurContainer}
-      />
       <View style={[styles.buttonOverlay, overlayStyle]} />
       {children}
     </View>

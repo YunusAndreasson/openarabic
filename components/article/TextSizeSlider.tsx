@@ -6,7 +6,6 @@ import Animated, {
   withTiming,
   withSpring,
 } from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
 
 import { CustomSlider } from '@/components/Slider';
 import { ThemedText } from '@/components/ThemedText';
@@ -30,23 +29,32 @@ export const TextSizeSlider = memo<TextSizeSliderProps>(
   ({ isVisible, fontScale, onFontScaleChange, colors, isDarkMode }) => {
     const height = useSharedValue(0);
     const opacity = useSharedValue(0);
+    const scale = useSharedValue(0.95);
 
-    // Animate visibility
+    // Animate visibility with more prominent entrance
     React.useEffect(() => {
       if (isVisible) {
         height.value = withSpring(SLIDER_HEIGHT, {
-          damping: 20,
+          damping: 18,
+          stiffness: 220,
+        });
+        opacity.value = withTiming(1, { duration: 250 });
+        scale.value = withSpring(1, {
+          damping: 15,
           stiffness: 200,
         });
-        opacity.value = withTiming(1, { duration: ANIMATION_DURATION });
       } else {
         height.value = withSpring(0, {
           damping: 20,
           stiffness: 200,
         });
-        opacity.value = withTiming(0, { duration: ANIMATION_DURATION });
+        opacity.value = withTiming(0, { duration: 200 });
+        scale.value = withSpring(0.95, {
+          damping: 20,
+          stiffness: 200,
+        });
       }
-    }, [isVisible, height, opacity]);
+    }, [isVisible, height, opacity, scale]);
 
     const animatedContainerStyle = useAnimatedStyle(() => ({
       height: height.value,
@@ -54,14 +62,21 @@ export const TextSizeSlider = memo<TextSizeSliderProps>(
     }));
 
     const animatedContentStyle = useAnimatedStyle(() => ({
-      transform: [{ scale: opacity.value }],
+      transform: [{ scale: scale.value }],
     }));
 
     const overlayStyle = useMemo(
       () => ({
-        backgroundColor: isDarkMode ? 'rgba(26, 33, 27, 0.35)' : 'rgba(253, 254, 253, 0.45)',
+        backgroundColor: colors.card,
+        borderWidth: 1,
+        borderColor: colors.cardBorder,
+        shadowColor: colors.shadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
       }),
-      [isDarkMode]
+      [colors]
     );
 
     const handleFontScaleChange = (value: number) => {
@@ -76,11 +91,6 @@ export const TextSizeSlider = memo<TextSizeSliderProps>(
     return (
       <Animated.View style={[styles.container, animatedContainerStyle]}>
         <View style={styles.sliderWrapper}>
-          <BlurView
-            intensity={isDarkMode ? 40 : 30}
-            tint={isDarkMode ? 'dark' : 'light'}
-            style={styles.blurContainer}
-          />
           <View style={[styles.overlay, overlayStyle]} />
 
           <Animated.View style={[styles.content, animatedContentStyle]}>
@@ -124,10 +134,6 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
     flex: 1,
-  },
-  blurContainer: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,

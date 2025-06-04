@@ -50,18 +50,6 @@ const TYPOGRAPHY_REFINEMENTS = {
 
 // Accessibility and contrast improvements
 const ACCESSIBILITY_CONFIG = {
-  TEXT_SHADOW: {
-    LIGHT: {
-      offset: { width: 0, height: 2 },
-      radius: 4,
-      color: 'rgba(42, 52, 65, 0.4)', // Use theme primary color for shadows
-    },
-    DARK: {
-      offset: { width: 0, height: 2 },
-      radius: 6,
-      color: 'rgba(0, 0, 0, 0.7)', // Darker shadow for dark mode
-    },
-  },
   CONTRAST_OVERLAY: {
     LIGHT: 'rgba(42, 52, 65, 0.25)', // Use theme primary for overlay
     DARK: 'rgba(0, 0, 0, 0.4)',
@@ -126,36 +114,26 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
       () => ({
         title: {
           color: textColor,
-          marginBottom: LAYOUT.SPACING.TINY, // Tighter spacing to author
-          fontWeight: '700' as const,
-          fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE, // Reduced from HUGE (30px) to XXLARGE (24px) for better hierarchy
+          marginBottom: LAYOUT.SPACING.SMALL, // Increased spacing to author for better separation
+          fontWeight: '800' as const, // Increased from 700 for stronger title presence
+          fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE, // Restored to HUGE (28px) for proper hierarchy
           letterSpacing: TYPOGRAPHY_REFINEMENTS.TITLE.letterSpacing,
-          lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * TYPOGRAPHY_REFINEMENTS.TITLE.lineHeight,
-          // Enhanced accessibility
-          textShadowColor: ACCESSIBILITY_CONFIG.TEXT_SHADOW[isDarkMode ? 'DARK' : 'LIGHT'].color,
-          textShadowOffset: ACCESSIBILITY_CONFIG.TEXT_SHADOW[isDarkMode ? 'DARK' : 'LIGHT'].offset,
-          textShadowRadius: ACCESSIBILITY_CONFIG.TEXT_SHADOW[isDarkMode ? 'DARK' : 'LIGHT'].radius,
+          lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * TYPOGRAPHY_REFINEMENTS.TITLE.lineHeight,
         },
         author: {
           color: textColor,
           opacity: TYPOGRAPHY_REFINEMENTS.AUTHOR.opacity,
-          marginBottom: LAYOUT.SPACING.MEDIUM, // Increased spacing to separate from metadata
-          fontWeight: '500' as const, // Reduced from 600 for better hierarchy
-          fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // Increased from SMALL (12px) to MEDIUM (15px)
+          marginBottom: LAYOUT.SPACING.LARGE, // Increased spacing to metadata group
+          fontWeight: '600' as const, // Increased from 500 for better hierarchy
+          fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE, // Increased from MEDIUM (15px) to LARGE (17px)
           letterSpacing: TYPOGRAPHY_REFINEMENTS.AUTHOR.letterSpacing,
-          textShadowColor: ACCESSIBILITY_CONFIG.TEXT_SHADOW[isDarkMode ? 'DARK' : 'LIGHT'].color,
-          textShadowOffset: { width: 0, height: 1 },
-          textShadowRadius: isDarkMode ? 4 : 2,
         },
         metadataText: {
           color: textColor,
           opacity: TYPOGRAPHY_REFINEMENTS.METADATA.opacity,
           fontWeight: '500' as const,
-          fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // Explicit size for consistency
+          fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // Increased from SMALL (13px) to MEDIUM (15px)
           letterSpacing: TYPOGRAPHY_REFINEMENTS.METADATA.letterSpacing,
-          textShadowColor: ACCESSIBILITY_CONFIG.TEXT_SHADOW[isDarkMode ? 'DARK' : 'LIGHT'].color,
-          textShadowOffset: { width: 0, height: 1 },
-          textShadowRadius: isDarkMode ? 3 : 2,
         },
         metadataIcon: {
           color: textColor,
@@ -165,12 +143,10 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
         summary: {
           color: textColor,
           opacity: TYPOGRAPHY_REFINEMENTS.SUMMARY.opacity,
-          fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // Explicit size
-          lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+          fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE, // Increased from MEDIUM (15px) to LARGE (17px)
+          lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
           letterSpacing: TYPOGRAPHY_REFINEMENTS.SUMMARY.letterSpacing,
-          textShadowColor: ACCESSIBILITY_CONFIG.TEXT_SHADOW[isDarkMode ? 'DARK' : 'LIGHT'].color,
-          textShadowOffset: { width: 0, height: 1 },
-          textShadowRadius: isDarkMode ? 4 : 2,
+          fontWeight: '400' as const, // Added explicit weight for consistency
         },
       }),
       [isDarkMode, textColor]
@@ -415,7 +391,7 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
                 >
                   <Ionicons
                     name="folder-outline"
-                    size={14}
+                    size={16}
                     color={dynamicTextStyles.metadataIcon.color}
                     style={dynamicTextStyles.metadataIcon}
                   />
@@ -432,7 +408,7 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
               <Animated.View style={[styles.metadataItem, createMetadataItemStyle(1)]}>
                 <Ionicons
                   name="time-outline"
-                  size={13}
+                  size={15}
                   color={dynamicTextStyles.metadataIcon.color}
                   style={dynamicTextStyles.metadataIcon}
                 />
@@ -445,7 +421,7 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
               <Animated.View style={[styles.metadataItem, createMetadataItemStyle(2)]}>
                 <Ionicons
                   name="stats-chart-outline"
-                  size={13}
+                  size={15}
                   color={dynamicTextStyles.metadataIcon.color}
                   style={dynamicTextStyles.metadataIcon}
                 />
@@ -548,7 +524,7 @@ const styles = StyleSheet.create({
   categoryText: {
     fontWeight: '600' as const, // Stronger weight for visual hierarchy
     opacity: 0.95, // Highest opacity for primary importance
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1, // Slightly larger for emphasis
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + 1, // Slightly larger than other metadata (16px)
   },
   summaryGroup: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
