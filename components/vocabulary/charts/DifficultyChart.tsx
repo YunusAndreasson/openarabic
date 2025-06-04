@@ -16,6 +16,12 @@ import { BaseChart, ChartCanvas, type DataPoint } from '../shared';
 import { ThemedText } from '../../ThemedText';
 import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, FSRS_DIFFICULTY_THRESHOLDS } from '../shared/constants';
 import { useChartColors } from '../shared/chartColors';
+import {
+  generateChartSubtitle,
+  createStandardizedStats,
+  CHART_LABELS,
+  EMPTY_STATE_MESSAGES,
+} from '../shared/chartMessages';
 
 interface DifficultyChartProps {
   studyWords: StudyWord[];
@@ -46,7 +52,7 @@ export const DifficultyChart = memo(
     const colors = useColors();
     const chartColors = useChartColors();
 
-    // Calculate difficulty distribution
+    // Calculate difficulty distribution data with standardized categories
     const difficultyData = useMemo(() => {
       if (studyWords.length === 0) {
         return {
@@ -61,7 +67,7 @@ export const DifficultyChart = memo(
         };
       }
 
-      // Define difficulty buckets with FSRS-aligned thresholds
+      // Create buckets with standardized labels - using "struggling" consistently
       const buckets: DifficultyBucket[] = [
         {
           count: 0,
@@ -82,28 +88,25 @@ export const DifficultyChart = memo(
           percentage: 0,
           color: chartColors.difficulty.hard,
           label: 'Struggling',
-          category: 'difficultyHard',
+          category: 'needsAttention',
         },
       ];
 
       let totalDifficulty = 0;
       let hardWords = 0;
 
+      // Categorize words using standardized thresholds
       studyWords.forEach(word => {
-        const difficulty = word.fsrs_difficulty ?? 5.0;
+        const difficulty = word.difficulty || 0.3; // FSRS initial difficulty
         totalDifficulty += difficulty;
 
-        if (difficulty >= FSRS_DIFFICULTY_THRESHOLDS.MEDIUM) {
-          hardWords++;
-        }
-
-        // Categorize into buckets using standardized thresholds
         if (difficulty < FSRS_DIFFICULTY_THRESHOLDS.EASY) {
           buckets[0]!.count++;
         } else if (difficulty < FSRS_DIFFICULTY_THRESHOLDS.MEDIUM) {
           buckets[1]!.count++;
         } else {
           buckets[2]!.count++;
+          hardWords++;
         }
       });
 
@@ -116,12 +119,12 @@ export const DifficultyChart = memo(
 
       // Determine distribution type for subtitle
       const easyWords = buckets[0]?.count ?? 0;
-      const hardWordsCount = buckets[2]?.count ?? 0;
+      const strugglingWords = buckets[2]?.count ?? 0;
 
       let distribution: 'easy' | 'balanced' | 'challenging';
       if (easyWords > studyWords.length * 0.6) {
         distribution = 'easy';
-      } else if (hardWordsCount > studyWords.length * 0.4) {
+      } else if (strugglingWords > studyWords.length * 0.4) {
         distribution = 'challenging';
       } else {
         distribution = 'balanced';
@@ -136,39 +139,29 @@ export const DifficultyChart = memo(
         buckets,
         hasData: true,
         insights: {
-          averageDifficulty: Math.round(averageDifficulty),
-          hardWords,
+          averageDifficulty, // Keep raw value for accurate percentage calculation
+          hardWords: strugglingWords,
           distribution,
           dominantLevel,
         },
       };
     }, [studyWords, chartColors]);
 
-    // Generate subtitle based on difficulty distribution
+    // Generate subtitle using standardized messaging system
     const subtitle = useMemo(() => {
       if (!difficultyData.hasData) {
         return 'Track word difficulty levels';
       }
 
-      const { distribution, averageDifficulty, hardWords } = difficultyData.insights;
+      const { hardWords } = difficultyData.insights;
       const totalWords = studyWords.length;
-      const hardPercentage = totalWords > 0 ? (hardWords / totalWords) * 100 : 0;
+      const strugglingPercentage = totalWords > 0 ? (hardWords / totalWords) * 100 : 0;
 
-      if (distribution === 'easy') {
-        return `${Math.round(hardPercentage)}% struggling words - consider challenging content`;
-      }
-      if (distribution === 'challenging') {
-        return `${Math.round(hardPercentage)}% struggling words - focus on review`;
-      }
-
-      // For balanced distribution, provide more nuanced feedback with standardized thresholds
-      if (averageDifficulty < FSRS_DIFFICULTY_THRESHOLDS.EASY) {
-        return 'Mostly manageable - ready for harder material';
-      } else if (averageDifficulty > FSRS_DIFFICULTY_THRESHOLDS.MEDIUM + 0.5) {
-        return 'High difficulty - prioritize review sessions';
-      } else {
-        return 'Well-balanced difficulty spread';
-      }
+      // Use standardized subtitle generator
+      return generateChartSubtitle.difficulty(
+        strugglingPercentage,
+        difficultyData.insights.distribution
+      );
     }, [difficultyData.insights, difficultyData.hasData, studyWords.length]);
 
     // Handle bar press with haptic feedback - memoized for performance
@@ -208,28 +201,43 @@ export const DifficultyChart = memo(
       });
     }, [difficultyData]);
 
+    // Create standardized stats using new messaging system with semantic matching
+    const { leftStat, rightStat } = useMemo(() => {
+      if (!difficultyData.hasData) {
+        return createStandardizedStats.difficulty(
+          0,
+          0,
+          colors.secondaryText,
+          colors.secondaryText,
+          onStatPress
+        );
+      }
+
+      const { averageDifficulty, hardWords } = difficultyData.insights;
+
+      // Convert FSRS difficulty (0-1 scale) to percentage and round the final result
+      const difficultyPercentage = Math.round(Math.min(100, Math.max(0, averageDifficulty * 100)));
+
+      return createStandardizedStats.difficulty(
+        difficultyPercentage,
+        hardWords, // struggling words count
+        chartColors.getDifficultyColor(averageDifficulty),
+        chartColors.difficulty.hard, // Red color for struggling words
+        onStatPress
+      );
+    }, [difficultyData, colors.secondaryText, onStatPress, chartColors]);
+
     return (
       <BaseChart
-        title="Challenge Level"
+        title={CHART_LABELS.DIFFICULTY}
         subtitle={subtitle}
         onInfoPress={onInfoPress}
         hideTitle={hideTitle}
         hasData={difficultyData.hasData}
-        leftStat={{
-          value: difficultyData.insights.dominantLevel?.label ?? 'Balanced',
-          label: difficultyData.insights.dominantLevel
-            ? `${Math.round(difficultyData.insights.dominantLevel.percentage)}% are this hard`
-            : 'difficulty spread',
-          color: difficultyData.insights.dominantLevel?.color ?? colors.secondaryText,
-        }}
-        rightStat={{
-          value: studyWords.length,
-          label: 'total words',
-          color: colors.secondaryText,
-          onPress: onStatPress && studyWords.length > 0 ? () => onStatPress('total') : undefined,
-        }}
-        contentHeight={GRAPH_HEIGHT_LARGE + 60} // Extra height for labels
-        emptyStateText="Study words to see which ones challenge you most"
+        leftStat={leftStat}
+        rightStat={rightStat}
+        contentHeight={GRAPH_HEIGHT_LARGE + 60} // Already includes extra height for custom labels
+        emptyStateText={EMPTY_STATE_MESSAGES.difficulty}
       >
         <View>
           {/* Chart Container */}
@@ -343,11 +351,6 @@ export const DifficultyChart = memo(
                     disabled={bucket.count === 0}
                     accessibilityLabel={`${bucket.label} difficulty: ${Math.round(bucket.percentage)}% of words`}
                     accessibilityRole="button"
-                    accessibilityHint={
-                      bucket.count > 0
-                        ? 'Tap to view words in this difficulty category'
-                        : 'No words in this category'
-                    }
                   />
                 );
               })}

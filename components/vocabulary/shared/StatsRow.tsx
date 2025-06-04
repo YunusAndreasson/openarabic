@@ -1,8 +1,10 @@
 import React, { memo, useCallback } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import { LAYOUT } from '@/constants/layout';
 import { lightFeedback } from '@/utils/haptics';
+import { useColors } from '@/hooks/useColors';
 
 import { ThemedText } from '../../ThemedText';
 
@@ -11,6 +13,7 @@ interface StatItemProps {
   label: string;
   color?: string;
   onPress?: () => void;
+  showChevron?: boolean;
 }
 
 interface StatsRowProps {
@@ -20,6 +23,8 @@ interface StatsRowProps {
 
 // Memoized StatItem component to prevent unnecessary re-renders
 const StatItem = memo(({ stat }: { stat: StatItemProps }) => {
+  const colors = useColors();
+
   const handlePress = useCallback(() => {
     if (stat.onPress) {
       lightFeedback();
@@ -29,13 +34,23 @@ const StatItem = memo(({ stat }: { stat: StatItemProps }) => {
 
   const content = (
     <View style={styles.progressStat}>
-      <ThemedText
-        type="heading2"
-        weight="bold"
-        style={[styles.progressValue, stat.color && { color: stat.color }]}
-      >
-        {stat.value}
-      </ThemedText>
+      <View style={styles.statValueRow}>
+        <ThemedText
+          type="heading2"
+          weight="bold"
+          style={[styles.progressValue, stat.color && { color: stat.color }]}
+        >
+          {stat.value}
+        </ThemedText>
+        {stat.showChevron && (
+          <Ionicons
+            name="chevron-forward"
+            size={16}
+            color={colors.secondaryText}
+            style={styles.chevronIcon}
+          />
+        )}
+      </View>
       <ThemedText type="caption" variant="secondary" style={styles.progressLabel}>
         {stat.label}
       </ThemedText>
@@ -83,14 +98,22 @@ const styles = StyleSheet.create({
   progressStat: {
     alignItems: 'flex-start',
   },
+  statValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: LAYOUT.SPACING.XSMALL,
+  },
   tappableStat: {
     borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
     padding: LAYOUT.SPACING.XSMALL,
-    margin: -LAYOUT.SPACING.XSMALL, // Negative margin to maintain visual spacing
+    margin: -LAYOUT.SPACING.XSMALL,
   },
   progressValue: {
-    marginBottom: LAYOUT.SPACING.XSMALL,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.1,
+  },
+  chevronIcon: {
+    marginLeft: LAYOUT.SPACING.XSMALL,
+    marginTop: 2,
   },
   progressLabel: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,

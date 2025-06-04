@@ -1,7 +1,7 @@
 import React, { memo, useMemo } from 'react';
 import { Path, Circle, Group, Skia, Rect, LinearGradient, vec } from '@shopify/react-native-skia';
 
-import type { StudyWord } from '@/types/vocabulary.types';
+import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 import {
   generateDateRange,
   isSameDay,
@@ -13,15 +13,29 @@ import {
 import { useChartColors } from '../shared/chartColors';
 import { BaseChart, ChartCanvas, type DataPoint } from '../shared';
 import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_14 } from '../shared/constants';
+import {
+  generateChartSubtitle,
+  createStandardizedStats,
+  CHART_LABELS,
+  EMPTY_STATE_MESSAGES,
+} from '../shared/chartMessages';
 
 interface EfficiencyChartProps {
   studyWords: StudyWord[];
   onInfoPress: () => void;
   hideTitle?: boolean;
+  learningWords?: number;
+  onStatPress?: (category: StatCategory) => void;
 }
 
 export const EfficiencyChart = memo(
-  ({ studyWords = [], onInfoPress, hideTitle = false }: EfficiencyChartProps) => {
+  ({
+    studyWords = [],
+    onInfoPress,
+    hideTitle = false,
+    learningWords = 0,
+    onStatPress,
+  }: EfficiencyChartProps) => {
     const chartColors = useChartColors();
 
     // Calculate efficiency data over the last 14 days
@@ -142,14 +156,16 @@ export const EfficiencyChart = memo(
       };
     }, [efficiencyData, chartColors]);
 
-    // Generate subtitle using shared utility
+    // Generate subtitle using standardized messaging system
     const subtitle = useMemo(() => {
-      const { currentEfficiency, trend } = chartData.insights;
-      return generatePerformanceSubtitle(
-        currentEfficiency,
-        'learning efficiency',
-        trend as 'improving' | 'declining' | 'stable'
-      );
+      const { currentEfficiency, weeklyAverage } = chartData.insights;
+
+      if (currentEfficiency === 0) {
+        return 'Practice to track learning speed';
+      }
+
+      // Use standardized subtitle generator
+      return generateChartSubtitle.efficiency(currentEfficiency, weeklyAverage);
     }, [chartData.insights]);
 
     // Prepare data points for interactive tooltips
@@ -170,33 +186,38 @@ export const EfficiencyChart = memo(
         .filter((point): point is DataPoint => point !== null);
     }, [chartData.dataPoints, efficiencyData]);
 
+    // Create standardized stats using new messaging system with semantic matching
+    const { leftStat, rightStat } = useMemo(() => {
+      if (!chartData.hasData) {
+        return createStandardizedStats.efficiency(
+          0,
+          0,
+          chartColors.performance.poor,
+          chartColors.performance.poor,
+          onStatPress
+        );
+      }
+
+      return createStandardizedStats.efficiency(
+        chartData.insights.currentEfficiency,
+        learningWords,
+        chartColors.getPerformanceColor(chartData.insights.currentEfficiency),
+        chartColors.performance.good,
+        onStatPress
+      );
+    }, [chartData, chartColors, learningWords, onStatPress]);
+
     return (
       <BaseChart
-        title="Learning Speed"
+        title={CHART_LABELS.SPEED}
         subtitle={subtitle}
         onInfoPress={onInfoPress}
         hideTitle={hideTitle}
         hasData={chartData.hasData}
-        leftStat={{
-          value: `${chartData.insights.currentEfficiency}%`,
-          label: 'speed',
-          color: chartColors.getPerformanceColor(chartData.insights.currentEfficiency),
-        }}
-        rightStat={{
-          value: `${chartData.insights.weeklyAverage}%`,
-          label: 'average',
-          color: chartColors.getPerformanceColor(chartData.insights.weeklyAverage),
-        }}
-        legendItems={[
-          {
-            type: 'line',
-            color: chartColors.ui.dataLine,
-            label: 'Efficiency',
-          },
-        ]}
-        timeRange="Past 14 days"
-        contentHeight={GRAPH_HEIGHT_LARGE}
-        emptyStateText="Study words to track your progress"
+        leftStat={leftStat}
+        rightStat={rightStat}
+        contentHeight={GRAPH_HEIGHT_LARGE + 20}
+        emptyStateText={EMPTY_STATE_MESSAGES.efficiency}
       >
         <ChartCanvas
           dataPoints={dataPoints}

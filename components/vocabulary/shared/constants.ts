@@ -23,10 +23,10 @@ export const PERFORMANCE_THRESHOLDS = {
   POOR: 0,
 } as const;
 
-// FSRS difficulty thresholds (validated from database analysis)
+// FSRS difficulty thresholds (corrected for actual 0-1 scale)
 export const FSRS_DIFFICULTY_THRESHOLDS = {
-  EASY: 6.5,
-  MEDIUM: 8.0,
+  EASY: 0.65, // Below 65% difficulty = Easy
+  MEDIUM: 0.8, // 65-80% difficulty = Medium, 80%+ = Hard/Struggling
 } as const;
 
 // Standardized chart layout constants for consistent alignment

@@ -13,6 +13,9 @@ import { useStreakData } from '../../hooks/useStreakData';
 import { useVocabularyChartData } from '../../hooks/useVocabularyChartData';
 import { lightFeedback } from '../../utils/haptics';
 
+// Import standardized chart labels for consistency
+import { CHART_LABELS } from './shared/chartMessages';
+
 import { InfoModal, type InfoModalType } from './InfoModal';
 import { LearningGauge } from './LearningGauge';
 import { StatCard } from './StatCard';
@@ -116,12 +119,12 @@ export const VocabularyStatCards = memo(
       };
     }, [fsrsMetrics, stats]);
 
-    // Prepare stat cards configuration with proper icons and colors
+    // Prepare stat cards configuration with proper icons and colors using standardized labels
     const statCards: StatCardConfig[] = useMemo(
       () => [
         {
           value: validatedData.due,
-          label: 'Due',
+          label: CHART_LABELS.DUE, // Use standardized label
           icon: 'alarm-outline',
           iconColor: colors.warning,
           bgColor: colors.buttonOverlay,
@@ -130,7 +133,7 @@ export const VocabularyStatCards = memo(
         },
         {
           value: validatedData.learning,
-          label: 'Learning',
+          label: CHART_LABELS.LEARNING, // Use standardized label
           icon: 'school-outline',
           iconColor: colors.info,
           bgColor: colors.buttonOverlay,
@@ -139,7 +142,7 @@ export const VocabularyStatCards = memo(
         },
         {
           value: validatedData.mastered,
-          label: 'Mastered',
+          label: CHART_LABELS.MASTERED, // Use standardized label
           icon: 'checkmark-circle-outline',
           iconColor: colors.success,
           bgColor: colors.buttonOverlay,
@@ -148,7 +151,7 @@ export const VocabularyStatCards = memo(
         },
         {
           value: validatedData.needsAttention,
-          label: 'Struggling',
+          label: CHART_LABELS.STRUGGLING, // Use consistent "struggling" terminology
           icon: 'alert-circle',
           iconColor: colors.error,
           bgColor: colors.buttonOverlay,
@@ -262,13 +265,15 @@ export const VocabularyStatCards = memo(
           <EfficiencyChart
             studyWords={validatedInput.studyWords}
             onInfoPress={handleEfficiencyInfo}
+            learningWords={validatedData.learning}
+            onStatPress={onStatPress}
             hideTitle={true}
           />
         </View>
 
         <View>
           <SectionTitle
-            title="Memory Decay"
+            title="Memory Retention"
             subtitle="Monitor which words you're forgetting"
             onInfoPress={handleRetrievabilityInfo}
           />

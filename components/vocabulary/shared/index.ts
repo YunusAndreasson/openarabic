@@ -1,7 +1,6 @@
 // Enhanced chart components with standardized patterns
 export { BaseChart } from './BaseChart';
-export { ChartCanvas } from './ChartCanvas';
-export type { DataPoint } from './ChartCanvas';
+export { ChartCanvas, type DataPoint } from './ChartCanvas';
 
 // Chart building blocks
 export { CardHeader } from './CardHeader';
@@ -27,3 +26,6 @@ export {
   type DifficultyLevel as ChartColorDifficultyLevel,
 } from './chartColors';
 export { CHART_LEGENDS, type TimeRange, type MemoryLevel, type ProgressType } from './chartLegends';
+
+// Standardized chart messaging system
+export * from './chartMessages';

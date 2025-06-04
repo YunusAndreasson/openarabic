@@ -10,7 +10,18 @@ import {
 } from '../shared/utils';
 import { useChartColors } from '../shared/chartColors';
 import { BaseChart, ChartCanvas, type DataPoint } from '../shared';
-import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_14 } from '../shared/constants';
+import {
+  GRAPH_WIDTH,
+  GRAPH_HEIGHT_LARGE,
+  DAYS_14,
+  MASTERY_STABILITY_THRESHOLD,
+} from '../shared/constants';
+import {
+  generateChartSubtitle,
+  createStandardizedStats,
+  CHART_LABELS,
+  EMPTY_STATE_MESSAGES,
+} from '../shared/chartMessages';
 
 interface MasteryChartProps {
   studyWords: StudyWord[];
@@ -163,19 +174,19 @@ export const MasteryChart = memo(
       };
     }, [masteryData]);
 
-    // Generate subtitle using shared utility with custom logic for trends
+    // Generate subtitle using standardized messaging system
     const subtitle = useMemo(() => {
       const { currentRate, trend, weeklyChange } = chartData.insights;
 
       if (currentRate === 0) {
-        return 'Start reviewing to build mastery';
+        return 'Start reviewing to build memory strength';
       }
 
-      return generatePerformanceSubtitle(
+      // Use standardized subtitle generator with safe defaults
+      return generateChartSubtitle.mastery(
         currentRate,
-        'mastery rate',
         trend as 'improving' | 'declining' | 'stable',
-        weeklyChange
+        weeklyChange ?? 0
       );
     }, [chartData.insights]);
 
@@ -197,34 +208,38 @@ export const MasteryChart = memo(
         .filter((point): point is DataPoint => point !== null);
     }, [chartData.dataPoints, masteryData]);
 
+    // Create standardized stats using new messaging system
+    const { leftStat, rightStat } = useMemo(() => {
+      if (!chartData.hasData) {
+        return createStandardizedStats.mastery(
+          0,
+          0,
+          chartColors.performance.poor,
+          chartColors.performance.excellent,
+          onStatPress
+        );
+      }
+
+      return createStandardizedStats.mastery(
+        chartData.insights.currentRate,
+        chartData.insights.totalMastered,
+        chartColors.getPerformanceColor(chartData.insights.currentRate),
+        chartColors.performance.excellent,
+        onStatPress
+      );
+    }, [chartData, chartColors, onStatPress]);
+
     return (
       <BaseChart
-        title="Mastery"
+        title={CHART_LABELS.STRENGTH}
         subtitle={subtitle}
         onInfoPress={onInfoPress}
         hideTitle={hideTitle}
         hasData={chartData.hasData}
-        leftStat={{
-          value: `${chartData.insights.currentRate}%`,
-          label: 'strength',
-          color: chartColors.getPerformanceColor(chartData.insights.currentRate),
-        }}
-        rightStat={{
-          value: chartData.insights.totalMastered,
-          label: 'mastered',
-          color: chartColors.performance.excellent,
-          onPress: onStatPress ? () => onStatPress('mastered') : undefined,
-        }}
-        legendItems={[
-          {
-            type: 'line',
-            color: chartColors.ui.dataLine,
-            label: 'Mastery',
-          },
-        ]}
-        timeRange="Past 14 days"
-        contentHeight={GRAPH_HEIGHT_LARGE}
-        emptyStateText="Study some words to see your progress"
+        leftStat={leftStat}
+        rightStat={rightStat}
+        contentHeight={GRAPH_HEIGHT_LARGE + 20}
+        emptyStateText={EMPTY_STATE_MESSAGES.mastery}
       >
         <ChartCanvas
           dataPoints={dataPoints}

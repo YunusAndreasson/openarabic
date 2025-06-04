@@ -16,6 +16,12 @@ import {
   DAYS_14,
   CRITICAL_RETRIEVABILITY_THRESHOLD,
 } from '../shared/constants';
+import {
+  generateChartSubtitle,
+  createStandardizedStats,
+  CHART_LABELS,
+  EMPTY_STATE_MESSAGES,
+} from '../shared/chartMessages';
 
 interface RetrievabilityChartProps {
   studyWords: StudyWord[];
@@ -118,28 +124,12 @@ export const RetrievabilityChart = memo(
         }
       });
 
-      // Define memory zones using standardized utility (mapped to memory colors)
-      const dangerZones = createStandardizedPerformanceZones(
+      // Define standardized performance zones - same as other charts
+      const performanceZones = createStandardizedPerformanceZones(
         GRAPH_HEIGHT_LARGE,
         0,
         chartColors
-      ).map(zone => ({
-        ...zone,
-        // Map performance colors to memory colors for semantic consistency
-        color:
-          zone.name === 'Excellent'
-            ? chartColors.memory.strong
-            : zone.name === 'Good'
-              ? chartColors.memory.fading
-              : zone.name === 'Fair'
-                ? chartColors.memory.fading
-                : chartColors.memory.weak,
-        // Adjust for retrievability chart scaling
-        y:
-          GRAPH_HEIGHT_LARGE -
-          ((zone.min + (zone.max - zone.min)) / maxRetrievability) * GRAPH_HEIGHT_LARGE,
-        height: ((zone.max - zone.min) / maxRetrievability) * GRAPH_HEIGHT_LARGE,
-      }));
+      );
 
       // Calculate insights
       const week1 = retrievabilityData.slice(0, 7);
@@ -158,7 +148,7 @@ export const RetrievabilityChart = memo(
       return {
         retrievabilityPath: path.toSVGString(),
         hasData,
-        dangerZones,
+        dangerZones: performanceZones,
         dataPoints: points,
         insights: {
           currentRetrievability: Math.round(currentRetrievability),
@@ -168,22 +158,18 @@ export const RetrievabilityChart = memo(
       };
     }, [retrievabilityData, chartColors]);
 
-    // Generate subtitle using shared utility with custom logic for critical words
+    // Generate subtitle using standardized messaging system
     const subtitle = useMemo(() => {
       const { currentRetrievability, criticalWords } = chartData.insights;
+      const totalWords = studyWords.length;
 
-      if (currentRetrievability === 0) {
-        return 'Study words to see memory tracking';
+      if (totalWords === 0) {
+        return 'Study words to track memory retention';
       }
-      if (criticalWords > 10) {
-        return `${criticalWords} words need review soon`;
-      }
-      return generatePerformanceSubtitle(
-        currentRetrievability,
-        'memory retention',
-        chartData.insights.trend as 'improving' | 'declining' | 'stable'
-      );
-    }, [chartData.insights]);
+
+      // Use standardized subtitle generator
+      return generateChartSubtitle.retrievability(currentRetrievability, criticalWords, totalWords);
+    }, [chartData.insights, studyWords.length]);
 
     // Prepare data points for interactive tooltips
     const dataPoints: DataPoint[] = useMemo(() => {
@@ -203,45 +189,49 @@ export const RetrievabilityChart = memo(
         .filter((point): point is DataPoint => point !== null);
     }, [chartData.dataPoints, retrievabilityData]);
 
+    // Create standardized stats using new messaging system
+    const { leftStat, rightStat } = useMemo(() => {
+      if (!chartData.hasData) {
+        return createStandardizedStats.retrievability(
+          0,
+          0,
+          chartColors.performance.poor,
+          chartColors.performance.poor,
+          onStatPress
+        );
+      }
+
+      return createStandardizedStats.retrievability(
+        chartData.insights.currentRetrievability,
+        chartData.insights.criticalWords,
+        chartColors.getPerformanceColor(chartData.insights.currentRetrievability),
+        chartColors.performance.poor, // Red for critical words
+        onStatPress
+      );
+    }, [chartData, chartColors, onStatPress]);
+
     return (
       <BaseChart
-        title="Memory"
+        title={CHART_LABELS.RETENTION}
         subtitle={subtitle}
         onInfoPress={onInfoPress}
         hideTitle={hideTitle}
         hasData={chartData.hasData}
-        leftStat={{
-          value: `${chartData.insights.currentRetrievability}%`,
-          label: 'retention',
-          color: chartColors.memory.strong,
-        }}
-        rightStat={{
-          value: chartData.insights.criticalWords,
-          label: 'critical',
-          color: chartColors.memory.weak,
-          onPress: onStatPress ? () => onStatPress('needsAttention') : undefined,
-        }}
-        legendItems={[
-          {
-            type: 'line',
-            color: chartColors.ui.dataLine,
-            label: 'Memory retention',
-          },
-        ]}
-        timeRange="Next 14 days"
-        contentHeight={GRAPH_HEIGHT_LARGE}
-        emptyStateText="Study words to see memory tracking"
+        leftStat={leftStat}
+        rightStat={rightStat}
+        contentHeight={GRAPH_HEIGHT_LARGE + 20}
+        emptyStateText={EMPTY_STATE_MESSAGES.retrievability}
       >
         <ChartCanvas
           dataPoints={dataPoints}
           enableTooltips={true}
           accessibilityLabel="Memory retention forecast showing expected retention over the next 14 days"
         >
-          {/* Memory zones background */}
+          {/* Performance zones background - same as other charts */}
           <Group>
             {chartData.dangerZones.map((zone, index) => (
               <Rect
-                key={`memory-zone-${index}`}
+                key={`performance-zone-${index}`}
                 x={0}
                 y={zone.y}
                 width={GRAPH_WIDTH}
@@ -249,20 +239,6 @@ export const RetrievabilityChart = memo(
                 color={chartColors.withOpacity(zone.color, 0.12)}
               />
             ))}
-          </Group>
-
-          {/* Critical threshold line */}
-          <Group>
-            <Rect
-              x={0}
-              y={
-                GRAPH_HEIGHT_LARGE -
-                ((CRITICAL_RETRIEVABILITY_THRESHOLD * 100) / 100) * GRAPH_HEIGHT_LARGE
-              }
-              width={GRAPH_WIDTH}
-              height={1}
-              color={chartColors.withOpacity(chartColors.memory.weak, 0.5)}
-            />
           </Group>
 
           {/* Area fill under the retrievability line */}
@@ -301,14 +277,6 @@ export const RetrievabilityChart = memo(
               const data = retrievabilityData[index];
               if (!data || data.wordCount === 0) return null;
 
-              // Color code points based on criticality
-              const pointColor =
-                point.retrievability < CRITICAL_RETRIEVABILITY_THRESHOLD * 100
-                  ? chartColors.memory.weak
-                  : point.retrievability < 85
-                    ? chartColors.memory.fading
-                    : chartColors.memory.strong;
-
               return (
                 <Group key={`retrievability-point-${index}`}>
                   {/* Subtle glow ring */}
@@ -316,10 +284,10 @@ export const RetrievabilityChart = memo(
                     cx={point.x}
                     cy={point.y}
                     r={6}
-                    color={chartColors.withOpacity(pointColor, 0.3)}
+                    color={chartColors.getDataPointGlow('retrievability')}
                   />
                   {/* Main data point */}
-                  <Circle cx={point.x} cy={point.y} r={4} color={pointColor} />
+                  <Circle cx={point.x} cy={point.y} r={4} color={chartColors.ui.dataLine} />
                 </Group>
               );
             })}
