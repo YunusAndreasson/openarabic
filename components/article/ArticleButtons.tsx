@@ -14,13 +14,16 @@ interface ArticleButtonsProps {
   onBookmarkPress: () => void;
   onPlayPress: () => void;
   onEnglishToggle: () => void;
+  onTextSizeToggle: () => void;
   isInReadingList?: boolean;
   isPlaying: boolean;
   showEnglish: boolean;
+  showTextSizeSlider: boolean;
   backButtonStyle?: AnimatedStyleProp<ViewStyle>;
   bookmarkButtonStyle?: AnimatedStyleProp<ViewStyle>;
   englishButtonStyle?: AnimatedStyleProp<ViewStyle>;
   playButtonStyle?: AnimatedStyleProp<ViewStyle>;
+  textSizeButtonStyle?: AnimatedStyleProp<ViewStyle>;
   colors: ThemeColors;
   user: { id: string } | null;
   isDarkMode: boolean;
@@ -87,13 +90,16 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
   onBookmarkPress,
   onPlayPress,
   onEnglishToggle,
+  onTextSizeToggle,
   isInReadingList,
   isPlaying,
   showEnglish,
+  showTextSizeSlider,
   backButtonStyle,
   bookmarkButtonStyle,
   englishButtonStyle,
   playButtonStyle,
+  textSizeButtonStyle,
   colors,
   user,
   isDarkMode,
@@ -222,6 +228,28 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
                 ]}
               >
                 <IconWithShadow name={showEnglish ? 'eye' : 'eye-off'} size={22} />
+              </View>
+            </TouchableOpacity>
+          </ButtonWrapper>
+        </Animated.View>
+
+        {/* Text Size Button */}
+        <Animated.View style={textSizeButtonStyle}>
+          <ButtonWrapper style={styles.iconButton}>
+            <TouchableOpacity
+              onPress={onTextSizeToggle}
+              style={StyleSheet.absoluteFill}
+              accessibilityLabel={
+                showTextSizeSlider ? 'Hide text size controls' : 'Show text size controls'
+              }
+            >
+              <View
+                style={[
+                  StyleSheet.absoluteFill,
+                  { alignItems: 'center', justifyContent: 'center' },
+                ]}
+              >
+                <IconWithShadow name="text" size={22} />
               </View>
             </TouchableOpacity>
           </ButtonWrapper>

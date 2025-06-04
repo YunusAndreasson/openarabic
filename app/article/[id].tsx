@@ -27,6 +27,7 @@ import {
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { analytics } from '@/services/analytics';
 import { updateAudioState } from '@/store/audioSlice';
+import { setFontScale } from '@/store/settingsSlice';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
@@ -400,6 +401,24 @@ export default function ArticleScreen(): JSX.Element {
     setShowEnglishLocal(!showEnglishLocal);
   }, [showEnglishLocal]);
 
+  const [showTextSizeSlider, setShowTextSizeSlider] = useState(false);
+
+  const handleTextSizeToggle = useCallback(() => {
+    lightFeedback();
+    setShowTextSizeSlider(!showTextSizeSlider);
+  }, [showTextSizeSlider]);
+
+  const handleFontScaleChange = useCallback(
+    (value: number) => {
+      const previousScale = settings.fontScale;
+      if (Math.abs(value - previousScale) >= 0.1) {
+        lightFeedback();
+      }
+      dispatch(setFontScale(value));
+    },
+    [settings.fontScale, dispatch]
+  );
+
   const handleBackPress = useCallback(() => {
     if (isPlaying) {
       stopPlayback().catch(error => {
@@ -697,6 +716,9 @@ export default function ArticleScreen(): JSX.Element {
     lastScrolledWordIdRef.current = null;
     lastScrolledSentenceIdRef.current = null;
 
+    // Reset text size slider when article changes
+    setShowTextSizeSlider(false);
+
     dispatch(
       updateAudioState({
         wordId: null,
@@ -730,9 +752,13 @@ export default function ArticleScreen(): JSX.Element {
             onBookmarkPress={handleBookmarkPress}
             onPlayPress={handlePlayPress}
             onEnglishToggle={handleEnglishToggle}
+            onTextSizeToggle={handleTextSizeToggle}
             isInReadingList={isInReadingList}
             isPlaying={audioSessionActive}
             showEnglish={showEnglishLocal}
+            showTextSizeSlider={showTextSizeSlider}
+            fontScale={settings.fontScale}
+            onFontScaleChange={handleFontScaleChange}
             englishToggleKey={showEnglishLocal ? 'en' : 'ar'}
             user={user}
             isDarkMode={isDarkMode}

@@ -287,6 +287,7 @@ export const ArabicWord = memo(ArabicWordComponent, (prevProps, nextProps) => {
     prevProps.isAudioHighlighted === nextProps.isAudioHighlighted &&
     prevProps.word.id === nextProps.word.id &&
     prevProps.settings.showTransliteration === nextProps.settings.showTransliteration &&
+    prevProps.settings.fontScale === nextProps.settings.fontScale &&
     prevProps.position === nextProps.position
   );
 });

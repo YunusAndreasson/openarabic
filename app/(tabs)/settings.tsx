@@ -4,13 +4,12 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React, { useCallback, memo, useMemo, useEffect, useState } from 'react';
-import { Alert, StyleSheet, View, ViewStyle, TextStyle } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import Constants from 'expo-constants';
 import pkg from '../../package.json';
 import * as Linking from 'expo-linking';
 
 import BaseCard from '@/components/BaseCard';
-import { CustomSlider } from '@/components/Slider';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -23,8 +22,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useReminders } from '@/hooks/useReminders';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { setFontScale, setShowEnglish } from '@/store/settingsSlice';
 import { lightFeedback } from '@/utils/haptics';
 import SectionTitle from '@/components/SectionTitle';
 
@@ -57,8 +54,6 @@ const Divider = memo(() => {
 Divider.displayName = 'Divider';
 
 const AccountScreen: React.FC = () => {
-  const dispatch = useAppDispatch();
-  const settings = useAppSelector(state => state.settings);
   const colors = useColors();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
@@ -113,17 +108,6 @@ const AccountScreen: React.FC = () => {
       { cancelable: true }
     );
   }, []);
-
-  const handleFontScaleChange = useCallback(
-    (value: number) => {
-      const previousScale = settings.fontScale;
-      if (Math.abs(value - previousScale) >= 0.1) {
-        lightFeedback();
-      }
-      dispatch(setFontScale(value));
-    },
-    [settings.fontScale, dispatch]
-  );
 
   const handleReminderToggle = useCallback(
     async (enabled: boolean) => {
@@ -232,82 +216,6 @@ const AccountScreen: React.FC = () => {
               <View style={styles.settingRow}>
                 <SettingLabel icon="moon" text="Dark Mode" iconColor={colors.icon} />
                 <ThemeToggle />
-              </View>
-            </View>
-          </BaseCard>
-        </View>
-
-        {/* Reading Section */}
-        <View style={styles.readingWrapper}>
-          <SectionTitle title="Reading" />
-          <BaseCard
-            style={styles.sectionContainer}
-            shadowSize="small"
-            includePressAnimation={false}
-          >
-            <View style={styles.readingLinksContainer}>
-              <View style={styles.settingRow}>
-                <SettingLabel icon="eye" text="English Translation" iconColor={colors.icon} />
-                <Toggle
-                  value={settings.showEnglish}
-                  onValueChange={value => dispatch(setShowEnglish(value))}
-                />
-              </View>
-              <Divider />
-              <View style={styles.settingRow}>
-                <SettingLabel icon="text" text="Text Size" iconColor={colors.icon} />
-                <View style={styles.sliderContainer}>
-                  <ThemedText
-                    type="caption"
-                    variant="secondary"
-                    align="right"
-                    style={styles.scaleText}
-                  >
-                    {Math.round(settings.fontScale * 100)}%
-                  </ThemedText>
-                  <View style={styles.sliderWrapper}>
-                    <CustomSlider
-                      value={settings.fontScale}
-                      onValueChange={handleFontScaleChange}
-                      minimumValue={0.8}
-                      maximumValue={1.3}
-                      step={0.1}
-                      style={styles.slider}
-                    />
-                  </View>
-                </View>
-              </View>
-              <Divider />
-              <View style={styles.previewContainer}>
-                <View style={styles.previewWrapper}>
-                  <View style={styles.previewContent}>
-                    <ThemedText
-                      type="arabic"
-                      arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * settings.fontScale}
-                      align="right"
-                      skipDefaultColor
-                      colorName="arabicText"
-                      style={styles.arabicPreviewText}
-                    >
-                      مرحباً بك في اللغة العربية
-                    </ThemedText>
-                    {settings.showEnglish ? (
-                      <ThemedText
-                        type="body"
-                        skipDefaultColor
-                        colorName="text"
-                        align="left"
-                        style={[styles.englishPreviewText, styles.mediumHighOpacity]}
-                      >
-                        Welcome to the Arabic language
-                      </ThemedText>
-                    ) : (
-                      <ThemedText type="body" style={[styles.englishPreviewText, styles.hidden]}>
-                        Welcome to the Arabic language
-                      </ThemedText>
-                    )}
-                  </View>
-                </View>
               </View>
             </View>
           </BaseCard>
@@ -677,57 +585,10 @@ const styles = StyleSheet.create({
     width: '100%',
   },
 
-  // Slider Styles
-  sliderContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    width: '50%',
-  },
-  scaleText: {
-    marginRight: LAYOUT.SPACING.SMALL,
-    width: 45,
-  },
-  sliderWrapper: {
-    flex: 1,
-  },
-  slider: {
-    flex: 1,
-    height: 40,
-  },
-
   // Common Section Container Styles
   sectionContainer: {
     overflow: 'hidden',
   },
-
-  // Preview Styles
-  previewContainer: {
-    padding: LAYOUT.SPACING.SMALL,
-  },
-  previewWrapper: {
-    height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
-    overflow: 'hidden',
-  },
-  previewContent: {
-    position: 'absolute',
-    top: 0,
-    width: '100%',
-  },
-  arabicPreviewText: {
-    flexShrink: 0,
-    marginBottom: LAYOUT.SPACING.TINY,
-    paddingVertical: LAYOUT.SPACING.TINY,
-  },
-  englishPreviewText: {
-    flexShrink: 0,
-    paddingVertical: LAYOUT.SPACING.TINY,
-  },
-  mediumHighOpacity: {
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
-  } as ViewStyle & TextStyle,
-  hidden: {
-    opacity: 0,
-  } as ViewStyle & TextStyle,
 
   // Common Links Container Styles
   linksContainer: {
@@ -747,14 +608,6 @@ const styles = StyleSheet.create({
 
   // Appearance Links Styles
   appearanceLinksContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-
-  // Reading Section Styles
-  readingWrapper: {
-    // Remove marginBottom - SectionTitle handles section spacing
-  },
-  readingLinksContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
   },
 

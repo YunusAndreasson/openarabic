@@ -23,6 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/ThemedText';
 import { ParallaxHeader } from '@/components/article/ParallaxHeader';
 import { ArticleButtons } from '@/components/article/ArticleButtons';
+import { TextSizeSlider } from '@/components/article/TextSizeSlider';
 import { RelatedArticlesFooter } from '@/components/article/RelatedArticlesFooter';
 import { LAYOUT, HEADER_IMAGE_HEIGHT } from '@/constants/layout';
 import type { Article } from '@/types/articles.types';
@@ -84,10 +85,14 @@ interface ArticleContentProps {
   onBookmarkPress?: () => void;
   onPlayPress?: () => void;
   onEnglishToggle?: () => void;
+  onTextSizeToggle?: () => void;
   // Button state props
   isInReadingList?: boolean;
   isPlaying?: boolean;
   showEnglish?: boolean;
+  showTextSizeSlider?: boolean;
+  fontScale?: number;
+  onFontScaleChange?: (value: number) => void;
   englishToggleKey?: string;
   user?: any;
   isDarkMode?: boolean;
@@ -112,10 +117,14 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
       onBookmarkPress,
       onPlayPress,
       onEnglishToggle,
+      onTextSizeToggle,
       // Button state props
       isInReadingList,
       isPlaying,
       showEnglish,
+      showTextSizeSlider,
+      fontScale,
+      onFontScaleChange,
       englishToggleKey,
       user,
       isDarkMode,
@@ -323,7 +332,7 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
               data={sortedSentences}
               renderItem={renderSentenceItem}
               keyExtractor={item => item.id.toString()}
-              extraData={englishToggleKey}
+              extraData={`${englishToggleKey}-${fontScale}`}
               estimatedItemSize={SENTENCE_ITEM_HEIGHT}
               style={[styles.content, { backgroundColor: colors.background }]}
               contentContainerStyle={{
@@ -360,21 +369,38 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
               ]}
             >
               <View style={styles.buttonsWrapper}>
-                {onBackPress && onBookmarkPress && onPlayPress && onEnglishToggle && (
-                  <MemoizedArticleButtons
-                    onBackPress={onBackPress}
-                    onBookmarkPress={onBookmarkPress}
-                    onPlayPress={onPlayPress}
-                    onEnglishToggle={onEnglishToggle}
-                    isInReadingList={!!isInReadingList}
-                    isPlaying={!!isPlaying}
-                    showEnglish={!!showEnglish}
-                    colors={colors}
-                    user={user}
-                    isDarkMode={!!isDarkMode}
-                  />
-                )}
+                {onBackPress &&
+                  onBookmarkPress &&
+                  onPlayPress &&
+                  onEnglishToggle &&
+                  onTextSizeToggle && (
+                    <MemoizedArticleButtons
+                      onBackPress={onBackPress}
+                      onBookmarkPress={onBookmarkPress}
+                      onPlayPress={onPlayPress}
+                      onEnglishToggle={onEnglishToggle}
+                      onTextSizeToggle={onTextSizeToggle}
+                      isInReadingList={!!isInReadingList}
+                      isPlaying={!!isPlaying}
+                      showEnglish={!!showEnglish}
+                      showTextSizeSlider={!!showTextSizeSlider}
+                      colors={colors}
+                      user={user}
+                      isDarkMode={!!isDarkMode}
+                    />
+                  )}
               </View>
+
+              {/* Text Size Slider - appears right below buttons */}
+              {onTextSizeToggle && fontScale !== undefined && onFontScaleChange && (
+                <TextSizeSlider
+                  isVisible={!!showTextSizeSlider}
+                  fontScale={fontScale}
+                  onFontScaleChange={onFontScaleChange}
+                  colors={colors}
+                  isDarkMode={!!isDarkMode}
+                />
+              )}
             </Animated.View>
           </View>
         ) : null}

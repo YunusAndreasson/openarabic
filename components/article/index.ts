@@ -7,3 +7,4 @@ export { ArabicWord } from './ArabicWord';
 export { TimeAgo, DifficultyIndicator } from '../index/ArticleHelpers';
 export { ArticleContent } from './ArticleContent';
 export { WordTooltip } from './WordTooltip';
+export { TextSizeSlider } from './TextSizeSlider';
