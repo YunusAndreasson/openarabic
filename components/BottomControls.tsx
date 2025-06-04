@@ -94,8 +94,8 @@ const BottomControls = memo<BottomControlsProps>(
                   styles.timerButton,
                   dynamicStyles.timerButton,
                   {
-                    backgroundColor: isTimerActive ? colors.tint : colors.elevation1,
-                    borderColor: isTimerActive ? colors.tint : colors.borderOverlay,
+                    backgroundColor: isTimerActive ? colors.tint : colors.card,
+                    borderColor: isTimerActive ? colors.tint : colors.border,
                   },
                 ]}
                 activeOpacity={LAYOUT.OPACITY.PRESSED}
@@ -106,7 +106,7 @@ const BottomControls = memo<BottomControlsProps>(
                 <Ionicons
                   name={isTimerActive ? 'timer' : 'timer-outline'}
                   size={16}
-                  color={isTimerActive ? colors.background : colors.textTertiary}
+                  color={isTimerActive ? colors.background : colors.textSecondary}
                 />
                 {isTimerActive && (
                   <ThemedText

@@ -188,15 +188,15 @@ const createBookmarkSortOptions = (
   isDueWordsDataAvailable: boolean
 ): SortOption<BookmarkSortOption>[] => {
   const baseOptions: SortOption<BookmarkSortOption>[] = [
-    { key: 'alphabetical', label: 'A-Z' },
-    { key: 'recent', label: 'Recently Added' },
+    { key: 'recent', label: 'Latest' },
+    { key: 'alphabetical', label: 'Title' },
   ];
 
   // Add due words option at the beginning when data is available or loading
   if (isDueWordsDataAvailable) {
-    baseOptions.unshift({ key: 'dueWords', label: 'Review Words' });
+    baseOptions.unshift({ key: 'dueWords', label: 'Words Due' });
   } else if (isDueWordsLoading) {
-    baseOptions.unshift({ key: 'dueWords', label: 'Review Words...' });
+    baseOptions.unshift({ key: 'dueWords', label: 'Words Due...' });
   }
 
   return baseOptions;
@@ -218,10 +218,6 @@ export default function BookmarksScreen(): JSX.Element {
   // Add state to track when we're starting playback (to show player immediately)
   const [isStartingPlayback, setIsStartingPlayback] = useState(false);
 
-  // Sorting state - default to the natural database sort (most recently added)
-  const [currentSort, setCurrentSort] = useState<BookmarkSortOption>('recent');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-
   // Sleep timer state
   const [showSleepTimer, setShowSleepTimer] = useState(false);
 
@@ -239,6 +235,21 @@ export default function BookmarksScreen(): JSX.Element {
 
   // Get due words data for sorting
   const { dueWordRootIds, isLoading: isDueWordsLoading } = useArticlesByDueWords(user?.id, 0);
+
+  // Check if due words data is available for sorting
+  const isDueWordsDataAvailable = useMemo(() => {
+    return !isDueWordsLoading && dueWordRootIds?.size > 0;
+  }, [isDueWordsLoading, dueWordRootIds?.size]);
+
+  // Determine the best default sort based on available data
+  const getDefaultSort = useCallback((): BookmarkSortOption => {
+    // Prioritize words due if data is available, otherwise fall back to latest
+    return isDueWordsDataAvailable ? 'dueWords' : 'recent';
+  }, [isDueWordsDataAvailable]);
+
+  // Sorting state - default to words due when available, otherwise latest
+  const [currentSort, setCurrentSort] = useState<BookmarkSortOption>(() => getDefaultSort());
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // --- Get State & Stable Actions from useEnhancedAudioPlayer ---
   const enhancedAudioPlayer = useEnhancedAudioPlayer();
@@ -309,23 +320,13 @@ export default function BookmarksScreen(): JSX.Element {
 
   const { data: articleDetailsMap = new Map<number, Article>() } = articlesWithSentencesQuery;
 
-  // Check if due words data is available for sorting
-  const isDueWordsDataAvailable = useMemo(() => {
-    return !isDueWordsLoading && dueWordRootIds?.size > 0 && articleDetailsMap.size > 0;
-  }, [isDueWordsLoading, dueWordRootIds?.size, articleDetailsMap.size]);
+  // Use the current sort directly - let user control it completely
+  const stableSort = currentSort;
 
-  // Use a stable sort that doesn't change during data loading
-  const stableSort = useMemo(() => {
-    // If user explicitly selected due words and data is available, use it
-    if (currentSort === 'dueWords' && isDueWordsDataAvailable) {
-      return 'dueWords';
-    }
-    // Otherwise use the current sort
-    return currentSort;
-  }, [currentSort, isDueWordsDataAvailable]);
-
-  // Track if we should use due words sorting (simplified)
-  const shouldUseDueWordsSort = stableSort === 'dueWords' && isDueWordsDataAvailable;
+  // Track if we should use due words sorting (requires both due words data and article details)
+  const shouldUseDueWordsSort = useMemo(() => {
+    return stableSort === 'dueWords' && isDueWordsDataAvailable && articleDetailsMap.size > 0;
+  }, [stableSort, isDueWordsDataAvailable, articleDetailsMap.size]);
 
   // Helper function to count due words in an article - define before using it
   const countDueWords = useCallback(
@@ -722,16 +723,13 @@ export default function BookmarksScreen(): JSX.Element {
           ListHeaderComponent={
             hasArticles ? (
               <View>
-                <SectionTitle title="Sort" isFirstSection={true} />
                 <SortingControls
                   currentSort={currentSort}
                   sortDirection={sortDirection}
                   onSortChange={handleSortChange}
                   options={sortOptions}
+                  style={{ marginTop: LAYOUT.SPACING.SMALL }}
                 />
-                <View>
-                  <SectionTitle title="Saved Texts" />
-                </View>
               </View>
             ) : null
           }

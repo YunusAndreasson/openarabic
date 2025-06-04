@@ -187,12 +187,8 @@ const NowPlayingCard = ({
       },
       timerButton: {
         backgroundColor: isTimerActive
-          ? isDarkMode
-            ? colors.elevation3
-            : colors.buttonOverlay
-          : isDarkMode
-            ? colors.elevation2
-            : colors.card,
+          ? colors.warning + '20' // Transparent warning color when active
+          : colors.buttonOverlay, // Better contrast when inactive
         borderColor: isTimerActive ? colors.warning : colors.border,
         borderWidth: 1,
       },
@@ -331,7 +327,7 @@ const NowPlayingCard = ({
               <Ionicons
                 name={isTimerActive ? 'timer' : 'timer-outline'}
                 size={20}
-                color={isTimerActive ? colors.warning : colors.textSecondary}
+                color={isTimerActive ? colors.warning : colors.text}
               />
             </TouchableOpacity>
           )}
