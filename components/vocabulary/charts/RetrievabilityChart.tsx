@@ -1,17 +1,29 @@
+import {
+  Path,
+  Circle,
+  Group,
+  Skia,
+  Rect,
+  LinearGradient,
+  vec,
+  Mask,
+} from '@shopify/react-native-skia';
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Path, Circle, Group, Skia, Rect, LinearGradient, vec } from '@shopify/react-native-skia';
 
+import { LAYOUT } from '@/constants/layout';
+import { useColors } from '@/hooks/useColors';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
-import {
-  calculateRetrievability,
-  createStandardizedPerformanceZones,
-  generatePerformanceSubtitle,
-  createAreaFillPath,
-} from '../shared/utils';
-import { useChartColors } from '../shared/chartColors';
-import { BaseChart, ChartCanvas, type DataPoint } from '../shared';
+
 import { ThemedText } from '../../ThemedText';
+import { BaseChart, ChartCanvas, type DataPoint } from '../shared';
+import { useChartColors } from '../shared/chartColors';
+import {
+  generateChartSubtitle,
+  createStandardizedStats,
+  CHART_LABELS,
+  EMPTY_STATE_MESSAGES,
+} from '../shared/chartMessages';
 import {
   GRAPH_WIDTH,
   GRAPH_HEIGHT_LARGE,
@@ -19,13 +31,11 @@ import {
   CRITICAL_RETRIEVABILITY_THRESHOLD,
 } from '../shared/constants';
 import {
-  generateChartSubtitle,
-  createStandardizedStats,
-  CHART_LABELS,
-  EMPTY_STATE_MESSAGES,
-} from '../shared/chartMessages';
-import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
+  calculateRetrievability,
+  createStandardizedPerformanceZones,
+  generatePerformanceSubtitle,
+  createAreaFillPath,
+} from '../shared/utils';
 
 interface RetrievabilityChartProps {
   studyWords: StudyWord[];
@@ -232,21 +242,7 @@ export const RetrievabilityChart = memo(
           enableTooltips={true}
           accessibilityLabel="Memory retention forecast showing expected retention over the next 7 days"
         >
-          {/* Performance zones background - same as other charts */}
-          <Group>
-            {chartData.dangerZones.map((zone, index) => (
-              <Rect
-                key={`performance-zone-${index}`}
-                x={0}
-                y={zone.y}
-                width={GRAPH_WIDTH}
-                height={zone.height}
-                color={chartColors.withOpacity(zone.color, 0.12)}
-              />
-            ))}
-          </Group>
-
-          {/* Area fill under the retrievability line */}
+          {/* Area fill under the retrievability line - rendered first as base */}
           <Group>
             {chartData.retrievabilityPath && (
               <Path
@@ -266,15 +262,44 @@ export const RetrievabilityChart = memo(
             )}
           </Group>
 
-          {/* Main retrievability line */}
+          {/* Performance zones background - masked to only show below the data line */}
+          <Group>
+            {chartData.retrievabilityPath && (
+              <Mask
+                mask={
+                  <Path
+                    path={createAreaFillPath(
+                      chartData.retrievabilityPath,
+                      GRAPH_WIDTH,
+                      GRAPH_HEIGHT_LARGE
+                    )}
+                    color="white"
+                  />
+                }
+              >
+                {chartData.dangerZones.map((zone, index) => (
+                  <Rect
+                    key={`performance-zone-${index}`}
+                    x={0}
+                    y={zone.y}
+                    width={GRAPH_WIDTH}
+                    height={zone.height}
+                    color={chartColors.withOpacity(zone.color, 0.25)}
+                  />
+                ))}
+              </Mask>
+            )}
+          </Group>
+
+          {/* Main retrievability line with brand accent color */}
           <Group>
             <Path
               path={chartData.retrievabilityPath}
               style="stroke"
-              strokeWidth={3}
+              strokeWidth={2.5}
               strokeCap="round"
               strokeJoin="round"
-              color={chartColors.ui.dataLine}
+              color={chartColors.ui.accent}
             />
 
             {/* Data points with enhanced styling */}
@@ -284,15 +309,9 @@ export const RetrievabilityChart = memo(
 
               return (
                 <Group key={`retrievability-point-${index}`}>
-                  {/* Subtle glow ring */}
-                  <Circle
-                    cx={point.x}
-                    cy={point.y}
-                    r={6}
-                    color={chartColors.getDataPointGlow('retrievability')}
-                  />
-                  {/* Main data point */}
-                  <Circle cx={point.x} cy={point.y} r={4} color={chartColors.ui.dataLine} />
+                  {/* Enhanced data point with border */}
+                  <Circle cx={point.x} cy={point.y} r={3.5} color={chartColors.ui.accent} />
+                  <Circle cx={point.x} cy={point.y} r={2} color={chartColors.ui.background} />
                 </Group>
               );
             })}
@@ -345,24 +364,24 @@ export const RetrievabilityChart = memo(
 RetrievabilityChart.displayName = 'RetrievabilityChart';
 
 const styles = StyleSheet.create({
-  dayLabels: {
-    position: 'relative',
-    height: 24,
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.XSMALL,
-  },
   dayLabel: {
-    position: 'absolute',
     alignItems: 'center',
+    height: 20,
     justifyContent: 'center',
     minWidth: 20,
-    height: 20,
+    position: 'absolute',
   },
   dayLabelText: {
     fontSize: 10,
-    textAlign: 'center',
-    lineHeight: 14,
-    includeFontPadding: false,
     fontWeight: '500',
+    includeFontPadding: false,
+    lineHeight: 14,
+    textAlign: 'center',
+  },
+  dayLabels: {
+    height: 24,
+    marginTop: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.XSMALL,
+    position: 'relative',
   },
 });

@@ -1,17 +1,29 @@
+import {
+  Path,
+  Circle,
+  Group,
+  Skia,
+  Rect,
+  LinearGradient,
+  vec,
+  Mask,
+} from '@shopify/react-native-skia';
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Path, Circle, Group, Skia, Rect, LinearGradient, vec } from '@shopify/react-native-skia';
 
+import { LAYOUT } from '@/constants/layout';
+import { useColors } from '@/hooks/useColors';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
-import {
-  generateDateRange,
-  createStandardizedPerformanceZones,
-  generatePerformanceSubtitle,
-  createAreaFillPath,
-} from '../shared/utils';
-import { useChartColors } from '../shared/chartColors';
-import { BaseChart, ChartCanvas, type DataPoint } from '../shared';
+
 import { ThemedText } from '../../ThemedText';
+import { BaseChart, ChartCanvas, type DataPoint } from '../shared';
+import { useChartColors } from '../shared/chartColors';
+import {
+  generateChartSubtitle,
+  createStandardizedStats,
+  CHART_LABELS,
+  EMPTY_STATE_MESSAGES,
+} from '../shared/chartMessages';
 import {
   GRAPH_WIDTH,
   GRAPH_HEIGHT_LARGE,
@@ -19,13 +31,11 @@ import {
   MASTERY_STABILITY_THRESHOLD,
 } from '../shared/constants';
 import {
-  generateChartSubtitle,
-  createStandardizedStats,
-  CHART_LABELS,
-  EMPTY_STATE_MESSAGES,
-} from '../shared/chartMessages';
-import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
+  generateDateRange,
+  createStandardizedPerformanceZones,
+  generatePerformanceSubtitle,
+  createAreaFillPath,
+} from '../shared/utils';
 
 interface MasteryChartProps {
   studyWords: StudyWord[];
@@ -251,21 +261,7 @@ export const MasteryChart = memo(
           enableTooltips={true}
           accessibilityLabel="Mastery progression chart showing learning progress over the past 7 days"
         >
-          {/* Standardized performance zones background */}
-          <Group>
-            {chartData.performanceZones?.map((zone, index) => (
-              <Rect
-                key={`performance-zone-${index}`}
-                x={0}
-                y={zone.y}
-                width={GRAPH_WIDTH}
-                height={zone.height}
-                color={chartColors.withOpacity(zone.color, 0.12)}
-              />
-            ))}
-          </Group>
-
-          {/* Area fill under the mastery line with gradient */}
+          {/* Area fill under the mastery line with gradient - rendered first as base */}
           <Group>
             {chartData.masteryPath && chartData.dataPoints.length > 0 && (
               <Path
@@ -281,31 +277,54 @@ export const MasteryChart = memo(
             )}
           </Group>
 
-          {/* Main mastery line */}
+          {/* Standardized performance zones background - masked to only show below the data line */}
+          <Group>
+            {chartData.masteryPath && chartData.dataPoints.length > 0 && (
+              <Mask
+                mask={
+                  <Path
+                    path={createAreaFillPath(
+                      chartData.masteryPath,
+                      GRAPH_WIDTH,
+                      GRAPH_HEIGHT_LARGE
+                    )}
+                    color="white"
+                  />
+                }
+              >
+                {chartData.performanceZones?.map((zone, index) => (
+                  <Rect
+                    key={`performance-zone-${index}`}
+                    x={0}
+                    y={zone.y}
+                    width={GRAPH_WIDTH}
+                    height={zone.height}
+                    color={chartColors.withOpacity(zone.color, 0.25)}
+                  />
+                ))}
+              </Mask>
+            )}
+          </Group>
+
+          {/* Main mastery line with brand accent color */}
           <Group>
             {chartData.masteryPath && chartData.dataPoints.length > 0 && (
               <Path
                 path={chartData.masteryPath}
                 style="stroke"
-                strokeWidth={3}
+                strokeWidth={2.5}
                 strokeCap="round"
                 strokeJoin="round"
-                color={chartColors.ui.dataLine}
+                color={chartColors.ui.accent}
               />
             )}
 
             {/* Data points with enhanced styling */}
             {chartData.dataPoints.map((point, index) => (
               <Group key={`mastery-point-${index}`}>
-                {/* Subtle glow ring */}
-                <Circle
-                  cx={point.x}
-                  cy={point.y}
-                  r={6}
-                  color={chartColors.getDataPointGlow('mastery')}
-                />
-                {/* Main data point */}
-                <Circle cx={point.x} cy={point.y} r={4} color={chartColors.ui.dataLine} />
+                {/* Enhanced data point with border */}
+                <Circle cx={point.x} cy={point.y} r={3.5} color={chartColors.ui.accent} />
+                <Circle cx={point.x} cy={point.y} r={2} color={chartColors.ui.background} />
               </Group>
             ))}
           </Group>
@@ -383,24 +402,24 @@ export const MasteryChart = memo(
 MasteryChart.displayName = 'MasteryChart';
 
 const styles = StyleSheet.create({
-  dayLabels: {
-    position: 'relative',
-    height: 24,
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.XSMALL,
-  },
   dayLabel: {
-    position: 'absolute',
     alignItems: 'center',
+    height: 20,
     justifyContent: 'center',
     minWidth: 20,
-    height: 20,
+    position: 'absolute',
   },
   dayLabelText: {
     fontSize: 10,
-    textAlign: 'center',
-    lineHeight: 14,
-    includeFontPadding: false,
     fontWeight: '500',
+    includeFontPadding: false,
+    lineHeight: 14,
+    textAlign: 'center',
+  },
+  dayLabels: {
+    height: 24,
+    marginTop: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.XSMALL,
+    position: 'relative',
   },
 });

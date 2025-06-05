@@ -27,23 +27,24 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 
+import { AuthProvider } from '@/components/AuthProvider';
+import { ThemedText } from '@/components/ThemedText';
+import { ToastProvider } from '@/components/ToastProvider';
 import { Theme } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import type { RootState } from '@/store/store';
+import { handleError } from '@/utils/errorHandling';
 
-import madinaFont from '../assets/fonts/Madina.otf';
 import figtreeFont from '../assets/fonts/Figtree.ttf';
+import madinaFont from '../assets/fonts/Madina.otf';
 import { useAppPreloader } from '../hooks/useAppPreloader';
 import { useAuth } from '../hooks/useAuth';
 import { analytics } from '../services/analytics';
-import { handleError } from '@/utils/errorHandling';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { store, persistor } from '../store/store';
 import { setTheme } from '../store/themeSlice';
-import { ToastProvider } from '@/components/ToastProvider';
-import { AuthProvider } from '@/components/AuthProvider';
-import { ThemedText } from '@/components/ThemedText';
+
 import { useArticlesAndDueWordsLoaded } from './(tabs)/index';
 
 // Keep the splash screen visible while we fetch resources
@@ -366,6 +367,7 @@ function AppContent() {
             <Stack.Screen name="article" options={{ headerShown: false }} />
             <Stack.Screen name="review" options={reviewScreenOptions} />
             <Stack.Screen name="listen" options={reviewScreenOptions} />
+            <Stack.Screen name="insights" options={{ headerShown: true }} />
             <Stack.Screen name="index" />
           </Stack>
           <StatusBar style={isDark ? 'light' : 'dark'} />

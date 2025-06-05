@@ -1,29 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { memo, useMemo, useState, useCallback } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 
 import SectionTitle from '@/components/SectionTitle';
+import { ThemedText } from '@/components/ThemedText';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 import { getStrugglingWordsCount } from '@/utils/wordClassification';
 
 import { LAYOUT } from '../../constants/layout';
 import { useAuth } from '../../hooks/useAuth';
 import { useColors } from '../../hooks/useColors';
-import { useStreakData } from '../../hooks/useStreakData';
 import { useVocabularyChartData } from '../../hooks/useVocabularyChartData';
 import { lightFeedback } from '../../utils/haptics';
 
-// Import standardized chart labels for consistency
-import { CHART_LABELS } from './shared/chartMessages';
-
 import { InfoModal, type InfoModalType } from './InfoModal';
-import { LearningGauge } from './LearningGauge';
-import { StatCard } from './StatCard';
-import { StreakCard } from './StreakCard';
-import { DifficultyChart } from './charts/DifficultyChart';
-import { EfficiencyChart } from './charts/EfficiencyChart';
-import { MasteryChart } from './charts/MasteryChart';
-import { RetrievabilityChart } from './charts/RetrievabilityChart';
+import { MemoryCapacityGauge } from './charts/MemoryCapacityGauge';
 
 interface VocabularyStatCardsProps {
   masteredWords?: number;
@@ -33,14 +24,13 @@ interface VocabularyStatCardsProps {
   studyWords?: StudyWord[];
 }
 
-interface StatCardConfig {
+interface WordCategoryConfig {
   value: number;
   label: string;
-  icon: keyof typeof Ionicons.glyphMap;
   iconColor: string;
   bgColor: string;
-  borderColor: string;
   category: StatCategory;
+  description: string;
 }
 
 export const VocabularyStatCards = memo(
@@ -57,9 +47,6 @@ export const VocabularyStatCards = memo(
 
     // Get optimized chart data from database views
     const { userStats } = useVocabularyChartData(user?.id);
-
-    // Get streak data
-    const { currentStreak, longestStreak, lastSevenDaysActivity } = useStreakData(user?.id);
 
     // Validate input data with safe defaults
     const validatedInput = useMemo(
@@ -84,83 +71,68 @@ export const VocabularyStatCards = memo(
       [userStats, validatedInput]
     );
 
-    // Calculate FSRS-based metrics from study words for components that still need them
-    const fsrsMetrics = useMemo(() => {
-      if (!validatedInput.studyWords.length) {
+    // Calculate comprehensive word categories for exploration
+    const wordCategories = useMemo(() => {
+      const studyWords = validatedInput.studyWords;
+
+      if (!studyWords.length) {
         return {
-          totalWords: stats.totalWords,
-          needsAttention: 0,
+          dueWords: 0,
+          learningWords: 0,
+          strugglingWords: 0,
+          recentlyAdded: 0,
+          masteredWords: 0,
+          longTermRetention: 0,
         };
       }
 
-      const needsAttention = getStrugglingWordsCount(validatedInput.studyWords);
+      const now = new Date();
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      // Calculate categories based on FSRS data and learning state
+      const dueWords = studyWords.filter(word => {
+        if (!word.fsrs_due) return false;
+        return new Date(word.fsrs_due) <= now;
+      }).length;
+
+      const learningWords = studyWords.filter(word => {
+        const stability = word.fsrs_stability || 0;
+        const difficulty = word.fsrs_difficulty || 5;
+        // Words with low stability (< 21 days) and being actively learned
+        return stability > 0 && stability < 21 && difficulty > 3;
+      }).length;
+
+      const strugglingWords = getStrugglingWordsCount(studyWords);
+
+      const recentlyAdded = studyWords.filter(word => {
+        if (!word.created_at) return false;
+        return new Date(word.created_at) >= oneWeekAgo;
+      }).length;
+
+      const masteredWords = studyWords.filter(word => {
+        const stability = word.fsrs_stability || 0;
+        const difficulty = word.fsrs_difficulty || 5;
+        // Well-established words with good stability (lowered threshold for better UX)
+        return stability >= 7 && difficulty <= 5;
+      }).length;
+
+      const longTermRetention = studyWords.filter(word => {
+        const stability = word.fsrs_stability || 0;
+        const createdAt = word.created_at ? new Date(word.created_at) : null;
+        // Words that have been mastered for over a month and are stable
+        return stability >= 30 && createdAt && createdAt <= oneMonthAgo;
+      }).length;
 
       return {
-        totalWords: Math.max(validatedInput.studyWords.length, stats.totalWords),
-        needsAttention,
+        dueWords,
+        learningWords,
+        strugglingWords,
+        recentlyAdded,
+        masteredWords,
+        longTermRetention,
       };
-    }, [validatedInput.studyWords, stats.totalWords]);
-
-    // Calculate validated data with proper consistency checks
-    const validatedData = useMemo(() => {
-      const total = Math.max(fsrsMetrics.totalWords, 1);
-
-      // Ensure data consistency - words can't exceed total
-      const validMastered = Math.min(stats.masteredWords, total);
-      const validLearning = Math.min(stats.learningWords, total);
-      const validDue = Math.min(stats.dueWords, total);
-
-      return {
-        total,
-        mastered: validMastered,
-        learning: validLearning,
-        due: validDue,
-        needsAttention: fsrsMetrics.needsAttention,
-      };
-    }, [fsrsMetrics, stats]);
-
-    // Prepare stat cards configuration with proper icons and colors using standardized labels
-    const statCards: StatCardConfig[] = useMemo(
-      () => [
-        {
-          value: validatedData.due,
-          label: CHART_LABELS.DUE, // Use standardized label
-          icon: 'alarm-outline',
-          iconColor: colors.warning,
-          bgColor: colors.buttonOverlay,
-          borderColor: colors.warning + '40',
-          category: 'due',
-        },
-        {
-          value: validatedData.learning,
-          label: CHART_LABELS.LEARNING, // Use standardized label
-          icon: 'school-outline',
-          iconColor: colors.info,
-          bgColor: colors.buttonOverlay,
-          borderColor: colors.info + '40',
-          category: 'learning',
-        },
-        {
-          value: validatedData.mastered,
-          label: CHART_LABELS.MASTERED, // Use standardized label
-          icon: 'checkmark-circle-outline',
-          iconColor: colors.success,
-          bgColor: colors.buttonOverlay,
-          borderColor: colors.success + '40',
-          category: 'mastered',
-        },
-        {
-          value: validatedData.needsAttention,
-          label: CHART_LABELS.STRUGGLING, // Use consistent "struggling" terminology
-          icon: 'alert-circle',
-          iconColor: colors.error,
-          bgColor: colors.buttonOverlay,
-          borderColor: colors.error + '40',
-          category: 'needsAttention',
-        },
-      ],
-      [validatedData, colors]
-    );
+    }, [validatedInput.studyWords]);
 
     // Handle info modal - memoized for performance
     const handleInfoPress = useCallback((type: InfoModalType) => {
@@ -172,133 +144,121 @@ export const VocabularyStatCards = memo(
       setModalType(null);
     }, []);
 
-    // Memoized info press handlers to prevent unnecessary re-renders
-    const handleRecommendationInfo = useCallback(
-      () => handleInfoPress('recommendation'),
-      [handleInfoPress]
-    );
-    const handleStreakInfo = useCallback(() => handleInfoPress('streak'), [handleInfoPress]);
-    const handleMasteryInfo = useCallback(() => handleInfoPress('mastery'), [handleInfoPress]);
-    const handleEfficiencyInfo = useCallback(
-      () => handleInfoPress('efficiency'),
-      [handleInfoPress]
-    );
-    const handleRetrievabilityInfo = useCallback(
-      () => handleInfoPress('retrievability'),
-      [handleInfoPress]
-    );
-    const handleDifficultyInfo = useCallback(
-      () => handleInfoPress('difficulty'),
-      [handleInfoPress]
+    // Create smart category configuration - organized by learning priority
+    const categoryConfigs: WordCategoryConfig[] = useMemo(
+      () => [
+        // 1. URGENT: Words that need immediate attention
+        {
+          value: wordCategories.dueWords,
+          label: 'Due for Review',
+          iconColor: colors.error,
+          bgColor: colors.buttonOverlay,
+          category: 'due',
+          description: 'Words scheduled for review now',
+        },
+        // 2. ACTIVE: Words being actively learned
+        {
+          value: wordCategories.learningWords,
+          label: 'In Progress',
+          iconColor: colors.info,
+          bgColor: colors.buttonOverlay,
+          category: 'learning',
+          description: 'Words you are actively learning',
+        },
+        // 3. CHALLENGE: Words that need extra attention
+        {
+          value: wordCategories.strugglingWords,
+          label: 'Challenging',
+          iconColor: colors.warning,
+          bgColor: colors.buttonOverlay,
+          category: 'needsAttention',
+          description: 'Words that are difficult to remember',
+        },
+        // 4. NEW: Recently added words
+        {
+          value: wordCategories.recentlyAdded,
+          label: 'Recently Added',
+          iconColor: colors.tint,
+          bgColor: colors.buttonOverlay,
+          category: 'total',
+          description: 'Words added in the last week',
+        },
+        // 5. SUCCESS: All mastered words combined
+        {
+          value: wordCategories.masteredWords + wordCategories.longTermRetention,
+          label: 'Mastered',
+          iconColor: colors.success,
+          bgColor: colors.buttonOverlay,
+          category: 'mastered',
+          description: 'Words you have successfully learned',
+        },
+      ],
+      [wordCategories, colors]
     );
 
-    // New handler for Learning Progress section
-    const handleProgressInfo = useCallback(() => handleInfoPress('progress'), [handleInfoPress]);
+    // Memoized info press handlers to prevent unnecessary re-renders
+    const handleMemoryCapacityInfo = useCallback(
+      () => handleInfoPress('mastery'),
+      [handleInfoPress]
+    );
 
     return (
       <View style={styles.container}>
-        {/* Start with Motivation - Daily Habit */}
+        {/* Memory Capacity Gauge - Top Priority */}
         <View style={styles.section}>
-          <SectionTitle title="Your Streak" onInfoPress={handleStreakInfo} isFirstSection={true} />
-          <StreakCard
-            currentStreak={currentStreak}
-            longestStreak={longestStreak}
-            lastSevenDaysActivity={lastSevenDaysActivity}
-            onInfoPress={handleStreakInfo}
-            hideTitle={true}
+          <SectionTitle
+            title="Memory Capacity"
+            onInfoPress={handleMemoryCapacityInfo}
+            isFirstSection={true}
+          />
+          <MemoryCapacityGauge
+            studyWords={validatedInput.studyWords}
+            onInfoPress={handleMemoryCapacityInfo}
+            onStatPress={onStatPress}
           />
         </View>
 
-        {/* Progress Overview + Smart Guidance */}
+        {/* Word Categories - Clean exploration interface */}
         <View style={styles.section}>
-          <SectionTitle title="Learning Progress" onInfoPress={handleProgressInfo} />
-          <View style={styles.statsGrid}>
-            {statCards.map(card => (
-              <StatCard
-                key={`vocab-stat-card-${card.category}`}
-                value={card.value}
-                label={card.label}
-                icon={card.icon}
-                iconColor={card.iconColor}
-                bgColor={card.bgColor}
-                borderColor={card.borderColor}
-                category={card.category}
-                onPress={onStatPress}
-              />
-            ))}
-          </View>
+          <SectionTitle title="Explore Your Words" />
+          <View style={styles.categoriesList}>
+            {categoryConfigs
+              .filter(config => config.value > 0 || config.category === 'mastered') // Always show mastered category
+              .map((config, index) => (
+                <TouchableOpacity
+                  key={config.category}
+                  style={[styles.categoryRow, { backgroundColor: config.bgColor }]}
+                  onPress={() => onStatPress?.(config.category)}
+                  activeOpacity={0.7}
+                  accessibilityLabel={`Browse ${config.label}: ${config.value} words`}
+                  accessibilityRole="button"
+                >
+                  {/* Number Badge */}
+                  <View style={[styles.numberBadge, { backgroundColor: config.iconColor }]}>
+                    <ThemedText style={styles.numberText}>{config.value}</ThemedText>
+                  </View>
 
-          {/* Integrated Smart Recommendation */}
-          <View style={styles.recommendationContainer}>
-            <LearningGauge
-              dueWords={validatedData.due}
-              learningWords={validatedData.learning}
-              totalWords={validatedData.total}
-              masteredWords={validatedData.mastered}
-              hideTitle={true}
-              onInfoPress={handleRecommendationInfo}
-            />
-          </View>
-        </View>
+                  {/* Content */}
+                  <View style={styles.categoryContent}>
+                    <ThemedText style={styles.categoryLabel}>{config.label}</ThemedText>
+                    <ThemedText
+                      type="caption"
+                      variant="secondary"
+                      style={styles.categoryDescription}
+                    >
+                      {config.description}
+                    </ThemedText>
+                  </View>
 
-        {/* Detailed Analytics */}
-        <View style={styles.analyticsSection}>
-          <View style={styles.chartContainer}>
-            <SectionTitle
-              title="Memory Strength"
-              subtitle="Track how well you remember each word"
-              onInfoPress={handleMasteryInfo}
-            />
-            <MasteryChart
-              studyWords={validatedInput.studyWords}
-              onInfoPress={handleMasteryInfo}
-              onStatPress={onStatPress}
-              hideTitle={true}
-            />
-          </View>
-
-          <View style={styles.chartContainer}>
-            <SectionTitle
-              title="Learning Speed"
-              subtitle="See how fast you master new vocabulary"
-              onInfoPress={handleEfficiencyInfo}
-            />
-            <EfficiencyChart
-              studyWords={validatedInput.studyWords}
-              onInfoPress={handleEfficiencyInfo}
-              learningWords={validatedData.learning}
-              onStatPress={onStatPress}
-              hideTitle={true}
-            />
-          </View>
-
-          <View style={styles.chartContainer}>
-            <SectionTitle
-              title="Memory Retention"
-              subtitle="Monitor which words you're forgetting"
-              onInfoPress={handleRetrievabilityInfo}
-            />
-            <RetrievabilityChart
-              studyWords={validatedInput.studyWords}
-              onInfoPress={handleRetrievabilityInfo}
-              onStatPress={onStatPress}
-              hideTitle={true}
-            />
-          </View>
-
-          <View style={[styles.chartContainer, styles.lastChart]}>
-            <SectionTitle
-              title="Challenge Level"
-              subtitle="Identify your most difficult words"
-              onInfoPress={handleDifficultyInfo}
-            />
-            <DifficultyChart
-              studyWords={validatedInput.studyWords}
-              onInfoPress={handleDifficultyInfo}
-              onDifficultyPress={onStatPress}
-              onStatPress={onStatPress}
-              hideTitle={true}
-            />
+                  {/* Chevron */}
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color={colors.secondaryText}
+                    style={styles.chevron}
+                  />
+                </TouchableOpacity>
+              ))}
           </View>
         </View>
 
@@ -312,28 +272,49 @@ export const VocabularyStatCards = memo(
 VocabularyStatCards.displayName = 'VocabularyStatCards';
 
 const styles = StyleSheet.create({
+  categoriesList: {
+    gap: LAYOUT.SPACING.SMALL,
+  },
+  categoryContent: {
+    flex: 1,
+  },
+  categoryDescription: {
+    fontSize: 13,
+    lineHeight: 16,
+    marginTop: 2,
+  },
+  categoryLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  categoryRow: {
+    alignItems: 'center',
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    flexDirection: 'row',
+    marginBottom: LAYOUT.SPACING.SMALL,
+    padding: LAYOUT.SPACING.MEDIUM,
+  },
+  chevron: {
+    marginLeft: LAYOUT.SPACING.SMALL,
+    opacity: 0.6,
+  },
   container: {
     flex: 1,
   },
+  numberBadge: {
+    alignItems: 'center',
+    borderRadius: 16,
+    height: 32,
+    justifyContent: 'center',
+    marginRight: LAYOUT.SPACING.MEDIUM,
+    width: 32,
+  },
+  numberText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   section: {
-    marginBottom: LAYOUT.SPACING.XXLARGE,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: LAYOUT.SPACING.MEDIUM,
-    justifyContent: 'space-between',
-  },
-  recommendationContainer: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
-  },
-  analyticsSection: {
-    marginBottom: LAYOUT.SPACING.XXLARGE,
-  },
-  chartContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  lastChart: {
-    marginBottom: 0,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
 });
