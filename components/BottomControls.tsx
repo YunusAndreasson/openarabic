@@ -1,14 +1,14 @@
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
+
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { useColors } from '@/hooks/useColors';
 
 import { ThemedButton } from './ThemedButton';
 import { ThemedText } from './ThemedText';
-import { useColors } from '@/hooks/useColors';
-import { LAYOUT } from '@/constants/layout';
-import { MIN_TOUCH_TARGET } from '@/constants/layout';
 
 export type BottomControlsProps = {
   primaryLabel: string;
@@ -133,7 +133,7 @@ const BottomControls = memo<BottomControlsProps>(
               <View style={styles.buttonContainer}>
                 <ThemedButton
                   title={secondaryLabel!}
-                  onPress={onSecondaryPress!}
+                  onPress={onSecondaryPress}
                   variant={secondaryVariant}
                   style={[
                     styles.button,
@@ -172,61 +172,51 @@ const BottomControls = memo<BottomControlsProps>(
 BottomControls.displayName = 'BottomControls';
 
 const styles = StyleSheet.create({
-  wrapper: {
-    position: 'absolute',
-    bottom: LAYOUT.BOTTOM_BAR.HEIGHT,
-    left: 0,
-    right: 0,
-    zIndex: LAYOUT.Z_INDEX.POPUP,
+  button: {
+    width: '100%',
   },
-  gradient: {
-    position: 'absolute',
-    top: -LAYOUT.SPACING.LARGE,
-    left: 0,
-    right: 0,
-    bottom: -LAYOUT.BOTTOM_BAR.HEIGHT,
-    height: 120,
+  buttonContainer: {
+    width: `${LAYOUT.WIDTH_RATIOS.ALMOST_HALF * 100}%`,
+  },
+  buttonsRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
   },
   container: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.TINY,
     position: 'relative',
   },
-  buttonsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  fullWidthButtonContainer: {
     width: '100%',
   },
-  buttonContainer: {
-    width: `${LAYOUT.WIDTH_RATIOS.ALMOST_HALF * 100}%`,
-  },
-  button: {
-    width: '100%',
+  gradient: {
+    bottom: -LAYOUT.BOTTOM_BAR.HEIGHT,
+    height: 120,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: -LAYOUT.SPACING.LARGE,
   },
   secondaryButton: {
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+    elevation: 2,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
-    elevation: 2,
-  },
-  timerContainer: {
-    position: 'absolute',
-    top: -LAYOUT.SPACING.SMALL,
-    right: LAYOUT.SCREEN_EDGE_PADDING,
-    zIndex: 1,
   },
   timerButton: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.TINY,
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     borderWidth: 1,
-    minWidth: MIN_TOUCH_TARGET.SIZE,
+    flexDirection: 'row',
+    justifyContent: 'center',
     minHeight: MIN_TOUCH_TARGET.SMALL,
+    minWidth: MIN_TOUCH_TARGET.SIZE,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.TINY,
     ...Platform.select({
       ios: {
         shadowOffset: { width: 0, height: 2 },
@@ -238,13 +228,23 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  timerContainer: {
+    position: 'absolute',
+    right: LAYOUT.SCREEN_EDGE_PADDING,
+    top: -LAYOUT.SPACING.SMALL,
+    zIndex: 1,
+  },
   timerLabel: {
-    marginLeft: LAYOUT.SPACING.XTINY,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     letterSpacing: 0.2,
+    marginLeft: LAYOUT.SPACING.XTINY,
   },
-  fullWidthButtonContainer: {
-    width: '100%',
+  wrapper: {
+    bottom: LAYOUT.BOTTOM_BAR.HEIGHT - LAYOUT.SPACING.LARGE,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    zIndex: LAYOUT.Z_INDEX.POPUP,
   },
 });
 

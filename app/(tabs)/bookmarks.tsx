@@ -714,9 +714,9 @@ export default function BookmarksScreen(): JSX.Element {
             paddingBottom: hasArticles
               ? insets.bottom +
                 LAYOUT.BOTTOM_BAR.HEIGHT +
-                LAYOUT.SPACING.MEDIUM +
-                (shouldShowPlayer ? 120 + LAYOUT.SPACING.MEDIUM : LAYOUT.BUTTON.HEIGHT.LARGE)
-              : insets.bottom + LAYOUT.SPACING.MEDIUM,
+                LAYOUT.SPACING.TINY +
+                (shouldShowPlayer ? 120 + LAYOUT.SPACING.TINY : LAYOUT.BUTTON.HEIGHT.LARGE)
+              : insets.bottom + LAYOUT.SPACING.TINY,
             paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
           }}
           showsVerticalScrollIndicator={false}

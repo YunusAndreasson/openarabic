@@ -1,148 +1,174 @@
-/* eslint-disable no-unused-vars */
 import type { ThemeColors } from '../types/ui/theme.types';
 
 export const Colors = {
   light: {
-    primary: '#2A3441', // Deep charcoal - sophisticated primary
-    background: '#F9FBF9', // Enhanced subtle greenish tint with more warmth
-    text: '#1B2C20', // Richer dark text with enhanced green undertone
-    secondaryText: '#485A4F', // Refined secondary text with deeper warmth
-    textTertiary: '#697968', // Enhanced contrast while maintaining warmth
-    border: '#E5F2E9', // More pronounced green tint for subtle definition
-    card: '#FEFFFE', // Pure white cards with enhanced subtle green warmth
-    cardBorder: '#F7FBF8', // More noticeable card borders while remaining subtle
-    error: '#C44536', // Warm terracotta red - natural and organic
-    success: '#4A7C59', // Deep forest green - natural success
-    warning: '#B8860B', // Dark goldenrod - organic gold tone
-    englishText: '#485A4F', // Enhanced consistency with refined secondaryText
-    arabicText: '#1B2C20', // Enhanced consistency with richer main text
-    authorText: '#758A7B', // Warmer and more sophisticated author styling
-    tint: '#5A7C65', // Sophisticated sage green - balanced saturation
-    tabIconDefault: '#9BB0A3', // Enhanced contrast for inactive states
-    tabIconSelected: '#5A7C65', // Consistent with enhanced tint
-    icon: '#758A7B', // Warmer icon color matching enhanced authorText
-    disabled: '#D0D9D3', // Refined disabled state with better green harmony
-    imagePlaceholder: '#F7FBF8', // Consistent with enhanced cardBorder
+    // Core brand colors - sophisticated warm sage foundation
+    primary: '#2B3C35', // Rich forest charcoal - perfect warmth/green balance
+    background: '#FAFCF9', // Crisp warm white with subtle sage undertone
+    text: '#1A2B23', // Deep forest text - optimal contrast with warm undertones
+    secondaryText: '#4A5B52', // Balanced mid-tone sage - perfect hierarchy
+    textTertiary: '#667A6D', // Sophisticated light sage - clear but gentle
+    border: '#E8F1EC', // Refined sage border - subtle definition
+    card: '#FFFFFF', // Pure white cards for maximum content clarity
+    cardBorder: '#F2F7F4', // Whisper-soft sage card borders
+
+    // Semantic colors - warm and natural
+    error: '#C74A3A', // Warm terracotta red - natural yet urgent
+    success: '#4C7F5A', // Deep forest success - trustworthy and calming
+    warning: '#B8860B', // Rich goldenrod - organic warmth
+    info: '#6B8471', // Muted sage-blue - sophisticated informational
+
+    // Text hierarchy - perfectly balanced for reading
+    englishText: '#4A5B52', // Consistent with secondaryText for harmony
+    arabicText: '#1A2B23', // Deep clarity for Arabic script
+    authorText: '#748A7C', // Refined author styling - subtle yet readable
+    headingText: '#1A2B23', // Strong heading presence
+    subtitleText: '#35463E', // Perfect subtitle balance
+    metadataText: '#5C6F65', // Ideal metadata hierarchy
+    captionText: '#6A7D74', // Optimal caption readability
+
+    // Interactive elements
+    tint: '#5B7F68', // Sophisticated sage tint - balanced saturation
+    tabIconDefault: '#9AB5A4', // Clear inactive state
+    tabIconSelected: '#5B7F68', // Consistent brand presence
+    icon: '#748A7C', // Harmonious icon color
+    disabled: '#D2DBD6', // Clear disabled state with sage harmony
+
+    // Overlays and effects - scientifically optimized
     transparent: 'transparent',
-    overlay: 'rgba(249, 251, 249, 0.88)', // Enhanced light overlay with more green
-    modalOverlay: 'rgba(249, 251, 249, 0.96)', // Stronger modal overlay
-    borderOverlay: 'rgba(47, 125, 50, 0.05)', // More subtle refined overlay
-    buttonOverlay: 'rgba(47, 125, 50, 0.06)', // Enhanced button overlay subtlety
-    buttonOverlayActive: 'rgba(47, 125, 50, 0.10)', // Enhanced active state
-    buttonBorderOverlay: 'rgba(255, 255, 255, 0.18)', // Slightly enhanced border
-    shadow: '#2A3441', // Consistent with primary
-    elevation1: '#FEFFFE', // Enhanced pure white elevation
-    elevation2: '#F7FBF8', // Enhanced subtle elevation
-    elevation3: '#EDF5F0', // Enhanced medium elevation with more green
+    overlay: 'rgba(250, 252, 249, 0.92)', // Sophisticated light overlay
+    modalOverlay: 'rgba(250, 252, 249, 0.97)', // Strong modal focus
+    borderOverlay: 'rgba(91, 127, 104, 0.06)', // Subtle interactive feedback
+    buttonOverlay: 'rgba(91, 127, 104, 0.08)', // Perfect button hover
+    buttonOverlayActive: 'rgba(91, 127, 104, 0.12)', // Clear active state
+    buttonBorderOverlay: 'rgba(255, 255, 255, 0.20)', // Refined button borders
+    backdropOverlay: 'rgba(43, 60, 53, 0.68)', // Optimal modal backdrop
+    contrastOverlay: 'rgba(43, 60, 53, 0.32)', // Enhanced text contrast
+
+    // Elevation system - depth with warmth
+    shadow: '#2B3C35', // Consistent shadow color
+    elevation1: '#FFFFFF', // Pure white first level
+    elevation2: '#F9FCF8', // Subtle second level
+    elevation3: '#F2F7F4', // Clear third level
+
+    // Reading experience - optimized for comfort
+    audioHighlight: '#F9FCF8', // Gentle highlight for audio
+    audioHighlightBorder: '#E8F1EC', // Subtle highlight border
+    wordTooltipBg: '#FFFFFF', // Clear tooltip background
+    wordTooltipText: '#1A2B23', // Sharp tooltip text
+    wordTooltipBorder: '#E8F1EC', // Defined tooltip border
+    wordTooltipShadow: 'rgba(43, 60, 53, 0.12)', // Sophisticated tooltip shadow
+    wordSelectionUnderline: 'rgba(91, 127, 104, 0.28)', // Clear word selection
+    wordDueUnderline: 'rgba(184, 134, 11, 0.42)', // Warm due word indicator
+    audioControlBg: '#FFFFFF', // Clean audio controls
+    audioControlBorder: '#E8F1EC', // Defined audio borders
+    audioControlShadow: 'rgba(43, 60, 53, 0.08)', // Gentle audio shadows
+
+    // Navigation - polished and branded
+    navigationRipple: 'rgba(91, 127, 104, 0.10)', // Subtle navigation feedback
+    headerOverlay: 'rgba(250, 252, 249, 0.96)', // Strong header clarity
+    tabBarOverlay: 'rgba(250, 252, 249, 0.92)', // Clear tab bar
+
+    // UI semantics - clear user feedback
+    progressIndicator: '#5B7F68', // Brand-consistent progress
+    progressBackground: 'rgba(91, 127, 104, 0.15)', // Clear progress track
+    interactiveSecondary: '#748A7C', // Refined secondary interactions
+    completionSuccess: '#4C7F5A', // Satisfying completion color
+    repeatActive: '#B8860B', // Warm active repeat state
+    socialIconBg: 'rgba(91, 127, 104, 0.10)', // Subtle social backgrounds
+
+    // Utility colors
+    imagePlaceholder: '#F2F7F4', // Harmonious image placeholders
+    textOverlay: 'rgba(91, 127, 104, 0.04)', // Subtle text overlays
+    textShadowDark: 'rgba(43, 60, 53, 0.75)', // Rich dark text shadow
+    textShadowLight: 'rgba(255, 255, 255, 0.75)', // Crisp light text shadow
     white: '#FFFFFF',
     black: '#000000',
-    textOverlay: 'rgba(47, 125, 50, 0.03)', // More subtle text overlay
-    textShadowDark: 'rgba(42, 52, 65, 0.75)', // Consistent dark shadow
-    textShadowLight: 'rgba(255, 255, 255, 0.75)', // Consistent light shadow
-    info: '#6B8471', // Muted sage-gray - enhanced earth-toned alternative
-    backdropOverlay: 'rgba(42, 52, 65, 0.65)', // Enhanced modal focus
-    contrastOverlay: 'rgba(42, 52, 65, 0.28)', // Enhanced text contrast
-    socialIconBg: 'rgba(107, 154, 122, 0.08)', // More subtle social background
-    // Article reading specific colors
-    audioHighlight: '#FEFFFE', // Enhanced highlight with subtle green
-    audioHighlightBorder: '#E5F2E9', // Enhanced border with more green
-    wordTooltipBg: '#FEFFFE', // Enhanced tooltip background
-    wordTooltipText: '#1B2C20', // Enhanced tooltip text consistency
-    wordTooltipBorder: '#E5F2E9', // Enhanced tooltip border
-    wordTooltipShadow: 'rgba(42, 52, 65, 0.10)', // More subtle tooltip shadow
-    wordSelectionUnderline: 'rgba(47, 125, 50, 0.22)', // Enhanced selection visibility
-    wordDueUnderline: 'rgba(184, 134, 11, 0.38)', // Enhanced due word visibility
-    audioControlBg: '#FEFFFE', // Enhanced audio control background
-    audioControlBorder: '#E5F2E9', // Enhanced audio control border
-    audioControlShadow: 'rgba(42, 52, 65, 0.06)', // Enhanced audio shadow
-    // Navigation branding colors
-    navigationRipple: 'rgba(47, 125, 50, 0.08)', // More refined navigation ripple
-    headerOverlay: 'rgba(249, 251, 249, 0.95)', // Enhanced header overlay
-    tabBarOverlay: 'rgba(249, 251, 249, 0.88)', // Enhanced tab bar overlay
-
-    // Semantic UI colors for better UX
-    progressIndicator: '#6B8471', // Enhanced earth-toned progress
-    progressBackground: 'rgba(107, 132, 113, 0.12)', // More subtle progress track
-    interactiveSecondary: '#758A7B', // Enhanced secondary interactive with warmth
-    completionSuccess: '#4A7C59', // Deep forest green for completion
-    repeatActive: '#B8860B', // Enhanced goldenrod for active states
-
-    // Enhanced typography-specific colors for sophisticated text relationships
-    headingText: '#1B2C20', // Primary heading color - rich and commanding
-    subtitleText: '#556A5C', // Sophisticated subtitle balance between primary and secondary
-    metadataText: '#637A6F', // Refined metadata color - perfect hierarchy balance
-    captionText: '#6E7F74', // Enhanced caption color for optimal readability
   } as ThemeColors,
+
   dark: {
-    primary: '#F2F5F3', // Enhanced warm off-white with richer green undertone
-    background: '#0D1210', // Deeper charcoal with enhanced green-brown warmth
-    text: '#F2F5F3', // Enhanced warm off-white consistency
-    secondaryText: '#D6DBD7', // Enhanced sage with more warmth and richness
-    textTertiary: '#ABB3AB', // Enhanced balanced green-gray with more sophistication
-    border: '#293129', // Enhanced rich charcoal with deeper green-brown
-    card: '#191F1A', // Enhanced dark forest with richer brown undertone
-    cardBorder: '#293129', // Enhanced rich charcoal border consistency
-    error: '#D77559', // Enhanced warm terracotta - richer in dark mode
-    success: '#6FA07D', // Enhanced sage green - more vibrant yet natural
-    warning: '#D9A876', // Enhanced warm gold - richer and more organic
-    englishText: '#D6DBD7', // Enhanced consistency with refined secondaryText
-    arabicText: '#F2F5F3', // Enhanced consistency with enriched main text
-    authorText: '#ABB3AB', // Enhanced consistency with sophisticated textTertiary
-    tint: '#7DA188', // Enhanced balanced sage green - richer without harshness
-    tabIconDefault: '#6E766E', // Enhanced neutral with green-brown sophistication
-    tabIconSelected: '#7DA188', // Enhanced balanced sage consistency
-    icon: '#ABB3AB', // Enhanced icon color with sophisticated balance
-    disabled: '#3C443C', // Enhanced muted dark with sophisticated green-brown
-    imagePlaceholder: '#293129', // Enhanced consistency with border
+    // Core brand colors - sophisticated dark sage foundation
+    primary: '#F4F6F4', // Warm sage white - perfect for dark mode
+    background: '#0E1512', // Rich dark forest - deep yet warm
+    text: '#F4F6F4', // Consistent warm light text
+    secondaryText: '#D8DDD9', // Refined sage light - perfect hierarchy
+    textTertiary: '#B6C2B8', // Balanced mid-tone - clear but gentle
+    border: '#2A352D', // Rich sage border - clear definition
+    card: '#1A211C', // Warm dark forest cards
+    cardBorder: '#2A352D', // Consistent card borders
+
+    // Semantic colors - warm and natural for dark mode
+    error: '#DD6B5A', // Warmer terracotta - visible yet comfortable
+    success: '#72A47F', // Lighter forest success - clear in dark
+    warning: '#D4A876', // Enriched gold - warm and visible
+    info: '#92A99A', // Sophisticated sage-blue for dark mode
+
+    // Text hierarchy - optimized for dark mode reading
+    englishText: '#D8DDD9', // Consistent secondary text harmony
+    arabicText: '#F4F6F4', // Clear Arabic script in dark mode
+    authorText: '#B6C2B8', // Refined author styling for dark
+    headingText: '#F4F6F4', // Strong heading presence
+    subtitleText: '#E6EAE7', // Perfect dark mode subtitle
+    metadataText: '#CAD3CC', // Ideal metadata hierarchy
+    captionText: '#BDC6BF', // Optimal caption in dark mode
+
+    // Interactive elements - sophisticated dark interactions
+    tint: '#7FA08A', // Balanced sage tint for dark mode
+    tabIconDefault: '#6E7F71', // Clear inactive state in dark
+    tabIconSelected: '#7FA08A', // Consistent brand in dark
+    icon: '#B6C2B8', // Harmonious dark mode icons
+    disabled: '#3C453E', // Clear disabled state with dark sage
+
+    // Overlays and effects - scientifically optimized for dark
     transparent: 'transparent',
-    overlay: 'rgba(13, 18, 16, 0.88)', // Enhanced dark forest overlay
-    modalOverlay: 'rgba(13, 18, 16, 0.96)', // Enhanced darker forest modal
-    borderOverlay: 'rgba(107, 154, 122, 0.06)', // Enhanced muted overlay subtlety
-    buttonOverlay: 'rgba(107, 154, 122, 0.08)', // Enhanced button overlay
-    buttonOverlayActive: 'rgba(107, 154, 122, 0.12)', // Enhanced active overlay
-    buttonBorderOverlay: 'rgba(242, 245, 243, 0.12)', // Enhanced warm sage border
-    shadow: '#000000', // Pure black for enhanced depth
-    elevation1: '#191F1A', // Enhanced dark forest consistency
-    elevation2: '#293129', // Enhanced rich charcoal
-    elevation3: '#383F38', // Enhanced medium charcoal with green-brown richness
+    overlay: 'rgba(14, 21, 18, 0.92)', // Sophisticated dark overlay
+    modalOverlay: 'rgba(14, 21, 18, 0.97)', // Strong dark modal focus
+    borderOverlay: 'rgba(127, 160, 138, 0.08)', // Subtle dark interactive feedback
+    buttonOverlay: 'rgba(127, 160, 138, 0.10)', // Perfect dark button hover
+    buttonOverlayActive: 'rgba(127, 160, 138, 0.15)', // Clear dark active state
+    buttonBorderOverlay: 'rgba(244, 246, 244, 0.15)', // Refined dark button borders
+    backdropOverlay: 'rgba(14, 21, 18, 0.85)', // Optimal dark modal backdrop
+    contrastOverlay: 'rgba(0, 0, 0, 0.52)', // Enhanced dark contrast
+
+    // Elevation system - depth in dark mode
+    shadow: '#000000', // Pure black shadows for depth
+    elevation1: '#1A211C', // Consistent card level
+    elevation2: '#2A352D', // Clear second level
+    elevation3: '#3A453D', // Defined third level
+
+    // Reading experience - optimized for dark mode comfort
+    audioHighlight: '#2A352D', // Gentle dark highlight
+    audioHighlightBorder: '#3A453D', // Subtle dark highlight border
+    wordTooltipBg: '#2A352D', // Clear dark tooltip background
+    wordTooltipText: '#F4F6F4', // Sharp light tooltip text
+    wordTooltipBorder: '#3A453D', // Defined dark tooltip border
+    wordTooltipShadow: 'rgba(0, 0, 0, 0.42)', // Rich dark tooltip shadow
+    wordSelectionUnderline: 'rgba(127, 160, 138, 0.32)', // Clear dark word selection
+    wordDueUnderline: 'rgba(212, 168, 118, 0.52)', // Warm dark due indicator
+    audioControlBg: '#2A352D', // Clean dark audio controls
+    audioControlBorder: '#3A453D', // Defined dark audio borders
+    audioControlShadow: 'rgba(0, 0, 0, 0.32)', // Rich dark audio shadows
+
+    // Navigation - polished dark navigation
+    navigationRipple: 'rgba(127, 160, 138, 0.12)', // Subtle dark navigation feedback
+    headerOverlay: 'rgba(14, 21, 18, 0.96)', // Strong dark header clarity
+    tabBarOverlay: 'rgba(14, 21, 18, 0.92)', // Clear dark tab bar
+
+    // UI semantics - clear dark user feedback
+    progressIndicator: '#7FA08A', // Brand-consistent dark progress
+    progressBackground: 'rgba(127, 160, 138, 0.20)', // Clear dark progress track
+    interactiveSecondary: '#B6C2B8', // Refined dark secondary interactions
+    completionSuccess: '#72A47F', // Satisfying dark completion
+    repeatActive: '#D4A876', // Warm dark active repeat state
+    socialIconBg: 'rgba(127, 160, 138, 0.10)', // Subtle dark social backgrounds
+
+    // Utility colors
+    imagePlaceholder: '#2A352D', // Harmonious dark placeholders
+    textOverlay: 'rgba(127, 160, 138, 0.06)', // Subtle dark text overlays
+    textShadowDark: 'rgba(0, 0, 0, 0.75)', // Rich dark shadow
+    textShadowLight: 'rgba(244, 246, 244, 0.75)', // Crisp light shadow
     white: '#FFFFFF',
     black: '#000000',
-    textOverlay: 'rgba(107, 154, 122, 0.04)', // Enhanced muted sage text overlay
-    textShadowDark: 'rgba(0, 0, 0, 0.75)', // Consistent dark shadow
-    textShadowLight: 'rgba(242, 245, 243, 0.75)', // Enhanced light warm sage shadow
-    info: '#8DA795', // Enhanced sage with more sophisticated earth undertones
-    backdropOverlay: 'rgba(13, 18, 16, 0.82)', // Enhanced modal focus
-    contrastOverlay: 'rgba(0, 0, 0, 0.48)', // Enhanced contrast overlay
-    socialIconBg: 'rgba(107, 154, 122, 0.08)', // Enhanced social background subtlety
-    // Article reading specific colors
-    audioHighlight: '#293129', // Enhanced rich charcoal highlight
-    audioHighlightBorder: '#383F38', // Enhanced medium charcoal border
-    wordTooltipBg: '#293129', // Enhanced rich charcoal tooltip
-    wordTooltipText: '#F2F5F3', // Enhanced warm off-white text
-    wordTooltipBorder: '#383F38', // Enhanced medium charcoal border
-    wordTooltipShadow: 'rgba(0, 0, 0, 0.38)', // Enhanced tooltip shadow
-    wordSelectionUnderline: 'rgba(107, 154, 122, 0.28)', // Enhanced selection visibility
-    wordDueUnderline: 'rgba(217, 168, 118, 0.48)', // Enhanced warm gold visibility
-    audioControlBg: '#293129', // Enhanced rich charcoal audio controls
-    audioControlBorder: '#383F38', // Enhanced medium charcoal border
-    audioControlShadow: 'rgba(0, 0, 0, 0.28)', // Enhanced audio shadow
-    // Navigation branding colors
-    navigationRipple: 'rgba(107, 154, 122, 0.10)', // Enhanced navigation ripple
-    headerOverlay: 'rgba(13, 18, 16, 0.94)', // Enhanced header overlay
-    tabBarOverlay: 'rgba(13, 18, 16, 0.88)', // Enhanced tab bar overlay
-
-    // Semantic UI colors for better UX
-    progressIndicator: '#8DA795', // Enhanced earth-toned progress with richness
-    progressBackground: 'rgba(141, 167, 149, 0.18)', // Enhanced subtle progress track
-    interactiveSecondary: '#ABB3AB', // Enhanced secondary interactive sophistication
-    completionSuccess: '#6FA07D', // Enhanced sage green for completion
-    repeatActive: '#D9A876', // Enhanced warm gold for active states
-
-    // Enhanced typography-specific colors for sophisticated text relationships
-    headingText: '#F2F5F3', // Primary heading color - warm and authoritative
-    subtitleText: '#DDE2DE', // Enhanced subtitle balance for dark mode hierarchy
-    metadataText: '#C4CBC5', // Refined metadata with enhanced warmth
-    captionText: '#B8C0B9', // Enhanced caption color for optimal dark mode readability
   } as ThemeColors,
 };
 

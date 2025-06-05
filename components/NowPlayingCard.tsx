@@ -1,7 +1,7 @@
-import React, { memo, useMemo, useEffect, useCallback } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import React, { memo, useMemo, useEffect, useCallback } from 'react';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -13,13 +13,14 @@ import Animated, {
   cancelAnimation,
 } from 'react-native-reanimated';
 
-import { EnhancedImage } from './EnhancedImage';
-import { ThemedText } from './ThemedText';
-import { ProgressBar } from './ProgressBar';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import type { Article } from '@/types/articles.types';
+
+import { EnhancedImage } from './EnhancedImage';
+import { ProgressBar } from './ProgressBar';
+import { ThemedText } from './ThemedText';
 
 const CARD_HEIGHT = 120;
 const IMAGE_SIZE = 80;
@@ -338,16 +339,14 @@ const NowPlayingCard = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
-    left: LAYOUT.SCREEN_EDGE_PADDING,
-    right: LAYOUT.SCREEN_EDGE_PADDING,
-    height: CARD_HEIGHT,
-    borderRadius: LAYOUT.BORDER_RADIUS.XLARGE,
-    borderWidth: 1,
-    overflow: 'hidden',
-    zIndex: LAYOUT.Z_INDEX.OVERLAY,
+  articleImage: {
+    height: '100%',
+    width: '100%',
+  },
+
+  author: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+    opacity: 0.9,
   },
 
   backgroundContainer: {
@@ -359,63 +358,76 @@ const styles = StyleSheet.create({
   },
 
   backgroundImageInner: {
-    width: '100%',
     height: '100%',
+    width: '100%',
+  },
+
+  container: {
+    borderRadius: LAYOUT.BORDER_RADIUS.XLARGE,
+    borderWidth: 1,
+    bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY,
+    height: CARD_HEIGHT,
+    left: LAYOUT.SCREEN_EDGE_PADDING,
+    overflow: 'hidden',
+    position: 'absolute',
+    right: LAYOUT.SCREEN_EDGE_PADDING,
+    zIndex: LAYOUT.Z_INDEX.OVERLAY,
+  },
+
+  content: {
+    alignItems: 'center',
+    flex: 1,
+    flexDirection: 'row',
+    padding: LAYOUT.SPACING.MEDIUM,
+  },
+
+  controls: {
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.SMALL,
   },
 
   gradientOverlay: {
     ...StyleSheet.absoluteFillObject,
   },
 
-  content: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: LAYOUT.SPACING.MEDIUM,
-  },
-
   imageContainer: {
-    width: IMAGE_SIZE,
-    height: IMAGE_SIZE,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    height: IMAGE_SIZE,
+    marginRight: LAYOUT.SPACING.MEDIUM,
     overflow: 'hidden',
-    marginRight: LAYOUT.SPACING.MEDIUM,
+    width: IMAGE_SIZE,
   },
 
-  articleImage: {
-    width: '100%',
-    height: '100%',
-  },
-
-  textContent: {
-    flex: 1,
-    marginRight: LAYOUT.SPACING.MEDIUM,
+  playButton: {
+    alignItems: 'center',
+    borderRadius: 24,
+    height: 48,
+    justifyContent: 'center',
+    width: 48,
   },
 
   primaryInfo: {
     marginBottom: LAYOUT.SPACING.SMALL,
   },
 
-  title: {
-    marginBottom: LAYOUT.SPACING.XTINY,
-    letterSpacing: -0.2,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '600',
+  progressBar: {
+    borderRadius: 2,
+    height: 3,
   },
 
-  author: {
-    opacity: 0.9,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+  progressInfo: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
 
   progressSection: {
     gap: LAYOUT.SPACING.XTINY,
   },
 
-  progressInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  textContent: {
+    flex: 1,
+    marginRight: LAYOUT.SPACING.MEDIUM,
   },
 
   timeText: {
@@ -425,30 +437,19 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
 
-  progressBar: {
-    height: 3,
-    borderRadius: 2,
-  },
-
-  controls: {
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.SMALL,
-  },
-
-  playButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
   timerButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
     alignItems: 'center',
+    borderRadius: 18,
+    height: 36,
     justifyContent: 'center',
+    width: 36,
+  },
+
+  title: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+    marginBottom: LAYOUT.SPACING.XTINY,
   },
 });
 

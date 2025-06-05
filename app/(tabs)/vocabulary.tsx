@@ -193,7 +193,7 @@ export default function VocabularyScreen(): JSX.Element {
           styles.contentContainer,
           {
             paddingTop: headerHeight,
-            paddingBottom: insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XXLARGE * 2,
+            paddingBottom: insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY,
           },
         ]}
         showsVerticalScrollIndicator={false}
