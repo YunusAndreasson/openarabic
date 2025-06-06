@@ -1,4 +1,3 @@
-/* eslint-disable react-native/no-unused-styles */
 import React, { useMemo, memo } from 'react';
 import type { StyleProp, TextStyle } from 'react-native';
 import { Text, StyleSheet } from 'react-native';
@@ -53,8 +52,7 @@ function ThemedTextComponent({
     colors: ReturnType<typeof useColors>,
     variant?: ThemedTextProps['variant'],
     colorName?: ThemedTextProps['colorName'],
-    skipDefaultColor?: boolean,
-    isDarkMode?: boolean
+    skipDefaultColor?: boolean
   ) => {
     if (colorName) return colors[colorName];
     if (variant) {
@@ -139,9 +137,9 @@ function ThemedTextComponent({
 
   return (
     <Text
-      style={finalStyle}
-      numberOfLines={numberOfLines}
       ellipsizeMode={ellipsizeMode}
+      numberOfLines={numberOfLines}
+      style={finalStyle}
       {...rest}
     />
   );
@@ -154,87 +152,87 @@ export const ThemedText = memo(ThemedTextComponent);
 const styles = StyleSheet.create({
   // Base text styles with enhanced micro-typography
   body: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    lineHeight:
-      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
     fontFamily: FONTS.ENGLISH,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.REGULAR,
     letterSpacing:
       TYPOGRAPHY_HIERARCHY.LETTER_SPACING.NORMAL +
       TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.RENDERING.SPACING_BOOST,
+    lineHeight:
+      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
     opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY,
   },
   bodyBold: {
+    fontFamily: FONTS.ENGLISH,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT,
     lineHeight:
       LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
-    fontFamily: FONTS.ENGLISH,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT,
     opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY,
   },
   caption: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
     fontFamily: FONTS.ENGLISH,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
     letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
     opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.TERTIARY,
   },
   heading1: {
+    fontFamily: FONTS.ENGLISH,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.TIGHT,
-    fontFamily: FONTS.ENGLISH,
     letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.EXTRA_TIGHT,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.TIGHT,
     opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY,
   },
   heading2: {
+    fontFamily: FONTS.ENGLISH,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
+    letterSpacing:
+      TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.SECTION_HEADER.letterSpacing,
     lineHeight:
       LAYOUT.TYPOGRAPHY.SCALE.XXLARGE *
       TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.SECTION_HEADER.lineHeightMultiplier,
-    fontFamily: FONTS.ENGLISH,
-    letterSpacing:
-      TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.SECTION_HEADER.letterSpacing,
     opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY,
   },
   heading3: {
+    fontFamily: FONTS.ENGLISH,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
     lineHeight:
       LAYOUT.TYPOGRAPHY.SCALE.LARGE *
       TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.lineHeightMultiplier,
-    fontFamily: FONTS.ENGLISH,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
     opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY,
   },
   label: {
+    fontFamily: FONTS.ENGLISH,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
-    fontFamily: FONTS.ENGLISH,
     letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
     opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.SECONDARY,
   },
   link: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    lineHeight:
-      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
-    textDecorationLine: 'underline',
     fontFamily: FONTS.ENGLISH,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
     letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.NORMAL,
+    lineHeight:
+      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
     opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.ACCENT,
+    textDecorationLine: 'underline',
   },
   overline: {
+    fontFamily: FONTS.ENGLISH,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
     letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.EXTRA_LOOSE,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
-    textTransform: 'uppercase',
-    fontFamily: FONTS.ENGLISH,
     opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.TERTIARY,
+    textTransform: 'uppercase',
   },
 });

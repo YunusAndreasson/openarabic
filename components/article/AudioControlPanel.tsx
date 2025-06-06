@@ -7,13 +7,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BaseCard from '../../components/BaseCard';
 import { ThemedText } from '../../components/ThemedText';
 import { ANIMATION_TIMING } from '../../constants/animations';
-import { LAYOUT } from '../../constants/layout';
-import { MIN_TOUCH_TARGET } from '../../constants/layout';
+import { LAYOUT , MIN_TOUCH_TARGET } from '../../constants/layout';
 import { useButtonAction } from '../../hooks/useButtonAction';
 import { useColors } from '../../hooks/useColors';
 import type { AudioControlPanelProps } from '../../types/ui/audio.types';
 
-/* eslint-disable react/prop-types */
+ 
 const AudioControlPanel = memo<AudioControlPanelProps>(
   ({
     isVisible,
@@ -64,7 +63,7 @@ const AudioControlPanel = memo<AudioControlPanelProps>(
     // Early return with invisible container to maintain layout
     if (!isVisible) {
       return (
-        <Animated.View style={containerStyle} pointerEvents="none">
+        <Animated.View pointerEvents="none" style={containerStyle}>
           <View style={styles.hiddenPlaceholder} />
         </Animated.View>
       );
@@ -73,6 +72,7 @@ const AudioControlPanel = memo<AudioControlPanelProps>(
     return (
       <Animated.View style={containerStyle}>
         <BaseCard
+          shadowSize="medium"
           style={[
             styles.card,
             {
@@ -82,64 +82,63 @@ const AudioControlPanel = memo<AudioControlPanelProps>(
               shadowColor: colors.audioControlShadow,
             },
           ]}
-          shadowSize="medium"
         >
           <View style={styles.contentContainer}>
             <TouchableOpacity
-              style={styles.iconButton}
-              onPress={handlePrevious}
-              disabled={isFirstSentence}
-              accessibilityRole="button"
               accessibilityLabel="Previous sentence"
+              accessibilityRole="button"
+              accessibilityState={{ disabled: isFirstSentence }}
+              disabled={isFirstSentence}
+              style={styles.iconButton}
               accessibilityHint={
                 isFirstSentence ? 'Already at first sentence' : 'Go to previous sentence'
               }
-              accessibilityState={{ disabled: isFirstSentence }}
+              onPress={handlePrevious}
             >
               <Ionicons
+                color={isFirstSentence ? colors.disabled : colors.text}
                 name="play-skip-back"
                 size={24}
-                color={isFirstSentence ? colors.disabled : colors.text}
               />
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={handlePlayPause}
+              accessibilityLabel={isPlaying ? 'Pause audio' : 'Play audio'}
+              accessibilityRole="button"
+              accessibilityHint={
+                isPlaying ? 'Pause the current sentence' : 'Start playing the current sentence'
+              }
               style={[
                 styles.playButton,
                 {
                   backgroundColor: colors.elevation2 || colors.elevation1,
                 },
               ]}
-              accessibilityRole="button"
-              accessibilityLabel={isPlaying ? 'Pause audio' : 'Play audio'}
-              accessibilityHint={
-                isPlaying ? 'Pause the current sentence' : 'Start playing the current sentence'
-              }
+              onPress={handlePlayPause}
             >
-              <Ionicons name={isPlaying ? 'pause' : 'play'} size={28} color={colors.text} />
+              <Ionicons color={colors.text} name={isPlaying ? 'pause' : 'play'} size={28} />
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.iconButton}
-              onPress={handleNext}
-              disabled={isLastSentence}
-              accessibilityRole="button"
               accessibilityLabel="Next sentence"
+              accessibilityRole="button"
+              accessibilityState={{ disabled: isLastSentence }}
+              disabled={isLastSentence}
+              style={styles.iconButton}
               accessibilityHint={
                 isLastSentence ? 'Already at last sentence' : 'Go to next sentence'
               }
-              accessibilityState={{ disabled: isLastSentence }}
+              onPress={handleNext}
             >
               <Ionicons
+                color={isLastSentence ? colors.disabled : colors.text}
                 name="play-skip-forward"
                 size={24}
-                color={isLastSentence ? colors.disabled : colors.text}
               />
             </TouchableOpacity>
 
             <View style={styles.infoContainer}>
-              <ThemedText type="caption" style={styles.sentenceInfo}>
+              <ThemedText style={styles.sentenceInfo} type="caption">
                 Sentence {currentSentenceIndex !== null ? currentSentenceIndex + 1 : 0}/
                 {totalSentences}
               </ThemedText>
@@ -157,8 +156,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   container: {
-    position: 'absolute',
     left: LAYOUT.SPACING.LARGE,
+    position: 'absolute',
     right: LAYOUT.SPACING.LARGE,
     zIndex: LAYOUT.Z_INDEX.POPUP,
   },
@@ -173,11 +172,11 @@ const styles = StyleSheet.create({
     opacity: 0,
   },
   iconButton: {
-    padding: LAYOUT.SPACING.SMALL,
-    minWidth: MIN_TOUCH_TARGET.SIZE,
-    minHeight: MIN_TOUCH_TARGET.SIZE,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: MIN_TOUCH_TARGET.SIZE,
+    minWidth: MIN_TOUCH_TARGET.SIZE,
+    padding: LAYOUT.SPACING.SMALL,
   },
   infoContainer: {
     alignItems: 'center',

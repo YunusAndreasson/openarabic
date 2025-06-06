@@ -1,5 +1,5 @@
-import { StudyWord } from '@/types/vocabulary.types';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
+import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 
 // Constants for track types

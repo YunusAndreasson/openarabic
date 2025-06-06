@@ -1,5 +1,6 @@
 import { Mixpanel } from 'mixpanel-react-native';
 import { Platform } from 'react-native';
+
 import { handleError } from '@/utils/errorHandling';
 
 // Local error handling wrapper
@@ -11,13 +12,7 @@ const logError = (error: unknown): void => {
 };
 
 type AnalyticsProperties =
-  | string
-  | number
-  | boolean
-  | null
-  | undefined
-  | { [key: string]: AnalyticsProperties }
-  | AnalyticsProperties[];
+  AnalyticsProperties[] | boolean | number | string | { [key: string]: AnalyticsProperties } | null | undefined;
 
 // Initialize Mixpanel with your project token
 const MIXPANEL_TOKEN = process.env.EXPO_PUBLIC_MIXPANEL_TOKEN || 'YOUR_MIXPANEL_TOKEN';

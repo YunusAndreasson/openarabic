@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { BlurView } from 'expo-blur';
 import { useGlobalSearchParams, router, Stack } from 'expo-router';
-import React, { useState, useCallback, useMemo, useEffect, JSX } from 'react';
+import type { JSX } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
@@ -24,9 +25,9 @@ const CustomHeaderBackground = () => {
   const isDarkMode = useIsDarkMode();
   return (
     <BlurView
-      tint={isDarkMode ? 'dark' : 'light'}
       intensity={BLUR_INTENSITY}
       style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+      tint={isDarkMode ? 'dark' : 'light'}
     />
   );
 };
@@ -165,10 +166,10 @@ function FilterScreenContent() {
       articles={articles}
       isLoading={isLoading}
       isRefreshing={isRefreshing}
-      onRefresh={handleRefresh}
-      onArticlePress={handleArticlePress}
       selectedAuthor={type === 'author' ? author : null}
       selectedCategory={type === 'category' ? category : null}
+      onArticlePress={handleArticlePress}
+      onRefresh={handleRefresh}
     />
   );
 }

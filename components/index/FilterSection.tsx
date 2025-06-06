@@ -1,13 +1,14 @@
-import { JSX, memo } from 'react';
-import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import type { JSX} from 'react';
+import { memo } from 'react';
+import { StyleSheet, View } from 'react-native';
 
-import SectionTitle from '@/components/SectionTitle';
-import { LAYOUT } from '@/constants/layout';
-import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import BaseCard from '@/components/BaseCard';
+import SectionTitle from '@/components/SectionTitle';
 import { ThemedText } from '@/components/ThemedText';
+import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
+import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 const styles = StyleSheet.create({
   filterSectionContainer: {
@@ -32,26 +33,26 @@ const CompactNavCard = memo(
     const colors = useColors();
     return (
       <View style={compactCardStyles.cardContainer}>
-        <BaseCard onPress={onPress} style={compactCardStyles.card} shadowSize="small">
+        <BaseCard shadowSize="small" style={compactCardStyles.card} onPress={onPress}>
           <View style={compactCardStyles.row}>
-            <ThemedText type="body" weight="bold" numberOfLines={1} style={compactCardStyles.label}>
+            <ThemedText numberOfLines={1} style={compactCardStyles.label} type="body" weight="bold">
               {label}
             </ThemedText>
             {count !== undefined && (
               <View style={[compactCardStyles.countBadge, { backgroundColor: colors.textOverlay }]}>
                 <ThemedText
-                  type="caption"
-                  style={[compactCardStyles.countText, { color: colors.textTertiary }]}
                   skipDefaultColor
+                  style={[compactCardStyles.countText, { color: colors.textTertiary }]}
+                  type="caption"
                 >
                   {count}
                 </ThemedText>
               </View>
             )}
             <Ionicons
+              color={colors.textTertiary}
               name="chevron-forward-outline"
               size={20}
-              color={colors.textTertiary}
               style={compactCardStyles.icon}
             />
           </View>
@@ -62,32 +63,24 @@ const CompactNavCard = memo(
 );
 
 const compactCardStyles = StyleSheet.create({
+  card: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    justifyContent: 'center',
+    marginHorizontal: 2,
+    minHeight: 48,
+    padding: LAYOUT.SPACING.MEDIUM,
+  },
   cardContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
   },
-  card: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    padding: LAYOUT.SPACING.MEDIUM,
-    minHeight: 48,
-    marginHorizontal: 2,
-    justifyContent: 'center',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  label: {
-    flex: 1,
-    fontWeight: '600',
-  },
   countBadge: {
+    alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.PILL,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.XTINY,
+    justifyContent: 'center',
     marginLeft: LAYOUT.SPACING.SMALL,
     minWidth: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.XTINY,
   },
   countText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
@@ -98,6 +91,14 @@ const compactCardStyles = StyleSheet.create({
     marginLeft: LAYOUT.SPACING.MEDIUM,
     opacity: LAYOUT.OPACITY.MEDIUM,
   },
+  label: {
+    flex: 1,
+    fontWeight: '600',
+  },
+  row: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
 });
 
 const FilterSection = memo(({ title, items, onSelect }: FilterSectionProps): JSX.Element => {
@@ -107,8 +108,8 @@ const FilterSection = memo(({ title, items, onSelect }: FilterSectionProps): JSX
       {items.map(item => (
         <CompactNavCard
           key={`${title.toLowerCase()}-${item.id}`}
-          label={capitalizeFirstLetter(item.name)}
           count={item.count}
+          label={capitalizeFirstLetter(item.name)}
           onPress={() => onSelect(item.id)}
         />
       ))}

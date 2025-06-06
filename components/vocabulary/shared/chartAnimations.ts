@@ -1,5 +1,5 @@
-import { useSharedValue, withTiming, withSpring, SharedValue } from 'react-native-reanimated';
 import { useEffect } from 'react';
+import { useSharedValue, withTiming, withSpring } from 'react-native-reanimated';
 
 export interface ChartAnimationConfig {
   duration?: number;

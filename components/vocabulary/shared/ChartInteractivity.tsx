@@ -1,39 +1,10 @@
-/**
- * Reusable Chart Interactivity Components
- *
- * This file provides DRY components for adding interactive tooltips to any chart.
- *
- * Usage Example:
- * ```typescript
- * import { ChartTooltip, DataPointOverlay, useChartTooltip } from '../shared/ChartInteractivity';
- *
- * // In your chart component:
- * const { tooltip, showTooltip } = useChartTooltip();
- *
- * // Add overlays for each data point:
- * {dataPoints.map((point, index) => (
- *   <DataPointOverlay
- *     key={`data-point-${index}`}
- *     x={point.x}
- *     y={point.y}
- *     value="85.2%"
- *     label="Jan 15"
- *     onPress={showTooltip}
- *   />
- * ))}
- *
- * // Add the tooltip:
- * <ChartTooltip tooltip={tooltip} maxWidth={GRAPH_WIDTH} />
- * ```
- */
-
 import React, { useState, useEffect, memo, useCallback } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
+import { Colors } from '@/constants/Colors';
 import { MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
-import { Colors } from '@/constants/Colors';
 
 interface ChartTooltip {
   x: number;
@@ -96,6 +67,8 @@ export const DataPointOverlay = memo<DataPointOverlayProps>(
 
     return (
       <TouchableOpacity
+        accessibilityLabel={accessibilityLabel || `Data point: ${value} ${label}`}
+        accessibilityRole="button"
         style={{
           position: 'absolute',
           left: x - offset,
@@ -106,8 +79,6 @@ export const DataPointOverlay = memo<DataPointOverlayProps>(
           backgroundColor: Colors.light.transparent,
         }}
         onPress={handlePress}
-        accessibilityLabel={accessibilityLabel || `Data point: ${value} ${label}`}
-        accessibilityRole="button"
       />
     );
   }

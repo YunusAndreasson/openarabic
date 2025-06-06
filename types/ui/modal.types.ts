@@ -75,7 +75,7 @@ export interface ThemedModalProps extends BaseChildrenProps {
    * Animation type for the modal
    * @default 'fade'
    */
-  animationType?: 'fade' | 'slide' | 'none';
+  animationType?: 'fade' | 'none' | 'slide';
   /**
    * Opacity of the modal overlay
    * @default 0.8

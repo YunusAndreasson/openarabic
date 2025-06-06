@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { memo, JSX, useMemo } from 'react';
+import type { JSX} from 'react';
+import React, { memo, useMemo } from 'react';
 import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -75,11 +76,11 @@ const IconContent = ({
   textColor: string;
   iconSize: number;
 }) => {
-  if (loading) return <ActivityIndicator size="small" color={textColor} />;
+  if (loading) return <ActivityIndicator color={textColor} size="small" />;
   if (iconComponent) return iconComponent;
   if (icon)
     return (
-      <Ionicons name={icon as keyof typeof Ionicons.glyphMap} size={iconSize} color={textColor} />
+      <Ionicons color={textColor} name={icon as keyof typeof Ionicons.glyphMap} size={iconSize} />
     );
   return null;
 };
@@ -90,7 +91,7 @@ const getButtonStyle = (
   size: ButtonSize,
   disabled: boolean,
   colors: ReturnType<typeof useColors>,
-  style?: StyleProp<ViewStyle> | Animated.AnimateStyle<StyleProp<ViewStyle>>
+  style?: Animated.AnimateStyle<StyleProp<ViewStyle>> | StyleProp<ViewStyle>
 ) => [
   styles.button,
   variant === 'filled'
@@ -157,31 +158,31 @@ function ThemedButtonComponent({
     <AnimatedTouchable
       // @ts-expect-error - Known type issue with Reanimated's animated style
       style={[buttonStyle, disablePressAnimation ? {} : animatedStyle]}
+      onPressIn={disablePressAnimation ? undefined : handlePressIn}
+      onPressOut={disablePressAnimation ? undefined : handlePressOut}
       disabled={disabled || loading}
       // Removed activeOpacity to allow custom animation to show
       onPress={handlePress}
-      onPressIn={disablePressAnimation ? undefined : handlePressIn}
-      onPressOut={disablePressAnimation ? undefined : handlePressOut}
       {...props}
     >
       <View style={[styles.innerContainer, innerContainerStyle]}>
         {hasIcon ? (
           <View style={[styles.iconContainer, size === 'small' && styles.iconContainerSmall]}>
             <IconContent
-              loading={loading}
-              iconComponent={iconComponent}
               icon={icon}
-              textColor={textColor}
+              iconComponent={iconComponent}
               iconSize={iconSize}
+              loading={loading}
+              textColor={textColor}
             />
           </View>
         ) : null}
         <View style={[styles.contentContainer, contentContainerStyle]}>
           <ThemedText
-            type={getTextType(size, textWeight)}
-            colorName={disabled ? 'disabled' : variant === 'filled' ? 'background' : 'tint'}
             skipDefaultColor
+            colorName={disabled ? 'disabled' : variant === 'filled' ? 'background' : 'tint'}
             style={buttonTextStyle}
+            type={getTextType(size, textWeight)}
           >
             {textWeight === 'normal' ? title : title?.toUpperCase()}
           </ThemedText>

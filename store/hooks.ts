@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
+import type {
+  TypedUseSelectorHook} from 'react-redux';
 import {
   useDispatch,
   useSelector,
-  shallowEqual,
-  TypedUseSelectorHook,
+  shallowEqual
 } from 'react-redux';
 
 import type { RootState, AppDispatch } from './store';

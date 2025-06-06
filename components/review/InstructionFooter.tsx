@@ -75,28 +75,28 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
       <Animated.View style={containerStyle}>
         <View style={styles.instructionItem}>
           <View style={iconStyle}>
-            <Ionicons name="arrow-back" size={18} color={colors.interactiveSecondary} />
+            <Ionicons color={colors.interactiveSecondary} name="arrow-back" size={18} />
           </View>
-          <ThemedText variant="subtle" style={textStyle}>
+          <ThemedText style={textStyle} variant="subtle">
             Unknown
           </ThemedText>
         </View>
 
         <View style={[styles.instructionItem, styles.instructionItemCenter]}>
           <View style={iconStyle}>
-            <Ionicons name="finger-print" size={18} color={colors.interactiveSecondary} />
+            <Ionicons color={colors.interactiveSecondary} name="finger-print" size={18} />
           </View>
-          <ThemedText variant="subtle" style={textStyle}>
+          <ThemedText style={textStyle} variant="subtle">
             Unsure
           </ThemedText>
         </View>
 
         <View style={[styles.instructionItem, styles.instructionItemRight]}>
-          <ThemedText variant="subtle" style={textStyle}>
+          <ThemedText style={textStyle} variant="subtle">
             Known
           </ThemedText>
           <View style={iconStyle}>
-            <Ionicons name="arrow-forward" size={18} color={colors.interactiveSecondary} />
+            <Ionicons color={colors.interactiveSecondary} name="arrow-forward" size={18} />
           </View>
         </View>
       </Animated.View>

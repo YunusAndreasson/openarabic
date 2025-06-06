@@ -19,13 +19,13 @@ const ErrorState = memo(({ message, onRetry }: ErrorStateProps) => {
   }, []);
 
   return (
-    <View style={styles.container} accessibilityRole="alert">
+    <View accessibilityRole="alert" style={styles.container}>
       <View style={styles.textContainer}>
         <ThemedText
+          accessibilityLabel={`Error: ${message}`}
+          align="center"
           type="body"
           variant="error"
-          align="center"
-          accessibilityLabel={`Error: ${message}`}
         >
           {message}
         </ThemedText>
@@ -33,10 +33,10 @@ const ErrorState = memo(({ message, onRetry }: ErrorStateProps) => {
       {onRetry ? (
         <View style={styles.buttonContainer}>
           <ThemedButton
-            title="Refresh"
-            onPress={onRetry}
-            variant="filled"
             accessibilityLabel="Attempt to reload content"
+            title="Refresh"
+            variant="filled"
+            onPress={onRetry}
           />
         </View>
       ) : null}

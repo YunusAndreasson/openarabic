@@ -1,5 +1,6 @@
 import { useColors } from '@/hooks/useColors';
 import { withOpacity } from '@/utils/colorUtils';
+
 import { PERFORMANCE_THRESHOLDS, FSRS_DIFFICULTY_THRESHOLDS } from './constants';
 
 /**
@@ -160,8 +161,8 @@ export const useChartColors = () => {
 };
 
 export type PerformanceLevel = 'excellent' | 'good' | 'moderate' | 'poor';
-export type ActivityLevel = 'high' | 'medium' | 'low' | 'none';
-export type MemoryState = 'strong' | 'fading' | 'weak';
-export type DifficultyLevel = 'easy' | 'medium' | 'hard';
-export type TrendDirection = 'improving' | 'stable' | 'declining';
-export type MasteryLevel = 'mastered' | 'proficient' | 'learning' | 'new';
+export type ActivityLevel = 'high' | 'low' | 'medium' | 'none';
+export type MemoryState = 'fading' | 'strong' | 'weak';
+export type DifficultyLevel = 'easy' | 'hard' | 'medium';
+export type TrendDirection = 'declining' | 'improving' | 'stable';
+export type MasteryLevel = 'learning' | 'mastered' | 'new' | 'proficient';

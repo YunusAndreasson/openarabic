@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useHeaderHeight } from '@react-navigation/elements';
-import { FlashList, ListRenderItem } from '@shopify/flash-list';
+import type { ListRenderItem } from '@shopify/flash-list';
+import { FlashList } from '@shopify/flash-list';
 import { BlurView } from 'expo-blur';
-import React, { memo, useCallback, JSX } from 'react';
-import type { ComponentProps } from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import React, { memo, useCallback } from 'react';
+import type { ComponentProps , JSX } from 'react';
+import type { ViewStyle } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LAYOUT, TYPOGRAPHY_HIERARCHY, getEnhancedOpacity } from '@/constants/layout';
@@ -83,24 +85,24 @@ const WordItem = memo(
     );
 
     return (
-      <ThemedCard variant="basic" onPress={onPress} style={styles.wordCard}>
+      <ThemedCard style={styles.wordCard} variant="basic" onPress={onPress}>
         <View style={styles.wordInfo}>
           <ThemedText
-            type="heading3"
             colorName="headingText"
             numberOfLines={1}
             style={wordTextStyle}
+            type="heading3"
           >
             {word}
           </ThemedText>
           <View style={styles.translationContainer}>
-            <ThemedText type="body" colorName="secondaryText" style={translationTextStyle}>
+            <ThemedText colorName="secondaryText" style={translationTextStyle} type="body">
               {english}
             </ThemedText>
           </View>
         </View>
         <View style={styles.statusContainer}>
-          <BlurView intensity={isDarkMode ? 3 : 10} tint="light" style={styles.statusPill}>
+          <BlurView intensity={isDarkMode ? 3 : 10} style={styles.statusPill} tint="light">
             <View
               style={[
                 styles.statusBackground,
@@ -114,11 +116,11 @@ const WordItem = memo(
               ]}
             >
               <Ionicons
+                color={colors.background}
                 name={statusIcon as ComponentProps<typeof Ionicons>['name']}
                 size={16}
-                color={colors.background}
               />
-              <ThemedText type="caption" weight="semibold" colorName="background" skipDefaultColor>
+              <ThemedText skipDefaultColor colorName="background" type="caption" weight="semibold">
                 {statusLabel}
               </ThemedText>
             </View>
@@ -158,7 +160,7 @@ export function VocabularyWordList({
   // Memoize the render item function to prevent recreating on each render
   const renderItem = useCallback<ListRenderItem<StudyWord>>(
     ({ item: studyWord }) => (
-      <WordItem studyWord={studyWord} onPress={() => onWordPress(studyWord)} colors={colors} />
+      <WordItem colors={colors} studyWord={studyWord} onPress={() => onWordPress(studyWord)} />
     ),
     [colors, onWordPress]
   );
@@ -171,12 +173,12 @@ export function VocabularyWordList({
     return (
       <View style={styles.container}>
         <View style={styles.titleContainer}>
-          <ThemedText type="heading2" colorName="headingText" style={titleStyle}>
+          <ThemedText colorName="headingText" style={titleStyle} type="heading2">
             {title}
           </ThemedText>
         </View>
         <View style={styles.emptyContainer}>
-          <ThemedText type="body" colorName="captionText">
+          <ThemedText colorName="captionText" type="body">
             Start adding words to build your vocabulary
           </ThemedText>
         </View>
@@ -187,17 +189,20 @@ export function VocabularyWordList({
   return (
     <View style={styles.container}>
       <View style={styles.titleContainer}>
-        <ThemedText type="heading2" colorName="headingText" style={titleStyle}>
+        <ThemedText colorName="headingText" style={titleStyle} type="heading2">
           {title}
         </ThemedText>
       </View>
       <FlashList
-        data={words}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        estimatedItemSize={70}
-        showsVerticalScrollIndicator={false}
         accessibilityLabel="Vocabulary words list"
+        data={words}
+        drawDistance={500}
+        estimatedFirstItemOffset={0}
+        estimatedItemSize={70}
+        ItemSeparatorComponent={() => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
           paddingTop:
@@ -208,12 +213,9 @@ export function VocabularyWordList({
             LAYOUT.SPACING.MEDIUM,
           paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + insets.bottom + LAYOUT.SPACING.SMALL,
         }}
-        drawDistance={500}
-        estimatedFirstItemOffset={0}
         overrideItemLayout={(layout, _item) => {
           layout.size = 70 + LAYOUT.SPACING.MEDIUM; // Add spacing to item height
         }}
-        ItemSeparatorComponent={() => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />}
       />
     </View>
   );

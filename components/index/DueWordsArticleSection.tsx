@@ -78,27 +78,27 @@ export function DueWordsArticleSection({
 
   return (
     <View style={styles.container}>
-      <SectionTitle title={sectionTitle} subtitle={sectionSubtitle} />
+      <SectionTitle subtitle={sectionSubtitle} title={sectionTitle} />
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.tint} />
+          <ActivityIndicator color={colors.tint} size="large" />
         </View>
       ) : (
         <ScrollView
           horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
           accessibilityLabel={`${sectionTitle} articles`}
+          contentContainerStyle={styles.scrollContent}
+          showsHorizontalScrollIndicator={false}
         >
           {articlesWithDueCount.map(article => (
             <ThemedCard
               key={`article-${article.id}`}
-              style={styles.articleCard}
-              variant="compact"
               article={article}
+              dueWordCount={article.dueWordCount}
               handlePress={() => onArticlePress(article)}
               hideDifficulty={true}
-              dueWordCount={article.dueWordCount}
+              style={styles.articleCard}
+              variant="compact"
             />
           ))}
         </ScrollView>

@@ -56,26 +56,26 @@ const RepeatButton: React.FC<RepeatButtonProps> = ({ enabled, onToggle }) => {
 
   return (
     <TouchableOpacity
-      onPress={handlePress}
-      style={styles.touchable}
-      accessibilityRole="button"
-      accessibilityLabel={enabled ? 'Turn off repeat mode' : 'Turn on repeat mode'}
       accessibilityHint="Toggles whether audio loops continuously"
+      accessibilityLabel={enabled ? 'Turn off repeat mode' : 'Turn on repeat mode'}
+      accessibilityRole="button"
       accessibilityState={{ selected: enabled }}
+      style={styles.touchable}
+      onPress={handlePress}
     >
       <Animated.View style={[styles.container, animatedContainerStyle]}>
         <View style={styles.content}>
           <Animated.View style={[styles.iconContainer, animatedIconStyle]}>
             <Ionicons
+              color={enabled ? colors.tint : colors.interactiveSecondary}
               name="repeat"
               size={20}
-              color={enabled ? colors.tint : colors.interactiveSecondary}
             />
           </Animated.View>
 
           <ThemedText
-            variant={enabled ? undefined : 'subtle'}
             style={[styles.label, { color: enabled ? colors.tint : colors.interactiveSecondary }]}
+            variant={enabled ? undefined : 'subtle'}
           >
             Repeat
           </ThemedText>

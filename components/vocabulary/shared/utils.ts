@@ -179,7 +179,7 @@ export const createStandardizedPerformanceZones = (
 export const generatePerformanceSubtitle = (
   value: number,
   metricName: string,
-  trend?: 'improving' | 'declining' | 'stable',
+  trend?: 'declining' | 'improving' | 'stable',
   trendValue?: number
 ): string => {
   if (value === 0) {

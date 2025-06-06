@@ -16,7 +16,7 @@ import { useIsDarkMode } from '../hooks/useThemeDetection';
 
 import { ThemedText } from './ThemedText';
 
-export type ToastType = 'info' | 'success' | 'error' | 'important';
+export type ToastType = 'error' | 'important' | 'info' | 'success';
 
 interface ToastProps {
   visible: boolean;
@@ -178,10 +178,10 @@ export const Toast = memo(
     const toastContent = useMemo(
       () => (
         <ThemedText
-          style={[styles.toastText, { color: textColor }]}
           skipDefaultColor
-          numberOfLines={3} // Allow more lines for longer messages
           ellipsizeMode="tail"
+          numberOfLines={3} // Allow more lines for longer messages
+          style={[styles.toastText, { color: textColor }]}
         >
           {message}
         </ThemedText>
@@ -192,7 +192,7 @@ export const Toast = memo(
     if (!visible) return null;
 
     return (
-      <Animated.View style={[containerStyle, animatedStyle]} pointerEvents="none">
+      <Animated.View pointerEvents="none" style={[containerStyle, animatedStyle]}>
         <View
           style={[
             styles.toast,

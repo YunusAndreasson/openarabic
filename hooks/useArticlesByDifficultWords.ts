@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+
+import { articlesService } from '../services/articles';
+import { strugglingWordsService } from '../services/strugglingWords';
 import type { Article } from '../types/articles.types';
 import { getArticlesByDifficultWords } from '../utils/articleUtils';
-import { strugglingWordsService } from '../services/strugglingWords';
-import { articlesService } from '../services/articles';
 
 interface UseArticlesByDifficultWordsResult {
   articles: Article[];

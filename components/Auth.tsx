@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Sentry from '@sentry/react-native';
 import { router } from 'expo-router';
-import React, { useState, useCallback, JSX, useEffect, memo } from 'react';
+import type { JSX} from 'react';
+import React, { useState, useCallback, useEffect, memo } from 'react';
 import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
@@ -280,65 +281,65 @@ function Auth(): JSX.Element {
       <View style={styles.inputsButtonGroup}>
         <View style={styles.inputWrapper}>
           <ThemedInput
-            icon="mail-outline"
-            value={email}
-            onChangeText={handleEmailChange}
-            onBlur={handleEmailBlur}
-            placeholder="Your email"
-            keyboardType="email-address"
-            returnKeyType="next"
-            autoComplete="email"
             autoCapitalize="none"
-            textContentType="emailAddress"
-            importantForAutofill="yes"
+            autoComplete="email"
             error={emailError}
+            icon="mail-outline"
+            importantForAutofill="yes"
+            keyboardType="email-address"
+            placeholder="Your email"
+            returnKeyType="next"
             textAlignVertical="center"
+            textContentType="emailAddress"
+            value={email}
+            onBlur={handleEmailBlur}
+            onChangeText={handleEmailChange}
           />
         </View>
 
         <View style={styles.inputWrapper}>
           <ThemedInput
-            icon="lock-closed-outline"
-            value={password}
-            onChangeText={handlePasswordChange}
-            onBlur={handlePasswordBlur}
-            placeholder="Your password"
-            secureTextEntry={!showPassword}
-            rightIcon={showPassword ? 'eye-off-outline' : 'eye-outline'}
-            onRightIconPress={() => setShowPassword(!showPassword)}
-            returnKeyType="done"
-            autoComplete={isRegistering ? 'password-new' : 'password'}
             autoCapitalize="none"
-            textContentType={isRegistering ? 'newPassword' : 'password'}
-            importantForAutofill="yes"
+            autoComplete={isRegistering ? 'password-new' : 'password'}
             error={passwordError}
+            icon="lock-closed-outline"
+            importantForAutofill="yes"
+            placeholder="Your password"
+            returnKeyType="done"
+            rightIcon={showPassword ? 'eye-off-outline' : 'eye-outline'}
+            secureTextEntry={!showPassword}
+            textAlignVertical="center"
+            textContentType={isRegistering ? 'newPassword' : 'password'}
+            value={password}
             hint={
               isRegistering
                 ? `${PASSWORD_REQUIREMENTS.minLength}+ chars with upper, lower & number`
                 : undefined
             }
-            textAlignVertical="center"
+            onBlur={handlePasswordBlur}
+            onChangeText={handlePasswordChange}
+            onRightIconPress={() => setShowPassword(!showPassword)}
           />
         </View>
 
         <ThemedButton
-          title={isRegistering ? 'Create Account' : 'Sign In'}
-          onPress={isRegistering ? signUpWithEmail : signInWithEmail}
           disabled={loading}
           loading={loading}
           style={styles.button}
+          title={isRegistering ? 'Create Account' : 'Sign In'}
+          onPress={isRegistering ? signUpWithEmail : signInWithEmail}
         />
       </View>
 
       <TouchableOpacity
-        onPress={toggleMode}
-        style={styles.toggleContainer}
-        activeOpacity={0.7}
-        accessibilityRole="button"
-        accessibilityLabel={isRegistering ? 'Switch to sign in' : 'Switch to create account'}
         accessibilityHint="Toggle between sign in and sign up modes"
+        accessibilityLabel={isRegistering ? 'Switch to sign in' : 'Switch to create account'}
+        accessibilityRole="button"
+        activeOpacity={0.7}
+        style={styles.toggleContainer}
+        onPress={toggleMode}
       >
-        <ThemedText type="body" align="center" variant="secondary">
+        <ThemedText align="center" type="body" variant="secondary">
           {isRegistering ? 'Already have an account? Sign in' : 'Need an account? Create one'}
         </ThemedText>
       </TouchableOpacity>

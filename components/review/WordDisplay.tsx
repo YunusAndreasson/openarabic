@@ -61,10 +61,10 @@ const WordDisplay = memo(
         <View style={styles.arabicContainer}>
           <ThemedText
             key={`word-${word}`}
-            type="arabic"
+            skipDefaultColor
             arabicFontSize={fontSize}
             style={textStyle}
-            skipDefaultColor
+            type="arabic"
           >
             {word}
           </ThemedText>
@@ -73,7 +73,7 @@ const WordDisplay = memo(
         {/* Fixed translation container - always reserves space */}
         <View style={styles.translationContainer}>
           <Animated.View style={translationAnimatedStyle}>
-            <ThemedText style={styles.translationText} colorName="englishText" skipDefaultColor>
+            <ThemedText skipDefaultColor colorName="englishText" style={styles.translationText}>
               {translation || ' '}
             </ThemedText>
           </Animated.View>
@@ -121,8 +121,8 @@ const styles = StyleSheet.create({
   translationText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.1,
     fontWeight: '400',
-    textAlign: 'center',
-    opacity: 0.85, // Slightly reduce opacity to create visual hierarchy
+    opacity: 0.85,
+    textAlign: 'center', // Slightly reduce opacity to create visual hierarchy
   },
 });
 

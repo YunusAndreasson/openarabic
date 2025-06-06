@@ -1,8 +1,8 @@
-import { JSX, memo } from 'react';
+import type { JSX} from 'react';
+import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import SectionTitle from '@/components/SectionTitle';
-import { LAYOUT } from '@/constants/layout';
 import type { Article } from '@/types/articles.types';
 
 import ArticleItem from './ArticleItem';
@@ -27,8 +27,8 @@ const LatestTextsSection = memo(
           <ArticleItem
             key={article.id}
             article={article}
-            onPress={onArticlePress}
             isLast={index === articles.length - 1}
+            onPress={onArticlePress}
           />
         ))}
       </View>

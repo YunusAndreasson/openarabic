@@ -117,21 +117,21 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({
   return (
     <View style={styles.articleHeaderContainer}>
       <View style={styles.titleContainer}>
-        <ThemedText type="heading1" accessibilityRole="header">
+        <ThemedText accessibilityRole="header" type="heading1">
           {article.title}
         </ThemedText>
       </View>
 
       <View style={styles.articleMetaContainer}>
         <TouchableOpacity
+          disabled={!article.author || !onAuthorPress}
           style={styles.authorContainer}
           onPress={article.author && onAuthorPress ? handleAuthorPress : undefined}
-          disabled={!article.author || !onAuthorPress}
         >
           <ThemedText
+            accessibilityLabel={`Written by ${article.author?.name || 'Author'}`}
             type="label"
             variant="secondary"
-            accessibilityLabel={`Written by ${article.author?.name || 'Author'}`}
           >
             {article.author?.name || 'Author'}
           </ThemedText>
@@ -140,22 +140,22 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({
 
       <View style={styles.articleInfoContainer}>
         <TouchableOpacity
+          disabled={!article.category || !onCategoryPress}
           style={styles.articleInfoItem}
           onPress={article.category && onCategoryPress ? handleCategoryPress : undefined}
-          disabled={!article.category || !onCategoryPress}
         >
           <Ionicons
+            accessibilityLabel="Category"
+            color={colors.text}
             name="folder-outline"
             size={16}
-            color={colors.text}
             style={styles.infoIcon}
-            accessibilityLabel="Category"
           />
           <View style={styles.infoTextContainer}>
             <ThemedText
+              accessibilityLabel={`Category: ${categoryName}`}
               type="caption"
               variant="secondary"
-              accessibilityLabel={`Category: ${categoryName}`}
             >
               {categoryName}
             </ThemedText>
@@ -164,17 +164,17 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({
 
         <View style={styles.articleInfoItem}>
           <Ionicons
+            accessibilityLabel="Reading time"
+            color={colors.text}
             name="time-outline"
             size={16}
-            color={colors.text}
             style={styles.infoIcon}
-            accessibilityLabel="Reading time"
           />
           <View style={styles.infoTextContainer}>
             <ThemedText
+              accessibilityLabel={`Reading time: ${readingTime} minutes`}
               type="caption"
               variant="secondary"
-              accessibilityLabel={`Reading time: ${readingTime} minutes`}
             >
               {readingTime} min read
             </ThemedText>
@@ -183,17 +183,17 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({
 
         <View style={styles.articleInfoItem}>
           <Ionicons
+            accessibilityLabel="Difficulty level"
+            color={colors.text}
             name="stats-chart-outline"
             size={16}
-            color={colors.text}
             style={styles.infoIcon}
-            accessibilityLabel="Difficulty level"
           />
           <View style={styles.infoTextContainer}>
             <ThemedText
+              accessibilityLabel={`Difficulty level: ${formatDifficultyLevel(article.difficulty_level)}`}
               type="caption"
               variant="secondary"
-              accessibilityLabel={`Difficulty level: ${formatDifficultyLevel(article.difficulty_level)}`}
             >
               {formatDifficultyLevel(article.difficulty_level)}
             </ThemedText>
@@ -204,8 +204,8 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({
         {false && (
           <View style={styles.sourceContainer}>
             <ThemedText
-              style={[styles.sourceText, { color: colors.textSecondary }]}
               accessibilityLabel={`Source: deleted`}
+              style={[styles.sourceText, { color: colors.textSecondary }]}
             >
               deleted
             </ThemedText>
@@ -216,9 +216,9 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({
       {article.summary ? (
         <View style={styles.summaryContainer}>
           <ThemedText
+            accessibilityLabel={`Article summary: ${article.summary}`}
             type="body"
             variant="subtle"
-            accessibilityLabel={`Article summary: ${article.summary}`}
             style={{
               lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
             }}

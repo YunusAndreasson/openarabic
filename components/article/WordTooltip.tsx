@@ -7,7 +7,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/useColors';
-import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import type { WordTooltipProps } from '@/types/ui/modal.types';
 
 // Constants for tooltip sizing and positioning
@@ -29,7 +28,6 @@ const TOOLTIP_CONSTANTS = {
  */
 export const WordTooltip = memo(
   ({ visible, text = '', layout, onClose, zIndex }: WordTooltipProps) => {
-    const isDarkMode = useIsDarkMode();
     const colors = useColors();
     const { width: screenWidth } = useWindowDimensions();
 
@@ -68,9 +66,9 @@ export const WordTooltip = memo(
     const tooltipContent = useMemo(
       () => (
         <ThemedText
-          style={[styles.tooltipText, { color: textColor }]}
           skipDefaultColor
           numberOfLines={2}
+          style={[styles.tooltipText, { color: textColor }]}
         >
           {text}
         </ThemedText>
@@ -154,6 +152,7 @@ export const WordTooltip = memo(
 
     return (
       <Animated.View
+        pointerEvents="none"
         style={[
           styles.tooltipContainer,
           styles.absoluteFull,
@@ -163,7 +162,6 @@ export const WordTooltip = memo(
           },
           opacityStyle as ViewStyle,
         ]}
-        pointerEvents="none"
       >
         <View
           style={[

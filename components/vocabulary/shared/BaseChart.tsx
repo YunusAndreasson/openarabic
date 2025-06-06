@@ -1,7 +1,6 @@
 import React, { memo, type ReactNode } from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
 
-import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 
 import BaseCard from '../../BaseCard';
@@ -9,17 +8,16 @@ import { ThemedText } from '../../ThemedText';
 
 import { CardHeader } from './CardHeader';
 import { ChartFooter } from './ChartFooter';
-import { StatsRow } from './StatsRow';
 import { CHART_LAYOUT } from './constants';
 
 export interface LegendItemProps {
-  type: 'bar' | 'line' | 'area' | 'dot';
+  type: 'area' | 'bar' | 'dot' | 'line';
   color: string;
   label: string;
 }
 
 interface StatItemProps {
-  value: string | number;
+  value: number | string;
   label: string;
   color?: string;
   onPress?: () => void;
@@ -66,8 +64,6 @@ export const BaseChart = memo(
     hasData,
     isLoading = false,
     error = null,
-    leftStat,
-    rightStat,
     legendItems,
     timeRange,
     contentHeight = 176, // Optimized to match GRAPH_HEIGHT_LARGE
@@ -79,10 +75,10 @@ export const BaseChart = memo(
     // Error state
     if (error) {
       return (
-        <BaseCard shadowSize="small" includePressAnimation={false}>
+        <BaseCard includePressAnimation={false} shadowSize="small">
           <View style={styles.content}>
             {!hideTitle && (
-              <CardHeader title={title} subtitle="Error loading data" onInfoPress={onInfoPress} />
+              <CardHeader subtitle="Error loading data" title={title} onInfoPress={onInfoPress} />
             )}
             <View style={[styles.emptyState, { height: contentHeight + 40 }]}>
               <ThemedText style={[styles.emptyText, { color: colors.error }]}>
@@ -97,10 +93,10 @@ export const BaseChart = memo(
     // Empty state
     if (!hasData && !isLoading) {
       return (
-        <BaseCard shadowSize="small" includePressAnimation={false}>
+        <BaseCard includePressAnimation={false} shadowSize="small">
           <View style={styles.content}>
             {!hideTitle && (
-              <CardHeader title={title} subtitle={subtitle} onInfoPress={onInfoPress} />
+              <CardHeader subtitle={subtitle} title={title} onInfoPress={onInfoPress} />
             )}
             <View style={[styles.emptyState, { height: contentHeight + 40 }]}>
               <ThemedText style={[styles.emptyText, { color: colors.secondaryText }]}>
@@ -114,19 +110,19 @@ export const BaseChart = memo(
 
     // Main chart with data
     return (
-      <BaseCard shadowSize="small" includePressAnimation={false}>
+      <BaseCard includePressAnimation={false} shadowSize="small">
         <View style={styles.content}>
           {/* Header Section */}
           {!hideTitle && (
             <View style={styles.headerSection}>
-              <CardHeader title={title} subtitle={subtitle} onInfoPress={onInfoPress} />
+              <CardHeader subtitle={subtitle} title={title} onInfoPress={onInfoPress} />
             </View>
           )}
 
           {/* Loading State */}
           {isLoading && (
             <View style={[styles.loadingState, { height: contentHeight }]}>
-              <ActivityIndicator size="small" color={colors.tint} style={styles.loadingIndicator} />
+              <ActivityIndicator color={colors.tint} size="small" style={styles.loadingIndicator} />
               <ThemedText style={[styles.loadingText, { color: colors.secondaryText }]}>
                 Loading chart...
               </ThemedText>

@@ -1,12 +1,12 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { handleError } from '@/utils/errorHandling';
 import type { Card, StepUnit } from 'ts-fsrs';
 import { createEmptyCard, fsrs, Rating, State, generatorParameters } from 'ts-fsrs';
 
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { UseFSRSOptions, UseFSRSResult, FSRSStateTracking } from '@/types/fsrs.types';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { handleError } from '@/utils/errorHandling';
 
 // Minimum number of intervening words before showing a repeated word
 const MIN_WORD_SPACING = 3;
@@ -171,7 +171,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
   }, []);
 
   const updateWord = useCallback(
-    async (rootId: number, confidence: 'known' | 'vague' | 'unknown') => {
+    async (rootId: number, confidence: 'known' | 'unknown' | 'vague') => {
       if (!userId || !currentWord || currentWord.root_id !== rootId) return;
 
       if (

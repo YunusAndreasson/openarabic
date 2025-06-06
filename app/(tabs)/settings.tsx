@@ -38,7 +38,7 @@ const SettingLabel = memo(({ icon, text, iconColor }: SettingLabelProps) => {
 
   return (
     <View style={styles.settingLabelContainer}>
-      <Ionicons name={icon} size={22} color={defaultIconColor} />
+      <Ionicons color={defaultIconColor} name={icon} size={22} />
       <View style={styles.settingLabelTextContainer}>
         <ThemedText type="body">{text}</ThemedText>
       </View>
@@ -178,16 +178,16 @@ const AccountScreen: React.FC = () => {
 
   return (
     <ThemedView
-      style={styles.container}
+      accessibilityLabel="Settings screen"
       includeBottomInset={false}
       safeAreaEdges={['left', 'right']}
-      accessibilityLabel="Settings screen"
+      style={styles.container}
     >
       <ThemedView
-        useSafeArea={false}
         includeBottomInset={false}
-        style={styles.flexOne}
         scrollable={true}
+        style={styles.flexOne}
+        useSafeArea={false}
         contentContainerStyle={[
           styles.scrollContent,
           {
@@ -202,28 +202,28 @@ const AccountScreen: React.FC = () => {
       >
         {/* Notifications Section - Moved to top as most frequently used */}
         <View style={styles.remindersWrapper}>
-          <SectionTitle title="Notifications" isFirstSection={true} />
+          <SectionTitle isFirstSection={true} title="Notifications" />
           <BaseCard
-            style={styles.sectionContainer}
-            shadowSize="small"
             includePressAnimation={false}
+            shadowSize="small"
+            style={styles.sectionContainer}
           >
             <View style={styles.remindersLinksContainer}>
               <View style={styles.settingRow}>
-                <SettingLabel icon="notifications" text="Study Reminders" iconColor={colors.icon} />
+                <SettingLabel icon="notifications" iconColor={colors.icon} text="Study Reminders" />
                 <Toggle value={reminderTime.enabled} onValueChange={handleReminderToggle} />
               </View>
               {reminderTime.enabled && (
                 <>
                   <Divider />
                   <BaseCard
-                    onPress={handleTimePickerOpen}
-                    style={styles.timePickerSettingRow}
-                    shadowSize="none"
                     includePressAnimation={true}
+                    shadowSize="none"
+                    style={styles.timePickerSettingRow}
+                    onPress={handleTimePickerOpen}
                   >
                     <View style={styles.settingRow}>
-                      <SettingLabel icon="time" text="Time" iconColor={colors.icon} />
+                      <SettingLabel icon="time" iconColor={colors.icon} text="Time" />
                       <ThemedText type="body" variant="secondary">
                         {formatReminderTime(reminderTime.hour, reminderTime.minute)}
                       </ThemedText>
@@ -239,13 +239,13 @@ const AccountScreen: React.FC = () => {
         <View style={styles.appearanceWrapper}>
           <SectionTitle title="Appearance" />
           <BaseCard
-            style={styles.sectionContainer}
-            shadowSize="small"
             includePressAnimation={false}
+            shadowSize="small"
+            style={styles.sectionContainer}
           >
             <View style={styles.appearanceLinksContainer}>
               <View style={styles.settingRow}>
-                <SettingLabel icon="moon" text="Dark Mode" iconColor={colors.icon} />
+                <SettingLabel icon="moon" iconColor={colors.icon} text="Dark Mode" />
                 <ThemeToggle />
               </View>
             </View>
@@ -256,54 +256,54 @@ const AccountScreen: React.FC = () => {
         <View style={styles.infoWrapper}>
           <SectionTitle title="Science" />
           <BaseCard
-            style={styles.sectionContainer}
-            shadowSize="small"
             includePressAnimation={false}
+            shadowSize="small"
+            style={styles.sectionContainer}
           >
             <View style={styles.actionLinksContainer}>
               <BaseCard
-                onPress={() => router.push('/learningMethod')}
-                style={styles.actionLinkCard}
-                shadowSize="none"
                 includePressAnimation={true}
+                shadowSize="none"
+                style={styles.actionLinkCard}
+                onPress={() => router.push('/learningMethod')}
               >
                 <View style={styles.actionLinkContent}>
                   <View style={styles.actionLinkLeft}>
                     <View style={styles.actionIconContainer}>
-                      <Ionicons name="school-outline" size={22} color={colors.icon} />
+                      <Ionicons color={colors.icon} name="school-outline" size={22} />
                     </View>
-                    <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
+                    <ThemedText style={styles.actionLinkText} type="body" weight="medium">
                       Language Learning Science
                     </ThemedText>
                   </View>
                   <Ionicons
+                    color={colors.textTertiary}
                     name="chevron-forward-outline"
                     size={20}
-                    color={colors.textTertiary}
                     style={styles.actionLinkChevron}
                   />
                 </View>
               </BaseCard>
 
               <BaseCard
-                onPress={() => router.push('/classicalTexts')}
-                style={styles.actionLinkCard}
-                shadowSize="none"
                 includePressAnimation={true}
+                shadowSize="none"
+                style={styles.actionLinkCard}
+                onPress={() => router.push('/classicalTexts')}
               >
                 <View style={styles.actionLinkContent}>
                   <View style={styles.actionLinkLeft}>
                     <View style={styles.actionIconContainer}>
-                      <Ionicons name="library-outline" size={22} color={colors.icon} />
+                      <Ionicons color={colors.icon} name="library-outline" size={22} />
                     </View>
-                    <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
+                    <ThemedText style={styles.actionLinkText} type="body" weight="medium">
                       Why Classical Texts
                     </ThemedText>
                   </View>
                   <Ionicons
+                    color={colors.textTertiary}
                     name="chevron-forward-outline"
                     size={20}
-                    color={colors.textTertiary}
                     style={styles.actionLinkChevron}
                   />
                 </View>
@@ -316,102 +316,102 @@ const AccountScreen: React.FC = () => {
         <View style={styles.connectWrapper}>
           <SectionTitle title="Connect" />
           <BaseCard
-            style={styles.sectionContainer}
-            shadowSize="small"
             includePressAnimation={false}
+            shadowSize="small"
+            style={styles.sectionContainer}
           >
             <View style={styles.socialLinksContainer}>
               <BaseCard
-                onPress={() => handleSocialLink('https://twitter.com/OpenArabicIo')}
-                style={styles.socialLinkCard}
-                shadowSize="none"
                 includePressAnimation={true}
+                shadowSize="none"
+                style={styles.socialLinkCard}
+                onPress={() => handleSocialLink('https://twitter.com/OpenArabicIo')}
               >
                 <View style={styles.socialLinkContent}>
                   <View style={styles.socialLinkLeft}>
                     <View style={styles.socialIconContainer}>
-                      <Ionicons name="logo-twitter" size={22} color={colors.icon} />
+                      <Ionicons color={colors.icon} name="logo-twitter" size={22} />
                     </View>
-                    <ThemedText type="body" weight="medium" style={styles.socialLinkText}>
+                    <ThemedText style={styles.socialLinkText} type="body" weight="medium">
                       Twitter
                     </ThemedText>
                   </View>
                   <Ionicons
+                    color={colors.textTertiary}
                     name="open-outline"
                     size={16}
-                    color={colors.textTertiary}
                     style={styles.socialLinkChevron}
                   />
                 </View>
               </BaseCard>
 
               <BaseCard
-                onPress={() => handleSocialLink('https://www.facebook.com/OpenArabic.io/')}
-                style={styles.socialLinkCard}
-                shadowSize="none"
                 includePressAnimation={true}
+                shadowSize="none"
+                style={styles.socialLinkCard}
+                onPress={() => handleSocialLink('https://www.facebook.com/OpenArabic.io/')}
               >
                 <View style={styles.socialLinkContent}>
                   <View style={styles.socialLinkLeft}>
                     <View style={styles.socialIconContainer}>
-                      <Ionicons name="logo-facebook" size={22} color={colors.icon} />
+                      <Ionicons color={colors.icon} name="logo-facebook" size={22} />
                     </View>
-                    <ThemedText type="body" weight="medium" style={styles.socialLinkText}>
+                    <ThemedText style={styles.socialLinkText} type="body" weight="medium">
                       Facebook
                     </ThemedText>
                   </View>
                   <Ionicons
+                    color={colors.textTertiary}
                     name="open-outline"
                     size={16}
-                    color={colors.textTertiary}
                     style={styles.socialLinkChevron}
                   />
                 </View>
               </BaseCard>
 
               <BaseCard
-                onPress={() => handleSocialLink('https://www.instagram.com/openarabic.io/')}
-                style={styles.socialLinkCard}
-                shadowSize="none"
                 includePressAnimation={true}
+                shadowSize="none"
+                style={styles.socialLinkCard}
+                onPress={() => handleSocialLink('https://www.instagram.com/openarabic.io/')}
               >
                 <View style={styles.socialLinkContent}>
                   <View style={styles.socialLinkLeft}>
                     <View style={styles.socialIconContainer}>
-                      <Ionicons name="logo-instagram" size={22} color={colors.icon} />
+                      <Ionicons color={colors.icon} name="logo-instagram" size={22} />
                     </View>
-                    <ThemedText type="body" weight="medium" style={styles.socialLinkText}>
+                    <ThemedText style={styles.socialLinkText} type="body" weight="medium">
                       Instagram
                     </ThemedText>
                   </View>
                   <Ionicons
+                    color={colors.textTertiary}
                     name="open-outline"
                     size={16}
-                    color={colors.textTertiary}
                     style={styles.socialLinkChevron}
                   />
                 </View>
               </BaseCard>
 
               <BaseCard
-                onPress={handleSupportContact}
-                style={styles.socialLinkCard}
-                shadowSize="none"
                 includePressAnimation={true}
+                shadowSize="none"
+                style={styles.socialLinkCard}
+                onPress={handleSupportContact}
               >
                 <View style={styles.socialLinkContent}>
                   <View style={styles.socialLinkLeft}>
                     <View style={styles.socialIconContainer}>
-                      <Ionicons name="mail" size={22} color={colors.icon} />
+                      <Ionicons color={colors.icon} name="mail" size={22} />
                     </View>
-                    <ThemedText type="body" weight="medium" style={styles.socialLinkText}>
+                    <ThemedText style={styles.socialLinkText} type="body" weight="medium">
                       Email
                     </ThemedText>
                   </View>
                   <Ionicons
+                    color={colors.textTertiary}
                     name="open-outline"
                     size={16}
-                    color={colors.textTertiary}
                     style={styles.socialLinkChevron}
                   />
                 </View>
@@ -424,39 +424,39 @@ const AccountScreen: React.FC = () => {
         <View style={styles.manageWrapper}>
           <SectionTitle title="Manage" />
           <BaseCard
-            style={styles.sectionContainer}
-            shadowSize="small"
             includePressAnimation={false}
+            shadowSize="small"
+            style={styles.sectionContainer}
           >
             <View style={styles.manageLinksContainer}>
               <BaseCard
-                onPress={handleSignOut}
-                style={styles.actionLinkCard}
-                shadowSize="none"
                 includePressAnimation={true}
+                shadowSize="none"
+                style={styles.actionLinkCard}
+                onPress={handleSignOut}
               >
                 <View style={styles.actionLinkContent}>
                   <View style={styles.actionLinkLeft}>
                     <View style={styles.actionIconContainer}>
-                      <Ionicons name="log-out-outline" size={22} color={colors.error} />
+                      <Ionicons color={colors.error} name="log-out-outline" size={22} />
                     </View>
                     <View style={styles.signOutTextContainer}>
-                      <ThemedText type="body" weight="medium" style={styles.signOutTitleText}>
+                      <ThemedText style={styles.signOutTitleText} type="body" weight="medium">
                         Sign Out
                       </ThemedText>
                       <ThemedText
-                        type="caption"
                         colorName="textTertiary"
                         style={styles.userEmailText}
+                        type="caption"
                       >
                         {user?.email || 'No email'}
                       </ThemedText>
                     </View>
                   </View>
                   <Ionicons
+                    color={colors.textTertiary}
                     name="chevron-forward-outline"
                     size={20}
-                    color={colors.textTertiary}
                     style={styles.actionLinkChevron}
                   />
                 </View>
@@ -468,10 +468,10 @@ const AccountScreen: React.FC = () => {
         {/* App Footer */}
         <View style={styles.appFooterWrapper}>
           <View style={styles.appFooterContent}>
-            <ThemedText type="caption" colorName="tabIconDefault" style={styles.versionText}>
+            <ThemedText colorName="tabIconDefault" style={styles.versionText} type="caption">
               Version {Constants.expoConfig?.version || appVersion || '1446.0.0'}
             </ThemedText>
-            <ThemedText type="caption" colorName="tabIconDefault" style={styles.copyrightText}>
+            <ThemedText colorName="tabIconDefault" style={styles.copyrightText} type="caption">
               © 2025 OpenArabic
             </ThemedText>
           </View>
@@ -480,12 +480,12 @@ const AccountScreen: React.FC = () => {
 
       {/* Time Picker Modal */}
       <TimePicker
-        isVisible={showTimePicker}
-        onClose={handleTimePickerClose}
-        onTimeSet={handleTimeSet}
         initialHour={reminderTime.hour}
         initialMinute={reminderTime.minute}
+        isVisible={showTimePicker}
         title="Set Time"
+        onClose={handleTimePickerClose}
+        onTimeSet={handleTimeSet}
       />
     </ThemedView>
   );

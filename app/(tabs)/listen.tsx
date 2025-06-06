@@ -3,7 +3,8 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { FlashList } from '@shopify/flash-list';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useFocusEffect } from 'expo-router';
-import React, { useState, useRef, useEffect, useMemo, useCallback, memo, JSX } from 'react';
+import type { JSX } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback, memo } from 'react';
 import { StyleSheet, View, RefreshControl, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,7 +12,6 @@ import { ArticleCard } from '@/components/ArticleCard';
 import BottomControls from '@/components/BottomControls';
 import EmptyState from '@/components/EmptyState';
 import NowPlayingCard from '@/components/NowPlayingCard';
-import SectionTitle from '@/components/SectionTitle';
 import SleepTimer from '@/components/SleepTimer';
 import SortingControls from '@/components/SortingControls';
 import type { SortOption, SortDirection } from '@/components/SortingControls';
@@ -125,11 +125,12 @@ const ListenListItem = memo(
     const leftMetaContent = (
       <View style={dynamicStyles.dueWordsContainer}>
         <Ionicons
+          color={dueWordCount > 0 ? colors.warning : colors.textTertiary}
           name="sync-outline"
           size={11}
-          color={dueWordCount > 0 ? colors.warning : colors.textTertiary}
         />
         <ThemedText
+          skipDefaultColor
           type="label"
           style={{
             color: dueWordCount > 0 ? colors.warning : colors.textTertiary,
@@ -140,7 +141,6 @@ const ListenListItem = memo(
             minWidth: 14, // Fixed width to accommodate double digits
             textAlign: 'center',
           }}
-          skipDefaultColor
         >
           {dueWordCount}
         </ThemedText>
@@ -149,24 +149,24 @@ const ListenListItem = memo(
 
     return (
       <ArticleCard
-        title={item.articles?.title || 'Untitled'}
+        active={isActive}
         author={item.articles?.author?.name || 'Author'}
         leftMeta={leftMetaContent}
+        title={item.articles?.title || 'Untitled'}
         meta={
           <ThemedText
+            skipDefaultColor
             type="caption"
             style={{
               color: colors.textTertiary,
               fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
               fontWeight: '500',
             }}
-            skipDefaultColor
           >
             · {getDaysAgo(item.added_at)}
           </ThemedText>
         }
         onPress={() => onPress(item.article_id)}
-        active={isActive}
       />
     );
   },
@@ -180,7 +180,7 @@ const ListenListItem = memo(
 
 ListenListItem.displayName = 'ListenListItem';
 
-export type ListenSortOption = 'dueWords' | 'alphabetical' | 'recent';
+export type ListenSortOption = 'alphabetical' | 'dueWords' | 'recent';
 
 // Create dynamic sort options with loading state
 const createListenSortOptions = (
@@ -213,7 +213,7 @@ export default function ListenScreen(): JSX.Element {
   // --- State Hooks ---
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
   // playbackMode: 'none' | 'all'
-  const [playbackMode, setPlaybackMode] = useState<'none' | 'all'>('none');
+  const [playbackMode, setPlaybackMode] = useState<'all' | 'none'>('none');
 
   // Add state to track when we're starting playback (to show player immediately)
   const [isStartingPlayback, setIsStartingPlayback] = useState(false);
@@ -674,7 +674,7 @@ export default function ListenScreen(): JSX.Element {
   if (shouldShowInitialLoading) {
     return (
       <ThemedView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.tint} />
+        <ActivityIndicator color={colors.tint} size="large" />
         <ThemedText style={{ marginTop: LAYOUT.SPACING.MEDIUM }}>Loading saved texts</ThemedText>
       </ThemedView>
     );
@@ -682,33 +682,21 @@ export default function ListenScreen(): JSX.Element {
 
   return (
     <ThemedView
-      style={styles.container}
+      accessibilityLabel="Listen screen"
       includeBottomInset={false}
       safeAreaEdges={['left', 'right']}
-      accessibilityLabel="Listen screen"
+      style={styles.container}
     >
-      <ThemedView useSafeArea={false} includeBottomInset={false} style={styles.flexOne}>
+      <ThemedView includeBottomInset={false} style={styles.flexOne} useSafeArea={false}>
         <FlashList
           ref={flashListRef}
           data={sortedReadingList}
+          drawDistance={ITEM_HEIGHT * 5}
+          estimatedItemSize={ITEM_HEIGHT}
           extraData={flashListExtraData}
           keyExtractor={item => `${item.article_id}`}
-          renderItem={({ item }) => {
-            // Get pre-calculated due word count - much faster than calculating in render
-            const dueWordCount = dueWordsCountMap.get(item.article_id) || 0;
-            const isActive =
-              audioState !== AUDIO_STATES.IDLE && metadata.articleId === item.article_id;
-
-            return (
-              <ListenListItem
-                item={item}
-                isActive={isActive}
-                dueWordCount={dueWordCount}
-                onPress={handleArticlePress}
-              />
-            );
-          }}
-          estimatedItemSize={ITEM_HEIGHT}
+          removeClippedSubviews={true}
+          showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingTop: headerHeight,
             paddingBottom: hasArticles
@@ -719,29 +707,15 @@ export default function ListenScreen(): JSX.Element {
               : insets.bottom + LAYOUT.SPACING.TINY,
             paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
           }}
-          showsVerticalScrollIndicator={false}
-          ListHeaderComponent={
-            hasArticles ? (
-              <View>
-                <SortingControls
-                  currentSort={currentSort}
-                  sortDirection={sortDirection}
-                  onSortChange={handleSortChange}
-                  options={sortOptions}
-                  style={{ marginTop: LAYOUT.SPACING.SMALL }}
-                />
-              </View>
-            ) : null
-          }
           ListEmptyComponent={
             shouldShowEmpty ? (
               <EmptyState
-                title="No Saved Texts"
+                colors={colors}
                 description="Save articles to listen later"
-                submessage="Bookmark any article, then return here to play with hands-free controls"
                 icon="headset-outline"
                 iconSize={72}
-                colors={colors}
+                submessage="Bookmark any article, then return here to play with hands-free controls"
+                title="No Saved Texts"
                 containerStyle={{
                   paddingTop: LAYOUT.SPACING.XLARGE,
                   paddingBottom: LAYOUT.SPACING.LARGE,
@@ -749,54 +723,81 @@ export default function ListenScreen(): JSX.Element {
               />
             ) : null
           }
-          drawDistance={ITEM_HEIGHT * 5}
+          ListHeaderComponent={
+            hasArticles ? (
+              <View>
+                <SortingControls
+                  currentSort={currentSort}
+                  options={sortOptions}
+                  sortDirection={sortDirection}
+                  style={{ marginTop: LAYOUT.SPACING.SMALL }}
+                  onSortChange={handleSortChange}
+                />
+              </View>
+            ) : null
+          }
           overrideItemLayout={layout => {
             layout.size = ITEM_HEIGHT;
           }}
-          removeClippedSubviews={true}
           refreshControl={
             <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={handleRefresh}
               colors={[colors.tint]}
-              tintColor={colors.tint}
               progressBackgroundColor={colors.background}
               progressViewOffset={headerHeight + LAYOUT.SPACING.XXLARGE}
+              refreshing={isRefreshing}
+              tintColor={colors.tint}
+              onRefresh={handleRefresh}
             />
           }
+          renderItem={({ item }) => {
+            // Get pre-calculated due word count - much faster than calculating in render
+            const dueWordCount = dueWordsCountMap.get(item.article_id) || 0;
+            const isActive =
+              audioState !== AUDIO_STATES.IDLE && metadata.articleId === item.article_id;
+
+            return (
+              <ListenListItem
+                dueWordCount={dueWordCount}
+                isActive={isActive}
+                item={item}
+                onPress={handleArticlePress}
+              />
+            );
+          }}
         />
       </ThemedView>
 
       {/* Only show bottom controls when there are texts to play but no active player */}
       {hasArticles && !shouldShowPlayer && !isStartingPlayback && (
         <BottomControls
-          primaryLabel={isCurrentlyPlaying && playbackMode === 'all' ? 'Stop' : 'Play All'}
-          onPrimaryPress={handlePlayAll}
-          primaryVariant="filled"
+          isTimerActive={sleepTimer.state.isActive}
           primaryDisabled={false}
+          primaryDisablePressAnimation={true}
+          primaryLabel={isCurrentlyPlaying && playbackMode === 'all' ? 'Stop' : 'Play All'}
+          primaryVariant="filled"
+          showTimerButton={isCurrentlyPlaying}
+          timerAccessibilityLabel="Sleep timer"
           primaryAccessibilityLabel={
             isCurrentlyPlaying && playbackMode === 'all' ? 'Stop playback' : 'Play all texts'
           }
-          showTimerButton={isCurrentlyPlaying}
+          onPrimaryPress={handlePlayAll}
           onTimerPress={() => {
             mediumFeedback();
             setShowSleepTimer(true);
           }}
-          isTimerActive={sleepTimer.state.isActive}
-          timerAccessibilityLabel="Sleep timer"
-          primaryDisablePressAnimation={true}
         />
       )}
 
       {/* Now Playing Card - shows when audio is playing with integrated controls */}
       <NowPlayingCard
-        isVisible={shouldShowPlayer}
         article={currentArticle}
-        progress={isStartingPlayback ? 0 : progress}
         duration={isStartingPlayback ? 0 : duration}
         isPlaying={!isStartingPlayback && audioState === AUDIO_STATES.PLAYING}
-        showTimerButton={true}
         isTimerActive={sleepTimer.state.isActive}
+        isVisible={shouldShowPlayer}
+        progress={isStartingPlayback ? 0 : progress}
+        showTimerButton={true}
+        timerAccessibilityLabel="Sleep timer"
         onPress={() => {
           if (currentArticle) {
             router.push(`/article/${currentArticle.id}`);
@@ -815,18 +816,17 @@ export default function ListenScreen(): JSX.Element {
           mediumFeedback();
           setShowSleepTimer(true);
         }}
-        timerAccessibilityLabel="Sleep timer"
       />
 
       {/* Sleep Timer Modal - only show when there are texts and timer is active/visible */}
       {hasArticles && (
         <SleepTimer
-          isVisible={showSleepTimer}
-          onClose={() => setShowSleepTimer(false)}
-          onTimerSet={handleSleepTimerSet}
-          onTimerCancel={handleSleepTimerCancel}
-          remainingTime={sleepTimer.state.remainingTime}
           isActive={sleepTimer.state.isActive}
+          isVisible={showSleepTimer}
+          remainingTime={sleepTimer.state.remainingTime}
+          onClose={() => setShowSleepTimer(false)}
+          onTimerCancel={handleSleepTimerCancel}
+          onTimerSet={handleSleepTimerSet}
         />
       )}
     </ThemedView>

@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { memo } from 'react';
-import { TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
+import type { ViewStyle } from 'react-native';
+import { TouchableOpacity, StyleSheet } from 'react-native';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
@@ -20,7 +21,7 @@ interface TouchableIconProps {
   /** Additional styles for the container */
   style?: ViewStyle;
   /** Size variant for the touch target */
-  touchSize?: 'small' | 'medium' | 'large';
+  touchSize?: 'large' | 'medium' | 'small';
   /** Whether to use haptic feedback */
   hapticFeedback?: boolean;
   /** Accessibility label */
@@ -29,7 +30,7 @@ interface TouchableIconProps {
   hitSlop?: { top: number; right: number; bottom: number; left: number };
 }
 
-/* eslint-disable react/prop-types */
+ 
 const TouchableIcon: React.FC<TouchableIconProps> = memo(
   ({
     name,
@@ -75,8 +76,12 @@ const TouchableIcon: React.FC<TouchableIconProps> = memo(
 
     return (
       <TouchableOpacity
-        onPress={handlePress}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityRole="button"
+        accessibilityState={{ disabled }}
+        activeOpacity={LAYOUT.OPACITY.PRESSED}
         disabled={disabled}
+        hitSlop={hitSlop || defaultHitSlop}
         style={[
           styles.container,
           {
@@ -86,13 +91,9 @@ const TouchableIcon: React.FC<TouchableIconProps> = memo(
           },
           style,
         ]}
-        activeOpacity={LAYOUT.OPACITY.PRESSED}
-        hitSlop={hitSlop || defaultHitSlop}
-        accessibilityRole="button"
-        accessibilityLabel={accessibilityLabel}
-        accessibilityState={{ disabled }}
+        onPress={handlePress}
       >
-        <Ionicons name={name} size={size} color={color || colors.textSecondary} />
+        <Ionicons color={color || colors.textSecondary} name={name} size={size} />
       </TouchableOpacity>
     );
   }

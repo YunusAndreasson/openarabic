@@ -9,7 +9,6 @@ import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { ProgressBarProps } from '@/types/ui/loader.types';
 
 import { useProgressAnimation } from '../hooks/animations';
-import { useIsDarkMode } from '../hooks/useThemeDetection';
 
 /**
  * A customizable progress bar component that can be used to display the
@@ -32,8 +31,6 @@ function ProgressBarComponent({
   animationDuration = 2000,
 }: ProgressBarProps) {
   const colors = useColors();
-  const isDarkMode = useIsDarkMode();
-
   // CRITICAL: Intercept the incoming value and convert to integer immediately
   // This prevents the native bridge from seeing floating point values at all
   const intProgress = useMemo(() => {
@@ -141,9 +138,9 @@ function ProgressBarComponent({
 
   return (
     <Animated.View
-      style={styles.container as StyleProp<ViewStyle>}
       accessibilityRole="progressbar"
       animatedProps={animatedProps}
+      style={styles.container as StyleProp<ViewStyle>}
     >
       <View style={styles.fillContainer}>
         <Animated.View style={styles.fill} />

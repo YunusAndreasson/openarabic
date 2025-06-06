@@ -48,17 +48,17 @@ const FeaturedSection: React.FC<FeaturedSectionProps> = ({
 
   return (
     <View style={styles.container}>
-      {showTitle && <SectionTitle title="Featured" isFirstSection={true} />}
+      {showTitle && <SectionTitle isFirstSection={true} title="Featured" />}
       <ThemedCard
-        variant="article"
-        imageUrl={article.image_url || 'https://picsum.photos/800/400'}
-        title={article.title}
-        category={article.category?.name || ''}
         author={article.author?.name || 'Author'}
-        summary={article.summary || undefined}
-        onPress={handlePress}
-        style={styles.cardStyle}
+        category={article.category?.name || ''}
         fullSummary={true}
+        imageUrl={article.image_url || 'https://picsum.photos/800/400'}
+        style={styles.cardStyle}
+        summary={article.summary || undefined}
+        title={article.title}
+        variant="article"
+        onPress={handlePress}
       />
     </View>
   );

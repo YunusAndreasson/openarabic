@@ -1,10 +1,11 @@
-import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import { AppState } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import { AppState } from 'react-native';
+
+import { handleError } from '@/utils/errorHandling';
 
 import { supabase, setupSupabaseAppStateListener } from '../services/supabase';
-import { handleError } from '@/utils/errorHandling';
 
 // Maximum number of retry attempts for session refresh
 const MAX_REFRESH_RETRIES = 3;
@@ -37,69 +38,6 @@ export function useProvideAuth(): AuthResult {
   const [authError, setAuthError] = useState<Error | null>(null);
   const refreshAttemptsRef = useRef(0);
   const [authInitialized, setAuthInitialized] = useState(false);
-
-  // Function to fetch the session that can be called on demand
-  const fetchSession = useCallback(async (): Promise<UserSession | null> => {
-    try {
-      // Ensure auth is initialized
-      if (!authInitialized) {
-        try {
-          Sentry.addBreadcrumb({
-            category: 'auth',
-            message: 'Initializing auth in fetchSession',
-            level: 'info',
-          });
-          await supabase.auth.initialize();
-          setAuthInitialized(true);
-        } catch (initError) {
-          Sentry.captureException(initError, {
-            tags: { location: 'auth_initialization' },
-            level: 'error',
-          });
-          setAuthError(
-            initError instanceof Error ? initError : new Error('Failed to initialize auth')
-          );
-          return null;
-        }
-      }
-
-      const { data, error } = await supabase.auth.getSession();
-
-      if (error) {
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'Error fetching session',
-          level: 'error',
-          data: { error: error.message },
-        });
-        setAuthError(error);
-        return null;
-      }
-
-      if (data.session) {
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'Successfully fetched session',
-          level: 'info',
-        });
-      } else {
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'No session found during fetch',
-          level: 'info',
-        });
-      }
-
-      return data.session;
-    } catch (error) {
-      handleError(error instanceof Error ? error : new Error('Failed to fetch session'), {
-        analyticsEventName: 'Session_Fetch_Error',
-        sentrySeverity: 'error',
-        showToast: false,
-      });
-      return null;
-    }
-  }, [authInitialized]);
 
   // Refresh session function with exponential backoff retry logic
   const refreshSession = useCallback(async (): Promise<UserSession | null> => {

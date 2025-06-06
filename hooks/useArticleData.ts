@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { articlesService } from '@/services/articles';
@@ -35,8 +35,6 @@ export const useArticleData = (
   articleId: number | undefined,
   userId: string | undefined
 ): ArticleDataResult => {
-  const queryClient = useQueryClient();
-
   // Fetch article data with optimized caching
   const {
     data: article,

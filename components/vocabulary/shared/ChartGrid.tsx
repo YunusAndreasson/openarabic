@@ -1,8 +1,9 @@
 import { Group, Line } from '@shopify/react-native-skia';
 import React, { memo } from 'react';
 import { useColorScheme } from 'react-native';
-import { withOpacity } from '@/utils/colorUtils';
+
 import { Colors } from '@/constants/Colors';
+import { withOpacity } from '@/utils/colorUtils';
 
 interface ChartGridProps {
   width: number;
@@ -38,11 +39,11 @@ export const ChartGrid = memo(
         {lines.map((y, index) => (
           <Line
             key={`grid-line-${index}`}
+            color={gridColor}
             p1={{ x: 0, y }}
             p2={{ x: width, y }}
-            style="stroke"
             strokeWidth={0.5}
-            color={gridColor}
+            style="stroke"
           />
         ))}
       </Group>

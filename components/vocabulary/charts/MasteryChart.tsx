@@ -9,13 +9,11 @@ import {
   Mask,
 } from '@shopify/react-native-skia';
 import React, { memo, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
-import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 
-import { ThemedText } from '../../ThemedText';
 import {
   BaseChart,
   ChartCanvas,
@@ -35,13 +33,11 @@ import {
   GRAPH_WIDTH,
   GRAPH_HEIGHT_LARGE,
   DAYS_7,
-  MASTERY_STABILITY_THRESHOLD,
   CHART_VISUAL,
 } from '../shared/constants';
 import {
   generateDateRange,
   createStandardizedPerformanceZones,
-  generatePerformanceSubtitle,
   createAreaFillPath,
 } from '../shared/utils';
 
@@ -208,7 +204,7 @@ export const MasteryChart = memo(
       // Use standardized subtitle generator with safe defaults
       return generateChartSubtitle.mastery(
         currentRate,
-        trend as 'improving' | 'declining' | 'stable',
+        trend as 'declining' | 'improving' | 'stable',
         weeklyChange ?? 0
       );
     }, [chartData.insights]);
@@ -254,29 +250,29 @@ export const MasteryChart = memo(
 
     return (
       <BaseChart
-        title={CHART_LABELS.STRENGTH}
-        subtitle={subtitle}
-        onInfoPress={onInfoPress}
-        hideTitle={hideTitle}
-        hasData={chartData.hasData}
-        leftStat={leftStat}
-        rightStat={rightStat}
         contentHeight={GRAPH_HEIGHT_LARGE + 32} // Optimized space for axis labels aligned with card padding
         emptyStateText={EMPTY_STATE_MESSAGES.mastery}
+        hasData={chartData.hasData}
+        hideTitle={hideTitle}
+        leftStat={leftStat}
+        rightStat={rightStat}
+        subtitle={subtitle}
+        title={CHART_LABELS.STRENGTH}
+        onInfoPress={onInfoPress}
       >
         <View style={{ position: 'relative' }}>
           <View style={{ marginLeft: Y_AXIS_WIDTH }}>
             <ChartCanvas
+              accessibilityLabel="Mastery progression chart showing learning progress over the past 7 days"
               dataPoints={dataPoints}
               enableTooltips={true}
-              accessibilityLabel="Mastery progression chart showing learning progress over the past 7 days"
             >
               {/* Subtle grid lines for better visual structure */}
               <ChartGrid
-                width={GRAPH_WIDTH}
-                height={GRAPH_HEIGHT_LARGE}
                 gridLines={4}
+                height={GRAPH_HEIGHT_LARGE}
                 topPadding={TOP_PADDING}
+                width={GRAPH_WIDTH}
               />
 
               {/* Area fill under the mastery line with gradient - rendered first as base */}
@@ -290,10 +286,10 @@ export const MasteryChart = memo(
                     )}
                   >
                     <LinearGradient
-                      start={vec(0, TOP_PADDING)}
-                      end={vec(0, GRAPH_HEIGHT_LARGE)}
                       colors={chartColors.getAreaFillGradient('mastery')}
+                      end={vec(0, GRAPH_HEIGHT_LARGE)}
                       positions={[0, 0.25, 0.65, 1]}
+                      start={vec(0, TOP_PADDING)}
                     />
                   </Path>
                 )}
@@ -305,23 +301,23 @@ export const MasteryChart = memo(
                   <Mask
                     mask={
                       <Path
+                        color={colors.white}
                         path={createAreaFillPath(
                           chartData.masteryPath,
                           GRAPH_WIDTH,
                           GRAPH_HEIGHT_LARGE
                         )}
-                        color={colors.white}
                       />
                     }
                   >
                     {chartData.performanceZones?.map((zone, index) => (
                       <Rect
                         key={`performance-zone-${index}`}
+                        color={chartColors.withOpacity(zone.color, 0.25)}
+                        height={zone.height}
+                        width={GRAPH_WIDTH}
                         x={0}
                         y={zone.y}
-                        width={GRAPH_WIDTH}
-                        height={zone.height}
-                        color={chartColors.withOpacity(zone.color, 0.25)}
                       />
                     ))}
                   </Mask>
@@ -332,12 +328,12 @@ export const MasteryChart = memo(
               <Group>
                 {chartData.masteryPath && chartData.dataPoints.length > 0 && (
                   <Path
+                    color={chartColors.ui.accent}
                     path={chartData.masteryPath}
-                    style="stroke"
-                    strokeWidth={CHART_VISUAL.LINE_WIDTH}
                     strokeCap="round"
                     strokeJoin="round"
-                    color={chartColors.ui.accent}
+                    strokeWidth={CHART_VISUAL.LINE_WIDTH}
+                    style="stroke"
                   />
                 )}
 
@@ -346,16 +342,16 @@ export const MasteryChart = memo(
                   <Group key={`mastery-point-${index}`}>
                     {/* Enhanced data point with border */}
                     <Circle
+                      color={chartColors.ui.accent}
                       cx={point.x}
                       cy={point.y}
                       r={CHART_VISUAL.DATA_POINT_SIZE}
-                      color={chartColors.ui.accent}
                     />
                     <Circle
+                      color={chartColors.ui.background}
                       cx={point.x}
                       cy={point.y}
                       r={CHART_VISUAL.DATA_POINT_INNER_SIZE}
-                      color={chartColors.ui.background}
                     />
                   </Group>
                 ))}
@@ -367,16 +363,16 @@ export const MasteryChart = memo(
                   <Group key={`milestone-${index}`}>
                     {/* Subtle milestone indicator - much smaller */}
                     <Circle
+                      color={chartColors.withOpacity(chartColors.performance.excellent, 0.15)}
                       cx={milestone.x}
                       cy={milestone.y}
                       r={CHART_VISUAL.MILESTONE_SIZE}
-                      color={chartColors.withOpacity(chartColors.performance.excellent, 0.15)}
                     />
                     <Circle
+                      color={chartColors.withOpacity(chartColors.performance.excellent, 0.8)}
                       cx={milestone.x}
                       cy={milestone.y}
                       r={CHART_VISUAL.MILESTONE_INNER_SIZE}
-                      color={chartColors.withOpacity(chartColors.performance.excellent, 0.8)}
                     />
                   </Group>
                 ))}
@@ -386,17 +382,17 @@ export const MasteryChart = memo(
 
           {/* Enhanced axis labels with proper padding and y-axis values */}
           <ChartAxes
-            width={GRAPH_WIDTH}
             height={GRAPH_HEIGHT_LARGE}
+            showYAxis={true}
+            topPadding={TOP_PADDING}
+            width={GRAPH_WIDTH}
+            xLabelPositions={chartData.dataPoints.map(point => point.x)}
+            yMax={100}
             xLabels={masteryData.map((data, index) =>
               index === masteryData.length - 1
                 ? 'Today'
                 : data.date.toLocaleDateString('en-US', { weekday: 'short' })
             )}
-            xLabelPositions={chartData.dataPoints.map(point => point.x)}
-            yMax={100}
-            showYAxis={true}
-            topPadding={TOP_PADDING}
           />
         </View>
       </BaseChart>

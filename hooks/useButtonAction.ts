@@ -7,7 +7,7 @@ import { ANIMATION_TIMING } from '../constants/animations';
  */
 export type ButtonActionFunction<TArgs extends unknown[] = [], TReturn = void> = (
   ...args: TArgs
-) => TReturn | Promise<TReturn>;
+) => Promise<TReturn> | TReturn;
 
 /**
  * Custom hook for button actions with debounce
@@ -51,7 +51,7 @@ export function useButtonAction<TArgs extends unknown[] = [], TReturn = void>(
       timeoutRef.current = setTimeout(async () => {
         try {
           await fn(...args);
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+           
         } catch (error) {
           // Log error but don't rethrow to prevent unhandled rejections
         } finally {

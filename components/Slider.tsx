@@ -1,5 +1,6 @@
 import Slider from '@react-native-community/slider';
-import React, { JSX } from 'react';
+import type { JSX } from 'react';
+import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
@@ -25,16 +26,16 @@ export function CustomSlider({
   return (
     <View style={[styles.container, style]}>
       <Slider
-        value={value}
-        onValueChange={onValueChange}
-        minimumValue={minimumValue}
-        maximumValue={maximumValue}
-        step={step}
-        minimumTrackTintColor={colors.tint}
         maximumTrackTintColor={colors.tabIconDefault}
-        thumbTintColor={colors.tint}
+        maximumValue={maximumValue}
+        minimumTrackTintColor={colors.tint}
+        minimumValue={minimumValue}
+        step={step}
         style={sliderStyle}
         tapToSeek={true}
+        thumbTintColor={colors.tint}
+        value={value}
+        onValueChange={onValueChange}
       />
     </View>
   );

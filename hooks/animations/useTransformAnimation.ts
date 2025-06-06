@@ -5,7 +5,6 @@ import type {
   WithSpringConfig,
   BaseAnimationBuilder,
 } from 'react-native-reanimated';
-import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import {
   useSharedValue,
   useAnimatedStyle,
@@ -22,6 +21,7 @@ import {
   cancelAnimation,
 } from 'react-native-reanimated';
 
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import { handleError } from '@/utils/errorHandling';
 
 import { SCREEN_WIDTH } from '../../constants/layout';
@@ -29,8 +29,8 @@ import { SCREEN_WIDTH } from '../../constants/layout';
 import { TIMING_CONFIG } from './animationConfigs';
 import type { SharedValue } from './types';
 
-export type TransformType = 'scale' | 'slide' | 'translateY' | 'translateX' | 'rotate';
-export type SlideDirection = 'right' | 'left';
+export type TransformType = 'rotate' | 'scale' | 'slide' | 'translateX' | 'translateY';
+export type SlideDirection = 'left' | 'right';
 
 export interface TransformAnimationOptions {
   /**

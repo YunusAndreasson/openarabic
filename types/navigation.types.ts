@@ -3,7 +3,7 @@
  */
 export interface ReviewParams {
   rootId?: number;
-  mode?: 'spaced' | 'random' | 'new';
+  mode?: 'new' | 'random' | 'spaced';
   count?: number;
   fromVocabulary?: string;
   fromRemember?: string;
@@ -14,23 +14,16 @@ export interface ReviewParams {
  */
 export interface WordListParams {
   filter?: 'all' | 'due' | 'learned';
-  sortBy?: 'dueDate' | 'addedDate' | 'difficulty';
+  sortBy?: 'addedDate' | 'difficulty' | 'dueDate';
   category?:
-    | 'total'
-    | 'mastered'
-    | 'learning'
-    | 'due'
-    | 'needsAttention'
-    | 'difficultyEasy'
-    | 'difficultyMedium'
-    | 'difficultyHard';
+    'difficultyEasy' | 'difficultyHard' | 'difficultyMedium' | 'due' | 'learning' | 'mastered' | 'needsAttention' | 'total';
 }
 
 /**
  * Type for route parameters
  */
 export type RouteParams = {
-  '/article/[id]': { id: string | number };
+  '/article/[id]': { id: number | string };
   '/review': ReviewParams;
   '/practice': ListenParams;
   '/wordList': WordListParams;

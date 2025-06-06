@@ -456,7 +456,16 @@ export default function ArticleScreen(): JSX.Element {
       return (
         <ArabicWord
           key={word.id}
+          isAudioHighlighted={isAudioHighlighted}
+          isDueWord={isDueWord}
           word={word}
+          wordRef={wordRef}
+          settings={{
+            showEnglish: false,
+            fontScale: settings.fontScale,
+            showTransliteration: false,
+            showWordType: false,
+          }}
           onPress={() => {
             if (word.root) {
               if (isDueWord) {
@@ -465,15 +474,6 @@ export default function ArticleScreen(): JSX.Element {
               handleRootPress(word.root.id);
             }
           }}
-          settings={{
-            showEnglish: false,
-            fontScale: settings.fontScale,
-            showTransliteration: false,
-            showWordType: false,
-          }}
-          isAudioHighlighted={isAudioHighlighted}
-          wordRef={wordRef}
-          isDueWord={isDueWord}
         />
       );
     },
@@ -496,20 +496,20 @@ export default function ArticleScreen(): JSX.Element {
       return (
         <ArticleSentence
           key={props.item.id}
+          colors={colors}
+          containerStyle={styles.transparentBackground}
+          currentPlayingPosition={isCurrentSentence ? currentPosition : null}
+          currentPlayingSentenceId={isCurrentSentence ? currentSentenceId : null}
+          currentPlayingWordId={isCurrentSentence ? currentWordId : null}
+          renderWord={renderWord}
+          settings={sentenceSettings}
+          words={words}
           sentence={{
             id: props.item.id,
             english: props.item.english,
             arabic: props.item.arabic,
             audio_url: props.item.audio_url,
           }}
-          words={words}
-          renderWord={renderWord}
-          settings={sentenceSettings}
-          colors={colors}
-          containerStyle={styles.transparentBackground}
-          currentPlayingSentenceId={isCurrentSentence ? currentSentenceId : null}
-          currentPlayingWordId={isCurrentSentence ? currentWordId : null}
-          currentPlayingPosition={isCurrentSentence ? currentPosition : null}
         />
       );
     },
@@ -725,47 +725,47 @@ export default function ArticleScreen(): JSX.Element {
 
   return (
     <ThemedView style={styles.container} useSafeArea={false}>
-      <StatusBar style={isDarkMode ? 'light' : 'dark'} translucent={true} animated={true} />
+      <StatusBar animated={true} style={isDarkMode ? 'light' : 'dark'} translucent={true} />
 
       <View style={styles.container}>
         {article && sortedSentences && sortedSentences.length > 0 ? (
           <ArticleContent
             ref={articleContentRef}
-            id={id}
             article={article}
-            sortedSentences={sortedSentences}
-            renderSentenceItem={renderSentenceItem}
-            handleScroll={handleScroll}
             colors={colors}
+            englishToggleKey={showEnglishLocal ? 'en' : 'ar'}
+            fontScale={settings.fontScale}
+            handleScroll={handleScroll}
+            id={id}
+            isDarkMode={isDarkMode}
+            isInReadingList={isInReadingList}
+            isPlaying={audioSessionActive}
             otherArticles={otherArticles}
+            renderSentenceItem={renderSentenceItem}
+            showEnglish={showEnglishLocal}
+            showTextSizeSlider={showTextSizeSlider}
+            sortedSentences={sortedSentences}
+            user={user}
             handleArticlePress={(articleId, isRelated) =>
               handleArticlePress(Number(articleId), isRelated)
             }
             onBackPress={handleBackPress}
             onBookmarkPress={handleBookmarkPress}
-            onPlayPress={handlePlayPress}
             onEnglishToggle={handleEnglishToggle}
-            onTextSizeToggle={handleTextSizeToggle}
-            isInReadingList={isInReadingList}
-            isPlaying={audioSessionActive}
-            showEnglish={showEnglishLocal}
-            showTextSizeSlider={showTextSizeSlider}
-            fontScale={settings.fontScale}
             onFontScaleChange={handleFontScaleChange}
-            englishToggleKey={showEnglishLocal ? 'en' : 'ar'}
-            user={user}
-            isDarkMode={isDarkMode}
+            onPlayPress={handlePlayPress}
+            onTextSizeToggle={handleTextSizeToggle}
           />
         ) : null}
       </View>
       <AudioControlPanel
-        isVisible={audioControlVisible}
+        currentSentenceIndex={currentSentenceIndex}
         isPlaying={isPlaying}
+        isVisible={audioControlVisible}
+        totalSentences={sentenceAudioData.length}
+        onNext={handleNextSentence}
         onPlayPause={handleAudioControlPause}
         onPrevious={handlePreviousSentence}
-        onNext={handleNextSentence}
-        currentSentenceIndex={currentSentenceIndex}
-        totalSentences={sentenceAudioData.length}
       />
     </ThemedView>
   );

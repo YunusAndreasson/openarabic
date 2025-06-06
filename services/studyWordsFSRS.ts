@@ -31,7 +31,7 @@ interface GetFSRSWordsOptions {
    * - "mastered": fsrs_state = 2 (Review) and fsrs_stability >= 5
    * - "learning": fsrs_state in (0,1,3) or (fsrs_state = 2 and fsrs_stability < 5)
    */
-  category?: 'mastered' | 'learning';
+  category?: 'learning' | 'mastered';
 }
 
 // Query key constants for consistent key usage

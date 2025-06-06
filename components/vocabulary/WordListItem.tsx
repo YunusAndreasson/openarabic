@@ -1,6 +1,5 @@
 import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { State } from 'ts-fsrs';
 
 import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
@@ -9,7 +8,7 @@ import { ThemedText } from '../ThemedText';
 
 interface WordListItemProps {
   word: StudyWord & { retentionScore?: number };
-  currentSort?: 'retention' | 'alphabetical' | 'streak' | 'due';
+  currentSort?: 'alphabetical' | 'due' | 'retention' | 'streak';
 }
 
 // Memoize the component to prevent unnecessary re-renders
@@ -36,11 +35,11 @@ const WordListItem = memo(function WordListItem({ word, currentSort }: WordListI
             {/* Primary: Word meaning with optional streak badge */}
             <View style={styles.titleRow}>
               <ThemedText
-                type="body"
-                weight="bold"
+                skipDefaultColor
                 numberOfLines={2}
                 style={[styles.meaningText, { color: colors.text }]}
-                skipDefaultColor
+                type="body"
+                weight="bold"
               >
                 {capitalizedMeaning || 'No translation available'}
               </ThemedText>
@@ -62,6 +61,7 @@ const WordListItem = memo(function WordListItem({ word, currentSort }: WordListI
                   ]}
                 >
                   <ThemedText
+                    skipDefaultColor
                     type="caption"
                     weight="bold"
                     style={[
@@ -77,7 +77,6 @@ const WordListItem = memo(function WordListItem({ word, currentSort }: WordListI
                                 : colors.interactiveSecondary,
                       },
                     ]}
-                    skipDefaultColor
                   >
                     🔥{word.success_streak}
                   </ThemedText>
@@ -90,10 +89,10 @@ const WordListItem = memo(function WordListItem({ word, currentSort }: WordListI
               <View style={styles.memoryRow}>
                 <View style={styles.memoryLabel}>
                   <ThemedText
+                    skipDefaultColor
+                    style={[styles.memoryPercentage, { color: colors.interactiveSecondary }]}
                     type="caption"
                     weight="medium"
-                    style={[styles.memoryPercentage, { color: colors.interactiveSecondary }]}
-                    skipDefaultColor
                   >
                     {word.retentionScore}%
                   </ThemedText>
@@ -129,13 +128,13 @@ const WordListItem = memo(function WordListItem({ word, currentSort }: WordListI
         <View style={styles.rightContent}>
           <View style={styles.arabicContainer}>
             <ThemedText
+              skipDefaultColor
+              align="center"
+              colorName="arabicText"
+              numberOfLines={1}
+              style={styles.arabicText}
               type="arabic"
               weight="bold"
-              align="center"
-              numberOfLines={1}
-              skipDefaultColor
-              colorName="arabicText"
-              style={styles.arabicText}
             >
               {letters}
             </ThemedText>
@@ -143,8 +142,8 @@ const WordListItem = memo(function WordListItem({ word, currentSort }: WordListI
           {/* Subtle interaction indicator */}
           <View style={styles.chevronContainer}>
             <ThemedText
-              style={[styles.chevronIcon, { color: colors.interactiveSecondary }]}
               skipDefaultColor
+              style={[styles.chevronIcon, { color: colors.interactiveSecondary }]}
             >
               ›
             </ThemedText>

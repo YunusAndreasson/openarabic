@@ -1,7 +1,8 @@
-import { supabase } from './supabase';
 import type { Article } from '../types/articles.types';
 import { handleError } from '../utils/errorHandling';
 import { mapToArticle, mapToArticles } from '../utils/typeMappers';
+
+import { supabase } from './supabase';
 
 // Define different column sets for different use cases
 const MINIMAL_COLUMNS = `
@@ -158,11 +159,11 @@ export const articlesService = {
 
   // Optimized method for getting minimal article data (for dropdowns, etc.)
   async getArticlesMinimal(
-    options: Pick<GetArticlesOptions, 'categoryId' | 'authorId'> = {}
+    options: Pick<GetArticlesOptions, 'authorId' | 'categoryId'> = {}
   ): Promise<
     Pick<
       Article,
-      'id' | 'title' | 'difficulty_level' | 'category_id' | 'author_id' | 'created_at'
+      'author_id' | 'category_id' | 'created_at' | 'difficulty_level' | 'id' | 'title'
     >[]
   > {
     try {
@@ -406,7 +407,7 @@ export const articlesService = {
 
   // New method for getting articles count (for pagination)
   async getArticlesCount(
-    options: Pick<GetArticlesOptions, 'categoryId' | 'authorId'> = {}
+    options: Pick<GetArticlesOptions, 'authorId' | 'categoryId'> = {}
   ): Promise<number> {
     try {
       const { categoryId, authorId } = options;

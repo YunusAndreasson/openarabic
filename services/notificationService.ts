@@ -1,5 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+
 import { Colors } from '@/constants/Colors';
 
 // Configure notification behavior

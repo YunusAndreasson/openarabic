@@ -1,7 +1,6 @@
 import React, { memo } from 'react';
 import { StyleSheet, View, useColorScheme } from 'react-native';
 
-import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { withOpacity } from '@/utils/colorUtils';
 

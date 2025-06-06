@@ -4,11 +4,11 @@ import { StyleSheet, View, Platform, TouchableOpacity } from 'react-native';
 import type { ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { LAYOUT } from '@/constants/layout';
 import { Colors } from '@/constants/Colors';
-import { withOpacity } from '@/utils/colorUtils';
+import { LAYOUT } from '@/constants/layout';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
+import { withOpacity } from '@/utils/colorUtils';
 
 interface ArticleButtonsProps {
   onBackPress: () => void;
@@ -131,9 +131,9 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
     <View style={{ alignItems: 'center', justifyContent: 'center' }}>
       {/* More subtle shadow layer */}
       <Ionicons
+        color={isDarkMode ? withOpacity(colors.black, 0.4) : withOpacity(colors.shadow, 0.3)}
         name={name}
         size={size}
-        color={isDarkMode ? withOpacity(colors.black, 0.4) : withOpacity(colors.shadow, 0.3)}
         style={{
           position: 'absolute',
           top: 0.5,
@@ -141,7 +141,7 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
         }}
       />
       {/* Main icon with reduced opacity */}
-      <Ionicons name={name} size={size} color={iconColor} />
+      <Ionicons color={iconColor} name={name} size={size} />
     </View>
   );
 
@@ -158,9 +158,9 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
         <Animated.View style={backButtonStyle}>
           <ButtonWrapper style={styles.backButton}>
             <TouchableOpacity
-              onPress={onBackPress}
-              style={StyleSheet.absoluteFill}
               accessibilityLabel="Back"
+              style={StyleSheet.absoluteFill}
+              onPress={onBackPress}
             >
               <View
                 style={[
@@ -180,9 +180,9 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
           <Animated.View style={bookmarkButtonStyle}>
             <ButtonWrapper style={styles.iconButton}>
               <TouchableOpacity
-                onPress={onBookmarkPress}
-                style={StyleSheet.absoluteFill}
                 accessibilityLabel={isInReadingList ? 'Remove bookmark' : 'Add bookmark'}
+                style={StyleSheet.absoluteFill}
+                onPress={onBookmarkPress}
               >
                 <View
                   style={[
@@ -204,11 +204,11 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
         <Animated.View style={englishButtonStyle}>
           <ButtonWrapper style={styles.iconButton}>
             <TouchableOpacity
-              onPress={onEnglishToggle}
               style={StyleSheet.absoluteFill}
               accessibilityLabel={
                 showEnglish ? 'Hide English translation' : 'Show English translation'
               }
+              onPress={onEnglishToggle}
             >
               <View
                 style={[
@@ -226,11 +226,11 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
         <Animated.View style={textSizeButtonStyle}>
           <ButtonWrapper style={styles.iconButton}>
             <TouchableOpacity
-              onPress={onTextSizeToggle}
               style={StyleSheet.absoluteFill}
               accessibilityLabel={
                 showTextSizeSlider ? 'Hide text size controls' : 'Show text size controls'
               }
+              onPress={onTextSizeToggle}
             >
               <View
                 style={[
@@ -247,9 +247,9 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
         <Animated.View style={playButtonStyle}>
           <ButtonWrapper style={styles.iconButton}>
             <TouchableOpacity
-              onPress={onPlayPress}
-              style={StyleSheet.absoluteFill}
               accessibilityLabel={isPlaying ? 'Stop audio' : 'Play audio'}
+              style={StyleSheet.absoluteFill}
+              onPress={onPlayPress}
             >
               <View
                 style={[

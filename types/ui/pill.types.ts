@@ -3,7 +3,7 @@
  */
 import type { StyleProp, ViewStyle, TextStyle } from 'react-native';
 
-export type PillVariant = 'filter' | 'category' | 'horizontal-category';
+export type PillVariant = 'category' | 'filter' | 'horizontal-category';
 
 /**
  * Base props for pill components
@@ -12,7 +12,7 @@ export interface BasePillProps {
   /**
    * Unique identifier for the item
    */
-  id: string | number;
+  id: number | string;
 
   /**
    * Label text to display in the pill
@@ -27,7 +27,7 @@ export interface BasePillProps {
   /**
    * Callback when the pill is selected
    */
-  onSelect?: (id: string | number) => void;
+  onSelect?: (id: number | string) => void;
 
   /**
    * Animation delay in milliseconds
@@ -74,15 +74,12 @@ export interface HorizontalCategoryPillProps extends BasePillProps {
  * Props for the Pill component
  */
 export type PillProps =
-  | FilterPillProps
-  | CategoryPillProps
-  | HorizontalCategoryPillProps
-  | (BasePillProps & {
+  CategoryPillProps | FilterPillProps | HorizontalCategoryPillProps | BasePillProps & {
       /**
        * Variant of the pill
        */
       variant?: PillVariant;
-    });
+    };
 
 /**
  * Interface for filter items
@@ -101,7 +98,7 @@ export interface FilterItem {
   /**
    * Allow for additional properties
    */
-  [key: string]: string | number;
+  [key: string]: number | string;
 }
 
 /**
@@ -154,5 +151,5 @@ export interface PillStyleProps {
   borderRadius?: number;
   padding?: number;
   margin?: number;
-  [key: string]: StyleProp<ViewStyle | TextStyle> | string | number | undefined;
+  [key: string]: StyleProp<TextStyle | ViewStyle> | number | string | undefined;
 }

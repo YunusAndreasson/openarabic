@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, router } from 'expo-router';
-import React, { JSX, useCallback, useEffect, useState, useRef } from 'react';
+import type { JSX} from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,7 +21,7 @@ import { useFSRSQueries } from '@/hooks/useFSRSQueries';
 import { useWordSizing } from '@/hooks/useWordSizing';
 import { listenAudioService } from '@/services/listenAudioService';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
-import { StudyWord } from '@/types/vocabulary.types';
+import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 
 /**
@@ -319,15 +320,15 @@ export default function ListenScreen(): JSX.Element {
   if (isComplete && !isClosing) {
     return (
       <CompletionScreen
-        onClose={handleClose}
-        title="Session Complete!"
-        subtitle="All words practiced"
+        useThemedView
+        buttonStyle={{ minWidth: 180 }}
         buttonText="Continue"
         buttonVariant="outlined"
         iconName="checkmark-circle-outline"
         iconSize={120}
-        useThemedView
-        buttonStyle={{ minWidth: 180 }}
+        subtitle="All words practiced"
+        title="Session Complete!"
+        onClose={handleClose}
       />
     );
   }
@@ -336,18 +337,18 @@ export default function ListenScreen(): JSX.Element {
     <ThemedView style={styles.container} useSafeArea={true}>
       <View style={styles.contentContainer}>
         <ListenHeader
-          progress={progress}
-          maxProgress={maxProgress}
           animationKey={progressAnimationKey}
+          maxProgress={maxProgress}
+          progress={progress}
           onClose={handleClose}
         />
 
         <View style={styles.wordArea}>
           <Animated.View style={[styles.wordContainer, animatedStyle as any]}>
             <WordDisplay
-              word={currentArabicWord}
-              translation={translationToShow}
               fontSize={wordFontSize}
+              translation={translationToShow}
+              word={currentArabicWord}
             />
           </Animated.View>
         </View>
@@ -357,9 +358,9 @@ export default function ListenScreen(): JSX.Element {
 
           <View style={styles.noteContainer}>
             <Ionicons
+              color={colors.tint}
               name="information-circle-outline"
               size={18}
-              color={colors.tint}
               style={styles.noteIcon}
             />
             <ThemedText style={styles.noteText}>Continues playing with screen off</ThemedText>

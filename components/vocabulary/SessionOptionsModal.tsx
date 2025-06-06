@@ -16,9 +16,9 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 
+import { Colors } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
-import { Colors } from '@/constants/Colors';
 import { withOpacity } from '@/utils/colorUtils';
 import { mediumFeedback } from '@/utils/haptics';
 
@@ -124,18 +124,19 @@ export default memo(function SessionOptionsModal({
 
   return (
     <Modal
-      visible={visible}
-      transparent
       statusBarTranslucent
+      transparent
       animationType="none"
+      visible={visible}
       onRequestClose={handleClose}
     >
       <TouchableWithoutFeedback onPress={handleBackdropPress}>
         <Animated.View
           style={[styles.backdrop, backdropStyle, { backgroundColor: colors.backdropOverlay }]}
         >
-          <Animated.View style={[styles.modalContainer, modalStyle]} pointerEvents="box-none">
+          <Animated.View pointerEvents="box-none" style={[styles.modalContainer, modalStyle]}>
             <View
+              pointerEvents="auto"
               style={[
                 styles.modal,
                 {
@@ -143,24 +144,23 @@ export default memo(function SessionOptionsModal({
                   shadowColor: colors.shadow,
                 },
               ]}
-              pointerEvents="auto"
             >
               {/* Header */}
               <View style={[styles.header, { borderBottomColor: colors.borderOverlay }]}>
                 <View style={styles.headerContent}>
-                  <ThemedText type="heading2" weight="bold" style={styles.title}>
+                  <ThemedText style={styles.title} type="heading2" weight="bold">
                     Practice Mode
                   </ThemedText>
-                  <ThemedText type="body" variant="secondary" style={styles.subtitle}>
+                  <ThemedText style={styles.subtitle} type="body" variant="secondary">
                     How would you like to practice {dueWordsCount} words?
                   </ThemedText>
                 </View>
                 <TouchableOpacity
-                  onPress={handleClose}
-                  style={styles.closeButton}
                   hitSlop={LAYOUT.HIT_SLOP.SMALL}
+                  style={styles.closeButton}
+                  onPress={handleClose}
                 >
-                  <Ionicons name="close" size={22} color={colors.text} />
+                  <Ionicons color={colors.text} name="close" size={22} />
                 </TouchableOpacity>
               </View>
 
@@ -168,10 +168,10 @@ export default memo(function SessionOptionsModal({
               <View style={styles.optionsContainer}>
                 {!hasWordsToStudy ? (
                   <View style={styles.emptyState}>
-                    <ThemedText type="body" variant="secondary" style={styles.emptyText}>
+                    <ThemedText style={styles.emptyText} type="body" variant="secondary">
                       You&apos;re all caught up!
                     </ThemedText>
-                    <ThemedText type="caption" variant="secondary" style={styles.emptySubtext}>
+                    <ThemedText style={styles.emptySubtext} type="caption" variant="secondary">
                       Add more words to practice
                     </ThemedText>
                   </View>
@@ -179,14 +179,14 @@ export default memo(function SessionOptionsModal({
                   sessionOptions.map((option, index) => (
                     <TouchableOpacity
                       key={option.id}
-                      onPress={option.onPress}
-                      style={[styles.optionButton, index === 0 && styles.primaryOption]}
                       activeOpacity={0.7}
+                      style={[styles.optionButton, index === 0 && styles.primaryOption]}
+                      onPress={option.onPress}
                     >
                       <BaseCard
-                        style={[styles.optionCard, index === 0 && styles.primaryCard]}
-                        shadowSize={index === 0 ? 'medium' : 'small'}
                         includePressAnimation={false}
+                        shadowSize={index === 0 ? 'medium' : 'small'}
+                        style={[styles.optionCard, index === 0 && styles.primaryCard]}
                       >
                         <View style={styles.optionContent}>
                           <View
@@ -197,34 +197,34 @@ export default memo(function SessionOptionsModal({
                             ]}
                           >
                             <Ionicons
+                              color={option.iconColor}
                               name={option.icon}
                               size={index === 0 ? 26 : 24}
-                              color={option.iconColor}
                             />
                           </View>
                           <View style={styles.textContainer}>
                             <ThemedText
+                              numberOfLines={2}
+                              style={styles.optionTitle}
                               type={index === 0 ? 'heading3' : 'body'}
                               weight="bold"
-                              style={styles.optionTitle}
-                              numberOfLines={2}
                             >
                               {option.title}
                             </ThemedText>
                             <ThemedText
+                              numberOfLines={2}
+                              style={styles.optionSubtitle}
                               type="caption"
                               variant="secondary"
-                              style={styles.optionSubtitle}
-                              numberOfLines={2}
                             >
                               {option.subtitle}
                             </ThemedText>
                           </View>
                           <View style={styles.chevronContainer}>
                             <Ionicons
+                              color={colors.secondaryText}
                               name="chevron-forward"
                               size={index === 0 ? 18 : 16}
-                              color={colors.secondaryText}
                             />
                           </View>
                         </View>

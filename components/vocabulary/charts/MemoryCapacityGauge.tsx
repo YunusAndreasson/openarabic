@@ -45,7 +45,7 @@ const SPRING_CONFIG = {
   mass: 1,
 };
 
-/* eslint-disable react/prop-types */
+ 
 export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords = [] }) => {
   const colors = useColors();
   const chartColors = useChartColors();
@@ -249,112 +249,112 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
 
   return (
     <BaseChart
-      title=""
-      subtitle=""
-      onInfoPress={() => {}}
-      hideTitle={true}
-      hasData={studyWords.length > 0}
       contentHeight={GAUGE_HEIGHT + 40}
       emptyStateText="Add words to track your memory capacity"
+      hasData={studyWords.length > 0}
+      hideTitle={true}
+      subtitle=""
+      title=""
+      onInfoPress={() => {}}
     >
       <Animated.View style={animatedPressStyle}>
         <TouchableOpacity
-          style={styles.gaugeContainer}
-          onPress={handleInsightsPress}
-          activeOpacity={1}
+          accessibilityHint="Opens insights screen"
           accessibilityLabel={`Memory capacity ${memoryMetrics.capacityScore}%. Tap for insights`}
           accessibilityRole="button"
-          accessibilityHint="Opens insights screen"
+          activeOpacity={1}
+          style={styles.gaugeContainer}
+          onPress={handleInsightsPress}
         >
           <Canvas style={styles.canvas}>
             <Group>
               {/* Background track - full gauge path with low opacity */}
               <Path
-                path={gaugePaths.fullPath}
-                style="stroke"
-                strokeWidth={GAUGE_STROKE_WIDTH + 2}
-                strokeCap="round"
                 color={chartColors.withOpacity(colors.card, 0.6)}
+                path={gaugePaths.fullPath}
+                strokeCap="round"
+                strokeWidth={GAUGE_STROKE_WIDTH + 2}
+                style="stroke"
               />
 
               <Path
-                path={gaugePaths.fullPath}
-                style="stroke"
-                strokeWidth={GAUGE_STROKE_WIDTH}
-                strokeCap="round"
                 color={chartColors.withOpacity(chartColors.ui.border, 0.08)}
+                path={gaugePaths.fullPath}
+                strokeCap="round"
+                strokeWidth={GAUGE_STROKE_WIDTH}
+                style="stroke"
               />
 
               {/* Unfilled portion with low opacity gradient */}
               <Path
-                path={gaugePaths.fullPath}
-                style="stroke"
-                strokeWidth={GAUGE_STROKE_WIDTH}
-                strokeCap="round"
                 opacity={0.2}
+                path={gaugePaths.fullPath}
+                strokeCap="round"
+                strokeWidth={GAUGE_STROKE_WIDTH}
+                style="stroke"
               >
                 <LinearGradient
-                  start={vec(GAUGE_WIDTH * 0.05, GAUGE_HEIGHT / 2)}
                   end={vec(GAUGE_WIDTH * 0.95, GAUGE_HEIGHT / 2)}
+                  positions={[0, 0.3, 0.7, 1]}
+                  start={vec(GAUGE_WIDTH * 0.05, GAUGE_HEIGHT / 2)}
                   colors={[
                     chartColors.performance.poor, // Red (left)
                     chartColors.performance.moderate, // Orange (left-center)
                     chartColors.performance.good, // Blue (right-center)
                     chartColors.performance.excellent, // Green (right)
                   ]}
-                  positions={[0, 0.3, 0.7, 1]}
                 />
               </Path>
 
               {/* Filled portion - only the achieved capacity with full opacity */}
               <Path
                 path={gaugePaths.filledPath}
-                style="stroke"
-                strokeWidth={GAUGE_STROKE_WIDTH}
                 strokeCap="round"
+                strokeWidth={GAUGE_STROKE_WIDTH}
+                style="stroke"
               >
                 <LinearGradient
+                  colors={getFilledGradientColors(memoryMetrics.capacityScore)}
+                  positions={getFilledGradientPositions(memoryMetrics.capacityScore)}
                   start={vec(GAUGE_WIDTH * 0.05, GAUGE_HEIGHT / 2)}
                   end={vec(
                     GAUGE_WIDTH * 0.05 + (GAUGE_WIDTH * 0.9 * gaugePaths.filledSweep) / 170,
                     GAUGE_HEIGHT / 2
                   )}
-                  colors={getFilledGradientColors(memoryMetrics.capacityScore)}
-                  positions={getFilledGradientPositions(memoryMetrics.capacityScore)}
                 />
               </Path>
 
               {/* Enhanced capacity indicator with glow effect */}
               <Circle
+                color={chartColors.withOpacity(getCapacityColor(memoryMetrics.capacityScore), 0.15)}
                 cx={indicatorPosition.x}
                 cy={indicatorPosition.y}
                 r={INDICATOR_GLOW_SIZE}
-                color={chartColors.withOpacity(getCapacityColor(memoryMetrics.capacityScore), 0.15)}
                 style="fill"
               />
 
               <Circle
+                color={colors.background}
                 cx={indicatorPosition.x}
                 cy={indicatorPosition.y}
                 r={INDICATOR_SIZE + 2}
-                color={colors.background}
                 style="fill"
               />
 
               <Circle
+                color={getCapacityColor(memoryMetrics.capacityScore)}
                 cx={indicatorPosition.x}
                 cy={indicatorPosition.y}
                 r={INDICATOR_SIZE}
-                color={getCapacityColor(memoryMetrics.capacityScore)}
                 style="fill"
               />
 
               {/* Inner highlight for 3D effect */}
               <Circle
+                color={chartColors.withOpacity(colors.background, 0.4)}
                 cx={indicatorPosition.x - 1}
                 cy={indicatorPosition.y - 1}
                 r={INDICATOR_SIZE - 3}
-                color={chartColors.withOpacity(colors.background, 0.4)}
                 style="fill"
               />
             </Group>
@@ -395,7 +395,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
 
           {/* Enhanced tap hint with better positioning */}
           <View style={styles.tapHintContainer}>
-            <ThemedText type="caption" variant="secondary" style={styles.tapHint}>
+            <ThemedText style={styles.tapHint} type="caption" variant="secondary">
               Tap for insights
             </ThemedText>
           </View>
@@ -404,7 +404,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
 
       {/* Enhanced recommendation section with better spacing */}
       <View style={styles.recommendationContainer}>
-        <ThemedText type="caption" variant="secondary" style={styles.recommendationText}>
+        <ThemedText style={styles.recommendationText} type="caption" variant="secondary">
           {getRecommendationMessage(memoryMetrics.capacityScore)}
         </ThemedText>
       </View>

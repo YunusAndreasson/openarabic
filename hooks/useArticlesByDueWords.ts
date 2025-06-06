@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+
+import { articlesService } from '../services/articles';
+import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '../services/studyWordsFSRS';
 import type { Article } from '../types/articles.types';
 import { getArticlesByDueWords } from '../utils/articleUtils';
-import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '../services/studyWordsFSRS';
-import { articlesService } from '../services/articles';
 
 interface UseArticlesByDueWordsResult {
   articles: Article[];

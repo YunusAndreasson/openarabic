@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { scheduleReminder, hasPermissions } from '@/services/notificationService';
-import { setReminderTime } from '@/store/settingsSlice';
-import type { ReminderTime } from '@/services/notificationService';
+
 import { analytics } from '@/services/analytics';
+import { scheduleReminder, hasPermissions } from '@/services/notificationService';
+import type { ReminderTime } from '@/services/notificationService';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { setReminderTime } from '@/store/settingsSlice';
 
 export function useReminders() {
   const dispatch = useAppDispatch();

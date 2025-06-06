@@ -1,6 +1,7 @@
 import { FlashList } from '@shopify/flash-list';
 import { useLocalSearchParams, Stack, router } from 'expo-router';
-import React, { useCallback, useMemo, memo, JSX, useEffect, useState } from 'react';
+import type { JSX } from 'react';
+import React, { useCallback, useMemo, memo, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import BaseCard from '../components/BaseCard';
@@ -54,7 +55,7 @@ const WordListItemMemo = memo(({ item, currentSort }: WordListItemMemoProps) => 
         style={{ marginBottom: LAYOUT.SPACING.TINY }}
         onPress={handleShowExamples}
       >
-        <WordListItem word={item} currentSort={currentSort} />
+        <WordListItem currentSort={currentSort} word={item} />
       </BaseCard>
     </View>
   );
@@ -76,11 +77,6 @@ export default function WordListScreen(): JSX.Element {
   // Get the title and icon based on the category
   const { title } = useMemo(() => {
     // Group related categories to reduce cognitive load
-    const categoryGroups = {
-      overview: ['total', 'due', 'needsAttention'],
-      mastery: ['mastered', 'learning'],
-      difficulty: ['difficultyEasy', 'difficultyMedium', 'difficultyHard'],
-    };
 
     switch (category) {
       case 'total':
@@ -137,14 +133,7 @@ export default function WordListScreen(): JSX.Element {
   const { data: words, error } = useWordList(
     user?.id,
     category as
-      | 'total'
-      | 'mastered'
-      | 'learning'
-      | 'due'
-      | 'needsAttention'
-      | 'difficultyEasy'
-      | 'difficultyMedium'
-      | 'difficultyHard',
+      'difficultyEasy' | 'difficultyHard' | 'difficultyMedium' | 'due' | 'learning' | 'mastered' | 'needsAttention' | 'total',
     sortBy,
     sortDirection
   );
@@ -172,7 +161,7 @@ export default function WordListScreen(): JSX.Element {
   const renderItem = useCallback(
     // eslint-disable-next-line react/no-unused-prop-types
     ({ item }: { readonly item: EnhancedStudyWord }) => (
-      <WordListItemMemo item={item} currentSort={sortBy} />
+      <WordListItemMemo currentSort={sortBy} item={item} />
     ),
     [sortBy]
   );
@@ -191,10 +180,10 @@ export default function WordListScreen(): JSX.Element {
       <View style={styles.headerContainer}>
         <SortingControls
           currentSort={sortBy}
-          sortDirection={sortDirection}
-          onSortChange={handleSortChange}
           options={wordListSortOptions}
+          sortDirection={sortDirection}
           style={styles.sortCard}
+          onSortChange={handleSortChange}
         />
       </View>
     );
@@ -241,25 +230,25 @@ export default function WordListScreen(): JSX.Element {
 
       {/* Use Animated.View with explicit FadeIn animation for smoother entrance */}
       <ThemedView
-        style={styles.container}
         includeBottomInset={false}
         safeAreaEdges={['left', 'right']}
+        style={styles.container}
       >
         <FlashList
+          contentContainerStyle={styles.listContentContainer}
+          contentInsetAdjustmentBehavior="automatic"
           data={words || []}
-          renderItem={renderItem}
-          estimatedItemSize={ITEM_HEIGHT}
-          ListHeaderComponent={ListHeaderComponent}
-          showsVerticalScrollIndicator={true}
+          drawDistance={150}
           estimatedFirstItemOffset={LAYOUT.SPACING.XLARGE}
+          estimatedItemSize={ITEM_HEIGHT}
+          keyExtractor={item => `word-${item.root_id}`}
+          ListHeaderComponent={ListHeaderComponent}
+          renderItem={renderItem}
+          showsVerticalScrollIndicator={true}
+          style={{ opacity: isLoading ? 0.6 : 1.0 }}
           overrideItemLayout={layout => {
             layout.size = ITEM_HEIGHT;
           }}
-          drawDistance={150}
-          contentInsetAdjustmentBehavior="automatic"
-          contentContainerStyle={styles.listContentContainer}
-          keyExtractor={item => `word-${item.root_id}`}
-          style={{ opacity: isLoading ? 0.6 : 1.0 }}
         />
       </ThemedView>
     </>

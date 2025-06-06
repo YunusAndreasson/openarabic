@@ -2,14 +2,15 @@ import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 
+import { handleError } from '@/utils/errorHandling';
+
 import { analytics } from '../services/analytics';
 import { studyWordsFSRSService } from '../services/studyWordsFSRS';
 import { selectAudioState } from '../store/audioSlice';
 import type { SentenceWord, StudyWord } from '../types/vocabulary.types';
-import { handleError } from '@/utils/errorHandling';
 
-import { useAuth } from './useAuth';
 import { useArticlesByDueWords } from './useArticlesByDueWords';
+import { useAuth } from './useAuth';
 
 export interface UseArabicWordProps {
   word: SentenceWord;

@@ -34,7 +34,7 @@ const EmptyState = memo(
     iconSize = DEFAULT_ICON_SIZE,
     iconContainerStyle,
     hideArticlesButton = false,
-  }: Partial<EmptyStateProps> & Pick<EmptyStateProps, 'title' | 'description' | 'colors'>) => {
+  }: Partial<EmptyStateProps> & Pick<EmptyStateProps, 'colors' | 'description' | 'title'>) => {
     const IconComponent = (icon && typeof icon !== 'string' ? icon : Ionicons) as ComponentType<
       ComponentProps<typeof Ionicons>
     >;
@@ -46,14 +46,14 @@ const EmptyState = memo(
 
     const defaultActionButton = !hideArticlesButton && (
       <ThemedButton
-        title="Browse Articles"
-        onPress={handleBrowseArticles}
-        variant="filled"
+        accessibilityLabel="Browse articles"
+        accessibilityRole="button"
         size="medium"
         style={styles.customActionButton}
         textWeight="bold"
-        accessibilityLabel="Browse articles"
-        accessibilityRole="button"
+        title="Browse Articles"
+        variant="filled"
+        onPress={handleBrowseArticles}
       />
     );
 
@@ -63,34 +63,34 @@ const EmptyState = memo(
           {icon && (
             <View style={[styles.iconContainer, iconContainerStyle]}>
               <IconComponent
+                accessibilityLabel={`${title} illustration`}
+                color={colors?.tint}
                 name={iconName}
                 size={iconSize}
-                color={colors?.tint}
                 style={styles.icon}
-                accessibilityLabel={`${title} illustration`}
               />
             </View>
           )}
 
           <View style={styles.textContent}>
-            <ThemedText type="body" weight="bold" style={styles.title} align="center">
+            <ThemedText align="center" style={styles.title} type="body" weight="bold">
               {title}
             </ThemedText>
 
             {description && (
               <ThemedText
-                type="body"
-                weight="bold"
-                variant="secondary"
                 align="center"
                 style={styles.description}
+                type="body"
+                variant="secondary"
+                weight="bold"
               >
                 {description}
               </ThemedText>
             )}
 
             {submessage && (
-              <ThemedText type="body" variant="subtle" align="center" style={styles.submessage}>
+              <ThemedText align="center" style={styles.submessage} type="body" variant="subtle">
                 {submessage}
               </ThemedText>
             )}
@@ -102,10 +102,10 @@ const EmptyState = memo(
             defaultActionButton ||
             (actionText && onAction && (
               <ThemedButton
-                title={actionText}
                 icon={typeof icon === 'string' ? icon : undefined}
-                onPress={onAction}
                 style={styles.customActionButton}
+                title={actionText}
+                onPress={onAction}
               />
             ))}
         </View>

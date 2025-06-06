@@ -70,29 +70,29 @@ function EnhancedImageInternal({
   return (
     <View style={[styles.container, { backgroundColor: colors.imagePlaceholder }, style]}>
       <Image
-        source={source}
-        style={styles.image}
+        accessibilityLabel={alt}
+        accessible={!!alt}
+        allowDownscaling={allowDownscaling}
+        autoplay={autoplay}
+        blurRadius={blurRadius}
+        cachePolicy={cachePolicy}
         contentFit={contentFit}
         contentPosition={contentPosition}
-        transition={transitionObject}
-        onLoad={onLoad}
-        onError={handleError}
-        cachePolicy={cachePolicy}
-        accessible={!!alt}
-        accessibilityLabel={alt}
         placeholder={processedPlaceholder}
-        blurRadius={blurRadius}
-        allowDownscaling={allowDownscaling}
         priority={priority}
-        autoplay={autoplay}
+        source={source}
+        style={styles.image}
+        transition={transitionObject}
+        onError={handleError}
+        onLoad={onLoad}
       />
 
       {isError ? (
         <View style={[styles.errorContainer, { backgroundColor: colors.imagePlaceholder }]}>
           <Ionicons
+            color={isDarkMode ? colors.white : colors.black}
             name="alert-circle-outline"
             size={24}
-            color={isDarkMode ? colors.white : colors.black}
           />
         </View>
       ) : null}

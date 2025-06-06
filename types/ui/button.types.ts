@@ -10,12 +10,12 @@ export type ButtonVariant = 'filled' | 'outlined';
 /**
  * Button size options
  */
-export type ButtonSize = 'small' | 'medium' | 'large';
+export type ButtonSize = 'large' | 'medium' | 'small';
 
 /**
  * Button text weight options
  */
-export type ButtonTextWeight = 'normal' | 'bold';
+export type ButtonTextWeight = 'bold' | 'normal';
 
 /**
  * Base button props shared across all button variants
@@ -90,9 +90,9 @@ export interface CloseButtonProps {
   /** Function to call when button is pressed */
   onPress: () => void;
   /** Size of the button container */
-  size?: number | ButtonSize;
+  size?: ButtonSize | number;
   /** Size of the close icon */
-  iconSize?: number | ButtonSize;
+  iconSize?: ButtonSize | number;
   /** Color of the close icon */
   color?: string;
   /** Additional styles for the button */
@@ -108,7 +108,7 @@ export interface CloseButtonProps {
 /**
  * Position options for floating buttons
  */
-export type FloatingButtonPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+export type FloatingButtonPosition = 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right';
 
 /**
  * Button type options for floating buttons
@@ -124,7 +124,7 @@ export interface FloatingButtonProps {
   top?: number;
   iconName: string;
   accessibilityLabel: string;
-  onPress: () => void | Promise<void>;
+  onPress: () => Promise<void> | void;
   colors: {
     background: string;
     text: string;

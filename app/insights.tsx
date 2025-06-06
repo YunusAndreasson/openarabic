@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
-import React, { useCallback, JSX, useState } from 'react';
+import type { JSX} from 'react';
+import React, { useCallback, useState } from 'react';
 import { StyleSheet, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -85,60 +86,60 @@ export default function InsightsScreen(): JSX.Element {
         }}
       />
       <ThemedView
-        style={styles.container}
+        accessibilityLabel="Insights screen"
         includeBottomInset={false}
         safeAreaEdges={['left', 'right']}
-        accessibilityLabel="Insights screen"
+        style={styles.container}
       >
         <ScrollView
+          showsVerticalScrollIndicator={false}
           contentContainerStyle={[
             styles.contentContainer,
             {
               paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE,
             },
           ]}
-          showsVerticalScrollIndicator={false}
         >
           {/* Detailed Analytics */}
           <View style={styles.analyticsSection}>
             <View style={styles.firstChartContainer}>
               <SectionTitle
-                title="Memory Strength"
-                subtitle="Your vocabulary strength over time"
-                onInfoPress={handleMasteryInfo}
                 isFirstSection={true}
+                subtitle="Your vocabulary strength over time"
+                title="Memory Strength"
+                onInfoPress={handleMasteryInfo}
               />
               <MasteryChart
+                hideTitle={true}
                 studyWords={validStudyWords}
                 onInfoPress={handleMasteryInfo}
-                hideTitle={true}
               />
             </View>
 
             <View style={styles.chartContainer}>
               <SectionTitle
-                title="Learning Speed"
                 subtitle="How quickly you learn new words"
+                title="Learning Speed"
                 onInfoPress={handleEfficiencyInfo}
               />
               <EfficiencyChart
+                hideTitle={true}
+                learningWords={0}
                 studyWords={validStudyWords}
                 onInfoPress={handleEfficiencyInfo}
-                learningWords={0}
-                hideTitle={true}
               />
             </View>
 
             <View style={[styles.chartContainer, styles.lastChart]}>
               <SectionTitle
-                title="Memory Retention"
                 subtitle="Which words need review"
+                title="Memory Retention"
                 onInfoPress={handleRetrievabilityInfo}
               />
               <RetrievabilityChart
+                hideTitle={true}
                 studyWords={validStudyWords}
                 onInfoPress={handleRetrievabilityInfo}
-                hideTitle={true}
               />
             </View>
           </View>

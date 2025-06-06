@@ -16,20 +16,20 @@ export const CardHeader = memo(({ title, subtitle, onInfoPress }: CardHeaderProp
   return (
     <View style={styles.cardHeader}>
       <View style={styles.titleGroup}>
-        <ThemedText type="heading3" weight="bold" style={styles.cardTitle}>
+        <ThemedText style={styles.cardTitle} type="heading3" weight="bold">
           {title}
         </ThemedText>
-        <ThemedText type="caption" variant="secondary" style={styles.cardSubtitle}>
+        <ThemedText style={styles.cardSubtitle} type="caption" variant="secondary">
           {subtitle}
         </ThemedText>
       </View>
       <TouchableIcon
+        accessibilityLabel="More information"
         name="information-outline"
         size={18}
+        style={styles.infoIcon}
         touchSize="small"
         onPress={onInfoPress}
-        accessibilityLabel="More information"
-        style={styles.infoIcon}
       />
     </View>
   );

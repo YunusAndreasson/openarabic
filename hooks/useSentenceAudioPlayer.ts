@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable react-hooks/exhaustive-deps */
+ 
+ 
 import { Audio } from 'expo-av';
 import type { AVPlaybackStatus } from 'expo-av/build/AV.types';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -28,7 +28,7 @@ import { handleError } from '../utils/errorHandling';
 
 import { useDebounce, useThrottle } from './useBounce';
 
-type AudioPlayerState = 'idle' | 'loading' | 'playing' | 'paused' | 'error';
+type AudioPlayerState = 'error' | 'idle' | 'loading' | 'paused' | 'playing';
 
 export type WordTiming = {
   wordId: number;
@@ -140,7 +140,7 @@ export function useSentenceAudioPlayer(): {
   const isHandlingCompletionRef = useRef<boolean>(false);
   const lastActiveIndex = useRef<number>(0);
   const activeTimersRef = useRef<
-    Set<ReturnType<typeof setTimeout> | ReturnType<typeof setInterval>>
+    Set<ReturnType<typeof setInterval> | ReturnType<typeof setTimeout>>
   >(new Set());
   const sentenceIndexOffsetRef = useRef<number>(0);
   const isManualNavigationRef = useRef<boolean>(false);
@@ -231,7 +231,7 @@ export function useSentenceAudioPlayer(): {
 
   // Helper to safely clear and remove a timer
   const clearTimer = useCallback(
-    (timerId: ReturnType<typeof setTimeout> | ReturnType<typeof setInterval> | null) => {
+    (timerId: ReturnType<typeof setInterval> | ReturnType<typeof setTimeout> | null) => {
       if (timerId) {
         clearTimeout(timerId);
         clearInterval(timerId);
@@ -243,7 +243,7 @@ export function useSentenceAudioPlayer(): {
 
   // Helper to register a new timer
   const registerTimer = useCallback(
-    (timerId: ReturnType<typeof setTimeout> | ReturnType<typeof setInterval>) => {
+    (timerId: ReturnType<typeof setInterval> | ReturnType<typeof setTimeout>) => {
       activeTimersRef.current.add(timerId);
       return timerId;
     },

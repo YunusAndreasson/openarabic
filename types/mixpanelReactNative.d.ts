@@ -1,6 +1,6 @@
 declare module 'mixpanel-react-native' {
   export interface MixpanelProperties {
-    [key: string]: string | number | boolean | null | undefined | Date | MixpanelProperties;
+    [key: string]: Date | MixpanelProperties | boolean | number | string | null | undefined;
   }
 
   export interface MixpanelInstance {
@@ -12,9 +12,9 @@ declare module 'mixpanel-react-native' {
     set(properties: MixpanelProperties): Promise<void>;
     setOnce(properties: MixpanelProperties): Promise<void>;
     unset(property: string): Promise<void>;
-    append(property: string, value: string | number | boolean | null | Date): Promise<void>;
-    union(property: string, values: (string | number | boolean | null | Date)[]): Promise<void>;
-    remove(property: string, value: string | number | boolean | null | Date): Promise<void>;
+    append(property: string, value: Date | boolean | number | string | null): Promise<void>;
+    union(property: string, values: (Date | boolean | number | string | null)[]): Promise<void>;
+    remove(property: string, value: Date | boolean | number | string | null): Promise<void>;
     trackCharge(amount: number, properties?: MixpanelProperties): Promise<void>;
     clearCharges(): Promise<void>;
     deleteUser(): Promise<void>;
@@ -23,8 +23,8 @@ declare module 'mixpanel-react-native' {
   export interface MixpanelPeople {
     set(properties: MixpanelProperties): Promise<void>;
     setOnce(properties: MixpanelProperties): Promise<void>;
-    union(property: string, values: (string | number | boolean | null | Date)[]): Promise<void>;
-    remove(property: string, value: string | number | boolean | null | Date): Promise<void>;
+    union(property: string, values: (Date | boolean | number | string | null)[]): Promise<void>;
+    remove(property: string, value: Date | boolean | number | string | null): Promise<void>;
     increment(property: string, value: number): Promise<void>;
   }
 

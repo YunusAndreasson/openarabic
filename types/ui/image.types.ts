@@ -7,13 +7,13 @@ import type { BaseStyleProps, BaseOptionalPressableProps } from './base.types';
  */
 export interface ImageConfig {
   /** How the image should fit within its container */
-  contentFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
+  contentFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
   /** Transition duration in milliseconds */
-  transition?: number | ImageTransition;
+  transition?: ImageTransition | number;
   /** Whether to show loading indicator */
   showLoadingIndicator?: boolean;
   /** Caching policy for the image */
-  cachePolicy?: 'memory' | 'disk' | 'memory-disk' | 'none';
+  cachePolicy?: 'disk' | 'memory-disk' | 'memory' | 'none';
   /** Blur radius for smooth transitions */
   blurRadius?: number;
 }
@@ -47,7 +47,7 @@ export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressabl
   disableOptimization?: boolean;
 
   /** Image transition duration in ms or transition object */
-  transition?: number | ImageTransition;
+  transition?: ImageTransition | number;
 
   /** Skip transition effect entirely */
   skipTransition?: boolean;
@@ -62,7 +62,7 @@ export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressabl
   allowDownscaling?: boolean;
 
   /** Loading priority */
-  priority?: 'low' | 'normal' | 'high';
+  priority?: 'high' | 'low' | 'normal';
 
 
   /** Whether to prefetch this image before it's displayed */

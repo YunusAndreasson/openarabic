@@ -230,17 +230,17 @@ const WordCard = memo(({ word, onPlayAudio, isPlaying }: WordCardProps) => {
   return (
     <View style={styles.cardContainer}>
       <TouchableOpacity
+        accessibilityHint="Tap to hear pronunciation"
+        accessibilityLabel={`Practice word: ${arabicText}, meaning: ${englishText}`}
+        accessibilityRole="button"
+        activeOpacity={1}
+        style={styles.touchableArea}
         onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        activeOpacity={1}
-        style={styles.touchableArea}
-        accessibilityRole="button"
-        accessibilityLabel={`Practice word: ${arabicText}, meaning: ${englishText}`}
-        accessibilityHint="Tap to hear pronunciation"
       >
         <Animated.View style={pressStyle}>
-          <BaseCard style={styles.wordCard} shadowSize="small">
+          <BaseCard shadowSize="small" style={styles.wordCard}>
             {/* Inner border effect when playing - no layout impact */}
             {isPlaying && (
               <View style={[styles.innerBorder, { borderColor: difficultyInfo.color + '40' }]} />
@@ -248,15 +248,15 @@ const WordCard = memo(({ word, onPlayAudio, isPlaying }: WordCardProps) => {
 
             <View style={styles.wordCardContent}>
               <ThemedText
-                type="arabic"
-                style={styles.arabicText}
                 arabicFontSize={26}
                 colorName="arabicText"
+                style={styles.arabicText}
+                type="arabic"
               >
                 {arabicText}
               </ThemedText>
 
-              <ThemedText type="caption" colorName="textTertiary" style={styles.englishText}>
+              <ThemedText colorName="textTertiary" style={styles.englishText} type="caption">
                 {englishText}
               </ThemedText>
 
@@ -269,19 +269,19 @@ const WordCard = memo(({ word, onPlayAudio, isPlaying }: WordCardProps) => {
               >
                 <View style={styles.difficultyContent}>
                   {isPlaying ? (
-                    <SoundWave isPlaying={isPlaying} color={difficultyInfo.color} />
+                    <SoundWave color={difficultyInfo.color} isPlaying={isPlaying} />
                   ) : (
                     <Ionicons
+                      color={difficultyInfo.color}
                       name={difficultyInfo.icon}
                       size={14}
-                      color={difficultyInfo.color}
                       style={styles.difficultyIcon}
                     />
                   )}
                   <ThemedText
-                    type="caption"
-                    style={[styles.difficultyText, { color: difficultyInfo.color }]}
                     skipDefaultColor
+                    style={[styles.difficultyText, { color: difficultyInfo.color }]}
+                    type="caption"
                   >
                     {isPlaying ? 'Playing' : difficultyInfo.label}
                   </ThemedText>
@@ -338,12 +338,12 @@ const StrugglingWordsSection = memo(({ words = [], isLoading = false }: Struggli
     return (
       <View style={styles.container}>
         <SectionTitle
-          title="Needs Practice"
-          subtitle="Practice these to improve your retention rate"
           isFirstSection={true}
+          subtitle="Practice these to improve your retention rate"
+          title="Needs Practice"
         />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.tint} />
+          <ActivityIndicator color={colors.tint} size="large" />
         </View>
       </View>
     );
@@ -356,21 +356,21 @@ const StrugglingWordsSection = memo(({ words = [], isLoading = false }: Struggli
   return (
     <View style={styles.container}>
       <SectionTitle
-        title="Needs Practice"
-        subtitle="Practice these to improve your retention rate"
         isFirstSection={true}
+        subtitle="Practice these to improve your retention rate"
+        title="Needs Practice"
       />
       <ScrollView
         horizontal
-        showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        showsHorizontalScrollIndicator={false}
       >
         {displayedWords.map(word => (
           <WordCard
             key={`word-${word.root_id}`}
+            isPlaying={playingWordId === `word-${word.root_id}`}
             word={word}
             onPlayAudio={playWordAudio}
-            isPlaying={playingWordId === `word-${word.root_id}`}
           />
         ))}
       </ScrollView>

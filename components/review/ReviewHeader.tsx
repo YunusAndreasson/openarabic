@@ -25,19 +25,19 @@ const ReviewHeader: React.FC<ReviewHeaderProps> = ({
     <View style={styles.header}>
       <View style={styles.progressContainer}>
         <ProgressBar
-          progress={Math.max(progress, maxProgress)}
-          animationTriggered={animationKey > 1}
           key={animationKey}
           animationDuration={500}
+          animationTriggered={animationKey > 1}
+          progress={Math.max(progress, maxProgress)}
         />
       </View>
       <CloseButton
-        onPress={onClose}
-        size="large"
-        iconSize={24}
-        color={colors.interactiveSecondary}
-        accessibilityLabel="Stop review session"
         accessibilityHint="Ends the review session and returns to previous screen"
+        accessibilityLabel="Stop review session"
+        color={colors.interactiveSecondary}
+        iconSize={24}
+        size="large"
+        onPress={onClose}
       />
     </View>
   );

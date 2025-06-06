@@ -1,5 +1,5 @@
 declare module 'moment-hijri' {
-  import { Moment } from 'moment';
+  import type { Moment } from 'moment';
 
   interface HijriMoment extends Moment {
     iYear(): number;
@@ -11,7 +11,7 @@ declare module 'moment-hijri' {
   }
 
   function moment(): HijriMoment;
-  function moment(date?: string | number | Date | Moment): HijriMoment;
+  function moment(date?: Date | Moment | number | string): HijriMoment;
 
   export = moment;
 }

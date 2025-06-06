@@ -39,7 +39,6 @@ interface ArticleSentenceProps {
   };
   colors: ThemeColors;
   containerStyle?: StyleProp<ViewStyle>;
-  currentPlayingSentenceId: number | null;
   currentPlayingWordId: number | null;
   currentPlayingPosition: number | null;
   isPlaying?: boolean;
@@ -66,7 +65,7 @@ function ArticleSentenceComponent({
 
   const previousWordIdRef = useRef<number | null>(null);
 
-  const wordRefs = useRef<Array<React.RefObject<any>>>([]);
+  const wordRefs = useRef<React.RefObject<any>[]>([]);
 
   const highlightOpacity = useSharedValue(0);
 

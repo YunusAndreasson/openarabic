@@ -8,9 +8,10 @@ import Animated, {
   withTiming,
   runOnJS,
 } from 'react-native-reanimated';
-import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 import { SCREEN_WIDTH, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
+
 
 import WordDisplay from './WordDisplay';
 
@@ -152,7 +153,7 @@ const ReviewCard = memo(function ReviewCard({
     <GestureDetector gesture={combinedGestures()}>
       <Animated.View style={[styles.swipeContainer, swipeContainerStyle]}>
         <Animated.View style={[styles.wordContainer, opacityStyle]}>
-          <WordDisplay word={word} fontSize={fontSize} />
+          <WordDisplay fontSize={fontSize} word={word} />
         </Animated.View>
       </Animated.View>
     </GestureDetector>

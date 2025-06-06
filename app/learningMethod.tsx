@@ -1,9 +1,9 @@
 // External Libraries
 import { Ionicons } from '@expo/vector-icons';
 import { Stack } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -39,16 +39,16 @@ const LearningMethodScreen: React.FC = () => {
       />
 
       <ThemedView
-        style={styles.container}
+        accessibilityLabel="Why this learning method works"
         includeBottomInset={false}
         safeAreaEdges={['left', 'right']}
-        accessibilityLabel="Why this learning method works"
+        style={styles.container}
       >
         <ThemedView
-          useSafeArea={false}
           includeBottomInset={false}
-          style={styles.flexOne}
           scrollable={true}
+          style={styles.flexOne}
+          useSafeArea={false}
           contentContainerStyle={[
             styles.content,
             {
@@ -62,36 +62,36 @@ const LearningMethodScreen: React.FC = () => {
         >
           {/* Custom Header */}
           <View style={styles.customHeader}>
-            <ThemedText type="heading1" weight="bold" style={styles.customHeaderTitle}>
+            <ThemedText style={styles.customHeaderTitle} type="heading1" weight="bold">
               The Science of Language Learning
             </ThemedText>
           </View>
 
           {/* Introduction */}
           <View style={styles.section}>
-            <ThemedText type="body" style={styles.bodyText}>
+            <ThemedText style={styles.bodyText} type="body">
               Language acquisition occurs through understanding meaningful messages, not grammar
-              instruction. According to Krashen's Input Hypothesis, the brain naturally identifies
+              instruction. According to Krashens Input Hypothesis, the brain naturally identifies
               patterns through exposure to comprehensible input.
             </ThemedText>
           </View>
 
           {/* Process */}
           <View style={styles.section}>
-            <ThemedText type="heading2" weight="bold" style={styles.sectionTitle}>
+            <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
               The Acquisition Process
             </ThemedText>
 
             <View style={styles.stepsList}>
               <View style={styles.stepItem}>
                 <View style={[styles.stepIcon, { backgroundColor: colors.buttonOverlay }]}>
-                  <Ionicons name="eye-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="eye-outline" size={20} />
                 </View>
                 <View style={styles.stepContent}>
-                  <ThemedText type="body" weight="bold" style={styles.stepTitle}>
+                  <ThemedText style={styles.stepTitle} type="body" weight="bold">
                     Comprehensible input (i+1)
                   </ThemedText>
-                  <ThemedText type="body" variant="secondary" style={styles.stepText}>
+                  <ThemedText style={styles.stepText} type="body" variant="secondary">
                     Translations provide meaning context while exposing you to Arabic structures
                     just beyond your current level.
                   </ThemedText>
@@ -100,13 +100,13 @@ const LearningMethodScreen: React.FC = () => {
 
               <View style={styles.stepItem}>
                 <View style={[styles.stepIcon, { backgroundColor: colors.buttonOverlay }]}>
-                  <Ionicons name="bulb-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="bulb-outline" size={20} />
                 </View>
                 <View style={styles.stepContent}>
-                  <ThemedText type="body" weight="bold" style={styles.stepTitle}>
+                  <ThemedText style={styles.stepTitle} type="body" weight="bold">
                     Unconscious pattern recognition
                   </ThemedText>
-                  <ThemedText type="body" variant="secondary" style={styles.stepText}>
+                  <ThemedText style={styles.stepText} type="body" variant="secondary">
                     The brain automatically identifies recurring structures without conscious
                     analysis or grammar study.
                   </ThemedText>
@@ -115,13 +115,13 @@ const LearningMethodScreen: React.FC = () => {
 
               <View style={styles.stepItem}>
                 <View style={[styles.stepIcon, { backgroundColor: colors.buttonOverlay }]}>
-                  <Ionicons name="refresh-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="refresh-outline" size={20} />
                 </View>
                 <View style={styles.stepContent}>
-                  <ThemedText type="body" weight="bold" style={styles.stepTitle}>
+                  <ThemedText style={styles.stepTitle} type="body" weight="bold">
                     Natural order acquisition
                   </ThemedText>
-                  <ThemedText type="body" variant="secondary" style={styles.stepText}>
+                  <ThemedText style={styles.stepText} type="body" variant="secondary">
                     Language structures are acquired in a predictable sequence through repeated
                     meaningful exposure.
                   </ThemedText>
@@ -130,13 +130,13 @@ const LearningMethodScreen: React.FC = () => {
 
               <View style={styles.stepItem}>
                 <View style={[styles.stepIcon, { backgroundColor: colors.progressBackground }]}>
-                  <Ionicons name="checkmark-circle-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="checkmark-circle-outline" size={20} />
                 </View>
                 <View style={styles.stepContent}>
-                  <ThemedText type="body" weight="bold" style={styles.stepTitle}>
+                  <ThemedText style={styles.stepTitle} type="body" weight="bold">
                     Internalized competence
                   </ThemedText>
-                  <ThemedText type="body" variant="secondary" style={styles.stepText}>
+                  <ThemedText style={styles.stepText} type="body" variant="secondary">
                     Arabic structures become part of your acquired language system, enabling fluent
                     use.
                   </ThemedText>
@@ -147,20 +147,20 @@ const LearningMethodScreen: React.FC = () => {
 
           {/* Why Classical Texts */}
           <View style={styles.section}>
-            <ThemedText type="heading2" weight="bold" style={styles.sectionTitle}>
+            <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
               Why Classical Islamic Texts
             </ThemedText>
 
             <View style={styles.reasonsList}>
               <View style={styles.reasonItem}>
                 <View style={[styles.reasonIcon, { backgroundColor: colors.progressBackground }]}>
-                  <Ionicons name="heart-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="heart-outline" size={20} />
                 </View>
                 <View style={styles.reasonContent}>
-                  <ThemedText type="body" weight="bold" style={styles.reasonTitle}>
+                  <ThemedText style={styles.reasonTitle} type="body" weight="bold">
                     Low affective filter
                   </ThemedText>
-                  <ThemedText type="body" variant="secondary" style={styles.reasonText}>
+                  <ThemedText style={styles.reasonText} type="body" variant="secondary">
                     Personal interest in content reduces anxiety and increases motivation, enabling
                     optimal acquisition.
                   </ThemedText>
@@ -169,13 +169,13 @@ const LearningMethodScreen: React.FC = () => {
 
               <View style={styles.reasonItem}>
                 <View style={[styles.reasonIcon, { backgroundColor: colors.progressBackground }]}>
-                  <Ionicons name="library-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="library-outline" size={20} />
                 </View>
                 <View style={styles.reasonContent}>
-                  <ThemedText type="body" weight="bold" style={styles.reasonTitle}>
+                  <ThemedText style={styles.reasonTitle} type="body" weight="bold">
                     Rich linguistic input
                   </ThemedText>
-                  <ThemedText type="body" variant="secondary" style={styles.reasonText}>
+                  <ThemedText style={styles.reasonText} type="body" variant="secondary">
                     Complete Arabic grammatical system and extensive vocabulary in authentic,
                     meaningful contexts.
                   </ThemedText>
@@ -184,13 +184,13 @@ const LearningMethodScreen: React.FC = () => {
 
               <View style={styles.reasonItem}>
                 <View style={[styles.reasonIcon, { backgroundColor: colors.progressBackground }]}>
-                  <Ionicons name="trending-up-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="trending-up-outline" size={20} />
                 </View>
                 <View style={styles.reasonContent}>
-                  <ThemedText type="body" weight="bold" style={styles.reasonTitle}>
+                  <ThemedText style={styles.reasonTitle} type="body" weight="bold">
                     Optimal comprehensibility
                   </ThemedText>
-                  <ThemedText type="body" variant="secondary" style={styles.reasonText}>
+                  <ThemedText style={styles.reasonText} type="body" variant="secondary">
                     Familiar concepts in Arabic with translation support create ideal i+1 conditions
                     for acquisition.
                   </ThemedText>
@@ -201,11 +201,11 @@ const LearningMethodScreen: React.FC = () => {
 
           {/* Research */}
           <View style={styles.section}>
-            <ThemedText type="heading2" weight="bold" style={styles.sectionTitle}>
+            <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
               Research Foundation
             </ThemedText>
-            <ThemedText type="body" style={styles.bodyText}>
-              Krashen's Input Hypothesis demonstrates that comprehensible input is the primary
+            <ThemedText style={styles.bodyText} type="body">
+              Krashens Input Hypothesis demonstrates that comprehensible input is the primary
               mechanism for language acquisition. Research shows optimal learning occurs when
               learners understand 90-95% of content.
             </ThemedText>
@@ -213,17 +213,17 @@ const LearningMethodScreen: React.FC = () => {
 
           {/* Practical Implications */}
           <View style={styles.section}>
-            <ThemedText type="heading2" weight="bold" style={styles.sectionTitle}>
+            <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
               What This Means
             </ThemedText>
 
             <View style={styles.benefitsList}>
               <View style={styles.benefitItem}>
                 <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
-                  <Ionicons name="bulb-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="bulb-outline" size={20} />
                 </View>
                 <View style={styles.benefitContent}>
-                  <ThemedText type="body" style={styles.benefitText}>
+                  <ThemedText style={styles.benefitText} type="body">
                     <ThemedText weight="bold">Acquisition, not learning</ThemedText>
                     {'\n'}Language develops through understanding, not memorization
                   </ThemedText>
@@ -231,10 +231,10 @@ const LearningMethodScreen: React.FC = () => {
               </View>
               <View style={styles.benefitItem}>
                 <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
-                  <Ionicons name="eye-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="eye-outline" size={20} />
                 </View>
                 <View style={styles.benefitContent}>
-                  <ThemedText type="body" style={styles.benefitText}>
+                  <ThemedText style={styles.benefitText} type="body">
                     <ThemedText weight="bold">Focus on meaning</ThemedText>
                     {'\n'}Understanding messages drives language development
                   </ThemedText>
@@ -242,10 +242,10 @@ const LearningMethodScreen: React.FC = () => {
               </View>
               <View style={styles.benefitItem}>
                 <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
-                  <Ionicons name="leaf-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="leaf-outline" size={20} />
                 </View>
                 <View style={styles.benefitContent}>
-                  <ThemedText type="body" style={styles.benefitText}>
+                  <ThemedText style={styles.benefitText} type="body">
                     <ThemedText weight="bold">Natural process</ThemedText>
                     {'\n'}Acquisition occurs automatically with sufficient comprehensible input
                   </ThemedText>
@@ -256,20 +256,20 @@ const LearningMethodScreen: React.FC = () => {
 
           {/* Scientific References */}
           <View style={styles.section}>
-            <ThemedText type="heading2" weight="bold" style={styles.sectionTitle}>
+            <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
               Scientific Foundation
             </ThemedText>
 
             <View style={styles.referencesList}>
               <View style={styles.referenceItem}>
                 <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
-                  <Ionicons name="document-text-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="document-text-outline" size={20} />
                 </View>
                 <View style={styles.referenceContent}>
-                  <ThemedText type="body" weight="bold" style={styles.referenceTitle}>
+                  <ThemedText style={styles.referenceTitle} type="body" weight="bold">
                     Krashen, S. (1985)
                   </ThemedText>
-                  <ThemedText type="body" variant="secondary" style={styles.referenceText}>
+                  <ThemedText style={styles.referenceText} type="body" variant="secondary">
                     The Input Hypothesis: Issues and Implications. Longman.
                   </ThemedText>
                 </View>
@@ -277,13 +277,13 @@ const LearningMethodScreen: React.FC = () => {
 
               <View style={styles.referenceItem}>
                 <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
-                  <Ionicons name="document-text-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="document-text-outline" size={20} />
                 </View>
                 <View style={styles.referenceContent}>
-                  <ThemedText type="body" weight="bold" style={styles.referenceTitle}>
+                  <ThemedText style={styles.referenceTitle} type="body" weight="bold">
                     Krashen, S. & Terrell, T. (1983)
                   </ThemedText>
-                  <ThemedText type="body" variant="secondary" style={styles.referenceText}>
+                  <ThemedText style={styles.referenceText} type="body" variant="secondary">
                     The Natural Approach: Language Acquisition in the Classroom. Prentice Hall.
                   </ThemedText>
                 </View>
@@ -291,13 +291,13 @@ const LearningMethodScreen: React.FC = () => {
 
               <View style={styles.referenceItem}>
                 <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
-                  <Ionicons name="document-text-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="document-text-outline" size={20} />
                 </View>
                 <View style={styles.referenceContent}>
-                  <ThemedText type="body" weight="bold" style={styles.referenceTitle}>
+                  <ThemedText style={styles.referenceTitle} type="body" weight="bold">
                     Lightbown, P. & Spada, N. (2013)
                   </ThemedText>
-                  <ThemedText type="body" variant="secondary" style={styles.referenceText}>
+                  <ThemedText style={styles.referenceText} type="body" variant="secondary">
                     How Languages are Learned (4th ed.). Oxford University Press.
                   </ThemedText>
                 </View>
@@ -332,8 +332,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.1,
-    marginBottom: LAYOUT.SPACING.LARGE,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4,
+    marginBottom: LAYOUT.SPACING.LARGE,
   },
   bodyText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.05,
@@ -346,17 +346,17 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.LARGE,
   },
   stepItem: {
-    flexDirection: 'row',
     alignItems: 'flex-start',
+    flexDirection: 'row',
   },
   stepIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
     alignItems: 'center',
+    borderRadius: 20,
+    height: 40,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
     marginTop: 2,
+    width: 40,
   },
   stepContent: {
     flex: 1,
@@ -375,17 +375,17 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.LARGE,
   },
   reasonItem: {
-    flexDirection: 'row',
     alignItems: 'flex-start',
+    flexDirection: 'row',
   },
   reasonIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
     alignItems: 'center',
+    borderRadius: 20,
+    height: 40,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
     marginTop: 2,
+    width: 40,
   },
   reasonContent: {
     flex: 1,
@@ -404,25 +404,25 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.MEDIUM,
   },
   benefitItem: {
-    flexDirection: 'row',
     alignItems: 'flex-start',
+    flexDirection: 'row',
   },
   benefitIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
     alignItems: 'center',
+    borderRadius: 20,
+    height: 40,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
     marginTop: 2,
+    width: 40,
   },
   benefitContent: {
     flex: 1,
   },
   benefitText: {
+    flex: 1,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
-    flex: 1,
   },
 
   // References List
@@ -430,17 +430,17 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.MEDIUM,
   },
   referenceItem: {
-    flexDirection: 'row',
     alignItems: 'flex-start',
+    flexDirection: 'row',
   },
   referenceIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
     alignItems: 'center',
+    borderRadius: 20,
+    height: 40,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
     marginTop: 2,
+    width: 40,
   },
   referenceContent: {
     flex: 1,
@@ -456,10 +456,10 @@ const styles = StyleSheet.create({
 
   // Custom Header Styles
   customHeader: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.XLARGE,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.XLARGE,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   customHeaderTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.2,

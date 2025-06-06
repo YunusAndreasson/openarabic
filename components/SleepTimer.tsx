@@ -121,18 +121,19 @@ const SleepTimerComponent = ({
 
   return (
     <Modal
-      visible={isVisible}
-      transparent
       statusBarTranslucent
+      transparent
       animationType="none"
+      visible={isVisible}
       onRequestClose={handleClose}
     >
       <TouchableWithoutFeedback onPress={handleBackdropPress}>
         <Animated.View
           style={[styles.backdrop, backdropStyle, { backgroundColor: colors.backdropOverlay }]}
         >
-          <Animated.View style={[styles.modalContainer, modalStyle]} pointerEvents="box-none">
+          <Animated.View pointerEvents="box-none" style={[styles.modalContainer, modalStyle]}>
             <View
+              pointerEvents="auto"
               style={[
                 styles.modal,
                 {
@@ -140,29 +141,28 @@ const SleepTimerComponent = ({
                   shadowColor: colors.shadow,
                 },
               ]}
-              pointerEvents="auto"
             >
               {/* Header */}
               <View style={[styles.header, { borderBottomColor: colors.borderOverlay }]}>
                 <View style={styles.headerContent}>
-                  <ThemedText type="heading2" weight="bold" style={styles.title}>
+                  <ThemedText style={styles.title} type="heading2" weight="bold">
                     Sleep Timer
                   </ThemedText>
-                  <ThemedText type="body" variant="secondary" style={styles.subtitle}>
+                  <ThemedText style={styles.subtitle} type="body" variant="secondary">
                     {isActive && remainingTime > 0
                       ? 'Playback will stop automatically'
                       : 'Automatically stop playback after'}
                   </ThemedText>
                 </View>
                 <TouchableOpacity
-                  onPress={handleClose}
-                  style={styles.closeButton}
-                  hitSlop={LAYOUT.HIT_SLOP.SMALL}
-                  accessibilityRole="button"
-                  accessibilityLabel="Close sleep timer"
                   accessibilityHint="Dismiss the sleep timer dialog"
+                  accessibilityLabel="Close sleep timer"
+                  accessibilityRole="button"
+                  hitSlop={LAYOUT.HIT_SLOP.SMALL}
+                  style={styles.closeButton}
+                  onPress={handleClose}
                 >
-                  <Ionicons name="close" size={22} color={colors.text} />
+                  <Ionicons color={colors.text} name="close" size={22} />
                 </TouchableOpacity>
               </View>
 
@@ -171,18 +171,18 @@ const SleepTimerComponent = ({
                 {isActive && remainingTime > 0 ? (
                   <View style={styles.activeTimerContainer}>
                     <View style={styles.timeDisplay}>
-                      <ThemedText type="heading1" style={[styles.timeText, { color: colors.tint }]}>
+                      <ThemedText style={[styles.timeText, { color: colors.tint }]} type="heading1">
                         {formatTime(remainingTime)}
                       </ThemedText>
                     </View>
-                    <ThemedText type="body" variant="secondary" style={styles.activeDescription}>
+                    <ThemedText style={styles.activeDescription} type="body" variant="secondary">
                       remaining
                     </ThemedText>
                     <ThemedButton
-                      title="Cancel Timer"
-                      onPress={handleCancelTimer}
-                      variant="outlined"
                       style={[styles.cancelButton, { borderColor: colors.borderOverlay }]}
+                      title="Cancel Timer"
+                      variant="outlined"
+                      onPress={handleCancelTimer}
                     />
                   </View>
                 ) : (
@@ -191,8 +191,10 @@ const SleepTimerComponent = ({
                       {timerOptions.map(minutes => (
                         <ThemedButton
                           key={minutes}
+                          accessibilityLabel={`Set timer for ${minutes} minutes`}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected: selectedMinutes === minutes }}
                           title={`${minutes} min`}
-                          onPress={() => handleOptionSelect(minutes)}
                           variant={selectedMinutes === minutes ? 'filled' : 'outlined'}
                           style={[
                             styles.optionButton,
@@ -206,25 +208,23 @@ const SleepTimerComponent = ({
                                   backgroundColor: colors.elevation1,
                                 },
                           ]}
-                          accessibilityRole="button"
-                          accessibilityLabel={`Set timer for ${minutes} minutes`}
-                          accessibilityState={{ selected: selectedMinutes === minutes }}
+                          onPress={() => handleOptionSelect(minutes)}
                         />
                       ))}
                     </View>
 
                     <View style={styles.actionButtons}>
                       <ThemedButton
-                        title="Cancel"
-                        onPress={handleClose}
-                        variant="outlined"
                         style={[styles.actionButton, { borderColor: colors.borderOverlay }]}
+                        title="Cancel"
+                        variant="outlined"
+                        onPress={handleClose}
                       />
                       <ThemedButton
-                        title="Set Timer"
-                        onPress={handleSetTimer}
-                        variant="filled"
                         style={styles.actionButton}
+                        title="Set Timer"
+                        variant="filled"
+                        onPress={handleSetTimer}
                       />
                     </View>
                   </View>

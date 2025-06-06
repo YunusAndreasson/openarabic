@@ -15,9 +15,9 @@ import Animated, {
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
-import { withOpacity } from '@/utils/colorUtils';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import type { Article } from '@/types/articles.types';
+import { withOpacity } from '@/utils/colorUtils';
 
 import { EnhancedImage } from './EnhancedImage';
 import { ProgressBar } from './ProgressBar';
@@ -237,41 +237,41 @@ const NowPlayingCard = ({
       <View style={styles.backgroundContainer}>
         <Animated.View style={[styles.backgroundImage, backgroundImageStyle]}>
           <EnhancedImage
+            contentFit="cover"
+            placeholder={article.placeholder}
             source={article.image_url || ''}
             style={styles.backgroundImageInner}
-            placeholder={article.placeholder}
-            contentFit="cover"
           />
         </Animated.View>
 
         {/* Gradient Overlay for Better Text Contrast */}
         <LinearGradient
+          end={{ x: 1, y: 1 }}
+          start={{ x: 0, y: 0 }}
+          style={styles.gradientOverlay}
           colors={[
             withOpacity(colors.background, 0.95),
             withOpacity(colors.background, 0.7),
           ]}
-          style={styles.gradientOverlay}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
         />
       </View>
 
       {/* Main Content */}
       <TouchableOpacity
+        accessibilityHint="Tap to open full player"
+        accessibilityLabel={`Now playing: ${article.title} by ${article.author?.name || 'Unknown author'}`}
+        accessibilityRole="button"
+        activeOpacity={0.8}
         style={styles.content}
         onPress={onPress}
-        activeOpacity={0.8}
-        accessibilityRole="button"
-        accessibilityLabel={`Now playing: ${article.title} by ${article.author?.name || 'Unknown author'}`}
-        accessibilityHint="Tap to open full player"
       >
         {/* Article Image */}
         <View style={styles.imageContainer}>
           <EnhancedImage
+            contentFit="cover"
+            placeholder={article.placeholder}
             source={article.image_url || ''}
             style={styles.articleImage}
-            placeholder={article.placeholder}
-            contentFit="cover"
           />
         </View>
 
@@ -279,11 +279,11 @@ const NowPlayingCard = ({
         <View style={styles.textContent}>
           {/* Primary Info */}
           <View style={styles.primaryInfo}>
-            <ThemedText type="body" numberOfLines={1} style={styles.title}>
+            <ThemedText numberOfLines={1} style={styles.title} type="body">
               {article.title}
             </ThemedText>
 
-            <ThemedText type="caption" variant="secondary" numberOfLines={1} style={styles.author}>
+            <ThemedText numberOfLines={1} style={styles.author} type="caption" variant="secondary">
               {article.author?.name || 'Author'}
             </ThemedText>
           </View>
@@ -291,21 +291,21 @@ const NowPlayingCard = ({
           {/* Progress Section */}
           <View style={styles.progressSection}>
             <View style={styles.progressInfo}>
-              <ThemedText type="caption" variant="secondary" style={styles.timeText}>
+              <ThemedText style={styles.timeText} type="caption" variant="secondary">
                 {timeCalculations.currentTime}
               </ThemedText>
-              <ThemedText type="caption" variant="secondary" style={styles.timeText}>
+              <ThemedText style={styles.timeText} type="caption" variant="secondary">
                 {timeCalculations.totalTime}
               </ThemedText>
             </View>
 
             <ProgressBar
-              progress={timeCalculations.progressPercentage}
-              height={3}
-              style={styles.progressBar}
-              fillColor={colors.tint}
-              backgroundColor={isDarkMode ? colors.elevation3 : colors.progressBackground}
               animationTriggered={timeCalculations.progressPercentage > 0}
+              backgroundColor={isDarkMode ? colors.elevation3 : colors.progressBackground}
+              fillColor={colors.tint}
+              height={3}
+              progress={timeCalculations.progressPercentage}
+              style={styles.progressBar}
             />
           </View>
         </View>
@@ -315,29 +315,29 @@ const NowPlayingCard = ({
           {/* Stop Button */}
           <Animated.View style={buttonAnimatedStyle}>
             <TouchableOpacity
+              accessibilityHint="Stops the current audio"
+              accessibilityLabel="Stop playback"
+              accessibilityRole="button"
+              activeOpacity={0.8}
               style={[styles.stopButton, dynamicStyles.stopButton]}
               onPress={handleStopPress}
-              activeOpacity={0.8}
-              accessibilityRole="button"
-              accessibilityLabel="Stop playback"
-              accessibilityHint="Stops the current audio"
             >
-              <Ionicons name="stop" size={24} color={colors.background} />
+              <Ionicons color={colors.background} name="stop" size={24} />
             </TouchableOpacity>
           </Animated.View>
 
           {/* Timer Button */}
           {showTimerButton && (
             <TouchableOpacity
+              accessibilityLabel={timerAccessibilityLabel}
+              activeOpacity={0.8}
               style={[styles.timerButton, dynamicStyles.timerButton]}
               onPress={onTimerPress}
-              activeOpacity={0.8}
-              accessibilityLabel={timerAccessibilityLabel}
             >
               <Ionicons
+                color={isTimerActive ? colors.warning : colors.text}
                 name={isTimerActive ? 'timer' : 'timer-outline'}
                 size={20}
-                color={isTimerActive ? colors.warning : colors.text}
               />
             </TouchableOpacity>
           )}

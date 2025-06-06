@@ -1,7 +1,6 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { LAYOUT } from '../../constants/layout';
 import { useArticlesByDifficultWords } from '../../hooks/useArticlesByDifficultWords';
 import type { Article } from '../../types/articles.types';
 import ArticleSection from '../article/ArticleSection';
@@ -63,10 +62,10 @@ export function DifficultWordsArticleSection({
   return (
     <View style={styles.container}>
       <ArticleSection
-        title="Practice Challenge"
         articles={articles.map(renderArticleWithDifficultCount)}
-        onArticlePress={onArticlePress}
         hideDifficulty={true}
+        title="Practice Challenge"
+        onArticlePress={onArticlePress}
       />
     </View>
   );

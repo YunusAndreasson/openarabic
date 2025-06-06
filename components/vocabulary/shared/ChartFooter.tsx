@@ -7,7 +7,7 @@ import { useColors } from '@/hooks/useColors';
 import { ThemedText } from '../../ThemedText';
 
 interface LegendItemProps {
-  type: 'bar' | 'line' | 'area' | 'dot';
+  type: 'area' | 'bar' | 'dot' | 'line';
   color: string;
   label: string;
 }
@@ -42,11 +42,11 @@ export const ChartFooter = memo(({ legendItems, timeRange }: ChartFooterProps) =
           <View key={`legend-${index}`} style={styles.legendItem}>
             {renderLegendIndicator(item)}
             <ThemedText
+              ellipsizeMode="tail"
+              numberOfLines={2}
+              style={styles.legendText}
               type="caption"
               variant="secondary"
-              style={styles.legendText}
-              numberOfLines={2}
-              ellipsizeMode="tail"
             >
               {item.label}
             </ThemedText>
@@ -55,10 +55,10 @@ export const ChartFooter = memo(({ legendItems, timeRange }: ChartFooterProps) =
       </View>
       <View style={styles.timeRange}>
         <ThemedText
+          numberOfLines={1}
+          style={styles.timeRangeText}
           type="caption"
           variant="disabled"
-          style={styles.timeRangeText}
-          numberOfLines={1}
         >
           {timeRange}
         </ThemedText>
@@ -70,63 +70,63 @@ export const ChartFooter = memo(({ legendItems, timeRange }: ChartFooterProps) =
 ChartFooter.displayName = 'ChartFooter';
 
 const styles = StyleSheet.create({
-  progressFooter: {
+  legendArea: {
+    borderRadius: 6 / 2,
+    flexShrink: 0,
+    height: 6,
+    marginRight: LAYOUT.SPACING.XSMALL,
+    width: 12,
+  },
+  legendBar: {
+    borderRadius: 6 / 2,
+    flexShrink: 0,
+    height: 6,
+    marginRight: LAYOUT.SPACING.XSMALL,
+    width: 12,
+  },
+  legendDot: {
+    borderRadius: 6 / 2,
+    flexShrink: 0,
+    height: 6,
+    marginRight: LAYOUT.SPACING.XSMALL,
+    width: 6,
+  },
+  legendItem: {
+    alignItems: 'center',
     flexDirection: 'row',
+    flexShrink: 1,
+    marginBottom: LAYOUT.SPACING.TINY,
+    maxWidth: '45%',
+  },
+  legendLine: {
+    borderRadius: 2 / 2,
+    flexShrink: 0,
+    height: 2,
+    marginRight: LAYOUT.SPACING.XSMALL,
+    width: 12,
+  },
+  legendText: {
+    flexShrink: 1,
+    flexWrap: 'wrap',
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
+  },
+  progressFooter: {
     alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    paddingTop: LAYOUT.SPACING.MEDIUM,
     borderTopWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginTop: LAYOUT.SPACING.SMALL,
     minHeight: 40,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
   },
   progressLegend: {
-    flexDirection: 'row',
     alignItems: 'flex-start',
+    flexDirection: 'row',
     flex: 1,
     flexWrap: 'wrap',
     gap: LAYOUT.SPACING.SMALL,
     marginRight: LAYOUT.SPACING.SMALL,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexShrink: 1,
-    maxWidth: '45%',
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
-  legendBar: {
-    width: 12,
-    height: 6,
-    borderRadius: 6 / 2,
-    marginRight: LAYOUT.SPACING.XSMALL,
-    flexShrink: 0,
-  },
-  legendLine: {
-    width: 12,
-    height: 2,
-    borderRadius: 2 / 2,
-    marginRight: LAYOUT.SPACING.XSMALL,
-    flexShrink: 0,
-  },
-  legendArea: {
-    width: 12,
-    height: 6,
-    borderRadius: 6 / 2,
-    marginRight: LAYOUT.SPACING.XSMALL,
-    flexShrink: 0,
-  },
-  legendDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 6 / 2,
-    marginRight: LAYOUT.SPACING.XSMALL,
-    flexShrink: 0,
-  },
-  legendText: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
-    flexShrink: 1,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    flexWrap: 'wrap',
   },
   timeRange: {
     alignItems: 'flex-end',
@@ -135,8 +135,8 @@ const styles = StyleSheet.create({
     paddingTop: 2,
   },
   timeRangeText: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
     textAlign: 'right',
   },
 });

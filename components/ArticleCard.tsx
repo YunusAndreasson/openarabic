@@ -83,23 +83,23 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   return (
     <View style={[styles.cardContainer, containerStyle]}>
       <BaseCard
-        onPress={onPress}
-        style={[styles.card, activeCardStyle, contentStyle]}
         shadowSize={active ? 'medium' : 'small'}
+        style={[styles.card, activeCardStyle, contentStyle]}
+        onPress={onPress}
       >
         <View style={styles.cardContent}>
           <View style={styles.textContent}>
-            <ThemedText type="heading3" colorName="headingText" style={titleStyle}>
+            <ThemedText colorName="headingText" style={titleStyle} type="heading3">
               {title}
             </ThemedText>
             <View style={styles.metaRow}>
               {leftMeta}
               <ThemedText
-                type="label"
-                numberOfLines={1}
-                colorName="authorText"
-                style={authorStyle}
                 skipDefaultColor
+                colorName="authorText"
+                numberOfLines={1}
+                style={authorStyle}
+                type="label"
               >
                 {author}
               </ThemedText>
@@ -109,9 +109,9 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
           <View style={styles.iconContainer}>
             {rightElement ?? (
               <Ionicons
+                color={colors.textTertiary}
                 name="chevron-forward-outline"
                 size={20}
-                color={colors.textTertiary}
                 style={styles.arrowIcon}
               />
             )}

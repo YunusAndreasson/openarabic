@@ -7,7 +7,7 @@
  * @param date - The date to format (string or Date object)
  * @returns A human-readable string representing how long ago the date was
  */
-export function formatTimeAgo(date: string | Date): string {
+export function formatTimeAgo(date: Date | string): string {
   const articleDate = typeof date === 'string' ? new Date(date) : date;
   const now = new Date();
   const diffInMillis = now.getTime() - articleDate.getTime();

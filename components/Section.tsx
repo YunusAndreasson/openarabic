@@ -73,7 +73,7 @@ const Section = memo(
     );
     if (Container === Animated.View) {
       return (
-        <Animated.View style={style} entering={FadeIn.delay(delay).duration(300)}>
+        <Animated.View entering={FadeIn.delay(delay).duration(300)} style={style}>
           {content}
         </Animated.View>
       );

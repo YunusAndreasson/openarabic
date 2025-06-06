@@ -4,15 +4,14 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 
 import SectionTitle from '@/components/SectionTitle';
 import { ThemedText } from '@/components/ThemedText';
+import { Colors } from '@/constants/Colors';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 import { getStrugglingWordsCount } from '@/utils/wordClassification';
 
 import { LAYOUT } from '../../constants/layout';
 import { useAuth } from '../../hooks/useAuth';
 import { useColors } from '../../hooks/useColors';
-import { Colors } from '@/constants/Colors';
 import { useVocabularyChartData } from '../../hooks/useVocabularyChartData';
-import { selectionFeedback } from '../../utils/haptics';
 
 import { InfoModal, type InfoModalType } from './InfoModal';
 import { MemoryCapacityGauge } from './charts/MemoryCapacityGauge';
@@ -47,7 +46,7 @@ export const VocabularyStatCards = memo(
     const [modalType, setModalType] = useState<InfoModalType | null>(null);
 
     // Get optimized chart data from database views
-    const { userStats } = useVocabularyChartData(user?.id);
+    useVocabularyChartData(user?.id);
 
     // Validate input data with safe defaults
     const validatedInput = useMemo(
@@ -58,18 +57,6 @@ export const VocabularyStatCards = memo(
         studyWords: Array.isArray(studyWords) ? studyWords : [],
       }),
       [masteredWords, learningWords, dueWords, studyWords]
-    );
-
-    // Use database stats when available, fallback to props
-    const stats = useMemo(
-      () => ({
-        masteredWords: userStats?.masteredWords ?? validatedInput.masteredWords,
-        learningWords: userStats?.learningWords ?? validatedInput.learningWords,
-        dueWords: userStats?.dueWords ?? validatedInput.dueWords,
-        totalWords:
-          userStats?.totalWords ?? validatedInput.masteredWords + validatedInput.learningWords,
-      }),
-      [userStats, validatedInput]
     );
 
     // Calculate comprehensive word categories for exploration
@@ -136,10 +123,6 @@ export const VocabularyStatCards = memo(
     }, [validatedInput.studyWords]);
 
     // Handle info modal - memoized for performance
-    const handleInfoPress = useCallback((type: InfoModalType) => {
-      selectionFeedback();
-      setModalType(type);
-    }, []);
 
     const handleCloseModal = useCallback(() => {
       setModalType(null);
@@ -208,16 +191,12 @@ export const VocabularyStatCards = memo(
     );
 
     // Memoized info press handlers to prevent unnecessary re-renders
-    const handleMemoryCapacityInfo = useCallback(
-      () => handleInfoPress('mastery'),
-      [handleInfoPress]
-    );
 
     return (
       <View style={styles.container}>
         {/* Memory Capacity Gauge - Top Priority */}
         <View style={styles.section}>
-          <SectionTitle title="Memory Capacity" isFirstSection={true} />
+          <SectionTitle isFirstSection={true} title="Memory Capacity" />
           <MemoryCapacityGauge studyWords={validatedInput.studyWords} onStatPress={onStatPress} />
         </View>
 
@@ -228,20 +207,20 @@ export const VocabularyStatCards = memo(
           {/* Primary Actions - Most Important */}
           {primaryCategories.some(config => config.value > 0) && (
             <View style={styles.categoryGroup}>
-              <ThemedText type="caption" variant="secondary" style={styles.groupLabel}>
+              <ThemedText style={styles.groupLabel} type="caption" variant="secondary">
                 REQUIRES ATTENTION
               </ThemedText>
               <View style={styles.categoriesList}>
                 {primaryCategories
                   .filter(config => config.value > 0)
-                  .map((config, index) => (
+                  .map(config => (
                     <TouchableOpacity
                       key={config.category}
-                      style={[styles.categoryRow, { backgroundColor: config.bgColor }]}
-                      onPress={() => onStatPress?.(config.category)}
-                      activeOpacity={0.7}
                       accessibilityLabel={`Browse ${config.label}: ${config.value} words`}
                       accessibilityRole="button"
+                      activeOpacity={0.7}
+                      style={[styles.categoryRow, { backgroundColor: config.bgColor }]}
+                      onPress={() => onStatPress?.(config.category)}
                     >
                       {/* Number Badge */}
                       <View style={[styles.numberBadge, { backgroundColor: config.iconColor }]}>
@@ -252,9 +231,9 @@ export const VocabularyStatCards = memo(
                       <View style={styles.categoryContent}>
                         <ThemedText style={styles.categoryLabel}>{config.label}</ThemedText>
                         <ThemedText
+                          style={styles.categoryDescription}
                           type="caption"
                           variant="secondary"
-                          style={styles.categoryDescription}
                         >
                           {config.description}
                         </ThemedText>
@@ -262,9 +241,9 @@ export const VocabularyStatCards = memo(
 
                       {/* Chevron */}
                       <Ionicons
+                        color={colors.secondaryText}
                         name="chevron-forward"
                         size={16}
-                        color={colors.secondaryText}
                         style={styles.chevron}
                       />
                     </TouchableOpacity>
@@ -275,20 +254,20 @@ export const VocabularyStatCards = memo(
 
           {/* Progress Overview - Learning Status */}
           <View style={styles.categoryGroup}>
-            <ThemedText type="caption" variant="secondary" style={styles.groupLabel}>
+            <ThemedText style={styles.groupLabel} type="caption" variant="secondary">
               LEARNING PROGRESS
             </ThemedText>
             <View style={styles.categoriesList}>
               {progressCategories
                 .filter(config => config.value > 0 || config.category === 'mastered') // Always show mastered
-                .map((config, index) => (
+                .map(config => (
                   <TouchableOpacity
                     key={config.category}
-                    style={[styles.categoryRow, { backgroundColor: config.bgColor }]}
-                    onPress={() => onStatPress?.(config.category)}
-                    activeOpacity={0.7}
                     accessibilityLabel={`Browse ${config.label}: ${config.value} words`}
                     accessibilityRole="button"
+                    activeOpacity={0.7}
+                    style={[styles.categoryRow, { backgroundColor: config.bgColor }]}
+                    onPress={() => onStatPress?.(config.category)}
                   >
                     {/* Number Badge */}
                     <View style={[styles.numberBadge, { backgroundColor: config.iconColor }]}>
@@ -299,9 +278,9 @@ export const VocabularyStatCards = memo(
                     <View style={styles.categoryContent}>
                       <ThemedText style={styles.categoryLabel}>{config.label}</ThemedText>
                       <ThemedText
+                        style={styles.categoryDescription}
                         type="caption"
                         variant="secondary"
-                        style={styles.categoryDescription}
                       >
                         {config.description}
                       </ThemedText>
@@ -309,9 +288,9 @@ export const VocabularyStatCards = memo(
 
                     {/* Chevron */}
                     <Ionicons
+                      color={colors.secondaryText}
                       name="chevron-forward"
                       size={16}
-                      color={colors.secondaryText}
                       style={styles.chevron}
                     />
                   </TouchableOpacity>
@@ -322,20 +301,20 @@ export const VocabularyStatCards = memo(
           {/* Recent Activity - Optional/Tertiary */}
           {activityCategories.some(config => config.value > 0) && (
             <View style={styles.categoryGroup}>
-              <ThemedText type="caption" variant="secondary" style={styles.groupLabel}>
+              <ThemedText style={styles.groupLabel} type="caption" variant="secondary">
                 RECENT ACTIVITY
               </ThemedText>
               <View style={styles.categoriesList}>
                 {activityCategories
                   .filter(config => config.value > 0)
-                  .map((config, index) => (
+                  .map(config => (
                     <TouchableOpacity
                       key={config.category}
-                      style={[styles.categoryRow, { backgroundColor: config.bgColor }]}
-                      onPress={() => onStatPress?.(config.category)}
-                      activeOpacity={0.7}
                       accessibilityLabel={`Browse ${config.label}: ${config.value} words`}
                       accessibilityRole="button"
+                      activeOpacity={0.7}
+                      style={[styles.categoryRow, { backgroundColor: config.bgColor }]}
+                      onPress={() => onStatPress?.(config.category)}
                     >
                       {/* Number Badge */}
                       <View style={[styles.numberBadge, { backgroundColor: config.iconColor }]}>
@@ -346,9 +325,9 @@ export const VocabularyStatCards = memo(
                       <View style={styles.categoryContent}>
                         <ThemedText style={styles.categoryLabel}>{config.label}</ThemedText>
                         <ThemedText
+                          style={styles.categoryDescription}
                           type="caption"
                           variant="secondary"
-                          style={styles.categoryDescription}
                         >
                           {config.description}
                         </ThemedText>
@@ -356,9 +335,9 @@ export const VocabularyStatCards = memo(
 
                       {/* Chevron */}
                       <Ionicons
+                        color={colors.secondaryText}
                         name="chevron-forward"
                         size={16}
-                        color={colors.secondaryText}
                         style={styles.chevron}
                       />
                     </TouchableOpacity>

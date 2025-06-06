@@ -10,7 +10,6 @@ import Animated, {
 import { CustomSlider } from '@/components/Slider';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { selectionFeedback } from '@/utils/haptics';
 
@@ -23,10 +22,9 @@ interface TextSizeSliderProps {
 }
 
 const SLIDER_HEIGHT = 80;
-const ANIMATION_DURATION = 300;
 
 export const TextSizeSlider = memo<TextSizeSliderProps>(
-  ({ isVisible, fontScale, onFontScaleChange, colors, isDarkMode }) => {
+  ({ isVisible, fontScale, onFontScaleChange, colors }) => {
     const height = useSharedValue(0);
     const opacity = useSharedValue(0);
     const scale = useSharedValue(0.95);
@@ -96,22 +94,22 @@ export const TextSizeSlider = memo<TextSizeSliderProps>(
           <Animated.View style={[styles.content, animatedContentStyle]}>
             <View style={styles.sliderSection}>
               <View style={styles.sliderHeader}>
-                <ThemedText type="label" weight="medium" style={styles.label}>
+                <ThemedText style={styles.label} type="label" weight="medium">
                   Text Size
                 </ThemedText>
-                <ThemedText type="label" variant="secondary" style={styles.value}>
+                <ThemedText style={styles.value} type="label" variant="secondary">
                   {Math.round(fontScale * 100)}%
                 </ThemedText>
               </View>
 
               <View style={styles.sliderContainer}>
                 <CustomSlider
-                  value={fontScale}
-                  onValueChange={handleFontScaleChange}
-                  minimumValue={0.8}
                   maximumValue={1.3}
+                  minimumValue={0.8}
                   step={0.1}
                   style={styles.slider}
+                  value={fontScale}
+                  onValueChange={handleFontScaleChange}
                 />
               </View>
             </View>

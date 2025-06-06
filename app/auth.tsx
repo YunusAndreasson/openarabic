@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { JSX, memo } from 'react';
+import type { JSX} from 'react';
+import React, { memo } from 'react';
 import { StyleSheet, View, KeyboardAvoidingView, Platform, Image, ScrollView } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -16,8 +17,8 @@ const AuthScreen = memo(function AuthScreen(): JSX.Element {
 
   return (
     <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background }]}
       edges={['top']}
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack.Screen
@@ -28,11 +29,14 @@ const AuthScreen = memo(function AuthScreen(): JSX.Element {
       />
 
       <KeyboardAvoidingView
-        style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        style={styles.keyboardAvoidingView}
       >
         <ScrollView
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
           style={styles.scrollView}
           contentContainerStyle={[
             styles.scrollContent,
@@ -41,17 +45,14 @@ const AuthScreen = memo(function AuthScreen(): JSX.Element {
               paddingBottom: Math.max(insets.bottom, LAYOUT.SPACING.LARGE),
             },
           ]}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
         >
           {/* Logo Section - Visual Hierarchy Level 1 */}
           <View style={styles.logoContainer}>
             <Image
+              accessibilityLabel="OpenArabic Logo"
+              resizeMode="contain"
               source={require('@/assets/images/oaLogo.png')}
               style={styles.logo}
-              resizeMode="contain"
-              accessibilityLabel="OpenArabic Logo"
             />
           </View>
 
@@ -89,13 +90,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   logo: {
-    width: 110,
     height: 110,
+    width: 110,
   },
   logoContainer: {
     alignItems: 'center',
-    paddingTop: LAYOUT.SPACING.XLARGE,
     paddingBottom: LAYOUT.SPACING.XXLARGE,
+    paddingTop: LAYOUT.SPACING.XLARGE,
   },
   scrollContent: {
     flexGrow: 1,

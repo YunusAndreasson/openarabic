@@ -114,7 +114,10 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
 
   return (
     <TouchableOpacity
-      onPress={handlePress}
+      accessibilityHint="Double tap to toggle"
+      accessibilityLabel={value ? 'Toggle is on' : 'Toggle is off'}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value }}
       activeOpacity={1}
       style={{
         minWidth: MIN_TOUCH_TARGET.SIZE,
@@ -122,10 +125,7 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
         alignItems: 'center',
         justifyContent: 'center',
       }}
-      accessibilityRole="switch"
-      accessibilityState={{ checked: value }}
-      accessibilityLabel={value ? 'Toggle is on' : 'Toggle is off'}
-      accessibilityHint="Double tap to toggle"
+      onPress={handlePress}
     >
       <Animated.View style={[containerStyle, combinedContainerStyle]}>
         <View style={styles.toggleTrack}>

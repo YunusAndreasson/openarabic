@@ -6,20 +6,20 @@ import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import reactNativePlugin from 'eslint-plugin-react-native';
 import importPlugin from 'eslint-plugin-import';
+import unusedImportsPlugin from 'eslint-plugin-unused-imports';
 import expoConfig from 'eslint-config-expo';
 
 const compat = new FlatCompat();
 
 export default [
   js.configs.recommended,
-  ...compat.extends('plugin:@typescript-eslint/recommended'),
   ...compat.extends('plugin:react/recommended'),
   ...compat.extends('plugin:react-hooks/recommended'),
   ...compat.extends('plugin:react-native/all'),
   ...compat.extends('plugin:import/errors'),
   ...compat.extends('plugin:import/warnings'),
-  ...compat.extends('plugin:import/typescript'),
   ...compat.extends('eslint-config-expo'),
+  // TypeScript-specific configuration
   {
     files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
@@ -33,6 +33,67 @@ export default [
     },
     plugins: {
       '@typescript-eslint': typescriptPlugin,
+      'unused-imports': unusedImportsPlugin,
+    },
+    rules: {
+      ...typescriptPlugin.configs.recommended.rules,
+      '@typescript-eslint/no-unnecessary-type-assertion': 'warn',
+      '@typescript-eslint/no-unused-vars': 'off', // Turned off in favor of unused-imports plugin
+      'unused-imports/no-unused-imports': 'error',
+      'unused-imports/no-unused-vars': [
+        'error',
+        {
+          vars: 'all',
+          args: 'after-used',
+          ignoreRestSiblings: true,
+          varsIgnorePattern: '^_',
+          argsIgnorePattern: '^_',
+        },
+      ],
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'warn',
+      '@typescript-eslint/consistent-type-imports': 'error',
+      'no-unused-vars': 'off', // Turn off base rule as it can conflict with @typescript-eslint version
+      'react/prop-types': 'off', // TypeScript provides compile-time type checking,
+    },
+  },
+  {
+    files: ['**/*.js', '**/*.jsx'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+    },
+    plugins: {
+      'unused-imports': unusedImportsPlugin,
+    },
+    rules: {
+      'unused-imports/no-unused-imports': 'error',
+      'unused-imports/no-unused-vars': [
+        'error',
+        {
+          vars: 'all',
+          args: 'after-used',
+          ignoreRestSiblings: true,
+          varsIgnorePattern: '^_',
+          argsIgnorePattern: '^_',
+        },
+      ],
+      // Disable TypeScript-specific rules that require type information for JS files
+      '@typescript-eslint/no-unnecessary-type-assertion': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/restrict-template-expressions': 'off',
+      '@typescript-eslint/restrict-plus-operands': 'off',
+      '@typescript-eslint/no-floating-promises': 'off',
+      '@typescript-eslint/require-await': 'off',
+      '@typescript-eslint/await-thenable': 'off',
+      '@typescript-eslint/no-misused-promises': 'off',
+      '@typescript-eslint/prefer-regexp-exec': 'off',
+      '@typescript-eslint/unbound-method': 'off',
     },
   },
   {
@@ -42,23 +103,30 @@ export default [
       'react-hooks': reactHooksPlugin,
       'react-native': reactNativePlugin,
       import: importPlugin,
+      'unused-imports': unusedImportsPlugin,
     },
     rules: {
-      'no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-vars': 'warn',
-      '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-non-null-assertion': 'warn',
-      '@typescript-eslint/consistent-type-imports': 'off',
-      '@typescript-eslint/no-unnecessary-type-assertion': 'warn',
-      'no-console': 'warn',
+      'no-unused-vars': 'off', // Turned off in favor of unused-imports plugin
+      'unused-imports/no-unused-imports': 'error',
+      'unused-imports/no-unused-vars': [
+        'error',
+        {
+          vars: 'all',
+          args: 'after-used',
+          ignoreRestSiblings: true,
+          varsIgnorePattern: '^_',
+          argsIgnorePattern: '^_',
+        },
+      ],
+      'no-console': 'off',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'off',
-      'react-native/no-unused-styles': 'warn',
+      'react-native/no-unused-styles': 'error',
       'react-native/split-platform-components': 'warn',
       'react-native/no-inline-styles': 'off',
       'react-native/no-color-literals': 'off',
       'react-native/no-raw-text': ['warn', { skip: ['ThemedText'] }],
+      'react-native/sort-styles': 'off',
       'react/react-in-jsx-scope': 'off',
       'react/jsx-no-bind': 'off',
       'react/no-array-index-key': 'warn',
@@ -82,7 +150,8 @@ export default [
       ],
       'import/no-unresolved': 'warn',
       'import/named': 'warn',
-      'import/no-duplicates': 'warn',
+      'import/no-duplicates': 'error',
+      'import/no-unused-modules': 'warn',
       'react/no-unstable-nested-components': ['warn', { allowAsProps: true }],
       'react/jsx-no-constructed-context-values': 'warn',
       'react/no-unused-prop-types': 'warn',

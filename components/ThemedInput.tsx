@@ -39,9 +39,9 @@ const InputIcon = ({
   colors: ReturnType<typeof useColors>;
 }) => (
   <Ionicons
+    color={error ? colors.tabIconSelected : isFocused ? colors.tint : colors.icon}
     name={name}
     size={20}
-    color={error ? colors.tabIconSelected : isFocused ? colors.tint : colors.icon}
     style={styles.leftIcon}
   />
 );
@@ -60,17 +60,17 @@ const RightInputIcon = ({
   onPress?: (e: GestureResponderEvent) => void;
 }) => (
   <TouchableOpacity
-    onPress={onPress}
+    accessibilityHint="Show or hide password text"
+    accessibilityLabel="Toggle password visibility"
+    accessibilityRole="button"
     hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
     style={styles.rightIcon}
-    accessibilityRole="button"
-    accessibilityLabel="Toggle password visibility"
-    accessibilityHint="Show or hide password text"
+    onPress={onPress}
   >
     <Ionicons
+      color={error ? colors.tabIconSelected : isFocused ? colors.tint : colors.icon}
       name={name}
       size={20}
-      color={error ? colors.tabIconSelected : isFocused ? colors.tint : colors.icon}
     />
   </TouchableOpacity>
 );
@@ -111,26 +111,26 @@ export const ThemedInput = forwardRef<TextInput, ThemedInputProps>(
       <View style={styles.wrapper}>
         <View style={containerStyles}>
           {icon ? (
-            <InputIcon name={icon} isFocused={isFocused} error={error} colors={colors} />
+            <InputIcon colors={colors} error={error} isFocused={isFocused} name={icon} />
           ) : null}
           <TextInput
-            style={[styles.input, { color: colors.text }, style]}
-            placeholderTextColor={colors.icon}
-            selectionColor={colors.tint}
+            ref={ref}
             autoCapitalize="none"
             autoCorrect={false}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
+            placeholderTextColor={colors.icon}
+            selectionColor={colors.tint}
+            style={[styles.input, { color: colors.text }, style]}
             textAlignVertical="center"
-            ref={ref}
+            onBlur={handleBlur}
+            onFocus={handleFocus}
             {...props}
           />
           {rightIcon ? (
             <RightInputIcon
-              name={rightIcon}
-              isFocused={isFocused}
-              error={error}
               colors={colors}
+              error={error}
+              isFocused={isFocused}
+              name={rightIcon}
               onPress={onRightIconPress}
             />
           ) : null}
@@ -165,12 +165,6 @@ const styles = StyleSheet.create({
   helperTextContainer: {
     marginLeft: LAYOUT.SPACING.TINY,
     marginTop: LAYOUT.SPACING.TINY,
-  },
-  hitSlop: {
-    bottom: LAYOUT.SPACING.MEDIUM,
-    left: LAYOUT.SPACING.MEDIUM,
-    right: LAYOUT.SPACING.MEDIUM,
-    top: LAYOUT.SPACING.MEDIUM,
   },
   input: {
     flex: 1,

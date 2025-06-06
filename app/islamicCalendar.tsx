@@ -149,7 +149,6 @@ export default function IslamicCalendarScreen() {
   const events = useMemo(calculateUpcomingEvents, []);
   const currentHijriDate = useMemo(getCurrentHijriDate, []);
 
-  const upcomingCount = events.filter(e => e.daysFromNow > 0 && e.daysFromNow <= 30).length;
   const activeCount = events.filter(e => e.isActive).length;
 
   return (
@@ -172,11 +171,12 @@ export default function IslamicCalendarScreen() {
       />
 
       <ThemedView
-        style={styles.container}
         includeBottomInset={false}
         safeAreaEdges={['left', 'right']}
+        style={styles.container}
       >
         <ScrollView
+          showsVerticalScrollIndicator={true}
           style={styles.scrollView}
           contentContainerStyle={[
             styles.scrollContent,
@@ -185,28 +185,27 @@ export default function IslamicCalendarScreen() {
                 insets.bottom + LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
             },
           ]}
-          showsVerticalScrollIndicator={true}
         >
           {/* Current Date & Stats */}
           <BaseCard
-            style={[styles.headerCard, { backgroundColor: colors.elevation2 }]}
             shadowSize="small"
+            style={[styles.headerCard, { backgroundColor: colors.elevation2 }]}
           >
             <View style={styles.headerContent}>
               <View style={styles.currentDateSection}>
                 <View style={styles.dateInfo}>
                   <ThemedText
-                    type="bodyBold"
-                    style={[styles.currentDateText, { color: colors.primary }]}
                     skipDefaultColor
+                    style={[styles.currentDateText, { color: colors.primary }]}
+                    type="bodyBold"
                   >
                     Today
                   </ThemedText>
                   <ThemedText
+                    skipDefaultColor
+                    style={[styles.hijriDateText, { color: colors.secondaryText }]}
                     type="body"
                     weight="medium"
-                    style={[styles.hijriDateText, { color: colors.secondaryText }]}
-                    skipDefaultColor
                   >
                     {currentHijriDate}
                   </ThemedText>
@@ -217,16 +216,16 @@ export default function IslamicCalendarScreen() {
                 {activeCount > 0 && (
                   <View style={styles.statItem}>
                     <ThemedText
-                      type="bodyBold"
-                      style={[styles.statNumber, { color: colors.success }]}
                       skipDefaultColor
+                      style={[styles.statNumber, { color: colors.success }]}
+                      type="bodyBold"
                     >
                       {activeCount}
                     </ThemedText>
                     <ThemedText
-                      type="caption"
-                      style={[styles.statLabel, { color: colors.textTertiary }]}
                       skipDefaultColor
+                      style={[styles.statLabel, { color: colors.textTertiary }]}
+                      type="caption"
                     >
                       active
                     </ThemedText>
@@ -245,6 +244,7 @@ export default function IslamicCalendarScreen() {
               return (
                 <BaseCard
                   key={`${event.name}-${event.hijriDate}`}
+                  shadowSize="small"
                   style={[
                     styles.eventCard,
                     { backgroundColor: isPast ? colors.elevation1 : colors.card },
@@ -255,17 +255,17 @@ export default function IslamicCalendarScreen() {
                     },
                     isPast && { opacity: 0.7 },
                   ]}
-                  shadowSize="small"
                 >
                   <View style={styles.eventContent}>
                     <View style={styles.eventHeader}>
                       <View style={styles.eventTitleContainer}>
-                        <ThemedText type="bodyBold" style={styles.eventTitle}>
+                        <ThemedText style={styles.eventTitle} type="bodyBold">
                           {event.name}
                         </ThemedText>
 
                         <View style={styles.timingRow}>
                           <ThemedText
+                            skipDefaultColor
                             type="caption"
                             weight="medium"
                             style={[
@@ -280,7 +280,6 @@ export default function IslamicCalendarScreen() {
                                       : colors.interactiveSecondary,
                               },
                             ]}
-                            skipDefaultColor
                           >
                             {event.isActive
                               ? `Day ${Math.floor((event.progress || 0) * (event.duration || 1))} of ${event.duration}`
@@ -314,12 +313,12 @@ export default function IslamicCalendarScreen() {
 
                       <View style={styles.eventRightSection}>
                         <ThemedText
+                          skipDefaultColor
                           type="body"
                           style={[
                             styles.eventArabicName,
                             { fontFamily: 'Madina', color: colors.arabicText },
                           ]}
-                          skipDefaultColor
                         >
                           {event.arabicName}
                         </ThemedText>
@@ -328,22 +327,22 @@ export default function IslamicCalendarScreen() {
 
                     <View style={styles.eventDates}>
                       <View style={styles.dateRow}>
-                        <Ionicons name="calendar" size={12} color={colors.interactiveSecondary} />
+                        <Ionicons color={colors.interactiveSecondary} name="calendar" size={12} />
                         <ThemedText
-                          type="caption"
-                          style={[styles.dateText, { color: colors.interactiveSecondary }]}
                           skipDefaultColor
+                          style={[styles.dateText, { color: colors.interactiveSecondary }]}
+                          type="caption"
                         >
                           {event.hijriDate}
                         </ThemedText>
                       </View>
                       <View style={styles.dateRow}>
                         <Ionicons
+                          color={colors.interactiveSecondary}
                           name="calendar-outline"
                           size={12}
-                          color={colors.interactiveSecondary}
                         />
-                        <ThemedText type="caption" variant="secondary" style={styles.dateText}>
+                        <ThemedText style={styles.dateText} type="caption" variant="secondary">
                           {event.gregorianDate.toLocaleDateString('en-US', {
                             month: 'short',
                             day: 'numeric',
@@ -361,11 +360,11 @@ export default function IslamicCalendarScreen() {
           {/* Footer Note */}
           <View style={styles.noteContent}>
             <Ionicons
+              color={colors.interactiveSecondary}
               name="information-circle-outline"
               size={16}
-              color={colors.interactiveSecondary}
             />
-            <ThemedText type="caption" variant="secondary" style={styles.noteText}>
+            <ThemedText style={styles.noteText} type="caption" variant="secondary">
               Dates may vary by 1-2 days depending on moon sighting. Active events show current
               progress.
             </ThemedText>
@@ -380,60 +379,39 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-  },
-  headerCard: {
-    marginBottom: LAYOUT.SPACING.LARGE,
-  },
-  headerContent: {
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   currentDateSection: {
     flex: 1,
-  },
-  dateInfo: {
-    gap: LAYOUT.SPACING.XTINY,
   },
   currentDateText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '700',
   },
-  hijriDateText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600',
-    letterSpacing: -0.1,
-  },
-  statsSection: {
-    flexDirection: 'row',
-    gap: LAYOUT.SPACING.LARGE,
-    alignItems: 'center',
-  },
-  statItem: {
-    alignItems: 'center',
+  dateInfo: {
     gap: LAYOUT.SPACING.XTINY,
   },
-  statNumber: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '700',
-    letterSpacing: -0.3,
+  dateRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: LAYOUT.SPACING.XTINY + 1,
   },
-  statLabel: {
+  dateText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    textAlign: 'center',
-    fontWeight: '500',
-    letterSpacing: 0.2,
-    textTransform: 'lowercase',
+    letterSpacing: 0.1,
   },
-  eventsSection: {
-    marginBottom: LAYOUT.SPACING.LARGE,
+  daysUntil: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  eventArabicName: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+    fontWeight: '600',
+    includeFontPadding: false,
+    letterSpacing: 0.2,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.6,
+    paddingVertical: LAYOUT.SPACING.XTINY,
+    textAlign: 'right',
+    textAlignVertical: 'center',
   },
   eventCard: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
@@ -441,90 +419,111 @@ const styles = StyleSheet.create({
   eventContent: {
     padding: LAYOUT.CARD.PADDING.MEDIUM,
   },
-  eventHeader: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  eventTitleContainer: {
-    flex: 1,
-    marginRight: LAYOUT.SPACING.MEDIUM,
-    justifyContent: 'flex-start',
-    gap: LAYOUT.SPACING.XTINY,
-  },
-  eventTitle: {
-    fontWeight: '700',
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    letterSpacing: -0.2,
-    flex: 1,
-  },
-  timingRow: {
-    gap: LAYOUT.SPACING.XTINY / 2,
-  },
-  separator: {
-    width: 1,
-    backgroundColor: 'transparent',
-    marginHorizontal: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.XTINY,
-    opacity: 0.2,
-  },
-  eventRightSection: {
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    minWidth: 130,
-    maxWidth: 150,
-    paddingVertical: LAYOUT.SPACING.XTINY / 2,
-    paddingLeft: LAYOUT.SPACING.XTINY,
-  },
-  eventArabicName: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.6,
-    textAlign: 'right',
-    fontWeight: '600',
-    includeFontPadding: false,
-    textAlignVertical: 'center',
-    paddingVertical: LAYOUT.SPACING.XTINY,
-    letterSpacing: 0.2,
-  },
-  daysUntil: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-  },
-  progressContainer: {
-    marginTop: LAYOUT.SPACING.XTINY / 2,
-  },
-  progressBar: {
-    height: 2,
-    borderRadius: 1,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 1,
-  },
   eventDates: {
     gap: LAYOUT.SPACING.XTINY,
     paddingTop: LAYOUT.SPACING.XTINY,
   },
-  dateRow: {
+  eventHeader: {
+    alignItems: 'stretch',
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.XTINY + 1,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
-  dateText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    letterSpacing: 0.1,
+  eventRightSection: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    maxWidth: 150,
+    minWidth: 130,
+    paddingLeft: LAYOUT.SPACING.XTINY,
+    paddingVertical: LAYOUT.SPACING.XTINY / 2,
+  },
+  eventTitle: {
+    flex: 1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  eventTitleContainer: {
+    flex: 1,
+    gap: LAYOUT.SPACING.XTINY,
+    justifyContent: 'flex-start',
+    marginRight: LAYOUT.SPACING.MEDIUM,
+  },
+  eventsSection: {
+    marginBottom: LAYOUT.SPACING.LARGE,
+  },
+  headerCard: {
+    marginBottom: LAYOUT.SPACING.LARGE,
+  },
+  headerContent: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
+  },
+  hijriDateText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontWeight: '600',
+    letterSpacing: -0.1,
   },
   noteContent: {
-    flexDirection: 'row',
     alignItems: 'flex-start',
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
+    flexDirection: 'row',
     gap: LAYOUT.SPACING.SMALL,
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
   },
   noteText: {
     flex: 1,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * 1.4,
-    fontStyle: 'italic',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+    fontStyle: 'italic',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * 1.4,
+  },
+  progressBar: {
+    borderRadius: 1,
+    height: 2,
+    overflow: 'hidden',
+  },
+  progressContainer: {
+    marginTop: LAYOUT.SPACING.XTINY / 2,
+  },
+  progressFill: {
+    borderRadius: 1,
+    height: '100%',
+  },
+  scrollContent: {
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  separator: {
+    backgroundColor: 'transparent',
+    marginHorizontal: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.XTINY,
+    opacity: 0.2,
+    width: 1,
+  },
+  statItem: {
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.XTINY,
+  },
+  statLabel: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+    fontWeight: '500',
+    letterSpacing: 0.2,
+    textAlign: 'center',
+    textTransform: 'lowercase',
+  },
+  statNumber: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
+  statsSection: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: LAYOUT.SPACING.LARGE,
+  },
+  timingRow: {
+    gap: LAYOUT.SPACING.XTINY / 2,
   },
 });

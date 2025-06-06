@@ -16,21 +16,15 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { Colors } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
-import { Colors } from '@/constants/Colors';
-import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { withOpacity } from '@/utils/colorUtils';
-import { lightFeedback } from '@/utils/haptics';
 
 import { ThemedText } from '../ThemedText';
 
 export type InfoModalType =
-  | 'mastery'
-  | 'retrievability'
-  | 'efficiency'
-  | 'recommendation'
-  | 'progress';
+  'efficiency' | 'mastery' | 'progress' | 'recommendation' | 'retrievability';
 
 interface InfoModalProps {
   visible: boolean;
@@ -274,18 +268,19 @@ export const InfoModal = memo(({ visible, type, onClose }: InfoModalProps) => {
 
   return (
     <Modal
-      visible={visible}
-      transparent
       statusBarTranslucent
+      transparent
       animationType="none"
+      visible={visible}
       onRequestClose={handleClose}
     >
       <TouchableWithoutFeedback onPress={handleBackdropPress}>
         <Animated.View
           style={[styles.backdrop, backdropStyle, { backgroundColor: colors.backdropOverlay }]}
         >
-          <Animated.View style={[styles.modalContainer, modalStyle]} pointerEvents="box-none">
+          <Animated.View pointerEvents="box-none" style={[styles.modalContainer, modalStyle]}>
             <View
+              pointerEvents="auto"
               style={[
                 styles.modal,
                 {
@@ -293,46 +288,45 @@ export const InfoModal = memo(({ visible, type, onClose }: InfoModalProps) => {
                   shadowColor: colors.shadow,
                 },
               ]}
-              pointerEvents="auto"
             >
               {/* Header */}
               <View style={[styles.header, { borderBottomColor: colors.borderOverlay }]}>
                 <View style={styles.headerContent}>
-                  <ThemedText type="heading2" weight="bold" style={styles.title}>
+                  <ThemedText style={styles.title} type="heading2" weight="bold">
                     {content.title}
                   </ThemedText>
-                  <ThemedText type="body" variant="secondary" style={styles.subtitle}>
+                  <ThemedText style={styles.subtitle} type="body" variant="secondary">
                     {content.subtitle}
                   </ThemedText>
                 </View>
                 <TouchableOpacity
-                  onPress={handleClose}
-                  style={styles.closeButton}
                   hitSlop={LAYOUT.HIT_SLOP.SMALL}
+                  style={styles.closeButton}
+                  onPress={handleClose}
                 >
-                  <Ionicons name="close" size={22} color={colors.text} />
+                  <Ionicons color={colors.text} name="close" size={22} />
                 </TouchableOpacity>
               </View>
 
               {/* Content */}
               <ScrollView
-                style={styles.content}
-                showsVerticalScrollIndicator={true}
-                contentContainerStyle={styles.contentContainer}
+                alwaysBounceVertical={true}
                 bounces={true}
-                scrollEventThrottle={16}
-                keyboardShouldPersistTaps="handled"
-                nestedScrollEnabled={false}
-                scrollIndicatorInsets={{ right: 2 }}
+                contentContainerStyle={styles.contentContainer}
                 contentInsetAdjustmentBehavior="automatic"
                 directionalLockEnabled={true}
-                alwaysBounceVertical={true}
-                scrollEnabled={true}
-                overScrollMode="always"
                 indicatorStyle="default"
+                keyboardShouldPersistTaps="handled"
+                nestedScrollEnabled={false}
+                overScrollMode="always"
+                scrollEnabled={true}
+                scrollEventThrottle={16}
+                scrollIndicatorInsets={{ right: 2 }}
+                showsVerticalScrollIndicator={true}
+                style={styles.content}
               >
                 {/* Extended subtitle content */}
-                <ThemedText type="body" variant="secondary" style={styles.extendedSubtitle}>
+                <ThemedText style={styles.extendedSubtitle} type="body" variant="secondary">
                   {content.subtitle}
                 </ThemedText>
 
@@ -349,14 +343,14 @@ export const InfoModal = memo(({ visible, type, onClose }: InfoModalProps) => {
                                 { backgroundColor: colors.buttonOverlay },
                               ]}
                             >
-                              <Ionicons name={section.icon} size={20} color={colors.tint} />
+                              <Ionicons color={colors.tint} name={section.icon} size={20} />
                             </View>
                           )}
-                          <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
+                          <ThemedText style={styles.sectionTitle} type="heading3" weight="bold">
                             {section.title}
                           </ThemedText>
                         </View>
-                        <ThemedText type="body" variant="secondary" style={styles.sectionContent}>
+                        <ThemedText style={styles.sectionContent} type="body" variant="secondary">
                           {section.content}
                         </ThemedText>
                       </View>
@@ -367,13 +361,13 @@ export const InfoModal = memo(({ visible, type, onClose }: InfoModalProps) => {
                 {/* Tips */}
                 {content.tips.length > 0 && (
                   <View style={tipsContainerStyle}>
-                    <ThemedText type="heading3" weight="bold" style={styles.tipsTitle}>
+                    <ThemedText style={styles.tipsTitle} type="heading3" weight="bold">
                       💡 Pro Tips
                     </ThemedText>
                     {content.tips.map((tip, index) => (
                       <View key={`tip-${index}`} style={styles.tip}>
                         <View style={[styles.tipBullet, { backgroundColor: colors.tint }]} />
-                        <ThemedText type="body" variant="secondary" style={styles.tipText}>
+                        <ThemedText style={styles.tipText} type="body" variant="secondary">
                           {tip}
                         </ThemedText>
                       </View>

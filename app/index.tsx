@@ -4,6 +4,7 @@ import { ActivityIndicator, StyleSheet } from 'react-native';
 
 import { ThemedView } from '@/components/ThemedView';
 import { useColors } from '@/hooks/useColors';
+
 import { useAuth } from '../hooks/useAuth';
 
 export default function Index() {
@@ -14,7 +15,7 @@ export default function Index() {
   if (isLoading) {
     return (
       <ThemedView style={styles.container}>
-        <ActivityIndicator size="large" color={colors.tint} />
+        <ActivityIndicator color={colors.tint} size="large" />
       </ThemedView>
     );
   }
@@ -29,8 +30,8 @@ export default function Index() {
 
 const styles = StyleSheet.create({
   container: {
+    alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
   },
 });

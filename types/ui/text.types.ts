@@ -4,26 +4,11 @@ import type { ColorName } from '../../constants/Colors';
 import type { SentenceWord } from '../vocabulary.types';
 
 export type TextTypeName =
-  | 'body'
-  | 'bodyBold'
-  | 'heading1'
-  | 'heading2'
-  | 'heading3'
-  | 'caption'
-  | 'label'
-  | 'arabic'
-  | 'overline';
+  'arabic' | 'body' | 'bodyBold' | 'caption' | 'heading1' | 'heading2' | 'heading3' | 'label' | 'overline';
 export type TextVariant =
-  | 'error'
-  | 'warning'
-  | 'success'
-  | 'info'
-  | 'primary'
-  | 'secondary'
-  | 'subtle'
-  | 'disabled';
-export type TextWeight = 'normal' | 'medium' | 'semibold' | 'bold';
-export type TextAlign = 'left' | 'center' | 'right' | 'justify';
+  'disabled' | 'error' | 'info' | 'primary' | 'secondary' | 'subtle' | 'success' | 'warning';
+export type TextWeight = 'bold' | 'medium' | 'normal' | 'semibold';
+export type TextAlign = 'center' | 'justify' | 'left' | 'right';
 
 /**
  * Props for the ThemedText component
@@ -44,7 +29,7 @@ export interface ThemedTextProps extends TextProps {
   /** Maximum number of lines to show */
   numberOfLines?: number;
   /** How text should be truncated if it overflows */
-  ellipsizeMode?: 'head' | 'middle' | 'tail' | 'clip';
+  ellipsizeMode?: 'clip' | 'head' | 'middle' | 'tail';
   /** Font size for Arabic text */
   arabicFontSize?: number;
   /** Custom style to apply to the text */
@@ -66,7 +51,7 @@ export interface ArabicWordProps {
   showInfoOnLongPress?: boolean;
   highlighted?: boolean;
   highlightColor?: string;
-  size?: 'normal' | 'large' | 'small';
+  size?: 'large' | 'normal' | 'small';
   fontSize?: number;
   lineHeight?: number;
   style?: StyleProp<TextStyle>;

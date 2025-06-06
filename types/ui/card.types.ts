@@ -15,7 +15,7 @@ export interface BaseCardProps extends BaseAnimatedStyleProps {
   /** Optional callback when card is pressed */
   onPress?: () => void;
   /** Shadow size for the card */
-  shadowSize?: 'small' | 'medium' | 'large' | 'none';
+  shadowSize?: 'large' | 'medium' | 'none' | 'small';
   /** Whether to include press animation */
   includePressAnimation?: boolean;
   /** Custom loading component to use */
@@ -31,7 +31,7 @@ export interface BaseCardProps extends BaseAnimatedStyleProps {
 /**
  * Variant types for ThemedCard
  */
-export type CardVariant = 'article' | 'compact' | 'basic';
+export type CardVariant = 'article' | 'basic' | 'compact';
 
 /**
  * Props for basic variant of ThemedCard
@@ -91,10 +91,7 @@ export interface CompactCardProps extends BaseCardProps, BaseOptionalPressablePr
  * The 'compact' variant can handle article data directly, removing the need for CompactArticleCard.
  */
 export type ThemedCardProps =
-  | ArticleCardProps
-  | CompactCardProps
-  | BasicCardProps
-  | (BaseCardProps &
+  ArticleCardProps | BasicCardProps | CompactCardProps | BaseCardProps &
       BaseOptionalPressableProps & {
         /** URL of the image to display in the card (for article variant) */
         imageUrl: string;
@@ -120,4 +117,4 @@ export type ThemedCardProps =
         dueWordCount?: number;
         /** Variant of the card */
         variant?: CardVariant;
-      });
+      };

@@ -60,23 +60,23 @@ const SectionTitle: React.FC<SectionTitleProps> = ({
   return (
     <View style={[styles.container, isFirstSection && styles.firstSection, containerStyle]}>
       <View style={styles.titleGroup}>
-        <ThemedText type="heading2" colorName="headingText" style={titleStyle}>
+        <ThemedText colorName="headingText" style={titleStyle} type="heading2">
           {title}
         </ThemedText>
         {subtitle && (
-          <ThemedText type="caption" colorName="subtitleText" style={subtitleStyle}>
+          <ThemedText colorName="subtitleText" style={subtitleStyle} type="caption">
             {subtitle}
           </ThemedText>
         )}
       </View>
       {onInfoPress && (
         <TouchableIcon
+          accessibilityLabel="More information"
           name="information-outline"
           size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+          style={styles.infoIcon}
           touchSize="small"
           onPress={onInfoPress}
-          accessibilityLabel="More information"
-          style={styles.infoIcon}
         />
       )}
     </View>

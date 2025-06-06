@@ -1,5 +1,7 @@
 import { useContext } from 'react';
+
 import { AuthContext } from '@/components/AuthProvider';
+
 import type { AuthResult } from './useProvideAuth';
 
 export function useAuth(): AuthResult {

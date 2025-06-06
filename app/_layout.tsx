@@ -138,11 +138,14 @@ function AppContent() {
             });
           }
         } else {
-          console.warn('SplashScreen module not properly initialized');
+          Sentry.captureException(err, {
+            tags: {
+              location: 'splash_screen_initialization',
+            },
+          });
         }
       } catch (err) {
         // Handle the case where the module isn't ready yet
-        console.warn('Failed to initialize splash screen:', err);
         Sentry.captureException(err, {
           tags: {
             location: 'splash_screen_initialization',
@@ -234,7 +237,6 @@ function AppContent() {
       if (SplashScreen && typeof SplashScreen.hideAsync === 'function') {
         SplashScreen.hideAsync().catch(err => {
           // Handle cases where splash screen hiding fails
-          console.warn('Failed to hide splash screen:', err);
           Sentry.captureException(err, {
             tags: {
               location: 'splash_screen_hide',
@@ -491,10 +493,10 @@ const ErrorFallback = memo(function ErrorFallback({ error }: FallbackProps) {
       >
         Something went wrong
       </ThemedText>
-      <ThemedText type="body" style={{ marginBottom: LAYOUT.SPACING.XLARGE }}>
+      <ThemedText style={{ marginBottom: LAYOUT.SPACING.XLARGE }} type="body">
         Please try again
       </ThemedText>
-      <ThemedText type="caption" colorName="textTertiary">
+      <ThemedText colorName="textTertiary" type="caption">
         {error.toString()}
       </ThemedText>
     </View>

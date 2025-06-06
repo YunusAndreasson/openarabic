@@ -94,10 +94,11 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
   return (
     <Animated.View style={animatedStyle as AnimatedStyleProp<ViewStyle>}>
       <TouchableOpacity
-        onPress={handlePress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
+        accessibilityHint={accessibilityHint}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityRole="button"
         activeOpacity={0.7}
+        hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
         style={[
           {
             width: buttonSize,
@@ -106,12 +107,11 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
           styles.buttonContainer,
           style,
         ]}
-        hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-        accessibilityRole="button"
-        accessibilityLabel={accessibilityLabel}
-        accessibilityHint={accessibilityHint}
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
       >
-        <Ionicons name="close" size={finalIconSize} color={color || colors.interactiveSecondary} />
+        <Ionicons color={color || colors.interactiveSecondary} name="close" size={finalIconSize} />
       </TouchableOpacity>
     </Animated.View>
   );

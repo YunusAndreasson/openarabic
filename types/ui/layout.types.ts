@@ -5,7 +5,7 @@ import type { ViewProps, StyleProp, ViewStyle, ScrollView } from 'react-native';
 import type { ArticleSentence, Category } from '../articles.types';
 import type { SentenceWord } from '../vocabulary.types';
 
-import type { BaseStyleProps, BaseThemedProps } from './base.types';
+import type { BaseThemedProps } from './base.types';
 import type { ThemeColors } from './theme.types';
 
 /**
@@ -25,7 +25,7 @@ export interface ThemedViewProps extends ViewProps {
   /** Whether to include bottom insets in safe area (default: true) */
   includeBottomInset?: boolean;
   /** Specific edges to apply safe area insets to (overrides includeBottomInset) */
-  safeAreaEdges?: ('top' | 'right' | 'bottom' | 'left')[];
+  safeAreaEdges?: ('bottom' | 'left' | 'right' | 'top')[];
   /** Optional ScrollView props */
   scrollViewProps?: Omit<React.ComponentProps<typeof ScrollView>, 'children'>;
   /** Children to render inside the view */
@@ -177,7 +177,7 @@ export interface SignInRequiredProps extends BaseThemedProps {
  */
 export interface StatCardProps extends BaseThemedProps {
   label: string;
-  value: string | number;
+  value: number | string;
   icon?: ComponentProps<typeof Ionicons>['name'];
   animateValue?: boolean;
   style?: StyleProp<ViewStyle>;

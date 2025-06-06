@@ -3,16 +3,16 @@ import { Audio } from 'expo-av';
 import { InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av/build/Audio.types';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { SharedValue } from 'react-native-reanimated';
-import { useAnimatedStyle } from 'react-native-reanimated';
 import type { ViewStyle } from 'react-native';
-import type { AnimatedStyleProp } from '@/types/ui/base.types';
+import { useAnimatedStyle } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useAuth } from '@/hooks/useAuth';
 import { useFSRS } from '@/hooks/useFSRS';
 import { useWordSizing } from '@/hooks/useWordSizing';
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import { handleError } from '@/utils/errorHandling';
 
 interface AudioPlayerState {
@@ -303,7 +303,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
   // Shows meaning overlay if needed
   const displayMeaning = useCallback(
-    (confidence: 'known' | 'vague' | 'unknown', isStruggling: boolean) => {
+    (confidence: 'known' | 'unknown' | 'vague', isStruggling: boolean) => {
       if (confidence === 'known') return null;
 
       const meaning = currentWord?.root?.meaning || 'No translation available';
@@ -314,7 +314,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
   // Determines if the user is struggling with this word
   const checkIsStruggling = useCallback(
-    (confidence: 'known' | 'vague' | 'unknown'): boolean => {
+    (confidence: 'known' | 'unknown' | 'vague'): boolean => {
       if (confidence !== 'vague') return false;
 
       const now = Date.now();
@@ -330,7 +330,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   // Process the word update in FSRS
   const processFeedback = useCallback(
     async (
-      confidence: 'known' | 'vague' | 'unknown',
+      confidence: 'known' | 'unknown' | 'vague',
       isStruggling: boolean,
       controller: AbortController
     ) => {
@@ -407,7 +407,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   }, []);
 
   const handleKnowledgeResponse = useCallback(
-    (confidence: 'known' | 'vague' | 'unknown') => {
+    (confidence: 'known' | 'unknown' | 'vague') => {
       // Guard conditions: exit early if we're already in a processing state
       if (
         stateRefs.current.isUpdatingWord ||

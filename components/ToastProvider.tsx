@@ -68,11 +68,11 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     <ToastContext.Provider value={contextValue}>
       {children}
       <Toast
-        visible={toastState.visible}
-        message={toastState.message}
         duration={toastState.duration}
-        onClose={handleClose}
+        message={toastState.message}
         type={toastState.type}
+        visible={toastState.visible}
+        onClose={handleClose}
       />
     </ToastContext.Provider>
   );

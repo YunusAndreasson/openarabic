@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+ 
 import * as Sentry from '@sentry/react-native';
 
 // Store toast handler globally - updated to support types
@@ -6,7 +6,7 @@ let globalToastHandler:
   | ((
       message: string,
       duration?: number,
-      type?: 'info' | 'success' | 'error' | 'important'
+      type?: 'error' | 'important' | 'info' | 'success'
     ) => void)
   | null = null;
 
@@ -15,7 +15,7 @@ export const setGlobalToastHandler = (
   handler: (
     message: string,
     duration?: number,
-    type?: 'info' | 'success' | 'error' | 'important'
+    type?: 'error' | 'important' | 'info' | 'success'
   ) => void
 ): void => {
   globalToastHandler = handler;
@@ -29,17 +29,17 @@ interface ErrorOptions {
   // Toast duration in ms (default: 2500)
   toastDuration?: number;
   // Toast type for visual styling
-  toastType?: 'info' | 'success' | 'error' | 'important';
+  toastType?: 'error' | 'important' | 'info' | 'success';
   // Whether to track in Mixpanel
   trackAnalytics?: boolean;
   // Custom analytics event name (default: 'Error Occurred')
   analyticsEventName?: string;
   // Additional analytics properties
-  analyticsProperties?: Record<string, string | number | boolean>;
+  analyticsProperties?: Record<string, boolean | number | string>;
   // Whether to capture in Sentry
   captureSentry?: boolean;
   // Sentry severity level
-  sentrySeverity?: 'fatal' | 'error' | 'warning' | 'info' | 'debug';
+  sentrySeverity?: 'debug' | 'error' | 'fatal' | 'info' | 'warning';
 }
 
 const DEFAULT_OPTIONS: ErrorOptions = {
@@ -66,7 +66,7 @@ const showToastMessage = (
   errorObj: Error,
   message?: string,
   duration?: number,
-  type?: 'info' | 'success' | 'error' | 'important'
+  type?: 'error' | 'important' | 'info' | 'success'
 ): void => {
   if (globalToastHandler) {
     const toastMessage = message || errorObj.message;
@@ -94,7 +94,7 @@ export const handleError = async (
     if (opts.showToast) {
       showToastMessage(errorObj, opts.toastMessage, opts.toastDuration, opts.toastType);
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
   } catch (_handlingError) {
     // Silent fail if error handling itself fails
   }

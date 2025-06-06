@@ -1,8 +1,9 @@
 import type { Tables } from '../types/database.types';
 import type { SentenceWord } from '../types/vocabulary.types';
-import { supabase } from './supabase';
 import { handleError } from '../utils/errorHandling';
 import { mapToSentenceWord } from '../utils/typeMappers';
+
+import { supabase } from './supabase';
 
 export interface SentenceWithWords {
   sentence: Tables<'article_sentences'>;

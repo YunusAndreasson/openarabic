@@ -1,14 +1,13 @@
 import { useHeaderHeight } from '@react-navigation/elements';
 import { FlashList } from '@shopify/flash-list';
-import React, { useMemo, useCallback, memo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { StyleSheet, RefreshControl, View } from 'react-native';
 
 import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
 import type { Article } from '../../types/articles.types';
-import type { Tables } from '../../types/database.types';
-import { ThemedText } from '../ThemedText';
 import { ThemedView } from '../ThemedView';
+
 import ListArticleItem from './ListArticleItem';
 
 interface FilteredArticleViewProps {
@@ -16,11 +15,6 @@ interface FilteredArticleViewProps {
    * Articles to display in the filtered view
    */
   articles: Article[];
-
-  /**
-   * Whether the view is in a loading state
-   */
-  isLoading?: boolean;
 
   /**
    * Whether the view is in a refreshing state
@@ -36,16 +30,6 @@ interface FilteredArticleViewProps {
    * Callback when an article is pressed
    */
   onArticlePress?: (article: Article) => void;
-
-  /**
-   * Selected author (if filtering by author)
-   */
-  selectedAuthor?: Tables<'authors'> | null;
-
-  /**
-   * Selected category (if filtering by category)
-   */
-  selectedCategory?: Tables<'categories'> | null;
 }
 
 /**
@@ -54,7 +38,6 @@ interface FilteredArticleViewProps {
  */
 const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   articles,
-  isLoading,
   isRefreshing,
   onRefresh,
   onArticlePress = () => {},
@@ -86,29 +69,29 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
 
   return (
     <ThemedView
-      style={styles.container}
       includeBottomInset={false}
       safeAreaEdges={['left', 'right']}
+      style={styles.container}
     >
       <FlashList
+        contentContainerStyle={styles.listContent}
         data={articles}
-        renderItem={renderItemCallback}
+        drawDistance={ITEM_HEIGHT * 5}
         estimatedItemSize={ITEM_HEIGHT}
         keyExtractor={item => item.id.toString()}
-        contentContainerStyle={styles.listContent}
-        ListHeaderComponent={HeaderSpacer}
         ListFooterComponent={ListFooterComponent}
+        ListHeaderComponent={HeaderSpacer}
+        renderItem={renderItemCallback}
         showsVerticalScrollIndicator={true}
-        drawDistance={ITEM_HEIGHT * 5}
         overrideItemLayout={layout => {
           layout.size = ITEM_HEIGHT;
         }}
         refreshControl={
           <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={onRefresh}
             colors={[colors.tint]}
+            refreshing={isRefreshing}
             tintColor={colors.tint}
+            onRefresh={onRefresh}
           />
         }
       />
@@ -119,9 +102,6 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  endMessageContainer: {
-    height: LAYOUT.SPACING.XLARGE,
   },
   headerSpacer: {
     height: 0, // This will be dynamically set

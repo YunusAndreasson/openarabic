@@ -4,8 +4,8 @@ import { InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av/build/Audi
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { AppState } from 'react-native';
 
-import { handleError } from '@/utils/errorHandling';
 import { shuffleArray } from '@/utils/arrayUtils';
+import { handleError } from '@/utils/errorHandling';
 
 /**
  * Audio player states

@@ -1,17 +1,17 @@
 import { FlashList } from '@shopify/flash-list';
 import { useLocalSearchParams } from 'expo-router';
+import type {
+  JSX} from 'react';
 import React, {
   useRef,
   useEffect,
   forwardRef,
   useImperativeHandle,
-  JSX,
   useMemo,
   useCallback,
 } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
-import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -21,17 +21,23 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
-import { ParallaxHeader } from '@/components/article/ParallaxHeader';
 import { ArticleButtons } from '@/components/article/ArticleButtons';
-import { TextSizeSlider } from '@/components/article/TextSizeSlider';
+import { ParallaxHeader } from '@/components/article/ParallaxHeader';
 import { RelatedArticlesFooter } from '@/components/article/RelatedArticlesFooter';
+import { TextSizeSlider } from '@/components/article/TextSizeSlider';
 import { LAYOUT, HEADER_IMAGE_HEIGHT } from '@/constants/layout';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 import type { ThemeColors } from '../../types/ui/theme.types';
 
 const styles = StyleSheet.create({
+  buttonsWrapper: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+  },
   content: {
     flex: 1,
   },
@@ -42,24 +48,19 @@ const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
   },
-  stickyButtonsContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: LAYOUT.Z_INDEX.HEADER,
-  },
-  buttonsWrapper: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
   sourceContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     marginBottom: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   sourceLabel: {
     fontSize: 14,
+  },
+  stickyButtonsContainer: {
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    zIndex: LAYOUT.Z_INDEX.HEADER,
   },
 });
 
@@ -270,11 +271,11 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
       () => (
         <ParallaxHeader
           article={article}
-          scrollY={scrollY}
           colors={colors}
           headerHeight={HEADER_IMAGE_HEIGHT}
-          topInset={insets.top}
           isDarkMode={!!isDarkMode}
+          scrollY={scrollY}
+          topInset={insets.top}
         />
       ),
       [article, scrollY, colors, insets.top, isDarkMode]
@@ -295,8 +296,8 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
           {otherArticles && otherArticles.length > 0 ? (
             <Animated.View style={footerStyle}>
               <RelatedArticlesFooter
-                otherArticles={otherArticles}
                 article={article}
+                otherArticles={otherArticles}
                 onArticlePress={a => handleArticlePress(String(a.id), true)}
               />
             </Animated.View>
@@ -329,11 +330,24 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
             <FlashList
               key={`article-${id}`}
               ref={flashListRef}
+              alwaysBounceVertical={false} // Only bounce when content allows it
+              bounces={true} // Re-enable bounce for parallax pull-down effect
               data={sortedSentences}
-              renderItem={renderSentenceItem}
-              keyExtractor={item => item.id.toString()}
-              extraData={`${englishToggleKey}-${fontScale}`}
+              drawDistance={SENTENCE_ITEM_HEIGHT * 12} // Increased for better performance
+              estimatedFirstItemOffset={0}
               estimatedItemSize={SENTENCE_ITEM_HEIGHT}
+              extraData={`${englishToggleKey}-${fontScale}`}
+              getItemType={() => 'sentence'} // Add item type for better optimization
+              initialScrollIndex={0}
+              keyExtractor={item => item.id.toString()}
+              ListFooterComponent={footerComponent}
+              ListHeaderComponent={headerComponent}
+              overScrollMode="auto" // Allow controlled overscroll for parallax
+              persistentScrollbar={true}
+              removeClippedSubviews={true} // Improve performance
+              renderItem={renderSentenceItem}
+              scrollEventThrottle={16} // Standard throttle for natural scrolling feel
+              showsVerticalScrollIndicator={true}
               style={[styles.content, { backgroundColor: colors.background }]}
               contentContainerStyle={{
                 paddingTop: 0,
@@ -341,23 +355,10 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
                 paddingBottom:
                   LAYOUT.CONTENT_SPACING.BOTTOM + insets.bottom + LAYOUT.SPACING.MEDIUM,
               }}
-              onScroll={handleAnimatedScroll}
-              scrollEventThrottle={16} // Standard throttle for natural scrolling feel
-              showsVerticalScrollIndicator={true}
-              bounces={true} // Re-enable bounce for parallax pull-down effect
-              alwaysBounceVertical={false} // Only bounce when content allows it
-              overScrollMode="auto" // Allow controlled overscroll for parallax
-              drawDistance={SENTENCE_ITEM_HEIGHT * 12} // Increased for better performance
-              initialScrollIndex={0}
-              persistentScrollbar={true}
-              removeClippedSubviews={true} // Improve performance
-              getItemType={() => 'sentence'} // Add item type for better optimization
               overrideItemLayout={layout => {
                 layout.size = SENTENCE_ITEM_HEIGHT;
               }}
-              estimatedFirstItemOffset={0}
-              ListHeaderComponent={headerComponent}
-              ListFooterComponent={footerComponent}
+              onScroll={handleAnimatedScroll}
             />
 
             {/* Sticky Buttons Header */}
@@ -375,18 +376,18 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
                   onEnglishToggle &&
                   onTextSizeToggle && (
                     <MemoizedArticleButtons
-                      onBackPress={onBackPress}
-                      onBookmarkPress={onBookmarkPress}
-                      onPlayPress={onPlayPress}
-                      onEnglishToggle={onEnglishToggle}
-                      onTextSizeToggle={onTextSizeToggle}
+                      colors={colors}
+                      isDarkMode={!!isDarkMode}
                       isInReadingList={!!isInReadingList}
                       isPlaying={!!isPlaying}
                       showEnglish={!!showEnglish}
                       showTextSizeSlider={!!showTextSizeSlider}
-                      colors={colors}
                       user={user}
-                      isDarkMode={!!isDarkMode}
+                      onBackPress={onBackPress}
+                      onBookmarkPress={onBookmarkPress}
+                      onEnglishToggle={onEnglishToggle}
+                      onPlayPress={onPlayPress}
+                      onTextSizeToggle={onTextSizeToggle}
                     />
                   )}
               </View>
@@ -394,11 +395,11 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
               {/* Text Size Slider - appears right below buttons */}
               {onTextSizeToggle && fontScale !== undefined && onFontScaleChange && (
                 <TextSizeSlider
-                  isVisible={!!showTextSizeSlider}
-                  fontScale={fontScale}
-                  onFontScaleChange={onFontScaleChange}
                   colors={colors}
+                  fontScale={fontScale}
                   isDarkMode={!!isDarkMode}
+                  isVisible={!!showTextSizeSlider}
+                  onFontScaleChange={onFontScaleChange}
                 />
               )}
             </Animated.View>

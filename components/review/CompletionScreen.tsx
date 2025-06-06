@@ -127,7 +127,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
       text: string;
       icon: string;
       color: string;
-      type: 'accuracy' | 'streak' | 'mastery' | 'efficiency' | 'effort';
+      type: 'accuracy' | 'efficiency' | 'effort' | 'mastery' | 'streak';
     }[] = [];
 
     // Accuracy achievement
@@ -228,21 +228,21 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
   const Content = (
     <View style={[styles.contentContainer, contentStyle]}>
       <Animated.View
-        style={[styles.iconContainer, iconAnimatedStyle]}
         entering={ZoomIn.delay(100).duration(400).springify()}
+        style={[styles.iconContainer, iconAnimatedStyle]}
       >
-        <Ionicons name={iconName as any} size={iconSize} color={colors.completionSuccess} />
+        <Ionicons color={colors.completionSuccess} name={iconName as any} size={iconSize} />
       </Animated.View>
 
       <View style={styles.textContainer}>
         <Animated.View entering={FadeInUp.delay(400).duration(300)}>
-          <ThemedText type="heading2" colorName="headingText" style={styles.titleText}>
+          <ThemedText colorName="headingText" style={styles.titleText} type="heading2">
             {title}
           </ThemedText>
         </Animated.View>
 
         <Animated.View entering={FadeInUp.delay(600).duration(300)}>
-          <ThemedText type="heading3" colorName="subtitleText" style={styles.subtitleText}>
+          <ThemedText colorName="subtitleText" style={styles.subtitleText} type="heading3">
             {subtitle}
           </ThemedText>
         </Animated.View>
@@ -253,17 +253,17 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
             {encouragingMetrics.map((metric, index) => (
               <React.Fragment key={index}>
                 <Animated.View
-                  style={styles.metricItem}
                   entering={FadeInUp.delay(800 + index * 150).duration(300)}
+                  style={styles.metricItem}
                 >
                   <View style={styles.metricContent}>
                     <View
                       style={[styles.metricIconContainer, { backgroundColor: `${metric.color}20` }]}
                     >
-                      <Ionicons name={metric.icon as any} size={22} color={metric.color} />
+                      <Ionicons color={metric.color} name={metric.icon as any} size={22} />
                     </View>
                     <View style={styles.metricTextContainer}>
-                      <ThemedText type="body" variant="primary" style={styles.metricText}>
+                      <ThemedText style={styles.metricText} type="body" variant="primary">
                         {metric.text}
                       </ThemedText>
                     </View>
@@ -277,10 +277,10 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
 
       <Animated.View entering={FadeIn.delay(encouragingMetrics ? 1400 : 1000).duration(300)}>
         <ThemedButton
-          title={buttonText}
-          onPress={onClose}
-          variant={buttonVariant}
           style={[styles.doneButton, buttonStyle]}
+          title={buttonText}
+          variant={buttonVariant}
+          onPress={onClose}
         />
       </Animated.View>
     </View>

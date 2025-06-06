@@ -25,21 +25,21 @@ const ListenHeader: React.FC<ListenHeaderProps> = ({
     <View style={styles.header}>
       <View style={styles.progressContainer}>
         <ProgressBar
-          progress={Math.max(progress, maxProgress)}
-          animationTriggered={animationKey > 1}
           key={animationKey}
           animationDuration={500}
+          animationTriggered={animationKey > 1}
+          progress={Math.max(progress, maxProgress)}
         />
       </View>
 
       <CloseButton
-        onPress={onClose}
-        size="large"
-        iconSize={24}
+        accessibilityHint="Ends the audio session and returns to previous screen"
+        accessibilityLabel="Stop listening session"
         color={colors.interactiveSecondary}
         hapticFeedback={false}
-        accessibilityLabel="Stop listening session"
-        accessibilityHint="Ends the audio session and returns to previous screen"
+        iconSize={24}
+        size="large"
+        onPress={onClose}
       />
     </View>
   );

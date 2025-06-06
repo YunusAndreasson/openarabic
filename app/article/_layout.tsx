@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { JSX } from 'react';
+import type { JSX } from 'react';
+import React from 'react';
 
 export default function ArticleLayout(): JSX.Element {
   return (

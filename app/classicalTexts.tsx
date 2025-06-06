@@ -1,9 +1,9 @@
 // External Libraries
 import { Ionicons } from '@expo/vector-icons';
 import { Stack } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -39,16 +39,16 @@ const ClassicalTextsScreen: React.FC = () => {
       />
 
       <ThemedView
-        style={styles.container}
+        accessibilityLabel="Why classical texts screen"
         includeBottomInset={false}
         safeAreaEdges={['left', 'right']}
-        accessibilityLabel="Why classical texts screen"
+        style={styles.container}
       >
         <ThemedView
-          useSafeArea={false}
           includeBottomInset={false}
-          style={styles.flexOne}
           scrollable={true}
+          style={styles.flexOne}
+          useSafeArea={false}
           contentContainerStyle={[
             styles.content,
             {
@@ -62,14 +62,14 @@ const ClassicalTextsScreen: React.FC = () => {
         >
           {/* Custom Header */}
           <View style={styles.customHeader}>
-            <ThemedText type="heading1" weight="bold" style={styles.customHeaderTitle}>
+            <ThemedText style={styles.customHeaderTitle} type="heading1" weight="bold">
               Why Classical Texts Work Best
             </ThemedText>
           </View>
 
           {/* Introduction */}
           <View style={styles.section}>
-            <ThemedText type="body" style={styles.bodyText}>
+            <ThemedText style={styles.bodyText} type="body">
               Classical Islamic texts with translations provide optimal conditions for Arabic
               acquisition through comprehensible input.
             </ThemedText>
@@ -77,17 +77,17 @@ const ClassicalTextsScreen: React.FC = () => {
 
           {/* Benefits */}
           <View style={styles.section}>
-            <ThemedText type="heading2" weight="bold" style={styles.sectionTitle}>
+            <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
               What You Get
             </ThemedText>
 
             <View style={styles.benefitsList}>
               <View style={styles.benefitItem}>
                 <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
-                  <Ionicons name="library-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="library-outline" size={20} />
                 </View>
                 <View style={styles.benefitContent}>
-                  <ThemedText type="body" style={styles.benefitText}>
+                  <ThemedText style={styles.benefitText} type="body">
                     <ThemedText weight="bold">Complete linguistic system</ThemedText>
                     {'\n'}All Arabic grammatical structures in authentic contexts
                   </ThemedText>
@@ -95,10 +95,10 @@ const ClassicalTextsScreen: React.FC = () => {
               </View>
               <View style={styles.benefitItem}>
                 <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
-                  <Ionicons name="book-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="book-outline" size={20} />
                 </View>
                 <View style={styles.benefitContent}>
-                  <ThemedText type="body" style={styles.benefitText}>
+                  <ThemedText style={styles.benefitText} type="body">
                     <ThemedText weight="bold">Rich vocabulary input</ThemedText>
                     {'\n'}Thousands of words in meaningful, comprehensible contexts
                   </ThemedText>
@@ -106,10 +106,10 @@ const ClassicalTextsScreen: React.FC = () => {
               </View>
               <View style={styles.benefitItem}>
                 <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
-                  <Ionicons name="language-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="language-outline" size={20} />
                 </View>
                 <View style={styles.benefitContent}>
-                  <ThemedText type="body" style={styles.benefitText}>
+                  <ThemedText style={styles.benefitText} type="body">
                     <ThemedText weight="bold">Authentic language patterns</ThemedText>
                     {'\n'}Arabic as actually written and used by native speakers
                   </ThemedText>
@@ -117,10 +117,10 @@ const ClassicalTextsScreen: React.FC = () => {
               </View>
               <View style={styles.benefitItem}>
                 <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
-                  <Ionicons name="bulb-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="bulb-outline" size={20} />
                 </View>
                 <View style={styles.benefitContent}>
-                  <ThemedText type="body" style={styles.benefitText}>
+                  <ThemedText style={styles.benefitText} type="body">
                     <ThemedText weight="bold">Cultural and conceptual framework</ThemedText>
                     {'\n'}Understanding of Arabic thought patterns and expression
                   </ThemedText>
@@ -131,35 +131,35 @@ const ClassicalTextsScreen: React.FC = () => {
 
           {/* Addressing Concerns */}
           <View style={styles.section}>
-            <ThemedText type="heading2" weight="bold" style={styles.sectionTitle}>
+            <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
               Common Concerns
             </ThemedText>
 
             <View style={styles.concernsList}>
               <View style={styles.concernItem}>
                 <View style={[styles.concernIcon, { backgroundColor: colors.buttonOverlay }]}>
-                  <Ionicons name="shield-checkmark-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="shield-checkmark-outline" size={20} />
                 </View>
                 <View style={styles.concernContent}>
-                  <ThemedText type="body" weight="bold" style={styles.concernTitle}>
+                  <ThemedText style={styles.concernTitle} type="body" weight="bold">
                     "Too difficult without grammar study"
                   </ThemedText>
-                  <ThemedText type="body" variant="secondary" style={styles.concernText}>
+                  <ThemedText style={styles.concernText} type="body" variant="secondary">
                     Translations provide comprehensible input while exposing you to authentic
-                    structures. Krashen's research shows grammar is acquired, not learned.
+                    structures. Krashens research shows grammar is acquired, not learned.
                   </ThemedText>
                 </View>
               </View>
 
               <View style={styles.concernItem}>
                 <View style={[styles.concernIcon, { backgroundColor: colors.buttonOverlay }]}>
-                  <Ionicons name="heart-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="heart-outline" size={20} />
                 </View>
                 <View style={styles.concernContent}>
-                  <ThemedText type="body" weight="bold" style={styles.concernTitle}>
-                    "Content is too advanced"
+                  <ThemedText style={styles.concernTitle} type="body" weight="bold">
+                    &quot;Content is too advanced&quot;
                   </ThemedText>
-                  <ThemedText type="body" variant="secondary" style={styles.concernText}>
+                  <ThemedText style={styles.concernText} type="body" variant="secondary">
                     Personal interest lowers the affective filter and improves acquisition. Familiar
                     concepts create optimal i+1 conditions.
                   </ThemedText>
@@ -170,20 +170,20 @@ const ClassicalTextsScreen: React.FC = () => {
 
           {/* Comparison */}
           <View style={styles.section}>
-            <ThemedText type="heading2" weight="bold" style={styles.sectionTitle}>
+            <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
               Classical vs Modern Arabic
             </ThemedText>
 
             <View style={styles.comparisonList}>
               <View style={styles.comparisonItem}>
                 <View style={[styles.comparisonIcon, { backgroundColor: colors.elevation2 }]}>
-                  <Ionicons name="library-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="library-outline" size={20} />
                 </View>
                 <View style={styles.comparisonContent}>
-                  <ThemedText type="body" weight="bold" style={styles.comparisonTitle}>
+                  <ThemedText style={styles.comparisonTitle} type="body" weight="bold">
                     Classical Arabic
                   </ThemedText>
-                  <ThemedText type="body" variant="secondary" style={styles.comparisonText}>
+                  <ThemedText style={styles.comparisonText} type="body" variant="secondary">
                     Foundation of all Arabic varieties. Enables reading Quran, hadith, literature,
                     formal writing, and news.
                   </ThemedText>
@@ -192,13 +192,13 @@ const ClassicalTextsScreen: React.FC = () => {
 
               <View style={styles.comparisonItem}>
                 <View style={[styles.comparisonIcon, { backgroundColor: colors.elevation2 }]}>
-                  <Ionicons name="chatbubble-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="chatbubble-outline" size={20} />
                 </View>
                 <View style={styles.comparisonContent}>
-                  <ThemedText type="body" weight="bold" style={styles.comparisonTitle}>
+                  <ThemedText style={styles.comparisonTitle} type="body" weight="bold">
                     Modern Standard Arabic
                   </ThemedText>
-                  <ThemedText type="body" variant="secondary" style={styles.comparisonText}>
+                  <ThemedText style={styles.comparisonText} type="body" variant="secondary">
                     Simplified classical Arabic for contemporary media and formal contexts. Easy
                     transition from classical foundation.
                   </ThemedText>
@@ -209,15 +209,15 @@ const ClassicalTextsScreen: React.FC = () => {
 
           {/* Process */}
           <View style={styles.section}>
-            <ThemedText type="heading2" weight="bold" style={styles.sectionTitle}>
+            <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
               How Acquisition Works
             </ThemedText>
-            <ThemedText type="body" style={styles.bodyText}>
+            <ThemedText style={styles.bodyText} type="body">
               Consistent exposure to comprehensible input builds linguistic competence over time.
               Each reading session contributes to your developing Arabic system through unconscious
               acquisition.
             </ThemedText>
-            <ThemedText type="body" style={styles.bodyText}>
+            <ThemedText style={styles.bodyText} type="body">
               This approach has successfully taught Arabic for centuries. Modern SLA research
               validates combining authentic texts with translation support for optimal
               comprehensible input.
@@ -226,20 +226,20 @@ const ClassicalTextsScreen: React.FC = () => {
 
           {/* Scientific References */}
           <View style={styles.section}>
-            <ThemedText type="heading2" weight="bold" style={styles.sectionTitle}>
+            <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
               Research Support
             </ThemedText>
 
             <View style={styles.referencesList}>
               <View style={styles.referenceItem}>
                 <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
-                  <Ionicons name="document-text-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="document-text-outline" size={20} />
                 </View>
                 <View style={styles.referenceContent}>
-                  <ThemedText type="body" weight="bold" style={styles.referenceTitle}>
+                  <ThemedText style={styles.referenceTitle} type="body" weight="bold">
                     Input Hypothesis
                   </ThemedText>
-                  <ThemedText type="body" variant="secondary" style={styles.referenceText}>
+                  <ThemedText style={styles.referenceText} type="body" variant="secondary">
                     Krashen, S. (1985). The Input Hypothesis: Issues and Implications. Demonstrates
                     that comprehensible input is the primary driver of language acquisition.
                   </ThemedText>
@@ -248,13 +248,13 @@ const ClassicalTextsScreen: React.FC = () => {
 
               <View style={styles.referenceItem}>
                 <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
-                  <Ionicons name="document-text-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="document-text-outline" size={20} />
                 </View>
                 <View style={styles.referenceContent}>
-                  <ThemedText type="body" weight="bold" style={styles.referenceTitle}>
+                  <ThemedText style={styles.referenceTitle} type="body" weight="bold">
                     Affective Filter Hypothesis
                   </ThemedText>
-                  <ThemedText type="body" variant="secondary" style={styles.referenceText}>
+                  <ThemedText style={styles.referenceText} type="body" variant="secondary">
                     Krashen, S. (1982). Principles and Practice in Second Language Acquisition.
                     Shows how motivation and low anxiety enable optimal language acquisition.
                   </ThemedText>
@@ -263,13 +263,13 @@ const ClassicalTextsScreen: React.FC = () => {
 
               <View style={styles.referenceItem}>
                 <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
-                  <Ionicons name="document-text-outline" size={20} color={colors.tint} />
+                  <Ionicons color={colors.tint} name="document-text-outline" size={20} />
                 </View>
                 <View style={styles.referenceContent}>
-                  <ThemedText type="body" weight="bold" style={styles.referenceTitle}>
+                  <ThemedText style={styles.referenceTitle} type="body" weight="bold">
                     Natural Approach
                   </ThemedText>
-                  <ThemedText type="body" variant="secondary" style={styles.referenceText}>
+                  <ThemedText style={styles.referenceText} type="body" variant="secondary">
                     Krashen, S. & Terrell, T. (1983). The Natural Approach. Demonstrates effective
                     language teaching through comprehensible input and meaningful content.
                   </ThemedText>
@@ -305,8 +305,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.1,
-    marginBottom: LAYOUT.SPACING.LARGE,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4,
+    marginBottom: LAYOUT.SPACING.LARGE,
   },
   bodyText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.05,
@@ -319,17 +319,17 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.LARGE,
   },
   concernItem: {
-    flexDirection: 'row',
     alignItems: 'flex-start',
+    flexDirection: 'row',
   },
   concernIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
     alignItems: 'center',
+    borderRadius: 20,
+    height: 40,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
     marginTop: 2,
+    width: 40,
   },
   concernContent: {
     flex: 1,
@@ -348,25 +348,25 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.MEDIUM,
   },
   benefitItem: {
-    flexDirection: 'row',
     alignItems: 'flex-start',
+    flexDirection: 'row',
   },
   benefitIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
     alignItems: 'center',
+    borderRadius: 20,
+    height: 40,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
     marginTop: 2,
+    width: 40,
   },
   benefitContent: {
     flex: 1,
   },
   benefitText: {
+    flex: 1,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
-    flex: 1,
   },
 
   // Comparison List
@@ -374,17 +374,17 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.LARGE,
   },
   comparisonItem: {
-    flexDirection: 'row',
     alignItems: 'flex-start',
+    flexDirection: 'row',
   },
   comparisonIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
     alignItems: 'center',
+    borderRadius: 20,
+    height: 40,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
     marginTop: 2,
+    width: 40,
   },
   comparisonContent: {
     flex: 1,
@@ -403,17 +403,17 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.LARGE,
   },
   referenceItem: {
-    flexDirection: 'row',
     alignItems: 'flex-start',
+    flexDirection: 'row',
   },
   referenceIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
     alignItems: 'center',
+    borderRadius: 20,
+    height: 40,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
     marginTop: 2,
+    width: 40,
   },
   referenceContent: {
     flex: 1,
@@ -429,10 +429,10 @@ const styles = StyleSheet.create({
 
   // Custom Header Styles
   customHeader: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.XLARGE,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.XLARGE,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   customHeaderTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.2,

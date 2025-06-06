@@ -1,7 +1,9 @@
 import React, { useMemo } from 'react';
+
 import { ArticleSection } from '@/components/article';
-import { getLongestArticles } from '../../utils/articleUtils';
+
 import type { Article } from '../../types/articles.types';
+import { getLongestArticles } from '../../utils/articleUtils';
 
 interface LongReadsSectionProps {
   articles: Article[];
@@ -25,10 +27,10 @@ export const LongReadsSection: React.FC<LongReadsSectionProps> = ({
 
   return (
     <ArticleSection
-      title="Long Reads"
       articles={longReadsArticles}
-      onArticlePress={onArticlePress}
       hideDifficulty={true}
+      title="Long Reads"
+      onArticlePress={onArticlePress}
     />
   );
 };

@@ -43,14 +43,14 @@ const ArticleItem = memo(({ item, onPress }: ArticleItemProps) => {
 
   return (
     <ThemedCard
-      variant="article"
-      imageUrl={item.image_url || 'https://picsum.photos/800/400'}
-      title={item.title}
-      category={item.category?.name ?? 'General'}
       author={item.author?.name ?? 'Author'}
-      onPress={handlePress}
-      style={[styles.articleCard, isPending && styles.pendingCard]}
+      category={item.category?.name ?? 'General'}
+      imageUrl={item.image_url || 'https://picsum.photos/800/400'}
       shadowSize="medium"
+      style={[styles.articleCard, isPending && styles.pendingCard]}
+      title={item.title}
+      variant="article"
+      onPress={handlePress}
     />
   );
 });
@@ -79,7 +79,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
     const listRef = useRef<FlashList<Article>>(null);
     const insets = useSafeAreaInsets();
     const headerHeight = useHeaderHeight();
-    const [isPending, startTransition] = useTransition();
+    const [, startTransition] = useTransition();
 
     // Defer articles data to prevent blocking during heavy operations
     const deferredArticles = useDeferredValue(articles);
@@ -105,11 +105,10 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
     const refreshControl = useMemo(
       () => (
         <RefreshControl
-          refreshing={isRefreshing}
-          onRefresh={handleRefreshWithTransition}
           colors={[colors.tint]}
-          tintColor={colors.tint}
           progressBackgroundColor={colors.background}
+          refreshing={isRefreshing}
+          tintColor={colors.tint}
           progressViewOffset={
             progressViewOffset !== undefined
               ? progressViewOffset
@@ -119,6 +118,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
                 LAYOUT.SPACING.XXLARGE +
                 LAYOUT.BUTTON.HEIGHT.MEDIUM
           }
+          onRefresh={handleRefreshWithTransition}
         />
       ),
       [

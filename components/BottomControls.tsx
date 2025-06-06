@@ -29,7 +29,7 @@ export type BottomControlsProps = {
   timerAccessibilityLabel?: string;
 };
 
-/* eslint-disable react/prop-types */
+ 
 const BottomControls = memo<BottomControlsProps>(
   ({
     primaryLabel,
@@ -90,7 +90,10 @@ const BottomControls = memo<BottomControlsProps>(
           {hasTimerButton && (
             <View style={styles.timerContainer}>
               <TouchableOpacity
-                onPress={onTimerPress}
+                accessibilityLabel={timerAccessibilityLabel || 'Sleep timer'}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isTimerActive }}
+                activeOpacity={LAYOUT.OPACITY.PRESSED}
                 style={[
                   styles.timerButton,
                   dynamicStyles.timerButton,
@@ -99,18 +102,16 @@ const BottomControls = memo<BottomControlsProps>(
                     borderColor: isTimerActive ? colors.tint : colors.border,
                   },
                 ]}
-                activeOpacity={LAYOUT.OPACITY.PRESSED}
-                accessibilityLabel={timerAccessibilityLabel || 'Sleep timer'}
-                accessibilityRole="button"
-                accessibilityState={{ selected: isTimerActive }}
+                onPress={onTimerPress}
               >
                 <Ionicons
+                  color={isTimerActive ? colors.background : colors.textSecondary}
                   name={isTimerActive ? 'timer' : 'timer-outline'}
                   size={16}
-                  color={isTimerActive ? colors.background : colors.textSecondary}
                 />
                 {isTimerActive && (
                   <ThemedText
+                    skipDefaultColor
                     type="caption"
                     style={[
                       styles.timerLabel,
@@ -119,7 +120,6 @@ const BottomControls = memo<BottomControlsProps>(
                         fontWeight: '600',
                       },
                     ]}
-                    skipDefaultColor
                   >
                     Timer
                   </ThemedText>
@@ -133,8 +133,9 @@ const BottomControls = memo<BottomControlsProps>(
             {hasSecondaryButton && (
               <View style={styles.buttonContainer}>
                 <ThemedButton
+                  accessibilityLabel={secondaryAccessibilityLabel || secondaryLabel!}
+                  disabled={secondaryDisabled}
                   title={secondaryLabel!}
-                  onPress={onSecondaryPress}
                   variant={secondaryVariant}
                   style={[
                     styles.button,
@@ -145,8 +146,7 @@ const BottomControls = memo<BottomControlsProps>(
                       backgroundColor: colors.card, // Use theme-aware card background
                     },
                   ]}
-                  disabled={secondaryDisabled}
-                  accessibilityLabel={secondaryAccessibilityLabel || secondaryLabel!}
+                  onPress={onSecondaryPress}
                 />
               </View>
             )}
@@ -154,13 +154,13 @@ const BottomControls = memo<BottomControlsProps>(
               style={hasSecondaryButton ? styles.buttonContainer : styles.fullWidthButtonContainer}
             >
               <ThemedButton
-                title={primaryLabel}
-                onPress={onPrimaryPress}
-                variant={primaryVariant}
-                style={styles.button}
-                disabled={primaryDisabled}
                 accessibilityLabel={primaryAccessibilityLabel || primaryLabel}
+                disabled={primaryDisabled}
                 disablePressAnimation={primaryDisablePressAnimation}
+                style={styles.button}
+                title={primaryLabel}
+                variant={primaryVariant}
+                onPress={onPrimaryPress}
               />
             </View>
           </View>

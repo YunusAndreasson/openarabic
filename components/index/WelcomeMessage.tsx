@@ -45,19 +45,19 @@ export const WelcomeMessage: React.FC = () => {
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        onPress={handleCalendarPress}
-        style={styles.dateContainer}
-        hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-        accessibilityLabel="View Islamic calendar"
         accessibilityHint="Opens Islamic calendar"
+        accessibilityLabel="View Islamic calendar"
+        hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+        style={styles.dateContainer}
+        onPress={handleCalendarPress}
       >
-        <ThemedText type="caption" weight="normal" colorName="textTertiary" style={styles.dateText}>
+        <ThemedText colorName="textTertiary" style={styles.dateText} type="caption" weight="normal">
           {dateMessage}
         </ThemedText>
         <Ionicons
+          color={colors.textTertiary}
           name="chevron-forward-outline"
           size={16}
-          color={colors.textTertiary}
           style={styles.chevronIcon}
         />
       </TouchableOpacity>

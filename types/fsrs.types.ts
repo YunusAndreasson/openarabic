@@ -11,7 +11,7 @@ export type UseFSRSResult = {
   isLoading: boolean;
   isComplete: boolean;
   progress: number;
-  updateWord: (rootId: number, confidence: 'known' | 'vague' | 'unknown') => Promise<void>;
+  updateWord: (rootId: number, confidence: 'known' | 'unknown' | 'vague') => Promise<void>;
   invalidateQueries: () => void;
   refetchDueWords: () => Promise<unknown>;
   resetQueue: () => void;

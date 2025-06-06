@@ -1,5 +1,5 @@
-import { StudyWord } from '@/types/vocabulary.types';
 import { checkAuthentication } from '@/services/supabase';
+import type { StudyWord } from '@/types/vocabulary.types';
 
 import { studyWordsFSRSService } from './studyWordsFSRS';
 

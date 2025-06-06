@@ -154,9 +154,9 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
       {Platform.OS === 'android' ? (
         <>
           <BlurView
-            tint={isDarkMode ? 'dark' : 'light'}
             intensity={BLUR_INTENSITY}
             style={StyleSheet.absoluteFill}
+            tint={isDarkMode ? 'dark' : 'light'}
           />
           <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tabBarOverlay }]} />
         </>
@@ -177,16 +177,16 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
         return (
           <PlatformPressable
             key={route.key}
-            onPress={getTabPressHandler(route, isFocused)}
-            style={styles.tabButton}
-            android_ripple={{ color: rippleColor, borderless: true }}
             accessibilityRole="tab"
             accessibilityState={{ selected: isFocused }}
+            android_ripple={{ color: rippleColor, borderless: true }}
+            style={styles.tabButton}
+            onPress={getTabPressHandler(route, isFocused)}
           >
             <Ionicons
+              color={isFocused ? colors.tint : colors.tabIconDefault}
               name={isFocused ? screen.iconFilled : screen.iconOutline}
               size={ICON_SIZE}
-              color={isFocused ? colors.tint : colors.tabIconDefault}
               style={[
                 isFocused ? styles.activeIcon : styles.inactiveIcon,
                 {
@@ -213,9 +213,9 @@ const CustomHeaderBackground = memo(() => {
     return (
       <View style={StyleSheet.absoluteFill}>
         <BlurView
-          tint={isDarkMode ? 'dark' : 'light'}
           intensity={BLUR_INTENSITY}
           style={StyleSheet.absoluteFill}
+          tint={isDarkMode ? 'dark' : 'light'}
         />
         <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.headerOverlay }]} />
       </View>
@@ -224,9 +224,9 @@ const CustomHeaderBackground = memo(() => {
 
   return (
     <BlurView
-      tint={isDarkMode ? 'dark' : 'light'}
       intensity={BLUR_INTENSITY}
       style={StyleSheet.absoluteFill}
+      tint={isDarkMode ? 'dark' : 'light'}
     />
   );
 });
@@ -271,7 +271,7 @@ export default function TabLayout() {
   }
 
   return (
-    <Tabs tabBar={props => <CustomTabBar {...props} />} screenOptions={screenOptions}>
+    <Tabs screenOptions={screenOptions} tabBar={props => <CustomTabBar {...props} />}>
       {TAB_SCREENS.map(screen => (
         <Tabs.Screen
           key={screen.name}

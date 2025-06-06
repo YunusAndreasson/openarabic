@@ -1,4 +1,5 @@
-import React, { useMemo, memo, JSX } from 'react';
+import type { JSX } from 'react';
+import React, { useMemo, memo } from 'react';
 import type { ViewStyle, StyleProp } from 'react-native';
 import { ScrollView, View, StyleSheet } from 'react-native';
 import type { Edge } from 'react-native-safe-area-context';
@@ -57,13 +58,13 @@ function ThemedViewComponent({
   const scrollableContent = useMemo(
     () => (
       <ScrollView
-        contentContainerStyle={contentContainerStyle}
-        showsVerticalScrollIndicator={false}
-        bounces={true}
-        removeClippedSubviews={true}
-        automaticallyAdjustContentInsets={false}
-        contentInsetAdjustmentBehavior="never"
         alwaysBounceVertical={true}
+        automaticallyAdjustContentInsets={false}
+        bounces={true}
+        contentContainerStyle={contentContainerStyle}
+        contentInsetAdjustmentBehavior="never"
+        removeClippedSubviews={true}
+        showsVerticalScrollIndicator={false}
         {...scrollViewProps}
       >
         {children}

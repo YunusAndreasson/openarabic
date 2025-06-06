@@ -1,5 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
-import React, { JSX } from 'react';
+import type { JSX } from 'react';
+import React from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
@@ -68,36 +69,36 @@ export default function ReviewScreen(): JSX.Element {
   } = useReview({ fromRemember });
 
   if (isComplete || isTransitioningToCompletion) {
-    return <CompletionScreen onClose={handleClose} sessionMetrics={sessionMetrics} />;
+    return <CompletionScreen sessionMetrics={sessionMetrics} onClose={handleClose} />;
   }
 
   return (
     <ThemedView style={baseStyles.container} useSafeArea={true}>
       <View style={baseStyles.contentContainer}>
         <ReviewHeader
-          progress={progress}
-          maxProgress={maxProgress}
           animationKey={progressAnimationKey}
+          maxProgress={maxProgress}
+          progress={progress}
           onClose={handleClose}
         />
 
         <View style={baseStyles.wordArea}>
           <ReviewCard
-            word={currentSentence.wordForm}
             fontSize={wordFontSize}
+            isTransitioning={isTransitioningToCompletion}
+            isUpdating={isUpdating}
+            opacityStyle={animatedStyle}
+            word={currentSentence.wordForm}
             onSwipeLeft={handleSwipeLeft}
             onSwipeRight={handleSwipeRight}
             onTap={handleTap}
-            isUpdating={isUpdating}
-            isTransitioning={isTransitioningToCompletion}
-            opacityStyle={animatedStyle}
           />
           <MeaningOverlay
-            visible={showMeaningOverlay}
-            meaning={currentMeaning}
-            isWarning={!isVagueMeaning}
-            isVague={isVagueMeaning}
             isStruggling={isStruggling}
+            isVague={isVagueMeaning}
+            isWarning={!isVagueMeaning}
+            meaning={currentMeaning}
+            visible={showMeaningOverlay}
           />
         </View>
 

@@ -1,4 +1,5 @@
-import React, { useCallback, useMemo, memo, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import React, { useCallback, useMemo, memo } from 'react';
 import { Pressable, StyleSheet, View, Platform, type TextStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -122,11 +123,11 @@ const Pill = memo(
           ]}
         >
           <ThemedText
-            type={textType}
             colorName={isSelected ? 'background' : 'text'}
-            numberOfLines={1}
             ellipsizeMode="tail"
+            numberOfLines={1}
             style={textStyle}
+            type={textType}
           >
             {label}
           </ThemedText>
@@ -137,6 +138,8 @@ const Pill = memo(
     return (
       <Animated.View style={scaleStyle}>
         <Pressable
+          android_ripple={androidRipple}
+          disabled={!onSelect}
           style={({ pressed: isPressedState }) => [
             styles.pill,
             containerStyle,
@@ -147,15 +150,13 @@ const Pill = memo(
           onPress={handlePress}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
-          disabled={!onSelect}
-          android_ripple={androidRipple}
         >
           <ThemedText
-            type={textType}
             colorName={isSelected ? 'background' : 'text'}
-            numberOfLines={1}
             ellipsizeMode="tail"
+            numberOfLines={1}
             style={textStyle}
+            type={textType}
           >
             {label}
           </ThemedText>

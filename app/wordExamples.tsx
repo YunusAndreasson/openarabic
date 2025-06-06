@@ -2,7 +2,6 @@ import { FlashList } from '@shopify/flash-list';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState, memo } from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
@@ -11,7 +10,8 @@ import { LAYOUT } from '@/constants/layout';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { supabase } from '@/services/supabase';
-import { wordExamplesService, SentenceWithWords } from '@/services/wordExamples';
+import type { SentenceWithWords } from '@/services/wordExamples';
+import { wordExamplesService } from '@/services/wordExamples';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
@@ -40,7 +40,7 @@ const SimpleArabicWord = memo(
 
     return (
       <View style={containerStyle}>
-        <ThemedText type="arabic" arabicFontSize={24} style={styles.arabicText}>
+        <ThemedText arabicFontSize={24} style={styles.arabicText} type="arabic">
           {word.word_form}
         </ThemedText>
       </View>
@@ -72,13 +72,13 @@ const WordExampleItem = memo(
               {item.words.map((word, index) => (
                 <SimpleArabicWord
                   key={`word-${word.id}-${index}`}
-                  word={word}
                   isHighlighted={targetWordId === word.id}
+                  word={word}
                 />
               ))}
             </View>
           ) : (
-            <ThemedText type="arabic" align="right" style={styles.arabicSentence}>
+            <ThemedText align="right" style={styles.arabicSentence} type="arabic">
               {item.sentence.arabic}
             </ThemedText>
           )}
@@ -203,7 +203,7 @@ export default function WordExamplesScreen() {
   // Memoized render function
   const renderSentenceItem = useCallback(
     ({ item }: { item: SentenceWithWords }) => (
-      <WordExampleItem item={item} wordId={wordId} rootId={rootId} />
+      <WordExampleItem item={item} rootId={rootId} wordId={wordId} />
     ),
     [rootId, wordId]
   );
@@ -237,8 +237,8 @@ export default function WordExamplesScreen() {
       <ThemedView style={styles.container}>
         <Stack.Screen options={headerOptions} />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.tint} />
-          <ThemedText variant="secondary" style={styles.loadingText}>
+          <ActivityIndicator color={colors.tint} size="large" />
+          <ThemedText style={styles.loadingText} variant="secondary">
             Loading examples...
           </ThemedText>
         </View>
@@ -251,23 +251,23 @@ export default function WordExamplesScreen() {
       <Stack.Screen options={headerOptions} />
 
       <ThemedView
-        style={styles.container}
         includeBottomInset={false}
         safeAreaEdges={['left', 'right']}
+        style={styles.container}
       >
         <FlashList
+          contentInsetAdjustmentBehavior="automatic"
           data={examples}
-          renderItem={renderSentenceItem}
+          drawDistance={400}
           estimatedItemSize={160}
+          keyExtractor={(item, index) => `sentence-${item.sentence.id || index}`}
+          renderItem={renderSentenceItem}
+          showsVerticalScrollIndicator={true}
           contentContainerStyle={{
             paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
             paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
             paddingTop: LAYOUT.SPACING.SMALL,
           }}
-          showsVerticalScrollIndicator={true}
-          contentInsetAdjustmentBehavior="automatic"
-          drawDistance={400}
-          keyExtractor={(item, index) => `sentence-${item.sentence.id || index}`}
         />
       </ThemedView>
     </>

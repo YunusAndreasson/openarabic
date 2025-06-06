@@ -1,14 +1,13 @@
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { memo, useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View, Platform, ActivityIndicator } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 
 import { DEFAULT_IMAGES } from '@/constants/images';
 import { LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY, getEnhancedOpacity } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
-import { withOpacity } from '@/utils/colorUtils';
 import type {
   ThemedCardProps as BaseThemedCardProps,
   ArticleCardProps,
@@ -16,7 +15,7 @@ import type {
   BasicCardProps,
 } from '@/types/ui/card.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
-import { calculateReadingTime } from '@/utils/articleUtils';
+import { withOpacity } from '@/utils/colorUtils';
 
 import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';
@@ -86,8 +85,8 @@ const styles = StyleSheet.create({
     }),
   },
   dueWordsContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
     marginTop: LAYOUT.SPACING.TINY,
   },
   gradient: {
@@ -145,7 +144,7 @@ type ThemedCardProps = Omit<BaseThemedCardProps, 'onPress'> & {
   handlePress?: () => void;
   onPress?: () => void;
   fullSummary?: boolean;
-} & (ArticleCardProps | CompactCardProps | BasicCardProps);
+} & (ArticleCardProps | BasicCardProps | CompactCardProps);
 
 // Type guards moved outside component
 const isArticleVariant = (p: ThemedCardProps): p is ArticleCardProps =>
@@ -161,7 +160,7 @@ const LoadingComponent = ({ isDarkMode, colors }: { isDarkMode: boolean; colors:
       { backgroundColor: isDarkMode ? colors.cardBackground : colors.overlay },
     ]}
   >
-    <ActivityIndicator size="large" color={colors.tint} />
+    <ActivityIndicator color={colors.tint} size="large" />
   </View>
 );
 
@@ -270,25 +269,25 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
       <>
         <View style={styles.imageContainer}>
           <EnhancedImage
-            source={
-              isArticleVariant(props)
-                ? props.imageUrl || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER
-                : DEFAULT_IMAGES.ARTICLE_PLACEHOLDER
-            }
-            style={styles.image}
-            contentFit="cover"
-            skipTransition={true}
-            cachePolicy="memory-disk"
+            allowDownscaling={false}
             alt={`Image for ${title || 'Article'}`}
             blurRadius={0}
-            allowDownscaling={false}
+            cachePolicy="memory-disk"
+            contentFit="cover"
+            prefetch={true}
             priority="high"
+            skipTransition={true}
+            style={styles.image}
             placeholder={
               (isArticleVariant(props) ? props.placeholder : undefined) || {
                 thumbhash: DEFAULT_IMAGES.ARTICLE_PLACEHOLDER_THUMBHASH,
               }
             }
-            prefetch={true}
+            source={
+              isArticleVariant(props)
+                ? props.imageUrl || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER
+                : DEFAULT_IMAGES.ARTICLE_PLACEHOLDER
+            }
           />
 
           <LinearGradient
@@ -313,10 +312,10 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
         <View style={styles.contentContainer}>
           <View style={styles.titleContainer}>
             <ThemedText
-              type="heading3"
-              numberOfLines={2}
               colorName="headingText"
+              numberOfLines={2}
               style={titleStyle}
+              type="heading3"
             >
               {title}
             </ThemedText>
@@ -324,7 +323,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
           {author ? (
             <View style={styles.authorContainer}>
-              <ThemedText type="label" colorName="authorText" numberOfLines={1} style={authorStyle}>
+              <ThemedText colorName="authorText" numberOfLines={1} style={authorStyle} type="label">
                 {author}
               </ThemedText>
             </View>
@@ -333,8 +332,8 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           {summary ? (
             <View style={styles.summaryContainer}>
               <ThemedText
-                type="caption"
                 colorName="captionText"
+                type="caption"
                 {...(!props.fullSummary ? { numberOfLines: 3 } : {})}
                 style={summaryStyle}
               >
@@ -367,20 +366,20 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
       <>
         <View style={styles.compactImageContainer}>
           <EnhancedImage
+            allowDownscaling={false}
+            alt={`Image for ${article?.title || 'Article'}`}
+            blurRadius={0}
+            contentFit="cover"
+            prefetch={true}
+            priority="high"
+            skipTransition={true}
             source={article?.image_url || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER}
             style={styles.image}
-            contentFit="cover"
-            skipTransition={true}
-            blurRadius={0}
-            allowDownscaling={false}
-            priority="high"
             placeholder={
               article?.placeholder || {
                 thumbhash: DEFAULT_IMAGES.ARTICLE_PLACEHOLDER_THUMBHASH,
               }
             }
-            prefetch={true}
-            alt={`Image for ${article?.title || 'Article'}`}
           />
 
           <LinearGradient
@@ -409,10 +408,10 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
         <View style={styles.contentContainer}>
           <View style={styles.titleContainer}>
             <ThemedText
-              type="heading3"
-              numberOfLines={2}
               colorName="headingText"
+              numberOfLines={2}
               style={titleStyle}
+              type="heading3"
             >
               {article?.title}
             </ThemedText>
@@ -422,10 +421,10 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           {article?.author ? (
             <View style={styles.authorContainer}>
               <ThemedText
-                type="caption"
                 colorName="metadataText"
                 numberOfLines={1}
                 style={metadataStyle}
+                type="caption"
               >
                 {article.author.name}
               </ThemedText>
@@ -435,17 +434,17 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           {/* Enhanced due word count indicator with accent styling */}
           {isCompactVariant(props) && props.dueWordCount ? (
             <View style={styles.dueWordsContainer}>
-              <Ionicons name="sync-outline" size={14} color={colors.warning} />
+              <Ionicons color={colors.warning} name="sync-outline" size={14} />
               <ThemedText
-                type="caption"
+                skipDefaultColor
                 colorName="warning"
+                type="caption"
                 style={[
                   dueWordsStyle,
                   {
                     marginLeft: LAYOUT.SPACING.TINY,
                   },
                 ]}
-                skipDefaultColor
               >
                 {props.dueWordCount} due {props.dueWordCount === 1 ? 'word' : 'words'}
               </ThemedText>
@@ -489,9 +488,9 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
     return (
       <BaseCard
         isLoading={true}
-        onPress={pressHandler}
+        loadingComponent={<LoadingComponent colors={colors} isDarkMode={isDarkMode} />}
         style={[isCompact && styles.compactContainer, style as StyleProp<ViewStyle>]}
-        loadingComponent={<LoadingComponent isDarkMode={isDarkMode} colors={colors} />}
+        onPress={pressHandler}
       >
         <View />
       </BaseCard>
@@ -500,9 +499,9 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
   return (
     <BaseCard
-      onPress={pressHandler}
-      style={[isCompact && styles.compactContainer, style as StyleProp<ViewStyle>]}
       includePressAnimation={true}
+      style={[isCompact && styles.compactContainer, style as StyleProp<ViewStyle>]}
+      onPress={pressHandler}
     >
       {isCompact ? compactContent : articleContent}
     </BaseCard>

@@ -1,6 +1,7 @@
-import React, { memo, ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
 import { Canvas } from '@shopify/react-native-skia';
+import type { ReactNode } from 'react';
+import React, { memo } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { ChartTooltip, DataPointOverlay, useChartTooltip } from './ChartInteractivity';
 import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE } from './constants';
@@ -43,10 +44,10 @@ export const ChartCanvas = memo(
 
     return (
       <View
-        style={[styles.container, { width, height }]}
-        accessible={true}
         accessibilityLabel={accessibilityLabel}
         accessibilityRole="image"
+        accessible={true}
+        style={[styles.container, { width, height }]}
       >
         {/* Main Chart Canvas */}
         <Canvas style={{ width, height }}>{children}</Canvas>
@@ -56,17 +57,17 @@ export const ChartCanvas = memo(
           dataPoints.map((point, index) => (
             <DataPointOverlay
               key={`data-point-${index}`}
+              accessibilityLabel={`Data point: ${point.value} ${point.label}`}
+              label={point.label}
+              value={point.value}
               x={point.x}
               y={point.y}
-              value={point.value}
-              label={point.label}
               onPress={showTooltip}
-              accessibilityLabel={`Data point: ${point.value} ${point.label}`}
             />
           ))}
 
         {/* Tooltip Component */}
-        {enableTooltips && <ChartTooltip tooltip={tooltip} maxWidth={width} />}
+        {enableTooltips && <ChartTooltip maxWidth={width} tooltip={tooltip} />}
       </View>
     );
   }

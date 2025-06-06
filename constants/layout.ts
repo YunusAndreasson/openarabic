@@ -551,7 +551,7 @@ export const createTypographyStyle = (
 // Semantic color getter with theme awareness
 export const getSemanticColor = (
   colorType: keyof typeof TYPOGRAPHY_HIERARCHY.SEMANTIC_COLORS,
-  isDarkMode: boolean = false
+  _isDarkMode: boolean = false
 ): string => {
   const colorName = TYPOGRAPHY_HIERARCHY.SEMANTIC_COLORS[colorType];
   // This returns the color name to be resolved by the theme system

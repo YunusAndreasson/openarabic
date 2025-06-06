@@ -1,12 +1,13 @@
+ 
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, View, useWindowDimensions, Platform } from 'react-native';
+import type { SharedValue } from 'react-native-reanimated';
 import Animated, {
   useAnimatedStyle,
   interpolate,
   Extrapolation,
-  SharedValue,
   useDerivedValue,
 } from 'react-native-reanimated';
 
@@ -377,30 +378,30 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
         {/* Background Image with Enhanced Parallax */}
         <Animated.View style={[styles.imageWrapper, imageAnimatedStyle]}>
           <EnhancedImage
-            source={staticValues.imageSource}
-            style={styles.image}
+            allowDownscaling={false}
+            blurRadius={0}
             contentFit="cover"
             priority="high"
-            blurRadius={0}
-            allowDownscaling={false}
+            source={staticValues.imageSource}
+            style={styles.image}
+            transition={300}
             placeholder={
               article.placeholder || {
                 thumbhash: DEFAULT_IMAGES.ARTICLE_PLACEHOLDER_THUMBHASH,
               }
             }
-            transition={300}
           />
         </Animated.View>
 
         {/* Dynamic Contrast Overlay */}
-        <Animated.View style={[styles.overlay, overlayStyle]} pointerEvents="none" />
+        <Animated.View pointerEvents="none" style={[styles.overlay, overlayStyle]} />
 
         {/* Advanced Gradient System */}
         <LinearGradient
           colors={gradientColors}
-          style={styles.gradient}
-          pointerEvents="none"
           locations={[0, 0.1, 0.2, 0.3, 0.45, 0.6, 0.75, 0.85, 0.95, 1]} // Precise color stops
+          pointerEvents="none"
+          style={styles.gradient}
         />
 
         {/* Content Section with Enhanced Hierarchy - Following Miller's Law */}
@@ -408,17 +409,17 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
           {/* Primary Content Group: Title and Author */}
           <View style={styles.primaryContentGroup}>
             <ThemedText
-              type="heading2"
-              style={dynamicTextStyles.title}
               adjustsFontSizeToFit={!!(article.title && article.title.length > 60)}
-              numberOfLines={article.title && article.title.length > 80 ? 3 : 2}
               allowFontScaling={true} // Respect user font size preferences
+              numberOfLines={article.title && article.title.length > 80 ? 3 : 2}
+              style={dynamicTextStyles.title}
+              type="heading2"
             >
               {article.title}
             </ThemedText>
 
             {article.author && (
-              <ThemedText type="label" style={dynamicTextStyles.author}>
+              <ThemedText style={dynamicTextStyles.author} type="label">
                 by {article.author.name}
               </ThemedText>
             )}
@@ -431,12 +432,12 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
               {article.category && (
                 <Animated.View style={[styles.metadataItem, metadataItemStyle0]}>
                   <Ionicons
+                    color={dynamicTextStyles.metadataIcon.color}
                     name="folder-outline"
                     size={15} // Consistent icon size
-                    color={dynamicTextStyles.metadataIcon.color}
                     style={dynamicTextStyles.metadataIcon}
                   />
-                  <ThemedText type="caption" style={dynamicTextStyles.metadataText}>
+                  <ThemedText style={dynamicTextStyles.metadataText} type="caption">
                     {capitalizeFirstLetter(article.category.name)}
                   </ThemedText>
                 </Animated.View>
@@ -445,12 +446,12 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
               {/* Reading Time */}
               <Animated.View style={[styles.metadataItem, metadataItemStyle1]}>
                 <Ionicons
+                  color={dynamicTextStyles.metadataIcon.color}
                   name="time-outline"
                   size={15}
-                  color={dynamicTextStyles.metadataIcon.color}
                   style={dynamicTextStyles.metadataIcon}
                 />
-                <ThemedText type="caption" style={dynamicTextStyles.metadataText}>
+                <ThemedText style={dynamicTextStyles.metadataText} type="caption">
                   {readingTime} min read
                 </ThemedText>
               </Animated.View>
@@ -458,12 +459,12 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
               {/* Difficulty Level */}
               <Animated.View style={[styles.metadataItem, metadataItemStyle2]}>
                 <Ionicons
+                  color={dynamicTextStyles.metadataIcon.color}
                   name="stats-chart-outline"
                   size={15}
-                  color={dynamicTextStyles.metadataIcon.color}
                   style={dynamicTextStyles.metadataIcon}
                 />
-                <ThemedText type="caption" style={dynamicTextStyles.metadataText}>
+                <ThemedText style={dynamicTextStyles.metadataText} type="caption">
                   {formatDifficultyLevel(article.difficulty_level)}
                 </ThemedText>
               </Animated.View>
@@ -474,10 +475,10 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
           {article.summary && (
             <View style={styles.summaryGroup}>
               <ThemedText
-                type="body"
-                style={dynamicTextStyles.summary}
-                numberOfLines={4}
                 ellipsizeMode="tail"
+                numberOfLines={4}
+                style={dynamicTextStyles.summary}
+                type="body"
               >
                 {article.summary}
               </ThemedText>

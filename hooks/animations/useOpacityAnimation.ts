@@ -15,7 +15,7 @@ import {
 import { TIMING_CONFIG } from './animationConfigs';
 import type { SharedValue } from './types';
 
-export type FadeAnimationStyle = 'standard' | 'entrance-only';
+export type FadeAnimationStyle = 'entrance-only' | 'standard';
 
 export interface FadeAnimationOptions {
   /**

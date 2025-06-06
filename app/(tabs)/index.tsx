@@ -1,7 +1,8 @@
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import React, { useEffect, useState, useCallback, useMemo, JSX } from 'react';
+import type { JSX } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -344,8 +345,8 @@ export default function ArticlesScreen(): JSX.Element {
             <FeaturedSection
               key="featured"
               article={featuredArticle}
-              onPress={handleArticlePress}
               showTitle={true}
+              onPress={handleArticlePress}
             />
           ) : null;
         }
@@ -354,8 +355,8 @@ export default function ArticlesScreen(): JSX.Element {
           return user?.id ? (
             <StrugglingWordsSection
               key="struggling-words"
-              words={strugglingWords}
               isLoading={isStrugglingWordsLoading}
+              words={strugglingWords}
             />
           ) : null;
 
@@ -363,10 +364,10 @@ export default function ArticlesScreen(): JSX.Element {
           return user?.id ? (
             <DueWordsArticleSection
               key="due-words"
+              dueWordRootIds={dueWordRootIds}
+              limit={10}
               userId={user.id}
               onArticlePress={handleArticlePress}
-              limit={10}
-              dueWordRootIds={dueWordRootIds}
             />
           ) : null;
 
@@ -374,10 +375,10 @@ export default function ArticlesScreen(): JSX.Element {
           return user?.id ? (
             <DifficultWordsArticleSection
               key="difficult-words"
+              difficultWordRootIds={difficultWordRootIds}
+              limit={10}
               userId={user.id}
               onArticlePress={handleArticlePress}
-              limit={10}
-              difficultWordRootIds={difficultWordRootIds}
             />
           ) : null;
 
@@ -385,10 +386,10 @@ export default function ArticlesScreen(): JSX.Element {
           return derivedData.beginnerArticles.length > 0 ? (
             <ArticleSection
               key="beginner"
-              title="Get Started"
               articles={derivedData.beginnerArticles.slice(0, 10)}
-              onArticlePress={handleArticlePress}
               hideDifficulty={true}
+              title="Get Started"
+              onArticlePress={handleArticlePress}
             />
           ) : null;
 
@@ -396,11 +397,11 @@ export default function ArticlesScreen(): JSX.Element {
           return derivedData.continueReadingArticles.length > 0 ? (
             <ArticleSection
               key="continue-reading"
-              title="Continue Reading"
               articles={derivedData.continueReadingArticles}
-              onArticlePress={handleArticlePress}
-              hideDifficulty={true}
               getLastOpenedAt={articleId => lastOpenedArticles?.[articleId]}
+              hideDifficulty={true}
+              title="Continue Reading"
+              onArticlePress={handleArticlePress}
             />
           ) : null;
 
@@ -418,9 +419,9 @@ export default function ArticlesScreen(): JSX.Element {
             <LongReadsSection
               key="long-reads"
               articles={articlesData}
-              onArticlePress={handleArticlePress}
               limit={10}
               minReadingTime={1}
+              onArticlePress={handleArticlePress}
             />
           );
 
@@ -428,8 +429,8 @@ export default function ArticlesScreen(): JSX.Element {
           return derivedData.authorsWithArticles.length > 0 ? (
             <FilterSection
               key="authors"
-              title="Authors"
               items={derivedData.authorsWithArticles}
+              title="Authors"
               onSelect={handleSelectAuthor}
             />
           ) : null;
@@ -438,8 +439,8 @@ export default function ArticlesScreen(): JSX.Element {
           return derivedData.categoriesWithArticles.length > 0 ? (
             <FilterSection
               key="categories"
-              title="Categories"
               items={derivedData.categoriesWithArticles}
+              title="Categories"
               onSelect={handleSelectCategory}
             />
           ) : null;
@@ -516,24 +517,24 @@ export default function ArticlesScreen(): JSX.Element {
 
   return (
     <ThemedView
-      style={styles.container}
+      accessibilityLabel="Articles screen"
       includeBottomInset={false}
       safeAreaEdges={['left', 'right']}
-      accessibilityLabel="Articles screen"
+      style={styles.container}
     >
       <ArticleList
         articles={[]}
-        isLoading={isArticlesLoading}
-        isRefreshing={isRefreshing}
-        onRefresh={handleRefresh}
-        onArticlePress={handleArticlePress}
-        ListHeaderComponent={isArticlesLoading && !isDataCached ? null : ListHeaderComponent}
-        ListFooterComponent={isArticlesLoading && !isDataCached ? null : ListFooterComponent}
-        ListEmptyComponent={null}
         contentContainerStyle={contentContainerStyle}
         hideMainList={isArticlesLoading && !isDataCached}
         hideWhileRefreshing={false}
+        isLoading={isArticlesLoading}
+        isRefreshing={isRefreshing}
+        ListEmptyComponent={null}
+        ListFooterComponent={isArticlesLoading && !isDataCached ? null : ListFooterComponent}
+        ListHeaderComponent={isArticlesLoading && !isDataCached ? null : ListHeaderComponent}
         progressViewOffset={headerHeight + LAYOUT.SPACING.XXLARGE}
+        onArticlePress={handleArticlePress}
+        onRefresh={handleRefresh}
       />
     </ThemedView>
   );

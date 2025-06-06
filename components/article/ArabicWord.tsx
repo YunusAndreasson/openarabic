@@ -244,12 +244,12 @@ function ArabicWordComponent({
     <>
       <TouchableOpacity
         ref={wordRef}
-        onPress={handlePress}
-        onLongPress={handleLongPress}
-        delayLongPress={250}
         activeOpacity={0.7}
-        onLayout={handleLayout}
+        delayLongPress={250}
         style={containerStyle}
+        onLayout={handleLayout}
+        onLongPress={handleLongPress}
+        onPress={handlePress}
       >
         <Animated.View style={[styles.wordView, pressStyle]}>
           <ThemedText {...textProps}>{word.word_form}</ThemedText>
@@ -257,11 +257,11 @@ function ArabicWordComponent({
       </TouchableOpacity>
       {tooltipVisible && absoluteLayout ? (
         <WordTooltip
-          visible={tooltipVisible}
-          text={word.english}
           layout={absoluteLayout}
-          onClose={handleTooltipClose}
+          text={word.english}
+          visible={tooltipVisible}
           zIndex={tooltipZIndex}
+          onClose={handleTooltipClose}
         />
       ) : null}
     </>

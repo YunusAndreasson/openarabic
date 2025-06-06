@@ -2,7 +2,8 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import React, { useState, useCallback, JSX } from 'react';
+import type { JSX } from 'react';
+import React, { useState, useCallback } from 'react';
 import { StyleSheet, RefreshControl, ScrollView, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -146,22 +147,13 @@ export default function VocabularyScreen(): JSX.Element {
   // Main content
   return (
     <ThemedView
-      style={styles.container}
+      accessibilityLabel="Vocabulary screen"
       includeBottomInset={false}
       safeAreaEdges={['left', 'right']}
-      accessibilityLabel="Vocabulary screen"
+      style={styles.container}
     >
       <ScrollView
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            colors={[colors.tint]}
-            tintColor={colors.tint}
-            progressBackgroundColor={colors.background}
-            progressViewOffset={headerHeight + LAYOUT.SPACING.XXLARGE}
-          />
-        }
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.contentContainer,
           {
@@ -169,39 +161,48 @@ export default function VocabularyScreen(): JSX.Element {
             paddingBottom: insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY,
           },
         ]}
-        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            colors={[colors.tint]}
+            progressBackgroundColor={colors.background}
+            progressViewOffset={headerHeight + LAYOUT.SPACING.XXLARGE}
+            refreshing={isRefreshing}
+            tintColor={colors.tint}
+            onRefresh={handleRefresh}
+          />
+        }
       >
         {/* Subtle loading indicator */}
         {showLoadingIndicator && (
           <ThemedView style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color={colors.tint} />
+            <ActivityIndicator color={colors.tint} size="small" />
           </ThemedView>
         )}
 
         {/* PRIMARY SECTION: Learning Overview */}
         <VocabularyStatCards
-          masteredWords={userStats?.masteredWords ?? 0}
-          learningWords={userStats?.learningWords ?? 0}
           dueWords={dueWords}
+          learningWords={userStats?.learningWords ?? 0}
+          masteredWords={userStats?.masteredWords ?? 0}
           studyWords={studyWords?.filter(word => word != null && word.root_id != null) ?? []}
           onStatPress={handleStatPress}
         />
       </ScrollView>
       <BottomControls
-        primaryLabel={getButtonLabel()}
-        onPrimaryPress={() => setShowSessionOptions(true)}
-        primaryVariant={hasWordsToStudy ? 'filled' : 'outlined'}
-        primaryDisabled={!hasWordsToStudy}
         primaryAccessibilityLabel={getAccessibilityLabel()}
+        primaryDisabled={!hasWordsToStudy}
+        primaryLabel={getButtonLabel()}
+        primaryVariant={hasWordsToStudy ? 'filled' : 'outlined'}
+        onPrimaryPress={() => setShowSessionOptions(true)}
       />
 
       {/* Session Options Modal */}
       <SessionOptionsModal
+        dueWordsCount={dueWords}
         visible={showSessionOptions}
         onClose={() => setShowSessionOptions(false)}
-        dueWordsCount={dueWords}
-        onStartReview={handleStartReview}
         onStartListen={handleStartListen}
+        onStartReview={handleStartReview}
       />
     </ThemedView>
   );

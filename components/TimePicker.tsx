@@ -109,31 +109,31 @@ export const TimePicker = memo(
             {/* Header */}
             <View style={styles.header}>
               <ThemedText
-                type="heading3"
-                weight="bold"
                 colorName="headingText"
                 style={styles.title}
+                type="heading3"
+                weight="bold"
               >
                 {title}
               </ThemedText>
               <TouchableOpacity
-                onPress={onClose}
-                style={styles.closeButton}
-                accessibilityRole="button"
-                accessibilityLabel="Close time picker"
                 accessibilityHint="Cancel time selection and close dialog"
+                accessibilityLabel="Close time picker"
+                accessibilityRole="button"
+                style={styles.closeButton}
+                onPress={onClose}
               >
-                <Ionicons name="close" size={24} color={colors.textSecondary} />
+                <Ionicons color={colors.textSecondary} name="close" size={24} />
               </TouchableOpacity>
             </View>
 
             {/* Time Display */}
             <View style={styles.timeDisplay}>
               <ThemedText
-                type="heading1"
-                weight="bold"
                 colorName="subtitleText"
                 style={styles.timeText}
+                type="heading1"
+                weight="bold"
               >
                 {formatTime(selectedHour, selectedMinute)}
               </ThemedText>
@@ -142,53 +142,53 @@ export const TimePicker = memo(
             {/* Hour Slider */}
             <View style={styles.sliderSection}>
               <View style={styles.sliderHeader}>
-                <ThemedText type="body" weight="medium" style={styles.sliderLabel}>
+                <ThemedText style={styles.sliderLabel} type="body" weight="medium">
                   Hour
                 </ThemedText>
-                <ThemedText type="body" variant="secondary" style={styles.sliderValue}>
+                <ThemedText style={styles.sliderValue} type="body" variant="secondary">
                   {selectedHour === 0 ? 12 : selectedHour > 12 ? selectedHour - 12 : selectedHour}{' '}
                   {selectedHour >= 12 ? 'PM' : 'AM'}
                 </ThemedText>
               </View>
               <CustomSlider
-                value={selectedHour}
-                onValueChange={handleHourChange}
-                minimumValue={0}
                 maximumValue={23}
+                minimumValue={0}
                 step={1}
                 style={styles.slider}
+                value={selectedHour}
+                onValueChange={handleHourChange}
               />
             </View>
 
             {/* Minute Slider */}
             <View style={styles.sliderSection}>
               <View style={styles.sliderHeader}>
-                <ThemedText type="body" weight="medium" style={styles.sliderLabel}>
+                <ThemedText style={styles.sliderLabel} type="body" weight="medium">
                   Minute
                 </ThemedText>
-                <ThemedText type="body" variant="secondary" style={styles.sliderValue}>
+                <ThemedText style={styles.sliderValue} type="body" variant="secondary">
                   {selectedMinute.toString().padStart(2, '0')}
                 </ThemedText>
               </View>
               <CustomSlider
-                value={selectedMinute}
-                onValueChange={handleMinuteChange}
-                minimumValue={0}
                 maximumValue={59}
+                minimumValue={0}
                 step={5}
                 style={styles.slider}
+                value={selectedMinute}
+                onValueChange={handleMinuteChange}
               />
             </View>
 
             {/* Actions */}
             <View style={styles.actions}>
               <ThemedButton
-                title="Cancel"
-                onPress={onClose}
-                variant="outlined"
                 style={styles.actionButton}
+                title="Cancel"
+                variant="outlined"
+                onPress={onClose}
               />
-              <ThemedButton title="Set Time" onPress={handleConfirm} style={styles.actionButton} />
+              <ThemedButton style={styles.actionButton} title="Set Time" onPress={handleConfirm} />
             </View>
           </View>
         </Animated.View>
@@ -211,10 +211,10 @@ export const TimePicker = memo(
 
     return (
       <Modal
-        visible={isVisible}
+        statusBarTranslucent
         transparent
         animationType="none"
-        statusBarTranslucent
+        visible={isVisible}
         onRequestClose={onClose}
       >
         <TouchableWithoutFeedback onPress={onClose}>

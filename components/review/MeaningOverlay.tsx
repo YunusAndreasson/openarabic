@@ -92,6 +92,7 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
       ]}
     >
       <ThemedText
+        skipDefaultColor
         style={[
           styles.text,
           {
@@ -99,7 +100,6 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
             fontSize: fontSize,
           },
         ]}
-        skipDefaultColor
       >
         {meaning || 'No translation available'}
       </ThemedText>

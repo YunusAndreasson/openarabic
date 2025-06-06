@@ -1,4 +1,5 @@
-import React, { JSX, memo } from 'react';
+import type { JSX} from 'react';
+import React, { memo } from 'react';
 
 import { ArticleCard } from '@/components/ArticleCard';
 import { ThemedText } from '@/components/ThemedText';
@@ -20,15 +21,15 @@ const ArticleItem = memo(({ article, onPress, isLast = false }: ArticleItemProps
 
   return (
     <ArticleCard
-      title={article.title}
       author={article.author?.name || 'Author'}
+      containerStyle={isLast ? { marginBottom: 0 } : undefined}
+      title={article.title}
       meta={
-        <ThemedText type="caption" colorName="textTertiary">
+        <ThemedText colorName="textTertiary" type="caption">
           · {timeAgoText} · {category}
         </ThemedText>
       }
       onPress={() => onPress(article)}
-      containerStyle={isLast ? { marginBottom: 0 } : undefined}
     />
   );
 });

@@ -9,13 +9,11 @@ import {
   Mask,
 } from '@shopify/react-native-skia';
 import React, { memo, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
-import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 
-import { ThemedText } from '../../ThemedText';
 import {
   BaseChart,
   ChartCanvas,
@@ -37,7 +35,6 @@ import {
   isSameDay,
   calculateEfficiencyScore,
   createStandardizedPerformanceZones,
-  generatePerformanceSubtitle,
   createAreaFillPath,
 } from '../shared/utils';
 
@@ -231,25 +228,25 @@ export const EfficiencyChart = memo(
 
     return (
       <BaseChart
-        title={CHART_LABELS.SPEED}
-        subtitle={subtitle}
-        onInfoPress={onInfoPress}
-        hideTitle={hideTitle}
-        hasData={chartData.hasData}
-        leftStat={leftStat}
-        rightStat={rightStat}
         contentHeight={GRAPH_HEIGHT_LARGE + 32} // Optimized space for axis labels aligned with card padding
         emptyStateText={EMPTY_STATE_MESSAGES.efficiency}
+        hasData={chartData.hasData}
+        hideTitle={hideTitle}
+        leftStat={leftStat}
+        rightStat={rightStat}
+        subtitle={subtitle}
+        title={CHART_LABELS.SPEED}
+        onInfoPress={onInfoPress}
       >
         <View style={{ position: 'relative' }}>
           <View style={{ marginLeft: Y_AXIS_WIDTH }}>
             <ChartCanvas
+              accessibilityLabel="Learning efficiency chart showing progress over the past 7 days"
               dataPoints={dataPoints}
               enableTooltips={true}
-              accessibilityLabel="Learning efficiency chart showing progress over the past 7 days"
             >
               {/* Subtle grid lines for better visual structure */}
-              <ChartGrid width={GRAPH_WIDTH} height={GRAPH_HEIGHT_LARGE} gridLines={4} />
+              <ChartGrid gridLines={4} height={GRAPH_HEIGHT_LARGE} width={GRAPH_WIDTH} />
 
               {/* Area fill under the efficiency line with gradient - rendered first as base */}
               <Group>
@@ -262,10 +259,10 @@ export const EfficiencyChart = memo(
                     )}
                   >
                     <LinearGradient
-                      start={vec(0, 0)}
-                      end={vec(0, GRAPH_HEIGHT_LARGE)}
                       colors={chartColors.getAreaFillGradient('efficiency')}
+                      end={vec(0, GRAPH_HEIGHT_LARGE)}
                       positions={[0, 0.3, 0.7, 1]}
+                      start={vec(0, 0)}
                     />
                   </Path>
                 )}
@@ -277,23 +274,23 @@ export const EfficiencyChart = memo(
                   <Mask
                     mask={
                       <Path
+                        color={colors.white}
                         path={createAreaFillPath(
                           chartData.efficiencyPath,
                           GRAPH_WIDTH,
                           GRAPH_HEIGHT_LARGE
                         )}
-                        color={colors.white}
                       />
                     }
                   >
                     {chartData.performanceZones.map((zone, index) => (
                       <Rect
                         key={`performance-zone-${index}`}
+                        color={chartColors.withOpacity(zone.color, 0.25)}
+                        height={zone.height}
+                        width={GRAPH_WIDTH}
                         x={0}
                         y={zone.y}
-                        width={GRAPH_WIDTH}
-                        height={zone.height}
-                        color={chartColors.withOpacity(zone.color, 0.25)}
                       />
                     ))}
                   </Mask>
@@ -303,12 +300,12 @@ export const EfficiencyChart = memo(
               {/* Efficiency line with brand accent color */}
               <Group>
                 <Path
+                  color={chartColors.ui.accent}
                   path={chartData.efficiencyPath}
-                  style="stroke"
-                  strokeWidth={CHART_VISUAL.LINE_WIDTH}
                   strokeCap="round"
                   strokeJoin="round"
-                  color={chartColors.ui.accent}
+                  strokeWidth={CHART_VISUAL.LINE_WIDTH}
+                  style="stroke"
                 />
 
                 {/* Data points with enhanced styling */}
@@ -320,16 +317,16 @@ export const EfficiencyChart = memo(
                     <Group key={`efficiency-point-${index}`}>
                       {/* Enhanced data point with border */}
                       <Circle
+                        color={chartColors.ui.accent}
                         cx={point.x}
                         cy={point.y}
                         r={CHART_VISUAL.DATA_POINT_SIZE}
-                        color={chartColors.ui.accent}
                       />
                       <Circle
+                        color={chartColors.ui.background}
                         cx={point.x}
                         cy={point.y}
                         r={CHART_VISUAL.DATA_POINT_INNER_SIZE}
-                        color={chartColors.ui.background}
                       />
                     </Group>
                   );
@@ -340,17 +337,17 @@ export const EfficiencyChart = memo(
 
           {/* Enhanced axis labels with proper padding and y-axis values */}
           <ChartAxes
-            width={GRAPH_WIDTH}
             height={GRAPH_HEIGHT_LARGE}
+            showYAxis={true}
+            topPadding={0}
+            width={GRAPH_WIDTH}
+            xLabelPositions={chartData.dataPoints.map(point => point.x)}
+            yMax={100}
             xLabels={efficiencyData.map((data, index) =>
               index === efficiencyData.length - 1
                 ? 'Today'
                 : data.date.toLocaleDateString('en-US', { weekday: 'short' })
             )}
-            xLabelPositions={chartData.dataPoints.map(point => point.x)}
-            yMax={100}
-            showYAxis={true}
-            topPadding={0}
           />
         </View>
       </BaseChart>

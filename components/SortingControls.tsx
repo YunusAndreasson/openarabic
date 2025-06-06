@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { memo, useState, useEffect, useCallback, JSX } from 'react';
+import type { JSX } from 'react';
+import React, { memo, useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { Colors } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
-import { Colors } from '@/constants/Colors';
 import { selectionFeedback } from '@/utils/haptics';
 
 import BaseCard from './BaseCard';
@@ -71,27 +72,13 @@ function SortingControls<T extends string>({
                 key={option.key}
                 id={option.key}
                 isSelected={isSelected}
-                onSelect={() => handleSortChange(option.key)}
-                variant="filter"
                 pillBg={colors.transparent}
-                pillStyle={[
-                  styles.sortPill,
-                  isSelected && {
-                    backgroundColor: colors.elevation1,
-                    borderWidth: 1,
-                    borderColor: colors.tint + '25', // Increased opacity for better visibility
-                    shadowColor: colors.tint,
-                    shadowOffset: { width: 0, height: 2 }, // Slightly more elevation
-                    shadowOpacity: 0.15, // Increased shadow
-                    shadowRadius: 3, // Larger shadow radius
-                    elevation: 3, // Increased Android elevation
-                  },
-                ]}
+                variant="filter"
                 label={
                   <View style={styles.sortPillContent}>
                     <ThemedText
-                      type="label"
                       colorName={isSelected ? 'tint' : 'textTertiary'}
+                      type="label"
                       weight={isSelected ? 'bold' : 'medium'}
                       style={[
                         styles.sortPillLabel,
@@ -106,6 +93,9 @@ function SortingControls<T extends string>({
                       {option.label}
                     </ThemedText>
                     <Ionicons
+                      color={isSelected ? colors.tint : colors.textTertiary}
+                      size={isSelected ? 13 : 11} // Larger icon when selected
+                      style={[styles.sortPillIcon, isSelected && styles.selectedIcon]}
                       name={
                         isSelected
                           ? internalDirection === 'desc'
@@ -113,12 +103,23 @@ function SortingControls<T extends string>({
                             : 'chevron-up'
                           : 'chevron-down'
                       }
-                      size={isSelected ? 13 : 11} // Larger icon when selected
-                      style={[styles.sortPillIcon, isSelected && styles.selectedIcon]}
-                      color={isSelected ? colors.tint : colors.textTertiary}
                     />
                   </View>
                 }
+                pillStyle={[
+                  styles.sortPill,
+                  isSelected && {
+                    backgroundColor: colors.elevation1,
+                    borderWidth: 1,
+                    borderColor: colors.tint + '25', // Increased opacity for better visibility
+                    shadowColor: colors.tint,
+                    shadowOffset: { width: 0, height: 2 }, // Slightly more elevation
+                    shadowOpacity: 0.15, // Increased shadow
+                    shadowRadius: 3, // Larger shadow radius
+                    elevation: 3, // Increased Android elevation
+                  },
+                ]}
+                onSelect={() => handleSortChange(option.key)}
               />
             );
           })}

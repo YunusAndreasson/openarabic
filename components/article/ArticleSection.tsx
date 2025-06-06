@@ -64,14 +64,14 @@ const ArticleSection = memo(
         <SectionTitle title={title} />
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.tint} />
+            <ActivityIndicator color={colors.tint} size="large" />
           </View>
         ) : (
           <ScrollView
             horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
             accessibilityLabel={`${title} articles`}
+            contentContainerStyle={styles.scrollContent}
+            showsHorizontalScrollIndicator={false}
           >
             {articles.map(article => {
               // Get last opened timestamp if provided
@@ -80,14 +80,14 @@ const ArticleSection = memo(
               return (
                 <ThemedCard
                   key={`article-${article.id}`}
-                  style={styles.articleCard}
-                  variant="compact"
                   article={article}
+                  dueWordCount={article.dueWordCount}
                   handlePress={() => onArticlePress(article)}
                   hideDifficulty={hideDifficulty}
                   lastOpenedAt={lastOpenedAt}
                   showTimeAgo={!!lastOpenedAt}
-                  dueWordCount={article.dueWordCount}
+                  style={styles.articleCard}
+                  variant="compact"
                 />
               );
             })}

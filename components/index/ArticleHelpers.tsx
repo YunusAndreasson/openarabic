@@ -18,7 +18,7 @@ export const TimeAgo = memo(({ date }: { date: string }) => {
 
   return (
     <View style={styles.timeAgoContainer}>
-      <ThemedText type="caption" colorName="textTertiary" skipDefaultColor>
+      <ThemedText skipDefaultColor colorName="textTertiary" type="caption">
         {timeAgoText}
       </ThemedText>
     </View>
@@ -64,6 +64,7 @@ export const DifficultyIndicator = memo(
               key={star}
               name="star"
               size={12}
+              style={styles.starIcon}
               color={
                 star <= normalizedLevel
                   ? colors.tint
@@ -71,17 +72,16 @@ export const DifficultyIndicator = memo(
                     ? colors.white + '40'
                     : colors.cardBorder
               }
-              style={styles.starIcon}
             />
           ))}
         </View>
         {!hideLabel ? (
           <View style={styles.difficultyTextContainer}>
             <ThemedText
-              type="caption"
               colorName={isDarkMode ? 'text' : undefined}
-              variant={isDarkMode ? undefined : 'subtle'}
               skipDefaultColor={!isDarkMode}
+              type="caption"
+              variant={isDarkMode ? undefined : 'subtle'}
             >
               {difficultyLabel}
             </ThemedText>
@@ -102,7 +102,7 @@ export const SummaryIndicator = memo(({ summary }: { summary: string | null }) =
 
   return (
     <View style={styles.summaryIndicatorContainer}>
-      <ThemedText type="caption" colorName="textTertiary" style={styles.summaryText}>
+      <ThemedText colorName="textTertiary" style={styles.summaryText} type="caption">
         {summary}
       </ThemedText>
     </View>

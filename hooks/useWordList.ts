@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
-import { StudyWord } from '@/types/vocabulary.types';
+import type { StudyWord } from '@/types/vocabulary.types';
 import {
   isStrugglingWord,
   isMasteredWord,
@@ -15,17 +15,10 @@ export interface EnhancedStudyWord extends StudyWord {
 }
 
 type WordListCategory =
-  | 'total'
-  | 'mastered'
-  | 'learning'
-  | 'due'
-  | 'needsAttention'
-  | 'difficultyEasy'
-  | 'difficultyMedium'
-  | 'difficultyHard';
+  'difficultyEasy' | 'difficultyHard' | 'difficultyMedium' | 'due' | 'learning' | 'mastered' | 'needsAttention' | 'total';
 
 // Add type for sort options
-export type WordListSort = 'retention' | 'due' | 'alphabetical' | 'streak';
+export type WordListSort = 'alphabetical' | 'due' | 'retention' | 'streak';
 
 /**
  * Calculate a retention score based on FSRS parameters

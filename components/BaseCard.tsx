@@ -14,7 +14,7 @@ import { useColors } from '../hooks/useColors';
  */
 
 // Disable prop-types validation since we're using TypeScript types
-/* eslint-disable react/prop-types */
+ 
 const BaseCard: React.FC<BaseCardProps> = memo(
   ({
     children,
@@ -104,9 +104,6 @@ const BaseCard: React.FC<BaseCardProps> = memo(
     // Interactive card with press handling
     return (
       <Pressable
-        onPressIn={includePressAnimation ? handlePressIn : undefined}
-        onPressOut={includePressAnimation ? handlePressOut : undefined}
-        onPress={onPress}
         disabled={disabled}
         testID={testID}
         android_ripple={{
@@ -119,6 +116,9 @@ const BaseCard: React.FC<BaseCardProps> = memo(
           pressed && !disabled && includePressAnimation && { opacity: LAYOUT.OPACITY.PRESSED },
           disabled && { opacity: LAYOUT.OPACITY.DISABLED },
         ]}
+        onPress={onPress}
+        onPressIn={includePressAnimation ? handlePressIn : undefined}
+        onPressOut={includePressAnimation ? handlePressOut : undefined}
       >
         <View style={combinedContentStyle}>{children}</View>
       </Pressable>

@@ -2,15 +2,15 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { memo, useCallback } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 
+import { Colors } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
-import { Colors } from '@/constants/Colors';
 import { selectionFeedback } from '@/utils/haptics';
 
 import { ThemedText } from '../../ThemedText';
 
 interface StatItemProps {
-  value: string | number;
+  value: number | string;
   label: string;
   color?: string;
   onPress?: () => void;
@@ -49,17 +49,17 @@ const StatItem = memo(({ stat }: { stat: StatItemProps }) => {
         </ThemedText>
         {stat.showChevron && (
           <Ionicons
+            color={colors.secondaryText}
             name="chevron-forward"
             size={16}
-            color={colors.secondaryText}
             style={[styles.chevronIcon, { opacity: 0.8 }]}
           />
         )}
       </View>
       <ThemedText
+        style={[styles.progressLabel, { opacity: 0.85 }]}
         type="caption"
         variant="secondary"
-        style={[styles.progressLabel, { opacity: 0.85 }]}
       >
         {stat.label}
       </ThemedText>
@@ -69,7 +69,10 @@ const StatItem = memo(({ stat }: { stat: StatItemProps }) => {
   if (stat.onPress) {
     return (
       <TouchableOpacity
-        onPress={handlePress}
+        accessibilityHint="Tap to view related words"
+        accessibilityLabel={`${stat.value} ${stat.label}`}
+        accessibilityRole="button"
+        activeOpacity={0.65}
         style={[
           styles.tappableStat,
           {
@@ -77,10 +80,7 @@ const StatItem = memo(({ stat }: { stat: StatItemProps }) => {
             borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
           },
         ]}
-        activeOpacity={0.65}
-        accessibilityRole="button"
-        accessibilityLabel={`${stat.value} ${stat.label}`}
-        accessibilityHint="Tap to view related words"
+        onPress={handlePress}
       >
         {content}
       </TouchableOpacity>

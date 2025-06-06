@@ -1,6 +1,6 @@
 import type { Article, ArticleSentence } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
-import type { StudyWord, SentenceWord } from '@/types/vocabulary.types';
+import type { SentenceWord } from '@/types/vocabulary.types';
 
 import { handleError } from './errorHandling';
 

@@ -1,9 +1,9 @@
 import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Sentry from '@sentry/react-native';
 import type { User, Session } from '@supabase/supabase-js';
 import { createClient } from '@supabase/supabase-js';
 import { AppState } from 'react-native';
-import * as Sentry from '@sentry/react-native';
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
 

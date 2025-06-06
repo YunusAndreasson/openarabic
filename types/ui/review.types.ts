@@ -17,7 +17,7 @@ export interface WordDisplayProps {
   /** Additional style for the container */
   style?: StyleProp<ViewStyle>;
   /** Size of the text */
-  size?: 'small' | 'medium' | 'large';
+  size?: 'large' | 'medium' | 'small';
   /** Arabic word to display (alternative to word prop) */
   arabicWord?: string;
 }

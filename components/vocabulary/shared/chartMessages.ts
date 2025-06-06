@@ -51,7 +51,7 @@ export const formatStatValue = {
 } as const;
 
 // Standardized performance level indicators
-export const getPerformanceLevel = (value: number): 'excellent' | 'good' | 'fair' | 'poor' => {
+export const getPerformanceLevel = (value: number): 'excellent' | 'fair' | 'good' | 'poor' => {
   if (value >= PERFORMANCE_THRESHOLDS.EXCELLENT) return 'excellent';
   if (value >= PERFORMANCE_THRESHOLDS.GOOD) return 'good';
   if (value >= PERFORMANCE_THRESHOLDS.FAIR) return 'fair';
@@ -102,7 +102,7 @@ export const TREND_MESSAGES = {
 export const generateChartSubtitle = {
   mastery: (
     currentRate: number,
-    trend: 'improving' | 'declining' | 'stable',
+    trend: 'declining' | 'improving' | 'stable',
     weeklyChange: number
   ): string => {
     if (currentRate === 0) {
@@ -157,7 +157,7 @@ export const generateChartSubtitle = {
 
   difficulty: (
     hardWordsPercentage: number,
-    distribution: 'easy' | 'balanced' | 'challenging'
+    distribution: 'balanced' | 'challenging' | 'easy'
   ): string => {
     if (hardWordsPercentage === 0) {
       return 'Add words to see difficulty levels';
