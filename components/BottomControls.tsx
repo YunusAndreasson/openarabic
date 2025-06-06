@@ -29,6 +29,7 @@ export type BottomControlsProps = {
   timerAccessibilityLabel?: string;
 };
 
+/* eslint-disable react/prop-types */
 const BottomControls = memo<BottomControlsProps>(
   ({
     primaryLabel,
@@ -213,10 +214,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'center',
-    minHeight: MIN_TOUCH_TARGET.SMALL,
+    minHeight: MIN_TOUCH_TARGET.MEDIUM, // Enhanced for better accessibility
     minWidth: MIN_TOUCH_TARGET.SIZE,
     paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.TINY,
+    paddingVertical: LAYOUT.SPACING.SMALL, // Increased padding for easier touch
     ...Platform.select({
       ios: {
         shadowOffset: { width: 0, height: 2 },

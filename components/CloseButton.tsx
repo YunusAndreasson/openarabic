@@ -2,10 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useRef, useEffect } from 'react';
 import type { ViewStyle } from 'react-native';
 import { TouchableOpacity, StyleSheet } from 'react-native';
-import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import Animated from 'react-native-reanimated';
 
 import { usePressAnimation } from '@/hooks/animations';
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { CloseButtonProps } from '@/types/ui/button.types';
 
 import { LAYOUT } from '../constants/layout';
@@ -104,7 +104,7 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
           styles.buttonContainer,
           style,
         ]}
-        hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+        hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
       >
         <Ionicons name="close" size={finalIconSize} color={color || colors.interactiveSecondary} />
       </TouchableOpacity>

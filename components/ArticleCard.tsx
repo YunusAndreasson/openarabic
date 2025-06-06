@@ -1,9 +1,14 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { ViewStyle, StyleProp } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 
-import { LAYOUT, TYPOGRAPHY_HIERARCHY, getEnhancedOpacity } from '@/constants/layout';
+import {
+  LAYOUT,
+  TYPOGRAPHY_HIERARCHY,
+  getEnhancedOpacity,
+  MIN_TOUCH_TARGET,
+} from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 
@@ -123,7 +128,8 @@ const styles = StyleSheet.create({
     opacity: LAYOUT.OPACITY.MEDIUM,
   },
   card: {
-    overflow: 'hidden',
+    minHeight: MIN_TOUCH_TARGET.SIZE,
+    overflow: 'hidden', // Ensure cards meet minimum touch target
   },
   cardContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
@@ -133,15 +139,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: LAYOUT.SPACING.MEDIUM,
+    minHeight: MIN_TOUCH_TARGET.SIZE,
+    padding: LAYOUT.SPACING.MEDIUM, // Ensure content area is touchable
   },
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: LAYOUT.SPACING.XLARGE,
-    minWidth: LAYOUT.SPACING.XLARGE,
-    paddingTop: LAYOUT.SPACING.MICRO,
     marginRight: LAYOUT.SPACING.TINY,
+    minHeight: MIN_TOUCH_TARGET.MEDIUM, // Ensure icon area is easily touchable
+    minWidth: MIN_TOUCH_TARGET.MEDIUM,
+    paddingTop: LAYOUT.SPACING.MICRO,
   },
   metaRow: {
     alignItems: 'center',

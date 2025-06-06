@@ -567,7 +567,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    minHeight: MIN_TOUCH_TARGET.SIZE,
+    minHeight: MIN_TOUCH_TARGET.SIZE, // Ensure all setting rows are easily touchable
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
   },

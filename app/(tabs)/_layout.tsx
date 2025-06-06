@@ -324,7 +324,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    minHeight: MIN_TOUCH_TARGET.SIZE,
+    minHeight: MIN_TOUCH_TARGET.SIZE, // Ensure tabs meet accessibility requirements
+    minWidth: MIN_TOUCH_TARGET.MEDIUM, // Ensure minimum width for touch
     ...Platform.select({
       ios: {
         paddingBottom: LAYOUT.SPACING.TINY / 2,

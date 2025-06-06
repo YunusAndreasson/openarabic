@@ -125,8 +125,10 @@ export const WORD_AREA_MIN_HEIGHT = 364;
 // Minimum touch target sizes for accessibility compliance
 export const MIN_TOUCH_TARGET = {
   // Apple HIG: 44pt minimum, Material: 48dp minimum
-  SIZE: 44, // Use 44pt as it satisfies both guidelines
-  SMALL: 32, // For dense layouts where 44pt isn't feasible
+  SIZE: 48, // Use 48dp for better accessibility (exceeds both guidelines)
+  MEDIUM: 44, // For standard interactive elements
+  SMALL: 32, // For dense layouts where larger isn't feasible
+  ICON_PADDING: 12, // Additional padding around icons to meet minimum target
 } as const;
 
 export const LAYOUT = {
@@ -238,8 +240,8 @@ export const LAYOUT = {
   BUTTON: {
     HEIGHT: {
       SMALL: MIN_TOUCH_TARGET.SMALL, // Use minimum small touch target (32pt) for dense layouts
-      MEDIUM: MIN_TOUCH_TARGET.SIZE, // Ensure medium buttons meet minimum requirements
-      LARGE: 52,
+      MEDIUM: MIN_TOUCH_TARGET.MEDIUM, // Use 44pt for standard buttons
+      LARGE: MIN_TOUCH_TARGET.SIZE, // Use 48pt for primary actions
     },
     BORDER_RADIUS: {
       SMALL: 8, // Same as BORDER_RADIUS.SMALL
@@ -370,9 +372,30 @@ export const LAYOUT = {
 
   // Standard hit slop sizes for better touch targets
   HIT_SLOP: {
+    NONE: { top: 0, bottom: 0, left: 0, right: 0 },
     SMALL: { top: 8, bottom: 8, left: 8, right: 8 },
     MEDIUM: { top: 12, bottom: 12, left: 12, right: 12 },
     LARGE: { top: 20, bottom: 20, left: 20, right: 20 },
+    ICON: {
+      top: MIN_TOUCH_TARGET.ICON_PADDING,
+      bottom: MIN_TOUCH_TARGET.ICON_PADDING,
+      left: MIN_TOUCH_TARGET.ICON_PADDING,
+      right: MIN_TOUCH_TARGET.ICON_PADDING,
+    }, // For icon-only buttons
+  },
+
+  // Touch target enhancement utilities
+  TOUCH_TARGET: {
+    // Minimum container sizes for interactive elements
+    MIN_CONTAINER: {
+      WIDTH: MIN_TOUCH_TARGET.SIZE,
+      HEIGHT: MIN_TOUCH_TARGET.SIZE,
+    },
+    // Padding to add around small elements to meet touch target requirements
+    ENHANCE_PADDING: (currentSize: number) => {
+      const needed = MIN_TOUCH_TARGET.MEDIUM - currentSize;
+      return needed > 0 ? Math.ceil(needed / 2) : 0;
+    },
   },
 
   // Border styles
