@@ -156,14 +156,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   chartContainer: {
-    marginBottom: LAYOUT.SPACING.XLARGE, // Increased spacing between charts for better visual separation
+    marginBottom: LAYOUT.SPACING.XXLARGE, // Optimized spacing for better visual hierarchy
   },
   container: {
     flex: 1,
   },
   contentContainer: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.MEDIUM, // Add top padding for better visual hierarchy
+    // No top padding - SectionTitle handles spacing with isFirstSection
   },
   errorContainer: {
     alignItems: 'center',
@@ -173,9 +173,9 @@ const styles = StyleSheet.create({
     paddingTop: LAYOUT.SPACING.XLARGE,
   },
   firstChartContainer: {
-    marginBottom: LAYOUT.SPACING.XLARGE, // Consistent with other charts
+    marginBottom: LAYOUT.SPACING.XXLARGE, // Consistent spacing for visual hierarchy
   },
   lastChart: {
-    marginBottom: LAYOUT.SPACING.MEDIUM, // Add some bottom margin for better visual balance
+    marginBottom: LAYOUT.SPACING.LARGE, // Optimized bottom margin for perfect visual balance
   },
 });

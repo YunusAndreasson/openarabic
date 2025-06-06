@@ -36,6 +36,7 @@ import {
   GRAPH_HEIGHT_LARGE,
   DAYS_7,
   CRITICAL_RETRIEVABILITY_THRESHOLD,
+  CHART_VISUAL,
 } from '../shared/constants';
 import {
   calculateRetrievability,
@@ -241,7 +242,7 @@ export const RetrievabilityChart = memo(
         hasData={chartData.hasData}
         leftStat={leftStat}
         rightStat={rightStat}
-        contentHeight={GRAPH_HEIGHT_LARGE + 20}
+        contentHeight={GRAPH_HEIGHT_LARGE + 32} // Optimized space for axis labels aligned with card padding
         emptyStateText={EMPTY_STATE_MESSAGES.retrievability}
       >
         <View style={{ position: 'relative' }}>
@@ -308,7 +309,7 @@ export const RetrievabilityChart = memo(
                 <Path
                   path={chartData.retrievabilityPath}
                   style="stroke"
-                  strokeWidth={2.5}
+                  strokeWidth={CHART_VISUAL.LINE_WIDTH}
                   strokeCap="round"
                   strokeJoin="round"
                   color={chartColors.ui.accent}
@@ -322,8 +323,18 @@ export const RetrievabilityChart = memo(
                   return (
                     <Group key={`retrievability-point-${index}`}>
                       {/* Enhanced data point with border */}
-                      <Circle cx={point.x} cy={point.y} r={3.5} color={chartColors.ui.accent} />
-                      <Circle cx={point.x} cy={point.y} r={2} color={chartColors.ui.background} />
+                      <Circle
+                        cx={point.x}
+                        cy={point.y}
+                        r={CHART_VISUAL.DATA_POINT_SIZE}
+                        color={chartColors.ui.accent}
+                      />
+                      <Circle
+                        cx={point.x}
+                        cy={point.y}
+                        r={CHART_VISUAL.DATA_POINT_INNER_SIZE}
+                        color={chartColors.ui.background}
+                      />
                     </Group>
                   );
                 })}

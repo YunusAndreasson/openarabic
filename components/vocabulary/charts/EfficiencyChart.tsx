@@ -31,7 +31,7 @@ import {
   CHART_LABELS,
   EMPTY_STATE_MESSAGES,
 } from '../shared/chartMessages';
-import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_7 } from '../shared/constants';
+import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_7, CHART_VISUAL } from '../shared/constants';
 import {
   generateDateRange,
   isSameDay,
@@ -238,7 +238,7 @@ export const EfficiencyChart = memo(
         hasData={chartData.hasData}
         leftStat={leftStat}
         rightStat={rightStat}
-        contentHeight={GRAPH_HEIGHT_LARGE + 20}
+        contentHeight={GRAPH_HEIGHT_LARGE + 32} // Optimized space for axis labels aligned with card padding
         emptyStateText={EMPTY_STATE_MESSAGES.efficiency}
       >
         <View style={{ position: 'relative' }}>
@@ -305,7 +305,7 @@ export const EfficiencyChart = memo(
                 <Path
                   path={chartData.efficiencyPath}
                   style="stroke"
-                  strokeWidth={2.5}
+                  strokeWidth={CHART_VISUAL.LINE_WIDTH}
                   strokeCap="round"
                   strokeJoin="round"
                   color={chartColors.ui.accent}
@@ -319,8 +319,18 @@ export const EfficiencyChart = memo(
                   return (
                     <Group key={`efficiency-point-${index}`}>
                       {/* Enhanced data point with border */}
-                      <Circle cx={point.x} cy={point.y} r={3.5} color={chartColors.ui.accent} />
-                      <Circle cx={point.x} cy={point.y} r={2} color={chartColors.ui.background} />
+                      <Circle
+                        cx={point.x}
+                        cy={point.y}
+                        r={CHART_VISUAL.DATA_POINT_SIZE}
+                        color={chartColors.ui.accent}
+                      />
+                      <Circle
+                        cx={point.x}
+                        cy={point.y}
+                        r={CHART_VISUAL.DATA_POINT_INNER_SIZE}
+                        color={chartColors.ui.background}
+                      />
                     </Group>
                   );
                 })}

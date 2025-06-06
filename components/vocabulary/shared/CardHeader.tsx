@@ -1,6 +1,6 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { memo } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
@@ -41,30 +41,30 @@ CardHeader.displayName = 'CardHeader';
 
 const styles = StyleSheet.create({
   cardHeader: {
-    flexDirection: 'row',
     alignItems: 'flex-start',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  cardSubtitle: {
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.TINY,
+  },
+  cardTitle: {
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.2,
+    marginBottom: 0,
+  },
+  infoIcon: {
+    alignItems: 'center',
+    borderRadius: 16,
+    height: 32,
+    justifyContent: 'center',
+    padding: LAYOUT.SPACING.SMALL,
+    width: 32,
   },
   titleGroup: {
     flex: 1,
     marginRight: LAYOUT.SPACING.SMALL,
-  },
-  cardTitle: {
-    marginBottom: 0,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.2,
-  },
-  cardSubtitle: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
-    marginTop: LAYOUT.SPACING.TINY,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  infoIcon: {
-    padding: LAYOUT.SPACING.SMALL,
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 16,
   },
 });

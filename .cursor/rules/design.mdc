@@ -1,0 +1,26 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Teslers Law (Law of Conservation of Complexity)
+- Shift inherent system complexity away from the user; handle it within the system design.
+- Avoid oversimplification that compromises functionality; balance simplicity with necessary complexity.
+
+# Hicks Law
+- Limit the number of choices presented at any decision point to reduce user decision time.
+- Organize options hierarchically or progressively to prevent overwhelming the user.
+
+# Fittss Law
+- Design interactive elements (e.g., buttons, links) to be large enough for easy selection.
+- Position frequently used controls closer to the user's typical interaction areas to minimize movement time.
+
+# Millers Law
+- Group information into chunks of no more than 5–9 items to align with users' working memory capacity.
+- Use clear categorization and hierarchy to aid information processing and recall.
+
+# General Guidelines
+- Maintain consistency in design patterns and terminology throughout the interface.
+- Provide immediate and clear feedback for user actions to confirm system responses.
+- Ensure touch targets are at least 48x48 dp for optimal accessibility on mobile devices.
+- Prioritize fast load times and responsive interactions to enhance user experience.

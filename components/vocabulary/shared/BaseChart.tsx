@@ -70,7 +70,7 @@ export const BaseChart = memo(
     rightStat,
     legendItems,
     timeRange,
-    contentHeight = 180, // Updated to match increased graph height
+    contentHeight = 176, // Optimized to match GRAPH_HEIGHT_LARGE
     emptyStateText = 'Study words to see your progress',
     errorText = 'Unable to load chart data',
   }: BaseChartProps) => {
@@ -134,7 +134,9 @@ export const BaseChart = memo(
           )}
 
           {/* Chart Content */}
-          {!isLoading && <View style={styles.chartSection}>{children}</View>}
+          {!isLoading && (
+            <View style={[styles.chartSection, { minHeight: contentHeight }]}>{children}</View>
+          )}
 
           {/* Footer Section */}
           {legendItems && timeRange && !isLoading && (
@@ -152,13 +154,13 @@ BaseChart.displayName = 'BaseChart';
 
 const styles = StyleSheet.create({
   chartSection: {
-    // Tighter spacing for better stats-chart proximity
-    marginVertical: CHART_LAYOUT.ELEMENT_SPACING * 0.5, // Reduced from 0.75x to 0.5x (8px)
-    paddingVertical: CHART_LAYOUT.ELEMENT_SPACING * 0.25, // Reduced internal padding (4px)
+    // Optimized spacing for perfect visual balance
+    marginVertical: CHART_LAYOUT.ELEMENT_SPACING * 0.375, // Refined spacing (6px)
+    paddingVertical: CHART_LAYOUT.ELEMENT_SPACING * 0.125, // Minimal internal padding (2px)
     position: 'relative',
   },
   content: {
-    padding: CHART_LAYOUT.CONTENT_PADDING,
+    padding: CHART_LAYOUT.CONTENT_PADDING * 0.875, // Slightly reduced padding for better space usage (10.5px)
   },
   emptyState: {
     alignItems: 'center',
@@ -178,7 +180,7 @@ const styles = StyleSheet.create({
     paddingTop: CHART_LAYOUT.ELEMENT_SPACING * 0.25,
   },
   headerSection: {
-    marginBottom: CHART_LAYOUT.ELEMENT_SPACING, // 16px - good separation from title
+    marginBottom: CHART_LAYOUT.ELEMENT_SPACING * 0.875, // 14px - optimized separation for visual hierarchy
   },
   loadingIndicator: {
     marginBottom: CHART_LAYOUT.ELEMENT_SPACING,

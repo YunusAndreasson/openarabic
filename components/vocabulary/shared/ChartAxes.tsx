@@ -6,8 +6,8 @@ import { useColors } from '@/hooks/useColors';
 
 import { ThemedText } from '../../ThemedText';
 
-// Export the y-axis width for use in other components
-export const Y_AXIS_WIDTH = 48;
+// Export the y-axis width for use in other components - optimized for perfect alignment
+export const Y_AXIS_WIDTH = 36; // Balanced for alignment with card padding
 
 interface AxisLabelsProps {
   width: number;
@@ -58,7 +58,7 @@ export const ChartAxes = memo(
           styles.axesContainer,
           {
             width: width + (showYAxis ? Y_AXIS_WIDTH : 0),
-            height: height + 40, // Space for x-axis labels
+            height: height + 32, // Optimized space for x-axis labels (2px gap + 24px label height + 6px bottom margin)
           },
         ]}
       >
@@ -99,7 +99,7 @@ export const ChartAxes = memo(
             {
               width: width,
               left: 0, // Remove the Y_AXIS_WIDTH offset since chart content already has margin
-              top: height,
+              top: height + 2, // Reduced gap between chart and labels for better alignment
               marginLeft: showYAxis ? Y_AXIS_WIDTH : 0, // Use margin instead to match chart content
             },
           ]}
@@ -110,8 +110,8 @@ export const ChartAxes = memo(
 
             if (position === undefined) return null;
 
-            // Calculate label left position
-            const labelWidth = 36;
+            // Calculate label left position - optimized for perfect alignment
+            const labelWidth = 32; // Reduced for better space efficiency
             let labelLeft: number;
 
             if (index === 0) {
@@ -167,13 +167,14 @@ const styles = StyleSheet.create({
     top: 0,
   },
   xAxisContainer: {
-    height: 32,
+    height: 24, // Reduced container height for better proportions
+    marginBottom: 6, // Reduced bottom margin to align with card padding
     position: 'absolute',
   },
   xLabel: {
     alignItems: 'center',
-    height: 28,
-    justifyContent: 'center',
+    height: 18, // Reduced label height for tighter spacing
+    justifyContent: 'center', // Center labels within container
     position: 'absolute',
   },
   xLabelText: {
@@ -192,7 +193,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     height: 16,
     justifyContent: 'center',
-    paddingRight: 12, // Increased padding to move labels further from chart
+    paddingRight: 6, // Reduced to match x-axis bottom margin for perfect alignment
     position: 'absolute',
   },
   yLabelText: {

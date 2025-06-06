@@ -36,6 +36,7 @@ import {
   GRAPH_HEIGHT_LARGE,
   DAYS_7,
   MASTERY_STABILITY_THRESHOLD,
+  CHART_VISUAL,
 } from '../shared/constants';
 import {
   generateDateRange,
@@ -57,7 +58,7 @@ export const MasteryChart = memo(
     const colors = useColors();
 
     // Add top padding to prevent dots from being cut off
-    const TOP_PADDING = 8; // Space for circle radius + shadow
+    const TOP_PADDING = CHART_VISUAL.CHART_TOP_PADDING; // Optimized space for data points
 
     // Calculate mastery progression over the last 7 days
     const masteryData = useMemo(() => {
@@ -260,7 +261,7 @@ export const MasteryChart = memo(
         hasData={chartData.hasData}
         leftStat={leftStat}
         rightStat={rightStat}
-        contentHeight={GRAPH_HEIGHT_LARGE + 20}
+        contentHeight={GRAPH_HEIGHT_LARGE + 32} // Optimized space for axis labels aligned with card padding
         emptyStateText={EMPTY_STATE_MESSAGES.mastery}
       >
         <View style={{ position: 'relative' }}>
@@ -333,7 +334,7 @@ export const MasteryChart = memo(
                   <Path
                     path={chartData.masteryPath}
                     style="stroke"
-                    strokeWidth={2.5}
+                    strokeWidth={CHART_VISUAL.LINE_WIDTH}
                     strokeCap="round"
                     strokeJoin="round"
                     color={chartColors.ui.accent}
@@ -344,8 +345,18 @@ export const MasteryChart = memo(
                 {chartData.dataPoints.map((point, index) => (
                   <Group key={`mastery-point-${index}`}>
                     {/* Enhanced data point with border */}
-                    <Circle cx={point.x} cy={point.y} r={3.5} color={chartColors.ui.accent} />
-                    <Circle cx={point.x} cy={point.y} r={2} color={chartColors.ui.background} />
+                    <Circle
+                      cx={point.x}
+                      cy={point.y}
+                      r={CHART_VISUAL.DATA_POINT_SIZE}
+                      color={chartColors.ui.accent}
+                    />
+                    <Circle
+                      cx={point.x}
+                      cy={point.y}
+                      r={CHART_VISUAL.DATA_POINT_INNER_SIZE}
+                      color={chartColors.ui.background}
+                    />
                   </Group>
                 ))}
               </Group>
@@ -358,13 +369,13 @@ export const MasteryChart = memo(
                     <Circle
                       cx={milestone.x}
                       cy={milestone.y}
-                      r={4}
+                      r={CHART_VISUAL.MILESTONE_SIZE}
                       color={chartColors.withOpacity(chartColors.performance.excellent, 0.15)}
                     />
                     <Circle
                       cx={milestone.x}
                       cy={milestone.y}
-                      r={2.5}
+                      r={CHART_VISUAL.MILESTONE_INNER_SIZE}
                       color={chartColors.withOpacity(chartColors.performance.excellent, 0.8)}
                     />
                   </Group>

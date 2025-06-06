@@ -2,11 +2,22 @@ import { Dimensions } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 
-// Graph dimensions - calculated dynamically to avoid unused constants
+// Graph dimensions - optimized for perfect alignment and space usage
 export const SCREEN_WIDTH = Dimensions.get('window').width;
 export const GRAPH_WIDTH =
   SCREEN_WIDTH - LAYOUT.SCREEN_EDGE_PADDING * 2 - LAYOUT.CARD.PADDING.MEDIUM * 2;
-export const GRAPH_HEIGHT_LARGE = 180; // Increased from 140px for better visual prominence
+export const GRAPH_HEIGHT_LARGE = 176; // Optimized height for better proportions (8px alignment grid)
+
+// Chart visual constants for perfect alignment
+export const CHART_VISUAL = {
+  DATA_POINT_SIZE: 3.5, // Primary data point radius
+  DATA_POINT_INNER_SIZE: 2, // Inner highlight radius
+  MILESTONE_SIZE: 4, // Milestone indicator radius
+  MILESTONE_INNER_SIZE: 2.5, // Milestone inner radius
+  LINE_WIDTH: 2.5, // Chart line stroke width
+  GRID_OPACITY: 0.06, // Subtle grid line opacity
+  CHART_TOP_PADDING: 8, // Top padding for data points (aligned to 8px grid)
+} as const;
 
 // Time periods - optimized for mobile clarity and user comprehension
 export const DAYS_7 = 7; // Weekly view for better mobile experience and cognitive load

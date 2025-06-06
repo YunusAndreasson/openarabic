@@ -17,8 +17,8 @@ export const ChartGrid = memo(
   ({ width, height, gridLines = 4, topPadding = 0 }: ChartGridProps) => {
     const colorScheme = useColorScheme();
 
-    // Simple grid color that works in both light and dark modes
-    const gridColor = colorScheme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)';
+    // Optimized grid color for perfect visual balance
+    const gridColor = colorScheme === 'dark' ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)';
 
     // Calculate grid line positions
     const gridSpacing = (height - topPadding) / (gridLines + 1);
