@@ -54,9 +54,9 @@ export const ChartCanvas = memo(
 
         {/* Interactive Data Point Overlays */}
         {enableTooltips &&
-          dataPoints.map((point, index) => (
+          dataPoints.map(point => (
             <DataPointOverlay
-              key={`data-point-${index}`}
+              key={`data-point-${point.label}-${point.value}`}
               accessibilityLabel={`Data point: ${point.value} ${point.label}`}
               label={point.label}
               value={point.value}

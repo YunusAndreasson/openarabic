@@ -69,9 +69,9 @@ const WordExampleItem = memo(
           {/* Render words or fallback to raw text */}
           {item.words.length > 0 ? (
             <View style={styles.wordsContainer}>
-              {item.words.map((word, index) => (
+              {item.words.map(word => (
                 <SimpleArabicWord
-                  key={`word-${word.id}-${index}`}
+                  key={`word-${word.id}`}
                   isHighlighted={targetWordId === word.id}
                   word={word}
                 />
@@ -201,12 +201,11 @@ export default function WordExamplesScreen() {
   }, [wordId, rootId, category, user?.id]);
 
   // Memoized render function
-  const renderSentenceItem = useCallback(
-    ({ item }: { item: SentenceWithWords }) => (
-      <WordExampleItem item={item} rootId={rootId} wordId={wordId} />
-    ),
-    [rootId, wordId]
-  );
+  const renderSentenceItem: ({ item }: { item: SentenceWithWords }) => React.ReactElement =
+    useCallback(
+      ({ item }) => <WordExampleItem item={item} rootId={rootId} wordId={wordId} />,
+      [rootId, wordId]
+    );
 
   // Enhanced header options with better styling
   const headerOptions = useMemo(

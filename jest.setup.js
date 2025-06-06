@@ -1,23 +1,18 @@
-/**
- * @jest-environment node
- */
-
 import { TextEncoder, TextDecoder } from 'util';
 
 import { jest } from '@jest/globals';
 
- 
 if (typeof global.jest === 'undefined') {
   global.jest = jest;
 }
 
 // Mock requestAnimationFrame and cancelAnimationFrame
 global.requestAnimationFrame = function (callback) {
-  return setTimeout(callback, 0);
+  return global.setTimeout(callback, 0);
 };
 
 global.cancelAnimationFrame = function (id) {
-  clearTimeout(id);
+  global.clearTimeout(id);
 };
 
 // Mock AsyncStorage

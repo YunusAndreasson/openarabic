@@ -1,4 +1,3 @@
- 
 import * as Sentry from '@sentry/react-native';
 
 // Store toast handler globally - updated to support types
@@ -94,8 +93,7 @@ export const handleError = async (
     if (opts.showToast) {
       showToastMessage(errorObj, opts.toastMessage, opts.toastDuration, opts.toastType);
     }
-     
-  } catch (_handlingError) {
+  } catch {
     // Silent fail if error handling itself fails
   }
 };

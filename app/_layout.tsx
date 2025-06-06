@@ -9,17 +9,7 @@ import { useFonts } from 'expo-font';
 import { Stack, useNavigationContainerRef, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  Component,
-  useMemo,
-  createContext,
-  useContext,
-  memo,
-  useCallback,
-} from 'react';
+import React, { useEffect, useState, useRef, Component, useMemo, useCallback, memo } from 'react';
 import 'react-native-reanimated';
 import { AppState, View, StyleSheet, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -34,7 +24,6 @@ import { Theme } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import type { RootState } from '@/store/store';
-import { handleError } from '@/utils/errorHandling';
 
 import figtreeFont from '../assets/fonts/Figtree.ttf';
 import madinaFont from '../assets/fonts/Madina.otf';
@@ -100,18 +89,6 @@ const reviewScreenOptions = {
   gestureEnabled: false,
 } as const;
 
-interface AppLoadingContextType {
-  initialLoadComplete: boolean;
-  wasPreloaded: boolean;
-}
-
-export const AppLoadingContext = createContext<AppLoadingContextType>({
-  initialLoadComplete: false,
-  wasPreloaded: false,
-});
-
-export const useAppLoading = (): AppLoadingContextType => useContext(AppLoadingContext);
-
 function AppContent() {
   const dispatch = useAppDispatch();
   const { theme } = useAppSelector((state: RootState) => state.theme);
@@ -127,35 +104,15 @@ function AppContent() {
   useEffect(() => {
     const initializeSplashScreen = async () => {
       try {
-        // Check if the SplashScreen module is available and has the required methods
-        if (SplashScreen && typeof SplashScreen.preventAutoHideAsync === 'function') {
-          await SplashScreen.preventAutoHideAsync();
-
-          // Configure splash screen to be visible for at least 1 second with fade effect
-          if (typeof SplashScreen.setOptions === 'function') {
-            SplashScreen.setOptions({
-              duration: 1000,
-            });
-          }
-        } else {
-          Sentry.captureException(err, {
-            tags: {
-              location: 'splash_screen_initialization',
-            },
-          });
-        }
-      } catch (err) {
-        // Handle the case where the module isn't ready yet
-        Sentry.captureException(err, {
-          tags: {
-            location: 'splash_screen_initialization',
-          },
-        });
+        await SplashScreen.preventAutoHideAsync();
+      } catch (error) {
+        // Silently handle splash screen errors - not critical for app functionality
+        console.warn('Splash screen initialization failed:', error);
       }
     };
 
     initializeSplashScreen();
-  }, []); // Run once on component mount
+  }, []);
 
   const [fontsLoaded] = useFonts({
     Madina: madinaFont,
@@ -164,14 +121,6 @@ function AppContent() {
 
   const { preloadAppData, isLoaded } = useAppPreloader();
   const articlesAndDueWordsLoaded = useArticlesAndDueWordsLoaded();
-
-  const appLoadingContext = useMemo(
-    () => ({
-      initialLoadComplete: appReady,
-      wasPreloaded: isLoaded,
-    }),
-    [appReady, isLoaded]
-  );
 
   useEffect(() => {
     if (navigationRef?.current) {
@@ -183,20 +132,16 @@ function AppContent() {
     if (!appReady || isAuthLoading) return;
 
     const identifyUser = async () => {
-      try {
-        if (session?.user) {
+      if (session?.user) {
+        try {
           await analytics.identify(session.user.id, {
             email: session.user.email,
             last_active: new Date().toISOString(),
           });
+        } catch (err) {
+          // Silently ignore analytics errors
+          console.warn('Analytics identify failed:', err);
         }
-      } catch (err) {
-        Sentry.captureException(err, {
-          tags: {
-            location: 'analytics_identify',
-          },
-          level: 'warning',
-        });
       }
     };
 
@@ -233,57 +178,11 @@ function AppContent() {
   // Hide splash screen after first layout
   const onLayoutRootView = useCallback(() => {
     if (appReady) {
-      // Check if SplashScreen module is available before hiding
-      if (SplashScreen && typeof SplashScreen.hideAsync === 'function') {
-        SplashScreen.hideAsync().catch(err => {
-          // Handle cases where splash screen hiding fails
-          Sentry.captureException(err, {
-            tags: {
-              location: 'splash_screen_hide',
-            },
-          });
-        });
-      }
+      SplashScreen.hideAsync().catch(() => {
+        // Ignore splash screen hiding errors
+      });
     }
   }, [appReady]);
-
-  // Add timeout to prevent infinite loading
-  useEffect(() => {
-    // Maximum time to wait for app to be ready (in milliseconds)
-    const MAX_LOADING_TIME = 8000; // Increased to 8 seconds from 5
-    // Authentication timeout - increased to allow for proper initialization
-    const AUTH_TIMEOUT = 5000; // Increased to 5 seconds from 3
-
-    let timeoutId: ReturnType<typeof setTimeout>;
-    let authTimeoutId: ReturnType<typeof setTimeout>;
-
-    // Separate timeout just for auth to ensure we don't block UI rendering
-    if (!appReady && isAuthLoading) {
-      authTimeoutId = setTimeout(() => {
-        handleError(
-          new Error('Auth loading timeout reached - proceeding with app initialization'),
-          { showToast: false, sentrySeverity: 'warning' }
-        );
-        // This doesn't affect the actual auth state, just lets the app proceed
-        // The auth system will keep trying in the background
-      }, AUTH_TIMEOUT);
-    }
-
-    if (!appReady && fontsLoaded) {
-      timeoutId = setTimeout(() => {
-        handleError(new Error('App loading timeout reached - forcing app ready state'), {
-          showToast: false,
-          sentrySeverity: 'warning',
-        });
-        setAppReady(true);
-      }, MAX_LOADING_TIME);
-    }
-
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-      if (authTimeoutId) clearTimeout(authTimeoutId);
-    };
-  }, [appReady, fontsLoaded, isAuthLoading]);
 
   // Wait for all resources before setting appReady
   useEffect(() => {
@@ -311,27 +210,12 @@ function AppContent() {
       appState.current = nextAppState;
 
       if (isActivating && appReady) {
-        Sentry.addBreadcrumb({
-          category: 'app_lifecycle',
-          message: 'App resumed from background',
-          level: 'info',
-        });
-
         // When resuming from background, refresh app data
-        const timeoutId = setTimeout(preloadAppData, 300);
-        return () => clearTimeout(timeoutId);
+        setTimeout(preloadAppData, 300);
       }
-      return undefined;
     });
 
-    return () => {
-      Sentry.addBreadcrumb({
-        category: 'app_lifecycle',
-        message: 'Removing app state subscription',
-        level: 'info',
-      });
-      subscription.remove();
-    };
+    return () => subscription.remove();
   }, [appReady, preloadAppData]);
 
   // Perform session-based navigation after app is ready
@@ -340,25 +224,9 @@ function AppContent() {
       setHasAttemptedRedirect(true);
 
       try {
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'Redirecting based on session state',
-          level: 'info',
-        });
-
         if (session) {
-          Sentry.addBreadcrumb({
-            category: 'auth',
-            message: 'Valid session found, redirecting to main app',
-            level: 'info',
-          });
           router.replace('/(tabs)');
         } else {
-          Sentry.addBreadcrumb({
-            category: 'auth',
-            message: 'No valid session, redirecting to auth',
-            level: 'info',
-          });
           router.replace('/auth');
         }
       } catch (err) {
@@ -368,7 +236,6 @@ function AppContent() {
             action: 'session_redirect',
           },
         });
-        // On error, default to auth screen
         router.replace('/auth');
       }
     }
@@ -385,32 +252,30 @@ function AppContent() {
 
   return (
     <NavigationThemeProvider value={navigationTheme}>
-      <AppLoadingContext.Provider value={appLoadingContext}>
-        <View style={styles.container} onLayout={onLayoutRootView}>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen
-              name="(tabs)"
-              options={{
-                headerShown: false,
-                animation: 'none',
-              }}
-            />
-            <Stack.Screen
-              name="auth"
-              options={{
-                headerShown: false,
-                animation: 'none',
-              }}
-            />
-            <Stack.Screen name="article" options={{ headerShown: false }} />
-            <Stack.Screen name="review" options={reviewScreenOptions} />
-            <Stack.Screen name="practice" options={reviewScreenOptions} />
-            <Stack.Screen name="insights" options={{ headerShown: true }} />
-            <Stack.Screen name="index" />
-          </Stack>
-          <StatusBar style={isDark ? 'light' : 'dark'} />
-        </View>
-      </AppLoadingContext.Provider>
+      <View style={styles.container} onLayout={onLayoutRootView}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen
+            name="(tabs)"
+            options={{
+              headerShown: false,
+              animation: 'none',
+            }}
+          />
+          <Stack.Screen
+            name="auth"
+            options={{
+              headerShown: false,
+              animation: 'none',
+            }}
+          />
+          <Stack.Screen name="article" options={{ headerShown: false }} />
+          <Stack.Screen name="review" options={reviewScreenOptions} />
+          <Stack.Screen name="practice" options={reviewScreenOptions} />
+          <Stack.Screen name="insights" options={{ headerShown: true }} />
+          <Stack.Screen name="index" />
+        </Stack>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+      </View>
     </NavigationThemeProvider>
   );
 }

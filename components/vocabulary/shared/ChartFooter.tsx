@@ -38,8 +38,8 @@ export const ChartFooter = memo(({ legendItems, timeRange }: ChartFooterProps) =
   return (
     <View style={[styles.progressFooter, { borderTopColor: colors.borderOverlay }]}>
       <View style={styles.progressLegend}>
-        {legendItems.map((item, index) => (
-          <View key={`legend-${index}`} style={styles.legendItem}>
+        {legendItems.map(item => (
+          <View key={`legend-${item.type}-${item.label}`} style={styles.legendItem}>
             {renderLegendIndicator(item)}
             <ThemedText
               ellipsizeMode="tail"

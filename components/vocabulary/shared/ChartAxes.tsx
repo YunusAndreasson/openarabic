@@ -37,9 +37,7 @@ export const ChartAxes = memo(
     const colorScheme = useColorScheme();
     const colors = useColors();
     const textColor =
-      colorScheme === 'dark'
-        ? withOpacity(colors.white, 0.7)
-        : withOpacity(colors.black, 0.7);
+      colorScheme === 'dark' ? withOpacity(colors.white, 0.7) : withOpacity(colors.black, 0.7);
     const todayTextColor = colors.tint; // More discrete color from Colors.ts
 
     // Calculate y-axis label positions and values
@@ -68,9 +66,9 @@ export const ChartAxes = memo(
         {/* Y-Axis Labels */}
         {showYAxis && (
           <View style={[styles.yAxisContainer, { height, width: Y_AXIS_WIDTH }]}>
-            {yLabels.map((label, index) => (
+            {yLabels.map(label => (
               <View
-                key={`y-label-${index}`}
+                key={`y-label-${label.value}`}
                 style={[
                   styles.yLabel,
                   {
@@ -130,7 +128,7 @@ export const ChartAxes = memo(
 
             return (
               <View
-                key={`x-label-${index}`}
+                key={`x-label-${label}`}
                 style={[
                   styles.xLabel,
                   {

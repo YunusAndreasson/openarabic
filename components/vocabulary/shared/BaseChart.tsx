@@ -16,13 +16,6 @@ export interface LegendItemProps {
   label: string;
 }
 
-interface StatItemProps {
-  value: number | string;
-  label: string;
-  color?: string;
-  onPress?: () => void;
-}
-
 interface BaseChartProps {
   // Header props
   title: string;

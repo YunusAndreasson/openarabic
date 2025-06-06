@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
   },
 });
 
-function useContentSections(articlesData: Article[], user: any) {
+function useContentSections(user: any) {
   const { hasEnoughArticles = false, dueWordRootIds = new Set() } = useArticlesByDueWords(
     user?.id,
     10
@@ -166,13 +166,7 @@ export default function ArticlesScreen(): JSX.Element {
     difficultWordRootIds,
     strugglingWords,
     isStrugglingWordsLoading,
-  } = useContentSections(articlesData, user);
-
-  useEffect(() => {
-    router.setParams({
-      animation: 'none',
-    });
-  }, []);
+  } = useContentSections(user);
 
   const { data: categoriesData = [] } = useQuery({
     queryKey: ['categories'],

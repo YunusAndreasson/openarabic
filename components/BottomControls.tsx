@@ -29,7 +29,6 @@ export type BottomControlsProps = {
   timerAccessibilityLabel?: string;
 };
 
- 
 const BottomControls = memo<BottomControlsProps>(
   ({
     primaryLabel,
@@ -133,9 +132,9 @@ const BottomControls = memo<BottomControlsProps>(
             {hasSecondaryButton && (
               <View style={styles.buttonContainer}>
                 <ThemedButton
-                  accessibilityLabel={secondaryAccessibilityLabel || secondaryLabel!}
+                  accessibilityLabel={secondaryAccessibilityLabel || (secondaryLabel as string)}
                   disabled={secondaryDisabled}
-                  title={secondaryLabel!}
+                  title={secondaryLabel as string}
                   variant={secondaryVariant}
                   style={[
                     styles.button,

@@ -54,14 +54,6 @@ const styles = StyleSheet.create({
   infoTextContainer: {
     marginLeft: LAYOUT.SPACING.TINY,
   },
-  sourceContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
-  sourceText: {
-    marginLeft: LAYOUT.SPACING.TINY,
-  },
   summaryContainer: {
     paddingTop: LAYOUT.SPACING.SMALL,
   },
@@ -199,18 +191,6 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({
             </ThemedText>
           </View>
         </View>
-
-        {/* Source */}
-        {false && (
-          <View style={styles.sourceContainer}>
-            <ThemedText
-              accessibilityLabel={`Source: deleted`}
-              style={[styles.sourceText, { color: colors.textSecondary }]}
-            >
-              deleted
-            </ThemedText>
-          </View>
-        )}
       </View>
 
       {article.summary ? (

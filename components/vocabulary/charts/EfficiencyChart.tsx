@@ -113,8 +113,10 @@ export const EfficiencyChart = memo(
         } else {
           // Create smooth curves using quadratic bezier
           const prevPoint = points[index - 1];
-          const controlX = (prevPoint!.x + x) / 2;
-          path.quadTo(controlX, prevPoint!.y, x, y);
+          if (prevPoint) {
+            const controlX = (prevPoint.x + x) / 2;
+            path.quadTo(controlX, prevPoint.y, x, y);
+          }
         }
       });
 
@@ -247,9 +249,9 @@ export const EfficiencyChart = memo(
                       />
                     }
                   >
-                    {chartData.performanceZones.map((zone, index) => (
+                    {chartData.performanceZones.map(zone => (
                       <Rect
-                        key={`performance-zone-${index}`}
+                        key={`performance-zone-${zone.color}-${zone.y}`}
                         color={chartColors.withOpacity(zone.color, 0.25)}
                         height={zone.height}
                         width={GRAPH_WIDTH}
@@ -278,7 +280,7 @@ export const EfficiencyChart = memo(
                   if (!data || data.wordCount === 0) return null;
 
                   return (
-                    <Group key={`efficiency-point-${index}`}>
+                    <Group key={`efficiency-point-${data.date.toISOString()}`}>
                       {/* Enhanced data point with border */}
                       <Circle
                         color={chartColors.ui.accent}

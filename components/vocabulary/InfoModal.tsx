@@ -24,7 +24,11 @@ import { withOpacity } from '@/utils/colorUtils';
 import { ThemedText } from '../ThemedText';
 
 export type InfoModalType =
-  'efficiency' | 'mastery' | 'progress' | 'recommendation' | 'retrievability';
+  | 'efficiency'
+  | 'mastery'
+  | 'progress'
+  | 'recommendation'
+  | 'retrievability';
 
 interface InfoModalProps {
   visible: boolean;
@@ -207,7 +211,7 @@ const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
   },
 };
 
-export const InfoModal = memo(({ visible, type, onClose }: InfoModalProps) => {
+export const InfoModal = memo(function InfoModal({ visible, type, onClose }: InfoModalProps) {
   const colors = useColors();
   const screenHeight = Dimensions.get('window').height;
 
@@ -333,8 +337,8 @@ export const InfoModal = memo(({ visible, type, onClose }: InfoModalProps) => {
                 {/* Sections */}
                 {content.sections.length > 0 && (
                   <View style={styles.sectionsContainer}>
-                    {content.sections.map((section, index) => (
-                      <View key={`section-${index}`} style={styles.section}>
+                    {content.sections.map(section => (
+                      <View key={`section-${section.title}`} style={styles.section}>
                         <View style={styles.sectionHeader}>
                           {section.icon && (
                             <View
@@ -364,8 +368,8 @@ export const InfoModal = memo(({ visible, type, onClose }: InfoModalProps) => {
                     <ThemedText style={styles.tipsTitle} type="heading3" weight="bold">
                       💡 Pro Tips
                     </ThemedText>
-                    {content.tips.map((tip, index) => (
-                      <View key={`tip-${index}`} style={styles.tip}>
+                    {content.tips.map(tip => (
+                      <View key={`tip-${tip}`} style={styles.tip}>
                         <View style={[styles.tipBullet, { backgroundColor: colors.tint }]} />
                         <ThemedText style={styles.tipText} type="body" variant="secondary">
                           {tip}
@@ -383,124 +387,96 @@ export const InfoModal = memo(({ visible, type, onClose }: InfoModalProps) => {
   );
 });
 
-InfoModal.displayName = 'InfoModal';
-
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
+    backgroundColor: Colors.light.background,
+  },
+  modalContainer: {
+    flex: 1,
     justifyContent: 'flex-end',
   },
-  closeButton: {
+  modal: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingTop: 0,
+  },
+  header: {
+    padding: 20,
+    paddingBottom: 0,
+  },
+  headerContent: {
+    flexDirection: 'row',
     alignItems: 'center',
-    flexShrink: 0,
-    height: 38,
-    justifyContent: 'center',
-    width: 38,
+    justifyContent: 'space-between',
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: Colors.light.text,
+  },
+  closeButton: {
+    padding: 10,
   },
   content: {
     backgroundColor: Colors.light.transparent,
     flex: 1,
   },
   contentContainer: {
-    padding: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.LARGE,
-    paddingRight: LAYOUT.SPACING.MEDIUM,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
+    padding: 20,
   },
   extendedSubtitle: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
-  },
-  header: {
-    alignItems: 'flex-start',
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    flexShrink: 0,
-    justifyContent: 'space-between',
-    padding: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  headerContent: {
-    flex: 1,
-    marginRight: LAYOUT.SPACING.MEDIUM,
-  },
-  modal: {
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    display: 'flex',
-    elevation: LAYOUT.ELEVATION.MEDIUM,
-    maxHeight: '70%',
-    overflow: 'hidden',
-    shadowOffset: {
-      width: 0,
-      height: -4,
-    },
-    shadowOpacity: LAYOUT.OPACITY.LIGHT,
-    shadowRadius: 12,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
-  section: {
-    marginBottom: LAYOUT.SPACING.LARGE,
-  },
-  sectionContent: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.5,
-    marginLeft: LAYOUT.SPACING.LARGE + LAYOUT.SPACING.SMALL, // Align with title
-  },
-  sectionHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  sectionIcon: {
-    alignItems: 'center',
-    borderRadius: 16,
-    height: 32,
-    justifyContent: 'center',
-    marginRight: LAYOUT.SPACING.SMALL,
-    width: 32,
-  },
-  sectionTitle: {
-    flex: 1,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.2,
+    fontSize: 16,
+    color: Colors.light.text,
+    marginBottom: 20,
   },
   sectionsContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.LARGE,
+    marginBottom: 20,
   },
-  subtitle: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
+  section: {
+    marginBottom: 10,
   },
-  tip: {
-    alignItems: 'flex-start',
+  sectionHeader: {
     flexDirection: 'row',
-    marginBottom: LAYOUT.SPACING.SMALL,
-    paddingLeft: LAYOUT.SPACING.SMALL,
+    alignItems: 'center',
   },
-  tipBullet: {
-    borderRadius: 3,
-    height: 6,
-    marginRight: LAYOUT.SPACING.SMALL,
-    marginTop: LAYOUT.SPACING.SMALL,
-    width: 6, // Align with text baseline
+  sectionIcon: {
+    padding: 10,
+    borderRadius: 10,
+    marginRight: 10,
   },
-  tipText: {
-    flex: 1,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.5,
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  sectionContent: {
+    fontSize: 16,
   },
   tipsContainer: {
+    padding: 20,
     borderTopWidth: 1,
-    marginTop: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
   },
   tipsTitle: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.2,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
-  title: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.2,
-    marginBottom: LAYOUT.SPACING.XSMALL,
+  tip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  tipBullet: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 10,
+  },
+  tipText: {
+    fontSize: 16,
   },
 });
