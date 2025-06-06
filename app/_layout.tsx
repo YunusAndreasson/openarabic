@@ -99,7 +99,10 @@ const navigationIntegration = Sentry.reactNavigationIntegration();
 Sentry.init({
   dsn: 'https://5ca58a5811a094515e346b0241e6a3f7@o1414696.ingest.us.sentry.io/4509090539831296',
   integrations: [navigationIntegration],
-  enabled: !__DEV__,
+  enabled: true, // Enable in both dev and production
+  tracesSampleRate: 1.0, // Sample everything (100%)
+  attachScreenshot: true, // Helps debug UI crashes
+  debug: __DEV__, // Enable debug logging in dev
 });
 
 const reviewScreenOptions = {
@@ -150,7 +153,6 @@ function AppContent() {
 
   useEffect(() => {
     if (navigationRef?.current) {
-      const navigationIntegration = Sentry.reactNavigationIntegration();
       navigationIntegration.registerNavigationContainer(navigationRef);
     }
   }, [navigationRef]);
@@ -340,9 +342,13 @@ function AppContent() {
     }
   }, [appReady, isAuthLoading, hasAttemptedRedirect, session, router]);
 
-  // Show nothing until the app is ready
+  // Show loading screen until the app is ready
   if (!appReady) {
-    return null;
+    return (
+      <View style={[styles.container, styles.errorContainer]}>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+      </View>
+    );
   }
 
   return (
@@ -394,6 +400,18 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // Report to Sentry with component stack
+    Sentry.captureException(error, {
+      tags: { location: 'error_boundary' },
+      contexts: {
+        react: {
+          componentStack: errorInfo.componentStack,
+        },
+      },
+    });
   }
 
   shouldComponentUpdate(_prevProps: ErrorBoundaryProps, nextState: ErrorBoundaryState): boolean {
