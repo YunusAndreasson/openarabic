@@ -10,12 +10,12 @@ import { Platform, StyleSheet, View, Text } from 'react-native';
 import type { TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { LAYOUT } from '@/constants/layout';
 import { Colors } from '@/constants/Colors';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
+
 import { useAuth } from '../../hooks/useAuth';
-import { MIN_TOUCH_TARGET } from '@/constants/layout';
 
 const TAB_SCREENS = [
   {
@@ -25,7 +25,7 @@ const TAB_SCREENS = [
     iconFilled: 'book',
   },
   {
-    name: 'bookmarks',
+    name: 'listen',
     title: 'Listen',
     iconOutline: 'headset-outline',
     iconFilled: 'headset',

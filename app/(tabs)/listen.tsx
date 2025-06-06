@@ -93,7 +93,7 @@ const getDaysAgo = (addedAt: string): string => {
 const ITEM_HEIGHT = 120; // Increased from 80 to account for AudioProgressBar
 
 // Memory-optimized component for reading list items
-const BookmarkListItem = memo(
+const ListenListItem = memo(
   ({
     item,
     isActive,
@@ -178,16 +178,16 @@ const BookmarkListItem = memo(
   }
 );
 
-BookmarkListItem.displayName = 'BookmarkListItem';
+ListenListItem.displayName = 'ListenListItem';
 
-export type BookmarkSortOption = 'dueWords' | 'alphabetical' | 'recent';
+export type ListenSortOption = 'dueWords' | 'alphabetical' | 'recent';
 
 // Create dynamic sort options with loading state
-const createBookmarkSortOptions = (
+const createListenSortOptions = (
   isDueWordsLoading: boolean,
   isDueWordsDataAvailable: boolean
-): SortOption<BookmarkSortOption>[] => {
-  const baseOptions: SortOption<BookmarkSortOption>[] = [
+): SortOption<ListenSortOption>[] => {
+  const baseOptions: SortOption<ListenSortOption>[] = [
     { key: 'recent', label: 'Latest' },
     { key: 'alphabetical', label: 'Title' },
   ];
@@ -202,7 +202,7 @@ const createBookmarkSortOptions = (
   return baseOptions;
 };
 
-export default function BookmarksScreen(): JSX.Element {
+export default function ListenScreen(): JSX.Element {
   const colors = useColors();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -242,13 +242,13 @@ export default function BookmarksScreen(): JSX.Element {
   }, [isDueWordsLoading, dueWordRootIds?.size]);
 
   // Determine the best default sort based on available data
-  const getDefaultSort = useCallback((): BookmarkSortOption => {
+  const getDefaultSort = useCallback((): ListenSortOption => {
     // Prioritize words due if data is available, otherwise fall back to latest
     return isDueWordsDataAvailable ? 'dueWords' : 'recent';
   }, [isDueWordsDataAvailable]);
 
   // Sorting state - default to words due when available, otherwise latest
-  const [currentSort, setCurrentSort] = useState<BookmarkSortOption>(() => getDefaultSort());
+  const [currentSort, setCurrentSort] = useState<ListenSortOption>(() => getDefaultSort());
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // --- Get State & Stable Actions from useEnhancedAudioPlayer ---
@@ -591,7 +591,7 @@ export default function BookmarksScreen(): JSX.Element {
 
   // Handle sorting
   const handleSortChange = useCallback((sort: string, direction: SortDirection) => {
-    setCurrentSort(sort as BookmarkSortOption);
+    setCurrentSort(sort as ListenSortOption);
     setSortDirection(direction);
   }, []);
 
@@ -620,7 +620,7 @@ export default function BookmarksScreen(): JSX.Element {
 
   // Memoized sort options to prevent unnecessary re-renders
   const sortOptions = useMemo(
-    () => createBookmarkSortOptions(isDueWordsLoading, isDueWordsDataAvailable),
+    () => createListenSortOptions(isDueWordsLoading, isDueWordsDataAvailable),
     [isDueWordsLoading, isDueWordsDataAvailable]
   );
 
@@ -685,7 +685,7 @@ export default function BookmarksScreen(): JSX.Element {
       style={styles.container}
       includeBottomInset={false}
       safeAreaEdges={['left', 'right']}
-      accessibilityLabel="Bookmarks screen"
+      accessibilityLabel="Listen screen"
     >
       <ThemedView useSafeArea={false} includeBottomInset={false} style={styles.flexOne}>
         <FlashList
@@ -700,7 +700,7 @@ export default function BookmarksScreen(): JSX.Element {
               audioState !== AUDIO_STATES.IDLE && metadata.articleId === item.article_id;
 
             return (
-              <BookmarkListItem
+              <ListenListItem
                 item={item}
                 isActive={isActive}
                 dueWordCount={dueWordCount}
@@ -739,7 +739,7 @@ export default function BookmarksScreen(): JSX.Element {
                 title="No Saved Texts"
                 description="Save articles to listen later"
                 submessage="Bookmark any article, then return here to play with hands-free controls"
-                icon="bookmarks-outline"
+                icon="headset-outline"
                 iconSize={72}
                 colors={colors}
                 containerStyle={{

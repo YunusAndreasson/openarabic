@@ -36,8 +36,7 @@ export type RouteParams = {
   '/wordList': WordListParams;
   '/': Record<string, never>;
   '/(tabs)': Record<string, never>;
-  '/(tabs)/bookmarks': Record<string, never>;
-  '/bookmarks': Record<string, never>;
+  '/(tabs)/listen': Record<string, never>;
   '/settings': Record<string, never>;
   '/vocabulary': Record<string, never>;
 };
@@ -79,8 +78,7 @@ const routeParams: Record<RoutePath, true> = {
   '/wordList': true,
   '/': true,
   '/(tabs)': true,
-  '/(tabs)/bookmarks': true,
-  '/bookmarks': true,
+  '/(tabs)/listen': true,
   '/settings': true,
   '/vocabulary': true,
 };
