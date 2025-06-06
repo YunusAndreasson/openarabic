@@ -11,9 +11,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { ArticleSentence } from '@/components/article';
 import { ArabicWord } from '@/components/article/ArabicWord';
 import { ArticleContent, type ArticleContentRef } from '@/components/article/ArticleContent';
-import AudioControlPanel from '@/components/article/AudioControlPanel';
 import { LAYOUT } from '@/constants/layout';
-import { useNavigationWithDebounce } from '@/hooks';
 import { useArticleData } from '@/hooks/useArticleData';
 import { useArticleMutations } from '@/hooks/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/useArticleRenderers';
@@ -21,19 +19,12 @@ import { useArticlesByDueWords } from '@/hooks/useArticlesByDueWords';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { useHeaderVisibility } from '@/hooks/useHeaderVisibility';
-import {
-  useSentenceAudioPlayer,
-  type WordTiming,
-  type SentenceWordsMap,
-} from '@/hooks/useSentenceAudioPlayer';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { analytics } from '@/services/analytics';
-import { updateAudioState } from '@/store/audioSlice';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { setFontScale } from '@/store/settingsSlice';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
-import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
 
 const createStyles = (colors: ReturnType<typeof useColors>) =>
@@ -60,18 +51,6 @@ export default function ArticleScreen(): JSX.Element {
   const dispatch = useAppDispatch();
 
   const { handleScroll } = useHeaderVisibility();
-
-  useNavigationWithDebounce();
-  const audioPlayer = useSentenceAudioPlayer();
-  const {
-    currentWordId,
-    currentPosition,
-    isPlaying,
-    currentSentenceIndex,
-    startPlayback,
-    stopPlayback,
-    findWordById,
-  } = audioPlayer;
 
   const articleId = useMemo(() => {
     if (!id) return undefined;
@@ -129,57 +108,6 @@ export default function ArticleScreen(): JSX.Element {
     }
   }, [article, isInReadingList, isLoadingReadingList]);
 
-  // Re-add sentenceAudioData that was removed by mistake
-  const sentenceAudioData = useMemo(() => {
-    if (!sortedSentences || !sentenceWordsMap) {
-      return [];
-    }
-    if (sortedSentences.length === 0) {
-      return [];
-    }
-    const validSentences = sortedSentences.filter(sentence => {
-      const audioUrl = sentence.audio_url?.trim();
-      return (
-        audioUrl &&
-        (audioUrl.startsWith('http://') ||
-          audioUrl.startsWith('https://') ||
-          audioUrl.startsWith('file://'))
-      );
-    });
-    if (validSentences.length === 0) {
-      return [];
-    }
-    return validSentences.map(sentence => {
-      const sentenceId = sentence.id;
-      const words = sentenceWordsMap.get(sentenceId) || [];
-      const wordTimings = words.reduce<WordTiming[]>((acc, word, index) => {
-        const start = parseFloat(word.audio_start || '');
-        const end = parseFloat(word.audio_end || '');
-        if (!isNaN(start) && !isNaN(end) && start < end) {
-          acc.push({
-            wordId: word.id,
-            startTime: start * 1000,
-            endTime: end * 1000,
-            position: index,
-          });
-        }
-        return acc;
-      }, []);
-      return {
-        sentenceId,
-        audioUrl: sentence.audio_url || '',
-        wordTimings,
-      };
-    });
-  }, [sortedSentences, sentenceWordsMap]);
-
-  const currentSentenceId = useMemo(() => {
-    if (currentSentenceIndex !== null && sortedSentences && sortedSentences[currentSentenceIndex]) {
-      return sortedSentences[currentSentenceIndex].id;
-    }
-    return null;
-  }, [currentSentenceIndex, sortedSentences]);
-
   const articleContentRef = useRef<ArticleContentRef>(null);
 
   const { handleToggleReadingList, handleRootPress } = useArticleMutations(
@@ -204,188 +132,6 @@ export default function ArticleScreen(): JSX.Element {
     handleWordPress,
     handleRootPress
   );
-
-  // Add a ref to track the last scrolled word to prevent cycles
-  const lastScrolledWordIdRef = useRef<number | null>(null);
-  const lastScrolledSentenceIdRef = useRef<number | null>(null);
-  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (
-      !currentWordId ||
-      !articleContentRef.current ||
-      !sentenceWordsMap ||
-      currentWordId === lastScrolledWordIdRef.current
-    ) {
-      return;
-    }
-
-    const word = findWordById(currentWordId, sentenceWordsMap as SentenceWordsMap);
-    if (!word) {
-      return;
-    }
-
-    // Only scroll if we've moved to a different sentence, not on every word change
-    if (word.sentence_id === lastScrolledSentenceIdRef.current) {
-      lastScrolledWordIdRef.current = currentWordId;
-      return;
-    }
-
-    // Clear any existing timeout
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
-
-    // Track this word ID and sentence ID to prevent multiple scrolls
-    lastScrolledWordIdRef.current = currentWordId;
-    lastScrolledSentenceIdRef.current = word.sentence_id;
-
-    // Debounce the scroll to prevent excessive scrolling during rapid word changes
-    scrollTimeoutRef.current = setTimeout(() => {
-      if (articleContentRef.current) {
-        articleContentRef.current.scrollToSentence(word.sentence_id);
-      }
-    }, 150); // Slightly longer delay to let sentence-level scrolling take precedence
-
-    // Reset the tracking after a delay to allow future scrolls to the same word if needed
-    const resetTimer = setTimeout(() => {
-      if (lastScrolledWordIdRef.current === currentWordId) {
-        lastScrolledWordIdRef.current = null;
-      }
-      // Don't reset sentence tracking as aggressively
-    }, 2000); // Longer timeout for better stability
-
-    return () => {
-      clearTimeout(resetTimer);
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-    };
-  }, [currentWordId, sentenceWordsMap, findWordById]);
-
-  const [audioControlVisible, setAudioControlVisible] = useState(false);
-  const [audioSessionActive, setAudioSessionActive] = useState(false);
-  const isNavigatingRef = useRef(false);
-  const pausedAudioStateRef = useRef<{
-    sentenceIndex: number | null;
-    wordId: number | null;
-    position: number | null;
-    audioPositionMs?: number;
-  }>({
-    sentenceIndex: null,
-    wordId: null,
-    position: null,
-    audioPositionMs: 0,
-  });
-
-  type SavedAudioState = {
-    sentenceIndex: number | null;
-    wordId: number | null;
-    position: number | null;
-    audioPositionMs?: number;
-  };
-
-  const shouldResumeFromSavedPosition = useCallback(
-    (savedState: SavedAudioState) => {
-      if (savedState.sentenceIndex === null) return false;
-      if (savedState.sentenceIndex < 0) return false;
-      return savedState.sentenceIndex >= 0 && savedState.sentenceIndex < sentenceAudioData.length;
-    },
-    [sentenceAudioData]
-  );
-
-  const resumeFromSavedPosition = useCallback(
-    async (savedState: SavedAudioState) => {
-      if (savedState.sentenceIndex === null) {
-        throw new Error('Cannot resume playback with null sentence index');
-      }
-      dispatch(
-        updateAudioState({
-          wordId: savedState.wordId,
-          position: savedState.position,
-          isPlaying: true,
-          sentenceId: savedState.sentenceIndex,
-        })
-      );
-      const resumeSuccess = await audioPlayer.resumePlayback(
-        savedState.sentenceIndex,
-        savedState.audioPositionMs || 0
-      );
-      if (!resumeSuccess) {
-        await audioPlayer.preloadAudioFiles(sentenceAudioData);
-        const success = await startPlayback(sentenceAudioData, {
-          sentenceOffset: savedState.sentenceIndex,
-        });
-        if (!success) {
-          handleError(new Error('Failed to resume audio playback'));
-          setAudioControlVisible(false);
-        }
-      }
-    },
-    [audioPlayer, sentenceAudioData, startPlayback, dispatch]
-  );
-
-  const startFreshPlayback = useCallback(async () => {
-    pausedAudioStateRef.current = {
-      sentenceIndex: null,
-      wordId: null,
-      position: null,
-      audioPositionMs: 0,
-    };
-    await stopPlayback();
-    dispatch(
-      updateAudioState({
-        wordId: null,
-        position: null,
-        isPlaying: true,
-        sentenceId: 0,
-      })
-    );
-    if (audioPlayer.setCurrentSentenceIndex) {
-      audioPlayer.setCurrentSentenceIndex(0);
-    }
-    await audioPlayer.preloadAudioFiles(sentenceAudioData);
-    const success = await startPlayback(sentenceAudioData, {
-      sentenceOffset: 0,
-      forceReset: true,
-    });
-    if (!success) {
-      handleError(new Error('Failed to start audio playback'));
-      setAudioControlVisible(false);
-    }
-  }, [audioPlayer, sentenceAudioData, startPlayback, dispatch, stopPlayback]);
-
-  const handleStartAudio = useCallback(async () => {
-    try {
-      setAudioControlVisible(true);
-      setAudioSessionActive(true);
-      const savedState = pausedAudioStateRef.current;
-      if (
-        savedState.sentenceIndex === null ||
-        savedState.sentenceIndex >= sentenceAudioData.length - 1
-      ) {
-        pausedAudioStateRef.current = {
-          sentenceIndex: null,
-          wordId: null,
-          position: null,
-          audioPositionMs: 0,
-        };
-        await startFreshPlayback();
-      } else if (shouldResumeFromSavedPosition(savedState)) {
-        await resumeFromSavedPosition(savedState);
-      } else {
-        await startFreshPlayback();
-      }
-    } catch (error) {
-      handleError(error as Error);
-      setAudioControlVisible(false);
-    }
-  }, [
-    shouldResumeFromSavedPosition,
-    resumeFromSavedPosition,
-    startFreshPlayback,
-    sentenceAudioData.length,
-  ]);
 
   const handleBookmarkPress = useCallback(() => {
     if (articleId) {
@@ -414,40 +160,14 @@ export default function ArticleScreen(): JSX.Element {
   );
 
   const handleBackPress = useCallback(() => {
-    if (isPlaying) {
-      stopPlayback().catch(error => {
-        handleError(error);
-      });
-    }
-    pausedAudioStateRef.current = {
-      sentenceIndex: null,
-      wordId: null,
-      position: null,
-    };
-    setAudioControlVisible(false);
-    setAudioSessionActive(false);
-    if (audioPlayer.soundRef && audioPlayer.soundRef.current) {
-      audioPlayer.soundRef.current.unloadAsync().catch(error => {
-        handleError(error);
-      });
-    }
-    isNavigatingRef.current = false;
-    dispatch(
-      updateAudioState({
-        wordId: null,
-        position: null,
-        isPlaying: false,
-        sentenceId: null,
-      })
-    );
     queryClient.cancelQueries();
     router.back();
-  }, [isPlaying, stopPlayback, audioPlayer, router, dispatch, queryClient]);
+  }, [router, queryClient]);
 
   const renderWord = useCallback(
     (
       word: SentenceWord,
-      isAudioHighlighted = false,
+      _isAudioHighlighted = false,
       wordRef?: React.RefObject<ComponentRef<typeof TouchableOpacity>>
     ) => {
       // Check if this word is due for review
@@ -456,7 +176,7 @@ export default function ArticleScreen(): JSX.Element {
       return (
         <ArabicWord
           key={word.id}
-          isAudioHighlighted={isAudioHighlighted}
+          isAudioHighlighted={false}
           isDueWord={isDueWord}
           word={word}
           wordRef={wordRef}
@@ -483,7 +203,6 @@ export default function ArticleScreen(): JSX.Element {
   const renderSentenceItem = useCallback(
     (props: { item: Tables<'article_sentences'> }) => {
       const words = getWordsForSentence(props.item.id);
-      const isCurrentSentence = props.item.id === currentSentenceId;
 
       // Create stable settings object
       const sentenceSettings = {
@@ -498,9 +217,8 @@ export default function ArticleScreen(): JSX.Element {
           key={props.item.id}
           colors={colors}
           containerStyle={styles.transparentBackground}
-          currentPlayingPosition={isCurrentSentence ? currentPosition : null}
-          currentPlayingSentenceId={isCurrentSentence ? currentSentenceId : null}
-          currentPlayingWordId={isCurrentSentence ? currentWordId : null}
+          currentPlayingWordId={null}
+          currentPlayingPosition={null}
           renderWord={renderWord}
           settings={sentenceSettings}
           words={words}
@@ -520,206 +238,12 @@ export default function ArticleScreen(): JSX.Element {
       settings.fontScale,
       colors,
       styles.transparentBackground,
-      currentSentenceId,
-      currentWordId,
-      currentPosition,
     ]
   );
 
-  const handleStopPlayback = useCallback(async () => {
-    try {
-      pausedAudioStateRef.current = {
-        sentenceIndex: null,
-        wordId: null,
-        position: null,
-        audioPositionMs: 0,
-      };
-      setAudioControlVisible(false);
-      setAudioSessionActive(false);
-      await stopPlayback();
-      if (audioPlayer.soundRef && audioPlayer.soundRef.current) {
-        try {
-          await audioPlayer.soundRef.current.unloadAsync();
-        } catch (error) {
-          handleError(error as Error);
-        }
-      }
-      dispatch(
-        updateAudioState({
-          wordId: null,
-          position: null,
-          isPlaying: false,
-          sentenceId: null,
-        })
-      );
-    } catch (error) {
-      handleError(error as Error);
-    }
-  }, [stopPlayback, dispatch, audioPlayer]);
-
-  const handlePlayPress = useCallback(async () => {
-    lightFeedback();
-    if (audioSessionActive) {
-      // Stop audio and close control panel
-      await handleStopPlayback();
-    } else {
-      await handleStartAudio();
-    }
-  }, [audioSessionActive, handleStopPlayback, handleStartAudio]);
-
-  // Simple pause/resume for audio control panel
-  const handleAudioControlPause = useCallback(async () => {
-    lightFeedback();
-    if (isPlaying) {
-      // Just pause, don't stop completely
-      let currentAudioPositionMs = 0;
-      if (audioPlayer.soundRef.current) {
-        try {
-          const status = await audioPlayer.soundRef.current.getStatusAsync();
-          if (status.isLoaded) {
-            currentAudioPositionMs = status.positionMillis;
-          }
-        } catch (audioError) {
-          handleError(audioError as Error);
-        }
-      }
-      pausedAudioStateRef.current = {
-        sentenceIndex: currentSentenceIndex,
-        wordId: currentWordId,
-        position: currentPosition,
-        audioPositionMs: currentAudioPositionMs,
-      };
-      await audioPlayer.stopPlayback(false);
-      dispatch(
-        updateAudioState({
-          wordId: currentWordId,
-          position: currentPosition,
-          isPlaying: false,
-          sentenceId: currentSentenceIndex,
-        })
-      );
-    } else {
-      // Resume from where we left off
-      await handleStartAudio();
-    }
-  }, [
-    isPlaying,
-    audioPlayer,
-    currentSentenceIndex,
-    currentWordId,
-    currentPosition,
-    dispatch,
-    handleStartAudio,
-  ]);
-
-  const handleNextSentence = useCallback(async () => {
-    if (isNavigatingRef.current) {
-      return;
-    }
-    isNavigatingRef.current = true;
-    if (currentSentenceIndex === null || !sentenceAudioData.length) {
-      isNavigatingRef.current = false;
-      return;
-    }
-    if (currentSentenceIndex < sentenceAudioData.length - 1) {
-      try {
-        await stopPlayback();
-        const nextSentenceIndex = currentSentenceIndex + 1;
-        pausedAudioStateRef.current = {
-          sentenceIndex: nextSentenceIndex,
-          wordId: null,
-          position: null,
-          audioPositionMs: 0,
-        };
-        await audioPlayer.preloadAudioFiles(sentenceAudioData);
-        const success = await startPlayback(sentenceAudioData, {
-          sentenceOffset: nextSentenceIndex,
-        });
-        if (!success) {
-          handleError(new Error('Failed to play next sentence'));
-          setAudioControlVisible(false);
-        }
-      } catch (error) {
-        handleError(error as Error);
-        setAudioControlVisible(false);
-      } finally {
-        setTimeout(() => {
-          isNavigatingRef.current = false;
-        }, 500);
-      }
-    } else {
-      isNavigatingRef.current = false;
-    }
-  }, [currentSentenceIndex, sentenceAudioData, stopPlayback, startPlayback, audioPlayer]);
-
-  const handlePreviousSentence = useCallback(async () => {
-    if (isNavigatingRef.current) {
-      return;
-    }
-    isNavigatingRef.current = true;
-    lightFeedback();
-    if (currentSentenceIndex === null || !sentenceAudioData.length) {
-      isNavigatingRef.current = false;
-      return;
-    }
-    if (currentSentenceIndex > 0) {
-      try {
-        await stopPlayback();
-        const prevSentenceIndex = currentSentenceIndex - 1;
-        pausedAudioStateRef.current = {
-          sentenceIndex: prevSentenceIndex,
-          wordId: null,
-          position: null,
-          audioPositionMs: 0,
-        };
-        await audioPlayer.preloadAudioFiles(sentenceAudioData);
-        const success = await startPlayback(sentenceAudioData, {
-          sentenceOffset: prevSentenceIndex,
-        });
-        if (!success) {
-          handleError(new Error('Failed to play previous sentence'));
-          setAudioControlVisible(false);
-        }
-      } catch (error) {
-        handleError(error as Error);
-        setAudioControlVisible(false);
-      } finally {
-        setTimeout(() => {
-          isNavigatingRef.current = false;
-        }, 500);
-      }
-    } else {
-      isNavigatingRef.current = false;
-    }
-  }, [currentSentenceIndex, sentenceAudioData, stopPlayback, startPlayback, audioPlayer]);
-
   useEffect(() => {
-    stopPlayback?.();
-    setAudioControlVisible(false);
-    setAudioSessionActive(false);
-    pausedAudioStateRef.current = {
-      sentenceIndex: null,
-      wordId: null,
-      position: null,
-      audioPositionMs: 0,
-    };
-    isNavigatingRef.current = false;
-
-    // Reset scroll tracking when article changes
-    lastScrolledWordIdRef.current = null;
-    lastScrolledSentenceIdRef.current = null;
-
     // Reset text size slider when article changes
     setShowTextSizeSlider(false);
-
-    dispatch(
-      updateAudioState({
-        wordId: null,
-        position: null,
-        isPlaying: false,
-        sentenceId: null,
-      })
-    );
     refetchReadingListStatus?.();
   }, [id]);
 
@@ -739,7 +263,7 @@ export default function ArticleScreen(): JSX.Element {
             id={id}
             isDarkMode={isDarkMode}
             isInReadingList={isInReadingList}
-            isPlaying={audioSessionActive}
+            isPlaying={false}
             otherArticles={otherArticles}
             renderSentenceItem={renderSentenceItem}
             showEnglish={showEnglishLocal}
@@ -753,20 +277,10 @@ export default function ArticleScreen(): JSX.Element {
             onBookmarkPress={handleBookmarkPress}
             onEnglishToggle={handleEnglishToggle}
             onFontScaleChange={handleFontScaleChange}
-            onPlayPress={handlePlayPress}
             onTextSizeToggle={handleTextSizeToggle}
           />
         ) : null}
       </View>
-      <AudioControlPanel
-        currentSentenceIndex={currentSentenceIndex}
-        isPlaying={isPlaying}
-        isVisible={audioControlVisible}
-        totalSentences={sentenceAudioData.length}
-        onNext={handleNextSentence}
-        onPlayPause={handleAudioControlPause}
-        onPrevious={handlePreviousSentence}
-      />
     </ThemedView>
   );
 }

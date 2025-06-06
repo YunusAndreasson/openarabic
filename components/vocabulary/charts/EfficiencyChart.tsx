@@ -12,7 +12,7 @@ import React, { memo, useMemo } from 'react';
 import { View } from 'react-native';
 
 import { useColors } from '@/hooks/useColors';
-import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
+import type { StudyWord } from '@/types/vocabulary.types';
 
 import {
   BaseChart,
@@ -23,12 +23,7 @@ import {
   type DataPoint,
 } from '../shared';
 import { useChartColors } from '../shared/chartColors';
-import {
-  generateChartSubtitle,
-  createStandardizedStats,
-  CHART_LABELS,
-  EMPTY_STATE_MESSAGES,
-} from '../shared/chartMessages';
+import { generateChartSubtitle, CHART_LABELS, EMPTY_STATE_MESSAGES } from '../shared/chartMessages';
 import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_7, CHART_VISUAL } from '../shared/constants';
 import {
   generateDateRange,
@@ -42,18 +37,10 @@ interface EfficiencyChartProps {
   studyWords: StudyWord[];
   onInfoPress: () => void;
   hideTitle?: boolean;
-  learningWords?: number;
-  onStatPress?: (category: StatCategory) => void;
 }
 
 export const EfficiencyChart = memo(
-  ({
-    studyWords = [],
-    onInfoPress,
-    hideTitle = false,
-    learningWords = 0,
-    onStatPress,
-  }: EfficiencyChartProps) => {
+  ({ studyWords = [], onInfoPress, hideTitle = false }: EfficiencyChartProps) => {
     const chartColors = useChartColors();
     const colors = useColors();
 
@@ -205,35 +192,12 @@ export const EfficiencyChart = memo(
         .filter((point): point is DataPoint => point !== null);
     }, [chartData.dataPoints, efficiencyData]);
 
-    // Create standardized stats using new messaging system with semantic matching
-    const { leftStat, rightStat } = useMemo(() => {
-      if (!chartData.hasData) {
-        return createStandardizedStats.efficiency(
-          0,
-          0,
-          chartColors.performance.poor,
-          chartColors.performance.poor,
-          onStatPress
-        );
-      }
-
-      return createStandardizedStats.efficiency(
-        chartData.insights.currentEfficiency,
-        learningWords,
-        chartColors.getPerformanceColor(chartData.insights.currentEfficiency),
-        chartColors.performance.good,
-        onStatPress
-      );
-    }, [chartData, chartColors, learningWords, onStatPress]);
-
     return (
       <BaseChart
-        contentHeight={GRAPH_HEIGHT_LARGE + 32} // Optimized space for axis labels aligned with card padding
+        contentHeight={GRAPH_HEIGHT_LARGE + 32}
         emptyStateText={EMPTY_STATE_MESSAGES.efficiency}
         hasData={chartData.hasData}
         hideTitle={hideTitle}
-        leftStat={leftStat}
-        rightStat={rightStat}
         subtitle={subtitle}
         title={CHART_LABELS.SPEED}
         onInfoPress={onInfoPress}

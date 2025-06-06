@@ -8,11 +8,10 @@ import { ThemedText } from '../ThemedText';
 
 interface WordListItemProps {
   word: StudyWord & { retentionScore?: number };
-  currentSort?: 'alphabetical' | 'due' | 'retention' | 'streak';
 }
 
 // Memoize the component to prevent unnecessary re-renders
-const WordListItem = memo(function WordListItem({ word, currentSort }: WordListItemProps) {
+const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
   const colors = useColors();
 
   // Get the actual word data from root

@@ -1,7 +1,6 @@
 import { FlashList } from '@shopify/flash-list';
 import { useLocalSearchParams } from 'expo-router';
-import type {
-  JSX} from 'react';
+import type { JSX } from 'react';
 import React, {
   useRef,
   useEffect,
@@ -20,7 +19,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ThemedText } from '@/components/ThemedText';
 import { ArticleButtons } from '@/components/article/ArticleButtons';
 import { ParallaxHeader } from '@/components/article/ParallaxHeader';
 import { RelatedArticlesFooter } from '@/components/article/RelatedArticlesFooter';
@@ -196,7 +194,7 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
               viewPosition: 0.05, // Position sentence very close to top for maximum visibility
               viewOffset: viewOffset,
             });
-          } catch (error) {
+          } catch {
             // Enhanced fallback with better error handling
             if (sortedSentences && sortedSentences.length > 0) {
               const targetIndex = Math.min(index, sortedSentences.length - 1);
@@ -286,13 +284,6 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
       () => (
         <>
           {/* Source field was removed from database */}
-          {false && (
-            <View style={styles.sourceContainer}>
-              <ThemedText style={[styles.sourceLabel, { color: colors.textSecondary }]}>
-                Source: deleted
-              </ThemedText>
-            </View>
-          )}
           {otherArticles && otherArticles.length > 0 ? (
             <Animated.View style={footerStyle}>
               <RelatedArticlesFooter
@@ -370,26 +361,22 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
               ]}
             >
               <View style={styles.buttonsWrapper}>
-                {onBackPress &&
-                  onBookmarkPress &&
-                  onPlayPress &&
-                  onEnglishToggle &&
-                  onTextSizeToggle && (
-                    <MemoizedArticleButtons
-                      colors={colors}
-                      isDarkMode={!!isDarkMode}
-                      isInReadingList={!!isInReadingList}
-                      isPlaying={!!isPlaying}
-                      showEnglish={!!showEnglish}
-                      showTextSizeSlider={!!showTextSizeSlider}
-                      user={user}
-                      onBackPress={onBackPress}
-                      onBookmarkPress={onBookmarkPress}
-                      onEnglishToggle={onEnglishToggle}
-                      onPlayPress={onPlayPress}
-                      onTextSizeToggle={onTextSizeToggle}
-                    />
-                  )}
+                {onBackPress && onBookmarkPress && onEnglishToggle && onTextSizeToggle && (
+                  <MemoizedArticleButtons
+                    colors={colors}
+                    isDarkMode={!!isDarkMode}
+                    isInReadingList={!!isInReadingList}
+                    isPlaying={!!isPlaying}
+                    showEnglish={!!showEnglish}
+                    showTextSizeSlider={!!showTextSizeSlider}
+                    user={user}
+                    onBackPress={onBackPress}
+                    onBookmarkPress={onBookmarkPress}
+                    onEnglishToggle={onEnglishToggle}
+                    onPlayPress={onPlayPress}
+                    onTextSizeToggle={onTextSizeToggle}
+                  />
+                )}
               </View>
 
               {/* Text Size Slider - appears right below buttons */}

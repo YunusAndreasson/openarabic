@@ -12,7 +12,7 @@ import React, { memo, useMemo } from 'react';
 import { View } from 'react-native';
 
 import { useColors } from '@/hooks/useColors';
-import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
+import type { StudyWord } from '@/types/vocabulary.types';
 
 import {
   BaseChart,
@@ -23,12 +23,7 @@ import {
   type DataPoint,
 } from '../shared';
 import { useChartColors } from '../shared/chartColors';
-import {
-  generateChartSubtitle,
-  createStandardizedStats,
-  CHART_LABELS,
-  EMPTY_STATE_MESSAGES,
-} from '../shared/chartMessages';
+import { generateChartSubtitle, CHART_LABELS, EMPTY_STATE_MESSAGES } from '../shared/chartMessages';
 import {
   GRAPH_WIDTH,
   GRAPH_HEIGHT_LARGE,
@@ -45,12 +40,11 @@ import {
 interface RetrievabilityChartProps {
   studyWords: StudyWord[];
   onInfoPress: () => void;
-  onStatPress?: (category: StatCategory) => void;
   hideTitle?: boolean;
 }
 
 export const RetrievabilityChart = memo(
-  ({ studyWords = [], onInfoPress, onStatPress, hideTitle = false }: RetrievabilityChartProps) => {
+  ({ studyWords = [], onInfoPress, hideTitle = false }: RetrievabilityChartProps) => {
     const chartColors = useChartColors();
     const colors = useColors();
 
@@ -209,48 +203,25 @@ export const RetrievabilityChart = memo(
         .filter((point): point is DataPoint => point !== null);
     }, [chartData.dataPoints, retrievabilityData]);
 
-    // Create standardized stats using new messaging system
-    const { leftStat, rightStat } = useMemo(() => {
-      if (!chartData.hasData) {
-        return createStandardizedStats.retrievability(
-          0,
-          0,
-          chartColors.performance.poor,
-          chartColors.performance.poor,
-          onStatPress
-        );
-      }
-
-      return createStandardizedStats.retrievability(
-        chartData.insights.currentRetrievability,
-        chartData.insights.criticalWords,
-        chartColors.getPerformanceColor(chartData.insights.currentRetrievability),
-        chartColors.performance.poor, // Red for critical words
-        onStatPress
-      );
-    }, [chartData, chartColors, onStatPress]);
-
     return (
       <BaseChart
-        contentHeight={GRAPH_HEIGHT_LARGE + 32} // Optimized space for axis labels aligned with card padding
-        emptyStateText={EMPTY_STATE_MESSAGES.retrievability}
-        hasData={chartData.hasData}
-        hideTitle={hideTitle}
-        leftStat={leftStat}
-        rightStat={rightStat}
-        subtitle={subtitle}
         title={CHART_LABELS.RETENTION}
+        subtitle={subtitle}
         onInfoPress={onInfoPress}
+        hideTitle={hideTitle}
+        hasData={chartData.hasData}
+        contentHeight={GRAPH_HEIGHT_LARGE + 32}
+        emptyStateText={EMPTY_STATE_MESSAGES.retrievability}
       >
         <View style={{ position: 'relative' }}>
           <View style={{ marginLeft: Y_AXIS_WIDTH }}>
             <ChartCanvas
-              accessibilityLabel="Memory retention forecast showing expected retention over the next 7 days"
               dataPoints={dataPoints}
               enableTooltips={true}
+              accessibilityLabel="Memory retention forecast showing expected retention over the next 7 days"
             >
               {/* Subtle grid lines for better visual structure */}
-              <ChartGrid gridLines={4} height={GRAPH_HEIGHT_LARGE} width={GRAPH_WIDTH} />
+              <ChartGrid width={GRAPH_WIDTH} height={GRAPH_HEIGHT_LARGE} gridLines={4} />
 
               {/* Area fill under the retrievability line - rendered first as base */}
               <Group>
@@ -263,10 +234,10 @@ export const RetrievabilityChart = memo(
                     )}
                   >
                     <LinearGradient
-                      colors={chartColors.getAreaFillGradient('retrievability')}
-                      end={vec(0, GRAPH_HEIGHT_LARGE)}
-                      positions={[0, 0.3, 0.7, 1]}
                       start={vec(0, 0)}
+                      end={vec(0, GRAPH_HEIGHT_LARGE)}
+                      colors={chartColors.getAreaFillGradient('retrievability')}
+                      positions={[0, 0.3, 0.7, 1]}
                     />
                   </Path>
                 )}
@@ -278,23 +249,23 @@ export const RetrievabilityChart = memo(
                   <Mask
                     mask={
                       <Path
-                        color={colors.white}
                         path={createAreaFillPath(
                           chartData.retrievabilityPath,
                           GRAPH_WIDTH,
                           GRAPH_HEIGHT_LARGE
                         )}
+                        color={colors.white}
                       />
                     }
                   >
                     {chartData.dangerZones.map((zone, index) => (
                       <Rect
                         key={`performance-zone-${index}`}
-                        color={chartColors.withOpacity(zone.color, 0.25)}
-                        height={zone.height}
-                        width={GRAPH_WIDTH}
                         x={0}
                         y={zone.y}
+                        width={GRAPH_WIDTH}
+                        height={zone.height}
+                        color={chartColors.withOpacity(zone.color, 0.25)}
                       />
                     ))}
                   </Mask>
@@ -304,12 +275,12 @@ export const RetrievabilityChart = memo(
               {/* Main retrievability line with brand accent color */}
               <Group>
                 <Path
-                  color={chartColors.ui.accent}
                   path={chartData.retrievabilityPath}
+                  style="stroke"
+                  strokeWidth={CHART_VISUAL.LINE_WIDTH}
                   strokeCap="round"
                   strokeJoin="round"
-                  strokeWidth={CHART_VISUAL.LINE_WIDTH}
-                  style="stroke"
+                  color={chartColors.ui.accent}
                 />
 
                 {/* Data points with enhanced styling */}
@@ -321,16 +292,16 @@ export const RetrievabilityChart = memo(
                     <Group key={`retrievability-point-${index}`}>
                       {/* Enhanced data point with border */}
                       <Circle
-                        color={chartColors.ui.accent}
                         cx={point.x}
                         cy={point.y}
                         r={CHART_VISUAL.DATA_POINT_SIZE}
+                        color={chartColors.ui.accent}
                       />
                       <Circle
-                        color={chartColors.ui.background}
                         cx={point.x}
                         cy={point.y}
                         r={CHART_VISUAL.DATA_POINT_INNER_SIZE}
+                        color={chartColors.ui.background}
                       />
                     </Group>
                   );
@@ -341,17 +312,17 @@ export const RetrievabilityChart = memo(
 
           {/* Enhanced axis labels with proper padding and y-axis values */}
           <ChartAxes
-            height={GRAPH_HEIGHT_LARGE}
-            showYAxis={true}
-            topPadding={0}
             width={GRAPH_WIDTH}
-            xLabelPositions={chartData.dataPoints.map(point => point.x)}
-            yMax={100}
+            height={GRAPH_HEIGHT_LARGE}
             xLabels={retrievabilityData
               .filter(data => data && data.wordCount > 0)
               .map((data, index) =>
                 index === 0 ? 'Today' : data.date.toLocaleDateString('en-US', { weekday: 'short' })
               )}
+            xLabelPositions={chartData.dataPoints.map(point => point.x)}
+            yMax={100}
+            showYAxis={true}
+            topPadding={0}
           />
         </View>
       </BaseChart>

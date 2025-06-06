@@ -24,6 +24,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { successFeedback } from '@/utils/haptics';
 
+const EMPTY_OBJECT = {};
+
 interface SessionMetrics {
   wordsReviewed: number;
   wordsKnown: number;
@@ -59,8 +61,8 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
   iconName = 'checkmark-circle',
   iconSize = 100,
   useThemedView = false,
-  contentStyle = {},
-  buttonStyle = {},
+  contentStyle = EMPTY_OBJECT,
+  buttonStyle = EMPTY_OBJECT,
   sessionMetrics,
 }) => {
   const colors = useColors();
@@ -251,7 +253,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
         {encouragingMetrics && encouragingMetrics.length > 0 && (
           <View style={styles.metricsContainer}>
             {encouragingMetrics.map((metric, index) => (
-              <React.Fragment key={index}>
+              <React.Fragment key={metric.type + metric.text}>
                 <Animated.View
                   entering={FadeInUp.delay(800 + index * 150).duration(300)}
                   style={styles.metricItem}

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { JSX} from 'react';
+import type { JSX } from 'react';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -61,6 +61,8 @@ const CompactNavCard = memo(
     );
   }
 );
+
+CompactNavCard.displayName = 'CompactNavCard';
 
 const compactCardStyles = StyleSheet.create({
   card: {

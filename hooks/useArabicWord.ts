@@ -1,12 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
 
 import { handleError } from '@/utils/errorHandling';
 
 import { analytics } from '../services/analytics';
 import { studyWordsFSRSService } from '../services/studyWordsFSRS';
-import { selectAudioState } from '../store/audioSlice';
 import type { SentenceWord, StudyWord } from '../types/vocabulary.types';
 
 import { useArticlesByDueWords } from './useArticlesByDueWords';
@@ -30,12 +28,11 @@ export interface UseArabicWordReturn {
  */
 export function useArabicWord({
   word,
-  position,
+  position: _position,
   onPress,
 }: UseArabicWordProps): UseArabicWordReturn {
   const { user } = useAuth();
   const [forceSelected, setForceSelected] = useState<boolean | null>(null);
-  const audioState = useSelector(selectAudioState);
 
   // Get due words data - we use 0 as limit since we only need the due word IDs
   const { dueWordRootIds = new Set<number>() } = useArticlesByDueWords(user?.id, 0);
@@ -68,13 +65,8 @@ export function useArabicWord({
     return studyWords.some((sw: StudyWord) => sw.root_id === word.root_id);
   }, [studyWords, word.root_id]);
 
-  // Check if this word is currently being highlighted by audio player
-  const isAudioHighlighted = useMemo(() => {
-    if (position !== undefined && audioState.position !== null) {
-      return audioState.wordId === word.id && audioState.position === position;
-    }
-    return audioState.wordId === word.id;
-  }, [audioState.wordId, audioState.position, word.id, position]);
+  // Since audio functionality is removed, isAudioHighlighted is always false
+  const isAudioHighlighted = false;
 
   // Calculate final selection state, considering force state, direct selection, and due words
   const isSelected = forceSelected !== null ? forceSelected : directlySelected || isDueWord;

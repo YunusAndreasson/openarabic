@@ -13,7 +13,7 @@ import { withOpacity } from '@/utils/colorUtils';
 interface ArticleButtonsProps {
   onBackPress: () => void;
   onBookmarkPress: () => void;
-  onPlayPress: () => void;
+  onPlayPress?: () => void;
   onEnglishToggle: () => void;
   onTextSizeToggle: () => void;
   isInReadingList?: boolean;
@@ -82,6 +82,59 @@ const styles = StyleSheet.create({
   },
 });
 
+// IconWithShadow moved outside ArticleButtons
+const IconWithShadow = ({
+  name,
+  size,
+  isDarkMode,
+  colors,
+  iconColor,
+}: {
+  name: keyof typeof Ionicons.glyphMap;
+  size: number;
+  isDarkMode: boolean;
+  colors: ThemeColors;
+  iconColor: string;
+}) => (
+  <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+    {/* More subtle shadow layer */}
+    <Ionicons
+      color={isDarkMode ? withOpacity(colors.black, 0.4) : withOpacity(colors.shadow, 0.3)}
+      name={name}
+      size={size}
+      style={{
+        position: 'absolute',
+        top: 0.5,
+        left: 0,
+      }}
+    />
+    {/* Main icon with reduced opacity */}
+    <Ionicons color={iconColor} name={name} size={size} />
+  </View>
+);
+
+// ButtonWrapper moved outside ArticleButtons
+const ButtonWrapper = ({
+  children,
+  style,
+  blurButtonStyle,
+  overlayStyle,
+  buttonShadow,
+  shadowColorStyle,
+}: {
+  children: React.ReactNode;
+  style?: ViewStyle;
+  blurButtonStyle: any;
+  overlayStyle: any;
+  buttonShadow: any;
+  shadowColorStyle: any;
+}) => (
+  <View style={[style, blurButtonStyle, buttonShadow, shadowColorStyle]}>
+    <View style={[styles.buttonOverlay, overlayStyle]} />
+    {children}
+  </View>
+);
+
 export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
   onBackPress,
   onBookmarkPress,
@@ -115,48 +168,21 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
   };
 
   // More subtle icon color with reduced contrast for better text focus
-  const iconColor = isDarkMode
-    ? withOpacity(colors.white, 0.75)
-    : withOpacity(colors.text, 0.75);
+  const iconColor = isDarkMode ? withOpacity(colors.white, 0.75) : withOpacity(colors.text, 0.75);
 
   const shadowColorStyle = Platform.OS === 'ios' ? { shadowColor: colors.shadow } : {};
-
-  const IconWithShadow = ({
-    name,
-    size,
-  }: {
-    name: keyof typeof Ionicons.glyphMap;
-    size: number;
-  }) => (
-    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-      {/* More subtle shadow layer */}
-      <Ionicons
-        color={isDarkMode ? withOpacity(colors.black, 0.4) : withOpacity(colors.shadow, 0.3)}
-        name={name}
-        size={size}
-        style={{
-          position: 'absolute',
-          top: 0.5,
-          left: 0,
-        }}
-      />
-      {/* Main icon with reduced opacity */}
-      <Ionicons color={iconColor} name={name} size={size} />
-    </View>
-  );
-
-  const ButtonWrapper = ({ children, style }: { children: React.ReactNode; style?: ViewStyle }) => (
-    <View style={[style, blurButtonStyle, styles.buttonShadow, shadowColorStyle]}>
-      <View style={[styles.buttonOverlay, overlayStyle]} />
-      {children}
-    </View>
-  );
 
   return (
     <Animated.View style={styles.buttonContainer}>
       <View style={styles.leftButtonGroup}>
         <Animated.View style={backButtonStyle}>
-          <ButtonWrapper style={styles.backButton}>
+          <ButtonWrapper
+            style={styles.backButton}
+            blurButtonStyle={blurButtonStyle}
+            overlayStyle={overlayStyle}
+            buttonShadow={styles.buttonShadow}
+            shadowColorStyle={shadowColorStyle}
+          >
             <TouchableOpacity
               accessibilityLabel="Back"
               style={StyleSheet.absoluteFill}
@@ -168,7 +194,13 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
                   { alignItems: 'center', justifyContent: 'center' },
                 ]}
               >
-                <IconWithShadow name="arrow-back" size={24} />
+                <IconWithShadow
+                  name="arrow-back"
+                  size={24}
+                  isDarkMode={isDarkMode}
+                  colors={colors}
+                  iconColor={iconColor}
+                />
               </View>
             </TouchableOpacity>
           </ButtonWrapper>
@@ -178,7 +210,13 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
       <View style={styles.rightButtonGroup}>
         {user && (
           <Animated.View style={bookmarkButtonStyle}>
-            <ButtonWrapper style={styles.iconButton}>
+            <ButtonWrapper
+              style={styles.iconButton}
+              blurButtonStyle={blurButtonStyle}
+              overlayStyle={overlayStyle}
+              buttonShadow={styles.buttonShadow}
+              shadowColorStyle={shadowColorStyle}
+            >
               <TouchableOpacity
                 accessibilityLabel={isInReadingList ? 'Remove bookmark' : 'Add bookmark'}
                 style={StyleSheet.absoluteFill}
@@ -193,6 +231,9 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
                   <IconWithShadow
                     name={isInReadingList ? 'bookmark' : 'bookmark-outline'}
                     size={22}
+                    isDarkMode={isDarkMode}
+                    colors={colors}
+                    iconColor={iconColor}
                   />
                 </View>
               </TouchableOpacity>
@@ -202,7 +243,13 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
 
         {/* English Toggle Button */}
         <Animated.View style={englishButtonStyle}>
-          <ButtonWrapper style={styles.iconButton}>
+          <ButtonWrapper
+            style={styles.iconButton}
+            blurButtonStyle={blurButtonStyle}
+            overlayStyle={overlayStyle}
+            buttonShadow={styles.buttonShadow}
+            shadowColorStyle={shadowColorStyle}
+          >
             <TouchableOpacity
               style={StyleSheet.absoluteFill}
               accessibilityLabel={
@@ -216,7 +263,13 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
                   { alignItems: 'center', justifyContent: 'center' },
                 ]}
               >
-                <IconWithShadow name={showEnglish ? 'eye' : 'eye-off'} size={22} />
+                <IconWithShadow
+                  name={showEnglish ? 'eye' : 'eye-off'}
+                  size={22}
+                  isDarkMode={isDarkMode}
+                  colors={colors}
+                  iconColor={iconColor}
+                />
               </View>
             </TouchableOpacity>
           </ButtonWrapper>
@@ -224,7 +277,13 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
 
         {/* Text Size Button */}
         <Animated.View style={textSizeButtonStyle}>
-          <ButtonWrapper style={styles.iconButton}>
+          <ButtonWrapper
+            style={styles.iconButton}
+            blurButtonStyle={blurButtonStyle}
+            overlayStyle={overlayStyle}
+            buttonShadow={styles.buttonShadow}
+            shadowColorStyle={shadowColorStyle}
+          >
             <TouchableOpacity
               style={StyleSheet.absoluteFill}
               accessibilityLabel={
@@ -238,30 +297,50 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
                   { alignItems: 'center', justifyContent: 'center' },
                 ]}
               >
-                <IconWithShadow name="text" size={22} />
+                <IconWithShadow
+                  name="text"
+                  size={22}
+                  isDarkMode={isDarkMode}
+                  colors={colors}
+                  iconColor={iconColor}
+                />
               </View>
             </TouchableOpacity>
           </ButtonWrapper>
         </Animated.View>
 
-        <Animated.View style={playButtonStyle}>
-          <ButtonWrapper style={styles.iconButton}>
-            <TouchableOpacity
-              accessibilityLabel={isPlaying ? 'Stop audio' : 'Play audio'}
-              style={StyleSheet.absoluteFill}
-              onPress={onPlayPress}
+        {onPlayPress && (
+          <Animated.View style={playButtonStyle}>
+            <ButtonWrapper
+              style={styles.iconButton}
+              blurButtonStyle={blurButtonStyle}
+              overlayStyle={overlayStyle}
+              buttonShadow={styles.buttonShadow}
+              shadowColorStyle={shadowColorStyle}
             >
-              <View
-                style={[
-                  StyleSheet.absoluteFill,
-                  { alignItems: 'center', justifyContent: 'center' },
-                ]}
+              <TouchableOpacity
+                accessibilityLabel={isPlaying ? 'Stop audio' : 'Play audio'}
+                style={StyleSheet.absoluteFill}
+                onPress={onPlayPress}
               >
-                <IconWithShadow name={isPlaying ? 'stop' : 'play'} size={22} />
-              </View>
-            </TouchableOpacity>
-          </ButtonWrapper>
-        </Animated.View>
+                <View
+                  style={[
+                    StyleSheet.absoluteFill,
+                    { alignItems: 'center', justifyContent: 'center' },
+                  ]}
+                >
+                  <IconWithShadow
+                    name={isPlaying ? 'stop' : 'play'}
+                    size={22}
+                    isDarkMode={isDarkMode}
+                    colors={colors}
+                    iconColor={iconColor}
+                  />
+                </View>
+              </TouchableOpacity>
+            </ButtonWrapper>
+          </Animated.View>
+        )}
       </View>
     </Animated.View>
   );

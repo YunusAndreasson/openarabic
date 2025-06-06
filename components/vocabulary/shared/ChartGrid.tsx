@@ -36,9 +36,9 @@ export const ChartGrid = memo(
 
     return (
       <Group>
-        {lines.map((y, index) => (
+        {lines.map(y => (
           <Line
-            key={`grid-line-${index}`}
+            key={`grid-line-${y}`}
             color={gridColor}
             p1={{ x: 0, y }}
             p2={{ x: width, y }}

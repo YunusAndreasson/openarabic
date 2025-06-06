@@ -9,6 +9,8 @@ import { useColors } from '../../hooks/useColors';
 import type { Article } from '../../types/articles.types';
 import SectionTitle from '../SectionTitle';
 
+const EMPTY_DUE_WORDS_SET = new Set<number>();
+
 interface DueWordsArticleSectionProps {
   userId: string | undefined;
   onArticlePress: (article: Article) => void;
@@ -24,7 +26,7 @@ export function DueWordsArticleSection({
   userId,
   onArticlePress,
   limit = 10,
-  dueWordRootIds = new Set(),
+  dueWordRootIds = EMPTY_DUE_WORDS_SET,
 }: DueWordsArticleSectionProps) {
   const { articles, hasEnoughArticles, dueWordsCount, isLoading } = useArticlesByDueWords(
     userId,

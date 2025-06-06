@@ -2,7 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
 
-import audioReducer from './audioSlice';
 import featuredContentReducer from './featuredContentSlice';
 import readingListReducer from './readingListSlice';
 import settingsReducer from './settingsSlice';
@@ -14,7 +13,7 @@ const rootReducer = combineReducers({
   settings: settingsReducer,
   readingList: readingListReducer,
   featuredContent: featuredContentReducer,
-  audio: audioReducer,
+  // audio: audioReducer, // REMOVED - no longer needed
 });
 
 // Migration function for settings
@@ -44,7 +43,7 @@ const persistConfig = {
     }
     return Promise.resolve(state);
   },
-  whitelist: ['theme', 'settings', 'readingList', 'featuredContent'],
+  whitelist: ['theme', 'settings', 'readingList', 'featuredContent'], // Removed 'audio' from persisted state
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

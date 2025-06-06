@@ -4,7 +4,7 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
-import React, { useCallback, memo, useMemo, useEffect, useState } from 'react';
+import React, { useCallback, memo, useEffect, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -61,20 +61,6 @@ const AccountScreen: React.FC = () => {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [notificationPermissions, setNotificationPermissions] = useState(false);
   const { user } = useAuth();
-
-  // User display logic
-  const displayName = useMemo(() => {
-    if (!user?.email) return 'Anonymous User';
-
-    const emailPrefix = user.email.split('@')[0];
-    if (!emailPrefix) return 'Anonymous User';
-
-    const parts = emailPrefix.split(/[._-]/).filter(part => Boolean(part && part.length > 0));
-
-    if (parts.length === 0) return 'User';
-
-    return parts.map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
-  }, [user?.email]);
 
   // Sign out handler
   const handleSignOut = useCallback(() => {

@@ -36,10 +36,6 @@ interface BaseChartProps {
   isLoading?: boolean;
   error?: Error | null;
 
-  // Stats props (optional)
-  leftStat?: StatItemProps;
-  rightStat?: StatItemProps;
-
   // Footer props (optional)
   legendItems?: LegendItemProps[];
   timeRange?: string;

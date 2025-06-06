@@ -142,7 +142,7 @@ const ClassicalTextsScreen: React.FC = () => {
                 </View>
                 <View style={styles.concernContent}>
                   <ThemedText style={styles.concernTitle} type="body" weight="bold">
-                    "Too difficult without grammar study"
+                    &quot;Too difficult without grammar study&quot;
                   </ThemedText>
                   <ThemedText style={styles.concernText} type="body" variant="secondary">
                     Translations provide comprehensible input while exposing you to authentic

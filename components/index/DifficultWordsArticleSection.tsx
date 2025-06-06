@@ -5,6 +5,8 @@ import { useArticlesByDifficultWords } from '../../hooks/useArticlesByDifficultW
 import type { Article } from '../../types/articles.types';
 import ArticleSection from '../article/ArticleSection';
 
+const EMPTY_DIFFICULT_WORDS_SET = new Set<number>();
+
 interface DifficultWordsArticleSectionProps {
   userId: string | undefined;
   onArticlePress: (article: Article) => void;
@@ -20,7 +22,7 @@ export function DifficultWordsArticleSection({
   userId,
   onArticlePress,
   limit = 10,
-  difficultWordRootIds = new Set(),
+  difficultWordRootIds = EMPTY_DIFFICULT_WORDS_SET,
 }: DifficultWordsArticleSectionProps) {
   const { articles, hasEnoughArticles } = useArticlesByDifficultWords(userId, limit);
 

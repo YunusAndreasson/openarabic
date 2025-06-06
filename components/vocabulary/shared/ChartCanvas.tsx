@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ChartTooltip, DataPointOverlay, useChartTooltip } from './ChartInteractivity';
+import { ChartTooltipData, DataPointOverlay, useChartTooltip } from './ChartInteractivity';
 import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE } from './constants';
 
 export interface DataPoint {
@@ -67,7 +67,7 @@ export const ChartCanvas = memo(
           ))}
 
         {/* Tooltip Component */}
-        {enableTooltips && <ChartTooltip maxWidth={width} tooltip={tooltip} />}
+        {enableTooltips && <ChartTooltipData maxWidth={width} tooltip={tooltip} />}
       </View>
     );
   }

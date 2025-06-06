@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unused-prop-types */
 import { useHeaderHeight } from '@react-navigation/elements';
 import { FlashList } from '@shopify/flash-list';
 import React, { useMemo, useCallback } from 'react';
@@ -9,6 +10,8 @@ import type { Article } from '../../types/articles.types';
 import { ThemedView } from '../ThemedView';
 
 import ListArticleItem from './ListArticleItem';
+
+const NOOP_ARTICLE_PRESS = () => {};
 
 interface FilteredArticleViewProps {
   /**
@@ -40,7 +43,7 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   articles,
   isRefreshing,
   onRefresh,
-  onArticlePress = () => {},
+  onArticlePress = NOOP_ARTICLE_PRESS,
 }) => {
   const colors = useColors();
   const navHeaderHeight = useHeaderHeight();

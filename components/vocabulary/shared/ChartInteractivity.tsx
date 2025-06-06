@@ -19,7 +19,7 @@ interface ChartTooltipProps {
   maxWidth: number;
 }
 
-export const ChartTooltip = memo<ChartTooltipProps>(({ tooltip, maxWidth }) => {
+export const ChartTooltipData = memo<ChartTooltipProps>(({ tooltip, maxWidth }) => {
   const colors = useColors();
 
   if (!tooltip.visible) return null;
@@ -45,7 +45,7 @@ export const ChartTooltip = memo<ChartTooltipProps>(({ tooltip, maxWidth }) => {
   );
 });
 
-ChartTooltip.displayName = 'ChartTooltip';
+ChartTooltipData.displayName = 'ChartTooltip';
 
 interface DataPointOverlayProps {
   x: number;

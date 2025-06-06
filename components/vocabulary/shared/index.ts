@@ -8,10 +8,11 @@ export { ChartAxes, Y_AXIS_WIDTH } from './ChartAxes';
 export { CardHeader } from './CardHeader';
 export { StatsRow } from './StatsRow';
 export { ChartFooter } from './ChartFooter';
-export { ChartTooltip, DataPointOverlay, useChartTooltip } from './ChartInteractivity';
-
-// Animation utilities
-export * from './chartAnimations';
+export {
+  ChartTooltipData as ChartTooltip,
+  DataPointOverlay,
+  useChartTooltip,
+} from './ChartInteractivity';
 
 // Color management
 export { useChartColors } from './chartColors';

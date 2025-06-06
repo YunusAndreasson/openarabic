@@ -17,6 +17,8 @@ import type { SentenceWord } from '../../types/vocabulary.types';
 
 import { ArabicWord } from './ArabicWord';
 
+const EMPTY_DUE_WORDS_SET = new Set<number>();
+
 interface ArticleSentenceProps {
   sentence: {
     id: string | number;
@@ -56,7 +58,7 @@ function ArticleSentenceComponent({
   currentPlayingWordId,
   currentPlayingPosition,
   isPlaying,
-  dueWordRootIds = new Set(),
+  dueWordRootIds = EMPTY_DUE_WORDS_SET,
 }: ArticleSentenceProps) {
   const defaultColors = useColors();
   const colors = propColors || defaultColors;

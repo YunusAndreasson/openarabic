@@ -45,7 +45,6 @@ const SPRING_CONFIG = {
   mass: 1,
 };
 
- 
 export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords = [] }) => {
   const colors = useColors();
   const chartColors = useChartColors();
@@ -141,18 +140,18 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
   // Helper functions for gradient calculation
   const getFilledGradientColors = (capacityScore: number): string[] => {
     const baseColors = [
-      chartColors.performance.poor, // 0% - Red
-      chartColors.performance.moderate, // 30% - Orange
-      chartColors.performance.good, // 70% - Blue
-      chartColors.performance.excellent, // 100% - Green
+      chartColors.performance.poor ?? '#FF0000', // fallback Red
+      chartColors.performance.moderate ?? '#FFA500', // fallback Orange
+      chartColors.performance.good ?? '#0000FF', // fallback Blue
+      chartColors.performance.excellent ?? '#00FF00', // fallback Green
     ];
 
     if (capacityScore <= 30) {
       // Only red to orange transition
-      return [baseColors[0]!, baseColors[1]!];
+      return [baseColors[0] as string, baseColors[1] as string];
     } else if (capacityScore <= 70) {
       // Red to orange to blue transition
-      return [baseColors[0]!, baseColors[1]!, baseColors[2]!];
+      return [baseColors[0] as string, baseColors[1] as string, baseColors[2] as string];
     } else {
       // Full gradient
       return baseColors;

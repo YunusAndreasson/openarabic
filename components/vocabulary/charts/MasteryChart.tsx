@@ -12,7 +12,7 @@ import React, { memo, useMemo } from 'react';
 import { View } from 'react-native';
 
 import { useColors } from '@/hooks/useColors';
-import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
+import type { StudyWord } from '@/types/vocabulary.types';
 
 import {
   BaseChart,
@@ -23,18 +23,8 @@ import {
   type DataPoint,
 } from '../shared';
 import { useChartColors } from '../shared/chartColors';
-import {
-  generateChartSubtitle,
-  createStandardizedStats,
-  CHART_LABELS,
-  EMPTY_STATE_MESSAGES,
-} from '../shared/chartMessages';
-import {
-  GRAPH_WIDTH,
-  GRAPH_HEIGHT_LARGE,
-  DAYS_7,
-  CHART_VISUAL,
-} from '../shared/constants';
+import { generateChartSubtitle, CHART_LABELS, EMPTY_STATE_MESSAGES } from '../shared/chartMessages';
+import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_7, CHART_VISUAL } from '../shared/constants';
 import {
   generateDateRange,
   createStandardizedPerformanceZones,
@@ -44,12 +34,11 @@ import {
 interface MasteryChartProps {
   studyWords: StudyWord[];
   onInfoPress: () => void;
-  onStatPress?: (category: StatCategory) => void;
   hideTitle?: boolean;
 }
 
 export const MasteryChart = memo(
-  ({ studyWords = [], onInfoPress, onStatPress, hideTitle = false }: MasteryChartProps) => {
+  ({ studyWords = [], onInfoPress, hideTitle = false }: MasteryChartProps) => {
     const chartColors = useChartColors();
     const colors = useColors();
 
@@ -133,11 +122,13 @@ export const MasteryChart = memo(
         } else if (masteryData.length > 1) {
           // Only create curves if we have more than one point
           const prevPoint = points[index - 1];
-          const controlX1 = prevPoint!.x + (x - prevPoint!.x) * 0.3;
-          const controlY1 = prevPoint!.y;
-          const controlX2 = prevPoint!.x + (x - prevPoint!.x) * 0.7;
-          const controlY2 = y;
-          path.cubicTo(controlX1, controlY1, controlX2, controlY2, x, y);
+          if (prevPoint) {
+            const controlX1 = prevPoint.x + (x - prevPoint.x) * 0.3;
+            const controlY1 = prevPoint.y;
+            const controlX2 = prevPoint.x + (x - prevPoint.x) * 0.7;
+            const controlY2 = y;
+            path.cubicTo(controlX1, controlY1, controlX2, controlY2, x, y);
+          }
         }
       });
 
@@ -227,35 +218,12 @@ export const MasteryChart = memo(
         .filter((point): point is DataPoint => point !== null);
     }, [chartData.dataPoints, masteryData]);
 
-    // Create standardized stats using new messaging system
-    const { leftStat, rightStat } = useMemo(() => {
-      if (!chartData.hasData) {
-        return createStandardizedStats.mastery(
-          0,
-          0,
-          chartColors.performance.poor,
-          chartColors.performance.excellent,
-          onStatPress
-        );
-      }
-
-      return createStandardizedStats.mastery(
-        chartData.insights.currentRate,
-        chartData.insights.totalMastered,
-        chartColors.getPerformanceColor(chartData.insights.currentRate),
-        chartColors.performance.excellent,
-        onStatPress
-      );
-    }, [chartData, chartColors, onStatPress]);
-
     return (
       <BaseChart
-        contentHeight={GRAPH_HEIGHT_LARGE + 32} // Optimized space for axis labels aligned with card padding
+        contentHeight={GRAPH_HEIGHT_LARGE + 32}
         emptyStateText={EMPTY_STATE_MESSAGES.mastery}
         hasData={chartData.hasData}
         hideTitle={hideTitle}
-        leftStat={leftStat}
-        rightStat={rightStat}
         subtitle={subtitle}
         title={CHART_LABELS.STRENGTH}
         onInfoPress={onInfoPress}
@@ -310,9 +278,9 @@ export const MasteryChart = memo(
                       />
                     }
                   >
-                    {chartData.performanceZones?.map((zone, index) => (
+                    {chartData.performanceZones?.map(zone => (
                       <Rect
-                        key={`performance-zone-${index}`}
+                        key={`performance-zone-${zone.min}-${zone.max}`}
                         color={chartColors.withOpacity(zone.color, 0.25)}
                         height={zone.height}
                         width={GRAPH_WIDTH}
@@ -338,8 +306,8 @@ export const MasteryChart = memo(
                 )}
 
                 {/* Data points with enhanced styling */}
-                {chartData.dataPoints.map((point, index) => (
-                  <Group key={`mastery-point-${index}`}>
+                {chartData.dataPoints.map(point => (
+                  <Group key={`mastery-point-${point.date.toISOString()}`}>
                     {/* Enhanced data point with border */}
                     <Circle
                       color={chartColors.ui.accent}
@@ -359,8 +327,8 @@ export const MasteryChart = memo(
 
               {/* Subtle milestone indicators */}
               <Group>
-                {chartData.milestones.map((milestone, index) => (
-                  <Group key={`milestone-${index}`}>
+                {chartData.milestones.map(milestone => (
+                  <Group key={`milestone-${milestone.rate}-${milestone.date.toISOString()}`}>
                     {/* Subtle milestone indicator - much smaller */}
                     <Circle
                       color={chartColors.withOpacity(chartColors.performance.excellent, 0.15)}

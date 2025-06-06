@@ -58,8 +58,6 @@ interface NowPlayingCardProps {
   progress: number;
   /** Duration of current track in milliseconds */
   duration: number;
-  /** Whether audio is currently playing */
-  isPlaying: boolean;
   /** Callback when card is tapped */
   onPress?: () => void;
   /** Callback when stop is tapped */
@@ -76,7 +74,6 @@ const NowPlayingCard = ({
   article,
   progress,
   duration,
-  isPlaying,
   onPress,
   onStop,
   showTimerButton = false,
@@ -249,10 +246,7 @@ const NowPlayingCard = ({
           end={{ x: 1, y: 1 }}
           start={{ x: 0, y: 0 }}
           style={styles.gradientOverlay}
-          colors={[
-            withOpacity(colors.background, 0.95),
-            withOpacity(colors.background, 0.7),
-          ]}
+          colors={[withOpacity(colors.background, 0.95), withOpacity(colors.background, 0.7)]}
         />
       </View>
 

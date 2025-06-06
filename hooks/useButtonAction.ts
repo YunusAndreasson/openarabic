@@ -1,5 +1,7 @@
 import { useRef, useCallback, useEffect } from 'react';
 
+import { handleError } from '@/utils/errorHandling';
+
 import { ANIMATION_TIMING } from '../constants/animations';
 
 /**
@@ -51,9 +53,8 @@ export function useButtonAction<TArgs extends unknown[] = [], TReturn = void>(
       timeoutRef.current = setTimeout(async () => {
         try {
           await fn(...args);
-           
         } catch (error) {
-          // Log error but don't rethrow to prevent unhandled rejections
+          handleError(error as Error);
         } finally {
           isExecutingRef.current = false;
         }
