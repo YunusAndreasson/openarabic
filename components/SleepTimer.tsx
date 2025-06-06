@@ -157,7 +157,7 @@ const SleepTimerComponent = ({
                 <TouchableOpacity
                   onPress={handleClose}
                   style={styles.closeButton}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  hitSlop={LAYOUT.HIT_SLOP.SMALL}
                   accessibilityRole="button"
                   accessibilityLabel="Close sleep timer"
                   accessibilityHint="Dismiss the sleep timer dialog"

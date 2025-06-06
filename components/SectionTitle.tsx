@@ -1,13 +1,12 @@
 import React from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 
 import { LAYOUT, TYPOGRAPHY_HIERARCHY, getEnhancedOpacity } from '../constants/layout';
-import { useColors } from '../hooks/useColors';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
 
 import { ThemedText } from './ThemedText';
+import TouchableIcon from './TouchableIcon';
 
 interface SectionTitleProps {
   title: string;
@@ -30,7 +29,6 @@ const SectionTitle: React.FC<SectionTitleProps> = ({
   containerStyle,
   isFirstSection = false,
 }) => {
-  const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
   // Enhanced styles with sophisticated typography colors and micro-typography
@@ -72,17 +70,14 @@ const SectionTitle: React.FC<SectionTitleProps> = ({
         )}
       </View>
       {onInfoPress && (
-        <TouchableOpacity
+        <TouchableIcon
+          name="information-outline"
+          size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+          touchSize="small"
           onPress={onInfoPress}
-          style={[styles.infoIcon, { backgroundColor: colors.textOverlay }]}
-          hitSlop={LAYOUT.HIT_SLOP.SMALL}
-        >
-          <Ionicons
-            name="information-outline"
-            size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-            color={colors.textTertiary}
-          />
-        </TouchableOpacity>
+          accessibilityLabel="More information"
+          style={styles.infoIcon}
+        />
       )}
     </View>
   );
@@ -94,8 +89,8 @@ export default SectionTitle;
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
     alignItems: 'flex-start',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: LAYOUT.SECTION.SPACING_INTERNAL,
     marginTop: LAYOUT.SECTION.SPACING_BETWEEN,
@@ -103,16 +98,16 @@ const styles = StyleSheet.create({
   firstSection: {
     marginTop: LAYOUT.SPACING.XLARGE,
   },
+  infoIcon: {
+    alignItems: 'center',
+    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    height: LAYOUT.BUTTON.ICON_SIZE.SMALL + LAYOUT.SPACING.SMALL * 2,
+    justifyContent: 'center',
+    padding: LAYOUT.SPACING.SMALL,
+    width: LAYOUT.BUTTON.ICON_SIZE.SMALL + LAYOUT.SPACING.SMALL * 2,
+  },
   titleGroup: {
     flex: 1,
     marginRight: LAYOUT.SPACING.SMALL,
-  },
-  infoIcon: {
-    padding: LAYOUT.SPACING.SMALL,
-    width: LAYOUT.BUTTON.ICON_SIZE.SMALL + LAYOUT.SPACING.SMALL * 2,
-    height: LAYOUT.BUTTON.ICON_SIZE.SMALL + LAYOUT.SPACING.SMALL * 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
   },
 });

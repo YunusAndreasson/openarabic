@@ -61,7 +61,7 @@ const RightInputIcon = ({
 }) => (
   <TouchableOpacity
     onPress={onPress}
-    hitSlop={styles.hitSlop}
+    hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
     style={styles.rightIcon}
     accessibilityRole="button"
     accessibilityLabel="Toggle password visibility"

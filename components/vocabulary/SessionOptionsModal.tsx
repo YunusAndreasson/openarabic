@@ -156,7 +156,7 @@ export default memo(function SessionOptionsModal({
                 <TouchableOpacity
                   onPress={handleClose}
                   style={styles.closeButton}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  hitSlop={LAYOUT.HIT_SLOP.SMALL}
                 >
                   <Ionicons name="close" size={22} color={colors.text} />
                 </TouchableOpacity>

@@ -1,11 +1,10 @@
-import { Ionicons } from '@expo/vector-icons';
 import React, { memo } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
 
 import { ThemedText } from '../../ThemedText';
+import TouchableIcon from '../../TouchableIcon';
 
 interface CardHeaderProps {
   title: string;
@@ -14,8 +13,6 @@ interface CardHeaderProps {
 }
 
 export const CardHeader = memo(({ title, subtitle, onInfoPress }: CardHeaderProps) => {
-  const colors = useColors();
-
   return (
     <View style={styles.cardHeader}>
       <View style={styles.titleGroup}>
@@ -26,13 +23,14 @@ export const CardHeader = memo(({ title, subtitle, onInfoPress }: CardHeaderProp
           {subtitle}
         </ThemedText>
       </View>
-      <TouchableOpacity
+      <TouchableIcon
+        name="information-outline"
+        size={18}
+        touchSize="small"
         onPress={onInfoPress}
-        style={[styles.infoIcon, { backgroundColor: colors.textOverlay }]}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      >
-        <Ionicons name="information-outline" size={18} color={colors.textTertiary} />
-      </TouchableOpacity>
+        accessibilityLabel="More information"
+        style={styles.infoIcon}
+      />
     </View>
   );
 });
@@ -56,12 +54,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   infoIcon: {
-    alignItems: 'center',
-    borderRadius: 16,
-    height: 32,
-    justifyContent: 'center',
-    padding: LAYOUT.SPACING.SMALL,
-    width: 32,
+    borderRadius: LAYOUT.BORDER_RADIUS.PILL,
   },
   titleGroup: {
     flex: 1,
