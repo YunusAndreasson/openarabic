@@ -17,9 +17,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 
-import { AuthProvider } from '@/components/AuthProvider';
+import { AuthProvider, ToastProvider } from '@/components/providers';
 import { ThemedText } from '@/components/ThemedText';
-import { ToastProvider } from '@/components/ToastProvider';
 import { Theme } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';

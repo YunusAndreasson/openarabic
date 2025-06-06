@@ -8,7 +8,7 @@ import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 
-import { useToast } from '../components/ToastProvider';
+import { useToast } from '@/components/providers/ToastProvider';
 
 interface ArticleMutationsResult {
   handleToggleReadingList: (articleId: number | undefined, isInReadingList: boolean) => void;
