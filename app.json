@@ -4,7 +4,7 @@
     "slug": "open-arabic",
     "version": "1446.10.59",
     "orientation": "portrait",
-    "icon": "./assets/images/oa-logo.png",
+    "icon": "./assets/images/oaLogo.png",
     "scheme": "open-arabic",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -43,7 +43,7 @@
         {
           "backgroundColor": "#0F1311",
           "imageResizeMode": "contain",
-          "image": "./assets/images/oa-logo.png"
+          "image": "./assets/images/oaLogo.png"
         }
       ],
       "expo-font",
@@ -64,14 +64,14 @@
             "name": "Audio Playback",
             "notificationTitle": "Open Arabic Audio",
             "notificationColor": "#2C312B",
-            "notificationIcon": "./assets/images/oa-logo.png"
+            "notificationIcon": "./assets/images/oaLogo.png"
           }
         }
       ],
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/oa-logo.png",
+          "icon": "./assets/images/oaLogo.png",
           "color": "#2C312B",
           "defaultChannel": "default"
         }
@@ -82,7 +82,7 @@
       "typedRoutes": true
     },
     "splash": {
-      "image": "./assets/images/oa-logo.png",
+      "image": "./assets/images/oaLogo.png",
       "backgroundColor": "#0F1311",
       "imageResizeMode": "contain",
       "resizeMode": "contain"

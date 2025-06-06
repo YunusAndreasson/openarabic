@@ -262,7 +262,7 @@ const AccountScreen: React.FC = () => {
           >
             <View style={styles.actionLinksContainer}>
               <BaseCard
-                onPress={() => router.push('/learning-method')}
+                onPress={() => router.push('/learningMethod')}
                 style={styles.actionLinkCard}
                 shadowSize="none"
                 includePressAnimation={true}
@@ -286,7 +286,7 @@ const AccountScreen: React.FC = () => {
               </BaseCard>
 
               <BaseCard
-                onPress={() => router.push('/classical-texts')}
+                onPress={() => router.push('/classicalTexts')}
                 style={styles.actionLinkCard}
                 shadowSize="none"
                 includePressAnimation={true}
