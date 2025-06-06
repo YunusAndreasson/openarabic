@@ -42,7 +42,7 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#0F1311",
-          "imageResizeMode": "contain",
+          "resizeMode": "contain",
           "image": "./assets/images/oaLogo.png"
         }
       ],
@@ -80,12 +80,6 @@
     ],
     "experiments": {
       "typedRoutes": true
-    },
-    "splash": {
-      "image": "./assets/images/oaLogo.png",
-      "backgroundColor": "#0F1311",
-      "imageResizeMode": "contain",
-      "resizeMode": "contain"
     },
     "extra": {
       "router": {

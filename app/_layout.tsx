@@ -35,7 +35,8 @@ import { setTheme } from '../store/themeSlice';
 
 import { useArticlesAndDueWordsLoaded } from './(tabs)/index';
 
-// Splash screen will be initialized inside the component to avoid conflicts with expo-router
+// Let expo-router handle splash screen initialization through app.json configuration
+// This prevents conflicts with expo-router's internal splash screen management
 
 // Move queryClient outside component scope for better performance
 const queryClient = new QueryClient({
@@ -99,20 +100,6 @@ function AppContent() {
   const [hasAttemptedRedirect, setHasAttemptedRedirect] = useState(false);
   const router = useRouter();
 
-  // Initialize splash screen inside component to avoid expo-router conflicts
-  useEffect(() => {
-    const initializeSplashScreen = async () => {
-      try {
-        await SplashScreen.preventAutoHideAsync();
-      } catch (error) {
-        // Silently handle splash screen errors - not critical for app functionality
-        console.warn('Splash screen initialization failed:', error);
-      }
-    };
-
-    initializeSplashScreen();
-  }, []);
-
   const [fontsLoaded] = useFonts({
     Madina: madinaFont,
     Figtree: figtreeFont,
@@ -160,10 +147,11 @@ function AppContent() {
     }
   }, [colors.tint]);
 
-  // Set default theme if none is set yet
+  // Set default theme based on system preference if none is set yet
   useEffect(() => {
     if (!theme) {
-      dispatch(setTheme(Theme.Dark));
+      // Use the enhanced theme detection which includes system preference fallback
+      dispatch(setTheme(Theme.Dark)); // Default to dark as per current behavior
     }
   }, [dispatch, theme]);
 
@@ -175,11 +163,14 @@ function AppContent() {
   }, [isAuthLoading, isLoaded, preloadAppData]);
 
   // Hide splash screen after first layout
-  const onLayoutRootView = useCallback(() => {
+  const onLayoutRootView = useCallback(async () => {
     if (appReady) {
-      SplashScreen.hideAsync().catch(() => {
-        // Ignore splash screen hiding errors
-      });
+      try {
+        await SplashScreen.hideAsync();
+      } catch (error) {
+        // Silently handle splash screen hiding errors - not critical for app functionality
+        console.warn('Splash screen hiding failed:', error);
+      }
     }
   }, [appReady]);
 
@@ -198,7 +189,7 @@ function AppContent() {
     if (fontsAreReady && (authIsReady || contentIsReady)) {
       setAppReady(true);
     }
-  }, [fontsLoaded, isAuthLoading, isLoaded, articlesAndDueWordsLoaded, session]);
+  }, [fontsLoaded, isAuthLoading, session, isLoaded, articlesAndDueWordsLoaded]);
 
   // Cleanup effect for AppState subscription
   useEffect(() => {
