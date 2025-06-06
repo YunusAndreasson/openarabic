@@ -30,7 +30,7 @@ const MOTION_CONFIG = {
   OPACITY_CURVE: [1, 0.85, 0.3], // Refined opacity curve for smooth transitions
 } as const;
 
-// Typography scale refinements for better hierarchy
+// Typography scale refinements for better hierarchy - Following design principles
 const TYPOGRAPHY_REFINEMENTS = {
   TITLE: {
     letterSpacing: Platform.OS === 'ios' ? -0.6 : -0.4, // Platform-specific optimization
@@ -38,15 +38,20 @@ const TYPOGRAPHY_REFINEMENTS = {
   },
   AUTHOR: {
     letterSpacing: Platform.OS === 'ios' ? 0.3 : 0.2,
-    opacity: 0.88, // Slightly higher for better readability
+    opacity: 0.85, // Consistent secondary hierarchy
   },
+  // Unified metadata styling for consistency (Hick's Law - reduce choice complexity)
   METADATA: {
     letterSpacing: Platform.OS === 'ios' ? 0.4 : 0.3,
-    opacity: 0.78, // Optimized for tertiary information
+    opacity: 0.75, // Consistent tertiary hierarchy
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // All metadata same size
+    fontWeight: '500' as const, // Consistent weight
   },
   SUMMARY: {
-    letterSpacing: 0.15, // Refined for body text
-    opacity: 0.92, // High opacity for content importance
+    letterSpacing: 0.1, // Refined for body text - slightly tighter for italic
+    opacity: 0.7, // Lowest in hierarchy to clearly distinguish from content
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // Same as metadata for consistency
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.5, // Increased line height for italic readability
   },
 } as const;
 
@@ -112,29 +117,31 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
     );
 
     // Dynamic text styles with enhanced hierarchy and accessibility
+    // Following Miller's Law: Clear categorization and hierarchy
     const dynamicTextStyles = useMemo(
       () => ({
         title: {
           color: textColor,
-          marginBottom: LAYOUT.SPACING.SMALL, // Increased spacing to author for better separation
-          fontWeight: '800' as const, // Increased from 700 for stronger title presence
-          fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE, // Restored to HUGE (28px) for proper hierarchy
+          marginBottom: LAYOUT.SPACING.SMALL,
+          fontWeight: '800' as const, // Strong hierarchy
+          fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE, // 28px for proper hierarchy
           letterSpacing: TYPOGRAPHY_REFINEMENTS.TITLE.letterSpacing,
           lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * TYPOGRAPHY_REFINEMENTS.TITLE.lineHeight,
         },
         author: {
           color: textColor,
           opacity: TYPOGRAPHY_REFINEMENTS.AUTHOR.opacity,
-          marginBottom: LAYOUT.SPACING.LARGE, // Increased spacing to metadata group
-          fontWeight: '600' as const, // Increased from 500 for better hierarchy
-          fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE, // Increased from MEDIUM (15px) to LARGE (17px)
+          marginBottom: LAYOUT.SPACING.LARGE,
+          fontWeight: '600' as const,
+          fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE, // 17px - secondary level
           letterSpacing: TYPOGRAPHY_REFINEMENTS.AUTHOR.letterSpacing,
         },
+        // Unified metadata styling for consistency
         metadataText: {
           color: textColor,
           opacity: TYPOGRAPHY_REFINEMENTS.METADATA.opacity,
-          fontWeight: '500' as const,
-          fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // Increased from SMALL (13px) to MEDIUM (15px)
+          fontWeight: TYPOGRAPHY_REFINEMENTS.METADATA.fontWeight,
+          fontSize: TYPOGRAPHY_REFINEMENTS.METADATA.fontSize, // 15px - all metadata same
           letterSpacing: TYPOGRAPHY_REFINEMENTS.METADATA.letterSpacing,
         },
         metadataIcon: {
@@ -142,13 +149,16 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
           opacity: TYPOGRAPHY_REFINEMENTS.METADATA.opacity,
           marginRight: LAYOUT.SPACING.TINY,
         },
+        // Summary with proper italic implementation
         summary: {
           color: textColor,
           opacity: TYPOGRAPHY_REFINEMENTS.SUMMARY.opacity,
-          fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE, // Increased from MEDIUM (15px) to LARGE (17px)
-          lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+          fontSize: TYPOGRAPHY_REFINEMENTS.SUMMARY.fontSize, // 15px - same as metadata but differentiated by italic
+          lineHeight: TYPOGRAPHY_REFINEMENTS.SUMMARY.lineHeight,
           letterSpacing: TYPOGRAPHY_REFINEMENTS.SUMMARY.letterSpacing,
-          fontWeight: '400' as const, // Added explicit weight for consistency
+          fontWeight: '400' as const,
+          // Apply italic directly to style - ThemedText will respect this
+          fontStyle: 'italic' as const,
         },
       }),
       [isDarkMode, textColor]
@@ -292,31 +302,66 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
       ] as const;
     }, [colors.background, isDarkMode]);
 
-    // Optimized staggered animation for metadata items - memoized function
-    const createMetadataItemStyle = useCallback(
-      (index: number) => {
-        return useAnimatedStyle(() => {
-          'worklet';
-          const progress = smoothScrollY.value / headerHeight;
-          const delay = index * 0.05; // Stagger delay
+    // Pre-memoized staggered animation styles - Fixed to avoid hook-in-callback issue
+    const metadataItemStyle0 = useAnimatedStyle(() => {
+      'worklet';
+      const progress = smoothScrollY.value / headerHeight;
+      const delay = 0 * 0.05; // Stagger delay
 
-          const opacity = interpolate(
-            progress,
-            [0, CONTENT_FADE_THRESHOLD + delay, 0.7 + delay],
-            [1, 0.7, 0],
-            Extrapolation.CLAMP
-          );
+      const opacity = interpolate(
+        progress,
+        [0, CONTENT_FADE_THRESHOLD + delay, 0.7 + delay],
+        [1, 0.7, 0],
+        Extrapolation.CLAMP
+      );
 
-          const translateY = interpolate(progress, [0, 0.5 + delay], [0, -4], Extrapolation.CLAMP);
+      const translateY = interpolate(progress, [0, 0.5 + delay], [0, -4], Extrapolation.CLAMP);
 
-          return {
-            opacity,
-            transform: [{ translateY }],
-          };
-        }, [index, headerHeight]);
-      },
-      [headerHeight]
-    );
+      return {
+        opacity,
+        transform: [{ translateY }],
+      };
+    }, [headerHeight]);
+
+    const metadataItemStyle1 = useAnimatedStyle(() => {
+      'worklet';
+      const progress = smoothScrollY.value / headerHeight;
+      const delay = 1 * 0.05; // Stagger delay
+
+      const opacity = interpolate(
+        progress,
+        [0, CONTENT_FADE_THRESHOLD + delay, 0.7 + delay],
+        [1, 0.7, 0],
+        Extrapolation.CLAMP
+      );
+
+      const translateY = interpolate(progress, [0, 0.5 + delay], [0, -4], Extrapolation.CLAMP);
+
+      return {
+        opacity,
+        transform: [{ translateY }],
+      };
+    }, [headerHeight]);
+
+    const metadataItemStyle2 = useAnimatedStyle(() => {
+      'worklet';
+      const progress = smoothScrollY.value / headerHeight;
+      const delay = 2 * 0.05; // Stagger delay
+
+      const opacity = interpolate(
+        progress,
+        [0, CONTENT_FADE_THRESHOLD + delay, 0.7 + delay],
+        [1, 0.7, 0],
+        Extrapolation.CLAMP
+      );
+
+      const translateY = interpolate(progress, [0, 0.5 + delay], [0, -4], Extrapolation.CLAMP);
+
+      return {
+        opacity,
+        transform: [{ translateY }],
+      };
+    }, [headerHeight]);
 
     // Dynamic content section style to handle safe area
     const contentSectionStyle = useMemo(
@@ -358,10 +403,7 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
           locations={[0, 0.1, 0.2, 0.3, 0.45, 0.6, 0.75, 0.85, 0.95, 1]} // Precise color stops
         />
 
-        {/* Safe Area Spacer - Removed to make image stick to top */}
-        {/* <View style={[styles.topSpace, { marginTop: topInset }]} /> */}
-
-        {/* Content Section with Enhanced Hierarchy */}
+        {/* Content Section with Enhanced Hierarchy - Following Miller's Law */}
         <Animated.View style={[contentSectionStyle, contentAnimatedStyle]}>
           {/* Primary Content Group: Title and Author */}
           <View style={styles.primaryContentGroup}>
@@ -382,32 +424,26 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
             )}
           </View>
 
-          {/* Secondary Content Group: Metadata - Unified Row */}
+          {/* Secondary Content Group: Metadata - Simplified and Consistent */}
           <View style={styles.metadataGroup}>
-            {/* Single metadata row with all three items */}
             <View style={styles.metadataRow}>
-              {/* Category - Primary importance with visual emphasis */}
+              {/* Category - Now consistent with other metadata */}
               {article.category && (
-                <Animated.View
-                  style={[styles.metadataItem, styles.categoryItem, createMetadataItemStyle(0)]}
-                >
+                <Animated.View style={[styles.metadataItem, metadataItemStyle0]}>
                   <Ionicons
                     name="folder-outline"
-                    size={16}
+                    size={15} // Consistent icon size
                     color={dynamicTextStyles.metadataIcon.color}
                     style={dynamicTextStyles.metadataIcon}
                   />
-                  <ThemedText
-                    type="caption"
-                    style={[dynamicTextStyles.metadataText, styles.categoryText]}
-                  >
+                  <ThemedText type="caption" style={dynamicTextStyles.metadataText}>
                     {capitalizeFirstLetter(article.category.name)}
                   </ThemedText>
                 </Animated.View>
               )}
 
-              {/* Reading Time - Secondary importance */}
-              <Animated.View style={[styles.metadataItem, createMetadataItemStyle(1)]}>
+              {/* Reading Time */}
+              <Animated.View style={[styles.metadataItem, metadataItemStyle1]}>
                 <Ionicons
                   name="time-outline"
                   size={15}
@@ -419,8 +455,8 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
                 </ThemedText>
               </Animated.View>
 
-              {/* Difficulty Level - Tertiary importance */}
-              <Animated.View style={[styles.metadataItem, createMetadataItemStyle(2)]}>
+              {/* Difficulty Level */}
+              <Animated.View style={[styles.metadataItem, metadataItemStyle2]}>
                 <Ionicons
                   name="stats-chart-outline"
                   size={15}
@@ -434,7 +470,7 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
             </View>
           </View>
 
-          {/* Tertiary Content Group: Summary */}
+          {/* Tertiary Content Group: Summary with Proper Italic */}
           {article.summary && (
             <View style={styles.summaryGroup}>
               <ThemedText
@@ -466,33 +502,24 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
 );
 
 const styles = StyleSheet.create({
-  categoryItem: {
-    // Category gets visual emphasis through typography, not spacing
-    marginRight: LAYOUT.SPACING.TINY, // Subtle extra space to create visual grouping
-  },
-  categoryText: {
-    fontWeight: '600' as const, // Stronger weight for visual hierarchy
-    opacity: 0.95, // Highest opacity for primary importance
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + 1, // Slightly larger than other metadata (16px)
-  },
   container: {
     borderRadius: 0,
     overflow: 'hidden',
-    width: '100%', // Ensure no border radius on container
+    width: '100%',
   },
   contentSection: {
-    position: 'absolute',
     bottom: 0,
     left: 0,
-    right: 0,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM, // Increased from SMALL (8px) to MEDIUM (12px)
-    paddingTop: LAYOUT.SPACING.LARGE,
     paddingBottom: LAYOUT.SPACING.XXLARGE + LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.LARGE,
+    position: 'absolute',
+    right: 0,
     zIndex: 3,
   },
   divider: {
-    height: StyleSheet.hairlineWidth, // Use hairline width for crisp lines
-    opacity: 0.12, // Refined opacity for subtle separation
+    height: StyleSheet.hairlineWidth,
+    opacity: 0.12,
     width: '100%',
   },
   gradient: {
@@ -502,39 +529,40 @@ const styles = StyleSheet.create({
   image: {
     borderRadius: 0,
     height: '100%',
-    width: '100%', // Override EnhancedImage's default border radius
+    width: '100%',
   },
   imageWrapper: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: Colors.dark.background,
+    borderRadius: 0,
+    left: 0,
     overflow: 'hidden',
-    borderRadius: 0, // Ensure no border radius on image wrapper
-    left: 0, // Explicitly set to reach left edge
-    right: 0, // Explicitly set to reach right edge
+    right: 0,
   },
   metadataGroup: {
-    marginBottom: LAYOUT.SPACING.LARGE, // Clear separation from summary
+    marginBottom: LAYOUT.SPACING.XLARGE, // Clear separation from summary
   },
   metadataItem: {
     alignItems: 'center',
     flexDirection: 'row',
   },
   metadataRow: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: LAYOUT.SPACING.LARGE, // Consistent spacing - Following Fitts's Law
     justifyContent: 'flex-start',
-    flexWrap: 'wrap', // Allow wrapping on smaller screens
-    gap: LAYOUT.SPACING.LARGE, // Consistent spacing between all items
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 2,
   },
   primaryContentGroup: {
-    marginBottom: LAYOUT.SPACING.MEDIUM, // Increased spacing to separate from metadata
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   summaryGroup: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.SMALL,
   },
   topSpace: {
     height: 60,
