@@ -4,7 +4,7 @@ export { default as ArticleSection } from './ArticleSection';
 export { default as RelatedArticlesFooter } from './RelatedArticlesFooter';
 export { ArticleButtons } from './ArticleButtons';
 export { ArabicWord } from './ArabicWord';
-export { TimeAgo, DifficultyIndicator } from '../index/ArticleHelpers';
+export { TimeAgo, DifficultyIndicator } from '../home/ArticleHelpers';
 export { ArticleContent } from './ArticleContent';
 export { WordTooltip } from './WordTooltip';
 export { TextSizeSlider } from './TextSizeSlider';

@@ -14,7 +14,7 @@ import SectionTitle from '@/components/SectionTitle';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
-import { useSimpleAudioPlayer } from '@/hooks/useSimpleAudioPlayer';
+import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 // Audio configuration

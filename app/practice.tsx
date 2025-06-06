@@ -16,7 +16,7 @@ import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
-import { useEnhancedAudioPlayer } from '@/hooks/useEnhancedAudioPlayer';
+import { useEnhancedAudioPlayer } from '@/hooks/audio/useEnhancedAudioPlayer';
 import { useFSRSQueries } from '@/hooks/useFSRSQueries';
 import { useWordSizing } from '@/hooks/useWordSizing';
 import { listenAudioService } from '@/services/listenAudioService';
