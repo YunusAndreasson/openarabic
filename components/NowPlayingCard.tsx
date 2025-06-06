@@ -51,20 +51,18 @@ const EXIT_SPRING_CONFIG = {
 interface NowPlayingCardProps {
   /** Whether the card should be visible */
   isVisible: boolean;
-  /** Current audio state */
-  audioState: string;
   /** Current article being played */
   article: Article | null;
-  /** Progress of current playback (0-100) */
+  /** Progress of current playback in milliseconds */
   progress: number;
-  /** Duration of current track in seconds */
+  /** Duration of current track in milliseconds */
   duration: number;
   /** Whether audio is currently playing */
   isPlaying: boolean;
   /** Callback when card is tapped */
   onPress?: () => void;
-  /** Callback when play/pause is tapped */
-  onPlayPause?: () => void;
+  /** Callback when stop is tapped */
+  onStop?: () => void;
   /** Timer functionality */
   showTimerButton?: boolean;
   onTimerPress?: () => void;
@@ -79,7 +77,7 @@ const NowPlayingCard = ({
   duration,
   isPlaying,
   onPress,
-  onPlayPause,
+  onStop,
   showTimerButton = false,
   onTimerPress,
   isTimerActive = false,
@@ -119,7 +117,7 @@ const NowPlayingCard = ({
   }, [isVisible, article, translateY, opacity, scale]);
 
   // Optimized button press animation using runOnUI for better performance
-  const handlePlayPausePress = useCallback(() => {
+  const handleStopPress = useCallback(() => {
     // Run animation on UI thread for maximum smoothness
     runOnUI(() => {
       'worklet';
@@ -130,8 +128,8 @@ const NowPlayingCard = ({
     })();
 
     // Call the actual handler
-    onPlayPause?.();
-  }, [onPlayPause, buttonScale]);
+    onStop?.();
+  }, [onStop, buttonScale]);
 
   // Cleanup animations on unmount to prevent memory leaks
   useEffect(() => {
@@ -178,7 +176,7 @@ const NowPlayingCard = ({
         shadowRadius: 8,
         elevation: 8,
       },
-      playButton: {
+      stopButton: {
         backgroundColor: colors.tint,
         shadowColor: colors.tint,
         shadowOffset: { width: 0, height: 2 },
@@ -211,15 +209,15 @@ const NowPlayingCard = ({
 
   // Optimized time calculations with stable dependencies
   const timeCalculations = useMemo(() => {
-    // progress is actually position in milliseconds, not percentage
+    // Ensure progress and duration are valid numbers
     const safeProgress = progress && isFinite(progress) ? progress : 0;
     const safeDuration = duration && isFinite(duration) ? duration : 0;
 
-    // Convert from milliseconds to seconds
+    // Both progress and duration should be in milliseconds for consistency
     const currentSeconds = safeProgress / 1000;
     const totalSeconds = safeDuration / 1000;
 
-    // Calculate progress percentage for the progress bar
+    // Calculate progress percentage for the progress bar (0-100)
     const percentage = safeDuration > 0 ? (safeProgress / safeDuration) * 100 : 0;
     const clampedPercentage = Math.max(0, Math.min(100, percentage));
 
@@ -258,7 +256,14 @@ const NowPlayingCard = ({
       </View>
 
       {/* Main Content */}
-      <TouchableOpacity style={styles.content} onPress={onPress} activeOpacity={0.8}>
+      <TouchableOpacity
+        style={styles.content}
+        onPress={onPress}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel={`Now playing: ${article.title} by ${article.author?.name || 'Unknown author'}`}
+        accessibilityHint="Tap to open full player"
+      >
         {/* Article Image */}
         <View style={styles.imageContainer}>
           <EnhancedImage
@@ -299,21 +304,24 @@ const NowPlayingCard = ({
               style={styles.progressBar}
               fillColor={colors.tint}
               backgroundColor={isDarkMode ? colors.elevation3 : colors.progressBackground}
-              animationTriggered={isPlaying && timeCalculations.progressPercentage > 0}
+              animationTriggered={timeCalculations.progressPercentage > 0}
             />
           </View>
         </View>
 
         {/* Controls */}
         <View style={styles.controls}>
-          {/* Play/Stop Button - single main control */}
+          {/* Stop Button */}
           <Animated.View style={buttonAnimatedStyle}>
             <TouchableOpacity
-              style={[styles.playButton, dynamicStyles.playButton]}
-              onPress={handlePlayPausePress}
+              style={[styles.stopButton, dynamicStyles.stopButton]}
+              onPress={handleStopPress}
               activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Stop playback"
+              accessibilityHint="Stops the current audio"
             >
-              <Ionicons name={isPlaying ? 'stop' : 'play'} size={24} color={colors.background} />
+              <Ionicons name="stop" size={24} color={colors.background} />
             </TouchableOpacity>
           </Animated.View>
 
@@ -398,14 +406,6 @@ const styles = StyleSheet.create({
     width: IMAGE_SIZE,
   },
 
-  playButton: {
-    alignItems: 'center',
-    borderRadius: 24,
-    height: 48,
-    justifyContent: 'center',
-    width: 48,
-  },
-
   primaryInfo: {
     marginBottom: LAYOUT.SPACING.SMALL,
   },
@@ -423,6 +423,14 @@ const styles = StyleSheet.create({
 
   progressSection: {
     gap: LAYOUT.SPACING.XTINY,
+  },
+
+  stopButton: {
+    alignItems: 'center',
+    borderRadius: 24,
+    height: 48,
+    justifyContent: 'center',
+    width: 48,
   },
 
   textContent: {
@@ -455,12 +463,11 @@ const styles = StyleSheet.create({
 
 NowPlayingCard.displayName = 'NowPlayingCard';
 
-// Optimized export with custom memo comparison to prevent unnecessary re-renders
-export default memo(NowPlayingCard, (prevProps, nextProps) => {
+// Memoized comparison function to prevent unnecessary re-renders
+const arePropsEqual = (prevProps: NowPlayingCardProps, nextProps: NowPlayingCardProps): boolean => {
   // Critical props that always require re-render
   if (
     prevProps.isVisible !== nextProps.isVisible ||
-    prevProps.isPlaying !== nextProps.isPlaying ||
     prevProps.article?.id !== nextProps.article?.id ||
     prevProps.isTimerActive !== nextProps.isTimerActive
   ) {
@@ -477,4 +484,7 @@ export default memo(NowPlayingCard, (prevProps, nextProps) => {
 
   // All other props are the same, skip re-render
   return true;
-});
+};
+
+// Optimized export with custom memo comparison
+export default memo(NowPlayingCard, arePropsEqual);

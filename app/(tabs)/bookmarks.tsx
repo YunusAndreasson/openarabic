@@ -791,7 +791,6 @@ export default function BookmarksScreen(): JSX.Element {
       {/* Now Playing Card - shows when audio is playing with integrated controls */}
       <NowPlayingCard
         isVisible={shouldShowPlayer}
-        audioState={isStartingPlayback ? AUDIO_STATES.LOADING : audioState}
         article={currentArticle}
         progress={isStartingPlayback ? 0 : progress}
         duration={isStartingPlayback ? 0 : duration}
@@ -803,24 +802,14 @@ export default function BookmarksScreen(): JSX.Element {
             router.push(`/article/${currentArticle.id}`);
           }
         }}
-        onPlayPause={() => {
+        onStop={() => {
+          lightFeedback();
           if (isStartingPlayback) {
             // If still starting, allow canceling
-            lightFeedback();
             setIsStartingPlayback(false);
-            setPlaybackMode('none');
-            actions.stopPlayback();
-          } else if (audioState === AUDIO_STATES.PLAYING) {
-            lightFeedback();
-            actions.stopPlayback();
-            setPlaybackMode('none');
-          } else {
-            // If stopped, restart playback from current position
-            if (sortedEnhancedTracks.length && currentTrackIndex >= 0) {
-              actions.startEnhancedPlayback(sortedEnhancedTracks, currentTrackIndex);
-              setPlaybackMode('all');
-            }
           }
+          actions.stopPlayback();
+          setPlaybackMode('none');
         }}
         onTimerPress={() => {
           mediumFeedback();

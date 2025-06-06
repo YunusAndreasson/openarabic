@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+
 import { handleError } from '@/utils/errorHandling';
 
 export interface SleepTimerState {
@@ -34,6 +35,11 @@ export function useSleepTimer(onTimerComplete?: () => void): UseSleepTimerResult
   const startTimer = useCallback(
     (minutes: number) => {
       try {
+        // Validate input
+        if (!minutes || minutes <= 0 || minutes > 180) {
+          throw new Error(`Invalid timer duration: ${minutes} minutes`);
+        }
+
         const seconds = minutes * 60;
         setRemainingTime(seconds);
         setIsActive(true);
