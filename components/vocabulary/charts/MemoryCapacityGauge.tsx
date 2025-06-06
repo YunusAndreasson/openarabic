@@ -255,16 +255,16 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
       hideTitle={true}
       hasData={studyWords.length > 0}
       contentHeight={GAUGE_HEIGHT + 40}
-      emptyStateText="Start learning words to track your memory capacity"
+      emptyStateText="Add words to track your memory capacity"
     >
       <Animated.View style={animatedPressStyle}>
         <TouchableOpacity
           style={styles.gaugeContainer}
           onPress={handleInsightsPress}
           activeOpacity={1}
-          accessibilityLabel={`Memory capacity: ${memoryMetrics.capacityScore}%. Tap to view detailed vocabulary insights`}
+          accessibilityLabel={`Memory capacity ${memoryMetrics.capacityScore}%. Tap for insights`}
           accessibilityRole="button"
-          accessibilityHint="Opens insights screen with detailed analytics"
+          accessibilityHint="Opens insights screen"
         >
           <Canvas style={styles.canvas}>
             <Group>
