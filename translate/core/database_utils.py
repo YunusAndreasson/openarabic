@@ -1,10 +1,9 @@
 import os
-import json
 import shutil
 from datetime import datetime, UTC
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
-from translate.core.arabic_text import clean_arabic_text, clean_word_for_matching
+from translate.core.arabic_text import clean_arabic_text
 from translate.core.storage_utils import (
     supabase,
     get_word_type_id,
@@ -212,15 +211,6 @@ def insert_sentence_words(
         }
 
     # If we have word timings, prepare for matching
-    # Pre-tokenize the original words using the same method for consistency
-    original_tokens = []
-    for word_info in word_by_word:
-        # Get the original Arabic word and clean it
-        original_word = clean_arabic_text(word_info["arabic"])
-        original_tokens.append(original_word)
-
-    # Extract words from word timings for comparison
-    timing_words = [clean_arabic_text(timing["word"]) for timing in word_timings]
 
     # Sort word timings by start time to ensure proper sequencing
     sorted_timings = sorted(word_timings, key=lambda x: float(x["start_time"]))
@@ -579,6 +569,23 @@ def validate_article_data(data: Dict) -> None:
             raise ValueError(f"Missing Arabic text in translation at position {idx}")
         if not translation.get("full_translation"):
             raise ValueError(f"Missing English translation at position {idx}")
+
+        # Check for failed translations
+        if translation.get("verification_status") == "Failed":
+            raise ValueError(
+                f"Translation at position {idx} has failed verification status"
+            )
+
+        # Check for error markers in translation text
+        if "[BATCH PROCESSING ERROR]" in translation.get("full_translation", ""):
+            raise ValueError(
+                f"Translation at position {idx} contains error marker - translation is incomplete"
+            )
+
+        if "[ERROR]" in translation.get("full_translation", ""):
+            raise ValueError(
+                f"Translation at position {idx} contains error marker - translation is incomplete"
+            )
 
         # 4. Validate word-by-word translations if present
         if "word_by_word" in translation:

@@ -1165,10 +1165,10 @@
     semver "^7.6.2"
     zod "^3.23.8"
 
-"@expo/eas-json@16.8.0":
-  version "16.8.0"
-  resolved "https://registry.yarnpkg.com/@expo/eas-json/-/eas-json-16.8.0.tgz#9ddf64e4011a0688e0f067324d15c9fda59ba418"
-  integrity sha512-qnOYMzzMLbr9xqJ5kuv1Rz0JE/pRKT43erLkgpssmMmTMv5h7ExhP+KXYSoVMoQPKrnSO3QWVC8HXp3aA5bjbA==
+"@expo/eas-json@16.9.0":
+  version "16.9.0"
+  resolved "https://registry.yarnpkg.com/@expo/eas-json/-/eas-json-16.9.0.tgz#b65be54bdbef08474b0b7c32961bed745a34bf89"
+  integrity sha512-EMm9OY/f3kR3A1Lcp5SF6WDeN4YppJe7XuYoR4sNnQ8sEskddXkp++o/mitAwRimvAdcP27F6oCzH/nDKQ7zlQ==
   dependencies:
     "@babel/code-frame" "7.23.5"
     "@expo/eas-build-job" "1.0.173"
@@ -2873,10 +2873,10 @@
   resolved "https://registry.yarnpkg.com/@standard-schema/utils/-/utils-0.3.0.tgz#3d5e608f16c2390c10528e98e59aef6bf73cae7b"
   integrity sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==
 
-"@supabase/auth-js@2.69.1":
-  version "2.69.1"
-  resolved "https://registry.yarnpkg.com/@supabase/auth-js/-/auth-js-2.69.1.tgz#fcf310d24dfab823ffbf22191e6ceaef933360d8"
-  integrity sha512-FILtt5WjCNzmReeRLq5wRs3iShwmnWgBvxHfqapC/VoljJl+W8hDAyFmf1NVw3zH+ZjZ05AKxiKxVeb0HNWRMQ==
+"@supabase/auth-js@2.70.0":
+  version "2.70.0"
+  resolved "https://registry.yarnpkg.com/@supabase/auth-js/-/auth-js-2.70.0.tgz#d4a0021d8a229d1ec23dd49ca76c486a686b6c14"
+  integrity sha512-BaAK/tOAZFJtzF1sE3gJ2FwTjLf4ky3PSvcvLGEgEmO4BSBkwWKu8l67rLLIBZPDnCyV7Owk2uPyKHa0kj5QGg==
   dependencies:
     "@supabase/node-fetch" "^2.6.14"
 
@@ -2925,12 +2925,12 @@
   dependencies:
     "@supabase/node-fetch" "^2.6.14"
 
-"@supabase/supabase-js@^2.49.10":
-  version "2.49.10"
-  resolved "https://registry.yarnpkg.com/@supabase/supabase-js/-/supabase-js-2.49.10.tgz#294622b50ef740936a9fd880b01f4b2a21831a70"
-  integrity sha512-IRPcIdncuhD2m1eZ2Fkg0S1fq9SXlHfmAetBxPN66kVFtTucR8b01xKuVmKqcIJokB17umMf1bmqyS8yboXGsw==
+"@supabase/supabase-js@^2.50.0":
+  version "2.50.0"
+  resolved "https://registry.yarnpkg.com/@supabase/supabase-js/-/supabase-js-2.50.0.tgz#77b908f42e819cc0146c44319852c35a5f353628"
+  integrity sha512-M1Gd5tPaaghYZ9OjeO1iORRqbTWFEz/cF3pPubRnMPzA+A8SiUsXXWDP+DWsASZcjEcVEcVQIAF38i5wrijYOg==
   dependencies:
-    "@supabase/auth-js" "2.69.1"
+    "@supabase/auth-js" "2.70.0"
     "@supabase/functions-js" "2.4.4"
     "@supabase/node-fetch" "2.6.15"
     "@supabase/postgrest-js" "1.19.4"
@@ -3039,9 +3039,9 @@
     "@types/node" "*"
 
 "@types/estree@^1.0.6":
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/@types/estree/-/estree-1.0.7.tgz#4158d3105276773d5b7695cd4834b1722e4f37a8"
-  integrity sha512-w28IoSUCJpidD/TGviZwwMJckNESJZXFu7NBZ5YJ4mEUnNraUn9Pm8HSZm/jDF1pDWYKspWE7oVphigUPRakIQ==
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/@types/estree/-/estree-1.0.8.tgz#958b91c991b1867ced318bedea0e215ee050726e"
+  integrity sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==
 
 "@types/get-params@^0.1.2":
   version "0.1.2"
@@ -4849,17 +4849,17 @@ dunder-proto@^1.0.0, dunder-proto@^1.0.1:
     es-errors "^1.3.0"
     gopd "^1.2.0"
 
-eas-cli@^16.8.0:
-  version "16.8.0"
-  resolved "https://registry.yarnpkg.com/eas-cli/-/eas-cli-16.8.0.tgz#0ff7f33f69767e670cf0ed80adb600987bb36ed7"
-  integrity sha512-SKjJXrfg0AzQdn2LKR3zLGQadoG91O0FWQL3Fgonf/OJ/is7N2BccCqAm1HMI8GM4xAsos0Yit8IY7ROVQgD1w==
+eas-cli@^16.9.0:
+  version "16.9.0"
+  resolved "https://registry.yarnpkg.com/eas-cli/-/eas-cli-16.9.0.tgz#e31abff375b282ab3c734a167deebf30d3782ffb"
+  integrity sha512-oPO6zAbOjyP1akiSlz8FgYhfv8S79Yh0Pw1KCuV2pKqVftUTBy1exmrUH9KtptZvVLKBqCteDQGcHvlsg5QnZQ==
   dependencies:
     "@expo/apple-utils" "2.1.12"
     "@expo/code-signing-certificates" "0.0.5"
     "@expo/config" "10.0.6"
     "@expo/config-plugins" "9.0.12"
     "@expo/eas-build-job" "1.0.173"
-    "@expo/eas-json" "16.8.0"
+    "@expo/eas-json" "16.9.0"
     "@expo/env" "^1.0.0"
     "@expo/json-file" "8.3.3"
     "@expo/logger" "1.0.117"
@@ -7099,10 +7099,10 @@ jest-environment-node@^29.7.0:
     jest-mock "^29.7.0"
     jest-util "^29.7.0"
 
-jest-expo@^53.0.6:
-  version "53.0.6"
-  resolved "https://registry.yarnpkg.com/jest-expo/-/jest-expo-53.0.6.tgz#1dbf296e37ec3717030dcebaaad83005bd0dd21e"
-  integrity sha512-xl5DSQE3OZIfKITg9rqUJutPbCtIzB58iV6L4aiuPSxBIsrnCXo7wAmxHcq23FJoTcyjhQo3IE49gTlv5zs+Xw==
+jest-expo@^53.0.7:
+  version "53.0.7"
+  resolved "https://registry.yarnpkg.com/jest-expo/-/jest-expo-53.0.7.tgz#ab1c288940dcdf470c25b7b18e2ed99f03d26bc6"
+  integrity sha512-Uiu3ES0sWbsxpifQuBzXMI1/N9JygfJfwEby/Qw/OPndIQ1YeeIQqkbP52xn6UhdSM4qYQiteX3EjY8TfrZIoA==
   dependencies:
     "@expo/config" "~11.0.10"
     "@expo/json-file" "^9.1.4"
@@ -11418,6 +11418,6 @@ yocto-queue@^0.1.0:
   integrity sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==
 
 zod@^3.23.8:
-  version "3.25.51"
-  resolved "https://registry.yarnpkg.com/zod/-/zod-3.25.51.tgz#aa2cf648e54f6f060f139cf77b694819f63c9f3a"
-  integrity sha512-TQSnBldh+XSGL+opiSIq0575wvDPqu09AqWe1F7JhUMKY+M91/aGlK4MhpVNO7MgYfHcVCB1ffwAUTJzllKJqg==
+  version "3.25.56"
+  resolved "https://registry.yarnpkg.com/zod/-/zod-3.25.56.tgz#4cff0340b7cd3778314dac1e74d6a663ffeef914"
+  integrity sha512-rd6eEF3BTNvQnR2e2wwolfTmUTnp70aUTqr0oaGbHifzC3BKJsoV+Gat8vxUMR1hwOKBs6El+qWehrHbCpW6SQ==

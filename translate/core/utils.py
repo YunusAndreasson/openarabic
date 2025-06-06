@@ -7,9 +7,9 @@ from typing import List, Dict, Any, Optional
 
 from openai import OpenAI
 
-# Configure logging
+# Configure logging to show only errors
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
 # Configuration constants
@@ -65,12 +65,18 @@ def init_openai_client():
     """Initialize the OpenAI client with API key"""
     # Find and exec set_keys.py robustly
     set_keys_path = os.path.join(os.path.dirname(__file__), "set_keys.py")
-    exec(open(set_keys_path).read())
+    try:
+        exec(open(set_keys_path).read())
+    except FileNotFoundError:
+        print(f"❌ API keys file not found: {set_keys_path}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Error loading API keys: {str(e)}")
+        sys.exit(1)
 
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
-        print("Error: OPENAI_API_KEY environment variable is not set.")
-        print("Please set your API key using: export OPENAI_API_KEY='your-api-key'")
+        print("❌ OPENAI_API_KEY environment variable is not set.")
         sys.exit(1)
 
     return OpenAI(api_key=api_key)

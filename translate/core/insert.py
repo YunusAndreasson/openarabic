@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 from datetime import datetime, UTC
 
 # Import from the newly created modules
@@ -20,7 +21,14 @@ from translate.core.audio_utils import ensure_valid_cache_files
 
 # Execute set_keys.py to set environment variables
 set_keys_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "set_keys.py")
-exec(open(set_keys_path).read())
+try:
+    exec(open(set_keys_path).read())
+except FileNotFoundError:
+    print(f"❌ API keys file not found: {set_keys_path}")
+    sys.exit(1)
+except Exception as e:
+    print(f"❌ Error loading API keys: {str(e)}")
+    sys.exit(1)
 
 
 def process_json_file(file_path: str) -> None:
@@ -38,7 +46,6 @@ def process_json_file(file_path: str) -> None:
     existing_article_id, existing_audio_url = check_article_exists(content_hash)
 
     if existing_article_id:
-        print(f"Article already exists with ID: {existing_article_id}")
         # Move files to archive even for existing articles
         archive_files(file_path, existing_article_id)
         return existing_article_id
@@ -63,7 +70,6 @@ def process_json_file(file_path: str) -> None:
     except Exception as e:
         if "content_hash" not in str(e):
             raise e
-        print("Note: content_hash column not available, skipping idempotency check")
 
     # Insert article
     result = supabase.table("articles").insert(article_data).execute()
@@ -79,7 +85,6 @@ def process_json_file(file_path: str) -> None:
     # Save timing statistics to a report file
     save_timing_report(article_id, data["metadata"]["title"], file_path, timing_stats)
 
-    print(f"Successfully inserted article with ID: {article_id}")
     return article_id
 
 
@@ -93,8 +98,8 @@ def main():
     articles_dir = os.path.abspath(os.path.join(script_dir, "..", "article"))
 
     if not os.path.exists(articles_dir):
-        print(f"Error: Could not find articles directory at {articles_dir}")
-        return
+        print(f"❌ Could not find articles directory at {articles_dir}")
+        sys.exit(1)
 
     # Get all json files in the articles directory
     json_files = []
@@ -113,25 +118,26 @@ def main():
                 json_files.append(output_json)
 
     if not json_files:
-        print("No article output.json files found in the articles directory")
-        return
+        print("❌ No article output.json files found in the articles directory")
+        sys.exit(1)
 
     success_count = 0
     error_count = 0
 
     for json_path in json_files:
         try:
-            print(f"Processing {json_path}")
             process_json_file(json_path)
             success_count += 1
         except Exception as e:
             error_count += 1
-            print(f"Error processing {json_path}: {str(e)}")
+            print(f"❌ Error processing {json_path}: {str(e)}")
 
-    print("Processing complete!")
-    print(f"Successfully processed: {success_count} articles")
     if error_count > 0:
-        print(f"Failed to process: {error_count} articles")
+        print(f"❌ Failed to process: {error_count} articles")
+        sys.exit(1)
+
+    # Normal successful completion
+    sys.exit(0)
 
 
 if __name__ == "__main__":

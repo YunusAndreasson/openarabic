@@ -19,9 +19,9 @@ from translate.core.schemas import (
     SENTENCE_SPLITTING_USER_PROMPT,
 )
 
-# Configure logging
+# Configure logging to show only errors
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
 
@@ -79,36 +79,18 @@ def split_file(input_file: str, output_file: str):
         with open(input_file, encoding="utf-8") as f:
             full_text = f.read()
 
-        print("Analyzing text and splitting into learner-friendly units...")
         split_result = split_text_into_sentences(full_text)
 
         # Add total units to metadata
         split_result["total_units"] = len(split_result["units"])
 
-        # Print analysis results
-        print("\nText Analysis:")
-        print(f"Title: {split_result['title']}")
-        print(f"Summary: {split_result['summary']}")
-        print(f"Difficulty Level: {split_result['difficulty_level']}/5")
-        print(f"Total Units: {split_result['total_units']}")
-        print("-" * 80)
-
-        if not split_result["units"]:
-            print("Warning: No units found to translate in the input file")
-
         # Save to output file
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(split_result, f, ensure_ascii=False, indent=2)
 
-        # Calculate and print statistics
+        # Calculate timing
         end_time = time.time()
         total_time = end_time - start_time
-
-        print("\nSplitting Summary:")
-        print(f"Time Elapsed: {total_time:.2f} seconds")
-        print(f"Total Units: {len(split_result['units'])}")
-        print(f"Output saved to: {output_file}")
-        print(str(token_tracker))
 
         return split_result
 
@@ -134,14 +116,11 @@ def main():
 
     try:
         split_file(input_file, output_file)
-        print("\n✅ Text splitting completed successfully.")
-        print(f"Output saved to: {output_file}")
         sys.exit(0)
     except KeyboardInterrupt:
-        print("\n⚠️ Text splitting interrupted by user.")
         sys.exit(130)  # Standard exit code for SIGINT
     except Exception as e:
-        print(f"\n❌ Fatal error during text splitting: {str(e)}")
+        print(f"❌ Fatal error during text splitting: {str(e)}")
         sys.exit(1)
 
 

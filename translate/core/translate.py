@@ -1,6 +1,5 @@
 import os
 import json
-import time
 import logging
 import sys
 
@@ -8,16 +7,13 @@ from tqdm import tqdm
 
 # Import from models module
 from translate.core.models import (
-    SentenceTranslation,
     TextMetadata,
-    TranslationResult,
 )
 
 # Import batch utilities
 from translate.core.batch_utils import create_batches, process_batch
 
 # Import shared utilities
-from translate.core.utils import token_tracker
 
 # Configure logging to show only errors
 logging.basicConfig(
@@ -25,7 +21,6 @@ logging.basicConfig(
 )
 
 # Configuration constants
-MAX_SENTENCE_LENGTH = 500  # characters
 MAX_BATCH_SIZE = 5  # Maximum number of sentences to process in one batch
 
 
@@ -40,13 +35,9 @@ def to_dict(obj):
 
 def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATCH_SIZE):
     """Translate a pre-split file"""
-    start_time = time.time()
-
     # Check for split file
     split_file = os.path.splitext(input_file)[0] + "_split.json"
     if not os.path.exists(split_file):
-        print(f"Split file not found: {split_file}")
-        print("Please run split_file.py first.")
         return None
 
     # Load the split file
@@ -55,7 +46,6 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
 
     all_units = split_data.get("units", [])
     if not all_units:
-        print("No units found in the split file")
         return None
 
     # Create metadata object
@@ -72,10 +62,10 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
     # Create batches for all units
     batches_to_process = create_batches(all_units, 0, batch_size)
     if not batches_to_process:
-        print("No batches created to process, finishing.")
         return None
 
     # Process each batch with progress bar
+    batch_errors = []
     with tqdm(total=len(all_units), desc="Translating", initial=0) as pbar:
         for batch in batches_to_process:
             try:
@@ -91,22 +81,55 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
                 pbar.update(len(batch["sentences"]))
 
             except Exception as e:
-                # Add error markers for this batch
-                for i, sentence in enumerate(batch["sentences"]):
-                    error_index = batch["start_index"] + i
-                    results.append(
-                        SentenceTranslation(
-                            index=error_index,
-                            original=sentence,
-                            tashkeel=sentence,
-                            word_by_word=[],
-                            full_translation="[BATCH PROCESSING ERROR]",
-                            notes=f"Error: {str(e)}",
-                            verification_status="Failed",
-                            verification_issues=["Processing failed"],
-                        )
-                    )
+                # Record batch error instead of adding error markers
+                batch_errors.append(f"Batch {len(batch_errors) + 1}: {str(e)}")
                 pbar.update(len(batch["sentences"]))
+
+    # If any batch failed, don't write incomplete data
+    if batch_errors:
+        print(f"❌ Translation failed - {len(batch_errors)} batch(es) failed:")
+        for error in batch_errors:
+            print(f"  - {error}")
+        return None
+
+    # Verify we have all expected translations
+    if len(results) != len(all_units):
+        print(
+            f"❌ Translation incomplete - expected {len(all_units)} translations, got {len(results)}"
+        )
+        return None
+
+    # Check for any failed translations in results
+    failed_count = 0
+    issue_count = 0
+    for i, result in enumerate(results):
+        if hasattr(result, "verification_status"):
+            if result.verification_status == "Failed":
+                failed_count += 1
+            elif result.verification_status == "Issues Found":
+                issue_count += 1
+
+        if hasattr(result, "full_translation") and result.full_translation:
+            if any(
+                error_marker in result.full_translation
+                for error_marker in [
+                    "[ERROR]",
+                    "[BATCH PROCESSING ERROR]",
+                    "[Translation Error]",
+                    "[Format Error]",
+                ]
+            ):
+                failed_count += 1
+
+    if failed_count > 0:
+        print(f"❌ Translation contains {failed_count} failed sentence(s)")
+        return None
+
+    if issue_count > 0:
+        print(
+            f"❌ Translation contains {issue_count} sentence(s) with validation issues"
+        )
+        return None
 
     # Write final output with metadata
     try:
@@ -120,8 +143,8 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
                 ensure_ascii=False,
                 indent=2,
             )
+        return True  # Return success indicator
     except Exception as e:
-        print(f"Fatal error writing output: {str(e)}")
         return None
 
 
@@ -139,8 +162,6 @@ def main():
     split_file = os.path.splitext(input_file)[0] + "_split.json"
     if not os.path.exists(split_file):
         print(f"❌ Split file not found: {split_file}")
-        print("Please run split_file.py first:")
-        print(f"  python split_file.py {input_file}")
         sys.exit(1)
 
     # Parse batch size parameter
@@ -149,55 +170,26 @@ def main():
         try:
             batch_size = int(sys.argv[3])
             if batch_size < 1:
-                print(
-                    f"Batch size must be at least 1, using default of {MAX_BATCH_SIZE}"
-                )
                 batch_size = MAX_BATCH_SIZE
             elif batch_size > 10:
-                print("Batch size over 10 may cause API issues, limiting to 10")
                 batch_size = 10
         except ValueError:
-            print(f"Invalid batch size, using default of {MAX_BATCH_SIZE}")
+            batch_size = MAX_BATCH_SIZE
 
     try:
         # Run translation
-        results = translate_file(input_file, output_file, batch_size)
+        success = translate_file(input_file, output_file, batch_size)
 
-        if not results:
-            print("\n⚠️ Translation failed to produce results.")
+        if not success:
+            print("❌ Translation failed to produce results.")
             sys.exit(1)
 
-        # Check for issues in the results
-        error_count = 0
-        for result in results.translations:
-            if result.verification_status in ["Failed", "Issues Found"]:
-                error_count += 1
-                print(
-                    f"\n{'⚠️ Issue' if result.verification_status == 'Issues Found' else '❌ Error'} in sentence {result.index}:"
-                )
-                print(f"Original: {result.original}")
-                print(f"Status: {result.verification_status}")
-                if result.verification_issues:
-                    print("Issues:", ", ".join(result.verification_issues))
-                print("-" * 40)
-
-        # Print final status
-        if error_count > 0:
-            print(
-                f"\n⚠️ Translation completed with {error_count} {'errors/issues' if error_count > 1 else 'error/issue'}."
-            )
-            print(f"Output saved to {output_file}")
-            sys.exit(1)
-        else:
-            print("\n✅ Translation completed successfully.")
-            print(f"Output saved to {output_file}")
-            sys.exit(0)
+        sys.exit(0)
 
     except KeyboardInterrupt:
-        print("\n⚠️ Translation interrupted by user.")
         sys.exit(130)
     except Exception as e:
-        print(f"\n❌ Error: {str(e)}")
+        print(f"❌ Error: {str(e)}")
         sys.exit(1)
 
 
