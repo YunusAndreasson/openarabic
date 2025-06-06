@@ -10,6 +10,7 @@ import { getStrugglingWordsCount } from '@/utils/wordClassification';
 import { LAYOUT } from '../../constants/layout';
 import { useAuth } from '../../hooks/useAuth';
 import { useColors } from '../../hooks/useColors';
+import { Colors } from '@/constants/Colors';
 import { useVocabularyChartData } from '../../hooks/useVocabularyChartData';
 import { selectionFeedback } from '../../utils/haptics';
 
@@ -423,7 +424,7 @@ const styles = StyleSheet.create({
     width: 32,
   },
   numberText: {
-    color: 'white',
+    color: Colors.light.white,
     fontSize: 14,
     fontWeight: '600',
   },

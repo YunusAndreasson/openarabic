@@ -15,6 +15,7 @@ import Animated, {
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
+import { withOpacity } from '@/utils/colorUtils';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import type { Article } from '@/types/articles.types';
 
@@ -246,8 +247,8 @@ const NowPlayingCard = ({
         {/* Gradient Overlay for Better Text Contrast */}
         <LinearGradient
           colors={[
-            isDarkMode ? 'rgba(13, 18, 16, 0.95)' : 'rgba(249, 251, 249, 0.95)',
-            isDarkMode ? 'rgba(13, 18, 16, 0.7)' : 'rgba(249, 251, 249, 0.7)',
+            withOpacity(colors.background, 0.95),
+            withOpacity(colors.background, 0.7),
           ]}
           style={styles.gradientOverlay}
           start={{ x: 0, y: 0 }}

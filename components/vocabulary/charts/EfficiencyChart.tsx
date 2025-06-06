@@ -282,7 +282,7 @@ export const EfficiencyChart = memo(
                           GRAPH_WIDTH,
                           GRAPH_HEIGHT_LARGE
                         )}
-                        color="white"
+                        color={colors.white}
                       />
                     }
                   >

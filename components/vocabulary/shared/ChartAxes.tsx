@@ -3,6 +3,7 @@ import { StyleSheet, View, useColorScheme } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
+import { withOpacity } from '@/utils/colorUtils';
 
 import { ThemedText } from '../../ThemedText';
 
@@ -36,7 +37,10 @@ export const ChartAxes = memo(
   }: AxisLabelsProps) => {
     const colorScheme = useColorScheme();
     const colors = useColors();
-    const textColor = colorScheme === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+    const textColor =
+      colorScheme === 'dark'
+        ? withOpacity(colors.white, 0.7)
+        : withOpacity(colors.black, 0.7);
     const todayTextColor = colors.tint; // More discrete color from Colors.ts
 
     // Calculate y-axis label positions and values

@@ -18,6 +18,7 @@ import Animated, {
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
+import { Colors } from '@/constants/Colors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { withOpacity } from '@/utils/colorUtils';
 import { lightFeedback } from '@/utils/haptics';
@@ -403,7 +404,7 @@ const styles = StyleSheet.create({
     width: 38,
   },
   content: {
-    backgroundColor: 'transparent',
+    backgroundColor: Colors.light.transparent,
     flex: 1,
   },
   contentContainer: {
