@@ -4,17 +4,17 @@ import React, { useCallback, useEffect, useMemo, useState, memo } from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { supabase } from '@/services/supabase';
-import { handleError } from '@/utils/errorHandling';
-import type { SentenceWord } from '@/types/vocabulary.types';
 import { wordExamplesService, SentenceWithWords } from '@/services/wordExamples';
+import type { SentenceWord } from '@/types/vocabulary.types';
+import { handleError } from '@/utils/errorHandling';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
-import BaseCard from '@/components/BaseCard';
 
 // Optimized word component with memoized styles and enhanced highlighting
 const SimpleArabicWord = memo(
@@ -119,7 +119,7 @@ export default function WordExamplesScreen() {
     if (category) {
       const categoryTitles = {
         total: 'All Examples',
-        mastered: 'Mastered Words',
+        mastered: 'Strong Words',
         learning: 'Learning Progress',
         due: 'Review Queue',
       };
@@ -275,14 +275,28 @@ export default function WordExamplesScreen() {
 }
 
 const styles = StyleSheet.create({
+  arabicSentence: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.2,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.5,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    textAlign: 'right',
+  },
+  arabicText: {
+    textAlign: 'right',
+  },
   container: {
     flex: 1,
   },
+  englishSentence: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + 1,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
+    marginTop: LAYOUT.SPACING.MEDIUM,
+  },
   loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+    flex: 1,
     gap: LAYOUT.SPACING.MEDIUM,
+    justifyContent: 'center',
   },
   loadingText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
@@ -293,14 +307,12 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
   sentenceContent: {
-    padding: LAYOUT.SPACING.LARGE,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    padding: LAYOUT.SPACING.LARGE,
   },
-  arabicSentence: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.2,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    textAlign: 'right',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.5,
+  wordContainer: {
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.SMALL / 2,
   },
   wordsContainer: {
     alignItems: 'center',
@@ -310,17 +322,5 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     minHeight: LAYOUT.SPACING.XLARGE * 2,
     width: '100%',
-  },
-  wordContainer: {
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.SMALL / 2,
-  },
-  arabicText: {
-    textAlign: 'right',
-  },
-  englishSentence: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + 1,
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
   },
 });

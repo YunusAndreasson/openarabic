@@ -84,7 +84,7 @@ export default function WordListScreen(): JSX.Element {
         };
       case 'mastered':
         return {
-          title: 'Mastered',
+          title: 'Strong',
           icon: 'checkmark-circle',
           description: 'Words with high stability',
         };

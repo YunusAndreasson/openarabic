@@ -54,12 +54,6 @@ const styles = StyleSheet.create({
   infoTextContainer: {
     marginLeft: LAYOUT.SPACING.TINY,
   },
-  summaryContainer: {
-    paddingTop: LAYOUT.SPACING.SMALL,
-  },
-  titleContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
   sourceContainer: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -67,6 +61,12 @@ const styles = StyleSheet.create({
   },
   sourceText: {
     marginLeft: LAYOUT.SPACING.TINY,
+  },
+  summaryContainer: {
+    paddingTop: LAYOUT.SPACING.SMALL,
+  },
+  titleContainer: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
 });
 
@@ -100,7 +100,7 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({
 
   const categoryName = article.category?.name
     ? capitalizeFirstLetter(article.category.name)
-    : 'Uncategorized';
+    : 'General';
 
   const handleAuthorPress = () => {
     if (onAuthorPress && article.author) {
@@ -131,9 +131,9 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({
           <ThemedText
             type="label"
             variant="secondary"
-            accessibilityLabel={`Written by ${article.author?.name || 'Unknown Scholar'}`}
+            accessibilityLabel={`Written by ${article.author?.name || 'Author'}`}
           >
-            {article.author?.name || 'Unknown Scholar'}
+            {article.author?.name || 'Author'}
           </ThemedText>
         </TouchableOpacity>
       </View>

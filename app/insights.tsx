@@ -104,7 +104,7 @@ export default function InsightsScreen(): JSX.Element {
             <View style={styles.firstChartContainer}>
               <SectionTitle
                 title="Memory Strength"
-                subtitle="Your vocabulary mastery over time"
+                subtitle="Your vocabulary strength over time"
                 onInfoPress={handleMasteryInfo}
                 isFirstSection={true}
               />

@@ -181,7 +181,7 @@ export const VocabularyStatCards = memo(
         },
         {
           value: wordCategories.masteredWords + wordCategories.longTermRetention,
-          label: 'Mastered',
+          label: 'Strong',
           iconColor: colors.success,
           bgColor: colors.buttonOverlay,
           category: 'mastered',

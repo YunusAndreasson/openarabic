@@ -150,7 +150,7 @@ const BookmarkListItem = memo(
     return (
       <ArticleCard
         title={item.articles?.title || 'Untitled'}
-        author={item.articles?.author?.name || 'Unknown Scholar'}
+        author={item.articles?.author?.name || 'Author'}
         leftMeta={leftMetaContent}
         meta={
           <ThemedText

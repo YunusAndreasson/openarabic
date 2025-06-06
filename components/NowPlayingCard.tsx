@@ -278,7 +278,7 @@ const NowPlayingCard = ({
             </ThemedText>
 
             <ThemedText type="caption" variant="secondary" numberOfLines={1} style={styles.author}>
-              {article.author?.name || 'Unknown Author'}
+              {article.author?.name || 'Author'}
             </ThemedText>
           </View>
 

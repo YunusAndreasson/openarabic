@@ -17,11 +17,11 @@ import Animated, {
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
+import { TIMING_CONFIG, SPRING_CONFIG } from '@/hooks/animations/animationConfigs';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
-import { ThemedView } from '@/components/ThemedView';
-import { TIMING_CONFIG, SPRING_CONFIG } from '@/hooks/animations/animationConfigs';
 import { lightFeedback } from '@/utils/haptics';
 
 interface SessionMetrics {
@@ -52,7 +52,7 @@ interface CompletionScreenProps {
 
 const CompletionScreen: React.FC<CompletionScreenProps> = ({
   onClose,
-  title = 'Great job!',
+  title = 'Great job',
   subtitle = 'You completed your review session.',
   buttonText = 'ALHAMDULILLAH',
   buttonVariant = 'outlined',
@@ -123,31 +123,31 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
     const sessionDuration = Math.round((Date.now() - metrics.startTime) / 60000); // minutes
     const accuracyRate = Math.round((metrics.wordsKnown / metrics.wordsReviewed) * 100);
 
-    const encouragingFacts: Array<{
+    const encouragingFacts: {
       text: string;
       icon: string;
       color: string;
       type: 'accuracy' | 'streak' | 'mastery' | 'efficiency' | 'effort';
-    }> = [];
+    }[] = [];
 
     // Accuracy achievement
     if (accuracyRate >= 80) {
       encouragingFacts.push({
-        text: `${accuracyRate}% accuracy - excellent recall!`,
+        text: `${accuracyRate}% accuracy - excellent recall`,
         icon: 'target',
         color: colors.completionSuccess,
         type: 'accuracy',
       });
     } else if (accuracyRate >= 60) {
       encouragingFacts.push({
-        text: `${accuracyRate}% accuracy - solid progress!`,
+        text: `${accuracyRate}% accuracy - solid progress`,
         icon: 'trending-up',
         color: colors.progressIndicator,
         type: 'accuracy',
       });
     } else if (metrics.wordsKnown > 0) {
       encouragingFacts.push({
-        text: `${metrics.wordsKnown} words mastered this session!`,
+        text: `${metrics.wordsKnown} words strong this session`,
         icon: 'checkmark-circle',
         color: colors.completionSuccess,
         type: 'mastery',
@@ -157,14 +157,14 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
     // Streak achievements
     if (metrics.longestStreak >= 5) {
       encouragingFacts.push({
-        text: `${metrics.longestStreak}-word streak - you're on fire!`,
+        text: `${metrics.longestStreak}-word streak - excellent focus`,
         icon: 'flame',
         color: colors.warning,
         type: 'streak',
       });
     } else if (metrics.longestStreak >= 3) {
       encouragingFacts.push({
-        text: `${metrics.longestStreak}-word streak achieved!`,
+        text: `${metrics.longestStreak}-word streak achieved`,
         icon: 'flash',
         color: colors.warning,
         type: 'streak',
@@ -174,7 +174,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
     // Mastery progress
     if (metrics.masteredWords > 0) {
       encouragingFacts.push({
-        text: `${metrics.masteredWords} words reached mastery level!`,
+        text: `${metrics.masteredWords} words reached strong level`,
         icon: 'star',
         color: colors.completionSuccess,
         type: 'mastery',
@@ -185,7 +185,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
     if (metrics.averageStabilityIncrease > 0) {
       const avgIncrease = Math.round(metrics.averageStabilityIncrease);
       encouragingFacts.push({
-        text: `+${avgIncrease} days average memory strength boost!`,
+        text: `+${avgIncrease} days average memory strength boost`,
         icon: 'bar-chart',
         color: colors.progressIndicator,
         type: 'efficiency',
@@ -196,7 +196,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
     if (sessionDuration > 0 && metrics.wordsReviewed >= 10) {
       const wordsPerMinute = Math.round(metrics.wordsReviewed / sessionDuration);
       encouragingFacts.push({
-        text: `${wordsPerMinute} words/min - efficient learning!`,
+        text: `${wordsPerMinute} words/min - efficient learning`,
         icon: 'speedometer',
         color: colors.info,
         type: 'efficiency',
@@ -206,14 +206,14 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
     // Effort recognition
     if (metrics.wordsReviewed >= 20) {
       encouragingFacts.push({
-        text: `${metrics.wordsReviewed} words reviewed - dedication pays off!`,
+        text: `${metrics.wordsReviewed} words reviewed - dedication pays off`,
         icon: 'trophy',
         color: colors.warning,
         type: 'effort',
       });
     } else if (metrics.wordsReviewed >= 10) {
       encouragingFacts.push({
-        text: `${metrics.wordsReviewed} words reviewed - great effort!`,
+        text: `${metrics.wordsReviewed} words reviewed - great effort`,
         icon: 'thumbs-up',
         color: colors.completionSuccess,
         type: 'effort',
@@ -332,6 +332,37 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: LAYOUT.SPACING.XLARGE,
   },
+  metricContent: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  metricIconContainer: {
+    alignItems: 'center',
+    borderRadius: 18,
+    height: 36,
+    justifyContent: 'center',
+    marginRight: LAYOUT.SPACING.MEDIUM,
+    width: 36,
+  },
+  metricItem: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+  },
+  metricText: {
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 24,
+    textAlign: 'left',
+  },
+  metricTextContainer: {
+    flex: 1,
+  },
+  metricsContainer: {
+    gap: LAYOUT.SPACING.SMALL,
+    marginTop: LAYOUT.SPACING.LARGE,
+    width: '100%',
+  },
   subtitleText: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     textAlign: 'center',
@@ -344,37 +375,6 @@ const styles = StyleSheet.create({
   titleText: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
     textAlign: 'center',
-  },
-  metricsContainer: {
-    marginTop: LAYOUT.SPACING.LARGE,
-    width: '100%',
-    gap: LAYOUT.SPACING.SMALL,
-  },
-  metricItem: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-  },
-  metricContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  metricIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: LAYOUT.SPACING.MEDIUM,
-  },
-  metricTextContainer: {
-    flex: 1,
-  },
-  metricText: {
-    textAlign: 'left',
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: '600',
   },
 });
 

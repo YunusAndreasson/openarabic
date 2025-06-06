@@ -87,7 +87,7 @@ const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
       {
         title: 'Memory Levels',
         content:
-          'New: Just learned, frequent review needed\nLearning: Building memory, review every few days\nMastered: Strong memory, minimal review\n\nWords progress through stages as you practice.',
+          'New: Just learned, frequent review needed\\nLearning: Building memory, review every few days\\nStrong: Solid memory, minimal review\\n\\nWords progress through stages as you practice.',
         icon: 'school',
       },
       {
@@ -97,9 +97,9 @@ const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
         icon: 'trending-up',
       },
       {
-        title: 'Mastered Count',
+        title: 'Strong Count',
         content:
-          'Words you have moved to long-term memory.\n\nThese require minimal review and are ready for use.\nClick to see your mastered words.\n\nThis represents real learning progress.',
+          'Words you have moved to long-term memory.\\n\\nThese require minimal review and are ready for use.\\nClick to see your strong words.\\n\\nThis represents real learning progress.',
         icon: 'checkmark-circle',
       },
     ],
@@ -149,7 +149,7 @@ const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
       {
         title: 'Learning Speed',
         content:
-          'How fast you move words from new to mastered.\n\nFaster learning means:\nBetter focus during study\nEffective review timing\nOptimal difficulty level',
+          'How fast you move words from new to strong.\\n\\nFaster learning means:\\nBetter focus during study\\nEffective review timing\\nOptimal difficulty level',
         icon: 'speedometer',
       },
       {
@@ -175,7 +175,7 @@ const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
   progress: {
     title: 'Learning Progress',
     subtitle:
-      'Your vocabulary journey across different learning stages.\n\nThese stats show how words move through your memory system from initial learning to long-term mastery.',
+      'Your vocabulary journey across different learning stages.\n\nThese stats show how words move through your memory system from initial learning to long-term strength.',
     sections: [
       {
         title: 'Due Words (Red)',
@@ -186,11 +186,11 @@ const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
       {
         title: 'Learning Words (Blue)',
         content:
-          "Words you're actively building memory for.\n\nWhy they matter:\nThese are in the critical formation stage of memory\nRegular practice moves them toward mastery\nSkipping practice sends them back to the beginning\n\nWhat to do:\nMaintain consistent practice to keep these progressing forward.",
+          "Words you're actively building memory for.\n\nWhy they matter:\nThese are in the critical formation stage of memory\nRegular practice moves them toward strength\nSkipping practice sends them back to the beginning\n\nWhat to do:\nMaintain consistent practice to keep these progressing forward.",
         icon: 'school-outline',
       },
       {
-        title: 'Mastered Words (Green)',
+        title: 'Strong Words (Green)',
         content:
           "Words that have reached long-term memory.\n\nWhy they matter:\nThese represent real learning achievement - vocabulary you truly own\nThey require minimal review and are ready for natural use\nThis is your measure of actual progress\n\nWhat to do:\nCelebrate this number - it's your real vocabulary growth!",
         icon: 'checkmark-circle-outline',
@@ -205,7 +205,7 @@ const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
     tips: [
       'Due words are your highest-impact practice - prioritize them',
       'Learning words need consistent practice to progress',
-      'Mastered count is your true measure of vocabulary growth',
+      'Strong count is your true measure of vocabulary growth',
       'Struggling words become strengths with focused attention',
     ],
   },

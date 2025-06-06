@@ -3,6 +3,7 @@ import { BlurView } from 'expo-blur';
 import { useGlobalSearchParams, router, Stack } from 'expo-router';
 import React, { useState, useCallback, useMemo, useEffect, JSX } from 'react';
 
+import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { handleError } from '@/utils/errorHandling';
@@ -10,13 +11,12 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 import ErrorState from '../components/ErrorState';
 import FilteredArticleView from '../components/index/FilteredArticleView';
-import { authorsService } from '../services/authors';
-import { categoriesService } from '../services/categories';
+import { useAppPreloader } from '../hooks/useAppPreloader';
 import { useNavigationWithDebounce } from '../hooks/useNavigationWithDebounce';
 import { articlesService } from '../services/articles';
-import { useAppPreloader } from '../hooks/useAppPreloader';
+import { authorsService } from '../services/authors';
+import { categoriesService } from '../services/categories';
 import type { Article } from '../types/articles.types';
-import { LAYOUT } from '@/constants/layout';
 
 // Custom Header Background component with blur effect (copied from tab layout)
 const BLUR_INTENSITY = 55;
@@ -146,7 +146,7 @@ function FilterScreenContent() {
     } else if (type === 'category' && category?.name) {
       title = capitalizeFirstLetter(category.name);
     } else if (type === 'author') {
-      title = 'Scholar';
+      title = 'Author';
     } else if (type === 'category') {
       title = 'Category';
     }
