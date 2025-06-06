@@ -11,7 +11,7 @@ import { handleError } from '@/utils/errorHandling';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 import ErrorState from '../components/ErrorState';
-import FilteredArticleView from '../components/index/FilteredArticleView';
+import FilteredArticleView from '../components/home/FilteredArticleView';
 import { useAppPreloader } from '../hooks/useAppPreloader';
 import { useNavigationWithDebounce } from '../hooks/useNavigationWithDebounce';
 import { articlesService } from '../services/articles';

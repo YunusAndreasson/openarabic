@@ -21,7 +21,7 @@ import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';
 import Pill from './Pill';
 import { ThemedText } from './ThemedText';
-import { TimeAgo, SummaryIndicator } from './index/ArticleHelpers';
+import { TimeAgo, SummaryIndicator } from './home/ArticleHelpers';
 
 /**
  * ThemedCard is a reusable card component that can display content in different variants.

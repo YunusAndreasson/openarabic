@@ -16,7 +16,7 @@ export * from './useThemeDetection';
 export * from './useFSRS';
 
 // Media hooks
-export * from './useAudioPlayer';
+export * from './audio';
 
 // Navigation hooks
 export * from './useNavigationWithDebounce';

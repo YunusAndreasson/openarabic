@@ -9,7 +9,7 @@ import { AppState } from 'react-native';
 // Import EnhancedAudioTrack from its central definition
 import { handleError } from '@/utils/errorHandling';
 
-import type { EnhancedAudioTrack } from '../types/audio.types';
+import type { EnhancedAudioTrack } from '../../types/audio.types';
 
 import { AUDIO_STATES } from './useAudioPlayer';
 
