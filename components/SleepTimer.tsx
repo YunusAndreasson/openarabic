@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { memo, useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -13,12 +14,13 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
-import { ThemedText } from './ThemedText';
-import { ThemedButton } from './ThemedButton';
-import { useColors } from '@/hooks/useColors';
+
 import { LAYOUT } from '@/constants/layout';
+import { useColors } from '@/hooks/useColors';
 import { lightFeedback } from '@/utils/haptics';
+
+import { ThemedButton } from './ThemedButton';
+import { ThemedText } from './ThemedText';
 
 export interface SleepTimerProps {
   isVisible: boolean;
@@ -86,19 +88,17 @@ const SleepTimer = memo(
     };
 
     const handleSetTimer = () => {
-      lightFeedback();
+      lightFeedback(); // Keep for primary action
       onTimerSet(selectedMinutes);
       onClose();
     };
 
     const handleCancelTimer = () => {
-      lightFeedback();
       onTimerCancel();
       onClose();
     };
 
     const handleClose = () => {
-      lightFeedback();
       onClose();
     };
 
@@ -107,7 +107,6 @@ const SleepTimer = memo(
     };
 
     const handleOptionSelect = (minutes: number) => {
-      lightFeedback();
       setSelectedMinutes(minutes);
     };
 
@@ -235,59 +234,83 @@ const SleepTimer = memo(
 SleepTimer.displayName = 'SleepTimer';
 
 const styles = StyleSheet.create({
+  actionButton: {
+    flex: 1,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: LAYOUT.SPACING.MEDIUM,
+  },
+  activeDescription: {
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  activeTimerContainer: {
+    alignItems: 'center',
+  },
   backdrop: {
     flex: 1,
     justifyContent: 'flex-end',
   },
-  modalContainer: {
+  cancelButton: {
+    width: '100%',
+  },
+  closeButton: {
+    alignItems: 'center',
+    height: 38,
+    justifyContent: 'center',
+    width: 38,
+  },
+  content: {
+    padding: LAYOUT.SPACING.LARGE + 4,
+    paddingTop: LAYOUT.SPACING.LARGE,
+  },
+  header: {
+    alignItems: 'flex-start',
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: LAYOUT.SPACING.LARGE + 4,
+    paddingBottom: LAYOUT.SPACING.MEDIUM + 2,
+  },
+  headerContent: {
     flex: 1,
-    justifyContent: 'flex-end',
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    marginRight: LAYOUT.SPACING.MEDIUM,
   },
   modal: {
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE + 4,
+    elevation: LAYOUT.ELEVATION.MEDIUM + 2,
     maxHeight: '65%',
+    overflow: 'hidden',
     shadowOffset: {
       width: 0,
       height: -8,
     },
     shadowOpacity: LAYOUT.OPACITY.LIGHT + 0.05,
     shadowRadius: 16,
-    elevation: LAYOUT.ELEVATION.MEDIUM + 2,
-    overflow: 'hidden',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    padding: LAYOUT.SPACING.LARGE + 4,
-    paddingBottom: LAYOUT.SPACING.MEDIUM + 2,
-    borderBottomWidth: 1,
-  },
-  headerContent: {
+  modalContainer: {
     flex: 1,
-    marginRight: LAYOUT.SPACING.MEDIUM,
+    justifyContent: 'flex-end',
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
-  title: {
-    marginBottom: LAYOUT.SPACING.XSMALL,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.2,
+  optionButton: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM + 2,
+    paddingVertical: LAYOUT.SPACING.MEDIUM + 2,
+    width: `${LAYOUT.WIDTH_RATIOS.THIRD * 100 - 3}%`,
+  },
+  optionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: LAYOUT.SPACING.SMALL + 2,
+    justifyContent: 'space-between',
+    marginBottom: LAYOUT.SPACING.XLARGE + 4,
+  },
+  setupContainer: {
+    width: '100%',
   },
   subtitle: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
-  },
-  closeButton: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  content: {
-    padding: LAYOUT.SPACING.LARGE + 4,
-    paddingTop: LAYOUT.SPACING.LARGE,
-  },
-  activeTimerContainer: {
-    alignItems: 'center',
   },
   timeDisplay: {
     alignItems: 'center',
@@ -295,40 +318,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.SMALL,
   },
   timeText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.8,
     fontVariant: ['tabular-nums'],
     fontWeight: '300',
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.8,
     letterSpacing: -0.5,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 2.2,
     textAlign: 'center',
   },
-  cancelButton: {
-    width: '100%',
-  },
-  setupContainer: {
-    width: '100%',
-  },
-  optionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: LAYOUT.SPACING.XLARGE + 4,
-    gap: LAYOUT.SPACING.SMALL + 2,
-  },
-  optionButton: {
-    width: `${LAYOUT.WIDTH_RATIOS.THIRD * 100 - 3}%`,
-    paddingVertical: LAYOUT.SPACING.MEDIUM + 2,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM + 2,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: LAYOUT.SPACING.MEDIUM,
-  },
-  actionButton: {
-    flex: 1,
-  },
-  activeDescription: {
-    marginBottom: LAYOUT.SPACING.SMALL,
+  title: {
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.2,
+    marginBottom: LAYOUT.SPACING.XSMALL,
   },
 });
 

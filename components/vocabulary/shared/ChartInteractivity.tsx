@@ -33,7 +33,6 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
-import { lightFeedback } from '@/utils/haptics';
 
 interface ChartTooltip {
   x: number;
@@ -136,7 +135,6 @@ export const useChartTooltip = (autoHideDelay: number = 3000) => {
 
   const showTooltip = useCallback(
     (x: number, y: number, value: string, label: string, yOffset: number = -40) => {
-      lightFeedback();
       setTooltip({
         x,
         y: y + yOffset,

@@ -4,7 +4,7 @@ import { StyleSheet, View, TouchableOpacity } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
-import { lightFeedback } from '@/utils/haptics';
+import { selectionFeedback } from '@/utils/haptics';
 
 import { ThemedText } from '../../ThemedText';
 
@@ -27,7 +27,7 @@ const StatItem = memo(({ stat }: { stat: StatItemProps }) => {
 
   const handlePress = useCallback(() => {
     if (stat.onPress) {
-      lightFeedback();
+      selectionFeedback();
       stat.onPress();
     }
   }, [stat.onPress]);

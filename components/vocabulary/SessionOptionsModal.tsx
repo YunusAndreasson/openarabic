@@ -18,7 +18,7 @@ import Animated, {
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
-import { lightFeedback, mediumFeedback } from '@/utils/haptics';
+import { mediumFeedback } from '@/utils/haptics';
 
 import BaseCard from '../BaseCard';
 import { ThemedText } from '../ThemedText';
@@ -80,7 +80,6 @@ export default memo(function SessionOptionsModal({
   }));
 
   const handleClose = () => {
-    runOnJS(lightFeedback)();
     onClose();
   };
 

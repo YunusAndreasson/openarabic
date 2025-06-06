@@ -11,8 +11,8 @@ import { CustomSlider } from '@/components/Slider';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
-import { lightFeedback } from '@/utils/haptics';
 import type { ThemeColors } from '@/types/ui/theme.types';
+import { selectionFeedback } from '@/utils/haptics';
 
 interface TextSizeSliderProps {
   isVisible: boolean;
@@ -80,7 +80,7 @@ export const TextSizeSlider = memo<TextSizeSliderProps>(
     );
 
     const handleFontScaleChange = (value: number) => {
-      lightFeedback();
+      selectionFeedback();
       onFontScaleChange(value);
     };
 
@@ -130,43 +130,43 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingTop: LAYOUT.SPACING.TINY,
   },
-  sliderWrapper: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    overflow: 'hidden',
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
+  },
+  label: {
     flex: 1,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
-  content: {
-    flex: 1,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    justifyContent: 'center',
-  },
-  sliderSection: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  sliderHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  label: {
-    flex: 1,
-  },
-  value: {
-    minWidth: 50,
-    textAlign: 'right',
+  slider: {
+    height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
   },
   sliderContainer: {
     height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
     justifyContent: 'center',
   },
-  slider: {
-    height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
+  sliderHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  sliderSection: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  sliderWrapper: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    flex: 1,
+    overflow: 'hidden',
+  },
+  value: {
+    minWidth: 50,
+    textAlign: 'right',
   },
 });

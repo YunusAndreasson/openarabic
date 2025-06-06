@@ -17,8 +17,10 @@ import { useNavigationWithDebounce } from '@/hooks';
 import { useArticleData } from '@/hooks/useArticleData';
 import { useArticleMutations } from '@/hooks/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/useArticleRenderers';
+import { useArticlesByDueWords } from '@/hooks/useArticlesByDueWords';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
+import { useHeaderVisibility } from '@/hooks/useHeaderVisibility';
 import {
   useSentenceAudioPlayer,
   type WordTiming,
@@ -27,14 +29,12 @@ import {
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { analytics } from '@/services/analytics';
 import { updateAudioState } from '@/store/audioSlice';
-import { setFontScale } from '@/store/settingsSlice';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { setFontScale } from '@/store/settingsSlice';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
-import { useHeaderVisibility } from '@/hooks/useHeaderVisibility';
-import { useArticlesByDueWords } from '@/hooks/useArticlesByDueWords';
 
 const createStyles = (colors: ReturnType<typeof useColors>) =>
   StyleSheet.create({
@@ -397,26 +397,20 @@ export default function ArticleScreen(): JSX.Element {
   const [showEnglishLocal, setShowEnglishLocal] = useState(true);
 
   const handleEnglishToggle = useCallback(() => {
-    lightFeedback();
     setShowEnglishLocal(!showEnglishLocal);
   }, [showEnglishLocal]);
 
   const [showTextSizeSlider, setShowTextSizeSlider] = useState(false);
 
   const handleTextSizeToggle = useCallback(() => {
-    lightFeedback();
     setShowTextSizeSlider(!showTextSizeSlider);
   }, [showTextSizeSlider]);
 
   const handleFontScaleChange = useCallback(
     (value: number) => {
-      const previousScale = settings.fontScale;
-      if (Math.abs(value - previousScale) >= 0.1) {
-        lightFeedback();
-      }
       dispatch(setFontScale(value));
     },
-    [settings.fontScale, dispatch]
+    [dispatch]
   );
 
   const handleBackPress = useCallback(() => {
@@ -623,7 +617,6 @@ export default function ArticleScreen(): JSX.Element {
       return;
     }
     isNavigatingRef.current = true;
-    lightFeedback();
     if (currentSentenceIndex === null || !sentenceAudioData.length) {
       isNavigatingRef.current = false;
       return;

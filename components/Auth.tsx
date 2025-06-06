@@ -8,7 +8,7 @@ import { LAYOUT } from '@/constants/layout';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
-import { lightFeedback } from '@/utils/haptics';
+import { successFeedback } from '@/utils/haptics';
 
 import { ThemedButton } from './ThemedButton';
 import { ThemedInput } from './ThemedInput';
@@ -200,7 +200,7 @@ function Auth(): JSX.Element {
         await analytics.trackSignIn('email');
 
         // Provide haptic feedback on successful login
-        lightFeedback();
+        successFeedback();
 
         // Redirect to main app immediately
         Sentry.addBreadcrumb({
@@ -257,7 +257,7 @@ function Auth(): JSX.Element {
         await analytics.trackSignUp('email');
 
         // Provide haptic feedback on successful account creation
-        lightFeedback();
+        successFeedback();
 
         Alert.alert('Success', 'Check your email for the confirmation link');
       }

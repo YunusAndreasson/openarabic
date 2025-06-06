@@ -18,6 +18,7 @@ import Animated, {
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { withOpacity } from '@/utils/colorUtils';
 import { lightFeedback } from '@/utils/haptics';
 
@@ -259,7 +260,6 @@ export const InfoModal = memo(({ visible, type, onClose }: InfoModalProps) => {
   }));
 
   const handleClose = () => {
-    lightFeedback();
     onClose();
   };
 

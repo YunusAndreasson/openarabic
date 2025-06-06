@@ -2,15 +2,14 @@ import React, { useEffect, useState, memo, useCallback, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import type { ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
-import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { MeaningOverlayProps } from '@/types/ui/review.types';
 
 import { ThemedText } from '../../components/ThemedText';
 import { LAYOUT } from '../../constants/layout';
 import { useOpacityAnimation } from '../../hooks/animations';
 import { useColors } from '../../hooks/useColors';
-import { lightFeedback } from '../../utils/haptics';
 
 /**
  * Component that displays the meaning of a word with a fade animation

@@ -1,18 +1,27 @@
-import React, { memo, useState, useCallback, useMemo } from 'react';
-import { StyleSheet, View, Modal, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import React, { memo, useState, useCallback, useMemo, useEffect } from 'react';
+import {
+  StyleSheet,
+  View,
+  Modal,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  Dimensions,
+} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
-import { ThemedText } from './ThemedText';
-import { ThemedButton } from './ThemedButton';
-import { useColors } from '@/hooks/useColors';
+
 import { LAYOUT } from '@/constants/layout';
-import { lightFeedback } from '@/utils/haptics';
+import { useColors } from '@/hooks/useColors';
+import { selectionFeedback } from '@/utils/haptics';
+
 import { CustomSlider } from './Slider';
+import { ThemedButton } from './ThemedButton';
+import { ThemedText } from './ThemedText';
 
 export interface TimePickerProps {
   isVisible: boolean;
@@ -28,45 +37,55 @@ export const TimePicker = memo(
     isVisible,
     onClose,
     onTimeSet,
-    initialHour = 19,
+    initialHour = 12,
     initialMinute = 0,
-    title = 'Set Reminder Time',
+    title = 'Set Time',
   }: TimePickerProps) => {
     const colors = useColors();
     const [selectedHour, setSelectedHour] = useState(initialHour);
     const [selectedMinute, setSelectedMinute] = useState(initialMinute);
+    const screenHeight = Dimensions.get('window').height;
 
     const backdropOpacity = useSharedValue(0);
+    const modalTranslateY = useSharedValue(screenHeight);
     const modalScale = useSharedValue(0.9);
+
+    useEffect(() => {
+      if (isVisible) {
+        backdropOpacity.value = withTiming(1, { duration: 300 });
+        modalTranslateY.value = withSpring(0, {
+          damping: 20,
+          stiffness: 300,
+        });
+        modalScale.value = withSpring(1, {
+          damping: 20,
+          stiffness: 300,
+        });
+      } else {
+        backdropOpacity.value = withTiming(0, { duration: 200 });
+        modalTranslateY.value = withTiming(screenHeight, { duration: 200 });
+        modalScale.value = withTiming(0.9, { duration: 200 });
+      }
+    }, [isVisible, backdropOpacity, modalTranslateY, modalScale, screenHeight]);
 
     const backdropStyle = useAnimatedStyle(() => ({
       opacity: backdropOpacity.value,
     }));
 
     const modalStyle = useAnimatedStyle(() => ({
-      transform: [{ scale: modalScale.value }],
+      transform: [{ translateY: modalTranslateY.value }, { scale: modalScale.value }],
     }));
-
-    React.useEffect(() => {
-      if (isVisible) {
-        backdropOpacity.value = withTiming(1, { duration: 200 });
-        modalScale.value = withSpring(1, { damping: 15, stiffness: 200 });
-      } else {
-        backdropOpacity.value = withTiming(0, { duration: 150 });
-        modalScale.value = withTiming(0.9, { duration: 150 });
-      }
-    }, [isVisible, backdropOpacity, modalScale]);
 
     const handleHourChange = useCallback((value: number) => {
       const hour = Math.round(value);
       setSelectedHour(hour);
-      lightFeedback();
+      selectionFeedback();
     }, []);
 
     const handleMinuteChange = useCallback((value: number) => {
       const minute = Math.round(value);
       setSelectedMinute(minute);
-      lightFeedback();
+      selectionFeedback();
     }, []);
 
     const handleConfirm = useCallback(() => {
@@ -213,36 +232,61 @@ export const TimePicker = memo(
 TimePicker.displayName = 'TimePicker';
 
 const styles = StyleSheet.create({
+  actionButton: {
+    flex: 1,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: LAYOUT.SPACING.MEDIUM,
+    justifyContent: 'space-between',
+    marginTop: LAYOUT.SPACING.MEDIUM,
+  },
   backdrop: {
+    alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
     paddingHorizontal: LAYOUT.SPACING.LARGE,
   },
-  modalContainer: {
-    width: '100%',
-    maxWidth: 400,
+  closeButton: {
+    marginRight: -LAYOUT.SPACING.SMALL,
+    padding: LAYOUT.SPACING.SMALL,
+  },
+  header: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: LAYOUT.SPACING.LARGE,
   },
   modal: {
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    elevation: 16,
     padding: LAYOUT.SPACING.LARGE,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
     shadowRadius: 16,
-    elevation: 16,
   },
-  header: {
+  modalContainer: {
+    maxWidth: 400,
+    width: '100%',
+  },
+  slider: {
+    height: 40,
+  },
+  sliderHeader: {
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
-  title: {
+  sliderLabel: {
     flex: 1,
   },
-  closeButton: {
-    padding: LAYOUT.SPACING.SMALL,
-    marginRight: -LAYOUT.SPACING.SMALL,
+  sliderSection: {
+    marginBottom: LAYOUT.SPACING.LARGE,
+  },
+  sliderValue: {
+    minWidth: 60,
+    textAlign: 'right',
   },
   timeDisplay: {
     alignItems: 'center',
@@ -253,32 +297,7 @@ const styles = StyleSheet.create({
     fontSize: 48,
     lineHeight: 56,
   },
-  sliderSection: {
-    marginBottom: LAYOUT.SPACING.LARGE,
-  },
-  sliderHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  sliderLabel: {
-    flex: 1,
-  },
-  sliderValue: {
-    minWidth: 60,
-    textAlign: 'right',
-  },
-  slider: {
-    height: 40,
-  },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    gap: LAYOUT.SPACING.MEDIUM,
-  },
-  actionButton: {
+  title: {
     flex: 1,
   },
 });

@@ -22,7 +22,7 @@ import { LAYOUT } from '@/constants/layout';
 import { TIMING_CONFIG, SPRING_CONFIG } from '@/hooks/animations/animationConfigs';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
-import { lightFeedback } from '@/utils/haptics';
+import { successFeedback } from '@/utils/haptics';
 
 interface SessionMetrics {
   wordsReviewed: number;
@@ -91,7 +91,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
         200,
         withTiming(1, TIMING_CONFIG.GENTLE, finished => {
           if (finished) {
-            runOnJS(lightFeedback)();
+            runOnJS(successFeedback)();
           }
         })
       );

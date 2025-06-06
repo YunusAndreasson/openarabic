@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
-import { lightFeedback } from '@/utils/haptics';
+import { selectionFeedback } from '@/utils/haptics';
 
 import BaseCard from './BaseCard';
 import Pill from './Pill';
@@ -42,8 +42,8 @@ function SortingControls<T extends string>({
 
   const handleSortChange = useCallback(
     (sort: T) => {
-      // Add haptic feedback
-      lightFeedback();
+      // Add selection haptic feedback
+      selectionFeedback();
 
       if (currentSort === sort) {
         // Toggle direction if same sort option

@@ -11,7 +11,7 @@ import { LAYOUT } from '../../constants/layout';
 import { useAuth } from '../../hooks/useAuth';
 import { useColors } from '../../hooks/useColors';
 import { useVocabularyChartData } from '../../hooks/useVocabularyChartData';
-import { lightFeedback } from '../../utils/haptics';
+import { selectionFeedback } from '../../utils/haptics';
 
 import { InfoModal, type InfoModalType } from './InfoModal';
 import { MemoryCapacityGauge } from './charts/MemoryCapacityGauge';
@@ -136,7 +136,7 @@ export const VocabularyStatCards = memo(
 
     // Handle info modal - memoized for performance
     const handleInfoPress = useCallback((type: InfoModalType) => {
-      lightFeedback();
+      selectionFeedback();
       setModalType(type);
     }, []);
 

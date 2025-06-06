@@ -16,7 +16,6 @@ import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { useSimpleAudioPlayer } from '@/hooks/useSimpleAudioPlayer';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { lightFeedback } from '@/utils/haptics';
 
 // Audio configuration
 const AUDIO_DELAY_BETWEEN_LANGUAGES = 300; // Minimal delay for immediate English playback
@@ -218,7 +217,6 @@ const WordCard = memo(({ word, onPlayAudio, isPlaying }: WordCardProps) => {
   }, []);
 
   const handlePress = useCallback(() => {
-    lightFeedback();
     // Play both Arabic and English audio from the root if available
     if (word.root?.audio_url || word.root?.audio_url_en) {
       onPlayAudio(word.root.audio_url, word.root.audio_url_en, `word-${word.root_id}`);

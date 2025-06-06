@@ -4,10 +4,8 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import Animated, { useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
-import { MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
-import { lightFeedback } from '@/utils/haptics';
 
 interface RepeatButtonProps {
   enabled: boolean;
@@ -18,7 +16,6 @@ const RepeatButton: React.FC<RepeatButtonProps> = ({ enabled, onToggle }) => {
   const colors = useColors();
 
   const handlePress = () => {
-    lightFeedback();
     onToggle();
   };
 
@@ -93,8 +90,8 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     borderWidth: 1,
     elevation: 1,
-    minWidth: 100,
     minHeight: MIN_TOUCH_TARGET.SIZE,
+    minWidth: 100,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM + 2,
     paddingVertical: LAYOUT.SPACING.SMALL + 2,
     shadowOffset: { width: 0, height: 1 },

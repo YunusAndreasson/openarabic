@@ -2,14 +2,13 @@ import { useCallback, memo, useMemo, useEffect, useRef } from 'react';
 import { StyleSheet, TouchableOpacity, View, Platform } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { LAYOUT } from '@/constants/layout';
-import { MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useToggleAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import type { ToggleProps } from '@/types/ui/form.types';
 
-import { lightFeedback } from '../utils/haptics';
+import { selectionFeedback } from '../utils/haptics';
 
 function ToggleComponent({ value, onValueChange }: ToggleProps) {
   const colors = useColors();
@@ -50,8 +49,8 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
 
   // Handle press with haptic feedback
   const handlePress = useCallback(() => {
-    // Add light haptic feedback for better user experience
-    lightFeedback();
+    // Add selection haptic feedback for toggle state changes
+    selectionFeedback();
     onValueChange(!value);
   }, [onValueChange, value]);
 

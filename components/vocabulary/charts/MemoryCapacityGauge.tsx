@@ -12,7 +12,7 @@ import { LAYOUT } from '@/constants/layout';
 import { useNavigationWithDebounce } from '@/hooks';
 import { useColors } from '@/hooks/useColors';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
-import { lightFeedback } from '@/utils/haptics';
+import { selectionFeedback } from '@/utils/haptics';
 
 import { ThemedText } from '../../ThemedText';
 import { BaseChart } from '../shared';
@@ -220,7 +220,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
 
   // Enhanced navigation with haptic feedback
   const handleInsightsPress = () => {
-    lightFeedback();
+    selectionFeedback();
 
     // Animate press feedback
     pressScale.value = withTiming(0.98, { duration: 100 }, () => {
