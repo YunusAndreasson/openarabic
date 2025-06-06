@@ -33,6 +33,7 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
+import { Colors } from '@/constants/Colors';
 
 interface ChartTooltip {
   x: number;
@@ -102,7 +103,7 @@ export const DataPointOverlay = memo<DataPointOverlayProps>(
           width: touchTargetSize,
           height: touchTargetSize,
           borderRadius: touchTargetSize / 2,
-          backgroundColor: 'transparent',
+          backgroundColor: Colors.light.transparent,
         }}
         onPress={handlePress}
         accessibilityLabel={accessibilityLabel || `Data point: ${value} ${label}`}

@@ -4,6 +4,7 @@ import { StyleSheet, View, TouchableOpacity } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
+import { Colors } from '@/constants/Colors';
 import { selectionFeedback } from '@/utils/haptics';
 
 import { ThemedText } from '../../ThemedText';
@@ -137,7 +138,7 @@ const styles = StyleSheet.create({
     minHeight: 24,
   },
   statsSeparator: {
-    backgroundColor: 'transparent',
+    backgroundColor: Colors.light.transparent,
     height: 32,
     marginHorizontal: LAYOUT.SPACING.LARGE,
     width: 1,

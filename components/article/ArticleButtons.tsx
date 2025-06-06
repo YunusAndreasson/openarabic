@@ -5,6 +5,8 @@ import type { ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
+import { Colors } from '@/constants/Colors';
+import { withOpacity } from '@/utils/colorUtils';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 
@@ -101,21 +103,21 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
 }) => {
   // Modern blur-based button style with subtle backdrop
   const blurButtonStyle = {
-    backgroundColor: 'transparent',
+    backgroundColor: Colors.light.transparent,
     borderWidth: 0,
   };
 
   // More subtle semi-transparent overlay to reduce visual prominence
   const overlayStyle = {
     backgroundColor: isDarkMode
-      ? 'rgba(26, 33, 27, 0.18)' // Slightly increased opacity for better contrast without blur
-      : 'rgba(253, 254, 253, 0.25)', // Slightly increased opacity for better contrast without blur
+      ? withOpacity(colors.background, 0.18)
+      : withOpacity(colors.background, 0.25),
   };
 
   // More subtle icon color with reduced contrast for better text focus
   const iconColor = isDarkMode
-    ? 'rgba(255, 255, 255, 0.75)' // Slightly transparent white in dark mode
-    : 'rgba(60, 60, 67, 0.75)'; // Slightly transparent dark in light mode
+    ? withOpacity(colors.white, 0.75)
+    : withOpacity(colors.text, 0.75);
 
   const shadowColorStyle = Platform.OS === 'ios' ? { shadowColor: colors.shadow } : {};
 
@@ -131,7 +133,7 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
       <Ionicons
         name={name}
         size={size}
-        color={isDarkMode ? 'rgba(0, 0, 0, 0.4)' : 'rgba(42, 52, 65, 0.3)'}
+        color={isDarkMode ? withOpacity(colors.black, 0.4) : withOpacity(colors.shadow, 0.3)}
         style={{
           position: 'absolute',
           top: 0.5,

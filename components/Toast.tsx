@@ -147,7 +147,7 @@ export const Toast = memo(
         case 'success':
           return colors.success || colors.tint;
         case 'error':
-          return colors.error || '#FF6B6B';
+          return colors.error;
         case 'important':
           return colors.warning || colors.accent || colors.tint;
         default:
@@ -158,9 +158,9 @@ export const Toast = memo(
     const textColor = useMemo(() => {
       // For important and error, use white text for better contrast
       if (type === 'important' || type === 'error') {
-        return '#FFFFFF';
+        return colors.white;
       }
-      return isDarkMode ? colors.text : colors.white || '#FFFFFF';
+      return isDarkMode ? colors.text : colors.white;
     }, [type, isDarkMode, colors.text, colors.white]);
 
     const { width: screenWidth } = Dimensions.get('window');
@@ -199,10 +199,10 @@ export const Toast = memo(
             {
               maxWidth: maxToastWidth,
               backgroundColor,
-              shadowColor: colors.shadow || '#000000',
+              shadowColor: colors.shadow,
               // Add subtle border for definition
               borderWidth: isDarkMode ? 1 : 0,
-              borderColor: isDarkMode ? colors.border : 'transparent',
+              borderColor: isDarkMode ? colors.border : colors.transparent,
             },
           ]}
         >

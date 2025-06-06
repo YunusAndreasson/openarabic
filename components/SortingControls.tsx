@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
+import { Colors } from '@/constants/Colors';
 import { selectionFeedback } from '@/utils/haptics';
 
 import BaseCard from './BaseCard';
@@ -164,9 +165,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     // Subtle default state
-    backgroundColor: 'transparent',
+    backgroundColor: Colors.light.transparent,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: Colors.light.transparent,
   },
   sortPillContent: {
     alignItems: 'center',

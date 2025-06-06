@@ -18,6 +18,8 @@ import Animated, {
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
+import { Colors } from '@/constants/Colors';
+import { withOpacity } from '@/utils/colorUtils';
 import { mediumFeedback } from '@/utils/haptics';
 
 import BaseCard from '../BaseCard';
@@ -331,7 +333,7 @@ const styles = StyleSheet.create({
     paddingTop: LAYOUT.SPACING.MEDIUM,
   },
   primaryCard: {
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: withOpacity(Colors.light.white, 0.1),
     borderWidth: 1,
   },
   primaryIconContainer: {
