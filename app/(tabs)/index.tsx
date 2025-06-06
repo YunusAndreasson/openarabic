@@ -50,7 +50,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContentContainer: {
-    flexGrow: 1,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
 });

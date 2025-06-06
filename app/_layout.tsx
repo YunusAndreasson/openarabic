@@ -47,19 +47,7 @@ import { setTheme } from '../store/themeSlice';
 
 import { useArticlesAndDueWordsLoaded } from './(tabs)/index';
 
-// Keep the splash screen visible while we fetch resources
-SplashScreen.preventAutoHideAsync().catch(err => {
-  Sentry.captureException(err, {
-    tags: {
-      location: 'splash_screen_prevention',
-    },
-  });
-});
-
-// Configure splash screen to be visible for at least 1 second with fade effect
-SplashScreen.setOptions({
-  duration: 1000,
-});
+// Splash screen will be initialized inside the component to avoid conflicts with expo-router
 
 // Move queryClient outside component scope for better performance
 const queryClient = new QueryClient({
@@ -134,6 +122,37 @@ function AppContent() {
   const navigationRef = useNavigationContainerRef();
   const [hasAttemptedRedirect, setHasAttemptedRedirect] = useState(false);
   const router = useRouter();
+
+  // Initialize splash screen inside component to avoid expo-router conflicts
+  useEffect(() => {
+    const initializeSplashScreen = async () => {
+      try {
+        // Check if the SplashScreen module is available and has the required methods
+        if (SplashScreen && typeof SplashScreen.preventAutoHideAsync === 'function') {
+          await SplashScreen.preventAutoHideAsync();
+
+          // Configure splash screen to be visible for at least 1 second with fade effect
+          if (typeof SplashScreen.setOptions === 'function') {
+            SplashScreen.setOptions({
+              duration: 1000,
+            });
+          }
+        } else {
+          console.warn('SplashScreen module not properly initialized');
+        }
+      } catch (err) {
+        // Handle the case where the module isn't ready yet
+        console.warn('Failed to initialize splash screen:', err);
+        Sentry.captureException(err, {
+          tags: {
+            location: 'splash_screen_initialization',
+          },
+        });
+      }
+    };
+
+    initializeSplashScreen();
+  }, []); // Run once on component mount
 
   const [fontsLoaded] = useFonts({
     Madina: madinaFont,
@@ -211,7 +230,18 @@ function AppContent() {
   // Hide splash screen after first layout
   const onLayoutRootView = useCallback(() => {
     if (appReady) {
-      SplashScreen.hideAsync();
+      // Check if SplashScreen module is available before hiding
+      if (SplashScreen && typeof SplashScreen.hideAsync === 'function') {
+        SplashScreen.hideAsync().catch(err => {
+          // Handle cases where splash screen hiding fails
+          console.warn('Failed to hide splash screen:', err);
+          Sentry.captureException(err, {
+            tags: {
+              location: 'splash_screen_hide',
+            },
+          });
+        });
+      }
     }
   }, [appReady]);
 
@@ -372,7 +402,7 @@ function AppContent() {
             />
             <Stack.Screen name="article" options={{ headerShown: false }} />
             <Stack.Screen name="review" options={reviewScreenOptions} />
-            <Stack.Screen name="listen" options={reviewScreenOptions} />
+            <Stack.Screen name="practice" options={reviewScreenOptions} />
             <Stack.Screen name="insights" options={{ headerShown: true }} />
             <Stack.Screen name="index" />
           </Stack>
