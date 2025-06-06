@@ -44,46 +44,6 @@ function safeGet<T>(
  * @param item Database row from study_words table with related data
  * @returns A fully typed StudyWord object with all required fields
  */
-export function mapToStudyWord(item: DatabaseRecord): StudyWord {
-  return {
-    root_id: safeGet(item, 'root_id', 0, Number),
-    root: safeGet(item, 'root', null),
-    user_id: safeGet(item, 'user_id', '', String),
-
-    // Legacy compatibility field
-    difficulty: safeGet(item, 'difficulty', undefined),
-
-    // FSRS fields
-    fsrs_due: safeGet(item, 'fsrs_due', null),
-    fsrs_stability: safeGet(item, 'fsrs_stability', null),
-    fsrs_difficulty: safeGet(item, 'fsrs_difficulty', 6.5, Number),
-    fsrs_elapsed_days: safeGet(item, 'fsrs_elapsed_days', 0, Number),
-    fsrs_scheduled_days: safeGet(item, 'fsrs_scheduled_days', 0, Number),
-    fsrs_reps: safeGet(item, 'fsrs_reps', 0, Number),
-    fsrs_learning_steps: safeGet(item, 'fsrs_learning_steps', 0, Number),
-    fsrs_lapses: safeGet(item, 'fsrs_lapses', 0, Number),
-    fsrs_state: safeGet(item, 'fsrs_state', 0, Number),
-    fsrs_last_review: safeGet(item, 'fsrs_last_review', null),
-
-    // Additional fields
-    created_at: safeGet(item, 'created_at', new Date().toISOString(), String),
-    last_updated_at: safeGet(item, 'last_updated_at', undefined),
-    success_streak: safeGet(item, 'success_streak', undefined),
-
-    // Session data initialized as empty
-    sessionData: {},
-  };
-}
-
-/**
- * Maps multiple database records to StudyWord objects
- * @param items Array of database rows from study_words table
- * @returns Array of fully typed StudyWord objects
- */
-export function mapToStudyWords(items: DatabaseRecord[]): StudyWord[] {
-  if (!Array.isArray(items)) return [];
-  return items.map(mapToStudyWord);
-}
 
 /**
  * Maps a database query result to a properly typed SentenceWord object

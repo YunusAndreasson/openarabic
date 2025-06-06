@@ -201,67 +201,12 @@ class Analytics {
     });
   }
 
-  async trackCompleteArticle(
-    articleId: number,
-    properties: {
-      timeSpent?: number;
-      wordsAdded?: number;
-    }
-  ) {
-    await this.track('COMPLETE_ARTICLE', {
-      article_id: articleId,
-      ...properties,
-    });
-  }
 
   async trackToggleReadingList(articleId: number, added: boolean) {
     await this.track('TOGGLE_READING_LIST', {
       article_id: articleId,
       action: added ? 'add' : 'remove',
     });
-  }
-
-  // Study Events
-  async trackAddStudyWord(
-    wordId: number,
-    properties: {
-      word?: string;
-      english?: string;
-      articleId?: number;
-    }
-  ) {
-    await this.track('ADD_STUDY_WORD', {
-      word_id: wordId,
-      ...properties,
-    });
-  }
-
-  async trackRemoveStudyWord(
-    wordId: number,
-    properties: {
-      word?: string;
-      english?: string;
-      timeStudied?: number;
-    }
-  ) {
-    await this.track('REMOVE_STUDY_WORD', {
-      word_id: wordId,
-      ...properties,
-    });
-  }
-
-  async trackCompleteReview(properties: {
-    wordsReviewed: number;
-    correctCount: number;
-    incorrectCount: number;
-    timeSpent: number;
-  }) {
-    await this.track('COMPLETE_REVIEW', properties);
-  }
-
-  // Reading List Events
-  async trackViewReadingList(properties: { totalCount: number; completedCount: number }) {
-    await this.track('VIEW_READING_LIST', properties);
   }
 
   // Update User Properties
