@@ -10,13 +10,13 @@ export { default as EmptyState } from './EmptyState';
 export { default as ErrorState } from './ErrorState';
 export { default as Section } from './Section';
 export { default as CloseButton } from './CloseButton';
-export { ToastProvider } from './ToastProvider';
+export { AuthProvider, ToastProvider, useToast } from './providers';
 export { default as Pill } from './Pill';
 export { Toggle } from './Toggle';
 export { CustomSlider } from './Slider';
 export { ThemeToggle } from './ThemeToggle';
 export { EnhancedImage } from './EnhancedImage';
-export { default as Auth } from './Auth';
+export { default as Auth } from './auth';
 export { TimeAgo, DifficultyIndicator } from './home/ArticleHelpers';
 
 // Re-export from subdirectories (except article to avoid circular dependency)

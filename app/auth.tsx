@@ -5,7 +5,7 @@ import React, { memo } from 'react';
 import { StyleSheet, View, KeyboardAvoidingView, Platform, Image, ScrollView } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import Auth from '@/components/Auth';
+import Auth from '@/components/auth';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';

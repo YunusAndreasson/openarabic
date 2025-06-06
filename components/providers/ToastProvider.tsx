@@ -1,8 +1,8 @@
 import React, { createContext, useCallback, useContext, useState, useEffect, useMemo } from 'react';
 
-import { setGlobalToastHandler } from '../utils/errorHandling';
+import { setGlobalToastHandler } from '../../utils/errorHandling';
 
-import { Toast, type ToastType } from './Toast';
+import { Toast, type ToastType } from '../Toast';
 
 interface ToastContextType {
   showToast: (message: string, duration?: number, type?: ToastType) => void;
