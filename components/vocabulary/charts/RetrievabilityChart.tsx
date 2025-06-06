@@ -16,7 +16,14 @@ import { useColors } from '@/hooks/useColors';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 
 import { ThemedText } from '../../ThemedText';
-import { BaseChart, ChartCanvas, type DataPoint } from '../shared';
+import {
+  BaseChart,
+  ChartCanvas,
+  ChartGrid,
+  ChartAxes,
+  Y_AXIS_WIDTH,
+  type DataPoint,
+} from '../shared';
 import { useChartColors } from '../shared/chartColors';
 import {
   generateChartSubtitle,
@@ -237,124 +244,107 @@ export const RetrievabilityChart = memo(
         contentHeight={GRAPH_HEIGHT_LARGE + 20}
         emptyStateText={EMPTY_STATE_MESSAGES.retrievability}
       >
-        <ChartCanvas
-          dataPoints={dataPoints}
-          enableTooltips={true}
-          accessibilityLabel="Memory retention forecast showing expected retention over the next 7 days"
-        >
-          {/* Area fill under the retrievability line - rendered first as base */}
-          <Group>
-            {chartData.retrievabilityPath && (
-              <Path
-                path={createAreaFillPath(
-                  chartData.retrievabilityPath,
-                  GRAPH_WIDTH,
-                  GRAPH_HEIGHT_LARGE
-                )}
-              >
-                <LinearGradient
-                  start={vec(0, 0)}
-                  end={vec(0, GRAPH_HEIGHT_LARGE)}
-                  colors={chartColors.getAreaFillGradient('retrievability')}
-                  positions={[0, 0.3, 0.7, 1]}
-                />
-              </Path>
-            )}
-          </Group>
+        <View style={{ position: 'relative' }}>
+          <View style={{ marginLeft: Y_AXIS_WIDTH }}>
+            <ChartCanvas
+              dataPoints={dataPoints}
+              enableTooltips={true}
+              accessibilityLabel="Memory retention forecast showing expected retention over the next 7 days"
+            >
+              {/* Subtle grid lines for better visual structure */}
+              <ChartGrid width={GRAPH_WIDTH} height={GRAPH_HEIGHT_LARGE} gridLines={4} />
 
-          {/* Performance zones background - masked to only show below the data line */}
-          <Group>
-            {chartData.retrievabilityPath && (
-              <Mask
-                mask={
+              {/* Area fill under the retrievability line - rendered first as base */}
+              <Group>
+                {chartData.retrievabilityPath && (
                   <Path
                     path={createAreaFillPath(
                       chartData.retrievabilityPath,
                       GRAPH_WIDTH,
                       GRAPH_HEIGHT_LARGE
                     )}
-                    color="white"
-                  />
-                }
-              >
-                {chartData.dangerZones.map((zone, index) => (
-                  <Rect
-                    key={`performance-zone-${index}`}
-                    x={0}
-                    y={zone.y}
-                    width={GRAPH_WIDTH}
-                    height={zone.height}
-                    color={chartColors.withOpacity(zone.color, 0.25)}
-                  />
-                ))}
-              </Mask>
-            )}
-          </Group>
+                  >
+                    <LinearGradient
+                      start={vec(0, 0)}
+                      end={vec(0, GRAPH_HEIGHT_LARGE)}
+                      colors={chartColors.getAreaFillGradient('retrievability')}
+                      positions={[0, 0.3, 0.7, 1]}
+                    />
+                  </Path>
+                )}
+              </Group>
 
-          {/* Main retrievability line with brand accent color */}
-          <Group>
-            <Path
-              path={chartData.retrievabilityPath}
-              style="stroke"
-              strokeWidth={2.5}
-              strokeCap="round"
-              strokeJoin="round"
-              color={chartColors.ui.accent}
-            />
+              {/* Performance zones background - masked to only show below the data line */}
+              <Group>
+                {chartData.retrievabilityPath && (
+                  <Mask
+                    mask={
+                      <Path
+                        path={createAreaFillPath(
+                          chartData.retrievabilityPath,
+                          GRAPH_WIDTH,
+                          GRAPH_HEIGHT_LARGE
+                        )}
+                        color="white"
+                      />
+                    }
+                  >
+                    {chartData.dangerZones.map((zone, index) => (
+                      <Rect
+                        key={`performance-zone-${index}`}
+                        x={0}
+                        y={zone.y}
+                        width={GRAPH_WIDTH}
+                        height={zone.height}
+                        color={chartColors.withOpacity(zone.color, 0.25)}
+                      />
+                    ))}
+                  </Mask>
+                )}
+              </Group>
 
-            {/* Data points with enhanced styling */}
-            {chartData.dataPoints.map((point, index) => {
-              const data = retrievabilityData[index];
-              if (!data || data.wordCount === 0) return null;
+              {/* Main retrievability line with brand accent color */}
+              <Group>
+                <Path
+                  path={chartData.retrievabilityPath}
+                  style="stroke"
+                  strokeWidth={2.5}
+                  strokeCap="round"
+                  strokeJoin="round"
+                  color={chartColors.ui.accent}
+                />
 
-              return (
-                <Group key={`retrievability-point-${index}`}>
-                  {/* Enhanced data point with border */}
-                  <Circle cx={point.x} cy={point.y} r={3.5} color={chartColors.ui.accent} />
-                  <Circle cx={point.x} cy={point.y} r={2} color={chartColors.ui.background} />
-                </Group>
-              );
-            })}
-          </Group>
-        </ChartCanvas>
+                {/* Data points with enhanced styling */}
+                {chartData.dataPoints.map((point, index) => {
+                  const data = retrievabilityData[index];
+                  if (!data || data.wordCount === 0) return null;
 
-        {/* Day labels for better context */}
-        <View style={styles.dayLabels}>
-          {chartData.dataPoints.map((point, index) => {
-            const data = retrievabilityData[index];
-            if (!data || data.wordCount === 0) return null;
+                  return (
+                    <Group key={`retrievability-point-${index}`}>
+                      {/* Enhanced data point with border */}
+                      <Circle cx={point.x} cy={point.y} r={3.5} color={chartColors.ui.accent} />
+                      <Circle cx={point.x} cy={point.y} r={2} color={chartColors.ui.background} />
+                    </Group>
+                  );
+                })}
+              </Group>
+            </ChartCanvas>
+          </View>
 
-            const dayName = data.date.toLocaleDateString('en-US', { weekday: 'short' });
-            const isToday = index === 0;
-            return (
-              <View
-                key={`day-label-${index}`}
-                style={[
-                  styles.dayLabel,
-                  {
-                    left: point.x - 12, // Center under the data point
-                    width: 24,
-                  },
-                ]}
-              >
-                <ThemedText
-                  type="caption"
-                  variant="secondary"
-                  style={[
-                    styles.dayLabelText,
-                    {
-                      color: isToday ? colors.tint : colors.secondaryText,
-                      opacity: isToday ? 0.9 : 0.7,
-                      fontWeight: isToday ? '600' : '400',
-                    },
-                  ]}
-                >
-                  {isToday ? 'T' : dayName.slice(0, 1)}{' '}
-                  {/* 'T' for today, first letter for others */}
-                </ThemedText>
-              </View>
-            );
-          })}
+          {/* Enhanced axis labels with proper padding and y-axis values */}
+          <ChartAxes
+            width={GRAPH_WIDTH}
+            height={GRAPH_HEIGHT_LARGE}
+            xLabels={retrievabilityData
+              .filter(data => data && data.wordCount > 0)
+              .map((data, index) =>
+                index === 0 ? 'Today' : data.date.toLocaleDateString('en-US', { weekday: 'short' })
+              )}
+            xLabelPositions={chartData.dataPoints.map(point => point.x)}
+            yMax={100}
+            showYAxis={true}
+            topPadding={0}
+          />
         </View>
       </BaseChart>
     );
@@ -363,25 +353,4 @@ export const RetrievabilityChart = memo(
 
 RetrievabilityChart.displayName = 'RetrievabilityChart';
 
-const styles = StyleSheet.create({
-  dayLabel: {
-    alignItems: 'center',
-    height: 20,
-    justifyContent: 'center',
-    minWidth: 20,
-    position: 'absolute',
-  },
-  dayLabelText: {
-    fontSize: 10,
-    fontWeight: '500',
-    includeFontPadding: false,
-    lineHeight: 14,
-    textAlign: 'center',
-  },
-  dayLabels: {
-    height: 24,
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.XSMALL,
-    position: 'relative',
-  },
-});
+// Styles removed - now using ChartAxes component

@@ -9,7 +9,6 @@ export { useOpacityAnimation } from './useOpacityAnimation';
 export { usePressAnimation } from './usePressAnimation';
 export { useTransformAnimation } from './useTransformAnimation';
 export { useProgressAnimation } from './useProgressAnimation';
-export { useComponentAnimation } from './useComponentAnimation';
 export { useToggleAnimation } from './useToggleAnimation';
 
 // Export animation configs

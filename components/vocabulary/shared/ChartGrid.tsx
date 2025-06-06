@@ -1,0 +1,48 @@
+import { Group, Line } from '@shopify/react-native-skia';
+import React, { memo } from 'react';
+import { useColorScheme } from 'react-native';
+
+interface ChartGridProps {
+  width: number;
+  height: number;
+  gridLines?: number; // Number of horizontal grid lines
+  topPadding?: number;
+}
+
+/**
+ * Subtle grid component for charts to improve visual structure
+ * without overwhelming the data visualization
+ */
+export const ChartGrid = memo(
+  ({ width, height, gridLines = 4, topPadding = 0 }: ChartGridProps) => {
+    const colorScheme = useColorScheme();
+
+    // Simple grid color that works in both light and dark modes
+    const gridColor = colorScheme === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)';
+
+    // Calculate grid line positions
+    const gridSpacing = (height - topPadding) / (gridLines + 1);
+    const lines: number[] = [];
+
+    for (let i = 1; i <= gridLines; i++) {
+      lines.push(topPadding + i * gridSpacing);
+    }
+
+    return (
+      <Group>
+        {lines.map((y, index) => (
+          <Line
+            key={`grid-line-${index}`}
+            p1={{ x: 0, y }}
+            p2={{ x: width, y }}
+            style="stroke"
+            strokeWidth={0.5}
+            color={gridColor}
+          />
+        ))}
+      </Group>
+    );
+  }
+);
+
+ChartGrid.displayName = 'ChartGrid';

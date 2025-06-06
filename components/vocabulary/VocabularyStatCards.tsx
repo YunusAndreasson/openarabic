@@ -206,16 +206,8 @@ export const VocabularyStatCards = memo(
       <View style={styles.container}>
         {/* Memory Capacity Gauge - Top Priority */}
         <View style={styles.section}>
-          <SectionTitle
-            title="Memory Capacity"
-            onInfoPress={handleMemoryCapacityInfo}
-            isFirstSection={true}
-          />
-          <MemoryCapacityGauge
-            studyWords={validatedInput.studyWords}
-            onInfoPress={handleMemoryCapacityInfo}
-            onStatPress={onStatPress}
-          />
+          <SectionTitle title="Memory Capacity" isFirstSection={true} />
+          <MemoryCapacityGauge studyWords={validatedInput.studyWords} onStatPress={onStatPress} />
         </View>
 
         {/* Word Categories - Clean exploration interface */}

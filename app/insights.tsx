@@ -1,6 +1,3 @@
-import { useHeaderHeight } from '@react-navigation/elements';
-import { useFocusEffect } from '@react-navigation/native';
-import { useQueryClient } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import React, { useCallback, JSX, useState } from 'react';
 import { StyleSheet, ScrollView, View } from 'react-native';
@@ -9,18 +6,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SectionTitle from '@/components/SectionTitle';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
-import { useNavigationWithDebounce } from '@/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { useFSRSQueries } from '@/hooks/useFSRSQueries';
-import { useStreakData } from '@/hooks/useStreakData';
-import type { StatCategory } from '@/types/vocabulary.types';
 import { lightFeedback } from '@/utils/haptics';
 
 import { InfoModal, type InfoModalType } from '../components/vocabulary/InfoModal';
-import { StreakCard } from '../components/vocabulary/StreakCard';
 import {
-  DifficultyChart,
   EfficiencyChart,
   MasteryChart,
   RetrievabilityChart,
@@ -29,32 +21,14 @@ import {
 export default function InsightsScreen(): JSX.Element {
   const { user } = useAuth();
   const colors = useColors();
-  const queryClient = useQueryClient();
-  const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
-  const { navigateTo } = useNavigationWithDebounce();
 
   const [modalType, setModalType] = useState<InfoModalType | null>(null);
 
-  // Get streak data
-  const { currentStreak, longestStreak, lastSevenDaysActivity } = useStreakData(user?.id);
-
   // Use the FSRS queries hook for data fetching
-  const {
-    allWords: studyWords,
-    isLoading: isDataLoading,
-    error,
-  } = useFSRSQueries({
+  const { allWords: studyWords, error } = useFSRSQueries({
     userId: user?.id,
   });
-
-  // Handle stat press events
-  const handleStatPress = (category: StatCategory) => {
-    navigateTo({
-      pathname: '/wordList',
-      params: { category },
-    });
-  };
 
   // Handle info modal
   const handleInfoPress = useCallback((type: InfoModalType) => {
@@ -67,14 +41,12 @@ export default function InsightsScreen(): JSX.Element {
   }, []);
 
   // Memoized info press handlers
-  const handleStreakInfo = useCallback(() => handleInfoPress('streak'), [handleInfoPress]);
   const handleMasteryInfo = useCallback(() => handleInfoPress('mastery'), [handleInfoPress]);
   const handleEfficiencyInfo = useCallback(() => handleInfoPress('efficiency'), [handleInfoPress]);
   const handleRetrievabilityInfo = useCallback(
     () => handleInfoPress('retrievability'),
     [handleInfoPress]
   );
-  const handleDifficultyInfo = useCallback(() => handleInfoPress('difficulty'), [handleInfoPress]);
 
   // Filter valid study words
   const validStudyWords = studyWords?.filter(word => word != null && word.root_id != null) ?? [];
@@ -82,7 +54,7 @@ export default function InsightsScreen(): JSX.Element {
   if (error) {
     return (
       <ThemedView style={styles.container}>
-        <View style={[styles.errorContainer, { paddingTop: headerHeight }]}>
+        <View style={styles.errorContainer}>
           <SectionTitle title="Error loading insights" />
         </View>
       </ThemedView>
@@ -127,35 +99,18 @@ export default function InsightsScreen(): JSX.Element {
           ]}
           showsVerticalScrollIndicator={false}
         >
-          {/* Streak Section */}
-          <View style={styles.firstChartContainer}>
-            <SectionTitle
-              title="Your Streak"
-              subtitle="Track your daily learning habit"
-              onInfoPress={handleStreakInfo}
-              isFirstSection={true}
-            />
-            <StreakCard
-              currentStreak={currentStreak}
-              longestStreak={longestStreak}
-              lastSevenDaysActivity={lastSevenDaysActivity}
-              onInfoPress={handleStreakInfo}
-              hideTitle={true}
-            />
-          </View>
-
           {/* Detailed Analytics */}
           <View style={styles.analyticsSection}>
-            <View style={styles.chartContainer}>
+            <View style={styles.firstChartContainer}>
               <SectionTitle
                 title="Memory Strength"
-                subtitle="Track how well you remember each word"
+                subtitle="Track your vocabulary mastery progress over time"
                 onInfoPress={handleMasteryInfo}
+                isFirstSection={true}
               />
               <MasteryChart
                 studyWords={validStudyWords}
                 onInfoPress={handleMasteryInfo}
-                onStatPress={handleStatPress}
                 hideTitle={true}
               />
             </View>
@@ -163,43 +118,26 @@ export default function InsightsScreen(): JSX.Element {
             <View style={styles.chartContainer}>
               <SectionTitle
                 title="Learning Speed"
-                subtitle="See how fast you master new vocabulary"
+                subtitle="Monitor your learning efficiency and practice momentum"
                 onInfoPress={handleEfficiencyInfo}
               />
               <EfficiencyChart
                 studyWords={validStudyWords}
                 onInfoPress={handleEfficiencyInfo}
                 learningWords={0}
-                onStatPress={handleStatPress}
-                hideTitle={true}
-              />
-            </View>
-
-            <View style={styles.chartContainer}>
-              <SectionTitle
-                title="Memory Retention"
-                subtitle="Monitor which words you're forgetting"
-                onInfoPress={handleRetrievabilityInfo}
-              />
-              <RetrievabilityChart
-                studyWords={validStudyWords}
-                onInfoPress={handleRetrievabilityInfo}
-                onStatPress={handleStatPress}
                 hideTitle={true}
               />
             </View>
 
             <View style={[styles.chartContainer, styles.lastChart]}>
               <SectionTitle
-                title="Challenge Level"
-                subtitle="Identify your most difficult words"
-                onInfoPress={handleDifficultyInfo}
+                title="Memory Retention"
+                subtitle="See which words need review to prevent forgetting"
+                onInfoPress={handleRetrievabilityInfo}
               />
-              <DifficultyChart
+              <RetrievabilityChart
                 studyWords={validStudyWords}
-                onInfoPress={handleDifficultyInfo}
-                onDifficultyPress={handleStatPress}
-                onStatPress={handleStatPress}
+                onInfoPress={handleRetrievabilityInfo}
                 hideTitle={true}
               />
             </View>
@@ -218,25 +156,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   chartContainer: {
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.XLARGE, // Increased spacing between charts for better visual separation
   },
   container: {
     flex: 1,
   },
   contentContainer: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: LAYOUT.SPACING.MEDIUM, // Add top padding for better visual hierarchy
   },
   errorContainer: {
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: LAYOUT.SPACING.XLARGE,
   },
   firstChartContainer: {
-    marginBottom: LAYOUT.SPACING.LARGE,
-    marginTop: -LAYOUT.SPACING.SMALL, // Reduce top spacing to match vocabulary screen
+    marginBottom: LAYOUT.SPACING.XLARGE, // Consistent with other charts
   },
   lastChart: {
-    marginBottom: 0,
+    marginBottom: LAYOUT.SPACING.MEDIUM, // Add some bottom margin for better visual balance
   },
 });

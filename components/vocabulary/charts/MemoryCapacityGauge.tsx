@@ -39,7 +39,6 @@ import {
 
 interface MemoryCapacityGaugeProps {
   studyWords: StudyWord[];
-  onInfoPress: () => void;
   onStatPress?: (category: StatCategory) => void;
 }
 
@@ -70,7 +69,7 @@ const TIMING_CONFIG = {
 };
 
 export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
-  ({ studyWords = [], onInfoPress, onStatPress }) => {
+  ({ studyWords = [], onStatPress }) => {
     const colors = useColors();
     const chartColors = useChartColors();
     const { navigateTo } = useNavigationWithDebounce();
@@ -125,26 +124,76 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
       };
     }, [studyWords]);
 
-    // Create enhanced gauge path with better visual appeal
-    const gaugePath = useMemo(() => {
-      const path = Skia.Path.Make();
+    // Create enhanced gauge paths with better visual appeal
+    const gaugePaths = useMemo(() => {
       const centerX = GAUGE_WIDTH / 2;
       const centerY = GAUGE_HEIGHT - 15;
+      const startAngle = 185;
+      const totalSweep = 170;
 
-      // Create half circle arc with refined positioning
-      path.addArc(
+      // Full gauge path (background)
+      const fullPath = Skia.Path.Make();
+      fullPath.addArc(
         {
           x: centerX - GAUGE_RADIUS,
           y: centerY - GAUGE_RADIUS,
           width: GAUGE_RADIUS * 2,
           height: GAUGE_RADIUS * 2,
         },
-        185, // Start angle (slightly adjusted for better visual)
-        170 // Sweep angle (refined arc)
+        startAngle,
+        totalSweep
       );
 
-      return path;
-    }, []);
+      // Filled portion path based on capacity score
+      const filledSweep = (memoryMetrics.capacityScore / 100) * totalSweep;
+      const filledPath = Skia.Path.Make();
+      filledPath.addArc(
+        {
+          x: centerX - GAUGE_RADIUS,
+          y: centerY - GAUGE_RADIUS,
+          width: GAUGE_RADIUS * 2,
+          height: GAUGE_RADIUS * 2,
+        },
+        startAngle,
+        filledSweep
+      );
+
+      return { fullPath, filledPath, filledSweep };
+    }, [memoryMetrics.capacityScore]);
+
+    // Helper functions for gradient calculation
+    const getFilledGradientColors = (capacityScore: number): string[] => {
+      const baseColors = [
+        chartColors.performance.poor || '#FF4444', // 0% - Red
+        chartColors.performance.moderate || '#FF8C00', // 30% - Orange
+        chartColors.performance.good || '#4A90E2', // 70% - Blue
+        chartColors.performance.excellent || '#34C759', // 100% - Green
+      ];
+
+      if (capacityScore <= 30) {
+        // Only red to orange transition
+        return [baseColors[0], baseColors[1]];
+      } else if (capacityScore <= 70) {
+        // Red to orange to blue transition
+        return [baseColors[0], baseColors[1], baseColors[2]];
+      } else {
+        // Full gradient
+        return baseColors;
+      }
+    };
+
+    const getFilledGradientPositions = (capacityScore: number): number[] => {
+      if (capacityScore <= 30) {
+        // Map 0-30% to full gradient span
+        return [0, 1];
+      } else if (capacityScore <= 70) {
+        // Map 0-70% across three colors
+        return [0, 30 / capacityScore, 1];
+      } else {
+        // Map 0-100% across four colors, scaled to actual score
+        return [0, 30 / capacityScore, 70 / capacityScore, 1];
+      }
+    };
 
     // Calculate enhanced indicator position with smooth animation potential
     const indicatorPosition = useMemo(() => {
@@ -229,10 +278,10 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
       <BaseChart
         title=""
         subtitle=""
-        onInfoPress={onInfoPress}
+        onInfoPress={() => {}}
         hideTitle={true}
         hasData={studyWords.length > 0}
-        contentHeight={GAUGE_HEIGHT + 80}
+        contentHeight={GAUGE_HEIGHT + 40}
         emptyStateText="Start learning words to track your memory capacity"
       >
         <Animated.View style={animatedPressStyle}>
@@ -246,29 +295,30 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
           >
             <Canvas style={styles.canvas}>
               <Group>
-                {/* Enhanced background gauge track with subtle gradient */}
+                {/* Background track - full gauge path with low opacity */}
                 <Path
-                  path={gaugePath}
+                  path={gaugePaths.fullPath}
                   style="stroke"
                   strokeWidth={GAUGE_STROKE_WIDTH + 2}
                   strokeCap="round"
-                  color={chartColors.withOpacity(colors.card, 0.8)}
+                  color={chartColors.withOpacity(colors.card, 0.6)}
                 />
 
                 <Path
-                  path={gaugePath}
+                  path={gaugePaths.fullPath}
                   style="stroke"
                   strokeWidth={GAUGE_STROKE_WIDTH}
                   strokeCap="round"
-                  color={chartColors.withOpacity(chartColors.ui.border, 0.12)}
+                  color={chartColors.withOpacity(chartColors.ui.border, 0.08)}
                 />
 
-                {/* Enhanced colored gauge with refined gradient */}
+                {/* Unfilled portion with low opacity gradient */}
                 <Path
-                  path={gaugePath}
+                  path={gaugePaths.fullPath}
                   style="stroke"
                   strokeWidth={GAUGE_STROKE_WIDTH}
                   strokeCap="round"
+                  opacity={0.2}
                 >
                   <LinearGradient
                     start={vec(GAUGE_WIDTH * 0.05, GAUGE_HEIGHT / 2)}
@@ -280,6 +330,24 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
                       chartColors.performance.excellent, // Green (right)
                     ]}
                     positions={[0, 0.3, 0.7, 1]}
+                  />
+                </Path>
+
+                {/* Filled portion - only the achieved capacity with full opacity */}
+                <Path
+                  path={gaugePaths.filledPath}
+                  style="stroke"
+                  strokeWidth={GAUGE_STROKE_WIDTH}
+                  strokeCap="round"
+                >
+                  <LinearGradient
+                    start={vec(GAUGE_WIDTH * 0.05, GAUGE_HEIGHT / 2)}
+                    end={vec(
+                      GAUGE_WIDTH * 0.05 + (GAUGE_WIDTH * 0.9 * gaugePaths.filledSweep) / 170,
+                      GAUGE_HEIGHT / 2
+                    )}
+                    colors={getFilledGradientColors(memoryMetrics.capacityScore)}
+                    positions={getFilledGradientPositions(memoryMetrics.capacityScore)}
                   />
                 </Path>
 
@@ -391,20 +459,20 @@ const styles = StyleSheet.create({
   },
   centerSection: {
     alignItems: 'center',
-    bottom: 40,
+    bottom: 30,
     justifyContent: 'center',
     position: 'absolute',
   },
   gaugeContainer: {
     alignItems: 'center',
-    height: GAUGE_HEIGHT + 80,
+    height: GAUGE_HEIGHT + 40,
     justifyContent: 'center',
     position: 'relative',
   },
   recommendationContainer: {
     alignItems: 'center',
-    marginTop: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SPACING.XLARGE,
+    marginTop: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
   },
   recommendationText: {
     fontSize: 13,

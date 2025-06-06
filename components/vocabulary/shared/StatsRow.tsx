@@ -1,10 +1,10 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { memo, useCallback } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 
 import { LAYOUT } from '@/constants/layout';
-import { lightFeedback } from '@/utils/haptics';
 import { useColors } from '@/hooks/useColors';
+import { lightFeedback } from '@/utils/haptics';
 
 import { ThemedText } from '../../ThemedText';
 
@@ -104,49 +104,49 @@ export const StatsRow = memo(({ leftStat, rightStat }: StatsRowProps) => {
 StatsRow.displayName = 'StatsRow';
 
 const styles = StyleSheet.create({
-  progressStatsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.XSMALL,
+  chevronIcon: {
+    marginLeft: LAYOUT.SPACING.SMALL,
+    marginTop: 1,
+  },
+  progressLabel: {
+    includeFontPadding: false,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.4,
+    marginTop: 1,
   },
   progressStat: {
     alignItems: 'flex-start',
     flex: 1,
     minHeight: 48,
   },
-  statValueRow: {
-    flexDirection: 'row',
+  progressStatsRow: {
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.XSMALL,
+  },
+  progressValue: {
+    includeFontPadding: false,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.1,
+    marginBottom: 2,
+  },
+  statValueRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
     marginBottom: LAYOUT.SPACING.XSMALL,
     minHeight: 24,
   },
+  statsSeparator: {
+    backgroundColor: 'transparent',
+    height: 32,
+    marginHorizontal: LAYOUT.SPACING.LARGE,
+    width: 1,
+  },
   tappableStat: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    padding: LAYOUT.SPACING.SMALL,
+    justifyContent: 'center',
     margin: -LAYOUT.SPACING.SMALL,
     minHeight: 44,
-    justifyContent: 'center',
-  },
-  progressValue: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.1,
-    includeFontPadding: false,
-    marginBottom: 2,
-  },
-  chevronIcon: {
-    marginLeft: LAYOUT.SPACING.SMALL,
-    marginTop: 1,
-  },
-  progressLabel: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.4,
-    includeFontPadding: false,
-    marginTop: 1,
-  },
-  statsSeparator: {
-    width: 1,
-    height: 32,
-    backgroundColor: 'transparent',
-    marginHorizontal: LAYOUT.SPACING.LARGE,
+    padding: LAYOUT.SPACING.SMALL,
   },
 });

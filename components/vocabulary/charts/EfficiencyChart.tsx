@@ -16,7 +16,14 @@ import { useColors } from '@/hooks/useColors';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 
 import { ThemedText } from '../../ThemedText';
-import { BaseChart, ChartCanvas, type DataPoint } from '../shared';
+import {
+  BaseChart,
+  ChartCanvas,
+  ChartGrid,
+  ChartAxes,
+  Y_AXIS_WIDTH,
+  type DataPoint,
+} from '../shared';
 import { useChartColors } from '../shared/chartColors';
 import {
   generateChartSubtitle,
@@ -234,117 +241,107 @@ export const EfficiencyChart = memo(
         contentHeight={GRAPH_HEIGHT_LARGE + 20}
         emptyStateText={EMPTY_STATE_MESSAGES.efficiency}
       >
-        <ChartCanvas
-          dataPoints={dataPoints}
-          enableTooltips={true}
-          accessibilityLabel="Learning efficiency chart showing progress over the past 7 days"
-        >
-          {/* Area fill under the efficiency line with gradient - rendered first as base */}
-          <Group>
-            {chartData.efficiencyPath && (
-              <Path
-                path={createAreaFillPath(chartData.efficiencyPath, GRAPH_WIDTH, GRAPH_HEIGHT_LARGE)}
-              >
-                <LinearGradient
-                  start={vec(0, 0)}
-                  end={vec(0, GRAPH_HEIGHT_LARGE)}
-                  colors={chartColors.getAreaFillGradient('efficiency')}
-                  positions={[0, 0.3, 0.7, 1]}
-                />
-              </Path>
-            )}
-          </Group>
+        <View style={{ position: 'relative' }}>
+          <View style={{ marginLeft: Y_AXIS_WIDTH }}>
+            <ChartCanvas
+              dataPoints={dataPoints}
+              enableTooltips={true}
+              accessibilityLabel="Learning efficiency chart showing progress over the past 7 days"
+            >
+              {/* Subtle grid lines for better visual structure */}
+              <ChartGrid width={GRAPH_WIDTH} height={GRAPH_HEIGHT_LARGE} gridLines={4} />
 
-          {/* Performance zones background - masked to only show below the data line */}
-          <Group>
-            {chartData.efficiencyPath && (
-              <Mask
-                mask={
+              {/* Area fill under the efficiency line with gradient - rendered first as base */}
+              <Group>
+                {chartData.efficiencyPath && (
                   <Path
                     path={createAreaFillPath(
                       chartData.efficiencyPath,
                       GRAPH_WIDTH,
                       GRAPH_HEIGHT_LARGE
                     )}
-                    color="white"
-                  />
-                }
-              >
-                {chartData.performanceZones.map((zone, index) => (
-                  <Rect
-                    key={`performance-zone-${index}`}
-                    x={0}
-                    y={zone.y}
-                    width={GRAPH_WIDTH}
-                    height={zone.height}
-                    color={chartColors.withOpacity(zone.color, 0.25)}
-                  />
-                ))}
-              </Mask>
+                  >
+                    <LinearGradient
+                      start={vec(0, 0)}
+                      end={vec(0, GRAPH_HEIGHT_LARGE)}
+                      colors={chartColors.getAreaFillGradient('efficiency')}
+                      positions={[0, 0.3, 0.7, 1]}
+                    />
+                  </Path>
+                )}
+              </Group>
+
+              {/* Performance zones background - masked to only show below the data line */}
+              <Group>
+                {chartData.efficiencyPath && (
+                  <Mask
+                    mask={
+                      <Path
+                        path={createAreaFillPath(
+                          chartData.efficiencyPath,
+                          GRAPH_WIDTH,
+                          GRAPH_HEIGHT_LARGE
+                        )}
+                        color="white"
+                      />
+                    }
+                  >
+                    {chartData.performanceZones.map((zone, index) => (
+                      <Rect
+                        key={`performance-zone-${index}`}
+                        x={0}
+                        y={zone.y}
+                        width={GRAPH_WIDTH}
+                        height={zone.height}
+                        color={chartColors.withOpacity(zone.color, 0.25)}
+                      />
+                    ))}
+                  </Mask>
+                )}
+              </Group>
+
+              {/* Efficiency line with brand accent color */}
+              <Group>
+                <Path
+                  path={chartData.efficiencyPath}
+                  style="stroke"
+                  strokeWidth={2.5}
+                  strokeCap="round"
+                  strokeJoin="round"
+                  color={chartColors.ui.accent}
+                />
+
+                {/* Data points with enhanced styling */}
+                {chartData.dataPoints.map((point, index) => {
+                  const data = efficiencyData[index];
+                  if (!data || data.wordCount === 0) return null;
+
+                  return (
+                    <Group key={`efficiency-point-${index}`}>
+                      {/* Enhanced data point with border */}
+                      <Circle cx={point.x} cy={point.y} r={3.5} color={chartColors.ui.accent} />
+                      <Circle cx={point.x} cy={point.y} r={2} color={chartColors.ui.background} />
+                    </Group>
+                  );
+                })}
+              </Group>
+            </ChartCanvas>
+          </View>
+
+          {/* Enhanced axis labels with proper padding and y-axis values */}
+          <ChartAxes
+            width={GRAPH_WIDTH}
+            height={GRAPH_HEIGHT_LARGE}
+            xLabels={efficiencyData.map((data, index) =>
+              index === efficiencyData.length - 1
+                ? 'Today'
+                : data.date.toLocaleDateString('en-US', { weekday: 'short' })
             )}
-          </Group>
-
-          {/* Efficiency line with brand accent color */}
-          <Group>
-            <Path
-              path={chartData.efficiencyPath}
-              style="stroke"
-              strokeWidth={2.5}
-              strokeCap="round"
-              strokeJoin="round"
-              color={chartColors.ui.accent}
-            />
-
-            {/* Data points with enhanced styling */}
-            {chartData.dataPoints.map((point, index) => {
-              const data = efficiencyData[index];
-              if (!data || data.wordCount === 0) return null;
-
-              return (
-                <Group key={`efficiency-point-${index}`}>
-                  {/* Enhanced data point with border */}
-                  <Circle cx={point.x} cy={point.y} r={3.5} color={chartColors.ui.accent} />
-                  <Circle cx={point.x} cy={point.y} r={2} color={chartColors.ui.background} />
-                </Group>
-              );
-            })}
-          </Group>
-        </ChartCanvas>
-
-        {/* Day labels for better context */}
-        <View style={styles.dayLabels}>
-          {chartData.dataPoints.map((point, index) => {
-            const data = efficiencyData[index];
-            if (!data) return null;
-
-            const dayName = data.date.toLocaleDateString('en-US', { weekday: 'short' });
-            return (
-              <View
-                key={`day-label-${index}`}
-                style={[
-                  styles.dayLabel,
-                  {
-                    left: point.x - 12, // Center under the data point
-                    width: 24,
-                  },
-                ]}
-              >
-                <ThemedText
-                  type="caption"
-                  variant="secondary"
-                  style={[
-                    styles.dayLabelText,
-                    {
-                      color: colors.secondaryText,
-                      opacity: 0.7,
-                    },
-                  ]}
-                >
-                  {dayName.slice(0, 1)} {/* First letter of day */}
-                </ThemedText>
-              </View>
-            );
-          })}
+            xLabelPositions={chartData.dataPoints.map(point => point.x)}
+            yMax={100}
+            showYAxis={true}
+            topPadding={0}
+          />
         </View>
       </BaseChart>
     );
@@ -353,25 +350,4 @@ export const EfficiencyChart = memo(
 
 EfficiencyChart.displayName = 'EfficiencyChart';
 
-const styles = StyleSheet.create({
-  dayLabel: {
-    alignItems: 'center',
-    height: 20,
-    justifyContent: 'center',
-    minWidth: 20,
-    position: 'absolute',
-  },
-  dayLabelText: {
-    fontSize: 10,
-    fontWeight: '500',
-    includeFontPadding: false,
-    lineHeight: 14,
-    textAlign: 'center',
-  },
-  dayLabels: {
-    height: 24,
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.XSMALL,
-    position: 'relative',
-  },
-});
+// Styles removed - now using ChartAxes component

@@ -16,7 +16,14 @@ import { useColors } from '@/hooks/useColors';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 
 import { ThemedText } from '../../ThemedText';
-import { BaseChart, ChartCanvas, type DataPoint } from '../shared';
+import {
+  BaseChart,
+  ChartCanvas,
+  ChartGrid,
+  ChartAxes,
+  Y_AXIS_WIDTH,
+  type DataPoint,
+} from '../shared';
 import { useChartColors } from '../shared/chartColors';
 import {
   generateChartSubtitle,
@@ -256,143 +263,130 @@ export const MasteryChart = memo(
         contentHeight={GRAPH_HEIGHT_LARGE + 20}
         emptyStateText={EMPTY_STATE_MESSAGES.mastery}
       >
-        <ChartCanvas
-          dataPoints={dataPoints}
-          enableTooltips={true}
-          accessibilityLabel="Mastery progression chart showing learning progress over the past 7 days"
-        >
-          {/* Area fill under the mastery line with gradient - rendered first as base */}
-          <Group>
-            {chartData.masteryPath && chartData.dataPoints.length > 0 && (
-              <Path
-                path={createAreaFillPath(chartData.masteryPath, GRAPH_WIDTH, GRAPH_HEIGHT_LARGE)}
-              >
-                <LinearGradient
-                  start={vec(0, TOP_PADDING)}
-                  end={vec(0, GRAPH_HEIGHT_LARGE)}
-                  colors={chartColors.getAreaFillGradient('mastery')}
-                  positions={[0, 0.25, 0.65, 1]}
-                />
-              </Path>
-            )}
-          </Group>
+        <View style={{ position: 'relative' }}>
+          <View style={{ marginLeft: Y_AXIS_WIDTH }}>
+            <ChartCanvas
+              dataPoints={dataPoints}
+              enableTooltips={true}
+              accessibilityLabel="Mastery progression chart showing learning progress over the past 7 days"
+            >
+              {/* Subtle grid lines for better visual structure */}
+              <ChartGrid
+                width={GRAPH_WIDTH}
+                height={GRAPH_HEIGHT_LARGE}
+                gridLines={4}
+                topPadding={TOP_PADDING}
+              />
 
-          {/* Standardized performance zones background - masked to only show below the data line */}
-          <Group>
-            {chartData.masteryPath && chartData.dataPoints.length > 0 && (
-              <Mask
-                mask={
+              {/* Area fill under the mastery line with gradient - rendered first as base */}
+              <Group>
+                {chartData.masteryPath && chartData.dataPoints.length > 0 && (
                   <Path
                     path={createAreaFillPath(
                       chartData.masteryPath,
                       GRAPH_WIDTH,
                       GRAPH_HEIGHT_LARGE
                     )}
-                    color="white"
+                  >
+                    <LinearGradient
+                      start={vec(0, TOP_PADDING)}
+                      end={vec(0, GRAPH_HEIGHT_LARGE)}
+                      colors={chartColors.getAreaFillGradient('mastery')}
+                      positions={[0, 0.25, 0.65, 1]}
+                    />
+                  </Path>
+                )}
+              </Group>
+
+              {/* Standardized performance zones background - masked to only show below the data line */}
+              <Group>
+                {chartData.masteryPath && chartData.dataPoints.length > 0 && (
+                  <Mask
+                    mask={
+                      <Path
+                        path={createAreaFillPath(
+                          chartData.masteryPath,
+                          GRAPH_WIDTH,
+                          GRAPH_HEIGHT_LARGE
+                        )}
+                        color="white"
+                      />
+                    }
+                  >
+                    {chartData.performanceZones?.map((zone, index) => (
+                      <Rect
+                        key={`performance-zone-${index}`}
+                        x={0}
+                        y={zone.y}
+                        width={GRAPH_WIDTH}
+                        height={zone.height}
+                        color={chartColors.withOpacity(zone.color, 0.25)}
+                      />
+                    ))}
+                  </Mask>
+                )}
+              </Group>
+
+              {/* Main mastery line with brand accent color */}
+              <Group>
+                {chartData.masteryPath && chartData.dataPoints.length > 0 && (
+                  <Path
+                    path={chartData.masteryPath}
+                    style="stroke"
+                    strokeWidth={2.5}
+                    strokeCap="round"
+                    strokeJoin="round"
+                    color={chartColors.ui.accent}
                   />
-                }
-              >
-                {chartData.performanceZones?.map((zone, index) => (
-                  <Rect
-                    key={`performance-zone-${index}`}
-                    x={0}
-                    y={zone.y}
-                    width={GRAPH_WIDTH}
-                    height={zone.height}
-                    color={chartColors.withOpacity(zone.color, 0.25)}
-                  />
+                )}
+
+                {/* Data points with enhanced styling */}
+                {chartData.dataPoints.map((point, index) => (
+                  <Group key={`mastery-point-${index}`}>
+                    {/* Enhanced data point with border */}
+                    <Circle cx={point.x} cy={point.y} r={3.5} color={chartColors.ui.accent} />
+                    <Circle cx={point.x} cy={point.y} r={2} color={chartColors.ui.background} />
+                  </Group>
                 ))}
-              </Mask>
-            )}
-          </Group>
-
-          {/* Main mastery line with brand accent color */}
-          <Group>
-            {chartData.masteryPath && chartData.dataPoints.length > 0 && (
-              <Path
-                path={chartData.masteryPath}
-                style="stroke"
-                strokeWidth={2.5}
-                strokeCap="round"
-                strokeJoin="round"
-                color={chartColors.ui.accent}
-              />
-            )}
-
-            {/* Data points with enhanced styling */}
-            {chartData.dataPoints.map((point, index) => (
-              <Group key={`mastery-point-${index}`}>
-                {/* Enhanced data point with border */}
-                <Circle cx={point.x} cy={point.y} r={3.5} color={chartColors.ui.accent} />
-                <Circle cx={point.x} cy={point.y} r={2} color={chartColors.ui.background} />
               </Group>
-            ))}
-          </Group>
 
-          {/* Enhanced milestone indicators */}
-          <Group>
-            {chartData.milestones.map((milestone, index) => (
-              <Group key={`milestone-${index}`}>
-                {/* Milestone glow */}
-                <Circle
-                  cx={milestone.x}
-                  cy={milestone.y}
-                  r={9}
-                  color={chartColors.withOpacity(chartColors.performance.excellent, 0.2)}
-                />
-                {/* Milestone ring */}
-                <Circle
-                  cx={milestone.x}
-                  cy={milestone.y}
-                  r={7}
-                  color={chartColors.withOpacity(chartColors.performance.excellent, 0.4)}
-                />
-                {/* Milestone center */}
-                <Circle
-                  cx={milestone.x}
-                  cy={milestone.y}
-                  r={5}
-                  color={chartColors.performance.excellent}
-                />
+              {/* Subtle milestone indicators */}
+              <Group>
+                {chartData.milestones.map((milestone, index) => (
+                  <Group key={`milestone-${index}`}>
+                    {/* Subtle milestone indicator - much smaller */}
+                    <Circle
+                      cx={milestone.x}
+                      cy={milestone.y}
+                      r={4}
+                      color={chartColors.withOpacity(chartColors.performance.excellent, 0.15)}
+                    />
+                    <Circle
+                      cx={milestone.x}
+                      cy={milestone.y}
+                      r={2.5}
+                      color={chartColors.withOpacity(chartColors.performance.excellent, 0.8)}
+                    />
+                  </Group>
+                ))}
               </Group>
-            ))}
-          </Group>
-        </ChartCanvas>
+            </ChartCanvas>
+          </View>
 
-        {/* Day labels for better context */}
-        <View style={styles.dayLabels}>
-          {chartData.dataPoints.map((point, index) => {
-            const data = masteryData[index];
-            if (!data) return null;
-
-            const dayName = data.date.toLocaleDateString('en-US', { weekday: 'short' });
-            return (
-              <View
-                key={`day-label-${index}`}
-                style={[
-                  styles.dayLabel,
-                  {
-                    left: point.x - 12, // Center under the data point
-                    width: 24,
-                  },
-                ]}
-              >
-                <ThemedText
-                  type="caption"
-                  variant="secondary"
-                  style={[
-                    styles.dayLabelText,
-                    {
-                      color: colors.secondaryText,
-                      opacity: 0.7,
-                    },
-                  ]}
-                >
-                  {dayName.slice(0, 1)} {/* First letter of day */}
-                </ThemedText>
-              </View>
-            );
-          })}
+          {/* Enhanced axis labels with proper padding and y-axis values */}
+          <ChartAxes
+            width={GRAPH_WIDTH}
+            height={GRAPH_HEIGHT_LARGE}
+            xLabels={masteryData.map((data, index) =>
+              index === masteryData.length - 1
+                ? 'Today'
+                : data.date.toLocaleDateString('en-US', { weekday: 'short' })
+            )}
+            xLabelPositions={chartData.dataPoints.map(point => point.x)}
+            yMax={100}
+            showYAxis={true}
+            topPadding={TOP_PADDING}
+          />
         </View>
       </BaseChart>
     );
@@ -401,25 +395,4 @@ export const MasteryChart = memo(
 
 MasteryChart.displayName = 'MasteryChart';
 
-const styles = StyleSheet.create({
-  dayLabel: {
-    alignItems: 'center',
-    height: 20,
-    justifyContent: 'center',
-    minWidth: 20,
-    position: 'absolute',
-  },
-  dayLabelText: {
-    fontSize: 10,
-    fontWeight: '500',
-    includeFontPadding: false,
-    lineHeight: 14,
-    textAlign: 'center',
-  },
-  dayLabels: {
-    height: 24,
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.XSMALL,
-    position: 'relative',
-  },
-});
+// Styles removed - now using ChartAxes component

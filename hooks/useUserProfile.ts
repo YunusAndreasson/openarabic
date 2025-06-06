@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import { useVocabularyChartData } from './useVocabularyChartData';
-import { useStreakData } from './useStreakData';
+
 import { useFSRSQueries } from './useFSRSQueries';
+import { useVocabularyChartData } from './useVocabularyChartData';
 
 export interface UserProfile {
   level: {
@@ -33,7 +33,9 @@ export interface UserProfile {
  */
 export function useUserProfile(userId?: string): UserProfile {
   const { userStats } = useVocabularyChartData(userId);
-  const { currentStreak, longestStreak } = useStreakData(userId);
+  // TODO: Implement streak tracking when needed
+  const currentStreak = 0;
+  const longestStreak = 0;
   const { allWords } = useFSRSQueries({ userId });
 
   return useMemo(() => {

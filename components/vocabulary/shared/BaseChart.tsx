@@ -1,14 +1,15 @@
 import React, { memo, type ReactNode } from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
 
-import BaseCard from '../../BaseCard';
-import { ThemedText } from '../../ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 
+import BaseCard from '../../BaseCard';
+import { ThemedText } from '../../ThemedText';
+
 import { CardHeader } from './CardHeader';
-import { StatsRow } from './StatsRow';
 import { ChartFooter } from './ChartFooter';
+import { StatsRow } from './StatsRow';
 import { CHART_LAYOUT } from './constants';
 
 export interface LegendItemProps {
@@ -122,19 +123,6 @@ export const BaseChart = memo(
             </View>
           )}
 
-          {/* Stats Section */}
-          {leftStat && rightStat && (
-            <View
-              style={[
-                styles.statsSection,
-                // Better visual separation when no header
-                !hideTitle ? {} : { marginTop: CHART_LAYOUT.ELEMENT_SPACING / 2 },
-              ]}
-            >
-              <StatsRow leftStat={leftStat} rightStat={rightStat} />
-            </View>
-          )}
-
           {/* Loading State */}
           {isLoading && (
             <View style={[styles.loadingState, { height: contentHeight }]}>
@@ -163,54 +151,54 @@ export const BaseChart = memo(
 BaseChart.displayName = 'BaseChart';
 
 const styles = StyleSheet.create({
-  content: {
-    padding: CHART_LAYOUT.CONTENT_PADDING,
-  },
-  headerSection: {
-    marginBottom: CHART_LAYOUT.ELEMENT_SPACING, // 16px - good separation from title
-  },
-  statsSection: {
-    marginBottom: CHART_LAYOUT.ELEMENT_SPACING * 0.75, // Reduced from 1.25x to 0.75x (12px)
-    paddingHorizontal: CHART_LAYOUT.ELEMENT_SPACING * 0.25, // Gentle horizontal grouping
-    paddingVertical: CHART_LAYOUT.ELEMENT_SPACING * 0.25, // Reduced vertical padding (4px)
-  },
   chartSection: {
-    position: 'relative',
     // Tighter spacing for better stats-chart proximity
     marginVertical: CHART_LAYOUT.ELEMENT_SPACING * 0.5, // Reduced from 0.75x to 0.5x (8px)
     paddingVertical: CHART_LAYOUT.ELEMENT_SPACING * 0.25, // Reduced internal padding (4px)
+    position: 'relative',
+  },
+  content: {
+    padding: CHART_LAYOUT.CONTENT_PADDING,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: CHART_LAYOUT.ELEMENT_SPACING * 1.5,
+    paddingVertical: CHART_LAYOUT.ELEMENT_SPACING,
+  },
+  emptyText: {
+    fontSize: 14,
+    letterSpacing: 0.2,
+    lineHeight: 22,
+    opacity: 0.75,
+    textAlign: 'center',
   },
   footerSection: {
     marginTop: CHART_LAYOUT.ELEMENT_SPACING * 0.75, // Slightly reduced (12px)
     paddingTop: CHART_LAYOUT.ELEMENT_SPACING * 0.25,
   },
-  emptyState: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: CHART_LAYOUT.ELEMENT_SPACING * 1.5,
-    paddingVertical: CHART_LAYOUT.ELEMENT_SPACING,
-  },
-  loadingState: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: CHART_LAYOUT.ELEMENT_SPACING * 1.5,
-    paddingVertical: CHART_LAYOUT.ELEMENT_SPACING,
+  headerSection: {
+    marginBottom: CHART_LAYOUT.ELEMENT_SPACING, // 16px - good separation from title
   },
   loadingIndicator: {
     marginBottom: CHART_LAYOUT.ELEMENT_SPACING,
   },
-  emptyText: {
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 22,
-    letterSpacing: 0.2,
-    opacity: 0.75,
+  loadingState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: CHART_LAYOUT.ELEMENT_SPACING * 1.5,
+    paddingVertical: CHART_LAYOUT.ELEMENT_SPACING,
   },
   loadingText: {
     fontSize: 12,
-    textAlign: 'center',
-    lineHeight: 18,
     letterSpacing: 0.15,
+    lineHeight: 18,
     opacity: 0.65,
+    textAlign: 'center',
+  },
+  statsSection: {
+    marginBottom: CHART_LAYOUT.ELEMENT_SPACING * 0.75, // Reduced from 1.25x to 0.75x (12px)
+    paddingHorizontal: CHART_LAYOUT.ELEMENT_SPACING * 0.25, // Gentle horizontal grouping
+    paddingVertical: CHART_LAYOUT.ELEMENT_SPACING * 0.25, // Reduced vertical padding (4px)
   },
 });

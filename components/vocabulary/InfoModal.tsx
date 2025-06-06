@@ -24,10 +24,8 @@ import { lightFeedback } from '@/utils/haptics';
 import { ThemedText } from '../ThemedText';
 
 export type InfoModalType =
-  | 'streak'
   | 'mastery'
   | 'retrievability'
-  | 'difficulty'
   | 'efficiency'
   | 'recommendation'
   | 'progress';
@@ -41,11 +39,11 @@ interface InfoModalProps {
 interface InfoContent {
   title: string;
   subtitle: string;
-  sections: Array<{
+  sections: {
     title: string;
     content: string;
     icon?: keyof typeof Ionicons.glyphMap;
-  }>;
+  }[];
   tips: string[];
 }
 
@@ -79,37 +77,6 @@ const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
       'Add 3-5 new words when optimal, 5-10 when starting out',
       'Consistency beats volume every time',
       'Review when mentally fresh for maximum effectiveness',
-    ],
-  },
-  streak: {
-    title: 'Your Streak',
-    subtitle:
-      'Your consistency in daily vocabulary practice.\n\nDaily practice is the foundation of effective spaced repetition. Even 5 minutes daily beats sporadic long sessions for memory retention.',
-    sections: [
-      {
-        title: 'Why Daily Practice Matters',
-        content:
-          'Consistent daily practice optimizes memory formation:\n\nSpaced intervals prevent forgetting curves\nDaily exposure strengthens neural pathways\nRegular practice builds automatic recall\nConsistent timing helps memory consolidation\n\nResearch shows daily practice is 3x more effective than cramming sessions.',
-        icon: 'flame',
-      },
-      {
-        title: 'Memory & Spaced Repetition',
-        content:
-          'Your brain forgets information predictably without reinforcement.\n\nDaily practice fights the forgetting curve\nOptimal spacing requires consistent timing\nSkipping days disrupts memory consolidation\nRegular practice builds long-term retention\n\nConsistency is more important than session length.',
-        icon: 'analytics',
-      },
-      {
-        title: 'Building Your Streak',
-        content:
-          'Start small and build momentum:\n\nBegin with just 2-3 words daily\nLink practice to existing routines\nConsistency beats intensity for retention\nMissing one day breaks the memory rhythm\n\nEvery streak begins with a single day of practice.',
-        icon: 'trophy',
-      },
-    ],
-    tips: [
-      'Daily practice is 3x more effective than weekly cramming',
-      'Even 5 minutes daily builds stronger memories than long irregular sessions',
-      'Consistent timing helps your brain expect and retain information',
-      'Missing days forces you to relearn instead of building on progress',
     ],
   },
   mastery: {
@@ -172,37 +139,6 @@ const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
       'Green zones indicate stable retention',
       'Red zones require immediate review',
       'Consistent practice prevents steep drops',
-    ],
-  },
-  difficulty: {
-    title: 'Challenge Level',
-    subtitle:
-      'Which words are hardest for you to remember.\n\nThis identifies your learning challenges and helps focus your effort where it matters most.',
-    sections: [
-      {
-        title: 'Difficulty Categories',
-        content:
-          'Easy: Quick to learn and remember\nMedium: Moderate effort required\nStruggling: Need extra attention and practice\n\nEveryone has different difficulty patterns based on background and learning style.',
-        icon: 'bar-chart',
-      },
-      {
-        title: 'Struggling Words',
-        content:
-          'Words that consistently challenge you.\n\nThese may need:\nMore frequent review\nDifferent learning techniques\nAdditional context or examples\n\nClick bars to explore specific difficulty levels.',
-        icon: 'alert-circle',
-      },
-      {
-        title: 'Difficulty Balance',
-        content:
-          'Ideal vocabulary has mixed difficulty levels:\n\nToo easy: Limited growth\nToo struggling: Overwhelming\nBalanced: Optimal challenge\n\nAdjust your word selection based on this distribution.',
-        icon: 'scale',
-      },
-    ],
-    tips: [
-      'Use easy words as confidence builders',
-      'Gradually introduce challenging vocabulary',
-      'Break down hard words into smaller parts',
-      'Focus on high-frequency words first',
     ],
   },
   efficiency: {
@@ -459,117 +395,117 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
   },
-  modalContainer: {
+  closeButton: {
+    alignItems: 'center',
+    flexShrink: 0,
+    height: 38,
+    justifyContent: 'center',
+    width: 38,
+  },
+  content: {
+    backgroundColor: 'transparent',
     flex: 1,
-    justifyContent: 'flex-end',
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+  },
+  contentContainer: {
+    padding: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.SPACING.LARGE,
+    paddingRight: LAYOUT.SPACING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+  },
+  extendedSubtitle: {
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
+  },
+  header: {
+    alignItems: 'flex-start',
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    flexShrink: 0,
+    justifyContent: 'space-between',
+    padding: LAYOUT.SPACING.LARGE,
     paddingBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  headerContent: {
+    flex: 1,
+    marginRight: LAYOUT.SPACING.MEDIUM,
   },
   modal: {
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    display: 'flex',
+    elevation: LAYOUT.ELEVATION.MEDIUM,
     maxHeight: '70%',
+    overflow: 'hidden',
     shadowOffset: {
       width: 0,
       height: -4,
     },
     shadowOpacity: LAYOUT.OPACITY.LIGHT,
     shadowRadius: 12,
-    elevation: LAYOUT.ELEVATION.MEDIUM,
-    overflow: 'hidden',
-    display: 'flex',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    padding: LAYOUT.SPACING.LARGE,
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
     paddingBottom: LAYOUT.SPACING.MEDIUM,
-    borderBottomWidth: 1,
-    flexShrink: 0,
-  },
-  headerContent: {
-    flex: 1,
-    marginRight: LAYOUT.SPACING.MEDIUM,
-  },
-  title: {
-    marginBottom: LAYOUT.SPACING.XSMALL,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.2,
-  },
-  subtitle: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
-  },
-  closeButton: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  content: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  contentContainer: {
-    padding: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.LARGE,
-    paddingRight: LAYOUT.SPACING.MEDIUM,
-  },
-  extendedSubtitle: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
-  },
-  sectionsContainer: {
-    marginTop: LAYOUT.SPACING.LARGE,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   section: {
     marginBottom: LAYOUT.SPACING.LARGE,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  sectionIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    marginRight: LAYOUT.SPACING.SMALL,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sectionTitle: {
-    flex: 1,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.2,
   },
   sectionContent: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.5,
     marginLeft: LAYOUT.SPACING.LARGE + LAYOUT.SPACING.SMALL, // Align with title
   },
-  tipsContainer: {
-    marginTop: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    borderTopWidth: 1,
+  sectionHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
-  tipsTitle: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+  sectionIcon: {
+    alignItems: 'center',
+    borderRadius: 16,
+    height: 32,
+    justifyContent: 'center',
+    marginRight: LAYOUT.SPACING.SMALL,
+    width: 32,
+  },
+  sectionTitle: {
+    flex: 1,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.2,
   },
+  sectionsContainer: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.LARGE,
+  },
+  subtitle: {
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
+  },
   tip: {
-    flexDirection: 'row',
     alignItems: 'flex-start',
+    flexDirection: 'row',
     marginBottom: LAYOUT.SPACING.SMALL,
     paddingLeft: LAYOUT.SPACING.SMALL,
   },
   tipBullet: {
-    width: 6,
-    height: 6,
     borderRadius: 3,
+    height: 6,
     marginRight: LAYOUT.SPACING.SMALL,
-    marginTop: LAYOUT.SPACING.SMALL, // Align with text baseline
+    marginTop: LAYOUT.SPACING.SMALL,
+    width: 6, // Align with text baseline
   },
   tipText: {
     flex: 1,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.5,
+  },
+  tipsContainer: {
+    borderTopWidth: 1,
+    marginTop: LAYOUT.SPACING.LARGE,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+  },
+  tipsTitle: {
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.2,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  title: {
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.2,
+    marginBottom: LAYOUT.SPACING.XSMALL,
   },
 });

@@ -31,9 +31,9 @@ import React, { useState, useEffect, memo, useCallback } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
+import { MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { lightFeedback } from '@/utils/haptics';
-import { MIN_TOUCH_TARGET } from '@/constants/layout';
 
 interface ChartTooltip {
   x: number;
@@ -161,20 +161,20 @@ export const useChartTooltip = (autoHideDelay: number = 3000) => {
 
 const styles = StyleSheet.create({
   tooltip: {
-    position: 'absolute',
-    padding: 8,
-    borderWidth: 1,
     borderRadius: 8,
+    borderWidth: 1,
+    elevation: 4,
+    padding: 8,
+    position: 'absolute',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
-    elevation: 4,
+  },
+  tooltipLabel: {
+    fontSize: 14,
   },
   tooltipValue: {
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  tooltipLabel: {
-    fontSize: 14,
   },
 });

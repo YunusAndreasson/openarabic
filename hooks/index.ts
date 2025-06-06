@@ -2,7 +2,6 @@
 export * from './animations/useOpacityAnimation';
 export * from './animations/usePressAnimation';
 export * from './animations/useTransformAnimation';
-export * from './animations/useComponentAnimation';
 export * from './animations/useToggleAnimation';
 export * from './animations/useProgressAnimation';
 
@@ -14,7 +13,6 @@ export * from './useColors';
 export * from './useThemeDetection';
 
 // Data hooks
-export * from './useGraphData';
 export * from './useFSRS';
 
 // Media hooks

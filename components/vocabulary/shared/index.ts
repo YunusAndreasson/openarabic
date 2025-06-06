@@ -1,6 +1,8 @@
 // Enhanced chart components with standardized patterns
 export { BaseChart } from './BaseChart';
 export { ChartCanvas, type DataPoint } from './ChartCanvas';
+export { ChartGrid } from './ChartGrid';
+export { ChartAxes, Y_AXIS_WIDTH } from './ChartAxes';
 
 // Chart building blocks
 export { CardHeader } from './CardHeader';
