@@ -1,29 +1,29 @@
 // External Libraries
 import { Ionicons } from '@expo/vector-icons';
 import { useHeaderHeight } from '@react-navigation/elements';
+import Constants from 'expo-constants';
+import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React, { useCallback, memo, useMemo, useEffect, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
-import Constants from 'expo-constants';
-import pkg from '../../package.json';
-import * as Linking from 'expo-linking';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BaseCard from '@/components/BaseCard';
+import SectionTitle from '@/components/SectionTitle';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import { Toggle } from '@/components/Toggle';
 import { TimePicker } from '@/components/TimePicker';
-import { LAYOUT } from '@/constants/layout';
-import { MIN_TOUCH_TARGET } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
+import { Toggle } from '@/components/Toggle';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useAuth } from '@/hooks/useAuth';
+import { useColors } from '@/hooks/useColors';
 import { useReminders } from '@/hooks/useReminders';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
 import { lightFeedback } from '@/utils/haptics';
-import SectionTitle from '@/components/SectionTitle';
+
+import pkg from '../../package.json';
 
 // Memoized components
 interface SettingLabelProps {
@@ -204,26 +204,9 @@ const AccountScreen: React.FC = () => {
           showsVerticalScrollIndicator: false,
         }}
       >
-        {/* Appearance Section */}
-        <View style={styles.appearanceWrapper}>
-          <SectionTitle title="Appearance" isFirstSection={true} />
-          <BaseCard
-            style={styles.sectionContainer}
-            shadowSize="small"
-            includePressAnimation={false}
-          >
-            <View style={styles.appearanceLinksContainer}>
-              <View style={styles.settingRow}>
-                <SettingLabel icon="moon" text="Dark Mode" iconColor={colors.icon} />
-                <ThemeToggle />
-              </View>
-            </View>
-          </BaseCard>
-        </View>
-
-        {/* Notifications Section */}
+        {/* Notifications Section - Moved to top as most frequently used */}
         <View style={styles.remindersWrapper}>
-          <SectionTitle title="Notifications" />
+          <SectionTitle title="Notifications" isFirstSection={true} />
           <BaseCard
             style={styles.sectionContainer}
             shadowSize="small"
@@ -260,7 +243,84 @@ const AccountScreen: React.FC = () => {
           </BaseCard>
         </View>
 
-        {/* Connect Section */}
+        {/* Appearance Section - Second most frequently used */}
+        <View style={styles.appearanceWrapper}>
+          <SectionTitle title="Appearance" />
+          <BaseCard
+            style={styles.sectionContainer}
+            shadowSize="small"
+            includePressAnimation={false}
+          >
+            <View style={styles.appearanceLinksContainer}>
+              <View style={styles.settingRow}>
+                <SettingLabel icon="moon" text="Dark Mode" iconColor={colors.icon} />
+                <ThemeToggle />
+              </View>
+            </View>
+          </BaseCard>
+        </View>
+
+        {/* Science Section - Educational content, valuable for understanding */}
+        <View style={styles.infoWrapper}>
+          <SectionTitle title="Science" />
+          <BaseCard
+            style={styles.sectionContainer}
+            shadowSize="small"
+            includePressAnimation={false}
+          >
+            <View style={styles.actionLinksContainer}>
+              <BaseCard
+                onPress={() => router.push('/learning-method')}
+                style={styles.actionLinkCard}
+                shadowSize="none"
+                includePressAnimation={true}
+              >
+                <View style={styles.actionLinkContent}>
+                  <View style={styles.actionLinkLeft}>
+                    <View style={styles.actionIconContainer}>
+                      <Ionicons name="school-outline" size={22} color={colors.icon} />
+                    </View>
+                    <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
+                      The Science of Language Learning
+                    </ThemedText>
+                  </View>
+                  <Ionicons
+                    name="chevron-forward-outline"
+                    size={20}
+                    color={colors.textTertiary}
+                    style={styles.actionLinkChevron}
+                  />
+                </View>
+              </BaseCard>
+
+              <BaseCard
+                onPress={() => router.push('/classical-texts')}
+                style={styles.actionLinkCard}
+                shadowSize="none"
+                includePressAnimation={true}
+              >
+                <View style={styles.actionLinkContent}>
+                  <View style={styles.actionLinkLeft}>
+                    <View style={styles.actionIconContainer}>
+                      <Ionicons name="library-outline" size={22} color={colors.icon} />
+                    </View>
+                    <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
+                      Why Classical Texts Work Best
+                    </ThemedText>
+                  </View>
+                  <Ionicons
+                    name="chevron-forward-outline"
+                    size={20}
+                    color={colors.textTertiary}
+                    style={styles.actionLinkChevron}
+                  />
+                </View>
+              </BaseCard>
+            </View>
+          </BaseCard>
+        </View>
+
+        {/* Connect Section - Social links, less frequently used */}
         <View style={styles.connectWrapper}>
           <SectionTitle title="Connect" />
           <BaseCard
@@ -368,67 +428,7 @@ const AccountScreen: React.FC = () => {
           </BaseCard>
         </View>
 
-        {/* Science Section */}
-        <View style={styles.infoWrapper}>
-          <SectionTitle title="Science" />
-          <BaseCard
-            style={styles.sectionContainer}
-            shadowSize="small"
-            includePressAnimation={false}
-          >
-            <View style={styles.actionLinksContainer}>
-              <BaseCard
-                onPress={() => router.push('/learning-method')}
-                style={styles.actionLinkCard}
-                shadowSize="none"
-                includePressAnimation={true}
-              >
-                <View style={styles.actionLinkContent}>
-                  <View style={styles.actionLinkLeft}>
-                    <View style={styles.actionIconContainer}>
-                      <Ionicons name="school-outline" size={22} color={colors.icon} />
-                    </View>
-                    <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
-                      The Science of Language Learning
-                    </ThemedText>
-                  </View>
-                  <Ionicons
-                    name="chevron-forward-outline"
-                    size={20}
-                    color={colors.textTertiary}
-                    style={styles.actionLinkChevron}
-                  />
-                </View>
-              </BaseCard>
-
-              <BaseCard
-                onPress={() => router.push('/classical-texts')}
-                style={styles.actionLinkCard}
-                shadowSize="none"
-                includePressAnimation={true}
-              >
-                <View style={styles.actionLinkContent}>
-                  <View style={styles.actionLinkLeft}>
-                    <View style={styles.actionIconContainer}>
-                      <Ionicons name="library-outline" size={22} color={colors.icon} />
-                    </View>
-                    <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
-                      Why Classical Texts Work Best
-                    </ThemedText>
-                  </View>
-                  <Ionicons
-                    name="chevron-forward-outline"
-                    size={20}
-                    color={colors.textTertiary}
-                    style={styles.actionLinkChevron}
-                  />
-                </View>
-              </BaseCard>
-            </View>
-          </BaseCard>
-        </View>
-
-        {/* Manage Section */}
+        {/* Manage Section - Kept at bottom as destructive action */}
         <View style={styles.manageWrapper}>
           <SectionTitle title="Manage" />
           <BaseCard
@@ -500,37 +500,27 @@ const AccountScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  flexOne: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
-  scrollView: {
-    flex: 1,
-  },
-
-  // Account Header Styles
-  accountHeaderWrapper: {
-    marginBottom: LAYOUT.SPACING.XLARGE,
-  },
-  accountContainer: {
+  // Common Section Container Styles
+  sectionContainer: {
     overflow: 'hidden',
   },
-  accountLinksContainer: {
+
+  // Common Links Container Styles
+  actionLinksContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
   },
+  socialLinksContainer: {
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+
+  // Action Link Styles
   actionLinkCard: {
     borderRadius: LAYOUT.BORDER_RADIUS.NONE,
     borderWidth: LAYOUT.BORDER.WIDTH.NONE,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     marginBottom: 0,
     minHeight: MIN_TOUCH_TARGET.SIZE,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
   actionLinkContent: {
     alignItems: 'center',
@@ -544,23 +534,40 @@ const styles = StyleSheet.create({
     paddingRight: LAYOUT.SPACING.SMALL,
   },
   actionIconContainer: {
-    padding: LAYOUT.SPACING.XSMALL,
     alignItems: 'center',
     justifyContent: 'center',
+    padding: LAYOUT.SPACING.XSMALL,
   },
   actionLinkText: {
     marginLeft: LAYOUT.SPACING.SMALL,
   },
   actionLinkChevron: {
-    opacity: LAYOUT.OPACITY.MEDIUM,
-    minWidth: LAYOUT.SPACING.XLARGE,
-    textAlign: 'center',
     marginRight: LAYOUT.SPACING.XSMALL,
+    minWidth: LAYOUT.SPACING.XLARGE,
+    opacity: LAYOUT.OPACITY.MEDIUM,
+    textAlign: 'center',
   },
 
-  // Section Styles
-  sectionTitle: {
+  // Preferences Styles
+  appearanceWrapper: {
+    // Remove marginBottom - SectionTitle handles section spacing
+  },
+
+  // Appearance Links Styles
+  appearanceLinksContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
+  },
+
+  // App Footer Styles
+  appFooterWrapper: {
+    alignItems: 'center',
+    marginBottom: LAYOUT.SPACING.XLARGE,
+    marginTop: LAYOUT.SPACING.XXLARGE,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  },
+  appFooterContent: {
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.XSMALL,
   },
 
   // Setting Row Styles
@@ -568,9 +575,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    minHeight: MIN_TOUCH_TARGET.SIZE,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
-    minHeight: MIN_TOUCH_TARGET.SIZE,
   },
   settingLabelContainer: {
     alignItems: 'center',
@@ -585,30 +592,23 @@ const styles = StyleSheet.create({
     width: '100%',
   },
 
-  // Common Section Container Styles
-  sectionContainer: {
-    overflow: 'hidden',
+  container: {
+    flex: 1,
   },
 
-  // Common Links Container Styles
-  linksContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  actionLinksContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  socialLinksContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-
-  // Preferences Styles
-  appearanceWrapper: {
+  // Connect Styles
+  connectWrapper: {
     // Remove marginBottom - SectionTitle handles section spacing
   },
 
-  // Appearance Links Styles
-  appearanceLinksContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
+  copyrightText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+    letterSpacing: 0.3,
+    opacity: LAYOUT.OPACITY.MEDIUM,
+  },
+
+  flexOne: {
+    flex: 1,
   },
 
   // Information Section Styles
@@ -616,9 +616,12 @@ const styles = StyleSheet.create({
     // Remove marginBottom - SectionTitle handles section spacing
   },
 
-  // Connect Styles
-  connectWrapper: {
+  // Manage Section Styles
+  manageWrapper: {
     // Remove marginBottom - SectionTitle handles section spacing
+  },
+  manageLinksContainer: {
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
 
   // Reminders Styles
@@ -629,19 +632,14 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.SMALL,
   },
 
-  // Time Picker Styles
-  timePickerSettingRow: {
-    borderRadius: LAYOUT.BORDER_RADIUS.NONE,
-    borderWidth: LAYOUT.BORDER.WIDTH.NONE,
+  scrollContent: {
+    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  },
+  scrollView: {
+    flex: 1,
   },
 
-  // Manage Section Styles
-  manageWrapper: {
-    // Remove marginBottom - SectionTitle handles section spacing
-  },
-  manageLinksContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
   signOutTextContainer: {
     flexDirection: 'column',
     marginLeft: LAYOUT.SPACING.SMALL,
@@ -649,18 +647,15 @@ const styles = StyleSheet.create({
   signOutTitleText: {
     // No additional margin needed since container handles spacing
   },
-  userEmailText: {
-    marginTop: LAYOUT.SPACING.TINY,
-  },
 
   // Social Link Styles (similar to action links but kept separate for clarity)
   socialLinkCard: {
     borderRadius: LAYOUT.BORDER_RADIUS.NONE,
     borderWidth: LAYOUT.BORDER.WIDTH.NONE,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     marginBottom: 0,
     minHeight: MIN_TOUCH_TARGET.SIZE,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
   socialLinkContent: {
     alignItems: 'center',
@@ -674,39 +669,33 @@ const styles = StyleSheet.create({
     paddingRight: LAYOUT.SPACING.SMALL,
   },
   socialIconContainer: {
-    padding: LAYOUT.SPACING.XSMALL,
     alignItems: 'center',
     justifyContent: 'center',
+    padding: LAYOUT.SPACING.XSMALL,
   },
   socialLinkText: {
     marginLeft: LAYOUT.SPACING.SMALL,
   },
   socialLinkChevron: {
-    opacity: LAYOUT.OPACITY.MEDIUM,
-    minWidth: LAYOUT.SPACING.XLARGE,
-    textAlign: 'center',
     marginRight: LAYOUT.SPACING.XSMALL,
+    minWidth: LAYOUT.SPACING.XLARGE,
+    opacity: LAYOUT.OPACITY.MEDIUM,
+    textAlign: 'center',
   },
 
-  // App Footer Styles
-  appFooterWrapper: {
-    alignItems: 'center',
-    marginTop: LAYOUT.SPACING.XXLARGE,
-    marginBottom: LAYOUT.SPACING.XLARGE,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  // Time Picker Styles
+  timePickerSettingRow: {
+    borderRadius: LAYOUT.BORDER_RADIUS.NONE,
+    borderWidth: LAYOUT.BORDER.WIDTH.NONE,
   },
-  appFooterContent: {
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.XSMALL,
+
+  userEmailText: {
+    marginTop: LAYOUT.SPACING.TINY,
   },
+
   versionText: {
     letterSpacing: 0.4,
     opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
-  },
-  copyrightText: {
-    letterSpacing: 0.3,
-    opacity: LAYOUT.OPACITY.MEDIUM,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
   },
 });
 
