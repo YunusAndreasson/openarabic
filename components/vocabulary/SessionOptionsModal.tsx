@@ -20,8 +20,8 @@ import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { lightFeedback, mediumFeedback } from '@/utils/haptics';
 
-import { ThemedText } from '../ThemedText';
 import BaseCard from '../BaseCard';
+import { ThemedText } from '../ThemedText';
 
 interface SessionOption {
   id: string;
@@ -30,24 +30,21 @@ interface SessionOption {
   icon: keyof typeof Ionicons.glyphMap;
   iconColor: string;
   onPress: () => void;
-  disabled?: boolean;
 }
 
 interface SessionOptionsModalProps {
   visible: boolean;
   onClose: () => void;
   dueWordsCount: number;
-  strugglingWordsCount: number;
-  onStartPractice: (wordType: 'due' | 'struggling') => void;
-  onStartListen: (wordType: 'due' | 'struggling') => void;
+  onStartReview: () => void;
+  onStartListen: () => void;
 }
 
 export default memo(function SessionOptionsModal({
   visible,
   onClose,
   dueWordsCount,
-  strugglingWordsCount,
-  onStartPractice,
+  onStartReview,
   onStartListen,
 }: SessionOptionsModalProps) {
   const colors = useColors();
@@ -97,39 +94,28 @@ export default memo(function SessionOptionsModal({
     callback();
   };
 
-  // Session options configuration
+  // Simple session options - just Visual or Audio
   const sessionOptions: SessionOption[] = [
     {
-      id: 'practice-due',
-      title: `Practice ${dueWordsCount} Due Words`,
-      subtitle: `Stay on track with words ready for review`,
-      icon: 'checkmark-circle-outline',
-      iconColor: colors.warning,
-      onPress: () => handleOptionPress(() => onStartPractice('due')),
-      disabled: dueWordsCount === 0,
+      id: 'visual-review',
+      title: 'Visual Review',
+      subtitle: 'Swipe through your due words',
+      icon: 'eye-outline',
+      iconColor: colors.tint,
+      onPress: () => handleOptionPress(onStartReview),
     },
     {
-      id: 'practice-struggling',
-      title: `Practice ${strugglingWordsCount} Hard Words`,
-      subtitle: `Focus on words you find challenging`,
-      icon: 'trending-up-outline',
-      iconColor: colors.error,
-      onPress: () => handleOptionPress(() => onStartPractice('struggling')),
-      disabled: strugglingWordsCount === 0,
-    },
-    {
-      id: 'listen-struggling',
-      title: `Listen to ${strugglingWordsCount} Hard Words`,
-      subtitle: `Hear pronunciation on the go`,
+      id: 'audio-review',
+      title: 'Audio Review',
+      subtitle: 'Listen to pronunciation',
       icon: 'headset-outline',
       iconColor: colors.info,
-      onPress: () => handleOptionPress(() => onStartListen('struggling')),
-      disabled: strugglingWordsCount === 0,
+      onPress: () => handleOptionPress(onStartListen),
     },
   ];
 
-  // Check if we have any available options
-  const hasAvailableOptions = sessionOptions.some(option => !option.disabled);
+  // Check if we have any words to practice
+  const hasWordsToStudy = dueWordsCount > 0;
 
   if (!visible) {
     return null;
@@ -162,10 +148,10 @@ export default memo(function SessionOptionsModal({
               <View style={[styles.header, { borderBottomColor: colors.borderOverlay }]}>
                 <View style={styles.headerContent}>
                   <ThemedText type="heading2" weight="bold" style={styles.title}>
-                    Choose Practice Mode
+                    Choose Study Mode
                   </ThemedText>
                   <ThemedText type="body" variant="secondary" style={styles.subtitle}>
-                    Select how you want to study your vocabulary
+                    How would you like to practice your {dueWordsCount} due words?
                   </ThemedText>
                 </View>
                 <TouchableOpacity
@@ -179,7 +165,7 @@ export default memo(function SessionOptionsModal({
 
               {/* Options Grid */}
               <View style={styles.optionsContainer}>
-                {!hasAvailableOptions ? (
+                {!hasWordsToStudy ? (
                   <View style={styles.emptyState}>
                     <ThemedText type="body" variant="secondary" style={styles.emptyText}>
                       No words available for practice right now.
@@ -189,76 +175,61 @@ export default memo(function SessionOptionsModal({
                     </ThemedText>
                   </View>
                 ) : (
-                  sessionOptions.map((option, index) => {
-                    const isPrimaryAction = index === 0 && !option.disabled; // Due words is primary when available
-
-                    return (
-                      <TouchableOpacity
-                        key={option.id}
-                        onPress={option.disabled ? undefined : option.onPress}
-                        disabled={option.disabled}
-                        style={[styles.optionButton, isPrimaryAction && styles.primaryOption]}
-                        activeOpacity={0.7}
+                  sessionOptions.map((option, index) => (
+                    <TouchableOpacity
+                      key={option.id}
+                      onPress={option.onPress}
+                      style={[styles.optionButton, index === 0 && styles.primaryOption]}
+                      activeOpacity={0.7}
+                    >
+                      <BaseCard
+                        style={[styles.optionCard, index === 0 && styles.primaryCard]}
+                        shadowSize={index === 0 ? 'medium' : 'small'}
+                        includePressAnimation={false}
                       >
-                        <BaseCard
-                          style={[
-                            styles.optionCard,
-                            isPrimaryAction && styles.primaryCard,
-                            option.disabled && styles.disabledCard,
-                          ]}
-                          shadowSize={isPrimaryAction ? 'medium' : 'small'}
-                          includePressAnimation={false}
-                        >
-                          <View style={styles.optionContent}>
-                            <View
-                              style={[
-                                styles.iconContainer,
-                                { backgroundColor: option.iconColor + '20' },
-                                isPrimaryAction && styles.primaryIconContainer,
-                              ]}
-                            >
-                              <Ionicons
-                                name={option.icon}
-                                size={isPrimaryAction ? 26 : 24}
-                                color={option.disabled ? colors.textTertiary : option.iconColor}
-                              />
-                            </View>
-                            <View style={styles.textContainer}>
-                              <ThemedText
-                                type={isPrimaryAction ? 'heading3' : 'body'}
-                                weight="bold"
-                                style={[
-                                  styles.optionTitle,
-                                  option.disabled && { color: colors.textTertiary },
-                                ]}
-                                numberOfLines={2}
-                              >
-                                {option.title}
-                              </ThemedText>
-                              <ThemedText
-                                type="caption"
-                                variant="secondary"
-                                style={[
-                                  styles.optionSubtitle,
-                                  option.disabled && { color: colors.textTertiary },
-                                ]}
-                                numberOfLines={2}
-                              >
-                                {option.subtitle}
-                              </ThemedText>
-                            </View>
-                            <View style={styles.chevronContainer}>
-                              <Ionicons
-                                name="chevron-forward"
-                                size={isPrimaryAction ? 18 : 16}
-                                color={option.disabled ? colors.textTertiary : colors.secondaryText}
-                              />
-                            </View>
+                        <View style={styles.optionContent}>
+                          <View
+                            style={[
+                              styles.iconContainer,
+                              { backgroundColor: option.iconColor + '20' },
+                              index === 0 && styles.primaryIconContainer,
+                            ]}
+                          >
+                            <Ionicons
+                              name={option.icon}
+                              size={index === 0 ? 26 : 24}
+                              color={option.iconColor}
+                            />
                           </View>
-                        </BaseCard>
-                      </TouchableOpacity>
-                    );
-                  })
+                          <View style={styles.textContainer}>
+                            <ThemedText
+                              type={index === 0 ? 'heading3' : 'body'}
+                              weight="bold"
+                              style={styles.optionTitle}
+                              numberOfLines={2}
+                            >
+                              {option.title}
+                            </ThemedText>
+                            <ThemedText
+                              type="caption"
+                              variant="secondary"
+                              style={styles.optionSubtitle}
+                              numberOfLines={2}
+                            >
+                              {option.subtitle}
+                            </ThemedText>
+                          </View>
+                          <View style={styles.chevronContainer}>
+                            <Ionicons
+                              name="chevron-forward"
+                              size={index === 0 ? 18 : 16}
+                              color={colors.secondaryText}
+                            />
+                          </View>
+                        </View>
+                      </BaseCard>
+                    </TouchableOpacity>
+                  ))
                 )}
               </View>
             </View>
@@ -274,116 +245,113 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
   },
-  modalContainer: {
+  chevronContainer: {
+    alignItems: 'center',
+    height: 24,
+    justifyContent: 'center',
+    width: 24,
+  },
+  closeButton: {
+    alignItems: 'center',
+    flexShrink: 0,
+    height: 38,
+    justifyContent: 'center',
+    width: 38,
+  },
+  emptyState: {
+    alignItems: 'center',
     flex: 1,
-    justifyContent: 'flex-end',
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    justifyContent: 'center',
+    paddingVertical: LAYOUT.SPACING.XLARGE,
+  },
+  emptySubtext: {
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
+  },
+  emptyText: {
+    marginBottom: LAYOUT.SPACING.TINY,
+  },
+  header: {
+    alignItems: 'flex-start',
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: LAYOUT.SPACING.LARGE,
     paddingBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  headerContent: {
+    flex: 1,
+    marginRight: LAYOUT.SPACING.MEDIUM,
+  },
+  iconContainer: {
+    alignItems: 'center',
+    borderRadius: 24,
+    height: 48,
+    justifyContent: 'center',
+    marginRight: LAYOUT.SPACING.MEDIUM,
+    width: 48,
   },
   modal: {
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    elevation: LAYOUT.ELEVATION.MEDIUM,
+    overflow: 'hidden',
     shadowOffset: {
       width: 0,
       height: -4,
     },
     shadowOpacity: LAYOUT.OPACITY.LIGHT,
     shadowRadius: 12,
-    elevation: LAYOUT.ELEVATION.MEDIUM,
-    overflow: 'hidden',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    padding: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-    borderBottomWidth: 1,
-  },
-  headerContent: {
+  modalContainer: {
     flex: 1,
-    marginRight: LAYOUT.SPACING.MEDIUM,
-  },
-  title: {
-    marginBottom: LAYOUT.SPACING.XSMALL,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.2,
-  },
-  subtitle: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
-  },
-  closeButton: {
-    width: 38,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  optionsContainer: {
-    padding: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    gap: LAYOUT.SPACING.MEDIUM,
+    justifyContent: 'flex-end',
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   optionButton: {
     width: '100%',
   },
-  primaryOption: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
   optionCard: {
     width: '100%',
   },
-  primaryCard: {
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  disabledCard: {
-    opacity: 0.6,
-  },
   optionContent: {
+    alignItems: 'center',
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: LAYOUT.SPACING.MEDIUM,
     minHeight: 72,
+    padding: LAYOUT.SPACING.MEDIUM,
   },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: LAYOUT.SPACING.MEDIUM,
+  optionSubtitle: {
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
+  },
+  optionTitle: {
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.3,
+    marginBottom: LAYOUT.SPACING.TINY,
+  },
+  optionsContainer: {
+    gap: LAYOUT.SPACING.MEDIUM,
+    padding: LAYOUT.SPACING.LARGE,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+  },
+  primaryCard: {
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1,
+  },
+  primaryIconContainer: {
+    borderRadius: 26,
+    height: 52,
+    width: 52,
+  },
+  primaryOption: {
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  subtitle: {
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
   },
   textContainer: {
     flex: 1,
     marginRight: LAYOUT.SPACING.SMALL,
   },
-  optionTitle: {
-    marginBottom: LAYOUT.SPACING.TINY,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.3,
-  },
-  optionSubtitle: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
-  },
-  chevronContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 24,
-    height: 24,
-  },
-  primaryIconContainer: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: LAYOUT.SPACING.XLARGE,
-  },
-  emptyText: {
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
-  emptySubtext: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
+  title: {
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.2,
+    marginBottom: LAYOUT.SPACING.XSMALL,
   },
 });

@@ -144,10 +144,10 @@ export const VocabularyStatCards = memo(
       setModalType(null);
     }, []);
 
-    // Create smart category configuration - organized by learning priority
-    const categoryConfigs: WordCategoryConfig[] = useMemo(
+    // Create smart category configuration - organized by learning priority and grouped logically
+    const primaryCategories: WordCategoryConfig[] = useMemo(
       () => [
-        // 1. URGENT: Words that need immediate attention
+        // PRIMARY GROUP: Immediate Action Needed (most important)
         {
           value: wordCategories.dueWords,
           label: 'Due for Review',
@@ -156,7 +156,21 @@ export const VocabularyStatCards = memo(
           category: 'due',
           description: 'Words scheduled for review now',
         },
-        // 2. ACTIVE: Words being actively learned
+        {
+          value: wordCategories.strugglingWords,
+          label: 'Challenging',
+          iconColor: colors.warning,
+          bgColor: colors.buttonOverlay,
+          category: 'needsAttention',
+          description: 'Words that need extra attention',
+        },
+      ],
+      [wordCategories, colors]
+    );
+
+    const progressCategories: WordCategoryConfig[] = useMemo(
+      () => [
+        // PROGRESS GROUP: Learning Status (secondary importance)
         {
           value: wordCategories.learningWords,
           label: 'In Progress',
@@ -165,25 +179,6 @@ export const VocabularyStatCards = memo(
           category: 'learning',
           description: 'Words you are actively learning',
         },
-        // 3. CHALLENGE: Words that need extra attention
-        {
-          value: wordCategories.strugglingWords,
-          label: 'Challenging',
-          iconColor: colors.warning,
-          bgColor: colors.buttonOverlay,
-          category: 'needsAttention',
-          description: 'Words that are difficult to remember',
-        },
-        // 4. NEW: Recently added words
-        {
-          value: wordCategories.recentlyAdded,
-          label: 'Recently Added',
-          iconColor: colors.tint,
-          bgColor: colors.buttonOverlay,
-          category: 'total',
-          description: 'Words added in the last week',
-        },
-        // 5. SUCCESS: All mastered words combined
         {
           value: wordCategories.masteredWords + wordCategories.longTermRetention,
           label: 'Mastered',
@@ -191,6 +186,21 @@ export const VocabularyStatCards = memo(
           bgColor: colors.buttonOverlay,
           category: 'mastered',
           description: 'Words you have successfully learned',
+        },
+      ],
+      [wordCategories, colors]
+    );
+
+    const activityCategories: WordCategoryConfig[] = useMemo(
+      () => [
+        // ACTIVITY GROUP: Recent Activity (tertiary importance)
+        {
+          value: wordCategories.recentlyAdded,
+          label: 'Recently Added',
+          iconColor: colors.tint,
+          bgColor: colors.buttonOverlay,
+          category: 'total',
+          description: 'Words added in the last week',
         },
       ],
       [wordCategories, colors]
@@ -210,48 +220,151 @@ export const VocabularyStatCards = memo(
           <MemoryCapacityGauge studyWords={validatedInput.studyWords} onStatPress={onStatPress} />
         </View>
 
-        {/* Word Categories - Clean exploration interface */}
+        {/* Word Categories - Clean exploration interface with grouped sections */}
         <View style={styles.section}>
           <SectionTitle title="Explore Your Words" />
-          <View style={styles.categoriesList}>
-            {categoryConfigs
-              .filter(config => config.value > 0 || config.category === 'mastered') // Always show mastered category
-              .map((config, index) => (
-                <TouchableOpacity
-                  key={config.category}
-                  style={[styles.categoryRow, { backgroundColor: config.bgColor }]}
-                  onPress={() => onStatPress?.(config.category)}
-                  activeOpacity={0.7}
-                  accessibilityLabel={`Browse ${config.label}: ${config.value} words`}
-                  accessibilityRole="button"
-                >
-                  {/* Number Badge */}
-                  <View style={[styles.numberBadge, { backgroundColor: config.iconColor }]}>
-                    <ThemedText style={styles.numberText}>{config.value}</ThemedText>
-                  </View>
 
-                  {/* Content */}
-                  <View style={styles.categoryContent}>
-                    <ThemedText style={styles.categoryLabel}>{config.label}</ThemedText>
-                    <ThemedText
-                      type="caption"
-                      variant="secondary"
-                      style={styles.categoryDescription}
+          {/* Primary Actions - Most Important */}
+          {primaryCategories.some(config => config.value > 0) && (
+            <View style={styles.categoryGroup}>
+              <ThemedText type="caption" variant="secondary" style={styles.groupLabel}>
+                REQUIRES ATTENTION
+              </ThemedText>
+              <View style={styles.categoriesList}>
+                {primaryCategories
+                  .filter(config => config.value > 0)
+                  .map((config, index) => (
+                    <TouchableOpacity
+                      key={config.category}
+                      style={[styles.categoryRow, { backgroundColor: config.bgColor }]}
+                      onPress={() => onStatPress?.(config.category)}
+                      activeOpacity={0.7}
+                      accessibilityLabel={`Browse ${config.label}: ${config.value} words`}
+                      accessibilityRole="button"
                     >
-                      {config.description}
-                    </ThemedText>
-                  </View>
+                      {/* Number Badge */}
+                      <View style={[styles.numberBadge, { backgroundColor: config.iconColor }]}>
+                        <ThemedText style={styles.numberText}>{config.value}</ThemedText>
+                      </View>
 
-                  {/* Chevron */}
-                  <Ionicons
-                    name="chevron-forward"
-                    size={16}
-                    color={colors.secondaryText}
-                    style={styles.chevron}
-                  />
-                </TouchableOpacity>
-              ))}
+                      {/* Content */}
+                      <View style={styles.categoryContent}>
+                        <ThemedText style={styles.categoryLabel}>{config.label}</ThemedText>
+                        <ThemedText
+                          type="caption"
+                          variant="secondary"
+                          style={styles.categoryDescription}
+                        >
+                          {config.description}
+                        </ThemedText>
+                      </View>
+
+                      {/* Chevron */}
+                      <Ionicons
+                        name="chevron-forward"
+                        size={16}
+                        color={colors.secondaryText}
+                        style={styles.chevron}
+                      />
+                    </TouchableOpacity>
+                  ))}
+              </View>
+            </View>
+          )}
+
+          {/* Progress Overview - Learning Status */}
+          <View style={styles.categoryGroup}>
+            <ThemedText type="caption" variant="secondary" style={styles.groupLabel}>
+              LEARNING PROGRESS
+            </ThemedText>
+            <View style={styles.categoriesList}>
+              {progressCategories
+                .filter(config => config.value > 0 || config.category === 'mastered') // Always show mastered
+                .map((config, index) => (
+                  <TouchableOpacity
+                    key={config.category}
+                    style={[styles.categoryRow, { backgroundColor: config.bgColor }]}
+                    onPress={() => onStatPress?.(config.category)}
+                    activeOpacity={0.7}
+                    accessibilityLabel={`Browse ${config.label}: ${config.value} words`}
+                    accessibilityRole="button"
+                  >
+                    {/* Number Badge */}
+                    <View style={[styles.numberBadge, { backgroundColor: config.iconColor }]}>
+                      <ThemedText style={styles.numberText}>{config.value}</ThemedText>
+                    </View>
+
+                    {/* Content */}
+                    <View style={styles.categoryContent}>
+                      <ThemedText style={styles.categoryLabel}>{config.label}</ThemedText>
+                      <ThemedText
+                        type="caption"
+                        variant="secondary"
+                        style={styles.categoryDescription}
+                      >
+                        {config.description}
+                      </ThemedText>
+                    </View>
+
+                    {/* Chevron */}
+                    <Ionicons
+                      name="chevron-forward"
+                      size={16}
+                      color={colors.secondaryText}
+                      style={styles.chevron}
+                    />
+                  </TouchableOpacity>
+                ))}
+            </View>
           </View>
+
+          {/* Recent Activity - Optional/Tertiary */}
+          {activityCategories.some(config => config.value > 0) && (
+            <View style={styles.categoryGroup}>
+              <ThemedText type="caption" variant="secondary" style={styles.groupLabel}>
+                RECENT ACTIVITY
+              </ThemedText>
+              <View style={styles.categoriesList}>
+                {activityCategories
+                  .filter(config => config.value > 0)
+                  .map((config, index) => (
+                    <TouchableOpacity
+                      key={config.category}
+                      style={[styles.categoryRow, { backgroundColor: config.bgColor }]}
+                      onPress={() => onStatPress?.(config.category)}
+                      activeOpacity={0.7}
+                      accessibilityLabel={`Browse ${config.label}: ${config.value} words`}
+                      accessibilityRole="button"
+                    >
+                      {/* Number Badge */}
+                      <View style={[styles.numberBadge, { backgroundColor: config.iconColor }]}>
+                        <ThemedText style={styles.numberText}>{config.value}</ThemedText>
+                      </View>
+
+                      {/* Content */}
+                      <View style={styles.categoryContent}>
+                        <ThemedText style={styles.categoryLabel}>{config.label}</ThemedText>
+                        <ThemedText
+                          type="caption"
+                          variant="secondary"
+                          style={styles.categoryDescription}
+                        >
+                          {config.description}
+                        </ThemedText>
+                      </View>
+
+                      {/* Chevron */}
+                      <Ionicons
+                        name="chevron-forward"
+                        size={16}
+                        color={colors.secondaryText}
+                        style={styles.chevron}
+                      />
+                    </TouchableOpacity>
+                  ))}
+              </View>
+            </View>
+          )}
         </View>
 
         {/* Info Modal */}
@@ -275,6 +388,9 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     marginTop: 2,
   },
+  categoryGroup: {
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
   categoryLabel: {
     fontSize: 16,
     fontWeight: '600',
@@ -292,6 +408,11 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  groupLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   numberBadge: {
     alignItems: 'center',
