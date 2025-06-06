@@ -99,28 +99,3 @@ export const handleError = async (
     // Silent fail if error handling itself fails
   }
 };
-
-// Pre-configured error handlers for common scenarios
-export const handleAuthError = (error: Error | string): Promise<void> =>
-  handleError(error, {
-    toastMessage: 'Authentication error occurred',
-    toastType: 'error',
-    analyticsEventName: 'Auth_Error',
-    sentrySeverity: 'warning',
-  });
-
-export const handleNetworkError = (error: Error | string): Promise<void> =>
-  handleError(error, {
-    toastMessage: 'Network error occurred',
-    toastType: 'error',
-    analyticsEventName: 'Network_Error',
-    sentrySeverity: 'warning',
-  });
-
-export const handleAPIError = (error: Error | string): Promise<void> =>
-  handleError(error, {
-    toastMessage: 'Service temporarily unavailable',
-    toastType: 'error',
-    analyticsEventName: 'API_Error',
-    sentrySeverity: 'error',
-  });

@@ -55,14 +55,3 @@ export const errorFeedback = (): void => {
   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
 };
 
-/**
- * Warning feedback for attention-requiring states like:
- * - Caution messages
- * - Confirmations needed
- */
-export const warningFeedback = (): void => {
-  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-};
-
-// Legacy exports for backward compatibility
-export const extraLightFeedback = selectionFeedback;

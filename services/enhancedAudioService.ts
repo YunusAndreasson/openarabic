@@ -73,19 +73,4 @@ export const enhancedAudioService = {
     }
   },
 
-  /**
-   * Gets enhanced audio track for a single article
-   */
-  async getArticleEnhancedTrack(articleId: number): Promise<EnhancedAudioTrack | null> {
-    try {
-      return await this.generateEnhancedAudioTrack(articleId);
-    } catch (error) {
-      await handleError(error instanceof Error ? error : new Error(String(error)), {
-        toastMessage: 'Error fetching enhanced audio track for article',
-        analyticsEventName: 'Enhanced_Audio_Track_Error',
-        sentrySeverity: 'error',
-      });
-      return null;
-    }
-  },
 };
