@@ -1,6 +1,7 @@
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
 import React, { useState, useCallback, JSX } from 'react';
 import { StyleSheet, RefreshControl, ScrollView, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,6 +30,7 @@ export default function VocabularyScreen(): JSX.Element {
   const { prefetchVocabularyData } = useAppPreloader();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   // Add state for refresh control and session options modal
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -100,10 +102,7 @@ export default function VocabularyScreen(): JSX.Element {
   // Handle starting a listen session
   const handleStartListen = () => {
     if (!user) return;
-    navigateTo({
-      pathname: '/listen',
-      params: { fromRemember: 'true' },
-    });
+    router.push('/practice?fromRemember=true');
   };
 
   // Handle stat press events

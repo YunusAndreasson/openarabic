@@ -322,7 +322,7 @@ export default function ListenScreen(): JSX.Element {
         onClose={handleClose}
         title="Session Complete!"
         subtitle="All words practiced"
-        buttonText="Close"
+        buttonText="Continue"
         buttonVariant="outlined"
         iconName="checkmark-circle-outline"
         iconSize={120}
@@ -358,11 +358,11 @@ export default function ListenScreen(): JSX.Element {
           <View style={styles.noteContainer}>
             <Ionicons
               name="information-circle-outline"
-              size={16}
-              color={colors.interactiveSecondary}
+              size={18}
+              color={colors.tint}
               style={styles.noteIcon}
             />
-            <ThemedText style={styles.noteText}>Audio continues with screen off</ThemedText>
+            <ThemedText style={styles.noteText}>Continues playing with screen off</ThemedText>
           </View>
         </View>
       </View>
@@ -395,17 +395,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    opacity: 0.6,
+    opacity: 0.8,
   },
   noteIcon: {
     fontWeight: '500',
     marginRight: LAYOUT.SPACING.TINY,
-    opacity: 0.7,
+    opacity: 0.8,
   },
   noteText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '400',
-    opacity: 0.7,
+    fontWeight: '500',
+    opacity: 0.8,
   },
   wordArea: {
     alignItems: 'center',

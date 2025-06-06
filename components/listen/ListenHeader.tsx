@@ -38,6 +38,8 @@ const ListenHeader: React.FC<ListenHeaderProps> = ({
         iconSize={24}
         color={colors.interactiveSecondary}
         hapticFeedback={false}
+        accessibilityLabel="Stop listening session"
+        accessibilityHint="Ends the audio session and returns to previous screen"
       />
     </View>
   );
@@ -48,9 +50,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     height: 48,
+    marginBottom: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingTop: LAYOUT.SPACING.SMALL,
-    marginBottom: LAYOUT.SPACING.LARGE,
     width: '100%',
     zIndex: 1,
   },

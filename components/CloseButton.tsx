@@ -30,6 +30,8 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
   color,
   style,
   hapticFeedback = false,
+  accessibilityLabel = 'Close',
+  accessibilityHint,
 }) => {
   const colors = useColors();
   const pressTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -105,6 +107,9 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
           style,
         ]}
         hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityHint={accessibilityHint}
       >
         <Ionicons name="close" size={finalIconSize} color={color || colors.interactiveSecondary} />
       </TouchableOpacity>

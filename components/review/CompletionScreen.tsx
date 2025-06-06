@@ -54,7 +54,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
   onClose,
   title = 'Great job',
   subtitle = 'You completed your review session.',
-  buttonText = 'ALHAMDULILLAH',
+  buttonText = 'Continue',
   buttonVariant = 'outlined',
   iconName = 'checkmark-circle',
   iconSize = 100,

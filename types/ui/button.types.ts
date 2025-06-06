@@ -1,7 +1,6 @@
 import type { TouchableOpacityProps, ViewStyle, StyleProp } from 'react-native';
-import type { AnimatedStyleProp } from './base.types';
 
-import type { BaseAnimatedStyleProps } from './base.types';
+import type { AnimatedStyleProp, BaseAnimatedStyleProps } from './base.types';
 
 /**
  * Button variant types
@@ -100,6 +99,10 @@ export interface CloseButtonProps {
   style?: StyleProp<ViewStyle>;
   /** Whether to trigger haptic feedback on press */
   hapticFeedback?: boolean;
+  /** Accessibility label for screen readers */
+  accessibilityLabel?: string;
+  /** Accessibility hint for screen readers */
+  accessibilityHint?: string;
 }
 
 /**

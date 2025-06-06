@@ -36,6 +36,8 @@ const ReviewHeader: React.FC<ReviewHeaderProps> = ({
         size="large"
         iconSize={24}
         color={colors.interactiveSecondary}
+        accessibilityLabel="Stop review session"
+        accessibilityHint="Ends the review session and returns to previous screen"
       />
     </View>
   );

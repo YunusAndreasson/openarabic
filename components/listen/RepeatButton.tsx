@@ -59,8 +59,8 @@ const RepeatButton: React.FC<RepeatButtonProps> = ({ enabled, onToggle }) => {
       onPress={handlePress}
       style={styles.touchable}
       accessibilityRole="button"
-      accessibilityLabel={enabled ? 'Repeat is on' : 'Repeat is off'}
-      accessibilityHint="Toggle repeat mode"
+      accessibilityLabel={enabled ? 'Turn off repeat mode' : 'Turn on repeat mode'}
+      accessibilityHint="Toggles whether audio loops continuously"
       accessibilityState={{ selected: enabled }}
     >
       <Animated.View style={[styles.container, animatedContainerStyle]}>
