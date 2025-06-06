@@ -33,7 +33,7 @@ const ErrorState = memo(({ message, onRetry }: ErrorStateProps) => {
       {onRetry ? (
         <View style={styles.buttonContainer}>
           <ThemedButton
-            title="Try Again"
+            title="Refresh"
             onPress={onRetry}
             variant="filled"
             accessibilityLabel="Attempt to reload content"

@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, View, Platform, TouchableOpacity } from 'react-native';
-import Animated from 'react-native-reanimated';
-import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { ViewStyle } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 
 interface ArticleButtonsProps {
@@ -30,13 +30,13 @@ interface ArticleButtonsProps {
 
 const styles = StyleSheet.create({
   backButton: {
-    height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
-    width: LAYOUT.BUTTON.HEIGHT.MEDIUM,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    marginRight: LAYOUT.SPACING.SMALL,
     alignItems: 'center',
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
     justifyContent: 'center',
+    marginRight: LAYOUT.SPACING.SMALL,
     overflow: 'hidden',
+    width: LAYOUT.BUTTON.HEIGHT.MEDIUM,
   },
   buttonContainer: {
     alignItems: 'center',
@@ -47,20 +47,9 @@ const styles = StyleSheet.create({
     width: '100%',
     zIndex: LAYOUT.Z_INDEX.HEADER,
   },
-  leftButtonGroup: {
-    flexDirection: 'row',
-  },
-  rightButtonGroup: {
-    flexDirection: 'row',
-  },
-  iconButton: {
-    height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
-    width: LAYOUT.BUTTON.HEIGHT.MEDIUM,
+  buttonOverlay: {
+    ...StyleSheet.absoluteFillObject,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    marginLeft: LAYOUT.SPACING.SMALL,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
   },
   buttonShadow: {
     ...Platform.select({
@@ -74,9 +63,20 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  buttonOverlay: {
-    ...StyleSheet.absoluteFillObject,
+  iconButton: {
+    alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
+    justifyContent: 'center',
+    marginLeft: LAYOUT.SPACING.SMALL,
+    overflow: 'hidden',
+    width: LAYOUT.BUTTON.HEIGHT.MEDIUM,
+  },
+  leftButtonGroup: {
+    flexDirection: 'row',
+  },
+  rightButtonGroup: {
+    flexDirection: 'row',
   },
 });
 
@@ -158,7 +158,7 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
             <TouchableOpacity
               onPress={onBackPress}
               style={StyleSheet.absoluteFill}
-              accessibilityLabel="Go back"
+              accessibilityLabel="Back"
             >
               <View
                 style={[
@@ -180,7 +180,7 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
               <TouchableOpacity
                 onPress={onBookmarkPress}
                 style={StyleSheet.absoluteFill}
-                accessibilityLabel={isInReadingList ? 'Remove bookmark' : 'Bookmark article'}
+                accessibilityLabel={isInReadingList ? 'Remove bookmark' : 'Add bookmark'}
               >
                 <View
                   style={[

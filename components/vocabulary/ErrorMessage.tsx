@@ -15,8 +15,8 @@ import { useColors } from '../../hooks/useColors';
  */
 const ErrorMessage = memo(
   ({
-    screenName = 'words',
-    customMessage = 'Unable to load data. Please try again.',
+    screenName = 'vocabulary',
+    customMessage = "Your progress isn't available right now.",
   }: ErrorMessageProps) => {
     const colors = useColors();
     const router = useRouter();
@@ -43,7 +43,7 @@ const ErrorMessage = memo(
           {customMessage}
         </ThemedText>
         <ThemedButton
-          title="Try Again"
+          title="Refresh"
           onPress={handleRetry}
           style={styles.retryButton}
           accessibilityLabel="Reload this screen"

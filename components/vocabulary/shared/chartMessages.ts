@@ -6,6 +6,7 @@
  */
 
 import type { StatCategory } from '@/types/vocabulary.types';
+
 import { PERFORMANCE_THRESHOLDS } from './constants';
 
 // Standardized terminology
@@ -105,7 +106,7 @@ export const generateChartSubtitle = {
     weeklyChange: number
   ): string => {
     if (currentRate === 0) {
-      return 'Start reviewing to build memory strength';
+      return 'Review words to build memory strength';
     }
 
     const performance = getPerformanceLevel(currentRate);
@@ -120,7 +121,7 @@ export const generateChartSubtitle = {
 
   efficiency: (currentEfficiency: number, weeklyAverage: number): string => {
     if (currentEfficiency === 0) {
-      return 'Practice to track learning speed';
+      return 'Practice to see learning speed';
     }
 
     const performance = getPerformanceLevel(currentEfficiency);
@@ -137,7 +138,7 @@ export const generateChartSubtitle = {
 
   retrievability: (currentRetention: number, criticalWords: number, totalWords: number): string => {
     if (totalWords === 0) {
-      return 'Study words to track memory retention';
+      return 'Review words to track retention';
     }
 
     const performance = getPerformanceLevel(currentRetention);
@@ -159,7 +160,7 @@ export const generateChartSubtitle = {
     distribution: 'easy' | 'balanced' | 'challenging'
   ): string => {
     if (hardWordsPercentage === 0) {
-      return 'Track word difficulty levels';
+      return 'Add words to see difficulty levels';
     }
 
     switch (distribution) {
@@ -273,9 +274,9 @@ export const createStandardizedStats = {
 
 // Standardized empty state messages
 export const EMPTY_STATE_MESSAGES = {
-  mastery: 'Study words to track memory strength',
-  efficiency: 'Practice regularly to see learning speed',
-  retrievability: 'Review words to monitor retention',
-  difficulty: 'Study words to identify challenge levels',
-  general: 'Study words to see your progress',
+  mastery: 'Review words to track your memory strength',
+  efficiency: 'Practice to see your learning speed',
+  retrievability: 'Study words to monitor your retention',
+  difficulty: 'Add words to see challenge levels',
+  general: 'Start studying to see your progress',
 } as const;

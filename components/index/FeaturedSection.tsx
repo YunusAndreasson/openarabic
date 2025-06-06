@@ -6,8 +6,8 @@ import { articlesService } from '@/services/articles';
 import type { Article } from '@/types/articles.types';
 
 import { LAYOUT } from '../../constants/layout';
-import ThemedCard from '../ThemedCard';
 import SectionTitle from '../SectionTitle';
+import ThemedCard from '../ThemedCard';
 
 interface FeaturedSectionProps {
   article: Article;
@@ -54,7 +54,7 @@ const FeaturedSection: React.FC<FeaturedSectionProps> = ({
         imageUrl={article.image_url || 'https://picsum.photos/800/400'}
         title={article.title}
         category={article.category?.name || ''}
-        author={article.author?.name || 'Unknown'}
+        author={article.author?.name || 'Author'}
         summary={article.summary || undefined}
         onPress={handlePress}
         style={styles.cardStyle}

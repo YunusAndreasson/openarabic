@@ -133,15 +133,15 @@ export default function VocabularyScreen(): JSX.Element {
 
   // Smart button labeling based on due words only
   const getButtonLabel = () => {
-    if (!hasWordsToStudy) return 'No Words Due';
-    if (dueWords === 1) return 'Practice 1 Word';
-    if (dueWords <= 20) return `Practice ${dueWords} Words`;
-    return 'Start Practice';
+    if (!hasWordsToStudy) return 'All caught up';
+    if (dueWords === 1) return 'Practice 1 word';
+    if (dueWords <= 20) return `Practice ${dueWords} words`;
+    return 'Start practice';
   };
 
   const getAccessibilityLabel = () => {
-    if (!hasWordsToStudy) return 'No words due for practice';
-    return `Start practice session with ${dueWords} due words available`;
+    if (!hasWordsToStudy) return 'No words to practice';
+    return `Practice ${dueWords} words`;
   };
 
   // Main content
@@ -150,7 +150,7 @@ export default function VocabularyScreen(): JSX.Element {
       style={styles.container}
       includeBottomInset={false}
       safeAreaEdges={['left', 'right']}
-      accessibilityLabel="Remember screen"
+      accessibilityLabel="Vocabulary screen"
     >
       <ScrollView
         refreshControl={

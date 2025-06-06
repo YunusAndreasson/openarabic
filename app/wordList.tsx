@@ -1,20 +1,19 @@
 import { FlashList } from '@shopify/flash-list';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack, router } from 'expo-router';
 import React, { useCallback, useMemo, memo, JSX, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import BaseCard from '../components/BaseCard';
+import SortingControls from '../components/SortingControls';
+import type { SortOption, SortDirection } from '../components/SortingControls';
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
 import WordListItem from '../components/vocabulary/WordListItem';
-import SortingControls from '../components/SortingControls';
-import type { SortOption, SortDirection } from '../components/SortingControls';
-import BaseCard from '../components/BaseCard';
 import { LAYOUT } from '../constants/layout';
 import { useAuth } from '../hooks/useAuth';
 import { useColors } from '../hooks/useColors';
 import type { EnhancedStudyWord, WordListSort } from '../hooks/useWordList';
 import { useWordList } from '../hooks/useWordList';
-import { router } from 'expo-router';
 import { lightFeedback } from '../utils/haptics';
 
 const ITEM_HEIGHT = LAYOUT.SPACING.XLARGE * 2.85;
@@ -208,7 +207,7 @@ export default function WordListScreen(): JSX.Element {
         <Stack.Screen options={{ title }} />
         <View style={styles.errorContainer}>
           <ThemedText style={styles.errorText}>
-            Failed to load words. Please try again later.
+            Your word list isn&apos;t available right now. Check your connection and refresh.
           </ThemedText>
         </View>
       </ThemedView>
@@ -260,7 +259,7 @@ export default function WordListScreen(): JSX.Element {
           contentInsetAdjustmentBehavior="automatic"
           contentContainerStyle={styles.listContentContainer}
           keyExtractor={item => `word-${item.root_id}`}
-          style={[{ opacity: isLoading ? 0.6 : 1.0 }]}
+          style={{ opacity: isLoading ? 0.6 : 1.0 }}
         />
       </ThemedView>
     </>
@@ -291,11 +290,11 @@ const styles = StyleSheet.create({
     paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
-  wordItemContainer: {
-    marginVertical: LAYOUT.SPACING.TINY,
-  },
   sortCard: {
     marginBottom: LAYOUT.SPACING.SMALL,
     marginHorizontal: 0,
+  },
+  wordItemContainer: {
+    marginVertical: LAYOUT.SPACING.TINY,
   },
 });

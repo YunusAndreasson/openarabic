@@ -1,11 +1,13 @@
 import React from 'react';
 import { StyleSheet, View, ScrollView, ActivityIndicator } from 'react-native';
-import SectionTitle from '../SectionTitle';
+
 import { ThemedCard } from '@/components';
+
+import { LAYOUT } from '../../constants/layout';
 import { useArticlesByDueWords } from '../../hooks/useArticlesByDueWords';
 import { useColors } from '../../hooks/useColors';
-import { LAYOUT } from '../../constants/layout';
 import type { Article } from '../../types/articles.types';
+import SectionTitle from '../SectionTitle';
 
 interface DueWordsArticleSectionProps {
   userId: string | undefined;
@@ -66,13 +68,11 @@ export function DueWordsArticleSection({
   };
 
   // Dynamic title based on whether we have due words
-  const sectionTitle = dueWordsCount > 0 ? 'Recommended Reading' : 'Practice Reading';
+  const sectionTitle = dueWordsCount > 0 ? 'Practice Reading' : 'Study Reading';
 
   // Dynamic subtitle based on whether we have due words
   const sectionSubtitle =
-    dueWordsCount > 0
-      ? "Read to reinforce words you're reviewing"
-      : 'Build vocabulary through contextual reading';
+    dueWordsCount > 0 ? "Reinforce words you're reviewing" : 'Build vocabulary through reading';
 
   const articlesWithDueCount = articles.map(renderArticleWithDueCount);
 
@@ -88,7 +88,7 @@ export function DueWordsArticleSection({
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
-          accessibilityLabel={`Scroll ${sectionTitle}`}
+          accessibilityLabel={`${sectionTitle} articles`}
         >
           {articlesWithDueCount.map(article => (
             <ThemedCard
@@ -108,6 +108,9 @@ export function DueWordsArticleSection({
 }
 
 const styles = StyleSheet.create({
+  articleCard: {
+    marginRight: LAYOUT.SPACING.MEDIUM,
+  },
   container: {
     // Removed margins - SectionTitle handles all section spacing
   },
@@ -119,8 +122,5 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingRight: LAYOUT.SPACING.MEDIUM,
-  },
-  articleCard: {
-    marginRight: LAYOUT.SPACING.MEDIUM,
   },
 });

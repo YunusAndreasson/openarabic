@@ -1,8 +1,8 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Sentry from '@sentry/react-native';
 import { router } from 'expo-router';
 import React, { useState, useCallback, JSX, useEffect, memo } from 'react';
 import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Sentry from '@sentry/react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { analytics } from '@/services/analytics';
@@ -259,7 +259,7 @@ function Auth(): JSX.Element {
         // Provide haptic feedback on successful account creation
         lightFeedback();
 
-        Alert.alert('Success', 'Check your email for the confirmation link!');
+        Alert.alert('Success', 'Check your email for the confirmation link');
       }
     } catch (err) {
       Alert.alert('Error', 'Failed to create account. Please try again.');
@@ -284,7 +284,7 @@ function Auth(): JSX.Element {
             value={email}
             onChangeText={handleEmailChange}
             onBlur={handleEmailBlur}
-            placeholder="Email"
+            placeholder="Your email"
             keyboardType="email-address"
             returnKeyType="next"
             autoComplete="email"
@@ -302,7 +302,7 @@ function Auth(): JSX.Element {
             value={password}
             onChangeText={handlePasswordChange}
             onBlur={handlePasswordBlur}
-            placeholder="Password"
+            placeholder="Your password"
             secureTextEntry={!showPassword}
             rightIcon={showPassword ? 'eye-off-outline' : 'eye-outline'}
             onRightIconPress={() => setShowPassword(!showPassword)}

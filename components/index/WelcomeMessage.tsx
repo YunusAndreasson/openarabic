@@ -1,11 +1,11 @@
-import React, { useMemo } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import moment from 'moment-hijri';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import moment from 'moment-hijri';
+import React, { useMemo } from 'react';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 
-import { LAYOUT } from '@/constants/layout';
 import { ThemedText } from '@/components/ThemedText';
+import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 
 // Hijri month names
@@ -49,7 +49,7 @@ export const WelcomeMessage: React.FC = () => {
         style={styles.dateContainer}
         hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
         accessibilityLabel="View Islamic calendar"
-        accessibilityHint="Opens the Islamic calendar with upcoming events"
+        accessibilityHint="Opens Islamic calendar"
       >
         <ThemedText type="caption" weight="normal" colorName="textTertiary" style={styles.dateText}>
           {dateMessage}
@@ -66,27 +66,27 @@ export const WelcomeMessage: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  chevronIcon: {
+    opacity: LAYOUT.OPACITY.MEDIUM,
+  },
   container: {
-    paddingTop: LAYOUT.SPACING.MEDIUM,
+    alignItems: 'center',
     paddingBottom: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    alignItems: 'center',
+    paddingTop: LAYOUT.SPACING.MEDIUM,
   },
   dateContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
     gap: LAYOUT.SPACING.SMALL,
     opacity: 0.6,
   },
   dateText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.2,
-    letterSpacing: 0.1,
-    textAlign: 'center',
     fontVariant: ['tabular-nums'],
     fontWeight: '400',
-  },
-  chevronIcon: {
-    opacity: LAYOUT.OPACITY.MEDIUM,
+    letterSpacing: 0.1,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.2,
+    textAlign: 'center',
   },
 });

@@ -112,19 +112,15 @@ const AccountScreen: React.FC = () => {
   const handleReminderToggle = useCallback(
     async (enabled: boolean) => {
       if (enabled && !notificationPermissions) {
-        Alert.alert(
-          'Notification Permission Required',
-          'Please allow notifications to receive daily study alerts.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Settings',
-              onPress: () => {
-                Linking.openSettings();
-              },
+        Alert.alert('Enable Notifications', 'Turn on notifications to get daily study reminders.', [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Settings',
+            onPress: () => {
+              Linking.openSettings();
             },
-          ]
-        );
+          },
+        ]);
         return;
       }
 
@@ -185,7 +181,7 @@ const AccountScreen: React.FC = () => {
       style={styles.container}
       includeBottomInset={false}
       safeAreaEdges={['left', 'right']}
-      accessibilityLabel="Account screen"
+      accessibilityLabel="Settings screen"
     >
       <ThemedView
         useSafeArea={false}
@@ -214,11 +210,7 @@ const AccountScreen: React.FC = () => {
           >
             <View style={styles.remindersLinksContainer}>
               <View style={styles.settingRow}>
-                <SettingLabel
-                  icon="notifications"
-                  text="Daily Study Alerts"
-                  iconColor={colors.icon}
-                />
+                <SettingLabel icon="notifications" text="Study Reminders" iconColor={colors.icon} />
                 <Toggle value={reminderTime.enabled} onValueChange={handleReminderToggle} />
               </View>
               {reminderTime.enabled && (
@@ -231,7 +223,7 @@ const AccountScreen: React.FC = () => {
                     includePressAnimation={true}
                   >
                     <View style={styles.settingRow}>
-                      <SettingLabel icon="time" text="Notification Time" iconColor={colors.icon} />
+                      <SettingLabel icon="time" text="Time" iconColor={colors.icon} />
                       <ThemedText type="body" variant="secondary">
                         {formatReminderTime(reminderTime.hour, reminderTime.minute)}
                       </ThemedText>
@@ -281,7 +273,7 @@ const AccountScreen: React.FC = () => {
                       <Ionicons name="school-outline" size={22} color={colors.icon} />
                     </View>
                     <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
-                      The Science of Language Learning
+                      Language Learning Science
                     </ThemedText>
                   </View>
                   <Ionicons
@@ -305,7 +297,7 @@ const AccountScreen: React.FC = () => {
                       <Ionicons name="library-outline" size={22} color={colors.icon} />
                     </View>
                     <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
-                      Why Classical Texts Work Best
+                      Why Classical Texts
                     </ThemedText>
                   </View>
                   <Ionicons
@@ -493,7 +485,7 @@ const AccountScreen: React.FC = () => {
         onTimeSet={handleTimeSet}
         initialHour={reminderTime.hour}
         initialMinute={reminderTime.minute}
-        title="Set Notification Time"
+        title="Set Time"
       />
     </ThemedView>
   );

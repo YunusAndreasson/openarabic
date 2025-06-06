@@ -1,25 +1,11 @@
-import {
-  Canvas,
-  Path,
-  Circle,
-  Group,
-  Skia,
-  LinearGradient,
-  vec,
-  Text,
-  matchFont,
-  RadialGradient,
-  Shadow,
-} from '@shopify/react-native-skia';
+import { Canvas, Path, Circle, Group, Skia, LinearGradient, vec } from '@shopify/react-native-skia';
 import React, { memo, useMemo } from 'react';
-import { StyleSheet, View, Platform, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   withTiming,
-  interpolate,
-  Extrapolate,
 } from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
@@ -31,11 +17,6 @@ import { lightFeedback } from '@/utils/haptics';
 import { ThemedText } from '../../ThemedText';
 import { BaseChart } from '../shared';
 import { useChartColors } from '../shared/chartColors';
-import {
-  generateChartSubtitle,
-  createStandardizedStats,
-  CHART_LABELS,
-} from '../shared/chartMessages';
 
 interface MemoryCapacityGaugeProps {
   studyWords: StudyWord[];
@@ -64,384 +45,372 @@ const SPRING_CONFIG = {
   mass: 1,
 };
 
-const TIMING_CONFIG = {
-  duration: 800,
-};
+/* eslint-disable react/prop-types */
+export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords = [] }) => {
+  const colors = useColors();
+  const chartColors = useChartColors();
+  const { navigateTo } = useNavigationWithDebounce();
 
-export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
-  ({ studyWords = [], onStatPress }) => {
-    const colors = useColors();
-    const chartColors = useChartColors();
-    const { navigateTo } = useNavigationWithDebounce();
+  // Animation values for smooth interactions
+  const pressScale = useSharedValue(1);
+  const indicatorPulse = useSharedValue(1);
 
-    // Animation values for smooth interactions
-    const pressScale = useSharedValue(1);
-    const indicatorPulse = useSharedValue(1);
+  // Calculate enhanced memory capacity with better algorithm
+  const memoryMetrics = useMemo(() => {
+    if (!studyWords.length) {
+      return { capacityScore: 85, trend: 'stable' as const };
+    }
 
-    // Calculate enhanced memory capacity with better algorithm
-    const memoryMetrics = useMemo(() => {
-      if (!studyWords.length) {
-        return { capacityScore: 85, trend: 'stable' as const };
-      }
+    // Filter words with FSRS data
+    const validWords = studyWords.filter(
+      word => word.fsrs_stability != null && word.fsrs_difficulty != null
+    );
 
-      // Filter words with FSRS data
-      const validWords = studyWords.filter(
-        word => word.fsrs_stability != null && word.fsrs_difficulty != null
-      );
+    if (!validWords.length) {
+      return { capacityScore: 85, trend: 'stable' as const };
+    }
 
-      if (!validWords.length) {
-        return { capacityScore: 85, trend: 'stable' as const };
-      }
+    // Enhanced calculation with FSRS algorithm principles
+    const averageStability =
+      validWords.reduce((sum, word) => sum + (word.fsrs_stability || 0), 0) / validWords.length;
+    const averageDifficulty =
+      validWords.reduce((sum, word) => sum + (word.fsrs_difficulty || 5), 0) / validWords.length;
+    const averageReps =
+      validWords.reduce((sum, word) => sum + (word.fsrs_reps || 0), 0) / validWords.length;
 
-      // Enhanced calculation with FSRS algorithm principles
-      const averageStability =
-        validWords.reduce((sum, word) => sum + (word.fsrs_stability || 0), 0) / validWords.length;
-      const averageDifficulty =
-        validWords.reduce((sum, word) => sum + (word.fsrs_difficulty || 5), 0) / validWords.length;
-      const averageReps =
-        validWords.reduce((sum, word) => sum + (word.fsrs_reps || 0), 0) / validWords.length;
+    // More sophisticated scoring algorithm based on available FSRS data
+    const stabilityFactor = Math.min(averageStability / 30, 1) * 45; // 0-45 points
+    const repsFactor = Math.min(averageReps / 10, 1) * 30; // 0-30 points (more reps = better retention)
+    const difficultyFactor = Math.max(0, (10 - averageDifficulty) / 10) * 25; // 0-25 points
 
-      // More sophisticated scoring algorithm based on available FSRS data
-      const stabilityFactor = Math.min(averageStability / 30, 1) * 45; // 0-45 points
-      const repsFactor = Math.min(averageReps / 10, 1) * 30; // 0-30 points (more reps = better retention)
-      const difficultyFactor = Math.max(0, (10 - averageDifficulty) / 10) * 25; // 0-25 points
+    const capacityScore = Math.round(stabilityFactor + repsFactor + difficultyFactor);
 
-      const capacityScore = Math.round(stabilityFactor + repsFactor + difficultyFactor);
+    // Determine trend based on recent performance
+    const recentWords = validWords.filter(word => {
+      if (!word.created_at) return false;
+      const wordDate = new Date(word.created_at);
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      return wordDate >= weekAgo;
+    });
 
-      // Determine trend based on recent performance
-      const recentWords = validWords.filter(word => {
-        if (!word.created_at) return false;
-        const wordDate = new Date(word.created_at);
-        const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-        return wordDate >= weekAgo;
+    const trend = recentWords.length > 0 && averageReps > 2 ? 'improving' : 'stable';
+
+    return {
+      capacityScore: Math.max(15, Math.min(100, capacityScore)),
+      trend,
+    };
+  }, [studyWords]);
+
+  // Create enhanced gauge paths with better visual appeal
+  const gaugePaths = useMemo(() => {
+    const centerX = GAUGE_WIDTH / 2;
+    const centerY = GAUGE_HEIGHT - 15;
+    const startAngle = 185;
+    const totalSweep = 170;
+
+    // Full gauge path (background)
+    const fullPath = Skia.Path.Make();
+    fullPath.addArc(
+      {
+        x: centerX - GAUGE_RADIUS,
+        y: centerY - GAUGE_RADIUS,
+        width: GAUGE_RADIUS * 2,
+        height: GAUGE_RADIUS * 2,
+      },
+      startAngle,
+      totalSweep
+    );
+
+    // Filled portion path based on capacity score
+    const filledSweep = (memoryMetrics.capacityScore / 100) * totalSweep;
+    const filledPath = Skia.Path.Make();
+    filledPath.addArc(
+      {
+        x: centerX - GAUGE_RADIUS,
+        y: centerY - GAUGE_RADIUS,
+        width: GAUGE_RADIUS * 2,
+        height: GAUGE_RADIUS * 2,
+      },
+      startAngle,
+      filledSweep
+    );
+
+    return { fullPath, filledPath, filledSweep };
+  }, [memoryMetrics.capacityScore]);
+
+  // Helper functions for gradient calculation
+  const getFilledGradientColors = (capacityScore: number): string[] => {
+    const baseColors = [
+      chartColors.performance.poor || '#FF4444', // 0% - Red
+      chartColors.performance.moderate || '#FF8C00', // 30% - Orange
+      chartColors.performance.good || '#4A90E2', // 70% - Blue
+      chartColors.performance.excellent || '#34C759', // 100% - Green
+    ];
+
+    if (capacityScore <= 30) {
+      // Only red to orange transition
+      return [baseColors[0]!, baseColors[1]!];
+    } else if (capacityScore <= 70) {
+      // Red to orange to blue transition
+      return [baseColors[0]!, baseColors[1]!, baseColors[2]!];
+    } else {
+      // Full gradient
+      return baseColors;
+    }
+  };
+
+  const getFilledGradientPositions = (capacityScore: number): number[] => {
+    if (capacityScore <= 30) {
+      // Map 0-30% to full gradient span
+      return [0, 1];
+    } else if (capacityScore <= 70) {
+      // Map 0-70% across three colors
+      return [0, 30 / capacityScore, 1];
+    } else {
+      // Map 0-100% across four colors, scaled to actual score
+      return [0, 30 / capacityScore, 70 / capacityScore, 1];
+    }
+  };
+
+  // Calculate enhanced indicator position with smooth animation potential
+  const indicatorPosition = useMemo(() => {
+    const centerX = GAUGE_WIDTH / 2;
+    const centerY = GAUGE_HEIGHT - 15;
+
+    // Convert capacity score to angle with refined mapping
+    const angle = 185 - (memoryMetrics.capacityScore / 100) * 170;
+    const angleRad = (angle * Math.PI) / 180;
+
+    const indicatorRadius = GAUGE_RADIUS - GAUGE_STROKE_WIDTH / 2;
+    const x = centerX + Math.cos(angleRad) * indicatorRadius;
+    const y = centerY + Math.sin(angleRad) * indicatorRadius;
+
+    return { x, y, angle };
+  }, [memoryMetrics.capacityScore]);
+
+  // Enhanced color system with better visual hierarchy
+  const getCapacityColor = (score: number) => {
+    if (score >= CAPACITY_THRESHOLDS.OPTIMAL) return chartColors.performance.excellent;
+    if (score >= CAPACITY_THRESHOLDS.MODERATE) return chartColors.performance.good;
+    if (score >= CAPACITY_THRESHOLDS.CRITICAL) return chartColors.performance.moderate;
+    return chartColors.performance.poor;
+  };
+
+  // Enhanced status text with more nuanced messaging
+  const getStatusText = (score: number) => {
+    if (score >= CAPACITY_THRESHOLDS.OPTIMAL) return 'Strong';
+    if (score >= CAPACITY_THRESHOLDS.MODERATE) return 'Good';
+    if (score >= CAPACITY_THRESHOLDS.CRITICAL) return 'Moderate';
+    return 'Heavy';
+  };
+
+  // Enhanced recommendation with actionable insights
+  const getRecommendationMessage = (score: number) => {
+    if (score >= CAPACITY_THRESHOLDS.OPTIMAL) {
+      return 'Your memory capacity is optimal for learning new vocabulary.';
+    }
+    if (score >= CAPACITY_THRESHOLDS.MODERATE) {
+      return 'Continue your review schedule to maintain healthy retention.';
+    }
+    if (score >= CAPACITY_THRESHOLDS.CRITICAL) {
+      return 'Focus on reviewing current words to strengthen retention.';
+    }
+    return 'Reduce new words and increase review frequency.';
+  };
+
+  // Enhanced navigation with haptic feedback
+  const handleInsightsPress = () => {
+    lightFeedback();
+
+    // Animate press feedback
+    pressScale.value = withTiming(0.98, { duration: 100 }, () => {
+      pressScale.value = withSpring(1, SPRING_CONFIG);
+    });
+
+    navigateTo('insights' as any);
+  };
+
+  // Animated style for press feedback
+  const animatedPressStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pressScale.value }],
+  }));
+
+  // Pulse animation for indicator
+  React.useEffect(() => {
+    const pulse = () => {
+      indicatorPulse.value = withTiming(1.2, { duration: 1000 }, () => {
+        indicatorPulse.value = withTiming(1, { duration: 1000 });
       });
-
-      const trend = recentWords.length > 0 && averageReps > 2 ? 'improving' : 'stable';
-
-      return {
-        capacityScore: Math.max(15, Math.min(100, capacityScore)),
-        trend,
-      };
-    }, [studyWords]);
-
-    // Create enhanced gauge paths with better visual appeal
-    const gaugePaths = useMemo(() => {
-      const centerX = GAUGE_WIDTH / 2;
-      const centerY = GAUGE_HEIGHT - 15;
-      const startAngle = 185;
-      const totalSweep = 170;
-
-      // Full gauge path (background)
-      const fullPath = Skia.Path.Make();
-      fullPath.addArc(
-        {
-          x: centerX - GAUGE_RADIUS,
-          y: centerY - GAUGE_RADIUS,
-          width: GAUGE_RADIUS * 2,
-          height: GAUGE_RADIUS * 2,
-        },
-        startAngle,
-        totalSweep
-      );
-
-      // Filled portion path based on capacity score
-      const filledSweep = (memoryMetrics.capacityScore / 100) * totalSweep;
-      const filledPath = Skia.Path.Make();
-      filledPath.addArc(
-        {
-          x: centerX - GAUGE_RADIUS,
-          y: centerY - GAUGE_RADIUS,
-          width: GAUGE_RADIUS * 2,
-          height: GAUGE_RADIUS * 2,
-        },
-        startAngle,
-        filledSweep
-      );
-
-      return { fullPath, filledPath, filledSweep };
-    }, [memoryMetrics.capacityScore]);
-
-    // Helper functions for gradient calculation
-    const getFilledGradientColors = (capacityScore: number): string[] => {
-      const baseColors = [
-        chartColors.performance.poor || '#FF4444', // 0% - Red
-        chartColors.performance.moderate || '#FF8C00', // 30% - Orange
-        chartColors.performance.good || '#4A90E2', // 70% - Blue
-        chartColors.performance.excellent || '#34C759', // 100% - Green
-      ];
-
-      if (capacityScore <= 30) {
-        // Only red to orange transition
-        return [baseColors[0], baseColors[1]];
-      } else if (capacityScore <= 70) {
-        // Red to orange to blue transition
-        return [baseColors[0], baseColors[1], baseColors[2]];
-      } else {
-        // Full gradient
-        return baseColors;
-      }
     };
 
-    const getFilledGradientPositions = (capacityScore: number): number[] => {
-      if (capacityScore <= 30) {
-        // Map 0-30% to full gradient span
-        return [0, 1];
-      } else if (capacityScore <= 70) {
-        // Map 0-70% across three colors
-        return [0, 30 / capacityScore, 1];
-      } else {
-        // Map 0-100% across four colors, scaled to actual score
-        return [0, 30 / capacityScore, 70 / capacityScore, 1];
-      }
-    };
+    const interval = setInterval(pulse, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
-    // Calculate enhanced indicator position with smooth animation potential
-    const indicatorPosition = useMemo(() => {
-      const centerX = GAUGE_WIDTH / 2;
-      const centerY = GAUGE_HEIGHT - 15;
+  return (
+    <BaseChart
+      title=""
+      subtitle=""
+      onInfoPress={() => {}}
+      hideTitle={true}
+      hasData={studyWords.length > 0}
+      contentHeight={GAUGE_HEIGHT + 40}
+      emptyStateText="Start learning words to track your memory capacity"
+    >
+      <Animated.View style={animatedPressStyle}>
+        <TouchableOpacity
+          style={styles.gaugeContainer}
+          onPress={handleInsightsPress}
+          activeOpacity={1}
+          accessibilityLabel={`Memory capacity: ${memoryMetrics.capacityScore}%. Tap to view detailed vocabulary insights`}
+          accessibilityRole="button"
+          accessibilityHint="Opens insights screen with detailed analytics"
+        >
+          <Canvas style={styles.canvas}>
+            <Group>
+              {/* Background track - full gauge path with low opacity */}
+              <Path
+                path={gaugePaths.fullPath}
+                style="stroke"
+                strokeWidth={GAUGE_STROKE_WIDTH + 2}
+                strokeCap="round"
+                color={chartColors.withOpacity(colors.card, 0.6)}
+              />
 
-      // Convert capacity score to angle with refined mapping
-      const angle = 185 - (memoryMetrics.capacityScore / 100) * 170;
-      const angleRad = (angle * Math.PI) / 180;
+              <Path
+                path={gaugePaths.fullPath}
+                style="stroke"
+                strokeWidth={GAUGE_STROKE_WIDTH}
+                strokeCap="round"
+                color={chartColors.withOpacity(chartColors.ui.border, 0.08)}
+              />
 
-      const indicatorRadius = GAUGE_RADIUS - GAUGE_STROKE_WIDTH / 2;
-      const x = centerX + Math.cos(angleRad) * indicatorRadius;
-      const y = centerY + Math.sin(angleRad) * indicatorRadius;
-
-      return { x, y, angle };
-    }, [memoryMetrics.capacityScore]);
-
-    // Enhanced color system with better visual hierarchy
-    const getCapacityColor = (score: number) => {
-      if (score >= CAPACITY_THRESHOLDS.OPTIMAL) return chartColors.performance.excellent;
-      if (score >= CAPACITY_THRESHOLDS.MODERATE) return chartColors.performance.good;
-      if (score >= CAPACITY_THRESHOLDS.CRITICAL) return chartColors.performance.moderate;
-      return chartColors.performance.poor;
-    };
-
-    // Enhanced status text with more nuanced messaging
-    const getStatusText = (score: number) => {
-      if (score >= CAPACITY_THRESHOLDS.OPTIMAL) return 'Optimal';
-      if (score >= CAPACITY_THRESHOLDS.MODERATE) return 'Good';
-      if (score >= CAPACITY_THRESHOLDS.CRITICAL) return 'Moderate';
-      return 'Overloaded';
-    };
-
-    // Enhanced recommendation with actionable insights
-    const getRecommendationMessage = (score: number) => {
-      if (score >= CAPACITY_THRESHOLDS.OPTIMAL) {
-        return 'Perfect balance! Your memory capacity is optimal for learning new vocabulary.';
-      }
-      if (score >= CAPACITY_THRESHOLDS.MODERATE) {
-        return 'Solid foundation. Continue your review schedule to maintain healthy retention.';
-      }
-      if (score >= CAPACITY_THRESHOLDS.CRITICAL) {
-        return 'Focus on reviewing current words to strengthen your memory foundation.';
-      }
-      return 'Consider reducing new words and increasing review frequency for better retention.';
-    };
-
-    // Enhanced navigation with haptic feedback
-    const handleInsightsPress = () => {
-      lightFeedback();
-
-      // Animate press feedback
-      pressScale.value = withTiming(0.98, { duration: 100 }, () => {
-        pressScale.value = withSpring(1, SPRING_CONFIG);
-      });
-
-      navigateTo('insights' as any);
-    };
-
-    // Animated style for press feedback
-    const animatedPressStyle = useAnimatedStyle(() => ({
-      transform: [{ scale: pressScale.value }],
-    }));
-
-    // Pulse animation for indicator
-    React.useEffect(() => {
-      const pulse = () => {
-        indicatorPulse.value = withTiming(1.2, { duration: 1000 }, () => {
-          indicatorPulse.value = withTiming(1, { duration: 1000 });
-        });
-      };
-
-      const interval = setInterval(pulse, 3000);
-      return () => clearInterval(interval);
-    }, []);
-
-    const animatedIndicatorStyle = useAnimatedStyle(() => ({
-      transform: [{ scale: indicatorPulse.value }],
-    }));
-
-    return (
-      <BaseChart
-        title=""
-        subtitle=""
-        onInfoPress={() => {}}
-        hideTitle={true}
-        hasData={studyWords.length > 0}
-        contentHeight={GAUGE_HEIGHT + 40}
-        emptyStateText="Start learning words to track your memory capacity"
-      >
-        <Animated.View style={animatedPressStyle}>
-          <TouchableOpacity
-            style={styles.gaugeContainer}
-            onPress={handleInsightsPress}
-            activeOpacity={1}
-            accessibilityLabel={`Memory capacity: ${memoryMetrics.capacityScore}%. Tap to view detailed vocabulary insights`}
-            accessibilityRole="button"
-            accessibilityHint="Opens insights screen with detailed analytics"
-          >
-            <Canvas style={styles.canvas}>
-              <Group>
-                {/* Background track - full gauge path with low opacity */}
-                <Path
-                  path={gaugePaths.fullPath}
-                  style="stroke"
-                  strokeWidth={GAUGE_STROKE_WIDTH + 2}
-                  strokeCap="round"
-                  color={chartColors.withOpacity(colors.card, 0.6)}
+              {/* Unfilled portion with low opacity gradient */}
+              <Path
+                path={gaugePaths.fullPath}
+                style="stroke"
+                strokeWidth={GAUGE_STROKE_WIDTH}
+                strokeCap="round"
+                opacity={0.2}
+              >
+                <LinearGradient
+                  start={vec(GAUGE_WIDTH * 0.05, GAUGE_HEIGHT / 2)}
+                  end={vec(GAUGE_WIDTH * 0.95, GAUGE_HEIGHT / 2)}
+                  colors={[
+                    chartColors.performance.poor, // Red (left)
+                    chartColors.performance.moderate, // Orange (left-center)
+                    chartColors.performance.good, // Blue (right-center)
+                    chartColors.performance.excellent, // Green (right)
+                  ]}
+                  positions={[0, 0.3, 0.7, 1]}
                 />
+              </Path>
 
-                <Path
-                  path={gaugePaths.fullPath}
-                  style="stroke"
-                  strokeWidth={GAUGE_STROKE_WIDTH}
-                  strokeCap="round"
-                  color={chartColors.withOpacity(chartColors.ui.border, 0.08)}
-                />
-
-                {/* Unfilled portion with low opacity gradient */}
-                <Path
-                  path={gaugePaths.fullPath}
-                  style="stroke"
-                  strokeWidth={GAUGE_STROKE_WIDTH}
-                  strokeCap="round"
-                  opacity={0.2}
-                >
-                  <LinearGradient
-                    start={vec(GAUGE_WIDTH * 0.05, GAUGE_HEIGHT / 2)}
-                    end={vec(GAUGE_WIDTH * 0.95, GAUGE_HEIGHT / 2)}
-                    colors={[
-                      chartColors.performance.poor, // Red (left)
-                      chartColors.performance.moderate, // Orange (left-center)
-                      chartColors.performance.good, // Blue (right-center)
-                      chartColors.performance.excellent, // Green (right)
-                    ]}
-                    positions={[0, 0.3, 0.7, 1]}
-                  />
-                </Path>
-
-                {/* Filled portion - only the achieved capacity with full opacity */}
-                <Path
-                  path={gaugePaths.filledPath}
-                  style="stroke"
-                  strokeWidth={GAUGE_STROKE_WIDTH}
-                  strokeCap="round"
-                >
-                  <LinearGradient
-                    start={vec(GAUGE_WIDTH * 0.05, GAUGE_HEIGHT / 2)}
-                    end={vec(
-                      GAUGE_WIDTH * 0.05 + (GAUGE_WIDTH * 0.9 * gaugePaths.filledSweep) / 170,
-                      GAUGE_HEIGHT / 2
-                    )}
-                    colors={getFilledGradientColors(memoryMetrics.capacityScore)}
-                    positions={getFilledGradientPositions(memoryMetrics.capacityScore)}
-                  />
-                </Path>
-
-                {/* Enhanced capacity indicator with glow effect */}
-                <Circle
-                  cx={indicatorPosition.x}
-                  cy={indicatorPosition.y}
-                  r={INDICATOR_GLOW_SIZE}
-                  color={chartColors.withOpacity(
-                    getCapacityColor(memoryMetrics.capacityScore),
-                    0.15
+              {/* Filled portion - only the achieved capacity with full opacity */}
+              <Path
+                path={gaugePaths.filledPath}
+                style="stroke"
+                strokeWidth={GAUGE_STROKE_WIDTH}
+                strokeCap="round"
+              >
+                <LinearGradient
+                  start={vec(GAUGE_WIDTH * 0.05, GAUGE_HEIGHT / 2)}
+                  end={vec(
+                    GAUGE_WIDTH * 0.05 + (GAUGE_WIDTH * 0.9 * gaugePaths.filledSweep) / 170,
+                    GAUGE_HEIGHT / 2
                   )}
-                  style="fill"
+                  colors={getFilledGradientColors(memoryMetrics.capacityScore)}
+                  positions={getFilledGradientPositions(memoryMetrics.capacityScore)}
                 />
+              </Path>
 
-                <Circle
-                  cx={indicatorPosition.x}
-                  cy={indicatorPosition.y}
-                  r={INDICATOR_SIZE + 2}
-                  color={colors.background}
-                  style="fill"
-                />
+              {/* Enhanced capacity indicator with glow effect */}
+              <Circle
+                cx={indicatorPosition.x}
+                cy={indicatorPosition.y}
+                r={INDICATOR_GLOW_SIZE}
+                color={chartColors.withOpacity(getCapacityColor(memoryMetrics.capacityScore), 0.15)}
+                style="fill"
+              />
 
-                <Circle
-                  cx={indicatorPosition.x}
-                  cy={indicatorPosition.y}
-                  r={INDICATOR_SIZE}
-                  color={getCapacityColor(memoryMetrics.capacityScore)}
-                  style="fill"
-                />
+              <Circle
+                cx={indicatorPosition.x}
+                cy={indicatorPosition.y}
+                r={INDICATOR_SIZE + 2}
+                color={colors.background}
+                style="fill"
+              />
 
-                {/* Inner highlight for 3D effect */}
-                <Circle
-                  cx={indicatorPosition.x - 1}
-                  cy={indicatorPosition.y - 1}
-                  r={INDICATOR_SIZE - 3}
-                  color={chartColors.withOpacity(colors.background, 0.4)}
-                  style="fill"
-                />
-              </Group>
-            </Canvas>
+              <Circle
+                cx={indicatorPosition.x}
+                cy={indicatorPosition.y}
+                r={INDICATOR_SIZE}
+                color={getCapacityColor(memoryMetrics.capacityScore)}
+                style="fill"
+              />
 
-            {/* Enhanced center section with better typography */}
-            <View style={styles.centerSection}>
-              <View style={styles.scoreContainer}>
+              {/* Inner highlight for 3D effect */}
+              <Circle
+                cx={indicatorPosition.x - 1}
+                cy={indicatorPosition.y - 1}
+                r={INDICATOR_SIZE - 3}
+                color={chartColors.withOpacity(colors.background, 0.4)}
+                style="fill"
+              />
+            </Group>
+          </Canvas>
+
+          {/* Enhanced center section with better typography */}
+          <View style={styles.centerSection}>
+            <View style={styles.scoreContainer}>
+              <ThemedText
+                style={[
+                  styles.capacityText,
+                  { color: getCapacityColor(memoryMetrics.capacityScore) },
+                ]}
+              >
+                {memoryMetrics.capacityScore}%
+              </ThemedText>
+              <View style={styles.statusContainer}>
                 <ThemedText
+                  type="caption"
                   style={[
-                    styles.capacityText,
+                    styles.statusText,
                     { color: getCapacityColor(memoryMetrics.capacityScore) },
                   ]}
                 >
-                  {memoryMetrics.capacityScore}%
+                  {getStatusText(memoryMetrics.capacityScore)}
                 </ThemedText>
-                <View style={styles.statusContainer}>
-                  <ThemedText
-                    type="caption"
+                {memoryMetrics.trend === 'improving' && (
+                  <View
                     style={[
-                      styles.statusText,
-                      { color: getCapacityColor(memoryMetrics.capacityScore) },
+                      styles.trendIndicator,
+                      { backgroundColor: chartColors.performance.excellent },
                     ]}
-                  >
-                    {getStatusText(memoryMetrics.capacityScore)}
-                  </ThemedText>
-                  {memoryMetrics.trend === 'improving' && (
-                    <View
-                      style={[
-                        styles.trendIndicator,
-                        { backgroundColor: chartColors.performance.excellent },
-                      ]}
-                    />
-                  )}
-                </View>
+                  />
+                )}
               </View>
             </View>
+          </View>
 
-            {/* Enhanced tap hint with better positioning */}
-            <View style={styles.tapHintContainer}>
-              <ThemedText type="caption" variant="secondary" style={styles.tapHint}>
-                Tap for insights
-              </ThemedText>
-            </View>
-          </TouchableOpacity>
-        </Animated.View>
+          {/* Enhanced tap hint with better positioning */}
+          <View style={styles.tapHintContainer}>
+            <ThemedText type="caption" variant="secondary" style={styles.tapHint}>
+              Tap for insights
+            </ThemedText>
+          </View>
+        </TouchableOpacity>
+      </Animated.View>
 
-        {/* Enhanced recommendation section with better spacing */}
-        <View style={styles.recommendationContainer}>
-          <ThemedText type="caption" variant="secondary" style={styles.recommendationText}>
-            {getRecommendationMessage(memoryMetrics.capacityScore)}
-          </ThemedText>
-        </View>
-      </BaseChart>
-    );
-  }
-);
+      {/* Enhanced recommendation section with better spacing */}
+      <View style={styles.recommendationContainer}>
+        <ThemedText type="caption" variant="secondary" style={styles.recommendationText}>
+          {getRecommendationMessage(memoryMetrics.capacityScore)}
+        </ThemedText>
+      </View>
+    </BaseChart>
+  );
+});
 
 MemoryCapacityGauge.displayName = 'MemoryCapacityGauge';
 

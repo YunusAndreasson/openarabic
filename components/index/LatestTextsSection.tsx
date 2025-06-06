@@ -22,7 +22,7 @@ const LatestTextsSection = memo(
   ({ articles, onArticlePress }: LatestTextsSectionProps): JSX.Element => {
     return (
       <View style={styles.sectionContainer}>
-        <SectionTitle title="Recent Articles" />
+        <SectionTitle title="Latest" />
         {articles.map((article, index) => (
           <ArticleItem
             key={article.id}

@@ -82,86 +82,86 @@ const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
   mastery: {
     title: 'Memory Strength',
     subtitle:
-      'How well you remember each word over time.\n\nThis tracks your vocabulary retention and shows which words have moved from learning to long-term memory.',
+      'How well you remember each word over time. This tracks your vocabulary retention and shows which words have moved from learning to long-term memory.',
     sections: [
       {
-        title: 'Memory Strength Levels',
+        title: 'Memory Levels',
         content:
-          'New: Just learned, needs frequent review\nLearning: Building memory, review every few days\nMastered: Strong memory, review weekly or less\n\nWords progress through these stages as you practice. The goal is moving words to mastered status.',
+          'New: Just learned, frequent review needed\nLearning: Building memory, review every few days\nMastered: Strong memory, minimal review\n\nWords progress through stages as you practice.',
         icon: 'school',
       },
       {
         title: 'Strength Percentage',
         content:
-          'Shows your current overall memory strength across all words.\n\nHigher percentages mean stronger retention\nLower percentages indicate need for more review\n\nAim for steady improvement over time rather than perfection.',
+          'Your current overall memory strength.\n\nHigher = stronger retention\nLower = more review needed\n\nAim for steady improvement over time.',
         icon: 'trending-up',
       },
       {
         title: 'Mastered Count',
         content:
-          'Total words you have moved to long-term memory.\n\nThese words require minimal review and are available for natural use\nClick to see your mastered word list\n\nCelebrate this number - it represents real learning progress.',
+          'Words you have moved to long-term memory.\n\nThese require minimal review and are ready for use.\nClick to see your mastered words.\n\nThis represents real learning progress.',
         icon: 'checkmark-circle',
       },
     ],
     tips: [
-      'Steep climbs indicate effective learning periods',
-      'Plateaus are normal - maintain consistency',
+      'Steep climbs show effective learning',
+      'Plateaus are normal - stay consistent',
       'Focus on quality recall over speed',
-      'Use context and associations for better retention',
+      'Use context for better retention',
     ],
   },
   retrievability: {
-    title: 'Memory Decay',
+    title: 'Memory Retention',
     subtitle:
-      'How long you remember words without practice.\n\nThis predicts which words you are likely to forget and need review soon.',
+      'How long you remember words without practice. This predicts which words you are likely to forget and need review soon.',
     sections: [
       {
-        title: 'Memory Decay Process',
+        title: 'Memory Decay',
         content:
-          'All memories naturally fade over time without reinforcement.\n\nFresh memories decay quickly\nReviewed memories last longer\nWell-learned words resist forgetting\n\nSpaced repetition fights this natural process.',
+          'All memories naturally fade without reinforcement.\n\nFresh memories decay quickly\nReviewed memories last longer\nWell-learned words resist forgetting\n\nSpaced repetition fights this process.',
         icon: 'time',
       },
       {
         title: 'Fading Words',
         content:
-          'Words approaching the forgetting threshold.\n\nThese need review soon to prevent memory loss\nClick to see which specific words are fading\n\nReviewing before forgetting is more efficient than relearning.',
+          'Words approaching the forgetting threshold.\n\nThese need review soon to prevent loss.\nClick to see which words are fading.\n\nReview before forgetting is more efficient.',
         icon: 'warning-outline',
       },
       {
         title: 'Retention Percentage',
         content:
-          'Predicted percentage of words you will remember.\n\nHigher percentages indicate strong memory\nLower percentages suggest review needed\n\nThis forecast helps prioritize study time.',
+          'Predicted percentage of words you will remember.\n\nHigher = strong memory\nLower = review needed\n\nThis forecast helps prioritize study time.',
         icon: 'shield',
       },
     ],
     tips: [
       'Review just before forgetting for strongest memories',
-      'Green zones indicate stable retention',
-      'Red zones require immediate review',
+      'Green zones show stable retention',
+      'Red zones need immediate review',
       'Consistent practice prevents steep drops',
     ],
   },
   efficiency: {
     title: 'Learning Speed',
     subtitle:
-      'How quickly you master new vocabulary.\n\nThis measures your learning velocity and helps optimize your study approach.',
+      'How quickly you master new vocabulary. This measures your learning velocity and helps optimize your study approach.',
     sections: [
       {
         title: 'Learning Speed',
         content:
-          'How fast you move words from new to mastered status.\n\nFaster learning means:\nBetter focus during study\nEffective review timing\nOptimal difficulty level\n\nSlow learning suggests need for strategy adjustment.',
+          'How fast you move words from new to mastered.\n\nFaster learning means:\nBetter focus during study\nEffective review timing\nOptimal difficulty level',
         icon: 'speedometer',
       },
       {
         title: 'Speed Factors',
         content:
-          'Several factors affect your learning speed:\n\nWord difficulty relative to your level\nQuality of attention during review\nSpacing between review sessions\nPersonal energy and focus\n\nOptimize these for better efficiency.',
+          'What affects your learning speed:\n\nWord difficulty vs your level\nQuality of attention during review\nSpacing between sessions\nPersonal energy and focus',
         icon: 'settings',
       },
       {
         title: 'Improvement Tips',
         content:
-          'To increase learning speed:\n\nStudy when mentally fresh\nUse active recall techniques\nConnect new words to known concepts\nPractice in varied contexts\n\nConsistency beats cramming for speed.',
+          'To increase learning speed:\n\nStudy when mentally fresh\nUse active recall techniques\nConnect new words to known concepts\nPractice in varied contexts',
         icon: 'bulb',
       },
     ],

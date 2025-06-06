@@ -45,7 +45,7 @@ const WordItem = memo(
     let statusIcon = 'star';
 
     if (isMastered) {
-      statusLabel = 'Mastered';
+      statusLabel = 'Strong';
       statusIcon = 'checkmark-circle';
     } else if (isReview) {
       statusLabel = 'Review';
@@ -177,7 +177,7 @@ export function VocabularyWordList({
         </View>
         <View style={styles.emptyContainer}>
           <ThemedText type="body" colorName="captionText">
-            No words
+            Start adding words to build your vocabulary
           </ThemedText>
         </View>
       </View>
@@ -197,6 +197,7 @@ export function VocabularyWordList({
         keyExtractor={keyExtractor}
         estimatedItemSize={70}
         showsVerticalScrollIndicator={false}
+        accessibilityLabel="Vocabulary words list"
         contentContainerStyle={{
           paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
           paddingTop:

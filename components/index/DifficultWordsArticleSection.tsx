@@ -1,9 +1,10 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import ArticleSection from '../article/ArticleSection';
-import { useArticlesByDifficultWords } from '../../hooks/useArticlesByDifficultWords';
+
 import { LAYOUT } from '../../constants/layout';
+import { useArticlesByDifficultWords } from '../../hooks/useArticlesByDifficultWords';
 import type { Article } from '../../types/articles.types';
+import ArticleSection from '../article/ArticleSection';
 
 interface DifficultWordsArticleSectionProps {
   userId: string | undefined;
@@ -62,7 +63,7 @@ export function DifficultWordsArticleSection({
   return (
     <View style={styles.container}>
       <ArticleSection
-        title="Challenge Yourself"
+        title="Practice Challenge"
         articles={articles.map(renderArticleWithDifficultCount)}
         onArticlePress={onArticlePress}
         hideDifficulty={true}

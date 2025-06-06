@@ -46,8 +46,8 @@ const ArticleItem = memo(({ item, onPress }: ArticleItemProps) => {
       variant="article"
       imageUrl={item.image_url || 'https://picsum.photos/800/400'}
       title={item.title}
-      category={item.category?.name ?? 'Uncategorized'}
-      author={item.author?.name ?? 'Anonymous'}
+      category={item.category?.name ?? 'General'}
+      author={item.author?.name ?? 'Author'}
       onPress={handlePress}
       style={[styles.articleCard, isPending && styles.pendingCard]}
       shadowSize="medium"
@@ -198,11 +198,11 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
   },
-  pendingCard: {
-    opacity: 0.7,
-  },
   container: {
     flex: 1,
+  },
+  pendingCard: {
+    opacity: 0.7,
   },
 });
 

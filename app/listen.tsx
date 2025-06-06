@@ -1,27 +1,27 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
+import { useLocalSearchParams, router } from 'expo-router';
 import React, { JSX, useCallback, useEffect, useState, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, router } from 'expo-router';
 import Animated from 'react-native-reanimated';
-import { useQueryClient } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
 import { ListenHeader, CompletionScreen } from '@/components/listen';
 import RepeatButton from '@/components/listen/RepeatButton';
 import { WordDisplay } from '@/components/review';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
-import { useWordSizing } from '@/hooks/useWordSizing';
-import { useAuth } from '@/hooks/useAuth';
-import { useFSRSQueries } from '@/hooks/useFSRSQueries';
-import { useEnhancedAudioPlayer } from '@/hooks/useEnhancedAudioPlayer';
 import { useOpacityAnimation } from '@/hooks/animations';
+import { useAuth } from '@/hooks/useAuth';
+import { useColors } from '@/hooks/useColors';
+import { useEnhancedAudioPlayer } from '@/hooks/useEnhancedAudioPlayer';
+import { useFSRSQueries } from '@/hooks/useFSRSQueries';
+import { useWordSizing } from '@/hooks/useWordSizing';
 import { listenAudioService } from '@/services/listenAudioService';
-import { handleError } from '@/utils/errorHandling';
-import { StudyWord } from '@/types/vocabulary.types';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
+import { StudyWord } from '@/types/vocabulary.types';
+import { handleError } from '@/utils/errorHandling';
 
 /**
  * Screen that plays Arabic words followed by their English translations
@@ -320,9 +320,9 @@ export default function ListenScreen(): JSX.Element {
     return (
       <CompletionScreen
         onClose={handleClose}
-        title="Great Listening Session!"
-        subtitle="You've practiced listening to all your words. Well done!"
-        buttonText="Done"
+        title="Session Complete!"
+        subtitle="All words practiced"
+        buttonText="Close"
         buttonVariant="outlined"
         iconName="checkmark-circle-outline"
         iconSize={120}
@@ -380,9 +380,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     justifyContent: 'space-between',
+    paddingBottom: 0,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: 0,
     width: '100%',
   },
   footer: {

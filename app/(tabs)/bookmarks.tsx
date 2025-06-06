@@ -196,7 +196,7 @@ const createBookmarkSortOptions = (
   if (isDueWordsDataAvailable) {
     baseOptions.unshift({ key: 'dueWords', label: 'Words Due' });
   } else if (isDueWordsLoading) {
-    baseOptions.unshift({ key: 'dueWords', label: 'Words Due...' });
+    baseOptions.unshift({ key: 'dueWords', label: 'Words Due' });
   }
 
   return baseOptions;
@@ -675,7 +675,7 @@ export default function BookmarksScreen(): JSX.Element {
     return (
       <ThemedView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.tint} />
-        <ThemedText style={{ marginTop: LAYOUT.SPACING.MEDIUM }}>Loading saved texts...</ThemedText>
+        <ThemedText style={{ marginTop: LAYOUT.SPACING.MEDIUM }}>Loading saved texts</ThemedText>
       </ThemedView>
     );
   }
@@ -685,7 +685,7 @@ export default function BookmarksScreen(): JSX.Element {
       style={styles.container}
       includeBottomInset={false}
       safeAreaEdges={['left', 'right']}
-      accessibilityLabel="Listen screen"
+      accessibilityLabel="Bookmarks screen"
     >
       <ThemedView useSafeArea={false} includeBottomInset={false} style={styles.flexOne}>
         <FlashList
@@ -737,8 +737,8 @@ export default function BookmarksScreen(): JSX.Element {
             shouldShowEmpty ? (
               <EmptyState
                 title="No Saved Texts"
-                description="Build a queue of texts to listen to on-demand"
-                submessage="Tap the bookmark icon on any text. Return here to play them with hands-free controls."
+                description="Save articles to listen later"
+                submessage="Bookmark any article, then return here to play with hands-free controls"
                 icon="bookmarks-outline"
                 iconSize={72}
                 colors={colors}
@@ -775,7 +775,7 @@ export default function BookmarksScreen(): JSX.Element {
           primaryVariant="filled"
           primaryDisabled={false}
           primaryAccessibilityLabel={
-            isCurrentlyPlaying && playbackMode === 'all' ? 'Stop playback' : 'Play all saved texts'
+            isCurrentlyPlaying && playbackMode === 'all' ? 'Stop playback' : 'Play all texts'
           }
           showTimerButton={isCurrentlyPlaying}
           onTimerPress={() => {
@@ -783,7 +783,7 @@ export default function BookmarksScreen(): JSX.Element {
             setShowSleepTimer(true);
           }}
           isTimerActive={sleepTimer.state.isActive}
-          timerAccessibilityLabel="Open sleep timer"
+          timerAccessibilityLabel="Sleep timer"
           primaryDisablePressAnimation={true}
         />
       )}
@@ -826,7 +826,7 @@ export default function BookmarksScreen(): JSX.Element {
           mediumFeedback();
           setShowSleepTimer(true);
         }}
-        timerAccessibilityLabel="Open sleep timer"
+        timerAccessibilityLabel="Sleep timer"
       />
 
       {/* Sleep Timer Modal - only show when there are texts and timer is active/visible */}

@@ -98,16 +98,16 @@ export default memo(function SessionOptionsModal({
   const sessionOptions: SessionOption[] = [
     {
       id: 'visual-review',
-      title: 'Visual Review',
-      subtitle: 'Swipe through your due words',
+      title: 'Visual Practice',
+      subtitle: 'Swipe through words',
       icon: 'eye-outline',
       iconColor: colors.tint,
       onPress: () => handleOptionPress(onStartReview),
     },
     {
       id: 'audio-review',
-      title: 'Audio Review',
-      subtitle: 'Listen to pronunciation',
+      title: 'Audio Practice',
+      subtitle: 'Listen and learn',
       icon: 'headset-outline',
       iconColor: colors.info,
       onPress: () => handleOptionPress(onStartListen),
@@ -148,10 +148,10 @@ export default memo(function SessionOptionsModal({
               <View style={[styles.header, { borderBottomColor: colors.borderOverlay }]}>
                 <View style={styles.headerContent}>
                   <ThemedText type="heading2" weight="bold" style={styles.title}>
-                    Choose Study Mode
+                    Practice Mode
                   </ThemedText>
                   <ThemedText type="body" variant="secondary" style={styles.subtitle}>
-                    How would you like to practice your {dueWordsCount} due words?
+                    How would you like to practice {dueWordsCount} words?
                   </ThemedText>
                 </View>
                 <TouchableOpacity
@@ -168,10 +168,10 @@ export default memo(function SessionOptionsModal({
                 {!hasWordsToStudy ? (
                   <View style={styles.emptyState}>
                     <ThemedText type="body" variant="secondary" style={styles.emptyText}>
-                      No words available for practice right now.
+                      You&apos;re all caught up!
                     </ThemedText>
                     <ThemedText type="caption" variant="secondary" style={styles.emptySubtext}>
-                      Come back after studying some new words!
+                      Add more words to practice
                     </ThemedText>
                   </View>
                 ) : (

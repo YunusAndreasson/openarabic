@@ -1,3 +1,5 @@
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useMemo, useCallback } from 'react';
 import { StyleSheet, View, useWindowDimensions, Platform } from 'react-native';
 import Animated, {
@@ -7,17 +9,17 @@ import Animated, {
   SharedValue,
   useDerivedValue,
 } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { EnhancedImage } from '../EnhancedImage';
-import { LAYOUT, HEADER_IMAGE_HEIGHT } from '@/constants/layout';
-import { DEFAULT_IMAGES } from '@/constants/images';
+
 import { Colors } from '@/constants/Colors';
-import { ThemedText } from '../ThemedText';
+import { DEFAULT_IMAGES } from '@/constants/images';
+import { LAYOUT, HEADER_IMAGE_HEIGHT } from '@/constants/layout';
+import { formatDifficultyLevel } from '@/services/difficultyLevel';
 import type { Article } from '@/types/articles.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
-import { formatDifficultyLevel } from '@/services/difficultyLevel';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
+
+import { EnhancedImage } from '../EnhancedImage';
+import { ThemedText } from '../ThemedText';
 
 const PARALLAX_FACTOR = 0.35; // Further refined for optimal parallax feel
 const CONTENT_FADE_THRESHOLD = 0.4; // Earlier fade for better UX
@@ -464,31 +466,19 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
 );
 
 const styles = StyleSheet.create({
+  categoryItem: {
+    // Category gets visual emphasis through typography, not spacing
+    marginRight: LAYOUT.SPACING.TINY, // Subtle extra space to create visual grouping
+  },
+  categoryText: {
+    fontWeight: '600' as const, // Stronger weight for visual hierarchy
+    opacity: 0.95, // Highest opacity for primary importance
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + 1, // Slightly larger than other metadata (16px)
+  },
   container: {
-    width: '100%',
+    borderRadius: 0,
     overflow: 'hidden',
-    borderRadius: 0, // Ensure no border radius on container
-  },
-  imageWrapper: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: Colors.dark.background,
-    overflow: 'hidden',
-    borderRadius: 0, // Ensure no border radius on image wrapper
-    left: 0, // Explicitly set to reach left edge
-    right: 0, // Explicitly set to reach right edge
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 0, // Override EnhancedImage's default border radius
-  },
-  gradient: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 1,
-  },
-  topSpace: {
-    width: '100%',
-    height: 60,
+    width: '100%', // Ensure no border radius on container
   },
   contentSection: {
     position: 'absolute',
@@ -500,15 +490,34 @@ const styles = StyleSheet.create({
     paddingBottom: LAYOUT.SPACING.XXLARGE + LAYOUT.SPACING.SMALL,
     zIndex: 3,
   },
-  primaryContentGroup: {
-    marginBottom: LAYOUT.SPACING.MEDIUM, // Increased spacing to separate from metadata
+  divider: {
+    height: StyleSheet.hairlineWidth, // Use hairline width for crisp lines
+    opacity: 0.12, // Refined opacity for subtle separation
+    width: '100%',
+  },
+  gradient: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
+  },
+  image: {
+    borderRadius: 0,
+    height: '100%',
+    width: '100%', // Override EnhancedImage's default border radius
+  },
+  imageWrapper: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: Colors.dark.background,
+    overflow: 'hidden',
+    borderRadius: 0, // Ensure no border radius on image wrapper
+    left: 0, // Explicitly set to reach left edge
+    right: 0, // Explicitly set to reach right edge
   },
   metadataGroup: {
     marginBottom: LAYOUT.SPACING.LARGE, // Clear separation from summary
   },
   metadataItem: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
   },
   metadataRow: {
     flexDirection: 'row',
@@ -517,25 +526,18 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap', // Allow wrapping on smaller screens
     gap: LAYOUT.SPACING.LARGE, // Consistent spacing between all items
   },
-  categoryItem: {
-    // Category gets visual emphasis through typography, not spacing
-    marginRight: LAYOUT.SPACING.TINY, // Subtle extra space to create visual grouping
-  },
-  categoryText: {
-    fontWeight: '600' as const, // Stronger weight for visual hierarchy
-    opacity: 0.95, // Highest opacity for primary importance
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + 1, // Slightly larger than other metadata (16px)
-  },
-  summaryGroup: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 2,
   },
-  divider: {
-    height: StyleSheet.hairlineWidth, // Use hairline width for crisp lines
-    opacity: 0.12, // Refined opacity for subtle separation
+  primaryContentGroup: {
+    marginBottom: LAYOUT.SPACING.MEDIUM, // Increased spacing to separate from metadata
+  },
+  summaryGroup: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  topSpace: {
+    height: 60,
     width: '100%',
   },
 });

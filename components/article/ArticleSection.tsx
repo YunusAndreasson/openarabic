@@ -1,11 +1,12 @@
 import React, { memo } from 'react';
 import { StyleSheet, View, ScrollView, ActivityIndicator } from 'react-native';
 
-import SectionTitle from '@/components/SectionTitle';
 import { ThemedCard } from '@/components';
+import SectionTitle from '@/components/SectionTitle';
 import { LAYOUT } from '@/constants/layout';
-import type { Article } from '../../types/articles.types';
 import { useColors } from '@/hooks/useColors';
+
+import type { Article } from '../../types/articles.types';
 
 interface ArticleSectionProps {
   /**
@@ -70,7 +71,7 @@ const ArticleSection = memo(
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
-            accessibilityLabel={`Scroll ${title}`}
+            accessibilityLabel={`${title} articles`}
           >
             {articles.map(article => {
               // Get last opened timestamp if provided
@@ -100,6 +101,9 @@ const ArticleSection = memo(
 ArticleSection.displayName = 'ArticleSection';
 
 const styles = StyleSheet.create({
+  articleCard: {
+    marginRight: LAYOUT.SPACING.MEDIUM,
+  },
   container: {
     // Removed margins - SectionTitle handles all section spacing
   },
@@ -111,9 +115,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingRight: LAYOUT.SPACING.MEDIUM,
-  },
-  articleCard: {
-    marginRight: LAYOUT.SPACING.MEDIUM,
   },
 });
 

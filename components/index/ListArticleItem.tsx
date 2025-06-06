@@ -12,18 +12,18 @@ interface ListArticleItemProps {
 }
 
 const ListArticleItem = memo(({ article, onPress }: ListArticleItemProps): JSX.Element => {
-  const categoryName = article.category?.name
+  const category = article.category?.name
     ? capitalizeFirstLetter(article.category.name)
-    : 'Uncategorized';
+    : 'General';
   const timeAgoText = formatTimeAgo(article.created_at);
 
   return (
     <ArticleCard
       title={article.title}
-      author={article.author?.name || 'Anonymous'}
+      author={article.author?.name || 'Author'}
       meta={
         <ThemedText type="caption" colorName="textTertiary">
-          · {timeAgoText} · {categoryName}
+          · {timeAgoText} · {category}
         </ThemedText>
       }
       onPress={() => onPress(article)}

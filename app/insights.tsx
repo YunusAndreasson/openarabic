@@ -55,7 +55,7 @@ export default function InsightsScreen(): JSX.Element {
     return (
       <ThemedView style={styles.container}>
         <View style={styles.errorContainer}>
-          <SectionTitle title="Error loading insights" />
+          <SectionTitle title="Insights unavailable" />
         </View>
       </ThemedView>
     );
@@ -78,7 +78,7 @@ export default function InsightsScreen(): JSX.Element {
           headerTransparent: false,
           headerTitleAlign: 'left',
           headerTintColor: colors.tint,
-          headerBackTitle: 'Remember',
+          headerBackTitle: 'Vocabulary',
           headerBackTitleStyle: {
             fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
           },
@@ -88,7 +88,7 @@ export default function InsightsScreen(): JSX.Element {
         style={styles.container}
         includeBottomInset={false}
         safeAreaEdges={['left', 'right']}
-        accessibilityLabel="Vocabulary insights screen"
+        accessibilityLabel="Insights screen"
       >
         <ScrollView
           contentContainerStyle={[
@@ -104,7 +104,7 @@ export default function InsightsScreen(): JSX.Element {
             <View style={styles.firstChartContainer}>
               <SectionTitle
                 title="Memory Strength"
-                subtitle="Track your vocabulary mastery progress over time"
+                subtitle="Your vocabulary mastery over time"
                 onInfoPress={handleMasteryInfo}
                 isFirstSection={true}
               />
@@ -118,7 +118,7 @@ export default function InsightsScreen(): JSX.Element {
             <View style={styles.chartContainer}>
               <SectionTitle
                 title="Learning Speed"
-                subtitle="Monitor your learning efficiency and practice momentum"
+                subtitle="How quickly you learn new words"
                 onInfoPress={handleEfficiencyInfo}
               />
               <EfficiencyChart
@@ -132,7 +132,7 @@ export default function InsightsScreen(): JSX.Element {
             <View style={[styles.chartContainer, styles.lastChart]}>
               <SectionTitle
                 title="Memory Retention"
-                subtitle="See which words need review to prevent forgetting"
+                subtitle="Which words need review"
                 onInfoPress={handleRetrievabilityInfo}
               />
               <RetrievabilityChart

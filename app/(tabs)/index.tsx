@@ -386,7 +386,7 @@ export default function ArticlesScreen(): JSX.Element {
           return derivedData.beginnerArticles.length > 0 ? (
             <ArticleSection
               key="beginner"
-              title="Start Your Journey"
+              title="Get Started"
               articles={derivedData.beginnerArticles.slice(0, 10)}
               onArticlePress={handleArticlePress}
               hideDifficulty={true}
@@ -429,7 +429,7 @@ export default function ArticlesScreen(): JSX.Element {
           return derivedData.authorsWithArticles.length > 0 ? (
             <FilterSection
               key="authors"
-              title="Scholars"
+              title="Authors"
               items={derivedData.authorsWithArticles}
               onSelect={handleSelectAuthor}
             />
@@ -520,7 +520,7 @@ export default function ArticlesScreen(): JSX.Element {
       style={styles.container}
       includeBottomInset={false}
       safeAreaEdges={['left', 'right']}
-      accessibilityLabel="Read screen"
+      accessibilityLabel="Articles screen"
     >
       <ArticleList
         articles={[]}

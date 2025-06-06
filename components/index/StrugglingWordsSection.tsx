@@ -1,13 +1,13 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { memo, useMemo, useState, useCallback } from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { State } from 'ts-fsrs';
-import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
+import { State } from 'ts-fsrs';
 
 import BaseCard from '@/components/BaseCard';
 import SectionTitle from '@/components/SectionTitle';
@@ -44,23 +44,23 @@ interface DifficultyInfo {
 const DIFFICULTY_CATEGORIES = [
   {
     icon: 'checkmark-circle',
-    label: 'Mastering',
+    label: 'Strong',
   },
   {
     icon: 'trending-up',
-    label: 'Improving',
+    label: 'Good',
   },
   {
     icon: 'sync',
-    label: 'Review soon',
+    label: 'Review',
   },
   {
     icon: 'time',
-    label: 'Needs practice',
+    label: 'Practice',
   },
   {
     icon: 'alert-circle',
-    label: 'Focus word',
+    label: 'Focus',
   },
 ];
 
@@ -148,7 +148,7 @@ const calculateWordDifficulty = (
     color,
     backgroundColor,
     icon: category?.icon || 'sync',
-    label: category?.label || 'Review soon',
+    label: category?.label || 'Review',
   };
 };
 
@@ -285,7 +285,7 @@ const WordCard = memo(({ word, onPlayAudio, isPlaying }: WordCardProps) => {
                     style={[styles.difficultyText, { color: difficultyInfo.color }]}
                     skipDefaultColor
                   >
-                    {isPlaying ? 'Playing...' : difficultyInfo.label}
+                    {isPlaying ? 'Playing' : difficultyInfo.label}
                   </ThemedText>
                 </View>
               </View>
@@ -340,7 +340,7 @@ const StrugglingWordsSection = memo(({ words = [], isLoading = false }: Struggli
     return (
       <View style={styles.container}>
         <SectionTitle
-          title="Challenging Words"
+          title="Needs Practice"
           subtitle="Practice these to improve your retention rate"
           isFirstSection={true}
         />
@@ -358,7 +358,7 @@ const StrugglingWordsSection = memo(({ words = [], isLoading = false }: Struggli
   return (
     <View style={styles.container}>
       <SectionTitle
-        title="Challenging Words"
+        title="Needs Practice"
         subtitle="Practice these to improve your retention rate"
         isFirstSection={true}
       />
@@ -383,55 +383,27 @@ const StrugglingWordsSection = memo(({ words = [], isLoading = false }: Struggli
 StrugglingWordsSection.displayName = 'StrugglingWordsSection';
 
 const styles = StyleSheet.create({
+  arabicText: {
+    marginBottom: LAYOUT.SPACING.TINY,
+    textAlign: 'center',
+  },
+  cardContainer: {
+    marginRight: LAYOUT.SPACING.MEDIUM,
+    position: 'relative',
+    width: 145,
+  },
   container: {
     // Removed margins - SectionTitle handles all section spacing
   },
-  scrollContent: {
-    paddingRight: LAYOUT.SPACING.MEDIUM,
-  },
-  cardContainer: {
-    width: 145,
-    marginRight: LAYOUT.SPACING.MEDIUM,
-    position: 'relative',
-  },
-  touchableArea: {
-    flex: 1,
-  },
-  wordCard: {
-    width: '100%',
-  },
-  innerBorder: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderWidth: 2,
-    borderRadius: 12,
-    pointerEvents: 'none', // Ensure it doesn't interfere with touch events
-  },
-  wordCardContent: {
-    padding: LAYOUT.SPACING.MEDIUM,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  arabicText: {
-    textAlign: 'center',
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
-  englishText: {
-    textAlign: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
   difficultyContainer: {
     borderRadius: 12,
+    marginTop: LAYOUT.SPACING.MICRO,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    marginTop: LAYOUT.SPACING.MICRO,
   },
   difficultyContent: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
     justifyContent: 'center',
   },
   difficultyIcon: {
@@ -439,27 +411,55 @@ const styles = StyleSheet.create({
   },
   difficultyText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    textAlign: 'center',
     fontWeight: '600',
+    textAlign: 'center',
+  },
+  englishText: {
+    marginBottom: LAYOUT.SPACING.SMALL,
+    textAlign: 'center',
+  },
+  innerBorder: {
+    borderRadius: 12,
+    borderWidth: 2,
+    bottom: 0,
+    left: 0,
+    pointerEvents: 'none',
+    position: 'absolute',
+    right: 0,
+    top: 0, // Ensure it doesn't interfere with touch events
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    height: 100,
+    justifyContent: 'center',
+  },
+  scrollContent: {
+    paddingRight: LAYOUT.SPACING.MEDIUM,
+  },
+  soundWave: {
+    borderRadius: 1,
+    height: 14,
+    marginHorizontal: 1,
+    width: 2,
   },
   soundWaveContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
+    height: 14,
     justifyContent: 'center',
     marginRight: 6,
     width: 16,
-    height: 14,
   },
-  soundWave: {
-    width: 2,
-    height: 14,
-    marginHorizontal: 1,
-    borderRadius: 1,
+  touchableArea: {
+    flex: 1,
   },
-  loadingContainer: {
-    height: 100,
+  wordCard: {
+    width: '100%',
+  },
+  wordCardContent: {
     alignItems: 'center',
     justifyContent: 'center',
+    padding: LAYOUT.SPACING.MEDIUM,
   },
 });
 
