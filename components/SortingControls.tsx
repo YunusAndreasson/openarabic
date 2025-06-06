@@ -1,12 +1,14 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { memo, useState, useEffect, useCallback, JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { ThemedText } from './ThemedText';
-import { useColors } from '@/hooks/useColors';
+
 import { LAYOUT } from '@/constants/layout';
-import Pill from './Pill';
-import BaseCard from './BaseCard';
+import { useColors } from '@/hooks/useColors';
 import { lightFeedback } from '@/utils/haptics';
+
+import BaseCard from './BaseCard';
+import Pill from './Pill';
+import { ThemedText } from './ThemedText';
 
 export type SortDirection = 'asc' | 'desc';
 
@@ -76,12 +78,12 @@ function SortingControls<T extends string>({
                   isSelected && {
                     backgroundColor: colors.elevation1,
                     borderWidth: 1,
-                    borderColor: colors.tint + '15', // Subtle border
+                    borderColor: colors.tint + '25', // Increased opacity for better visibility
                     shadowColor: colors.tint,
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 2,
-                    elevation: 2,
+                    shadowOffset: { width: 0, height: 2 }, // Slightly more elevation
+                    shadowOpacity: 0.15, // Increased shadow
+                    shadowRadius: 3, // Larger shadow radius
+                    elevation: 3, // Increased Android elevation
                   },
                 ]}
                 label={
@@ -90,7 +92,15 @@ function SortingControls<T extends string>({
                       type="label"
                       colorName={isSelected ? 'tint' : 'textTertiary'}
                       weight={isSelected ? 'bold' : 'medium'}
-                      style={[styles.sortPillLabel, isSelected && styles.selectedLabel]}
+                      style={[
+                        styles.sortPillLabel,
+                        isSelected && styles.selectedLabel,
+                        {
+                          fontSize: isSelected
+                            ? LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1
+                            : LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+                        }, // Slightly larger when selected
+                      ]}
                     >
                       {option.label}
                     </ThemedText>
@@ -102,7 +112,7 @@ function SortingControls<T extends string>({
                             : 'chevron-up'
                           : 'chevron-down'
                       }
-                      size={11}
+                      size={isSelected ? 13 : 11} // Larger icon when selected
                       style={[styles.sortPillIcon, isSelected && styles.selectedIcon]}
                       color={isSelected ? colors.tint : colors.textTertiary}
                     />
@@ -123,6 +133,12 @@ const MemoizedSortingControls = memo(SortingControls);
 export default MemoizedSortingControls;
 
 const styles = StyleSheet.create({
+  selectedIcon: {
+    opacity: 1, // Full opacity when selected
+  },
+  selectedLabel: {
+    fontWeight: '600',
+  },
   sortCard: {
     marginBottom: LAYOUT.SPACING.XSMALL,
     marginHorizontal: 0,
@@ -134,8 +150,8 @@ const styles = StyleSheet.create({
   },
   sortOptions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     gap: LAYOUT.SPACING.XSMALL,
+    justifyContent: 'space-between',
   },
   sortPill: {
     flex: 1,
@@ -153,24 +169,18 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   sortPillContent: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
     gap: LAYOUT.SPACING.XTINY,
-  },
-  sortPillLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    textAlign: 'center',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 2,
-    letterSpacing: 0.2, // Subtle letter spacing for elegance
-  },
-  selectedLabel: {
-    fontWeight: '600',
   },
   sortPillIcon: {
     marginLeft: LAYOUT.SPACING.MICRO,
     opacity: 0.7, // Subtle when not selected
   },
-  selectedIcon: {
-    opacity: 1, // Full opacity when selected
+  sortPillLabel: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    letterSpacing: 0.2,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 2,
+    textAlign: 'center', // Subtle letter spacing for elegance
   },
 });

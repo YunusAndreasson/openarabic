@@ -156,43 +156,6 @@ const WordListItem = memo(function WordListItem({ word, currentSort }: WordListI
 });
 
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingVertical: LAYOUT.SPACING.MEDIUM, // Reduced from MEDIUM + 2 for tighter spacing
-    minHeight: 90, // Optimized height for content density
-  },
-  mainContent: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    justifyContent: 'space-between',
-    gap: LAYOUT.SPACING.XLARGE, // Increased for better visual separation (proximity principle)
-  },
-  leftContent: {
-    flex: 1,
-    paddingRight: LAYOUT.SPACING.LARGE, // Increased for better separation from Arabic
-    justifyContent: 'center',
-  },
-  textContent: {
-    flex: 1,
-    gap: LAYOUT.SPACING.MEDIUM, // Restored optimal spacing for clear grouping
-  },
-  meaningText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + 2, // Primary text prominence
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.3, // Optimal readability
-    fontWeight: '700',
-    letterSpacing: -0.4, // Refined letter spacing for elegance
-    marginBottom: 0,
-  },
-  rightContent: {
-    alignItems: 'center',
-    justifyContent: 'center', // Back to center for better layout
-    minWidth: 130, // Increased to give more space for Arabic text
-    paddingLeft: LAYOUT.SPACING.LARGE,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    paddingRight: LAYOUT.SPACING.SMALL, // Minimal right padding
-    flex: 0,
-    position: 'relative', // For absolute positioning of chevron
-  },
   arabicContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -208,28 +171,44 @@ const styles = StyleSheet.create({
     paddingTop: LAYOUT.SPACING.SMALL,
     paddingBottom: LAYOUT.SPACING.XSMALL,
   },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center', // Changed to center for better visual balance
-    gap: LAYOUT.SPACING.MEDIUM, // Increased gap for better badge separation
-    marginBottom: 0,
-  },
-  streakBadge: {
-    paddingHorizontal: LAYOUT.SPACING.SMALL + 1, // Slightly more padding
-    paddingVertical: LAYOUT.SPACING.XSMALL,
-    borderRadius: 8, // More refined radius
-    alignSelf: 'flex-start', // Align with text baseline
-  },
-  streakText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // Restored readability
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.1,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-  },
-  memoryRow: {
-    flexDirection: 'row',
+  chevronContainer: {
     alignItems: 'center',
-    gap: LAYOUT.SPACING.MEDIUM, // Restored for better visual grouping
+    height: 24,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: LAYOUT.SPACING.TINY,
+    top: '50%',
+    transform: [{ translateY: -12 }],
+    width: 24,
+  },
+  chevronIcon: {
+    fontSize: 24, // Much larger, standard interactive size
+    fontWeight: '500',
+    letterSpacing: 0,
+    opacity: 0.7, // Restore opacity for proper visual hierarchy
+  },
+  container: {
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingVertical: LAYOUT.SPACING.MEDIUM, // Reduced from MEDIUM + 2 for tighter spacing
+    minHeight: 90, // Optimized height for content density
+  },
+  leftContent: {
+    flex: 1,
+    paddingRight: LAYOUT.SPACING.LARGE, // Increased for better separation from Arabic
+    justifyContent: 'center',
+  },
+  mainContent: {
+    alignItems: 'stretch',
+    flexDirection: 'row',
+    gap: LAYOUT.SPACING.XLARGE,
+    justifyContent: 'space-between', // Increased for better visual separation (proximity principle)
+  },
+  meaningText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + 2, // Primary text prominence
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.3, // Optimal readability
+    fontWeight: '700',
+    letterSpacing: -0.4, // Refined letter spacing for elegance
+    marginBottom: 0,
   },
   memoryLabel: {
     minWidth: 34, // Optimized for percentage display
@@ -240,34 +219,57 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.3, // Refined letter spacing
   },
-  progressTrackContainer: {
-    flex: 1,
-    maxWidth: 110, // Optimized width for better proportions
+  memoryRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: LAYOUT.SPACING.MEDIUM, // Restored for better visual grouping
+  },
+  progressFill: {
+    borderRadius: 2,
+    height: '100%',
   },
   progressTrack: {
     height: 4, // Slightly thicker for better visibility
     borderRadius: 2,
     overflow: 'hidden',
   },
-  progressFill: {
-    height: '100%',
-    borderRadius: 2,
+  progressTrackContainer: {
+    flex: 1,
+    maxWidth: 110, // Optimized width for better proportions
   },
-  chevronContainer: {
-    position: 'absolute',
-    right: LAYOUT.SPACING.TINY,
-    top: '50%',
-    transform: [{ translateY: -12 }],
+  rightContent: {
     alignItems: 'center',
-    justifyContent: 'center',
-    width: 24,
-    height: 24,
+    justifyContent: 'center', // Back to center for better layout
+    minWidth: 130, // Increased to give more space for Arabic text
+    paddingLeft: LAYOUT.SPACING.LARGE,
+    paddingVertical: LAYOUT.SPACING.SMALL,
+    paddingRight: LAYOUT.SPACING.SMALL, // Minimal right padding
+    flex: 0,
+    position: 'relative', // For absolute positioning of chevron
   },
-  chevronIcon: {
-    fontSize: 24, // Much larger, standard interactive size
-    fontWeight: '500',
-    letterSpacing: 0,
-    opacity: 0.7, // Restore opacity for proper visual hierarchy
+  streakBadge: {
+    paddingHorizontal: LAYOUT.SPACING.SMALL + 1, // Slightly more padding
+    paddingVertical: LAYOUT.SPACING.XSMALL,
+    borderRadius: 8, // More refined radius
+    alignSelf: 'flex-start', // Align with text baseline
+    minWidth: 48, // Ensure minimum touch target size
+    minHeight: 32, // Adequate touch height
+  },
+  streakText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // Restored readability
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.1,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  textContent: {
+    flex: 1,
+    gap: LAYOUT.SPACING.MEDIUM, // Restored optimal spacing for clear grouping
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center', // Changed to center for better visual balance
+    gap: LAYOUT.SPACING.LARGE, // Increased from MEDIUM to LARGE for better separation
+    marginBottom: 0,
   },
 });
 

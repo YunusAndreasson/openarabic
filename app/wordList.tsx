@@ -75,60 +75,60 @@ export default function WordListScreen(): JSX.Element {
 
   // Get the title and icon based on the category
   const { title } = useMemo(() => {
+    // Group related categories to reduce cognitive load
+    const categoryGroups = {
+      overview: ['total', 'due', 'needsAttention'],
+      mastery: ['mastered', 'learning'],
+      difficulty: ['difficultyEasy', 'difficultyMedium', 'difficultyHard'],
+    };
+
     switch (category) {
       case 'total':
         return {
-          title: 'Total Words',
+          title: 'All Words',
           icon: 'book',
-          description: 'Sorted by retention strength',
+          description: 'Your complete vocabulary',
         };
       case 'mastered':
         return {
-          title: 'Strong',
+          title: 'Mastered',
           icon: 'checkmark-circle',
-          description: 'Words with high stability',
+          description: 'Words you know well',
         };
       case 'learning':
         return {
           title: 'Learning',
           icon: 'school',
-          description: 'Words still being learned',
+          description: 'Words in progress',
         };
       case 'needsAttention':
         return {
-          title: 'Difficult',
+          title: 'Needs Review',
           icon: 'alert-circle',
-          description: 'Words that are challenging',
+          description: 'Words that need practice',
         };
       case 'due':
         return {
-          title: 'Due',
+          title: 'Due Now',
           icon: 'alarm-outline',
-          description: 'Words ready for review',
+          description: 'Ready for review',
         };
+      // Simplified difficulty grouping
       case 'difficultyEasy':
-        return {
-          title: 'Easy Words',
-          icon: 'happy-outline',
-          description: 'Words with low difficulty',
-        };
       case 'difficultyMedium':
+      case 'difficultyHard': {
+        const difficultyLevel = category.replace('difficulty', '').toLowerCase();
         return {
-          title: 'Medium Words',
-          icon: 'remove-circle-outline',
-          description: 'Words with medium difficulty',
+          title: `${difficultyLevel.charAt(0).toUpperCase() + difficultyLevel.slice(1)} Words`,
+          icon: 'stats-chart-outline',
+          description: `Words with ${difficultyLevel} difficulty`,
         };
-      case 'difficultyHard':
-        return {
-          title: 'Hard Words',
-          icon: 'warning-outline',
-          description: 'Words with high difficulty',
-        };
+      }
       default:
         return {
-          title: 'Due',
+          title: 'Due Now',
           icon: 'alarm-outline',
-          description: 'Words ready for review',
+          description: 'Ready for review',
         };
     }
   }, [category]);
