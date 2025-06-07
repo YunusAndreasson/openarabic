@@ -3,36 +3,9 @@ import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
-import { ThemedText } from '@/components/ThemedText';
-import { ListeningListButton } from '@/components/article/ListeningListButton';
 import { DEFAULT_IMAGES } from '@/constants/images';
-import { LAYOUT } from '@/constants/layout';
 import type { Article } from '@/types/articles.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
-
-// Typography scale refinements for better hierarchy - Following design principles
-const TYPOGRAPHY_REFINEMENTS = {
-  TITLE: {
-    letterSpacing: -0.6,
-    lineHeight: 1.15,
-  },
-  AUTHOR: {
-    letterSpacing: 0.2,
-    opacity: 0.85,
-  },
-  METADATA: {
-    fontSize: 14,
-    fontWeight: '500' as const,
-    letterSpacing: 0.3,
-    opacity: 0.72,
-  },
-  SUMMARY: {
-    fontSize: 15,
-    lineHeight: 1.4,
-    letterSpacing: 0.1,
-    opacity: 0.8,
-  },
-} as const;
 
 // Fixed header image height for better image visibility
 const HEADER_IMAGE_HEIGHT = 200;
@@ -41,48 +14,10 @@ interface ParallaxHeaderProps {
   article: Article;
   colors: ThemeColors;
   isDarkMode?: boolean;
-  isInReadingList?: boolean;
-  isLoadingReadingList?: boolean;
-  onToggleReadingList?: () => void;
-  user?: { id: string } | null;
 }
 
 const ParallaxHeader = React.memo<ParallaxHeaderProps>(
-  ({
-    article,
-    colors,
-    isDarkMode = false,
-    isInReadingList = false,
-    isLoadingReadingList = false,
-    onToggleReadingList,
-    user,
-  }) => {
-    // Enhanced text colors with better accessibility
-    const textColor = useMemo(() => colors.primary, [colors.primary]);
-
-    // Dynamic text styles with enhanced hierarchy
-    const dynamicTextStyles = useMemo(
-      () => ({
-        title: {
-          color: textColor,
-          marginBottom: LAYOUT.SPACING.SMALL,
-          fontWeight: '800' as const,
-          fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
-          letterSpacing: TYPOGRAPHY_REFINEMENTS.TITLE.letterSpacing,
-          lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * TYPOGRAPHY_REFINEMENTS.TITLE.lineHeight,
-        },
-        author: {
-          color: textColor,
-          opacity: TYPOGRAPHY_REFINEMENTS.AUTHOR.opacity,
-          marginBottom: LAYOUT.SPACING.LARGE,
-          fontWeight: '600' as const,
-          fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-          letterSpacing: TYPOGRAPHY_REFINEMENTS.AUTHOR.letterSpacing,
-        },
-      }),
-      [textColor]
-    );
-
+  ({ article, colors, isDarkMode = false }) => {
     // Image source
     const imageSource = useMemo(() => {
       return article.image_url || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER;
@@ -128,32 +63,6 @@ const ParallaxHeader = React.memo<ParallaxHeaderProps>(
             pointerEvents="none"
           />
         </View>
-
-        {/* Content Section - Overlaps image with proper styling */}
-        <View style={[styles.contentSection, { backgroundColor: colors.background }]}>
-          {/* Title and Author */}
-          <View style={styles.primaryContentGroup}>
-            <ThemedText style={dynamicTextStyles.title} type="heading2" numberOfLines={3}>
-              {article.title}
-            </ThemedText>
-
-            {article.author && (
-              <ThemedText style={dynamicTextStyles.author} type="label">
-                by {article.author.name}
-              </ThemedText>
-            )}
-          </View>
-
-          {/* Listening List Button - Only show if user is authenticated and handler is provided */}
-          {user && onToggleReadingList && (
-            <ListeningListButton
-              isInReadingList={isInReadingList}
-              isLoading={isLoadingReadingList}
-              onPress={onToggleReadingList}
-              colors={colors}
-            />
-          )}
-        </View>
       </View>
     );
   }
@@ -180,26 +89,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-  },
-  // Content section - Overlaps image with margin offset
-  contentSection: {
-    marginTop: -HEADER_IMAGE_HEIGHT * 0.3, // Negative margin to overlap image by 30%
-    paddingTop: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    borderTopRightRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  // Content groups with enhanced spacing following proximity principles
-  primaryContentGroup: {
-    marginBottom: LAYOUT.SPACING.LARGE,
   },
 });
 

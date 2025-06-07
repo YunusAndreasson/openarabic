@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { ViewStyle, StyleProp } from 'react-native';
@@ -9,7 +8,6 @@ import {
   getEnhancedOpacity,
   MIN_TOUCH_TARGET,
 } from '@/constants/layout';
-import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
 import BaseCard from '../BaseCard';
@@ -40,7 +38,6 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   contentStyle,
   children,
 }) => {
-  const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
   const activeCardStyle = React.useMemo(
@@ -106,16 +103,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
               {meta}
             </View>
           </View>
-          <View style={styles.iconContainer}>
-            {rightElement ?? (
-              <Ionicons
-                color={colors.textTertiary}
-                name="chevron-forward-outline"
-                size={20}
-                style={styles.arrowIcon}
-              />
-            )}
-          </View>
+          {rightElement && <View style={styles.iconContainer}>{rightElement}</View>}
         </View>
         {children}
       </BaseCard>
@@ -124,9 +112,6 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
 };
 
 const styles = StyleSheet.create({
-  arrowIcon: {
-    opacity: LAYOUT.OPACITY.MEDIUM,
-  },
   card: {
     minHeight: MIN_TOUCH_TARGET.SIZE,
     overflow: 'hidden', // Ensure cards meet minimum touch target

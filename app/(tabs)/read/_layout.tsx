@@ -1,6 +1,12 @@
 import { Stack } from 'expo-router';
+import { useColorScheme } from 'react-native';
+
+import { Colors } from '@/constants/Colors';
+import { LAYOUT } from '@/constants/layout';
 
 export default function ReadLayout() {
+  const colorScheme = useColorScheme();
+
   return (
     <Stack>
       <Stack.Screen
@@ -11,11 +17,26 @@ export default function ReadLayout() {
       />
       <Stack.Screen
         name="filter"
-        options={{
+        options={({ route }) => ({
           headerShown: true,
-          title: 'Filter',
+          title: (route.params as any)?.headerTitle || 'Filter',
           headerBackTitle: 'Read',
-        }}
+          headerTitleAlign: 'left',
+          headerTransparent: false,
+          presentation: 'modal',
+          headerStyle: {
+            backgroundColor: Colors[colorScheme ?? 'light'].background,
+            elevation: 0,
+            shadowOpacity: 0,
+            borderBottomWidth: 0,
+          },
+          headerTitleStyle: {
+            fontSize: LAYOUT.HEADER.TITLE.SECONDARY.fontSize,
+            fontWeight: LAYOUT.HEADER.TITLE.SECONDARY.fontWeight as any,
+            color: Colors[colorScheme ?? 'light'].text,
+          },
+          headerTintColor: Colors[colorScheme ?? 'light'].tint,
+        })}
       />
       <Stack.Screen
         name="article"

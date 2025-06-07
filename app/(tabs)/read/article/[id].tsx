@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-unused-styles */
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import type { ComponentRef, JSX } from 'react';
@@ -39,6 +39,7 @@ const createStyles = (colors: ReturnType<typeof useColors>) =>
 
 export default function ArticleScreen(): JSX.Element {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const colors = useColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { user } = useAuth();
@@ -65,6 +66,13 @@ export default function ArticleScreen(): JSX.Element {
     otherArticles,
     refetchStudyWords,
   } = useArticleData(articleId, user?.id);
+
+  // Set header title when article loads
+  useEffect(() => {
+    if (article?.title) {
+      router.setParams({ title: article.title });
+    }
+  }, [article?.title]);
 
   const { dueWordRootIds = new Set<number>() } = useArticlesByDueWords(user?.id, 0);
 
@@ -104,7 +112,7 @@ export default function ArticleScreen(): JSX.Element {
 
   const articleContentRef = useRef<ArticleContentRef>(null);
 
-  const { handleToggleReadingList, handleRootPress } = useArticleMutations(
+  const { handleRootPress } = useArticleMutations(
     user?.id,
     refetchReadingListStatus,
     refetchStudyWords
@@ -230,10 +238,6 @@ export default function ArticleScreen(): JSX.Element {
             handleArticlePress={(articleId, isRelated) =>
               handleArticlePress(Number(articleId), isRelated)
             }
-            isInReadingList={isInReadingList}
-            isLoadingReadingList={isLoadingReadingList}
-            onToggleReadingList={() => handleToggleReadingList(articleId, isInReadingList)}
-            user={user}
           />
         ) : null}
       </View>

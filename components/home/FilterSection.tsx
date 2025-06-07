@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import type { JSX } from 'react';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -49,12 +48,6 @@ const CompactNavCard = memo(
                 </ThemedText>
               </View>
             )}
-            <Ionicons
-              color={colors.textTertiary}
-              name="chevron-forward-outline"
-              size={20}
-              style={compactCardStyles.icon}
-            />
           </View>
         </BaseCard>
       </View>
@@ -88,10 +81,6 @@ const compactCardStyles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '600',
     textAlign: 'center',
-  },
-  icon: {
-    marginLeft: LAYOUT.SPACING.MEDIUM,
-    opacity: LAYOUT.OPACITY.MEDIUM,
   },
   label: {
     flex: 1,

@@ -1,5 +1,4 @@
 /* eslint-disable react/no-unused-prop-types */
-import { useHeaderHeight } from '@react-navigation/elements';
 import { FlashList } from '@shopify/flash-list';
 import React, { useMemo, useCallback } from 'react';
 import { StyleSheet, RefreshControl, View } from 'react-native';
@@ -46,12 +45,6 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   onArticlePress = NOOP_ARTICLE_PRESS,
 }) => {
   const colors = useColors();
-  const navHeaderHeight = useHeaderHeight();
-
-  // Determine the header title based on selected filters
-
-  // Calculate header height for spacer
-  const headerHeight = useMemo(() => navHeaderHeight + LAYOUT.SPACING.SMALL, [navHeaderHeight]);
 
   const renderItemCallback = useCallback(
     ({ item }: { item: Article }) => <ListArticleItem article={item} onPress={onArticlePress} />,
@@ -59,13 +52,8 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   );
 
   const ListFooterComponent = useMemo(() => {
-    return null;
-  }, [articles.length]);
-
-  // Create a header spacer component
-  const HeaderSpacer = useMemo(() => {
-    return <View style={[styles.headerSpacer, { height: headerHeight }]} />;
-  }, [headerHeight]);
+    return <View style={{ height: LAYOUT.SPACING.LARGE }} />;
+  }, []);
 
   // Calculate the estimated item height based on content + padding + margins
   const ITEM_HEIGHT = 100; // Adjust this based on your actual card height
@@ -83,7 +71,6 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
         estimatedItemSize={ITEM_HEIGHT}
         keyExtractor={item => item.id.toString()}
         ListFooterComponent={ListFooterComponent}
-        ListHeaderComponent={HeaderSpacer}
         renderItem={renderItemCallback}
         showsVerticalScrollIndicator={true}
         overrideItemLayout={layout => {
@@ -106,10 +93,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  headerSpacer: {
-    height: 0, // This will be dynamically set
-  },
   listContent: {
+    paddingTop: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
