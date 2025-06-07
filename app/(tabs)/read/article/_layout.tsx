@@ -92,12 +92,12 @@ export default function ArticleLayout(): JSX.Element {
       <Stack.Screen
         name="[id]"
         options={({ route }) => ({
-          headerShown: true,
+          headerShown: false, // Hidden for modal design with swipe indicator
           title: (route.params as any)?.title || '',
           headerBackTitle: 'Read',
           headerTitleAlign: 'left',
           headerTransparent: false,
-          headerRight: () => <ArticleHeaderRight />,
+          headerRight: () => <ArticleHeaderRight />, // Keep code but won't show
           headerStyle: {
             backgroundColor: Colors[colorScheme ?? 'light'].background,
             elevation: 0,

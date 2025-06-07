@@ -1,10 +1,9 @@
 /* eslint-disable react/no-unused-prop-types */
 import { FlashList } from '@shopify/flash-list';
 import React, { useMemo, useCallback } from 'react';
-import { StyleSheet, RefreshControl, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '../../constants/layout';
-import { useColors } from '../../hooks/theme/useColors';
 import type { Article } from '../../types/articles.types';
 import { ThemedView } from '../ThemedView';
 
@@ -20,11 +19,13 @@ interface FilteredArticleViewProps {
 
   /**
    * Whether the view is in a refreshing state
+   * @deprecated Pull-to-refresh disabled in modal contexts to avoid conflicts with pull-to-close
    */
   isRefreshing: boolean;
 
   /**
    * Callback when the view is refreshed
+   * @deprecated Pull-to-refresh disabled in modal contexts to avoid conflicts with pull-to-close
    */
   onRefresh: () => void;
 
@@ -35,17 +36,16 @@ interface FilteredArticleViewProps {
 }
 
 /**
- * A specialized component for displaying filtered articles
- * Uses a simple ScrollView instead of FlashList to avoid recycling issues
+ * A specialized component for displaying filtered articles in modal contexts
+ * Pull-to-refresh is disabled to avoid conflicts with modal pull-to-close gestures
  */
 const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   articles,
-  isRefreshing,
-  onRefresh,
+  // isRefreshing and onRefresh are kept for API compatibility but not used
+  isRefreshing: _isRefreshing,
+  onRefresh: _onRefresh,
   onArticlePress = NOOP_ARTICLE_PRESS,
 }) => {
-  const colors = useColors();
-
   const renderItemCallback = useCallback(
     ({ item }: { item: Article }) => <ListArticleItem article={item} onPress={onArticlePress} />,
     [onArticlePress]
@@ -76,14 +76,7 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
         overrideItemLayout={layout => {
           layout.size = ITEM_HEIGHT;
         }}
-        refreshControl={
-          <RefreshControl
-            colors={[colors.tint]}
-            refreshing={isRefreshing}
-            tintColor={colors.tint}
-            onRefresh={onRefresh}
-          />
-        }
+        // Pull-to-refresh disabled to avoid conflicts with modal pull-to-close gesture
       />
     </ThemedView>
   );

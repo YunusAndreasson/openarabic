@@ -5,7 +5,7 @@ import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import type { JSX } from 'react';
 import React, { useState, useCallback, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
@@ -207,23 +207,68 @@ export default function ArticlesScreen(): JSX.Element {
 
   const intelligentArticle = useIntelligentArticleSelection(user, articlesData);
 
-  // Force re-selection on refresh
+  // Force re-selection on refresh by adding refreshKey as a dependency
   const currentArticle = useMemo(() => {
-    return intelligentArticle;
-  }, [intelligentArticle, refreshKey]);
+    // Include refreshKey in the random selection to ensure new articles on refresh
+    if (!articlesData.length) {
+      return {
+        article: null,
+        reason: 'Loading articles...',
+        type: 'random' as const,
+        dueWordRootIds: new Set<number>(),
+      };
+    }
+
+    // Use refreshKey to influence random selection for a different article
+    const baseResult = intelligentArticle;
+
+    // If it's a random selection or we want to force a new selection,
+    // modify the seed to get a different article
+    if (baseResult.type === 'random' || refreshKey > 0) {
+      const availableArticles = articlesData.filter(
+        article =>
+          // Exclude the current article if refreshKey > 0 to ensure we get a different one
+          refreshKey === 0 || article.id !== baseResult.article?.id
+      );
+
+      if (availableArticles.length > 0) {
+        // Use refreshKey as part of the random seed to get different articles
+        const randomIndex =
+          (Math.floor(Math.random() * availableArticles.length) + refreshKey) %
+          availableArticles.length;
+        const newArticle = availableArticles[randomIndex] ?? null;
+
+        return {
+          ...baseResult,
+          article: newArticle,
+          reason: refreshKey > 0 ? 'New recommendation selected for you' : baseResult.reason,
+        };
+      }
+    }
+
+    return baseResult;
+  }, [intelligentArticle, refreshKey, articlesData]);
 
   const derivedData = useMemo(() => {
+    // Safety check - don't process if data isn't ready
+    if (!articlesData?.length || !authors?.length || !categoriesData?.length) {
+      return {
+        authorsWithArticles: [],
+        categoriesWithArticles: [],
+      };
+    }
+
     const authorIdsWithArticles = new Map<number, number>();
     const categoryIdsWithArticles = new Map<number, number>();
 
     articlesData.forEach(article => {
-      if (article.author?.id) {
+      if (article?.author?.id) {
         authorIdsWithArticles.set(
           article.author.id,
           (authorIdsWithArticles.get(article.author.id) || 0) + 1
         );
       }
-      if (article.category?.id) {
+      if (article?.category?.id) {
         categoryIdsWithArticles.set(
           article.category.id,
           (categoryIdsWithArticles.get(article.category.id) || 0) + 1
@@ -232,14 +277,14 @@ export default function ArticlesScreen(): JSX.Element {
     });
 
     const authorsWithArticles = authors
-      .filter(author => authorIdsWithArticles.has(author.id))
+      .filter(author => author?.id && authorIdsWithArticles.has(author.id))
       .map(author => ({
         ...author,
         count: authorIdsWithArticles.get(author.id) || 0,
       }));
 
     const categoriesWithArticles = categoriesData
-      .filter(category => categoryIdsWithArticles.has(category.id))
+      .filter(category => category?.id && categoryIdsWithArticles.has(category.id))
       .map(category => ({
         ...category,
         count: categoryIdsWithArticles.get(category.id) || 0,
@@ -277,6 +322,9 @@ export default function ArticlesScreen(): JSX.Element {
 
       // Force new article selection
       setRefreshKey(prev => prev + 1);
+
+      // Optional: Add a small delay to ensure data is fresh before new selection
+      await new Promise(resolve => setTimeout(resolve, 100));
     } catch (error) {
       handleError(error instanceof Error ? error : new Error('Refresh failed'));
     } finally {
@@ -293,13 +341,57 @@ export default function ArticlesScreen(): JSX.Element {
     [dispatch, prefetchArticle]
   );
 
-  const handleSelectAuthor = useCallback((authorId: number) => {
-    router.push(`/(tabs)/read/filter?type=author&id=${authorId}`);
-  }, []);
+  const handleSelectAuthor = useCallback(
+    (authorId: number) => {
+      // Safety check - ensure we have a valid author ID
+      if (!authorId || isNaN(authorId) || authorId <= 0) {
+        console.warn('Invalid author ID:', authorId);
+        return;
+      }
 
-  const handleSelectCategory = useCallback((categoryId: number) => {
-    router.push(`/(tabs)/read/filter?type=category&id=${categoryId}`);
-  }, []);
+      // Additional safety - ensure data is fully loaded
+      if (!articlesData?.length || !authors?.length) {
+        console.warn('Cannot navigate while data is loading');
+        return;
+      }
+
+      // Verify the author actually exists in our data
+      const authorExists = authors.some(author => author.id === authorId);
+      if (!authorExists) {
+        console.warn('Author does not exist in current data:', authorId);
+        return;
+      }
+
+      router.push(`/(tabs)/read/filter?type=author&id=${authorId}`);
+    },
+    [articlesData, authors]
+  );
+
+  const handleSelectCategory = useCallback(
+    (categoryId: number) => {
+      // Safety check - ensure we have a valid category ID
+      if (!categoryId || isNaN(categoryId) || categoryId <= 0) {
+        console.warn('Invalid category ID:', categoryId);
+        return;
+      }
+
+      // Additional safety - ensure data is fully loaded
+      if (!articlesData?.length || !categoriesData?.length) {
+        console.warn('Cannot navigate while data is loading');
+        return;
+      }
+
+      // Verify the category actually exists in our data
+      const categoryExists = categoriesData.some(cat => cat.id === categoryId);
+      if (!categoryExists) {
+        console.warn('Category does not exist in current data:', categoryId);
+        return;
+      }
+
+      router.push(`/(tabs)/read/filter?type=category&id=${categoryId}`);
+    },
+    [articlesData, categoriesData]
+  );
 
   const calculateDueWordsForArticle = useCallback(
     (article: Article, dueWordRootIds: Set<number>): number => {
@@ -336,23 +428,46 @@ export default function ArticlesScreen(): JSX.Element {
           />
         )}
 
-        {currentArticle.article && derivedData.categoriesWithArticles.length > 0 && (
-          <View style={{ marginTop: LAYOUT.SPACING.LARGE }} />
-        )}
+        {/* Only render FilterSections when data is stable and valid - with extra safety */}
+        {(() => {
+          try {
+            const validCategories = derivedData.categoriesWithArticles.filter(
+              cat => cat?.id && cat.id > 0 && cat?.name
+            );
+            const validAuthors = derivedData.authorsWithArticles.filter(
+              author => author?.id && author.id > 0 && author?.name
+            );
 
-        {derivedData.categoriesWithArticles.length > 0 && (
-          <FilterSection
-            items={derivedData.categoriesWithArticles}
-            onSelect={handleSelectCategory}
-          />
-        )}
+            return (
+              <>
+                {/* Divider between recommended article and categories */}
+                {currentArticle.article &&
+                  articlesData?.length > 0 &&
+                  categoriesData?.length > 0 &&
+                  validCategories.length > 0 && <SectionDivider />}
 
-        {derivedData.categoriesWithArticles.length > 0 &&
-          derivedData.authorsWithArticles.length > 0 && <SectionDivider />}
+                {articlesData?.length > 0 &&
+                  categoriesData?.length > 0 &&
+                  validCategories.length > 0 && (
+                    <FilterSection items={validCategories} onSelect={handleSelectCategory} />
+                  )}
 
-        {derivedData.authorsWithArticles.length > 0 && (
-          <FilterSection items={derivedData.authorsWithArticles} onSelect={handleSelectAuthor} />
-        )}
+                {articlesData?.length > 0 &&
+                  categoriesData?.length > 0 &&
+                  authors?.length > 0 &&
+                  validCategories.length > 0 &&
+                  validAuthors.length > 0 && <SectionDivider />}
+
+                {articlesData?.length > 0 && authors?.length > 0 && validAuthors.length > 0 && (
+                  <FilterSection items={validAuthors} onSelect={handleSelectAuthor} />
+                )}
+              </>
+            );
+          } catch (error) {
+            console.warn('Error rendering filter sections:', error);
+            return null;
+          }
+        })()}
       </>
     );
   }, [
@@ -402,7 +517,7 @@ export default function ArticlesScreen(): JSX.Element {
       style={styles.container}
     >
       <ArticleList
-        articles={[]}
+        articles={articlesData}
         contentContainerStyle={contentContainerStyle}
         hideMainList={true}
         hideWhileRefreshing={false}

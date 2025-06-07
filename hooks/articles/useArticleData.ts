@@ -6,7 +6,6 @@ import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { Article } from '@/types/articles.types';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
-import { handleError } from '@/utils/errorHandling';
 
 interface ArticleDataResult {
   article: Article | undefined;
@@ -18,10 +17,6 @@ interface ArticleDataResult {
   selectedWordIds: Set<number>;
   sortedSentences: Required<Article>['article_sentences'];
   sentenceWordsMap: Map<number, SentenceWord[]>;
-  otherArticles: Article[];
-  isLoadingOtherArticles: boolean;
-  otherCategoryArticles: Article[];
-  isLoadingOtherCategoryArticles: boolean;
   refetchStudyWords: () => void;
   isLoadingStudyWords: boolean;
 }
@@ -147,45 +142,7 @@ export const useArticleData = (
     }, new Map<number, SentenceWord[]>());
   }, [sortedSentences]);
 
-  // Get related articles with optimized caching
-  const { data: otherArticles = [], isLoading: isLoadingOtherArticles } = useQuery<Article[]>({
-    queryKey: ['otherArticles', article?.category_id],
-    queryFn: async () => {
-      if (!article?.category_id) return [];
-      try {
-        return await articlesService.getRelatedArticles(article.id);
-      } catch (error) {
-        handleError(error instanceof Error ? error : String(error));
-        return [];
-      }
-    },
-    enabled: !!article?.category_id,
-    staleTime: 3600000, // 1 hour - articles update max once a day
-    gcTime: 7200000, // 2 hours
-    refetchOnMount: false,
-    placeholderData: old => old,
-  });
-
-  // Get other category articles with optimized caching
-  const { data: otherCategoryArticles = [], isLoading: isLoadingOtherCategoryArticles } = useQuery<
-    Article[]
-  >({
-    queryKey: ['otherCategoryArticles', article?.id],
-    queryFn: async () => {
-      if (!article?.id || !article.category_id) return [];
-      try {
-        return await articlesService.getOtherCategoryArticles(article.category_id, article.id);
-      } catch (error) {
-        handleError(error instanceof Error ? error : String(error));
-        return [];
-      }
-    },
-    enabled: !!article?.id,
-    staleTime: 3600000, // 1 hour - articles update max once a day
-    gcTime: 7200000, // 2 hours
-    refetchOnMount: false,
-    placeholderData: old => old,
-  });
+  // Related articles functionality removed
 
   return {
     article,
@@ -197,10 +154,6 @@ export const useArticleData = (
     selectedWordIds,
     sortedSentences,
     sentenceWordsMap,
-    otherArticles,
-    isLoadingOtherArticles,
-    otherCategoryArticles,
-    isLoadingOtherCategoryArticles,
     refetchStudyWords,
     isLoadingStudyWords,
   };

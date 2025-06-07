@@ -86,13 +86,13 @@ export const useArticleRenderers = (
         // Use replace for related articles to avoid building up the navigation stack
         if (isRelatedArticle) {
           router.replace({
-            pathname: '/article/[id]',
+            pathname: '/(tabs)/read/article/[id]',
             params,
           });
         } else {
           // For normal navigation, use the debounce hook
           navigateTo({
-            pathname: '/article/[id]',
+            pathname: '/(tabs)/read/article/[id]',
             params,
           });
         }
@@ -101,7 +101,7 @@ export const useArticleRenderers = (
         const errorMessage = error instanceof Error ? error : new Error(String(error));
         handleError(errorMessage);
         // Fallback to most basic navigation if all else fails
-        router.push(`/article/${articleId}`);
+        router.push(`/(tabs)/read/article/${articleId}`);
       }
     },
     [navigateTo, router]

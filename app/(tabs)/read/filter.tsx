@@ -19,11 +19,23 @@ export default function FilterScreen(): JSX.Element {
   const type = params.type as string;
   const id = params.id as string;
   const numericId = parseInt(id, 10);
+
   const { prefetchArticle } = useAppPreloader();
+
+  // Check if parameters are invalid
+  const hasInvalidParams =
+    !type || !id || !['author', 'category'].includes(type) || isNaN(numericId) || numericId <= 0;
+
+  // Handle navigation leak in useEffect to avoid setState during render
+  useEffect(() => {
+    if (hasInvalidParams && !type && id && !isNaN(numericId) && numericId > 0) {
+      router.replace(`/(tabs)/read/article/${id}`);
+    }
+  }, [hasInvalidParams, type, id, numericId]);
   const cacheKey = useMemo(() => ['filtered-articles', type, numericId], [type, numericId]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { data: author, isLoading: isAuthorLoading } = useQuery({
+  const { data: author } = useQuery({
     queryKey: ['author', numericId],
     queryFn: async () => {
       try {
@@ -35,7 +47,7 @@ export default function FilterScreen(): JSX.Element {
       }
     },
     staleTime: 86400000, // 24 hours - authors rarely change
-    enabled: type === 'author' && !isNaN(numericId),
+    enabled: type === 'author' && !isNaN(numericId) && !hasInvalidParams,
   });
 
   const { data: category } = useQuery({
@@ -48,12 +60,12 @@ export default function FilterScreen(): JSX.Element {
         return null;
       }
     },
-    enabled: type === 'category' && !isNaN(numericId),
+    enabled: type === 'category' && !isNaN(numericId) && !hasInvalidParams,
   });
 
   const {
     data: articles = [],
-    isLoading: isArticlesLoading,
+    isLoading: _isArticlesLoading,
     error,
     refetch,
   } = useQuery({
@@ -75,11 +87,11 @@ export default function FilterScreen(): JSX.Element {
         throw new Error(err instanceof Error ? err.message : 'Failed to fetch articles');
       }
     },
+    enabled: !hasInvalidParams,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
   });
 
-  const _isLoading = type === 'author' && (isArticlesLoading || isAuthorLoading);
   const { navigateTo } = useNavigationWithDebounce();
 
   const handleRefresh = useCallback(() => {
@@ -90,7 +102,7 @@ export default function FilterScreen(): JSX.Element {
   const handleArticlePress = useCallback(
     (article: Article) => {
       prefetchArticle(article.id);
-      navigateTo({ pathname: '/(tabs)/read/article/[id]' as any, params: { id: article.id } });
+      navigateTo({ pathname: '/(tabs)/read/article/[id]', params: { id: article.id } });
     },
     [navigateTo, prefetchArticle]
   );
@@ -110,6 +122,21 @@ export default function FilterScreen(): JSX.Element {
     router.setParams({ headerTitle: title });
   }, [type, author?.name, category?.name]);
 
+  // Show error for invalid parameters first
+  if (hasInvalidParams) {
+    // If it looks like an article navigation leak, show loading while redirecting
+    if (!type && id && !isNaN(numericId) && numericId > 0) {
+      return <></>;
+    }
+
+    return (
+      <ErrorState
+        message={`Invalid filter parameters: type="${type}", id="${id}"`}
+        onRetry={() => router.back()}
+      />
+    );
+  }
+
   if (error && !isRefreshing) {
     return (
       <ErrorState
@@ -124,7 +151,7 @@ export default function FilterScreen(): JSX.Element {
       articles={articles}
       isRefreshing={isRefreshing}
       onArticlePress={handleArticlePress}
-      onRefresh={handleRefresh}
+      onRefresh={handleRefresh} // Note: Pull-to-refresh is disabled in modal context to avoid conflict with pull-to-close
     />
   );
 }

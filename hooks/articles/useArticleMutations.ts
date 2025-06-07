@@ -9,7 +9,6 @@ import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 
-
 interface ArticleMutationsResult {
   handleToggleReadingList: (articleId: number | undefined, isInReadingList: boolean) => void;
   handleWordPress: (wordId: number) => void;
@@ -65,21 +64,20 @@ export const useArticleMutations = (
         // Then refetch to ensure consistency
         refetchReadingListStatus();
         queryClient.invalidateQueries({ queryKey: ['readingList', userId] });
-        showToast('Saved for listening', undefined, 'success');
       },
       onError: (error: Error) => {
+        // Silently handle errors - no toast notifications for playlist actions
         const errorMessage = error.message;
         if (
-          errorMessage.includes('reading_list_position_unique') ||
-          errorMessage.includes('duplicate key value')
+          !errorMessage.includes('reading_list_position_unique') &&
+          !errorMessage.includes('duplicate key value')
         ) {
-          showToast('Already saved for listening', undefined, 'info');
-        } else {
-          showToast('Failed to save for listening', undefined, 'error');
+          // Only log non-duplicate errors to console for debugging
+          console.warn('Failed to add to reading list:', errorMessage);
         }
       },
     }),
-    [queryClient, refetchReadingListStatus, showToast]
+    [queryClient, refetchReadingListStatus]
   );
 
   // Memoize mutation options for removing from reading list
@@ -94,13 +92,13 @@ export const useArticleMutations = (
         // Then refetch to ensure consistency
         refetchReadingListStatus();
         queryClient.invalidateQueries({ queryKey: ['readingList', userId] });
-        showToast('Removed from listening list', undefined, 'info');
       },
-      onError: () => {
-        showToast('Failed to remove from listening list', undefined, 'error');
+      onError: (error: Error) => {
+        // Silently handle errors - no toast notifications for playlist actions
+        console.warn('Failed to remove from reading list:', error.message);
       },
     }),
-    [queryClient, refetchReadingListStatus, showToast]
+    [queryClient, refetchReadingListStatus]
   );
 
   // Memoize mutation options for toggling word study status
@@ -253,7 +251,7 @@ export const useArticleMutations = (
           const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
 
           if (refreshError || !refreshData.session) {
-            showToast('Please sign in to manage your reading list', undefined, 'info');
+            // Silently redirect to auth - no toast for playlist actions
             router.replace('/auth');
             return;
           }
@@ -280,7 +278,7 @@ export const useArticleMutations = (
         handleError(error as Error);
       }
     },
-    [addToReadingListMutation, removeFromReadingListMutation, showToast]
+    [addToReadingListMutation, removeFromReadingListMutation]
   );
 
   // Handle word press

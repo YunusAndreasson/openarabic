@@ -1,10 +1,11 @@
 /* eslint-disable react-native/no-unused-styles */
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import type { ComponentRef, JSX } from 'react';
 import { StyleSheet, View, AppState } from 'react-native';
 import type { TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleSentence } from '@/components/article';
@@ -25,7 +26,10 @@ import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { lightFeedback } from '@/utils/haptics';
 
-const createStyles = (colors: ReturnType<typeof useColors>) =>
+const createStyles = (
+  colors: ReturnType<typeof useColors>,
+  _insets: ReturnType<typeof useSafeAreaInsets>
+) =>
   StyleSheet.create({
     container: {
       backgroundColor: colors.background,
@@ -35,13 +39,32 @@ const createStyles = (colors: ReturnType<typeof useColors>) =>
       backgroundColor: colors.transparent,
       paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     },
+    // Swipe indicator for modal dismiss gesture
+    swipeIndicatorContainer: {
+      position: 'absolute',
+      top: LAYOUT.SPACING.SMALL, // Very close to safe area top (8px below)
+      left: 0,
+      right: 0,
+      zIndex: 1000, // High z-index to ensure it's above everything
+      alignItems: 'center',
+      paddingVertical: LAYOUT.SPACING.TINY,
+      pointerEvents: 'none', // Don't interfere with touch events
+    },
+    swipeIndicator: {
+      width: 36,
+      height: 4,
+      backgroundColor: colors.text,
+      opacity: 0.25, // More subtle
+      borderRadius: LAYOUT.BORDER_RADIUS.PILL,
+    },
   });
 
 export default function ArticleScreen(): JSX.Element {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
+
   const colors = useColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const insets = useSafeAreaInsets();
+  const styles = useMemo(() => createStyles(colors, insets), [colors, insets]);
   const { user } = useAuth();
   const settings = useAppSelector(state => state.settings);
   const isDarkMode = useIsDarkMode();
@@ -63,16 +86,8 @@ export default function ArticleScreen(): JSX.Element {
     selectedWordIds,
     sortedSentences,
     sentenceWordsMap,
-    otherArticles,
     refetchStudyWords,
   } = useArticleData(articleId, user?.id);
-
-  // Set header title when article loads
-  useEffect(() => {
-    if (article?.title) {
-      router.setParams({ title: article.title });
-    }
-  }, [article?.title]);
 
   const { dueWordRootIds = new Set<number>() } = useArticlesByDueWords(user?.id, 0);
 
@@ -112,7 +127,7 @@ export default function ArticleScreen(): JSX.Element {
 
   const articleContentRef = useRef<ArticleContentRef>(null);
 
-  const { handleRootPress } = useArticleMutations(
+  const { handleRootPress, handleToggleReadingList } = useArticleMutations(
     user?.id,
     refetchReadingListStatus,
     refetchStudyWords
@@ -127,7 +142,7 @@ export default function ArticleScreen(): JSX.Element {
     [handleRootPress]
   );
 
-  const { handleArticlePress, getWordsForSentence } = useArticleRenderers(
+  const { handleArticlePress: _handleArticlePress, getWordsForSentence } = useArticleRenderers(
     settings,
     selectedWordIds,
     sentenceWordsMap,
@@ -223,6 +238,11 @@ export default function ArticleScreen(): JSX.Element {
       <StatusBar animated={true} style={isDarkMode ? 'light' : 'dark'} translucent={true} />
 
       <View style={styles.container}>
+        {/* Swipe indicator for modal dismiss */}
+        <View style={styles.swipeIndicatorContainer}>
+          <View style={styles.swipeIndicator} />
+        </View>
+
         {article && sortedSentences && sortedSentences.length > 0 ? (
           <ArticleContent
             ref={articleContentRef}
@@ -232,12 +252,11 @@ export default function ArticleScreen(): JSX.Element {
             handleScroll={handleScroll}
             id={id}
             isDarkMode={isDarkMode}
-            otherArticles={otherArticles}
             renderSentenceItem={renderSentenceItem}
             sortedSentences={sortedSentences}
-            handleArticlePress={(articleId, isRelated) =>
-              handleArticlePress(Number(articleId), isRelated)
-            }
+            isInReadingList={isInReadingList}
+            isLoadingReadingList={isLoadingReadingList}
+            onToggleReadingList={() => handleToggleReadingList(article.id, isInReadingList)}
           />
         ) : null}
       </View>

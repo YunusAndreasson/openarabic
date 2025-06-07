@@ -1,8 +1,6 @@
 export { default as ArticleHeader } from './ArticleHeader';
 export { ArticleSentence } from './ArticleSentence';
 export { default as ArticleSection } from './ArticleSection';
-export { default as RelatedArticlesFooter } from './RelatedArticlesFooter';
-export { ArticleButtons } from './ArticleButtons';
 export { ArabicWord } from './ArabicWord';
 export { TimeAgo, DifficultyIndicator } from '../home/ArticleHelpers';
 export { ArticleContent } from './ArticleContent';

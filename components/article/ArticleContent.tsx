@@ -9,17 +9,16 @@ import React, {
   useMemo,
   useCallback,
 } from 'react';
-import type { NativeScrollEvent, NativeSyntheticEvent, ViewStyle } from 'react-native';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ThemedButton } from '@/components/ThemedButton';
 import ParallaxHeader from '@/components/article/ParallaxHeader';
-import { RelatedArticlesFooter } from '@/components/article/RelatedArticlesFooter';
 import { LAYOUT } from '@/constants/layout';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
-import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 import type { ThemeColors } from '../../types/ui/theme.types';
 
@@ -54,11 +53,11 @@ interface ArticleContentProps {
   renderSentenceItem: ({ item }: { item: Tables<'article_sentences'> }) => React.ReactElement;
   handleScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   colors: ThemeColors;
-  footerStyle?: AnimatedStyleProp<ViewStyle>;
-  otherArticles?: Article[];
-  handleArticlePress: (articleId: string, isCompact: boolean) => void;
   englishToggleKey?: string;
   isDarkMode?: boolean;
+  isInReadingList?: boolean;
+  isLoadingReadingList?: boolean;
+  onToggleReadingList?: () => void;
 }
 
 const SENTENCE_ITEM_HEIGHT = 70;
@@ -72,11 +71,11 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
       renderSentenceItem,
       handleScroll,
       colors,
-      footerStyle,
-      otherArticles,
-      handleArticlePress,
       englishToggleKey,
       isDarkMode,
+      isInReadingList,
+      isLoadingReadingList,
+      onToggleReadingList,
     }: ArticleContentProps,
     ref
   ): JSX.Element => {
@@ -181,28 +180,36 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
 
     // Memoize the header component for better performance
     const headerComponent = useMemo(
-      () => <ParallaxHeader article={article} colors={colors} isDarkMode={!!isDarkMode} />,
-      [article, colors, isDarkMode]
-    );
-
-    // Memoize the footer component for better performance
-    const footerComponent = useMemo(
       () => (
         <>
-          {/* Source field was removed from database */}
-          {otherArticles && otherArticles.length > 0 ? (
-            <Animated.View style={footerStyle}>
-              <RelatedArticlesFooter
-                article={article}
-                otherArticles={otherArticles}
-                onArticlePress={a => handleArticlePress(String(a.id), true)}
+          <ParallaxHeader article={article} colors={colors} isDarkMode={!!isDarkMode} />
+          {/* Action button in clean content area below image */}
+          {onToggleReadingList && (
+            <View
+              style={{
+                paddingHorizontal: LAYOUT.SPACING.LARGE,
+                paddingVertical: LAYOUT.SPACING.MEDIUM,
+                backgroundColor: colors.background,
+              }}
+            >
+              <ThemedButton
+                variant="filled"
+                size="medium"
+                title={isInReadingList ? 'Remove from Playlist' : 'Save for Listening'}
+                loading={isLoadingReadingList}
+                onPress={onToggleReadingList}
+                style={{
+                  backgroundColor: colors.tint,
+                }}
               />
-            </Animated.View>
-          ) : null}
+            </View>
+          )}
         </>
       ),
-      [article, otherArticles, footerStyle, handleArticlePress]
+      [article, colors, isDarkMode, isInReadingList, isLoadingReadingList, onToggleReadingList]
     );
+
+    // No footer component needed anymore
 
     // Expose the scrollToSentence method to the parent component
     useImperativeHandle(
@@ -237,7 +244,6 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
               getItemType={() => 'sentence'} // Add item type for better optimization
               initialScrollIndex={0}
               keyExtractor={item => item.id.toString()}
-              ListFooterComponent={footerComponent}
               ListHeaderComponent={headerComponent}
               overScrollMode="auto" // Allow controlled overscroll for parallax
               persistentScrollbar={true}
