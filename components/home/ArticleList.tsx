@@ -131,10 +131,10 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
       ]
     );
 
-    const shouldHideContent = (hideWhileRefreshing && isRefreshing) || hideMainList;
-    const displayData = shouldHideContent ? [] : deferredArticles;
-    const displayHeader = shouldHideContent ? null : ListHeaderComponent;
-    const displayFooter = shouldHideContent ? null : ListFooterComponent;
+    const shouldHideMainList = (hideWhileRefreshing && isRefreshing) || hideMainList;
+    const displayData = shouldHideMainList ? [] : deferredArticles;
+    const displayHeader = hideWhileRefreshing && isRefreshing ? null : ListHeaderComponent;
+    const displayFooter = hideWhileRefreshing && isRefreshing ? null : ListFooterComponent;
 
     const safeContentContainerStyle = useMemo(
       () => ({

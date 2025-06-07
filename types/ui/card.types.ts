@@ -53,12 +53,16 @@ export interface ArticleCardProps extends BaseCardProps, BaseOptionalPressablePr
   title: string;
   /** Category text to display in a pill on the card */
   category: string;
+  /** Category to display with author (separate from pill) */
+  categoryForDisplay?: string;
   /** Author name to display in the card */
   author?: string;
   /** Summary text to display in the card */
   summary?: string;
   /** Placeholder image using blurhash or thumbhash */
   placeholder?: { blurhash?: string; thumbhash?: string };
+  /** Number of words due for review in this article */
+  dueWordCount?: number;
 }
 
 /**
@@ -91,7 +95,10 @@ export interface CompactCardProps extends BaseCardProps, BaseOptionalPressablePr
  * The 'compact' variant can handle article data directly, removing the need for CompactArticleCard.
  */
 export type ThemedCardProps =
-  ArticleCardProps | BasicCardProps | CompactCardProps | BaseCardProps &
+  | ArticleCardProps
+  | BasicCardProps
+  | CompactCardProps
+  | (BaseCardProps &
       BaseOptionalPressableProps & {
         /** URL of the image to display in the card (for article variant) */
         imageUrl: string;
@@ -117,4 +124,4 @@ export type ThemedCardProps =
         dueWordCount?: number;
         /** Variant of the card */
         variant?: CardVariant;
-      };
+      });

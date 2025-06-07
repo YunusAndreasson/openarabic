@@ -13,6 +13,7 @@ interface FeaturedSectionProps {
   article: Article;
   onPress: (article: Article) => void;
   showTitle?: boolean;
+  dueWordCount?: number;
 }
 
 /**
@@ -22,6 +23,7 @@ const FeaturedSection: React.FC<FeaturedSectionProps> = ({
   article,
   onPress,
   showTitle = true,
+  dueWordCount,
 }) => {
   // Use queryClient for prefetching on press
   const queryClient = useQueryClient();
@@ -51,7 +53,9 @@ const FeaturedSection: React.FC<FeaturedSectionProps> = ({
       {showTitle && <SectionTitle isFirstSection={true} title="Featured" />}
       <ThemedCard
         author={article.author?.name || 'Author'}
-        category={article.category?.name || ''}
+        category="RECOMMENDED READING"
+        categoryForDisplay={article.category?.name}
+        dueWordCount={dueWordCount}
         fullSummary={true}
         imageUrl={article.image_url || 'https://picsum.photos/800/400'}
         style={styles.cardStyle}

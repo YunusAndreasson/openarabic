@@ -47,37 +47,6 @@ export function getLatestArticles(
 }
 
 /**
- * Creates a seeded random number generator
- * @param seed - The seed for the random number generator
- * @returns A function that generates random numbers between 0 and 1
- */
-function createSeededRandom(seed: number) {
-  return function () {
-    const x = Math.sin(seed++) * 10000;
-    return x - Math.floor(x);
-  };
-}
-
-/**
- * Shuffles an array using a seeded random number generator
- * @param array - The array to shuffle
- * @param seed - The seed for the random number generator
- * @returns A new shuffled array
- */
-function seededShuffle<T>(array: T[], seed: number): T[] {
-  const random = createSeededRandom(seed);
-  const shuffled = [...array];
-
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1));
-    // TypeScript doesn't track that j < i+1, but we know this is safe
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]] as [T, T];
-  }
-
-  return shuffled;
-}
-
-/**
  * Gets beginner-friendly articles (difficulty level 1-3)
  * @param articles - The articles to sort
  * @param limit - The maximum number of articles to return (default: 20)
@@ -90,38 +59,6 @@ export function getBeginnerArticles(articles: Article[], limit = 20): Article[] 
     .filter(article => article.difficulty_level >= 1 && article.difficulty_level <= 3)
     .sort((a, b) => a.difficulty_level - b.difficulty_level)
     .slice(0, limit);
-}
-
-/**
- * Gets a daily pick article based on the day of the year
- * @param articles - The articles to pick from
- * @param dayOfYear - The day of the year (1-366)
- * @returns A random but consistent daily pick article or null if no articles are available
- */
-export function getDailyPickArticle(articles: Article[], dayOfYear: number): Article | null {
-  if (articles.length === 0) return null;
-
-  // Shuffle the articles using the day of year as seed
-  const shuffledArticles = seededShuffle(articles, dayOfYear);
-
-  // Return the first article from the shuffled array
-  return shuffledArticles[0] ?? null;
-}
-
-/**
- * Gets a fresh daily pick article using a random seed (for refresh functionality)
- * @param articles - The articles to pick from
- * @returns A random daily pick article or null if no articles are available
- */
-export function getFreshDailyPickArticle(articles: Article[]): Article | null {
-  if (articles.length === 0) return null;
-
-  // Use current timestamp as seed for truly random selection on refresh
-  const randomSeed = Date.now();
-  const shuffledArticles = seededShuffle(articles, randomSeed);
-
-  // Return the first article from the shuffled array
-  return shuffledArticles[0] ?? null;
 }
 
 /**

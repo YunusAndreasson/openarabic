@@ -4,45 +4,30 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import type { JSX } from 'react';
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { StyleSheet } from 'react-native';
+import React, { useState, useCallback, useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
-import { ArticleSection } from '@/components/article';
 import ArticleList from '@/components/home/ArticleList';
-import { DifficultWordsArticleSection } from '@/components/home/DifficultWordsArticleSection';
-import { DueWordsArticleSection } from '@/components/home/DueWordsArticleSection';
 import FeaturedSection from '@/components/home/FeaturedSection';
 import FilterSection from '@/components/home/FilterSection';
-import LatestTextsSection from '@/components/home/LatestTextsSection';
-import { LongReadsSection } from '@/components/home/LongReadsSection';
-import StrugglingWordsSection from '@/components/home/StrugglingWordsSection';
+import SectionDivider from '@/components/home/SectionDivider';
 import { WelcomeMessage } from '@/components/home/WelcomeMessage';
 import { LAYOUT } from '@/constants/layout';
-import { useScreenFocusRefresh } from '@/hooks';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useArticlesByDifficultWords } from '@/hooks/articles/useArticlesByDifficultWords';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
-import { useStrugglingWords } from '@/hooks/vocabulary/useStrugglingWords';
 import { articlesService } from '@/services/articles';
 import { authorsService } from '@/services/authors';
 import { categoriesService } from '@/services/categories';
 import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
-import { setDailyPick, clearDailyPick } from '@/store/featuredContentSlice';
-import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
+import { useAppDispatch } from '@/store/hooks';
 import { updateLastOpenedArticle } from '@/store/readingListSlice';
 import type { Article } from '@/types/articles.types';
-import {
-  filterArticles,
-  getLatestArticles,
-  getBeginnerArticles,
-  getDailyPickArticle,
-  getFreshDailyPickArticle,
-} from '@/utils/articleUtils';
-import { getDayOfYear } from '@/utils/dateUtils';
+import { filterArticles, getBeginnerArticles } from '@/utils/articleUtils';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
 
@@ -57,22 +42,23 @@ const styles = StyleSheet.create({
   },
 });
 
-function useContentSections(user: any) {
-  const { hasEnoughArticles = false, dueWordRootIds = new Set() } = useArticlesByDueWords(
+interface IntelligentArticleResult {
+  article: Article | null;
+  reason: string;
+  type: 'due-words' | 'difficult-words' | 'beginner' | 'random';
+}
+
+function useIntelligentArticleSelection(
+  user: any,
+  articlesData: Article[]
+): IntelligentArticleResult & { dueWordRootIds: Set<number> } {
+  const { hasEnoughArticles: hasDueWordArticles, dueWordRootIds } = useArticlesByDueWords(
     user?.id,
     10
   );
 
-  const {
-    hasEnoughArticles: hasEnoughDifficultArticles = false,
-    difficultWordRootIds = new Set(),
-  } = useArticlesByDifficultWords(user?.id, 10);
-
-  const { words: strugglingWords, isLoading: isStrugglingWordsLoading } = useStrugglingWords({
-    userId: user?.id,
-    limit: 10,
-    enabled: !!user?.id,
-  });
+  const { hasEnoughArticles: hasDifficultWordArticles, difficultWordRootIds } =
+    useArticlesByDifficultWords(user?.id, 10);
 
   const { data: allStudyWords = [] } = useQuery({
     queryKey: FSRS_QUERY_KEYS.all(user?.id || ''),
@@ -90,50 +76,89 @@ function useContentSections(user: any) {
 
   const hasAnyStudyWords = allStudyWords.length > 0;
 
-  const primarySections = useMemo(() => {
-    const sections = [];
-
-    sections.push({ type: 'featured', priority: 1 });
-
-    if (hasEnoughArticles) {
-      sections.push({ type: 'due-words', priority: 2 });
-    } else if (hasEnoughDifficultArticles && hasAnyStudyWords) {
-      sections.push({ type: 'difficult-words', priority: 2 });
-    } else if (!hasAnyStudyWords) {
-      sections.push({ type: 'beginner', priority: 2 });
+  return useMemo(() => {
+    if (!articlesData.length) {
+      return {
+        article: null,
+        reason: 'Loading articles...',
+        type: 'random',
+        dueWordRootIds: new Set<number>(),
+      };
     }
 
-    if (user?.id && strugglingWords.length > 0) {
-      sections.push({ type: 'struggling-words', priority: 3 });
+    // Strategy 1: If user has due words and enough articles with those words
+    if (user?.id && hasDueWordArticles && dueWordRootIds.size > 0) {
+      const dueWordArticles = articlesData.filter(article =>
+        article.article_sentences?.some(sentence =>
+          sentence.sentence_words?.some((word: any) => dueWordRootIds.has(word.root_id))
+        )
+      );
+
+      if (dueWordArticles.length > 0) {
+        const randomArticle =
+          dueWordArticles[Math.floor(Math.random() * dueWordArticles.length)] ?? null;
+        return {
+          article: randomArticle,
+          reason: 'Selected to help you practice words that are due for review',
+          type: 'due-words',
+          dueWordRootIds,
+        };
+      }
     }
 
-    return sections;
-  }, [hasEnoughArticles, hasEnoughDifficultArticles, hasAnyStudyWords, user?.id, strugglingWords]);
+    // Strategy 2: If user has difficult words and study progress
+    if (user?.id && hasDifficultWordArticles && difficultWordRootIds.size > 0 && hasAnyStudyWords) {
+      const difficultWordArticles = articlesData.filter(article =>
+        article.article_sentences?.some(sentence =>
+          sentence.sentence_words?.some((word: any) => difficultWordRootIds.has(word.root_id))
+        )
+      );
 
-  const secondarySections = useMemo(() => {
-    return [
-      { type: 'continue-reading', priority: 4 },
-      { type: 'latest-texts', priority: 5 },
-      { type: 'long-reads', priority: 6 },
-    ];
-  }, []);
+      if (difficultWordArticles.length > 0) {
+        const randomArticle =
+          difficultWordArticles[Math.floor(Math.random() * difficultWordArticles.length)] ?? null;
+        return {
+          article: randomArticle,
+          reason: "Chosen to reinforce words you're finding challenging",
+          type: 'difficult-words',
+          dueWordRootIds,
+        };
+      }
+    }
 
-  const discoverySections = useMemo(() => {
-    return [
-      { type: 'authors', priority: 7 },
-      { type: 'categories', priority: 8 },
-    ];
-  }, []);
+    // Strategy 3: If user has no study progress, show beginner content
+    if (!user?.id || !hasAnyStudyWords) {
+      const beginnerArticles = getBeginnerArticles(filterArticles(articlesData, null, null));
 
-  return {
-    primarySections,
-    secondarySections,
-    discoverySections,
+      if (beginnerArticles.length > 0) {
+        const randomArticle =
+          beginnerArticles[Math.floor(Math.random() * beginnerArticles.length)] ?? null;
+        return {
+          article: randomArticle,
+          reason: 'Perfect for getting started with your reading journey',
+          type: 'beginner',
+          dueWordRootIds,
+        };
+      }
+    }
+
+    // Fallback: Random article
+    const randomArticle = articlesData[Math.floor(Math.random() * articlesData.length)] ?? null;
+    return {
+      article: randomArticle,
+      reason: 'Randomly selected for you to discover new content',
+      type: 'random',
+      dueWordRootIds,
+    };
+  }, [
+    articlesData,
+    user?.id,
+    hasDueWordArticles,
     dueWordRootIds,
+    hasDifficultWordArticles,
     difficultWordRootIds,
-    strugglingWords,
-    isStrugglingWordsLoading,
-  };
+    hasAnyStudyWords,
+  ]);
 }
 
 export default function ArticlesScreen(): JSX.Element {
@@ -144,31 +169,6 @@ export default function ArticlesScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { prefetchArticle } = useAppPreloader();
-
-  const {
-    data: articlesData = [],
-    isLoading: isArticlesLoading,
-    error: articlesError,
-  } = useQuery({
-    queryKey: ['articles'],
-    queryFn: () => articlesService.getArticles(),
-    staleTime: 3600000,
-    gcTime: 7200000,
-    retry: 3,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    placeholderData: old => old,
-  });
-
-  const {
-    primarySections,
-    secondarySections,
-    discoverySections,
-    dueWordRootIds,
-    difficultWordRootIds,
-    strugglingWords,
-    isStrugglingWordsLoading,
-  } = useContentSections(user);
 
   const { data: categoriesData = [] } = useQuery({
     queryKey: ['categories'],
@@ -190,29 +190,29 @@ export default function ArticlesScreen(): JSX.Element {
     refetchOnMount: false,
   });
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  // Get articles with word stats for filter data
+  const { data: articlesData = [] } = useQuery({
+    queryKey: ['articles', 'withWordStats'],
+    queryFn: () => articlesService.getArticles({ includeWordStats: true }),
+    staleTime: 3600000,
+    gcTime: 7200000,
+    retry: 3,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    placeholderData: old => old,
+  });
 
-  const { lastOpenedArticles = {} } = useAppSelectorMemo(state => state.readingList);
-  const { dailyPick: featured } = useAppSelectorMemo(state => state.featuredContent);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const intelligentArticle = useIntelligentArticleSelection(user, articlesData);
+
+  // Force re-selection on refresh
+  const currentArticle = useMemo(() => {
+    return intelligentArticle;
+  }, [intelligentArticle, refreshKey]);
 
   const derivedData = useMemo(() => {
-    const filteredArticles = filterArticles(articlesData, null, null);
-    const beginnerArticles = getBeginnerArticles(filteredArticles);
-
-    const articleMap = new Map<number, Article>();
-    articlesData.forEach(article => {
-      articleMap.set(article.id, article);
-    });
-
-    const continueReadingArticles = Object.entries(lastOpenedArticles)
-      .sort((a, b) => new Date(b[1]).getTime() - new Date(a[1]).getTime())
-      .map(([id]) => Number(id))
-      .map(id => articleMap.get(id))
-      .filter(Boolean)
-      .slice(0, 5) as Article[];
-
-    const latestArticlesForSection = getLatestArticles(articlesData, 5, true);
-
     const authorIdsWithArticles = new Map<number, number>();
     const categoryIdsWithArticles = new Map<number, number>();
 
@@ -246,13 +246,10 @@ export default function ArticlesScreen(): JSX.Element {
       }));
 
     return {
-      beginnerArticles,
-      continueReadingArticles,
-      latestArticlesForSection,
       authorsWithArticles,
       categoriesWithArticles,
     };
-  }, [articlesData, lastOpenedArticles, authors, categoriesData]);
+  }, [articlesData, authors, categoriesData]);
 
   const handleRefresh = useCallback(async () => {
     if (isRefreshing) return;
@@ -261,17 +258,13 @@ export default function ArticlesScreen(): JSX.Element {
     mediumFeedback();
 
     try {
-      dispatch(clearDailyPick());
-
-      const queriesToInvalidate: (string | readonly string[])[] = [['articles'], ['categories']];
+      const queriesToInvalidate: (string | readonly string[])[] = [
+        ['articles', 'withWordStats'],
+        ['categories'],
+      ];
 
       if (user?.id) {
-        queriesToInvalidate.push(
-          ['readingList', user.id],
-          FSRS_QUERY_KEYS.due(user.id),
-          FSRS_QUERY_KEYS.all(user.id),
-          ['struggling-words', user.id]
-        );
+        queriesToInvalidate.push(FSRS_QUERY_KEYS.due(user.id), FSRS_QUERY_KEYS.all(user.id));
       }
 
       await Promise.all(
@@ -282,21 +275,14 @@ export default function ArticlesScreen(): JSX.Element {
         )
       );
 
-      setTimeout(() => {
-        if (articlesData.length > 0) {
-          const freshFeaturedArticle = getFreshDailyPickArticle(articlesData);
-          if (freshFeaturedArticle?.id) {
-            const today = new Date().toISOString().split('T')[0] || '';
-            dispatch(setDailyPick({ articleId: Number(freshFeaturedArticle.id), date: today }));
-          }
-        }
-      }, 100);
+      // Force new article selection
+      setRefreshKey(prev => prev + 1);
     } catch (error) {
       handleError(error instanceof Error ? error : new Error('Refresh failed'));
     } finally {
       setIsRefreshing(false);
     }
-  }, [isRefreshing, queryClient, user?.id, dispatch, articlesData]);
+  }, [isRefreshing, queryClient, user?.id]);
 
   const handleArticlePress = useCallback(
     (article: Article) => {
@@ -315,174 +301,74 @@ export default function ArticlesScreen(): JSX.Element {
     router.push(`/(tabs)/read/filter?type=category&id=${categoryId}`);
   }, []);
 
-  useEffect(() => {
-    if (articlesError || articlesData.length === 0) return;
+  const calculateDueWordsForArticle = useCallback(
+    (article: Article, dueWordRootIds: Set<number>): number => {
+      if (!user?.id || !dueWordRootIds || dueWordRootIds.size === 0) return 0;
 
-    const today = new Date().toISOString().split('T')[0] || '';
-    if (featured.date !== today) {
-      const featuredArticle = getDailyPickArticle(articlesData, getDayOfYear());
-      if (featuredArticle?.id) {
-        if (today) {
-          dispatch(setDailyPick({ articleId: Number(featuredArticle.id), date: today }));
-        }
-      }
-    }
-  }, [articlesData, articlesError, featured.date, dispatch]);
+      const uniqueDueRootIds = new Set<number>();
 
-  const renderSection = useCallback(
-    (sectionType: string) => {
-      switch (sectionType) {
-        case 'featured': {
-          const featuredArticle =
-            featured.articleId !== null
-              ? articlesData.find(article => article.id === featured.articleId)
-              : null;
-          return featuredArticle ? (
-            <FeaturedSection
-              key="featured"
-              article={featuredArticle}
-              showTitle={true}
-              onPress={handleArticlePress}
-            />
-          ) : null;
-        }
+      article.article_sentences?.forEach(sentence => {
+        sentence.sentence_words?.forEach((word: any) => {
+          if (word.root_id && dueWordRootIds.has(word.root_id)) {
+            uniqueDueRootIds.add(word.root_id);
+          }
+        });
+      });
 
-        case 'struggling-words':
-          return user?.id ? (
-            <StrugglingWordsSection
-              key="struggling-words"
-              isLoading={isStrugglingWordsLoading}
-              words={strugglingWords}
-            />
-          ) : null;
-
-        case 'due-words':
-          return user?.id ? (
-            <DueWordsArticleSection
-              key="due-words"
-              dueWordRootIds={dueWordRootIds}
-              limit={10}
-              userId={user.id}
-              onArticlePress={handleArticlePress}
-            />
-          ) : null;
-
-        case 'difficult-words':
-          return user?.id ? (
-            <DifficultWordsArticleSection
-              key="difficult-words"
-              difficultWordRootIds={difficultWordRootIds}
-              limit={10}
-              userId={user.id}
-              onArticlePress={handleArticlePress}
-            />
-          ) : null;
-
-        case 'beginner':
-          return derivedData.beginnerArticles.length > 0 ? (
-            <ArticleSection
-              key="beginner"
-              articles={derivedData.beginnerArticles.slice(0, 10)}
-              hideDifficulty={true}
-              title="Get Started"
-              onArticlePress={handleArticlePress}
-            />
-          ) : null;
-
-        case 'continue-reading':
-          return derivedData.continueReadingArticles.length > 0 ? (
-            <ArticleSection
-              key="continue-reading"
-              articles={derivedData.continueReadingArticles}
-              getLastOpenedAt={articleId => lastOpenedArticles?.[articleId]}
-              hideDifficulty={true}
-              title="Continue Reading"
-              onArticlePress={handleArticlePress}
-            />
-          ) : null;
-
-        case 'latest-texts':
-          return derivedData.latestArticlesForSection.length > 0 ? (
-            <LatestTextsSection
-              key="latest-texts"
-              articles={derivedData.latestArticlesForSection}
-              onArticlePress={handleArticlePress}
-            />
-          ) : null;
-
-        case 'long-reads':
-          return (
-            <LongReadsSection
-              key="long-reads"
-              articles={articlesData}
-              limit={10}
-              minReadingTime={1}
-              onArticlePress={handleArticlePress}
-            />
-          );
-
-        case 'authors':
-          return derivedData.authorsWithArticles.length > 0 ? (
-            <FilterSection
-              key="authors"
-              items={derivedData.authorsWithArticles}
-              title="Authors"
-              onSelect={handleSelectAuthor}
-            />
-          ) : null;
-
-        case 'categories':
-          return derivedData.categoriesWithArticles.length > 0 ? (
-            <FilterSection
-              key="categories"
-              items={derivedData.categoriesWithArticles}
-              title="Categories"
-              onSelect={handleSelectCategory}
-            />
-          ) : null;
-
-        default:
-          return null;
-      }
+      return uniqueDueRootIds.size;
     },
-    [
-      articlesData,
-      featured,
-      handleArticlePress,
-      user?.id,
-      strugglingWords,
-      isStrugglingWordsLoading,
-      dueWordRootIds,
-      difficultWordRootIds,
-      derivedData,
-      lastOpenedArticles,
-      handleSelectAuthor,
-      handleSelectCategory,
-    ]
+    [user?.id]
   );
 
   const ListHeaderComponent = useMemo(() => {
-    const allSections = [...primarySections, ...secondarySections, ...discoverySections];
+    const dueWordsCount = currentArticle.article
+      ? calculateDueWordsForArticle(currentArticle.article, currentArticle.dueWordRootIds)
+      : 0;
 
     return (
       <>
-        {allSections
-          .sort((a, b) => a.priority - b.priority)
-          .map(section => renderSection(section.type))
-          .filter(Boolean)}
+        {currentArticle.article && (
+          <FeaturedSection
+            article={currentArticle.article}
+            dueWordCount={dueWordsCount > 0 ? dueWordsCount : undefined}
+            showTitle={false}
+            onPress={handleArticlePress}
+          />
+        )}
+
+        {currentArticle.article && derivedData.categoriesWithArticles.length > 0 && (
+          <View style={{ marginTop: LAYOUT.SPACING.LARGE }} />
+        )}
+
+        {derivedData.categoriesWithArticles.length > 0 && (
+          <FilterSection
+            items={derivedData.categoriesWithArticles}
+            onSelect={handleSelectCategory}
+          />
+        )}
+
+        {derivedData.categoriesWithArticles.length > 0 &&
+          derivedData.authorsWithArticles.length > 0 && <SectionDivider />}
+
+        {derivedData.authorsWithArticles.length > 0 && (
+          <FilterSection items={derivedData.authorsWithArticles} onSelect={handleSelectAuthor} />
+        )}
       </>
     );
-  }, [primarySections, secondarySections, discoverySections, renderSection]);
+  }, [
+    currentArticle.article,
+    currentArticle.dueWordRootIds,
+    calculateDueWordsForArticle,
+    handleArticlePress,
+    derivedData.authorsWithArticles,
+    derivedData.categoriesWithArticles,
+    handleSelectAuthor,
+    handleSelectCategory,
+  ]);
 
   const ListFooterComponent = useMemo(() => {
     return <WelcomeMessage />;
   }, []);
-
-  const articlesQuery = queryClient.getQueryState(['articles']);
-  const isDataCached = articlesQuery?.data !== undefined;
-
-  useScreenFocusRefresh(queryClient, 'articles', undefined, 300000, true, false);
-  useScreenFocusRefresh(queryClient, 'categories', undefined, 600000, true, false);
 
   const contentContainerStyle = useMemo(
     () => ({
@@ -498,17 +384,14 @@ export default function ArticlesScreen(): JSX.Element {
     [colors.background, headerHeight, insets.bottom]
   );
 
-  if (articlesError && !isRefreshing && !isDataCached) {
-    return (
-      <ErrorState
-        message={
-          articlesError instanceof Error ? articlesError.message : 'An unexpected error occurred'
-        }
-        onRetry={() => {
-          handleRefresh();
-        }}
-      />
-    );
+  // Get loading state from queries
+  const articlesQueryState = queryClient.getQueryState(['articles', 'withWordStats']);
+  const isLoadingArticles = articlesQueryState?.status === 'pending';
+  const hasArticlesError = articlesQueryState?.status === 'error';
+
+  // Show error state only if there's a query error and we're not refreshing
+  if (hasArticlesError && !isRefreshing && !isLoadingArticles) {
+    return <ErrorState message="Unable to load articles" onRetry={handleRefresh} />;
   }
 
   return (
@@ -521,13 +404,13 @@ export default function ArticlesScreen(): JSX.Element {
       <ArticleList
         articles={[]}
         contentContainerStyle={contentContainerStyle}
-        hideMainList={isArticlesLoading && !isDataCached}
+        hideMainList={true}
         hideWhileRefreshing={false}
-        isLoading={isArticlesLoading}
+        isLoading={isLoadingArticles}
         isRefreshing={isRefreshing}
         ListEmptyComponent={null}
-        ListFooterComponent={isArticlesLoading && !isDataCached ? null : ListFooterComponent}
-        ListHeaderComponent={isArticlesLoading && !isDataCached ? null : ListHeaderComponent}
+        ListFooterComponent={ListFooterComponent}
+        ListHeaderComponent={ListHeaderComponent}
         progressViewOffset={headerHeight + LAYOUT.SPACING.XXLARGE}
         onArticlePress={handleArticlePress}
         onRefresh={handleRefresh}
@@ -540,7 +423,7 @@ export function useArticlesAndDueWordsLoaded() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const articlesQueryState = queryClient.getQueryState(['articles']);
+  const articlesQueryState = queryClient.getQueryState(['articles', 'withWordStats']);
   const articlesLoaded =
     articlesQueryState?.status === 'success' || articlesQueryState?.status === 'error';
 

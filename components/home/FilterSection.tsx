@@ -23,7 +23,7 @@ interface FilterItem {
 }
 
 interface FilterSectionProps {
-  title: string;
+  title?: string;
   items: FilterItem[];
   onSelect: (id: number) => void;
 }
@@ -106,10 +106,10 @@ const compactCardStyles = StyleSheet.create({
 const FilterSection = memo(({ title, items, onSelect }: FilterSectionProps): JSX.Element => {
   return (
     <View style={styles.filterSectionContainer}>
-      <SectionTitle title={title} />
+      {title && <SectionTitle title={title} />}
       {items.map(item => (
         <CompactNavCard
-          key={`${title.toLowerCase()}-${item.id}`}
+          key={`${title || 'filter'}-${item.id}`}
           count={item.count}
           label={capitalizeFirstLetter(item.name)}
           onPress={() => onSelect(item.id)}

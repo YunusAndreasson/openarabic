@@ -177,12 +177,13 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
   // Memoize gradient colors with consistent opacity stops
   const gradientColors = useMemo(
-    () => [
-      withOpacity(baseColor, 0),
-      withOpacity(baseColor, 0.95),
-      withOpacity(baseColor, 0.98),
-      colors.card,
-    ] as const,
+    () =>
+      [
+        withOpacity(baseColor, 0),
+        withOpacity(baseColor, 0.95),
+        withOpacity(baseColor, 0.98),
+        colors.card,
+      ] as const,
     [baseColor, colors.card]
   );
 
@@ -321,10 +322,12 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             </ThemedText>
           </View>
 
-          {author ? (
+          {author || (isArticleVariant(props) && props.categoryForDisplay) ? (
             <View style={styles.authorContainer}>
               <ThemedText colorName="authorText" numberOfLines={1} style={authorStyle} type="label">
-                {author}
+                {[author, isArticleVariant(props) ? props.categoryForDisplay : undefined]
+                  .filter(Boolean)
+                  .join(' • ')}
               </ThemedText>
             </View>
           ) : null}
@@ -341,6 +344,26 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
               </ThemedText>
             </View>
           ) : null}
+
+          {/* Enhanced due word count indicator for article variant */}
+          {isArticleVariant(props) && props.dueWordCount ? (
+            <View style={styles.dueWordsContainer}>
+              <Ionicons color={colors.warning} name="sync-outline" size={14} />
+              <ThemedText
+                skipDefaultColor
+                colorName="warning"
+                type="caption"
+                style={[
+                  dueWordsStyle,
+                  {
+                    marginLeft: LAYOUT.SPACING.TINY,
+                  },
+                ]}
+              >
+                {props.dueWordCount} due {props.dueWordCount === 1 ? 'word' : 'words'}
+              </ThemedText>
+            </View>
+          ) : null}
         </View>
       </>
     );
@@ -353,10 +376,13 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
     category,
     author,
     summary,
+    isArticleVariant(props) ? props.dueWordCount : undefined,
     gradientProps,
     titleStyle,
     authorStyle,
     summaryStyle,
+    dueWordsStyle,
+    colors.warning,
   ]);
 
   // Memoize compact article content with enhanced colors
