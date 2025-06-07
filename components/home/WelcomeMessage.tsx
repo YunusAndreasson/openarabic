@@ -39,7 +39,7 @@ export const WelcomeMessage: React.FC = () => {
   }, []);
 
   const handleCalendarPress = () => {
-    router.push('/islamicCalendar');
+    router.push('/(tabs)/settings/islamicCalendar');
   };
 
   return (

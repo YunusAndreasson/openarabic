@@ -19,7 +19,7 @@ import { useAuth } from '../../hooks/auth/useAuth';
 
 const TAB_SCREENS = [
   {
-    name: 'index',
+    name: 'read',
     title: 'Read',
     iconOutline: 'book-outline',
     iconFilled: 'book',

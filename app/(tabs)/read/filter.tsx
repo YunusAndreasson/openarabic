@@ -4,20 +4,19 @@ import { useGlobalSearchParams, router, Stack } from 'expo-router';
 import type { JSX } from 'react';
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 
+import ErrorState from '@/components/ErrorState';
+import FilteredArticleView from '@/components/home/FilteredArticleView';
 import { LAYOUT } from '@/constants/layout';
+import { useAppPreloader } from '@/hooks/app/useAppPreloader';
+import { useNavigationWithDebounce } from '@/hooks/navigation/useNavigationWithDebounce';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import { articlesService } from '@/services/articles';
+import { authorsService } from '@/services/authors';
+import { categoriesService } from '@/services/categories';
+import type { Article } from '@/types/articles.types';
 import { handleError } from '@/utils/errorHandling';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
-
-import ErrorState from '../components/ErrorState';
-import FilteredArticleView from '../components/home/FilteredArticleView';
-import { useAppPreloader } from '../hooks/app/useAppPreloader';
-import { useNavigationWithDebounce } from '../hooks/navigation/useNavigationWithDebounce';
-import { articlesService } from '../services/articles';
-import { authorsService } from '../services/authors';
-import { categoriesService } from '../services/categories';
-import type { Article } from '../types/articles.types';
 
 // Custom Header Background component with blur effect (copied from tab layout)
 const BLUR_INTENSITY = 55;
@@ -136,7 +135,7 @@ function FilterScreenContent() {
   const handleArticlePress = useCallback(
     (article: Article) => {
       prefetchArticle(article.id);
-      navigateTo({ pathname: '/article/[id]', params: { id: article.id } });
+      navigateTo({ pathname: '/(tabs)/read/article/[id]', params: { id: article.id } });
     },
     [navigateTo, prefetchArticle]
   );

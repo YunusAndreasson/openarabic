@@ -1,3 +1,5 @@
+// Move content from the existing index.tsx file here
+
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -19,10 +21,10 @@ import StrugglingWordsSection from '@/components/home/StrugglingWordsSection';
 import { WelcomeMessage } from '@/components/home/WelcomeMessage';
 import { LAYOUT } from '@/constants/layout';
 import { useScreenFocusRefresh } from '@/hooks';
+import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useArticlesByDifficultWords } from '@/hooks/articles/useArticlesByDifficultWords';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useColors } from '@/hooks/theme/useColors';
 import { useStrugglingWords } from '@/hooks/vocabulary/useStrugglingWords';
 import { articlesService } from '@/services/articles';
@@ -44,7 +46,7 @@ import { getDayOfYear } from '@/utils/dateUtils';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
 
-import ErrorState from '../../components/ErrorState';
+import ErrorState from '../../../components/ErrorState';
 
 const styles = StyleSheet.create({
   container: {
@@ -300,17 +302,17 @@ export default function ArticlesScreen(): JSX.Element {
     (article: Article) => {
       dispatch(updateLastOpenedArticle(article.id));
       prefetchArticle(article.id);
-      router.push(`/article/${article.id}`);
+      router.push(`/(tabs)/read/article/${article.id}`);
     },
     [dispatch, prefetchArticle]
   );
 
   const handleSelectAuthor = useCallback((authorId: number) => {
-    router.push(`/filter?type=author&id=${authorId}`);
+    router.push(`/(tabs)/read/filter?type=author&id=${authorId}`);
   }, []);
 
   const handleSelectCategory = useCallback((categoryId: number) => {
-    router.push(`/filter?type=category&id=${categoryId}`);
+    router.push(`/(tabs)/read/filter?type=category&id=${categoryId}`);
   }, []);
 
   useEffect(() => {

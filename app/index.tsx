@@ -22,7 +22,7 @@ export default function Index() {
 
   // Once auth is loaded, redirect based on session state
   if (session?.user) {
-    return <Redirect href="/(tabs)" />;
+    return <Redirect href="/(tabs)/read" />;
   } else {
     return <Redirect href="/auth" />;
   }

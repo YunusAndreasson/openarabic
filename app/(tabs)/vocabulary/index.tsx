@@ -10,19 +10,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BottomControls from '@/components/BottomControls';
 import { ThemedView } from '@/components/ThemedView';
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
+import SessionOptionsModal from '@/components/vocabulary/SessionOptionsModal';
 import { VocabularyStatCards } from '@/components/vocabulary/VocabularyStatCards';
 import { LAYOUT } from '@/constants/layout';
 import { useNavigationWithDebounce } from '@/hooks';
-import { useAuth } from '@/hooks/auth/useAuth';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useVocabularyChartData } from '@/hooks/vocabulary/useVocabularyChartData';
 import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import type { StatCategory } from '@/types/vocabulary.types';
 import { mediumFeedback } from '@/utils/haptics';
-
-import SessionOptionsModal from '@/components/vocabulary/SessionOptionsModal';
 
 export default function VocabularyScreen(): JSX.Element {
   const { user } = useAuth();

@@ -8,23 +8,23 @@ import React, { useState, useRef, useEffect, useMemo, useCallback, memo } from '
 import { StyleSheet, View, RefreshControl, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ArticleCard } from '@/components/home/ArticleCard';
 import BottomControls from '@/components/BottomControls';
 import EmptyState from '@/components/EmptyState';
 import SortingControls from '@/components/SortingControls';
 import type { SortOption, SortDirection } from '@/components/SortingControls';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { ArticleCard } from '@/components/home/ArticleCard';
 import NowPlayingCard from '@/components/listen/NowPlayingCard';
 import SleepTimer from '@/components/listen/SleepTimer';
 import { LAYOUT } from '@/constants/layout';
 import { useLoadingState, useScreenFocusRefresh } from '@/hooks';
+import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { AUDIO_STATES } from '@/hooks/audio/useAudioPlayer';
 import { useEnhancedAudioPlayer } from '@/hooks/audio/useEnhancedAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useColors } from '@/hooks/theme/useColors';
 import { articlesService } from '@/services/articles';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
@@ -613,7 +613,7 @@ export default function ListenScreen(): JSX.Element {
   const handleArticlePress = useCallback(
     (articleId: number) => {
       prefetchArticle(articleId);
-      router.push(`/article/${articleId}`);
+      router.push(`/(tabs)/read/article/${articleId}`);
     },
     [prefetchArticle]
   );
@@ -800,7 +800,7 @@ export default function ListenScreen(): JSX.Element {
         timerAccessibilityLabel="Sleep timer"
         onPress={() => {
           if (currentArticle) {
-            router.push(`/article/${currentArticle.id}`);
+            router.push(`/(tabs)/read/article/${currentArticle.id}`);
           }
         }}
         onStop={() => {

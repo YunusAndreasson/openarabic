@@ -1,11 +1,12 @@
 import type { JSX} from 'react';
 import React, { memo } from 'react';
 
-import { ArticleCard } from './ArticleCard';
 import { ThemedText } from '@/components/ThemedText';
 import type { Article } from '@/types/articles.types';
 import { formatTimeAgo } from '@/utils/dateUtils';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
+
+import { ArticleCard } from './ArticleCard';
 
 interface ArticleItemProps {
   article: Article;

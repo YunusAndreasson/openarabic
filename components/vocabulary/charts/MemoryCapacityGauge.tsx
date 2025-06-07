@@ -226,7 +226,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
       pressScale.value = withSpring(1, SPRING_CONFIG);
     });
 
-    navigateTo('insights' as any);
+    navigateTo('/(tabs)/vocabulary/insights' as any);
   };
 
   // Animated style for press feedback

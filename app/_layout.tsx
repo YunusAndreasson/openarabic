@@ -1,3 +1,5 @@
+// Fix for expo-router v5.0.7 + React Native 0.79.3 splash screen compatibility issue
+import '../splash-polyfill';
 import {
   DarkTheme,
   DefaultTheme,
@@ -7,7 +9,6 @@ import * as Sentry from '@sentry/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import { Stack, useNavigationContainerRef, useRouter } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState, useRef, Component, useMemo, useCallback, memo } from 'react';
 import 'react-native-reanimated';
@@ -34,7 +35,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { store, persistor } from '../store/store';
 import { setTheme } from '../store/themeSlice';
 
-import { useArticlesAndDueWordsLoaded } from './(tabs)/index';
+import { useArticlesAndDueWordsLoaded } from './(tabs)/read/index';
 
 // Let expo-router handle splash screen initialization through app.json configuration
 // This prevents conflicts with expo-router's internal splash screen management
@@ -159,17 +160,10 @@ function AppContent() {
     }
   }, [isAuthLoading, isLoaded, preloadAppData]);
 
-  // Hide splash screen after first layout
-  const onLayoutRootView = useCallback(async () => {
-    if (appReady) {
-      try {
-        await SplashScreen.hideAsync();
-      } catch (error) {
-        // Silently handle splash screen hiding errors - not critical for app functionality
-        console.warn('Splash screen hiding failed:', error);
-      }
-    }
-  }, [appReady]);
+  // Layout callback - expo-router handles splash screen automatically
+  const onLayoutRootView = useCallback(() => {
+    // Removed manual splash screen hiding - expo-router handles this through plugin configuration
+  }, []);
 
   // Wait for all resources before setting appReady
   useEffect(() => {
@@ -212,7 +206,7 @@ function AppContent() {
 
       try {
         if (session) {
-          router.replace('/(tabs)');
+          router.replace('/(tabs)/read');
         } else {
           router.replace('/auth');
         }
@@ -255,9 +249,6 @@ function AppContent() {
               animation: 'none',
             }}
           />
-          <Stack.Screen name="article" options={{ headerShown: false }} />
-          <Stack.Screen name="insights" options={{ headerShown: true }} />
-          <Stack.Screen name="index" />
         </Stack>
         <StatusBar style={isDark ? 'light' : 'dark'} />
       </View>

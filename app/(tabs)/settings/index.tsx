@@ -17,13 +17,13 @@ import { TimePicker } from '@/components/TimePicker';
 import { Toggle } from '@/components/Toggle';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useColors } from '@/hooks/theme/useColors';
 import { useReminders } from '@/hooks/notifications/useReminders';
+import { useColors } from '@/hooks/theme/useColors';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
 import { lightFeedback } from '@/utils/haptics';
 
-import pkg from '../../package.json';
+import pkg from '../../../package.json';
 
 // Memoized components
 interface SettingLabelProps {
@@ -251,7 +251,7 @@ const AccountScreen: React.FC = () => {
                 includePressAnimation={true}
                 shadowSize="none"
                 style={styles.actionLinkCard}
-                onPress={() => router.push('/learningMethod')}
+                onPress={() => router.push('/(tabs)/settings/learningMethod')}
               >
                 <View style={styles.actionLinkContent}>
                   <View style={styles.actionLinkLeft}>
@@ -275,7 +275,7 @@ const AccountScreen: React.FC = () => {
                 includePressAnimation={true}
                 shadowSize="none"
                 style={styles.actionLinkCard}
-                onPress={() => router.push('/classicalTexts')}
+                onPress={() => router.push('/(tabs)/settings/classicalTexts')}
               >
                 <View style={styles.actionLinkContent}>
                   <View style={styles.actionLinkLeft}>
