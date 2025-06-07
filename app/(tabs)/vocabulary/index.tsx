@@ -22,7 +22,7 @@ import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import type { StatCategory } from '@/types/vocabulary.types';
 import { mediumFeedback } from '@/utils/haptics';
 
-import SessionOptionsModal from '../../components/vocabulary/SessionOptionsModal';
+import SessionOptionsModal from '@/components/vocabulary/SessionOptionsModal';
 
 export default function VocabularyScreen(): JSX.Element {
   const { user } = useAuth();
