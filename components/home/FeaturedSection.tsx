@@ -67,7 +67,7 @@ const FeaturedSection: React.FC<FeaturedSectionProps> = ({
 const styles = StyleSheet.create({
   cardStyle: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    shadowOpacity: LAYOUT.OPACITY.LIGHT, // Slightly increased shadow for emphasis
+    shadowOpacity: LAYOUT.OPACITY.SUBTLE,
   },
   container: {
     // Remove custom spacing - SectionTitle handles all section spacing

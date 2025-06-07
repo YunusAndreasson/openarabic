@@ -82,7 +82,7 @@ const compactCardStyles = StyleSheet.create({
     marginLeft: LAYOUT.SPACING.SMALL,
     minWidth: 24,
     paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.XTINY,
+    paddingVertical: LAYOUT.SPACING.TINY,
   },
   countText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,

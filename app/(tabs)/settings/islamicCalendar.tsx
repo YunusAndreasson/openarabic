@@ -160,7 +160,7 @@ export default function IslamicCalendarScreen() {
           headerTitleStyle: {
             ...LAYOUT.HEADER.TITLE.SECONDARY,
             color: colors.text,
-          },
+          } as any,
           headerStyle: { backgroundColor: colors.background },
           headerShadowVisible: false,
           headerTitleAlign: 'left',
@@ -387,12 +387,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   dateInfo: {
-    gap: LAYOUT.SPACING.XTINY,
+    gap: LAYOUT.SPACING.TINY,
   },
   dateRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: LAYOUT.SPACING.XTINY + 1,
+    gap: LAYOUT.SPACING.TINY,
   },
   dateText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
     letterSpacing: 0.2,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.6,
-    paddingVertical: LAYOUT.SPACING.XTINY,
+    paddingVertical: LAYOUT.SPACING.TINY,
     textAlign: 'right',
     textAlignVertical: 'center',
   },
@@ -420,8 +420,8 @@ const styles = StyleSheet.create({
     padding: LAYOUT.CARD.PADDING.MEDIUM,
   },
   eventDates: {
-    gap: LAYOUT.SPACING.XTINY,
-    paddingTop: LAYOUT.SPACING.XTINY,
+    gap: LAYOUT.SPACING.TINY,
+    paddingTop: LAYOUT.SPACING.TINY,
   },
   eventHeader: {
     alignItems: 'stretch',
@@ -433,8 +433,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     maxWidth: 150,
     minWidth: 130,
-    paddingLeft: LAYOUT.SPACING.XTINY,
-    paddingVertical: LAYOUT.SPACING.XTINY / 2,
+    paddingLeft: LAYOUT.SPACING.TINY,
+    paddingVertical: LAYOUT.SPACING.TINY / 2,
   },
   eventTitle: {
     flex: 1,
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
   },
   eventTitleContainer: {
     flex: 1,
-    gap: LAYOUT.SPACING.XTINY,
+    gap: LAYOUT.SPACING.TINY,
     justifyContent: 'flex-start',
     marginRight: LAYOUT.SPACING.MEDIUM,
   },
@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   progressContainer: {
-    marginTop: LAYOUT.SPACING.XTINY / 2,
+    marginTop: LAYOUT.SPACING.TINY / 2,
   },
   progressFill: {
     borderRadius: 1,
@@ -498,13 +498,13 @@ const styles = StyleSheet.create({
   },
   separator: {
     backgroundColor: 'transparent',
-    marginHorizontal: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.XTINY,
+    marginHorizontal: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.TINY,
     opacity: 0.2,
     width: 1,
   },
   statItem: {
     alignItems: 'center',
-    gap: LAYOUT.SPACING.XTINY,
+    gap: LAYOUT.SPACING.TINY,
   },
   statLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
@@ -524,6 +524,6 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.LARGE,
   },
   timingRow: {
-    gap: LAYOUT.SPACING.XTINY / 2,
+    gap: LAYOUT.SPACING.TINY / 2,
   },
 });

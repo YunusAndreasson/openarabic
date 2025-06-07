@@ -1,13 +1,17 @@
 import React, { memo, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 
-import type { ErrorStateProps } from '@/types/ui/layout.types';
-
 import { LAYOUT } from '../constants/layout';
 import { errorFeedback } from '../utils/haptics';
 
 import { ThemedButton } from './ThemedButton';
 import { ThemedText } from './ThemedText';
+
+// Define ErrorStateProps inline
+interface ErrorStateProps {
+  message: string;
+  onRetry?: () => void;
+}
 
 /**
  * A component for displaying error messages

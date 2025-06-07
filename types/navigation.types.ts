@@ -16,7 +16,14 @@ export interface WordListParams {
   filter?: 'all' | 'due' | 'learned';
   sortBy?: 'addedDate' | 'difficulty' | 'dueDate';
   category?:
-    'difficultyEasy' | 'difficultyHard' | 'difficultyMedium' | 'due' | 'learning' | 'mastered' | 'needsAttention' | 'total';
+    | 'difficultyEasy'
+    | 'difficultyHard'
+    | 'difficultyMedium'
+    | 'due'
+    | 'learning'
+    | 'mastered'
+    | 'needsAttention'
+    | 'total';
 }
 
 /**
@@ -24,15 +31,15 @@ export interface WordListParams {
  */
 export type RouteParams = {
   '/article/[id]': { id: number | string };
-  '/vocabulary/review': ReviewParams;
-  '/vocabulary/practice': ListenParams;
-  '/vocabulary/wordList': WordListParams;
-  '/vocabulary/wordExamples': Record<string, never>;
+  '/practice/review': ReviewParams;
+  '/practice/practice': ListenParams;
+  '/practice/wordList': WordListParams;
+  '/practice/wordExamples': Record<string, never>;
   '/': Record<string, never>;
   '/(tabs)': Record<string, never>;
   '/(tabs)/listen': Record<string, never>;
   '/settings': Record<string, never>;
-  '/vocabulary': Record<string, never>;
+  '/practice': Record<string, never>;
 };
 
 /**
@@ -67,15 +74,15 @@ export function isRoutePath(path: string): path is RoutePath {
 // Route parameter definitions for type checking
 const routeParams: Record<RoutePath, true> = {
   '/article/[id]': true,
-  '/vocabulary/review': true,
-  '/vocabulary/practice': true,
-  '/vocabulary/wordList': true,
-  '/vocabulary/wordExamples': true,
+  '/practice/review': true,
+  '/practice/practice': true,
+  '/practice/wordList': true,
+  '/practice/wordExamples': true,
   '/': true,
   '/(tabs)': true,
   '/(tabs)/listen': true,
   '/settings': true,
-  '/vocabulary': true,
+  '/practice': true,
 };
 
 /**

@@ -43,7 +43,7 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
     ...Platform.select({
       ios: {
         shadowColor: colors.shadow,
-        shadowOpacity: LAYOUT.OPACITY.XLIGHT,
+        shadowOpacity: LAYOUT.OPACITY.SUBTLE,
       },
     }),
   };
@@ -65,7 +65,7 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
     ...Platform.select({
       ios: {
         shadowColor: colors.shadow,
-        shadowOpacity: LAYOUT.OPACITY.XLIGHT * 0.5,
+        shadowOpacity: LAYOUT.OPACITY.SUBTLE,
       },
     }),
   };
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     textAlign: 'center',
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * 1.4,
-    paddingTop: LAYOUT.SPACING.MICRO,
+    paddingTop: LAYOUT.SPACING.TINY,
   } as TextStyle,
 });
 

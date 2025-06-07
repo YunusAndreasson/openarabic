@@ -44,7 +44,12 @@ const SELECT_COLUMNS = `
 `;
 
 export const wordExamplesService = {
-  async getExamples({ wordId, rootId, rootIds, limit = 50 }: GetExamplesOptions): Promise<{ word: SentenceWord | null; examples: SentenceWithWords[] }> {
+  async getExamples({
+    wordId,
+    rootId,
+    rootIds,
+    limit = 50,
+  }: GetExamplesOptions): Promise<{ word: SentenceWord | null; examples: SentenceWithWords[] }> {
     try {
       let query = supabase
         .from('sentence_words')
@@ -81,7 +86,7 @@ export const wordExamplesService = {
           sentence_words: unknown[];
         };
         const words: SentenceWord[] = Array.isArray(sentence.sentence_words)
-          ? sentence.sentence_words.map(mapToSentenceWord)
+          ? sentence.sentence_words.map(word => mapToSentenceWord(word as Record<string, unknown>))
           : [];
 
         if (!sentencesMap.has(sentence.id)) {
@@ -96,4 +101,3 @@ export const wordExamplesService = {
     }
   },
 };
-

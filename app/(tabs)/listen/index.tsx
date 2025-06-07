@@ -29,12 +29,11 @@ import { useColors } from '@/hooks/theme/useColors';
 import { articlesService } from '@/services/articles';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { readingListService } from '@/services/readingList';
+import type { Article } from '@/types/articles.types';
+import type { Tables } from '@/types/database.types';
+import type { SentenceWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback, lightFeedback } from '@/utils/haptics';
-
-import type { Article } from '../../types/articles.types';
-import type { Tables } from '../../types/database.types';
-import type { SentenceWord } from '../../types/vocabulary.types';
 
 type ReadingListItem = Tables<'reading_list'> & {
   articles: Article & {
@@ -68,8 +67,8 @@ const itemStyles = StyleSheet.create({
     elevation: 1,
     flexDirection: 'row',
     marginRight: 8,
-    paddingHorizontal: LAYOUT.SPACING.XSMALL + 1,
-    paddingVertical: LAYOUT.SPACING.MICRO + 1,
+    paddingHorizontal: LAYOUT.SPACING.TINY,
+    paddingVertical: LAYOUT.SPACING.TINY,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 1,
@@ -135,7 +134,7 @@ const ListenListItem = memo(
           style={{
             color: dueWordCount > 0 ? colors.warning : colors.textTertiary,
             fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL - 1,
-            marginLeft: LAYOUT.SPACING.XTINY,
+            marginLeft: LAYOUT.SPACING.TINY,
             fontWeight: '700',
             letterSpacing: 0.2,
             minWidth: 14, // Fixed width to accommodate double digits
@@ -792,7 +791,6 @@ export default function ListenScreen(): JSX.Element {
       <NowPlayingCard
         article={currentArticle}
         duration={isStartingPlayback ? 0 : duration}
-        isPlaying={!isStartingPlayback && audioState === AUDIO_STATES.PLAYING}
         isTimerActive={sleepTimer.state.isActive}
         isVisible={shouldShowPlayer}
         progress={isStartingPlayback ? 0 : progress}

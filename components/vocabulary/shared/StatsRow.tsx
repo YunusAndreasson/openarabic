@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.XSMALL,
+    paddingVertical: LAYOUT.SPACING.SMALL,
   },
   progressValue: {
     includeFontPadding: false,
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   statValueRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    marginBottom: LAYOUT.SPACING.XSMALL,
+    marginBottom: LAYOUT.SPACING.SMALL,
     minHeight: 24,
   },
   statsSeparator: {

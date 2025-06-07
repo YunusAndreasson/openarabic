@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
     justifyContent: 'center',
-    paddingHorizontal: LAYOUT.SPACING.MICRO,
+    paddingHorizontal: LAYOUT.SPACING.TINY,
     paddingVertical: 2,
   },
   wordView: {},

@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
   },
 
   progressSection: {
-    gap: LAYOUT.SPACING.XTINY,
+    gap: LAYOUT.SPACING.TINY,
   },
 
   stopButton: {
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '600',
     letterSpacing: -0.2,
-    marginBottom: LAYOUT.SPACING.XTINY,
+    marginBottom: LAYOUT.SPACING.TINY,
   },
 });
 

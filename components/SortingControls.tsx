@@ -142,17 +142,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   sortCard: {
-    marginBottom: LAYOUT.SPACING.XSMALL,
+    marginBottom: LAYOUT.SPACING.SMALL,
     marginHorizontal: 0,
     overflow: 'hidden', // Ensures clean card edges
   },
   sortContent: {
-    paddingHorizontal: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.MICRO,
-    paddingVertical: LAYOUT.SPACING.XSMALL + LAYOUT.SPACING.MICRO,
+    paddingHorizontal: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.TINY,
+    paddingVertical: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.TINY,
   },
   sortOptions: {
     flexDirection: 'row',
-    gap: LAYOUT.SPACING.XSMALL,
+    gap: LAYOUT.SPACING.SMALL,
     justifyContent: 'space-between',
   },
   sortPill: {
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     marginRight: 0,
     paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.XSMALL + LAYOUT.SPACING.MICRO,
+    paddingVertical: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.TINY,
     borderRadius: LAYOUT.BORDER_RADIUS.SMALL + 1,
     minHeight: 42,
     justifyContent: 'center',
@@ -173,10 +173,10 @@ const styles = StyleSheet.create({
   sortPillContent: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: LAYOUT.SPACING.XTINY,
+    gap: LAYOUT.SPACING.TINY,
   },
   sortPillIcon: {
-    marginLeft: LAYOUT.SPACING.MICRO,
+    marginLeft: LAYOUT.SPACING.TINY,
     opacity: 0.7, // Subtle when not selected
   },
   sortPillLabel: {

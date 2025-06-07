@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconContainer: {
-    marginRight: LAYOUT.SPACING.XSMALL,
+    marginRight: LAYOUT.SPACING.SMALL,
   },
   label: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,

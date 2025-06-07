@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
       width: 0,
       height: -4,
     },
-    shadowOpacity: LAYOUT.OPACITY.LIGHT,
+    shadowOpacity: LAYOUT.OPACITY.SUBTLE,
     shadowRadius: 12,
   },
   modalContainer: {
@@ -353,6 +353,6 @@ const styles = StyleSheet.create({
   },
   title: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.2,
-    marginBottom: LAYOUT.SPACING.XSMALL,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
 });

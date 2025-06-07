@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     ...Platform.select({
       ios: {
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: LAYOUT.OPACITY.LIGHT,
+        shadowOpacity: LAYOUT.OPACITY.SUBTLE,
         shadowRadius: 2,
       },
       android: {

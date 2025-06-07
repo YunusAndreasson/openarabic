@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
   },
   difficultyContainer: {
     borderRadius: 12,
-    marginTop: LAYOUT.SPACING.MICRO,
+    marginTop: LAYOUT.SPACING.TINY,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },

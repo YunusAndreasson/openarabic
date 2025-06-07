@@ -4,12 +4,26 @@ import React, { memo } from 'react';
 import type { ComponentType, ComponentProps } from 'react';
 import { View, StyleSheet } from 'react-native';
 
-import type { EmptyStateProps } from '@/types/ui/layout.types';
-
 import { LAYOUT } from '../constants/layout';
 
 import { ThemedButton } from './ThemedButton';
 import { ThemedText } from './ThemedText';
+
+// Define EmptyStateProps inline
+interface EmptyStateProps {
+  title: string;
+  description: string;
+  actionText?: string;
+  icon?: string | ComponentType<any>;
+  onAction?: () => void;
+  containerStyle?: any;
+  colors: { tint: string };
+  submessage?: string;
+  customActionButton?: React.ReactNode;
+  iconSize?: number;
+  iconContainerStyle?: any;
+  hideArticlesButton?: boolean;
+}
 
 const DEFAULT_ICON_SIZE = 64;
 
@@ -65,7 +79,7 @@ const EmptyState = memo(
               <IconComponent
                 accessibilityLabel={`${title} illustration`}
                 color={colors?.tint}
-                name={iconName}
+                name={iconName as any}
                 size={iconSize}
                 style={styles.icon}
               />

@@ -15,7 +15,7 @@ import { useColors } from '../../hooks/theme/useColors';
  */
 const ErrorMessage = memo(
   ({
-    screenName = 'vocabulary',
+    screenName = 'practice',
     customMessage = "Your progress isn't available right now.",
   }: ErrorMessageProps) => {
     const colors = useColors();
@@ -25,8 +25,8 @@ const ErrorMessage = memo(
       // Map screenName to appropriate route
       let route: RoutePath = '/(tabs)';
 
-      if (screenName === 'vocabulary') {
-        route = '/vocabulary' as RoutePath;
+      if (screenName === 'practice') {
+        route = '/practice' as RoutePath;
       } else if (screenName === 'settings') {
         route = '/settings' as RoutePath;
       }

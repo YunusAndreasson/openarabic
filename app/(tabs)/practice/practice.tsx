@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, router } from 'expo-router';
-import type { JSX} from 'react';
+import type { JSX } from 'react';
 import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -267,7 +267,7 @@ export default function ListenScreen(): JSX.Element {
       // For user-initiated cancellations during session
       if (fromRemember) {
         // Use replace instead of navigate to avoid navigation stack issues
-        router.replace('/(tabs)/vocabulary');
+        router.replace('/(tabs)/practice');
       } else {
         router.back();
       }

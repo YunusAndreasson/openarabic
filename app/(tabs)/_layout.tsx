@@ -31,7 +31,7 @@ const TAB_SCREENS = [
     iconFilled: 'headset',
   },
   {
-    name: 'vocabulary',
+    name: 'practice',
     title: 'Practice',
     iconOutline: 'trending-up-outline',
     iconFilled: 'trending-up',
@@ -58,7 +58,7 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
         ios: isDarkMode
           ? {
               shadowOffset: { width: 0, height: -2 },
-              shadowOpacity: LAYOUT.OPACITY.XLIGHT,
+              shadowOpacity: LAYOUT.OPACITY.SUBTLE,
               shadowRadius: 8,
               borderTopWidth: StyleSheet.hairlineWidth,
             }
@@ -232,7 +232,10 @@ const CustomHeaderBackground = memo(() => {
 });
 CustomHeaderBackground.displayName = 'CustomHeaderBackground';
 
-const HEADER_TITLE_STYLE = LAYOUT.HEADER.TITLE.MAIN;
+const HEADER_TITLE_STYLE = {
+  ...LAYOUT.HEADER.TITLE.MAIN,
+  fontWeight: LAYOUT.HEADER.TITLE.MAIN.fontWeight as any,
+};
 
 const HEADER_STYLE = {
   elevation: 0,
@@ -317,7 +320,7 @@ const styles = StyleSheet.create({
       fontWeight: '500',
     },
     android: {
-      paddingBottom: LAYOUT.SPACING.MICRO,
+      paddingBottom: LAYOUT.SPACING.TINY,
     },
   }) as TextStyle,
   tabButton: {

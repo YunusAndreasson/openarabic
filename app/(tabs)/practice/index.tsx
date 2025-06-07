@@ -94,7 +94,7 @@ export default function VocabularyScreen(): JSX.Element {
   const handleStartReview = () => {
     if (!user) return;
     navigateTo({
-      pathname: '/vocabulary/review',
+      pathname: '/practice/review',
       params: { fromRemember: 'true' },
     });
   };
@@ -102,13 +102,13 @@ export default function VocabularyScreen(): JSX.Element {
   // Handle starting a listen session
   const handleStartListen = () => {
     if (!user) return;
-    router.push('/vocabulary/practice?fromRemember=true');
+    router.push('/practice/practice?fromRemember=true');
   };
 
   // Handle stat press events
   const handleStatPress = (category: StatCategory) => {
     navigateTo({
-      pathname: '/vocabulary/wordList',
+      pathname: '/practice/wordList',
       params: { category },
     });
   };

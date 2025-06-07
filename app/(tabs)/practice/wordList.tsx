@@ -29,17 +29,16 @@ const wordListSortOptions: SortOption<WordListSort>[] = [
 // Move WordListItem component definition outside to optimize recycling
 interface WordListItemMemoProps {
   readonly item: EnhancedStudyWord;
-  readonly currentSort: WordListSort;
 }
 
-const WordListItemMemo = memo(({ item, currentSort }: WordListItemMemoProps) => {
+const WordListItemMemo = memo(({ item }: WordListItemMemoProps) => {
   // Handler for navigating to examples screen
   const handleShowExamples = useCallback(() => {
     if (!item.root_id) return;
 
     // Pass word meaning and letters directly to avoid unnecessary loading
     router.push({
-      pathname: '/vocabulary/wordExamples',
+      pathname: '/practice/wordExamples',
       params: {
         rootId: item.root_id.toString(),
         rootMeaning: item.root?.meaning || '',
@@ -55,7 +54,7 @@ const WordListItemMemo = memo(({ item, currentSort }: WordListItemMemoProps) => 
         style={{ marginBottom: LAYOUT.SPACING.TINY }}
         onPress={handleShowExamples}
       >
-        <WordListItem currentSort={currentSort} word={item} />
+        <WordListItem word={item} />
       </BaseCard>
     </View>
   );
@@ -133,7 +132,14 @@ export default function WordListScreen(): JSX.Element {
   const { data: words, error } = useWordList(
     user?.id,
     category as
-      'difficultyEasy' | 'difficultyHard' | 'difficultyMedium' | 'due' | 'learning' | 'mastered' | 'needsAttention' | 'total',
+      | 'difficultyEasy'
+      | 'difficultyHard'
+      | 'difficultyMedium'
+      | 'due'
+      | 'learning'
+      | 'mastered'
+      | 'needsAttention'
+      | 'total',
     sortBy,
     sortDirection
   );
@@ -160,10 +166,8 @@ export default function WordListScreen(): JSX.Element {
   // Optimize renderItem for FlashList
   const renderItem = useCallback(
     // eslint-disable-next-line react/no-unused-prop-types
-    ({ item }: { readonly item: EnhancedStudyWord }) => (
-      <WordListItemMemo currentSort={sortBy} item={item} />
-    ),
-    [sortBy]
+    ({ item }: { readonly item: EnhancedStudyWord }) => <WordListItemMemo item={item} />,
+    []
   );
 
   // Sort functions
@@ -213,7 +217,7 @@ export default function WordListScreen(): JSX.Element {
           headerTitleStyle: {
             ...LAYOUT.HEADER.TITLE.SECONDARY,
             color: colors.text,
-          },
+          } as any,
           headerStyle: {
             backgroundColor: colors.background,
           },
@@ -272,7 +276,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   headerContainer: {
-    paddingBottom: LAYOUT.SPACING.XSMALL,
+    paddingBottom: LAYOUT.SPACING.TINY,
     paddingTop: 0,
   },
   listContentContainer: {

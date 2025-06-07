@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
       width: 0,
       height: -8,
     },
-    shadowOpacity: LAYOUT.OPACITY.LIGHT + 0.05,
+    shadowOpacity: LAYOUT.OPACITY.SUBTLE,
     shadowRadius: 16,
   },
   modalContainer: {
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
   },
   title: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.2,
-    marginBottom: LAYOUT.SPACING.XSMALL,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
 });
 

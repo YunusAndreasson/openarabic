@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlignVertical: 'center',
     paddingTop: LAYOUT.SPACING.SMALL,
-    paddingBottom: LAYOUT.SPACING.XSMALL,
+    paddingBottom: LAYOUT.SPACING.SMALL,
   },
   chevronContainer: {
     alignItems: 'center',
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   },
   streakBadge: {
     paddingHorizontal: LAYOUT.SPACING.SMALL + 1, // Slightly more padding
-    paddingVertical: LAYOUT.SPACING.XSMALL,
+    paddingVertical: LAYOUT.SPACING.SMALL,
     borderRadius: 8, // More refined radius
     alignSelf: 'flex-start', // Align with text baseline
     minWidth: 48, // Ensure minimum touch target size

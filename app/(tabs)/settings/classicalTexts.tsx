@@ -23,7 +23,7 @@ const ClassicalTextsScreen: React.FC = () => {
           headerTitleStyle: {
             ...LAYOUT.HEADER.TITLE.SECONDARY,
             color: colors.text,
-          },
+          } as any,
           headerStyle: {
             backgroundColor: colors.background,
           },

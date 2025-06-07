@@ -214,6 +214,7 @@ export default function WordExamplesScreen() {
       headerTitle: title,
       headerTitleStyle: {
         ...LAYOUT.HEADER.TITLE.SECONDARY,
+        fontWeight: LAYOUT.HEADER.TITLE.SECONDARY.fontWeight as any,
         color: colors.text,
         letterSpacing: -0.5,
       },

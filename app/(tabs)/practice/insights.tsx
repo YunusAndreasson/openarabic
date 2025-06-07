@@ -75,7 +75,7 @@ export default function InsightsScreen(): JSX.Element {
           headerTransparent: false,
           headerTitleAlign: 'left',
           headerTintColor: colors.tint,
-          headerBackTitle: 'Vocabulary',
+          headerBackTitle: 'Practice',
           headerBackTitleStyle: {
             fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
           },

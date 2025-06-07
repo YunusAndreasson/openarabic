@@ -676,7 +676,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         if (onClose) {
           onClose();
         } else if (fromRemember) {
-          router.replace('/(tabs)/vocabulary');
+          router.replace('/(tabs)/practice');
         } else {
           router.back();
         }
