@@ -26,8 +26,8 @@ import type { RootState } from '@/store/store';
 
 import figtreeFont from '../assets/fonts/Figtree.ttf';
 import madinaFont from '../assets/fonts/Madina.otf';
-import { useAuth } from '../hooks/auth/useAuth';
 import { useAppPreloader } from '../hooks/app/useAppPreloader';
+import { useAuth } from '../hooks/auth/useAuth';
 import { useSystemUITheme } from '../hooks/theme/useSystemUITheme';
 import { analytics } from '../services/analytics';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
@@ -80,15 +80,8 @@ Sentry.init({
   enabled: true, // Enable in both dev and production
   tracesSampleRate: 1.0, // Sample everything (100%)
   attachScreenshot: true, // Helps debug UI crashes
-  debug: __DEV__, // Enable debug logging in dev
+  debug: false, // Disable debug logging to reduce console noise
 });
-
-const reviewScreenOptions = {
-  headerShown: false,
-  animation: 'none',
-  presentation: 'containedModal',
-  gestureEnabled: false,
-} as const;
 
 function AppContent() {
   const dispatch = useAppDispatch();
@@ -263,8 +256,6 @@ function AppContent() {
             }}
           />
           <Stack.Screen name="article" options={{ headerShown: false }} />
-          <Stack.Screen name="review" options={reviewScreenOptions} />
-          <Stack.Screen name="practice" options={reviewScreenOptions} />
           <Stack.Screen name="insights" options={{ headerShown: true }} />
           <Stack.Screen name="index" />
         </Stack>

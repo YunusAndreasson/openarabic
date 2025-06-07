@@ -12,8 +12,8 @@ import {
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
-import BaseCard from './BaseCard';
-import { ThemedText } from './ThemedText';
+import BaseCard from '../BaseCard';
+import { ThemedText } from '../ThemedText';
 
 interface ArticleCardProps {
   title: string;
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     marginRight: LAYOUT.SPACING.TINY,
     minHeight: MIN_TOUCH_TARGET.MEDIUM, // Ensure icon area is easily touchable
     minWidth: MIN_TOUCH_TARGET.MEDIUM,
-    paddingTop: LAYOUT.SPACING.MICRO,
+    paddingTop: LAYOUT.SPACING.TINY,
   },
   metaRow: {
     alignItems: 'center',
