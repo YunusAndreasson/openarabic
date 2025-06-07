@@ -13,7 +13,8 @@ export * from './useColors';
 export * from './useThemeDetection';
 
 // Data hooks
-export * from './useFSRS';
+export * from './vocabulary';
+export * from './articles';
 
 // Media hooks
 export * from './audio';
@@ -24,7 +25,6 @@ export * from './useNavigationWithDebounce';
 // New utility hooks
 export * from './useLoadingState';
 export * from './useScreenFocusRefresh';
-export * from './useWordSizing';
 
 // UI interaction hooks
 export * from './useButtonAction';

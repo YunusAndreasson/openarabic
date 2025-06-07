@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { useArticlesByDifficultWords } from '../../hooks/useArticlesByDifficultWords';
+import { useArticlesByDifficultWords } from '../../hooks/articles/useArticlesByDifficultWords';
 import type { Article } from '../../types/articles.types';
 import ArticleSection from '../article/ArticleSection';
 

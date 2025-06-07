@@ -11,7 +11,7 @@ import { getStrugglingWordsCount } from '@/utils/wordClassification';
 import { LAYOUT } from '../../constants/layout';
 import { useAuth } from '../../hooks/useAuth';
 import { useColors } from '../../hooks/useColors';
-import { useVocabularyChartData } from '../../hooks/useVocabularyChartData';
+import { useVocabularyChartData } from '../../hooks/vocabulary/useVocabularyChartData';
 
 import { InfoModal, type InfoModalType } from './InfoModal';
 import { MemoryCapacityGauge } from './charts/MemoryCapacityGauge';

@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '../services/studyWordsFSRS';
-import type { StudyWord } from '../types/vocabulary.types';
+import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
+import type { StudyWord } from '@/types/vocabulary.types';
 
 interface UseFSRSQueriesOptions {
   userId: string | undefined;

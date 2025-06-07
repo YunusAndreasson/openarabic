@@ -20,7 +20,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
 import { useLoadingState, useScreenFocusRefresh } from '@/hooks';
 import { useAppPreloader } from '@/hooks/useAppPreloader';
-import { useArticlesByDueWords } from '@/hooks/useArticlesByDueWords';
+import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { AUDIO_STATES } from '@/hooks/audio/useAudioPlayer';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';

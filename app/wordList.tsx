@@ -13,8 +13,8 @@ import WordListItem from '../components/vocabulary/WordListItem';
 import { LAYOUT } from '../constants/layout';
 import { useAuth } from '../hooks/useAuth';
 import { useColors } from '../hooks/useColors';
-import type { EnhancedStudyWord, WordListSort } from '../hooks/useWordList';
-import { useWordList } from '../hooks/useWordList';
+import type { EnhancedStudyWord, WordListSort } from '../hooks/vocabulary/useWordList';
+import { useWordList } from '../hooks/vocabulary/useWordList';
 import { lightFeedback } from '../utils/haptics';
 
 const ITEM_HEIGHT = LAYOUT.SPACING.XLARGE * 2.85;
