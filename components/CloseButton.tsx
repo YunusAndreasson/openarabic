@@ -1,11 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useRef, useEffect } from 'react';
-import type { ViewStyle } from 'react-native';
 import { TouchableOpacity, StyleSheet } from 'react-native';
-import Animated from 'react-native-reanimated';
 
 import { usePressAnimation } from '@/hooks/animations';
-import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { CloseButtonProps } from '@/types/ui/button.types';
 
 import { LAYOUT } from '../constants/layout';
@@ -65,7 +62,7 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
   }, [iconSize]);
 
   // Use the standardized press animation hook for consistent animation
-  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
+  const { handlePressIn, handlePressOut } = usePressAnimation({
     type: 'button',
     scaleAmount: 0.9,
   });
@@ -92,28 +89,26 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
   };
 
   return (
-    <Animated.View style={animatedStyle as AnimatedStyleProp<ViewStyle>}>
-      <TouchableOpacity
-        accessibilityHint={accessibilityHint}
-        accessibilityLabel={accessibilityLabel}
-        accessibilityRole="button"
-        activeOpacity={0.7}
-        hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-        style={[
-          {
-            width: buttonSize,
-            height: buttonSize,
-          },
-          styles.buttonContainer,
-          style,
-        ]}
-        onPress={handlePress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-      >
-        <Ionicons color={color || colors.interactiveSecondary} name="close" size={finalIconSize} />
-      </TouchableOpacity>
-    </Animated.View>
+    <TouchableOpacity
+      accessibilityHint={accessibilityHint}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      activeOpacity={0.7}
+      hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+      style={[
+        {
+          width: buttonSize,
+          height: buttonSize,
+        },
+        styles.buttonContainer,
+        style,
+      ]}
+      onPress={handlePress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+    >
+      <Ionicons color={color || colors.interactiveSecondary} name="close" size={finalIconSize} />
+    </TouchableOpacity>
   );
 };
 

@@ -1,6 +1,5 @@
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import type { JSX} from 'react';
+import type { JSX } from 'react';
 import React, { memo } from 'react';
 import { StyleSheet, View, KeyboardAvoidingView, Platform, Image, ScrollView } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,11 +7,9 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import Auth from '@/components/auth';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
-import { useIsDarkMode } from '@/hooks/useThemeDetection';
 
 const AuthScreen = memo(function AuthScreen(): JSX.Element {
   const colors = useColors();
-  const isDark = useIsDarkMode();
   const insets = useSafeAreaInsets();
 
   return (
@@ -20,7 +17,6 @@ const AuthScreen = memo(function AuthScreen(): JSX.Element {
       edges={['top']}
       style={[styles.container, { backgroundColor: colors.background }]}
     >
-      <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack.Screen
         options={{
           headerShown: false,

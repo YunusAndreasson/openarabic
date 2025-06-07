@@ -17,8 +17,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 
-import { AuthProvider, ToastProvider } from '@/components/providers';
 import { ThemedText } from '@/components/ThemedText';
+import { AuthProvider, ToastProvider } from '@/components/providers';
 import { Theme } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
@@ -28,6 +28,7 @@ import figtreeFont from '../assets/fonts/Figtree.ttf';
 import madinaFont from '../assets/fonts/Madina.otf';
 import { useAppPreloader } from '../hooks/useAppPreloader';
 import { useAuth } from '../hooks/useAuth';
+import { useSystemUITheme } from '../hooks/useSystemUITheme';
 import { analytics } from '../services/analytics';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { store, persistor } from '../store/store';
@@ -99,6 +100,9 @@ function AppContent() {
   const navigationRef = useNavigationContainerRef();
   const [hasAttemptedRedirect, setHasAttemptedRedirect] = useState(false);
   const router = useRouter();
+
+  // Centralized system UI theme management
+  useSystemUITheme();
 
   const [fontsLoaded] = useFonts({
     Madina: madinaFont,
