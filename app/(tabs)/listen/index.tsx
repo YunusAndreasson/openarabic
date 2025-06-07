@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { FlashList } from '@shopify/flash-list';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -20,18 +19,15 @@ import SleepTimer from '@/components/listen/SleepTimer';
 import { LAYOUT } from '@/constants/layout';
 import { useLoadingState, useScreenFocusRefresh } from '@/hooks';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
-import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { AUDIO_STATES } from '@/hooks/audio/useAudioPlayer';
 import { useEnhancedAudioPlayer } from '@/hooks/audio/useEnhancedAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
-import { articlesService } from '@/services/articles';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { readingListService } from '@/services/readingList';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
-import type { SentenceWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback, lightFeedback } from '@/utils/haptics';
 
@@ -58,23 +54,6 @@ const styles = StyleSheet.create({
   },
 });
 
-// Static styles to avoid recreation on every render
-const itemStyles = StyleSheet.create({
-  dueWordsContainer: {
-    alignItems: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: 0.5,
-    elevation: 1,
-    flexDirection: 'row',
-    marginRight: 8,
-    paddingHorizontal: LAYOUT.SPACING.TINY,
-    paddingVertical: LAYOUT.SPACING.TINY,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
-  },
-});
-
 // Helper functions moved outside component to avoid recreation on every render
 const getDaysAgo = (addedAt: string): string => {
   const addedDate = new Date(addedAt);
@@ -88,69 +67,25 @@ const getDaysAgo = (addedAt: string): string => {
 };
 
 // Define a constant for item height calculation
-// Card content + margins + borders + audio progress bar when active
-const ITEM_HEIGHT = 120; // Increased from 80 to account for AudioProgressBar
+const ITEM_HEIGHT = 120;
 
 // Memory-optimized component for reading list items
 const ListenListItem = memo(
   ({
     item,
     isActive,
-    dueWordCount = 0,
     onPress,
   }: {
     item: ReadingListItem;
     isActive: boolean;
-    dueWordCount?: number;
     onPress: (id: number) => void;
   }) => {
     const colors = useColors();
-
-    // Memoize dynamic styles that depend on colors
-    const dynamicStyles = useMemo(
-      () => ({
-        dueWordsContainer: {
-          ...itemStyles.dueWordsContainer,
-          backgroundColor: colors.buttonOverlay,
-          borderColor: dueWordCount > 0 ? colors.warning + '30' : colors.borderOverlay,
-          shadowColor: dueWordCount > 0 ? colors.warning : colors.border,
-          minWidth: 42, // Fixed minimum width to accommodate double digits
-        },
-      }),
-      [colors, dueWordCount]
-    );
-
-    // Always show due words indicator, but change color based on count
-    const leftMetaContent = (
-      <View style={dynamicStyles.dueWordsContainer}>
-        <Ionicons
-          color={dueWordCount > 0 ? colors.warning : colors.textTertiary}
-          name="sync-outline"
-          size={11}
-        />
-        <ThemedText
-          skipDefaultColor
-          type="label"
-          style={{
-            color: dueWordCount > 0 ? colors.warning : colors.textTertiary,
-            fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL - 1,
-            marginLeft: LAYOUT.SPACING.TINY,
-            fontWeight: '700',
-            letterSpacing: 0.2,
-            minWidth: 14, // Fixed width to accommodate double digits
-            textAlign: 'center',
-          }}
-        >
-          {dueWordCount}
-        </ThemedText>
-      </View>
-    );
 
     return (
       <ArticleCard
         active={isActive}
         author={item.articles?.author?.name || 'Author'}
-        leftMeta={leftMetaContent}
         title={item.articles?.title || 'Untitled'}
         meta={
           <ThemedText
@@ -162,7 +97,7 @@ const ListenListItem = memo(
               fontWeight: '500',
             }}
           >
-            · {getDaysAgo(item.added_at)}
+            {getDaysAgo(item.added_at)}
           </ThemedText>
         }
         onPress={() => onPress(item.article_id)}
@@ -170,36 +105,20 @@ const ListenListItem = memo(
     );
   },
   (prevProps, nextProps) => {
-    // Only re-render if active state or due word count changes
-    return (
-      prevProps.isActive === nextProps.isActive && prevProps.dueWordCount === nextProps.dueWordCount
-    );
+    // Only re-render if active state changes
+    return prevProps.isActive === nextProps.isActive;
   }
 );
 
 ListenListItem.displayName = 'ListenListItem';
 
-export type ListenSortOption = 'alphabetical' | 'dueWords' | 'recent';
+export type ListenSortOption = 'recent' | 'alphabetical';
 
-// Create dynamic sort options with loading state
-const createListenSortOptions = (
-  isDueWordsLoading: boolean,
-  isDueWordsDataAvailable: boolean
-): SortOption<ListenSortOption>[] => {
-  const baseOptions: SortOption<ListenSortOption>[] = [
-    { key: 'recent', label: 'Latest' },
-    { key: 'alphabetical', label: 'Title' },
-  ];
-
-  // Add due words option at the beginning when data is available or loading
-  if (isDueWordsDataAvailable) {
-    baseOptions.unshift({ key: 'dueWords', label: 'Words Due' });
-  } else if (isDueWordsLoading) {
-    baseOptions.unshift({ key: 'dueWords', label: 'Words Due' });
-  }
-
-  return baseOptions;
-};
+// Simplified sort options for playlist UX
+const createListenSortOptions = (): SortOption<ListenSortOption>[] => [
+  { key: 'recent', label: 'Recently Saved' },
+  { key: 'alphabetical', label: 'Title A-Z' },
+];
 
 export default function ListenScreen(): JSX.Element {
   const colors = useColors();
@@ -232,28 +151,13 @@ export default function ListenScreen(): JSX.Element {
     return () => clearTimeout(timer);
   }, []);
 
-  // Get due words data for sorting
-  const { dueWordRootIds, isLoading: isDueWordsLoading } = useArticlesByDueWords(user?.id, 0);
-
-  // Check if due words data is available for sorting
-  const isDueWordsDataAvailable = useMemo(() => {
-    return !isDueWordsLoading && dueWordRootIds?.size > 0;
-  }, [isDueWordsLoading, dueWordRootIds?.size]);
-
-  // Determine the best default sort based on available data
-  const getDefaultSort = useCallback((): ListenSortOption => {
-    // Prioritize words due if data is available, otherwise fall back to latest
-    return isDueWordsDataAvailable ? 'dueWords' : 'recent';
-  }, [isDueWordsDataAvailable]);
-
-  // Sorting state - default to words due when available, otherwise latest
-  const [currentSort, setCurrentSort] = useState<ListenSortOption>(() => getDefaultSort());
+  // Simplified sorting state - default to recent (playlist standard)
+  const [currentSort, setCurrentSort] = useState<ListenSortOption>('recent');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // --- Get State & Stable Actions from useEnhancedAudioPlayer ---
   const enhancedAudioPlayer = useEnhancedAudioPlayer();
-  const { progress, duration, metadata, audioState, currentTrackIndex, actions } =
-    enhancedAudioPlayer;
+  const { progress, duration, metadata, audioState, actions } = enhancedAudioPlayer;
 
   // Clear starting playback state once audio actually starts
   useEffect(() => {
@@ -289,65 +193,6 @@ export default function ListenScreen(): JSX.Element {
     isFetching: isReadingListFetching,
   } = readingListQuery;
 
-  // Memoize article IDs to reduce query refetches
-  const articleIds = useMemo(() => readingList.map(item => item.article_id), [readingList]);
-
-  // Query to fetch complete article data for articles in the reading list
-  const articlesWithSentencesQuery = useQuery({
-    queryKey: ['articles-with-sentences', user?.id, articleIds],
-    queryFn: async () => {
-      if (!user?.id || !articleIds.length) return new Map<number, Article>();
-
-      // Fetch complete article data with sentences and words
-      const articlesWithSentences = await Promise.all(
-        articleIds.map(id => articlesService.getArticleById(id))
-      );
-
-      // Create a map of article ID to detailed article data
-      const articleMap = new Map<number, Article>();
-      articlesWithSentences.forEach(article => {
-        if (article) {
-          articleMap.set(article.id, article);
-        }
-      });
-
-      return articleMap;
-    },
-    enabled: !!user?.id && !!articleIds.length,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: articleDetailsMap = new Map<number, Article>() } = articlesWithSentencesQuery;
-
-  // Use the current sort directly - let user control it completely
-  const stableSort = currentSort;
-
-  // Track if we should use due words sorting (requires both due words data and article details)
-  const shouldUseDueWordsSort = useMemo(() => {
-    return stableSort === 'dueWords' && isDueWordsDataAvailable && articleDetailsMap.size > 0;
-  }, [stableSort, isDueWordsDataAvailable, articleDetailsMap.size]);
-
-  // Helper function to count due words in an article - define before using it
-  const countDueWords = useCallback(
-    (articleId: number, dueWordRootIds: Set<number> | undefined): number => {
-      // Get detailed article data from the map
-      const article = articleDetailsMap.get(articleId);
-      if (!article?.article_sentences?.length || !dueWordRootIds?.size) return 0;
-
-      let count = 0;
-      article.article_sentences.forEach((sentence: { sentence_words?: SentenceWord[] }) => {
-        sentence.sentence_words?.forEach((word: SentenceWord) => {
-          if (word.root_id && dueWordRootIds.has(word.root_id)) {
-            count++;
-          }
-        });
-      });
-
-      return count;
-    },
-    [articleDetailsMap]
-  );
-
   // Deduplicate reading list first
   const dedupedReadingList = useMemo(() => {
     if (!readingList?.length) return [];
@@ -360,51 +205,27 @@ export default function ListenScreen(): JSX.Element {
     });
   }, [readingList]);
 
-  // Sort reading list with stable dependencies
+  // Simplified sorting - just recent vs alphabetical
   const sortedReadingList = useMemo(() => {
     if (!dedupedReadingList.length) return [];
 
     // For "recent" sort, use the natural database order (already sorted by added_at desc)
-    // This is the most common case and should be super fast with no dependencies
-    if (stableSort === 'recent') {
+    if (currentSort === 'recent') {
       return sortDirection === 'desc' ? dedupedReadingList : [...dedupedReadingList].reverse();
     }
 
-    // For other sorts, apply client-side sorting only when needed
-    const sortedList = [...dedupedReadingList];
-
-    switch (stableSort) {
-      case 'dueWords':
-        // Only sort by due words if we have the necessary data
-        if (shouldUseDueWordsSort && dueWordRootIds) {
-          return sortedList.sort((a, b) => {
-            const aDueWords = countDueWords(a.article_id, dueWordRootIds);
-            const bDueWords = countDueWords(b.article_id, dueWordRootIds);
-            const result = bDueWords - aDueWords;
-            return sortDirection === 'desc' ? result : -result;
-          });
-        }
-        // Fallback to recent sort if due words data isn't ready
-        return sortDirection === 'desc' ? dedupedReadingList : [...dedupedReadingList].reverse();
-
-      case 'alphabetical':
-        return sortedList.sort((a, b) => {
-          const result = (a.articles?.title || '').localeCompare(b.articles?.title || '');
-          return sortDirection === 'desc' ? -result : result;
-        });
-
-      default:
-        // Fallback to recent sort
-        return sortDirection === 'desc' ? dedupedReadingList : [...dedupedReadingList].reverse();
+    // For alphabetical sort
+    if (currentSort === 'alphabetical') {
+      const sortedList = [...dedupedReadingList];
+      return sortedList.sort((a, b) => {
+        const result = (a.articles?.title || '').localeCompare(b.articles?.title || '');
+        return sortDirection === 'desc' ? -result : result;
+      });
     }
-  }, [
-    dedupedReadingList,
-    stableSort,
-    sortDirection,
-    shouldUseDueWordsSort,
-    countDueWords,
-    dueWordRootIds,
-  ]);
+
+    // Fallback to recent sort
+    return sortDirection === 'desc' ? dedupedReadingList : [...dedupedReadingList].reverse();
+  }, [dedupedReadingList, currentSort, sortDirection]);
 
   // Check if data is already in cache
   const isDataCached = useMemo(() => {
@@ -451,28 +272,14 @@ export default function ListenScreen(): JSX.Element {
     [metadata.articleId, metadata.articleTitle]
   );
 
+  // Simplified extraData for FlashList - removed complex due words calculations
   const flashListExtraData = useMemo(
     () => ({
       // Include data that affects item rendering and re-render triggers
-      currentTrackIndex,
       metadataValues,
-      dueWordRootIdsSize: dueWordRootIds?.size || 0,
-      articleDetailsMapSize: articleDetailsMap.size,
-      isDueWordsLoading,
       audioState, // Include audioState to trigger re-renders when playback starts/stops
-      progress, // Include progress to trigger re-renders when audio progresses
-      duration, // Include duration to trigger re-renders when duration changes
     }),
-    [
-      currentTrackIndex,
-      metadataValues,
-      dueWordRootIds?.size,
-      articleDetailsMap.size,
-      isDueWordsLoading,
-      audioState,
-      progress,
-      duration,
-    ]
+    [metadataValues, audioState]
   );
   // --- End Derived State & Memos ---
 
@@ -617,30 +424,8 @@ export default function ListenScreen(): JSX.Element {
     [prefetchArticle]
   );
 
-  // Memoized sort options to prevent unnecessary re-renders
-  const sortOptions = useMemo(
-    () => createListenSortOptions(isDueWordsLoading, isDueWordsDataAvailable),
-    [isDueWordsLoading, isDueWordsDataAvailable]
-  );
-
-  // Pre-calculate due words counts for all articles to avoid expensive calculations in renderItem
-  const dueWordsCountMap = useMemo(() => {
-    const countMap = new Map<number, number>();
-
-    if (!dueWordRootIds?.size || isDueWordsLoading) {
-      return countMap;
-    }
-
-    // Only calculate for articles we have detailed data for
-    for (const item of dedupedReadingList) {
-      if (articleDetailsMap.has(item.article_id)) {
-        const count = countDueWords(item.article_id, dueWordRootIds);
-        countMap.set(item.article_id, count);
-      }
-    }
-
-    return countMap;
-  }, [dedupedReadingList, dueWordRootIds, isDueWordsLoading, articleDetailsMap, countDueWords]);
+  // Memoized sort options - simplified to just two options
+  const sortOptions = useMemo(() => createListenSortOptions(), []);
 
   // Get current article for now playing card
   const currentArticle = useMemo(() => {
@@ -674,7 +459,7 @@ export default function ListenScreen(): JSX.Element {
     return (
       <ThemedView style={styles.loadingContainer}>
         <ActivityIndicator color={colors.tint} size="large" />
-        <ThemedText style={{ marginTop: LAYOUT.SPACING.MEDIUM }}>Loading saved texts</ThemedText>
+        <ThemedText style={{ marginTop: LAYOUT.SPACING.MEDIUM }}>Loading your playlist</ThemedText>
       </ThemedView>
     );
   }
@@ -710,11 +495,11 @@ export default function ListenScreen(): JSX.Element {
             shouldShowEmpty ? (
               <EmptyState
                 colors={colors}
-                description="Save articles to listen later"
+                description="Your listening playlist is empty"
                 icon="headset-outline"
                 iconSize={72}
-                submessage="Bookmark any article, then return here to play with hands-free controls"
-                title="No Saved Texts"
+                submessage="Bookmark articles from the Read tab to build your playlist"
+                title="No Articles Saved"
                 containerStyle={{
                   paddingTop: LAYOUT.SPACING.XLARGE,
                   paddingBottom: LAYOUT.SPACING.LARGE,
@@ -749,19 +534,10 @@ export default function ListenScreen(): JSX.Element {
             />
           }
           renderItem={({ item }) => {
-            // Get pre-calculated due word count - much faster than calculating in render
-            const dueWordCount = dueWordsCountMap.get(item.article_id) || 0;
             const isActive =
               audioState !== AUDIO_STATES.IDLE && metadata.articleId === item.article_id;
 
-            return (
-              <ListenListItem
-                dueWordCount={dueWordCount}
-                isActive={isActive}
-                item={item}
-                onPress={handleArticlePress}
-              />
-            );
+            return <ListenListItem isActive={isActive} item={item} onPress={handleArticlePress} />;
           }}
         />
       </ThemedView>
