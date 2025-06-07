@@ -39,24 +39,6 @@ const createStyles = (
       backgroundColor: colors.transparent,
       paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     },
-    // Swipe indicator for modal dismiss gesture
-    swipeIndicatorContainer: {
-      position: 'absolute',
-      top: LAYOUT.SPACING.SMALL, // Very close to safe area top (8px below)
-      left: 0,
-      right: 0,
-      zIndex: 1000, // High z-index to ensure it's above everything
-      alignItems: 'center',
-      paddingVertical: LAYOUT.SPACING.TINY,
-      pointerEvents: 'none', // Don't interfere with touch events
-    },
-    swipeIndicator: {
-      width: 36,
-      height: 4,
-      backgroundColor: colors.text,
-      opacity: 0.25, // More subtle
-      borderRadius: LAYOUT.BORDER_RADIUS.PILL,
-    },
   });
 
 export default function ArticleScreen(): JSX.Element {
@@ -238,11 +220,6 @@ export default function ArticleScreen(): JSX.Element {
       <StatusBar animated={true} style={isDarkMode ? 'light' : 'dark'} translucent={true} />
 
       <View style={styles.container}>
-        {/* Swipe indicator for modal dismiss */}
-        <View style={styles.swipeIndicatorContainer}>
-          <View style={styles.swipeIndicator} />
-        </View>
-
         {article && sortedSentences && sortedSentences.length > 0 ? (
           <ArticleContent
             ref={articleContentRef}

@@ -6,7 +6,6 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import ErrorState from '@/components/ErrorState';
 import FilteredArticleView from '@/components/home/FilteredArticleView';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
-import { useNavigationWithDebounce } from '@/hooks/navigation/useNavigationWithDebounce';
 import { articlesService } from '@/services/articles';
 import { authorsService } from '@/services/authors';
 import { categoriesService } from '@/services/categories';
@@ -92,8 +91,6 @@ export default function FilterScreen(): JSX.Element {
     refetchOnMount: true,
   });
 
-  const { navigateTo } = useNavigationWithDebounce();
-
   const handleRefresh = useCallback(() => {
     setIsRefreshing(true);
     refetch().finally(() => setIsRefreshing(false));
@@ -102,9 +99,9 @@ export default function FilterScreen(): JSX.Element {
   const handleArticlePress = useCallback(
     (article: Article) => {
       prefetchArticle(article.id);
-      navigateTo({ pathname: '/(tabs)/read/article/[id]', params: { id: article.id } });
+      router.push(`/(tabs)/read/article/${article.id}`);
     },
-    [navigateTo, prefetchArticle]
+    [prefetchArticle]
   );
 
   // Set the header title dynamically based on the filter type and data

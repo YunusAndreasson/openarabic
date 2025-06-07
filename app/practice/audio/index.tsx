@@ -335,7 +335,6 @@ export default function ListenScreen(): JSX.Element {
 
   return (
     <ThemedView style={styles.container} useSafeArea={true}>
-      <View style={styles.closeIndicator} />
       <View style={styles.contentContainer}>
         <ListenHeader
           animationKey={progressAnimationKey}
@@ -378,14 +377,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-  closeIndicator: {
-    alignSelf: 'center',
-    backgroundColor: 'rgba(128, 128, 128, 0.3)',
-    borderRadius: 2,
-    height: 4,
-    marginTop: LAYOUT.SPACING.SMALL,
-    width: 40,
-  },
+
   contentContainer: {
     alignItems: 'center',
     flex: 1,

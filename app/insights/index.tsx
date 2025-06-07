@@ -51,7 +51,6 @@ export default function InsightsScreen(): JSX.Element {
     return (
       <ThemedView style={styles.container} useSafeArea={false}>
         <StatusBar animated={true} style={isDarkMode ? 'light' : 'dark'} translucent={true} />
-        <View style={styles.closeIndicator} />
         <View style={styles.errorContainer}>
           <SectionTitle title="Insights unavailable" />
         </View>
@@ -62,8 +61,6 @@ export default function InsightsScreen(): JSX.Element {
   return (
     <ThemedView accessibilityLabel="Insights screen" style={styles.container} useSafeArea={false}>
       <StatusBar animated={true} style={isDarkMode ? 'light' : 'dark'} translucent={true} />
-
-      <View style={styles.closeIndicator} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -151,13 +148,5 @@ const styles = StyleSheet.create({
   },
   lastChart: {
     marginBottom: LAYOUT.SPACING.LARGE, // Optimized bottom margin for perfect visual balance
-  },
-  closeIndicator: {
-    alignSelf: 'center',
-    backgroundColor: 'rgba(128, 128, 128, 0.3)',
-    borderRadius: 2,
-    height: 4,
-    marginTop: LAYOUT.SPACING.SMALL,
-    width: 40,
   },
 });
