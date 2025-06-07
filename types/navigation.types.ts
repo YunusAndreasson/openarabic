@@ -24,9 +24,10 @@ export interface WordListParams {
  */
 export type RouteParams = {
   '/article/[id]': { id: number | string };
-  '/review': ReviewParams;
-  '/practice': ListenParams;
-  '/wordList': WordListParams;
+  '/vocabulary/review': ReviewParams;
+  '/vocabulary/practice': ListenParams;
+  '/vocabulary/wordList': WordListParams;
+  '/vocabulary/wordExamples': Record<string, never>;
   '/': Record<string, never>;
   '/(tabs)': Record<string, never>;
   '/(tabs)/listen': Record<string, never>;
@@ -66,9 +67,10 @@ export function isRoutePath(path: string): path is RoutePath {
 // Route parameter definitions for type checking
 const routeParams: Record<RoutePath, true> = {
   '/article/[id]': true,
-  '/review': true,
-  '/practice': true,
-  '/wordList': true,
+  '/vocabulary/review': true,
+  '/vocabulary/practice': true,
+  '/vocabulary/wordList': true,
+  '/vocabulary/wordExamples': true,
   '/': true,
   '/(tabs)': true,
   '/(tabs)/listen': true,
