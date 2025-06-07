@@ -13,8 +13,8 @@ import {
   CompletionScreen,
   MeaningOverlay,
   InstructionFooter,
-} from '../components/review';
-import { useReview } from '../hooks/review';
+} from '@/components/review';
+import { useReview } from '@/hooks/review';
 
 const baseStyles = StyleSheet.create({
   container: {

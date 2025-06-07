@@ -4,18 +4,18 @@ import type { JSX } from 'react';
 import React, { useCallback, useMemo, memo, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import BaseCard from '../components/BaseCard';
-import SortingControls from '../components/SortingControls';
-import type { SortOption, SortDirection } from '../components/SortingControls';
-import { ThemedText } from '../components/ThemedText';
-import { ThemedView } from '../components/ThemedView';
-import WordListItem from '../components/vocabulary/WordListItem';
-import { LAYOUT } from '../constants/layout';
-import { useAuth } from '../hooks/auth/useAuth';
-import { useColors } from '../hooks/useColors';
-import type { EnhancedStudyWord, WordListSort } from '../hooks/vocabulary/useWordList';
-import { useWordList } from '../hooks/vocabulary/useWordList';
-import { lightFeedback } from '../utils/haptics';
+import BaseCard from '@/components/BaseCard';
+import SortingControls from '@/components/SortingControls';
+import type { SortOption, SortDirection } from '@/components/SortingControls';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import WordListItem from '@/components/vocabulary/WordListItem';
+import { LAYOUT } from '@/constants/layout';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { useColors } from '@/hooks/useColors';
+import type { EnhancedStudyWord, WordListSort } from '@/hooks/vocabulary/useWordList';
+import { useWordList } from '@/hooks/vocabulary/useWordList';
+import { lightFeedback } from '@/utils/haptics';
 
 const ITEM_HEIGHT = LAYOUT.SPACING.XLARGE * 2.85;
 
@@ -39,7 +39,7 @@ const WordListItemMemo = memo(({ item, currentSort }: WordListItemMemoProps) => 
 
     // Pass word meaning and letters directly to avoid unnecessary loading
     router.push({
-      pathname: '/wordExamples',
+      pathname: '/vocabulary/wordExamples',
       params: {
         rootId: item.root_id.toString(),
         rootMeaning: item.root?.meaning || '',
