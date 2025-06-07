@@ -9,7 +9,7 @@ import { categoriesService } from '../services/categories';
 import { readingListService } from '../services/readingList';
 import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '../services/studyWordsFSRS';
 
-import { useAuth } from './useAuth';
+import { useAuth } from './auth/useAuth';
 
 // Cache time constants in milliseconds - optimized for different data types
 const CACHE_TIMES = {
