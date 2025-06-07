@@ -9,8 +9,8 @@ import {
   TYPOGRAPHY_HIERARCHY,
   getEnhancedOpacity,
 } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
-import { useIsDarkMode } from '@/hooks/useThemeDetection';
+import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { ThemedTextProps } from '@/types/ui/text.types';
 
 /**

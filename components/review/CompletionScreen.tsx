@@ -21,7 +21,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
 import { TIMING_CONFIG, SPRING_CONFIG } from '@/hooks/animations/animationConfigs';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useColors } from '@/hooks/useColors';
+import { useColors } from '@/hooks/theme/useColors';
 import { successFeedback } from '@/utils/haptics';
 
 const EMPTY_OBJECT = {};

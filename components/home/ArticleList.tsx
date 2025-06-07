@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ArticleListProps } from '@/types/ui/article.types';
 
 import { LAYOUT } from '../../constants/layout';
-import { useColors } from '../../hooks/useColors';
+import { useColors } from '../../hooks/theme/useColors';
 import type { Article } from '../../types/articles.types';
 import ThemedCard from '../ThemedCard';
 

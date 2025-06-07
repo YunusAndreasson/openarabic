@@ -4,7 +4,7 @@ import { View, StyleSheet } from 'react-native';
 import { CloseButton } from '@/components/CloseButton';
 import { ProgressBar } from '@/components/ProgressBar';
 import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
+import { useColors } from '@/hooks/theme/useColors';
 
 interface ListenHeaderProps {
   progress: number;

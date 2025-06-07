@@ -12,7 +12,7 @@ import { ThemedView } from '@/components/ThemedView';
 import WordListItem from '@/components/vocabulary/WordListItem';
 import { LAYOUT } from '@/constants/layout';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useColors } from '@/hooks/useColors';
+import { useColors } from '@/hooks/theme/useColors';
 import type { EnhancedStudyWord, WordListSort } from '@/hooks/vocabulary/useWordList';
 import { useWordList } from '@/hooks/vocabulary/useWordList';
 import { lightFeedback } from '@/utils/haptics';

@@ -21,14 +21,14 @@ import { ThemedText } from '@/components/ThemedText';
 import { AuthProvider, ToastProvider } from '@/components/providers';
 import { Theme } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
+import { useColors } from '@/hooks/theme/useColors';
 import type { RootState } from '@/store/store';
 
 import figtreeFont from '../assets/fonts/Figtree.ttf';
 import madinaFont from '../assets/fonts/Madina.otf';
 import { useAuth } from '../hooks/auth/useAuth';
-import { useAppPreloader } from '../hooks/useAppPreloader';
-import { useSystemUITheme } from '../hooks/useSystemUITheme';
+import { useAppPreloader } from '../hooks/app/useAppPreloader';
+import { useSystemUITheme } from '../hooks/theme/useSystemUITheme';
 import { analytics } from '../services/analytics';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { store, persistor } from '../store/store';

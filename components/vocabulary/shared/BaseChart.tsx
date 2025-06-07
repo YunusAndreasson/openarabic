@@ -1,7 +1,7 @@
 import React, { memo, type ReactNode } from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
 
-import { useColors } from '@/hooks/useColors';
+import { useColors } from '@/hooks/theme/useColors';
 
 import BaseCard from '../../BaseCard';
 import { ThemedText } from '../../ThemedText';

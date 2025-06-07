@@ -6,7 +6,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import Auth from '@/components/auth';
 import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
+import { useColors } from '@/hooks/theme/useColors';
 
 const AuthScreen = memo(function AuthScreen(): JSX.Element {
   const colors = useColors();

@@ -10,8 +10,8 @@ import { View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LAYOUT, TYPOGRAPHY_HIERARCHY, getEnhancedOpacity } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
-import { useIsDarkMode } from '@/hooks/useThemeDetection';
+import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { isMasteredWord, isLearningWord, isDueWord } from '@/utils/wordClassification';
 

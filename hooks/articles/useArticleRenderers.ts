@@ -5,7 +5,7 @@ import type { Article } from '@/types/articles.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 
-import { useNavigationWithDebounce } from '../useNavigationWithDebounce';
+import { useNavigationWithDebounce } from '../navigation/useNavigationWithDebounce';
 
 type SentenceWordsMap = Map<number, SentenceWord[]>;
 

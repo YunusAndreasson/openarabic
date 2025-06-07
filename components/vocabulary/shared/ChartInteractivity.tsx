@@ -4,7 +4,7 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { Colors } from '@/constants/Colors';
 import { MIN_TOUCH_TARGET } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
+import { useColors } from '@/hooks/theme/useColors';
 
 interface ChartTooltip {
   x: number;

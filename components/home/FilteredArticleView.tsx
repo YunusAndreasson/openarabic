@@ -5,7 +5,7 @@ import React, { useMemo, useCallback } from 'react';
 import { StyleSheet, RefreshControl, View } from 'react-native';
 
 import { LAYOUT } from '../../constants/layout';
-import { useColors } from '../../hooks/useColors';
+import { useColors } from '../../hooks/theme/useColors';
 import type { Article } from '../../types/articles.types';
 import { ThemedView } from '../ThemedView';
 

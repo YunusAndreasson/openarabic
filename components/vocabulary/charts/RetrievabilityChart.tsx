@@ -11,7 +11,7 @@ import {
 import React, { memo, useMemo } from 'react';
 import { View } from 'react-native';
 
-import { useColors } from '@/hooks/useColors';
+import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 import {

@@ -16,7 +16,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
+import { useColors } from '@/hooks/theme/useColors';
 import { lightFeedback, selectionFeedback } from '@/utils/haptics';
 
 import { ThemedButton } from '../ThemedButton';

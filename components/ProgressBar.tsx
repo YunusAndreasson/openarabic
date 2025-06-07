@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { cancelAnimation, useAnimatedProps } from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
+import { useColors } from '@/hooks/theme/useColors';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { ProgressBarProps } from '@/types/ui/loader.types';
 
