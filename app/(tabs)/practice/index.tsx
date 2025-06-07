@@ -4,16 +4,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import React, { useState, useCallback } from 'react';
-import { StyleSheet, RefreshControl, ScrollView, ActivityIndicator } from 'react-native';
+import { StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import BottomControls from '@/components/BottomControls';
 import { ThemedView } from '@/components/ThemedView';
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
-import SessionOptionsModal from '@/components/vocabulary/SessionOptionsModal';
+import SessionTypeModal from '@/components/vocabulary/SessionTypeModal';
 import { VocabularyStatCards } from '@/components/vocabulary/VocabularyStatCards';
 import { LAYOUT } from '@/constants/layout';
-import { useNavigationWithDebounce } from '@/hooks';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
@@ -21,23 +19,21 @@ import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useVocabularyChartData } from '@/hooks/vocabulary/useVocabularyChartData';
 import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import type { StatCategory } from '@/types/vocabulary.types';
-import { mediumFeedback } from '@/utils/haptics';
 
 export default function VocabularyScreen(): JSX.Element {
   const { user } = useAuth();
   const colors = useColors();
   const queryClient = useQueryClient();
+  const router = useRouter();
   const { prefetchVocabularyData } = useAppPreloader();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
-  const router = useRouter();
 
-  // Add state for refresh control and session options modal
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [showSessionOptions, setShowSessionOptions] = useState(false);
+  // Add state for refresh control and modal
 
-  // Use the navigation with debounce hook
-  const { navigateTo } = useNavigationWithDebounce();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<StatCategory>('due');
+  const [selectedWordCount, setSelectedWordCount] = useState(0);
 
   // Combine focus effects for better performance
   useFocusEffect(
@@ -68,49 +64,35 @@ export default function VocabularyScreen(): JSX.Element {
   // Use the optimized vocabulary chart data hook that uses database views
   const { userStats, isLoadingUserStats } = useVocabularyChartData(user?.id);
 
-  // Handler for pull-to-refresh
-  const handleRefresh = async () => {
-    if (!user || isFetching) return;
+  // Handle starting review for specific category - now shows modal
+  const handleStartCategoryReview = useCallback(
+    (category: StatCategory, count: number) => {
+      if (!user) return;
+      setSelectedCategory(category);
+      setSelectedWordCount(count);
+      setModalVisible(true);
+    },
+    [user]
+  );
 
-    mediumFeedback();
-    setIsRefreshing(true);
-    try {
-      await queryClient.invalidateQueries({
-        predicate: query => {
-          const key = query.queryKey[0];
-          return (
-            key === FSRS_QUERY_KEYS.due(user.id)[0] ||
-            key === FSRS_QUERY_KEYS.all(user.id)[0] ||
-            (typeof key === 'string' && key.includes('vocabulary-stats'))
-          );
-        },
-      });
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
+  // Handle modal actions
+  const handleModalClose = useCallback(() => {
+    setModalVisible(false);
+  }, []);
 
-  // Handle starting a review
-  const handleStartReview = () => {
-    if (!user) return;
-    navigateTo({
-      pathname: '/practice/review',
-      params: { fromRemember: 'true' },
-    });
-  };
+  const handleStartAudio = useCallback(() => {
+    setModalVisible(false);
+    router.push('/practice/audio?fromRemember=true');
+  }, [router]);
 
-  // Handle starting a listen session
-  const handleStartListen = () => {
-    if (!user) return;
-    router.push('/practice/practice?fromRemember=true');
-  };
+  const handleStartVisual = useCallback(() => {
+    setModalVisible(false);
+    router.push('/practice/review?fromRemember=true');
+  }, [router]);
 
   // Handle stat press events
   const handleStatPress = (category: StatCategory) => {
-    navigateTo({
-      pathname: '/practice/wordList',
-      params: { category },
-    });
+    router.push(`/(tabs)/practice/wordList?category=${category}`);
   };
 
   // Show error message if there was an error loading data
@@ -128,20 +110,6 @@ export default function VocabularyScreen(): JSX.Element {
 
   // Get stats - simplified for due words focus
   const dueWords = userStats?.dueWords ?? dueWordsData?.length ?? 0;
-  const hasWordsToStudy = dueWords > 0;
-
-  // Smart button labeling based on due words only
-  const getButtonLabel = () => {
-    if (!hasWordsToStudy) return 'All caught up';
-    if (dueWords === 1) return 'Practice 1 word';
-    if (dueWords <= 20) return `Practice ${dueWords} words`;
-    return 'Start practice';
-  };
-
-  const getAccessibilityLabel = () => {
-    if (!hasWordsToStudy) return 'No words to practice';
-    return `Practice ${dueWords} words`;
-  };
 
   // Main content
   return (
@@ -160,16 +128,6 @@ export default function VocabularyScreen(): JSX.Element {
             paddingBottom: insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY,
           },
         ]}
-        refreshControl={
-          <RefreshControl
-            colors={[colors.tint]}
-            progressBackgroundColor={colors.background}
-            progressViewOffset={headerHeight + LAYOUT.SPACING.XXLARGE}
-            refreshing={isRefreshing}
-            tintColor={colors.tint}
-            onRefresh={handleRefresh}
-          />
-        }
       >
         {/* Subtle loading indicator */}
         {showLoadingIndicator && (
@@ -185,23 +143,18 @@ export default function VocabularyScreen(): JSX.Element {
           masteredWords={userStats?.masteredWords ?? 0}
           studyWords={studyWords?.filter(word => word != null && word.root_id != null) ?? []}
           onStatPress={handleStatPress}
+          onStartReview={handleStartCategoryReview}
         />
       </ScrollView>
-      <BottomControls
-        primaryAccessibilityLabel={getAccessibilityLabel()}
-        primaryDisabled={!hasWordsToStudy}
-        primaryLabel={getButtonLabel()}
-        primaryVariant={hasWordsToStudy ? 'filled' : 'outlined'}
-        onPrimaryPress={() => setShowSessionOptions(true)}
-      />
 
-      {/* Session Options Modal */}
-      <SessionOptionsModal
-        dueWordsCount={dueWords}
-        visible={showSessionOptions}
-        onClose={() => setShowSessionOptions(false)}
-        onStartListen={handleStartListen}
-        onStartReview={handleStartReview}
+      {/* Session Type Modal */}
+      <SessionTypeModal
+        visible={modalVisible}
+        category={selectedCategory}
+        wordCount={selectedWordCount}
+        onClose={handleModalClose}
+        onStartAudio={handleStartAudio}
+        onStartVisual={handleStartVisual}
       />
     </ThemedView>
   );

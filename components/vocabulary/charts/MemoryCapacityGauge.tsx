@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Canvas, Path, Circle, Group, Skia, LinearGradient, vec } from '@shopify/react-native-skia';
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
@@ -24,12 +25,12 @@ interface MemoryCapacityGaugeProps {
 }
 
 // Enhanced gauge configuration for better visual appeal
-const GAUGE_WIDTH = 300;
-const GAUGE_HEIGHT = 170;
-const GAUGE_RADIUS = 130;
-const GAUGE_STROKE_WIDTH = 18;
-const INDICATOR_SIZE = 10;
-const INDICATOR_GLOW_SIZE = 20;
+const GAUGE_WIDTH = 320;
+const GAUGE_HEIGHT = 180;
+const GAUGE_RADIUS = 140;
+const GAUGE_STROKE_WIDTH = 20;
+const INDICATOR_SIZE = 12;
+const INDICATOR_GLOW_SIZE = 24;
 
 // Memory capacity thresholds with refined ranges
 const CAPACITY_THRESHOLDS = {
@@ -195,26 +196,18 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
     return chartColors.performance.poor;
   };
 
-  // Clear, user-friendly status text
-  const getStatusText = (score: number) => {
-    if (score >= CAPACITY_THRESHOLDS.OPTIMAL) return 'Light';
-    if (score >= CAPACITY_THRESHOLDS.MODERATE) return 'Balanced';
-    if (score >= CAPACITY_THRESHOLDS.CRITICAL) return 'Busy';
-    return 'Overloaded';
-  };
-
-  // Concise, actionable recommendations
-  const getRecommendationMessage = (score: number) => {
+  // Clear, actionable readiness messaging
+  const getReadinessMessage = (score: number) => {
     if (score >= CAPACITY_THRESHOLDS.OPTIMAL) {
-      return 'Perfect for adding new words';
+      return 'Add new words';
     }
     if (score >= CAPACITY_THRESHOLDS.MODERATE) {
-      return 'Keep up your current pace';
+      return 'Add words moderately';
     }
     if (score >= CAPACITY_THRESHOLDS.CRITICAL) {
-      return 'Review more, add fewer words';
+      return 'Review before adding';
     }
-    return 'Focus on reviews over new words';
+    return 'Focus on reviews only';
   };
 
   // Enhanced navigation with haptic feedback
@@ -226,7 +219,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
       pressScale.value = withSpring(1, SPRING_CONFIG);
     });
 
-    navigateTo('/(tabs)/practice/insights' as any);
+    navigateTo('/insights' as any);
   };
 
   // Animated style for press feedback
@@ -248,32 +241,26 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
 
   return (
     <BaseChart
-      contentHeight={GAUGE_HEIGHT + 60}
-      emptyStateText="Add words to track your learning load"
+      contentHeight={GAUGE_HEIGHT + 140}
+      emptyStateText="Add words to see your learning capacity"
       hasData={studyWords.length > 0}
       hideTitle={true}
       subtitle=""
       title=""
       onInfoPress={() => {}}
     >
-      {/* Context Pill */}
-      <View style={styles.pillContainer}>
-        <View style={[styles.pill, { backgroundColor: colors.buttonOverlay }]}>
-          <ThemedText style={[styles.pillText, { color: colors.tint }]} type="caption">
-            MEMORY LOAD
-          </ThemedText>
-        </View>
-      </View>
-
       <Animated.View style={animatedPressStyle}>
-        <TouchableOpacity
-          accessibilityHint="View detailed learning insights"
-          accessibilityLabel={`Memory load ${memoryMetrics.capacityScore}%, ${getStatusText(memoryMetrics.capacityScore).toLowerCase()}. Tap for insights`}
-          accessibilityRole="button"
-          activeOpacity={1}
-          style={styles.gaugeContainer}
-          onPress={handleInsightsPress}
-        >
+        <View style={styles.gaugeContainer}>
+          {/* Info button in top right corner */}
+          <TouchableOpacity
+            accessibilityHint="View detailed learning insights"
+            accessibilityLabel="View insights"
+            accessibilityRole="button"
+            style={styles.infoButton}
+            onPress={handleInsightsPress}
+          >
+            <Ionicons name="analytics-outline" size={20} color={colors.tint} />
+          </TouchableOpacity>
           <Canvas style={styles.canvas}>
             <Group>
               {/* Background track - full gauge path with low opacity */}
@@ -368,7 +355,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
             </Group>
           </Canvas>
 
-          {/* Enhanced center section with better typography */}
+          {/* Center section with percentage */}
           <View style={styles.centerSection}>
             <View style={styles.scoreContainer}>
               <ThemedText
@@ -379,43 +366,58 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
               >
                 {memoryMetrics.capacityScore}%
               </ThemedText>
-              <View style={styles.statusContainer}>
-                <ThemedText
-                  type="caption"
-                  style={[
-                    styles.statusText,
-                    { color: getCapacityColor(memoryMetrics.capacityScore) },
-                  ]}
-                >
-                  {getStatusText(memoryMetrics.capacityScore)}
-                </ThemedText>
-                {memoryMetrics.trend === 'improving' && (
+              {memoryMetrics.trend === 'improving' && (
+                <View style={styles.statusContainer}>
                   <View
                     style={[
                       styles.trendIndicator,
                       { backgroundColor: chartColors.performance.excellent },
                     ]}
                   />
-                )}
-              </View>
+                </View>
+              )}
             </View>
           </View>
+        </View>
 
-          {/* Clear action hint */}
-          <View style={styles.tapHintContainer}>
-            <ThemedText style={styles.tapHint} type="caption" variant="secondary">
-              View insights
+        {/* Bottom section with prominent readiness status */}
+        <View style={styles.bottomSection}>
+          <View
+            style={[
+              styles.statusBadge,
+              {
+                backgroundColor: chartColors.withOpacity(
+                  memoryMetrics.capacityScore >= CAPACITY_THRESHOLDS.MODERATE
+                    ? chartColors.performance.excellent
+                    : chartColors.performance.moderate,
+                  0.08
+                ),
+              },
+            ]}
+          >
+            <ThemedText
+              style={[
+                styles.statusLabel,
+                {
+                  color:
+                    memoryMetrics.capacityScore >= CAPACITY_THRESHOLDS.MODERATE
+                      ? chartColors.performance.excellent
+                      : chartColors.performance.moderate,
+                },
+              ]}
+              type="caption"
+            >
+              {memoryMetrics.capacityScore >= CAPACITY_THRESHOLDS.MODERATE
+                ? 'READY FOR NEW WORDS'
+                : 'NOT READY FOR NEW WORDS'}
             </ThemedText>
           </View>
-        </TouchableOpacity>
-      </Animated.View>
 
-      {/* Enhanced recommendation section with better spacing */}
-      <View style={styles.recommendationContainer}>
-        <ThemedText style={styles.recommendationText} type="caption" variant="secondary">
-          {getRecommendationMessage(memoryMetrics.capacityScore)}
-        </ThemedText>
-      </View>
+          <ThemedText style={styles.actionText}>
+            {getReadinessMessage(memoryMetrics.capacityScore)}
+          </ThemedText>
+        </View>
+      </Animated.View>
     </BaseChart>
   );
 });
@@ -428,15 +430,16 @@ const styles = StyleSheet.create({
     width: GAUGE_WIDTH,
   },
   capacityText: {
-    fontSize: 36,
+    fontSize: 42,
     fontWeight: '900',
     includeFontPadding: false,
-    letterSpacing: -1,
-    lineHeight: 40,
+    letterSpacing: -1.5,
+    lineHeight: 46,
+    textAlign: 'center',
   },
   centerSection: {
     alignItems: 'center',
-    bottom: 30,
+    bottom: 45,
     justifyContent: 'center',
     position: 'absolute',
   },
@@ -446,16 +449,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'relative',
   },
-  recommendationContainer: {
-    alignItems: 'center',
-    marginTop: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
+  infoButton: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    zIndex: 10,
+    padding: LAYOUT.SPACING.SMALL,
+    borderRadius: 20,
   },
-  recommendationText: {
-    fontSize: 13,
-    fontWeight: '500',
-    lineHeight: 18,
-    opacity: 0.8,
+  bottomSection: {
+    alignItems: 'center',
+    marginTop: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+  },
+  statusBadge: {
+    alignItems: 'center',
+    borderRadius: 16,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
+  },
+  statusLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    opacity: 1,
+    textAlign: 'center',
+  },
+  actionText: {
+    fontSize: 18,
+    fontWeight: '700',
     textAlign: 'center',
   },
   scoreContainer: {
@@ -468,24 +491,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 4,
   },
-  statusText: {
+  readinessText: {
     fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    fontWeight: '500',
+    marginBottom: LAYOUT.SPACING.TINY,
     textAlign: 'center',
-    textTransform: 'uppercase',
   },
   tapHint: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '500',
     includeFontPadding: false,
     letterSpacing: 0.2,
-    opacity: 0.4,
-  },
-  tapHintContainer: {
-    alignItems: 'center',
-    bottom: 16,
-    position: 'absolute',
+    opacity: 0.6,
+    textAlign: 'center',
   },
   trendIndicator: {
     borderRadius: 3,
@@ -493,20 +511,5 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     opacity: 0.8,
     width: 6,
-  },
-  pillContainer: {
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  pill: {
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-  },
-  pillText: {
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
   },
 });

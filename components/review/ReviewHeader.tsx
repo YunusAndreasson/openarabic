@@ -1,26 +1,17 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 
-import { CloseButton } from '@/components/CloseButton';
 import { ProgressBar } from '@/components/ProgressBar';
 import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/theme/useColors';
 
 interface ReviewHeaderProps {
   progress: number;
   maxProgress: number;
   animationKey: number;
-  onClose: () => void;
+  onClose?: () => void; // Made optional since we're not using it
 }
 
-const ReviewHeader: React.FC<ReviewHeaderProps> = ({
-  progress,
-  maxProgress,
-  animationKey,
-  onClose,
-}) => {
-  const colors = useColors();
-
+const ReviewHeader: React.FC<ReviewHeaderProps> = ({ progress, maxProgress, animationKey }) => {
   return (
     <View style={styles.header}>
       <View style={styles.progressContainer}>
@@ -31,14 +22,6 @@ const ReviewHeader: React.FC<ReviewHeaderProps> = ({
           progress={Math.max(progress, maxProgress)}
         />
       </View>
-      <CloseButton
-        accessibilityHint="Ends the review session and returns to previous screen"
-        accessibilityLabel="Stop review session"
-        color={colors.interactiveSecondary}
-        iconSize={24}
-        size="large"
-        onPress={onClose}
-      />
     </View>
   );
 };
@@ -55,7 +38,6 @@ const styles = StyleSheet.create({
   },
   progressContainer: {
     flex: 1,
-    marginRight: LAYOUT.SPACING.SMALL,
     marginVertical: LAYOUT.SPACING.MEDIUM,
   },
 });

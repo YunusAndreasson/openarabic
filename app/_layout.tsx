@@ -249,6 +249,20 @@ function AppContent() {
               animation: 'none',
             }}
           />
+          <Stack.Screen
+            name="practice"
+            options={{
+              headerShown: false,
+              presentation: 'modal',
+            }}
+          />
+          <Stack.Screen
+            name="insights"
+            options={{
+              headerShown: false,
+              presentation: 'modal',
+            }}
+          />
         </Stack>
         <StatusBar style={isDark ? 'light' : 'dark'} />
       </View>

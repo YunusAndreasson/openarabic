@@ -16,6 +16,7 @@ interface VocabularyStatCardsProps {
   learningWords?: number;
   dueWords?: number;
   onStatPress?: (category: StatCategory) => void;
+  onStartReview?: (category: StatCategory, count: number) => void;
   studyWords?: StudyWord[];
 }
 
@@ -34,6 +35,7 @@ export const VocabularyStatCards = memo(
     learningWords = 0,
     dueWords = 0,
     onStatPress,
+    onStartReview,
     studyWords = [],
   }: VocabularyStatCardsProps) => {
     const colors = useColors();
@@ -94,45 +96,49 @@ export const VocabularyStatCards = memo(
       };
     }, [validatedInput.studyWords]);
 
-    // Create simple category cards - no grouping, just important categories
-    const categories: WordCategoryConfig[] = useMemo(
-      () =>
-        [
-          {
-            value: wordCategories.dueWords,
-            label: 'Due for Review',
-            iconColor: colors.error,
-            bgColor: colors.card,
-            category: 'due' as StatCategory,
-            description: 'Words ready for practice',
-          },
-          {
-            value: wordCategories.strugglingWords,
-            label: 'Challenging',
-            iconColor: colors.warning,
-            bgColor: colors.card,
-            category: 'needsAttention' as StatCategory,
-            description: 'Words that need extra attention',
-          },
-          {
-            value: wordCategories.learningWords,
-            label: 'In Progress',
-            iconColor: colors.info,
-            bgColor: colors.card,
-            category: 'learning' as StatCategory,
-            description: 'Words you are actively learning',
-          },
-          {
-            value: wordCategories.masteredWords,
-            label: 'Strong',
-            iconColor: colors.success,
-            bgColor: colors.card,
-            category: 'mastered' as StatCategory,
-            description: 'Words you have mastered',
-          },
-        ].filter(config => config.value > 0), // Only show categories with words
-      [wordCategories, colors]
-    );
+    // Create focused practice session cards
+    const totalWords = validatedInput.studyWords.length;
+    const categories: WordCategoryConfig[] = useMemo(() => {
+      const cards = [];
+
+      // Always show due words if available
+      if (wordCategories.dueWords > 0) {
+        cards.push({
+          value: wordCategories.dueWords,
+          label: 'Practice Due Words',
+          iconColor: colors.error,
+          bgColor: colors.card,
+          category: 'due' as StatCategory,
+          description: 'Review scheduled words',
+        });
+      }
+
+      // Always show challenging words if available
+      if (wordCategories.strugglingWords > 0) {
+        cards.push({
+          value: wordCategories.strugglingWords,
+          label: 'Practice Challenging',
+          iconColor: colors.warning,
+          bgColor: colors.card,
+          category: 'needsAttention' as StatCategory,
+          description: 'Focus on difficult words',
+        });
+      }
+
+      // Always show all words option if user has words
+      if (totalWords > 0) {
+        cards.push({
+          value: totalWords,
+          label: 'Practice All Words',
+          iconColor: colors.tint,
+          bgColor: colors.card,
+          category: 'total' as StatCategory,
+          description: 'Long randomized session',
+        });
+      }
+
+      return cards;
+    }, [wordCategories, colors, totalWords]);
 
     return (
       <View style={styles.container}>
@@ -142,11 +148,11 @@ export const VocabularyStatCards = memo(
         {categories.map(config => (
           <TouchableOpacity
             key={config.category}
-            accessibilityLabel={`Browse ${config.label}: ${config.value} words`}
+            accessibilityLabel={`Practice ${config.value} ${config.category === 'due' ? 'due' : config.category === 'total' ? '' : config.category} words`}
             accessibilityRole="button"
             activeOpacity={0.7}
             style={[styles.categoryCard, { backgroundColor: config.bgColor }]}
-            onPress={() => onStatPress?.(config.category)}
+            onPress={() => onStartReview?.(config.category, config.value)}
           >
             {/* Number Badge */}
             <View style={[styles.numberBadge, { backgroundColor: config.iconColor }]}>

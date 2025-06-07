@@ -1,26 +1,17 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 
-import { CloseButton } from '@/components/CloseButton';
 import { ProgressBar } from '@/components/ProgressBar';
 import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/theme/useColors';
 
 interface ListenHeaderProps {
   progress: number;
   maxProgress: number;
   animationKey: number;
-  onClose: () => void;
+  onClose?: () => void; // Made optional since we're not using it
 }
 
-const ListenHeader: React.FC<ListenHeaderProps> = ({
-  progress,
-  maxProgress,
-  animationKey,
-  onClose,
-}) => {
-  const colors = useColors();
-
+const ListenHeader: React.FC<ListenHeaderProps> = ({ progress, maxProgress, animationKey }) => {
   return (
     <View style={styles.header}>
       <View style={styles.progressContainer}>
@@ -31,16 +22,6 @@ const ListenHeader: React.FC<ListenHeaderProps> = ({
           progress={Math.max(progress, maxProgress)}
         />
       </View>
-
-      <CloseButton
-        accessibilityHint="Ends the audio session and returns to previous screen"
-        accessibilityLabel="Stop listening session"
-        color={colors.interactiveSecondary}
-        hapticFeedback={false}
-        iconSize={24}
-        size="large"
-        onPress={onClose}
-      />
     </View>
   );
 };
@@ -58,7 +39,6 @@ const styles = StyleSheet.create({
   },
   progressContainer: {
     flex: 1,
-    marginRight: LAYOUT.SPACING.SMALL,
     marginVertical: LAYOUT.SPACING.MEDIUM,
   },
 });

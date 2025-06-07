@@ -21,6 +21,14 @@ const baseStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   } as ViewStyle,
+  closeIndicator: {
+    alignSelf: 'center',
+    backgroundColor: 'rgba(128, 128, 128, 0.3)',
+    borderRadius: 2,
+    height: 4,
+    marginTop: LAYOUT.SPACING.SMALL,
+    width: 40,
+  } as ViewStyle,
   contentContainer: {
     flex: 1,
     width: '100%',
@@ -73,6 +81,7 @@ export default function ReviewScreen(): JSX.Element {
 
   return (
     <ThemedView style={baseStyles.container} useSafeArea={true}>
+      <View style={baseStyles.closeIndicator} />
       <View style={baseStyles.contentContainer}>
         <ReviewHeader
           animationKey={progressAnimationKey}
