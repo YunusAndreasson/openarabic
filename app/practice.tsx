@@ -14,7 +14,7 @@ import RepeatButton from '@/components/listen/RepeatButton';
 import { WordDisplay } from '@/components/review';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { useEnhancedAudioPlayer } from '@/hooks/audio/useEnhancedAudioPlayer';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';

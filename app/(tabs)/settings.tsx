@@ -16,7 +16,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { TimePicker } from '@/components/TimePicker';
 import { Toggle } from '@/components/Toggle';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { useReminders } from '@/hooks/useReminders';
 import { analytics } from '@/services/analytics';

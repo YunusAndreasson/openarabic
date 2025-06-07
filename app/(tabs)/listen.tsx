@@ -22,7 +22,7 @@ import { useLoadingState, useScreenFocusRefresh } from '@/hooks';
 import { useAppPreloader } from '@/hooks/useAppPreloader';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { AUDIO_STATES } from '@/hooks/audio/useAudioPlayer';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { useEnhancedAudioPlayer } from '@/hooks/audio/useEnhancedAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';

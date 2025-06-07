@@ -14,7 +14,7 @@ import { VocabularyStatCards } from '@/components/vocabulary/VocabularyStatCards
 import { LAYOUT } from '@/constants/layout';
 import { useNavigationWithDebounce } from '@/hooks';
 import { useAppPreloader } from '@/hooks/useAppPreloader';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useVocabularyChartData } from '@/hooks/vocabulary/useVocabularyChartData';

@@ -22,7 +22,7 @@ import { useScreenFocusRefresh } from '@/hooks';
 import { useAppPreloader } from '@/hooks/useAppPreloader';
 import { useArticlesByDifficultWords } from '@/hooks/articles/useArticlesByDifficultWords';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { useStrugglingWords } from '@/hooks/vocabulary/useStrugglingWords';
 import { articlesService } from '@/services/articles';

@@ -1,6 +1,6 @@
 import React, { createContext } from 'react';
 
-import { useProvideAuth, type AuthResult } from '@/hooks/useProvideAuth';
+import { useProvideAuth, type AuthResult } from '@/hooks/auth/useProvideAuth';
 
 export const AuthContext = createContext<AuthResult | null>(null);
 
