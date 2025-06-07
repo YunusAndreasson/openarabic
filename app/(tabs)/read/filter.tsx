@@ -99,7 +99,9 @@ export default function FilterScreen(): JSX.Element {
   const handleArticlePress = useCallback(
     (article: Article) => {
       prefetchArticle(article.id);
-      router.push(`/(tabs)/read/article/${article.id}`);
+      router.push(
+        `/(tabs)/read/article/${article.id}?headerTitle=${encodeURIComponent(article.title)}`
+      );
     },
     [prefetchArticle]
   );

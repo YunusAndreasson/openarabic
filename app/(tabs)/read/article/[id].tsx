@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-unused-styles */
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import type { ComponentRef, JSX } from 'react';
@@ -13,7 +13,6 @@ import { ArabicWord } from '@/components/article/ArabicWord';
 import { ArticleContent, type ArticleContentRef } from '@/components/article/ArticleContent';
 import { LAYOUT } from '@/constants/layout';
 import { useArticleData } from '@/hooks/articles/useArticleData';
-import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/articles/useArticleRenderers';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -62,9 +61,6 @@ export default function ArticleScreen(): JSX.Element {
   const {
     article,
     isLoadingArticle,
-    isInReadingList,
-    refetchReadingListStatus,
-    isLoadingReadingList,
     selectedWordIds,
     sortedSentences,
     sentenceWordsMap,
@@ -101,19 +97,14 @@ export default function ArticleScreen(): JSX.Element {
     }
   }, [article, isLoadingArticle]);
 
-  useEffect(() => {
-    if (article && !isLoadingReadingList) {
-      analytics.trackToggleReadingList(article.id, isInReadingList);
-    }
-  }, [article, isInReadingList, isLoadingReadingList]);
-
   const articleContentRef = useRef<ArticleContentRef>(null);
 
-  const { handleRootPress, handleToggleReadingList } = useArticleMutations(
-    user?.id,
-    refetchReadingListStatus,
-    refetchStudyWords
-  );
+  // Simple root press handler for word interactions
+  const handleRootPress = useCallback((rootId: number) => {
+    router.push(
+      `/(tabs)/practice/review?rootId=${rootId}&mode=random&count=1&fromVocabulary=article`
+    );
+  }, []);
 
   const handleWordPress = useCallback(
     (word: SentenceWord) => {
@@ -211,10 +202,6 @@ export default function ArticleScreen(): JSX.Element {
     ]
   );
 
-  useEffect(() => {
-    refetchReadingListStatus?.();
-  }, [id, refetchReadingListStatus]);
-
   return (
     <ThemedView style={styles.container} useSafeArea={false}>
       <StatusBar animated={true} style={isDarkMode ? 'light' : 'dark'} translucent={true} />
@@ -231,9 +218,6 @@ export default function ArticleScreen(): JSX.Element {
             isDarkMode={isDarkMode}
             renderSentenceItem={renderSentenceItem}
             sortedSentences={sortedSentences}
-            isInReadingList={isInReadingList}
-            isLoadingReadingList={isLoadingReadingList}
-            onToggleReadingList={() => handleToggleReadingList(article.id, isInReadingList)}
           />
         ) : null}
       </View>

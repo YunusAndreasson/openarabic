@@ -418,10 +418,15 @@ export default function ListenScreen(): JSX.Element {
 
   const handleArticlePress = useCallback(
     (articleId: number) => {
-      prefetchArticle(articleId);
-      router.push(`/(tabs)/read/article/${articleId}`);
+      const article = sortedReadingList.find(item => item.article_id === articleId)?.articles;
+      if (article) {
+        prefetchArticle(articleId);
+        router.push(
+          `/(tabs)/read/article/${articleId}?headerTitle=${encodeURIComponent(article.title)}`
+        );
+      }
     },
-    [prefetchArticle]
+    [prefetchArticle, sortedReadingList]
   );
 
   // Memoized sort options - simplified to just two options
@@ -574,7 +579,9 @@ export default function ListenScreen(): JSX.Element {
         timerAccessibilityLabel="Sleep timer"
         onPress={() => {
           if (currentArticle) {
-            router.push(`/(tabs)/read/article/${currentArticle.id}`);
+            router.push(
+              `/(tabs)/read/article/${currentArticle.id}?headerTitle=${encodeURIComponent(currentArticle.title)}`
+            );
           }
         }}
         onStop={() => {

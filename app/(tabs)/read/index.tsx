@@ -336,7 +336,9 @@ export default function ArticlesScreen(): JSX.Element {
     (article: Article) => {
       dispatch(updateLastOpenedArticle(article.id));
       prefetchArticle(article.id);
-      router.push(`/(tabs)/read/article/${article.id}`);
+      router.push(
+        `/(tabs)/read/article/${article.id}?headerTitle=${encodeURIComponent(article.title)}`
+      );
     },
     [dispatch, prefetchArticle]
   );

@@ -280,15 +280,11 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             skipTransition={true}
             style={styles.image}
             placeholder={
-              (isArticleVariant(props) ? props.placeholder : undefined) || {
-                thumbhash: DEFAULT_IMAGES.ARTICLE_PLACEHOLDER_THUMBHASH,
-              }
-            }
-            source={
               isArticleVariant(props)
-                ? props.imageUrl || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER
-                : DEFAULT_IMAGES.ARTICLE_PLACEHOLDER
+                ? props.placeholder!
+                : { thumbhash: DEFAULT_IMAGES.ARTICLE_PLACEHOLDER_THUMBHASH }
             }
+            source={isArticleVariant(props) ? props.imageUrl : DEFAULT_IMAGES.ARTICLE_PLACEHOLDER}
           />
 
           <LinearGradient
@@ -399,13 +395,9 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             prefetch={true}
             priority="high"
             skipTransition={true}
-            source={article?.image_url || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER}
+            source={article!.image_url!}
             style={styles.image}
-            placeholder={
-              article?.placeholder || {
-                thumbhash: DEFAULT_IMAGES.ARTICLE_PLACEHOLDER_THUMBHASH,
-              }
-            }
+            placeholder={article!.placeholder}
           />
 
           <LinearGradient

@@ -14,7 +14,6 @@ import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ThemedButton } from '@/components/ThemedButton';
 import ParallaxHeader from '@/components/article/ParallaxHeader';
 import { LAYOUT } from '@/constants/layout';
 import type { Article } from '@/types/articles.types';
@@ -55,9 +54,6 @@ interface ArticleContentProps {
   colors: ThemeColors;
   englishToggleKey?: string;
   isDarkMode?: boolean;
-  isInReadingList?: boolean;
-  isLoadingReadingList?: boolean;
-  onToggleReadingList?: () => void;
 }
 
 const SENTENCE_ITEM_HEIGHT = 70;
@@ -73,9 +69,6 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
       colors,
       englishToggleKey,
       isDarkMode,
-      isInReadingList,
-      isLoadingReadingList,
-      onToggleReadingList,
     }: ArticleContentProps,
     ref
   ): JSX.Element => {
@@ -183,30 +176,9 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
       () => (
         <>
           <ParallaxHeader article={article} colors={colors} isDarkMode={!!isDarkMode} />
-          {/* Action button in clean content area below image */}
-          {onToggleReadingList && (
-            <View
-              style={{
-                paddingHorizontal: LAYOUT.SPACING.LARGE,
-                paddingVertical: LAYOUT.SPACING.MEDIUM,
-                backgroundColor: colors.background,
-              }}
-            >
-              <ThemedButton
-                variant="filled"
-                size="medium"
-                title={isInReadingList ? 'Remove from Playlist' : 'Save for Listening'}
-                loading={isLoadingReadingList}
-                onPress={onToggleReadingList}
-                style={{
-                  backgroundColor: colors.tint,
-                }}
-              />
-            </View>
-          )}
         </>
       ),
-      [article, colors, isDarkMode, isInReadingList, isLoadingReadingList, onToggleReadingList]
+      [article, colors, isDarkMode]
     );
 
     // No footer component needed anymore

@@ -27,10 +27,28 @@ export interface WordListParams {
 }
 
 /**
+ * Type for filter parameters
+ */
+export interface FilterParams {
+  type: 'author' | 'category';
+  id: string;
+  headerTitle?: string;
+}
+
+/**
+ * Type for article parameters
+ */
+export interface ArticleParams {
+  id: string;
+  headerTitle?: string;
+}
+
+/**
  * Type for route parameters
  */
 export type RouteParams = {
-  '/(tabs)/read/article/[id]': { id: number | string };
+  '/(tabs)/read/article/[id]': ArticleParams;
+  '/(tabs)/read/filter': FilterParams;
   '/practice/review': ReviewParams;
   '/practice/practice': ListenParams;
   '/practice/wordList': WordListParams;
@@ -74,6 +92,7 @@ export function isRoutePath(path: string): path is RoutePath {
 // Route parameter definitions for type checking
 const routeParams: Record<RoutePath, true> = {
   '/(tabs)/read/article/[id]': true,
+  '/(tabs)/read/filter': true,
   '/practice/review': true,
   '/practice/practice': true,
   '/practice/wordList': true,

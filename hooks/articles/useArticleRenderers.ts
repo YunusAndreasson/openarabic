@@ -5,8 +5,6 @@ import type { Article } from '@/types/articles.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 
-import { useNavigationWithDebounce } from '../navigation/useNavigationWithDebounce';
-
 type SentenceWordsMap = Map<number, SentenceWord[]>;
 
 interface ArticleSettings {
@@ -45,9 +43,6 @@ export const useArticleRenderers = (
   const router = useRouter();
   const { fontScale } = settings;
 
-  // Use the navigation with debounce hook
-  const { navigateTo } = useNavigationWithDebounce();
-
   // Prepare word for rendering
   const prepareWord = useCallback(
     (word: SentenceWord) => {
@@ -78,23 +73,22 @@ export const useArticleRenderers = (
    */
   const handleArticlePress = useCallback(
     (articleOrId: Article | number, isRelatedArticle = false) => {
-      // Extract article ID whether an Article object or just an ID was passed
+      // Extract article ID and title whether an Article object or just an ID was passed
       const articleId = typeof articleOrId === 'number' ? articleOrId : articleOrId.id;
-      const params = { id: articleId.toString() };
+      const articleTitle = typeof articleOrId === 'number' ? undefined : articleOrId.title;
+
+      // Build URL with title if available
+      const url = articleTitle
+        ? `/(tabs)/read/article/${articleId}?headerTitle=${encodeURIComponent(articleTitle)}`
+        : `/(tabs)/read/article/${articleId}`;
 
       try {
         // Use replace for related articles to avoid building up the navigation stack
         if (isRelatedArticle) {
-          router.replace({
-            pathname: '/(tabs)/read/article/[id]',
-            params,
-          });
+          router.replace(url);
         } else {
-          // For normal navigation, use the debounce hook
-          navigateTo({
-            pathname: '/(tabs)/read/article/[id]',
-            params,
-          });
+          // For normal navigation, use push
+          router.push(url);
         }
       } catch (error: unknown) {
         // Ensure error is properly typed before handling
@@ -104,7 +98,7 @@ export const useArticleRenderers = (
         router.push(`/(tabs)/read/article/${articleId}`);
       }
     },
-    [navigateTo, router]
+    [router]
   );
 
   // Get words for a sentence - memoize the map lookup function
