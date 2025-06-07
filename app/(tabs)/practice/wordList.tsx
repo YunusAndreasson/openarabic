@@ -197,7 +197,23 @@ export default function WordListScreen(): JSX.Element {
   if (error) {
     return (
       <ThemedView style={styles.container}>
-        <Stack.Screen options={{ title }} />
+        <Stack.Screen
+          options={{
+            title,
+            headerShown: true,
+            headerBackTitle: 'Practice',
+            headerStyle: {
+              backgroundColor: colors.background,
+            },
+            headerTitleStyle: {
+              fontSize: LAYOUT.HEADER.TITLE.SECONDARY.fontSize,
+              fontWeight: LAYOUT.HEADER.TITLE.SECONDARY.fontWeight as any,
+              color: colors.text,
+            },
+            headerShadowVisible: false,
+            headerTintColor: colors.tint,
+          }}
+        />
         <View style={styles.errorContainer}>
           <ThemedText style={styles.errorText}>
             Your word list isn&apos;t available right now. Check your connection and refresh.
@@ -209,7 +225,6 @@ export default function WordListScreen(): JSX.Element {
 
   return (
     <>
-      {/* Disable the native header */}
       <Stack.Screen
         options={{
           headerShown: true,
@@ -225,7 +240,7 @@ export default function WordListScreen(): JSX.Element {
           headerTransparent: false,
           headerTitleAlign: 'left',
           headerTintColor: colors.tint,
-          headerBackTitle: 'Remember',
+          headerBackTitle: 'Practice',
           headerBackTitleStyle: {
             fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
           },

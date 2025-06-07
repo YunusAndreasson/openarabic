@@ -6,7 +6,13 @@ export default function VocabularyLayout() {
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="review" options={{ headerShown: false }} />
       <Stack.Screen name="practice" options={{ headerShown: false }} />
-      <Stack.Screen name="wordList" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="wordList"
+        options={{
+          headerShown: false,
+          presentation: 'modal',
+        }}
+      />
       <Stack.Screen name="wordExamples" options={{ headerShown: false }} />
       <Stack.Screen name="insights" options={{ headerShown: false }} />
     </Stack>

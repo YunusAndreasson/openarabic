@@ -195,26 +195,26 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
     return chartColors.performance.poor;
   };
 
-  // Enhanced status text with more nuanced messaging
+  // Clear, user-friendly status text
   const getStatusText = (score: number) => {
-    if (score >= CAPACITY_THRESHOLDS.OPTIMAL) return 'Strong';
-    if (score >= CAPACITY_THRESHOLDS.MODERATE) return 'Good';
-    if (score >= CAPACITY_THRESHOLDS.CRITICAL) return 'Moderate';
-    return 'Heavy';
+    if (score >= CAPACITY_THRESHOLDS.OPTIMAL) return 'Light';
+    if (score >= CAPACITY_THRESHOLDS.MODERATE) return 'Balanced';
+    if (score >= CAPACITY_THRESHOLDS.CRITICAL) return 'Busy';
+    return 'Overloaded';
   };
 
-  // Enhanced recommendation with actionable insights
+  // Concise, actionable recommendations
   const getRecommendationMessage = (score: number) => {
     if (score >= CAPACITY_THRESHOLDS.OPTIMAL) {
-      return 'Your memory capacity is optimal for learning new vocabulary.';
+      return 'Perfect for adding new words';
     }
     if (score >= CAPACITY_THRESHOLDS.MODERATE) {
-      return 'Continue your review schedule to maintain healthy retention.';
+      return 'Keep up your current pace';
     }
     if (score >= CAPACITY_THRESHOLDS.CRITICAL) {
-      return 'Focus on reviewing current words to strengthen retention.';
+      return 'Review more, add fewer words';
     }
-    return 'Reduce new words and increase review frequency.';
+    return 'Focus on reviews over new words';
   };
 
   // Enhanced navigation with haptic feedback
@@ -248,18 +248,27 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
 
   return (
     <BaseChart
-      contentHeight={GAUGE_HEIGHT + 40}
-      emptyStateText="Add words to track your memory capacity"
+      contentHeight={GAUGE_HEIGHT + 60}
+      emptyStateText="Add words to track your learning load"
       hasData={studyWords.length > 0}
       hideTitle={true}
       subtitle=""
       title=""
       onInfoPress={() => {}}
     >
+      {/* Context Pill */}
+      <View style={styles.pillContainer}>
+        <View style={[styles.pill, { backgroundColor: colors.buttonOverlay }]}>
+          <ThemedText style={[styles.pillText, { color: colors.tint }]} type="caption">
+            MEMORY LOAD
+          </ThemedText>
+        </View>
+      </View>
+
       <Animated.View style={animatedPressStyle}>
         <TouchableOpacity
-          accessibilityHint="Opens insights screen"
-          accessibilityLabel={`Memory capacity ${memoryMetrics.capacityScore}%. Tap for insights`}
+          accessibilityHint="View detailed learning insights"
+          accessibilityLabel={`Memory load ${memoryMetrics.capacityScore}%, ${getStatusText(memoryMetrics.capacityScore).toLowerCase()}. Tap for insights`}
           accessibilityRole="button"
           activeOpacity={1}
           style={styles.gaugeContainer}
@@ -392,10 +401,10 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
             </View>
           </View>
 
-          {/* Enhanced tap hint with better positioning */}
+          {/* Clear action hint */}
           <View style={styles.tapHintContainer}>
             <ThemedText style={styles.tapHint} type="caption" variant="secondary">
-              Tap for insights
+              View insights
             </ThemedText>
           </View>
         </TouchableOpacity>
@@ -484,5 +493,20 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     opacity: 0.8,
     width: 6,
+  },
+  pillContainer: {
+    alignItems: 'center',
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  pill: {
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  pillText: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
 });
