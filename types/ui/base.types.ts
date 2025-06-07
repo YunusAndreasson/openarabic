@@ -61,13 +61,6 @@ export interface BaseAnimationProps {
   duration?: number;
 }
 
-/**
- * Styles for pills
- */
-export interface BasePillStyles {
-  container: ViewStyle;
-  text: TextStyle;
-}
 
 /**
  * Type to help with animated style casting
