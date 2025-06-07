@@ -30,11 +30,6 @@ export interface BasePillProps {
   onSelect?: (id: number | string) => void;
 
   /**
-   * Animation delay in milliseconds
-   */
-  animationDelay?: number;
-
-  /**
    * Whether the pill should be positioned absolutely
    */
   absolute?: boolean;
@@ -81,63 +76,4 @@ export type PillProps =
       variant?: PillVariant;
     };
 
-/**
- * Interface for filter items
- */
-export interface FilterItem {
-  /**
-   * Unique identifier for the item
-   */
-  id: number;
-
-  /**
-   * Display name for the item
-   */
-  name: string;
-
-  /**
-   * Allow for additional properties
-   */
-  [key: string]: number | string;
-}
-
-/**
- * Props for the FilterList component
- */
-export interface FilterListProps<T extends FilterItem> {
-  /**
-   * Title for the filter section
-   */
-  title: string;
-
-  /**
-   * Array of items to display in the filter list
-   */
-  items: T[];
-
-  /**
-   * ID of the currently selected item
-   */
-  selectedId: number | null;
-
-  /**
-   * Callback when an item is selected
-   */
-  onSelect: (id: number) => void;
-
-  /**
-   * Callback when filters are cleared
-   */
-  onClearFilter?: () => void;
-
-  /**
-   * Animation delay in milliseconds
-   */
-  animationDelay?: number;
-
-  /**
-   * Base animation delay for individual items
-   */
-  itemAnimationDelay?: number;
-}
 

@@ -10,8 +10,6 @@ export interface ImageConfig {
   contentFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
   /** Transition duration in milliseconds */
   transition?: ImageTransition | number;
-  /** Whether to show loading indicator */
-  showLoadingIndicator?: boolean;
   /** Caching policy for the image */
   cachePolicy?: 'disk' | 'memory-disk' | 'memory' | 'none';
   /** Blur radius for smooth transitions */
@@ -30,10 +28,6 @@ export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressabl
 
   /** Content position within container */
   contentPosition?: ImageContentPosition;
-
-  /** Whether to show loading indicator */
-  showLoadingIndicator?: boolean;
-
   /** Alt text for accessibility */
   alt?: string;
 
@@ -43,8 +37,6 @@ export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressabl
   /** Callback when image fails to load */
   onError?: () => void;
 
-  /** For testing/debugging - disable optimizations */
-  disableOptimization?: boolean;
 
   /** Image transition duration in ms or transition object */
   transition?: ImageTransition | number;
