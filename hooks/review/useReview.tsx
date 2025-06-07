@@ -9,7 +9,7 @@ import type { SharedValue } from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { useFSRS } from '@/hooks/vocabulary/useFSRS';
 import { useWordSizing } from '@/hooks/vocabulary/useWordSizing';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';

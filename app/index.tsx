@@ -5,7 +5,7 @@ import { ActivityIndicator, StyleSheet } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { useColors } from '@/hooks/useColors';
 
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../hooks/auth/useAuth';
 
 export default function Index() {
   const colors = useColors();

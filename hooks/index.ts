@@ -6,7 +6,7 @@ export * from './animations/useToggleAnimation';
 export * from './animations/useProgressAnimation';
 
 // Auth hooks
-export * from './useAuth';
+export * from './auth';
 
 // Theme hooks
 export * from './useColors';
@@ -15,6 +15,7 @@ export * from './useThemeDetection';
 // Data hooks
 export * from './vocabulary';
 export * from './articles';
+export * from './review';
 
 // Media hooks
 export * from './audio';

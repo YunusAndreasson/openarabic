@@ -16,7 +16,7 @@ import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/articles/useArticleRenderers';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { useHeaderVisibility } from '@/hooks/useHeaderVisibility';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';

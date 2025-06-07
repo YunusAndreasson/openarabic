@@ -9,7 +9,7 @@ import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 import { getStrugglingWordsCount } from '@/utils/wordClassification';
 
 import { LAYOUT } from '../../constants/layout';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../hooks/auth/useAuth';
 import { useColors } from '../../hooks/useColors';
 import { useVocabularyChartData } from '../../hooks/vocabulary/useVocabularyChartData';
 

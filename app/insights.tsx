@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SectionTitle from '@/components/SectionTitle';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { lightFeedback } from '@/utils/haptics';
