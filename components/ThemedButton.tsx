@@ -7,7 +7,7 @@ import Animated from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
-import { useColors } from '@/hooks/useColors';
+import { useColors } from '@/hooks/theme/useColors';
 import type {
   ThemedButtonProps,
   ButtonVariant,

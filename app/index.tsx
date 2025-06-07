@@ -3,7 +3,7 @@ import React from 'react';
 import { ActivityIndicator, StyleSheet } from 'react-native';
 
 import { ThemedView } from '@/components/ThemedView';
-import { useColors } from '@/hooks/useColors';
+import { useColors } from '@/hooks/theme/useColors';
 
 import { useAuth } from '../hooks/auth/useAuth';
 

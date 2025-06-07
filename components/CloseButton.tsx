@@ -6,7 +6,7 @@ import { usePressAnimation } from '@/hooks/animations';
 import type { CloseButtonProps } from '@/types/ui/button.types';
 
 import { LAYOUT } from '../constants/layout';
-import { useColors } from '../hooks/useColors';
+import { useColors } from '../hooks/theme/useColors';
 import { lightFeedback } from '../utils/haptics';
 
 const styles = StyleSheet.create({

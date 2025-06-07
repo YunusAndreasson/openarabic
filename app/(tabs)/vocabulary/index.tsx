@@ -14,8 +14,8 @@ import { VocabularyStatCards } from '@/components/vocabulary/VocabularyStatCards
 import { LAYOUT } from '@/constants/layout';
 import { useNavigationWithDebounce } from '@/hooks';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useAppPreloader } from '@/hooks/useAppPreloader';
-import { useColors } from '@/hooks/useColors';
+import { useAppPreloader } from '@/hooks/app/useAppPreloader';
+import { useColors } from '@/hooks/theme/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useVocabularyChartData } from '@/hooks/vocabulary/useVocabularyChartData';
 import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';

@@ -1,4 +1,4 @@
-import { useColors } from '@/hooks/useColors';
+import { useColors } from '@/hooks/theme/useColors';
 import { withOpacity } from '@/utils/colorUtils';
 
 import { PERFORMANCE_THRESHOLDS, FSRS_DIFFICULTY_THRESHOLDS } from './constants';

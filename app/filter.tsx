@@ -5,15 +5,15 @@ import type { JSX } from 'react';
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 
 import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
-import { useIsDarkMode } from '@/hooks/useThemeDetection';
+import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { handleError } from '@/utils/errorHandling';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 import ErrorState from '../components/ErrorState';
 import FilteredArticleView from '../components/home/FilteredArticleView';
-import { useAppPreloader } from '../hooks/useAppPreloader';
-import { useNavigationWithDebounce } from '../hooks/useNavigationWithDebounce';
+import { useAppPreloader } from '../hooks/app/useAppPreloader';
+import { useNavigationWithDebounce } from '../hooks/navigation/useNavigationWithDebounce';
 import { articlesService } from '../services/articles';
 import { authorsService } from '../services/authors';
 import { categoriesService } from '../services/categories';

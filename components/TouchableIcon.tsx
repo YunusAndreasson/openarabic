@@ -4,7 +4,7 @@ import type { ViewStyle } from 'react-native';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
+import { useColors } from '@/hooks/theme/useColors';
 import { lightFeedback } from '@/utils/haptics';
 
 interface TouchableIconProps {

@@ -4,7 +4,7 @@ import { StyleSheet, View, TouchableOpacity } from 'react-native';
 
 import { Colors } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
+import { useColors } from '@/hooks/theme/useColors';
 import { selectionFeedback } from '@/utils/haptics';
 
 import { ThemedText } from '../../ThemedText';

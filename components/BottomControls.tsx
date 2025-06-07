@@ -5,7 +5,7 @@ import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
+import { useColors } from '@/hooks/theme/useColors';
 
 import { ThemedButton } from './ThemedButton';
 import { ThemedText } from './ThemedText';

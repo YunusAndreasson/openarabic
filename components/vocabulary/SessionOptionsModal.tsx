@@ -18,7 +18,7 @@ import Animated, {
 
 import { Colors } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
+import { useColors } from '@/hooks/theme/useColors';
 import { withOpacity } from '@/utils/colorUtils';
 import { mediumFeedback } from '@/utils/haptics';
 

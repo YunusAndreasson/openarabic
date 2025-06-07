@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { StyleSheet, View, useColorScheme } from 'react-native';
 
-import { useColors } from '@/hooks/useColors';
+import { useColors } from '@/hooks/theme/useColors';
 import { withOpacity } from '@/utils/colorUtils';
 
 import { ThemedText } from '../../ThemedText';

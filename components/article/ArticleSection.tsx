@@ -4,7 +4,7 @@ import { StyleSheet, View, ScrollView, ActivityIndicator } from 'react-native';
 import { ThemedCard } from '@/components';
 import SectionTitle from '@/components/SectionTitle';
 import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
+import { useColors } from '@/hooks/theme/useColors';
 
 import type { Article } from '../../types/articles.types';
 

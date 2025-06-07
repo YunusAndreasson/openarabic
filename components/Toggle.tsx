@@ -4,8 +4,8 @@ import Animated from 'react-native-reanimated';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useToggleAnimation } from '@/hooks/animations';
-import { useColors } from '@/hooks/useColors';
-import { useIsDarkMode } from '@/hooks/useThemeDetection';
+import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { ToggleProps } from '@/types/ui/form.types';
 
 import { selectionFeedback } from '../utils/haptics';

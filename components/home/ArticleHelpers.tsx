@@ -3,8 +3,8 @@ import React, { useMemo, memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '../../constants/layout';
-import { useColors } from '../../hooks/useColors';
-import { useIsDarkMode } from '../../hooks/useThemeDetection';
+import { useColors } from '../../hooks/theme/useColors';
+import { useIsDarkMode } from '../../hooks/theme/useThemeDetection';
 import { formatTimeAgo } from '../../utils/dateUtils';
 import { ThemedText } from '../ThemedText';
 

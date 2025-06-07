@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 
 import { LAYOUT, TYPOGRAPHY_HIERARCHY, getEnhancedOpacity } from '../constants/layout';
-import { useIsDarkMode } from '../hooks/useThemeDetection';
+import { useIsDarkMode } from '../hooks/theme/useThemeDetection';
 
 import { ThemedText } from './ThemedText';
 import TouchableIcon from './TouchableIcon';

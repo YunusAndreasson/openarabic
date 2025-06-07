@@ -10,7 +10,7 @@ import type {
 import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
+import { useColors } from '@/hooks/theme/useColors';
 
 import { errorFeedback } from '../utils/haptics';
 

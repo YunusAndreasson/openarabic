@@ -10,7 +10,7 @@ import { getStrugglingWordsCount } from '@/utils/wordClassification';
 
 import { LAYOUT } from '../../constants/layout';
 import { useAuth } from '../../hooks/auth/useAuth';
-import { useColors } from '../../hooks/useColors';
+import { useColors } from '../../hooks/theme/useColors';
 import { useVocabularyChartData } from '../../hooks/vocabulary/useVocabularyChartData';
 
 import { InfoModal, type InfoModalType } from './InfoModal';

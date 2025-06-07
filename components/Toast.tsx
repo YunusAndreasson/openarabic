@@ -11,8 +11,8 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LAYOUT } from '../constants/layout';
-import { useColors } from '../hooks/useColors';
-import { useIsDarkMode } from '../hooks/useThemeDetection';
+import { useColors } from '../hooks/theme/useColors';
+import { useIsDarkMode } from '../hooks/theme/useThemeDetection';
 
 import { ThemedText } from './ThemedText';
 

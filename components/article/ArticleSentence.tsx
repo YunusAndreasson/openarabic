@@ -11,7 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { LAYOUT, FONTS } from '../../constants/layout';
-import { useColors } from '../../hooks/useColors';
+import { useColors } from '../../hooks/theme/useColors';
 import type { ThemeColors } from '../../types/ui/theme.types';
 import type { SentenceWord } from '../../types/vocabulary.types';
 

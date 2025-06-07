@@ -8,7 +8,7 @@ import type { ErrorMessageProps } from '@/types/ui/review.types';
 import { ThemedButton } from '../../components/ThemedButton';
 import { ThemedText } from '../../components/ThemedText';
 import { LAYOUT } from '../../constants/layout';
-import { useColors } from '../../hooks/useColors';
+import { useColors } from '../../hooks/theme/useColors';
 
 /**
  * Displays an error message with a retry button

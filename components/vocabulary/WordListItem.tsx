@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '../../constants/layout';
-import { useColors } from '../../hooks/useColors';
+import { useColors } from '../../hooks/theme/useColors';
 import type { StudyWord } from '../../types/vocabulary.types';
 import { ThemedText } from '../ThemedText';
 

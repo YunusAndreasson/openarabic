@@ -4,7 +4,7 @@ import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
+import { useColors } from '@/hooks/theme/useColors';
 import type { CustomSliderProps } from '@/types/ui/form.types';
 
 export function CustomSlider({

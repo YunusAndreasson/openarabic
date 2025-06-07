@@ -5,7 +5,7 @@ import { ScrollView, View, StyleSheet } from 'react-native';
 import type { Edge } from 'react-native-safe-area-context';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useColors } from '@/hooks/useColors';
+import { useColors } from '@/hooks/theme/useColors';
 import type { ThemedViewProps } from '@/types/ui/layout.types';
 
 /**

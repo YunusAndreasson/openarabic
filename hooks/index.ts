@@ -1,16 +1,11 @@
 // Animation hooks
-export * from './animations/useOpacityAnimation';
-export * from './animations/usePressAnimation';
-export * from './animations/useTransformAnimation';
-export * from './animations/useToggleAnimation';
-export * from './animations/useProgressAnimation';
+export * from './animations';
 
 // Auth hooks
 export * from './auth';
 
 // Theme hooks
-export * from './useColors';
-export * from './useThemeDetection';
+export * from './theme';
 
 // Data hooks
 export * from './vocabulary';
@@ -21,11 +16,16 @@ export * from './review';
 export * from './audio';
 
 // Navigation hooks
-export * from './useNavigationWithDebounce';
+export * from './navigation';
 
-// New utility hooks
-export * from './useLoadingState';
-export * from './useScreenFocusRefresh';
+// App hooks
+export * from './app';
+
+// Notification hooks
+export * from './notifications';
+
+// Utility hooks
+export * from './utils';
 
 // UI interaction hooks
-export * from './useButtonAction';
+export * from './ui';
