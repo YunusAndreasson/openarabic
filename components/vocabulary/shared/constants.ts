@@ -1,9 +1,6 @@
-import { Dimensions } from 'react-native';
-
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 
 // Graph dimensions - optimized for perfect alignment and space usage
-export const SCREEN_WIDTH = Dimensions.get('window').width;
 export const GRAPH_WIDTH =
   SCREEN_WIDTH - LAYOUT.SCREEN_EDGE_PADDING * 2 - LAYOUT.CARD.PADDING.MEDIUM * 2;
 export const GRAPH_HEIGHT_LARGE = 176; // Optimized height for better proportions (8px alignment grid)
