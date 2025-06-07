@@ -1,16 +1,14 @@
-import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
+import { ListeningListButton } from '@/components/article/ListeningListButton';
 import { DEFAULT_IMAGES } from '@/constants/images';
 import { LAYOUT } from '@/constants/layout';
-import { formatDifficultyLevel } from '@/services/difficultyLevel';
 import type { Article } from '@/types/articles.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
-import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 // Typography scale refinements for better hierarchy - Following design principles
 const TYPOGRAPHY_REFINEMENTS = {
@@ -43,10 +41,22 @@ interface ParallaxHeaderProps {
   article: Article;
   colors: ThemeColors;
   isDarkMode?: boolean;
+  isInReadingList?: boolean;
+  isLoadingReadingList?: boolean;
+  onToggleReadingList?: () => void;
+  user?: { id: string } | null;
 }
 
 const ParallaxHeader = React.memo<ParallaxHeaderProps>(
-  ({ article, colors, isDarkMode = false }) => {
+  ({
+    article,
+    colors,
+    isDarkMode = false,
+    isInReadingList = false,
+    isLoadingReadingList = false,
+    onToggleReadingList,
+    user,
+  }) => {
     // Enhanced text colors with better accessibility
     const textColor = useMemo(() => colors.primary, [colors.primary]);
 
@@ -69,52 +79,9 @@ const ParallaxHeader = React.memo<ParallaxHeaderProps>(
           fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
           letterSpacing: TYPOGRAPHY_REFINEMENTS.AUTHOR.letterSpacing,
         },
-        metadataText: {
-          color: textColor,
-          opacity: TYPOGRAPHY_REFINEMENTS.METADATA.opacity,
-          fontWeight: TYPOGRAPHY_REFINEMENTS.METADATA.fontWeight,
-          fontSize: TYPOGRAPHY_REFINEMENTS.METADATA.fontSize,
-          letterSpacing: TYPOGRAPHY_REFINEMENTS.METADATA.letterSpacing,
-        },
-        metadataIcon: {
-          color: textColor,
-          opacity: TYPOGRAPHY_REFINEMENTS.METADATA.opacity,
-          marginRight: LAYOUT.SPACING.TINY,
-        },
-        summary: {
-          color: textColor,
-          opacity: TYPOGRAPHY_REFINEMENTS.SUMMARY.opacity,
-          fontSize: TYPOGRAPHY_REFINEMENTS.SUMMARY.fontSize,
-          lineHeight:
-            TYPOGRAPHY_REFINEMENTS.SUMMARY.fontSize * TYPOGRAPHY_REFINEMENTS.SUMMARY.lineHeight,
-          letterSpacing: TYPOGRAPHY_REFINEMENTS.SUMMARY.letterSpacing,
-          fontWeight: '400' as const,
-          fontStyle: 'italic' as const,
-          textAlign: 'left' as const,
-        },
       }),
       [textColor]
     );
-
-    // Reading time calculation
-    const readingTime = useMemo(() => {
-      if (!article) return 2;
-
-      if (article.article_sentences?.length) {
-        const wordCount = article.article_sentences.reduce((total, sentence) => {
-          const estimatedWords = Math.ceil((sentence.english?.length || 0) / 5);
-          return total + estimatedWords;
-        }, 0);
-        return Math.max(1, Math.ceil(wordCount / 200));
-      }
-
-      if (article.summary) {
-        const wordCount = article.summary.split(/\s+/).filter(word => word.length > 0).length;
-        return Math.max(1, Math.ceil(wordCount / 200));
-      }
-
-      return 2;
-    }, [article]);
 
     // Image source
     const imageSource = useMemo(() => {
@@ -177,63 +144,14 @@ const ParallaxHeader = React.memo<ParallaxHeaderProps>(
             )}
           </View>
 
-          {/* Metadata */}
-          <View style={styles.metadataGroup}>
-            <View style={styles.metadataRow}>
-              {article.category && (
-                <View style={styles.metadataItem}>
-                  <Ionicons
-                    color={dynamicTextStyles.metadataIcon.color}
-                    name="folder-outline"
-                    size={15}
-                    style={dynamicTextStyles.metadataIcon}
-                  />
-                  <ThemedText style={dynamicTextStyles.metadataText} type="caption">
-                    {capitalizeFirstLetter(article.category.name)}
-                  </ThemedText>
-                </View>
-              )}
-
-              <View style={styles.metadataItem}>
-                <Ionicons
-                  color={dynamicTextStyles.metadataIcon.color}
-                  name="time-outline"
-                  size={15}
-                  style={dynamicTextStyles.metadataIcon}
-                />
-                <ThemedText style={dynamicTextStyles.metadataText} type="caption">
-                  {readingTime} min read
-                </ThemedText>
-              </View>
-
-              {article.difficulty_level && (
-                <View style={styles.metadataItem}>
-                  <Ionicons
-                    color={dynamicTextStyles.metadataIcon.color}
-                    name="bar-chart-outline"
-                    size={15}
-                    style={dynamicTextStyles.metadataIcon}
-                  />
-                  <ThemedText style={dynamicTextStyles.metadataText} type="caption">
-                    {formatDifficultyLevel(article.difficulty_level)}
-                  </ThemedText>
-                </View>
-              )}
-            </View>
-          </View>
-
-          {/* Summary */}
-          {article.summary && (
-            <View style={styles.summaryGroup}>
-              <ThemedText
-                style={dynamicTextStyles.summary}
-                type="body"
-                numberOfLines={undefined}
-                ellipsizeMode={undefined}
-              >
-                {article.summary}
-              </ThemedText>
-            </View>
+          {/* Listening List Button - Only show if user is authenticated and handler is provided */}
+          {user && onToggleReadingList && (
+            <ListeningListButton
+              isInReadingList={isInReadingList}
+              isLoading={isLoadingReadingList}
+              onPress={onToggleReadingList}
+              colors={colors}
+            />
           )}
         </View>
       </View>
@@ -281,21 +199,6 @@ const styles = StyleSheet.create({
   },
   // Content groups with enhanced spacing following proximity principles
   primaryContentGroup: {
-    marginBottom: LAYOUT.SPACING.LARGE,
-  },
-  metadataGroup: {
-    marginBottom: LAYOUT.SPACING.LARGE,
-  },
-  metadataRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: LAYOUT.SPACING.MEDIUM,
-  },
-  metadataItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  summaryGroup: {
     marginBottom: LAYOUT.SPACING.LARGE,
   },
 });

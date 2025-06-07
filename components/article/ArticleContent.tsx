@@ -59,6 +59,10 @@ interface ArticleContentProps {
   handleArticlePress: (articleId: string, isCompact: boolean) => void;
   englishToggleKey?: string;
   isDarkMode?: boolean;
+  isInReadingList?: boolean;
+  isLoadingReadingList?: boolean;
+  onToggleReadingList?: () => void;
+  user?: { id: string } | null;
 }
 
 const SENTENCE_ITEM_HEIGHT = 70;
@@ -77,6 +81,10 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
       handleArticlePress,
       englishToggleKey,
       isDarkMode,
+      isInReadingList,
+      isLoadingReadingList,
+      onToggleReadingList,
+      user,
     }: ArticleContentProps,
     ref
   ): JSX.Element => {
@@ -181,8 +189,26 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
 
     // Memoize the header component for better performance
     const headerComponent = useMemo(
-      () => <ParallaxHeader article={article} colors={colors} isDarkMode={!!isDarkMode} />,
-      [article, colors, isDarkMode]
+      () => (
+        <ParallaxHeader
+          article={article}
+          colors={colors}
+          isDarkMode={!!isDarkMode}
+          isInReadingList={isInReadingList}
+          isLoadingReadingList={isLoadingReadingList}
+          onToggleReadingList={onToggleReadingList}
+          user={user}
+        />
+      ),
+      [
+        article,
+        colors,
+        isDarkMode,
+        isInReadingList,
+        isLoadingReadingList,
+        onToggleReadingList,
+        user,
+      ]
     );
 
     // Memoize the footer component for better performance

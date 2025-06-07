@@ -127,7 +127,7 @@ export default function ArticleScreen(): JSX.Element {
     handleRootPress
   );
 
-  const [showEnglishLocal, setShowEnglishLocal] = useState(true);
+  const [showEnglishLocal, _setShowEnglishLocal] = useState(true);
 
   const renderWord = useCallback(
     (
@@ -230,6 +230,10 @@ export default function ArticleScreen(): JSX.Element {
             handleArticlePress={(articleId, isRelated) =>
               handleArticlePress(Number(articleId), isRelated)
             }
+            isInReadingList={isInReadingList}
+            isLoadingReadingList={isLoadingReadingList}
+            onToggleReadingList={() => handleToggleReadingList(articleId, isInReadingList)}
+            user={user}
           />
         ) : null}
       </View>
