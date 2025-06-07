@@ -8,7 +8,7 @@ import React, { useState, useRef, useEffect, useMemo, useCallback, memo } from '
 import { StyleSheet, View, RefreshControl, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ArticleCard } from '@/components/ArticleCard';
+import { ArticleCard } from '@/components/home/ArticleCard';
 import BottomControls from '@/components/BottomControls';
 import EmptyState from '@/components/EmptyState';
 import NowPlayingCard from '@/components/listen/NowPlayingCard';
