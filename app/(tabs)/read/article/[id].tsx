@@ -1,6 +1,5 @@
 /* eslint-disable react-native/no-unused-styles */
-import { useQueryClient } from '@tanstack/react-query';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import type { ComponentRef, JSX } from 'react';
@@ -21,8 +20,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useHeaderVisibility } from '@/hooks/ui/useHeaderVisibility';
 import { analytics } from '@/services/analytics';
-import { useAppSelector, useAppDispatch } from '@/store/hooks';
-import { setFontScale } from '@/store/settingsSlice';
+import { useAppSelector } from '@/store/hooks';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { lightFeedback } from '@/utils/haptics';
@@ -46,9 +44,6 @@ export default function ArticleScreen(): JSX.Element {
   const { user } = useAuth();
   const settings = useAppSelector(state => state.settings);
   const isDarkMode = useIsDarkMode();
-  const queryClient = useQueryClient();
-  const router = useRouter();
-  const dispatch = useAppDispatch();
 
   const { handleScroll } = useHeaderVisibility();
 
@@ -77,14 +72,13 @@ export default function ArticleScreen(): JSX.Element {
     if (!user?.id) return;
     const subscription = AppState.addEventListener('change', nextAppState => {
       if (nextAppState === 'active') {
-        queryClient.invalidateQueries({ queryKey: ['studyWords', user.id] });
         refetchStudyWords?.();
       }
     });
     return () => {
       subscription.remove();
     };
-  }, [user?.id, queryClient, refetchStudyWords]);
+  }, [user?.id, refetchStudyWords]);
 
   useEffect(() => {
     if (article && !isLoadingArticle) {
@@ -133,36 +127,7 @@ export default function ArticleScreen(): JSX.Element {
     handleRootPress
   );
 
-  const handleBookmarkPress = useCallback(() => {
-    if (articleId) {
-      lightFeedback();
-      handleToggleReadingList(articleId, Boolean(isInReadingList));
-    }
-  }, [articleId, isInReadingList, handleToggleReadingList]);
-
   const [showEnglishLocal, setShowEnglishLocal] = useState(true);
-
-  const handleEnglishToggle = useCallback(() => {
-    setShowEnglishLocal(!showEnglishLocal);
-  }, [showEnglishLocal]);
-
-  const [showTextSizeSlider, setShowTextSizeSlider] = useState(false);
-
-  const handleTextSizeToggle = useCallback(() => {
-    setShowTextSizeSlider(!showTextSizeSlider);
-  }, [showTextSizeSlider]);
-
-  const handleFontScaleChange = useCallback(
-    (value: number) => {
-      dispatch(setFontScale(value));
-    },
-    [dispatch]
-  );
-
-  const handleBackPress = useCallback(() => {
-    queryClient.cancelQueries();
-    router.back();
-  }, [router, queryClient]);
 
   const renderWord = useCallback(
     (
@@ -242,10 +207,8 @@ export default function ArticleScreen(): JSX.Element {
   );
 
   useEffect(() => {
-    // Reset text size slider when article changes
-    setShowTextSizeSlider(false);
     refetchReadingListStatus?.();
-  }, [id]);
+  }, [id, refetchReadingListStatus]);
 
   return (
     <ThemedView style={styles.container} useSafeArea={false}>
@@ -258,26 +221,15 @@ export default function ArticleScreen(): JSX.Element {
             article={article}
             colors={colors}
             englishToggleKey={showEnglishLocal ? 'en' : 'ar'}
-            fontScale={settings.fontScale}
             handleScroll={handleScroll}
             id={id}
             isDarkMode={isDarkMode}
-            isInReadingList={isInReadingList}
-            isPlaying={false}
             otherArticles={otherArticles}
             renderSentenceItem={renderSentenceItem}
-            showEnglish={showEnglishLocal}
-            showTextSizeSlider={showTextSizeSlider}
             sortedSentences={sortedSentences}
-            user={user}
             handleArticlePress={(articleId, isRelated) =>
               handleArticlePress(Number(articleId), isRelated)
             }
-            onBackPress={handleBackPress}
-            onBookmarkPress={handleBookmarkPress}
-            onEnglishToggle={handleEnglishToggle}
-            onFontScaleChange={handleFontScaleChange}
-            onTextSizeToggle={handleTextSizeToggle}
           />
         ) : null}
       </View>

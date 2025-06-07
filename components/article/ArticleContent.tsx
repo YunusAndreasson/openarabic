@@ -11,19 +11,12 @@ import React, {
 } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  interpolate,
-  Extrapolation,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ArticleButtons } from '@/components/article/ArticleButtons';
-import { ParallaxHeader } from '@/components/article/ParallaxHeader';
+import ParallaxHeader from '@/components/article/ParallaxHeader';
 import { RelatedArticlesFooter } from '@/components/article/RelatedArticlesFooter';
-import { TextSizeSlider } from '@/components/article/TextSizeSlider';
-import { LAYOUT, HEADER_IMAGE_HEIGHT } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
@@ -31,11 +24,6 @@ import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { ThemeColors } from '../../types/ui/theme.types';
 
 const styles = StyleSheet.create({
-  buttonsWrapper: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
   content: {
     flex: 1,
   },
@@ -53,17 +41,7 @@ const styles = StyleSheet.create({
   sourceLabel: {
     fontSize: 14,
   },
-  stickyButtonsContainer: {
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    zIndex: LAYOUT.Z_INDEX.HEADER,
-  },
 });
-
-// Memoized ArticleButtons component to prevent unnecessary re-renders
-const MemoizedArticleButtons = React.memo(ArticleButtons);
 
 export type ArticleContentRef = {
   scrollToSentence: (sentenceId: number) => void;
@@ -79,21 +57,7 @@ interface ArticleContentProps {
   footerStyle?: AnimatedStyleProp<ViewStyle>;
   otherArticles?: Article[];
   handleArticlePress: (articleId: string, isCompact: boolean) => void;
-  // Button action props
-  onBackPress?: () => void;
-  onBookmarkPress?: () => void;
-  onPlayPress?: () => void;
-  onEnglishToggle?: () => void;
-  onTextSizeToggle?: () => void;
-  // Button state props
-  isInReadingList?: boolean;
-  isPlaying?: boolean;
-  showEnglish?: boolean;
-  showTextSizeSlider?: boolean;
-  fontScale?: number;
-  onFontScaleChange?: (value: number) => void;
   englishToggleKey?: string;
-  user?: any;
   isDarkMode?: boolean;
 }
 
@@ -111,21 +75,7 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
       footerStyle,
       otherArticles,
       handleArticlePress,
-      // Button action props
-      onBackPress,
-      onBookmarkPress,
-      onPlayPress,
-      onEnglishToggle,
-      onTextSizeToggle,
-      // Button state props
-      isInReadingList,
-      isPlaying,
-      showEnglish,
-      showTextSizeSlider,
-      fontScale,
-      onFontScaleChange,
       englishToggleKey,
-      user,
       isDarkMode,
     }: ArticleContentProps,
     ref
@@ -141,18 +91,12 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
       wordPosition?: string;
     }>();
 
-    // Create a shared value to track scroll position for parallax effect
-    const scrollY = useSharedValue(0);
-
-    // Helper function to handle animated scroll events
+    // Helper function to handle scroll events
     const handleAnimatedScroll = useCallback(
       (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-        const currentY = event.nativeEvent.contentOffset.y;
-        // Use direct assignment for smoother parallax - no spring damping here
-        scrollY.value = currentY;
         handleScroll(event);
       },
-      [scrollY, handleScroll]
+      [handleScroll]
     );
 
     // Helper function to scroll to an index with consistent parameters
@@ -174,19 +118,8 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
           }
 
           try {
-            // The parallax header is always present, so we need to account for it for all sentences
-            // Calculate the total header area that needs to be cleared
-            const parallaxHeaderHeight = HEADER_IMAGE_HEIGHT;
-            const stickyButtonsHeight =
-              insets.top + LAYOUT.BUTTON.HEIGHT.MEDIUM + LAYOUT.SPACING.MEDIUM;
-
-            // For all sentences, we need to clear both the parallax header and sticky buttons
-            // The first sentence needs extra spacing, others need less
-            const baseOffset = parallaxHeaderHeight + stickyButtonsHeight;
-            const viewOffset =
-              index === 0
-                ? baseOffset + LAYOUT.SPACING.LARGE // Extra spacing for first sentence
-                : baseOffset + LAYOUT.SPACING.SMALL; // Less spacing for subsequent sentences
+            // Use a more conservative offset since header height is now dynamic
+            const viewOffset = 200 + LAYOUT.SPACING.SMALL; // Estimated dynamic header height
 
             flashListRef.current.scrollToIndex({
               index: index,
@@ -198,11 +131,7 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
             // Enhanced fallback with better error handling
             if (sortedSentences && sortedSentences.length > 0) {
               const targetIndex = Math.min(index, sortedSentences.length - 1);
-              const fallbackOffset =
-                HEADER_IMAGE_HEIGHT +
-                insets.top +
-                LAYOUT.BUTTON.HEIGHT.MEDIUM +
-                LAYOUT.SPACING.LARGE;
+              const fallbackOffset = 200 + LAYOUT.SPACING.SMALL; // Estimated dynamic header height
 
               flashListRef.current?.scrollToItem({
                 item: sortedSentences[targetIndex],
@@ -250,33 +179,10 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
       }
     }, [scrollToSentenceParam, sortedSentences]);
 
-    // Animated style for the sticky buttons header
-    const stickyButtonsStyle = useAnimatedStyle(() => {
-      const bgOpacity = interpolate(
-        scrollY.value,
-        [0, HEADER_IMAGE_HEIGHT * 0.3],
-        [0, 0.65],
-        Extrapolation.CLAMP
-      );
-
-      return {
-        backgroundColor: colors.backdropOverlay.replace(/[\d.]+\)$/, `${bgOpacity})`),
-      };
-    }, []);
-
     // Memoize the header component for better performance
     const headerComponent = useMemo(
-      () => (
-        <ParallaxHeader
-          article={article}
-          colors={colors}
-          headerHeight={HEADER_IMAGE_HEIGHT}
-          isDarkMode={!!isDarkMode}
-          scrollY={scrollY}
-          topInset={insets.top}
-        />
-      ),
-      [article, scrollY, colors, insets.top, isDarkMode]
+      () => <ParallaxHeader article={article} colors={colors} isDarkMode={!!isDarkMode} />,
+      [article, colors, isDarkMode]
     );
 
     // Memoize the footer component for better performance
@@ -327,7 +233,7 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
               drawDistance={SENTENCE_ITEM_HEIGHT * 12} // Increased for better performance
               estimatedFirstItemOffset={0}
               estimatedItemSize={SENTENCE_ITEM_HEIGHT}
-              extraData={`${englishToggleKey}-${fontScale}`}
+              extraData={englishToggleKey}
               getItemType={() => 'sentence'} // Add item type for better optimization
               initialScrollIndex={0}
               keyExtractor={item => item.id.toString()}
@@ -341,7 +247,7 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
               showsVerticalScrollIndicator={true}
               style={[styles.content, { backgroundColor: colors.background }]}
               contentContainerStyle={{
-                paddingTop: 0,
+                paddingTop: 0, // Remove padding since ParallaxHeader handles its own layout
                 // Slight bottom padding adjustment for better closure
                 paddingBottom:
                   LAYOUT.CONTENT_SPACING.BOTTOM + insets.bottom + LAYOUT.SPACING.MEDIUM,
@@ -351,45 +257,6 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
               }}
               onScroll={handleAnimatedScroll}
             />
-
-            {/* Sticky Buttons Header */}
-            <Animated.View
-              style={[
-                styles.stickyButtonsContainer,
-                stickyButtonsStyle,
-                { paddingTop: insets.top + LAYOUT.SPACING.TINY }, // Added tiny extra padding for visual balance
-              ]}
-            >
-              <View style={styles.buttonsWrapper}>
-                {onBackPress && onBookmarkPress && onEnglishToggle && onTextSizeToggle && (
-                  <MemoizedArticleButtons
-                    colors={colors}
-                    isDarkMode={!!isDarkMode}
-                    isInReadingList={!!isInReadingList}
-                    isPlaying={!!isPlaying}
-                    showEnglish={!!showEnglish}
-                    showTextSizeSlider={!!showTextSizeSlider}
-                    user={user}
-                    onBackPress={onBackPress}
-                    onBookmarkPress={onBookmarkPress}
-                    onEnglishToggle={onEnglishToggle}
-                    onPlayPress={onPlayPress}
-                    onTextSizeToggle={onTextSizeToggle}
-                  />
-                )}
-              </View>
-
-              {/* Text Size Slider - appears right below buttons */}
-              {onTextSizeToggle && fontScale !== undefined && onFontScaleChange && (
-                <TextSizeSlider
-                  colors={colors}
-                  fontScale={fontScale}
-                  isDarkMode={!!isDarkMode}
-                  isVisible={!!showTextSizeSlider}
-                  onFontScaleChange={onFontScaleChange}
-                />
-              )}
-            </Animated.View>
           </View>
         ) : null}
       </Animated.View>

@@ -27,8 +27,8 @@ const ErrorMessage = memo(
 
       if (screenName === 'practice') {
         route = '/practice' as RoutePath;
-      } else if (screenName === 'settings') {
-        route = '/settings' as RoutePath;
+      } else if (screenName === 'account') {
+        route = '/(tabs)/read/account' as RoutePath;
       }
 
       router.replace(route);

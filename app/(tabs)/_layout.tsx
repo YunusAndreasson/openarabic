@@ -10,6 +10,7 @@ import { Platform, StyleSheet, View, Text } from 'react-native';
 import type { TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import HeaderProfile from '@/components/HeaderProfile';
 import { Colors } from '@/constants/Colors';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -35,12 +36,6 @@ const TAB_SCREENS = [
     title: 'Practice',
     iconOutline: 'trending-up-outline',
     iconFilled: 'trending-up',
-  },
-  {
-    name: 'settings',
-    title: 'Account',
-    iconOutline: 'person-outline',
-    iconFilled: 'person',
   },
 ] as const;
 
@@ -247,6 +242,7 @@ export default function TabLayout() {
   const { session, isLoading } = useAuth();
 
   const headerBackground = useCallback(() => <CustomHeaderBackground />, []);
+  const headerProfileComponent = useCallback(() => <HeaderProfile />, []);
 
   const screenOptions = useMemo(
     () => ({
@@ -281,6 +277,9 @@ export default function TabLayout() {
           name={screen.name}
           options={{
             title: screen.title,
+            ...(screen.name === 'read' && {
+              headerRight: headerProfileComponent,
+            }),
           }}
         />
       ))}

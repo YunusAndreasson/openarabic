@@ -105,7 +105,7 @@ export const TYPOGRAPHY_HIERARCHY = {
 } as const;
 
 // Component-specific constants
-export const HEADER_IMAGE_HEIGHT = 350;
+export const HEADER_IMAGE_HEIGHT = 150; // Reduced for cleaner article view
 export const WORD_AREA_MIN_HEIGHT = 364;
 
 // Minimum touch target sizes for accessibility compliance

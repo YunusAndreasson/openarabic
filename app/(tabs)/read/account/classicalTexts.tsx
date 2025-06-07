@@ -31,7 +31,7 @@ const ClassicalTextsScreen: React.FC = () => {
           headerTransparent: false,
           headerTitleAlign: 'left',
           headerTintColor: colors.tint,
-          headerBackTitle: 'Settings',
+          headerBackTitle: 'Account',
           headerBackTitleStyle: {
             fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
           },

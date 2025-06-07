@@ -11,7 +11,7 @@ import type { ThemeColors } from '@/types/ui/theme.types';
 import { withOpacity } from '@/utils/colorUtils';
 
 interface ArticleButtonsProps {
-  onBackPress: () => void;
+  onBackPress?: () => void; // Made optional since we don't want back button anymore
   onBookmarkPress: () => void;
   onPlayPress?: () => void;
   onEnglishToggle: () => void;
@@ -20,7 +20,6 @@ interface ArticleButtonsProps {
   isPlaying: boolean;
   showEnglish: boolean;
   showTextSizeSlider: boolean;
-  backButtonStyle?: AnimatedStyleProp<ViewStyle>;
   bookmarkButtonStyle?: AnimatedStyleProp<ViewStyle>;
   englishButtonStyle?: AnimatedStyleProp<ViewStyle>;
   playButtonStyle?: AnimatedStyleProp<ViewStyle>;
@@ -31,15 +30,6 @@ interface ArticleButtonsProps {
 }
 
 const styles = StyleSheet.create({
-  backButton: {
-    alignItems: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
-    justifyContent: 'center',
-    marginRight: LAYOUT.SPACING.SMALL,
-    overflow: 'hidden',
-    width: LAYOUT.BUTTON.HEIGHT.MEDIUM,
-  },
   buttonContainer: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -74,9 +64,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     width: LAYOUT.BUTTON.HEIGHT.MEDIUM,
   },
-  leftButtonGroup: {
-    flexDirection: 'row',
-  },
+
   rightButtonGroup: {
     flexDirection: 'row',
   },
@@ -136,7 +124,6 @@ const ButtonWrapper = ({
 );
 
 export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
-  onBackPress,
   onBookmarkPress,
   onPlayPress,
   onEnglishToggle,
@@ -145,7 +132,6 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
   isPlaying,
   showEnglish,
   showTextSizeSlider,
-  backButtonStyle,
   bookmarkButtonStyle,
   englishButtonStyle,
   playButtonStyle,
@@ -174,39 +160,6 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
 
   return (
     <Animated.View style={styles.buttonContainer}>
-      <View style={styles.leftButtonGroup}>
-        <Animated.View style={backButtonStyle}>
-          <ButtonWrapper
-            style={styles.backButton}
-            blurButtonStyle={blurButtonStyle}
-            overlayStyle={overlayStyle}
-            buttonShadow={styles.buttonShadow}
-            shadowColorStyle={shadowColorStyle}
-          >
-            <TouchableOpacity
-              accessibilityLabel="Back"
-              style={StyleSheet.absoluteFill}
-              onPress={onBackPress}
-            >
-              <View
-                style={[
-                  StyleSheet.absoluteFill,
-                  { alignItems: 'center', justifyContent: 'center' },
-                ]}
-              >
-                <IconWithShadow
-                  name="arrow-back"
-                  size={24}
-                  isDarkMode={isDarkMode}
-                  colors={colors}
-                  iconColor={iconColor}
-                />
-              </View>
-            </TouchableOpacity>
-          </ButtonWrapper>
-        </Animated.View>
-      </View>
-
       <View style={styles.rightButtonGroup}>
         {user && (
           <Animated.View style={bookmarkButtonStyle}>

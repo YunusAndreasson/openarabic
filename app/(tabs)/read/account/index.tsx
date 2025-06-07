@@ -23,7 +23,7 @@ import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
 import { lightFeedback } from '@/utils/haptics';
 
-import pkg from '../../../package.json';
+import pkg from '../../../../package.json';
 
 // Memoized components
 interface SettingLabelProps {
@@ -164,7 +164,7 @@ const AccountScreen: React.FC = () => {
 
   return (
     <ThemedView
-      accessibilityLabel="Settings screen"
+      accessibilityLabel="Account screen"
       includeBottomInset={false}
       safeAreaEdges={['left', 'right']}
       style={styles.container}
@@ -177,7 +177,7 @@ const AccountScreen: React.FC = () => {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: headerHeight,
+            paddingTop: headerHeight - LAYOUT.SPACING.LARGE, // Reduced padding for tighter layout
             paddingBottom: insets.bottom + LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
           },
         ]}
@@ -187,7 +187,7 @@ const AccountScreen: React.FC = () => {
         }}
       >
         {/* Notifications Section - Moved to top as most frequently used */}
-        <View style={styles.remindersWrapper}>
+        <View style={[styles.remindersWrapper, styles.firstSectionOverride]}>
           <SectionTitle isFirstSection={true} title="Notifications" />
           <BaseCard
             includePressAnimation={false}
@@ -251,7 +251,7 @@ const AccountScreen: React.FC = () => {
                 includePressAnimation={true}
                 shadowSize="none"
                 style={styles.actionLinkCard}
-                onPress={() => router.push('/(tabs)/settings/learningMethod')}
+                onPress={() => router.push('/(tabs)/read/account/learningMethod')}
               >
                 <View style={styles.actionLinkContent}>
                   <View style={styles.actionLinkLeft}>
@@ -275,7 +275,7 @@ const AccountScreen: React.FC = () => {
                 includePressAnimation={true}
                 shadowSize="none"
                 style={styles.actionLinkCard}
-                onPress={() => router.push('/(tabs)/settings/classicalTexts')}
+                onPress={() => router.push('/(tabs)/read/account/classicalTexts')}
               >
                 <View style={styles.actionLinkContent}>
                   <View style={styles.actionLinkLeft}>
@@ -605,6 +605,9 @@ const styles = StyleSheet.create({
   // Reminders Styles
   remindersWrapper: {
     // Remove marginBottom - SectionTitle handles section spacing
+  },
+  firstSectionOverride: {
+    marginTop: -LAYOUT.SPACING.XLARGE, // Offset the SectionTitle's first section margin
   },
   remindersLinksContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
