@@ -21,6 +21,12 @@ const basePalette = {
     lightest: '#FAFCF9', // Crisp warm white
   },
 
+  // Interactive sage tints
+  tint: {
+    primary: '#5B7F68', // Sophisticated sage tint - light mode
+    primaryDark: '#7FA08A', // Balanced sage tint - dark mode
+  },
+
   // Semantic warm tones
   semantic: {
     error: '#C74A3A', // Warm terracotta red
@@ -45,6 +51,58 @@ const alpha = (color: string, opacity: number) =>
     .toString(16)
     .padStart(2, '0')}`;
 
+// Calculated intermediate colors for perfect hierarchy
+const textHierarchy = {
+  light: {
+    subtitle: '#35463E', // 25% blend between darkest and medium
+    metadata: '#5C6F65', // 50% blend between medium and light
+    caption: '#6A7D74', // 75% blend between medium and light
+  },
+  dark: {
+    subtitle: '#E6EAE7', // Light mode equivalent
+    metadata: '#CAD3CC', // Light mode equivalent
+    caption: '#BDC6BF', // Light mode equivalent
+  },
+};
+
+// Standardized opacity system
+const opacity = {
+  subtle: 0.04, // Very subtle overlays
+  light: 0.06, // Light overlays
+  medium: 0.08, // Standard hover states
+  strong: 0.1, // Active backgrounds
+  active: 0.12, // Strong active states
+  border: 0.15, // Border overlays
+  progress: 0.15, // Progress backgrounds
+  disabled: 0.2, // Disabled backgrounds
+  selection: 0.28, // Text selection
+  tooltip: 0.32, // Tooltips and shadows
+  due: 0.42, // Due word indicators
+  overlay: 0.52, // Strong overlays
+  backdrop: 0.68, // Modal backdrops
+  shadow: 0.75, // Text shadows
+  darkBackdrop: 0.85, // Dark mode backdrops
+  modal: 0.92, // Modal overlays
+  header: 0.96, // Header overlays
+  full: 0.97, // Full modal overlays
+};
+
+// Elevation system
+const elevation = {
+  light: {
+    level0: basePalette.sage.lightest, // Background
+    level1: basePalette.pure.white, // Cards
+    level2: '#F9FCF8', // Raised elements
+    level3: basePalette.sage.lighter, // Floating elements
+  },
+  dark: {
+    level0: basePalette.sage.darkest, // Background
+    level1: basePalette.sage.dark, // Cards
+    level2: basePalette.sage.medium, // Raised elements
+    level3: '#3A453D', // Floating elements
+  },
+};
+
 export const Colors = {
   light: {
     // Core brand colors
@@ -63,76 +121,76 @@ export const Colors = {
     warning: basePalette.semantic.warning,
     info: basePalette.forest.light,
 
-    // Text hierarchy - all using base palette
+    // Text hierarchy - systematically calculated
     englishText: basePalette.forest.medium,
     arabicText: basePalette.forest.darkest,
     authorText: basePalette.forest.light,
     headingText: basePalette.forest.darkest,
-    subtitleText: '#35463E', // Slightly lighter than darkest
-    metadataText: '#5C6F65', // Between medium and light
-    captionText: '#6A7D74', // Between medium and light
+    subtitleText: textHierarchy.light.subtitle,
+    metadataText: textHierarchy.light.metadata,
+    captionText: textHierarchy.light.caption,
 
     // Interactive elements
-    tint: '#5B7F68', // Sophisticated sage tint
+    tint: basePalette.tint.primary,
     tabIconDefault: basePalette.forest.lighter,
-    tabIconSelected: '#5B7F68',
+    tabIconSelected: basePalette.tint.primary,
     icon: basePalette.forest.light,
     disabled: '#D2DBD6',
 
-    // Overlays - using alpha helper for consistency
+    // Overlays - using standardized opacity system
     transparent: basePalette.pure.transparent,
-    overlay: alpha(basePalette.sage.lightest, 0.92),
-    modalOverlay: alpha(basePalette.sage.lightest, 0.97),
-    borderOverlay: alpha('#5B7F68', 0.06),
-    buttonOverlay: alpha('#5B7F68', 0.08),
-    buttonOverlayActive: alpha('#5B7F68', 0.12),
-    buttonBorderOverlay: alpha(basePalette.pure.white, 0.2),
-    backdropOverlay: alpha(basePalette.forest.dark, 0.68),
-    contrastOverlay: alpha(basePalette.forest.dark, 0.32),
+    overlay: alpha(basePalette.sage.lightest, opacity.modal),
+    modalOverlay: alpha(basePalette.sage.lightest, opacity.full),
+    borderOverlay: alpha(basePalette.tint.primary, opacity.light),
+    buttonOverlay: alpha(basePalette.tint.primary, opacity.medium),
+    buttonOverlayActive: alpha(basePalette.tint.primary, opacity.active),
+    buttonBorderOverlay: alpha(basePalette.pure.white, opacity.disabled),
+    backdropOverlay: alpha(basePalette.forest.dark, opacity.backdrop),
+    contrastOverlay: alpha(basePalette.forest.dark, opacity.overlay),
 
     // Elevation system
     shadow: basePalette.forest.dark,
-    elevation1: basePalette.pure.white,
-    elevation2: '#F9FCF8',
-    elevation3: basePalette.sage.lighter,
+    elevation1: elevation.light.level1,
+    elevation2: elevation.light.level2,
+    elevation3: elevation.light.level3,
 
-    // Reading experience - consolidated similar values
-    audioHighlight: '#F9FCF8',
+    // Reading experience - using standardized values
+    audioHighlight: elevation.light.level2,
     audioHighlightBorder: basePalette.sage.light,
     wordTooltipBg: basePalette.pure.white,
     wordTooltipText: basePalette.forest.darkest,
     wordTooltipBorder: basePalette.sage.light,
-    wordTooltipShadow: alpha(basePalette.forest.dark, 0.12),
-    wordSelectionUnderline: alpha('#5B7F68', 0.28),
-    wordDueUnderline: alpha(basePalette.semantic.warning, 0.42),
+    wordTooltipShadow: alpha(basePalette.forest.dark, opacity.active),
+    wordSelectionUnderline: alpha(basePalette.tint.primary, opacity.selection),
+    wordDueUnderline: alpha(basePalette.semantic.warning, opacity.due),
     audioControlBg: basePalette.pure.white,
     audioControlBorder: basePalette.sage.light,
-    audioControlShadow: alpha(basePalette.forest.dark, 0.08),
+    audioControlShadow: alpha(basePalette.forest.dark, opacity.medium),
 
     // Navigation
-    navigationRipple: alpha('#5B7F68', 0.1),
-    headerOverlay: alpha(basePalette.sage.lightest, 0.96),
-    tabBarOverlay: alpha(basePalette.sage.lightest, 0.92),
+    navigationRipple: alpha(basePalette.tint.primary, opacity.strong),
+    headerOverlay: alpha(basePalette.sage.lightest, opacity.header),
+    tabBarOverlay: alpha(basePalette.sage.lightest, opacity.modal),
 
     // UI semantics
-    progressIndicator: '#5B7F68',
-    progressBackground: alpha('#5B7F68', 0.15),
+    progressIndicator: basePalette.tint.primary,
+    progressBackground: alpha(basePalette.tint.primary, opacity.progress),
     interactiveSecondary: basePalette.forest.light,
     completionSuccess: basePalette.semantic.success,
     repeatActive: basePalette.semantic.warning,
-    socialIconBg: alpha('#5B7F68', 0.1),
+    socialIconBg: alpha(basePalette.tint.primary, opacity.strong),
 
     // Utility colors
     imagePlaceholder: basePalette.sage.lighter,
-    textOverlay: alpha('#5B7F68', 0.04),
-    textShadowDark: alpha(basePalette.forest.dark, 0.75),
-    textShadowLight: alpha(basePalette.pure.white, 0.75),
+    textOverlay: alpha(basePalette.tint.primary, opacity.subtle),
+    textShadowDark: alpha(basePalette.forest.dark, opacity.shadow),
+    textShadowLight: alpha(basePalette.pure.white, opacity.shadow),
     white: basePalette.pure.white,
     black: basePalette.pure.black,
   } as ThemeColors,
 
   dark: {
-    // Core brand colors - using dark variants from base palette
+    // Core brand colors
     primary: '#F4F6F4',
     background: basePalette.sage.darkest,
     text: '#F4F6F4',
@@ -153,65 +211,65 @@ export const Colors = {
     arabicText: '#F4F6F4',
     authorText: '#B6C2B8',
     headingText: '#F4F6F4',
-    subtitleText: '#E6EAE7',
-    metadataText: '#CAD3CC',
-    captionText: '#BDC6BF',
+    subtitleText: textHierarchy.dark.subtitle,
+    metadataText: textHierarchy.dark.metadata,
+    captionText: textHierarchy.dark.caption,
 
     // Interactive elements
-    tint: '#7FA08A',
+    tint: basePalette.tint.primaryDark,
     tabIconDefault: '#6E7F71',
-    tabIconSelected: '#7FA08A',
+    tabIconSelected: basePalette.tint.primaryDark,
     icon: '#B6C2B8',
     disabled: '#3C453E',
 
-    // Overlays - dark mode variants
+    // Overlays - dark mode with standardized opacity
     transparent: basePalette.pure.transparent,
-    overlay: alpha(basePalette.sage.darkest, 0.92),
-    modalOverlay: alpha(basePalette.sage.darkest, 0.97),
-    borderOverlay: alpha('#7FA08A', 0.08),
-    buttonOverlay: alpha('#7FA08A', 0.1),
-    buttonOverlayActive: alpha('#7FA08A', 0.15),
-    buttonBorderOverlay: alpha('#F4F6F4', 0.15),
-    backdropOverlay: alpha(basePalette.sage.darkest, 0.85),
-    contrastOverlay: alpha(basePalette.pure.black, 0.52),
+    overlay: alpha(basePalette.sage.darkest, opacity.modal),
+    modalOverlay: alpha(basePalette.sage.darkest, opacity.full),
+    borderOverlay: alpha(basePalette.tint.primaryDark, opacity.medium),
+    buttonOverlay: alpha(basePalette.tint.primaryDark, opacity.strong),
+    buttonOverlayActive: alpha(basePalette.tint.primaryDark, opacity.progress),
+    buttonBorderOverlay: alpha('#F4F6F4', opacity.progress),
+    backdropOverlay: alpha(basePalette.sage.darkest, opacity.darkBackdrop),
+    contrastOverlay: alpha(basePalette.pure.black, opacity.overlay),
 
     // Elevation system
     shadow: basePalette.pure.black,
-    elevation1: basePalette.sage.dark,
-    elevation2: basePalette.sage.medium,
-    elevation3: '#3A453D',
+    elevation1: elevation.dark.level1,
+    elevation2: elevation.dark.level2,
+    elevation3: elevation.dark.level3,
 
-    // Reading experience - dark mode variants
+    // Reading experience - dark mode with standardized values
     audioHighlight: basePalette.sage.medium,
-    audioHighlightBorder: '#3A453D',
+    audioHighlightBorder: elevation.dark.level3,
     wordTooltipBg: basePalette.sage.medium,
     wordTooltipText: '#F4F6F4',
-    wordTooltipBorder: '#3A453D',
-    wordTooltipShadow: alpha(basePalette.pure.black, 0.42),
-    wordSelectionUnderline: alpha('#7FA08A', 0.32),
-    wordDueUnderline: alpha(basePalette.semantic.warningDark, 0.52),
+    wordTooltipBorder: elevation.dark.level3,
+    wordTooltipShadow: alpha(basePalette.pure.black, opacity.due),
+    wordSelectionUnderline: alpha(basePalette.tint.primaryDark, opacity.tooltip),
+    wordDueUnderline: alpha(basePalette.semantic.warningDark, opacity.overlay),
     audioControlBg: basePalette.sage.medium,
-    audioControlBorder: '#3A453D',
-    audioControlShadow: alpha(basePalette.pure.black, 0.32),
+    audioControlBorder: elevation.dark.level3,
+    audioControlShadow: alpha(basePalette.pure.black, opacity.tooltip),
 
     // Navigation
-    navigationRipple: alpha('#7FA08A', 0.12),
-    headerOverlay: alpha(basePalette.sage.darkest, 0.96),
-    tabBarOverlay: alpha(basePalette.sage.darkest, 0.92),
+    navigationRipple: alpha(basePalette.tint.primaryDark, opacity.active),
+    headerOverlay: alpha(basePalette.sage.darkest, opacity.header),
+    tabBarOverlay: alpha(basePalette.sage.darkest, opacity.modal),
 
     // UI semantics
-    progressIndicator: '#7FA08A',
-    progressBackground: alpha('#7FA08A', 0.2),
+    progressIndicator: basePalette.tint.primaryDark,
+    progressBackground: alpha(basePalette.tint.primaryDark, opacity.disabled),
     interactiveSecondary: '#B6C2B8',
     completionSuccess: basePalette.semantic.successDark,
     repeatActive: basePalette.semantic.warningDark,
-    socialIconBg: alpha('#7FA08A', 0.1),
+    socialIconBg: alpha(basePalette.tint.primaryDark, opacity.strong),
 
     // Utility colors
     imagePlaceholder: basePalette.sage.medium,
-    textOverlay: alpha('#7FA08A', 0.06),
-    textShadowDark: alpha(basePalette.pure.black, 0.75),
-    textShadowLight: alpha('#F4F6F4', 0.75),
+    textOverlay: alpha(basePalette.tint.primaryDark, opacity.light),
+    textShadowDark: alpha(basePalette.pure.black, opacity.shadow),
+    textShadowLight: alpha('#F4F6F4', opacity.shadow),
     white: basePalette.pure.white,
     black: basePalette.pure.black,
   } as ThemeColors,
