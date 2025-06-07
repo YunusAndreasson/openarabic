@@ -30,8 +30,6 @@ export interface ToggleProps {
   value: boolean;
   /** Callback function when the toggle state changes */
   onValueChange: (value: boolean) => void;
-  /** Optional label for the toggle */
-  label?: string;
 }
 
 /**
