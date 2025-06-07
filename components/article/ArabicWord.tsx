@@ -7,7 +7,7 @@ import Animated, { useSharedValue, withSequence, withTiming } from 'react-native
 
 import { LAYOUT } from '../../constants/layout';
 import { useOpacityAnimation, useTransformAnimation } from '../../hooks/animations';
-import { useArabicWord } from '../../hooks/useArabicWord';
+import { useArabicWord } from '../../hooks/vocabulary/useArabicWord';
 import { useColors } from '../../hooks/useColors';
 import { useIsDarkMode } from '../../hooks/useThemeDetection';
 import type { TextWeight } from '../../types/ui/text.types';

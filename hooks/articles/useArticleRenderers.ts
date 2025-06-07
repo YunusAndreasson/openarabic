@@ -1,11 +1,11 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 
-import type { Article } from '../types/articles.types';
-import type { SentenceWord } from '../types/vocabulary.types';
-import { handleError } from '../utils/errorHandling';
+import type { Article } from '@/types/articles.types';
+import type { SentenceWord } from '@/types/vocabulary.types';
+import { handleError } from '@/utils/errorHandling';
 
-import { useNavigationWithDebounce } from './useNavigationWithDebounce';
+import { useNavigationWithDebounce } from '../useNavigationWithDebounce';
 
 type SentenceWordsMap = Map<number, SentenceWord[]>;
 

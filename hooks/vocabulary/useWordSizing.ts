@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-import { SCREEN_WIDTH } from '../constants/layout';
+import { SCREEN_WIDTH } from '@/constants/layout';
 
 interface WordSizingOptions {
   minFontSize?: number;

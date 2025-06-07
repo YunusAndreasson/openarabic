@@ -3,12 +3,12 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { handleError } from '@/utils/errorHandling';
 
-import { analytics } from '../services/analytics';
-import { studyWordsFSRSService } from '../services/studyWordsFSRS';
-import type { SentenceWord, StudyWord } from '../types/vocabulary.types';
+import { analytics } from '@/services/analytics';
+import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
+import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 
-import { useArticlesByDueWords } from './useArticlesByDueWords';
-import { useAuth } from './useAuth';
+import { useArticlesByDueWords } from '../articles/useArticlesByDueWords';
+import { useAuth } from '../useAuth';
 
 export interface UseArabicWordProps {
   word: SentenceWord;
