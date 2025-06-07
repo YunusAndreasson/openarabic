@@ -13,8 +13,8 @@ import BaseCard from '@/components/BaseCard';
 import SectionTitle from '@/components/SectionTitle';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
+import { useColors } from '@/hooks/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 // Audio configuration

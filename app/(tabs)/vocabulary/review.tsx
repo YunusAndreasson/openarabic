@@ -5,8 +5,6 @@ import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedView } from '@/components/ThemedView';
-import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
-
 import {
   ReviewCard,
   ReviewHeader,
@@ -14,6 +12,7 @@ import {
   MeaningOverlay,
   InstructionFooter,
 } from '@/components/review';
+import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { useReview } from '@/hooks/review';
 
 const baseStyles = StyleSheet.create({

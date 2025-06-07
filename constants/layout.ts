@@ -32,21 +32,16 @@ export const TYPOGRAPHY_HIERARCHY = {
 
   // Advanced letter spacing optimized for Figtree characteristics
   LETTER_SPACING: {
-    EXTRA_TIGHT: Platform.OS === 'ios' ? -0.6 : -0.3, // For large headings - enhanced impact
-    TIGHT: Platform.OS === 'ios' ? -0.4 : -0.2, // Standard tight for headings
+    TIGHT: -0.3, // For headings - simplified from EXTRA_TIGHT and TIGHT
     NORMAL: 0, // Body text default
-    RELAXED: Platform.OS === 'ios' ? 0.3 : 0.2, // Metadata and captions
-    LOOSE: Platform.OS === 'ios' ? 0.5 : 0.3, // Overlines and labels
-    EXTRA_LOOSE: Platform.OS === 'ios' ? 0.8 : 0.4, // Special cases - enhanced readability
+    RELAXED: 0.3, // Metadata and captions - consolidated from RELAXED, LOOSE, EXTRA_LOOSE
   },
 
   // Enhanced line height ratios for optimal readability
   LINE_HEIGHT_MULTIPLIERS: {
-    EXTRA_TIGHT: 1.1, // For large display text
-    TIGHT: 1.2, // Standard headings
+    TIGHT: 1.2, // For headings and compact text
     NORMAL: 1.4, // Body text - optimized for Figtree
-    LOOSE: 1.6, // Captions and metadata
-    EXTRA_LOOSE: 1.8, // Special long-form content
+    LOOSE: 1.6, // Captions and metadata - consolidated from LOOSE and EXTRA_LOOSE
   },
 
   // Semantic color mappings for different content types
@@ -71,30 +66,22 @@ export const TYPOGRAPHY_HIERARCHY = {
 
   // Micro-typography enhancements
   MICRO_ADJUSTMENTS: {
-    // Platform-specific font rendering optimizations
-    RENDERING: {
-      // iOS tends to render fonts slightly bolder
-      WEIGHT_COMPENSATION: Platform.OS === 'ios' ? -50 : 0, // Subtract 50 from font weight on iOS
-      // Android benefits from slightly increased letter spacing
-      SPACING_BOOST: Platform.OS === 'android' ? 0.05 : 0,
-    },
-
-    // Content-specific adjustments
+    // Content-specific adjustments - removed platform-specific differences
     CONTENT_TYPES: {
       CARD_TITLE: {
-        letterSpacing: Platform.OS === 'ios' ? -0.2 : -0.1, // Slightly less tight for smaller font size
+        letterSpacing: -0.15, // Simplified from platform-specific values
         lineHeightMultiplier: 1.2, // Slightly tighter for better vertical rhythm with smaller text
       },
       SECTION_HEADER: {
-        letterSpacing: Platform.OS === 'ios' ? -0.5 : -0.25, // Extra tight for section headers
+        letterSpacing: -0.35, // Simplified from platform-specific values
         lineHeightMultiplier: 1.1, // Very tight for impact
       },
       METADATA: {
-        letterSpacing: Platform.OS === 'ios' ? 0.4 : 0.25, // Extra relaxed for metadata
+        letterSpacing: 0.3, // Simplified from platform-specific values
         lineHeightMultiplier: 1.3, // Compact but readable
       },
       AUTHOR_BYLINE: {
-        letterSpacing: Platform.OS === 'ios' ? 0.2 : 0.15, // Slightly relaxed
+        letterSpacing: 0.15, // Simplified from platform-specific values
         lineHeightMultiplier: 1.25, // Tight but breathable
       },
     },
@@ -117,8 +104,7 @@ export const TYPOGRAPHY_HIERARCHY = {
   },
 } as const;
 
-// Add constants for CollapsibleHeader component
-export const HEADER_HEIGHT = 50;
+// Component-specific constants
 export const HEADER_IMAGE_HEIGHT = 350;
 export const WORD_AREA_MIN_HEIGHT = 364;
 
@@ -142,13 +128,7 @@ export const LAYOUT = {
     BOTTOM: 12,
   },
 
-  // Section spacing system for consistent design
-  SECTION: {
-    // Spacing between different sections (e.g., between "Daily Pick" and "Struggling Words")
-    SPACING_BETWEEN: 24, // XXLARGE - increased for better visual separation and scanning
-    // Spacing within a section (e.g., between section title and content)
-    SPACING_INTERNAL: 8, // SMALL - keep tight for content grouping
-  },
+  // Note: Section spacing moved to SPACING.XXLARGE (between sections) and SPACING.SECTION_INTERNAL (within sections)
 
   // Loader sizes
   LOADER: {
@@ -157,42 +137,31 @@ export const LAYOUT = {
     LARGE: 52,
   },
 
-  // Element spacing
+  // Element spacing - Simplified to 7 essential sizes following Miller's Law
   SPACING: {
-    MICRO: 2, // Minimal spacing for pixel-level tweaks
-    XTINY: 3, // Between MICRO and TINY
-    TINY: 4, // Default tiny spacing
-    XSMALL: 6, // Between TINY and SMALL
+    TINY: 4, // Minimal spacing for tight layouts
     SMALL: 8, // Standard small spacing
     MEDIUM: 12, // Base spacing for most layouts
-    LARGE: 16, // Increased spacing for grouping sections
-    XLARGE: 20, // For emphasized body text and larger secondary headings (no longer used for heading3)
-    XXLARGE: 22, // NEW - for section headers (better hierarchy)
+    LARGE: 16, // Section spacing
+    XLARGE: 20, // Major section separation
+    XXLARGE: 24, // Maximum spacing for visual breaks
+    SECTION_INTERNAL: 8, // Within-section spacing (replaces SECTION.SPACING_INTERNAL)
   },
 
   /**
    * Standardized opacity values for consistent visual appearance
-   *
-   * General purpose opacity values (XLIGHT through FULL) should be used for
-   * static visual elements, while UI state opacities (DISABLED, HOVER, etc.)
-   * should be used for interactive elements in different states.
+   * Simplified to follow Miller's Law - max 7 essential opacity levels
    */
   OPACITY: {
-    // General purpose opacity values
-    XLIGHT: 0.1,
-    LIGHT: 0.3,
-    MEDIUM: 0.5,
-    MEDIUM_HIGH: 0.7,
-    HIGH: 0.85,
-    XHIGH: 0.95,
-    FULL: 1.0,
-    // UI state opacities
-    DISABLED: 0.5,
-    DIMMED: 0.7,
-    HOVER: 0.9,
-    PRESSED: 0.7,
-    OVERLAY: 0.4,
-    ACTIVE: 1,
+    // Visual hierarchy opacities
+    SUBTLE: 0.3, // Barely visible elements
+    MEDIUM: 0.5, // Secondary content, disabled states
+    HIGH: 0.7, // Dimmed or secondary active content
+    FULL: 1.0, // Primary content and active states
+    // Interactive state opacities
+    HOVER: 0.8, // Hover state for interactive elements
+    PRESSED: 0.6, // Pressed/active state
+    OVERLAY: 0.4, // Modal overlays and backgrounds
   },
 
   // Specific component heights
@@ -425,19 +394,19 @@ export const LAYOUT = {
     TITLE: {
       // Main navigation titles (tab screens)
       MAIN: {
-        fontSize: 30, // HUGE - for large iOS titles
-        fontWeight: 'bold' as const,
+        fontSize: 28, // HUGE - matches LAYOUT.TYPOGRAPHY.SCALE.HUGE
+        fontWeight: '700', // BOLD - matches TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD
         marginLeft: -4, // TINY spacing adjustment for iOS alignment
       },
       // Secondary navigation titles (modal/stack screens)
       SECONDARY: {
         fontSize: 20, // XLARGE - standard for secondary screens
-        fontWeight: '600' as const,
+        fontWeight: '600', // SEMIBOLD - matches TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD
       },
       // Compact navigation titles (dense screens)
       COMPACT: {
         fontSize: 17, // LARGE - for compact layouts
-        fontWeight: '600' as const,
+        fontWeight: '600', // SEMIBOLD - matches TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD
       },
     },
   },
@@ -548,15 +517,8 @@ export const createTypographyStyle = (
   }
 };
 
-// Semantic color getter with theme awareness
-export const getSemanticColor = (
-  colorType: keyof typeof TYPOGRAPHY_HIERARCHY.SEMANTIC_COLORS,
-  _isDarkMode: boolean = false
-): string => {
-  const colorName = TYPOGRAPHY_HIERARCHY.SEMANTIC_COLORS[colorType];
-  // This returns the color name to be resolved by the theme system
-  return colorName;
-};
+// Note: getSemanticColor was removed as it only returned the color name without any theme-aware logic
+// Use TYPOGRAPHY_HIERARCHY.SEMANTIC_COLORS[colorType] directly instead
 
 // Enhanced opacity calculator with theme-aware adjustments
 export const getEnhancedOpacity = (

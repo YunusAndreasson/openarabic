@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router';
-import type { JSX} from 'react';
+import type { JSX } from 'react';
 import React, { useCallback, useState } from 'react';
 import { StyleSheet, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -69,7 +69,8 @@ export default function InsightsScreen(): JSX.Element {
           headerShown: true,
           headerTitle: 'Insights',
           headerTitleStyle: {
-            ...LAYOUT.HEADER.TITLE.SECONDARY,
+            fontSize: LAYOUT.HEADER.TITLE.SECONDARY.fontSize,
+            fontWeight: LAYOUT.HEADER.TITLE.SECONDARY.fontWeight as any,
             color: colors.text,
           },
           headerStyle: {
@@ -124,7 +125,6 @@ export default function InsightsScreen(): JSX.Element {
               />
               <EfficiencyChart
                 hideTitle={true}
-                learningWords={0}
                 studyWords={validStudyWords}
                 onInfoPress={handleEfficiencyInfo}
               />

@@ -1,7 +1,6 @@
 import React, { createContext, useCallback, useContext, useState, useEffect, useMemo } from 'react';
 
 import { setGlobalToastHandler } from '../../utils/errorHandling';
-
 import { Toast, type ToastType } from '../Toast';
 
 interface ToastContextType {

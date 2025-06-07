@@ -14,7 +14,7 @@ import { useColors } from '../hooks/useColors';
  */
 
 // Disable prop-types validation since we're using TypeScript types
- 
+
 const BaseCard: React.FC<BaseCardProps> = memo(
   ({
     children,
@@ -114,7 +114,7 @@ const BaseCard: React.FC<BaseCardProps> = memo(
         style={({ pressed }: { pressed: boolean }) => [
           combinedCardStyle,
           pressed && !disabled && includePressAnimation && { opacity: LAYOUT.OPACITY.PRESSED },
-          disabled && { opacity: LAYOUT.OPACITY.DISABLED },
+          disabled && { opacity: LAYOUT.OPACITY.MEDIUM },
         ]}
         onPress={onPress}
         onPressIn={includePressAnimation ? handlePressIn : undefined}

@@ -80,7 +80,7 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
   const shadowStyle = useMemo(
     () => ({
       shadowColor: colors.shadow,
-      shadowOpacity: isDarkMode ? LAYOUT.OPACITY.XLIGHT : LAYOUT.OPACITY.XLIGHT,
+      shadowOpacity: LAYOUT.OPACITY.SUBTLE,
     }),
     [colors.shadow, isDarkMode]
   );
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
       ? {
           shadowOffset: { width: 0, height: 2 },
           shadowRadius: 4,
-          shadowOpacity: LAYOUT.OPACITY.XLIGHT,
+          shadowOpacity: LAYOUT.OPACITY.SUBTLE,
         }
       : {
           elevation: LAYOUT.ELEVATION.SUBTLE,

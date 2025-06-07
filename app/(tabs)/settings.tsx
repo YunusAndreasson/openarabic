@@ -514,13 +514,13 @@ const styles = StyleSheet.create({
   actionIconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: LAYOUT.SPACING.XSMALL,
+    padding: LAYOUT.SPACING.SMALL,
   },
   actionLinkText: {
     marginLeft: LAYOUT.SPACING.SMALL,
   },
   actionLinkChevron: {
-    marginRight: LAYOUT.SPACING.XSMALL,
+    marginRight: LAYOUT.SPACING.SMALL,
     minWidth: LAYOUT.SPACING.XLARGE,
     opacity: LAYOUT.OPACITY.MEDIUM,
     textAlign: 'center',
@@ -545,7 +545,7 @@ const styles = StyleSheet.create({
   },
   appFooterContent: {
     alignItems: 'center',
-    gap: LAYOUT.SPACING.XSMALL,
+    gap: LAYOUT.SPACING.SMALL,
   },
 
   // Setting Row Styles
@@ -649,13 +649,13 @@ const styles = StyleSheet.create({
   socialIconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: LAYOUT.SPACING.XSMALL,
+    padding: LAYOUT.SPACING.SMALL,
   },
   socialLinkText: {
     marginLeft: LAYOUT.SPACING.SMALL,
   },
   socialLinkChevron: {
-    marginRight: LAYOUT.SPACING.XSMALL,
+    marginRight: LAYOUT.SPACING.SMALL,
     minWidth: LAYOUT.SPACING.XLARGE,
     opacity: LAYOUT.OPACITY.MEDIUM,
     textAlign: 'center',
@@ -673,7 +673,7 @@ const styles = StyleSheet.create({
 
   versionText: {
     letterSpacing: 0.4,
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
+    opacity: LAYOUT.OPACITY.HIGH,
   },
 });
 

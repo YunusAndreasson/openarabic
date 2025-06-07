@@ -13,8 +13,8 @@ import ErrorMessage from '@/components/vocabulary/ErrorMessage';
 import { VocabularyStatCards } from '@/components/vocabulary/VocabularyStatCards';
 import { LAYOUT } from '@/constants/layout';
 import { useNavigationWithDebounce } from '@/hooks';
-import { useAppPreloader } from '@/hooks/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useAppPreloader } from '@/hooks/useAppPreloader';
 import { useColors } from '@/hooks/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useVocabularyChartData } from '@/hooks/vocabulary/useVocabularyChartData';
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   loadingContainer: {
     alignItems: 'center',
     marginBottom: LAYOUT.SPACING.SMALL,
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
+    opacity: LAYOUT.OPACITY.HIGH,
     paddingVertical: LAYOUT.SPACING.TINY, // Subtle loading indicator
   },
 });

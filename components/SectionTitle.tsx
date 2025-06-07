@@ -92,8 +92,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: LAYOUT.SECTION.SPACING_INTERNAL,
-    marginTop: LAYOUT.SECTION.SPACING_BETWEEN,
+    marginBottom: LAYOUT.SPACING.SECTION_INTERNAL,
+    marginTop: LAYOUT.SPACING.XXLARGE,
   },
   firstSection: {
     marginTop: LAYOUT.SPACING.XLARGE,

@@ -1,2 +1,2 @@
 export * from './useAuth';
-export * from './useProvideAuth';
+export { useProvideAuth } from './useProvideAuth';

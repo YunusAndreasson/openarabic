@@ -30,7 +30,6 @@ interface TouchableIconProps {
   hitSlop?: { top: number; right: number; bottom: number; left: number };
 }
 
- 
 const TouchableIcon: React.FC<TouchableIconProps> = memo(
   ({
     name,
@@ -87,7 +86,7 @@ const TouchableIcon: React.FC<TouchableIconProps> = memo(
           {
             width: touchTargetSize,
             height: touchTargetSize,
-            opacity: disabled ? LAYOUT.OPACITY.DISABLED : 1,
+            opacity: disabled ? LAYOUT.OPACITY.MEDIUM : 1,
           },
           style,
         ]}

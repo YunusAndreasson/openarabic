@@ -26,8 +26,8 @@ import type { RootState } from '@/store/store';
 
 import figtreeFont from '../assets/fonts/Figtree.ttf';
 import madinaFont from '../assets/fonts/Madina.otf';
-import { useAppPreloader } from '../hooks/useAppPreloader';
 import { useAuth } from '../hooks/auth/useAuth';
+import { useAppPreloader } from '../hooks/useAppPreloader';
 import { useSystemUITheme } from '../hooks/useSystemUITheme';
 import { analytics } from '../services/analytics';
 import { useAppDispatch, useAppSelector } from '../store/hooks';

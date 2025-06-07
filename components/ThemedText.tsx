@@ -90,7 +90,7 @@ function ThemedTextComponent({
 
   // Consolidated style computation with enhanced opacity handling
   const { finalStyle } = useMemo(() => {
-    const textColor = getTextColor(colors, variant, colorName, skipDefaultColor, isDarkMode);
+    const textColor = getTextColor(colors, variant, colorName, skipDefaultColor);
 
     if (type === 'arabic') {
       return {
@@ -155,9 +155,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.ENGLISH,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.REGULAR,
-    letterSpacing:
-      TYPOGRAPHY_HIERARCHY.LETTER_SPACING.NORMAL +
-      TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.RENDERING.SPACING_BOOST,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.NORMAL,
     lineHeight:
       LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
     opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY,
@@ -183,7 +181,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.ENGLISH,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.EXTRA_TIGHT,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.TIGHT,
     opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY,
   },
@@ -230,7 +228,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.ENGLISH,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.EXTRA_LOOSE,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
     opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.TERTIARY,
     textTransform: 'uppercase',

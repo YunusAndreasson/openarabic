@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   timerLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     letterSpacing: 0.2,
-    marginLeft: LAYOUT.SPACING.XTINY,
+    marginLeft: LAYOUT.SPACING.TINY,
   },
   wrapper: {
     bottom: LAYOUT.BOTTOM_BAR.HEIGHT - LAYOUT.SPACING.LARGE,

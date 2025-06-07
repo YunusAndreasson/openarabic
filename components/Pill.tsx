@@ -227,7 +227,7 @@ const getFilterStyle = (
     ? {
         shadowColor: colors.shadow,
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: LAYOUT.OPACITY.XLIGHT,
+        shadowOpacity: LAYOUT.OPACITY.SUBTLE,
         shadowRadius: 3,
       }
     : {

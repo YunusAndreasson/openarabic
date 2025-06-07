@@ -74,21 +74,21 @@ const styles = StyleSheet.create({
     borderRadius: 6 / 2,
     flexShrink: 0,
     height: 6,
-    marginRight: LAYOUT.SPACING.XSMALL,
+    marginRight: LAYOUT.SPACING.SMALL,
     width: 12,
   },
   legendBar: {
     borderRadius: 6 / 2,
     flexShrink: 0,
     height: 6,
-    marginRight: LAYOUT.SPACING.XSMALL,
+    marginRight: LAYOUT.SPACING.SMALL,
     width: 12,
   },
   legendDot: {
     borderRadius: 6 / 2,
     flexShrink: 0,
     height: 6,
-    marginRight: LAYOUT.SPACING.XSMALL,
+    marginRight: LAYOUT.SPACING.SMALL,
     width: 6,
   },
   legendItem: {
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     borderRadius: 2 / 2,
     flexShrink: 0,
     height: 2,
-    marginRight: LAYOUT.SPACING.XSMALL,
+    marginRight: LAYOUT.SPACING.SMALL,
     width: 12,
   },
   legendText: {

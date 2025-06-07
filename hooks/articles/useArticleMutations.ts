@@ -3,12 +3,12 @@ import { router } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 
 // Services
+import { useToast } from '@/components/providers/ToastProvider';
 import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 
-import { useToast } from '@/components/providers/ToastProvider';
 
 interface ArticleMutationsResult {
   handleToggleReadingList: (articleId: number | undefined, isInReadingList: boolean) => void;
