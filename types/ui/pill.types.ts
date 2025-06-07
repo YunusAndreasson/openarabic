@@ -141,15 +141,3 @@ export interface FilterListProps<T extends FilterItem> {
   itemAnimationDelay?: number;
 }
 
-export interface PillStyleProps {
-  style?: StyleProp<ViewStyle>;
-  textStyle?: StyleProp<TextStyle>;
-  backgroundColor?: string;
-  textColor?: string;
-  borderColor?: string;
-  borderWidth?: number;
-  borderRadius?: number;
-  padding?: number;
-  margin?: number;
-  [key: string]: StyleProp<TextStyle | ViewStyle> | number | string | undefined;
-}
