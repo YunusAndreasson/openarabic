@@ -2,7 +2,6 @@ import type { TextStyle } from 'react-native';
 import { Dimensions, Platform } from 'react-native';
 
 export const SCREEN_WIDTH = Dimensions.get('window').width;
-export const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 // Font family constants
 export const FONTS = {
@@ -105,7 +104,6 @@ export const TYPOGRAPHY_HIERARCHY = {
 } as const;
 
 // Component-specific constants
-export const HEADER_IMAGE_HEIGHT = 150; // Reduced for cleaner article view
 export const WORD_AREA_MIN_HEIGHT = 364;
 
 // Minimum touch target sizes for accessibility compliance
@@ -432,89 +430,6 @@ export const getArabicTextStyle = (
     textAlignVertical: 'center',
     ...additionalStyles,
   };
-};
-
-// Advanced typography utility functions
-export const createTypographyStyle = (
-  fontSize: number,
-  type: 'heading' | 'body' | 'caption' | 'metadata' | 'author',
-  importance: 'primary' | 'secondary' | 'tertiary' | 'accent' = 'primary'
-): TextStyle => {
-  const baseStyle: TextStyle = {
-    fontFamily: FONTS.ENGLISH,
-    fontSize,
-  };
-
-  // Apply type-specific adjustments
-  switch (type) {
-    case 'heading':
-      return {
-        ...baseStyle,
-        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
-        letterSpacing:
-          TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.SECTION_HEADER.letterSpacing,
-        lineHeight:
-          fontSize *
-          TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.SECTION_HEADER.lineHeightMultiplier,
-        opacity:
-          importance === 'primary'
-            ? TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY
-            : TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.SECONDARY,
-      };
-
-    case 'body':
-      return {
-        ...baseStyle,
-        fontWeight:
-          importance === 'primary'
-            ? TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD
-            : TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
-        letterSpacing:
-          TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
-        lineHeight:
-          fontSize *
-          TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.lineHeightMultiplier,
-        opacity:
-          TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY[
-            importance.toUpperCase() as keyof typeof TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY
-          ],
-      };
-
-    case 'caption':
-      return {
-        ...baseStyle,
-        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
-        letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
-        lineHeight: fontSize * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
-        opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.TERTIARY,
-      };
-
-    case 'metadata':
-      return {
-        ...baseStyle,
-        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
-        letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.METADATA.letterSpacing,
-        lineHeight:
-          fontSize *
-          TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.METADATA.lineHeightMultiplier,
-        opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.TERTIARY,
-      };
-
-    case 'author':
-      return {
-        ...baseStyle,
-        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
-        letterSpacing:
-          TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.AUTHOR_BYLINE.letterSpacing,
-        lineHeight:
-          fontSize *
-          TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.AUTHOR_BYLINE.lineHeightMultiplier,
-        opacity: TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.SECONDARY,
-      };
-
-    default:
-      return baseStyle;
-  }
 };
 
 // Note: getSemanticColor was removed as it only returned the color name without any theme-aware logic
