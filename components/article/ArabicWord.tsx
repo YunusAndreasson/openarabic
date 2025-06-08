@@ -15,7 +15,7 @@ import type { TextWeight } from '@/types/ui/text.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { lightFeedback } from '@/utils/haptics';
 
-import { EnhancedWordTooltip } from './EnhancedWordTooltip';
+import { WordTooltip } from './WordTooltip';
 
 // Global counter for tooltip zIndex values with circular increment
 const MIN_Z_INDEX = LAYOUT.Z_INDEX.TOOLTIP;
@@ -256,10 +256,9 @@ function ArabicWordComponent({
         </Animated.View>
       </TouchableOpacity>
       {tooltipVisible && absoluteLayout ? (
-        <EnhancedWordTooltip
+        <WordTooltip
           layout={absoluteLayout}
-          arabicWord={word.word_form}
-          englishTranslation={word.english}
+          text={word.english}
           visible={tooltipVisible}
           zIndex={tooltipZIndex}
           onClose={handleTooltipClose}

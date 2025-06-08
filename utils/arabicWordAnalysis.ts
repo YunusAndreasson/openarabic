@@ -154,10 +154,86 @@ export function analyzeArabicWord(arabic: string, english: string): WordAnalysis
 }
 
 /**
- * Formats the analysis for display in the tooltip
+ * Reconstructs Arabic word components in proper RTL order
+ */
+function reconstructArabicRTL(analysis: WordAnalysis): {
+  segments: { text: string; colorName: string; type: string }[];
+  totalText: string;
+} {
+  const segments: { text: string; colorName: string; type: string }[] = [];
+  let reconstructedWord = analysis.original.arabic;
+
+  // Sort components by position in the original word for proper RTL reconstruction
+  const sortedComponents = [...analysis.components].sort((a, b) => {
+    const indexA = analysis.original.arabic.indexOf(a.arabicMatch);
+    const indexB = analysis.original.arabic.indexOf(b.arabicMatch);
+    return indexA - indexB;
+  });
+
+  // Track what's been processed
+  let processedIndices = new Set<number>();
+
+  for (const analyzedComponent of sortedComponents) {
+    const startIndex = analysis.original.arabic.indexOf(analyzedComponent.arabicMatch);
+    const endIndex = startIndex + analyzedComponent.arabicMatch.length;
+
+    // Skip if this part was already processed (overlapping components)
+    let overlap = false;
+    for (let i = startIndex; i < endIndex; i++) {
+      if (processedIndices.has(i)) {
+        overlap = true;
+        break;
+      }
+    }
+
+    if (!overlap) {
+      const config = COMPONENT_TYPE_CONFIG[analyzedComponent.component.type];
+      segments.push({
+        text: analyzedComponent.arabicMatch,
+        colorName: config.colorName,
+        type: analyzedComponent.component.type,
+      });
+
+      // Mark indices as processed
+      for (let i = startIndex; i < endIndex; i++) {
+        processedIndices.add(i);
+      }
+    }
+  }
+
+  // Add remaining parts (root) if any
+  if (analysis.remainingArabic && analysis.remainingArabic.trim().length > 0) {
+    segments.push({
+      text: analysis.remainingArabic.trim(),
+      colorName: 'text', // Main text color for root
+      type: 'root',
+    });
+  }
+
+  // If no segments were created, use the whole word as root
+  if (segments.length === 0) {
+    segments.push({
+      text: analysis.original.arabic,
+      colorName: 'text',
+      type: 'root',
+    });
+  }
+
+  return {
+    segments,
+    totalText: reconstructedWord,
+  };
+}
+
+/**
+ * Formats the analysis for display in the tooltip with color-coded RTL support
  */
 export function formatWordAnalysis(analysis: WordAnalysis): {
   title: string;
+  reconstructedArabic?: {
+    segments: { text: string; colorName: string; type: string }[];
+    totalText: string;
+  };
   sections: {
     type: 'original' | 'components' | 'root';
     content: string;
@@ -182,8 +258,14 @@ export function formatWordAnalysis(analysis: WordAnalysis): {
     content: analysis.original.english,
   });
 
+  let reconstructedArabic;
+
   // If we found components, show them with clear Arabic-to-English mapping
   if (analysis.hasComponents) {
+    // Generate properly reconstructed RTL Arabic word with colors
+    reconstructedArabic = reconstructArabicRTL(analysis);
+
+    // Create sections for each component with matching colors
     for (const analyzedComponent of analysis.components) {
       const config = COMPONENT_TYPE_CONFIG[analyzedComponent.component.type];
       const englishPart =
@@ -217,7 +299,7 @@ export function formatWordAnalysis(analysis: WordAnalysis): {
           content: `${remainingArabicDisplay} → ${analysis.remainingEnglish}`,
           arabicPart: remainingArabicDisplay,
           englishPart: analysis.remainingEnglish,
-          colorName: 'textTertiary',
+          colorName: 'text', // Use main text color for root
           icon: '→',
         });
       } else {
@@ -226,7 +308,7 @@ export function formatWordAnalysis(analysis: WordAnalysis): {
           type: 'root',
           content: `● ${analysis.remainingEnglish}`,
           englishPart: analysis.remainingEnglish,
-          colorName: 'textTertiary',
+          colorName: 'text', // Use main text color for root
           icon: '●',
         });
       }
@@ -235,6 +317,7 @@ export function formatWordAnalysis(analysis: WordAnalysis): {
 
   return {
     title: analysis.original.arabic,
+    reconstructedArabic,
     sections,
   };
 }
