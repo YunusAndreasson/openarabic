@@ -5,7 +5,7 @@ import {
   View,
   Modal,
   TouchableWithoutFeedback,
-  Dimensions,
+  useWindowDimensions,
   TouchableOpacity,
 } from 'react-native';
 import Animated, {
@@ -54,7 +54,7 @@ const SleepTimerComponent = ({
 }: SleepTimerProps) => {
   const colors = useColors();
   const [selectedMinutes, setSelectedMinutes] = useState(15);
-  const screenHeight = Dimensions.get('window').height;
+  const { height: screenHeight } = useWindowDimensions();
 
   // Animation values
   const backdropOpacity = useSharedValue(0);

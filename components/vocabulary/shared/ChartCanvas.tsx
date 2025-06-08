@@ -4,7 +4,7 @@ import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ChartTooltipData, DataPointOverlay, useChartTooltip } from './ChartInteractivity';
-import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE } from './constants';
+import { useGraphWidth, GRAPH_HEIGHT_LARGE } from './constants';
 
 export interface DataPoint {
   x: number;
@@ -34,12 +34,14 @@ interface ChartCanvasProps {
 export const ChartCanvas = memo(
   ({
     children,
-    width = GRAPH_WIDTH,
+    width,
     height = GRAPH_HEIGHT_LARGE,
     dataPoints = [],
     enableTooltips = true,
     accessibilityLabel = 'Chart visualization',
   }: ChartCanvasProps) => {
+    const graphWidth = useGraphWidth();
+    const resolvedWidth = width ?? graphWidth;
     const { tooltip, showTooltip } = useChartTooltip();
 
     return (
@@ -47,10 +49,10 @@ export const ChartCanvas = memo(
         accessibilityLabel={accessibilityLabel}
         accessibilityRole="image"
         accessible={true}
-        style={[styles.container, { width, height }]}
+        style={[styles.container, { width: resolvedWidth, height }]}
       >
         {/* Main Chart Canvas */}
-        <Canvas style={{ width, height }}>{children}</Canvas>
+        <Canvas style={{ width: resolvedWidth, height }}>{children}</Canvas>
 
         {/* Interactive Data Point Overlays */}
         {enableTooltips &&

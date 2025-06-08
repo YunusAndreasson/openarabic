@@ -24,7 +24,7 @@ import {
 } from '@/components/vocabulary/shared';
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import { generateChartSubtitle, CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/components/vocabulary/shared/chartMessages';
-import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_7, CHART_VISUAL } from '@/components/vocabulary/shared/constants';
+import { useGraphWidth, GRAPH_HEIGHT_LARGE, DAYS_7, CHART_VISUAL } from '@/components/vocabulary/shared/constants';
 import {
   generateDateRange,
   createStandardizedPerformanceZones,
@@ -41,6 +41,7 @@ export const MasteryChart = memo(
   ({ studyWords = [], onInfoPress, hideTitle = false }: MasteryChartProps) => {
     const chartColors = useChartColors();
     const colors = useColors();
+    const graphWidth = useGraphWidth();
 
     // Add top padding to prevent dots from being cut off
     const TOP_PADDING = CHART_VISUAL.CHART_TOP_PADDING; // Optimized space for data points
@@ -103,7 +104,7 @@ export const MasteryChart = memo(
       }
 
       const maxRate = Math.max(100, Math.max(...masteryData.map(d => d.masteryRate))); // Always use 100% as ceiling
-      const stepX = GRAPH_WIDTH / Math.max(1, masteryData.length - 1); // Prevent division by zero
+      const stepX = graphWidth / Math.max(1, masteryData.length - 1); // Prevent division by zero
 
       // Add top padding to prevent dots from being cut off
       const chartHeight = GRAPH_HEIGHT_LARGE - TOP_PADDING;
@@ -240,7 +241,7 @@ export const MasteryChart = memo(
                 gridLines={4}
                 height={GRAPH_HEIGHT_LARGE}
                 topPadding={TOP_PADDING}
-                width={GRAPH_WIDTH}
+                width={graphWidth}
               />
 
               {/* Area fill under the mastery line with gradient - rendered first as base */}
@@ -249,7 +250,7 @@ export const MasteryChart = memo(
                   <Path
                     path={createAreaFillPath(
                       chartData.masteryPath,
-                      GRAPH_WIDTH,
+                      graphWidth,
                       GRAPH_HEIGHT_LARGE
                     )}
                   >
@@ -272,7 +273,7 @@ export const MasteryChart = memo(
                         color={colors.white}
                         path={createAreaFillPath(
                           chartData.masteryPath,
-                          GRAPH_WIDTH,
+                          graphWidth,
                           GRAPH_HEIGHT_LARGE
                         )}
                       />
@@ -283,7 +284,7 @@ export const MasteryChart = memo(
                         key={`performance-zone-${zone.min}-${zone.max}`}
                         color={chartColors.withOpacity(zone.color, 0.25)}
                         height={zone.height}
-                        width={GRAPH_WIDTH}
+                        width={graphWidth}
                         x={0}
                         y={zone.y}
                       />
@@ -353,7 +354,7 @@ export const MasteryChart = memo(
             height={GRAPH_HEIGHT_LARGE}
             showYAxis={true}
             topPadding={TOP_PADDING}
-            width={GRAPH_WIDTH}
+            width={graphWidth}
             xLabelPositions={chartData.dataPoints.map(point => point.x)}
             yMax={100}
             xLabels={masteryData.map(data =>

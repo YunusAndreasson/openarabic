@@ -5,7 +5,7 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View, Platform, ActivityIndicator } from 'react-native';
 
 import { DEFAULT_IMAGES } from '@/constants/images';
-import { LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY, getEnhancedOpacity } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY, getEnhancedOpacity, useScreenWidth } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type {
@@ -108,7 +108,6 @@ const styles = StyleSheet.create({
   imageContainer: {
     borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    height: Math.round((SCREEN_WIDTH - LAYOUT.SCREEN_EDGE_PADDING * 2) / GOLDEN_RATIO_ADJUSTED),
     overflow: 'hidden',
     position: 'relative',
     width: '100%',
@@ -116,7 +115,6 @@ const styles = StyleSheet.create({
   },
   loadingComponentContainer: {
     alignItems: 'center',
-    height: Math.round((SCREEN_WIDTH - LAYOUT.SCREEN_EDGE_PADDING * 2) / GOLDEN_RATIO_ADJUSTED),
     justifyContent: 'center',
     width: '100%',
   },
@@ -153,10 +151,19 @@ const isCompactVariant = (p: ThemedCardProps): p is CompactCardProps =>
   'variant' in p && p.variant === 'compact';
 
 // Loading component moved outside to prevent recreation
-const LoadingComponent = ({ isDarkMode, colors }: { isDarkMode: boolean; colors: ThemeColors }) => (
+const LoadingComponent = ({
+  isDarkMode,
+  colors,
+  style: additionalStyle,
+}: {
+  isDarkMode: boolean;
+  colors: ThemeColors;
+  style?: StyleProp<ViewStyle>;
+}) => (
   <View
     style={[
       styles.loadingComponentContainer,
+      additionalStyle,
       { backgroundColor: isDarkMode ? colors.cardBackground : colors.overlay },
     ]}
   >
@@ -170,6 +177,18 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
+  const screenWidth = useScreenWidth();
+  const imageHeight = useMemo(
+    () => Math.round((screenWidth - LAYOUT.SCREEN_EDGE_PADDING * 2) / GOLDEN_RATIO_ADJUSTED),
+    [screenWidth]
+  );
+  const dynamicStyles = useMemo(
+    () => ({
+      imageContainer: { height: imageHeight },
+      loadingComponentContainer: { height: imageHeight },
+    }),
+    [imageHeight]
+  );
   const isCompact = variant === 'compact';
   const isArticle = variant === 'article';
 
@@ -268,7 +287,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
     if (!isArticle) return null;
     return (
       <>
-        <View style={styles.imageContainer}>
+        <View style={[styles.imageContainer, dynamicStyles.imageContainer]}>
           <EnhancedImage
             allowDownscaling={false}
             alt={`Image for ${title || 'Article'}`}
@@ -503,7 +522,13 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
     return (
       <BaseCard
         isLoading={true}
-        loadingComponent={<LoadingComponent colors={colors} isDarkMode={isDarkMode} />}
+        loadingComponent={
+          <LoadingComponent
+            colors={colors}
+            isDarkMode={isDarkMode}
+            style={dynamicStyles.loadingComponentContainer}
+          />
+        }
         style={[isCompact && styles.compactContainer, style as StyleProp<ViewStyle>]}
         onPress={pressHandler}
       >

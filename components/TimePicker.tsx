@@ -6,7 +6,7 @@ import {
   Modal,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -44,7 +44,7 @@ export const TimePicker = memo(
     const colors = useColors();
     const [selectedHour, setSelectedHour] = useState(initialHour);
     const [selectedMinute, setSelectedMinute] = useState(initialMinute);
-    const screenHeight = Dimensions.get('window').height;
+    const { height: screenHeight } = useWindowDimensions();
 
     const backdropOpacity = useSharedValue(0);
     const modalTranslateY = useSharedValue(screenHeight);

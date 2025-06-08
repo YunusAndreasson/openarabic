@@ -24,7 +24,7 @@ import {
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import { handleError } from '@/utils/errorHandling';
 
-import { SCREEN_WIDTH } from '@/constants/layout';
+import { useScreenWidth } from '@/constants/layout';
 
 import { TIMING_CONFIG } from './animationConfigs';
 import type { SharedValue } from './types';
@@ -159,11 +159,13 @@ export const useTransformAnimation = (
     stiffness,
   } = options;
 
+  const screenWidth = useScreenWidth();
+
   // For slide animations, calculate the start position based on direction
   const startPosition = useMemo(
     () =>
-      type === 'slide' ? (direction === 'right' ? SCREEN_WIDTH : -SCREEN_WIDTH) : initialValue,
-    [type, direction, initialValue]
+      type === 'slide' ? (direction === 'right' ? screenWidth : -screenWidth) : initialValue,
+    [type, direction, initialValue, screenWidth]
   );
 
   // Initialize the shared value

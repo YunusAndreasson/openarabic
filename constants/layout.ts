@@ -1,7 +1,9 @@
 import type { TextStyle } from 'react-native';
-import { Dimensions, Platform } from 'react-native';
+import { Platform, useWindowDimensions } from 'react-native';
 
-export const SCREEN_WIDTH = Dimensions.get('window').width;
+export const useScreenWidth = (): number => {
+  return useWindowDimensions().width;
+};
 
 // Font family constants
 export const FONTS = {

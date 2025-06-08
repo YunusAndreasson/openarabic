@@ -24,7 +24,7 @@ import {
 } from '@/components/vocabulary/shared';
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import { generateChartSubtitle, CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/components/vocabulary/shared/chartMessages';
-import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_7, CHART_VISUAL } from '@/components/vocabulary/shared/constants';
+import { useGraphWidth, GRAPH_HEIGHT_LARGE, DAYS_7, CHART_VISUAL } from '@/components/vocabulary/shared/constants';
 import {
   generateDateRange,
   isSameDay,
@@ -43,6 +43,7 @@ export const EfficiencyChart = memo(
   ({ studyWords = [], onInfoPress, hideTitle = false }: EfficiencyChartProps) => {
     const chartColors = useChartColors();
     const colors = useColors();
+    const graphWidth = useGraphWidth();
 
     // Calculate efficiency data over the last 7 days
     const efficiencyData = useMemo(() => {
@@ -96,7 +97,7 @@ export const EfficiencyChart = memo(
         100,
         Math.max(...efficiencyData.map(d => d.averageEfficiency))
       );
-      const stepX = GRAPH_WIDTH / (efficiencyData.length - 1);
+      const stepX = graphWidth / (efficiencyData.length - 1);
 
       // Create smooth curve using Skia Path
       const path = Skia.Path.Make();
@@ -212,7 +213,7 @@ export const EfficiencyChart = memo(
               enableTooltips={true}
             >
               {/* Subtle grid lines for better visual structure */}
-              <ChartGrid gridLines={4} height={GRAPH_HEIGHT_LARGE} width={GRAPH_WIDTH} />
+              <ChartGrid gridLines={4} height={GRAPH_HEIGHT_LARGE} width={graphWidth} />
 
               {/* Area fill under the efficiency line with gradient - rendered first as base */}
               <Group>
@@ -220,7 +221,7 @@ export const EfficiencyChart = memo(
                   <Path
                     path={createAreaFillPath(
                       chartData.efficiencyPath,
-                      GRAPH_WIDTH,
+                      graphWidth,
                       GRAPH_HEIGHT_LARGE
                     )}
                   >
@@ -243,7 +244,7 @@ export const EfficiencyChart = memo(
                         color={colors.white}
                         path={createAreaFillPath(
                           chartData.efficiencyPath,
-                          GRAPH_WIDTH,
+                          graphWidth,
                           GRAPH_HEIGHT_LARGE
                         )}
                       />
@@ -254,7 +255,7 @@ export const EfficiencyChart = memo(
                         key={`performance-zone-${zone.color}-${zone.y}`}
                         color={chartColors.withOpacity(zone.color, 0.25)}
                         height={zone.height}
-                        width={GRAPH_WIDTH}
+                        width={graphWidth}
                         x={0}
                         y={zone.y}
                       />
@@ -306,7 +307,7 @@ export const EfficiencyChart = memo(
             height={GRAPH_HEIGHT_LARGE}
             showYAxis={true}
             topPadding={0}
-            width={GRAPH_WIDTH}
+            width={graphWidth}
             xLabelPositions={chartData.dataPoints.map(point => point.x)}
             yMax={100}
             xLabels={efficiencyData.map(data =>

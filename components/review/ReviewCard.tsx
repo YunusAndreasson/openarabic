@@ -9,14 +9,14 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 
-import { SCREEN_WIDTH, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
+import { WORD_AREA_MIN_HEIGHT, useScreenWidth } from '@/constants/layout';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 
 import WordDisplay from './WordDisplay';
 
 // Animation config constants
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.04;
+const SWIPE_THRESHOLD_RATIO = 0.04;
 const RESET_CONFIG = { duration: 150 }; // Faster reset animation
 
 // Styles moved outside component
@@ -63,6 +63,8 @@ const ReviewCard = memo(function ReviewCard({
   const translateX = useSharedValue(0);
   const isAnimatingRef = useSharedValue(false);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const screenWidth = useScreenWidth();
+  const SWIPE_THRESHOLD = screenWidth * SWIPE_THRESHOLD_RATIO;
 
   // Reset position function with callback
   const resetPosition = useCallback(() => {
@@ -113,7 +115,15 @@ const ReviewCard = memo(function ReviewCard({
             runOnJS(resetPosition)();
           }
         }),
-    [isUpdating, isTransitioning, isAnimatingRef, translateX, handleSwipeComplete, resetPosition]
+    [
+      isUpdating,
+      isTransitioning,
+      isAnimatingRef,
+      translateX,
+      handleSwipeComplete,
+      resetPosition,
+      screenWidth,
+    ]
   );
 
   // Create tap gesture - memoized
