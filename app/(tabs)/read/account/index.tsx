@@ -19,11 +19,10 @@ import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useReminders } from '@/hooks/notifications/useReminders';
 import { useColors } from '@/hooks/theme/useColors';
+import pkg from '@/package.json';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
 import { lightFeedback } from '@/utils/haptics';
-
-import pkg from '@/package.json';
 
 // Memoized components
 interface SettingLabelProps {

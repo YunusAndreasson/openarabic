@@ -3,7 +3,6 @@ import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import BaseCard from '@/components/BaseCard';
-import SectionTitle from '@/components/SectionTitle';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -11,7 +10,7 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 const styles = StyleSheet.create({
   filterSectionContainer: {
-    // Removed margins - SectionTitle handles all section spacing
+    marginTop: LAYOUT.SPACING.XLARGE,
   },
 });
 
@@ -22,7 +21,6 @@ interface FilterItem {
 }
 
 interface FilterSectionProps {
-  title?: string;
   items: FilterItem[];
   onSelect: (id: number, name?: string) => void;
 }
@@ -92,13 +90,12 @@ const compactCardStyles = StyleSheet.create({
   },
 });
 
-const FilterSection = memo(({ title, items, onSelect }: FilterSectionProps): JSX.Element => {
+const FilterSection = memo(({ items, onSelect }: FilterSectionProps): JSX.Element => {
   return (
     <View style={styles.filterSectionContainer}>
-      {title && <SectionTitle title={title} />}
       {items.map(item => (
         <CompactNavCard
-          key={`${title || 'filter'}-${item.id}`}
+          key={`filter-${item.id}`}
           count={item.count}
           label={capitalizeFirstLetter(item.name)}
           onPress={() => onSelect(item.id, item.name)}

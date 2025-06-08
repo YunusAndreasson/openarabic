@@ -14,7 +14,7 @@ import RepeatButton from '@/components/listen/RepeatButton';
 import { WordDisplay } from '@/components/review';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
-import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
+import { useAudioPlayer, AUDIO_STATES } from '@/hooks/audio/useAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
@@ -55,8 +55,9 @@ export default function ListenScreen(): JSX.Element {
   const maxProgressRef = useRef(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selectedTracksRef = useRef<EnhancedAudioTrack[]>([]);
-  const lastAudioStateRef = useRef('');
+  const lastAudioStateRef = useRef<string>(AUDIO_STATES.IDLE);
   const playbackCompletedRef = useRef(false);
+  const hasStartedPlayback = useRef(false);
 
   // Animation
   const { animatedStyle, fadeIn, fadeOut } = useOpacityAnimation({
@@ -119,33 +120,17 @@ export default function ListenScreen(): JSX.Element {
     handleTrackChange();
   }, [currentTrackIndex, handleTrackChange]);
 
-  // Detect when the audio state changes to idle after playing
+  // Track audio state changes for completion
   useEffect(() => {
-    // Track state transitions
     if (audioState !== lastAudioStateRef.current) {
-      console.log('🎵 Audio state changed:', lastAudioStateRef.current, '->', audioState);
-      // If we were playing and now we're idle, check if we've reached the end of the queue
-      const wasPlaying = lastAudioStateRef.current === 'playing';
-      const isNowIdle = audioState === 'idle';
-
-      if (wasPlaying && isNowIdle) {
-        // Only mark as completed if we're at the end of the queue (no current track)
-        // The useAudioPlayer will clear currentTrack when the queue is finished
-        console.log(
-          '🎵 Playing->Idle transition, currentTrackIndex:',
-          currentTrackIndex,
-          'queue length:',
-          selectedTracksRef.current.length
-        );
-        if (currentTrackIndex === -1 || currentTrackIndex >= selectedTracksRef.current.length - 1) {
-          console.log('🎵 Marking playback as completed');
-          playbackCompletedRef.current = true;
-        }
-      }
-
       lastAudioStateRef.current = audioState;
+
+      // When audio finishes or stops, mark practice as completed
+      if (audioState === AUDIO_STATES.IDLE && hasStartedPlayback.current) {
+        setIsComplete(true);
+      }
     }
-  }, [audioState, currentTrackIndex]);
+  }, [audioState]);
 
   // Initialize word list and start playback
   useEffect(() => {
@@ -159,7 +144,6 @@ export default function ListenScreen(): JSX.Element {
       try {
         // Get random vocabulary tracks (await the promise)
         const selectedTracks = await listenAudioService.getRandomVocabularyTracks(allWords, 20);
-        console.log('🎵 Generated tracks:', selectedTracks.length);
         selectedTracksRef.current = selectedTracks;
 
         // Keep the original study words for reference
@@ -202,10 +186,7 @@ export default function ListenScreen(): JSX.Element {
           }
 
           timeoutRef.current = setTimeout(() => {
-            console.log('🎵 Starting audio playback with', selectedTracks.length, 'tracks');
-            console.log('🎵 First track:', selectedTracks[0]);
             actionsRef.current.startEnhancedPlayback(selectedTracks, 0).catch(error => {
-              console.error('🚨 Failed to start audio playback:', error);
               handleError(
                 error instanceof Error ? error : new Error('Failed to start audio playback')
               );

@@ -64,17 +64,15 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
 
   // Create audio player with current track source - following expo-audio docs pattern exactly
   const audioSource = currentTrack ? { uri: currentTrack.audioUrl } : null;
-  console.log('🎵 useAudioPlayer: Creating audio player with source:', audioSource);
   const audioPlayer = useExpoAudioPlayer(audioSource);
 
   // Use the proper expo-audio status hook
   const status = useAudioPlayerStatus(audioPlayer);
-  console.log('🎵 useAudioPlayer: Player status:', status);
 
   // Check for player errors
   useEffect(() => {
     if (currentTrack && !status?.isLoaded && status?.playbackState === 'unknown') {
-      console.warn('🟡 useAudioPlayer: Player struggling to load track:', currentTrack.audioUrl);
+      // Player having trouble loading track
     }
   }, [status, currentTrack]);
 
@@ -120,18 +118,6 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
               ? AUDIO_STATES.STOPPED
               : AUDIO_STATES.IDLE;
 
-    console.log(
-      '🎵 useAudioPlayer: Audio state calculated:',
-      newState,
-      '- isLoading:',
-      isLoading,
-      'currentTrack:',
-      !!currentTrack,
-      'isPlayerLoaded:',
-      isPlayerLoaded,
-      'isPlaying:',
-      isPlaying
-    );
     return newState;
   }, [isLoading, isPlaying, isPaused, currentTrack, isPlayerLoaded]);
 
@@ -164,18 +150,7 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
 
   // Handle auto-play when player and track are ready
   useEffect(() => {
-    console.log(
-      '🎵 useAudioPlayer: Auto-play effect - shouldAutoPlay:',
-      shouldAutoPlay,
-      'audioPlayer:',
-      !!audioPlayer,
-      'currentTrack:',
-      !!currentTrack,
-      'isPlayerLoaded:',
-      isPlayerLoaded
-    );
     if (shouldAutoPlay && audioPlayer && currentTrack && isPlayerLoaded) {
-      console.log('🎵 useAudioPlayer: Auto-play triggered for track:', currentTrack.title);
       // Clear the flag immediately to prevent multiple calls
       setShouldAutoPlay(false);
 
@@ -184,11 +159,10 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
         try {
           // Defensive call to play()
           if (typeof audioPlayer.play === 'function') {
-            console.log('🎵 useAudioPlayer: Calling audioPlayer.play()');
             audioPlayer.play();
           }
-        } catch (error) {
-          console.error('🚨 useAudioPlayer: Auto-play failed:', error);
+        } catch {
+          // Auto-play failed silently
         }
       });
     }
@@ -247,7 +221,6 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
 
   const stop = useCallback(async () => {
     try {
-      console.log('🚨 useAudioPlayer: stop() called - clearing current track');
       // Clear the current track and queue first to signal stop intent
       setCurrentTrack(null);
       setQueue([]);
@@ -307,12 +280,6 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
   // Queue loading - following expo-audio docs pattern exactly
   const loadQueue = useCallback(async (tracks: EnhancedAudioTrack[], startIndex = 0) => {
     try {
-      console.log(
-        '🎵 useAudioPlayer: loadQueue called with',
-        tracks.length,
-        'tracks, startIndex:',
-        startIndex
-      );
       setIsLoading(true);
 
       if (tracks.length === 0) {
@@ -325,15 +292,12 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
       const validStartIndex = Math.max(0, Math.min(startIndex, tracks.length - 1));
       const initialTrack = tracks[validStartIndex];
 
-      console.log('🎵 useAudioPlayer: Setting initial track:', initialTrack?.title);
-
       setQueue(tracks);
       setCurrentIndex(validStartIndex);
       setCurrentTrack(initialTrack || null);
 
       // The useAudioPlayer hook will automatically recreate the player with the new source
     } catch (error) {
-      console.error('🚨 useAudioPlayer: loadQueue failed:', error);
       handleError(error as Error, { toastMessage: 'Failed to load queue' });
     } finally {
       setIsLoading(false);
@@ -344,11 +308,6 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
   const startEnhancedPlayback = useCallback(
     async (tracks: EnhancedAudioTrack[], startIndex = 0): Promise<boolean> => {
       try {
-        console.log(
-          '🎵 useAudioPlayer: startEnhancedPlayback called with',
-          tracks.length,
-          'tracks'
-        );
         // Set auto-play flag to maintain user interaction context
         setShouldAutoPlay(true);
 
@@ -357,7 +316,6 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
 
         return true; // Success
       } catch (error) {
-        console.error('🚨 useAudioPlayer: startEnhancedPlayback failed:', error);
         setShouldAutoPlay(false); // Reset flag on error
         handleError(error as Error, { toastMessage: 'Failed to start enhanced playback' });
         return false; // Failure
@@ -376,7 +334,6 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
       const nextTrack = queue[nextIndex];
 
       if (nextTrack) {
-        console.log('🎵 useAudioPlayer: Moving to next track:', nextTrack.title);
         setCurrentIndex(nextIndex);
         setCurrentTrack(nextTrack);
         setShouldAutoPlay(true); // Ensure next track auto-plays
@@ -412,17 +369,8 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
       const hasPlayedLongEnough = trackStartTime && now - trackStartTime >= duration * 1000 * 0.8; // 80% of duration
 
       if (!hasPlayedLongEnough) {
-        console.log('🎵 useAudioPlayer: Track finished too quickly, ignoring');
         return;
       }
-
-      console.log('🎵 useAudioPlayer: Track genuinely finished, advancing to next track');
-      console.log(
-        '🎵 useAudioPlayer: Track details - duration:',
-        duration,
-        'currentTime:',
-        currentTime
-      );
 
       // Remove this track from start times to prevent reprocessing
       setTrackStartTimes(prev => {
@@ -435,15 +383,8 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
       setTimeout(() => {
         // Check if we can advance to next track
         if (currentIndex < queue.length - 1) {
-          console.log(
-            '🎵 useAudioPlayer: Advancing from track',
-            currentIndex,
-            'to',
-            currentIndex + 1
-          );
           next();
         } else {
-          console.log('🎵 useAudioPlayer: Reached end of queue, no more tracks');
           // Clear current track to signal completion
           setCurrentTrack(null);
           setCurrentIndex(-1);
@@ -469,7 +410,6 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
         const newMap = new Map(prev);
         if (!newMap.has(currentIndex)) {
           newMap.set(currentIndex, Date.now());
-          console.log('🎵 useAudioPlayer: Tracking start time for track', currentIndex);
         }
         return newMap;
       });

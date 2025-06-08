@@ -340,7 +340,6 @@ export default function ArticlesScreen(): JSX.Element {
           <FeaturedSection
             article={currentArticle.article}
             dueWordCount={dueWordsCount > 0 ? dueWordsCount : undefined}
-            showTitle={false}
             onPress={handleArticlePress}
           />
         )}

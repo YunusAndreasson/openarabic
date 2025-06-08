@@ -2,29 +2,21 @@ import { useQueryClient } from '@tanstack/react-query';
 import React, { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import ThemedCard from '@/components/ThemedCard';
+import { LAYOUT } from '@/constants/layout';
 import { articlesService } from '@/services/articles';
 import type { Article } from '@/types/articles.types';
-
-import { LAYOUT } from '@/constants/layout';
-import SectionTitle from '@/components/SectionTitle';
-import ThemedCard from '@/components/ThemedCard';
 
 interface FeaturedSectionProps {
   article: Article;
   onPress: (article: Article) => void;
-  showTitle?: boolean;
   dueWordCount?: number;
 }
 
 /**
  * A section displaying the featured article
  */
-const FeaturedSection: React.FC<FeaturedSectionProps> = ({
-  article,
-  onPress,
-  showTitle = true,
-  dueWordCount,
-}) => {
+const FeaturedSection: React.FC<FeaturedSectionProps> = ({ article, onPress, dueWordCount }) => {
   // Use queryClient for prefetching on press
   const queryClient = useQueryClient();
 
@@ -50,7 +42,6 @@ const FeaturedSection: React.FC<FeaturedSectionProps> = ({
 
   return (
     <View style={styles.container}>
-      {showTitle && <SectionTitle isFirstSection={true} title="Featured" />}
       <ThemedCard
         author={article.author?.name || 'Author'}
         category="RECOMMENDED READING"
@@ -74,7 +65,7 @@ const styles = StyleSheet.create({
     shadowOpacity: LAYOUT.OPACITY.SUBTLE,
   },
   container: {
-    // Remove custom spacing - SectionTitle handles all section spacing
+    marginTop: LAYOUT.SPACING.XLARGE,
   },
 });
 

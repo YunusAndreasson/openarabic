@@ -10,23 +10,6 @@ export interface ReviewParams {
 }
 
 /**
- * Type for word list parameters
- */
-export interface WordListParams {
-  filter?: 'all' | 'due' | 'learned';
-  sortBy?: 'addedDate' | 'difficulty' | 'dueDate';
-  category?:
-    | 'difficultyEasy'
-    | 'difficultyHard'
-    | 'difficultyMedium'
-    | 'due'
-    | 'learning'
-    | 'mastered'
-    | 'needsAttention'
-    | 'total';
-}
-
-/**
  * Type for filter parameters
  */
 export interface FilterParams {
@@ -52,8 +35,6 @@ export type RouteParams = {
   '/(tabs)/read/filter': FilterParams;
   '/practice/review': ReviewParams;
   '/practice/practice': ListenParams;
-  '/practice/wordList': WordListParams;
-  '/practice/wordExamples': Record<string, never>;
   '/': Record<string, never>;
   '/(tabs)': Record<string, never>;
   '/(tabs)/listen': Record<string, never>;
@@ -74,15 +55,12 @@ export type Route<T extends RoutePath> = {
   params?: RouteParams[T];
 };
 
-
 // Route parameter definitions for type checking
-const routeParams: Record<RoutePath, true> = {
+const _routeParams: Record<RoutePath, true> = {
   '/(tabs)/read/article/[id]': true,
   '/(tabs)/read/filter': true,
   '/practice/review': true,
   '/practice/practice': true,
-  '/practice/wordList': true,
-  '/practice/wordExamples': true,
   '/': true,
   '/(tabs)': true,
   '/(tabs)/listen': true,

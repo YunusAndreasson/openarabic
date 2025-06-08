@@ -83,9 +83,10 @@ export default function VocabularyScreen(): JSX.Element {
     router.push('/practice/review?fromRemember=true');
   }, [router]);
 
-  // Handle stat press events
+  // Handle stat press events - temporarily disabled
   const handleStatPress = (category: StatCategory) => {
-    router.push(`/(tabs)/practice/wordList?category=${category}`);
+    // TODO: Implement new word list functionality or remove completely
+    console.log('Stat pressed:', category);
   };
 
   // Show error message if there was an error loading data
