@@ -8,8 +8,7 @@ export { default as BaseCard } from './BaseCard';
 export { default as SectionTitle } from './SectionTitle';
 export { default as EmptyState } from './EmptyState';
 export { default as ErrorState } from './ErrorState';
-export { default as Section } from './Section';
-export { default as CloseButton } from './CloseButton';
+
 export { AuthProvider, ToastProvider, useToast } from './providers';
 export { default as Pill } from './Pill';
 export { Toggle } from './Toggle';

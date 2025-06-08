@@ -56,6 +56,8 @@ const ArticleHeaderTitle = React.memo(({ title }: { title: string }) => {
 });
 
 export default function ReadLayout() {
+  const colors = useColors();
+
   return (
     <Stack>
       <Stack.Screen
@@ -73,6 +75,14 @@ export default function ReadLayout() {
           headerTransparent: false,
           presentation: 'modal',
           gestureEnabled: true,
+          headerStyle: {
+            backgroundColor: colors.background,
+          },
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '600',
+          },
+          headerTintColor: colors.headingText,
         })}
       />
       <Stack.Screen
@@ -88,6 +98,15 @@ export default function ReadLayout() {
             headerTransparent: false,
             presentation: 'modal',
             gestureEnabled: true,
+            animation: 'fade',
+            animationDuration: 300,
+            headerStyle: {
+              backgroundColor: colors.background,
+            },
+            headerTintColor: colors.tint,
+            headerBackTitleStyle: {
+              fontSize: 16,
+            },
           };
         }}
       />

@@ -6,7 +6,7 @@ export { ChartAxes, Y_AXIS_WIDTH } from './ChartAxes';
 
 // Chart building blocks
 export { CardHeader } from './CardHeader';
-export { StatsRow } from './StatsRow';
+
 export { ChartFooter } from './ChartFooter';
 export {
   ChartTooltipData as ChartTooltip,
@@ -28,7 +28,6 @@ export {
   type ActivityLevel,
   type DifficultyLevel as ChartColorDifficultyLevel,
 } from './chartColors';
-export { CHART_LEGENDS, type TimeRange, type MemoryLevel, type ProgressType } from './chartLegends';
 
 // Standardized chart messaging system
 export * from './chartMessages';

@@ -5,6 +5,7 @@ import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react'
 import type { ComponentRef, JSX } from 'react';
 import { StyleSheet, View, AppState } from 'react-native';
 import type { TouchableOpacity } from 'react-native';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
@@ -13,6 +14,7 @@ import { ArabicWord } from '@/components/article/ArabicWord';
 import { ArticleContent, type ArticleContentRef } from '@/components/article/ArticleContent';
 import { ToastProvider } from '@/components/providers/ToastProvider';
 import { LAYOUT } from '@/constants/layout';
+import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleRenderers } from '@/hooks/articles/useArticleRenderers';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
@@ -52,6 +54,18 @@ export default function ArticleScreen(): JSX.Element {
   const isDarkMode = useIsDarkMode();
 
   const { handleScroll } = useHeaderVisibility();
+
+  // Add fade-in animation for smooth content appearance
+  const { opacity, fadeIn } = useOpacityAnimation({
+    initialOpacity: 0,
+    duration: 300,
+    autoStart: false,
+  });
+
+  // Create custom animated style for the view
+  const contentAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
 
   const articleId = useMemo(() => {
     if (!id) return undefined;
@@ -97,6 +111,17 @@ export default function ArticleScreen(): JSX.Element {
       });
     }
   }, [article, isLoadingArticle]);
+
+  // Trigger fade-in when article content is ready
+  useEffect(() => {
+    if (article && sortedSentences && sortedSentences.length > 0 && !isLoadingArticle) {
+      // Small delay to ensure everything is rendered before fading in
+      const timer = setTimeout(() => {
+        fadeIn();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [article, sortedSentences, isLoadingArticle, fadeIn]);
 
   const articleContentRef = useRef<ArticleContentRef>(null);
 
@@ -210,17 +235,19 @@ export default function ArticleScreen(): JSX.Element {
 
         <View style={styles.container}>
           {article && sortedSentences && sortedSentences.length > 0 ? (
-            <ArticleContent
-              ref={articleContentRef}
-              article={article}
-              colors={colors}
-              englishToggleKey={showEnglishLocal ? 'en' : 'ar'}
-              handleScroll={handleScroll}
-              id={id}
-              isDarkMode={isDarkMode}
-              renderSentenceItem={renderSentenceItem}
-              sortedSentences={sortedSentences}
-            />
+            <Animated.View style={[styles.container, contentAnimatedStyle]}>
+              <ArticleContent
+                ref={articleContentRef}
+                article={article}
+                colors={colors}
+                englishToggleKey={showEnglishLocal ? 'en' : 'ar'}
+                handleScroll={handleScroll}
+                id={id}
+                isDarkMode={isDarkMode}
+                renderSentenceItem={renderSentenceItem}
+                sortedSentences={sortedSentences}
+              />
+            </Animated.View>
           ) : null}
         </View>
       </ThemedView>
