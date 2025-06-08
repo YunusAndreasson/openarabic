@@ -5,10 +5,10 @@ import Animated from 'react-native-reanimated';
 
 import type { PillProps as OriginalPillProps } from '@/types/ui/pill.types';
 
-import { LAYOUT } from '../constants/layout';
-import { useTransformAnimation } from '../hooks/animations';
-import { useColors } from '../hooks/theme/useColors';
-import { useIsDarkMode } from '../hooks/theme/useThemeDetection';
+import { LAYOUT } from '@/constants/layout';
+import { useTransformAnimation } from '@/hooks/animations';
+import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
 import { ThemedText } from './ThemedText';
 

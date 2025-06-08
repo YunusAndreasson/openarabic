@@ -7,8 +7,8 @@ import { AppState } from 'react-native';
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
 
-import type { Database } from '../types/database.types';
-import { handleError } from '../utils/errorHandling';
+import type { Database } from '@/types/database.types';
+import { handleError } from '@/utils/errorHandling';
 
 /**
  * Supabase client configuration and initialization

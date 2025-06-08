@@ -5,15 +5,15 @@ import type { LayoutRectangle, LayoutChangeEvent, ViewStyle, TextStyle } from 'r
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import Animated, { useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
-import { LAYOUT } from '../../constants/layout';
-import { useOpacityAnimation, useTransformAnimation } from '../../hooks/animations';
-import { useColors } from '../../hooks/theme/useColors';
-import { useIsDarkMode } from '../../hooks/theme/useThemeDetection';
-import { useArabicWord } from '../../hooks/vocabulary/useArabicWord';
-import type { TextWeight } from '../../types/ui/text.types';
-import type { SentenceWord } from '../../types/vocabulary.types';
-import { lightFeedback } from '../../utils/haptics';
-import { ThemedText } from '../ThemedText';
+import { LAYOUT } from '@/constants/layout';
+import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
+import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import { useArabicWord } from '@/hooks/vocabulary/useArabicWord';
+import type { TextWeight } from '@/types/ui/text.types';
+import type { SentenceWord } from '@/types/vocabulary.types';
+import { lightFeedback } from '@/utils/haptics';
+import { ThemedText } from '@/components/ThemedText';
 
 import { WordTooltip } from './WordTooltip';
 

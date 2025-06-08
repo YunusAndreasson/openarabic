@@ -10,8 +10,8 @@ import {
 } from '@/constants/layout';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
-import BaseCard from '../BaseCard';
-import { ThemedText } from '../ThemedText';
+import BaseCard from '@/components/BaseCard';
+import { ThemedText } from '@/components/ThemedText';
 
 interface ArticleCardProps {
   title: string;

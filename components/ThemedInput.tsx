@@ -12,7 +12,7 @@ import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
-import { errorFeedback } from '../utils/haptics';
+import { errorFeedback } from '@/utils/haptics';
 
 import { ThemedText } from './ThemedText';
 

@@ -1,6 +1,6 @@
 // Import the type from the central location
-import type { EnhancedAudioTrack } from '../types/audio.types';
-import { handleError } from '../utils/errorHandling';
+import type { EnhancedAudioTrack } from '@/types/audio.types';
+import { handleError } from '@/utils/errorHandling';
 
 import { articlesService } from './articles';
 import { readingListService } from './readingList';

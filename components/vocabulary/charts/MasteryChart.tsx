@@ -21,15 +21,15 @@ import {
   ChartAxes,
   Y_AXIS_WIDTH,
   type DataPoint,
-} from '../shared';
-import { useChartColors } from '../shared/chartColors';
-import { generateChartSubtitle, CHART_LABELS, EMPTY_STATE_MESSAGES } from '../shared/chartMessages';
-import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_7, CHART_VISUAL } from '../shared/constants';
+} from '@/components/vocabulary/shared';
+import { useChartColors } from '@/components/vocabulary/shared/chartColors';
+import { generateChartSubtitle, CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/components/vocabulary/shared/chartMessages';
+import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_7, CHART_VISUAL } from '@/components/vocabulary/shared/constants';
 import {
   generateDateRange,
   createStandardizedPerformanceZones,
   createAreaFillPath,
-} from '../shared/utils';
+} from '@/components/vocabulary/shared/utils';
 
 interface MasteryChartProps {
   studyWords: StudyWord[];

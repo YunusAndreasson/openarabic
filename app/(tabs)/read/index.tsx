@@ -29,7 +29,7 @@ import { filterArticles, getBeginnerArticles } from '@/utils/articleUtils';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
 
-import ErrorState from '../../../components/ErrorState';
+import ErrorState from '@/components/ErrorState';
 
 const styles = StyleSheet.create({
   container: {

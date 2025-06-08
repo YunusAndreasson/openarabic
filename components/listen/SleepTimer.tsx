@@ -19,8 +19,8 @@ import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { lightFeedback, selectionFeedback } from '@/utils/haptics';
 
-import { ThemedButton } from '../ThemedButton';
-import { ThemedText } from '../ThemedText';
+import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedText } from '@/components/ThemedText';
 
 export interface SleepTimerProps {
   isVisible: boolean;

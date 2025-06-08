@@ -6,8 +6,8 @@ import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 
-import { useArticlesByDueWords } from '../articles/useArticlesByDueWords';
-import { useAuth } from '../auth/useAuth';
+import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 export interface UseArabicWordProps {
   word: SentenceWord;

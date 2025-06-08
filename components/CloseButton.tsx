@@ -5,9 +5,9 @@ import { TouchableOpacity, StyleSheet } from 'react-native';
 import { usePressAnimation } from '@/hooks/animations';
 import type { CloseButtonProps } from '@/types/ui/button.types';
 
-import { LAYOUT } from '../constants/layout';
-import { useColors } from '../hooks/theme/useColors';
-import { lightFeedback } from '../utils/haptics';
+import { LAYOUT } from '@/constants/layout';
+import { useColors } from '@/hooks/theme/useColors';
+import { lightFeedback } from '@/utils/haptics';
 
 const styles = StyleSheet.create({
   buttonContainer: {

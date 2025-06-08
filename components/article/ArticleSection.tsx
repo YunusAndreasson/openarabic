@@ -6,7 +6,7 @@ import SectionTitle from '@/components/SectionTitle';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
-import type { Article } from '../../types/articles.types';
+import type { Article } from '@/types/articles.types';
 
 interface ArticleSectionProps {
   /**

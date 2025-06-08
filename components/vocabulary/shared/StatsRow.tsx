@@ -7,7 +7,7 @@ import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectionFeedback } from '@/utils/haptics';
 
-import { ThemedText } from '../../ThemedText';
+import { ThemedText } from '@/components/ThemedText';
 
 interface StatItemProps {
   value: number | string;

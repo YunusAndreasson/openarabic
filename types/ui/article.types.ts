@@ -1,6 +1,6 @@
 import type { StyleProp, ViewStyle } from 'react-native';
 
-import type { Article } from '../articles.types';
+import type { Article } from '@/types/articles.types';
 
 /**
  * Props for the ArticleList component

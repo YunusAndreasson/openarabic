@@ -1,7 +1,7 @@
-import type { Tables } from '../types/database.types';
-import type { SentenceWord } from '../types/vocabulary.types';
-import { handleError } from '../utils/errorHandling';
-import { mapToSentenceWord } from '../utils/typeMappers';
+import type { Tables } from '@/types/database.types';
+import type { SentenceWord } from '@/types/vocabulary.types';
+import { handleError } from '@/utils/errorHandling';
+import { mapToSentenceWord } from '@/utils/typeMappers';
 
 import { supabase } from './supabase';
 

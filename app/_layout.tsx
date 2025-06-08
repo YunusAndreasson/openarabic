@@ -1,5 +1,5 @@
 // Fix for expo-router v5.0.7 + React Native 0.79.3 splash screen compatibility issue
-import '../splash-polyfill';
+import '@/splash-polyfill';
 import {
   DarkTheme,
   DefaultTheme,
@@ -25,15 +25,15 @@ import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { RootState } from '@/store/store';
 
-import figtreeFont from '../assets/fonts/Figtree.ttf';
-import madinaFont from '../assets/fonts/Madina.otf';
-import { useAppPreloader } from '../hooks/app/useAppPreloader';
-import { useAuth } from '../hooks/auth/useAuth';
-import { useSystemUITheme } from '../hooks/theme/useSystemUITheme';
-import { analytics } from '../services/analytics';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { store, persistor } from '../store/store';
-import { setTheme } from '../store/themeSlice';
+import figtreeFont from '@/assets/fonts/Figtree.ttf';
+import madinaFont from '@/assets/fonts/Madina.otf';
+import { useAppPreloader } from '@/hooks/app/useAppPreloader';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
+import { analytics } from '@/services/analytics';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { store, persistor } from '@/store/store';
+import { setTheme } from '@/store/themeSlice';
 
 import { useArticlesAndDueWordsLoaded } from './(tabs)/read/index';
 

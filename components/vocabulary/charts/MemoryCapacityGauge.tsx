@@ -15,9 +15,9 @@ import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 import { selectionFeedback } from '@/utils/haptics';
 
-import { ThemedText } from '../../ThemedText';
-import { BaseChart } from '../shared';
-import { useChartColors } from '../shared/chartColors';
+import { ThemedText } from '@/components/ThemedText';
+import { BaseChart } from '@/components/vocabulary/shared';
+import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 
 interface MemoryCapacityGaugeProps {
   studyWords: StudyWord[];

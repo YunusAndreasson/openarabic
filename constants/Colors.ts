@@ -1,4 +1,4 @@
-import type { ThemeColors } from '../types/ui/theme.types';
+import type { ThemeColors } from '@/types/ui/theme.types';
 
 // Base palette - your beautiful greenish warm foundation
 const basePalette = {

@@ -11,9 +11,9 @@ import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
 
-import { ThemedButton } from '../ThemedButton';
-import { ThemedInput } from '../ThemedInput';
-import { ThemedText } from '../ThemedText';
+import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedInput } from '@/components/ThemedInput';
+import { ThemedText } from '@/components/ThemedText';
 
 /**
  * Email validation regex and password requirements

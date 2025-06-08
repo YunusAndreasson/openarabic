@@ -16,7 +16,7 @@ import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
-import { useAuth } from '../../hooks/auth/useAuth';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 const TAB_SCREENS = [
   {

@@ -1,7 +1,7 @@
 import type { TextProps, TextStyle, StyleProp } from 'react-native';
 
-import type { ColorName } from '../../constants/Colors';
-import type { SentenceWord } from '../vocabulary.types';
+import type { ColorName } from '@/constants/Colors';
+import type { SentenceWord } from '@/types/vocabulary.types';
 
 export type TextTypeName =
   'arabic' | 'body' | 'bodyBold' | 'caption' | 'heading1' | 'heading2' | 'heading3' | 'label' | 'overline';

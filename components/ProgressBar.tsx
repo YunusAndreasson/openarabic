@@ -8,7 +8,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { ProgressBarProps } from '@/types/ui/loader.types';
 
-import { useProgressAnimation } from '../hooks/animations';
+import { useProgressAnimation } from '@/hooks/animations';
 
 /**
  * A customizable progress bar component that can be used to display the
