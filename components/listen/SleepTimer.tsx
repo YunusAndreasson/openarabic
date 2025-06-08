@@ -1,5 +1,13 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { memo, useState, useEffect } from 'react';
-import { StyleSheet, View, Modal, TouchableWithoutFeedback, Dimensions } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Modal,
+  TouchableWithoutFeedback,
+  Dimensions,
+  TouchableOpacity,
+} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -94,14 +102,6 @@ const SleepTimerComponent = ({
     onClose();
   };
 
-  const handleClose = () => {
-    onClose();
-  };
-
-  const handleBackdropPress = () => {
-    handleClose();
-  };
-
   const handleOptionSelect = (minutes: number) => {
     selectionFeedback();
     setSelectedMinutes(minutes);
@@ -117,9 +117,9 @@ const SleepTimerComponent = ({
       transparent
       animationType="none"
       visible={isVisible}
-      onRequestClose={handleClose}
+      onRequestClose={onClose}
     >
-      <TouchableWithoutFeedback onPress={handleBackdropPress}>
+      <TouchableWithoutFeedback onPress={onClose}>
         <Animated.View
           style={[styles.backdrop, backdropStyle, { backgroundColor: colors.backdropOverlay }]}
         >
@@ -143,9 +143,17 @@ const SleepTimerComponent = ({
                   <ThemedText style={styles.subtitle} type="body" variant="secondary">
                     {isActive && remainingTime > 0
                       ? 'Playback will stop automatically'
-                      : 'Automatically stop playback after'}
+                      : 'Choose when to stop playback'}
                   </ThemedText>
                 </View>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={onClose}
+                  accessibilityLabel="Close sleep timer"
+                  accessibilityRole="button"
+                >
+                  <Ionicons name="close" size={24} color={colors.text} />
+                </TouchableOpacity>
               </View>
 
               {/* Content */}
@@ -161,7 +169,7 @@ const SleepTimerComponent = ({
                       remaining
                     </ThemedText>
                     <ThemedButton
-                      style={[styles.cancelButton, { borderColor: colors.borderOverlay }]}
+                      style={[styles.fullWidthButton, { borderColor: colors.borderOverlay }]}
                       title="Cancel Timer"
                       variant="outlined"
                       onPress={handleCancelTimer}
@@ -195,20 +203,12 @@ const SleepTimerComponent = ({
                       ))}
                     </View>
 
-                    <View style={styles.actionButtons}>
-                      <ThemedButton
-                        style={[styles.actionButton, { borderColor: colors.borderOverlay }]}
-                        title="Cancel"
-                        variant="outlined"
-                        onPress={handleClose}
-                      />
-                      <ThemedButton
-                        style={styles.actionButton}
-                        title="Set Timer"
-                        variant="filled"
-                        onPress={handleSetTimer}
-                      />
-                    </View>
+                    <ThemedButton
+                      style={styles.fullWidthButton}
+                      title="Start Timer"
+                      variant="filled"
+                      onPress={handleSetTimer}
+                    />
                   </View>
                 )}
               </View>
@@ -245,13 +245,6 @@ const arePropsEqual = (prevProps: SleepTimerProps, nextProps: SleepTimerProps): 
 };
 
 const styles = StyleSheet.create({
-  actionButton: {
-    flex: 1,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: LAYOUT.SPACING.MEDIUM,
-  },
   activeDescription: {
     marginBottom: LAYOUT.SPACING.SMALL,
   },
@@ -262,12 +255,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
   },
-  cancelButton: {
-    width: '100%',
+  closeButton: {
+    padding: LAYOUT.SPACING.SMALL,
   },
   content: {
     padding: LAYOUT.SPACING.LARGE + 4,
     paddingTop: LAYOUT.SPACING.LARGE,
+  },
+  fullWidthButton: {
+    width: '100%',
   },
   header: {
     alignItems: 'flex-start',

@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useFocusEffect } from 'expo-router';
 import type { JSX } from 'react';
 import React, { useState, useRef, useEffect, useMemo, useCallback, memo } from 'react';
-import { StyleSheet, View, RefreshControl, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BottomControls from '@/components/BottomControls';
@@ -54,18 +54,6 @@ const styles = StyleSheet.create({
   },
 });
 
-// Helper functions moved outside component to avoid recreation on every render
-const getDaysAgo = (addedAt: string): string => {
-  const addedDate = new Date(addedAt);
-  const now = new Date();
-  const diffTime = Math.abs(now.getTime() - addedDate.getTime());
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return '1 day ago';
-  return `${diffDays} days ago`;
-};
-
 // Define a constant for item height calculation
 const ITEM_HEIGHT = 120;
 
@@ -80,26 +68,11 @@ const ListenListItem = memo(
     isActive: boolean;
     onPress: (id: number) => void;
   }) => {
-    const colors = useColors();
-
     return (
       <ArticleCard
         active={isActive}
         author={item.articles?.author?.name || 'Author'}
         title={item.articles?.title || 'Untitled'}
-        meta={
-          <ThemedText
-            skipDefaultColor
-            type="caption"
-            style={{
-              color: colors.textTertiary,
-              fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-              fontWeight: '500',
-            }}
-          >
-            {getDaysAgo(item.added_at)}
-          </ThemedText>
-        }
         onPress={() => onPress(item.article_id)}
       />
     );
@@ -112,12 +85,12 @@ const ListenListItem = memo(
 
 ListenListItem.displayName = 'ListenListItem';
 
-export type ListenSortOption = 'recent' | 'alphabetical';
+export type ListenSortOption = 'title' | 'author';
 
-// Simplified sort options for playlist UX
+// Updated sort options - Title and Author with hidden recent priority
 const createListenSortOptions = (): SortOption<ListenSortOption>[] => [
-  { key: 'recent', label: 'Recently Saved' },
-  { key: 'alphabetical', label: 'Title A-Z' },
+  { key: 'title', label: 'Title' },
+  { key: 'author', label: 'Author' },
 ];
 
 export default function ListenScreen(): JSX.Element {
@@ -126,7 +99,6 @@ export default function ListenScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const { prefetchArticle } = useAppPreloader();
   const flashListRef = useRef<FlashList<ReadingListItem>>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // --- State Hooks ---
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
@@ -151,8 +123,8 @@ export default function ListenScreen(): JSX.Element {
     return () => clearTimeout(timer);
   }, []);
 
-  // Simplified sorting state - default to recent (playlist standard)
-  const [currentSort, setCurrentSort] = useState<ListenSortOption>('recent');
+  // Simplified sorting state - default to title (with hidden recent priority)
+  const [currentSort, setCurrentSort] = useState<ListenSortOption>('title');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // --- Get State & Stable Actions from useEnhancedAudioPlayer ---
@@ -205,26 +177,55 @@ export default function ListenScreen(): JSX.Element {
     });
   }, [readingList]);
 
-  // Simplified sorting - just recent vs alphabetical
+  // Enhanced sorting with hidden recent priority - always sort by added_at first, then by selected option
   const sortedReadingList = useMemo(() => {
     if (!dedupedReadingList.length) return [];
 
-    // For "recent" sort, use the natural database order (already sorted by added_at desc)
-    if (currentSort === 'recent') {
-      return sortDirection === 'desc' ? dedupedReadingList : [...dedupedReadingList].reverse();
-    }
+    const sortedList = [...dedupedReadingList];
 
-    // For alphabetical sort
-    if (currentSort === 'alphabetical') {
-      const sortedList = [...dedupedReadingList];
-      return sortedList.sort((a, b) => {
+    // Always sort by added_at first (most recent first) - this is the hidden behavior
+    sortedList.sort((a, b) => {
+      const dateA = new Date(a.added_at).getTime();
+      const dateB = new Date(b.added_at).getTime();
+      return dateB - dateA; // Most recent first
+    });
+
+    // For same-day items, apply secondary sorting
+    if (currentSort === 'title') {
+      sortedList.sort((a, b) => {
+        // Keep recent priority, but for items added on the same day, sort by title
+        const dateA = new Date(a.added_at).toDateString();
+        const dateB = new Date(b.added_at).toDateString();
+
+        // If different days, maintain date order
+        if (dateA !== dateB) {
+          return new Date(b.added_at).getTime() - new Date(a.added_at).getTime();
+        }
+
+        // Same day: sort by title
         const result = (a.articles?.title || '').localeCompare(b.articles?.title || '');
+        return sortDirection === 'desc' ? -result : result;
+      });
+    } else if (currentSort === 'author') {
+      sortedList.sort((a, b) => {
+        // Keep recent priority, but for items added on the same day, sort by author
+        const dateA = new Date(a.added_at).toDateString();
+        const dateB = new Date(b.added_at).toDateString();
+
+        // If different days, maintain date order
+        if (dateA !== dateB) {
+          return new Date(b.added_at).getTime() - new Date(a.added_at).getTime();
+        }
+
+        // Same day: sort by author
+        const result = (a.articles?.author?.name || '').localeCompare(
+          b.articles?.author?.name || ''
+        );
         return sortDirection === 'desc' ? -result : result;
       });
     }
 
-    // Fallback to recent sort
-    return sortDirection === 'desc' ? dedupedReadingList : [...dedupedReadingList].reverse();
+    return sortedList;
   }, [dedupedReadingList, currentSort, sortDirection]);
 
   // Check if data is already in cache
@@ -375,26 +376,6 @@ export default function ListenScreen(): JSX.Element {
     actions.stopPlayback,
   ]);
 
-  // Handle refresh
-  const handleRefresh = useCallback(async () => {
-    if (!user?.id || isRefreshing) return;
-
-    mediumFeedback();
-    setIsRefreshing(true);
-    try {
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: ['readingList', user.id],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ['enhancedAudioTracks', user.id],
-        }),
-      ]);
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, [user?.id, queryClient, isRefreshing]);
-
   // Handle sorting
   const handleSortChange = useCallback((sort: string, direction: SortDirection) => {
     setCurrentSort(sort as ListenSortOption);
@@ -528,16 +509,6 @@ export default function ListenScreen(): JSX.Element {
           overrideItemLayout={layout => {
             layout.size = ITEM_HEIGHT;
           }}
-          refreshControl={
-            <RefreshControl
-              colors={[colors.tint]}
-              progressBackgroundColor={colors.background}
-              progressViewOffset={headerHeight + LAYOUT.SPACING.XXLARGE}
-              refreshing={isRefreshing}
-              tintColor={colors.tint}
-              onRefresh={handleRefresh}
-            />
-          }
           renderItem={({ item }) => {
             const isActive =
               audioState !== AUDIO_STATES.IDLE && metadata.articleId === item.article_id;

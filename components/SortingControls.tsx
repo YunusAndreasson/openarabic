@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import type { JSX } from 'react';
 import React, { memo, useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -92,18 +91,20 @@ function SortingControls<T extends string>({
                     >
                       {option.label}
                     </ThemedText>
-                    <Ionicons
-                      color={isSelected ? colors.tint : colors.textTertiary}
-                      size={isSelected ? 13 : 11} // Larger icon when selected
-                      style={[styles.sortPillIcon, isSelected && styles.selectedIcon]}
-                      name={
-                        isSelected
-                          ? internalDirection === 'desc'
-                            ? 'chevron-down'
-                            : 'chevron-up'
-                          : 'chevron-down'
-                      }
-                    />
+                    <ThemedText
+                      colorName={isSelected ? 'tint' : 'textTertiary'}
+                      type="caption"
+                      weight={isSelected ? 'semibold' : 'medium'}
+                      style={[
+                        styles.sortDirectionLabel,
+                        isSelected && styles.selectedDirectionLabel,
+                        {
+                          fontSize: isSelected ? 11 : 10,
+                        },
+                      ]}
+                    >
+                      {isSelected ? (internalDirection === 'desc' ? 'Z-A' : 'A-Z') : 'A-Z'}
+                    </ThemedText>
                   </View>
                 }
                 pillStyle={[
@@ -135,9 +136,6 @@ const MemoizedSortingControls = memo(SortingControls);
 export default MemoizedSortingControls;
 
 const styles = StyleSheet.create({
-  selectedIcon: {
-    opacity: 1, // Full opacity when selected
-  },
   selectedLabel: {
     fontWeight: '600',
   },
@@ -175,14 +173,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: LAYOUT.SPACING.TINY,
   },
-  sortPillIcon: {
-    marginLeft: LAYOUT.SPACING.TINY,
-    opacity: 0.7, // Subtle when not selected
-  },
   sortPillLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     letterSpacing: 0.2,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 2,
     textAlign: 'center', // Subtle letter spacing for elegance
+  },
+  sortDirectionLabel: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    letterSpacing: 0.2,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 2,
+    textAlign: 'center', // Subtle letter spacing for elegance
+  },
+  selectedDirectionLabel: {
+    fontWeight: '600',
   },
 });
