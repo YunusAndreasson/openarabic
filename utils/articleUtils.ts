@@ -23,30 +23,6 @@ export function filterArticles(
 }
 
 /**
- * Gets latest articles sorted by creation date
- * @param articles - The articles to sort
- * @param limit - The maximum number of articles to return (default: 10)
- * @param alreadySorted - If true, assumes the array is already sorted in
- * descending order by creation date
- * @returns Latest articles sorted by creation date (newest first)
- */
-export function getLatestArticles(
-  articles: Article[],
-  limit = 10,
-  alreadySorted = false
-): Article[] {
-  if (!articles.length) return [];
-
-  const sorted = alreadySorted
-    ? articles
-    : [...articles].sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-
-  return sorted.slice(0, limit);
-}
-
-/**
  * Gets beginner-friendly articles (difficulty level 1-3)
  * @param articles - The articles to sort
  * @param limit - The maximum number of articles to return (default: 20)
@@ -158,53 +134,22 @@ export function getArticlesByDifficultWords(
 }
 
 /**
- * Calculate reading time for an article based on content
+ * Calculates estimated reading time for an article
  * @param article - The article to calculate reading time for
- * @returns Reading time in minutes
+ * @returns Estimated reading time in minutes
  */
 export function calculateReadingTime(article: Article): number {
-  if (!article) return 2;
+  if (!article.article_sentences?.length) return 0;
 
-  // More accurate calculation based on content type
-  if (article.article_sentences?.length) {
-    const wordCount = article.article_sentences.reduce((total, sentence) => {
-      // Estimate words from sentence length (more accurate than fixed ratio)
-      const estimatedWords = Math.ceil((sentence.english?.length || 0) / 5);
-      return total + estimatedWords;
-    }, 0);
-    return Math.max(1, Math.ceil(wordCount / 200)); // 200 WPM reading speed
-  }
+  // Count total words in the article
+  const totalWords = article.article_sentences.reduce((total, sentence) => {
+    return total + (sentence.sentence_words?.length || 0);
+  }, 0);
 
-  if (article.summary) {
-    const wordCount = article.summary.split(/\s+/).filter(word => word.length > 0).length;
-    return Math.max(1, Math.ceil(wordCount / 200));
-  }
+  // Average reading speed: 200 words per minute for Arabic
+  const wordsPerMinute = 200;
+  const readingTime = totalWords / wordsPerMinute;
 
-  return 2; // Default fallback
-}
-
-/**
- * Gets the longest articles sorted by reading time
- * @param articles - The articles to sort
- * @param limit - The maximum number of articles to return (default: 10)
- * @param minReadingTime - Minimum reading time in minutes to be considered a "long read" (default: 5)
- * @returns Longest articles sorted by reading time (longest first)
- */
-export function getLongestArticles(
-  articles: Article[],
-  limit = 10,
-  minReadingTime = 5
-): (Article & { readingTime: number })[] {
-  if (!articles.length) return [];
-
-  // Calculate reading time for each article and filter by minimum
-  const articlesWithReadingTime = articles
-    .map(article => ({
-      ...article,
-      readingTime: calculateReadingTime(article),
-    }))
-    .filter(article => article.readingTime >= minReadingTime)
-    .sort((a, b) => b.readingTime - a.readingTime);
-
-  return articlesWithReadingTime.slice(0, limit);
+  // Round to nearest half minute, minimum 0.5 minutes
+  return Math.max(0.5, Math.round(readingTime * 2) / 2);
 }
