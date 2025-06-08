@@ -129,7 +129,7 @@ export default function ListenScreen(): JSX.Element {
 
   // --- Get State & Stable Actions from useAudioPlayer ---
   const enhancedAudioPlayer = useAudioPlayer();
-  const { progress, duration, metadata, audioState, actions } = enhancedAudioPlayer;
+  const { duration, position, metadata, audioState, actions } = enhancedAudioPlayer;
 
   // Clear starting playback state once audio actually starts
   useEffect(() => {
@@ -543,10 +543,10 @@ export default function ListenScreen(): JSX.Element {
       {/* Now Playing Card - shows when audio is playing with integrated controls */}
       <NowPlayingCard
         article={currentArticle}
-        duration={isStartingPlayback ? 0 : duration}
+        duration={isStartingPlayback ? 0 : duration * 1000}
         isTimerActive={sleepTimer.state.isActive}
         isVisible={shouldShowPlayer}
-        progress={isStartingPlayback ? 0 : progress}
+        progress={isStartingPlayback ? 0 : position * 1000}
         showTimerButton={true}
         timerAccessibilityLabel="Sleep timer"
         onPress={() => {

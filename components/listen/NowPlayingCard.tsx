@@ -13,15 +13,14 @@ import Animated, {
   cancelAnimation,
 } from 'react-native-reanimated';
 
+import { EnhancedImage } from '@/components/EnhancedImage';
+import { ProgressBar } from '@/components/ProgressBar';
+import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { Article } from '@/types/articles.types';
 import { withOpacity } from '@/utils/colorUtils';
-
-import { EnhancedImage } from '@/components/EnhancedImage';
-import { ProgressBar } from '@/components/ProgressBar';
-import { ThemedText } from '@/components/ThemedText';
 
 const CARD_HEIGHT = 120;
 const IMAGE_SIZE = 80;
@@ -193,18 +192,6 @@ const NowPlayingCard = ({
     [colors, isDarkMode, isTimerActive]
   );
 
-  // Optimized format function - memoized outside component to prevent recreation
-  const formatTime = useCallback((seconds: number): string => {
-    // Handle invalid inputs efficiently
-    if (!seconds || !isFinite(seconds) || isNaN(seconds) || seconds < 0) {
-      return '0:00';
-    }
-
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  }, []);
-
   // Optimized time calculations with stable dependencies
   const timeCalculations = useMemo(() => {
     // Ensure progress and duration are valid numbers
@@ -219,12 +206,22 @@ const NowPlayingCard = ({
     const percentage = safeDuration > 0 ? (safeProgress / safeDuration) * 100 : 0;
     const clampedPercentage = Math.max(0, Math.min(100, percentage));
 
+    // Format time inline to avoid dependency issues with reanimated
+    const formatTime = (seconds: number): string => {
+      if (!seconds || !isFinite(seconds) || isNaN(seconds) || seconds < 0) {
+        return '0:00';
+      }
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
     return {
       currentTime: formatTime(currentSeconds),
       totalTime: formatTime(totalSeconds),
       progressPercentage: clampedPercentage,
     };
-  }, [progress, duration, formatTime]);
+  }, [progress, duration]);
 
   if (!article) return null;
 
