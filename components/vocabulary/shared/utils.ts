@@ -23,26 +23,6 @@ export const isSameDay = (date1: Date, date2: Date): boolean => {
   return date1.toDateString() === date2.toDateString();
 };
 
-// Calculate FSRS word state
-export const getWordState = (word: StudyWord) => {
-  const state = word.fsrs_state;
-  const stability = word.fsrs_stability ?? 0;
-  const hasReview = !!word.fsrs_last_review;
-
-  if (state === 0 || !hasReview) {
-    return 'new';
-  } else if (
-    state === 1 ||
-    state === 3 ||
-    (state === 2 && stability < MASTERY_STABILITY_THRESHOLD)
-  ) {
-    return 'learning';
-  } else if (state === 2 && stability >= MASTERY_STABILITY_THRESHOLD) {
-    return 'mastered';
-  } else {
-    return 'learning'; // fallback
-  }
-};
 
 // Calculate retrievability using FSRS formula
 export const calculateRetrievability = (word: StudyWord, targetDate: Date): number => {

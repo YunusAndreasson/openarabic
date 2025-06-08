@@ -108,15 +108,6 @@ export async function cancelReminder(): Promise<void> {
   }
 }
 
-export async function getScheduledReminders(): Promise<Notifications.NotificationRequest[]> {
-  try {
-    return await Notifications.getAllScheduledNotificationsAsync();
-  } catch (error) {
-    console.error('Failed to get scheduled reminders:', error);
-    return [];
-  }
-}
-
 export async function hasPermissions(): Promise<boolean> {
   try {
     const { status } = await Notifications.getPermissionsAsync();
