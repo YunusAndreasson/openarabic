@@ -5,6 +5,7 @@ import type { LayoutRectangle, LayoutChangeEvent, ViewStyle, TextStyle } from 'r
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import Animated, { useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
+import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
@@ -13,9 +14,8 @@ import { useArabicWord } from '@/hooks/vocabulary/useArabicWord';
 import type { TextWeight } from '@/types/ui/text.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { lightFeedback } from '@/utils/haptics';
-import { ThemedText } from '@/components/ThemedText';
 
-import { WordTooltip } from './WordTooltip';
+import { EnhancedWordTooltip } from './EnhancedWordTooltip';
 
 // Global counter for tooltip zIndex values with circular increment
 const MIN_Z_INDEX = LAYOUT.Z_INDEX.TOOLTIP;
@@ -256,9 +256,10 @@ function ArabicWordComponent({
         </Animated.View>
       </TouchableOpacity>
       {tooltipVisible && absoluteLayout ? (
-        <WordTooltip
+        <EnhancedWordTooltip
           layout={absoluteLayout}
-          text={word.english}
+          arabicWord={word.word_form}
+          englishTranslation={word.english}
           visible={tooltipVisible}
           zIndex={tooltipZIndex}
           onClose={handleTooltipClose}
