@@ -77,13 +77,3 @@ export interface ThemeColors {
   [key: string]: string;
 }
 
-export interface ComponentColors {
-  background?: string;
-  text?: string;
-  border?: string;
-  tint?: string;
-}
-
-export interface ThemeProps {
-  colors: ThemeColors;
-}
