@@ -1,6 +1,4 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { Audio } from 'expo-av';
-import { InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av/build/Audio.types';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ViewStyle } from 'react-native';
@@ -9,24 +7,13 @@ import type { SharedValue } from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
+import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useFSRS } from '@/hooks/vocabulary/useFSRS';
 import { useWordSizing } from '@/hooks/vocabulary/useWordSizing';
+import type { EnhancedAudioTrack } from '@/types/audio.types';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import { handleError } from '@/utils/errorHandling';
-
-interface AudioPlayerState {
-  sound: Audio.Sound | null;
-  lastUrl: string | null;
-  isPlaying: boolean;
-}
-
-// Enhanced interface to store multiple preloaded sounds
-interface PreloadedAudio {
-  url: string;
-  loaded: boolean;
-  sound?: Audio.Sound;
-}
 
 // Consolidated refs for easier state management
 interface ReviewTimeRefs {
@@ -56,89 +43,6 @@ interface SessionMetrics {
   currentStreak: number;
   masteredWords: number;
   startTime: number;
-}
-
-function useAudioPlayer() {
-  const audioState = useRef<AudioPlayerState>({
-    sound: null,
-    lastUrl: null,
-    isPlaying: false,
-  });
-
-  const cleanup = useCallback(async () => {
-    const { sound } = audioState.current;
-    if (sound) {
-      try {
-        const promises = [sound.stopAsync().catch(() => {}), sound.unloadAsync().catch(() => {})];
-        await Promise.all(promises);
-      } catch (e) {
-        handleError(e instanceof Error ? e : new Error(String(e)));
-      }
-      audioState.current.sound = null;
-    }
-    audioState.current.isPlaying = false;
-  }, []);
-
-  const playAudio = useCallback(
-    async (url: string) => {
-      try {
-        if (audioState.current.lastUrl === url && audioState.current.isPlaying) {
-          return;
-        }
-
-        await cleanup();
-
-        audioState.current.lastUrl = url;
-        audioState.current.isPlaying = true;
-
-        const audioMode = {
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: true,
-          shouldDuckAndroid: true,
-          interruptionModeIOS: InterruptionModeIOS.DoNotMix,
-          interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
-          playThroughEarpieceAndroid: false,
-        };
-
-        await Audio.setAudioModeAsync(audioMode);
-
-        const { sound } = await Audio.Sound.createAsync(
-          { uri: url },
-          { shouldPlay: true },
-          status => {
-            if (!status.isLoaded) return;
-            if (status.didJustFinish) {
-              audioState.current.isPlaying = false;
-            }
-          }
-        );
-
-        audioState.current.sound = sound;
-
-        const controller = new AbortController();
-        setTimeout(() => {
-          if (!controller.signal.aborted && audioState.current.lastUrl === url) {
-            audioState.current.isPlaying = false;
-          }
-        }, 3000);
-
-        return () => controller.abort();
-      } catch (error) {
-        handleError(error instanceof Error ? error : new Error(String(error)));
-        audioState.current.isPlaying = false;
-        return () => {};
-      }
-    },
-    [cleanup]
-  );
-
-  useEffect(() => {
-    return () => {
-      cleanup().catch(e => handleError(e instanceof Error ? e : new Error(String(e))));
-    };
-  }, [cleanup]);
-
-  return { playAudio, cleanup };
 }
 
 interface UseReviewProps {
@@ -182,11 +86,6 @@ const fontConfig: WordSizingConfig = {
   maxScreenWidth: 500,
 };
 
-// Number of upcoming words to preload audio for
-const PRELOAD_COUNT = 3;
-// Preloading delay in milliseconds
-const PRELOAD_DELAY = 100;
-
 // Timing constants for transitions (milliseconds)
 const TRANSITION_DELAYS = {
   initial: 150, // Initial delay before animation (was 200)
@@ -200,15 +99,19 @@ const TRANSITION_DELAYS = {
 export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseReviewReturn {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { playAudio, cleanup: cleanupAudio } = useAudioPlayer();
+
+  // Use enhanced audio player instead of local expo-av implementation
+  const audioPlayer = useAudioPlayer();
+
+  // Create stable refs for audio player methods to avoid dependency issues
+  const audioPlayerRef = useRef(audioPlayer);
+  audioPlayerRef.current = audioPlayer;
 
   // Use optimized opacity animation from hooks/animations
   const { opacity, fadeIn, fadeOut } = useOpacityAnimation({
     initialOpacity: 1,
     duration: TRANSITION_DELAYS.fadeAnimation,
   });
-
-  const preloadedAudioRef = useRef<Map<string, PreloadedAudio>>(new Map());
 
   // UI state
   const [showMeaningOverlay, setShowMeaningOverlay] = useState(false);
@@ -254,7 +157,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     if (stateRefs.current.completionTriggered) return;
     stateRefs.current.completionTriggered = true;
 
-    cleanupAudio();
+    // audioPlayerRef.current.stop();
     setIsTransitioningToCompletion(true);
     fadeOut();
 
@@ -268,12 +171,11 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     stateRefs.current.completionTransition = setTimeout(() => {
       if (stateRefs.current.completionTriggered) {
         setIsTransitioningToCompletion(false);
-        cleanupAudio();
       }
     }, 200);
-  }, [fadeOut, cleanupAudio]);
+  }, [fadeOut]);
 
-  const { currentWord, wordQueue, isComplete, progress, updateWord, invalidateQueries } = useFSRS({
+  const { currentWord, isComplete, progress, updateWord, invalidateQueries } = useFSRS({
     userId: user?.id,
     onComplete: triggerCompletionTransition,
   });
@@ -358,52 +260,44 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     [currentWord, updateWord, fadeIn]
   );
 
-  // Enhanced preload function to handle multiple upcoming words
-  const preloadAudio = useCallback(async (audioUrls: string[]) => {
-    if (!audioUrls.length) return;
+  // Enhanced audio playback function for single audio files
+  const playAudio = useCallback(async (url: string) => {
+    try {
+      if (!url) return;
 
-    clearTimeout(stateRefs.current.timeoutRef ?? undefined);
-    stateRefs.current.timeoutRef = setTimeout(async () => {
-      try {
-        // Process each URL
-        for (const audioUrl of audioUrls) {
-          if (!audioUrl) continue;
+      // Create a single track for the enhanced audio player
+      const track: EnhancedAudioTrack = {
+        id: `review-${Date.now()}`,
+        audioUrl: url,
+        title: 'Review Audio',
+        duration: 0, // Will be populated by the player
+      };
 
-          // Skip if already loaded
-          if (
-            preloadedAudioRef.current.has(audioUrl) &&
-            preloadedAudioRef.current.get(audioUrl)?.loaded
-          ) {
-            continue;
-          }
+      // Use the enhanced player to play the single track
+      await audioPlayerRef.current.actions.startEnhancedPlayback([track], 0);
+    } catch (error) {
+      handleError(error instanceof Error ? error : new Error(String(error)));
+    }
+  }, []);
 
-          // Clean up old sound if exists
-          const existing = preloadedAudioRef.current.get(audioUrl);
-          if (existing?.sound) {
-            await existing.sound.unloadAsync().catch(() => {});
-          }
+  // Enhanced audio playback for English feedback (non-blocking)
+  const playEnglishFeedback = useCallback(async (url: string) => {
+    try {
+      if (!url) return;
 
-          // Create and store new sound
-          const { sound } = await Audio.Sound.createAsync({ uri: audioUrl }, { shouldPlay: false });
-          preloadedAudioRef.current.set(audioUrl, {
-            url: audioUrl,
-            loaded: true,
-            sound,
-          });
-        }
+      // Create a feedback track that doesn't interfere with main playback
+      const feedbackTrack: EnhancedAudioTrack = {
+        id: `feedback-${Date.now()}`,
+        audioUrl: url,
+        title: 'English Feedback',
+        duration: 0,
+      };
 
-        // Clean up any sounds that aren't in our current set of upcoming words
-        const urlSet = new Set(audioUrls);
-        for (const [url, data] of preloadedAudioRef.current.entries()) {
-          if (!urlSet.has(url) && data.sound) {
-            await data.sound.unloadAsync().catch(() => {});
-            preloadedAudioRef.current.delete(url);
-          }
-        }
-      } catch (error) {
-        handleError(error instanceof Error ? error : new Error(String(error)));
-      }
-    }, PRELOAD_DELAY);
+      // Play feedback audio independently
+      await audioPlayerRef.current.actions.startEnhancedPlayback([feedbackTrack], 0);
+    } catch (error) {
+      handleError(error instanceof Error ? error : new Error(String(error)));
+    }
   }, []);
 
   const handleKnowledgeResponse = useCallback(
@@ -463,7 +357,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         if (controller.signal.aborted) return;
 
         // Clean up any playing audio before proceeding
-        cleanupAudio();
+        // audioPlayerRef.current.stop();
         fadeOut();
 
         setTimeout(() => {
@@ -475,23 +369,12 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
           // Update UI with meaning if needed
           stateRefs.current.meaningTimeout = displayMeaning(confidence, isStruggling);
 
-          // Create dedicated audio playing for English audio (don't use main audio player)
+          // Play English feedback audio for vague/unknown responses
           if (
             (confidence === 'vague' || confidence === 'unknown') &&
             currentWord?.root?.audio_url_en
           ) {
-            // Use direct Audio API instead of shared audio player to avoid conflicts
-            Audio.Sound.createAsync({ uri: currentWord.root.audio_url_en }, { shouldPlay: true })
-              .then(({ sound }) => {
-                sound.setOnPlaybackStatusUpdate(status => {
-                  if (status.isLoaded && status.didJustFinish) {
-                    sound.unloadAsync().catch(() => {});
-                  }
-                });
-              })
-              .catch(error => {
-                handleError(error instanceof Error ? error : new Error(String(error)));
-              });
+            playEnglishFeedback(currentWord.root.audio_url_en);
           }
 
           // Track vague responses for future struggle detection
@@ -522,11 +405,11 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     [
       isTransitioningToCompletion,
       isComplete,
-      cleanupAudio,
       fadeOut,
       checkIsStruggling,
       displayMeaning,
       processFeedback,
+      playEnglishFeedback,
       currentWord?.root?.audio_url_en,
       currentWord?.fsrs_stability,
     ]
@@ -539,9 +422,9 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     }
 
     if (isComplete) {
-      cleanupAudio();
+      // audioPlayerRef.current.stop();
     }
-  }, [isComplete, isTransitioningToCompletion, triggerCompletionTransition, cleanupAudio]);
+  }, [isComplete, isTransitioningToCompletion, triggerCompletionTransition]);
 
   // Effect: Update progress bar
   useEffect(() => {
@@ -613,19 +496,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
       // Update the lastProcessedWordId after playing audio
       timeRefs.current.lastProcessedWordId = wordId;
-
-      // Preload audio for multiple upcoming words - use requestAnimationFrame for timing optimization
-      requestAnimationFrame(() => {
-        // Get audio URLs for the next PRELOAD_COUNT words
-        const upcomingUrls = wordQueue
-          .slice(0, PRELOAD_COUNT)
-          .map(word => word?.root?.audio_url)
-          .filter(Boolean) as string[];
-
-        if (upcomingUrls.length > 0) {
-          preloadAudio(upcomingUrls);
-        }
-      });
     }
   }, [
     currentWord?.root_id,
@@ -633,8 +503,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     currentWord?.root?.audio_url,
     isComplete,
     isTransitioningToCompletion,
-    wordQueue,
-    preloadAudio,
     playAudio,
   ]);
 
@@ -656,7 +524,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   const handleClose = useCallback(() => {
     const mounted = { current: true };
     // Removed haptic feedback for closing review
-    cleanupAudio();
+    // audioPlayerRef.current.stop();
 
     if (!mounted.current) return;
 
@@ -686,7 +554,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     return () => {
       mounted.current = false;
     };
-  }, [invalidateQueries, user?.id, queryClient, onClose, cleanupAudio]);
+  }, [invalidateQueries, user?.id, queryClient, onClose]);
 
   // Cleanup effect
   useEffect(() => {
@@ -697,7 +565,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       stateRefs.current.completionTriggered = true;
       stateRefs.current.progressUpdatedForCompletion = false;
       fadeIn();
-      cleanupAudio();
+      // audioPlayerRef.current.stop();
 
       if (stateRefs.current.meaningTimeout) {
         clearTimeout(stateRefs.current.meaningTimeout);
@@ -709,19 +577,19 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         stateRefs.current.completionTransition = null;
       }
 
-      // Clean up all preloaded audio
-      for (const [, data] of preloadedAudioRef.current.entries()) {
-        if (data.sound) {
-          data.sound.unloadAsync().catch(() => {});
-        }
-      }
-      preloadedAudioRef.current.clear();
-
       stateRefs.current.isUpdatingWord = false;
       stateRefs.current.maxProgress = 0;
       timeRefs.current.lastProcessedWordId = null;
     };
-  }, [fadeIn, cleanupAudio]);
+  }, [fadeIn]);
+
+  // Create animated style outside of render to avoid reanimated warnings
+  const animatedStyle = useAnimatedStyle(
+    (): ViewStyle => ({
+      opacity: opacity.value,
+    }),
+    [opacity]
+  );
 
   return {
     showMeaningOverlay,
@@ -741,11 +609,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     handleSwipeRight,
     handleTap,
     handleClose,
-    animatedStyle: useAnimatedStyle(
-      (): ViewStyle => ({
-        opacity: opacity.value,
-      })
-    ),
+    animatedStyle,
     sessionMetrics: sessionMetricsRef.current,
   };
 }

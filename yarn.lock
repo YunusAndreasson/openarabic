@@ -5516,11 +5516,6 @@ expo-audio@~0.4.6:
   resolved "https://registry.yarnpkg.com/expo-audio/-/expo-audio-0.4.6.tgz#39def71b91f2cb5c4d21a51aef6ffabcc4421ad4"
   integrity sha512-/pgz0AnQHnyJWkPfTp/3gBDib6FZYnscpktFZgmPeTeCK8KkPV4+eV2oEDDbSe2ngUrqDA0WVO4MX2Mfeec9ZA==
 
-expo-av@^15.1.5:
-  version "15.1.5"
-  resolved "https://registry.yarnpkg.com/expo-av/-/expo-av-15.1.5.tgz#9102cca08a1997816d79e0e43fc397a9f40a6f6e"
-  integrity sha512-nd1B97Ix0u8IGL45jTtI66RNiRyiY9bYrS3nliugqjDF011RS03V7XpIeJdQnIh9/+P1/ei1b3vbpyifYVjmSw==
-
 expo-blur@^14.1.5:
   version "14.1.5"
   resolved "https://registry.yarnpkg.com/expo-blur/-/expo-blur-14.1.5.tgz#910712389e19286ccdc136275bf569f427aa05ef"

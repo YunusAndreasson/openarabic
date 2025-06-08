@@ -56,19 +56,6 @@
         }
       ],
       [
-        "expo-av",
-        {
-          "microphonePermission": false,
-          "androidScreenCapture": false,
-          "foregroundService": {
-            "name": "Audio Playback",
-            "notificationTitle": "Open Arabic Audio",
-            "notificationColor": "#2C312B",
-            "notificationIcon": "./assets/images/oaLogo.png"
-          }
-        }
-      ],
-      [
         "expo-notifications",
         {
           "icon": "./assets/images/oaLogo.png",

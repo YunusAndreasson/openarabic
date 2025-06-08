@@ -32,7 +32,6 @@
     "@tanstack/react-query": "^5.80.6",
     "eas-cli": "^16.9.0",
     "expo-audio": "~0.4.6",
-    "expo-av": "^15.1.5",
     "expo-blur": "^14.1.5",
     "expo-constants": "^17.1.6",
     "expo-font": "^13.3.1",

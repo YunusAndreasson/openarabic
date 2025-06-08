@@ -197,8 +197,8 @@ jest.mock('react-native-safe-area-context', () => ({
 // Reduce the default timeout from 5000ms to 1000ms
 jest.setTimeout(10000);
 
-// Mock expo-av for audio tests
-jest.mock('expo-av', () => {
+// Mock expo-audio for audio tests
+jest.mock('expo-audio', () => {
   const mockSound = {
     playAsync: jest.fn().mockResolvedValue({}),
     pauseAsync: jest.fn().mockResolvedValue({}),
@@ -216,17 +216,16 @@ jest.mock('expo-av', () => {
   };
 
   return {
-    Audio: {
-      Sound: {
-        createAsync: jest.fn().mockResolvedValue({
-          sound: mockSound,
-          status: {
-            isLoaded: true,
-          },
-        }),
-      },
-      setAudioModeAsync: jest.fn().mockResolvedValue({}),
+    AudioPlayer: {
+      create: jest.fn().mockResolvedValue(mockSound),
     },
+    AudioStatus: {
+      Idle: 'idle',
+      Loading: 'loading',
+      ReadyToPlay: 'readyToPlay',
+      Error: 'error',
+    },
+    setAudioModeAsync: jest.fn().mockResolvedValue({}),
   };
 });
 

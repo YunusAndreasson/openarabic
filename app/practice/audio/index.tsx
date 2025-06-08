@@ -69,6 +69,10 @@ export default function ListenScreen(): JSX.Element {
   const audioPlayer = useAudioPlayer();
   const { audioState, currentTrackIndex, actions } = audioPlayer;
 
+  // Keep actions ref updated
+  const actionsRef = useRef(actions);
+  actionsRef.current = actions;
+
   // Fetch vocabulary words
   const { allWords } = useFSRSQueries({
     userId: user?.id,
@@ -119,17 +123,29 @@ export default function ListenScreen(): JSX.Element {
   useEffect(() => {
     // Track state transitions
     if (audioState !== lastAudioStateRef.current) {
-      // If we were playing and now we're idle, it means playback completed
+      console.log('🎵 Audio state changed:', lastAudioStateRef.current, '->', audioState);
+      // If we were playing and now we're idle, check if we've reached the end of the queue
       const wasPlaying = lastAudioStateRef.current === 'playing';
       const isNowIdle = audioState === 'idle';
 
       if (wasPlaying && isNowIdle) {
-        playbackCompletedRef.current = true;
+        // Only mark as completed if we're at the end of the queue (no current track)
+        // The useAudioPlayer will clear currentTrack when the queue is finished
+        console.log(
+          '🎵 Playing->Idle transition, currentTrackIndex:',
+          currentTrackIndex,
+          'queue length:',
+          selectedTracksRef.current.length
+        );
+        if (currentTrackIndex === -1 || currentTrackIndex >= selectedTracksRef.current.length - 1) {
+          console.log('🎵 Marking playback as completed');
+          playbackCompletedRef.current = true;
+        }
       }
 
       lastAudioStateRef.current = audioState;
     }
-  }, [audioState]);
+  }, [audioState, currentTrackIndex]);
 
   // Initialize word list and start playback
   useEffect(() => {
@@ -143,6 +159,7 @@ export default function ListenScreen(): JSX.Element {
       try {
         // Get random vocabulary tracks (await the promise)
         const selectedTracks = await listenAudioService.getRandomVocabularyTracks(allWords, 20);
+        console.log('🎵 Generated tracks:', selectedTracks.length);
         selectedTracksRef.current = selectedTracks;
 
         // Keep the original study words for reference
@@ -185,7 +202,10 @@ export default function ListenScreen(): JSX.Element {
           }
 
           timeoutRef.current = setTimeout(() => {
-            actions.startEnhancedPlayback(selectedTracks, 0).catch(error => {
+            console.log('🎵 Starting audio playback with', selectedTracks.length, 'tracks');
+            console.log('🎵 First track:', selectedTracks[0]);
+            actionsRef.current.startEnhancedPlayback(selectedTracks, 0).catch(error => {
+              console.error('🚨 Failed to start audio playback:', error);
               handleError(
                 error instanceof Error ? error : new Error('Failed to start audio playback')
               );
@@ -199,7 +219,7 @@ export default function ListenScreen(): JSX.Element {
 
     // Call the async function
     loadTracksAndStartPlayback();
-  }, [allWords, wordList.length, actions]);
+  }, [allWords, wordList.length]);
 
   // Function to restart playback for repeat mode
   const handleRestartPlayback = useCallback(() => {
@@ -220,11 +240,11 @@ export default function ListenScreen(): JSX.Element {
       setProgressAnimationKey(prev => prev + 1);
       playbackCompletedRef.current = false;
 
-      actions.startEnhancedPlayback(selectedTracksRef.current, 0).catch(error => {
+      actionsRef.current.startEnhancedPlayback(selectedTracksRef.current, 0).catch(error => {
         handleError(error instanceof Error ? error : new Error('Failed to restart audio playback'));
       });
     }, 500);
-  }, [actions]);
+  }, []);
 
   // Handle completion when last track ends
   useEffect(() => {
@@ -249,7 +269,7 @@ export default function ListenScreen(): JSX.Element {
     setIsClosing(true);
 
     // Ensure audio is stopped and cleanup is done
-    actions.stopPlayback().catch(() => {});
+    actionsRef.current.stopPlayback().catch(() => {});
 
     // Clear any timers
     if (timeoutRef.current) {
@@ -276,13 +296,13 @@ export default function ListenScreen(): JSX.Element {
       handleError(error instanceof Error ? error : new Error(String(error)));
       router.back();
     }
-  }, [user?.id, queryClient, actions, fromRemember]);
+  }, [user?.id, queryClient, fromRemember]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       // Cancel any ongoing audio
-      actions.stopPlayback().catch(() => {});
+      actionsRef.current.stopPlayback().catch(() => {});
 
       // Clear any timers
       if (timeoutRef.current) {
@@ -294,7 +314,7 @@ export default function ListenScreen(): JSX.Element {
       maxProgressRef.current = 0;
       playbackCompletedRef.current = false;
     };
-  }, [actions]);
+  }, []); // Empty dependencies - only run on mount/unmount
 
   // Current word properties
   const currentWord = wordList[currentWordIndex] || null;
