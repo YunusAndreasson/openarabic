@@ -14,10 +14,18 @@ import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedText } from '@/components/ThemedText';
 import ParallaxHeader from '@/components/article/ParallaxHeader';
+import { useToast } from '@/components/providers/ToastProvider';
 import { LAYOUT } from '@/constants/layout';
+import { useArticleData } from '@/hooks/articles/useArticleData';
+import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
+import { useAuth } from '@/hooks/auth/useAuth';
+import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
+import { lightFeedback } from '@/utils/haptics';
 
 import type { ThemeColors } from '../../types/ui/theme.types';
 
@@ -39,11 +47,122 @@ const styles = StyleSheet.create({
   sourceLabel: {
     fontSize: 14,
   },
+  readingListButtonContainer: {
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: LAYOUT.SPACING.SMALL,
+    paddingBottom: LAYOUT.SPACING.XLARGE,
+  },
+  summaryContainer: {
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    marginTop: -LAYOUT.SPACING.XXLARGE * 1.5,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    zIndex: 10,
+  },
+  summaryCard: {
+    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    padding: LAYOUT.SPACING.LARGE,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  summaryLabel: {
+    marginBottom: LAYOUT.SPACING.SMALL,
+    opacity: 0.8,
+  },
+  summaryText: {
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.7,
+  },
 });
 
 export type ArticleContentRef = {
   scrollToSentence: (sentenceId: number) => void;
 };
+
+interface ReadingListButtonProps {
+  articleId: number;
+  isInReadingList: boolean;
+  isLoading: boolean;
+  onToggle: (articleId: number, isInReadingList: boolean) => void;
+}
+
+const ReadingListButton = React.memo<ReadingListButtonProps>(
+  ({ articleId, isInReadingList, isLoading, onToggle }) => {
+    const { showToast } = useToast();
+
+    const handlePress = () => {
+      lightFeedback();
+      onToggle(articleId, isInReadingList);
+
+      // Show toast message
+      if (isInReadingList) {
+        showToast('Removed from listening list', 3000, 'success');
+      } else {
+        showToast('Added to listening list', 3000, 'success');
+      }
+    };
+
+    return (
+      <View style={styles.readingListButtonContainer}>
+        <ThemedButton
+          variant={isInReadingList ? 'outlined' : 'filled'}
+          title={isInReadingList ? 'Remove from listening list' : 'Add to listening list'}
+          icon={isInReadingList ? 'headset' : 'headset-outline'}
+          size="medium"
+          loading={isLoading}
+          disabled={isLoading}
+          accessibilityLabel={
+            isInReadingList ? 'Remove from listening list' : 'Add to listening list'
+          }
+          onPress={handlePress}
+        />
+      </View>
+    );
+  }
+);
+
+interface ArticleSummaryProps {
+  summary: string;
+}
+
+const ArticleSummary = React.memo<ArticleSummaryProps>(({ summary }) => {
+  const colors = useColors();
+
+  return (
+    <View style={styles.summaryContainer}>
+      <View
+        style={[
+          styles.summaryCard,
+          {
+            backgroundColor: colors.background, // Use main background for clean, prominent look
+            borderColor: colors.border,
+          },
+        ]}
+      >
+        <ThemedText
+          type="label"
+          variant="secondary"
+          style={styles.summaryLabel}
+          accessibilityLabel="Article summary"
+        >
+          Summary
+        </ThemedText>
+        <ThemedText
+          type="body"
+          style={styles.summaryText}
+          accessibilityLabel={`Article overview: ${summary}`}
+        >
+          {summary}
+        </ThemedText>
+      </View>
+    </View>
+  );
+});
 
 interface ArticleContentProps {
   id: string;
@@ -82,6 +201,17 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
       highlightWord?: string;
       wordPosition?: string;
     }>();
+
+    const { user } = useAuth();
+    const articleId = parseInt(id, 10);
+
+    // Get reading list data for the button
+    const { isInReadingList, refetchReadingListStatus, isLoadingReadingList } = useArticleData(
+      articleId,
+      user?.id
+    );
+
+    const { handleToggleReadingList } = useArticleMutations(user?.id, refetchReadingListStatus);
 
     // Helper function to handle scroll events
     const handleAnimatedScroll = useCallback(
@@ -176,12 +306,28 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
       () => (
         <>
           <ParallaxHeader article={article} colors={colors} isDarkMode={!!isDarkMode} />
+          {article.summary && <ArticleSummary summary={article.summary} />}
+          {user && (
+            <ReadingListButton
+              articleId={articleId}
+              isInReadingList={isInReadingList}
+              isLoading={isLoadingReadingList}
+              onToggle={handleToggleReadingList}
+            />
+          )}
         </>
       ),
-      [article, colors, isDarkMode]
+      [
+        article,
+        colors,
+        isDarkMode,
+        user,
+        articleId,
+        isInReadingList,
+        isLoadingReadingList,
+        handleToggleReadingList,
+      ]
     );
-
-    // No footer component needed anymore
 
     // Expose the scrollToSentence method to the parent component
     useImperativeHandle(

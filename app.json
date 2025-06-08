@@ -2,7 +2,7 @@
   "expo": {
     "name": "Open Arabic",
     "slug": "open-arabic",
-    "version": "1446.10.62",
+    "version": "1446.10.63",
     "orientation": "portrait",
     "icon": "./assets/images/oaLogo.png",
     "scheme": "open-arabic",
@@ -21,7 +21,7 @@
           "openarabic.backgroundfetch"
         ]
       },
-      "buildNumber": "62"
+      "buildNumber": "63"
     },
     "android": {
       "adaptiveIcon": {

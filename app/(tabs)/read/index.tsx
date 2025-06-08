@@ -5,14 +5,13 @@ import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import type { JSX } from 'react';
 import React, { useState, useCallback, useMemo } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
 import ArticleList from '@/components/home/ArticleList';
 import FeaturedSection from '@/components/home/FeaturedSection';
 import FilterSection from '@/components/home/FilterSection';
-import SectionDivider from '@/components/home/SectionDivider';
 import { WelcomeMessage } from '@/components/home/WelcomeMessage';
 import { LAYOUT } from '@/constants/layout';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
@@ -330,8 +329,8 @@ export default function ArticlesScreen(): JSX.Element {
 
   // Optimized header component
   const ListHeaderComponent = useMemo(() => {
-    const showDivider = currentArticle.article && categoriesWithArticles.length > 0;
     const showCategories = categoriesWithArticles.length > 0;
+    const showGap = currentArticle.article && showCategories;
 
     return (
       <>
@@ -344,7 +343,7 @@ export default function ArticlesScreen(): JSX.Element {
           />
         )}
 
-        {showDivider && <SectionDivider />}
+        {showGap && <View style={{ height: LAYOUT.SPACING.XLARGE }} />}
 
         {showCategories && (
           <FilterSection items={categoriesWithArticles} onSelect={handleSelectCategory} />

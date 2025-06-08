@@ -6,8 +6,8 @@ import { EnhancedImage } from '@/components/EnhancedImage';
 import type { Article } from '@/types/articles.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 
-// Clean header image height focused on the image
-const HEADER_IMAGE_HEIGHT = 240;
+// Increased header height to accommodate overlapping summary
+const HEADER_IMAGE_HEIGHT = 280;
 
 interface ParallaxHeaderProps {
   article: Article;
@@ -20,15 +20,16 @@ const ParallaxHeader = React.memo<ParallaxHeaderProps>(
     // Image source - we know there's always an image
     const imageSource = article.image_url!;
 
-    // Light gradient for elegant image transition
+    // Enhanced gradient for better summary integration
     const imageGradientColors = useMemo(() => {
       return [
         'transparent',
         'transparent',
-        'rgba(0, 0, 0, 0.05)',
-        'rgba(0, 0, 0, 0.1)',
+        'rgba(0, 0, 0, 0.03)',
+        'rgba(0, 0, 0, 0.08)',
         'rgba(0, 0, 0, 0.15)',
-        'rgba(0, 0, 0, 0.2)',
+        'rgba(0, 0, 0, 0.25)',
+        'rgba(0, 0, 0, 0.4)', // Stronger gradient for summary overlay
       ] as const;
     }, []);
 
@@ -40,7 +41,9 @@ const ParallaxHeader = React.memo<ParallaxHeaderProps>(
       return [
         'transparent',
         'transparent',
-        `${overlayColor}0.1)`,
+        'transparent',
+        `${overlayColor}0.05)`,
+        `${overlayColor}0.15)`,
         `${overlayColor}0.3)`,
         `${overlayColor}0.5)`,
         `${overlayColor}0.7)`,
@@ -62,7 +65,7 @@ const ParallaxHeader = React.memo<ParallaxHeaderProps>(
             placeholder={article.placeholder}
           />
 
-          {/* Light image gradient */}
+          {/* Enhanced image gradient for summary overlay */}
           <LinearGradient
             colors={imageGradientColors}
             style={styles.imageGradientOverlay}
@@ -85,7 +88,7 @@ const styles = StyleSheet.create({
   container: {
     // Remove position relative to avoid z-index issues
   },
-  // Image section - Normal flow, visible at top with safe area consideration
+  // Image section - Extended height for overlapping summary
   imageSection: {
     width: '100%',
     height: HEADER_IMAGE_HEIGHT,
@@ -96,13 +99,13 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  // Light gradient overlay for elegant image transition
+  // Enhanced gradient overlay for summary integration
   imageGradientOverlay: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: '40%', // Cover bottom 40% for subtle effect
+    height: '60%', // Increased from 40% to 60% for better summary integration
   },
   // Background gradient for smooth transition to content
   backgroundGradientOverlay: {

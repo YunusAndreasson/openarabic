@@ -1,22 +1,26 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Stack } from 'expo-router';
 import React from 'react';
-import { TouchableOpacity, View, Text } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { useToast } from '@/components/providers/ToastProvider';
-import { useArticleData } from '@/hooks/articles/useArticleData';
-import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
-import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
-import type { FilterParams, ArticleParams } from '@/types/navigation.types';
-import { lightFeedback } from '@/utils/haptics';
+import type { ArticleParams } from '@/types/navigation.types';
+
+interface FilterParams {
+  type: string;
+  id?: string;
+}
 
 /**
- * Determines the appropriate title for the filter screen based on parameters
+ * Get display title for filter screen based on route params
  */
 function getFilterTitle(params: FilterParams): string {
-  // Use the dynamic title if available, otherwise fall back to type-based title
-  return params.headerTitle || (params.type === 'author' ? 'Author' : 'Category');
+  const { type, id } = params;
+
+  if (type === 'category' && id) {
+    return 'Category';
+  }
+
+  return 'Filter';
 }
 
 /**
@@ -51,59 +55,6 @@ const ArticleHeaderTitle = React.memo(({ title }: { title: string }) => {
   );
 });
 
-/**
- * Header right component for article screens with listening list toggle
- */
-const ArticleHeaderRight = React.memo(({ articleId }: { articleId: number }) => {
-  const { user } = useAuth();
-  const colors = useColors();
-  const { showToast } = useToast();
-
-  const { isInReadingList, refetchReadingListStatus, isLoadingReadingList } = useArticleData(
-    articleId,
-    user!.id
-  );
-
-  const { handleToggleReadingList } = useArticleMutations(user?.id, refetchReadingListStatus);
-
-  // Early return if no user
-  if (!user) {
-    return null;
-  }
-
-  const handlePress = () => {
-    lightFeedback();
-    handleToggleReadingList(articleId, isInReadingList);
-
-    // Show toast message
-    if (isInReadingList) {
-      showToast('Removed from listening list', 3000, 'success');
-    } else {
-      showToast('Added to listening list', 3000, 'success');
-    }
-  };
-
-  return (
-    <TouchableOpacity
-      onPress={handlePress}
-      disabled={isLoadingReadingList}
-      style={{
-        padding: 8,
-        marginRight: 4,
-        opacity: isLoadingReadingList ? 0.6 : 1,
-      }}
-      accessibilityLabel={isInReadingList ? 'Remove from listening list' : 'Add to listening list'}
-      accessibilityRole="button"
-    >
-      <Ionicons
-        name={isInReadingList ? 'headset' : 'headset-outline'}
-        size={24}
-        color={colors.tint}
-      />
-    </TouchableOpacity>
-  );
-});
-
 export default function ReadLayout() {
   return (
     <Stack>
@@ -128,7 +79,6 @@ export default function ReadLayout() {
         name="article"
         options={({ route }) => {
           const params = route.params as ArticleParams;
-          const articleId = parseInt(params.id, 10); // We know this will always be valid
 
           return {
             headerShown: true,
@@ -136,7 +86,6 @@ export default function ReadLayout() {
             headerBackTitle: 'Read',
             headerTitleAlign: 'center',
             headerTransparent: false,
-            headerRight: () => <ArticleHeaderRight articleId={articleId} />,
             presentation: 'modal',
             gestureEnabled: true,
           };
