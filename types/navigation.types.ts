@@ -74,21 +74,6 @@ export type Route<T extends RoutePath> = {
   params?: RouteParams[T];
 };
 
-/**
- * Type guard to check if a route has parameters
- */
-export function hasParams<T extends RoutePath>(
-  route: Route<T>
-): route is Route<T> & { params: NonNullable<RouteParams[T]> } {
-  return route.params !== undefined;
-}
-
-/**
- * Type guard to check if a value is a valid route path
- */
-export function isRoutePath(path: string): path is RoutePath {
-  return Object.keys(routeParams).includes(path);
-}
 
 // Route parameter definitions for type checking
 const routeParams: Record<RoutePath, true> = {

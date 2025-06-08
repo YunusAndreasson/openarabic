@@ -133,23 +133,3 @@ export function getArticlesByDifficultWords(
     .slice(0, limit);
 }
 
-/**
- * Calculates estimated reading time for an article
- * @param article - The article to calculate reading time for
- * @returns Estimated reading time in minutes
- */
-export function calculateReadingTime(article: Article): number {
-  if (!article.article_sentences?.length) return 0;
-
-  // Count total words in the article
-  const totalWords = article.article_sentences.reduce((total, sentence) => {
-    return total + (sentence.sentence_words?.length || 0);
-  }, 0);
-
-  // Average reading speed: 200 words per minute for Arabic
-  const wordsPerMinute = 200;
-  const readingTime = totalWords / wordsPerMinute;
-
-  // Round to nearest half minute, minimum 0.5 minutes
-  return Math.max(0.5, Math.round(readingTime * 2) / 2);
-}
