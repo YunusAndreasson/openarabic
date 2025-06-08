@@ -34,6 +34,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  headerContainer: {
+    marginTop: LAYOUT.SPACING.SMALL,
+  },
   listContentContainer: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
@@ -329,13 +332,10 @@ export default function ArticlesScreen(): JSX.Element {
     calculateDueWordsForArticle,
   ]);
 
-  // Optimized header component
-  const ListHeaderComponent = useMemo(() => {
-    const showCategories = categoriesWithArticles.length > 0;
-    const showGap = currentArticle.article && showCategories;
-
-    return (
-      <>
+  // Simplified header component
+  const ListHeaderComponent = useMemo(
+    () => (
+      <View style={styles.headerContainer}>
         {currentArticle.article && (
           <FeaturedSection
             article={currentArticle.article}
@@ -344,20 +344,19 @@ export default function ArticlesScreen(): JSX.Element {
           />
         )}
 
-        {showGap && <View style={{ height: LAYOUT.SPACING.XLARGE }} />}
-
-        {showCategories && (
+        {categoriesWithArticles.length > 0 && (
           <FilterSection items={categoriesWithArticles} onSelect={handleSelectCategory} />
         )}
-      </>
-    );
-  }, [
-    currentArticle.article,
-    dueWordsCount,
-    handleArticlePress,
-    categoriesWithArticles,
-    handleSelectCategory,
-  ]);
+      </View>
+    ),
+    [
+      currentArticle.article,
+      dueWordsCount,
+      handleArticlePress,
+      categoriesWithArticles,
+      handleSelectCategory,
+    ]
+  );
 
   // Remove unnecessary memoization for stable component
   const ListFooterComponent = <WelcomeMessage />;

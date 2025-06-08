@@ -64,9 +64,7 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     shadowOpacity: LAYOUT.OPACITY.SUBTLE,
   },
-  container: {
-    marginTop: LAYOUT.SPACING.SMALL,
-  },
+  container: {},
 });
 
 FeaturedSection.displayName = 'FeaturedSection';
