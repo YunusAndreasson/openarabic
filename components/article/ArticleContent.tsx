@@ -21,8 +21,11 @@ import { useToast } from '@/components/providers/ToastProvider';
 import { LAYOUT } from '@/constants/layout';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
+import { AUDIO_STATES } from '@/hooks/audio/useAudioPlayer';
+import { useEnhancedAudioPlayer } from '@/hooks/audio/useEnhancedAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
+import { enhancedAudioService } from '@/services/enhancedAudioService';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import { lightFeedback } from '@/utils/haptics';
@@ -47,10 +50,18 @@ const styles = StyleSheet.create({
   sourceLabel: {
     fontSize: 14,
   },
-  readingListButtonContainer: {
+  audioControlsContainer: {
+    flexDirection: 'row',
+    gap: LAYOUT.SPACING.SMALL,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.SMALL,
     paddingBottom: LAYOUT.SPACING.XLARGE,
+  },
+  playNowButton: {
+    flex: 1,
+  },
+  listenLaterButton: {
+    flex: 1,
   },
   summaryContainer: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
@@ -84,20 +95,69 @@ export type ArticleContentRef = {
   scrollToSentence: (sentenceId: number) => void;
 };
 
-interface ReadingListButtonProps {
+interface AudioControlsButtonProps {
   articleId: number;
+  article: Article;
   isInReadingList: boolean;
   isLoading: boolean;
-  onToggle: (articleId: number, isInReadingList: boolean) => void;
+  onToggleReadingList: (articleId: number, isInReadingList: boolean) => void;
 }
 
-const ReadingListButton = React.memo<ReadingListButtonProps>(
-  ({ articleId, isInReadingList, isLoading, onToggle }) => {
+const AudioControlsButton = React.memo<AudioControlsButtonProps>(
+  ({ articleId, article, isInReadingList, isLoading, onToggleReadingList }) => {
     const { showToast } = useToast();
+    const enhancedAudioPlayer = useEnhancedAudioPlayer();
+    const { audioState } = enhancedAudioPlayer;
+    const [isPlayNowLoading, setIsPlayNowLoading] = React.useState(false);
 
-    const handlePress = () => {
+    const isCurrentlyPlaying = audioState !== AUDIO_STATES.IDLE;
+
+    const handlePlayToggle = async () => {
+      if (isCurrentlyPlaying) {
+        // Stop playback
+        lightFeedback();
+        await enhancedAudioPlayer.actions.stopPlayback();
+        showToast('Stopped playback', 2000, 'success');
+        return;
+      }
+
+      // Start playback
+      if (!article.audio_url) {
+        showToast('Audio not available for this article', 3000, 'error');
+        return;
+      }
+
+      try {
+        setIsPlayNowLoading(true);
+        lightFeedback();
+
+        // Generate enhanced audio track for this article
+        const track = await enhancedAudioService.generateEnhancedAudioTrack(articleId);
+
+        if (!track) {
+          showToast('Failed to prepare audio', 3000, 'error');
+          return;
+        }
+
+        // Start playback with single track
+        const success = await enhancedAudioPlayer.actions.startEnhancedPlayback([track], 0);
+
+        if (success) {
+          showToast('Playing now - find it in the Listen tab', 3000, 'success');
+        } else {
+          showToast('Failed to start playback', 3000, 'error');
+        }
+      } catch (error) {
+        console.error('Play now error:', error);
+        showToast('Failed to start playback', 3000, 'error');
+      } finally {
+        setIsPlayNowLoading(false);
+      }
+    };
+
+    const handleListenLater = () => {
       lightFeedback();
-      onToggle(articleId, isInReadingList);
+      onToggleReadingList(articleId, isInReadingList);
 
       // Show toast message
       if (isInReadingList) {
@@ -107,19 +167,40 @@ const ReadingListButton = React.memo<ReadingListButtonProps>(
       }
     };
 
+    const hasAudio = !!article.audio_url;
+
     return (
-      <View style={styles.readingListButtonContainer}>
+      <View style={styles.audioControlsContainer}>
+        {/* Play/Stop Button */}
         <ThemedButton
-          variant={isInReadingList ? 'outlined' : 'filled'}
-          title={isInReadingList ? 'Remove from listening list' : 'Add to listening list'}
-          icon={isInReadingList ? 'headset' : 'headset-outline'}
+          variant="filled"
+          title={isCurrentlyPlaying ? 'STOP' : 'PLAY NOW'}
+          size="medium"
+          loading={isPlayNowLoading}
+          disabled={(!hasAudio && !isCurrentlyPlaying) || isPlayNowLoading}
+          accessibilityLabel={
+            isCurrentlyPlaying
+              ? 'Stop audio playback'
+              : hasAudio
+                ? 'Play article audio now'
+                : 'Audio not available'
+          }
+          onPress={handlePlayToggle}
+          style={styles.playNowButton}
+        />
+
+        {/* Listen Later Button */}
+        <ThemedButton
+          variant={isInReadingList ? 'outlined' : 'outlined'}
+          title={isInReadingList ? 'REMOVE' : 'LISTEN LATER'}
           size="medium"
           loading={isLoading}
           disabled={isLoading}
           accessibilityLabel={
             isInReadingList ? 'Remove from listening list' : 'Add to listening list'
           }
-          onPress={handlePress}
+          onPress={handleListenLater}
+          style={styles.listenLaterButton}
         />
       </View>
     );
@@ -308,11 +389,12 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
           <ParallaxHeader article={article} colors={colors} isDarkMode={!!isDarkMode} />
           {article.summary && <ArticleSummary summary={article.summary} />}
           {user && (
-            <ReadingListButton
+            <AudioControlsButton
               articleId={articleId}
+              article={article}
               isInReadingList={isInReadingList}
               isLoading={isLoadingReadingList}
-              onToggle={handleToggleReadingList}
+              onToggleReadingList={handleToggleReadingList}
             />
           )}
         </>

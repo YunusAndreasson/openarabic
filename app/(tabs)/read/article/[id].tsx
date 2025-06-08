@@ -11,6 +11,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { ArticleSentence } from '@/components/article';
 import { ArabicWord } from '@/components/article/ArabicWord';
 import { ArticleContent, type ArticleContentRef } from '@/components/article/ArticleContent';
+import { ToastProvider } from '@/components/providers/ToastProvider';
 import { LAYOUT } from '@/constants/layout';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleRenderers } from '@/hooks/articles/useArticleRenderers';
@@ -203,24 +204,26 @@ export default function ArticleScreen(): JSX.Element {
   );
 
   return (
-    <ThemedView style={styles.container} useSafeArea={false}>
-      <StatusBar animated={true} style={isDarkMode ? 'light' : 'dark'} translucent={true} />
+    <ToastProvider>
+      <ThemedView style={styles.container} useSafeArea={false}>
+        <StatusBar animated={true} style={isDarkMode ? 'light' : 'dark'} translucent={true} />
 
-      <View style={styles.container}>
-        {article && sortedSentences && sortedSentences.length > 0 ? (
-          <ArticleContent
-            ref={articleContentRef}
-            article={article}
-            colors={colors}
-            englishToggleKey={showEnglishLocal ? 'en' : 'ar'}
-            handleScroll={handleScroll}
-            id={id}
-            isDarkMode={isDarkMode}
-            renderSentenceItem={renderSentenceItem}
-            sortedSentences={sortedSentences}
-          />
-        ) : null}
-      </View>
-    </ThemedView>
+        <View style={styles.container}>
+          {article && sortedSentences && sortedSentences.length > 0 ? (
+            <ArticleContent
+              ref={articleContentRef}
+              article={article}
+              colors={colors}
+              englishToggleKey={showEnglishLocal ? 'en' : 'ar'}
+              handleScroll={handleScroll}
+              id={id}
+              isDarkMode={isDarkMode}
+              renderSentenceItem={renderSentenceItem}
+              sortedSentences={sortedSentences}
+            />
+          ) : null}
+        </View>
+      </ThemedView>
+    </ToastProvider>
   );
 }

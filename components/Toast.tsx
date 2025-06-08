@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     position: 'absolute',
     width: '100%',
-    zIndex: LAYOUT.Z_INDEX.POPUP + 1, // Higher z-index for prominence
+    zIndex: 999999, // Maximum z-index to appear above modals
   },
   toastText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // Larger text
