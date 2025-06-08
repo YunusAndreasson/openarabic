@@ -5,19 +5,25 @@ import { View } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ArticleParams } from '@/types/navigation.types';
+import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 interface FilterParams {
   type: string;
   id?: string;
+  name?: string;
 }
 
 /**
  * Get display title for filter screen based on route params
  */
 function getFilterTitle(params: FilterParams): string {
-  const { type, id } = params;
+  const { type, name } = params;
 
-  if (type === 'category' && id) {
+  if (type === 'category' && name) {
+    return capitalizeFirstLetter(decodeURIComponent(name));
+  }
+
+  if (type === 'category') {
     return 'Category';
   }
 
@@ -97,8 +103,7 @@ export default function ReadLayout() {
             headerTransparent: false,
             presentation: 'modal',
             gestureEnabled: true,
-            animation: 'fade',
-            animationDuration: 300,
+            animationTypeForReplace: 'push',
             headerStyle: {
               backgroundColor: colors.background,
             },

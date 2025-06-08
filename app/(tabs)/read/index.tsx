@@ -8,6 +8,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import ErrorState from '@/components/ErrorState';
 import { ThemedView } from '@/components/ThemedView';
 import ArticleList from '@/components/home/ArticleList';
 import FeaturedSection from '@/components/home/FeaturedSection';
@@ -28,8 +29,6 @@ import type { Article } from '@/types/articles.types';
 import { filterArticles, getBeginnerArticles } from '@/utils/articleUtils';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
-
-import ErrorState from '@/components/ErrorState';
 
 const styles = StyleSheet.create({
   container: {
@@ -292,8 +291,11 @@ export default function ArticlesScreen(): JSX.Element {
     [dispatch, prefetchArticle]
   );
 
-  const handleSelectCategory = useCallback((categoryId: number) => {
-    router.push(`/(tabs)/read/filter?type=category&id=${categoryId}`);
+  const handleSelectCategory = useCallback((categoryId: number, categoryName?: string) => {
+    const url = categoryName
+      ? `/(tabs)/read/filter?type=category&id=${categoryId}&name=${encodeURIComponent(categoryName)}`
+      : `/(tabs)/read/filter?type=category&id=${categoryId}`;
+    router.push(url);
   }, []);
 
   const calculateDueWordsForArticle = useCallback(
@@ -358,9 +360,8 @@ export default function ArticlesScreen(): JSX.Element {
     handleSelectCategory,
   ]);
 
-  const ListFooterComponent = useMemo(() => {
-    return <WelcomeMessage />;
-  }, []);
+  // Remove unnecessary memoization for stable component
+  const ListFooterComponent = <WelcomeMessage />;
 
   const contentContainerStyle = useMemo(
     () => ({

@@ -28,9 +28,8 @@ import { useColors } from '@/hooks/theme/useColors';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
-import { lightFeedback } from '@/utils/haptics';
-
 import type { ThemeColors } from '@/types/ui/theme.types';
+import { lightFeedback } from '@/utils/haptics';
 
 const styles = StyleSheet.create({
   content: {
@@ -117,7 +116,6 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
         // Stop playback
         lightFeedback();
         await enhancedAudioPlayer.actions.stopPlayback();
-        showToast('Stopped playback', 2000, 'success');
         return;
       }
 
@@ -142,9 +140,7 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
         // Start playback with single track
         const success = await enhancedAudioPlayer.actions.startEnhancedPlayback([track], 0);
 
-        if (success) {
-          showToast('Playing now - find it in the Listen tab', 3000, 'success');
-        } else {
+        if (!success) {
           showToast('Failed to start playback', 3000, 'error');
         }
       } catch (error) {
@@ -430,7 +426,9 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
     return (
       <Animated.View style={styles.flexOne}>
         {sortedSentences && sortedSentences.length > 0 ? (
-          <View style={styles.listContainer}>
+          <View
+            style={[styles.listContainer, styles.content, { backgroundColor: colors.background }]}
+          >
             <FlashList
               key={`article-${id}`}
               ref={flashListRef}
@@ -451,7 +449,6 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
               renderItem={renderSentenceItem}
               scrollEventThrottle={16} // Standard throttle for natural scrolling feel
               showsVerticalScrollIndicator={true}
-              style={[styles.content, { backgroundColor: colors.background }]}
               contentContainerStyle={{
                 paddingTop: 0, // Remove padding since ParallaxHeader handles its own layout
                 // Slight bottom padding adjustment for better closure

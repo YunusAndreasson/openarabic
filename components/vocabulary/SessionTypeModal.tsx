@@ -1,3 +1,7 @@
+// TODO: Replace with Expo Router native modal presentation
+// Use router.push('/(tabs)/practice/session-type') with presentation: 'modal' instead
+// This custom Modal should be replaced with native Expo Router modal for better performance
+
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import React, { memo, useEffect } from 'react';

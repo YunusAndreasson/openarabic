@@ -1,12 +1,10 @@
-/* eslint-disable react-native/no-unused-styles */
 import { useLocalSearchParams, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import type { ComponentRef, JSX } from 'react';
-import { StyleSheet, View, AppState } from 'react-native';
+import { View, AppState } from 'react-native';
 import type { TouchableOpacity } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleSentence } from '@/components/article';
@@ -28,27 +26,10 @@ import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { lightFeedback } from '@/utils/haptics';
 
-const createStyles = (
-  colors: ReturnType<typeof useColors>,
-  _insets: ReturnType<typeof useSafeAreaInsets>
-) =>
-  StyleSheet.create({
-    container: {
-      backgroundColor: colors.background,
-      flex: 1,
-    },
-    transparentBackground: {
-      backgroundColor: colors.transparent,
-      paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    },
-  });
-
 export default function ArticleScreen(): JSX.Element {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const colors = useColors();
-  const insets = useSafeAreaInsets();
-  const styles = useMemo(() => createStyles(colors, insets), [colors, insets]);
   const { user } = useAuth();
   const settings = useAppSelector(state => state.settings);
   const isDarkMode = useIsDarkMode();
@@ -203,7 +184,10 @@ export default function ArticleScreen(): JSX.Element {
         <ArticleSentence
           key={props.item.id}
           colors={colors}
-          containerStyle={styles.transparentBackground}
+          containerStyle={{
+            backgroundColor: colors.transparent,
+            paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+          }}
           currentPlayingWordId={null}
           currentPlayingPosition={null}
           renderWord={renderWord}
@@ -218,24 +202,17 @@ export default function ArticleScreen(): JSX.Element {
         />
       );
     },
-    [
-      getWordsForSentence,
-      renderWord,
-      showEnglishLocal,
-      settings.fontScale,
-      colors,
-      styles.transparentBackground,
-    ]
+    [getWordsForSentence, renderWord, showEnglishLocal, settings.fontScale, colors]
   );
 
   return (
     <ToastProvider>
-      <ThemedView style={styles.container} useSafeArea={false}>
+      <ThemedView style={{ flex: 1 }} useSafeArea={false}>
         <StatusBar animated={true} style={isDarkMode ? 'light' : 'dark'} translucent={true} />
 
-        <View style={styles.container}>
+        <View style={{ flex: 1 }}>
           {article && sortedSentences && sortedSentences.length > 0 ? (
-            <Animated.View style={[styles.container, contentAnimatedStyle]}>
+            <Animated.View style={[{ flex: 1 }, contentAnimatedStyle]}>
               <ArticleContent
                 ref={articleContentRef}
                 article={article}

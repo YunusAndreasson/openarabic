@@ -32,6 +32,7 @@ export interface WordListParams {
 export interface FilterParams {
   type: 'author' | 'category';
   id: string;
+  name?: string;
   headerTitle?: string;
 }
 

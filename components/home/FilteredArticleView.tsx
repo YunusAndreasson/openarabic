@@ -3,9 +3,9 @@ import { FlashList } from '@shopify/flash-list';
 import React, { useMemo, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
 import type { Article } from '@/types/articles.types';
-import { ThemedView } from '@/components/ThemedView';
 
 import ListArticleItem from './ListArticleItem';
 
@@ -18,18 +18,6 @@ interface FilteredArticleViewProps {
   articles: Article[];
 
   /**
-   * Whether the view is in a refreshing state
-   * @deprecated Pull-to-refresh disabled in modal contexts to avoid conflicts with pull-to-close
-   */
-  isRefreshing: boolean;
-
-  /**
-   * Callback when the view is refreshed
-   * @deprecated Pull-to-refresh disabled in modal contexts to avoid conflicts with pull-to-close
-   */
-  onRefresh: () => void;
-
-  /**
    * Callback when an article is pressed
    */
   onArticlePress?: (article: Article) => void;
@@ -37,13 +25,9 @@ interface FilteredArticleViewProps {
 
 /**
  * A specialized component for displaying filtered articles in modal contexts
- * Pull-to-refresh is disabled to avoid conflicts with modal pull-to-close gestures
  */
 const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   articles,
-  // isRefreshing and onRefresh are kept for API compatibility but not used
-  isRefreshing: _isRefreshing,
-  onRefresh: _onRefresh,
   onArticlePress = NOOP_ARTICLE_PRESS,
 }) => {
   const renderItemCallback = useCallback(
@@ -76,7 +60,6 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
         overrideItemLayout={layout => {
           layout.size = ITEM_HEIGHT;
         }}
-        // Pull-to-refresh disabled to avoid conflicts with modal pull-to-close gesture
       />
     </ThemedView>
   );

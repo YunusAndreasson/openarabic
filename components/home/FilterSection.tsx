@@ -24,7 +24,7 @@ interface FilterItem {
 interface FilterSectionProps {
   title?: string;
   items: FilterItem[];
-  onSelect: (id: number) => void;
+  onSelect: (id: number, name?: string) => void;
 }
 
 const CompactNavCard = memo(
@@ -101,7 +101,7 @@ const FilterSection = memo(({ title, items, onSelect }: FilterSectionProps): JSX
           key={`${title || 'filter'}-${item.id}`}
           count={item.count}
           label={capitalizeFirstLetter(item.name)}
-          onPress={() => onSelect(item.id)}
+          onPress={() => onSelect(item.id, item.name)}
         />
       ))}
     </View>
