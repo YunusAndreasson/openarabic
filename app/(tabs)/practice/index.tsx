@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import React, { useState, useCallback } from 'react';
-import { StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { StyleSheet, ScrollView, ActivityIndicator, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
@@ -131,14 +131,16 @@ export default function VocabularyScreen(): JSX.Element {
         )}
 
         {/* PRIMARY SECTION: Learning Overview */}
-        <VocabularyStatCards
-          dueWords={dueWords}
-          learningWords={userStats?.learningWords ?? 0}
-          masteredWords={userStats?.masteredWords ?? 0}
-          studyWords={studyWords?.filter(word => word != null && word.root_id != null) ?? []}
-          onStatPress={handleStatPress}
-          onStartReview={handleStartCategoryReview}
-        />
+        <View style={{ marginTop: LAYOUT.SPACING.SMALL }}>
+          <VocabularyStatCards
+            dueWords={dueWords}
+            learningWords={userStats?.learningWords ?? 0}
+            masteredWords={userStats?.masteredWords ?? 0}
+            studyWords={studyWords?.filter(word => word != null && word.root_id != null) ?? []}
+            onStatPress={handleStatPress}
+            onStartReview={handleStartCategoryReview}
+          />
+        </View>
       </ScrollView>
 
       {/* Session Type Modal */}

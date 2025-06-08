@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
     shadowOpacity: LAYOUT.OPACITY.SUBTLE,
   },
   container: {
-    marginTop: LAYOUT.SPACING.XLARGE,
+    marginTop: LAYOUT.SPACING.SMALL,
   },
 });
 
