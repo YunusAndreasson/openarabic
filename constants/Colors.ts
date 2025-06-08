@@ -143,10 +143,7 @@ export const Colors = {
     modalOverlay: alpha(basePalette.sage.lightest, opacity.full),
     borderOverlay: alpha(basePalette.tint.primary, opacity.light),
     buttonOverlay: alpha(basePalette.tint.primary, opacity.medium),
-    buttonOverlayActive: alpha(basePalette.tint.primary, opacity.active),
-    buttonBorderOverlay: alpha(basePalette.pure.white, opacity.disabled),
     backdropOverlay: alpha(basePalette.forest.dark, opacity.backdrop),
-    contrastOverlay: alpha(basePalette.forest.dark, opacity.overlay),
 
     // Elevation system
     shadow: basePalette.forest.dark,
@@ -163,9 +160,6 @@ export const Colors = {
     wordTooltipShadow: alpha(basePalette.forest.dark, opacity.active),
     wordSelectionUnderline: alpha(basePalette.tint.primary, opacity.selection),
     wordDueUnderline: alpha(basePalette.semantic.warning, opacity.due),
-    audioControlBg: basePalette.pure.white,
-    audioControlBorder: basePalette.sage.light,
-    audioControlShadow: alpha(basePalette.forest.dark, opacity.medium),
 
     // Navigation
     navigationRipple: alpha(basePalette.tint.primary, opacity.strong),
@@ -177,8 +171,6 @@ export const Colors = {
     progressBackground: alpha(basePalette.tint.primary, opacity.progress),
     interactiveSecondary: basePalette.forest.light,
     completionSuccess: basePalette.semantic.success,
-    repeatActive: basePalette.semantic.warning,
-    socialIconBg: alpha(basePalette.tint.primary, opacity.strong),
 
     // Utility colors
     imagePlaceholder: basePalette.sage.lighter,
@@ -228,10 +220,7 @@ export const Colors = {
     modalOverlay: alpha(basePalette.sage.darkest, opacity.full),
     borderOverlay: alpha(basePalette.tint.primaryDark, opacity.medium),
     buttonOverlay: alpha(basePalette.tint.primaryDark, opacity.strong),
-    buttonOverlayActive: alpha(basePalette.tint.primaryDark, opacity.progress),
-    buttonBorderOverlay: alpha('#F4F6F4', opacity.progress),
     backdropOverlay: alpha(basePalette.sage.darkest, opacity.darkBackdrop),
-    contrastOverlay: alpha(basePalette.pure.black, opacity.overlay),
 
     // Elevation system
     shadow: basePalette.pure.black,
@@ -248,9 +237,6 @@ export const Colors = {
     wordTooltipShadow: alpha(basePalette.pure.black, opacity.due),
     wordSelectionUnderline: alpha(basePalette.tint.primaryDark, opacity.tooltip),
     wordDueUnderline: alpha(basePalette.semantic.warningDark, opacity.overlay),
-    audioControlBg: basePalette.sage.medium,
-    audioControlBorder: elevation.dark.level3,
-    audioControlShadow: alpha(basePalette.pure.black, opacity.tooltip),
 
     // Navigation
     navigationRipple: alpha(basePalette.tint.primaryDark, opacity.active),
@@ -262,8 +248,6 @@ export const Colors = {
     progressBackground: alpha(basePalette.tint.primaryDark, opacity.disabled),
     interactiveSecondary: '#B6C2B8',
     completionSuccess: basePalette.semantic.successDark,
-    repeatActive: basePalette.semantic.warningDark,
-    socialIconBg: alpha(basePalette.tint.primaryDark, opacity.strong),
 
     // Utility colors
     imagePlaceholder: basePalette.sage.medium,

@@ -31,8 +31,6 @@ export interface ThemeColors {
   modalOverlay: string;
   borderOverlay: string;
   buttonOverlay: string;
-  buttonOverlayActive: string;
-  buttonBorderOverlay: string;
   shadow: string;
   elevation1: string;
   elevation2: string;
@@ -46,8 +44,6 @@ export interface ThemeColors {
 
   // Enhanced theme-aware colors
   backdropOverlay: string;
-  contrastOverlay: string;
-  socialIconBg: string;
 
   // Article reading specific colors
   audioHighlight: string;
@@ -58,9 +54,6 @@ export interface ThemeColors {
   wordTooltipShadow: string;
   wordSelectionUnderline: string;
   wordDueUnderline: string;
-  audioControlBg: string;
-  audioControlBorder: string;
-  audioControlShadow: string;
 
   // Navigation branding colors
   navigationRipple: string;
@@ -72,7 +65,6 @@ export interface ThemeColors {
   progressBackground: string;
   interactiveSecondary: string;
   completionSuccess: string;
-  repeatActive: string;
 
   [key: string]: string;
 }
