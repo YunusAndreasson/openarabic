@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, memo } from 'react';
 import type { ViewStyle } from 'react-native';
-import { StyleSheet, View, Dimensions, Platform } from 'react-native';
+import { StyleSheet, View, Platform, useWindowDimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   withSpring,
@@ -163,7 +163,7 @@ export const Toast = memo(
       return isDarkMode ? colors.text : colors.white;
     }, [type, isDarkMode, colors.text, colors.white]);
 
-    const { width: screenWidth } = Dimensions.get('window');
+    const { width: screenWidth } = useWindowDimensions();
     const maxToastWidth = screenWidth * MAX_TOAST_WIDTH_RATIO;
 
     // Position higher on screen for better visibility

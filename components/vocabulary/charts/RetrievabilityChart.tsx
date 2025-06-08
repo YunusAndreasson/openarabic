@@ -25,7 +25,7 @@ import {
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import { generateChartSubtitle, CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/components/vocabulary/shared/chartMessages';
 import {
-  GRAPH_WIDTH,
+  useGraphWidth,
   GRAPH_HEIGHT_LARGE,
   DAYS_7,
   CRITICAL_RETRIEVABILITY_THRESHOLD,
@@ -47,6 +47,7 @@ export const RetrievabilityChart = memo(
   ({ studyWords = [], onInfoPress, hideTitle = false }: RetrievabilityChartProps) => {
     const chartColors = useChartColors();
     const colors = useColors();
+    const graphWidth = useGraphWidth();
 
     // Calculate retrievability forecast over the next 7 days
     const retrievabilityData = useMemo(() => {
@@ -115,7 +116,7 @@ export const RetrievabilityChart = memo(
         100,
         Math.max(...retrievabilityData.map(d => d.averageRetrievability))
       );
-      const stepX = GRAPH_WIDTH / (retrievabilityData.length - 1);
+      const stepX = graphWidth / (retrievabilityData.length - 1);
 
       // Create smooth curve using Skia Path
       const path = Skia.Path.Make();
@@ -223,7 +224,7 @@ export const RetrievabilityChart = memo(
               accessibilityLabel="Memory retention forecast showing expected retention over the next 7 days"
             >
               {/* Subtle grid lines for better visual structure */}
-              <ChartGrid width={GRAPH_WIDTH} height={GRAPH_HEIGHT_LARGE} gridLines={4} />
+              <ChartGrid width={graphWidth} height={GRAPH_HEIGHT_LARGE} gridLines={4} />
 
               {/* Area fill under the retrievability line - rendered first as base */}
               <Group>
@@ -231,7 +232,7 @@ export const RetrievabilityChart = memo(
                   <Path
                     path={createAreaFillPath(
                       chartData.retrievabilityPath,
-                      GRAPH_WIDTH,
+                      graphWidth,
                       GRAPH_HEIGHT_LARGE
                     )}
                   >
@@ -253,7 +254,7 @@ export const RetrievabilityChart = memo(
                       <Path
                         path={createAreaFillPath(
                           chartData.retrievabilityPath,
-                          GRAPH_WIDTH,
+                          graphWidth,
                           GRAPH_HEIGHT_LARGE
                         )}
                         color={colors.white}
@@ -265,7 +266,7 @@ export const RetrievabilityChart = memo(
                         key={`performance-zone-${zone.color}-${zone.y}`}
                         x={0}
                         y={zone.y}
-                        width={GRAPH_WIDTH}
+                        width={graphWidth}
                         height={zone.height}
                         color={chartColors.withOpacity(zone.color, 0.25)}
                       />
@@ -314,7 +315,7 @@ export const RetrievabilityChart = memo(
 
           {/* Enhanced axis labels with proper padding and y-axis values */}
           <ChartAxes
-            width={GRAPH_WIDTH}
+            width={graphWidth}
             height={GRAPH_HEIGHT_LARGE}
             xLabels={retrievabilityData
               .filter(data => data && data.wordCount > 0)

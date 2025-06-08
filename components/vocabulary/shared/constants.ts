@@ -1,8 +1,10 @@
-import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { LAYOUT, useScreenWidth } from '@/constants/layout';
 
 // Graph dimensions - optimized for perfect alignment and space usage
-export const GRAPH_WIDTH =
-  SCREEN_WIDTH - LAYOUT.SCREEN_EDGE_PADDING * 2 - LAYOUT.CARD.PADDING.MEDIUM * 2 - 32;
+export const useGraphWidth = (): number => {
+  const screenWidth = useScreenWidth();
+  return screenWidth - LAYOUT.SCREEN_EDGE_PADDING * 2 - LAYOUT.CARD.PADDING.MEDIUM * 2 - 32;
+};
 export const GRAPH_HEIGHT_LARGE = 176; // Optimized height for better proportions (8px alignment grid)
 
 // Chart visual constants for perfect alignment
