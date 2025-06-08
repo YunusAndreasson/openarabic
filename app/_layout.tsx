@@ -10,7 +10,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import { Stack, useNavigationContainerRef, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useState, useRef, Component, useMemo, useCallback, memo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback, memo } from 'react';
 import 'react-native-reanimated';
 import { AppState, View, StyleSheet, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -270,51 +270,6 @@ function AppContent() {
   );
 }
 
-interface ErrorBoundaryProps {
-  children: React.ReactNode;
-  FallbackComponent: React.ComponentType<{ error: Error }>;
-}
-
-interface ErrorBoundaryState {
-  hasError: boolean;
-  error: Error | null;
-}
-
-class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  static defaultState: ErrorBoundaryState = { hasError: false, error: null };
-
-  state = ErrorBoundary.defaultState;
-
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Report to Sentry with component stack
-    Sentry.captureException(error, {
-      tags: { location: 'error_boundary' },
-      contexts: {
-        react: {
-          componentStack: errorInfo.componentStack,
-        },
-      },
-    });
-  }
-
-  shouldComponentUpdate(_prevProps: ErrorBoundaryProps, nextState: ErrorBoundaryState): boolean {
-    if (this.state.hasError !== nextState.hasError) return true;
-    if (this.state.error !== nextState.error) return true;
-    return false;
-  }
-
-  render() {
-    if (this.state.hasError && this.state.error) {
-      const { FallbackComponent } = this.props;
-      return <FallbackComponent error={this.state.error} />;
-    }
-    return this.props.children;
-  }
-}
 
 interface FallbackProps {
   readonly error: Error;
@@ -367,9 +322,13 @@ export default Sentry.wrap(function RootLayout() {
             <AuthProvider>
               <SafeAreaProvider>
                 <ToastProvider>
-                  <ErrorBoundary FallbackComponent={ErrorFallback}>
+                  <Sentry.ErrorBoundary
+                    fallback={({ error }) => (
+                      <ErrorFallback error={error} />
+                    )}
+                  >
                     <AppContent />
-                  </ErrorBoundary>
+                  </Sentry.ErrorBoundary>
                 </ToastProvider>
               </SafeAreaProvider>
             </AuthProvider>
