@@ -143,18 +143,19 @@ const SessionTypeModal = memo(
                   onPress={() => handleOptionPress(onStartVisual)}
                   accessibilityLabel="Start visual session"
                 >
-                  <View style={[styles.iconContainer, { backgroundColor: colors.success + '15' }]}>
-                    <Ionicons name="eye" size={24} color={colors.success} />
+                  <View style={[styles.iconContainer, { backgroundColor: colors.tint + '15' }]}>
+                    <Ionicons name="eye" size={24} color={colors.tint} />
                   </View>
                   <View style={styles.optionContent}>
                     <ThemedText style={styles.optionTitle} type="body" weight="semibold">
                       Visual
                     </ThemedText>
                     <ThemedText
-                      style={[styles.optionDescription, { color: colors.secondaryText }]}
+                      colorName="secondaryText"
+                      style={styles.optionDescription}
                       type="caption"
                     >
-                      See and choose
+                      Interactive
                     </ThemedText>
                   </View>
                 </TouchableOpacity>
@@ -173,7 +174,8 @@ const SessionTypeModal = memo(
                       Audio
                     </ThemedText>
                     <ThemedText
-                      style={[styles.optionDescription, { color: colors.secondaryText }]}
+                      colorName="secondaryText"
+                      style={styles.optionDescription}
                       type="caption"
                     >
                       Hands-free

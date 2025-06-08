@@ -37,8 +37,10 @@ export const ChartTooltipData = memo<ChartTooltipProps>(({ tooltip, maxWidth }) 
         },
       ]}
     >
-      <ThemedText style={[styles.tooltipValue, { color: colors.text }]}>{tooltip.value}</ThemedText>
-      <ThemedText style={[styles.tooltipLabel, { color: colors.secondaryText }]}>
+      <ThemedText colorName="text" style={styles.tooltipValue}>
+        {tooltip.value}
+      </ThemedText>
+      <ThemedText colorName="secondaryText" style={styles.tooltipLabel}>
         {tooltip.label}
       </ThemedText>
     </View>

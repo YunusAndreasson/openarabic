@@ -2,9 +2,8 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 
-import { LAYOUT, TYPOGRAPHY_HIERARCHY, getEnhancedOpacity } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
 import { ThemedText } from './ThemedText';
 import TouchableIcon from './TouchableIcon';
@@ -30,10 +29,10 @@ const SectionTitle: React.FC<SectionTitleProps> = ({
   containerStyle,
   isFirstSection = false,
 }) => {
-  const isDarkMode = useIsDarkMode();
   const colors = useColors();
 
-  // Enhanced styles with sophisticated typography colors and micro-typography
+  // Enhanced styles with sophisticated typography and micro-typography
+  // Let ThemedText handle colors through colorName prop
   const titleStyle = React.useMemo(
     () => ({
       marginBottom: 0,
@@ -43,9 +42,8 @@ const SectionTitle: React.FC<SectionTitleProps> = ({
       lineHeight:
         LAYOUT.TYPOGRAPHY.SCALE.XXLARGE *
         TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.SECTION_HEADER.lineHeightMultiplier,
-      opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY, isDarkMode),
     }),
-    [isDarkMode]
+    []
   );
 
   const subtitleStyle = React.useMemo(
@@ -53,10 +51,9 @@ const SectionTitle: React.FC<SectionTitleProps> = ({
       lineHeight:
         LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
       marginTop: LAYOUT.SPACING.TINY,
-      opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.TERTIARY, isDarkMode),
       letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
     }),
-    [isDarkMode]
+    []
   );
 
   return (

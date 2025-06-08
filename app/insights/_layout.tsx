@@ -2,7 +2,11 @@ import { Stack } from 'expo-router';
 import type { JSX } from 'react';
 import React from 'react';
 
+import { useColors } from '@/hooks/theme/useColors';
+
 export default function InsightsLayout(): JSX.Element {
+  const colors = useColors();
+
   return (
     <Stack>
       <Stack.Screen
@@ -33,6 +37,17 @@ export default function InsightsLayout(): JSX.Element {
             headerTransparent: false,
             presentation: 'modal',
             gestureEnabled: true,
+            headerStyle: {
+              backgroundColor: colors.background,
+            },
+            headerTitleStyle: {
+              fontSize: 20,
+              fontWeight: '600',
+            },
+            headerTintColor: colors.headingText,
+            headerBackTitleStyle: {
+              fontSize: 16,
+            },
           };
         }}
       />

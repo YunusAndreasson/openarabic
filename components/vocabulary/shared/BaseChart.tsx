@@ -69,8 +69,8 @@ export const BaseChart = memo(
             {!hideTitle && (
               <CardHeader subtitle="Error loading data" title={title} onInfoPress={onInfoPress} />
             )}
-            <View style={[styles.emptyState, { height: contentHeight + 40 }]}>
-              <ThemedText style={[styles.emptyText, { color: colors.error }]}>
+            <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
+              <ThemedText colorName="error" style={styles.emptyText}>
                 {errorText}
               </ThemedText>
             </View>
@@ -87,8 +87,8 @@ export const BaseChart = memo(
             {!hideTitle && (
               <CardHeader subtitle={subtitle} title={title} onInfoPress={onInfoPress} />
             )}
-            <View style={[styles.emptyState, { height: contentHeight + 40 }]}>
-              <ThemedText style={[styles.emptyText, { color: colors.secondaryText }]}>
+            <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
+              <ThemedText colorName="secondaryText" style={styles.emptyText}>
                 {emptyStateText}
               </ThemedText>
             </View>
@@ -110,9 +110,9 @@ export const BaseChart = memo(
 
           {/* Loading State */}
           {isLoading && (
-            <View style={[styles.loadingState, { height: contentHeight }]}>
-              <ActivityIndicator color={colors.tint} size="small" style={styles.loadingIndicator} />
-              <ThemedText style={[styles.loadingText, { color: colors.secondaryText }]}>
+            <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+              <ActivityIndicator color={colors.tint} size="large" />
+              <ThemedText colorName="secondaryText" style={styles.loadingText}>
                 Loading chart...
               </ThemedText>
             </View>
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   content: {
     padding: CHART_LAYOUT.CONTENT_PADDING * 0.875, // Slightly reduced padding for better space usage (10.5px)
   },
-  emptyState: {
+  emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: CHART_LAYOUT.ELEMENT_SPACING * 1.5,
@@ -167,10 +167,7 @@ const styles = StyleSheet.create({
   headerSection: {
     marginBottom: CHART_LAYOUT.ELEMENT_SPACING * 0.875, // 14px - optimized separation for visual hierarchy
   },
-  loadingIndicator: {
-    marginBottom: CHART_LAYOUT.ELEMENT_SPACING,
-  },
-  loadingState: {
+  loadingContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: CHART_LAYOUT.ELEMENT_SPACING * 1.5,

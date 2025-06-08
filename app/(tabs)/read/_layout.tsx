@@ -1,7 +1,8 @@
 import { Stack } from 'expo-router';
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
+import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ArticleParams } from '@/types/navigation.types';
 
@@ -27,8 +28,6 @@ function getFilterTitle(params: FilterParams): string {
  * Beautiful centered header title component for articles
  */
 const ArticleHeaderTitle = React.memo(({ title }: { title: string }) => {
-  const colors = useColors();
-
   return (
     <View
       style={{
@@ -39,18 +38,18 @@ const ArticleHeaderTitle = React.memo(({ title }: { title: string }) => {
         maxWidth: '100%',
       }}
     >
-      <Text
+      <ThemedText
+        colorName="headingText"
         style={{
           fontSize: 17,
           fontWeight: '600',
-          color: colors.text,
           textAlign: 'center',
         }}
         numberOfLines={2}
         ellipsizeMode="tail"
       >
         {title}
-      </Text>
+      </ThemedText>
     </View>
   );
 });

@@ -161,7 +161,7 @@ const SleepTimerComponent = ({
                 {isActive && remainingTime > 0 ? (
                   <View style={styles.activeTimerContainer}>
                     <View style={styles.timeDisplay}>
-                      <ThemedText style={[styles.timeText, { color: colors.tint }]} type="heading1">
+                      <ThemedText colorName="tint" style={styles.timeText} type="heading1">
                         {formatTime(remainingTime)}
                       </ThemedText>
                     </View>

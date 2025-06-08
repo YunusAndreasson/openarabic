@@ -22,7 +22,6 @@ const ClassicalTextsScreen: React.FC = () => {
           headerTitle: '',
           headerTitleStyle: {
             ...LAYOUT.HEADER.TITLE.SECONDARY,
-            color: colors.text,
           } as any,
           headerStyle: {
             backgroundColor: colors.background,
@@ -30,7 +29,7 @@ const ClassicalTextsScreen: React.FC = () => {
           headerShadowVisible: false,
           headerTransparent: false,
           headerTitleAlign: 'left',
-          headerTintColor: colors.tint,
+          headerTintColor: colors.headingText,
           headerBackTitle: 'Account',
           headerBackTitleStyle: {
             fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
