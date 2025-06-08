@@ -366,11 +366,7 @@ export default function ArticlesScreen(): JSX.Element {
       ...styles.listContentContainer,
       backgroundColor: colors.background,
       paddingTop: headerHeight,
-      paddingBottom:
-        insets.bottom +
-        LAYOUT.CONTENT_SPACING.BOTTOM +
-        LAYOUT.BOTTOM_BAR.HEIGHT +
-        LAYOUT.SPACING.MEDIUM,
+      paddingBottom: insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY,
     }),
     [colors.background, headerHeight, insets.bottom]
   );

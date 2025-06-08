@@ -10,7 +10,8 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 const styles = StyleSheet.create({
   filterSectionContainer: {
-    marginTop: LAYOUT.SPACING.XLARGE,
+    marginTop: LAYOUT.SPACING.MEDIUM,
+    gap: LAYOUT.SPACING.MEDIUM,
   },
 });
 
@@ -29,26 +30,24 @@ const CompactNavCard = memo(
   ({ label, count, onPress }: { label: string; count?: number; onPress: () => void }) => {
     const colors = useColors();
     return (
-      <View style={compactCardStyles.cardContainer}>
-        <BaseCard shadowSize="small" style={compactCardStyles.card} onPress={onPress}>
-          <View style={compactCardStyles.row}>
-            <ThemedText numberOfLines={1} style={compactCardStyles.label} type="body" weight="bold">
-              {label}
-            </ThemedText>
-            {count !== undefined && (
-              <View style={[compactCardStyles.countBadge, { backgroundColor: colors.textOverlay }]}>
-                <ThemedText
-                  skipDefaultColor
-                  style={[compactCardStyles.countText, { color: colors.textTertiary }]}
-                  type="caption"
-                >
-                  {count}
-                </ThemedText>
-              </View>
-            )}
-          </View>
-        </BaseCard>
-      </View>
+      <BaseCard shadowSize="small" style={compactCardStyles.card} onPress={onPress}>
+        <View style={compactCardStyles.row}>
+          <ThemedText numberOfLines={1} style={compactCardStyles.label} type="body" weight="bold">
+            {capitalizeFirstLetter(label)}
+          </ThemedText>
+          {count !== undefined && (
+            <View style={[compactCardStyles.countBadge, { backgroundColor: colors.textOverlay }]}>
+              <ThemedText
+                skipDefaultColor
+                style={[compactCardStyles.countText, { color: colors.textTertiary }]}
+                type="caption"
+              >
+                {count}
+              </ThemedText>
+            </View>
+          )}
+        </View>
+      </BaseCard>
     );
   }
 );
@@ -58,13 +57,24 @@ CompactNavCard.displayName = 'CompactNavCard';
 const compactCardStyles = StyleSheet.create({
   card: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    justifyContent: 'center',
-    marginHorizontal: 2,
-    minHeight: 48,
-    padding: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  cardContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  label: {
+    flex: 1,
+    fontWeight: '600',
   },
   countBadge: {
     alignItems: 'center',
@@ -80,14 +90,6 @@ const compactCardStyles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
-  label: {
-    flex: 1,
-    fontWeight: '600',
-  },
-  row: {
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
 });
 
 const FilterSection = memo(({ items, onSelect }: FilterSectionProps): JSX.Element => {
@@ -97,7 +99,7 @@ const FilterSection = memo(({ items, onSelect }: FilterSectionProps): JSX.Elemen
         <CompactNavCard
           key={`filter-${item.id}`}
           count={item.count}
-          label={capitalizeFirstLetter(item.name)}
+          label={item.name}
           onPress={() => onSelect(item.id, item.name)}
         />
       ))}

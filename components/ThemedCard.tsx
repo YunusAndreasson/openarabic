@@ -5,7 +5,12 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View, Platform, ActivityIndicator } from 'react-native';
 
 import { DEFAULT_IMAGES } from '@/constants/images';
-import { LAYOUT, TYPOGRAPHY_HIERARCHY, getEnhancedOpacity, useScreenWidth } from '@/constants/layout';
+import {
+  LAYOUT,
+  TYPOGRAPHY_HIERARCHY,
+  getEnhancedOpacity,
+  useScreenWidth,
+} from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type {

@@ -452,7 +452,7 @@ export default function ListenScreen(): JSX.Element {
     return (
       <ThemedView style={styles.loadingContainer}>
         <ActivityIndicator color={colors.tint} size="large" />
-        <ThemedText style={{ marginTop: LAYOUT.SPACING.MEDIUM }}>Loading your playlist</ThemedText>
+        <ThemedText style={{ marginTop: LAYOUT.SPACING.SMALL }}>Loading your playlist</ThemedText>
       </ThemedView>
     );
   }
@@ -480,7 +480,7 @@ export default function ListenScreen(): JSX.Element {
               ? insets.bottom +
                 LAYOUT.BOTTOM_BAR.HEIGHT +
                 LAYOUT.SPACING.TINY +
-                (shouldShowPlayer ? 120 + LAYOUT.SPACING.TINY : LAYOUT.BUTTON.HEIGHT.LARGE)
+                (shouldShowPlayer ? 120 + LAYOUT.SPACING.TINY : LAYOUT.SPACING.TINY)
               : insets.bottom + LAYOUT.SPACING.TINY,
             paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
           }}
