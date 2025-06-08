@@ -23,7 +23,7 @@ import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
 import { lightFeedback } from '@/utils/haptics';
 
-import pkg from '../../../../package.json';
+import pkg from '@/package.json';
 
 // Memoized components
 interface SettingLabelProps {

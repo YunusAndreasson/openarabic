@@ -2,10 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { LAYOUT } from '../../constants/layout';
-import { useColors } from '../../hooks/theme/useColors';
-import { useIsDarkMode } from '../../hooks/theme/useThemeDetection';
-import { ThemedText } from '../ThemedText';
+import { LAYOUT } from '@/constants/layout';
+import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import { ThemedText } from '@/components/ThemedText';
 
 /**
  * DifficultyIndicator component to display article difficulty

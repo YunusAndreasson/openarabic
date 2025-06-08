@@ -3,7 +3,7 @@ import type { ViewStyle } from 'react-native';
 import { View, StyleSheet } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
-import { LAYOUT } from '../constants/layout';
+import { LAYOUT } from '@/constants/layout';
 
 import SectionTitle from './SectionTitle';
 

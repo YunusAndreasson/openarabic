@@ -3,9 +3,9 @@ import { FlashList } from '@shopify/flash-list';
 import React, { useMemo, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { LAYOUT } from '../../constants/layout';
-import type { Article } from '../../types/articles.types';
-import { ThemedView } from '../ThemedView';
+import { LAYOUT } from '@/constants/layout';
+import type { Article } from '@/types/articles.types';
+import { ThemedView } from '@/components/ThemedView';
 
 import ListArticleItem from './ListArticleItem';
 

@@ -2,9 +2,9 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 
-import { LAYOUT, TYPOGRAPHY_HIERARCHY, getEnhancedOpacity } from '../constants/layout';
-import { useColors } from '../hooks/theme/useColors';
-import { useIsDarkMode } from '../hooks/theme/useThemeDetection';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY, getEnhancedOpacity } from '@/constants/layout';
+import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
 import { ThemedText } from './ThemedText';
 import TouchableIcon from './TouchableIcon';

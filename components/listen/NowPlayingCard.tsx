@@ -19,9 +19,9 @@ import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { Article } from '@/types/articles.types';
 import { withOpacity } from '@/utils/colorUtils';
 
-import { EnhancedImage } from '../EnhancedImage';
-import { ProgressBar } from '../ProgressBar';
-import { ThemedText } from '../ThemedText';
+import { EnhancedImage } from '@/components/EnhancedImage';
+import { ProgressBar } from '@/components/ProgressBar';
+import { ThemedText } from '@/components/ThemedText';
 
 const CARD_HEIGHT = 120;
 const IMAGE_SIZE = 80;

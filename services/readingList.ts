@@ -1,5 +1,5 @@
-import type { Article } from '../types/articles.types';
-import { handleError } from '../utils/errorHandling';
+import type { Article } from '@/types/articles.types';
+import { handleError } from '@/utils/errorHandling';
 
 import { supabase, checkAuthentication } from './supabase';
 

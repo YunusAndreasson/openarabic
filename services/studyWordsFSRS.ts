@@ -1,7 +1,7 @@
 import type { Rating } from 'ts-fsrs';
 import { createEmptyCard } from 'ts-fsrs';
 
-import type { StudyWord } from '../types/vocabulary.types';
+import type { StudyWord } from '@/types/vocabulary.types';
 
 import { supabase, checkAuthentication } from './supabase';
 

@@ -1,5 +1,5 @@
-import type { Article } from '../types/articles.types';
-import type { StudyWord } from '../types/vocabulary.types';
+import type { Article } from '@/types/articles.types';
+import type { StudyWord } from '@/types/vocabulary.types';
 
 /**
  * Filters articles by author or category ID

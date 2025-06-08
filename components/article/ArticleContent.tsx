@@ -30,7 +30,7 @@ import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import { lightFeedback } from '@/utils/haptics';
 
-import type { ThemeColors } from '../../types/ui/theme.types';
+import type { ThemeColors } from '@/types/ui/theme.types';
 
 const styles = StyleSheet.create({
   content: {

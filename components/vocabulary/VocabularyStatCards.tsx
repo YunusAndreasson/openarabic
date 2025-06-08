@@ -6,8 +6,8 @@ import { Colors } from '@/constants/Colors';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 import { getStrugglingWordsCount } from '@/utils/wordClassification';
 
-import { LAYOUT } from '../../constants/layout';
-import { useColors } from '../../hooks/theme/useColors';
+import { LAYOUT } from '@/constants/layout';
+import { useColors } from '@/hooks/theme/useColors';
 
 import { MemoryCapacityGauge } from './charts/MemoryCapacityGauge';
 

@@ -5,9 +5,9 @@ import { StyleSheet, View } from 'react-native';
 import { articlesService } from '@/services/articles';
 import type { Article } from '@/types/articles.types';
 
-import { LAYOUT } from '../../constants/layout';
-import SectionTitle from '../SectionTitle';
-import ThemedCard from '../ThemedCard';
+import { LAYOUT } from '@/constants/layout';
+import SectionTitle from '@/components/SectionTitle';
+import ThemedCard from '@/components/ThemedCard';
 
 interface FeaturedSectionProps {
   article: Article;

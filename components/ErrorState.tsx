@@ -1,8 +1,8 @@
 import React, { memo, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 
-import { LAYOUT } from '../constants/layout';
-import { errorFeedback } from '../utils/haptics';
+import { LAYOUT } from '@/constants/layout';
+import { errorFeedback } from '@/utils/haptics';
 
 import { ThemedButton } from './ThemedButton';
 import { ThemedText } from './ThemedText';

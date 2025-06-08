@@ -24,7 +24,7 @@ import {
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import { handleError } from '@/utils/errorHandling';
 
-import { SCREEN_WIDTH } from '../../constants/layout';
+import { SCREEN_WIDTH } from '@/constants/layout';
 
 import { TIMING_CONFIG } from './animationConfigs';
 import type { SharedValue } from './types';

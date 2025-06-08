@@ -3,8 +3,8 @@ import { StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 
-import { ThemedText } from '../../ThemedText';
-import TouchableIcon from '../../TouchableIcon';
+import { ThemedText } from '@/components/ThemedText';
+import TouchableIcon from '@/components/TouchableIcon';
 
 interface CardHeaderProps {
   title: string;

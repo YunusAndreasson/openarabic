@@ -1,6 +1,6 @@
-import type { Article } from '../types/articles.types';
-import { handleError } from '../utils/errorHandling';
-import { mapToArticle, mapToArticles } from '../utils/typeMappers';
+import type { Article } from '@/types/articles.types';
+import { handleError } from '@/utils/errorHandling';
+import { mapToArticle, mapToArticles } from '@/utils/typeMappers';
 
 import { supabase } from './supabase';
 

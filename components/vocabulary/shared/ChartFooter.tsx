@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
-import { ThemedText } from '../../ThemedText';
+import { ThemedText } from '@/components/ThemedText';
 
 interface LegendItemProps {
   type: 'area' | 'bar' | 'dot' | 'line';

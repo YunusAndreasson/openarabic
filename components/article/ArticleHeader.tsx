@@ -2,11 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 
-import { ThemedText } from '../../components/ThemedText';
-import { LAYOUT } from '../../constants/layout';
-import { formatDifficultyLevel } from '../../services/difficultyLevel';
-import type { Article } from '../../types/articles.types';
-import { capitalizeFirstLetter } from '../../utils/stringUtils';
+import { ThemedText } from '@/components/ThemedText';
+import { LAYOUT } from '@/constants/layout';
+import { formatDifficultyLevel } from '@/services/difficultyLevel';
+import type { Article } from '@/types/articles.types';
+import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 // Define the props interface locally
 interface ArticleHeaderProps {

@@ -3,8 +3,8 @@ import { StyleSheet, View, ActivityIndicator } from 'react-native';
 
 import { useColors } from '@/hooks/theme/useColors';
 
-import BaseCard from '../../BaseCard';
-import { ThemedText } from '../../ThemedText';
+import BaseCard from '@/components/BaseCard';
+import { ThemedText } from '@/components/ThemedText';
 
 import { CardHeader } from './CardHeader';
 import { ChartFooter } from './ChartFooter';

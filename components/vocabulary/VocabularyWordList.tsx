@@ -15,8 +15,8 @@ import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { isMasteredWord, isLearningWord, isDueWord } from '@/utils/wordClassification';
 
-import ThemedCard from '../ThemedCard';
-import { ThemedText } from '../ThemedText';
+import ThemedCard from '@/components/ThemedCard';
+import { ThemedText } from '@/components/ThemedText';
 
 interface VocabularyWordListProps {
   title: string;

@@ -5,4 +5,4 @@ export { ArabicWord } from './ArabicWord';
 export { ArticleContent } from './ArticleContent';
 export { WordTooltip } from './WordTooltip';
 export { TextSizeSlider } from './TextSizeSlider';
-export { DifficultyIndicator } from '../home/ArticleHelpers';
+export { DifficultyIndicator } from '@/components/home/ArticleHelpers';

@@ -6,8 +6,8 @@ import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated'
 import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
 import type { WordDisplayProps } from '@/types/ui/review.types';
 
-import { ThemedText } from '../../components/ThemedText';
-import { useColors } from '../../hooks/theme/useColors';
+import { ThemedText } from '@/components/ThemedText';
+import { useColors } from '@/hooks/theme/useColors';
 
 /**
  * Component to display a word with optimal styling and sizing

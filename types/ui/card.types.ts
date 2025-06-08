@@ -1,6 +1,6 @@
 import type { ViewStyle, StyleProp } from 'react-native';
 
-import type { Article } from '../articles.types';
+import type { Article } from '@/types/articles.types';
 
 import type { BaseAnimatedStyleProps, BaseOptionalPressableProps } from './base.types';
 

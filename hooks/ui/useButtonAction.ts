@@ -2,7 +2,7 @@ import { useRef, useCallback, useEffect } from 'react';
 
 import { handleError } from '@/utils/errorHandling';
 
-import { ANIMATION_TIMING } from '../../constants/animations';
+import { ANIMATION_TIMING } from '@/constants/animations';
 
 /**
  * Type for functions that can be used with useButtonAction

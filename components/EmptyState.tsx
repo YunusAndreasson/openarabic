@@ -4,7 +4,7 @@ import React, { memo } from 'react';
 import type { ComponentType, ComponentProps } from 'react';
 import { View, StyleSheet } from 'react-native';
 
-import { LAYOUT } from '../constants/layout';
+import { LAYOUT } from '@/constants/layout';
 
 import { ThemedButton } from './ThemedButton';
 import { ThemedText } from './ThemedText';
