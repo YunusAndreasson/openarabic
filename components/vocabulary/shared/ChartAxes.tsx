@@ -38,7 +38,6 @@ export const ChartAxes = memo(
     const colors = useColors();
     const textColor =
       colorScheme === 'dark' ? withOpacity(colors.white, 0.7) : withOpacity(colors.black, 0.7);
-    const todayTextColor = colors.tint; // More discrete color from Colors.ts
 
     // Calculate y-axis label positions and values
     // Account for top padding used by the chart
@@ -106,25 +105,14 @@ export const ChartAxes = memo(
           ]}
         >
           {xLabels.map((label, index) => {
-            const isToday = label === 'Today'; // Check for "Today" label specifically
+            const isToday = index === xLabels.length - 1; // Today is always the last label
             const position = xLabelPositions[index];
 
             if (position === undefined) return null;
 
-            // Calculate label left position - optimized for perfect alignment
-            const labelWidth = 32; // Reduced for better space efficiency
-            let labelLeft: number;
-
-            if (index === 0) {
-              // First label: center on data point but ensure it doesn't go negative
-              labelLeft = Math.max(0, position - labelWidth / 2);
-            } else if (index === xLabels.length - 1) {
-              // Last label: center on data point but ensure it doesn't overflow
-              labelLeft = Math.min(position - labelWidth / 2, width - labelWidth);
-            } else {
-              // Middle labels: center on data point
-              labelLeft = position - labelWidth / 2;
-            }
+            // Calculate label left position - consistently center all labels on their data points
+            const labelWidth = 32;
+            const labelLeft = position - labelWidth / 2; // Always center on data point for even alignment
 
             return (
               <View
@@ -142,8 +130,8 @@ export const ChartAxes = memo(
                   style={[
                     styles.xLabelText,
                     {
-                      color: isToday ? todayTextColor : textColor,
-                      fontWeight: isToday ? '500' : '500', // Same weight as other labels for more discrete appearance
+                      color: textColor,
+                      fontWeight: isToday ? '600' : '500', // Make today bold
                     },
                   ]}
                 >

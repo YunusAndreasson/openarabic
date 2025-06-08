@@ -20,27 +20,17 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import type { StatCategory } from '@/types/vocabulary.types';
 import { selectionFeedback, lightFeedback } from '@/utils/haptics';
 
 interface SessionTypeModalProps {
   visible: boolean;
-  category: StatCategory;
-  wordCount: number;
   onClose: () => void;
   onStartAudio: () => void;
   onStartVisual: () => void;
 }
 
 const SessionTypeModal = memo(
-  ({
-    visible,
-    category,
-    wordCount,
-    onClose,
-    onStartAudio,
-    onStartVisual,
-  }: SessionTypeModalProps) => {
+  ({ visible, onClose, onStartAudio, onStartVisual }: SessionTypeModalProps) => {
     const colors = useColors();
     const isDarkMode = useIsDarkMode();
 
@@ -62,20 +52,6 @@ const SessionTypeModal = memo(
         opacity.value = 1;
       }
     }, [visible, translateY, opacity]);
-
-    // Get category-specific text
-    const getCategoryTitle = () => {
-      switch (category) {
-        case 'due':
-          return 'Due Words';
-        case 'needsAttention':
-          return 'Challenging Words';
-        case 'total':
-          return 'All Words';
-        default:
-          return 'Practice Session';
-      }
-    };
 
     const handleOptionPress = (onAction: () => void) => {
       selectionFeedback();
@@ -155,13 +131,7 @@ const SessionTypeModal = memo(
               {/* Header */}
               <View style={styles.header}>
                 <ThemedText style={styles.title} type="heading3">
-                  {getCategoryTitle()}
-                </ThemedText>
-                <ThemedText
-                  style={[styles.subtitle, { color: colors.secondaryText }]}
-                  type="caption"
-                >
-                  {wordCount} words • Choose session type
+                  Choose session type
                 </ThemedText>
               </View>
 
@@ -171,20 +141,20 @@ const SessionTypeModal = memo(
                 <TouchableOpacity
                   style={[styles.optionCard, { backgroundColor: colors.card }]}
                   onPress={() => handleOptionPress(onStartVisual)}
-                  accessibilityLabel={`Start visual session with ${wordCount} words`}
+                  accessibilityLabel="Start visual session"
                 >
                   <View style={[styles.iconContainer, { backgroundColor: colors.success + '15' }]}>
                     <Ionicons name="eye" size={24} color={colors.success} />
                   </View>
                   <View style={styles.optionContent}>
                     <ThemedText style={styles.optionTitle} type="body" weight="semibold">
-                      Visual Session
+                      Visual
                     </ThemedText>
                     <ThemedText
                       style={[styles.optionDescription, { color: colors.secondaryText }]}
                       type="caption"
                     >
-                      Interactive review and recall
+                      See and choose
                     </ThemedText>
                   </View>
                 </TouchableOpacity>
@@ -193,20 +163,20 @@ const SessionTypeModal = memo(
                 <TouchableOpacity
                   style={[styles.optionCard, { backgroundColor: colors.card }]}
                   onPress={() => handleOptionPress(onStartAudio)}
-                  accessibilityLabel={`Start audio session with ${wordCount} words`}
+                  accessibilityLabel="Start audio session"
                 >
                   <View style={[styles.iconContainer, { backgroundColor: colors.tint + '15' }]}>
                     <Ionicons name="headset" size={24} color={colors.tint} />
                   </View>
                   <View style={styles.optionContent}>
                     <ThemedText style={styles.optionTitle} type="body" weight="semibold">
-                      Audio Session
+                      Audio
                     </ThemedText>
                     <ThemedText
                       style={[styles.optionDescription, { color: colors.secondaryText }]}
                       type="caption"
                     >
-                      Listen and learn hands-free
+                      Hands-free
                     </ThemedText>
                   </View>
                 </TouchableOpacity>

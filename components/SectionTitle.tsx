@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 
 import { LAYOUT, TYPOGRAPHY_HIERARCHY, getEnhancedOpacity } from '../constants/layout';
+import { useColors } from '../hooks/theme/useColors';
 import { useIsDarkMode } from '../hooks/theme/useThemeDetection';
 
 import { ThemedText } from './ThemedText';
@@ -30,6 +31,7 @@ const SectionTitle: React.FC<SectionTitleProps> = ({
   isFirstSection = false,
 }) => {
   const isDarkMode = useIsDarkMode();
+  const colors = useColors();
 
   // Enhanced styles with sophisticated typography colors and micro-typography
   const titleStyle = React.useMemo(
@@ -72,6 +74,7 @@ const SectionTitle: React.FC<SectionTitleProps> = ({
       {onInfoPress && (
         <TouchableIcon
           accessibilityLabel="More information"
+          color={colors.tint}
           name="information-outline"
           size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
           style={styles.infoIcon}

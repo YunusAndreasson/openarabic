@@ -32,8 +32,6 @@ export default function VocabularyScreen(): JSX.Element {
   // Add state for refresh control and modal
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<StatCategory>('due');
-  const [selectedWordCount, setSelectedWordCount] = useState(0);
 
   // Combine focus effects for better performance
   useFocusEffect(
@@ -65,15 +63,10 @@ export default function VocabularyScreen(): JSX.Element {
   const { userStats, isLoadingUserStats } = useVocabularyChartData(user?.id);
 
   // Handle starting review for specific category - now shows modal
-  const handleStartCategoryReview = useCallback(
-    (category: StatCategory, count: number) => {
-      if (!user) return;
-      setSelectedCategory(category);
-      setSelectedWordCount(count);
-      setModalVisible(true);
-    },
-    [user]
-  );
+  const handleStartCategoryReview = useCallback(() => {
+    if (!user) return;
+    setModalVisible(true);
+  }, [user]);
 
   // Handle modal actions
   const handleModalClose = useCallback(() => {
@@ -150,8 +143,6 @@ export default function VocabularyScreen(): JSX.Element {
       {/* Session Type Modal */}
       <SessionTypeModal
         visible={modalVisible}
-        category={selectedCategory}
-        wordCount={selectedWordCount}
         onClose={handleModalClose}
         onStartAudio={handleStartAudio}
         onStartVisual={handleStartVisual}

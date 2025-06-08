@@ -309,10 +309,8 @@ export const EfficiencyChart = memo(
             width={GRAPH_WIDTH}
             xLabelPositions={chartData.dataPoints.map(point => point.x)}
             yMax={100}
-            xLabels={efficiencyData.map((data, index) =>
-              index === efficiencyData.length - 1
-                ? 'Today'
-                : data.date.toLocaleDateString('en-US', { weekday: 'short' })
+            xLabels={efficiencyData.map(data =>
+              data.date.toLocaleDateString('en-US', { weekday: 'short' })
             )}
           />
         </View>

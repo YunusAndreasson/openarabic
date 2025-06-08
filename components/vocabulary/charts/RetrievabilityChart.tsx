@@ -318,9 +318,7 @@ export const RetrievabilityChart = memo(
             height={GRAPH_HEIGHT_LARGE}
             xLabels={retrievabilityData
               .filter(data => data && data.wordCount > 0)
-              .map((data, index) =>
-                index === 0 ? 'Today' : data.date.toLocaleDateString('en-US', { weekday: 'short' })
-              )}
+              .map(data => data.date.toLocaleDateString('en-US', { weekday: 'short' }))}
             xLabelPositions={chartData.dataPoints.map(point => point.x)}
             yMax={100}
             showYAxis={true}

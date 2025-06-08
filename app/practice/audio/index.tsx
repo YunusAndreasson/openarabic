@@ -353,7 +353,7 @@ export default function ListenScreen(): JSX.Element {
           </Animated.View>
         </View>
 
-        <View style={[styles.footer, { paddingBottom: insets.bottom + LAYOUT.SPACING.MEDIUM }]}>
+        <View style={[styles.footer, { paddingBottom: insets.bottom + LAYOUT.SPACING.SMALL }]}>
           <RepeatButton enabled={repeatEnabled} onToggle={handleRepeatToggle} />
 
           <View style={styles.noteContainer}>
@@ -363,7 +363,7 @@ export default function ListenScreen(): JSX.Element {
               size={18}
               style={styles.noteIcon}
             />
-            <ThemedText style={styles.noteText}>Continues playing with screen off</ThemedText>
+            <ThemedText style={styles.noteText}>Works with screen off</ThemedText>
           </View>
         </View>
       </View>
@@ -390,7 +390,6 @@ const styles = StyleSheet.create({
   footer: {
     alignItems: 'center',
     gap: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
     width: '100%',
   },
   noteContainer: {

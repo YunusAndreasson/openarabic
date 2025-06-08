@@ -16,7 +16,7 @@ interface VocabularyStatCardsProps {
   learningWords?: number;
   dueWords?: number;
   onStatPress?: (category: StatCategory) => void;
-  onStartReview?: (category: StatCategory, count: number) => void;
+  onStartReview?: () => void;
   studyWords?: StudyWord[];
 }
 
@@ -152,7 +152,7 @@ export const VocabularyStatCards = memo(
             accessibilityRole="button"
             activeOpacity={0.7}
             style={[styles.categoryCard, { backgroundColor: config.bgColor }]}
-            onPress={() => onStartReview?.(config.category, config.value)}
+            onPress={onStartReview}
           >
             {/* Number Badge */}
             <View style={[styles.numberBadge, { backgroundColor: config.iconColor }]}>

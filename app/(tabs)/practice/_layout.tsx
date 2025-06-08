@@ -14,7 +14,6 @@ export default function VocabularyLayout() {
         }}
       />
       <Stack.Screen name="wordExamples" options={{ headerShown: false }} />
-      <Stack.Screen name="insights" options={{ headerShown: false }} />
     </Stack>
   );
 }

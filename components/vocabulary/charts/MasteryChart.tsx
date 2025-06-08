@@ -356,10 +356,8 @@ export const MasteryChart = memo(
             width={GRAPH_WIDTH}
             xLabelPositions={chartData.dataPoints.map(point => point.x)}
             yMax={100}
-            xLabels={masteryData.map((data, index) =>
-              index === masteryData.length - 1
-                ? 'Today'
-                : data.date.toLocaleDateString('en-US', { weekday: 'short' })
+            xLabels={masteryData.map(data =>
+              data.date.toLocaleDateString('en-US', { weekday: 'short' })
             )}
           />
         </View>

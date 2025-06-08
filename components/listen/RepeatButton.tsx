@@ -104,12 +104,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
     marginRight: LAYOUT.SPACING.SMALL,
   },
   label: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '500',
     letterSpacing: 0.2,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.2,
   },
   touchable: {
     alignSelf: 'center',
