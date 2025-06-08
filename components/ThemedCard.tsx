@@ -21,7 +21,7 @@ import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';
 import Pill from './Pill';
 import { ThemedText } from './ThemedText';
-import { TimeAgo, SummaryIndicator } from './home/ArticleHelpers';
+import { SummaryIndicator } from './home/ArticleHelpers';
 
 /**
  * ThemedCard is a reusable card component that can display content in different variants.
@@ -259,7 +259,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
   // Extract compact article props
   const article = isCompactVariant(props) ? props.article : undefined;
-  const showTimeAgo = isCompactVariant(props) ? props.showTimeAgo : false;
+
   const hideDifficulty = isCompactVariant(props) ? props.hideDifficulty : false;
   const lastOpenedAt = isCompactVariant(props) ? props.lastOpenedAt : undefined;
 
@@ -470,10 +470,8 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           ) : null}
 
           <View style={styles.cardFooter}>
-            {showTimeAgo ? (
-              <TimeAgo date={lastOpenedAt || article?.created_at || ''} />
-            ) : isCompactVariant(props) && props.dueWordCount ? null : ( // Don't show reading time when there are due words - only show due word count above
-              // Always show summary indicator when not showing time ago or due words
+            {isCompactVariant(props) && props.dueWordCount ? null : (
+              // Show summary indicator when not showing due words
               <SummaryIndicator summary={article?.summary || null} />
             )}
           </View>
@@ -484,7 +482,6 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
     isCompact,
     article,
     isCompactVariant(props) ? props.dueWordCount : undefined,
-    showTimeAgo,
     hideDifficulty,
     lastOpenedAt,
     gradientProps,

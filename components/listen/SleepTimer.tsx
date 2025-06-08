@@ -1,13 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
 import React, { memo, useState, useEffect } from 'react';
-import {
-  StyleSheet,
-  View,
-  Modal,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  Dimensions,
-} from 'react-native';
+import { StyleSheet, View, Modal, TouchableWithoutFeedback, Dimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -154,16 +146,6 @@ const SleepTimerComponent = ({
                       : 'Automatically stop playback after'}
                   </ThemedText>
                 </View>
-                <TouchableOpacity
-                  accessibilityHint="Dismiss the sleep timer dialog"
-                  accessibilityLabel="Close sleep timer"
-                  accessibilityRole="button"
-                  hitSlop={LAYOUT.HIT_SLOP.SMALL}
-                  style={styles.closeButton}
-                  onPress={handleClose}
-                >
-                  <Ionicons color={colors.text} name="close" size={22} />
-                </TouchableOpacity>
               </View>
 
               {/* Content */}
@@ -283,12 +265,6 @@ const styles = StyleSheet.create({
   cancelButton: {
     width: '100%',
   },
-  closeButton: {
-    alignItems: 'center',
-    height: 38,
-    justifyContent: 'center',
-    width: 38,
-  },
   content: {
     padding: LAYOUT.SPACING.LARGE + 4,
     paddingTop: LAYOUT.SPACING.LARGE,
@@ -303,7 +279,6 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     flex: 1,
-    marginRight: LAYOUT.SPACING.MEDIUM,
   },
   modal: {
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE + 4,

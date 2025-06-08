@@ -75,8 +75,7 @@ export interface CompactCardProps extends BaseCardProps, BaseOptionalPressablePr
   children?: React.ReactNode;
   /** Article data to display in the card */
   article: Article;
-  /** Show time ago instead of difficulty */
-  showTimeAgo?: boolean;
+
   /** Hide difficulty completely */
   hideDifficulty?: boolean;
   /** When the article was last opened */
@@ -114,8 +113,7 @@ export type ThemedCardProps =
         children?: React.ReactNode;
         /** Article data to display (for compact variant) */
         article: Article;
-        /** Show time ago instead of difficulty (for compact variant) */
-        showTimeAgo?: boolean;
+
         /** Hide difficulty completely (for compact variant) */
         hideDifficulty?: boolean;
         /** When the article was last opened (for compact variant) */

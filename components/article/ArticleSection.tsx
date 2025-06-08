@@ -85,7 +85,6 @@ const ArticleSection = memo(
                   handlePress={() => onArticlePress(article)}
                   hideDifficulty={hideDifficulty}
                   lastOpenedAt={lastOpenedAt}
-                  showTimeAgo={!!lastOpenedAt}
                   style={styles.articleCard}
                   variant="compact"
                 />

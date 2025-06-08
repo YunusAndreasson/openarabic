@@ -5,27 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/theme/useColors';
 import { useIsDarkMode } from '../../hooks/theme/useThemeDetection';
-import { formatTimeAgo } from '../../utils/dateUtils';
 import { ThemedText } from '../ThemedText';
-
-/**
- * TimeAgo component to show when an article was published or last opened
- */
-export const TimeAgo = memo(({ date }: { date: string }) => {
-  // Ensure we have a valid date
-  const validDate = date ? date : new Date().toISOString();
-  const timeAgoText = formatTimeAgo(validDate);
-
-  return (
-    <View style={styles.timeAgoContainer}>
-      <ThemedText skipDefaultColor colorName="textTertiary" type="caption">
-        {timeAgoText}
-      </ThemedText>
-    </View>
-  );
-});
-
-TimeAgo.displayName = 'TimeAgo';
 
 /**
  * DifficultyIndicator component to display article difficulty
@@ -134,13 +114,5 @@ const styles = StyleSheet.create({
   },
   summaryText: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.6,
-  },
-  timeAgoContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    paddingLeft: 0,
-  },
-  timeIcon: {
-    marginRight: LAYOUT.SPACING.TINY,
   },
 });

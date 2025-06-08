@@ -22,7 +22,7 @@ function getFilterTitle(params: FilterParams): string {
 /**
  * Beautiful centered header title component for articles
  */
-function ArticleHeaderTitle({ title }: { title: string }) {
+const ArticleHeaderTitle = React.memo(({ title }: { title: string }) => {
   const colors = useColors();
 
   return (
@@ -49,12 +49,12 @@ function ArticleHeaderTitle({ title }: { title: string }) {
       </Text>
     </View>
   );
-}
+});
 
 /**
  * Header right component for article screens with listening list toggle
  */
-function ArticleHeaderRight({ articleId }: { articleId: number }) {
+const ArticleHeaderRight = React.memo(({ articleId }: { articleId: number }) => {
   const { user } = useAuth();
   const colors = useColors();
   const { showToast } = useToast();
@@ -102,7 +102,7 @@ function ArticleHeaderRight({ articleId }: { articleId: number }) {
       />
     </TouchableOpacity>
   );
-}
+});
 
 export default function ReadLayout() {
   return (

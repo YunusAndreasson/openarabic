@@ -7,7 +7,6 @@ import ErrorState from '@/components/ErrorState';
 import FilteredArticleView from '@/components/home/FilteredArticleView';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { articlesService } from '@/services/articles';
-import { authorsService } from '@/services/authors';
 import { categoriesService } from '@/services/categories';
 import type { Article } from '@/types/articles.types';
 import { handleError } from '@/utils/errorHandling';
@@ -23,7 +22,7 @@ export default function FilterScreen(): JSX.Element {
 
   // Check if parameters are invalid
   const hasInvalidParams =
-    !type || !id || !['author', 'category'].includes(type) || isNaN(numericId) || numericId <= 0;
+    !type || !id || type !== 'category' || isNaN(numericId) || numericId <= 0;
 
   // Handle navigation leak in useEffect to avoid setState during render
   useEffect(() => {
@@ -31,23 +30,9 @@ export default function FilterScreen(): JSX.Element {
       router.replace(`/(tabs)/read/article/${id}`);
     }
   }, [hasInvalidParams, type, id, numericId]);
+
   const cacheKey = useMemo(() => ['filtered-articles', type, numericId], [type, numericId]);
   const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const { data: author } = useQuery({
-    queryKey: ['author', numericId],
-    queryFn: async () => {
-      try {
-        const authors = await authorsService.getAuthors();
-        return authors.find(a => a.id === numericId) ?? null;
-      } catch (err) {
-        handleError(err instanceof Error ? err : String(err));
-        return null;
-      }
-    },
-    staleTime: 86400000, // 24 hours - authors rarely change
-    enabled: type === 'author' && !isNaN(numericId) && !hasInvalidParams,
-  });
 
   const { data: category } = useQuery({
     queryKey: ['category', numericId],
@@ -75,9 +60,7 @@ export default function FilterScreen(): JSX.Element {
       }
 
       try {
-        if (type === 'author') {
-          return await articlesService.getArticles({ authorId: numericId });
-        } else if (type === 'category') {
+        if (type === 'category') {
           return await articlesService.getArticles({ categoryId: numericId });
         } else {
           throw new Error(`Invalid filter type: "${type}"`);
@@ -109,17 +92,13 @@ export default function FilterScreen(): JSX.Element {
   // Set the header title dynamically based on the filter type and data
   useEffect(() => {
     let title = 'Filter';
-    if (type === 'author' && author?.name) {
-      title = author.name;
-    } else if (type === 'category' && category?.name) {
+    if (type === 'category' && category?.name) {
       title = capitalizeFirstLetter(category.name);
-    } else if (type === 'author') {
-      title = 'Author';
     } else if (type === 'category') {
       title = 'Category';
     }
     router.setParams({ headerTitle: title });
-  }, [type, author?.name, category?.name]);
+  }, [type, category?.name]);
 
   // Show error for invalid parameters first
   if (hasInvalidParams) {

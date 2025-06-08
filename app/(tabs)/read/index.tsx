@@ -21,7 +21,6 @@ import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { articlesService } from '@/services/articles';
-import { authorsService } from '@/services/authors';
 import { categoriesService } from '@/services/categories';
 import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import { useAppDispatch } from '@/store/hooks';
@@ -170,7 +169,7 @@ export default function ArticlesScreen(): JSX.Element {
   const { user } = useAuth();
   const { prefetchArticle } = useAppPreloader();
 
-  const { data: categoriesData = [] } = useQuery({
+  const { data: categoriesData = [], isLoading: isCategoriesLoading } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoriesService.getCategories(),
     staleTime: 86400000,
@@ -180,20 +179,10 @@ export default function ArticlesScreen(): JSX.Element {
     refetchOnMount: false,
   });
 
-  const { data: authors = [] } = useQuery({
-    queryKey: ['authors'],
-    queryFn: () => authorsService.getAuthors(),
-    staleTime: 86400000,
-    gcTime: 172800000,
-    retry: 3,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-  });
-
-  // Get articles with word stats for filter data
-  const { data: articlesData = [] } = useQuery({
-    queryKey: ['articles', 'withWordStats'],
-    queryFn: () => articlesService.getArticles({ includeWordStats: true }),
+  // Get articles for display and filtering
+  const { data: articlesData = [], isLoading: isArticlesLoading } = useQuery({
+    queryKey: ['articles'],
+    queryFn: () => articlesService.getArticles(),
     staleTime: 3600000,
     gcTime: 7200000,
     retry: 3,
@@ -207,9 +196,8 @@ export default function ArticlesScreen(): JSX.Element {
 
   const intelligentArticle = useIntelligentArticleSelection(user, articlesData);
 
-  // Force re-selection on refresh by adding refreshKey as a dependency
+  // Optimize article selection - only recalculate when needed
   const currentArticle = useMemo(() => {
-    // Include refreshKey in the random selection to ensure new articles on refresh
     if (!articlesData.length) {
       return {
         article: null,
@@ -219,55 +207,34 @@ export default function ArticlesScreen(): JSX.Element {
       };
     }
 
-    // Use refreshKey to influence random selection for a different article
-    const baseResult = intelligentArticle;
-
-    // If it's a random selection or we want to force a new selection,
-    // modify the seed to get a different article
-    if (baseResult.type === 'random' || refreshKey > 0) {
+    // For refresh: pick a different random article
+    if (refreshKey > 0 && intelligentArticle.article) {
       const availableArticles = articlesData.filter(
-        article =>
-          // Exclude the current article if refreshKey > 0 to ensure we get a different one
-          refreshKey === 0 || article.id !== baseResult.article?.id
+        article => article.id !== intelligentArticle.article?.id
       );
 
       if (availableArticles.length > 0) {
-        // Use refreshKey as part of the random seed to get different articles
-        const randomIndex =
-          (Math.floor(Math.random() * availableArticles.length) + refreshKey) %
-          availableArticles.length;
-        const newArticle = availableArticles[randomIndex] ?? null;
+        const randomIndex = Math.floor(Math.random() * availableArticles.length);
+        const newArticle = availableArticles[randomIndex];
 
         return {
-          ...baseResult,
+          ...intelligentArticle,
           article: newArticle,
-          reason: refreshKey > 0 ? 'New recommendation selected for you' : baseResult.reason,
+          reason: 'New recommendation selected for you',
         };
       }
     }
 
-    return baseResult;
-  }, [intelligentArticle, refreshKey, articlesData]);
+    return intelligentArticle;
+  }, [intelligentArticle, refreshKey, articlesData.length]);
 
-  const derivedData = useMemo(() => {
-    // Safety check - don't process if data isn't ready
-    if (!articlesData?.length || !authors?.length || !categoriesData?.length) {
-      return {
-        authorsWithArticles: [],
-        categoriesWithArticles: [],
-      };
-    }
+  // Simplified derivedData - we know there will be data
+  const categoriesWithArticles = useMemo(() => {
+    if (!articlesData.length || !categoriesData.length) return [];
 
-    const authorIdsWithArticles = new Map<number, number>();
     const categoryIdsWithArticles = new Map<number, number>();
 
     articlesData.forEach(article => {
-      if (article?.author?.id) {
-        authorIdsWithArticles.set(
-          article.author.id,
-          (authorIdsWithArticles.get(article.author.id) || 0) + 1
-        );
-      }
       if (article?.category?.id) {
         categoryIdsWithArticles.set(
           article.category.id,
@@ -276,25 +243,14 @@ export default function ArticlesScreen(): JSX.Element {
       }
     });
 
-    const authorsWithArticles = authors
-      .filter(author => author?.id && authorIdsWithArticles.has(author.id))
-      .map(author => ({
-        ...author,
-        count: authorIdsWithArticles.get(author.id) || 0,
-      }));
-
-    const categoriesWithArticles = categoriesData
+    return categoriesData
       .filter(category => category?.id && categoryIdsWithArticles.has(category.id))
       .map(category => ({
         ...category,
         count: categoryIdsWithArticles.get(category.id) || 0,
-      }));
-
-    return {
-      authorsWithArticles,
-      categoriesWithArticles,
-    };
-  }, [articlesData, authors, categoriesData]);
+      }))
+      .filter(category => category.id > 0 && category.name); // Additional safety for valid categories
+  }, [articlesData, categoriesData]);
 
   const handleRefresh = useCallback(async () => {
     if (isRefreshing) return;
@@ -303,10 +259,7 @@ export default function ArticlesScreen(): JSX.Element {
     mediumFeedback();
 
     try {
-      const queriesToInvalidate: (string | readonly string[])[] = [
-        ['articles', 'withWordStats'],
-        ['categories'],
-      ];
+      const queriesToInvalidate: (string | readonly string[])[] = [['articles'], ['categories']];
 
       if (user?.id) {
         queriesToInvalidate.push(FSRS_QUERY_KEYS.due(user.id), FSRS_QUERY_KEYS.all(user.id));
@@ -322,9 +275,6 @@ export default function ArticlesScreen(): JSX.Element {
 
       // Force new article selection
       setRefreshKey(prev => prev + 1);
-
-      // Optional: Add a small delay to ensure data is fresh before new selection
-      await new Promise(resolve => setTimeout(resolve, 100));
     } catch (error) {
       handleError(error instanceof Error ? error : new Error('Refresh failed'));
     } finally {
@@ -343,57 +293,9 @@ export default function ArticlesScreen(): JSX.Element {
     [dispatch, prefetchArticle]
   );
 
-  const handleSelectAuthor = useCallback(
-    (authorId: number) => {
-      // Safety check - ensure we have a valid author ID
-      if (!authorId || isNaN(authorId) || authorId <= 0) {
-        console.warn('Invalid author ID:', authorId);
-        return;
-      }
-
-      // Additional safety - ensure data is fully loaded
-      if (!articlesData?.length || !authors?.length) {
-        console.warn('Cannot navigate while data is loading');
-        return;
-      }
-
-      // Verify the author actually exists in our data
-      const authorExists = authors.some(author => author.id === authorId);
-      if (!authorExists) {
-        console.warn('Author does not exist in current data:', authorId);
-        return;
-      }
-
-      router.push(`/(tabs)/read/filter?type=author&id=${authorId}`);
-    },
-    [articlesData, authors]
-  );
-
-  const handleSelectCategory = useCallback(
-    (categoryId: number) => {
-      // Safety check - ensure we have a valid category ID
-      if (!categoryId || isNaN(categoryId) || categoryId <= 0) {
-        console.warn('Invalid category ID:', categoryId);
-        return;
-      }
-
-      // Additional safety - ensure data is fully loaded
-      if (!articlesData?.length || !categoriesData?.length) {
-        console.warn('Cannot navigate while data is loading');
-        return;
-      }
-
-      // Verify the category actually exists in our data
-      const categoryExists = categoriesData.some(cat => cat.id === categoryId);
-      if (!categoryExists) {
-        console.warn('Category does not exist in current data:', categoryId);
-        return;
-      }
-
-      router.push(`/(tabs)/read/filter?type=category&id=${categoryId}`);
-    },
-    [articlesData, categoriesData]
-  );
+  const handleSelectCategory = useCallback((categoryId: number) => {
+    router.push(`/(tabs)/read/filter?type=category&id=${categoryId}`);
+  }, []);
 
   const calculateDueWordsForArticle = useCallback(
     (article: Article, dueWordRootIds: Set<number>): number => {
@@ -414,10 +316,22 @@ export default function ArticlesScreen(): JSX.Element {
     [user?.id]
   );
 
+  // Pre-calculate due words count to avoid expensive computation in render
+  const dueWordsCount = useMemo(() => {
+    if (!currentArticle.article || !user?.id || !currentArticle.dueWordRootIds.size) return 0;
+
+    return calculateDueWordsForArticle(currentArticle.article, currentArticle.dueWordRootIds);
+  }, [
+    currentArticle.article?.id,
+    currentArticle.dueWordRootIds,
+    user?.id,
+    calculateDueWordsForArticle,
+  ]);
+
+  // Optimized header component
   const ListHeaderComponent = useMemo(() => {
-    const dueWordsCount = currentArticle.article
-      ? calculateDueWordsForArticle(currentArticle.article, currentArticle.dueWordRootIds)
-      : 0;
+    const showDivider = currentArticle.article && categoriesWithArticles.length > 0;
+    const showCategories = categoriesWithArticles.length > 0;
 
     return (
       <>
@@ -430,56 +344,18 @@ export default function ArticlesScreen(): JSX.Element {
           />
         )}
 
-        {/* Only render FilterSections when data is stable and valid - with extra safety */}
-        {(() => {
-          try {
-            const validCategories = derivedData.categoriesWithArticles.filter(
-              cat => cat?.id && cat.id > 0 && cat?.name
-            );
-            const validAuthors = derivedData.authorsWithArticles.filter(
-              author => author?.id && author.id > 0 && author?.name
-            );
+        {showDivider && <SectionDivider />}
 
-            return (
-              <>
-                {/* Divider between recommended article and categories */}
-                {currentArticle.article &&
-                  articlesData?.length > 0 &&
-                  categoriesData?.length > 0 &&
-                  validCategories.length > 0 && <SectionDivider />}
-
-                {articlesData?.length > 0 &&
-                  categoriesData?.length > 0 &&
-                  validCategories.length > 0 && (
-                    <FilterSection items={validCategories} onSelect={handleSelectCategory} />
-                  )}
-
-                {articlesData?.length > 0 &&
-                  categoriesData?.length > 0 &&
-                  authors?.length > 0 &&
-                  validCategories.length > 0 &&
-                  validAuthors.length > 0 && <SectionDivider />}
-
-                {articlesData?.length > 0 && authors?.length > 0 && validAuthors.length > 0 && (
-                  <FilterSection items={validAuthors} onSelect={handleSelectAuthor} />
-                )}
-              </>
-            );
-          } catch (error) {
-            console.warn('Error rendering filter sections:', error);
-            return null;
-          }
-        })()}
+        {showCategories && (
+          <FilterSection items={categoriesWithArticles} onSelect={handleSelectCategory} />
+        )}
       </>
     );
   }, [
     currentArticle.article,
-    currentArticle.dueWordRootIds,
-    calculateDueWordsForArticle,
+    dueWordsCount,
     handleArticlePress,
-    derivedData.authorsWithArticles,
-    derivedData.categoriesWithArticles,
-    handleSelectAuthor,
+    categoriesWithArticles,
     handleSelectCategory,
   ]);
 
@@ -501,13 +377,13 @@ export default function ArticlesScreen(): JSX.Element {
     [colors.background, headerHeight, insets.bottom]
   );
 
-  // Get loading state from queries
-  const articlesQueryState = queryClient.getQueryState(['articles', 'withWordStats']);
-  const isLoadingArticles = articlesQueryState?.status === 'pending';
+  // Simplified loading and error handling
+  const isLoading = isArticlesLoading || isCategoriesLoading;
+  const articlesQueryState = queryClient.getQueryState(['articles']);
   const hasArticlesError = articlesQueryState?.status === 'error';
 
-  // Show error state only if there's a query error and we're not refreshing
-  if (hasArticlesError && !isRefreshing && !isLoadingArticles) {
+  // Show error state only for actual errors, not loading states
+  if (hasArticlesError && !isRefreshing && !isLoading) {
     return <ErrorState message="Unable to load articles" onRetry={handleRefresh} />;
   }
 
@@ -523,7 +399,7 @@ export default function ArticlesScreen(): JSX.Element {
         contentContainerStyle={contentContainerStyle}
         hideMainList={true}
         hideWhileRefreshing={false}
-        isLoading={isLoadingArticles}
+        isLoading={isLoading}
         isRefreshing={isRefreshing}
         ListEmptyComponent={null}
         ListFooterComponent={ListFooterComponent}
@@ -540,7 +416,7 @@ export function useArticlesAndDueWordsLoaded() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const articlesQueryState = queryClient.getQueryState(['articles', 'withWordStats']);
+  const articlesQueryState = queryClient.getQueryState(['articles']);
   const articlesLoaded =
     articlesQueryState?.status === 'success' || articlesQueryState?.status === 'error';
 
