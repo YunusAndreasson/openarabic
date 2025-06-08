@@ -59,26 +59,6 @@ const articleJoinQuery = `
 `;
 
 export const readingListService = {
-  /**
-   * Gets all reading list articles
-   * @param userId - The user ID
-   */
-  async getInProgressArticles(userId: string): Promise<Article[]> {
-    await checkAuthentication(userId);
-    const { data, error } = await supabase
-      .from<'reading_list'>('reading_list')
-      .select(articleJoinQuery)
-      .match({ user_id: userId });
-
-    if (error) {
-      await handleError(error, errorConfig.readingList.load);
-      throw error;
-    }
-
-    return (data || [])
-      .filter((item: SupabaseArticleJoinResult) => item.articles)
-      .map((item: SupabaseArticleJoinResult) => item.articles);
-  },
 
   /**
    * Adds an article to the reading list
