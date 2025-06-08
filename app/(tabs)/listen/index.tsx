@@ -337,10 +337,12 @@ export default function ListenScreen(): JSX.Element {
       queryKey: ['enhancedAudioTracks', user.id],
     });
 
+    // Don't automatically stop playback on focus loss - let user control when to stop
+    // This prevents interrupting playback when navigating to articles or other screens
     return () => {
-      actions.stopPlayback();
+      // No automatic cleanup - user can control playback with stop button
     };
-  }, [user?.id, queryClient, actions.stopPlayback]);
+  }, [user?.id, queryClient]);
   useFocusEffect(focusEffectCallback);
 
   // --- Event Handlers (use stable actions) ---
@@ -421,7 +423,12 @@ export default function ListenScreen(): JSX.Element {
     }
 
     if (!metadata.articleId || !sortedReadingList.length) return null;
-    const currentItem = sortedReadingList.find(item => item.article_id === metadata.articleId);
+
+    // Convert metadata.articleId (string) to number for comparison
+    const articleIdNumber = parseInt(metadata.articleId, 10);
+    if (isNaN(articleIdNumber)) return null;
+
+    const currentItem = sortedReadingList.find(item => item.article_id === articleIdNumber);
     return currentItem?.articles || null;
   }, [isStartingPlayback, sortedReadingList, metadata.articleId]);
 
@@ -511,7 +518,9 @@ export default function ListenScreen(): JSX.Element {
           }}
           renderItem={({ item }) => {
             const isActive =
-              audioState !== AUDIO_STATES.IDLE && metadata.articleId === item.article_id;
+              audioState !== AUDIO_STATES.IDLE &&
+              !!metadata.articleId &&
+              parseInt(metadata.articleId, 10) === item.article_id;
 
             return <ListenListItem isActive={isActive} item={item} onPress={handleArticlePress} />;
           }}
@@ -521,21 +530,13 @@ export default function ListenScreen(): JSX.Element {
       {/* Only show bottom controls when there are texts to play but no active player */}
       {hasArticles && !shouldShowPlayer && !isStartingPlayback && (
         <BottomControls
-          isTimerActive={sleepTimer.state.isActive}
           primaryDisabled={false}
           primaryDisablePressAnimation={true}
-          primaryLabel={isCurrentlyPlaying && playbackMode === 'all' ? 'Stop' : 'Play All'}
+          primaryLabel="Play All"
           primaryVariant="filled"
-          showTimerButton={isCurrentlyPlaying}
-          timerAccessibilityLabel="Sleep timer"
-          primaryAccessibilityLabel={
-            isCurrentlyPlaying && playbackMode === 'all' ? 'Stop playback' : 'Play all texts'
-          }
+          showTimerButton={false}
+          primaryAccessibilityLabel="Play all texts"
           onPrimaryPress={handlePlayAll}
-          onTimerPress={() => {
-            mediumFeedback();
-            setShowSleepTimer(true);
-          }}
         />
       )}
 
