@@ -1,441 +1,528 @@
+// Import correctly from expo-av using default import syntax
 import { Audio } from 'expo-av';
 import type { AVPlaybackStatus } from 'expo-av/build/AV.types';
 import { InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av/build/Audio.types';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { AppState } from 'react-native';
 
-import { shuffleArray } from '@/utils/arrayUtils';
+import { AUDIO_STATES } from '@/constants/audio';
+import type { EnhancedAudioTrack } from '@/types/audio.types';
 import { handleError } from '@/utils/errorHandling';
 
 /**
- * Audio player states
+ * Type for metadata about the current playback session
  */
-export const AUDIO_STATES = {
-  IDLE: 'idle', // Not playing anything
-  LOADING: 'loading', // Loading audio
-  PLAYING: 'playing', // Playing audio
-  PAUSED: 'paused', // Audio loaded but paused
-  ERROR: 'error', // Error occurred
-} as const;
-
-export type AudioState = (typeof AUDIO_STATES)[keyof typeof AUDIO_STATES];
-
-/**
- * Audio track information
- */
-export interface AudioTrack {
-  id: number;
-  audioUrl: string;
-  title: string;
-  duration?: number;
-  artist?: string;
-  artwork?: string;
+interface PlaybackMetadata {
+  articleId: number;
+  articleTitle: string;
 }
 
 /**
- * Audio player hook result
+ * Interface for queued audio item
  */
-export interface AudioPlayerResult {
-  audioState: AudioState;
-  currentTrackIndex: number;
+interface QueuedAudioItem {
+  track: EnhancedAudioTrack;
+  index: number;
+  sound?: Audio.Sound | null;
+  isPreloaded: boolean;
+}
+
+// Default initial metadata state
+const initialMetadata: PlaybackMetadata = {
+  articleId: 0,
+  articleTitle: '',
+};
+
+// Define the return type for clarity and stability
+export interface EnhancedPlayerState {
   progress: number;
   duration: number;
+  metadata: PlaybackMetadata;
+  isTrackEnded: boolean;
+  audioState: (typeof AUDIO_STATES)[keyof typeof AUDIO_STATES];
+  currentTrackIndex: number;
   playlistMode: boolean;
-  loadAndPlayAudio: (audioUrl: string) => Promise<boolean>;
-  togglePlayPause: () => Promise<void>;
-  playTrack: (tracks: AudioTrack[], index: number) => Promise<boolean>;
-  startPlayback: (tracks: AudioTrack[], startIndex?: number) => Promise<boolean>;
-  stopPlayback: () => Promise<void>;
-  startShufflePlayback: (tracks: AudioTrack[]) => Promise<boolean>;
-  playNextTrack: () => Promise<boolean>;
-  playPreviousTrack: () => Promise<boolean>;
-  seekToPosition: (position: number) => Promise<boolean>;
 }
 
+export interface EnhancedPlayerActions {
+  resetTrackEndedFlag: () => void;
+  startEnhancedPlayback: (tracks: EnhancedAudioTrack[], startIndex?: number) => Promise<boolean>;
+  startEnhancedShufflePlayback: (tracks: EnhancedAudioTrack[]) => Promise<boolean>;
+  stopPlayback: () => Promise<boolean>;
+  playNextTrack: () => Promise<boolean>;
+  isActiveArticle: (articleId: number) => boolean;
+  initializeQueue: (tracks: EnhancedAudioTrack[]) => boolean;
+  preloadTracks: () => Promise<void>;
+  playQueuedTrack: (index: number) => Promise<boolean>;
+}
+
+export type EnhancedPlayerAPI = EnhancedPlayerState & { actions: EnhancedPlayerActions };
+
 /**
- * Custom hook for audio playback functionality
+ * Hook for enhanced audio player that handles article-level audio
+ * using a queue-based system with preloading
  */
-export function useAudioPlayer(): AudioPlayerResult {
-  // State for the audio player
-  const [audioState, setAudioState] = useState<AudioState>(AUDIO_STATES.IDLE);
+export function useAudioPlayer(): EnhancedPlayerAPI {
+  // Base audio player
+  const [localDuration, setLocalDuration] = useState(0);
+  const [localProgress, setLocalProgress] = useState(0);
+
+  // --- State ---
+  const [metadata, setMetadata] = useState<PlaybackMetadata>(initialMetadata);
+  const [isTrackEnded, setIsTrackEnded] = useState(false);
+  const [audioState, setAudioState] = useState<(typeof AUDIO_STATES)[keyof typeof AUDIO_STATES]>(
+    AUDIO_STATES.IDLE
+  );
   const [currentTrackIndex, setCurrentTrackIndex] = useState(-1);
-  const [playlistMode, setPlaylistMode] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const [playlistModeActive, setPlaylistModeActive] = useState(false);
+  // --- End State ---
 
-  // Refs for audio player
-  const soundRef = useRef<Audio.Sound | null>(null);
-  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const lastActionTimeRef = useRef<number>(0);
+  // --- Refs for stability and internal tracking ---
+  const audioQueueRef = useRef<QueuedAudioItem[]>([]);
+  const isPlayingRef = useRef(false);
+  const currentIndexRef = useRef(-1);
+  const preloadInProgressRef = useRef(false);
+  const preloadBatchSizeRef = useRef(2);
+  const currentPlaylistRef = useRef<EnhancedAudioTrack[]>([]);
+  const lastStateUpdateRef = useRef(Date.now());
+  const currentSoundRef = useRef<Audio.Sound | null>(null);
   const appStateRef = useRef(AppState.currentState);
-  const currentPlaylistRef = useRef<AudioTrack[]>([]);
+  const trackEndTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Forward declaration for functions that have circular dependencies
-  const playNextTrackRef = useRef<() => Promise<boolean>>(async () => false);
+  // Ref to hold stable callbacks implementing the Actions interface
+  const actionsRef = useRef<EnhancedPlayerActions>({
+    resetTrackEndedFlag: () => {},
+    startEnhancedPlayback: async () => false,
+    startEnhancedShufflePlayback: async () => false,
+    stopPlayback: async () => false,
+    playNextTrack: async () => false,
+    isActiveArticle: () => false,
+    initializeQueue: () => false,
+    preloadTracks: async () => {},
+    playQueuedTrack: async () => false,
+  });
+  // --- End Refs ---
 
-  // Clean up all audio resources
-  const cleanupAudio = useCallback(async () => {
-    // Clear any timers
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = null;
-    }
-
-    // Unload sound if it exists
-    if (soundRef.current) {
-      try {
-        await soundRef.current.stopAsync().catch(error => {
-          handleError(error instanceof Error ? error : new Error('Failed to stop audio'), {
-            analyticsEventName: 'Audio_Stop_Error',
-            sentrySeverity: 'warning',
-          });
-        });
-
-        await soundRef.current.unloadAsync().catch(error => {
-          handleError(error instanceof Error ? error : new Error('Failed to unload audio'), {
-            analyticsEventName: 'Audio_Unload_Error',
-            sentrySeverity: 'warning',
-          });
-        });
-      } catch (error) {
-        handleError(error instanceof Error ? error : new Error('Failed to cleanup audio'), {
-          analyticsEventName: 'Audio_Cleanup_Error',
-          sentrySeverity: 'error',
-        });
-      } finally {
-        soundRef.current = null;
-      }
-    }
+  // --- Internal Logic Callbacks (used to define actions) ---
+  const updateExposedState = useCallback(() => {
+    const now = Date.now();
+    if (now - lastStateUpdateRef.current < 50) return;
+    lastStateUpdateRef.current = now;
+    setCurrentTrackIndex(currentIndexRef.current);
+    const newAudioState = isPlayingRef.current
+      ? AUDIO_STATES.PLAYING
+      : audioQueueRef.current.length > 0
+        ? AUDIO_STATES.PAUSED
+        : AUDIO_STATES.IDLE;
+    setAudioState(newAudioState);
+    setPlaylistModeActive(audioQueueRef.current.length > 1);
   }, []);
 
-  // Initialize audio session
-  const initAudioSession = useCallback(async () => {
-    await Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: true,
-      shouldDuckAndroid: true,
-      interruptionModeIOS: InterruptionModeIOS.DuckOthers,
-      interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-      playThroughEarpieceAndroid: false,
+  const updateMetadata = useCallback((track: EnhancedAudioTrack | null) => {
+    if (!track) {
+      setMetadata(initialMetadata);
+      return;
+    }
+    setMetadata({
+      articleId: track.articleId ?? track.rootId ?? 0,
+      articleTitle: track.title,
     });
-
-    return true;
   }, []);
 
-  // Start tracking progress
-  const startProgressTracking = useCallback(() => {
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = null;
-    }
-
-    const intervalId = setInterval(async () => {
-      if (!soundRef.current) {
-        if (progressIntervalRef.current) {
-          clearInterval(progressIntervalRef.current);
-          progressIntervalRef.current = null;
-        }
-        return;
-      }
-
-      try {
-        const status = await soundRef.current.getStatusAsync();
-        if (status.isLoaded) {
-          setProgress(status.positionMillis);
-          setDuration(status.durationMillis || 0);
-        }
-      } catch {
-        // Ignore status check errors - they will be handled by the status update callback
-      }
-    }, 1000);
-
-    progressIntervalRef.current = intervalId;
-  }, []);
-
-  // Handle playback status updates
-  const onPlaybackStatusUpdate = useCallback(
-    (status: AVPlaybackStatus) => {
-      if (!status.isLoaded) {
-        if (status.error) {
-          setAudioState(AUDIO_STATES.ERROR);
-        }
-        return;
-      }
-
-      // Log state transitions
-      const newState: AudioState = status.isPlaying
-        ? AUDIO_STATES.PLAYING
-        : status.isBuffering
-          ? AUDIO_STATES.LOADING
-          : AUDIO_STATES.PAUSED;
-
-      if (newState !== audioState) {
-        setAudioState(newState);
-      }
-
-      // Update progress and duration
-      setProgress(status.positionMillis);
-      // Ensure duration is set from either status or current playlist track
-      const currentTrack = currentPlaylistRef.current[currentTrackIndex];
-      const trackDuration = currentTrack?.duration;
-      setDuration(status.durationMillis || trackDuration || 0);
-
-      // Handle track completion
-      if (status.didJustFinish && !status.isLooping) {
-        if (!playlistMode) {
-          // Single track mode - just stop
-          setAudioState(AUDIO_STATES.IDLE);
-          setProgress(0);
-        } else {
-          // In playlist mode, proceed to next track
-          void playNextTrackRef.current();
-        }
-      }
-    },
-    [playlistMode, audioState, currentTrackIndex]
-  );
-
-  // Load and play audio with the specified URL
-  const loadAndPlayAudio = useCallback(
-    async (audioUrl: string) => {
-      if (!audioUrl) {
-        setAudioState(AUDIO_STATES.ERROR);
-        return false;
-      }
-
-      try {
-        setAudioState(AUDIO_STATES.LOADING);
-        lastActionTimeRef.current = Date.now();
-
-        // Clean up any existing audio first
-        await cleanupAudio().catch(error => {
-          handleError(error instanceof Error ? error : new Error('Failed to cleanup audio'));
-        });
-
-        // Initialize audio session first to ensure proper configuration
-        await initAudioSession();
-
-        // Create and load the new sound
-        const { sound } = await Audio.Sound.createAsync(
-          { uri: audioUrl },
-          { shouldPlay: true },
-          onPlaybackStatusUpdate
-        );
-
-        soundRef.current = sound;
-        startProgressTracking();
-        return true;
-      } catch (error) {
-        handleError(error instanceof Error ? error : new Error('Failed to load audio'), {
-          analyticsEventName: 'Audio_Load_Error',
-          sentrySeverity: 'error',
-        });
-        setAudioState(AUDIO_STATES.ERROR);
-        return false;
-      }
-    },
-    [cleanupAudio, initAudioSession, onPlaybackStatusUpdate, startProgressTracking]
-  );
-
-  // Toggle play/pause state
-  const togglePlayPause = useCallback(async () => {
-    if (!soundRef.current) return;
-
+  const preloadTracksLogic = useCallback(async () => {
+    if (preloadInProgressRef.current || !isPlayingRef.current) return;
+    preloadInProgressRef.current = true;
     try {
-      const status = await soundRef.current.getStatusAsync();
-      if (!status.isLoaded) return;
+      const currentIndex = currentIndexRef.current;
+      const queue = audioQueueRef.current;
+      const startIndex = currentIndex + 1;
+      const endIndex = Math.min(startIndex + preloadBatchSizeRef.current, queue.length);
+      if (startIndex >= queue.length) {
+        preloadInProgressRef.current = false;
+        return;
+      }
+      for (let i = startIndex; i < endIndex; i++) {
+        const queueItem = queue[i];
+        if (!queueItem || queueItem.isPreloaded || !queueItem.track.audioUrl) continue;
 
-      if (status.isPlaying) {
-        await soundRef.current.pauseAsync();
-      } else {
-        await soundRef.current.playAsync();
+        // Use expo-av for preloading
+        try {
+          // Only prepare, don't play yet
+          const { sound } = await Audio.Sound.createAsync(
+            { uri: queueItem.track.audioUrl },
+            { shouldPlay: false }
+          );
+          if (queueItem) {
+            queueItem.sound = sound;
+            queueItem.isPreloaded = true;
+          } else {
+            // If queueItem became null somehow, unload immediately
+            await sound.unloadAsync();
+          }
+        } catch (preloadError) {
+          handleError(preloadError as Error, { toastMessage: `Preloading track ${i} failed` });
+          if (queueItem) {
+            queueItem.isPreloaded = true;
+          }
+        }
       }
     } catch (error) {
-      handleError(error instanceof Error ? error : new Error('Failed to toggle playback'), {
-        analyticsEventName: 'Audio_Toggle_Error',
-        sentrySeverity: 'warning',
-      });
+      handleError(error as Error);
+    } finally {
+      preloadInProgressRef.current = false;
     }
   }, []);
 
-  // Play a specific track from a playlist
-  const playTrack = useCallback(
-    async (tracks: AudioTrack[], index: number): Promise<boolean> => {
-      if (index < 0 || index >= tracks.length) {
+  const playQueuedTrackLogic = useCallback(
+    async (index: number): Promise<boolean> => {
+      const queue = audioQueueRef.current;
+      if (index < 0 || index >= queue.length || !queue[index]) {
         return false;
       }
 
+      if (currentSoundRef.current) {
+        try {
+          await currentSoundRef.current.stopAsync();
+          await currentSoundRef.current.unloadAsync();
+        } catch (e) {
+          handleError(e as Error, { toastMessage: 'Error stopping/unloading previous sound' });
+        } finally {
+          currentSoundRef.current = null;
+        }
+      }
+
+      const queueItem = queue[index];
+      if (!queueItem || !queueItem.track.audioUrl) {
+        setIsTrackEnded(true);
+        updateExposedState();
+        return false;
+      }
+
+      currentIndexRef.current = index;
+      updateExposedState();
+      updateMetadata(queueItem.track);
       try {
-        const track = tracks[index];
-        if (!track) {
+        let soundObject: Audio.Sound | null = null;
+
+        // Helper function to update playback state from status
+        const updatePlaybackState = (status: AVPlaybackStatus) => {
+          if (status.isLoaded) {
+            const duration = status.durationMillis ?? queueItem.track.duration ?? 0;
+            const progress = status.positionMillis || 0;
+            setLocalDuration(duration);
+            setLocalProgress(progress);
+            return duration;
+          }
+          return 0;
+        };
+
+        // Set up status update callback
+        const onStatusUpdate = (status: AVPlaybackStatus) => {
+          if (status.isLoaded) {
+            updatePlaybackState(status);
+          }
+        };
+
+        if (queueItem.isPreloaded && queueItem.sound) {
+          soundObject = queueItem.sound;
+          currentSoundRef.current = soundObject;
+          soundObject.setOnPlaybackStatusUpdate(onStatusUpdate);
+          await soundObject.replayAsync();
+          const status = await soundObject.getStatusAsync();
+          const duration = updatePlaybackState(status);
+
+          if (duration && isFinite(duration)) {
+            if (trackEndTimeoutRef.current) {
+              clearTimeout(trackEndTimeoutRef.current);
+            }
+            trackEndTimeoutRef.current = setTimeout(() => {
+              if (isPlayingRef.current && currentIndexRef.current === index) {
+                setIsTrackEnded(true);
+              }
+            }, duration + 100);
+          }
+        } else {
+          // Load and play on demand
+          try {
+            const { sound, status } = await Audio.Sound.createAsync(
+              { uri: queueItem.track.audioUrl },
+              { shouldPlay: true },
+              onStatusUpdate
+            );
+            soundObject = sound;
+            currentSoundRef.current = sound;
+            const duration = updatePlaybackState(status);
+
+            // Update queue item if it was loaded on demand
+            if (queueItem) {
+              queueItem.sound = sound;
+              queueItem.isPreloaded = true;
+            }
+
+            if (duration && isFinite(duration)) {
+              if (trackEndTimeoutRef.current) {
+                clearTimeout(trackEndTimeoutRef.current);
+              }
+              trackEndTimeoutRef.current = setTimeout(() => {
+                if (isPlayingRef.current && currentIndexRef.current === index) {
+                  setIsTrackEnded(true);
+                }
+              }, duration + 100);
+            }
+          } catch (loadError) {
+            handleError(loadError as Error);
+            setIsTrackEnded(true);
+            return false;
+          }
+        }
+
+        if (soundObject) {
+          await soundObject.playAsync();
+          isPlayingRef.current = true;
+          updateExposedState();
+          return true;
+        } else {
+          setIsTrackEnded(true);
           return false;
         }
-
-        currentPlaylistRef.current = tracks;
-        setCurrentTrackIndex(index);
-        setPlaylistMode(true);
-
-        return await loadAndPlayAudio(track.audioUrl);
       } catch (error) {
-        handleError(error instanceof Error ? error : new Error('Failed to play track'), {
-          analyticsEventName: 'Audio_PlayTrack_Error',
-          sentrySeverity: 'error',
-        });
+        handleError(error as Error);
+        setIsTrackEnded(true);
+        isPlayingRef.current = false;
+        updateExposedState();
         return false;
       }
     },
-    [loadAndPlayAudio]
+    [updateExposedState, updateMetadata]
   );
 
-  // Start playback of a playlist
-  const startPlayback = useCallback(
-    async (tracks: AudioTrack[], startIndex = 0): Promise<boolean> => {
-      if (!tracks.length) return false;
-
-      try {
-        return await playTrack(tracks, startIndex);
-      } catch (error) {
-        handleError(error instanceof Error ? error : new Error('Failed to start playback'), {
-          analyticsEventName: 'Audio_StartPlayback_Error',
-          sentrySeverity: 'error',
-        });
-        return false;
-      }
-    },
-    [playTrack]
-  );
-
-  // Stop playback and cleanup
-  const stopPlayback = useCallback(async () => {
-    try {
-      await cleanupAudio();
-      setAudioState(AUDIO_STATES.IDLE);
-      setCurrentTrackIndex(-1);
-      setPlaylistMode(false);
-      setProgress(0);
-      setDuration(0);
-    } catch (error) {
-      handleError(error instanceof Error ? error : new Error('Failed to stop playback'), {
-        analyticsEventName: 'Audio_StopPlayback_Error',
-        sentrySeverity: 'error',
-      });
+  const stopPlaybackLogic = useCallback(async (): Promise<boolean> => {
+    // First, clear any pending timeout that might trigger track ended
+    if (trackEndTimeoutRef.current) {
+      clearTimeout(trackEndTimeoutRef.current);
+      trackEndTimeoutRef.current = null;
     }
-  }, [cleanupAudio]);
 
-  // Start shuffle playback
-  const startShufflePlayback = useCallback(
-    async (tracks: AudioTrack[]): Promise<boolean> => {
-      if (!tracks.length) return false;
+    // Reset all state immediately to prevent any pending updates
+    isPlayingRef.current = false;
+    setIsTrackEnded(false);
+    currentIndexRef.current = -1;
+    setLocalProgress(0);
+    setLocalDuration(0);
 
+    // Stop and unload the current sound if it exists
+    if (currentSoundRef.current) {
       try {
-        const shuffledTracks = shuffleArray(tracks);
-        return await startPlayback(shuffledTracks, 0);
+        await currentSoundRef.current.stopAsync();
+        await currentSoundRef.current.unloadAsync();
       } catch (error) {
-        handleError(
-          error instanceof Error ? error : new Error('Failed to start shuffle playback'),
-          {
-            analyticsEventName: 'Audio_ShufflePlayback_Error',
-            sentrySeverity: 'error',
+        // Silently handle cleanup errors - these are expected during normal operation
+        handleError(error as Error, { showToast: false, sentrySeverity: 'info' });
+      } finally {
+        currentSoundRef.current = null;
+      }
+    }
+
+    // Unload any preloaded sounds in the queue properly
+    const unloadPromises = audioQueueRef.current
+      .filter(item => item.sound)
+      .map(async item => {
+        try {
+          if (item.sound) {
+            await item.sound.stopAsync(); // Stop first
+            await item.sound.unloadAsync(); // Then unload
+            item.sound = null;
           }
-        );
-        return false;
-      }
+          item.isPreloaded = false;
+        } catch (error) {
+          // Silently handle cleanup errors - these are expected during normal operation
+          handleError(error as Error, { showToast: false, sentrySeverity: 'info' });
+        }
+      });
+
+    await Promise.allSettled(unloadPromises);
+
+    // Clear the queue and reset all state variables
+    audioQueueRef.current = [];
+    currentPlaylistRef.current = [];
+    preloadInProgressRef.current = false;
+
+    // Reset metadata
+    updateMetadata(null);
+    updateExposedState();
+
+    return true;
+  }, [updateExposedState, updateMetadata]);
+
+  const initializeQueueLogic = useCallback(
+    (tracks: EnhancedAudioTrack[]): boolean => {
+      isPlayingRef.current = false;
+      currentIndexRef.current = -1;
+      audioQueueRef.current = tracks.map((track, index) => ({ track, index, isPreloaded: false }));
+      updateExposedState();
+      return audioQueueRef.current.length > 0;
     },
-    [startPlayback]
+    [updateExposedState]
   );
 
-  // Play next track in playlist
-  const playNextTrack = useCallback(async (): Promise<boolean> => {
-    if (!playlistMode || !currentPlaylistRef.current.length) return false;
+  // --- Assign to actionsRef ---
+  actionsRef.current.resetTrackEndedFlag = useCallback(() => {
+    setIsTrackEnded(prev => (prev ? false : prev));
+  }, []);
+
+  actionsRef.current.initializeQueue = initializeQueueLogic;
+  actionsRef.current.preloadTracks = preloadTracksLogic;
+  actionsRef.current.playQueuedTrack = playQueuedTrackLogic;
+  actionsRef.current.stopPlayback = stopPlaybackLogic;
+
+  actionsRef.current.playNextTrack = useCallback(async () => {
+    const currentIndex = currentIndexRef.current;
+    const nextIndex = currentIndex + 1;
 
     try {
-      const nextIndex = (currentTrackIndex + 1) % currentPlaylistRef.current.length;
-      return await playTrack(currentPlaylistRef.current, nextIndex);
+      if (!isPlayingRef.current) {
+        return false;
+      }
+
+      if (nextIndex >= audioQueueRef.current.length) {
+        await actionsRef.current.stopPlayback();
+        return false;
+      }
+
+      return await playQueuedTrackLogic(nextIndex);
     } catch (error) {
-      handleError(error instanceof Error ? error : new Error('Failed to play next track'), {
-        analyticsEventName: 'Audio_NextTrack_Error',
-        sentrySeverity: 'error',
-      });
-      return false;
-    }
-  }, [playlistMode, currentTrackIndex, playTrack]);
-
-  // Play previous track in playlist
-  const playPreviousTrack = useCallback(async (): Promise<boolean> => {
-    if (!playlistMode || !currentPlaylistRef.current.length) return false;
-
-    try {
-      const prevIndex =
-        currentTrackIndex > 0 ? currentTrackIndex - 1 : currentPlaylistRef.current.length - 1;
-      return await playTrack(currentPlaylistRef.current, prevIndex);
-    } catch (error) {
-      handleError(error instanceof Error ? error : new Error('Failed to play previous track'), {
-        analyticsEventName: 'Audio_PreviousTrack_Error',
-        sentrySeverity: 'error',
-      });
-      return false;
-    }
-  }, [playlistMode, currentTrackIndex, playTrack]);
-
-  // Seek to a specific position
-  const seekToPosition = useCallback(async (position: number): Promise<boolean> => {
-    if (!soundRef.current) return false;
-
-    try {
-      const status = await soundRef.current.getStatusAsync();
-      if (!status.isLoaded) return false;
-
-      await soundRef.current.setPositionAsync(position);
-      return true;
-    } catch (error) {
-      handleError(error instanceof Error ? error : new Error('Failed to seek to position'), {
-        analyticsEventName: 'Audio_Seek_Error',
-        sentrySeverity: 'warning',
-      });
+      handleError(error as Error, { toastMessage: 'Error advancing to next track' });
+      if (nextIndex + 1 < audioQueueRef.current.length) {
+        return playQueuedTrackLogic(nextIndex + 1);
+      }
       return false;
     }
   }, []);
 
-  // Set up playNextTrack ref
-  useEffect(() => {
-    playNextTrackRef.current = playNextTrack;
-  }, [playNextTrack]);
+  actionsRef.current.startEnhancedPlayback = useCallback(
+    async (tracks, startIndex = 0) => {
+      if (!tracks || tracks.length === 0) {
+        return false;
+      }
+      await actionsRef.current.stopPlayback();
+      currentPlaylistRef.current = tracks;
+      actionsRef.current.initializeQueue(tracks);
+      isPlayingRef.current = true;
+      updateExposedState();
+      actionsRef.current.preloadTracks();
+      return await actionsRef.current.playQueuedTrack(startIndex);
+    },
+    [updateExposedState]
+  );
 
-  // Handle app state changes
+  actionsRef.current.startEnhancedShufflePlayback = useCallback(
+    async tracks => {
+      if (!tracks || tracks.length === 0) {
+        return false;
+      }
+      await actionsRef.current.stopPlayback();
+      const shuffledTracks = [...tracks].sort(() => Math.random() - 0.5);
+      currentPlaylistRef.current = shuffledTracks;
+      actionsRef.current.initializeQueue(shuffledTracks);
+      isPlayingRef.current = true;
+      updateExposedState();
+      actionsRef.current.preloadTracks();
+      return await actionsRef.current.playQueuedTrack(0);
+    },
+    [updateExposedState]
+  );
+
+  // Assign state-dependent checks (these are called via stable wrappers later)
+  actionsRef.current.isActiveArticle = articleId =>
+    audioState !== AUDIO_STATES.IDLE && metadata.articleId === articleId;
+
+  // --- Effects ---
+  // Effect to advance track when one ends
   useEffect(() => {
+    if (!isTrackEnded || !isPlayingRef.current) return;
+
+    setIsTrackEnded(false);
+
+    actionsRef.current.playNextTrack().catch(e => handleError(e as Error));
+  }, [isTrackEnded]);
+
+  // Reference for tracking preload state
+  const isPreloadingRef = useRef(false);
+
+  // Effect to trigger preload when index changes - changed dependency from audioState to currentTrackIndex
+  useEffect(() => {
+    if (isPlayingRef.current && !preloadInProgressRef.current && !isPreloadingRef.current) {
+      isPreloadingRef.current = true;
+      actionsRef.current.preloadTracks().finally(() => {
+        isPreloadingRef.current = false;
+      });
+    }
+  }, [currentTrackIndex]);
+
+  // Add initAudioSession function
+  const initAudioSession = useCallback(async () => {
+    try {
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
+        shouldDuckAndroid: true,
+        interruptionModeIOS: InterruptionModeIOS.DuckOthers,
+        interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+        playThroughEarpieceAndroid: false,
+      });
+    } catch (error) {
+      handleError(error as Error, { toastMessage: 'Failed to initialize audio session' });
+    }
+  }, []);
+
+  // Add AppState effect
+  useEffect(() => {
+    // Initialize audio session on mount
+    initAudioSession();
+
     const subscription = AppState.addEventListener('change', nextAppState => {
-      // Don't stop playback when app goes to background
-      // This allows audio to continue playing in the background
-      // and automatically move to the next track
+      // Maintain audio session regardless of app state
+      // This allows continuous audio playback in background
+      if (
+        (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') ||
+        (appStateRef.current === 'active' && nextAppState.match(/inactive|background/))
+      ) {
+        initAudioSession();
+      }
       appStateRef.current = nextAppState;
     });
 
     return () => {
       subscription.remove();
     };
-  }, [stopPlayback]);
+  }, [initAudioSession]);
+  // --- End Effects ---
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      void cleanupAudio();
+  // --- Final Memoized Return Value ---
+  const stableActions = actionsRef.current; // Actions ref current value IS stable between renders
+
+  return useMemo(() => {
+    return {
+      progress: localProgress,
+      duration: localDuration,
+      metadata,
+      isTrackEnded,
+      audioState,
+      currentTrackIndex,
+      playlistMode: playlistModeActive,
+      actions: stableActions,
     };
-  }, [cleanupAudio]);
-
-  return {
+  }, [
+    localProgress,
+    localDuration,
+    metadata,
+    isTrackEnded,
     audioState,
     currentTrackIndex,
-    progress,
-    duration,
-    playlistMode,
-    loadAndPlayAudio,
-    togglePlayPause,
-    playTrack,
-    startPlayback,
-    stopPlayback,
-    startShufflePlayback,
-    playNextTrack,
-    playPreviousTrack,
-    seekToPosition,
-  };
+    playlistModeActive,
+    stableActions,
+  ]);
 }
+
+// Backward compatibility export
+export { useAudioPlayer as useEnhancedAudioPlayer };

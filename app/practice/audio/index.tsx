@@ -14,7 +14,7 @@ import RepeatButton from '@/components/listen/RepeatButton';
 import { WordDisplay } from '@/components/review';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
-import { useEnhancedAudioPlayer } from '@/hooks/audio/useEnhancedAudioPlayer';
+import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
@@ -66,8 +66,8 @@ export default function ListenScreen(): JSX.Element {
   });
 
   // Get enhanced audio player
-  const enhancedAudioPlayer = useEnhancedAudioPlayer();
-  const { audioState, currentTrackIndex, actions } = enhancedAudioPlayer;
+  const audioPlayer = useAudioPlayer();
+  const { audioState, currentTrackIndex, actions } = audioPlayer;
 
   // Fetch vocabulary words
   const { allWords } = useFSRSQueries({

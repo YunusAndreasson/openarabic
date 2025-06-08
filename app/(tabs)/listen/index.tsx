@@ -16,11 +16,11 @@ import { ThemedView } from '@/components/ThemedView';
 import { ArticleCard } from '@/components/home/ArticleCard';
 import NowPlayingCard from '@/components/listen/NowPlayingCard';
 import SleepTimer from '@/components/listen/SleepTimer';
+import { AUDIO_STATES } from '@/constants/audio';
 import { LAYOUT } from '@/constants/layout';
 import { useLoadingState, useScreenFocusRefresh } from '@/hooks';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
-import { AUDIO_STATES } from '@/hooks/audio/useAudioPlayer';
-import { useEnhancedAudioPlayer } from '@/hooks/audio/useEnhancedAudioPlayer';
+import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
@@ -127,8 +127,8 @@ export default function ListenScreen(): JSX.Element {
   const [currentSort, setCurrentSort] = useState<ListenSortOption>('title');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
-  // --- Get State & Stable Actions from useEnhancedAudioPlayer ---
-  const enhancedAudioPlayer = useEnhancedAudioPlayer();
+  // --- Get State & Stable Actions from useAudioPlayer ---
+  const enhancedAudioPlayer = useAudioPlayer();
   const { progress, duration, metadata, audioState, actions } = enhancedAudioPlayer;
 
   // Clear starting playback state once audio actually starts

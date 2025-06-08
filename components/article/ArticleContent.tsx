@@ -18,11 +18,11 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import ParallaxHeader from '@/components/article/ParallaxHeader';
 import { useToast } from '@/components/providers/ToastProvider';
+import { AUDIO_STATES } from '@/constants/audio';
 import { LAYOUT } from '@/constants/layout';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
-import { AUDIO_STATES } from '@/hooks/audio/useAudioPlayer';
-import { useEnhancedAudioPlayer } from '@/hooks/audio/useEnhancedAudioPlayer';
+import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
@@ -105,8 +105,8 @@ interface AudioControlsButtonProps {
 const AudioControlsButton = React.memo<AudioControlsButtonProps>(
   ({ articleId, article, isInReadingList, isLoading, onToggleReadingList }) => {
     const { showToast } = useToast();
-    const enhancedAudioPlayer = useEnhancedAudioPlayer();
-    const { audioState } = enhancedAudioPlayer;
+    const audioPlayer = useAudioPlayer();
+    const { audioState } = audioPlayer;
     const [isPlayNowLoading, setIsPlayNowLoading] = React.useState(false);
 
     const isCurrentlyPlaying = audioState !== AUDIO_STATES.IDLE;
@@ -115,7 +115,7 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
       if (isCurrentlyPlaying) {
         // Stop playback
         lightFeedback();
-        await enhancedAudioPlayer.actions.stopPlayback();
+        await audioPlayer.actions.stopPlayback();
         return;
       }
 
@@ -138,7 +138,7 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
         }
 
         // Start playback with single track
-        const success = await enhancedAudioPlayer.actions.startEnhancedPlayback([track], 0);
+        const success = await audioPlayer.actions.startEnhancedPlayback([track], 0);
 
         if (!success) {
           showToast('Failed to start playback', 3000, 'error');
