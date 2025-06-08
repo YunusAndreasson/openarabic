@@ -49,76 +49,14 @@ export interface StudyWord {
 }
 
 /**
- * Base statistics shared across vocabulary-related statistics interfaces
- */
-export interface BaseVocabularyStats {
-  totalWords: number;
-  masteredWords: number;
-  learningWords: number;
-  successRate: number;
-  averageInterval: number;
-  averageEaseFactor: number;
-  averageLapses: number;
-  newWordsCount: number;
-  failedInSessionCount: number;
-  longestSuccessStreak: number;
-  wordsWithStreaks: number;
-  averageDifficulty: number;
-}
-
-/**
- * Statistics used by vocabulary dashboard, graphs, and components
- */
-export interface VocabularyStats extends BaseVocabularyStats {
-  dueWords: number;
-  streak: number;
-}
-
-/**
- * Statistics about the spaced repetition system
- * Used by vocabulary dashboard components and screens
- */
-export interface SrsStats extends BaseVocabularyStats {
-  averageStability: number;
-  masteredCount: number;
-  learningCount: number;
-  failedWordsRemaining: number;
-}
-
-/**
  * Category types for vocabulary statistics and filtering
  */
 export type StatCategory =
-  'difficultyEasy' | 'difficultyHard' | 'difficultyMedium' | 'due' | 'learning' | 'mastered' | 'needsAttention' | 'total';
-
-/**
- * Weekly progress data for vocabulary charts
- * Each entry represents one day's worth of data
- */
-export interface WeeklyProgressData {
-  date: string; // Day abbreviation (e.g., 'Mon', 'Tue')
-  count: number;
-  wordsLearned: number;
-}
-
-/**
- * Processed point with coordinates for graph visualization
- */
-export interface GraphProcessedPoint {
-  x: number;
-  y: number;
-  value: number;
-  label: string;
-}
-
-/**
- * Processed graph data with paths and statistics
- */
-export interface GraphPaths {
-  points: GraphProcessedPoint[];
-  areaPath: string;
-  linePath: string;
-  totalWordsLearned: number;
-  dailyAverage: number;
-  maxValue: number;
-}
+  | 'difficultyEasy'
+  | 'difficultyHard'
+  | 'difficultyMedium'
+  | 'due'
+  | 'learning'
+  | 'mastered'
+  | 'needsAttention'
+  | 'total';
