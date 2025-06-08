@@ -9,11 +9,4 @@ export const categoriesService = {
     if (error) throw error;
     return (data ?? []) as Tables<'categories'>[];
   },
-
-  async getCategory(id: number): Promise<Tables<'categories'> | null> {
-    const { data, error } = await supabase.from('categories').select('*').eq('id', id).single();
-
-    if (error) throw error;
-    return (data as Tables<'categories'>) ?? null;
-  },
 };

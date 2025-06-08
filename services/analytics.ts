@@ -145,16 +145,6 @@ class Analytics {
     }
   }
 
-  // Update user profile properties
-  async updateUserProfile(properties: Record<string, AnalyticsProperties>) {
-    if (!this.isInitialized) return;
-
-    try {
-      await this.mixpanel.getPeople().set(properties);
-    } catch (error) {
-      logError(error);
-    }
-  }
 
   // Reset user (for logout)
   async reset() {
@@ -194,39 +184,6 @@ class Analytics {
       article_id: articleId,
       ...articleProperties,
     });
-  }
-
-
-  async trackToggleReadingList(articleId: number, added: boolean) {
-    await this.track('TOGGLE_READING_LIST', {
-      article_id: articleId,
-      action: added ? 'add' : 'remove',
-    });
-  }
-
-  // Update User Properties
-  async updateUserStats(stats: {
-    totalArticlesRead?: number;
-    totalWordsStudied?: number;
-    readingListCount?: number;
-    studyWordsCount?: number;
-  }) {
-    const properties: Record<string, number> = {};
-
-    if (stats.totalArticlesRead !== undefined) {
-      properties[USER_PROPERTIES.TOTAL_ARTICLES_READ] = stats.totalArticlesRead;
-    }
-    if (stats.totalWordsStudied !== undefined) {
-      properties[USER_PROPERTIES.TOTAL_WORDS_STUDIED] = stats.totalWordsStudied;
-    }
-    if (stats.readingListCount !== undefined) {
-      properties[USER_PROPERTIES.READING_LIST_COUNT] = stats.readingListCount;
-    }
-    if (stats.studyWordsCount !== undefined) {
-      properties[USER_PROPERTIES.STUDY_WORDS_COUNT] = stats.studyWordsCount;
-    }
-
-    await this.updateUserProfile(properties);
   }
 }
 
