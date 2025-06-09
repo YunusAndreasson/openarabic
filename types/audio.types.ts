@@ -13,6 +13,4 @@ export type EnhancedAudioTrack = {
   audioUrl: string;
   /** Title of the article (used for display) */
   title: string;
-  /** Duration of the audio in milliseconds (optional) */
-  duration?: number;
 };

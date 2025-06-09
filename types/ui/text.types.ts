@@ -1,7 +1,6 @@
 import type { TextProps, TextStyle, StyleProp } from 'react-native';
 
 import type { ColorName } from '@/constants/Colors';
-import type { SentenceWord } from '@/types/vocabulary.types';
 
 export type TextTypeName =
   'arabic' | 'body' | 'bodyBold' | 'caption' | 'heading1' | 'heading2' | 'heading3' | 'label' | 'overline';
@@ -36,23 +35,4 @@ export interface ThemedTextProps extends TextProps {
   style?: StyleProp<TextStyle>;
   /** Text content to display */
   children?: React.ReactNode;
-}
-
-/**
- * Props for the ArabicWord component
- */
-export interface ArabicWordProps {
-  word: SentenceWord;
-  isSelected?: boolean;
-  onPress: (word: SentenceWord) => void;
-  scale?: number;
-  baseSize?: number;
-  interactive?: boolean;
-  showInfoOnLongPress?: boolean;
-  highlighted?: boolean;
-  highlightColor?: string;
-  size?: 'large' | 'normal' | 'small';
-  fontSize?: number;
-  lineHeight?: number;
-  style?: StyleProp<TextStyle>;
 }
