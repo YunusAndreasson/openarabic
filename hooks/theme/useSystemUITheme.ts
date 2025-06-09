@@ -12,7 +12,7 @@ import { useIsDarkMode } from './useThemeDetection';
  * Automatically synchronizes root background with the app's current theme
  * Uses expo-system-ui for cross-platform background color management
  */
-export function useSystemUITheme() {
+export function useSystemUITheme(): void {
   const colors = useColors();
   const isDark = useIsDarkMode();
 
