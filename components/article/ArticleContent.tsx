@@ -18,7 +18,6 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import ParallaxHeader from '@/components/article/ParallaxHeader';
 import { useToast } from '@/components/providers/ToastProvider';
-import { Colors } from '@/constants/Colors';
 import { AUDIO_STATES } from '@/constants/audio';
 import { LAYOUT } from '@/constants/layout';
 import { useArticleData } from '@/hooks/articles/useArticleData';
@@ -71,17 +70,10 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   summaryCard: {
+    ...LAYOUT.SHADOW.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     padding: LAYOUT.SPACING.LARGE,
     borderWidth: 1,
-    shadowColor: Colors.light.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
   },
   summaryLabel: {
     marginBottom: LAYOUT.SPACING.SMALL,

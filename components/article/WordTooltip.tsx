@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useCallback, memo } from 'react';
 import type { ViewStyle } from 'react-native';
-import { StyleSheet, View, Platform, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -218,20 +218,11 @@ const styles = StyleSheet.create({
     width: 0,
   },
   tooltip: {
+    ...LAYOUT.SHADOW.SUBTLE,
     alignSelf: 'flex-start',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     position: 'absolute',
-    ...Platform.select({
-      ios: {
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: LAYOUT.OPACITY.SUBTLE,
-        shadowRadius: 2,
-      },
-      android: {
-        elevation: LAYOUT.ELEVATION.SUBTLE,
-      },
-    }),
   },
   tooltipContainer: {
     position: 'absolute',

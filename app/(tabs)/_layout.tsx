@@ -53,13 +53,13 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
           ? {
               shadowOffset: { width: 0, height: -2 },
               shadowOpacity: LAYOUT.OPACITY.SUBTLE,
-              shadowRadius: 8,
+              shadowRadius: 6, // LAYOUT.SHADOW.SMALL radius
               borderTopWidth: StyleSheet.hairlineWidth,
             }
           : {
               shadowOffset: { width: 0, height: -2 },
-              shadowOpacity: 1,
-              shadowRadius: 10,
+              shadowOpacity: 0.3, // LAYOUT.SHADOW.MEDIUM opacity
+              shadowRadius: 10, // LAYOUT.SHADOW.MEDIUM radius
               borderTopWidth: StyleSheet.hairlineWidth,
             },
         android: {

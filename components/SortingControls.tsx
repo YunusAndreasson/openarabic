@@ -2,7 +2,6 @@ import type { JSX } from 'react';
 import React, { memo, useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Colors } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { SortDirection, SortOption } from '@/types/ui/sorting.types';
@@ -104,14 +103,11 @@ function SortingControls<T extends string>({
                 pillStyle={[
                   styles.sortPill,
                   isSelected && {
+                    ...LAYOUT.SHADOW.SUBTLE,
                     backgroundColor: colors.elevation1,
                     borderWidth: 1,
                     borderColor: colors.tint + '25', // Increased opacity for better visibility
                     shadowColor: colors.tint,
-                    shadowOffset: { width: 0, height: 2 }, // Slightly more elevation
-                    shadowOpacity: 0.15, // Increased shadow
-                    shadowRadius: 3, // Larger shadow radius
-                    elevation: 3, // Increased Android elevation
                   },
                 ]}
                 onSelect={() => handleSortChange(option.key)}
@@ -158,9 +154,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     // Subtle default state
-    backgroundColor: Colors.light.transparent,
+    backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: Colors.light.transparent,
+    borderColor: 'transparent',
   },
   sortPillContent: {
     alignItems: 'center',

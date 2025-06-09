@@ -268,16 +268,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   modal: {
+    ...LAYOUT.SHADOW.LARGE,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    elevation: LAYOUT.ELEVATION.MEDIUM + 2,
     maxHeight: '65%',
     overflow: 'hidden',
     shadowOffset: {
       width: 0,
       height: -8,
     },
-    shadowOpacity: LAYOUT.OPACITY.SUBTLE,
-    shadowRadius: 16,
   },
   modalContainer: {
     flex: 1,

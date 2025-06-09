@@ -12,7 +12,6 @@ import {
 } from '@/constants/layout';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
-
 interface ArticleCardProps {
   title: string;
   author: string;
@@ -46,7 +45,6 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
         ? {
             elevation: LAYOUT.ELEVATION.MEDIUM,
             shadowOpacity: LAYOUT.OPACITY.MEDIUM,
-            shadowRadius: 8,
           }
         : undefined,
     [active]

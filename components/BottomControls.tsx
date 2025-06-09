@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { memo, useMemo } from 'react';
-import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
@@ -193,13 +193,11 @@ const styles = StyleSheet.create({
     top: -LAYOUT.SPACING.LARGE,
   },
   secondaryButton: {
+    ...LAYOUT.SHADOW.SUBTLE,
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-    elevation: 2,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
   },
   timerButton: {
+    ...LAYOUT.SHADOW.SUBTLE,
     alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
@@ -209,16 +207,6 @@ const styles = StyleSheet.create({
     minWidth: MIN_TOUCH_TARGET.SIZE,
     paddingHorizontal: LAYOUT.SPACING.SMALL,
     paddingVertical: LAYOUT.SPACING.SMALL, // Increased padding for easier touch
-    ...Platform.select({
-      ios: {
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
   },
   timerContainer: {
     position: 'absolute',

@@ -3,7 +3,6 @@ import React, { useCallback, useMemo, memo } from 'react';
 import { Pressable, StyleSheet, View, Platform, type TextStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-
 import { LAYOUT } from '@/constants/layout';
 import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
@@ -104,10 +103,8 @@ const Pill = memo(
 
     const shadowStyle = useMemo(
       () => ({
+        ...LAYOUT.SHADOW.SUBTLE,
         shadowColor: isDarkMode ? colors.black : colors.shadow,
-        shadowOffset: { width: 0, height: isDarkMode ? 1 : 2 },
-        shadowOpacity: isDarkMode ? 0.25 : 0.1,
-        shadowRadius: isDarkMode ? 1 : 4,
       }),
       [isDarkMode, colors]
     );
@@ -198,10 +195,9 @@ const getCategoryStyle = (
   // Enhanced shadow for depth perception (simulates blur effect)
   ...(Platform.OS === 'ios'
     ? {
+        ...LAYOUT.SHADOW.SMALL,
         shadowColor: isDarkMode ? colors.black : colors.shadow,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: isDarkMode ? 0.4 : 0.15, // Increased opacity for blur-like effect
-        shadowRadius: 6, // Increased radius for softer shadow
+        shadowOpacity: isDarkMode ? 0.4 : 0.25, // Increased opacity for blur-like effect
       }
     : {
         elevation: isSelected ? 4 : 3, // Higher elevation for blur-like effect
@@ -225,10 +221,8 @@ const getFilterStyle = (
   borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   ...(Platform.OS === 'ios'
     ? {
+        ...LAYOUT.SHADOW.SUBTLE,
         shadowColor: colors.shadow,
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: LAYOUT.OPACITY.SUBTLE,
-        shadowRadius: 3,
       }
     : {
         elevation: isSelected ? 2 : 1,

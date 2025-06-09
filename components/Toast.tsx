@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, memo } from 'react';
-import type { ViewStyle } from 'react-native';
-import { StyleSheet, View, Platform, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   withSpring,
@@ -30,16 +29,7 @@ const DEFAULT_DURATION = 3500;
 const MAX_TOAST_WIDTH_RATIO = 0.9;
 
 // Enhanced shadow styles for more prominence
-const SHADOW_STYLES = Platform.select({
-  ios: {
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-  },
-  android: {
-    elevation: 12,
-  },
-}) as ViewStyle;
+const SHADOW_STYLES = LAYOUT.SHADOW.LARGE;
 
 const styles = StyleSheet.create({
   toast: {

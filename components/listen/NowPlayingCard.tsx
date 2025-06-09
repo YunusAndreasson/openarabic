@@ -163,21 +163,17 @@ const NowPlayingCard = ({
   const dynamicStyles = useMemo(
     () => ({
       container: {
+        ...LAYOUT.SHADOW.SMALL,
         backgroundColor: isDarkMode ? colors.elevation2 : colors.card,
         borderColor: isDarkMode ? colors.border : colors.cardBorder,
         shadowColor: colors.shadow,
         shadowOffset: { width: 0, height: -2 },
         shadowOpacity: isDarkMode ? 0.3 : 0.1,
-        shadowRadius: 8,
-        elevation: 8,
       },
       stopButton: {
+        ...LAYOUT.SHADOW.SUBTLE,
         backgroundColor: colors.tint,
         shadowColor: colors.tint,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-        elevation: 4,
       },
       timerButton: {
         backgroundColor: isTimerActive

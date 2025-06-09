@@ -21,7 +21,6 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { Colors } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
@@ -206,17 +205,14 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.SMALL,
   },
   modalContainer: {
+    ...LAYOUT.SHADOW.LARGE,
     borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     paddingBottom: LAYOUT.SPACING.XLARGE,
-    shadowColor: Colors.light.black,
     shadowOffset: {
       width: 0,
       height: -2,
     },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
   },
   header: {
     paddingHorizontal: LAYOUT.SPACING.LARGE,
@@ -238,19 +234,12 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.MEDIUM,
   },
   optionCard: {
+    ...LAYOUT.SHADOW.SUBTLE,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    shadowColor: Colors.light.black,
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
   iconContainer: {
     width: 48,

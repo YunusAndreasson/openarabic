@@ -252,12 +252,9 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.LARGE,
   },
   modal: {
+    ...LAYOUT.SHADOW.LARGE,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    elevation: 16,
     padding: LAYOUT.SPACING.LARGE,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
   },
   modalContainer: {
     maxWidth: 400,

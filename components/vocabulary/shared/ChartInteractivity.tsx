@@ -2,8 +2,7 @@ import React, { useState, useEffect, memo, useCallback } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { Colors } from '@/constants/Colors';
-import { MIN_TOUCH_TARGET } from '@/constants/layout';
+import { MIN_TOUCH_TARGET, LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 interface ChartTooltip {
@@ -74,7 +73,7 @@ export const DataPointOverlay = memo<DataPointOverlayProps>(({ x, y, value, labe
         width: touchTargetSize,
         height: touchTargetSize,
         borderRadius: touchTargetSize / 2,
-        backgroundColor: Colors.light.transparent,
+        backgroundColor: 'transparent',
       }}
       onPress={handlePress}
     />
@@ -128,14 +127,11 @@ export const useChartTooltip = (autoHideDelay: number = 3000) => {
 
 const styles = StyleSheet.create({
   tooltip: {
+    ...LAYOUT.SHADOW.SUBTLE,
     borderRadius: 8,
     borderWidth: 1,
-    elevation: 4,
     padding: 8,
     position: 'absolute',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
   },
   tooltipLabel: {
     fontSize: 14,

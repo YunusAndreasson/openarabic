@@ -1,5 +1,5 @@
 import { useCallback, memo, useMemo, useEffect, useRef } from 'react';
-import { StyleSheet, TouchableOpacity, View, Platform } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
@@ -13,7 +13,6 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
   const isMounted = useRef(false);
-
 
   const dimensions = useMemo(() => {
     const TOGGLE_HEIGHT = LAYOUT.BUTTON.HEIGHT.SMALL - 4;
@@ -33,10 +32,8 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
 
   const { TOGGLE_HEIGHT, HANDLE_SIZE, TOGGLE_WIDTH, TRAVEL_DISTANCE } = dimensions;
 
-
   const { containerAnimatedStyle, handleAnimatedStyle, forceAnimateToInitialState } =
     useToggleAnimation(value, TRAVEL_DISTANCE);
-
 
   useEffect(() => {
     isMounted.current = true;
@@ -46,13 +43,10 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
     }
   }, [value, forceAnimateToInitialState]);
 
-
   const handlePress = useCallback(() => {
-
     selectionFeedback();
     onValueChange(!value);
   }, [onValueChange, value]);
-
 
   const combinedContainerStyle = useMemo(() => {
     return [
@@ -62,7 +56,6 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
       },
     ];
   }, [containerAnimatedStyle, value, colors.tint, colors.border, isDarkMode]);
-
 
   const containerStyle = useMemo(
     () => [
@@ -131,7 +124,6 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
   );
 }
 
-
 export const Toggle = memo(ToggleComponent);
 
 const styles = StyleSheet.create({
@@ -142,16 +134,7 @@ const styles = StyleSheet.create({
   handle: {
     position: 'relative',
   },
-  shadow:
-    Platform.OS === 'ios'
-      ? {
-          shadowOffset: { width: 0, height: 2 },
-          shadowRadius: 4,
-          shadowOpacity: LAYOUT.OPACITY.SUBTLE,
-        }
-      : {
-          elevation: LAYOUT.ELEVATION.SUBTLE,
-        },
+  shadow: LAYOUT.SHADOW.SUBTLE,
   toggleTrack: {
     alignItems: 'flex-start',
     justifyContent: 'center',

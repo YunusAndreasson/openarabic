@@ -76,16 +76,13 @@ const RepeatButton: React.FC<RepeatButtonProps> = ({ enabled, onToggle }) => {
 
 const styles = StyleSheet.create({
   container: {
+    ...LAYOUT.SHADOW.SUBTLE,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
-    elevation: 1,
     minHeight: MIN_TOUCH_TARGET.SIZE,
     minWidth: 100,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM + 2,
     paddingVertical: LAYOUT.SPACING.SMALL + 2,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
   },
   content: {
     alignItems: 'center',

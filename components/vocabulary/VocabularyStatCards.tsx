@@ -2,7 +2,6 @@ import React, { memo, useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { Colors } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
@@ -177,19 +176,12 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.MEDIUM,
   },
   categoryCard: {
+    ...LAYOUT.SHADOW.SUBTLE,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    shadowColor: Colors.light.black,
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
   numberBadge: {
     width: 40,
@@ -202,7 +194,7 @@ const styles = StyleSheet.create({
   numberText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '700',
-    color: Colors.light.background,
+    color: '#FFFFFF',
   },
   categoryContent: {
     flex: 1,
