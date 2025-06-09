@@ -17,7 +17,6 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
-
 const TAB_SCREENS = [
   {
     name: 'read',

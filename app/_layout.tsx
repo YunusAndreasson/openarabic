@@ -25,7 +25,6 @@ import { AuthProvider, ToastProvider } from '@/components/providers';
 import { Theme } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
-import { handleError } from '@/utils/errorHandling';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
@@ -33,6 +32,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import type { RootState } from '@/store/store';
 import { store, persistor } from '@/store/store';
 import { setTheme } from '@/store/themeSlice';
+import { handleError } from '@/utils/errorHandling';
 
 import { useArticlesAndDueWordsLoaded } from './(tabs)/read/index';
 // import { analytics } from '@/services/analytics';
@@ -164,7 +164,6 @@ function AppContent() {
       preloadAppData();
     }
   }, [isAuthLoading, isLoaded, preloadAppData]);
-
 
   // Wait for all resources before setting appReady
   useEffect(() => {

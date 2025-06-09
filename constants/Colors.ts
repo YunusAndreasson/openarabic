@@ -105,15 +105,15 @@ const elevation = {
 
 export const Colors = {
   light: {
-    // Core brand colors
+    // Core brand colors - improved contrast
     primary: basePalette.forest.dark,
-    background: basePalette.sage.lightest,
+    background: basePalette.sage.lighter, // Changed from lightest for better contrast
     text: basePalette.forest.darkest,
     secondaryText: basePalette.forest.medium,
     textTertiary: basePalette.forest.light,
-    border: basePalette.sage.light,
+    border: '#D4E1D8', // Stronger border than sage.light for better definition
     card: basePalette.pure.white,
-    cardBorder: basePalette.sage.lighter,
+    cardBorder: '#E0EBE4', // More visible than sage.lighter, less than full border
 
     // Semantic colors
     error: basePalette.semantic.error,
@@ -121,50 +121,50 @@ export const Colors = {
     warning: basePalette.semantic.warning,
     info: basePalette.forest.light,
 
-    // Text hierarchy - systematically calculated
+    // Text hierarchy - enhanced for better readability
     englishText: basePalette.forest.medium,
     arabicText: basePalette.forest.darkest,
-    authorText: basePalette.forest.light,
+    authorText: '#5A6B61', // Slightly darker than forest.light for better contrast
     headingText: basePalette.forest.darkest,
-    subtitleText: textHierarchy.light.subtitle,
+    subtitleText: '#2F3F37', // Slightly lighter than darkest for subtle hierarchy
     metadataText: textHierarchy.light.metadata,
     captionText: textHierarchy.light.caption,
 
     // Interactive elements
     tint: basePalette.tint.primary,
-    tabIconDefault: basePalette.forest.lighter,
+    tabIconDefault: '#8A9D8F', // Slightly darker than forest.lighter for visibility
     tabIconSelected: basePalette.tint.primary,
     icon: basePalette.forest.light,
-    disabled: '#D2DBD6',
+    disabled: '#C8D4CC', // Slightly darker for better contrast
 
-    // Overlays - using standardized opacity system
+    // Overlays - adjusted for new background
     transparent: basePalette.pure.transparent,
-    overlay: alpha(basePalette.sage.lightest, opacity.modal),
-    modalOverlay: alpha(basePalette.sage.lightest, opacity.full),
+    overlay: alpha(basePalette.sage.lighter, opacity.modal),
+    modalOverlay: alpha(basePalette.sage.lighter, opacity.full),
     borderOverlay: alpha(basePalette.tint.primary, opacity.light),
     buttonOverlay: alpha(basePalette.tint.primary, opacity.medium),
     backdropOverlay: alpha(basePalette.forest.dark, opacity.backdrop),
 
-    // Elevation system
+    // Elevation system - enhanced contrast
     shadow: basePalette.forest.dark,
-    elevation1: elevation.light.level1,
-    elevation2: elevation.light.level2,
-    elevation3: elevation.light.level3,
+    elevation1: basePalette.pure.white, // Cards remain pure white for maximum contrast
+    elevation2: '#FDFEFD', // Very subtle tint for raised elements
+    elevation3: '#F8FBF9', // Slightly more tinted for floating elements
 
-    // Reading experience - using standardized values
-    audioHighlight: elevation.light.level2,
-    audioHighlightBorder: basePalette.sage.light,
+    // Reading experience - improved visibility
+    audioHighlight: '#F8FBF9', // Slightly more visible than before
+    audioHighlightBorder: '#D4E1D8', // Matching stronger border
     wordTooltipBg: basePalette.pure.white,
     wordTooltipText: basePalette.forest.darkest,
-    wordTooltipBorder: basePalette.sage.light,
+    wordTooltipBorder: '#D4E1D8', // Matching stronger border
     wordTooltipShadow: alpha(basePalette.forest.dark, opacity.active),
     wordSelectionUnderline: alpha(basePalette.tint.primary, opacity.selection),
     wordDueUnderline: alpha(basePalette.semantic.warning, opacity.due),
 
-    // Navigation
+    // Navigation - adjusted for new background
     navigationRipple: alpha(basePalette.tint.primary, opacity.strong),
-    headerOverlay: alpha(basePalette.sage.lightest, opacity.header),
-    tabBarOverlay: alpha(basePalette.sage.lightest, opacity.modal),
+    headerOverlay: alpha(basePalette.sage.lighter, opacity.header),
+    tabBarOverlay: alpha(basePalette.sage.lighter, opacity.modal),
 
     // UI semantics
     progressIndicator: basePalette.tint.primary,
@@ -172,8 +172,8 @@ export const Colors = {
     interactiveSecondary: basePalette.forest.light,
     completionSuccess: basePalette.semantic.success,
 
-    // Utility colors
-    imagePlaceholder: basePalette.sage.lighter,
+    // Utility colors - enhanced contrast
+    imagePlaceholder: '#E8F1EC', // Using sage.light for better visibility
     textOverlay: alpha(basePalette.tint.primary, opacity.subtle),
     textShadowDark: alpha(basePalette.forest.dark, opacity.shadow),
     textShadowLight: alpha(basePalette.pure.white, opacity.shadow),

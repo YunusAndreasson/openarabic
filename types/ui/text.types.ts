@@ -3,9 +3,24 @@ import type { TextProps, TextStyle, StyleProp } from 'react-native';
 import type { ColorName } from '@/constants/Colors';
 
 export type TextTypeName =
-  'arabic' | 'body' | 'bodyBold' | 'caption' | 'heading1' | 'heading2' | 'heading3' | 'label' | 'overline';
+  | 'arabic'
+  | 'body'
+  | 'bodyBold'
+  | 'caption'
+  | 'heading1'
+  | 'heading2'
+  | 'heading3'
+  | 'label'
+  | 'overline';
 export type TextVariant =
-  'disabled' | 'error' | 'info' | 'primary' | 'secondary' | 'subtle' | 'success' | 'warning';
+  | 'disabled'
+  | 'error'
+  | 'info'
+  | 'primary'
+  | 'secondary'
+  | 'subtle'
+  | 'success'
+  | 'warning';
 export type TextWeight = 'bold' | 'medium' | 'normal' | 'semibold';
 export type TextAlign = 'center' | 'justify' | 'left' | 'right';
 

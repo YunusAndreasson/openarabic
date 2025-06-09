@@ -57,31 +57,29 @@ interface DataPointOverlayProps {
   onPress: (x: number, y: number, value: string, label: string) => void;
 }
 
-export const DataPointOverlay = memo<DataPointOverlayProps>(
-  ({ x, y, value, label, onPress }) => {
-    const handlePress = useCallback(() => {
-      onPress(x, y, value, label);
-    }, [x, y, value, label, onPress]);
+export const DataPointOverlay = memo<DataPointOverlayProps>(({ x, y, value, label, onPress }) => {
+  const handlePress = useCallback(() => {
+    onPress(x, y, value, label);
+  }, [x, y, value, label, onPress]);
 
-    const touchTargetSize = MIN_TOUCH_TARGET.SIZE;
-    const offset = touchTargetSize / 2;
+  const touchTargetSize = MIN_TOUCH_TARGET.SIZE;
+  const offset = touchTargetSize / 2;
 
-    return (
-      <TouchableOpacity
-        style={{
-          position: 'absolute',
-          left: x - offset,
-          top: y - offset,
-          width: touchTargetSize,
-          height: touchTargetSize,
-          borderRadius: touchTargetSize / 2,
-          backgroundColor: Colors.light.transparent,
-        }}
-        onPress={handlePress}
-      />
-    );
-  }
-);
+  return (
+    <TouchableOpacity
+      style={{
+        position: 'absolute',
+        left: x - offset,
+        top: y - offset,
+        width: touchTargetSize,
+        height: touchTargetSize,
+        borderRadius: touchTargetSize / 2,
+        backgroundColor: Colors.light.transparent,
+      }}
+      onPress={handlePress}
+    />
+  );
+});
 
 DataPointOverlay.displayName = 'DataPointOverlay';
 
