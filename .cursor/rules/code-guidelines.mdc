@@ -8,10 +8,10 @@ alwaysApply: true
 You are a senior React Native developer tasked with writing performant, reliable and production ready code for a language learning app.
 
 ## App Features
-[index.tsx](mdc:app/(tabs) Main screen with list of articles
-[vocabulary.tsx](mdc:app/(tabs) Entry screen for practitinc words using Spaced Repetition
-[bookmarks.tsx](mdc:app/(tabs) Articles stored for later reading and playing
-[settings.tsx](mdc:app/(tabs) Settings and account
+[app/(tabs)/read/index.tsx](mdc:app/(tabs)/read/index.tsx) Main screen with list of articles
+[app/(tabs)/practice/index.tsx](mdc:app/(tabs)/practice/index.tsx) Entry screen for practicing words using Spaced Repetition  
+[app/(tabs)/listen/index.tsx](mdc:app/(tabs)/listen/index.tsx) Audio playback for bookmarked articles and listening practice
+[app/(tabs)/read/account/](mdc:app/(tabs)/read/account/) Settings and account management
 
 ## Core Principles
 - Always investigate issues before proposing fixes
@@ -25,7 +25,7 @@ You are a senior React Native developer tasked with writing performant, reliable
 - Only use modern React functional components
 
 ## Important files
-- Database strucure is available in [database.types.ts](mdc:lib/database.types.ts)  
+- Database structure is available in [database.types.ts](mdc:types/database.types.ts)  
 - Colors are available in [Colors.ts](mdc:constants/Colors.ts) 
 - Layout constraints are available in [layout.ts](mdc:constants/layout.ts) 
 
@@ -38,19 +38,27 @@ You are a senior React Native developer tasked with writing performant, reliable
 - Data Fetching: TanStack Query (React Query)
 - UI Performance: @shopify/flash-list for optimized lists
 - Animation: react-native-reanimated and @shopify/react-native-skia
+- Audio: expo-audio for playback and audio controls
+- Spaced Repetition: ts-fsrs for vocabulary learning algorithms
 - Analytics: Sentry for error tracking, Mixpanel for analytics
 - Backend: Database, storage and auth: Supabase
-- Mobile: React Native 18 and Expo 53
+- Mobile: React Native 0.79.3, React 19.0.0, and Expo SDK 53
+- Notifications: expo-notifications for push notifications
+- Haptics: expo-haptics for tactile feedback
+- Testing: Jest with React Native Testing Library
 
 ## Directory Structure
 - `app/(tabs)` - Main screen components
+- `app/auth` - Authentication screens
+- `app/practice` - Standalone practice screens  
+- `app/insights` - Analytics and insights screens
 - `hooks/` - Custom React hooks for shared logic
 - `components/` - Reusable UI components
 - `constants/` - App constants, theme values, and configuration
 - `services/` - External API communication (primarily Supabase)
 - `store/` - Redux state management
 - `types/` - TypeScript type definitions
-- `utils/` - helper functions
+- `utils/` - Helper functions
 
 ## Best Practices
 - Use types from the `/types` directory for consistency
@@ -63,8 +71,12 @@ You are a senior React Native developer tasked with writing performant, reliable
 - Style using StyleSheet.create() for static styles, inline for dynamic
 - Handle errors with try/catch in services, Sentry for logging
 - Structure Supabase queries in `services/` with typed responses using database.types.ts
-- Use currect types and never `any`
+- Use correct types and never `any`
 
 ## Constraints
 - Don't be overly strict about linting issues
 - Focus on mobile UX patterns, not responsive web design
+
+## Design Guidelines
+- Follow UX principles from [design.mdc](mdc:.cursor/rules/design.mdc)
+- Follow copy and messaging guidelines from [copy.mdc](mdc:.cursor/rules/copy.mdc)
