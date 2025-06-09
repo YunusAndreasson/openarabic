@@ -6,8 +6,7 @@ import { BlurView } from 'expo-blur';
 import type { BlurTint } from 'expo-blur';
 import { Tabs, router } from 'expo-router';
 import React, { useMemo, useCallback, memo, useEffect } from 'react';
-import { Platform, StyleSheet, View, Text } from 'react-native';
-import type { TextStyle } from 'react-native';
+import { Platform, StyleSheet, View, Text, type TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import HeaderProfile from '@/components/HeaderProfile';
@@ -224,9 +223,8 @@ const CustomHeaderBackground = memo(() => {
 });
 CustomHeaderBackground.displayName = 'CustomHeaderBackground';
 
-const HEADER_TITLE_STYLE = {
+const HEADER_TITLE_STYLE: TextStyle = {
   ...LAYOUT.HEADER.TITLE.MAIN,
-  fontWeight: LAYOUT.HEADER.TITLE.MAIN.fontWeight as any,
 };
 
 const HEADER_STYLE = {
