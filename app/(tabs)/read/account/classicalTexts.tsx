@@ -2,7 +2,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack } from 'expo-router';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -22,7 +22,7 @@ const ClassicalTextsScreen: React.FC = () => {
           headerTitle: '',
           headerTitleStyle: {
             ...LAYOUT.HEADER.TITLE.SECONDARY,
-          } as any,
+          } as TextStyle,
           headerStyle: {
             backgroundColor: colors.background,
           },
