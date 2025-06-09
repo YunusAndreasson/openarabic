@@ -5,31 +5,14 @@ import { AppState } from 'react-native';
 
 import { supabase, setupSupabaseAppStateListener } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
+import type { AuthResult, UserSession } from '@/types/auth.types';
 
 // Maximum number of retry attempts for session refresh
 const MAX_REFRESH_RETRIES = 3;
 // Time between retries (exponential backoff)
 const RETRY_DELAY_MS = 1000;
 
-// Define session type based on properties we use
-export type UserSession = {
-  user: {
-    id: string;
-    email?: string;
-    app_metadata: Record<string, unknown>;
-    user_metadata: Record<string, unknown>;
-  } | null;
-  expires_at?: number;
-};
-
-export type AuthResult = {
-  session: UserSession | null;
-  user: UserSession['user'] | null;
-  isLoading: boolean;
-  authError: Error | null;
-  refreshSession: () => Promise<UserSession | null>;
-  isAuthenticated: boolean; // New property to easily check auth state
-};
+// UserSession and AuthResult types are defined in '@/types/auth.types'
 
 export function useProvideAuth(): AuthResult {
   const [session, setSession] = useState<UserSession | null>(null);
