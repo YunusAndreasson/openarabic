@@ -13,6 +13,7 @@ import { useFSRS } from '@/hooks/vocabulary/useFSRS';
 import { useWordSizing } from '@/hooks/vocabulary/useWordSizing';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
+import type { SessionMetrics } from '@/types/review.types';
 import { handleError } from '@/utils/errorHandling';
 
 // Consolidated refs for easier state management
@@ -30,19 +31,6 @@ interface ReviewStateRefs {
   completionTriggered: boolean;
   isUpdatingWord: boolean;
   progressUpdatedForCompletion: boolean;
-}
-
-// Add session metrics tracking interface
-interface SessionMetrics {
-  wordsReviewed: number;
-  wordsKnown: number;
-  wordsVague: number;
-  wordsUnknown: number;
-  averageStabilityIncrease: number;
-  longestStreak: number;
-  currentStreak: number;
-  masteredWords: number;
-  startTime: number;
 }
 
 interface UseReviewProps {
