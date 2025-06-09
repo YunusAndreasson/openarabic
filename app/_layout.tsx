@@ -259,7 +259,6 @@ function AppContent() {
           <Stack.Screen
             name="insights"
             options={{
-              headerShown: false,
               presentation: 'modal',
             }}
           />

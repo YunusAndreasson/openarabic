@@ -51,7 +51,6 @@ export default function InsightsScreen(): JSX.Element {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: LAYOUT.SPACING.LARGE,
             paddingBottom: insets.bottom + LAYOUT.SPACING.XLARGE,
           },
         ]}
@@ -111,7 +110,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.LARGE,
   },
   chartSection: {
-    marginBottom: LAYOUT.SPACING.XXLARGE,
+    marginBottom: LAYOUT.SPACING.TINY,
   },
   errorContainer: {
     alignItems: 'center',

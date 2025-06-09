@@ -13,26 +13,28 @@ export default function InsightsLayout(): JSX.Element {
         name="index"
         options={{
           presentation: 'modal',
-          headerShown: false,
+          headerShown: true,
+          title: 'Insights',
+          headerTitleAlign: 'center',
+          headerTransparent: false,
           gestureEnabled: true, // Enable pull-down to dismiss
+          headerStyle: {
+            backgroundColor: colors.background,
+          },
+          headerTitleStyle: {
+            fontSize: 20,
+            fontWeight: '600',
+          },
+          headerTintColor: colors.headingText,
         }}
       />
       <Stack.Screen
         name="info/[type]"
-        options={({ route }) => {
-          const params = route.params as { type: string };
-          const typeMap: Record<string, string> = {
-            mastery: 'Word Mastery',
-            retrievability: 'Review Timing',
-            efficiency: 'Learning Speed',
-            progress: 'Progress Stages',
-            recommendation: 'Next Steps',
-          };
-
+        options={() => {
           return {
             headerShown: true,
-            title: typeMap[params.type] || 'Info',
-            headerBackTitle: 'Insights',
+            title: 'Insights',
+            headerBackTitle: 'Back',
             headerTitleAlign: 'center',
             headerTransparent: false,
             presentation: 'modal',

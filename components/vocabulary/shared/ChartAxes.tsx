@@ -1,10 +1,10 @@
 import React, { memo } from 'react';
-import { StyleSheet, View, useColorScheme } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { withOpacity } from '@/utils/colorUtils';
-
 
 // Export the y-axis width for use in other components - optimized for perfect alignment
 export const Y_AXIS_WIDTH = 36; // Balanced for alignment with card padding
@@ -34,10 +34,9 @@ export const ChartAxes = memo(
     yAxisLines = 5,
     topPadding = 0,
   }: AxisLabelsProps) => {
-    const colorScheme = useColorScheme();
+    const isDarkMode = useIsDarkMode();
     const colors = useColors();
-    const textColor =
-      colorScheme === 'dark' ? withOpacity(colors.white, 0.7) : withOpacity(colors.black, 0.7);
+    const textColor = isDarkMode ? withOpacity(colors.white, 0.7) : withOpacity(colors.black, 0.7);
 
     // Calculate y-axis label positions and values
     // Account for top padding used by the chart

@@ -208,6 +208,13 @@ export default function InfoModalScreen(): JSX.Element {
         showsVerticalScrollIndicator={true}
         bounces={true}
       >
+        {/* Content Title */}
+        <View style={styles.titleContainer}>
+          <ThemedText style={styles.contentTitle} type="heading2" weight="bold">
+            {content.title}
+          </ThemedText>
+        </View>
+
         {/* Subtitle */}
         <View style={styles.subtitleContainer}>
           <ThemedText style={styles.subtitle} type="body" variant="secondary">
@@ -268,6 +275,13 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingTop: LAYOUT.SPACING.LARGE,
+  },
+  titleContainer: {
+    marginBottom: LAYOUT.SPACING.XLARGE,
+  },
+  contentTitle: {
+    fontSize: 24,
+    lineHeight: 30,
   },
   subtitleContainer: {
     marginBottom: LAYOUT.SPACING.XLARGE,
