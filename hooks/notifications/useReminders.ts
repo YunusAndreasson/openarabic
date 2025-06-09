@@ -12,12 +12,22 @@ const analytics = {
   track: async (_event: string, _properties?: any) => {},
 };
 
-export function useReminders() {
+export interface UseRemindersResult {
+  reminderTime: ReminderTime;
+  updateReminderTime: (newReminderTime: ReminderTime) => Promise<void>;
+  checkPermissions: () => Promise<boolean>;
+  isScheduling: boolean;
+  formatReminderTime: (hour: number, minute: number) => string;
+}
+
+export function useReminders(): UseRemindersResult {
   const dispatch = useAppDispatch();
   const reminderTime = useAppSelector(state => state.settings.reminderTime);
   const [isScheduling, setIsScheduling] = useState(false);
 
-  const updateReminderTime = async (newReminderTime: ReminderTime) => {
+  const updateReminderTime = async (
+    newReminderTime: ReminderTime
+  ): Promise<void> => {
     setIsScheduling(true);
     try {
       // Schedule the reminder
@@ -48,7 +58,7 @@ export function useReminders() {
     }
   };
 
-  const formatReminderTime = (hour: number, minute: number) => {
+  const formatReminderTime = (hour: number, minute: number): string => {
     const period = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
     const displayMinute = minute.toString().padStart(2, '0');
