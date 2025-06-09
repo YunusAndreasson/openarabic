@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
+import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { withOpacity } from '@/utils/colorUtils';
@@ -156,7 +157,7 @@ const styles = StyleSheet.create({
   },
   xAxisContainer: {
     height: 24, // Reduced container height for better proportions
-    marginBottom: 6, // Reduced bottom margin to align with card padding
+    marginBottom: LAYOUT.SPACING.TINY + LAYOUT.SPACING.TINY / 2, // 6px
     position: 'absolute',
   },
   xLabel: {

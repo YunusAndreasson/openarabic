@@ -398,17 +398,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    opacity: 0.8,
+    opacity: LAYOUT.OPACITY.HOVER,
   },
   noteIcon: {
     fontWeight: '500',
     marginRight: LAYOUT.SPACING.TINY,
-    opacity: 0.8,
+    opacity: LAYOUT.OPACITY.HOVER,
   },
   noteText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '500',
-    opacity: 0.8,
+    opacity: LAYOUT.OPACITY.HOVER,
   },
   wordArea: {
     alignItems: 'center',

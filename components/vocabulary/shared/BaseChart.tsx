@@ -1,14 +1,13 @@
 import React, { memo, type ReactNode } from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
 
-
 import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
+import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 import { CardHeader } from './CardHeader';
 import { ChartFooter } from './ChartFooter';
-import { CHART_LAYOUT } from './constants';
 
 export interface LegendItemProps {
   type: 'area' | 'bar' | 'dot' | 'line';
@@ -140,49 +139,49 @@ BaseChart.displayName = 'BaseChart';
 const styles = StyleSheet.create({
   chartSection: {
     // Optimized spacing for perfect visual balance
-    marginVertical: CHART_LAYOUT.ELEMENT_SPACING * 0.375, // Refined spacing (6px)
-    paddingVertical: CHART_LAYOUT.ELEMENT_SPACING * 0.125, // Minimal internal padding (2px)
+    marginVertical: LAYOUT.SPACING.TINY + LAYOUT.SPACING.TINY / 2, // 6px
+    paddingVertical: LAYOUT.SPACING.TINY / 2, // 2px
     position: 'relative',
   },
   content: {
-    padding: CHART_LAYOUT.CONTENT_PADDING * 0.875, // Slightly reduced padding for better space usage (10.5px)
+    padding: LAYOUT.SPACING.MEDIUM - LAYOUT.SPACING.TINY / 2, // 10.5px → use 10px
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: CHART_LAYOUT.ELEMENT_SPACING * 1.5,
-    paddingVertical: CHART_LAYOUT.ELEMENT_SPACING,
+    paddingHorizontal: LAYOUT.SPACING.XXLARGE,
+    paddingVertical: LAYOUT.SPACING.LARGE,
   },
   emptyText: {
-    fontSize: 14,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1,
     letterSpacing: 0.2,
-    lineHeight: 22,
-    opacity: 0.75,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
+    opacity: LAYOUT.OPACITY.HIGH,
     textAlign: 'center',
   },
   footerSection: {
-    marginTop: CHART_LAYOUT.ELEMENT_SPACING * 0.75, // Slightly reduced (12px)
-    paddingTop: CHART_LAYOUT.ELEMENT_SPACING * 0.25,
+    marginTop: LAYOUT.SPACING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.TINY,
   },
   headerSection: {
-    marginBottom: CHART_LAYOUT.ELEMENT_SPACING * 0.875, // 14px - optimized separation for visual hierarchy
+    marginBottom: LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY / 2, // 14px
   },
   loadingContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: CHART_LAYOUT.ELEMENT_SPACING * 1.5,
-    paddingVertical: CHART_LAYOUT.ELEMENT_SPACING,
+    paddingHorizontal: LAYOUT.SPACING.XXLARGE,
+    paddingVertical: LAYOUT.SPACING.LARGE,
   },
   loadingText: {
-    fontSize: 12,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY + 1,
     letterSpacing: 0.15,
-    lineHeight: 18,
-    opacity: 0.65,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE + 1,
+    opacity: LAYOUT.OPACITY.HIGH - 0.05,
     textAlign: 'center',
   },
   statsSection: {
-    marginBottom: CHART_LAYOUT.ELEMENT_SPACING * 0.75, // Reduced from 1.25x to 0.75x (12px)
-    paddingHorizontal: CHART_LAYOUT.ELEMENT_SPACING * 0.25, // Gentle horizontal grouping
-    paddingVertical: CHART_LAYOUT.ELEMENT_SPACING * 0.25, // Reduced vertical padding (4px)
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.TINY,
+    paddingVertical: LAYOUT.SPACING.TINY,
   },
 });

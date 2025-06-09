@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   pendingCard: {
-    opacity: 0.7,
+    opacity: LAYOUT.OPACITY.HIGH,
   },
 });
 

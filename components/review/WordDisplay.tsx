@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   translationText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.1,
     fontWeight: '400',
-    opacity: 0.85,
+    opacity: LAYOUT.OPACITY.HIGH,
     textAlign: 'center', // Slightly reduce opacity to create visual hierarchy
   },
 });

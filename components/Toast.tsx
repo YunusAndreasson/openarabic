@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   toast: {
     alignSelf: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM, // More rounded for modern look
-    minWidth: 140, // Slightly larger minimum width
+    minWidth: LAYOUT.BUTTON.HEIGHT.LARGE * 3 - LAYOUT.SPACING.SMALL, // ~140px
     overflow: 'hidden',
     paddingHorizontal: LAYOUT.SPACING.LARGE, // More generous padding
     paddingVertical: LAYOUT.SPACING.MEDIUM, // Taller for more presence

@@ -2,7 +2,7 @@ import React, { memo, useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 import { getStrugglingWordsCount } from '@/utils/wordClassification';
@@ -181,12 +181,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.SPACING.XLARGE,
   },
   numberBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: MIN_TOUCH_TARGET.SIZE - LAYOUT.SPACING.SMALL,
+    height: MIN_TOUCH_TARGET.SIZE - LAYOUT.SPACING.SMALL,
+    borderRadius: LAYOUT.SPACING.XLARGE,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,

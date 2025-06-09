@@ -128,16 +128,16 @@ export const useChartTooltip = (autoHideDelay: number = 3000) => {
 const styles = StyleSheet.create({
   tooltip: {
     ...LAYOUT.SHADOW.SUBTLE,
-    borderRadius: 8,
-    borderWidth: 1,
-    padding: 8,
+    borderRadius: LAYOUT.INPUT.BORDER_RADIUS,
+    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+    padding: LAYOUT.SPACING.SMALL,
     position: 'absolute',
   },
   tooltipLabel: {
-    fontSize: 14,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1,
   },
   tooltipValue: {
-    fontSize: 16,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + 1,
     fontWeight: 'bold',
   },
 });

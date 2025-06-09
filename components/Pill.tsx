@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
     zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
   },
   container: {
-    minWidth: 50,
+    minWidth: LAYOUT.BUTTON.HEIGHT.LARGE + LAYOUT.SPACING.TINY / 2, // ~50px
     zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
   },
   pill: {

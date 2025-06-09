@@ -6,7 +6,7 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { HIJRI_MONTHS } from '@/constants/hijri';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 export const WelcomeMessage: React.FC = () => {
@@ -62,14 +62,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: LAYOUT.SPACING.SMALL,
-    opacity: 0.6,
+    opacity: LAYOUT.OPACITY.PRESSED,
   },
   dateText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontVariant: ['tabular-nums'],
     fontWeight: '400',
-    letterSpacing: 0.1,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.2,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.METADATA.letterSpacing,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
     textAlign: 'center',
   },
 });

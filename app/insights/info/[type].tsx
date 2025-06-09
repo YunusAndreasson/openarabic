@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 type InfoModalType = 'efficiency' | 'mastery' | 'progress' | 'recommendation' | 'retrievability';
@@ -280,15 +280,15 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.XLARGE,
   },
   contentTitle: {
-    fontSize: 24,
-    lineHeight: 30,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE + LAYOUT.SPACING.TINY / 2,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE + LAYOUT.SPACING.TINY / 2,
   },
   subtitleContainer: {
     marginBottom: LAYOUT.SPACING.XLARGE,
   },
   subtitle: {
-    fontSize: 17,
-    lineHeight: 24,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE + LAYOUT.SPACING.TINY / 2,
   },
   section: {
     marginBottom: LAYOUT.SPACING.XLARGE,
@@ -299,35 +299,35 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.LARGE,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
+    width: MIN_TOUCH_TARGET.SIZE - LAYOUT.SPACING.SMALL,
+    height: MIN_TOUCH_TARGET.SIZE - LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
   },
   sectionTitle: {
-    fontSize: 22,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + LAYOUT.SPACING.TINY / 2,
     flex: 1,
-    lineHeight: 28,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
   },
   sectionContent: {
-    fontSize: 17,
-    lineHeight: 26,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE + LAYOUT.SPACING.TINY,
     letterSpacing: 0.1,
   },
   sectionDivider: {
-    height: 1,
+    height: LAYOUT.BORDER.WIDTH.NORMAL,
     marginTop: LAYOUT.SPACING.XLARGE,
-    opacity: 0.2,
+    opacity: LAYOUT.OPACITY.SUBTLE - 0.1,
   },
   tipsContainer: {
-    borderTopWidth: 1,
+    borderTopWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     paddingTop: LAYOUT.SPACING.XLARGE,
     marginTop: LAYOUT.SPACING.MEDIUM,
   },
   tipsTitle: {
-    fontSize: 22,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + LAYOUT.SPACING.TINY / 2,
     marginBottom: LAYOUT.SPACING.LARGE,
   },
   tipItem: {
@@ -336,15 +336,15 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   tipBullet: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginTop: 9,
+    width: LAYOUT.SPACING.SMALL,
+    height: LAYOUT.SPACING.SMALL,
+    borderRadius: LAYOUT.SPACING.TINY,
+    marginTop: LAYOUT.SPACING.SMALL + 1,
     marginRight: LAYOUT.SPACING.MEDIUM,
   },
   tipText: {
     flex: 1,
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + 1,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE + LAYOUT.SPACING.TINY / 2,
   },
 });

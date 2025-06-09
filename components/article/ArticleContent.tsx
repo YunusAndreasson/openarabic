@@ -74,10 +74,11 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     padding: LAYOUT.SPACING.LARGE,
     borderWidth: 1,
+    opacity: LAYOUT.OPACITY.HOVER,
   },
   summaryLabel: {
     marginBottom: LAYOUT.SPACING.SMALL,
-    opacity: 0.8,
+    opacity: LAYOUT.OPACITY.HOVER,
   },
   summaryText: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.7,

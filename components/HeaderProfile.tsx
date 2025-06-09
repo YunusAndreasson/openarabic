@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import React, { memo, useCallback } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { MIN_TOUCH_TARGET } from '@/constants/layout';
+import { MIN_TOUCH_TARGET, LAYOUT } from '@/constants/layout';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     height: MIN_TOUCH_TARGET.MEDIUM,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 4,
+    marginRight: LAYOUT.SPACING.TINY,
   },
 });
 

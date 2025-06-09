@@ -12,7 +12,7 @@ import Animated, {
 import { ThemedText } from '@/components/ThemedText';
 import { BaseChart } from '@/components/vocabulary/shared';
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useNavigationWithDebounce } from '@/hooks';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
@@ -407,11 +407,11 @@ const styles = StyleSheet.create({
     width: GAUGE_WIDTH,
   },
   capacityText: {
-    fontSize: 42,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE + LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY / 2,
     fontWeight: '900',
     includeFontPadding: false,
-    letterSpacing: -1.5,
-    lineHeight: 46,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT * 5,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE + LAYOUT.SPACING.LARGE + LAYOUT.SPACING.TINY / 2,
     textAlign: 'center',
   },
   centerSection: {
@@ -447,14 +447,14 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.SMALL,
   },
   statusLabel: {
-    fontSize: 12,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY + 1,
     fontWeight: '800',
-    letterSpacing: 1.2,
-    opacity: 1,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.METADATA.letterSpacing * 4,
+    opacity: LAYOUT.OPACITY.FULL,
     textAlign: 'center',
   },
   actionText: {
-    fontSize: 18,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE + 1,
     fontWeight: '700',
     textAlign: 'center',
   },
@@ -466,27 +466,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 4,
+    marginTop: LAYOUT.SPACING.TINY,
   },
   readinessText: {
-    fontSize: 14,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1,
     fontWeight: '500',
     marginBottom: LAYOUT.SPACING.TINY,
     textAlign: 'center',
   },
   tapHint: {
-    fontSize: 11,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     fontWeight: '500',
     includeFontPadding: false,
-    letterSpacing: 0.2,
-    opacity: 0.6,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.METADATA.letterSpacing,
+    opacity: LAYOUT.OPACITY.PRESSED,
     textAlign: 'center',
   },
   trendIndicator: {
-    borderRadius: 3,
-    height: 6,
-    marginLeft: 6,
-    opacity: 0.8,
-    width: 6,
+    borderRadius: LAYOUT.SPACING.TINY - 1,
+    height: LAYOUT.SPACING.TINY + LAYOUT.SPACING.TINY / 2,
+    marginLeft: LAYOUT.SPACING.TINY + LAYOUT.SPACING.TINY / 2,
+    opacity: LAYOUT.OPACITY.HOVER,
+    width: LAYOUT.SPACING.TINY + LAYOUT.SPACING.TINY / 2,
   },
 });

@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { JSX} from 'react';
+import type { JSX } from 'react';
 import React, { memo, useMemo } from 'react';
 import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type {
@@ -210,16 +210,16 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontWeight: '800',
-    letterSpacing: 1.5,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED * 5,
     textAlign: 'center',
   },
   buttonTextLarge: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE - 1,
-    letterSpacing: 2,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED * 7,
   },
   buttonTextSmall: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    letterSpacing: 1,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED * 3,
   },
   contentContainer: {
     alignItems: 'center',
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   },
   normalText: {
     fontWeight: '400',
-    letterSpacing: 0.5,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED + 0.2,
     textTransform: 'none',
   },
 });

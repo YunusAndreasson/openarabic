@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 const ClassicalTextsScreen: React.FC = () => {
@@ -323,11 +323,11 @@ const styles = StyleSheet.create({
   concernIcon: {
     alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    height: 40,
+    height: MIN_TOUCH_TARGET.SIZE - LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
     marginTop: 2,
-    width: 40,
+    width: MIN_TOUCH_TARGET.SIZE - LAYOUT.SPACING.SMALL,
   },
   concernContent: {
     flex: 1,
@@ -352,11 +352,11 @@ const styles = StyleSheet.create({
   benefitIcon: {
     alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    height: 40,
+    height: MIN_TOUCH_TARGET.SIZE - LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
     marginTop: 2,
-    width: 40,
+    width: MIN_TOUCH_TARGET.SIZE - LAYOUT.SPACING.SMALL,
   },
   benefitContent: {
     flex: 1,
@@ -378,11 +378,11 @@ const styles = StyleSheet.create({
   comparisonIcon: {
     alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    height: 40,
+    height: MIN_TOUCH_TARGET.SIZE - LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
     marginTop: 2,
-    width: 40,
+    width: MIN_TOUCH_TARGET.SIZE - LAYOUT.SPACING.SMALL,
   },
   comparisonContent: {
     flex: 1,
@@ -407,11 +407,11 @@ const styles = StyleSheet.create({
   referenceIcon: {
     alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    height: 40,
+    height: MIN_TOUCH_TARGET.SIZE - LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
     marginTop: 2,
-    width: 40,
+    width: MIN_TOUCH_TARGET.SIZE - LAYOUT.SPACING.SMALL,
   },
   referenceContent: {
     flex: 1,

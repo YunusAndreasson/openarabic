@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -161,8 +161,8 @@ const styles = StyleSheet.create({
   },
   arabicText: {
     textAlign: 'center',
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + 6, // Slightly smaller but still prominent
-    lineHeight: 44, // Adjusted for smaller font
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE + LAYOUT.SPACING.TINY, // 26px
+    lineHeight: LAYOUT.BUTTON.HEIGHT.MEDIUM, // 44px
     letterSpacing: 0.5,
     fontWeight: '600',
     textAlignVertical: 'center',
@@ -171,24 +171,24 @@ const styles = StyleSheet.create({
   },
   chevronContainer: {
     alignItems: 'center',
-    height: 24,
+    height: LAYOUT.BUTTON.ICON_SIZE.LARGE,
     justifyContent: 'center',
     position: 'absolute',
     right: LAYOUT.SPACING.TINY,
     top: '50%',
-    transform: [{ translateY: -12 }],
-    width: 24,
+    transform: [{ translateY: -LAYOUT.SPACING.MEDIUM }],
+    width: LAYOUT.BUTTON.ICON_SIZE.LARGE,
   },
   chevronIcon: {
-    fontSize: 24, // Much larger, standard interactive size
+    fontSize: LAYOUT.BUTTON.ICON_SIZE.LARGE,
     fontWeight: '500',
     letterSpacing: 0,
-    opacity: 0.7, // Restore opacity for proper visual hierarchy
+    opacity: LAYOUT.OPACITY.HIGH,
   },
   container: {
     paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingVertical: LAYOUT.SPACING.MEDIUM, // Reduced from MEDIUM + 2 for tighter spacing
-    minHeight: 90, // Optimized height for content density
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE + LAYOUT.SPACING.XXLARGE + LAYOUT.SPACING.LARGE, // ~90px
   },
   leftContent: {
     flex: 1,
@@ -202,56 +202,64 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between', // Increased for better visual separation (proximity principle)
   },
   meaningText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + 2, // Primary text prominence
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.3, // Optimal readability
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
     fontWeight: '700',
-    letterSpacing: -0.4, // Refined letter spacing for elegance
+    letterSpacing: -0.4,
     marginBottom: 0,
   },
   memoryLabel: {
-    minWidth: 34, // Optimized for percentage display
+    minWidth: LAYOUT.SPACING.LARGE + LAYOUT.SPACING.LARGE + LAYOUT.SPACING.TINY, // ~34px
   },
   memoryPercentage: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1, // Slightly larger for better hierarchy
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
     fontWeight: '600',
-    letterSpacing: 0.3, // Refined letter spacing
+    letterSpacing: 0.3,
   },
   memoryRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: LAYOUT.SPACING.MEDIUM, // Restored for better visual grouping
+    gap: LAYOUT.SPACING.MEDIUM,
   },
   progressFill: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     height: '100%',
   },
   progressTrack: {
-    height: 4, // Slightly thicker for better visibility
+    height: LAYOUT.SPACING.TINY,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
   },
   progressTrackContainer: {
     flex: 1,
-    maxWidth: 110, // Optimized width for better proportions
+    maxWidth:
+      LAYOUT.BUTTON.HEIGHT.LARGE +
+      LAYOUT.BUTTON.HEIGHT.LARGE +
+      LAYOUT.SPACING.MEDIUM +
+      LAYOUT.SPACING.TINY, // ~110px
   },
   rightContent: {
     alignItems: 'center',
-    justifyContent: 'center', // Back to center for better layout
-    minWidth: 130, // Increased to give more space for Arabic text
+    justifyContent: 'center',
+    minWidth:
+      LAYOUT.BUTTON.HEIGHT.LARGE +
+      LAYOUT.BUTTON.HEIGHT.LARGE +
+      LAYOUT.SPACING.XXLARGE +
+      LAYOUT.SPACING.LARGE, // ~130px
     paddingLeft: LAYOUT.SPACING.LARGE,
     paddingVertical: LAYOUT.SPACING.SMALL,
-    paddingRight: LAYOUT.SPACING.SMALL, // Minimal right padding
+    paddingRight: LAYOUT.SPACING.SMALL,
     flex: 0,
-    position: 'relative', // For absolute positioning of chevron
+    position: 'relative',
   },
   streakBadge: {
-    paddingHorizontal: LAYOUT.SPACING.SMALL + 1, // Slightly more padding
+    paddingHorizontal: LAYOUT.SPACING.SMALL + 1,
     paddingVertical: LAYOUT.SPACING.SMALL,
-    borderRadius: 8, // More refined radius
-    alignSelf: 'flex-start', // Align with text baseline
-    minWidth: 48, // Ensure minimum touch target size
-    minHeight: 32, // Adequate touch height
+    borderRadius: LAYOUT.SPACING.SMALL,
+    alignSelf: 'flex-start',
+    minWidth: MIN_TOUCH_TARGET.SIZE,
+    minHeight: MIN_TOUCH_TARGET.SMALL,
   },
   streakText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // Restored readability

@@ -4,7 +4,7 @@ import React, { memo } from 'react';
 import type { ComponentType, ComponentProps } from 'react';
 import { View, StyleSheet } from 'react-native';
 
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 
 import { ThemedButton } from './ThemedButton';
 import { ThemedText } from './ThemedText';
@@ -148,10 +148,10 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     alignItems: 'center',
-    maxWidth: 320,
+    maxWidth: LAYOUT.BUTTON.HEIGHT.LARGE * 7 - LAYOUT.SPACING.LARGE, // ~320px
   },
   customActionButton: {
-    minWidth: 180,
+    minWidth: LAYOUT.BUTTON.HEIGHT.LARGE * 4 - LAYOUT.SPACING.MEDIUM, // ~180px
   },
   description: {
     marginTop: LAYOUT.SPACING.MEDIUM,
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.SMALL,
   },
   title: {
-    letterSpacing: -0.5,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT + 0.2,
   },
 });
 
