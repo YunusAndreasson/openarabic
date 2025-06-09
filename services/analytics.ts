@@ -45,13 +45,6 @@ const EVENTS = {
   TOGGLE_REMINDER: 'Toggle Reminder',
 } as const;
 
-// User Properties
-const USER_PROPERTIES = {
-  TOTAL_ARTICLES_READ: 'Total Articles Read',
-  TOTAL_WORDS_STUDIED: 'Total Words Studied',
-  READING_LIST_COUNT: 'Reading List Count',
-  STUDY_WORDS_COUNT: 'Study Words Count',
-} as const;
 
 class Analytics {
   private mixpanel!: Mixpanel;

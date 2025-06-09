@@ -22,7 +22,6 @@ export const CHART_VISUAL = {
 export const DAYS_7 = 7; // Weekly view for better mobile experience and cognitive load
 
 // FSRS thresholds - aligned with FSRS algorithm standards
-export const MASTERY_STABILITY_THRESHOLD = 5; // Days - minimum stability for mastery
 export const CRITICAL_RETRIEVABILITY_THRESHOLD = 0.7; // 70% - threshold for review urgency
 
 // Standardized performance thresholds used across all charts

@@ -149,47 +149,6 @@ export const createStandardizedPerformanceZones = (
 };
 
 /**
- * Generates standardized subtitle based on performance value
- * @param value - Performance value (0-100)
- * @param metricName - Name of the metric (e.g., 'efficiency', 'retention', 'mastery')
- * @param trend - Optional trend direction
- * @param trendValue - Optional trend change value
- * @returns Subtitle string
- */
-export const generatePerformanceSubtitle = (
-  value: number,
-  metricName: string,
-  trend?: 'declining' | 'improving' | 'stable',
-  trendValue?: number
-): string => {
-  if (value === 0) {
-    return `Study words to track ${metricName}`;
-  }
-
-  // Enhanced trend messaging with actionable insights
-  if (trend && trendValue !== undefined) {
-    if (trend === 'improving') {
-      return `${metricName} improving by ${Math.abs(trendValue)}% - keep it up!`;
-    }
-    if (trend === 'declining') {
-      return `${metricName} down ${Math.abs(trendValue)}% - review more often`;
-    }
-  }
-
-  // Enhanced performance messaging with encouragement
-  if (value >= PERFORMANCE_THRESHOLDS.EXCELLENT) {
-    return `Excellent ${metricName} - you're mastering this!`;
-  }
-  if (value >= PERFORMANCE_THRESHOLDS.GOOD) {
-    return `Good ${metricName} - steady progress`;
-  }
-  if (value >= PERFORMANCE_THRESHOLDS.FAIR) {
-    return `Fair ${metricName} - practice more for improvement`;
-  }
-  return `Focus on improving ${metricName} with regular practice`;
-};
-
-/**
  * Creates a smooth area fill path for line charts
  * @param smoothPath - The main line path
  * @param graphWidth - Width of the graph
