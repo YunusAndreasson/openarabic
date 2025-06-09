@@ -4,7 +4,7 @@ import { handleError } from '@/utils/errorHandling';
 
 import { AuthContext } from '@/components/providers/AuthProvider';
 
-import type { AuthResult } from './useProvideAuth';
+import type { AuthResult } from '@/types/auth.types';
 
 export function useAuth(): AuthResult {
   const context = useContext(AuthContext);
@@ -34,4 +34,4 @@ export function useAuth(): AuthResult {
   return context;
 }
 
-export type { AuthResult, UserSession } from './useProvideAuth';
+export type { AuthResult, UserSession } from '@/types/auth.types';
