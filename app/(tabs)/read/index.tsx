@@ -26,6 +26,8 @@ import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '@/services/studyWordsFSR
 import { useAppDispatch } from '@/store/hooks';
 import { updateLastOpenedArticle } from '@/store/readingListSlice';
 import type { Article } from '@/types/articles.types';
+import type { UserSession } from '@/types/auth.types';
+import type { SentenceWord } from '@/types/vocabulary.types';
 import { filterArticles, getBeginnerArticles } from '@/utils/articleUtils';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
@@ -49,7 +51,7 @@ interface IntelligentArticleResult {
 }
 
 function useIntelligentArticleSelection(
-  user: any,
+  user: UserSession['user'] | null,
   articlesData: Article[]
 ): IntelligentArticleResult & { dueWordRootIds: Set<number> } {
   const { hasEnoughArticles: hasDueWordArticles, dueWordRootIds } = useArticlesByDueWords(
@@ -90,7 +92,9 @@ function useIntelligentArticleSelection(
     if (user?.id && hasDueWordArticles && dueWordRootIds.size > 0) {
       const dueWordArticles = articlesData.filter(article =>
         article.article_sentences?.some(sentence =>
-          sentence.sentence_words?.some((word: any) => dueWordRootIds.has(word.root_id))
+          sentence.sentence_words?.some((word: SentenceWord) =>
+            dueWordRootIds.has(word.root_id)
+          )
         )
       );
 
@@ -110,7 +114,9 @@ function useIntelligentArticleSelection(
     if (user?.id && hasDifficultWordArticles && difficultWordRootIds.size > 0 && hasAnyStudyWords) {
       const difficultWordArticles = articlesData.filter(article =>
         article.article_sentences?.some(sentence =>
-          sentence.sentence_words?.some((word: any) => difficultWordRootIds.has(word.root_id))
+          sentence.sentence_words?.some((word: SentenceWord) =>
+            difficultWordRootIds.has(word.root_id)
+          )
         )
       );
 
@@ -308,7 +314,7 @@ export default function ArticlesScreen(): JSX.Element {
       const uniqueDueRootIds = new Set<number>();
 
       article.article_sentences?.forEach(sentence => {
-        sentence.sentence_words?.forEach((word: any) => {
+        sentence.sentence_words?.forEach((word: SentenceWord) => {
           if (word.root_id && dueWordRootIds.has(word.root_id)) {
             uniqueDueRootIds.add(word.root_id);
           }
