@@ -1,16 +1,24 @@
 import { useCallback, useRef, useState } from 'react';
-import type { NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import type { NativeSyntheticEvent, NativeScrollEvent, ViewStyle } from 'react-native';
 import { useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 interface UseHeaderVisibilityOptions {
   threshold?: number;
   animationDuration?: number;
 }
 
+export interface UseHeaderVisibilityResult {
+  isHeaderVisible: boolean;
+  setIsHeaderVisible: React.Dispatch<React.SetStateAction<boolean>>;
+  handleScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  animatedStyle: AnimatedStyleProp<ViewStyle>;
+}
+
 export function useHeaderVisibility({
   threshold = 50,
   animationDuration = 200,
-}: UseHeaderVisibilityOptions = {}) {
+}: UseHeaderVisibilityOptions = {}): UseHeaderVisibilityResult {
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const prevScrollYValue = useRef(0);
   const ticking = useRef(false);
