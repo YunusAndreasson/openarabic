@@ -12,18 +12,10 @@ DEFAULT_OUTPUT_FILE = os.path.join(
 )
 DEFAULT_BATCH_SIZE = 5
 
-# Set keys
-set_keys_path = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "core", "set_keys.py"
-)
-try:
-    exec(open(set_keys_path).read())
-except FileNotFoundError:
-    print(f"❌ API keys file not found: {set_keys_path}")
-    sys.exit(1)
-except Exception as e:
-    print(f"❌ Error loading API keys: {str(e)}")
-    sys.exit(1)
+from translate.core.utils import load_api_keys
+
+# Load environment variables once
+load_api_keys()
 
 
 def print_header():

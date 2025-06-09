@@ -15,15 +15,10 @@ from translate.core.arabic_text import (
     wrap_in_arabic_ssml,
     preprocess_text_for_tts,
 )
+from translate.core.utils import load_api_keys
 
-# Execute set_keys.py to set environment variables
-set_keys_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "set_keys.py")
-try:
-    exec(open(set_keys_path).read())
-except FileNotFoundError:
-    raise EnvironmentError(f"API keys file not found: {set_keys_path}")
-except Exception as e:
-    raise EnvironmentError(f"Error loading API keys: {str(e)}")
+# Load environment variables once
+load_api_keys()
 
 # ElevenLabs configuration
 ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY")
