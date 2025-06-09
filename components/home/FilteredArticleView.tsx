@@ -77,6 +77,7 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
         options={sortOptions}
         sortDirection={sortDirection}
         onSortChange={onSortChange}
+        style={{ marginBottom: LAYOUT.SPACING.MEDIUM }}
       />
     );
   }, [sortOptions, currentSort, sortDirection, onSortChange, articles.length]);
@@ -98,6 +99,7 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
         keyExtractor={item => item.id.toString()}
         ListFooterComponent={ListFooterComponent}
         ListHeaderComponent={ListHeaderComponent}
+        ItemSeparatorComponent={() => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />}
         renderItem={renderItemCallback}
         showsVerticalScrollIndicator={true}
         overrideItemLayout={layout => {

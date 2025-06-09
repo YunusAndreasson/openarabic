@@ -483,6 +483,7 @@ export default function ListenScreen(): JSX.Element {
               : insets.bottom + LAYOUT.SPACING.TINY,
             paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
           }}
+          ItemSeparatorComponent={() => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />}
           ListEmptyComponent={
             shouldShowEmpty ? (
               <EmptyState
@@ -506,7 +507,7 @@ export default function ListenScreen(): JSX.Element {
                   currentSort={currentSort}
                   options={sortOptions}
                   sortDirection={sortDirection}
-                  style={{ marginTop: LAYOUT.SPACING.SMALL }}
+                  style={{ marginTop: LAYOUT.SPACING.SMALL, marginBottom: LAYOUT.SPACING.MEDIUM }}
                   onSortChange={handleSortChange}
                 />
               </View>

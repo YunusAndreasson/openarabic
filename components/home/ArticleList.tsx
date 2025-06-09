@@ -10,7 +10,7 @@ import React, {
   memo,
   useTransition,
 } from 'react';
-import { StyleSheet, RefreshControl, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, RefreshControl, type StyleProp, type ViewStyle, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import ThemedCard from '@/components/ThemedCard';
@@ -146,6 +146,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
         ListEmptyComponent: null,
         refreshControl,
         scrollEventThrottle: 16,
+        ItemSeparatorComponent: () => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />,
         overrideItemLayout: (layout: any, _item: Article) => {
           layout.size = ITEM_HEIGHT;
         },
