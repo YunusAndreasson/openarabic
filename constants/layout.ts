@@ -121,21 +121,13 @@ export const LAYOUT = {
   // Screen edge spacing
   SCREEN_EDGE_PADDING: 12, // Tighter horizontal margin matching index.tsx
 
-  // List and content spacing
-  LIST_VERTICAL_SPACING: 12, // Standard vertical padding for lists
+  // Content spacing
   CONTENT_SPACING: {
     TOP: 16, // Increased for consistent header spacing
     BOTTOM: 12,
   },
 
   // Note: Section spacing moved to SPACING.XXLARGE (between sections) and SPACING.SECTION_INTERNAL (within sections)
-
-  // Loader sizes
-  LOADER: {
-    SMALL: 28,
-    MEDIUM: 40,
-    LARGE: 52,
-  },
 
   // Element spacing - Simplified to 7 essential sizes following Miller's Law
   SPACING: {
@@ -167,13 +159,11 @@ export const LAYOUT = {
   // Specific component heights
   BOTTOM_BAR: {
     HEIGHT: Platform.OS === 'ios' ? 65 : 45, // Reduced height for both platforms
-    MARGIN: 12, // Tighter margin for bottom elements
   },
 
   // Unified border radius system
   BORDER_RADIUS: {
     NONE: 0,
-    XSMALL: 4, // For small UI elements like text placeholders
     SMALL: 8, // For inputs, small buttons, cards
     MEDIUM: 12, // Standard radius for most components
     LARGE: 16, // For featured cards and containers
@@ -187,11 +177,6 @@ export const LAYOUT = {
       SMALL: 8, // Tighter padding for compact cards
       MEDIUM: 12, // Standard padding
       LARGE: 16, // Spacious padding for featured cards
-    },
-    MARGIN: {
-      SMALL: 4, // Tighter margin for grid layouts
-      MEDIUM: 8, // Standard margin
-      LARGE: 12, // Spacious margin for featured cards
     },
   },
 
@@ -211,23 +196,6 @@ export const LAYOUT = {
       SMALL: MIN_TOUCH_TARGET.SMALL, // Use minimum small touch target (32pt) for dense layouts
       MEDIUM: MIN_TOUCH_TARGET.MEDIUM, // Use 44pt for standard buttons
       LARGE: MIN_TOUCH_TARGET.SIZE, // Use 48pt for primary actions
-    },
-    BORDER_RADIUS: {
-      SMALL: 8, // Same as BORDER_RADIUS.SMALL
-      MEDIUM: 12, // Same as BORDER_RADIUS.MEDIUM
-      LARGE: 24, // Same as BORDER_RADIUS.XLARGE
-    },
-    PADDING: {
-      HORIZONTAL: {
-        SMALL: 12,
-        MEDIUM: 16,
-        LARGE: 20,
-      },
-      VERTICAL: {
-        SMALL: 8,
-        MEDIUM: 12,
-        LARGE: 16,
-      },
     },
     ICON_SIZE: {
       SMALL: 16,
@@ -321,36 +289,20 @@ export const LAYOUT = {
   // Width ratios for grid and column layouts
   WIDTH_RATIOS: {
     ALMOST_HALF: 0.48, // Slightly less than half for paired elements with margin
-    HALF: 0.5, // Exact half
     THIRD: 0.3333, // Third
-    TWO_THIRDS: 0.6667, // Two thirds
-    QUARTER: 0.25, // Quarter
-    THREE_QUARTERS: 0.75, // Three quarters
-    TWO_FIFTHS: 0.4, // 40% width
-    FULL: 1, // Full width
   },
 
   // Animation timing constants (in milliseconds)
   ANIMATION: {
     DURATION: {
       FAST: 200,
-      NORMAL: 300,
       SLOW: 500,
     },
   },
 
   // Standard hit slop sizes for better touch targets
   HIT_SLOP: {
-    NONE: { top: 0, bottom: 0, left: 0, right: 0 },
-    SMALL: { top: 8, bottom: 8, left: 8, right: 8 },
     MEDIUM: { top: 12, bottom: 12, left: 12, right: 12 },
-    LARGE: { top: 20, bottom: 20, left: 20, right: 20 },
-    ICON: {
-      top: MIN_TOUCH_TARGET.ICON_PADDING,
-      bottom: MIN_TOUCH_TARGET.ICON_PADDING,
-      left: MIN_TOUCH_TARGET.ICON_PADDING,
-      right: MIN_TOUCH_TARGET.ICON_PADDING,
-    }, // For icon-only buttons
   },
 
   // Touch target enhancement utilities
