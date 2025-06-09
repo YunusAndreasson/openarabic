@@ -1,4 +1,5 @@
 import { useColorScheme } from 'react-native';
+import type { ColorSchemeName } from 'react-native';
 
 import { Theme } from '@/constants/Colors';
 import { useAppSelectorMemo } from '@/store/hooks';
@@ -29,6 +30,6 @@ export function useIsDarkMode(): boolean {
  * Useful for initializing theme or providing theme suggestions
  * @returns 'light' | 'dark' | null
  */
-export function useSystemColorScheme() {
+export function useSystemColorScheme(): ColorSchemeName {
   return useColorScheme();
 }
