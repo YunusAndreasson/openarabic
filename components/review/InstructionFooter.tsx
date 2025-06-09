@@ -5,7 +5,7 @@ import type { ViewStyle, TextStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { InstructionFooterProps } from '@/types/ui/review.types';
@@ -103,7 +103,7 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
   );
 };
 
-const ICON_SIZE = 32;
+const ICON_SIZE = MIN_TOUCH_TARGET.SMALL;
 
 const styles = StyleSheet.create({
   footer: {

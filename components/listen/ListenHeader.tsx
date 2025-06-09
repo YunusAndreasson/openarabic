@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     flexDirection: 'row',
-    height: 48,
+    height: LAYOUT.BUTTON.HEIGHT.LARGE,
     marginBottom: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingTop: LAYOUT.SPACING.SMALL,
