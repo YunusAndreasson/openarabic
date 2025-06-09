@@ -101,6 +101,24 @@ export const MIN_TOUCH_TARGET = {
   ICON_PADDING: 12,
 } as const;
 
+// Extract SPACING and MIN_TOUCH_TARGET for use before LAYOUT is declared
+const SPACING = {
+  TINY: 4,
+  SMALL: 8,
+  MEDIUM: 12,
+  LARGE: 16,
+  XLARGE: 20,
+  XXLARGE: 24,
+  SECTION_INTERNAL: 8,
+};
+
+const MIN_TOUCH = {
+  SIZE: 48,
+  MEDIUM: 44,
+  SMALL: 32,
+  ICON_PADDING: 12,
+};
+
 export const LAYOUT = {
   SCREEN_EDGE_PADDING: 12,
 
@@ -109,15 +127,7 @@ export const LAYOUT = {
     BOTTOM: 12,
   },
 
-  SPACING: {
-    TINY: 4,
-    SMALL: 8,
-    MEDIUM: 12,
-    LARGE: 16,
-    XLARGE: 20,
-    XXLARGE: 24,
-    SECTION_INTERNAL: 8,
-  },
+  SPACING,
 
   /**
    * Standardized opacity values for consistent visual appearance
@@ -145,9 +155,9 @@ export const LAYOUT = {
 
   CARD: {
     PADDING: {
-      SMALL: 8,
-      MEDIUM: 12,
-      LARGE: 16,
+      SMALL: SPACING.SMALL,
+      MEDIUM: SPACING.MEDIUM,
+      LARGE: SPACING.LARGE,
     },
   },
 
@@ -162,9 +172,9 @@ export const LAYOUT = {
 
   BUTTON: {
     HEIGHT: {
-      SMALL: MIN_TOUCH_TARGET.SMALL,
-      MEDIUM: MIN_TOUCH_TARGET.MEDIUM,
-      LARGE: MIN_TOUCH_TARGET.SIZE,
+      SMALL: MIN_TOUCH.SMALL,
+      MEDIUM: MIN_TOUCH.MEDIUM,
+      LARGE: MIN_TOUCH.SIZE,
     },
     ICON_SIZE: {
       SMALL: 16,
@@ -278,12 +288,12 @@ export const LAYOUT = {
 
   TOUCH_TARGET: {
     MIN_CONTAINER: {
-      WIDTH: MIN_TOUCH_TARGET.SIZE,
-      HEIGHT: MIN_TOUCH_TARGET.SIZE,
+      WIDTH: MIN_TOUCH.SIZE,
+      HEIGHT: MIN_TOUCH.SIZE,
     },
 
     ENHANCE_PADDING: (currentSize: number) => {
-      const needed = MIN_TOUCH_TARGET.MEDIUM - currentSize;
+      const needed = MIN_TOUCH.MEDIUM - currentSize;
       return needed > 0 ? Math.ceil(needed / 2) : 0;
     },
   },

@@ -18,6 +18,7 @@ import type {
 } from '@/types/ui/card.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { withOpacity } from '@/utils/colorUtils';
+import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';
@@ -240,7 +241,11 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
         {props.category ? (
           <View style={styles.pillContainer}>
-            <Pill id={props.category} label={props.category} variant="category" />
+            <Pill
+              id={props.category}
+              label={capitalizeFirstLetter(props.category)}
+              variant="category"
+            />
           </View>
         ) : null}
 
@@ -258,7 +263,8 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
           <View style={styles.authorContainer}>
             <ThemedText colorName="authorText" numberOfLines={1} style={authorStyle} type="label">
-              {props.author} • {props.categoryForDisplay}
+              {props.author} •{' '}
+              {props.categoryForDisplay ? capitalizeFirstLetter(props.categoryForDisplay) : ''}
             </ThemedText>
           </View>
 
