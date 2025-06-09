@@ -22,8 +22,7 @@ const MAX_Z_INDEX = 10000;
 let tooltipZIndexCounter = MIN_Z_INDEX;
 
 const getNextZIndex = () => {
-  tooltipZIndexCounter =
-    tooltipZIndexCounter >= MAX_Z_INDEX ? MIN_Z_INDEX : tooltipZIndexCounter + 1;
+  tooltipZIndexCounter = tooltipZIndexCounter >= MAX_Z_INDEX ? MIN_Z_INDEX : tooltipZIndexCounter;
   return tooltipZIndexCounter;
 };
 

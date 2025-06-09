@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   buttonTextLarge: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE - 1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED * 7,
   },
   buttonTextSmall: {

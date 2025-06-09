@@ -76,7 +76,6 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
         currentSort={currentSort}
         options={sortOptions}
         sortDirection={sortDirection}
-        style={{ marginTop: LAYOUT.SPACING.SMALL }}
         onSortChange={onSortChange}
       />
     );

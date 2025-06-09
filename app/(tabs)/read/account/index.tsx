@@ -191,7 +191,7 @@ const AccountScreen: React.FC = () => {
         }}
       >
         {/* Notifications Section - Moved to top as most frequently used */}
-        <View style={[styles.remindersWrapper, styles.firstSectionOverride]}>
+        <View style={styles.firstSectionOverride}>
           <SectionTitle isFirstSection={true} title="Notifications" />
           <BaseCard
             includePressAnimation={false}
@@ -243,7 +243,7 @@ const AccountScreen: React.FC = () => {
         </View>
 
         {/* Science Section - Educational content, valuable for understanding */}
-        <View style={styles.infoWrapper}>
+        <View>
           <SectionTitle title="Science" />
           <BaseCard
             includePressAnimation={false}
@@ -303,7 +303,7 @@ const AccountScreen: React.FC = () => {
         </View>
 
         {/* Connect Section - Social links, less frequently used */}
-        <View style={styles.connectWrapper}>
+        <View>
           <SectionTitle title="Connect" />
           <BaseCard
             includePressAnimation={false}
@@ -411,7 +411,7 @@ const AccountScreen: React.FC = () => {
         </View>
 
         {/* Manage Section - Kept at bottom as destructive action */}
-        <View style={styles.manageWrapper}>
+        <View>
           <SectionTitle title="Manage" />
           <BaseCard
             includePressAnimation={false}
@@ -578,11 +578,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  // Connect Styles
-  connectWrapper: {
-    // Remove marginBottom - SectionTitle handles section spacing
-  },
-
   copyrightText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     letterSpacing: 0.3,
@@ -593,23 +588,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  // Information Section Styles
-  infoWrapper: {
-    // Remove marginBottom - SectionTitle handles section spacing
-  },
-
-  // Manage Section Styles
-  manageWrapper: {
-    // Remove marginBottom - SectionTitle handles section spacing
-  },
   manageLinksContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
   },
 
-  // Reminders Styles
-  remindersWrapper: {
-    // Remove marginBottom - SectionTitle handles section spacing
-  },
   firstSectionOverride: {
     marginTop: -LAYOUT.SPACING.XLARGE, // Offset the SectionTitle's first section margin
   },

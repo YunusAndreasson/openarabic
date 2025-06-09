@@ -1,6 +1,5 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import type { ViewStyle, StyleProp } from 'react-native';
 
 import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
@@ -15,27 +14,15 @@ import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 interface ArticleCardProps {
   title: string;
   author: string;
-  meta?: React.ReactNode;
-  leftMeta?: React.ReactNode;
   onPress?: () => void;
-  rightElement?: React.ReactNode;
   active?: boolean;
-  containerStyle?: StyleProp<ViewStyle>;
-  contentStyle?: StyleProp<ViewStyle>;
-  children?: React.ReactNode;
 }
 
 export const ArticleCard: React.FC<ArticleCardProps> = ({
   title,
   author,
-  meta,
-  leftMeta,
   onPress,
-  rightElement,
   active = false,
-  containerStyle,
-  contentStyle,
-  children,
 }) => {
   const isDarkMode = useIsDarkMode();
 
@@ -66,7 +53,6 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
 
   const authorStyle = React.useMemo(
     () => ({
-      marginRight: LAYOUT.SPACING.TINY,
       fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
       letterSpacing:
         TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.AUTHOR_BYLINE.letterSpacing,
@@ -76,10 +62,10 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   );
 
   return (
-    <View style={[styles.cardContainer, containerStyle]}>
+    <View style={styles.cardContainer}>
       <BaseCard
         shadowSize={active ? 'medium' : 'small'}
-        style={[styles.card, activeCardStyle, contentStyle]}
+        style={[styles.card, activeCardStyle]}
         onPress={onPress}
       >
         <View style={styles.cardContent}>
@@ -87,23 +73,17 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
             <ThemedText colorName="headingText" style={titleStyle} type="heading3">
               {title}
             </ThemedText>
-            <View style={styles.metaRow}>
-              {leftMeta}
-              <ThemedText
-                skipDefaultColor
-                colorName="authorText"
-                numberOfLines={1}
-                style={authorStyle}
-                type="label"
-              >
-                {author}
-              </ThemedText>
-              {meta}
-            </View>
+            <ThemedText
+              skipDefaultColor
+              colorName="authorText"
+              numberOfLines={1}
+              style={authorStyle}
+              type="label"
+            >
+              {author}
+            </ThemedText>
           </View>
-          {rightElement && <View style={styles.iconContainer}>{rightElement}</View>}
         </View>
-        {children}
       </BaseCard>
     </View>
   );
@@ -112,35 +92,18 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     minHeight: MIN_TOUCH_TARGET.SIZE,
-    overflow: 'hidden', // Ensure cards meet minimum touch target
+    overflow: 'hidden',
   },
   cardContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
     position: 'relative',
   },
   cardContent: {
-    alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
     minHeight: MIN_TOUCH_TARGET.SIZE,
-    padding: LAYOUT.SPACING.MEDIUM, // Ensure content area is touchable
-  },
-  iconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: LAYOUT.SPACING.TINY,
-    minHeight: MIN_TOUCH_TARGET.MEDIUM, // Ensure icon area is easily touchable
-    minWidth: MIN_TOUCH_TARGET.MEDIUM,
-    paddingTop: LAYOUT.SPACING.TINY,
-  },
-  metaRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    marginTop: LAYOUT.SPACING.TINY,
+    padding: LAYOUT.SPACING.MEDIUM,
   },
   textContent: {
     flex: 1,
-    paddingRight: LAYOUT.SPACING.SMALL,
   },
 });

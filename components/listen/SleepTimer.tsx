@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.SMALL,
   },
   content: {
-    padding: LAYOUT.SPACING.LARGE + 4,
+    padding: LAYOUT.SPACING.LARGE,
     paddingTop: LAYOUT.SPACING.LARGE,
   },
   fullWidthButton: {
@@ -261,8 +261,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: LAYOUT.SPACING.LARGE + 4,
-    paddingBottom: LAYOUT.SPACING.MEDIUM + 2,
+    padding: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
   headerContent: {
     flex: 1,
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: LAYOUT.SPACING.SMALL + 2,
     justifyContent: 'space-between',
-    marginBottom: LAYOUT.SPACING.XLARGE + 4,
+    marginBottom: LAYOUT.SPACING.XLARGE,
   },
   setupContainer: {
     width: '100%',

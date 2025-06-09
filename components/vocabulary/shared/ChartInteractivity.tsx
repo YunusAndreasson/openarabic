@@ -134,10 +134,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   tooltipLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
   },
   tooltipValue: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + 1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: 'bold',
   },
 });

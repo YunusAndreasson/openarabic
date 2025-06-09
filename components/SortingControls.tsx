@@ -166,13 +166,13 @@ const styles = StyleSheet.create({
   sortPillLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     letterSpacing: 0.2,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 2,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     textAlign: 'center', // Subtle letter spacing for elegance
   },
   sortDirectionLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     letterSpacing: 0.2,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 2,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     textAlign: 'center', // Subtle letter spacing for elegance
   },
   selectedDirectionLabel: {

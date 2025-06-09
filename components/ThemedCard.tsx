@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { memo, useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
@@ -16,8 +15,6 @@ import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type {
   ThemedCardProps as BaseThemedCardProps,
   ArticleCardProps,
-  CompactCardProps,
-  BasicCardProps,
 } from '@/types/ui/card.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { withOpacity } from '@/utils/colorUtils';
@@ -26,7 +23,6 @@ import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';
 import Pill from './Pill';
 import { ThemedText } from './ThemedText';
-import { SummaryIndicator } from './home/ArticleHelpers';
 
 /**
  * ThemedCard is a reusable card component that can display content in different variants.
@@ -49,35 +45,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     zIndex: 20,
   },
-  cardFooter: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    marginBottom: 0,
-    marginTop: LAYOUT.SPACING.TINY,
-  },
-  compactContainer: {
-    width: LAYOUT.BUTTON.HEIGHT.LARGE * 4 + LAYOUT.SPACING.XLARGE,
-  },
-  compactImageContainer: {
-    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    height: Math.round(
-      (LAYOUT.BUTTON.HEIGHT.LARGE * 4 + LAYOUT.SPACING.XLARGE) / GOLDEN_RATIO_ADJUSTED
-    ),
-    minHeight: Math.round(
-      (LAYOUT.BUTTON.HEIGHT.LARGE * 4 + LAYOUT.SPACING.XLARGE) / GOLDEN_RATIO_ADJUSTED
-    ),
-    overflow: 'hidden',
-    position: 'relative',
-    width: '100%',
-    zIndex: 1,
-    ...Platform.select({
-      android: {
-        marginTop: 1, // Add a small margin to prevent cutoff
-      },
-    }),
-  },
+
   contentContainer: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
@@ -89,11 +57,7 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  dueWordsContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginTop: LAYOUT.SPACING.TINY,
-  },
+
   gradient: {
     position: 'absolute',
     bottom: 0,
@@ -146,13 +110,7 @@ type ThemedCardProps = Omit<BaseThemedCardProps, 'onPress'> & {
   handlePress?: () => void;
   onPress?: () => void;
   fullSummary?: boolean;
-} & (ArticleCardProps | BasicCardProps | CompactCardProps);
-
-// Type guards moved outside component
-const isArticleVariant = (p: ThemedCardProps): p is ArticleCardProps =>
-  'variant' in p && p.variant === 'article';
-const isCompactVariant = (p: ThemedCardProps): p is CompactCardProps =>
-  'variant' in p && p.variant === 'compact';
+} & ArticleCardProps;
 
 // Loading component moved outside to prevent recreation
 const LoadingComponent = ({
@@ -176,7 +134,7 @@ const LoadingComponent = ({
 );
 
 function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
-  const { handlePress, onPress, style, isLoading = false, variant = 'article' } = props;
+  const { handlePress, onPress, style, isLoading = false } = props;
   const pressHandler = onPress || handlePress;
 
   const colors = useColors();
@@ -193,8 +151,6 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
     }),
     [imageHeight]
   );
-  const isCompact = variant === 'compact';
-  const isArticle = variant === 'article';
 
   const baseColor = colors.background;
 
@@ -225,14 +181,12 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
     [gradientColors]
   );
 
-  // Enhanced text styles with semantic colors and sophisticated typography
+  // Enhanced text styles with semantic colors and simplified typography
   const titleStyle = useMemo(
     () => ({
       fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
       letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
-      lineHeight:
-        LAYOUT.TYPOGRAPHY.SCALE.LARGE *
-        TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.lineHeightMultiplier,
+      lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
       opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY, isDarkMode),
     }),
     [isDarkMode]
@@ -243,6 +197,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
       fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
       letterSpacing:
         TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.AUTHOR_BYLINE.letterSpacing,
+      lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
       opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.SECONDARY, isDarkMode),
     }),
     [isDarkMode]
@@ -250,55 +205,21 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
   const summaryStyle = useMemo(
     () => ({
-      lineHeight:
-        LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
+      lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
       letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
       opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.TERTIARY, isDarkMode),
     }),
     [isDarkMode]
   );
-
-  const metadataStyle = useMemo(
-    () => ({
-      fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
-      letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.METADATA.letterSpacing,
-      opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.TERTIARY, isDarkMode),
-    }),
-    [isDarkMode]
-  );
-
-  // Enhanced due words style with accent color
-  const dueWordsStyle = useMemo(
-    () => ({
-      fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-      letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
-      opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.ACCENT, isDarkMode, true),
-    }),
-    [isDarkMode]
-  );
-
-  // Extract variant-specific props based on type
-  const title = isArticleVariant(props) ? props.title : undefined;
-  const category = isArticleVariant(props) ? props.category : undefined;
-  const author = isArticleVariant(props) ? props.author : undefined;
-  const summary = isArticleVariant(props) ? props.summary : undefined;
-  const children = 'children' in props ? props.children : undefined;
-
-  // Extract compact article props
-  const article = isCompactVariant(props) ? props.article : undefined;
-
-  const hideDifficulty = isCompactVariant(props) ? props.hideDifficulty : false;
-  const lastOpenedAt = isCompactVariant(props) ? props.lastOpenedAt : undefined;
 
   // Memoize article content with enhanced typography
   const articleContent = useMemo(() => {
-    if (!isArticle) return null;
     return (
       <>
         <View style={[styles.imageContainer, dynamicStyles.imageContainer]}>
           <EnhancedImage
             allowDownscaling={false}
-            alt={`Image for ${title || 'Article'}`}
+            alt={`Image for ${props.title || 'Article'}`}
             blurRadius={0}
             cachePolicy="memory-disk"
             contentFit="cover"
@@ -307,19 +228,19 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             skipTransition={true}
             style={styles.image}
             placeholder={
-              (isArticleVariant(props) ? props.placeholder : undefined) || {
+              props.placeholder || {
                 thumbhash: DEFAULT_IMAGES.ARTICLE_PLACEHOLDER_THUMBHASH,
               }
             }
-            source={isArticleVariant(props) ? props.imageUrl : DEFAULT_IMAGES.ARTICLE_PLACEHOLDER}
+            source={props.imageUrl || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER}
           />
 
           <LinearGradient {...gradientProps} style={styles.gradient} />
         </View>
 
-        {category ? (
+        {props.category ? (
           <View style={styles.pillContainer}>
-            <Pill id={category} label={category} variant="category" />
+            <Pill id={props.category} label={props.category} variant="category" />
           </View>
         ) : null}
 
@@ -331,21 +252,17 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
               style={titleStyle}
               type="heading3"
             >
-              {title}
+              {props.title}
             </ThemedText>
           </View>
 
-          {author || (isArticleVariant(props) && props.categoryForDisplay) ? (
-            <View style={styles.authorContainer}>
-              <ThemedText colorName="authorText" numberOfLines={1} style={authorStyle} type="label">
-                {[author, isArticleVariant(props) ? props.categoryForDisplay : undefined]
-                  .filter(Boolean)
-                  .join(' • ')}
-              </ThemedText>
-            </View>
-          ) : null}
+          <View style={styles.authorContainer}>
+            <ThemedText colorName="authorText" numberOfLines={1} style={authorStyle} type="label">
+              {props.author} • {props.categoryForDisplay}
+            </ThemedText>
+          </View>
 
-          {summary ? (
+          {props.summary ? (
             <View style={styles.summaryContainer}>
               <ThemedText
                 colorName="captionText"
@@ -353,27 +270,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
                 {...(!props.fullSummary ? { numberOfLines: 3 } : {})}
                 style={summaryStyle}
               >
-                {summary}
-              </ThemedText>
-            </View>
-          ) : null}
-
-          {/* Enhanced due word count indicator for article variant */}
-          {isArticleVariant(props) && props.dueWordCount ? (
-            <View style={styles.dueWordsContainer}>
-              <Ionicons color={colors.warning} name="sync-outline" size={14} />
-              <ThemedText
-                skipDefaultColor
-                colorName="warning"
-                type="caption"
-                style={[
-                  dueWordsStyle,
-                  {
-                    marginLeft: LAYOUT.SPACING.TINY,
-                  },
-                ]}
-              >
-                {props.dueWordCount} due {props.dueWordCount === 1 ? 'word' : 'words'}
+                {props.summary}
               </ThemedText>
             </View>
           ) : null}
@@ -381,130 +278,18 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
       </>
     );
   }, [
-    isArticle,
-    title,
-    isArticleVariant(props) ? props.imageUrl : undefined,
-    isArticleVariant(props) ? props.placeholder : undefined,
+    props.title,
+    props.imageUrl,
+    props.placeholder,
     props.fullSummary,
-    category,
-    author,
-    summary,
-    isArticleVariant(props) ? props.dueWordCount : undefined,
+    props.category,
+    props.author,
+    props.summary,
     gradientProps,
     titleStyle,
     authorStyle,
     summaryStyle,
-    dueWordsStyle,
-    colors.warning,
   ]);
-
-  // Memoize compact article content with enhanced colors
-  const compactArticleContent = useMemo(() => {
-    if (!isCompact) return null;
-    return (
-      <>
-        <View style={styles.compactImageContainer}>
-          <EnhancedImage
-            allowDownscaling={false}
-            alt={`Image for ${article?.title || 'Article'}`}
-            blurRadius={0}
-            contentFit="cover"
-            prefetch={true}
-            priority="high"
-            skipTransition={true}
-            source={article?.image_url || ''}
-            style={styles.image}
-            placeholder={article?.placeholder}
-          />
-
-          <LinearGradient {...gradientProps} style={styles.gradient} />
-        </View>
-
-        {article?.category ? (
-          <View style={styles.pillContainer}>
-            <Pill
-              id={article.category.id || ''}
-              label={article.category.name || ''}
-              variant="category"
-            />
-          </View>
-        ) : null}
-
-        <View style={styles.contentContainer}>
-          <View style={styles.titleContainer}>
-            <ThemedText
-              colorName="headingText"
-              numberOfLines={2}
-              style={titleStyle}
-              type="heading3"
-            >
-              {article?.title}
-            </ThemedText>
-          </View>
-
-          {/* Enhanced author information with semantic colors */}
-          {article?.author ? (
-            <View style={styles.authorContainer}>
-              <ThemedText
-                colorName="metadataText"
-                numberOfLines={1}
-                style={metadataStyle}
-                type="caption"
-              >
-                {article.author.name}
-              </ThemedText>
-            </View>
-          ) : null}
-
-          {/* Enhanced due word count indicator with accent styling */}
-          {isCompactVariant(props) && props.dueWordCount ? (
-            <View style={styles.dueWordsContainer}>
-              <Ionicons color={colors.warning} name="sync-outline" size={14} />
-              <ThemedText
-                skipDefaultColor
-                colorName="warning"
-                type="caption"
-                style={[
-                  dueWordsStyle,
-                  {
-                    marginLeft: LAYOUT.SPACING.TINY,
-                  },
-                ]}
-              >
-                {props.dueWordCount} due {props.dueWordCount === 1 ? 'word' : 'words'}
-              </ThemedText>
-            </View>
-          ) : null}
-
-          <View style={styles.cardFooter}>
-            {isCompactVariant(props) && props.dueWordCount ? null : (
-              // Show summary indicator when not showing due words
-              <SummaryIndicator summary={article?.summary || null} />
-            )}
-          </View>
-        </View>
-      </>
-    );
-  }, [
-    isCompact,
-    article,
-    isCompactVariant(props) ? props.dueWordCount : undefined,
-    hideDifficulty,
-    lastOpenedAt,
-    gradientProps,
-    titleStyle,
-    metadataStyle,
-    dueWordsStyle,
-    colors.warning,
-  ]);
-
-  // Memoize compact content
-  const compactContent = useMemo(() => {
-    if (article) {
-      return compactArticleContent;
-    }
-    return children;
-  }, [article, compactArticleContent, children]);
 
   if (isLoading) {
     return (
@@ -517,7 +302,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             style={dynamicStyles.loadingComponentContainer}
           />
         }
-        style={[isCompact && styles.compactContainer, style as StyleProp<ViewStyle>]}
+        style={style as StyleProp<ViewStyle>}
         onPress={pressHandler}
       >
         <View />
@@ -528,10 +313,10 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
   return (
     <BaseCard
       includePressAnimation={true}
-      style={[isCompact && styles.compactContainer, style as StyleProp<ViewStyle>]}
+      style={style as StyleProp<ViewStyle>}
       onPress={pressHandler}
     >
-      {isCompact ? compactContent : articleContent}
+      {articleContent}
     </BaseCard>
   );
 }

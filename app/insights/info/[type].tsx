@@ -339,12 +339,12 @@ const styles = StyleSheet.create({
     width: LAYOUT.SPACING.SMALL,
     height: LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.SPACING.TINY,
-    marginTop: LAYOUT.SPACING.SMALL + 1,
+    marginTop: LAYOUT.SPACING.SMALL,
     marginRight: LAYOUT.SPACING.MEDIUM,
   },
   tipText: {
     flex: 1,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + 1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE + LAYOUT.SPACING.TINY / 2,
   },
 });

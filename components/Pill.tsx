@@ -191,7 +191,7 @@ const getCategoryStyle = (
       : `${colors.elevation1}${CATEGORY_OPACITY.BLUR_LIGHT}`, // 70% opacity for blur-like effect
   borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  paddingVertical: LAYOUT.SPACING.TINY + 2,
+  paddingVertical: LAYOUT.SPACING.TINY,
   // Enhanced shadow for depth perception (simulates blur effect)
   ...(Platform.OS === 'ios'
     ? {
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.SMALL,
     marginRight: LAYOUT.SPACING.SMALL,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingVertical: LAYOUT.SPACING.SMALL - 1,
+    paddingVertical: LAYOUT.SPACING.SMALL,
   },
 });
 

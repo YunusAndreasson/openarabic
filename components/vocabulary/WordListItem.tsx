@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     minWidth: LAYOUT.SPACING.LARGE + LAYOUT.SPACING.LARGE + LAYOUT.SPACING.TINY, // ~34px
   },
   memoryPercentage: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
     fontWeight: '600',
     letterSpacing: 0.3,

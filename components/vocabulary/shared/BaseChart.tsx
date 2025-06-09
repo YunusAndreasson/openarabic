@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.LARGE,
   },
   emptyText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     letterSpacing: 0.2,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
     opacity: LAYOUT.OPACITY.HIGH,
@@ -173,9 +173,9 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.LARGE,
   },
   loadingText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY + 1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     letterSpacing: 0.15,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE + 1,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     opacity: LAYOUT.OPACITY.HIGH - 0.05,
     textAlign: 'center',
   },

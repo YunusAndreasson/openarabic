@@ -44,7 +44,7 @@ const FeaturedSection: React.FC<FeaturedSectionProps> = ({ article, onPress, due
     <View style={styles.container}>
       <ThemedCard
         author={article.author?.name || 'Author'}
-        category="RECOMMENDED READING"
+        category="FEATURED"
         categoryForDisplay={article.category?.name}
         dueWordCount={dueWordCount}
         fullSummary={true}

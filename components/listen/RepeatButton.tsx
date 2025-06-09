@@ -81,8 +81,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     minHeight: MIN_TOUCH_TARGET.SIZE,
     minWidth: 100,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM + 2,
-    paddingVertical: LAYOUT.SPACING.SMALL + 2,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
   },
   content: {
     alignItems: 'center',

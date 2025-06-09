@@ -245,7 +245,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
                 color={chartColors.withOpacity(colors.card, 0.6)}
                 path={gaugePaths.fullPath}
                 strokeCap="round"
-                strokeWidth={GAUGE_STROKE_WIDTH + 2}
+                strokeWidth={GAUGE_STROKE_WIDTH}
                 style="stroke"
               />
 
@@ -447,14 +447,14 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.SMALL,
   },
   statusLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY + 1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     fontWeight: '800',
     letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.METADATA.letterSpacing * 4,
     opacity: LAYOUT.OPACITY.FULL,
     textAlign: 'center',
   },
   actionText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE + 1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     fontWeight: '700',
     textAlign: 'center',
   },
@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.TINY,
   },
   readinessText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '500',
     marginBottom: LAYOUT.SPACING.TINY,
     textAlign: 'center',
