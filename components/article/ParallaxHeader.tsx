@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { withOpacity } from '@/utils/colorUtils';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
 import type { Article } from '@/types/articles.types';
@@ -25,32 +26,32 @@ const ParallaxHeader = React.memo<ParallaxHeaderProps>(
       return [
         'transparent',
         'transparent',
-        'rgba(0, 0, 0, 0.03)',
-        'rgba(0, 0, 0, 0.08)',
-        'rgba(0, 0, 0, 0.15)',
-        'rgba(0, 0, 0, 0.25)',
-        'rgba(0, 0, 0, 0.4)', // Stronger gradient for summary overlay
+        withOpacity(colors.black, 0.03),
+        withOpacity(colors.black, 0.08),
+        withOpacity(colors.black, 0.15),
+        withOpacity(colors.black, 0.25),
+        withOpacity(colors.black, 0.4), // Stronger gradient for summary overlay
       ] as const;
-    }, []);
+    }, [colors.black]);
 
     // Background gradient colors for smooth transition to content
     const backgroundGradientColors = useMemo(() => {
       const bgColor = colors.background;
-      const overlayColor = isDarkMode ? 'rgba(0,0,0,' : 'rgba(0,0,0,';
+      const overlayColor = colors.black;
 
       return [
         'transparent',
         'transparent',
         'transparent',
-        `${overlayColor}0.05)`,
-        `${overlayColor}0.15)`,
-        `${overlayColor}0.3)`,
-        `${overlayColor}0.5)`,
-        `${overlayColor}0.7)`,
-        `${overlayColor}0.85)`,
+        withOpacity(overlayColor, 0.05),
+        withOpacity(overlayColor, 0.15),
+        withOpacity(overlayColor, 0.3),
+        withOpacity(overlayColor, 0.5),
+        withOpacity(overlayColor, 0.7),
+        withOpacity(overlayColor, 0.85),
         bgColor,
       ] as const;
-    }, [colors.background, isDarkMode]);
+    }, [colors.background, colors.black]);
 
     return (
       <View style={styles.container}>

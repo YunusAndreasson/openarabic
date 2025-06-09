@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    shadowColor: '#000',
+    shadowColor: Colors.light.black,
     shadowOffset: {
       width: 0,
       height: 1,

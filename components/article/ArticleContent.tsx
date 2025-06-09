@@ -25,6 +25,7 @@ import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
 import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
+import { Colors } from '@/constants/Colors';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
@@ -73,7 +74,7 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     padding: LAYOUT.SPACING.LARGE,
     borderWidth: 1,
-    shadowColor: '#000',
+    shadowColor: Colors.light.black,
     shadowOffset: {
       width: 0,
       height: 2,

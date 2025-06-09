@@ -22,6 +22,7 @@ import Animated, {
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { Colors } from '@/constants/Colors';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
@@ -126,7 +127,9 @@ const SessionTypeModal = memo(
               exiting={SlideOutDown.duration(200)}
             >
               {/* Close indicator */}
-              <View style={styles.closeIndicator} />
+              <View
+                style={[styles.closeIndicator, { backgroundColor: colors.modalIndicator }]}
+              />
 
               {/* Header */}
               <View style={styles.header}>
@@ -199,7 +202,6 @@ const styles = StyleSheet.create({
   closeIndicator: {
     width: 32,
     height: 4,
-    backgroundColor: '#C4C4C4',
     borderRadius: 2,
     alignSelf: 'center',
     marginTop: LAYOUT.SPACING.MEDIUM,
@@ -209,7 +211,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: LAYOUT.BORDER_RADIUS.LARGE,
     borderTopRightRadius: LAYOUT.BORDER_RADIUS.LARGE,
     paddingBottom: LAYOUT.SPACING.XLARGE,
-    shadowColor: '#000',
+    shadowColor: Colors.light.black,
     shadowOffset: {
       width: 0,
       height: -2,
@@ -243,7 +245,7 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    shadowColor: '#000',
+    shadowColor: Colors.light.black,
     shadowOffset: {
       width: 0,
       height: 1,

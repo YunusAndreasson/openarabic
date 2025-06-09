@@ -138,10 +138,10 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
   // Helper functions for gradient calculation
   const getFilledGradientColors = (capacityScore: number): string[] => {
     const baseColors = [
-      chartColors.performance.poor ?? '#FF0000', // fallback Red
-      chartColors.performance.moderate ?? '#FFA500', // fallback Orange
-      chartColors.performance.good ?? '#0000FF', // fallback Blue
-      chartColors.performance.excellent ?? '#00FF00', // fallback Green
+      chartColors.performance.poor ?? colors.error,
+      chartColors.performance.moderate ?? colors.warning,
+      chartColors.performance.good ?? colors.info,
+      chartColors.performance.excellent ?? colors.success,
     ];
 
     if (capacityScore <= 30) {

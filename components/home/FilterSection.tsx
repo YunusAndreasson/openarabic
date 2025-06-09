@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { Colors } from '@/constants/Colors';
 import { useColors } from '@/hooks/theme/useColors';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
@@ -59,7 +60,7 @@ const compactCardStyles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
-    shadowColor: '#000',
+    shadowColor: Colors.light.black,
     shadowOffset: {
       width: 0,
       height: 1,
