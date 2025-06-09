@@ -1,5 +1,6 @@
 import { Mixpanel } from 'mixpanel-react-native';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
 import { handleError } from '@/utils/errorHandling';
 
@@ -71,7 +72,7 @@ class Analytics {
 
     const superProperties = {
       platform: Platform.OS,
-      appVersion: process.env.EXPO_PUBLIC_APP_VERSION || '1.0.0',
+      appVersion: Constants.expoConfig?.version,
       environment: __DEV__ ? 'development' : 'production',
     };
 
