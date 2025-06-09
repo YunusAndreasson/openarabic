@@ -1,5 +1,5 @@
 // Fix for expo-router v5.0.7 + React Native 0.79.3 splash screen compatibility issue
-import '@/splash-polyfill';
+import '@/utils/splash-polyfill';
 import {
   DarkTheme,
   DefaultTheme,
