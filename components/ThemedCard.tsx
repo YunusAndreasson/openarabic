@@ -95,13 +95,12 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.TINY,
   },
   gradient: {
-    ...StyleSheet.absoluteFillObject,
-    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    position: 'absolute',
     bottom: 0,
-    height: '200%',
-    overflow: 'hidden',
-    zIndex: 5,
+    left: 0,
+    right: 0,
+    height: '40%', // Only bottom 40% for subtle transition
+    zIndex: 10, // Above image but below content
   },
   image: {
     borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
@@ -199,24 +198,28 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
   const baseColor = colors.background;
 
-  // Memoize gradient colors with consistent opacity stops
-  const gradientColors = useMemo(
-    () =>
-      [
+  // Memoize gradient colors with balanced intensity for both modes
+  const gradientColors = useMemo(() => {
+    if (isDarkMode) {
+      // Dark mode gradient with similar intensity to light mode
+      return [
         withOpacity(baseColor, 0),
-        withOpacity(baseColor, 0.95),
-        withOpacity(baseColor, 0.98),
+        withOpacity(baseColor, 0.5),
+        withOpacity(baseColor, 0.9),
         colors.card,
-      ] as const,
-    [baseColor, colors.card]
-  );
+      ] as const;
+    } else {
+      // Light mode: no gradient (completely transparent)
+      return ['transparent', 'transparent', 'transparent', 'transparent'] as const;
+    }
+  }, [baseColor, colors.card, isDarkMode]);
 
-  // Common gradient props
+  // Simple gradient props - same positioning for both modes
   const gradientProps = useMemo(
     () => ({
       colors: gradientColors,
-      start: { x: 0, y: 0.3 },
-      end: { x: 0, y: 0.8 },
+      start: { x: 0, y: 0.1 },
+      end: { x: 0, y: 1.0 },
       pointerEvents: 'none' as const,
     }),
     [gradientColors]
@@ -311,17 +314,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             source={isArticleVariant(props) ? props.imageUrl : DEFAULT_IMAGES.ARTICLE_PLACEHOLDER}
           />
 
-          <LinearGradient
-            {...gradientProps}
-            style={[
-              styles.gradient,
-              {
-                bottom: -LAYOUT.SPACING.XLARGE * 2,
-                height: '200%',
-                transform: [{ scale: 1.01 }],
-              },
-            ]}
-          />
+          <LinearGradient {...gradientProps} style={styles.gradient} />
         </View>
 
         {category ? (
@@ -424,17 +417,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             placeholder={article?.placeholder}
           />
 
-          <LinearGradient
-            {...gradientProps}
-            style={[
-              styles.gradient,
-              {
-                bottom: -LAYOUT.SPACING.XLARGE * 2,
-                height: '200%',
-                transform: [{ scale: 1.01 }],
-              },
-            ]}
-          />
+          <LinearGradient {...gradientProps} style={styles.gradient} />
         </View>
 
         {article?.category ? (
