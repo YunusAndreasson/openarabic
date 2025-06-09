@@ -1,13 +1,13 @@
 import { useState, useCallback } from 'react';
 
-type LoadingState = {
+export interface LoadingState {
   isLoading: boolean;
   dataLoaded: boolean;
   startLoading: () => void;
   stopLoading: () => void;
   setDataLoaded: (loaded: boolean) => void;
   reset: () => void;
-};
+}
 
 
 /**
