@@ -10,6 +10,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { HIJRI_MONTHS } from '@/constants/hijri';
 import { LAYOUT } from '@/constants/layout';
+import { createNavigationOptions } from '@/constants/modal';
 import { useColors } from '@/hooks/theme/useColors';
 
 interface IslamicEvent {
@@ -140,21 +141,10 @@ export default function IslamicCalendarScreen() {
   return (
     <>
       <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTitle: 'Calendar',
-          headerTitleStyle: {
-            fontSize: LAYOUT.HEADER.TITLE.SECONDARY.fontSize,
-            fontWeight: LAYOUT.HEADER.TITLE.SECONDARY.fontWeight as any,
-            color: colors.text,
-          },
-          headerStyle: { backgroundColor: colors.background },
-          headerShadowVisible: false,
-          headerTitleAlign: 'left',
-          headerTintColor: colors.tint,
-          headerBackTitle: 'Read',
-          headerBackTitleStyle: { fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM },
-        }}
+        options={createNavigationOptions(colors, {
+          title: 'Calendar',
+          isRegularScreen: true,
+        })}
       />
 
       <ThemedView

@@ -29,8 +29,6 @@ const SectionTitle: React.FC<SectionTitleProps> = ({
     () => ({
       marginBottom: 0,
       fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
-      letterSpacing:
-        TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.SECTION_HEADER.letterSpacing,
       lineHeight:
         LAYOUT.TYPOGRAPHY.SCALE.XXLARGE *
         TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.SECTION_HEADER.lineHeightMultiplier,
@@ -42,8 +40,7 @@ const SectionTitle: React.FC<SectionTitleProps> = ({
     () => ({
       lineHeight:
         LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
-      marginTop: LAYOUT.SPACING.MEDIUM,
-      letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
+      marginTop: LAYOUT.SPACING.TINY,
     }),
     []
   );

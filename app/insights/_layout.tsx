@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import type { JSX } from 'react';
 import React from 'react';
 
+import { createNavigationOptions } from '@/constants/modal';
 import { useColors } from '@/hooks/theme/useColors';
 
 export default function InsightsLayout(): JSX.Element {
@@ -11,47 +12,16 @@ export default function InsightsLayout(): JSX.Element {
     <Stack>
       <Stack.Screen
         name="index"
-        options={{
-          presentation: 'modal',
-          headerShown: true,
+        options={createNavigationOptions(colors, {
           title: 'Insights',
-          headerTitleAlign: 'center',
-          headerTransparent: false,
-          gestureEnabled: true, // Enable pull-down to dismiss
-          headerStyle: {
-            backgroundColor: colors.background,
-          },
-          headerTitleStyle: {
-            fontSize: 20,
-            fontWeight: '600',
-          },
-          headerTintColor: colors.headingText,
-        }}
+          isRegularScreen: true,
+        })}
       />
       <Stack.Screen
         name="info/[type]"
-        options={() => {
-          return {
-            headerShown: true,
-            title: 'Insights',
-            headerBackTitle: 'Back',
-            headerTitleAlign: 'center',
-            headerTransparent: false,
-            presentation: 'modal',
-            gestureEnabled: true,
-            headerStyle: {
-              backgroundColor: colors.background,
-            },
-            headerTitleStyle: {
-              fontSize: 20,
-              fontWeight: '600',
-            },
-            headerTintColor: colors.headingText,
-            headerBackTitleStyle: {
-              fontSize: 16,
-            },
-          };
-        }}
+        options={createNavigationOptions(colors, {
+          isRegularScreen: true,
+        })}
       />
     </Stack>
   );

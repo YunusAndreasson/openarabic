@@ -24,6 +24,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { AuthProvider, ToastProvider } from '@/components/providers';
 import { Theme } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
+import { createNavigationOptions } from '@/constants/modal';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
@@ -251,16 +252,15 @@ function AppContent() {
           />
           <Stack.Screen
             name="practice"
-            options={{
+            options={createNavigationOptions(colors, {
               headerShown: false,
-              presentation: 'modal',
-            }}
+            })}
           />
           <Stack.Screen
             name="insights"
-            options={{
-              presentation: 'modal',
-            }}
+            options={createNavigationOptions(colors, {
+              headerShown: false,
+            })}
           />
         </Stack>
         <StatusBar style={isDark ? 'light' : 'dark'} />

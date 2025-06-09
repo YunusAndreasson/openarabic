@@ -1,8 +1,7 @@
 import { Stack } from 'expo-router';
 import React from 'react';
-import { View } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
+import { createNavigationOptions } from '@/constants/modal';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ArticleParams, FilterParams } from '@/types/navigation.types';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
@@ -24,36 +23,6 @@ function getFilterTitle(params: FilterParams): string {
   return 'Filter';
 }
 
-/**
- * Beautiful centered header title component for articles
- */
-const ArticleHeaderTitle = React.memo(({ title }: { title: string }) => {
-  return (
-    <View
-      style={{
-        alignItems: 'center',
-        justifyContent: 'center',
-        flex: 1,
-        paddingHorizontal: 8,
-        maxWidth: '100%',
-      }}
-    >
-      <ThemedText
-        colorName="headingText"
-        style={{
-          fontSize: 17,
-          fontWeight: '600',
-          textAlign: 'center',
-        }}
-        numberOfLines={2}
-        ellipsizeMode="tail"
-      >
-        {title}
-      </ThemedText>
-    </View>
-  );
-});
-
 export default function ReadLayout() {
   const colors = useColors();
 
@@ -67,53 +36,27 @@ export default function ReadLayout() {
       />
       <Stack.Screen
         name="filter"
-        options={({ route }) => ({
-          headerShown: true,
-          title: getFilterTitle(route.params as FilterParams),
-          headerTitleAlign: 'left',
-          headerTransparent: false,
-          presentation: 'modal',
-          gestureEnabled: true,
-          headerStyle: {
-            backgroundColor: colors.background,
-          },
-          headerTitleStyle: {
-            fontSize: 20,
-            fontWeight: '600',
-          },
-          headerTintColor: colors.headingText,
-        })}
+        options={({ route }) =>
+          createNavigationOptions(colors, {
+            title: getFilterTitle(route.params as FilterParams),
+          })
+        }
       />
       <Stack.Screen
         name="article"
         options={({ route }) => {
           const params = route.params as ArticleParams;
 
-          return {
-            headerShown: true,
-            headerTitle: () => <ArticleHeaderTitle title={params.headerTitle || 'Article'} />,
-            headerBackTitle: 'Read',
-            headerTitleAlign: 'center',
-            headerTransparent: false,
-            presentation: 'modal',
-            gestureEnabled: true,
-            animationTypeForReplace: 'push',
-            headerStyle: {
-              backgroundColor: colors.background,
-            },
-            headerTintColor: colors.tint,
-            headerBackTitleStyle: {
-              fontSize: 16,
-            },
-          };
+          return createNavigationOptions(colors, {
+            title: params.headerTitle || 'Article',
+          });
         }}
       />
       <Stack.Screen
         name="account"
-        options={{
-          headerShown: false, // Let account layout handle its own header
-          presentation: 'modal',
-        }}
+        options={createNavigationOptions(colors, {
+          headerShown: false,
+        })}
       />
     </Stack>
   );

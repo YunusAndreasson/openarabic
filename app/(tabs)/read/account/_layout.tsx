@@ -1,5 +1,6 @@
 import { Stack } from 'expo-router';
 
+import { createNavigationOptions } from '@/constants/modal';
 import { useColors } from '@/hooks/theme/useColors';
 
 export default function AccountLayout() {
@@ -9,75 +10,31 @@ export default function AccountLayout() {
     <Stack>
       <Stack.Screen
         name="index"
-        options={{
+        options={createNavigationOptions(colors, {
           title: 'Account',
-          headerBackTitle: 'Read',
-          headerStyle: {
-            backgroundColor: colors.background,
-          },
-          headerTitleStyle: {
-            fontSize: 20,
-            fontWeight: '600',
-          },
-          headerTintColor: colors.headingText,
-          headerBackTitleStyle: {
-            fontSize: 16,
-          },
-        }}
+          isRegularScreen: true,
+        })}
       />
       <Stack.Screen
         name="classicalTexts"
-        options={{
+        options={createNavigationOptions(colors, {
           title: 'Classical Texts',
-          headerBackTitle: 'Account',
-          headerStyle: {
-            backgroundColor: colors.background,
-          },
-          headerTitleStyle: {
-            fontSize: 20,
-            fontWeight: '600',
-          },
-          headerTintColor: colors.headingText,
-          headerBackTitleStyle: {
-            fontSize: 16,
-          },
-        }}
+          isRegularScreen: true,
+        })}
       />
       <Stack.Screen
         name="learningMethod"
-        options={{
+        options={createNavigationOptions(colors, {
           title: 'Learning Method',
-          headerBackTitle: 'Account',
-          headerStyle: {
-            backgroundColor: colors.background,
-          },
-          headerTitleStyle: {
-            fontSize: 20,
-            fontWeight: '600',
-          },
-          headerTintColor: colors.headingText,
-          headerBackTitleStyle: {
-            fontSize: 16,
-          },
-        }}
+          isRegularScreen: true,
+        })}
       />
       <Stack.Screen
         name="islamicCalendar"
-        options={{
+        options={createNavigationOptions(colors, {
           title: 'Islamic Calendar',
-          headerBackTitle: 'Account',
-          headerStyle: {
-            backgroundColor: colors.background,
-          },
-          headerTitleStyle: {
-            fontSize: 20,
-            fontWeight: '600',
-          },
-          headerTintColor: colors.headingText,
-          headerBackTitleStyle: {
-            fontSize: 16,
-          },
-        }}
+          isRegularScreen: true,
+        })}
       />
     </Stack>
   );
