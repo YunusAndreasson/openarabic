@@ -1,9 +1,8 @@
-import { useLocalSearchParams } from 'expo-router';
 import React, { memo, useCallback, useEffect, useState, useMemo } from 'react';
 import type { ComponentRef } from 'react';
 import type { LayoutRectangle, LayoutChangeEvent, ViewStyle, TextStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity } from 'react-native';
-import Animated, { useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
@@ -38,10 +37,7 @@ interface ArabicWordProps {
   onPress: (word: SentenceWord) => void;
   position?: number;
   settings: {
-    showEnglish: boolean;
     fontScale: number;
-    showTransliteration?: boolean;
-    showWordType?: boolean;
   };
   wordRef?: React.RefObject<ComponentRef<typeof TouchableOpacity>>;
   isAudioHighlighted?: boolean;
@@ -95,23 +91,6 @@ function ArabicWordComponent({
     initialOpacity: 1,
     duration: 200,
   });
-
-  // Get URL params for highlighting
-  const { highlightWord } = useLocalSearchParams<{ highlightWord?: string }>();
-  const isHighlighted = word.id != null && highlightWord === word.id.toString();
-
-  // Use Reanimated for highlight animation
-  const highlightOpacity = useSharedValue(0);
-
-  useEffect(() => {
-    if (isHighlighted) {
-      // Use Reanimated's animation sequence
-      highlightOpacity.value = withSequence(
-        withTiming(1, { duration: 300 }),
-        withTiming(0, { duration: 1000 })
-      );
-    }
-  }, [isHighlighted, highlightOpacity]);
 
   // Handle the animation reversal after a brief delay
   useEffect(() => {
@@ -286,7 +265,6 @@ export const ArabicWord = memo(ArabicWordComponent, (prevProps, nextProps) => {
   return (
     prevProps.isAudioHighlighted === nextProps.isAudioHighlighted &&
     prevProps.word.id === nextProps.word.id &&
-    prevProps.settings.showTransliteration === nextProps.settings.showTransliteration &&
     prevProps.settings.fontScale === nextProps.settings.fontScale &&
     prevProps.position === nextProps.position
   );

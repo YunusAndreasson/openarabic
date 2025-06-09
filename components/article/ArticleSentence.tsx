@@ -36,8 +36,6 @@ interface ArticleSentenceProps {
   settings: {
     showEnglish: boolean;
     fontScale: number;
-    showTransliteration: boolean;
-    showWordType: boolean;
   };
   colors: ThemeColors;
   containerStyle?: StyleProp<ViewStyle>;
@@ -127,7 +125,7 @@ function ArticleSentenceComponent({
           key={`word-${wordId}-${word.position || sentence.id}`}
           word={word}
           onPress={word => onWordPress?.(word)}
-          settings={settings}
+          settings={{ fontScale: settings.fontScale }}
           isAudioHighlighted={isWordHighlighted}
           wordRef={wordRefs.current[index]}
           position={index}

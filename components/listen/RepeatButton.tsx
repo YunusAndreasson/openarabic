@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import Animated, { useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { useToggleAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 
 interface RepeatButtonProps {
@@ -15,53 +16,48 @@ interface RepeatButtonProps {
 const RepeatButton: React.FC<RepeatButtonProps> = ({ enabled, onToggle }) => {
   const colors = useColors();
 
+  // Use toggle animation for container state changes (scale + opacity)
+  const { containerAnimatedStyle } = useToggleAnimation(enabled, 0.02); // Small scale change
+
+  // Use transform animation for icon rotation
+  const { animatedStyle: iconRotationStyle, startAnimation: startRotation } = useTransformAnimation(
+    {
+      type: 'rotate',
+      initialValue: 0,
+      targetValue: 360,
+      duration: 400,
+    }
+  );
+
+  // Trigger rotation animation when enabled state changes
+  React.useEffect(() => {
+    if (enabled) {
+      startRotation();
+    }
+  }, [enabled, startRotation]);
+
   const handlePress = () => {
     onToggle();
   };
 
-  // Animated styles for the button container - using more subtle colors
-  const animatedContainerStyle = useAnimatedStyle(() => {
-    return {
-      backgroundColor: withTiming(enabled ? colors.elevation2 : colors.elevation1, {
-        duration: 200,
-      }),
-      borderColor: withTiming(enabled ? colors.borderOverlay : colors.borderOverlay, {
-        duration: 200,
-      }),
-      opacity: withTiming(enabled ? 1 : 0.7, { duration: 200 }),
-      transform: [
-        {
-          scale: withSpring(enabled ? 1.02 : 1, {
-            damping: 15,
-            stiffness: 300,
-          }),
-        },
-      ],
-    };
-  }, [enabled, colors]);
-
-  // Animated styles for the icon
-  const animatedIconStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        {
-          rotate: withSpring(enabled ? '360deg' : '0deg', {
-            damping: 12,
-            stiffness: 200,
-          }),
-        },
-      ],
-    };
-  }, [enabled]);
+  // Memoize background colors to prevent unnecessary re-renders
+  const containerStyle = useMemo(
+    () => ({
+      backgroundColor: enabled ? colors.elevation2 : colors.elevation1,
+      borderColor: colors.borderOverlay,
+      opacity: enabled ? 1 : 0.7,
+    }),
+    [enabled, colors.elevation1, colors.elevation2, colors.borderOverlay]
+  );
 
   return (
     <TouchableOpacity
       style={styles.touchable}
       onPress={handlePress}
     >
-      <Animated.View style={[styles.container, animatedContainerStyle]}>
+      <Animated.View style={[styles.container, containerStyle, containerAnimatedStyle]}>
         <View style={styles.content}>
-          <Animated.View style={[styles.iconContainer, animatedIconStyle]}>
+          <Animated.View style={[styles.iconContainer, iconRotationStyle]}>
             <Ionicons
               color={enabled ? colors.tint : colors.interactiveSecondary}
               name="repeat"

@@ -1,13 +1,13 @@
-import React, { useMemo, memo } from 'react';
+import React, { useMemo, memo, useEffect } from 'react';
 import type { TextStyle } from 'react-native';
 import { View, Platform, StyleSheet } from 'react-native';
-import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
+import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { WordDisplayProps } from '@/types/ui/review.types';
-
 
 /**
  * Component to display a word with optimal styling and sizing
@@ -16,6 +16,17 @@ import type { WordDisplayProps } from '@/types/ui/review.types';
 const WordDisplay = memo(
   ({ word, fontSize = 24, style, translation }: WordDisplayProps) => {
     const colors = useColors();
+
+    // Use opacity animation hook for translation visibility
+    const { animatedStyle: translationAnimatedStyle, setOpacity } = useOpacityAnimation({
+      initialOpacity: translation ? 1 : 0,
+      duration: 300,
+    });
+
+    // Update opacity when translation changes
+    useEffect(() => {
+      setOpacity(translation ? 1 : 0);
+    }, [translation, setOpacity]);
 
     // Memoize the text style to prevent unnecessary re-renders
     // Use getArabicTextStyle as base and only override necessary properties
@@ -46,13 +57,6 @@ const WordDisplay = memo(
       [colors.arabicText, fontSize, colors.shadow]
     );
 
-    // Animated style for translation with smooth opacity transition
-    const translationAnimatedStyle = useAnimatedStyle(() => {
-      return {
-        opacity: withTiming(translation ? 1 : 0, { duration: 300 }),
-      };
-    }, [translation]);
-
     // Use a key based on the word to ensure React completely replaces the component
     // when the word changes, preventing any visual glitches during transitions
     return (
@@ -72,7 +76,7 @@ const WordDisplay = memo(
 
         {/* Fixed translation container - always reserves space */}
         <View style={styles.translationContainer}>
-          <Animated.View style={translationAnimatedStyle}>
+          <Animated.View style={translationAnimatedStyle as any}>
             <ThemedText skipDefaultColor colorName="englishText" style={styles.translationText}>
               {translation || ' '}
             </ThemedText>

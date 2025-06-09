@@ -9,7 +9,6 @@ type SentenceWordsMap = Map<number, SentenceWord[]>;
 
 interface ArticleSettings {
   fontScale: number;
-  showEnglish: boolean;
 }
 
 /**

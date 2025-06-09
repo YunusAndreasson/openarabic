@@ -8,9 +8,15 @@ interface ReviewHeaderProps {
   progress: number;
   maxProgress: number;
   animationKey: number;
+  onClose?: () => void;
 }
 
-const ReviewHeader: React.FC<ReviewHeaderProps> = ({ progress, maxProgress, animationKey }) => {
+const ReviewHeader: React.FC<ReviewHeaderProps> = ({
+  progress,
+  maxProgress,
+  animationKey,
+  onClose: _onClose,
+}) => {
   return (
     <View style={styles.header}>
       <View style={styles.progressContainer}>

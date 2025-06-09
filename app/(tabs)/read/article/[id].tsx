@@ -1,6 +1,6 @@
 import { useLocalSearchParams, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
+import React, { useMemo, useCallback, useEffect, useRef } from 'react';
 import type { ComponentRef, JSX } from 'react';
 import { View, AppState } from 'react-native';
 import type { TouchableOpacity } from 'react-native';
@@ -137,8 +137,6 @@ export default function ArticleScreen(): JSX.Element {
     handleRootPress
   );
 
-  const [showEnglishLocal, _setShowEnglishLocal] = useState(true);
-
   const renderWord = useCallback(
     (
       word: SentenceWord,
@@ -156,10 +154,7 @@ export default function ArticleScreen(): JSX.Element {
           word={word}
           wordRef={wordRef}
           settings={{
-            showEnglish: false,
             fontScale: settings.fontScale,
-            showTransliteration: false,
-            showWordType: false,
           }}
           onPress={() => {
             if (word.root) {
@@ -179,12 +174,10 @@ export default function ArticleScreen(): JSX.Element {
     (props: { item: Tables<'article_sentences'> }) => {
       const words = getWordsForSentence(props.item.id);
 
-      // Create stable settings object
+      // Create stable settings object - English is always shown
       const sentenceSettings = {
-        showEnglish: showEnglishLocal,
+        showEnglish: true,
         fontScale: settings.fontScale,
-        showTransliteration: false,
-        showWordType: false,
       };
 
       return (
@@ -209,7 +202,7 @@ export default function ArticleScreen(): JSX.Element {
         />
       );
     },
-    [getWordsForSentence, renderWord, showEnglishLocal, settings.fontScale, colors]
+    [getWordsForSentence, renderWord, settings.fontScale, colors]
   );
 
   return (
@@ -224,7 +217,6 @@ export default function ArticleScreen(): JSX.Element {
                 ref={articleContentRef}
                 article={article}
                 colors={colors}
-                englishToggleKey={showEnglishLocal ? 'en' : 'ar'}
                 handleScroll={handleScroll}
                 id={id}
                 isDarkMode={isDarkMode}

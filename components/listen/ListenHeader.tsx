@@ -8,9 +8,15 @@ interface ListenHeaderProps {
   progress: number;
   maxProgress: number;
   animationKey: number;
+  onClose?: () => void;
 }
 
-const ListenHeader: React.FC<ListenHeaderProps> = ({ progress, maxProgress, animationKey }) => {
+const ListenHeader: React.FC<ListenHeaderProps> = ({
+  progress,
+  maxProgress,
+  animationKey,
+  onClose: _onClose,
+}) => {
   return (
     <View style={styles.header}>
       <View style={styles.progressContainer}>

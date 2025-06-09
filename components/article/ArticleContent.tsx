@@ -237,7 +237,6 @@ interface ArticleContentProps {
   renderSentenceItem: ({ item }: { item: Tables<'article_sentences'> }) => React.ReactElement;
   handleScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   colors: ThemeColors;
-  englishToggleKey?: string;
   isDarkMode?: boolean;
 }
 
@@ -252,7 +251,6 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
       renderSentenceItem,
       handleScroll,
       colors,
-      englishToggleKey,
       isDarkMode,
     }: ArticleContentProps,
     ref
@@ -427,7 +425,7 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
               drawDistance={SENTENCE_ITEM_HEIGHT * 12} // Increased for better performance
               estimatedFirstItemOffset={0}
               estimatedItemSize={SENTENCE_ITEM_HEIGHT}
-              extraData={englishToggleKey}
+              extraData={''}
               getItemType={() => 'sentence'} // Add item type for better optimization
               initialScrollIndex={0}
               keyExtractor={item => item.id.toString()}
