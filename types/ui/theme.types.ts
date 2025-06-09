@@ -39,8 +39,10 @@ export interface ThemeColors {
   black: string;
   textOverlay: string;
   textShadowDark: string;
-  textShadowLight: string;
-  info: string;
+    textShadowLight: string;
+    info: string;
+
+    modalIndicator: string;
 
 
   backdropOverlay: string;
