@@ -383,7 +383,6 @@ export default function ArticlesScreen(): JSX.Element {
 
   return (
     <ThemedView
-      accessibilityLabel="Articles screen"
       includeBottomInset={false}
       safeAreaEdges={['left', 'right']}
       style={styles.container}

@@ -40,7 +40,6 @@ const LearningMethodScreen: React.FC = () => {
       />
 
       <ThemedView
-        accessibilityLabel="Why this learning method works"
         includeBottomInset={false}
         safeAreaEdges={['left', 'right']}
         style={styles.container}

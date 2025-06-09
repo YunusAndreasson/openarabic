@@ -249,9 +249,6 @@ const NowPlayingCard = ({
 
       {/* Main Content */}
       <TouchableOpacity
-        accessibilityHint="Tap to open full player"
-        accessibilityLabel={`Now playing: ${article.title} by ${article.author?.name || 'Unknown author'}`}
-        accessibilityRole="button"
         activeOpacity={0.8}
         style={styles.content}
         onPress={onPress}
@@ -306,9 +303,6 @@ const NowPlayingCard = ({
           {/* Stop Button */}
           <Animated.View style={buttonAnimatedStyle}>
             <TouchableOpacity
-              accessibilityHint="Stops the current audio"
-              accessibilityLabel="Stop playback"
-              accessibilityRole="button"
               activeOpacity={0.8}
               style={[styles.stopButton, dynamicStyles.stopButton]}
               onPress={handleStopPress}
@@ -320,7 +314,6 @@ const NowPlayingCard = ({
           {/* Timer Button */}
           {showTimerButton && (
             <TouchableOpacity
-              accessibilityLabel={timerAccessibilityLabel}
               activeOpacity={0.8}
               style={[styles.timerButton, dynamicStyles.timerButton]}
               onPress={onTimerPress}

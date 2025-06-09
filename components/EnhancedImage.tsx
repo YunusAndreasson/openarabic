@@ -70,8 +70,6 @@ function EnhancedImageInternal({
   return (
     <View style={[styles.container, { backgroundColor: colors.imagePlaceholder }, style]}>
       <Image
-        accessibilityLabel={alt}
-        accessible={!!alt}
         allowDownscaling={allowDownscaling}
         autoplay={autoplay}
         blurRadius={blurRadius}

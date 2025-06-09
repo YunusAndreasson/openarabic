@@ -24,7 +24,6 @@ export const CardHeader = memo(({ title, subtitle, onInfoPress }: CardHeaderProp
         </ThemedText>
       </View>
       <TouchableIcon
-        accessibilityLabel="More information"
         name="information-outline"
         size={18}
         style={styles.infoIcon}

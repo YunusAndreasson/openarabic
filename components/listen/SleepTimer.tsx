@@ -149,8 +149,6 @@ const SleepTimerComponent = ({
                 <TouchableOpacity
                   style={styles.closeButton}
                   onPress={onClose}
-                  accessibilityLabel="Close sleep timer"
-                  accessibilityRole="button"
                 >
                   <Ionicons name="close" size={24} color={colors.text} />
                 </TouchableOpacity>
@@ -181,9 +179,6 @@ const SleepTimerComponent = ({
                       {timerOptions.map(minutes => (
                         <ThemedButton
                           key={minutes}
-                          accessibilityLabel={`Set timer for ${minutes} minutes`}
-                          accessibilityRole="button"
-                          accessibilityState={{ selected: selectedMinutes === minutes }}
                           title={`${minutes} min`}
                           variant={selectedMinutes === minutes ? 'filled' : 'outlined'}
                           style={[

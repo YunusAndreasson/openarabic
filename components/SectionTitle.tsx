@@ -62,7 +62,6 @@ const SectionTitle: React.FC<SectionTitleProps> = ({
       </View>
       {onInfoPress && (
         <TouchableIcon
-          accessibilityLabel="More information"
           color={colors.tint}
           name="information-outline"
           size={LAYOUT.BUTTON.ICON_SIZE.SMALL}

@@ -59,9 +59,6 @@ const RightInputIcon = ({
   onPress?: (e: GestureResponderEvent) => void;
 }) => (
   <TouchableOpacity
-    accessibilityHint="Show or hide password text"
-    accessibilityLabel="Toggle password visibility"
-    accessibilityRole="button"
     hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
     style={styles.rightIcon}
     onPress={onPress}

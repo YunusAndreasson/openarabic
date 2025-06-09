@@ -23,8 +23,6 @@ interface ChartCanvasProps {
   dataPoints?: DataPoint[];
   enableTooltips?: boolean;
 
-  // Accessibility
-  accessibilityLabel?: string;
 }
 
 /**
@@ -38,7 +36,6 @@ export const ChartCanvas = memo(
     height = GRAPH_HEIGHT_LARGE,
     dataPoints = [],
     enableTooltips = true,
-    accessibilityLabel = 'Chart visualization',
   }: ChartCanvasProps) => {
     const graphWidth = useGraphWidth();
     const resolvedWidth = width ?? graphWidth;
@@ -46,9 +43,6 @@ export const ChartCanvas = memo(
 
     return (
       <View
-        accessibilityLabel={accessibilityLabel}
-        accessibilityRole="image"
-        accessible={true}
         style={[styles.container, { width: resolvedWidth, height }]}
       >
         {/* Main Chart Canvas */}
@@ -59,7 +53,6 @@ export const ChartCanvas = memo(
           dataPoints.map(point => (
             <DataPointOverlay
               key={`data-point-${point.label}-${point.value}`}
-              accessibilityLabel={`Data point: ${point.value} ${point.label}`}
               label={point.label}
               value={point.value}
               x={point.x}

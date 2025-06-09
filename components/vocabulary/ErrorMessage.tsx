@@ -35,15 +35,13 @@ const ErrorMessage = memo(
     };
 
     return (
-      <View accessibilityRole="alert" style={styles.messageContainer}>
+      <View style={styles.messageContainer}>
         <ThemedText
-          accessibilityLabel={`Error: ${customMessage}`}
           style={[styles.message, { color: colors.error }]}
         >
           {customMessage}
         </ThemedText>
         <ThemedButton
-          accessibilityLabel="Reload this screen"
           style={styles.retryButton}
           title="Refresh"
           onPress={handleRetry}

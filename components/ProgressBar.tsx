@@ -123,21 +123,11 @@ function ProgressBarComponent({
     [height, bgColor, style, animatedStyle, progressFillColor, fillStyle]
   );
 
-  // Use animated props for accessibility instead of accessing shared value directly
-  const animatedProps = useAnimatedProps(() => {
-    const accessibilityProgressValue = animatedProgress.value / 100;
-    return {
-      accessibilityValue: {
-        min: 0,
-        max: 100,
-        now: Math.round(accessibilityProgressValue),
-      },
-    };
-  });
+  // Animated props for progress value
+  const animatedProps = useAnimatedProps(() => ({}));
 
   return (
     <Animated.View
-      accessibilityRole="progressbar"
       animatedProps={animatedProps}
       style={styles.container as StyleProp<ViewStyle>}
     >

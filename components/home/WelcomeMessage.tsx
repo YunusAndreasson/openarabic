@@ -45,8 +45,6 @@ export const WelcomeMessage: React.FC = () => {
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        accessibilityHint="Opens Islamic calendar"
-        accessibilityLabel="View Islamic calendar"
         hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
         style={styles.dateContainer}
         onPress={handleCalendarPress}

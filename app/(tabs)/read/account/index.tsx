@@ -168,7 +168,6 @@ const AccountScreen: React.FC = () => {
 
   return (
     <ThemedView
-      accessibilityLabel="Account screen"
       includeBottomInset={false}
       safeAreaEdges={['left', 'right']}
       style={styles.container}

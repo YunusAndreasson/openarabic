@@ -45,7 +45,6 @@ const AuthScreen = memo(function AuthScreen(): JSX.Element {
           {/* Logo Section - Visual Hierarchy Level 1 */}
           <View style={styles.logoContainer}>
             <Image
-              accessibilityLabel="OpenArabic Logo"
               resizeMode="contain"
               source={require('@/assets/images/oaLogo.png')}
               style={styles.logo}
