@@ -4,6 +4,7 @@ import type { ColorValue } from 'react-native';
 
 import { useColors } from './useColors';
 import { useIsDarkMode } from './useThemeDetection';
+import { handleError } from '@/utils/errorHandling';
 
 /**
  * Centralized system UI theme management
@@ -22,7 +23,7 @@ export function useSystemUITheme() {
         await SystemUI.setBackgroundColorAsync(colors.background);
       } catch (error) {
         // Silently handle system UI errors - not critical for app functionality
-        console.warn('System UI background color update failed:', error);
+        handleError(error as Error, { showToast: false, captureSentry: false });
       }
     };
 
@@ -38,7 +39,7 @@ export async function getSystemUIBackgroundColor(): Promise<ColorValue | null> {
   try {
     return await SystemUI.getBackgroundColorAsync();
   } catch (error) {
-    console.warn('Failed to get system UI background color:', error);
+    handleError(error as Error, { showToast: false, captureSentry: false });
     return null;
   }
 }

@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { handleError } from '@/utils/errorHandling';
 
 export interface VocabularyStatsFromDB {
   totalWords: number;
@@ -53,7 +54,7 @@ export const vocabularyStatsService = {
         .single();
 
       if (error) {
-        console.error('Error fetching user stats:', error);
+        handleError(error as Error, { showToast: false });
         return null;
       }
 
@@ -66,7 +67,7 @@ export const vocabularyStatsService = {
         avgStability: data.avg_stability || 0,
       };
     } catch (error) {
-      console.error('Error fetching user stats:', error);
+      handleError(error as Error, { showToast: false });
       return null;
     }
   },
@@ -84,7 +85,7 @@ export const vocabularyStatsService = {
         .limit(days);
 
       if (error) {
-        console.error('Error fetching mastery progress:', error);
+        handleError(error as Error, { showToast: false });
         return [];
       }
 
@@ -98,7 +99,7 @@ export const vocabularyStatsService = {
             : 0,
       }));
     } catch (error) {
-      console.error('Error fetching mastery progress:', error);
+      handleError(error as Error, { showToast: false });
       return [];
     }
   },
@@ -116,7 +117,7 @@ export const vocabularyStatsService = {
         .limit(days);
 
       if (error) {
-        console.error('Error fetching efficiency progress:', error);
+        handleError(error as Error, { showToast: false });
         return [];
       }
 
@@ -126,7 +127,7 @@ export const vocabularyStatsService = {
         avgEfficiency: row.avg_efficiency || 0,
       }));
     } catch (error) {
-      console.error('Error fetching efficiency progress:', error);
+      handleError(error as Error, { showToast: false });
       return [];
     }
   },
@@ -143,7 +144,7 @@ export const vocabularyStatsService = {
         .order('forecast_date', { ascending: true });
 
       if (error) {
-        console.error('Error fetching retrievability forecast:', error);
+        handleError(error as Error, { showToast: false });
         return [];
       }
 
@@ -155,7 +156,7 @@ export const vocabularyStatsService = {
         urgentWords: row.urgent_words || 0,
       }));
     } catch (error) {
-      console.error('Error fetching retrievability forecast:', error);
+      handleError(error as Error, { showToast: false });
       return [];
     }
   },
@@ -172,7 +173,7 @@ export const vocabularyStatsService = {
         .single();
 
       if (error) {
-        console.error('Error fetching difficulty distribution:', error);
+        handleError(error as Error, { showToast: false });
         return null;
       }
 
@@ -186,7 +187,7 @@ export const vocabularyStatsService = {
         hardPercentage: data.hard_percentage || 0,
       };
     } catch (error) {
-      console.error('Error fetching difficulty distribution:', error);
+      handleError(error as Error, { showToast: false });
       return null;
     }
   },
@@ -225,7 +226,7 @@ export const vocabularyStatsService = {
         difficultyDistribution,
       };
     } catch (error) {
-      console.error('Error fetching all chart data:', error);
+      handleError(error as Error, { showToast: false });
       return {
         userStats: null,
         masteryProgress: [],

@@ -2,6 +2,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import { Colors } from '@/constants/Colors';
+import { handleError } from '@/utils/errorHandling';
 
 // Configure notification behavior
 Notifications.setNotificationHandler({
@@ -36,7 +37,10 @@ async function initialize(): Promise<boolean> {
     }
 
     if (finalStatus !== 'granted') {
-      console.warn('Notification permissions not granted');
+      handleError(new Error('Notification permissions not granted'), {
+        showToast: false,
+        captureSentry: false,
+      });
       return false;
     }
 
@@ -55,7 +59,7 @@ async function initialize(): Promise<boolean> {
     isInitialized = true;
     return true;
   } catch (error) {
-    console.error('Failed to initialize notifications:', error);
+    handleError(error as Error, { showToast: false });
     return false;
   }
 }
@@ -95,7 +99,7 @@ export async function scheduleReminder(reminderTime: ReminderTime): Promise<stri
 
     return identifier;
   } catch (error) {
-    console.error('Failed to schedule reminder:', error);
+    handleError(error as Error, { showToast: false });
     return null;
   }
 }
@@ -104,7 +108,7 @@ export async function cancelReminder(): Promise<void> {
   try {
     await Notifications.cancelAllScheduledNotificationsAsync();
   } catch (error) {
-    console.error('Failed to cancel reminders:', error);
+    handleError(error as Error, { showToast: false });
   }
 }
 
@@ -113,7 +117,7 @@ export async function hasPermissions(): Promise<boolean> {
     const { status } = await Notifications.getPermissionsAsync();
     return status === 'granted';
   } catch (error) {
-    console.error('Failed to check notification permissions:', error);
+    handleError(error as Error, { showToast: false });
     return false;
   }
 }

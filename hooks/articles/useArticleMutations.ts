@@ -73,7 +73,10 @@ export const useArticleMutations = (
           !errorMessage.includes('duplicate key value')
         ) {
           // Only log non-duplicate errors to console for debugging
-          console.warn('Failed to add to reading list:', errorMessage);
+          handleError(new Error(`Failed to add to reading list: ${errorMessage}`), {
+            showToast: false,
+            captureSentry: false,
+          });
         }
       },
     }),
@@ -95,7 +98,7 @@ export const useArticleMutations = (
       },
       onError: (error: Error) => {
         // Silently handle errors - no toast notifications for playlist actions
-        console.warn('Failed to remove from reading list:', error.message);
+        handleError(error, { showToast: false, captureSentry: false });
       },
     }),
     [queryClient, refetchReadingListStatus]

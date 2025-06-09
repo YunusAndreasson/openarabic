@@ -25,6 +25,7 @@ import { AuthProvider, ToastProvider } from '@/components/providers';
 import { Theme } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
+import { handleError } from '@/utils/errorHandling';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
@@ -128,7 +129,7 @@ function AppContent() {
           });
         } catch (err) {
           // Silently ignore analytics errors
-          console.warn('Analytics identify failed:', err);
+          handleError(err as Error, { showToast: false });
         }
       }
     };

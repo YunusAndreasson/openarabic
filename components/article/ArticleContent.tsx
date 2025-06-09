@@ -30,6 +30,7 @@ import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { lightFeedback } from '@/utils/haptics';
+import { handleError } from '@/utils/errorHandling';
 
 const styles = StyleSheet.create({
   content: {
@@ -144,7 +145,7 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
           showToast('Failed to start playback', 3000, 'error');
         }
       } catch (error) {
-        console.error('Play now error:', error);
+        handleError(error as Error, { showToast: false });
         showToast('Failed to start playback', 3000, 'error');
       } finally {
         setIsPlayNowLoading(false);
