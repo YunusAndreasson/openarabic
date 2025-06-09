@@ -1,1 +1,1 @@
-export { useReminders } from './useReminders';
+export * from './useReminders';
