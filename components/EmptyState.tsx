@@ -60,8 +60,6 @@ const EmptyState = memo(
 
     const defaultActionButton = !hideArticlesButton && (
       <ThemedButton
-        accessibilityLabel="Browse articles"
-        accessibilityRole="button"
         size="medium"
         style={styles.customActionButton}
         textWeight="bold"
@@ -77,7 +75,6 @@ const EmptyState = memo(
           {icon && (
             <View style={[styles.iconContainer, iconContainerStyle]}>
               <IconComponent
-                accessibilityLabel={`${title} illustration`}
                 color={colors?.tint}
                 name={iconName as any}
                 size={iconSize}

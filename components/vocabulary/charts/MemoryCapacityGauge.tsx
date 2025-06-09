@@ -239,9 +239,6 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
         <View style={styles.gaugeContainer}>
           {/* Info button in top right corner */}
           <TouchableOpacity
-            accessibilityHint="View detailed learning insights"
-            accessibilityLabel="View insights"
-            accessibilityRole="button"
             style={styles.infoButton}
             onPress={handleInsightsPress}
           >

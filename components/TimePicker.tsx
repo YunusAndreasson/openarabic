@@ -117,9 +117,6 @@ export const TimePicker = memo(
                 {title}
               </ThemedText>
               <TouchableOpacity
-                accessibilityHint="Cancel time selection and close dialog"
-                accessibilityLabel="Close time picker"
-                accessibilityRole="button"
                 style={styles.closeButton}
                 onPress={onClose}
               >

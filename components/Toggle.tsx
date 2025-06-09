@@ -113,10 +113,6 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
 
   return (
     <TouchableOpacity
-      accessibilityHint="Double tap to toggle"
-      accessibilityLabel={value ? 'Toggle is on' : 'Toggle is off'}
-      accessibilityRole="switch"
-      accessibilityState={{ checked: value }}
       activeOpacity={1}
       style={{
         minWidth: MIN_TOUCH_TARGET.SIZE,

@@ -459,7 +459,6 @@ export default function ListenScreen(): JSX.Element {
 
   return (
     <ThemedView
-      accessibilityLabel="Listen screen"
       includeBottomInset={false}
       safeAreaEdges={['left', 'right']}
       style={styles.container}

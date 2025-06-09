@@ -38,7 +38,6 @@ const ClassicalTextsScreen: React.FC = () => {
       />
 
       <ThemedView
-        accessibilityLabel="Why classical texts screen"
         includeBottomInset={false}
         safeAreaEdges={['left', 'right']}
         style={styles.container}

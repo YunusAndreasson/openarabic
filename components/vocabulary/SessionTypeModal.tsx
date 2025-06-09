@@ -145,7 +145,6 @@ const SessionTypeModal = memo(
                 <TouchableOpacity
                   style={[styles.optionCard, { backgroundColor: colors.card }]}
                   onPress={() => handleOptionPress(onStartVisual)}
-                  accessibilityLabel="Start visual session"
                 >
                   <View style={[styles.iconContainer, { backgroundColor: colors.tint + '15' }]}>
                     <Ionicons name="eye" size={24} color={colors.tint} />
@@ -168,7 +167,6 @@ const SessionTypeModal = memo(
                 <TouchableOpacity
                   style={[styles.optionCard, { backgroundColor: colors.card }]}
                   onPress={() => handleOptionPress(onStartAudio)}
-                  accessibilityLabel="Start audio session"
                 >
                   <View style={[styles.iconContainer, { backgroundColor: colors.tint + '15' }]}>
                     <Ionicons name="headset" size={24} color={colors.tint} />

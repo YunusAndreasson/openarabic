@@ -208,7 +208,6 @@ export const EfficiencyChart = memo(
         <View style={{ position: 'relative' }}>
           <View style={{ marginLeft: Y_AXIS_WIDTH }}>
             <ChartCanvas
-              accessibilityLabel="Learning efficiency chart showing progress over the past 7 days"
               dataPoints={dataPoints}
               enableTooltips={true}
             >

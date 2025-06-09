@@ -174,13 +174,6 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
           size="medium"
           loading={isPlayNowLoading}
           disabled={(!hasAudio && !isCurrentlyPlaying) || isPlayNowLoading}
-          accessibilityLabel={
-            isCurrentlyPlaying
-              ? 'Stop audio playback'
-              : hasAudio
-                ? 'Play article audio now'
-                : 'Audio not available'
-          }
           onPress={handlePlayToggle}
           style={styles.playNowButton}
         />
@@ -192,9 +185,6 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
           size="medium"
           loading={isLoading}
           disabled={isLoading}
-          accessibilityLabel={
-            isInReadingList ? 'Remove from listening list' : 'Add to listening list'
-          }
           onPress={handleListenLater}
           style={styles.listenLaterButton}
         />
@@ -226,14 +216,12 @@ const ArticleSummary = React.memo<ArticleSummaryProps>(({ summary }) => {
           type="label"
           variant="secondary"
           style={styles.summaryLabel}
-          accessibilityLabel="Article summary"
         >
           Summary
         </ThemedText>
         <ThemedText
           type="body"
           style={styles.summaryText}
-          accessibilityLabel={`Article overview: ${summary}`}
         >
           {summary}
         </ThemedText>

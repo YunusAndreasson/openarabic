@@ -23,10 +23,9 @@ const ErrorState = memo(({ message, onRetry }: ErrorStateProps) => {
   }, []);
 
   return (
-    <View accessibilityRole="alert" style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.textContainer}>
         <ThemedText
-          accessibilityLabel={`Error: ${message}`}
           align="center"
           type="body"
           variant="error"
@@ -37,7 +36,6 @@ const ErrorState = memo(({ message, onRetry }: ErrorStateProps) => {
       {onRetry ? (
         <View style={styles.buttonContainer}>
           <ThemedButton
-            accessibilityLabel="Attempt to reload content"
             title="Refresh"
             variant="filled"
             onPress={onRetry}

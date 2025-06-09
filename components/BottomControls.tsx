@@ -89,9 +89,6 @@ const BottomControls = memo<BottomControlsProps>(
           {hasTimerButton && (
             <View style={styles.timerContainer}>
               <TouchableOpacity
-                accessibilityLabel={timerAccessibilityLabel || 'Sleep timer'}
-                accessibilityRole="button"
-                accessibilityState={{ selected: isTimerActive }}
                 activeOpacity={LAYOUT.OPACITY.PRESSED}
                 style={[
                   styles.timerButton,
@@ -132,7 +129,6 @@ const BottomControls = memo<BottomControlsProps>(
             {hasSecondaryButton && (
               <View style={styles.buttonContainer}>
                 <ThemedButton
-                  accessibilityLabel={secondaryAccessibilityLabel || (secondaryLabel as string)}
                   disabled={secondaryDisabled}
                   title={secondaryLabel as string}
                   variant={secondaryVariant}
@@ -153,7 +149,6 @@ const BottomControls = memo<BottomControlsProps>(
               style={hasSecondaryButton ? styles.buttonContainer : styles.fullWidthButtonContainer}
             >
               <ThemedButton
-                accessibilityLabel={primaryAccessibilityLabel || primaryLabel}
                 disabled={primaryDisabled}
                 disablePressAnimation={primaryDisablePressAnimation}
                 style={styles.button}

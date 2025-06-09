@@ -106,7 +106,6 @@ export default function VocabularyScreen(): JSX.Element {
   // Main content
   return (
     <ThemedView
-      accessibilityLabel="Vocabulary screen"
       includeBottomInset={false}
       safeAreaEdges={['left', 'right']}
       style={styles.container}

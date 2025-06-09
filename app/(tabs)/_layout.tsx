@@ -172,8 +172,6 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
         return (
           <PlatformPressable
             key={route.key}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: isFocused }}
             android_ripple={{ color: rippleColor, borderless: true }}
             style={styles.tabButton}
             onPress={getTabPressHandler(route, isFocused)}

@@ -56,10 +56,6 @@ const RepeatButton: React.FC<RepeatButtonProps> = ({ enabled, onToggle }) => {
 
   return (
     <TouchableOpacity
-      accessibilityHint="Toggles whether audio loops continuously"
-      accessibilityLabel={enabled ? 'Turn off repeat mode' : 'Turn on repeat mode'}
-      accessibilityRole="button"
-      accessibilityState={{ selected: enabled }}
       style={styles.touchable}
       onPress={handlePress}
     >

@@ -24,8 +24,6 @@ interface TouchableIconProps {
   touchSize?: 'large' | 'medium' | 'small';
   /** Whether to use haptic feedback */
   hapticFeedback?: boolean;
-  /** Accessibility label */
-  accessibilityLabel?: string;
   /** Hit slop override */
   hitSlop?: { top: number; right: number; bottom: number; left: number };
 }
@@ -40,7 +38,6 @@ const TouchableIcon: React.FC<TouchableIconProps> = memo(
     style,
     touchSize = 'medium',
     hapticFeedback = true,
-    accessibilityLabel,
     hitSlop,
   }) => {
     const colors = useColors();
@@ -75,9 +72,6 @@ const TouchableIcon: React.FC<TouchableIconProps> = memo(
 
     return (
       <TouchableOpacity
-        accessibilityLabel={accessibilityLabel}
-        accessibilityRole="button"
-        accessibilityState={{ disabled }}
         activeOpacity={LAYOUT.OPACITY.PRESSED}
         disabled={disabled}
         hitSlop={hitSlop || defaultHitSlop}

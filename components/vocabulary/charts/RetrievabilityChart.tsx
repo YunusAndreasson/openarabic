@@ -221,7 +221,6 @@ export const RetrievabilityChart = memo(
             <ChartCanvas
               dataPoints={dataPoints}
               enableTooltips={true}
-              accessibilityLabel="Memory retention forecast showing expected retention over the next 7 days"
             >
               {/* Subtle grid lines for better visual structure */}
               <ChartGrid width={graphWidth} height={GRAPH_HEIGHT_LARGE} gridLines={4} />

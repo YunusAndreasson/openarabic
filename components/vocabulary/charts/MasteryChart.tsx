@@ -232,7 +232,6 @@ export const MasteryChart = memo(
         <View style={{ position: 'relative' }}>
           <View style={{ marginLeft: Y_AXIS_WIDTH }}>
             <ChartCanvas
-              accessibilityLabel="Mastery progression chart showing learning progress over the past 7 days"
               dataPoints={dataPoints}
               enableTooltips={true}
             >

@@ -26,8 +26,6 @@ const HeaderProfile = memo(({ size = 28 }: HeaderProfileProps) => {
   return (
     <View style={styles.container}>
       <Pressable
-        accessibilityLabel="Account settings"
-        accessibilityRole="button"
         onPress={handlePress}
         style={styles.profileButton}
       >

@@ -147,8 +147,6 @@ export const VocabularyStatCards = memo(
         {categories.map(config => (
           <TouchableOpacity
             key={config.category}
-            accessibilityLabel={`Practice ${config.value} ${config.category === 'due' ? 'due' : config.category === 'total' ? '' : config.category} words`}
-            accessibilityRole="button"
             activeOpacity={0.7}
             style={[styles.categoryCard, { backgroundColor: config.bgColor }]}
             onPress={onStartReview}

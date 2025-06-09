@@ -55,11 +55,10 @@ interface DataPointOverlayProps {
   value: string;
   label: string;
   onPress: (x: number, y: number, value: string, label: string) => void;
-  accessibilityLabel?: string;
 }
 
 export const DataPointOverlay = memo<DataPointOverlayProps>(
-  ({ x, y, value, label, onPress, accessibilityLabel }) => {
+  ({ x, y, value, label, onPress }) => {
     const handlePress = useCallback(() => {
       onPress(x, y, value, label);
     }, [x, y, value, label, onPress]);
@@ -69,8 +68,6 @@ export const DataPointOverlay = memo<DataPointOverlayProps>(
 
     return (
       <TouchableOpacity
-        accessibilityLabel={accessibilityLabel || `Data point: ${value} ${label}`}
-        accessibilityRole="button"
         style={{
           position: 'absolute',
           left: x - offset,
