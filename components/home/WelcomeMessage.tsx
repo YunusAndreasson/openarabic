@@ -7,22 +7,7 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-
-// Hijri month names
-const HIJRI_MONTHS = [
-  'Muharram',
-  'Safar',
-  "Rabi' al-Awwal",
-  "Rabi' al-Thani",
-  'Jumada al-Awwal',
-  'Jumada al-Thani',
-  'Rajab',
-  "Sha'ban",
-  'Ramadan',
-  'Shawwal',
-  "Dhu al-Qi'dah",
-  'Dhu al-Hijjah',
-];
+import { HIJRI_MONTHS } from '@/constants/hijri';
 
 export const WelcomeMessage: React.FC = () => {
   const colors = useColors();

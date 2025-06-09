@@ -6,6 +6,7 @@ export const AUDIO_STATES = {
   LOADING: 'loading',
   PLAYING: 'playing',
   PAUSED: 'paused',
+  STOPPED: 'stopped',
   ERROR: 'error',
 } as const;
 
