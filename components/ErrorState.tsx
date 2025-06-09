@@ -25,21 +25,13 @@ const ErrorState = memo(({ message, onRetry }: ErrorStateProps) => {
   return (
     <View style={styles.container}>
       <View style={styles.textContainer}>
-        <ThemedText
-          align="center"
-          type="body"
-          variant="error"
-        >
+        <ThemedText align="center" type="body" variant="error">
           {message}
         </ThemedText>
       </View>
       {onRetry ? (
         <View style={styles.buttonContainer}>
-          <ThemedButton
-            title="Refresh"
-            variant="filled"
-            onPress={onRetry}
-          />
+          <ThemedButton title="Refresh" variant="filled" onPress={onRetry} />
         </View>
       ) : null}
     </View>

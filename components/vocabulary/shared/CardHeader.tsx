@@ -1,7 +1,6 @@
 import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-
 import { ThemedText } from '@/components/ThemedText';
 import TouchableIcon from '@/components/TouchableIcon';
 import { LAYOUT } from '@/constants/layout';
@@ -41,12 +40,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   cardSubtitle: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
     marginBottom: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.TINY,
+    marginTop: LAYOUT.SPACING.MEDIUM,
   },
   cardTitle: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.2,

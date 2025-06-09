@@ -298,13 +298,13 @@ const styles = StyleSheet.create({
 
   // Section Styles
   section: {
-    marginBottom: LAYOUT.SPACING.XLARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   sectionTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.1,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4,
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   bodyText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.05,
@@ -428,14 +428,14 @@ const styles = StyleSheet.create({
   // Custom Header Styles
   customHeader: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.XLARGE,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.LARGE,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
   },
   customHeaderTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.2,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.3,
-    marginBottom: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
 });
 

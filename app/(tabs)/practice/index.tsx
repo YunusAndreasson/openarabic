@@ -128,7 +128,7 @@ export default function VocabularyScreen(): JSX.Element {
         )}
 
         {/* PRIMARY SECTION: Learning Overview */}
-        <View style={{ marginTop: LAYOUT.SPACING.SMALL }}>
+        <View style={{ marginTop: LAYOUT.SPACING.MEDIUM }}>
           <VocabularyStatCards
             dueWords={dueWords}
             learningWords={userStats?.learningWords ?? 0}

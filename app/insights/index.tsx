@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.LARGE,
   },
   chartSection: {
-    marginBottom: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   errorContainer: {
     alignItems: 'center',

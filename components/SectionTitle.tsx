@@ -42,7 +42,7 @@ const SectionTitle: React.FC<SectionTitleProps> = ({
     () => ({
       lineHeight:
         LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
-      marginTop: LAYOUT.SPACING.TINY,
+      marginTop: LAYOUT.SPACING.MEDIUM,
       letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
     }),
     []
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: LAYOUT.SPACING.SECTION_INTERNAL,
-    marginTop: LAYOUT.SPACING.XXLARGE,
+    marginTop: LAYOUT.SPACING.MEDIUM,
   },
   firstSection: {
     marginTop: LAYOUT.SPACING.XLARGE,

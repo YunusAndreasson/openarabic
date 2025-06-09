@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
   },
   bottomSection: {
     alignItems: 'center',
-    marginTop: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   statusBadge: {
@@ -466,12 +466,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: LAYOUT.SPACING.TINY,
+    marginTop: LAYOUT.SPACING.MEDIUM,
   },
   readinessText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '500',
-    marginBottom: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
     textAlign: 'center',
   },
   tapHint: {

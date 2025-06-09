@@ -452,7 +452,7 @@ export default function ListenScreen(): JSX.Element {
     return (
       <ThemedView style={styles.loadingContainer}>
         <ActivityIndicator color={colors.tint} size="large" />
-        <ThemedText style={{ marginTop: LAYOUT.SPACING.SMALL }}>Loading your playlist</ThemedText>
+        <ThemedText style={{ marginTop: LAYOUT.SPACING.MEDIUM }}>Loading your playlist</ThemedText>
       </ThemedView>
     );
   }
@@ -507,7 +507,7 @@ export default function ListenScreen(): JSX.Element {
                   currentSort={currentSort}
                   options={sortOptions}
                   sortDirection={sortDirection}
-                  style={{ marginTop: LAYOUT.SPACING.SMALL, marginBottom: LAYOUT.SPACING.MEDIUM }}
+                  style={{ marginTop: LAYOUT.SPACING.MEDIUM, marginBottom: LAYOUT.SPACING.MEDIUM }}
                   onSortChange={handleSortChange}
                 />
               </View>

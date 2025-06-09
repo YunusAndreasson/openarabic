@@ -291,12 +291,12 @@ const styles = StyleSheet.create({
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE + LAYOUT.SPACING.TINY / 2,
   },
   section: {
-    marginBottom: LAYOUT.SPACING.XLARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   iconContainer: {
     width: MIN_TOUCH_TARGET.SIZE - LAYOUT.SPACING.SMALL,
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   },
   sectionDivider: {
     height: LAYOUT.BORDER.WIDTH.NORMAL,
-    marginTop: LAYOUT.SPACING.XLARGE,
+    marginTop: LAYOUT.SPACING.MEDIUM,
     opacity: LAYOUT.OPACITY.SUBTLE - 0.1,
   },
   tipsContainer: {
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
   },
   tipsTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + LAYOUT.SPACING.TINY / 2,
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   tipItem: {
     flexDirection: 'row',

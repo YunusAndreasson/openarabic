@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
   },
 
   primaryInfo: {
-    marginBottom: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
 
   progressBar: {
@@ -432,7 +432,7 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '600',
     letterSpacing: -0.2,
-    marginBottom: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
 });
 

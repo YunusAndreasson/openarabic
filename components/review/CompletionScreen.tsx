@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   doneButton: {
-    marginTop: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.MEDIUM,
     minWidth: 150,
     paddingVertical: LAYOUT.SPACING.SMALL,
   },
@@ -350,8 +350,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   metricsContainer: {
-    gap: LAYOUT.SPACING.SMALL,
-    marginTop: LAYOUT.SPACING.LARGE,
+    gap: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.MEDIUM,
     width: '100%',
   },
   subtitleText: {

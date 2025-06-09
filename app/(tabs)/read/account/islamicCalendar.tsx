@@ -435,10 +435,10 @@ const styles = StyleSheet.create({
     marginRight: LAYOUT.SPACING.MEDIUM,
   },
   eventsSection: {
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   headerCard: {
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   headerContent: {
     alignItems: 'center',

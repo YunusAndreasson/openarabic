@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     flexShrink: 1,
-    marginBottom: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
     maxWidth: '45%',
   },
   legendLine: {
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: LAYOUT.SPACING.SMALL,
+    marginTop: LAYOUT.SPACING.MEDIUM,
     minHeight: 40,
     paddingTop: LAYOUT.SPACING.MEDIUM,
   },

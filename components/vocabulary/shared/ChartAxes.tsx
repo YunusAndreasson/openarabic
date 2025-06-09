@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
   },
   xAxisContainer: {
     height: 24, // Reduced container height for better proportions
-    marginBottom: LAYOUT.SPACING.TINY + LAYOUT.SPACING.TINY / 2, // 6px
+    marginBottom: LAYOUT.SPACING.MEDIUM,
     position: 'absolute',
   },
   xLabel: {

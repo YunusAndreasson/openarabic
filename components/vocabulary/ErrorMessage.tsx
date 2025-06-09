@@ -2,7 +2,6 @@ import { useRouter } from 'expo-router';
 import React, { memo } from 'react';
 import { View, StyleSheet } from 'react-native';
 
-
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
@@ -36,16 +35,8 @@ const ErrorMessage = memo(
 
     return (
       <View style={styles.messageContainer}>
-        <ThemedText
-          style={[styles.message, { color: colors.error }]}
-        >
-          {customMessage}
-        </ThemedText>
-        <ThemedButton
-          style={styles.retryButton}
-          title="Refresh"
-          onPress={handleRetry}
-        />
+        <ThemedText style={[styles.message, { color: colors.error }]}>{customMessage}</ThemedText>
+        <ThemedButton style={styles.retryButton} title="Refresh" onPress={handleRetry} />
       </View>
     );
   }
@@ -60,10 +51,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    marginTop: LAYOUT.SPACING.XLARGE,
+    marginTop: LAYOUT.SPACING.MEDIUM,
   },
   retryButton: {
-    marginTop: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.MEDIUM,
   },
 });
 

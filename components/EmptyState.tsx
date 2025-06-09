@@ -127,7 +127,7 @@ const EmptyState = memo(
 
 const styles = StyleSheet.create({
   actionArea: {
-    marginTop: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.MEDIUM,
     width: '100%',
   },
   actionButton: {
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: LAYOUT.BUTTON.HEIGHT.LARGE * 2,
     justifyContent: 'center',
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
     width: LAYOUT.BUTTON.HEIGHT.LARGE * 2,
   },
   submessage: {
