@@ -403,9 +403,9 @@ const styles = StyleSheet.create({
   stopButton: {
     alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    height: 48,
+    height: LAYOUT.BUTTON.HEIGHT.LARGE,
     justifyContent: 'center',
-    width: 48,
+    width: LAYOUT.BUTTON.HEIGHT.LARGE,
   },
 
   textContent: {
