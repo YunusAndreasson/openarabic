@@ -12,8 +12,8 @@ import type { Article } from '@/types/articles.types';
 
 export type FilterSortOption = 'title' | 'author';
 
-// Define sort options for filtered articles - same as listen screen
-const createFilterSortOptions = (): SortOption<FilterSortOption>[] => [
+// Static sort options for filtered articles
+const FILTER_SORT_OPTIONS: SortOption<FilterSortOption>[] = [
   { key: 'title', label: 'Title' },
   { key: 'author', label: 'Author' },
 ];
@@ -104,8 +104,8 @@ export default function FilterScreen(): JSX.Element {
     setSortDirection(direction);
   }, []);
 
-  // Memoized sort options
-  const sortOptions = useMemo(() => createFilterSortOptions(), []);
+  // Use constant sort options
+  const sortOptions = FILTER_SORT_OPTIONS;
 
   // Show error for invalid parameters first
   if (hasInvalidParams) {
