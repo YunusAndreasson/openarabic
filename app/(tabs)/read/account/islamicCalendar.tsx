@@ -9,6 +9,7 @@ import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
+import { HIJRI_MONTHS } from '@/constants/hijri';
 import { useColors } from '@/hooks/theme/useColors';
 
 interface IslamicEvent {
@@ -51,21 +52,6 @@ const ISLAMIC_EVENTS: IslamicEvent[] = [
   { name: 'Day of Arafah', arabicName: 'يوم عرفة', month: 12, day: 9 },
   { name: 'Eid al-Adha', arabicName: 'عيد الأضحى', month: 12, day: 10 },
   { name: 'White Days', arabicName: 'الأيام البيض', month: 12, day: 13, duration: 3 },
-];
-
-const HIJRI_MONTHS = [
-  'Muharram',
-  'Safar',
-  "Rabi' al-Awwal",
-  "Rabi' al-Thani",
-  'Jumada al-Awwal',
-  'Jumada al-Thani',
-  'Rajab',
-  "Sha'ban",
-  'Ramadan',
-  'Shawwal',
-  "Dhu al-Qi'dah",
-  'Dhu al-Hijjah',
 ];
 
 interface EventWithDate extends IslamicEvent {

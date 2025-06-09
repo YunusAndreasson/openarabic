@@ -8,18 +8,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import type { EnhancedAudioTrack } from '../../types/audio.types';
 import { handleError } from '../../utils/errorHandling';
-
-// Audio states for compatibility
-export const AUDIO_STATES = {
-  IDLE: 'idle',
-  LOADING: 'loading',
-  PLAYING: 'playing',
-  PAUSED: 'paused',
-  STOPPED: 'stopped',
-  ERROR: 'error',
-} as const;
-
-type AudioState = (typeof AUDIO_STATES)[keyof typeof AUDIO_STATES];
+import { AUDIO_STATES, type AudioState } from '@/constants/audio';
 
 /**
  * Enhanced audio player interface
