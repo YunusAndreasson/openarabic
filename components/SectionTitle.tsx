@@ -16,12 +16,6 @@ interface SectionTitleProps {
   isFirstSection?: boolean;
 }
 
-/**
- * A minimal, refined section title component with sophisticated typography colors
- * Clean typography with perfectly balanced spacing and enhanced micro-typography
- * Now uses dedicated heading and subtitle colors for maximum polish and hierarchy
- * Supports optional subtitle and info button for enhanced sections
- */
 const SectionTitle: React.FC<SectionTitleProps> = ({
   title,
   subtitle,
@@ -31,8 +25,6 @@ const SectionTitle: React.FC<SectionTitleProps> = ({
 }) => {
   const colors = useColors();
 
-  // Enhanced styles with sophisticated typography and micro-typography
-  // Let ThemedText handle colors through colorName prop
   const titleStyle = React.useMemo(
     () => ({
       marginBottom: 0,

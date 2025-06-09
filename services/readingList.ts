@@ -3,7 +3,7 @@ import { handleError } from '@/utils/errorHandling';
 
 import { supabase, checkAuthentication } from './supabase';
 
-// Define shared types to improve type safety
+
 type ReadingListItem = {
   user_id: string;
   article_id: number;
@@ -16,7 +16,7 @@ type ReadingListItem = {
   };
 };
 
-// Shared error handling configuration
+
 const errorConfig = {
   readingList: {
     load: {
@@ -51,7 +51,7 @@ export const readingListService = {
    */
   async addToReadingList(userId: string, articleId: number): Promise<void> {
     await checkAuthentication(userId);
-    // First check if the article is already in the reading list
+
     const { data, error: checkError } = await supabase
       .from('reading_list')
       .select('article_id')
@@ -64,7 +64,7 @@ export const readingListService = {
       throw checkError;
     }
 
-    // If article already exists, do nothing
+
     if (data) {
       return;
     }
@@ -72,7 +72,7 @@ export const readingListService = {
     const { error } = await supabase.from('reading_list').insert({
       user_id: userId,
       article_id: articleId,
-      // The added_at field has a default value in the database (now())
+
     });
 
     if (error) {

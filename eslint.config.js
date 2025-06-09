@@ -19,7 +19,7 @@ export default [
   ...compat.extends('plugin:import/errors'),
   ...compat.extends('plugin:import/warnings'),
   ...compat.extends('eslint-config-expo'),
-  // TypeScript-specific configuration
+
   {
     files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
@@ -38,7 +38,7 @@ export default [
     rules: {
       ...typescriptPlugin.configs.recommended.rules,
       '@typescript-eslint/no-unnecessary-type-assertion': 'warn',
-      '@typescript-eslint/no-unused-vars': 'off', // Turned off in favor of unused-imports plugin
+      '@typescript-eslint/no-unused-vars': 'off',
       'unused-imports/no-unused-imports': 'error',
       'unused-imports/no-unused-vars': [
         'error',
@@ -54,8 +54,8 @@ export default [
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-non-null-assertion': 'warn',
       '@typescript-eslint/consistent-type-imports': 'error',
-      'no-unused-vars': 'off', // Turn off base rule as it can conflict with @typescript-eslint version
-      'react/prop-types': 'off', // TypeScript provides compile-time type checking,
+      'no-unused-vars': 'off',
+      'react/prop-types': 'off',
     },
   },
   {
@@ -79,7 +79,7 @@ export default [
           argsIgnorePattern: '^_',
         },
       ],
-      // Disable TypeScript-specific rules that require type information for JS files
+
       '@typescript-eslint/no-unnecessary-type-assertion': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
@@ -106,7 +106,7 @@ export default [
       'unused-imports': unusedImportsPlugin,
     },
     rules: {
-      'no-unused-vars': 'off', // Turned off in favor of unused-imports plugin
+      'no-unused-vars': 'off',
       'unused-imports/no-unused-imports': 'error',
       'unused-imports/no-unused-vars': [
         'error',

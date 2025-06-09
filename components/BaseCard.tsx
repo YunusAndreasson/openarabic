@@ -8,12 +8,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { BaseCardProps } from '@/types/ui/card.types';
 
-/**
- * BaseCard is the foundation component for all card-type UI elements
- * in the application. It handles border radius, shadows, press animations, and loading states.
- */
 
-// Disable prop-types validation since we're using TypeScript types
 
 const BaseCard: React.FC<BaseCardProps> = memo(
   ({
@@ -31,19 +26,19 @@ const BaseCard: React.FC<BaseCardProps> = memo(
     const colors = useColors();
     const isDarkMode = useIsDarkMode();
 
-    // Use press animation hook for smooth press feedback
+
     const { handlePressIn, handlePressOut } = usePressAnimation();
 
-    // Memoize both shadow and border styles together for better performance
+
     const baseStyles = useMemo(() => {
-      // Get shadow properties from LAYOUT constants
+
       let calculatedShadow = {};
 
       if (shadowSize !== 'none') {
         const baseShadow = {
           shadowColor: colors.shadow,
           ...LAYOUT.SHADOW.MEDIUM,
-          elevation: isDarkMode ? 0 : 4, // Increased elevation in light mode for better visibility
+          elevation: isDarkMode ? 0 : 4,
         };
 
         switch (shadowSize) {
@@ -51,14 +46,14 @@ const BaseCard: React.FC<BaseCardProps> = memo(
             calculatedShadow = {
               ...baseShadow,
               ...LAYOUT.SHADOW.SMALL,
-              elevation: isDarkMode ? 0 : 2, // Increased from 1
+              elevation: isDarkMode ? 0 : 2,
             };
             break;
           case 'large':
             calculatedShadow = {
               ...baseShadow,
               ...LAYOUT.SHADOW.LARGE,
-              elevation: isDarkMode ? 0 : 6, // Increased from 5
+              elevation: isDarkMode ? 0 : 6,
             };
             break;
           default:
@@ -74,16 +69,16 @@ const BaseCard: React.FC<BaseCardProps> = memo(
       };
     }, [colors.shadow, colors.cardBorder, colors.card, isDarkMode, shadowSize]);
 
-    // Combined card style with stable reference
+
     const combinedCardStyle = useMemo(
       () => [styles.card, baseStyles.background, baseStyles.shadow, style],
       [baseStyles, style]
     );
 
-    // Combine content style with stable reference
+
     const combinedContentStyle = useMemo(() => [styles.content, contentStyle], [contentStyle]);
 
-    // Render loading state if needed
+
     if (isLoading) {
       return (
         <View style={combinedCardStyle} testID={testID}>
@@ -92,7 +87,7 @@ const BaseCard: React.FC<BaseCardProps> = memo(
       );
     }
 
-    // Non-interactive card
+
     if (!onPress) {
       return (
         <View style={combinedCardStyle} testID={testID}>
@@ -101,7 +96,7 @@ const BaseCard: React.FC<BaseCardProps> = memo(
       );
     }
 
-    // Interactive card with press handling
+
     return (
       <Pressable
         disabled={disabled}
@@ -139,13 +134,13 @@ const styles = StyleSheet.create({
     zIndex: LAYOUT.Z_INDEX.BASE,
     ...Platform.select({
       android: {
-        minHeight: 1, // Prevent content collapse on Android
+        minHeight: 1,
       },
     }),
   },
 });
 
-// Add display name for better debugging
+
 BaseCard.displayName = 'BaseCard';
 
 export default BaseCard;

@@ -14,11 +14,11 @@ export interface ThemeColors {
   arabicText: string;
   authorText: string;
 
-  // Enhanced typography-specific colors for sophisticated text relationships
-  headingText: string; // Primary heading color - rich and commanding
-  subtitleText: string; // Sophisticated subtitle balance between primary and secondary
-  metadataText: string; // Refined metadata color - perfect hierarchy balance
-  captionText: string; // Enhanced caption color for optimal readability
+
+  headingText: string;
+  subtitleText: string;
+  metadataText: string;
+  captionText: string;
 
   tint: string;
   tabIconDefault: string;
@@ -42,10 +42,10 @@ export interface ThemeColors {
   textShadowLight: string;
   info: string;
 
-  // Enhanced theme-aware colors
+
   backdropOverlay: string;
 
-  // Article reading specific colors
+
   audioHighlight: string;
   audioHighlightBorder: string;
   wordTooltipBg: string;
@@ -55,12 +55,12 @@ export interface ThemeColors {
   wordSelectionUnderline: string;
   wordDueUnderline: string;
 
-  // Navigation branding colors
+
   navigationRipple: string;
   headerOverlay: string;
   tabBarOverlay: string;
 
-  // Semantic UI colors for better UX
+
   progressIndicator: string;
   progressBackground: string;
   interactiveSecondary: string;

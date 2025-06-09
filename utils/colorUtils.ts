@@ -9,33 +9,33 @@
  * @returns RGB color components as a string "r,g,b"
  */
 function hexToRgb(hex: string): string {
-  // Validate input
+
   if (!hex || typeof hex !== 'string') {
-    return '0,0,0'; // Return black as fallback
+    return '0,0,0';
   }
 
-  // Remove the hash if it exists
+
   hex = hex.replace(/^#/, '');
 
-  // Handle shorthand hex (e.g., #F50)
+
   if (hex.length === 3) {
     const [h1 = '0', h2 = '0', h3 = '0'] = hex;
     hex = h1 + h1 + h2 + h2 + h3 + h3;
   }
 
-  // Validate hex format
+
   if (!/^[\dA-Fa-f]{6}$/.test(hex)) {
-    return '0,0,0'; // Return black as fallback
+    return '0,0,0';
   }
 
-  // Parse the hex values
+
   const r = parseInt(hex.substring(0, 2), 16);
   const g = parseInt(hex.substring(2, 4), 16);
   const b = parseInt(hex.substring(4, 6), 16);
 
-  // Validate parsed values
+
   if (isNaN(r) || isNaN(g) || isNaN(b)) {
-    return '0,0,0'; // Return black as fallback
+    return '0,0,0';
   }
 
   return `${r},${g},${b}`;
@@ -49,7 +49,7 @@ function hexToRgb(hex: string): string {
  * @returns RGBA color string (e.g., "rgba(255,85,0,0.5)")
  */
 export function withOpacity(hex: string, opacity: number): string {
-  // Validate opacity
+
   const validOpacity = Math.max(0, Math.min(1, opacity));
   return `rgba(${hexToRgb(hex)},${validOpacity})`;
 }

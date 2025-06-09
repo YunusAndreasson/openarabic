@@ -14,12 +14,12 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
   const isDarkMode = useIsDarkMode();
   const isMounted = useRef(false);
 
-  // Memoize dimensions to prevent recalculation on each render
+
   const dimensions = useMemo(() => {
-    const TOGGLE_HEIGHT = LAYOUT.BUTTON.HEIGHT.SMALL - 4; // Make it slightly smaller
+    const TOGGLE_HEIGHT = LAYOUT.BUTTON.HEIGHT.SMALL - 4;
     const TOGGLE_PADDING = LAYOUT.SPACING.TINY;
     const HANDLE_SIZE = TOGGLE_HEIGHT - TOGGLE_PADDING * 2;
-    const TOGGLE_WIDTH = TOGGLE_HEIGHT * 1.75; // Slightly smaller ratio
+    const TOGGLE_WIDTH = TOGGLE_HEIGHT * 1.75;
     const TRAVEL_DISTANCE = TOGGLE_WIDTH - HANDLE_SIZE - TOGGLE_PADDING * 2;
 
     return {
@@ -33,27 +33,27 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
 
   const { TOGGLE_HEIGHT, HANDLE_SIZE, TOGGLE_WIDTH, TRAVEL_DISTANCE } = dimensions;
 
-  // Use the standardized toggle animation hook
+
   const { containerAnimatedStyle, handleAnimatedStyle, forceAnimateToInitialState } =
     useToggleAnimation(value, TRAVEL_DISTANCE);
 
-  // Set mounted flag after initial render
+
   useEffect(() => {
     isMounted.current = true;
-    // Force immediate animation to initial state to avoid glitching
+
     if (forceAnimateToInitialState) {
       forceAnimateToInitialState(value);
     }
   }, [value, forceAnimateToInitialState]);
 
-  // Handle press with haptic feedback
+
   const handlePress = useCallback(() => {
-    // Add selection haptic feedback for toggle state changes
+
     selectionFeedback();
     onValueChange(!value);
   }, [onValueChange, value]);
 
-  // Background color animation - combine with containerAnimatedStyle
+
   const combinedContainerStyle = useMemo(() => {
     return [
       containerAnimatedStyle,
@@ -63,7 +63,7 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
     ];
   }, [containerAnimatedStyle, value, colors.tint, colors.border, isDarkMode]);
 
-  // Memoize static styles to prevent new object creation on each render
+
   const containerStyle = useMemo(
     () => [
       styles.container,
@@ -135,7 +135,7 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
   );
 }
 
-// Use memo to prevent unnecessary re-renders
+
 export const Toggle = memo(ToggleComponent);
 
 const styles = StyleSheet.create({
