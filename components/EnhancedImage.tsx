@@ -14,7 +14,6 @@ function EnhancedImageInternal({
   style,
   contentFit = 'cover',
   contentPosition = 'center',
-  alt,
   onLoad,
   onError,
   transition = 300,

@@ -16,7 +16,6 @@ import { LAYOUT } from '@/constants/layout';
 import { useNavigationWithDebounce } from '@/hooks';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
-import { selectionFeedback } from '@/utils/haptics';
 
 interface MemoryCapacityGaugeProps {
   studyWords: StudyWord[];
@@ -210,8 +209,6 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
 
   // Enhanced navigation with haptic feedback
   const handleInsightsPress = () => {
-    selectionFeedback();
-
     // Animate press feedback
     pressScale.value = withTiming(0.98, { duration: 100 }, () => {
       pressScale.value = withSpring(1, SPRING_CONFIG);
@@ -238,10 +235,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
       <Animated.View style={animatedPressStyle}>
         <View style={styles.gaugeContainer}>
           {/* Info button in top right corner */}
-          <TouchableOpacity
-            style={styles.infoButton}
-            onPress={handleInsightsPress}
-          >
+          <TouchableOpacity style={styles.infoButton} onPress={handleInsightsPress}>
             <Ionicons name="analytics-outline" size={20} color={colors.tint} />
           </TouchableOpacity>
           <Canvas style={styles.canvas}>

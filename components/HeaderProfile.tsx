@@ -6,7 +6,6 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
-import { lightFeedback } from '@/utils/haptics';
 
 interface HeaderProfileProps {
   size?: number;
@@ -17,7 +16,6 @@ const HeaderProfile = memo(({ size = 28 }: HeaderProfileProps) => {
   const { user } = useAuth();
 
   const handlePress = useCallback(() => {
-    lightFeedback();
     router.push('/(tabs)/read/account');
   }, []);
 
@@ -25,10 +23,7 @@ const HeaderProfile = memo(({ size = 28 }: HeaderProfileProps) => {
 
   return (
     <View style={styles.container}>
-      <Pressable
-        onPress={handlePress}
-        style={styles.profileButton}
-      >
+      <Pressable onPress={handlePress} style={styles.profileButton}>
         <Ionicons name="person" size={size * 0.8} color={colors.tint} />
       </Pressable>
     </View>

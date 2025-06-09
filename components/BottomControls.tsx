@@ -35,17 +35,14 @@ const BottomControls = memo<BottomControlsProps>(
     onPrimaryPress,
     primaryVariant = 'filled',
     primaryDisabled = false,
-    primaryAccessibilityLabel,
     primaryDisablePressAnimation,
     secondaryLabel,
     onSecondaryPress,
     secondaryVariant = 'outlined',
     secondaryDisabled = false,
-    secondaryAccessibilityLabel,
     showTimerButton = false,
     onTimerPress,
     isTimerActive = false,
-    timerAccessibilityLabel,
   }) => {
     const colors = useColors();
     const insets = useSafeAreaInsets();

@@ -65,7 +65,6 @@ interface NowPlayingCardProps {
   showTimerButton?: boolean;
   onTimerPress?: () => void;
   isTimerActive?: boolean;
-  timerAccessibilityLabel?: string;
 }
 
 const NowPlayingCard = ({
@@ -78,7 +77,6 @@ const NowPlayingCard = ({
   showTimerButton = false,
   onTimerPress,
   isTimerActive = false,
-  timerAccessibilityLabel,
 }: NowPlayingCardProps) => {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
@@ -248,11 +246,7 @@ const NowPlayingCard = ({
       </View>
 
       {/* Main Content */}
-      <TouchableOpacity
-        activeOpacity={0.8}
-        style={styles.content}
-        onPress={onPress}
-      >
+      <TouchableOpacity activeOpacity={0.8} style={styles.content} onPress={onPress}>
         {/* Article Image */}
         <View style={styles.imageContainer}>
           <EnhancedImage

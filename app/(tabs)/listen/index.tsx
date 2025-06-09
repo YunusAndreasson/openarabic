@@ -547,7 +547,6 @@ export default function ListenScreen(): JSX.Element {
         isVisible={shouldShowPlayer}
         progress={isStartingPlayback ? 0 : position * 1000}
         showTimerButton={true}
-        timerAccessibilityLabel="Sleep timer"
         onPress={() => {
           if (currentArticle) {
             router.push(

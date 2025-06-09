@@ -88,7 +88,7 @@ const AccountScreen: React.FC = () => {
                 return;
               }
               await analytics.reset();
-              router.replace('auth');
+              router.replace('/auth');
             } catch (error) {
               Alert.alert('Error', error instanceof Error ? error.message : 'Failed to sign out');
             }

@@ -1,13 +1,22 @@
 import { useQuery } from '@tanstack/react-query';
 import { useGlobalSearchParams, router } from 'expo-router';
 import type { JSX } from 'react';
-import React, { useCallback, useMemo, useEffect } from 'react';
+import React, { useCallback, useMemo, useEffect, useState } from 'react';
 
 import ErrorState from '@/components/ErrorState';
+import type { SortOption, SortDirection } from '@/components/SortingControls';
 import FilteredArticleView from '@/components/home/FilteredArticleView';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { articlesService } from '@/services/articles';
 import type { Article } from '@/types/articles.types';
+
+export type FilterSortOption = 'title' | 'author';
+
+// Define sort options for filtered articles - same as listen screen
+const createFilterSortOptions = (): SortOption<FilterSortOption>[] => [
+  { key: 'title', label: 'Title' },
+  { key: 'author', label: 'Author' },
+];
 
 export default function FilterScreen(): JSX.Element {
   const params = useGlobalSearchParams();
@@ -16,6 +25,10 @@ export default function FilterScreen(): JSX.Element {
   const numericId = parseInt(id, 10);
 
   const { prefetchArticle } = useAppPreloader();
+
+  // Sorting state - same defaults as listen screen
+  const [currentSort, setCurrentSort] = useState<FilterSortOption>('title');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // Check if parameters are invalid
   const hasInvalidParams =
@@ -52,6 +65,29 @@ export default function FilterScreen(): JSX.Element {
     refetchOnMount: true,
   });
 
+  // Sort articles based on current sort and direction - same as listen screen
+  const sortedArticles = useMemo(() => {
+    if (!articles.length) return [];
+
+    const sortedList = [...articles];
+
+    if (currentSort === 'title') {
+      sortedList.sort((a, b) => {
+        const result = a.title.localeCompare(b.title);
+        return sortDirection === 'desc' ? -result : result;
+      });
+    } else if (currentSort === 'author') {
+      sortedList.sort((a, b) => {
+        const authorA = a.author?.name || '';
+        const authorB = b.author?.name || '';
+        const result = authorA.localeCompare(authorB);
+        return sortDirection === 'desc' ? -result : result;
+      });
+    }
+
+    return sortedList;
+  }, [articles, currentSort, sortDirection]);
+
   const handleArticlePress = useCallback(
     (article: Article) => {
       prefetchArticle(article.id);
@@ -61,6 +97,15 @@ export default function FilterScreen(): JSX.Element {
     },
     [prefetchArticle]
   );
+
+  // Handle sorting
+  const handleSortChange = useCallback((sort: string, direction: SortDirection) => {
+    setCurrentSort(sort as FilterSortOption);
+    setSortDirection(direction);
+  }, []);
+
+  // Memoized sort options
+  const sortOptions = useMemo(() => createFilterSortOptions(), []);
 
   // Show error for invalid parameters first
   if (hasInvalidParams) {
@@ -86,5 +131,15 @@ export default function FilterScreen(): JSX.Element {
     );
   }
 
-  return <FilteredArticleView articles={articles} onArticlePress={handleArticlePress} />;
+  return (
+    <FilteredArticleView
+      articles={sortedArticles}
+      onArticlePress={handleArticlePress}
+      // Pass sorting props to FilteredArticleView
+      sortOptions={sortOptions}
+      currentSort={currentSort}
+      sortDirection={sortDirection}
+      onSortChange={handleSortChange}
+    />
+  );
 }
