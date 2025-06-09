@@ -202,8 +202,6 @@ function ArabicWordComponent({
     (): ViewStyle => ({
       borderBottomWidth: 1,
       borderBottomColor: isDueWord ? colors.wordDueUnderline : colors.wordSelectionUnderline,
-      paddingBottom: 2,
-      marginBottom: -1,
     }),
     [colors.wordDueUnderline, colors.wordSelectionUnderline, isDueWord]
   );
@@ -249,13 +247,14 @@ function ArabicWordComponent({
 const styles = StyleSheet.create({
   textStyle: {
     textAlign: 'center',
+    paddingBottom: 2,
+    marginBottom: -1,
   },
   wordContainer: {
     alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     justifyContent: 'center',
-    paddingHorizontal: LAYOUT.SPACING.TINY,
-    paddingVertical: 2,
+    paddingHorizontal: LAYOUT.SPACING.MICRO,
   },
   wordView: {},
 });

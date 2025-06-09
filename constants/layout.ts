@@ -103,6 +103,7 @@ export const MIN_TOUCH_TARGET = {
 
 // Extract SPACING and MIN_TOUCH_TARGET for use before LAYOUT is declared
 const SPACING = {
+  MICRO: 1,
   TINY: 4,
   SMALL: 8,
   MEDIUM: 12,
