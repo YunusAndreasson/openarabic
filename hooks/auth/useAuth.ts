@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/react-native';
 import { useContext } from 'react';
+import { handleError } from '@/utils/errorHandling';
 
 import { AuthContext } from '@/components/providers/AuthProvider';
 
@@ -25,8 +26,7 @@ export function useAuth(): AuthResult {
 
     // Provide a more descriptive error for development
     if (__DEV__) {
-      console.error('useAuth Error: Make sure your component is wrapped with AuthProvider');
-      console.error('Check your component hierarchy and ensure AuthProvider is in the parent tree');
+      handleError(error, { showToast: false, captureSentry: false });
     }
 
     throw error;

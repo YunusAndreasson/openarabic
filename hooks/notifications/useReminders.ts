@@ -4,6 +4,7 @@ import { scheduleReminder, hasPermissions } from '@/services/notificationService
 import type { ReminderTime } from '@/services/notificationService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setReminderTime } from '@/store/settingsSlice';
+import { handleError } from '@/utils/errorHandling';
 
 // import { analytics } from '@/services/analytics';
 // Temporary mock analytics until service is fixed
@@ -32,7 +33,7 @@ export function useReminders() {
         enabled: newReminderTime.enabled,
       });
     } catch (error) {
-      console.error('Failed to update reminder:', error);
+      handleError(error as Error, { showToast: false });
     } finally {
       setIsScheduling(false);
     }
@@ -42,7 +43,7 @@ export function useReminders() {
     try {
       return await hasPermissions();
     } catch (error) {
-      console.error('Failed to check permissions:', error);
+      handleError(error as Error, { showToast: false });
       return false;
     }
   };

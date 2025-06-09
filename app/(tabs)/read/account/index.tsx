@@ -22,6 +22,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import pkg from '@/package.json';
 import { supabase } from '@/services/supabase';
 import { lightFeedback } from '@/utils/haptics';
+import { handleError } from '@/utils/errorHandling';
 // import { analytics } from '@/services/analytics';
 // Temporary mock analytics until service is fixed
 const analytics = {
@@ -129,7 +130,7 @@ const AccountScreen: React.FC = () => {
         const permissionsGranted = await hasPermissions();
         setNotificationPermissions(permissionsGranted);
       } catch (error) {
-        console.error('Failed to check notification permissions:', error);
+        handleError(error as Error, { showToast: false });
         setNotificationPermissions(false);
       }
     };
