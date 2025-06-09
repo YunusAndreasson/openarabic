@@ -1,4 +1,10 @@
 /**
+ * Confidence level selected when answering a vocabulary prompt.
+ * Centralized here to avoid repeating the union across hooks and services.
+ */
+export type WordConfidence = 'known' | 'unknown' | 'vague';
+
+/**
  * Statistics about a review session such as counts of words reviewed and other metrics
  * Used by the review hook and completion screen to show session progress
  */

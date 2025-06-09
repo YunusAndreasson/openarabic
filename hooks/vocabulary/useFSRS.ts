@@ -6,6 +6,7 @@ import { createEmptyCard, fsrs, Rating, State, generatorParameters } from 'ts-fs
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { UseFSRSOptions, UseFSRSResult, FSRSStateTracking } from '@/types/fsrs.types';
 import type { StudyWord } from '@/types/vocabulary.types';
+import type { WordConfidence } from '@/types/review.types';
 import { handleError } from '@/utils/errorHandling';
 
 // Minimum number of intervening words before showing a repeated word
@@ -234,7 +235,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
   }, []);
 
   const updateWord = useCallback(
-    async (rootId: number, confidence: 'known' | 'unknown' | 'vague') => {
+    async (rootId: number, confidence: WordConfidence) => {
       if (!userId || !currentWord || currentWord.root_id !== rootId) return;
 
       if (

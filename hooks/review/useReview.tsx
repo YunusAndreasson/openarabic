@@ -12,7 +12,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useFSRS } from '@/hooks/vocabulary/useFSRS';
 import { useWordSizing } from '@/hooks/vocabulary/useWordSizing';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
-import type { SessionMetrics } from '@/types/review.types';
+import type { SessionMetrics, WordConfidence } from '@/types/review.types';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import { handleError } from '@/utils/errorHandling';
 
@@ -193,7 +193,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
   // Shows meaning overlay if needed
   const displayMeaning = useCallback(
-    (confidence: 'known' | 'unknown' | 'vague', isStruggling: boolean) => {
+    (confidence: WordConfidence, isStruggling: boolean) => {
       if (confidence === 'known') return null;
 
       const meaning = currentWord?.root?.meaning || 'No translation available';
@@ -204,7 +204,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
   // Determines if the user is struggling with this word
   const checkIsStruggling = useCallback(
-    (confidence: 'known' | 'unknown' | 'vague'): boolean => {
+    (confidence: WordConfidence): boolean => {
       if (confidence !== 'vague') return false;
 
       const now = Date.now();
@@ -220,7 +220,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   // Process the word update in FSRS
   const processFeedback = useCallback(
     async (
-      confidence: 'known' | 'unknown' | 'vague',
+      confidence: WordConfidence,
       isStruggling: boolean,
       controller: AbortController
     ) => {
@@ -289,7 +289,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   }, []);
 
   const handleKnowledgeResponse = useCallback(
-    (confidence: 'known' | 'unknown' | 'vague') => {
+    (confidence: WordConfidence) => {
       // Guard conditions: exit early if we're already in a processing state
       if (
         stateRefs.current.isUpdatingWord ||
