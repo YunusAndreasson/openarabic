@@ -11,24 +11,20 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ErrorState from '@/components/ErrorState';
 import { ThemedView } from '@/components/ThemedView';
 import ArticleList from '@/components/home/ArticleList';
-import FeaturedSection from '@/components/home/FeaturedSection';
 import FilterSection from '@/components/home/FilterSection';
+import IntelligentArticleSection from '@/components/home/IntelligentArticleSection';
 import { WelcomeMessage } from '@/components/home/WelcomeMessage';
 import { LAYOUT } from '@/constants/layout';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
-import { useArticlesByDifficultWords } from '@/hooks/articles/useArticlesByDifficultWords';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
-import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
+import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import { useAppDispatch } from '@/store/hooks';
 import { updateLastOpenedArticle } from '@/store/readingListSlice';
 import type { Article } from '@/types/articles.types';
-import type { UserSession } from '@/types/auth.types';
-import type { SentenceWord } from '@/types/vocabulary.types';
-import { filterArticles, getBeginnerArticles } from '@/utils/articleUtils';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
 
@@ -43,129 +39,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
 });
-
-interface IntelligentArticleResult {
-  article: Article | null;
-  reason: string;
-  type: 'due-words' | 'difficult-words' | 'beginner' | 'random';
-}
-
-function useIntelligentArticleSelection(
-  user: UserSession['user'] | null,
-  articlesData: Article[]
-): IntelligentArticleResult & { dueWordRootIds: Set<number> } {
-  const { hasEnoughArticles: hasDueWordArticles, dueWordRootIds } = useArticlesByDueWords(
-    user?.id,
-    10
-  );
-
-  const { hasEnoughArticles: hasDifficultWordArticles, difficultWordRootIds } =
-    useArticlesByDifficultWords(user?.id, 10);
-
-  const { data: allStudyWords = [] } = useQuery({
-    queryKey: FSRS_QUERY_KEYS.all(user?.id || ''),
-    queryFn: () => {
-      if (!user?.id) return Promise.resolve([]);
-      return studyWordsFSRSService.getFSRSWords(user.id, {
-        forStats: true,
-        limit: 1,
-      });
-    },
-    enabled: !!user?.id,
-    staleTime: 180000,
-    gcTime: 600000,
-  });
-
-  const hasAnyStudyWords = allStudyWords.length > 0;
-
-  return useMemo(() => {
-    if (!articlesData.length) {
-      return {
-        article: null,
-        reason: 'Loading articles...',
-        type: 'random',
-        dueWordRootIds: new Set<number>(),
-      };
-    }
-
-    // Strategy 1: If user has due words and enough articles with those words
-    if (user?.id && hasDueWordArticles && dueWordRootIds.size > 0) {
-      const dueWordArticles = articlesData.filter(article =>
-        article.article_sentences?.some(sentence =>
-          sentence.sentence_words?.some((word: SentenceWord) =>
-            dueWordRootIds.has(word.root_id)
-          )
-        )
-      );
-
-      if (dueWordArticles.length > 0) {
-        const randomArticle =
-          dueWordArticles[Math.floor(Math.random() * dueWordArticles.length)] ?? null;
-        return {
-          article: randomArticle,
-          reason: 'Selected to help you practice words that are due for review',
-          type: 'due-words',
-          dueWordRootIds,
-        };
-      }
-    }
-
-    // Strategy 2: If user has difficult words and study progress
-    if (user?.id && hasDifficultWordArticles && difficultWordRootIds.size > 0 && hasAnyStudyWords) {
-      const difficultWordArticles = articlesData.filter(article =>
-        article.article_sentences?.some(sentence =>
-          sentence.sentence_words?.some((word: SentenceWord) =>
-            difficultWordRootIds.has(word.root_id)
-          )
-        )
-      );
-
-      if (difficultWordArticles.length > 0) {
-        const randomArticle =
-          difficultWordArticles[Math.floor(Math.random() * difficultWordArticles.length)] ?? null;
-        return {
-          article: randomArticle,
-          reason: "Chosen to reinforce words you're finding challenging",
-          type: 'difficult-words',
-          dueWordRootIds,
-        };
-      }
-    }
-
-    // Strategy 3: If user has no study progress, show beginner content
-    if (!user?.id || !hasAnyStudyWords) {
-      const beginnerArticles = getBeginnerArticles(filterArticles(articlesData, null, null));
-
-      if (beginnerArticles.length > 0) {
-        const randomArticle =
-          beginnerArticles[Math.floor(Math.random() * beginnerArticles.length)] ?? null;
-        return {
-          article: randomArticle,
-          reason: 'Perfect for getting started with your reading journey',
-          type: 'beginner',
-          dueWordRootIds,
-        };
-      }
-    }
-
-    // Fallback: Random article
-    const randomArticle = articlesData[Math.floor(Math.random() * articlesData.length)] ?? null;
-    return {
-      article: randomArticle,
-      reason: 'Randomly selected for you to discover new content',
-      type: 'random',
-      dueWordRootIds,
-    };
-  }, [
-    articlesData,
-    user?.id,
-    hasDueWordArticles,
-    dueWordRootIds,
-    hasDifficultWordArticles,
-    difficultWordRootIds,
-    hasAnyStudyWords,
-  ]);
-}
 
 export default function ArticlesScreen(): JSX.Element {
   const colors = useColors();
@@ -200,40 +73,6 @@ export default function ArticlesScreen(): JSX.Element {
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-
-  const intelligentArticle = useIntelligentArticleSelection(user, articlesData);
-
-  // Optimize article selection - only recalculate when needed
-  const currentArticle = useMemo(() => {
-    if (!articlesData.length) {
-      return {
-        article: null,
-        reason: 'Loading articles...',
-        type: 'random' as const,
-        dueWordRootIds: new Set<number>(),
-      };
-    }
-
-    // For refresh: pick a different random article
-    if (refreshKey > 0 && intelligentArticle.article) {
-      const availableArticles = articlesData.filter(
-        article => article.id !== intelligentArticle.article?.id
-      );
-
-      if (availableArticles.length > 0) {
-        const randomIndex = Math.floor(Math.random() * availableArticles.length);
-        const newArticle = availableArticles[randomIndex];
-
-        return {
-          ...intelligentArticle,
-          article: newArticle,
-          reason: 'New recommendation selected for you',
-        };
-      }
-    }
-
-    return intelligentArticle;
-  }, [intelligentArticle, refreshKey, articlesData.length]);
 
   // Simplified derivedData - we know there will be data
   const categoriesWithArticles = useMemo(() => {
@@ -307,61 +146,22 @@ export default function ArticlesScreen(): JSX.Element {
     router.push(url);
   }, []);
 
-  const calculateDueWordsForArticle = useCallback(
-    (article: Article, dueWordRootIds: Set<number>): number => {
-      if (!user?.id || !dueWordRootIds || dueWordRootIds.size === 0) return 0;
-
-      const uniqueDueRootIds = new Set<number>();
-
-      article.article_sentences?.forEach(sentence => {
-        sentence.sentence_words?.forEach((word: SentenceWord) => {
-          if (word.root_id && dueWordRootIds.has(word.root_id)) {
-            uniqueDueRootIds.add(word.root_id);
-          }
-        });
-      });
-
-      return uniqueDueRootIds.size;
-    },
-    [user?.id]
-  );
-
-  // Pre-calculate due words count to avoid expensive computation in render
-  const dueWordsCount = useMemo(() => {
-    if (!currentArticle.article || !user?.id || !currentArticle.dueWordRootIds.size) return 0;
-
-    return calculateDueWordsForArticle(currentArticle.article, currentArticle.dueWordRootIds);
-  }, [
-    currentArticle.article?.id,
-    currentArticle.dueWordRootIds,
-    user?.id,
-    calculateDueWordsForArticle,
-  ]);
-
   // Simplified header component
   const ListHeaderComponent = useMemo(
     () => (
       <View style={styles.headerContainer}>
-        {currentArticle.article && (
-          <FeaturedSection
-            article={currentArticle.article}
-            dueWordCount={dueWordsCount > 0 ? dueWordsCount : undefined}
-            onPress={handleArticlePress}
-          />
-        )}
+        <IntelligentArticleSection
+          articlesData={articlesData}
+          refreshKey={refreshKey}
+          onArticlePress={handleArticlePress}
+        />
 
         {categoriesWithArticles.length > 0 && (
           <FilterSection items={categoriesWithArticles} onSelect={handleSelectCategory} />
         )}
       </View>
     ),
-    [
-      currentArticle.article,
-      dueWordsCount,
-      handleArticlePress,
-      categoriesWithArticles,
-      handleSelectCategory,
-    ]
+    [articlesData, refreshKey, handleArticlePress, categoriesWithArticles, handleSelectCategory]
   );
 
   // Remove unnecessary memoization for stable component
