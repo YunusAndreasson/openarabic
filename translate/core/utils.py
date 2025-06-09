@@ -7,6 +7,22 @@ from typing import List, Dict, Any, Optional
 
 from openai import OpenAI
 
+# Flag to ensure we only load API keys once
+_keys_loaded = False
+
+
+def load_api_keys() -> None:
+    """Load API keys from set_keys.py if present."""
+    global _keys_loaded
+    if _keys_loaded:
+        return
+    set_keys_path = os.path.join(os.path.dirname(__file__), "set_keys.py")
+    if not os.path.exists(set_keys_path):
+        raise FileNotFoundError(f"API keys file not found: {set_keys_path}")
+    with open(set_keys_path) as f:
+        exec(f.read(), globals())
+    _keys_loaded = True
+
 # Configure logging to show only errors
 logging.basicConfig(
     level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -63,21 +79,11 @@ token_tracker = TokenUsageTracker()
 # Initialize OpenAI client
 def init_openai_client():
     """Initialize the OpenAI client with API key"""
-    # Find and exec set_keys.py robustly
-    set_keys_path = os.path.join(os.path.dirname(__file__), "set_keys.py")
-    try:
-        exec(open(set_keys_path).read())
-    except FileNotFoundError:
-        print(f"❌ API keys file not found: {set_keys_path}")
-        sys.exit(1)
-    except Exception as e:
-        print(f"❌ Error loading API keys: {str(e)}")
-        sys.exit(1)
+    load_api_keys()
 
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
-        print("❌ OPENAI_API_KEY environment variable is not set.")
-        sys.exit(1)
+        raise EnvironmentError("OPENAI_API_KEY environment variable is not set.")
 
     return OpenAI(api_key=api_key)
 

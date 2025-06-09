@@ -18,17 +18,10 @@ from translate.core.database_utils import (
     validate_article_data,
 )
 from translate.core.audio_utils import ensure_valid_cache_files
+from translate.core.utils import load_api_keys
 
-# Execute set_keys.py to set environment variables
-set_keys_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "set_keys.py")
-try:
-    exec(open(set_keys_path).read())
-except FileNotFoundError:
-    print(f"❌ API keys file not found: {set_keys_path}")
-    sys.exit(1)
-except Exception as e:
-    print(f"❌ Error loading API keys: {str(e)}")
-    sys.exit(1)
+# Load environment variables once
+load_api_keys()
 
 
 def process_json_file(file_path: str) -> None:
