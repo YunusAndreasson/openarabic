@@ -4,8 +4,8 @@ import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { AppState } from 'react-native';
 
 import { supabase, setupSupabaseAppStateListener } from '@/services/supabase';
-import { handleError } from '@/utils/errorHandling';
 import type { AuthResult, UserSession } from '@/types/auth.types';
+import { handleError } from '@/utils/errorHandling';
 
 // Maximum number of retry attempts for session refresh
 const MAX_REFRESH_RETRIES = 3;

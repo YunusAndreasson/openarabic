@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
   },
   stepIcon: {
     alignItems: 'center',
-    borderRadius: 20,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     height: 40,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
   },
   reasonIcon: {
     alignItems: 'center',
-    borderRadius: 20,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     height: 40,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
   },
   benefitIcon: {
     alignItems: 'center',
-    borderRadius: 20,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     height: 40,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
   },
   referenceIcon: {
     alignItems: 'center',
-    borderRadius: 20,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     height: 40,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,

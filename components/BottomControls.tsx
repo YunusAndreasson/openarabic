@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   },
   timerButton: {
     alignItems: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'center',

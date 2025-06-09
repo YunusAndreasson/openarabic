@@ -3,9 +3,10 @@ import type { ReactNode } from 'react';
 import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import type { DataPoint } from '@/types/ui/chart.types';
+
 import { ChartTooltipData, DataPointOverlay, useChartTooltip } from './ChartInteractivity';
 import { useGraphWidth, GRAPH_HEIGHT_LARGE } from './constants';
-import type { DataPoint } from '@/types/ui/chart.types';
 
 interface ChartCanvasProps {
   children: ReactNode;

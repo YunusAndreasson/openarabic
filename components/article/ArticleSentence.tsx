@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   },
   sentenceBackground: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   wordsContainer: {
     alignItems: 'center',

@@ -5,12 +5,12 @@ import { StyleSheet, View } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import type { SortDirection, SortOption } from '@/types/ui/sorting.types';
 import { selectionFeedback } from '@/utils/haptics';
 
 import BaseCard from './BaseCard';
 import Pill from './Pill';
 import { ThemedText } from './ThemedText';
-import type { SortDirection, SortOption } from '@/types/ui/sorting.types';
 
 export interface SortingControlsProps<T = string> {
   currentSort: T;
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     marginRight: 0,
     paddingHorizontal: LAYOUT.SPACING.SMALL,
     paddingVertical: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.TINY,
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL + 1,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     minHeight: 42,
     justifyContent: 'center',
     alignItems: 'center',

@@ -8,8 +8,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { LAYOUT } from '@/constants/layout';
 import { HIJRI_MONTHS } from '@/constants/hijri';
+import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 interface IslamicEvent {
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * 1.4,
   },
   progressBar: {
-    borderRadius: 1,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     height: 2,
     overflow: 'hidden',
   },
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.TINY / 2,
   },
   progressFill: {
-    borderRadius: 1,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     height: '100%',
   },
   scrollContent: {

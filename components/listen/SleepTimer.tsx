@@ -21,7 +21,6 @@ import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { lightFeedback, selectionFeedback } from '@/utils/haptics';
 
-
 export interface SleepTimerProps {
   isVisible: boolean;
   onClose: () => void;
@@ -146,10 +145,7 @@ const SleepTimerComponent = ({
                       : 'Choose when to stop playback'}
                   </ThemedText>
                 </View>
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={onClose}
-                >
+                <TouchableOpacity style={styles.closeButton} onPress={onClose}>
                   <Ionicons name="close" size={24} color={colors.text} />
                 </TouchableOpacity>
               </View>
@@ -272,7 +268,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   modal: {
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE + 4,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     elevation: LAYOUT.ELEVATION.MEDIUM + 2,
     maxHeight: '65%',
     overflow: 'hidden',

@@ -102,7 +102,7 @@ export const EnhancedImage = memo(EnhancedImageInternal);
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
     position: 'relative',
   },

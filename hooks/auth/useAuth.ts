@@ -1,10 +1,10 @@
 import * as Sentry from '@sentry/react-native';
 import { useContext } from 'react';
-import { handleError } from '@/utils/errorHandling';
+
 
 import { AuthContext } from '@/components/providers/AuthProvider';
-
 import type { AuthResult } from '@/types/auth.types';
+import { handleError } from '@/utils/errorHandling';
 
 export function useAuth(): AuthResult {
   const context = useContext(AuthContext);

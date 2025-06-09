@@ -5,15 +5,12 @@ export const useScreenWidth = (): number => {
   return useWindowDimensions().width;
 };
 
-
 export const FONTS = {
   ENGLISH: 'Figtree',
   ARABIC: 'Madina',
 } as const;
 
-
 export const TYPOGRAPHY_HIERARCHY = {
-
   WEIGHTS: {
     REGULAR: '400' as const,
     MEDIUM: '500' as const,
@@ -21,7 +18,6 @@ export const TYPOGRAPHY_HIERARCHY = {
     BOLD: '700' as const,
     HEAVY: '800' as const,
   },
-
 
   COLOR_HIERARCHY: {
     PRIMARY: 1.0,
@@ -31,20 +27,17 @@ export const TYPOGRAPHY_HIERARCHY = {
     ACCENT: 0.75,
   },
 
-
   LETTER_SPACING: {
     TIGHT: -0.3,
     NORMAL: 0,
     RELAXED: 0.3,
   },
 
-
   LINE_HEIGHT_MULTIPLIERS: {
     TIGHT: 1.2,
     NORMAL: 1.4,
     LOOSE: 1.6,
   },
-
 
   SEMANTIC_COLORS: {
     PRIMARY_CONTENT: 'text',
@@ -58,16 +51,13 @@ export const TYPOGRAPHY_HIERARCHY = {
     WARNING_CONTENT: 'warning',
     INFO_CONTENT: 'info',
 
-
     HEADING_CONTENT: 'headingText',
     SUBTITLE_CONTENT: 'subtitleText',
     METADATA_CONTENT: 'metadataText',
     CAPTION_CONTENT: 'captionText',
   } as const,
 
-
   MICRO_ADJUSTMENTS: {
-
     CONTENT_TYPES: {
       CARD_TITLE: {
         letterSpacing: -0.15,
@@ -88,15 +78,12 @@ export const TYPOGRAPHY_HIERARCHY = {
     },
   },
 
-
   ACCESSIBILITY: {
-
     MIN_CONTRAST_RATIOS: {
       LARGE_TEXT: 3.0,
       NORMAL_TEXT: 4.5,
       ENHANCED: 7.0,
     },
-
 
     DYNAMIC_OPACITY: {
       LIGHT_THEME_BOOST: 0.05,
@@ -105,12 +92,9 @@ export const TYPOGRAPHY_HIERARCHY = {
   },
 } as const;
 
-
 export const WORD_AREA_MIN_HEIGHT = 364;
 
-
 export const MIN_TOUCH_TARGET = {
-
   SIZE: 48,
   MEDIUM: 44,
   SMALL: 32,
@@ -118,17 +102,12 @@ export const MIN_TOUCH_TARGET = {
 } as const;
 
 export const LAYOUT = {
-
   SCREEN_EDGE_PADDING: 12,
-
 
   CONTENT_SPACING: {
     TOP: 16,
     BOTTOM: 12,
   },
-
-
-
 
   SPACING: {
     TINY: 4,
@@ -145,7 +124,6 @@ export const LAYOUT = {
    * Simplified to follow Miller's Law - max 7 essential opacity levels
    */
   OPACITY: {
-
     SUBTLE: 0.3,
     MEDIUM: 0.5,
     HIGH: 0.7,
@@ -156,21 +134,14 @@ export const LAYOUT = {
     OVERLAY: 0.4,
   },
 
-
   BOTTOM_BAR: {
     HEIGHT: Platform.OS === 'ios' ? 65 : 45,
   },
 
-
   BORDER_RADIUS: {
-    NONE: 0,
-    SMALL: 8,
     MEDIUM: 12,
-    LARGE: 16,
-    XLARGE: 24,
     PILL: 9999,
   },
-
 
   CARD: {
     PADDING: {
@@ -180,7 +151,6 @@ export const LAYOUT = {
     },
   },
 
-
   INPUT: {
     HEIGHT: 52,
     BORDER_RADIUS: 8,
@@ -189,7 +159,6 @@ export const LAYOUT = {
       FOCUSED: 2,
     },
   },
-
 
   BUTTON: {
     HEIGHT: {
@@ -203,7 +172,6 @@ export const LAYOUT = {
       LARGE: 24,
     },
   },
-
 
   TYPOGRAPHY: {
     SCALE: {
@@ -223,12 +191,10 @@ export const LAYOUT = {
     },
   },
 
-
   SHADOW: {
     SMALL: {
       ...Platform.select({
         ios: {
-
           shadowOffset: { width: 0, height: 3 },
           shadowOpacity: 0.25,
           shadowRadius: 6,
@@ -241,7 +207,6 @@ export const LAYOUT = {
     MEDIUM: {
       ...Platform.select({
         ios: {
-
           shadowOffset: { width: 0, height: 6 },
           shadowOpacity: 0.3,
           shadowRadius: 10,
@@ -254,7 +219,6 @@ export const LAYOUT = {
     LARGE: {
       ...Platform.select({
         ios: {
-
           shadowOffset: { width: 0, height: 8 },
           shadowOpacity: 0.35,
           shadowRadius: 14,
@@ -266,7 +230,6 @@ export const LAYOUT = {
     },
   },
 
-
   ELEVATION: {
     NONE: 0,
     SUBTLE: 2,
@@ -274,7 +237,6 @@ export const LAYOUT = {
     MEDIUM: 8,
     LARGE: 12,
   },
-
 
   Z_INDEX: {
     BASE: 0,
@@ -286,12 +248,10 @@ export const LAYOUT = {
     POPUP: 6,
   },
 
-
   WIDTH_RATIOS: {
     ALMOST_HALF: 0.48,
     THIRD: 0.3333,
   },
-
 
   ANIMATION: {
     DURATION: {
@@ -300,14 +260,11 @@ export const LAYOUT = {
     },
   },
 
-
   HIT_SLOP: {
     MEDIUM: { top: 12, bottom: 12, left: 12, right: 12 },
   },
 
-
   TOUCH_TARGET: {
-
     MIN_CONTAINER: {
       WIDTH: MIN_TOUCH_TARGET.SIZE,
       HEIGHT: MIN_TOUCH_TARGET.SIZE,
@@ -318,7 +275,6 @@ export const LAYOUT = {
       return needed > 0 ? Math.ceil(needed / 2) : 0;
     },
   },
-
 
   BORDER: {
     WIDTH: {
@@ -334,7 +290,6 @@ export const LAYOUT = {
     },
   },
 
-
   HEADER: {
     HEIGHT: {
       EXPANDED: 380,
@@ -344,7 +299,6 @@ export const LAYOUT = {
     NAV_HEADER_HEIGHT: Platform.OS === 'ios' ? 100 : 80,
 
     TITLE: {
-
       MAIN: {
         fontSize: 28,
         fontWeight: '700',
@@ -363,7 +317,6 @@ export const LAYOUT = {
     },
   },
 };
-
 
 export const getArabicTextStyle = (
   fontSize: number,
@@ -386,10 +339,6 @@ export const getArabicTextStyle = (
   };
 };
 
-
-
-
-
 export const getEnhancedOpacity = (
   baseOpacity: number,
   isDarkMode: boolean = false,
@@ -397,18 +346,15 @@ export const getEnhancedOpacity = (
 ): number => {
   let adjustedOpacity = baseOpacity;
 
-
   if (isDarkMode) {
     adjustedOpacity += TYPOGRAPHY_HIERARCHY.ACCESSIBILITY.DYNAMIC_OPACITY.DARK_THEME_BOOST;
   } else {
     adjustedOpacity += TYPOGRAPHY_HIERARCHY.ACCESSIBILITY.DYNAMIC_OPACITY.LIGHT_THEME_BOOST;
   }
 
-
   if (isInteractive) {
     adjustedOpacity += 0.05;
   }
-
 
   return Math.min(1.0, Math.max(0.0, adjustedOpacity));
 };

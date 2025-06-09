@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
   },
 
   container: {
-    borderRadius: LAYOUT.BORDER_RADIUS.XLARGE,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
     bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY,
     height: CARD_HEIGHT,
@@ -390,7 +390,7 @@ const styles = StyleSheet.create({
   },
 
   progressBar: {
-    borderRadius: 2,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     height: 3,
   },
 
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
 
   stopButton: {
     alignItems: 'center',
-    borderRadius: 24,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     height: 48,
     justifyContent: 'center',
     width: 48,
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
 
   timerButton: {
     alignItems: 'center',
-    borderRadius: 18,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     height: 36,
     justifyContent: 'center',
     width: 36,

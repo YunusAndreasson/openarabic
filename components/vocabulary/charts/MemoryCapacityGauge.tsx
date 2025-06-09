@@ -432,7 +432,7 @@ const styles = StyleSheet.create({
     top: 0,
     zIndex: 10,
     padding: LAYOUT.SPACING.SMALL,
-    borderRadius: 20,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   bottomSection: {
     alignItems: 'center',
@@ -441,7 +441,7 @@ const styles = StyleSheet.create({
   },
   statusBadge: {
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     marginBottom: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.SMALL,

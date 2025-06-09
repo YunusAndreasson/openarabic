@@ -21,8 +21,8 @@ import { useReminders } from '@/hooks/notifications/useReminders';
 import { useColors } from '@/hooks/theme/useColors';
 import pkg from '@/package.json';
 import { supabase } from '@/services/supabase';
-import { lightFeedback } from '@/utils/haptics';
 import { handleError } from '@/utils/errorHandling';
+import { lightFeedback } from '@/utils/haptics';
 // import { analytics } from '@/services/analytics';
 // Temporary mock analytics until service is fixed
 const analytics = {
@@ -497,7 +497,7 @@ const styles = StyleSheet.create({
 
   // Action Link Styles
   actionLinkCard: {
-    borderRadius: LAYOUT.BORDER_RADIUS.NONE,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.NONE,
     marginBottom: 0,
     minHeight: MIN_TOUCH_TARGET.SIZE,
@@ -635,7 +635,7 @@ const styles = StyleSheet.create({
 
   // Social Link Styles (similar to action links but kept separate for clarity)
   socialLinkCard: {
-    borderRadius: LAYOUT.BORDER_RADIUS.NONE,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.NONE,
     marginBottom: 0,
     minHeight: MIN_TOUCH_TARGET.SIZE,
@@ -670,7 +670,7 @@ const styles = StyleSheet.create({
 
   // Time Picker Styles
   timePickerSettingRow: {
-    borderRadius: LAYOUT.BORDER_RADIUS.NONE,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.NONE,
   },
 

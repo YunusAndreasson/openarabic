@@ -223,12 +223,12 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.MEDIUM, // Restored for better visual grouping
   },
   progressFill: {
-    borderRadius: 2,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     height: '100%',
   },
   progressTrack: {
     height: 4, // Slightly thicker for better visibility
-    borderRadius: 2,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
   },
   progressTrackContainer: {

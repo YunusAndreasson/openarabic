@@ -4,11 +4,11 @@ import type { JSX } from 'react';
 import React, { useCallback, useMemo, useEffect, useState } from 'react';
 
 import ErrorState from '@/components/ErrorState';
-import type { SortOption, SortDirection } from '@/types/ui/sorting.types';
 import FilteredArticleView from '@/components/home/FilteredArticleView';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { articlesService } from '@/services/articles';
 import type { Article } from '@/types/articles.types';
+import type { SortOption, SortDirection } from '@/types/ui/sorting.types';
 
 export type FilterSortOption = 'title' | 'author';
 

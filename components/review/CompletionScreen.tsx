@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   },
   metricIconContainer: {
     alignItems: 'center',
-    borderRadius: 18,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     height: 36,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,

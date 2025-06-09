@@ -4,10 +4,10 @@ import React, { useMemo, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import SortingControls from '@/components/SortingControls';
-import type { SortOption, SortDirection } from '@/types/ui/sorting.types';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
 import type { Article } from '@/types/articles.types';
+import type { SortOption, SortDirection } from '@/types/ui/sorting.types';
 
 import ListArticleItem from './ListArticleItem';
 

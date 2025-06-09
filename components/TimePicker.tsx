@@ -116,10 +116,7 @@ export const TimePicker = memo(
               >
                 {title}
               </ThemedText>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={onClose}
-              >
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
                 <Ionicons color={colors.textSecondary} name="close" size={24} />
               </TouchableOpacity>
             </View>
@@ -255,7 +252,7 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.LARGE,
   },
   modal: {
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     elevation: 16,
     padding: LAYOUT.SPACING.LARGE,
     shadowOffset: { width: 0, height: 8 },

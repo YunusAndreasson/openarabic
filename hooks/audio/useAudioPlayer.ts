@@ -6,9 +6,9 @@ import {
 } from 'expo-audio';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
-import type { EnhancedAudioTrack } from '../../types/audio.types';
-import { handleError } from '../../utils/errorHandling';
 import { AUDIO_STATES, type AudioState } from '@/constants/audio';
+import type { EnhancedAudioTrack } from '@/types/audio.types';
+import { handleError } from '@/utils/errorHandling';
 
 /**
  * Enhanced audio player interface
@@ -416,13 +416,6 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
   useEffect(() => {
     return () => {
       stop();
-      try {
-        if (audioPlayer && typeof audioPlayer.unloadAsync === 'function') {
-          audioPlayer.unloadAsync();
-        }
-      } catch {
-        // ignore unload errors
-      }
       setTrackStartTimes(new Map());
     };
   }, []);

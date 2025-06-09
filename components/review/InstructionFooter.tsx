@@ -4,7 +4,6 @@ import { View, StyleSheet, Platform } from 'react-native';
 import type { ViewStyle, TextStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
@@ -59,7 +58,7 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
     width: '100%',
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     backgroundColor: colors.elevation1,
     opacity: 0.7,
     ...Platform.select({

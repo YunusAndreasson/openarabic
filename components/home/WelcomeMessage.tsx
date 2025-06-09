@@ -5,9 +5,9 @@ import React, { useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
+import { HIJRI_MONTHS } from '@/constants/hijri';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { HIJRI_MONTHS } from '@/constants/hijri';
 
 export const WelcomeMessage: React.FC = () => {
   const colors = useColors();

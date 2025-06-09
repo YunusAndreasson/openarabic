@@ -51,10 +51,7 @@ const RepeatButton: React.FC<RepeatButtonProps> = ({ enabled, onToggle }) => {
   );
 
   return (
-    <TouchableOpacity
-      style={styles.touchable}
-      onPress={handlePress}
-    >
+    <TouchableOpacity style={styles.touchable} onPress={handlePress}>
       <Animated.View style={[styles.container, containerStyle, containerAnimatedStyle]}>
         <View style={styles.content}>
           <Animated.View style={[styles.iconContainer, iconRotationStyle]}>
@@ -79,7 +76,7 @@ const RepeatButton: React.FC<RepeatButtonProps> = ({ enabled, onToggle }) => {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
     elevation: 1,
     minHeight: MIN_TOUCH_TARGET.SIZE,

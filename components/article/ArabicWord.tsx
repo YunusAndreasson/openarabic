@@ -189,7 +189,7 @@ function ArabicWordComponent({
   const getAudioHighlightedStyle = useCallback(
     (): ViewStyle => ({
       backgroundColor: colors.audioHighlight,
-      borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+      borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
       shadowColor: colors.audioHighlightBorder,
       shadowOffset: { width: 0, height: 0 },
       shadowOpacity: 1,
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
   },
   wordContainer: {
     alignItems: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     justifyContent: 'center',
     paddingHorizontal: LAYOUT.SPACING.TINY,
     paddingVertical: 2,

@@ -21,8 +21,8 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
 import { Colors } from '@/constants/Colors';
+import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
@@ -127,9 +127,7 @@ const SessionTypeModal = memo(
               exiting={SlideOutDown.duration(200)}
             >
               {/* Close indicator */}
-              <View
-                style={[styles.closeIndicator, { backgroundColor: colors.modalIndicator }]}
-              />
+              <View style={[styles.closeIndicator, { backgroundColor: colors.modalIndicator }]} />
 
               {/* Header */}
               <View style={styles.header}>
@@ -202,14 +200,14 @@ const styles = StyleSheet.create({
   closeIndicator: {
     width: 32,
     height: 4,
-    borderRadius: 2,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     alignSelf: 'center',
     marginTop: LAYOUT.SPACING.MEDIUM,
     marginBottom: LAYOUT.SPACING.SMALL,
   },
   modalContainer: {
-    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    borderTopRightRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     paddingBottom: LAYOUT.SPACING.XLARGE,
     shadowColor: Colors.light.black,
     shadowOffset: {
@@ -257,7 +255,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,

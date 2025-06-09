@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     alignItems: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.XLARGE,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     flexDirection: 'row',
     gap: LAYOUT.SPACING.SMALL,
     justifyContent: 'center',

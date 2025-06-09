@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   },
   infoIcon: {
     alignItems: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     height: LAYOUT.BUTTON.ICON_SIZE.SMALL + LAYOUT.SPACING.SMALL * 2,
     justifyContent: 'center',
     padding: LAYOUT.SPACING.SMALL,

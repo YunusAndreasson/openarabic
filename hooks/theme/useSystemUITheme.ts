@@ -2,9 +2,10 @@ import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
 import type { ColorValue } from 'react-native';
 
+import { handleError } from '@/utils/errorHandling';
+
 import { useColors } from './useColors';
 import { useIsDarkMode } from './useThemeDetection';
-import { handleError } from '@/utils/errorHandling';
 
 /**
  * Centralized system UI theme management

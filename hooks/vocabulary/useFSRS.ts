@@ -5,8 +5,8 @@ import { createEmptyCard, fsrs, Rating, State, generatorParameters } from 'ts-fs
 
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { UseFSRSOptions, UseFSRSResult, FSRSStateTracking } from '@/types/fsrs.types';
-import type { StudyWord } from '@/types/vocabulary.types';
 import type { WordConfidence } from '@/types/review.types';
+import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 
 // Minimum number of intervening words before showing a repeated word
@@ -67,8 +67,8 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
   });
 
   // Timeouts for queue initialization and completion callbacks
-  const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const completionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const initTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const completionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const queryClient = useQueryClient();
 

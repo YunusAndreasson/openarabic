@@ -18,6 +18,7 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import ParallaxHeader from '@/components/article/ParallaxHeader';
 import { useToast } from '@/components/providers/ToastProvider';
+import { Colors } from '@/constants/Colors';
 import { AUDIO_STATES } from '@/constants/audio';
 import { LAYOUT } from '@/constants/layout';
 import { useArticleData } from '@/hooks/articles/useArticleData';
@@ -25,13 +26,12 @@ import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
 import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
-import { Colors } from '@/constants/Colors';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
-import { lightFeedback } from '@/utils/haptics';
 import { handleError } from '@/utils/errorHandling';
+import { lightFeedback } from '@/utils/haptics';
 
 const styles = StyleSheet.create({
   content: {
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   summaryCard: {
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     padding: LAYOUT.SPACING.LARGE,
     borderWidth: 1,
     shadowColor: Colors.light.black,
@@ -214,17 +214,10 @@ const ArticleSummary = React.memo<ArticleSummaryProps>(({ summary }) => {
           },
         ]}
       >
-        <ThemedText
-          type="label"
-          variant="secondary"
-          style={styles.summaryLabel}
-        >
+        <ThemedText type="label" variant="secondary" style={styles.summaryLabel}>
           Summary
         </ThemedText>
-        <ThemedText
-          type="body"
-          style={styles.summaryText}
-        >
+        <ThemedText type="body" style={styles.summaryText}>
           {summary}
         </ThemedText>
       </View>

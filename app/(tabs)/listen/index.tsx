@@ -10,7 +10,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BottomControls from '@/components/BottomControls';
 import EmptyState from '@/components/EmptyState';
 import SortingControls from '@/components/SortingControls';
-import type { SortOption, SortDirection } from '@/types/ui/sorting.types';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleCard } from '@/components/home/ArticleCard';
@@ -28,6 +27,7 @@ import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { readingListService } from '@/services/readingList';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
+import type { SortOption, SortDirection } from '@/types/ui/sorting.types';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback, lightFeedback } from '@/utils/haptics';
 

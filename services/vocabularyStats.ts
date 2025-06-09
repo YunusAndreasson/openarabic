@@ -1,5 +1,6 @@
-import { supabase } from './supabase';
 import { handleError } from '@/utils/errorHandling';
+
+import { supabase } from './supabase';
 
 export interface VocabularyStatsFromDB {
   totalWords: number;

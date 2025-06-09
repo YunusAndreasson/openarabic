@@ -1,5 +1,5 @@
-import type { StudyWord } from './vocabulary.types';
 import type { WordConfidence } from './review.types';
+import type { StudyWord } from './vocabulary.types';
 
 export interface UseFSRSOptions {
   userId: string | undefined;

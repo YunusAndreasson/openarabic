@@ -5,7 +5,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
-
 interface LegendItemProps {
   type: 'area' | 'bar' | 'dot' | 'line';
   color: string;
@@ -71,21 +70,21 @@ ChartFooter.displayName = 'ChartFooter';
 
 const styles = StyleSheet.create({
   legendArea: {
-    borderRadius: 6 / 2,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     flexShrink: 0,
     height: 6,
     marginRight: LAYOUT.SPACING.SMALL,
     width: 12,
   },
   legendBar: {
-    borderRadius: 6 / 2,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     flexShrink: 0,
     height: 6,
     marginRight: LAYOUT.SPACING.SMALL,
     width: 12,
   },
   legendDot: {
-    borderRadius: 6 / 2,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     flexShrink: 0,
     height: 6,
     marginRight: LAYOUT.SPACING.SMALL,
@@ -99,7 +98,7 @@ const styles = StyleSheet.create({
     maxWidth: '45%',
   },
   legendLine: {
-    borderRadius: 2 / 2,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     flexShrink: 0,
     height: 2,
     marginRight: LAYOUT.SPACING.SMALL,
