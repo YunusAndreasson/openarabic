@@ -87,8 +87,8 @@ ListenListItem.displayName = 'ListenListItem';
 
 export type ListenSortOption = 'title' | 'author';
 
-// Updated sort options - Title and Author with hidden recent priority
-const createListenSortOptions = (): SortOption<ListenSortOption>[] => [
+// Static sort options - Title and Author with hidden recent priority
+const LISTEN_SORT_OPTIONS: SortOption<ListenSortOption>[] = [
   { key: 'title', label: 'Title' },
   { key: 'author', label: 'Author' },
 ];
@@ -412,8 +412,8 @@ export default function ListenScreen(): JSX.Element {
     [prefetchArticle, sortedReadingList]
   );
 
-  // Memoized sort options - simplified to just two options
-  const sortOptions = useMemo(() => createListenSortOptions(), []);
+  // Use constant sort options
+  const sortOptions = LISTEN_SORT_OPTIONS;
 
   // Get current article for now playing card
   const currentArticle = useMemo(() => {

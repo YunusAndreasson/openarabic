@@ -10,7 +10,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import { Stack, useNavigationContainerRef, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useState, useRef, useMemo, useCallback, memo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, memo } from 'react';
 import 'react-native-reanimated';
 import { AppState, View, StyleSheet, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -165,10 +165,6 @@ function AppContent() {
     }
   }, [isAuthLoading, isLoaded, preloadAppData]);
 
-  // Layout callback - expo-router handles splash screen automatically
-  const onLayoutRootView = useCallback(() => {
-    // Removed manual splash screen hiding - expo-router handles this through plugin configuration
-  }, []);
 
   // Wait for all resources before setting appReady
   useEffect(() => {
@@ -238,7 +234,7 @@ function AppContent() {
 
   return (
     <NavigationThemeProvider value={navigationTheme}>
-      <View style={styles.container} onLayout={onLayoutRootView}>
+      <View style={styles.container}>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen
             name="(tabs)"
