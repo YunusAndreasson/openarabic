@@ -10,13 +10,7 @@ import { selectionFeedback } from '@/utils/haptics';
 import BaseCard from './BaseCard';
 import Pill from './Pill';
 import { ThemedText } from './ThemedText';
-
-export type SortDirection = 'asc' | 'desc';
-
-export interface SortOption<T = string> {
-  key: T;
-  label: string;
-}
+import type { SortDirection, SortOption } from '@/types/ui/sorting.types';
 
 export interface SortingControlsProps<T = string> {
   currentSort: T;

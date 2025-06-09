@@ -5,14 +5,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ChartTooltipData, DataPointOverlay, useChartTooltip } from './ChartInteractivity';
 import { useGraphWidth, GRAPH_HEIGHT_LARGE } from './constants';
-
-export interface DataPoint {
-  x: number;
-  y: number;
-  value: string;
-  label: string;
-  data?: any; // Additional data for the point
-}
+import type { DataPoint } from '@/types/ui/chart.types';
 
 interface ChartCanvasProps {
   children: ReactNode;
@@ -22,7 +15,6 @@ interface ChartCanvasProps {
   // Interactive features
   dataPoints?: DataPoint[];
   enableTooltips?: boolean;
-
 }
 
 /**
@@ -42,9 +34,7 @@ export const ChartCanvas = memo(
     const { tooltip, showTooltip } = useChartTooltip();
 
     return (
-      <View
-        style={[styles.container, { width: resolvedWidth, height }]}
-      >
+      <View style={[styles.container, { width: resolvedWidth, height }]}>
         {/* Main Chart Canvas */}
         <Canvas style={{ width: resolvedWidth, height }}>{children}</Canvas>
 
@@ -75,3 +65,5 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
 });
+
+export type { DataPoint } from '@/types/ui/chart.types';
