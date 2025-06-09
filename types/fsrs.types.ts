@@ -1,4 +1,5 @@
 import type { StudyWord } from './vocabulary.types';
+import type { WordConfidence } from './review.types';
 
 export interface UseFSRSOptions {
   userId: string | undefined;
@@ -11,7 +12,7 @@ export type UseFSRSResult = {
   isLoading: boolean;
   isComplete: boolean;
   progress: number;
-  updateWord: (rootId: number, confidence: 'known' | 'unknown' | 'vague') => Promise<void>;
+  updateWord: (rootId: number, confidence: WordConfidence) => Promise<void>;
   invalidateQueries: () => void;
   refetchDueWords: () => Promise<unknown>;
   resetQueue: () => void;
