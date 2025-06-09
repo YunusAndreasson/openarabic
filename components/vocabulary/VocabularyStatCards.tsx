@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
   numberBadge: {
     width: 40,
     height: 40,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
