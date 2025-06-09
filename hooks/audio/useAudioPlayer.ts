@@ -423,6 +423,21 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
     }
   }, [currentIndex, queue.length]);
 
+  // Cleanup on unmount to release audio resources
+  useEffect(() => {
+    return () => {
+      stop();
+      try {
+        if (audioPlayer && typeof audioPlayer.unloadAsync === 'function') {
+          audioPlayer.unloadAsync();
+        }
+      } catch {
+        // ignore unload errors
+      }
+      setTrackStartTimes(new Map());
+    };
+  }, []);
+
   // Legacy actions for compatibility
   const actions = useMemo(
     () => ({
