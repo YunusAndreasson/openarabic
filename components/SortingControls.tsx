@@ -135,8 +135,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden', // Ensures clean card edges
   },
   sortContent: {
-    paddingHorizontal: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.TINY,
-    paddingVertical: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.TINY,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
   sortOptions: {
     flexDirection: 'row',
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     marginRight: 0,
     paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.TINY,
+    paddingVertical: LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     minHeight: 42,
     justifyContent: 'center',
