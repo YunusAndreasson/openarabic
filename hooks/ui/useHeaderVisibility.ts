@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import type { NativeSyntheticEvent, NativeScrollEvent, ViewStyle } from 'react-native';
 import { useAnimatedStyle, withTiming } from 'react-native-reanimated';
+
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 interface UseHeaderVisibilityOptions {

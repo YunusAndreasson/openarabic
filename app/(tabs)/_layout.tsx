@@ -223,9 +223,10 @@ const CustomHeaderBackground = memo(() => {
 });
 CustomHeaderBackground.displayName = 'CustomHeaderBackground';
 
-const HEADER_TITLE_STYLE: TextStyle = {
-  ...LAYOUT.HEADER.TITLE.MAIN,
-};
+const HEADER_TITLE_STYLE = {
+  fontSize: LAYOUT.HEADER.TITLE.MAIN.fontSize,
+  fontWeight: LAYOUT.HEADER.TITLE.MAIN.fontWeight as any,
+} as TextStyle;
 
 const HEADER_STYLE = {
   elevation: 0,

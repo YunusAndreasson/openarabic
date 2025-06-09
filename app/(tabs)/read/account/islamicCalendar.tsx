@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Stack } from 'expo-router';
 import moment from 'moment-hijri';
 import React, { useMemo } from 'react';
-import { StyleSheet, View, ScrollView, type TextStyle } from 'react-native';
+import { StyleSheet, View, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BaseCard from '@/components/BaseCard';
@@ -144,9 +144,10 @@ export default function IslamicCalendarScreen() {
           headerShown: true,
           headerTitle: 'Calendar',
           headerTitleStyle: {
-            ...LAYOUT.HEADER.TITLE.SECONDARY,
+            fontSize: LAYOUT.HEADER.TITLE.SECONDARY.fontSize,
+            fontWeight: LAYOUT.HEADER.TITLE.SECONDARY.fontWeight as any,
             color: colors.text,
-          } as TextStyle,
+          },
           headerStyle: { backgroundColor: colors.background },
           headerShadowVisible: false,
           headerTitleAlign: 'left',
