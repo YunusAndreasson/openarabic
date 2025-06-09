@@ -388,13 +388,8 @@ export default function ArticlesScreen(): JSX.Element {
       style={styles.container}
     >
       <ArticleList
-        articles={articlesData}
         contentContainerStyle={contentContainerStyle}
-        hideMainList={true}
-        hideWhileRefreshing={false}
-        isLoading={isLoading}
         isRefreshing={isRefreshing}
-        ListEmptyComponent={null}
         ListFooterComponent={ListFooterComponent}
         ListHeaderComponent={ListHeaderComponent}
         progressViewOffset={headerHeight + LAYOUT.SPACING.XXLARGE}

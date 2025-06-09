@@ -8,23 +8,20 @@ import React, {
   forwardRef,
   useImperativeHandle,
   memo,
-  useDeferredValue,
   useTransition,
 } from 'react';
-import { StyleSheet, RefreshControl } from 'react-native';
+import { StyleSheet, RefreshControl, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import ThemedCard from '@/components/ThemedCard';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
-import type { ArticleListProps } from '@/types/ui/article.types';
 
 const ITEM_HEIGHT = 360;
 const DRAW_DISTANCE = ITEM_HEIGHT * 5;
 const ESTIMATED_LIST_SIZE = { height: ITEM_HEIGHT * 10, width: 0 };
 
-// Move ArticleItem outside the parent component
 interface ArticleItemProps {
   item: Article;
   onPress: (article: Article) => void;
@@ -34,7 +31,6 @@ const ArticleItem = memo(({ item, onPress }: ArticleItemProps) => {
   const [isPending, startTransition] = useTransition();
 
   const handlePress = useCallback(() => {
-    // Use transition for non-urgent navigation
     startTransition(() => {
       onPress(item);
     });
@@ -56,21 +52,27 @@ const ArticleItem = memo(({ item, onPress }: ArticleItemProps) => {
 
 ArticleItem.displayName = 'ArticleItem';
 
+// Simplified props for single usage
+interface ArticleListProps {
+  onRefresh?: () => void;
+  onArticlePress: (article: Article) => void;
+  ListHeaderComponent?: React.ComponentType<object> | React.ReactElement | null;
+  ListFooterComponent?: React.ComponentType<object> | React.ReactElement | null;
+  contentContainerStyle?: StyleProp<ViewStyle>;
+  progressViewOffset?: number;
+  isRefreshing?: boolean;
+}
+
 const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
   (
     {
-      articles,
-      isLoading,
-      isRefreshing = false,
       onRefresh,
       onArticlePress,
       ListHeaderComponent,
       ListFooterComponent,
-      ListEmptyComponent,
-      hideMainList = false,
-      hideWhileRefreshing = false,
       contentContainerStyle,
       progressViewOffset,
+      isRefreshing = false,
     },
     ref
   ) => {
@@ -79,9 +81,6 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
     const insets = useSafeAreaInsets();
     const headerHeight = useHeaderHeight();
     const [, startTransition] = useTransition();
-
-    // Defer articles data to prevent blocking during heavy operations
-    const deferredArticles = useDeferredValue(articles);
 
     useImperativeHandle(ref, () => listRef.current as FlashList<Article>, []);
 
@@ -92,7 +91,6 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
       [onArticlePress]
     );
 
-    // Optimized refresh control with transitions
     const handleRefreshWithTransition = useCallback(() => {
       if (onRefresh) {
         startTransition(() => {
@@ -111,11 +109,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
           progressViewOffset={
             progressViewOffset !== undefined
               ? progressViewOffset
-              : headerHeight +
-                LAYOUT.SPACING.TINY +
-                LAYOUT.SPACING.SMALL +
-                LAYOUT.SPACING.XXLARGE +
-                LAYOUT.BUTTON.HEIGHT.MEDIUM
+              : headerHeight + LAYOUT.SPACING.XXLARGE
           }
           onRefresh={handleRefreshWithTransition}
         />
@@ -130,11 +124,6 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
       ]
     );
 
-    const shouldHideMainList = (hideWhileRefreshing && isRefreshing) || hideMainList;
-    const displayData = shouldHideMainList ? [] : deferredArticles;
-    const displayHeader = hideWhileRefreshing && isRefreshing ? null : ListHeaderComponent;
-    const displayFooter = hideWhileRefreshing && isRefreshing ? null : ListFooterComponent;
-
     const safeContentContainerStyle = useMemo(
       () => ({
         ...(contentContainerStyle as ContentStyle),
@@ -143,18 +132,18 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
       [contentContainerStyle, insets]
     );
 
-    // Enhanced FlashList configuration for React Native 0.79
     const flashListConfig = useMemo(
       () => ({
-        data: displayData,
+        // Always hide main list since we only show header/footer
+        data: [] as Article[],
         renderItem,
         keyExtractor,
         estimatedItemSize: ITEM_HEIGHT,
         showsVerticalScrollIndicator: false,
         contentContainerStyle: safeContentContainerStyle,
-        ListHeaderComponent: displayHeader,
-        ListFooterComponent: displayFooter,
-        ListEmptyComponent: isLoading ? null : ListEmptyComponent,
+        ListHeaderComponent,
+        ListFooterComponent,
+        ListEmptyComponent: null,
         refreshControl,
         scrollEventThrottle: 16,
         overrideItemLayout: (layout: any, _item: Article) => {
@@ -162,26 +151,21 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
         },
         drawDistance: DRAW_DISTANCE,
         estimatedListSize: ESTIMATED_LIST_SIZE,
-        // React Native 0.79 optimizations
         removeClippedSubviews: true,
         maxToRenderPerBatch: 10,
         windowSize: 10,
         initialNumToRender: 5,
         updateCellsBatchingPeriod: 50,
-        // Performance optimizations
         disableIntervalMomentum: true,
         disableScrollViewPanResponder: false,
         keyboardShouldPersistTaps: 'handled' as const,
       }),
       [
-        displayData,
         renderItem,
         keyExtractor,
         safeContentContainerStyle,
-        displayHeader,
-        displayFooter,
-        ListEmptyComponent,
-        isLoading,
+        ListHeaderComponent,
+        ListFooterComponent,
         refreshControl,
       ]
     );
@@ -196,9 +180,6 @@ const styles = StyleSheet.create({
   articleCard: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
-  },
-  container: {
-    flex: 1,
   },
   pendingCard: {
     opacity: 0.7,
