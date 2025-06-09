@@ -23,20 +23,9 @@ import { TIMING_CONFIG, SPRING_CONFIG } from '@/hooks/animations/animationConfig
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { successFeedback } from '@/utils/haptics';
+import type { SessionMetrics } from '@/types/review.types';
 
 const EMPTY_OBJECT = {};
-
-interface SessionMetrics {
-  wordsReviewed: number;
-  wordsKnown: number;
-  wordsVague: number;
-  wordsUnknown: number;
-  averageStabilityIncrease: number;
-  longestStreak: number;
-  currentStreak: number;
-  masteredWords: number;
-  startTime: number;
-}
 
 interface CompletionScreenProps {
   onClose: () => void;
