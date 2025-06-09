@@ -39,42 +39,6 @@ export const useChartColors = () => {
       poor: colors.error, // Red - attention needed
     },
 
-    // Activity levels - using the primary color with varying intensities
-    activity: {
-      high: colors.tint, // Bright primary - high energy
-      medium: colors.info, // Blue - steady activity
-      low: colors.warning, // Orange - gentle activity
-      none: withOpacity(colors.textTertiary, CHART_OPACITY.MEDIUM),
-    },
-
-    // Memory retention states - using temperature-based color psychology
-    memory: {
-      strong: colors.success, // Green - healthy, strong
-      fading: colors.warning, // Orange - transitional state
-      weak: colors.error, // Red - needs attention
-    },
-
-    // Difficulty levels - using intensity progression
-    difficulty: {
-      easy: colors.success, // Green - easy/positive
-      medium: colors.warning, // Orange - moderate challenge
-      hard: colors.error, // Red - difficult/challenging
-    },
-
-    // Trend indicators - directional color psychology
-    trend: {
-      improving: colors.success, // Green - positive direction
-      stable: colors.info, // Blue - steady state
-      declining: colors.error, // Red - negative direction
-    },
-
-    // Streak and consistency - using primary brand colors
-    streak: {
-      active: colors.tint, // Bright primary - active engagement
-      inactive: withOpacity(colors.textTertiary, CHART_OPACITY.LOW),
-      today: colors.primary, // Primary brand color for current day
-      weekend: withOpacity(colors.warning, CHART_OPACITY.MEDIUM),
-    },
 
     // Chart UI elements - optimized for data visualization contrast
     ui: {
@@ -122,47 +86,5 @@ export const useChartColors = () => {
       }
     },
 
-    // Get subtle glow colors for enhanced data point visibility
-    getDataPointGlow: (type: 'efficiency' | 'mastery' | 'retrievability' = 'efficiency') => {
-      switch (type) {
-        case 'efficiency':
-          return withOpacity(colors.info, 0.4);
-        case 'mastery':
-          return withOpacity(colors.success, 0.35);
-        case 'retrievability':
-          return withOpacity(colors.info, 0.4);
-      }
-    },
-
-    // Enhanced color selection functions with standardized thresholds
-    getPerformanceColor: (value: number) => {
-      if (value >= PERFORMANCE_THRESHOLDS.EXCELLENT) return colors.success;
-      if (value >= PERFORMANCE_THRESHOLDS.GOOD) return colors.info;
-      if (value >= PERFORMANCE_THRESHOLDS.FAIR) return colors.warning;
-      return colors.error;
-    },
-
-    getDifficultyColor: (difficulty: number) => {
-      // FSRS difficulty ranges ~5-10, using validated thresholds
-      if (difficulty < FSRS_DIFFICULTY_THRESHOLDS.EASY) return colors.success;
-      if (difficulty < FSRS_DIFFICULTY_THRESHOLDS.MEDIUM) return colors.warning;
-      return colors.error;
-    },
-
-    getRetrievabilityColor: (retrievability: number) => {
-      // Convert to percentage and use standardized thresholds
-      const percentage = retrievability * 100;
-      if (percentage >= PERFORMANCE_THRESHOLDS.EXCELLENT) return colors.success;
-      if (percentage >= PERFORMANCE_THRESHOLDS.GOOD) return colors.info;
-      if (percentage >= PERFORMANCE_THRESHOLDS.FAIR) return colors.warning;
-      return colors.error;
-    },
   };
 };
-
-export type PerformanceLevel = 'excellent' | 'good' | 'moderate' | 'poor';
-export type ActivityLevel = 'high' | 'low' | 'medium' | 'none';
-export type MemoryState = 'fading' | 'strong' | 'weak';
-export type DifficultyLevel = 'easy' | 'hard' | 'medium';
-export type TrendDirection = 'declining' | 'improving' | 'stable';
-export type MasteryLevel = 'learning' | 'mastered' | 'new' | 'proficient';

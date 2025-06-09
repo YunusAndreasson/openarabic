@@ -21,13 +21,5 @@ export { useChartColors } from './chartColors';
 export * from './utils';
 export * from './constants';
 
-// Chart utilities and constants
-export {
-  CHART_OPACITY,
-  type PerformanceLevel as ChartColorPerformanceLevel,
-  type ActivityLevel,
-  type DifficultyLevel as ChartColorDifficultyLevel,
-} from './chartColors';
-
 // Standardized chart messaging system
 export * from './chartMessages';
