@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 
 import { handleError } from '@/utils/errorHandling';
 
-// Local error handling wrapper
+
 const logError = (error: unknown): void => {
   handleError(error instanceof Error ? error : new Error(String(error)), {
     showToast: false,
@@ -14,33 +14,33 @@ const logError = (error: unknown): void => {
 type AnalyticsProperties =
   AnalyticsProperties[] | boolean | number | string | { [key: string]: AnalyticsProperties } | null | undefined;
 
-// Initialize Mixpanel with your project token
+
 const MIXPANEL_TOKEN = process.env.EXPO_PUBLIC_MIXPANEL_TOKEN || 'YOUR_MIXPANEL_TOKEN';
 
-// Option to disable tracking in development
-const ENABLE_DEV_TRACKING = false; // Set this to false to disable tracking in development
 
-// Event Names
+const ENABLE_DEV_TRACKING = false;
+
+
 const EVENTS = {
-  // Auth Events
+
   SIGN_UP: 'Sign Up',
   SIGN_IN: 'Sign In',
   SIGN_OUT: 'Sign Out',
 
-  // Article Events
+
   VIEW_ARTICLE: 'View Article',
   COMPLETE_ARTICLE: 'Complete Article',
   TOGGLE_READING_LIST: 'Toggle Reading List',
 
-  // Study Events
+
   ADD_STUDY_WORD: 'Add Study Word',
   REMOVE_STUDY_WORD: 'Remove Study Word',
   COMPLETE_REVIEW: 'Complete Review',
 
-  // Reading List Events
+
   VIEW_READING_LIST: 'View Reading List',
 
-  // Reminder Events
+
   SET_REMINDER_TIME: 'Set Reminder Time',
   TOGGLE_REMINDER: 'Toggle Reminder',
 } as const;
@@ -51,24 +51,24 @@ class Analytics {
   private isInitialized: boolean = false;
 
   constructor() {
-    // Skip initialization in development if tracking is disabled
+
     if (__DEV__ && !ENABLE_DEV_TRACKING) {
       return;
     }
 
-    // Disable legacy autotrack mobile events
+
     const trackAutomaticEvents = false;
 
-    // Use JavaScript mode for Expo compatibility
+
     const useNative = false;
 
-    // Set server URL (use api-eu.mixpanel.com for EU data residency if needed)
-    const serverURL = 'https://api.mixpanel.com';
 
-    // Opt users into tracking by default
+    const serverURL = 'https:
+
+
     const optOutTrackingDefault = false;
 
-    // Set default super properties
+
     const superProperties = {
       platform: Platform.OS,
       appVersion: process.env.EXPO_PUBLIC_APP_VERSION || '1.0.0',
@@ -84,19 +84,19 @@ class Analytics {
       superProperties
     );
 
-    // Initialize Mixpanel
+
     this.init();
   }
 
   private async init() {
-    // Skip initialization in development if tracking is disabled
+
     if (__DEV__ && !ENABLE_DEV_TRACKING) return;
 
     try {
       await this.mixpanel.init();
       this.isInitialized = true;
 
-      // Enable debug logs in development
+
       if (__DEV__) {
         this.mixpanel.setLoggingEnabled(true);
       }
@@ -105,7 +105,7 @@ class Analytics {
     }
   }
 
-  // Initialize user profile
+
   async identify(userId: string, userProperties?: Record<string, AnalyticsProperties>) {
     if (!this.isInitialized) return;
 
@@ -119,9 +119,9 @@ class Analytics {
     }
   }
 
-  // Track an event
+
   async track(eventName: keyof typeof EVENTS, properties?: Record<string, AnalyticsProperties>) {
-    // Skip tracking in development if disabled
+
     if (__DEV__ && !ENABLE_DEV_TRACKING) {
       return;
     }
@@ -139,7 +139,7 @@ class Analytics {
   }
 
 
-  // Reset user (for logout)
+
   async reset() {
     if (!this.isInitialized) return;
 
@@ -150,7 +150,7 @@ class Analytics {
     }
   }
 
-  // Auth Events
+
   async trackSignUp(method: string = 'email') {
     await this.track('SIGN_UP', { method });
   }
@@ -163,7 +163,7 @@ class Analytics {
     await this.track('SIGN_OUT');
   }
 
-  // Article Events
+
   async trackViewArticle(
     articleId: number,
     articleProperties: {
@@ -180,5 +180,5 @@ class Analytics {
   }
 }
 
-// Export a singleton instance
+
 export const analytics = new Analytics();

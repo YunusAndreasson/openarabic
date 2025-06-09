@@ -21,10 +21,10 @@ export interface StudyWord {
   root?: Tables<'roots'> | null;
   user_id: string;
 
-  // Legacy compatibility field
+
   difficulty?: number;
 
-  // FSRS fields
+
   fsrs_due: string | null;
   fsrs_stability: number | null;
   fsrs_difficulty: number | null;
@@ -36,7 +36,7 @@ export interface StudyWord {
   fsrs_state: number | null;
   fsrs_last_review: string | null;
 
-  // Additional fields
+
   created_at: string;
   success_streak?: number;
 }

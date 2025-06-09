@@ -19,8 +19,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
-    flowType: 'implicit', // Using implicit flow instead of pkce to fix session persistence issues
-    debug: false, // Disable auth debugging completely to avoid excessive logging
+    flowType: 'implicit',
+    debug: false,
   },
 });
 
@@ -45,7 +45,7 @@ export function setupSupabaseAppStateListener(): () => void {
       });
 
       try {
-        // Initialize auth on app becoming active
+
         await supabase.auth.initialize();
         supabase.auth.startAutoRefresh();
       } catch (err) {
@@ -79,7 +79,7 @@ export async function checkAuthentication(expectedUserId?: string): Promise<{
   user: User;
 }> {
   try {
-    // Initialize auth to ensure storage is loaded
+
     await supabase.auth.initialize();
 
     const { data, error } = await supabase.auth.getSession();
@@ -92,7 +92,7 @@ export async function checkAuthentication(expectedUserId?: string): Promise<{
       throw error;
     }
 
-    // Check if session exists and is valid
+
     const hasValidSession =
       data.session &&
       data.session.user &&
@@ -105,7 +105,7 @@ export async function checkAuthentication(expectedUserId?: string): Promise<{
       };
     }
 
-    // Handle authentication errors
+
     const errorMessage =
       !data.session || !data.session.user ? 'User must be authenticated' : 'User ID mismatch';
 
