@@ -1,6 +1,5 @@
 // External Libraries
 import { Ionicons } from '@expo/vector-icons';
-import { useHeaderHeight } from '@react-navigation/elements';
 import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
@@ -60,7 +59,6 @@ Divider.displayName = 'Divider';
 
 const AccountScreen: React.FC = () => {
   const colors = useColors();
-  const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
   const { reminderTime, updateReminderTime, formatReminderTime } = useReminders();
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -166,6 +164,7 @@ const AccountScreen: React.FC = () => {
   }, []);
 
   const appVersion = pkg.version;
+  const currentYear = new Date().getFullYear();
 
   return (
     <ThemedView
@@ -181,7 +180,7 @@ const AccountScreen: React.FC = () => {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: headerHeight - LAYOUT.SPACING.LARGE, // Reduced padding for tighter layout
+            paddingTop: LAYOUT.SPACING.LARGE, // Reduced padding for tighter layout
             paddingBottom: insets.bottom + LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
           },
         ]}
@@ -226,7 +225,7 @@ const AccountScreen: React.FC = () => {
         </View>
 
         {/* Appearance Section - Second most frequently used */}
-        <View style={styles.appearanceWrapper}>
+        <View>
           <SectionTitle title="Appearance" />
           <BaseCard
             includePressAnimation={false}
@@ -431,7 +430,7 @@ const AccountScreen: React.FC = () => {
                       <Ionicons color={colors.error} name="log-out-outline" size={22} />
                     </View>
                     <View style={styles.signOutTextContainer}>
-                      <ThemedText style={styles.signOutTitleText} type="body" weight="medium">
+                      <ThemedText type="body" weight="medium">
                         Sign Out
                       </ThemedText>
                       <ThemedText
@@ -459,10 +458,10 @@ const AccountScreen: React.FC = () => {
         <View style={styles.appFooterWrapper}>
           <View style={styles.appFooterContent}>
             <ThemedText colorName="tabIconDefault" style={styles.versionText} type="caption">
-              Version {Constants.expoConfig?.version || appVersion || '1446.0.0'}
+              Version {Constants.expoConfig?.version || appVersion || '0.0.0'}
             </ThemedText>
             <ThemedText colorName="tabIconDefault" style={styles.copyrightText} type="caption">
-              © 2025 OpenArabic
+              © {currentYear} {pkg.name}
             </ThemedText>
           </View>
         </View>
@@ -528,11 +527,6 @@ const styles = StyleSheet.create({
     minWidth: LAYOUT.SPACING.XLARGE,
     opacity: LAYOUT.OPACITY.MEDIUM,
     textAlign: 'center',
-  },
-
-  // Preferences Styles
-  appearanceWrapper: {
-    // Remove marginBottom - SectionTitle handles section spacing
   },
 
   // Appearance Links Styles
@@ -610,9 +604,6 @@ const styles = StyleSheet.create({
   signOutTextContainer: {
     flexDirection: 'column',
     marginLeft: LAYOUT.SPACING.SMALL,
-  },
-  signOutTitleText: {
-    // No additional margin needed since container handles spacing
   },
 
   // Social Link Styles (similar to action links but kept separate for clarity)

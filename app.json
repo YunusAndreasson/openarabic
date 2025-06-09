@@ -2,26 +2,32 @@
   "expo": {
     "name": "Open Arabic",
     "slug": "open-arabic",
-    "version": "1446.10.68",
+    "version": "1446.10.70",
     "orientation": "portrait",
     "icon": "./assets/images/oaLogo.png",
     "scheme": "open-arabic",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "jsEngine": "hermes",
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "openarabic",
       "infoPlist": {
-        "UIBackgroundModes": ["audio", "processing"],
+        "UIBackgroundModes": [
+          "audio",
+          "processing"
+        ],
         "ITSAppUsesNonExemptEncryption": false,
         "BGTaskSchedulerPermittedIdentifiers": [
           "openarabic.backgroundtask",
           "openarabic.backgroundfetch"
         ]
       },
-      "buildNumber": "68"
+      "buildNumber": "70"
     },
     "android": {
       "adaptiveIcon": {
@@ -34,7 +40,8 @@
         "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE"
-      ]
+      ],
+      "versionCode": 2
     },
     "plugins": [
       "expo-router",

@@ -1,17 +1,17 @@
-import js from '@eslint/js';
-import { FlatCompat } from '@eslint/eslintrc';
-import typescriptPlugin from '@typescript-eslint/eslint-plugin';
-import typescriptParser from '@typescript-eslint/parser';
-import reactPlugin from 'eslint-plugin-react';
-import reactHooksPlugin from 'eslint-plugin-react-hooks';
-import reactNativePlugin from 'eslint-plugin-react-native';
-import importPlugin from 'eslint-plugin-import';
-import unusedImportsPlugin from 'eslint-plugin-unused-imports';
-import expoConfig from 'eslint-config-expo';
+const js = require('@eslint/js');
+const { FlatCompat } = require('@eslint/eslintrc');
+const typescriptPlugin = require('@typescript-eslint/eslint-plugin');
+const typescriptParser = require('@typescript-eslint/parser');
+const reactPlugin = require('eslint-plugin-react');
+const reactHooksPlugin = require('eslint-plugin-react-hooks');
+const reactNativePlugin = require('eslint-plugin-react-native');
+const importPlugin = require('eslint-plugin-import');
+const unusedImportsPlugin = require('eslint-plugin-unused-imports');
+const expoConfig = require('eslint-config-expo');
 
 const compat = new FlatCompat();
 
-export default [
+module.exports = [
   js.configs.recommended,
   ...compat.extends('plugin:react/recommended'),
   ...compat.extends('plugin:react-hooks/recommended'),

@@ -166,28 +166,35 @@ function ThemedButtonComponent({
       {...props}
     >
       <View style={[styles.innerContainer, innerContainerStyle]}>
-        {hasIcon ? (
-          <View style={[styles.iconContainer, size === 'small' && styles.iconContainerSmall]}>
-            <IconContent
-              icon={icon}
-              iconComponent={iconComponent}
-              iconSize={iconSize}
-              loading={loading}
-              textColor={textColor}
-            />
-          </View>
-        ) : null}
-        <View style={[styles.contentContainer, contentContainerStyle]}>
-          <ThemedText
-            skipDefaultColor
-            colorName={disabled ? 'disabled' : variant === 'filled' ? 'background' : 'tint'}
-            style={buttonTextStyle}
-            type={getTextType(size, textWeight)}
-          >
-            {textWeight === 'normal' ? title : title?.toUpperCase()}
-          </ThemedText>
-          {children}
-        </View>
+        {loading ? (
+          // When loading, show only the ActivityIndicator centered
+          <ActivityIndicator color={textColor} size="small" />
+        ) : (
+          <>
+            {hasIcon ? (
+              <View style={[styles.iconContainer, size === 'small' && styles.iconContainerSmall]}>
+                <IconContent
+                  icon={icon}
+                  iconComponent={iconComponent}
+                  iconSize={iconSize}
+                  loading={false}
+                  textColor={textColor}
+                />
+              </View>
+            ) : null}
+            <View style={[styles.contentContainer, contentContainerStyle]}>
+              <ThemedText
+                skipDefaultColor
+                colorName={disabled ? 'disabled' : variant === 'filled' ? 'background' : 'tint'}
+                style={buttonTextStyle}
+                type={getTextType(size, textWeight)}
+              >
+                {textWeight === 'normal' ? title : title?.toUpperCase()}
+              </ThemedText>
+              {children}
+            </View>
+          </>
+        )}
       </View>
     </AnimatedTouchable>
   );

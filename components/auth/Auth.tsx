@@ -107,7 +107,7 @@ function Auth(): JSX.Element {
   const validateEmail = useCallback((email: string) => {
     if (!email) return false;
     if (!EMAIL_REGEX.test(email)) {
-      if (isMountedRef.current) setEmailError('Invalid email address');
+      if (isMountedRef.current) setEmailError('Enter a valid email');
       return false;
     }
     if (isMountedRef.current) setEmailError('');
@@ -116,12 +116,12 @@ function Auth(): JSX.Element {
 
   const validatePassword = useCallback((password: string) => {
     if (!password) {
-      if (isMountedRef.current) setPasswordError('Password is required');
+      if (isMountedRef.current) setPasswordError('Enter your password');
       return false;
     }
     if (password.length < PASSWORD_REQUIREMENTS.minLength) {
       if (isMountedRef.current)
-        setPasswordError(`Must be at least ${PASSWORD_REQUIREMENTS.minLength} characters`);
+        setPasswordError(`Use at least ${PASSWORD_REQUIREMENTS.minLength} characters`);
       return false;
     }
     if (
@@ -129,7 +129,7 @@ function Auth(): JSX.Element {
       !PASSWORD_REQUIREMENTS.hasLowerCase.test(password) ||
       !PASSWORD_REQUIREMENTS.hasNumber.test(password)
     ) {
-      if (isMountedRef.current) setPasswordError('Include upper, lower & number');
+      if (isMountedRef.current) setPasswordError('Add uppercase, lowercase and number');
       return false;
     }
     if (isMountedRef.current) setPasswordError('');
@@ -196,7 +196,7 @@ function Auth(): JSX.Element {
           tags: { location: 'auth_component' },
           extra: { error: error.message },
         });
-        Alert.alert('Error', error.message);
+        Alert.alert('Sign in failed', error.message);
       } else {
         // Ensure auto-refresh is active
         supabase.auth.startAutoRefresh();
@@ -228,11 +228,11 @@ function Auth(): JSX.Element {
     } catch (err) {
       if (!isMountedRef.current) return;
       handleError(err instanceof Error ? err : new Error('Sign in error'), {
-        toastMessage: 'Failed to sign in. Please try again.',
+        toastMessage: 'Sign in failed. Please try again',
         analyticsEventName: 'Sign_In_Error',
         sentrySeverity: 'error',
       });
-      Alert.alert('Error', 'Failed to sign in. Please try again.');
+      Alert.alert('Sign in failed', 'Please try again');
     } finally {
       if (isMountedRef.current) {
         setLoading(false);
@@ -262,7 +262,7 @@ function Auth(): JSX.Element {
 
       if (error) {
         if (!isMountedRef.current) return;
-        Alert.alert('Error', error.message);
+        Alert.alert('Account creation failed', error.message);
       } else {
         // Ensure auto-refresh is active
         supabase.auth.startAutoRefresh();
@@ -280,11 +280,11 @@ function Auth(): JSX.Element {
         successFeedback();
 
         if (!isMountedRef.current) return;
-        Alert.alert('Success', 'Check your email for the confirmation link');
+        Alert.alert('Account created', 'Check your email for the confirmation link');
       }
     } catch (err) {
       if (!isMountedRef.current) return;
-      Alert.alert('Error', 'Failed to create account. Please try again.');
+      Alert.alert('Account creation failed', 'Please try again');
       handleError(err as Error);
     } finally {
       if (isMountedRef.current) {
@@ -336,7 +336,7 @@ function Auth(): JSX.Element {
             value={password}
             hint={
               isRegistering
-                ? `${PASSWORD_REQUIREMENTS.minLength}+ chars with upper, lower & number`
+                ? `At least ${PASSWORD_REQUIREMENTS.minLength} characters with uppercase, lowercase and number`
                 : undefined
             }
             onBlur={handlePasswordBlur}
@@ -354,13 +354,9 @@ function Auth(): JSX.Element {
         />
       </View>
 
-      <TouchableOpacity
-        activeOpacity={0.7}
-        style={styles.toggleContainer}
-        onPress={toggleMode}
-      >
+      <TouchableOpacity activeOpacity={0.7} style={styles.toggleContainer} onPress={toggleMode}>
         <ThemedText align="center" type="body" variant="secondary">
-          {isRegistering ? 'Already have an account? Sign in' : 'Need an account? Create one'}
+          {isRegistering ? 'Have an account? Sign in' : 'Need an account? Create one'}
         </ThemedText>
       </TouchableOpacity>
     </View>

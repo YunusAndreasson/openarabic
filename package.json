@@ -1,7 +1,7 @@
 {
-  "name": "openarabic",
+  "name": "OpenArabic",
   "main": "expo-router/entry",
-  "version": "1446.10.25",
+  "version": "1446.10.70",
   "scripts": {
     "postinstall": "patch-package",
     "doctor": "npx expo-doctor",
@@ -10,7 +10,8 @@
     "start": "expo start -c",
     "test": "jest --watchAll --testTimeout=1000",
     "fullupgrade": "yarn upgrade --latest && npx expo@latest install --check",
-    "types:db": "supabase gen types typescript --project-id kkmnzbeugdoajtzfjkxg > types/database.types.ts"
+    "types:db": "supabase gen types typescript --project-id kkmnzbeugdoajtzfjkxg > types/database.types.ts",
+    "bump": "tsc --noEmit && yarn lint && node utils/bumpVersion.js"
   },
   "dependencies": {
     "@babel/runtime": "^7.27.6",
@@ -67,8 +68,8 @@
     "@types/jest": "^29.5.14",
     "@types/react": "~19.0.10",
     "@types/react-test-renderer": "^19.1.0",
-    "@typescript-eslint/eslint-plugin": "^8.33.1",
-    "@typescript-eslint/parser": "^8.33.1",
+    "@typescript-eslint/eslint-plugin": "^8.34.0",
+    "@typescript-eslint/parser": "^8.34.0",
     "babel-plugin-module-resolver": "^5.0.2",
     "eslint": "9.28.0",
     "eslint-config-expo": "~9.2.0",

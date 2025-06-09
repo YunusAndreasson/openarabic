@@ -1,9 +1,10 @@
 import { Stack } from 'expo-router';
 import type { JSX } from 'react';
 import React, { memo } from 'react';
-import { StyleSheet, View, KeyboardAvoidingView, Platform, Image, ScrollView } from 'react-native';
+import { StyleSheet, View, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ThemedText } from '@/components/ThemedText';
 import Auth from '@/components/auth';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -42,13 +43,14 @@ const AuthScreen = memo(function AuthScreen(): JSX.Element {
             },
           ]}
         >
-          {/* Logo Section - Visual Hierarchy Level 1 */}
-          <View style={styles.logoContainer}>
-            <Image
-              resizeMode="contain"
-              source={require('@/assets/images/oaLogo.png')}
-              style={styles.logo}
-            />
+          {/* Header Section - Visual Hierarchy Level 1 */}
+          <View style={styles.headerContainer}>
+            <ThemedText align="center" type="heading1" colorName="headingText">
+              Welcome to OpenArabic
+            </ThemedText>
+            <ThemedText align="center" type="body" variant="secondary" style={styles.subtitle}>
+              Sign in to continue learning Arabic
+            </ThemedText>
           </View>
 
           {/* Auth Form - Visual Hierarchy Level 2 */}
@@ -80,17 +82,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  keyboardAvoidingView: {
-    flex: 1,
-  },
-  logo: {
-    height: 110,
-    width: 110,
-  },
-  logoContainer: {
+  headerContainer: {
     alignItems: 'center',
     paddingBottom: LAYOUT.SPACING.XXLARGE,
-    paddingTop: LAYOUT.SPACING.XLARGE,
+    width: '100%',
+  },
+  keyboardAvoidingView: {
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
@@ -98,5 +96,8 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  subtitle: {
+    marginTop: LAYOUT.SPACING.MEDIUM,
   },
 });
