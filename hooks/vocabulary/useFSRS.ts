@@ -65,6 +65,10 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
     queueInitialized: false,
   });
 
+  // Timeouts for queue initialization and completion callbacks
+  const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const completionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const queryClient = useQueryClient();
 
   // Configure FSRS with proper learning steps
@@ -108,7 +112,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
     stateTrackingRef.current.queueInitialized = true;
 
     // Batch updates via setTimeout to separate render cycles
-    setTimeout(() => {
+    initTimeoutRef.current = setTimeout(() => {
       if (dueWords.length > 0) {
         countersRef.current.totalWords = dueWords.length;
         countersRef.current.uniqueWords = new Set(dueWords.map(word => word.root_id));
@@ -129,12 +133,17 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
         if (onComplete && !stateTrackingRef.current.completionTriggered) {
           stateTrackingRef.current.completionTriggered = true;
           // Further delay the completion callback
-          setTimeout(() => {
+          completionTimeoutRef.current = setTimeout(() => {
             onComplete();
           }, 50);
         }
       }
     }, 0);
+
+    return () => {
+      if (initTimeoutRef.current) clearTimeout(initTimeoutRef.current);
+      if (completionTimeoutRef.current) clearTimeout(completionTimeoutRef.current);
+    };
   }, [dueWords, isLoading, onComplete]);
 
   const convertToFSRSCard = useCallback((word: StudyWord): Card => {
