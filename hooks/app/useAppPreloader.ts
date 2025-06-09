@@ -89,8 +89,41 @@ export const useAppPreloader = (): AppPreloaderResult => {
         }),
       ];
 
-      await Promise.all(criticalPromises);
-      setPreloadProgress(40);
+      const [categories] = await Promise.all(criticalPromises);
+      setPreloadProgress(30);
+
+      // Preload 15 articles per category for instant category modal loading
+      if (categories && Array.isArray(categories) && categories.length > 0) {
+        const categoryPreloadPromises = categories.map(category =>
+          queryClient
+            .prefetchQuery({
+              queryKey: ['filtered-articles', 'category', category.id],
+              queryFn: () =>
+                articlesService.getArticles({
+                  categoryId: category.id,
+                  limit: 15,
+                  sortBy: 'created_at',
+                  sortOrder: 'desc',
+                }),
+              ...CACHE_TIMES.ARTICLES,
+              retry: 2,
+            })
+            .catch(() => {
+              // Silently handle individual category preload failures
+              // This ensures one category failure doesn't block others
+            })
+        );
+
+        // Wait for category preloading with a reasonable timeout
+        await Promise.allSettled(categoryPreloadPromises);
+        setPreloadProgress(50);
+
+        Sentry.addBreadcrumb({
+          category: 'preloader',
+          message: `Preloaded articles for ${categories.length} categories`,
+          level: 'info',
+        });
+      }
 
       // Load remaining articles in background
       queryClient.prefetchQuery({
@@ -366,6 +399,18 @@ export const useAppPreloader = (): AppPreloaderResult => {
               const keyArray = Array.isArray(key) ? key : [key];
               return keyArray.every((keyPart, index) => queryKey[index] === keyPart);
             });
+          },
+        }),
+        // Also invalidate category-specific article caches
+        queryClient.invalidateQueries({
+          predicate: query => {
+            const queryKey = query.queryKey;
+            return (
+              Array.isArray(queryKey) &&
+              queryKey.length >= 3 &&
+              queryKey[0] === 'filtered-articles' &&
+              queryKey[1] === 'category'
+            );
           },
         }),
         preloadAppData(),
