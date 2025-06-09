@@ -104,11 +104,11 @@ export const VocabularyStatCards = memo(
       if (wordCategories.dueWords > 0) {
         cards.push({
           value: wordCategories.dueWords,
-          label: 'Practice Due Words',
+          label: 'Due Now',
           iconColor: colors.error,
           bgColor: colors.card,
           category: 'due' as StatCategory,
-          description: 'Review scheduled words',
+          description: 'Regular practice for scheduled words',
         });
       }
 
@@ -116,11 +116,11 @@ export const VocabularyStatCards = memo(
       if (wordCategories.strugglingWords > 0) {
         cards.push({
           value: wordCategories.strugglingWords,
-          label: 'Practice Challenging',
+          label: 'Challenging',
           iconColor: colors.warning,
           bgColor: colors.card,
           category: 'needsAttention' as StatCategory,
-          description: 'Focus on difficult words',
+          description: 'Drill down on challenging words',
         });
       }
 
@@ -128,11 +128,11 @@ export const VocabularyStatCards = memo(
       if (totalWords > 0) {
         cards.push({
           value: totalWords,
-          label: 'Practice All Words',
+          label: 'All Words',
           iconColor: colors.tint,
           bgColor: colors.card,
           category: 'total' as StatCategory,
-          description: 'Long randomized session',
+          description: 'If you want to do additional practice',
         });
       }
 

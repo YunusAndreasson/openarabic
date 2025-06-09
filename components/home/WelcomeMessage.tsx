@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.XXLARGE,
   },
   dateContainer: {
     alignItems: 'center',

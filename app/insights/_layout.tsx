@@ -24,9 +24,9 @@ export default function InsightsLayout(): JSX.Element {
           const typeMap: Record<string, string> = {
             mastery: 'Word Mastery',
             retrievability: 'Review Timing',
-            efficiency: 'Learning Progress',
-            progress: 'Learning Progress',
-            recommendation: 'What To Do Next',
+            efficiency: 'Learning Speed',
+            progress: 'Progress Stages',
+            recommendation: 'Next Steps',
           };
 
           return {

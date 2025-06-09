@@ -156,7 +156,7 @@ export default function IslamicCalendarScreen() {
       <Stack.Screen
         options={{
           headerShown: true,
-          headerTitle: 'Islamic Calendar',
+          headerTitle: 'Calendar',
           headerTitleStyle: {
             ...LAYOUT.HEADER.TITLE.SECONDARY,
             color: colors.text,

@@ -24,7 +24,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import { selectionFeedback, lightFeedback } from '@/utils/haptics';
 
 interface SessionTypeModalProps {
   visible: boolean;
@@ -48,8 +47,6 @@ const SessionTypeModal = memo(
         // Immediately reset values without animation
         translateY.value = 0;
         opacity.value = 1;
-        // Add haptic feedback when modal opens
-        lightFeedback();
       } else {
         // Reset when modal closes to ensure clean state
         translateY.value = 0;
@@ -58,7 +55,6 @@ const SessionTypeModal = memo(
     }, [visible, translateY, opacity]);
 
     const handleOptionPress = (onAction: () => void) => {
-      selectionFeedback();
       onAction();
     };
 
@@ -158,7 +154,7 @@ const SessionTypeModal = memo(
                       style={styles.optionDescription}
                       type="caption"
                     >
-                      Interactive
+                      Tap and swipe
                     </ThemedText>
                   </View>
                 </TouchableOpacity>
@@ -169,7 +165,7 @@ const SessionTypeModal = memo(
                   onPress={() => handleOptionPress(onStartAudio)}
                 >
                   <View style={[styles.iconContainer, { backgroundColor: colors.tint + '15' }]}>
-                    <Ionicons name="headset" size={24} color={colors.tint} />
+                    <Ionicons name="ear" size={24} color={colors.tint} />
                   </View>
                   <View style={styles.optionContent}>
                     <ThemedText style={styles.optionTitle} type="body" weight="semibold">
@@ -180,7 +176,7 @@ const SessionTypeModal = memo(
                       style={styles.optionDescription}
                       type="caption"
                     >
-                      Hands-free
+                      Listen while multitasking
                     </ThemedText>
                   </View>
                 </TouchableOpacity>
