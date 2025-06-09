@@ -3,10 +3,10 @@ import { handleError } from '@/utils/errorHandling';
 
 import { supabase, checkAuthentication } from './supabase';
 
-
 type ReadingListItem = {
   user_id: string;
   article_id: number;
+  category_id: number | null;
   added_at: string;
   articles: Article & {
     author: {
@@ -15,7 +15,6 @@ type ReadingListItem = {
     };
   };
 };
-
 
 const errorConfig = {
   readingList: {
@@ -64,7 +63,6 @@ export const readingListService = {
       throw checkError;
     }
 
-
     if (data) {
       return;
     }
@@ -72,7 +70,6 @@ export const readingListService = {
     const { error } = await supabase.from('reading_list').insert({
       user_id: userId,
       article_id: articleId,
-
     });
 
     if (error) {

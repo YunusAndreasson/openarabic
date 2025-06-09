@@ -4,16 +4,13 @@
   "version": "1446.10.25",
   "scripts": {
     "postinstall": "patch-package",
-    "android": "expo start --android",
     "doctor": "npx expo-doctor",
-    "ios": "expo start --ios",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "start": "expo start -c",
     "test": "jest --watchAll --testTimeout=1000",
     "fullupgrade": "yarn upgrade --latest && npx expo@latest install --check",
-    "types:db": "supabase gen types typescript --project-id kkmnzbeugdoajtzfjkxg > types/database.types.ts",
-    "cleanup": "rm -rf node_modules/.cache node_modules/.vite .expo metro-cache .turbo build dist tmp coverage node_modules && pnpm install"
+    "types:db": "supabase gen types typescript --project-id kkmnzbeugdoajtzfjkxg > types/database.types.ts"
   },
   "dependencies": {
     "@babel/runtime": "^7.27.6",

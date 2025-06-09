@@ -1,4 +1,4 @@
-export type Json = Json[] | boolean | number | string | { [key: string]: Json | undefined } | null;
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   public: {
@@ -121,6 +121,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      bookmark_categories: {
+        Row: {
+          color: string | null;
+          created_at: string | null;
+          icon: string | null;
+          id: number;
+          name: string;
+          position: number;
+          updated_at: string | null;
+          user_id: string;
+        };
+        Insert: {
+          color?: string | null;
+          created_at?: string | null;
+          icon?: string | null;
+          id?: number;
+          name: string;
+          position?: number;
+          updated_at?: string | null;
+          user_id: string;
+        };
+        Update: {
+          color?: string | null;
+          created_at?: string | null;
+          icon?: string | null;
+          id?: number;
+          name?: string;
+          position?: number;
+          updated_at?: string | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       categories: {
         Row: {
           id: number;
@@ -140,16 +173,19 @@ export type Database = {
         Row: {
           added_at: string;
           article_id: number;
+          category_id: number | null;
           user_id: string;
         };
         Insert: {
           added_at?: string;
           article_id: number;
+          category_id?: number | null;
           user_id: string;
         };
         Update: {
           added_at?: string;
           article_id?: number;
+          category_id?: number | null;
           user_id?: string;
         };
         Relationships: [
@@ -172,6 +208,13 @@ export type Database = {
             columns: ['article_id'];
             isOneToOne: false;
             referencedRelation: 'articles_word_stats';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'reading_list_category_id_fkey';
+            columns: ['category_id'];
+            isOneToOne: false;
+            referencedRelation: 'bookmark_categories';
             referencedColumns: ['id'];
           },
         ];
@@ -503,6 +546,21 @@ export type Database = {
       create_column_if_not_exists: {
         Args: { table_name: string; column_name: string; column_type: string };
         Returns: undefined;
+      };
+      get_bookmark_categories_with_counts: {
+        Args: { user_id_param: string };
+        Returns: {
+          id: number;
+          user_id: string;
+          name: string;
+          color: string;
+          icon: string;
+          position: number;
+          created_at: string;
+          updated_at: string;
+          article_count: number;
+          due_word_count: number;
+        }[];
       };
       validate_fsrs_integrity: {
         Args: Record<PropertyKey, never>;
