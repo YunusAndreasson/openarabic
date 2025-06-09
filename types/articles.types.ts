@@ -33,8 +33,6 @@ export interface Article extends Tables<'articles'> {
   author: Author | null;
   /** URL to the audio recording for the article */
   audio_url: string | null;
-  /** When the user last opened this article */
-  last_opened_at?: string;
   /** Image placeholders for optimized loading */
   placeholder?: {
     /** BlurHash encoding for progressive image loading */

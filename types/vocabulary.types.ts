@@ -38,14 +38,7 @@ export interface StudyWord {
 
   // Additional fields
   created_at: string;
-  last_updated_at?: string;
   success_streak?: number;
-
-  // Session data
-  sessionData?: {
-    isNew?: boolean; // Is this a new word (review_count <= 1)
-    failedInSession?: boolean; // Has the user failed this word in the current session
-  };
 }
 
 /**
