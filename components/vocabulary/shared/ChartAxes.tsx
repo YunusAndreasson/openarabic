@@ -1,10 +1,10 @@
 import React, { memo } from 'react';
 import { StyleSheet, View, useColorScheme } from 'react-native';
 
+import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/theme/useColors';
 import { withOpacity } from '@/utils/colorUtils';
 
-import { ThemedText } from '@/components/ThemedText';
 
 // Export the y-axis width for use in other components - optimized for perfect alignment
 export const Y_AXIS_WIDTH = 36; // Balanced for alignment with card padding

@@ -5,7 +5,7 @@ import type { StudyWord } from '@/types/vocabulary.types';
 
 interface UseFSRSQueriesOptions {
   userId: string | undefined;
-  category?: string;
+  category?: 'learning' | 'mastered';
   limit?: number;
 }
 
@@ -92,7 +92,7 @@ export function useFSRSQueries({
       userId && category ? FSRS_QUERY_KEYS.filtered(userId, category) : ['fsrs-words', 'filtered'],
     queryFn: () => {
       if (!userId) throw new Error('User ID is required');
-      return studyWordsFSRSService.getFSRSWords(userId);
+      return studyWordsFSRSService.getFSRSWords(userId, { category });
     },
     enabled: !!userId && !!category,
     staleTime: 180000, // 3 minutes - filtered words change moderately
@@ -108,7 +108,15 @@ export function useFSRSQueries({
   const invalidateAllQueries = () => {
     if (!userId) return;
 
+    // Invalidate all FSRS queries with consistent key formats
     queryClient.invalidateQueries({ queryKey: ['fsrs-words'] });
+
+    // Also invalidate legacy keys used in other parts of the codebase
+    queryClient.invalidateQueries({ queryKey: ['dueWords', userId] });
+    queryClient.invalidateQueries({ queryKey: ['studyWords', userId] });
+    queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
+    queryClient.invalidateQueries({ queryKey: ['studyWordsCounts', userId] });
+    queryClient.invalidateQueries({ queryKey: ['vocabulary-words', userId] });
   };
 
   return {

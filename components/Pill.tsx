@@ -3,12 +3,12 @@ import React, { useCallback, useMemo, memo } from 'react';
 import { Pressable, StyleSheet, View, Platform, type TextStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import type { PillProps as OriginalPillProps } from '@/types/ui/pill.types';
 
 import { LAYOUT } from '@/constants/layout';
 import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import type { PillProps as OriginalPillProps } from '@/types/ui/pill.types';
 
 import { ThemedText } from './ThemedText';
 

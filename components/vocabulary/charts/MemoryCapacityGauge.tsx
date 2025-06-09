@@ -9,15 +9,14 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { ThemedText } from '@/components/ThemedText';
+import { BaseChart } from '@/components/vocabulary/shared';
+import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import { LAYOUT } from '@/constants/layout';
 import { useNavigationWithDebounce } from '@/hooks';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 import { selectionFeedback } from '@/utils/haptics';
-
-import { ThemedText } from '@/components/ThemedText';
-import { BaseChart } from '@/components/vocabulary/shared';
-import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 
 interface MemoryCapacityGaugeProps {
   studyWords: StudyWord[];
@@ -53,7 +52,6 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
 
   // Animation values for smooth interactions
   const pressScale = useSharedValue(1);
-  const indicatorPulse = useSharedValue(1);
 
   // Calculate enhanced memory capacity with better algorithm
   const memoryMetrics = useMemo(() => {
@@ -226,18 +224,6 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
   const animatedPressStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pressScale.value }],
   }));
-
-  // Pulse animation for indicator
-  React.useEffect(() => {
-    const pulse = () => {
-      indicatorPulse.value = withTiming(1.2, { duration: 1000 }, () => {
-        indicatorPulse.value = withTiming(1, { duration: 1000 });
-      });
-    };
-
-    const interval = setInterval(pulse, 3000);
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <BaseChart

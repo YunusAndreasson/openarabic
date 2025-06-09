@@ -4,12 +4,12 @@ import { View, StyleSheet, Platform } from 'react-native';
 import type { ViewStyle, TextStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import type { InstructionFooterProps } from '@/types/ui/review.types';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import type { InstructionFooterProps } from '@/types/ui/review.types';
 
 /**
  * Footer component that displays swipe instructions

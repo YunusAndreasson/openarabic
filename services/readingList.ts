@@ -16,11 +16,6 @@ type ReadingListItem = {
   };
 };
 
-type SupabaseArticleJoinResult = {
-  article_id: number;
-  articles: Article;
-};
-
 // Shared error handling configuration
 const errorConfig = {
   readingList: {
@@ -48,18 +43,7 @@ const errorConfig = {
   },
 };
 
-// Shared query fragments
-const articleJoinQuery = `
-  article_id,
-  articles:article_id(
-    *,
-    category:categories(*),
-    author:authors(*)
-  )
-`;
-
 export const readingListService = {
-
   /**
    * Adds an article to the reading list
    * @param userId - The user ID
@@ -69,9 +53,10 @@ export const readingListService = {
     await checkAuthentication(userId);
     // First check if the article is already in the reading list
     const { data, error: checkError } = await supabase
-      .from<'reading_list'>('reading_list')
+      .from('reading_list')
       .select('article_id')
-      .match({ user_id: userId, article_id: articleId })
+      .eq('user_id', userId)
+      .eq('article_id', articleId)
       .single();
 
     if (checkError && checkError.code !== 'PGRST116') {
@@ -84,7 +69,7 @@ export const readingListService = {
       return;
     }
 
-    const { error } = await supabase.from<'reading_list'>('reading_list').insert({
+    const { error } = await supabase.from('reading_list').insert({
       user_id: userId,
       article_id: articleId,
       // The added_at field has a default value in the database (now())
@@ -105,9 +90,10 @@ export const readingListService = {
   async removeFromReadingList(userId: string, articleId: number): Promise<void> {
     await checkAuthentication(userId);
     const { error } = await supabase
-      .from<'reading_list'>('reading_list')
+      .from('reading_list')
       .delete()
-      .match({ user_id: userId, article_id: articleId });
+      .eq('user_id', userId)
+      .eq('article_id', articleId);
 
     if (error) {
       await handleError(error, {
@@ -124,9 +110,10 @@ export const readingListService = {
   async isInReadingList(userId: string, articleId: number): Promise<boolean> {
     await checkAuthentication(userId);
     const { data, error } = await supabase
-      .from<'reading_list'>('reading_list')
+      .from('reading_list')
       .select('article_id')
-      .match({ user_id: userId, article_id: articleId })
+      .eq('user_id', userId)
+      .eq('article_id', articleId)
       .single();
 
     if (error && error.code !== 'PGRST116') {
@@ -146,7 +133,7 @@ export const readingListService = {
   async getReadingList(userId: string): Promise<ReadingListItem[]> {
     await checkAuthentication(userId);
     const { data, error } = await supabase
-      .from<'reading_list'>('reading_list')
+      .from('reading_list')
       .select(
         `
         *,
@@ -157,7 +144,7 @@ export const readingListService = {
         )
       `
       )
-      .match({ user_id: userId })
+      .eq('user_id', userId)
       .order('added_at', { ascending: false });
 
     if (error) {
@@ -165,6 +152,6 @@ export const readingListService = {
       throw error;
     }
 
-    return data || [];
+    return (data || []) as ReadingListItem[];
   },
 };

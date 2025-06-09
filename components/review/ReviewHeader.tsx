@@ -8,7 +8,7 @@ interface ReviewHeaderProps {
   progress: number;
   maxProgress: number;
   animationKey: number;
-  onClose?: () => void; // Made optional since we're not using it
+  onClose?: () => void;
 }
 
 const ReviewHeader: React.FC<ReviewHeaderProps> = ({ progress, maxProgress, animationKey }) => {

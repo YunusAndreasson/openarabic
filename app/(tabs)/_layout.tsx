@@ -13,10 +13,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HeaderProfile from '@/components/HeaderProfile';
 import { Colors } from '@/constants/Colors';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
-import { useAuth } from '@/hooks/auth/useAuth';
 
 const TAB_SCREENS = [
   {

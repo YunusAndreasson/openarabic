@@ -66,7 +66,9 @@ export default function ArticleScreen(): JSX.Element {
   const { dueWordRootIds = new Set<number>() } = useArticlesByDueWords(user?.id, 0);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      return;
+    }
     const subscription = AppState.addEventListener('change', nextAppState => {
       if (nextAppState === 'active') {
         refetchStudyWords?.();
@@ -102,6 +104,7 @@ export default function ArticleScreen(): JSX.Element {
       }, 50);
       return () => clearTimeout(timer);
     }
+    return;
   }, [article, sortedSentences, isLoadingArticle, fadeIn]);
 
   const articleContentRef = useRef<ArticleContentRef>(null);

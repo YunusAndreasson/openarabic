@@ -3,7 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { StyleSheet, ScrollView, ActivityIndicator, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -18,7 +18,6 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useVocabularyChartData } from '@/hooks/vocabulary/useVocabularyChartData';
 import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
-import type { StatCategory } from '@/types/vocabulary.types';
 
 export default function VocabularyScreen(): JSX.Element {
   const { user } = useAuth();
@@ -62,6 +61,11 @@ export default function VocabularyScreen(): JSX.Element {
   // Use the optimized vocabulary chart data hook that uses database views
   const { userStats, isLoadingUserStats } = useVocabularyChartData(user?.id);
 
+  // Memoize filtered study words to avoid filtering on every render
+  const filteredStudyWords = useMemo(() => {
+    return studyWords?.filter(word => word != null && word.root_id != null) ?? [];
+  }, [studyWords]);
+
   // Handle starting review for specific category - now shows modal
   const handleStartCategoryReview = useCallback(() => {
     if (!user) return;
@@ -82,12 +86,6 @@ export default function VocabularyScreen(): JSX.Element {
     setModalVisible(false);
     router.push('/practice/review?fromRemember=true');
   }, [router]);
-
-  // Handle stat press events - temporarily disabled
-  const handleStatPress = (category: StatCategory) => {
-    // TODO: Implement new word list functionality or remove completely
-    console.log('Stat pressed:', category);
-  };
 
   // Show error message if there was an error loading data
   if (error) {
@@ -136,8 +134,7 @@ export default function VocabularyScreen(): JSX.Element {
             dueWords={dueWords}
             learningWords={userStats?.learningWords ?? 0}
             masteredWords={userStats?.masteredWords ?? 0}
-            studyWords={studyWords?.filter(word => word != null && word.root_id != null) ?? []}
-            onStatPress={handleStatPress}
+            studyWords={filteredStudyWords}
             onStartReview={handleStartCategoryReview}
           />
         </View>

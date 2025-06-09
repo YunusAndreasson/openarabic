@@ -21,10 +21,10 @@ import {
   cancelAnimation,
 } from 'react-native-reanimated';
 
+import { useScreenWidth } from '@/constants/layout';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import { handleError } from '@/utils/errorHandling';
 
-import { useScreenWidth } from '@/constants/layout';
 
 import { TIMING_CONFIG } from './animationConfigs';
 import type { SharedValue } from './types';

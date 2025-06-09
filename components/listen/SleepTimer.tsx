@@ -15,12 +15,12 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { lightFeedback, selectionFeedback } from '@/utils/haptics';
 
-import { ThemedButton } from '@/components/ThemedButton';
-import { ThemedText } from '@/components/ThemedText';
 
 export interface SleepTimerProps {
   isVisible: boolean;

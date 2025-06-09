@@ -1,10 +1,10 @@
 import React, { memo, type ReactNode } from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
 
-import { useColors } from '@/hooks/theme/useColors';
 
 import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
+import { useColors } from '@/hooks/theme/useColors';
 
 import { CardHeader } from './CardHeader';
 import { ChartFooter } from './ChartFooter';

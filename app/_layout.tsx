@@ -18,20 +18,19 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 
+import figtreeFont from '@/assets/fonts/Figtree.ttf';
+import madinaFont from '@/assets/fonts/Madina.otf';
 import { ThemedText } from '@/components/ThemedText';
 import { AuthProvider, ToastProvider } from '@/components/providers';
 import { Theme } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/theme/useColors';
-import type { RootState } from '@/store/store';
-
-import figtreeFont from '@/assets/fonts/Figtree.ttf';
-import madinaFont from '@/assets/fonts/Madina.otf';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useColors } from '@/hooks/theme/useColors';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
 import { analytics } from '@/services/analytics';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import type { RootState } from '@/store/store';
 import { store, persistor } from '@/store/store';
 import { setTheme } from '@/store/themeSlice';
 
@@ -270,9 +269,8 @@ function AppContent() {
   );
 }
 
-
 interface FallbackProps {
-  readonly error: Error;
+  readonly error: unknown;
 }
 
 const styles = StyleSheet.create({
@@ -291,6 +289,7 @@ const styles = StyleSheet.create({
 });
 
 const ErrorFallback = memo(function ErrorFallback({ error }: FallbackProps) {
+  const errorMessage = error instanceof Error ? error.toString() : 'Unknown error occurred';
   return (
     <View style={styles.errorContainer}>
       <ThemedText
@@ -307,7 +306,7 @@ const ErrorFallback = memo(function ErrorFallback({ error }: FallbackProps) {
         Please try again
       </ThemedText>
       <ThemedText colorName="textTertiary" type="caption">
-        {error.toString()}
+        {errorMessage}
       </ThemedText>
     </View>
   );
@@ -322,11 +321,7 @@ export default Sentry.wrap(function RootLayout() {
             <AuthProvider>
               <SafeAreaProvider>
                 <ToastProvider>
-                  <Sentry.ErrorBoundary
-                    fallback={({ error }) => (
-                      <ErrorFallback error={error} />
-                    )}
-                  >
+                  <Sentry.ErrorBoundary fallback={({ error }) => <ErrorFallback error={error} />}>
                     <AppContent />
                   </Sentry.ErrorBoundary>
                 </ToastProvider>

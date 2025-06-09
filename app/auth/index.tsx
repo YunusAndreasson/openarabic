@@ -61,7 +61,6 @@ const AuthScreen = memo(function AuthScreen(): JSX.Element {
                   insets.left + LAYOUT.SPACING.LARGE,
                   LAYOUT.SPACING.LARGE
                 ),
-                paddingRight: Math.max(insets.right + LAYOUT.SPACING.LARGE, LAYOUT.SPACING.LARGE),
               },
             ]}
           >

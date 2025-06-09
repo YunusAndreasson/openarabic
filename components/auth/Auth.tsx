@@ -1,19 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Sentry from '@sentry/react-native';
 import { router } from 'expo-router';
-import type { JSX} from 'react';
-import React, { useState, useCallback, useEffect, memo } from 'react';
+import type { JSX } from 'react';
+import React, { useState, useCallback, useEffect, memo, useRef } from 'react';
 import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
 
+import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedInput } from '@/components/ThemedInput';
+import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
-
-import { ThemedButton } from '@/components/ThemedButton';
-import { ThemedInput } from '@/components/ThemedInput';
-import { ThemedText } from '@/components/ThemedText';
 
 /**
  * Email validation regex and password requirements
@@ -40,6 +39,9 @@ function Auth(): JSX.Element {
   // Validation state
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+
+  // Mount tracking to prevent state updates after unmount
+  const isMountedRef = useRef(true);
 
   // Initialize auth session on component mount to ensure token refresh
   useEffect(() => {
@@ -90,6 +92,7 @@ function Auth(): JSX.Element {
 
     return () => {
       isMounted = false;
+      isMountedRef.current = false;
       // Don't stop autoRefresh on unmount to keep session alive
     };
   }, []);
@@ -98,20 +101,21 @@ function Auth(): JSX.Element {
   const validateEmail = useCallback((email: string) => {
     if (!email) return false;
     if (!EMAIL_REGEX.test(email)) {
-      setEmailError('Invalid email address');
+      if (isMountedRef.current) setEmailError('Invalid email address');
       return false;
     }
-    setEmailError('');
+    if (isMountedRef.current) setEmailError('');
     return true;
   }, []);
 
   const validatePassword = useCallback((password: string) => {
     if (!password) {
-      setPasswordError('Password is required');
+      if (isMountedRef.current) setPasswordError('Password is required');
       return false;
     }
     if (password.length < PASSWORD_REQUIREMENTS.minLength) {
-      setPasswordError(`Must be at least ${PASSWORD_REQUIREMENTS.minLength} characters`);
+      if (isMountedRef.current)
+        setPasswordError(`Must be at least ${PASSWORD_REQUIREMENTS.minLength} characters`);
       return false;
     }
     if (
@@ -119,16 +123,17 @@ function Auth(): JSX.Element {
       !PASSWORD_REQUIREMENTS.hasLowerCase.test(password) ||
       !PASSWORD_REQUIREMENTS.hasNumber.test(password)
     ) {
-      setPasswordError('Include upper, lower & number');
+      if (isMountedRef.current) setPasswordError('Include upper, lower & number');
       return false;
     }
-    setPasswordError('');
+    if (isMountedRef.current) setPasswordError('');
     return true;
   }, []);
 
   // Input handlers
   const handleEmailChange = useCallback(
     (text: string) => {
+      if (!isMountedRef.current) return;
       setEmail(text);
       if (emailError) validateEmail(text);
     },
@@ -137,6 +142,7 @@ function Auth(): JSX.Element {
 
   const handlePasswordChange = useCallback(
     (text: string) => {
+      if (!isMountedRef.current) return;
       setPassword(text);
       if (passwordError) validatePassword(text);
     },
@@ -160,6 +166,7 @@ function Auth(): JSX.Element {
     // Only proceed if both validations pass
     if (!isEmailValid || !isPasswordValid) return;
 
+    if (!isMountedRef.current) return;
     setLoading(true);
     Sentry.addBreadcrumb({
       category: 'auth',
@@ -177,6 +184,7 @@ function Auth(): JSX.Element {
       });
 
       if (error) {
+        if (!isMountedRef.current) return;
         Sentry.captureMessage('Sign in error', {
           level: 'error',
           tags: { location: 'auth_component' },
@@ -209,9 +217,10 @@ function Auth(): JSX.Element {
           message: 'Redirecting to main app after successful login',
           level: 'info',
         });
-        router.replace('/(tabs)');
+        router.replace('/(tabs)/read');
       }
     } catch (err) {
+      if (!isMountedRef.current) return;
       handleError(err instanceof Error ? err : new Error('Sign in error'), {
         toastMessage: 'Failed to sign in. Please try again.',
         analyticsEventName: 'Sign_In_Error',
@@ -219,7 +228,9 @@ function Auth(): JSX.Element {
       });
       Alert.alert('Error', 'Failed to sign in. Please try again.');
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   }, [email, password, validateEmail, validatePassword]);
 
@@ -231,6 +242,7 @@ function Auth(): JSX.Element {
     // Only proceed if both validations pass
     if (!isEmailValid || !isPasswordValid) return;
 
+    if (!isMountedRef.current) return;
     setLoading(true);
 
     try {
@@ -243,6 +255,7 @@ function Auth(): JSX.Element {
       });
 
       if (error) {
+        if (!isMountedRef.current) return;
         Alert.alert('Error', error.message);
       } else {
         // Ensure auto-refresh is active
@@ -260,13 +273,17 @@ function Auth(): JSX.Element {
         // Provide haptic feedback on successful account creation
         successFeedback();
 
+        if (!isMountedRef.current) return;
         Alert.alert('Success', 'Check your email for the confirmation link');
       }
     } catch (err) {
+      if (!isMountedRef.current) return;
       Alert.alert('Error', 'Failed to create account. Please try again.');
       handleError(err as Error);
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   }, [email, password, validateEmail, validatePassword]);
 

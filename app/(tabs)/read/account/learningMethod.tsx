@@ -21,8 +21,9 @@ const LearningMethodScreen: React.FC = () => {
           headerShown: true,
           headerTitle: '',
           headerTitleStyle: {
-            ...LAYOUT.HEADER.TITLE.SECONDARY,
             color: colors.text,
+            fontSize: 17,
+            fontWeight: '600',
           },
           headerStyle: {
             backgroundColor: colors.background,

@@ -304,9 +304,9 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             skipTransition={true}
             style={styles.image}
             placeholder={
-              isArticleVariant(props)
-                ? props.placeholder!
-                : { thumbhash: DEFAULT_IMAGES.ARTICLE_PLACEHOLDER_THUMBHASH }
+              (isArticleVariant(props) ? props.placeholder : undefined) || {
+                thumbhash: DEFAULT_IMAGES.ARTICLE_PLACEHOLDER_THUMBHASH,
+              }
             }
             source={isArticleVariant(props) ? props.imageUrl : DEFAULT_IMAGES.ARTICLE_PLACEHOLDER}
           />
@@ -419,9 +419,9 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             prefetch={true}
             priority="high"
             skipTransition={true}
-            source={article!.image_url!}
+            source={article?.image_url || ''}
             style={styles.image}
-            placeholder={article!.placeholder}
+            placeholder={article?.placeholder}
           />
 
           <LinearGradient

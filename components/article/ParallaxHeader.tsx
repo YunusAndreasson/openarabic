@@ -17,8 +17,8 @@ interface ParallaxHeaderProps {
 
 const ParallaxHeader = React.memo<ParallaxHeaderProps>(
   ({ article, colors, isDarkMode = false }) => {
-    // Image source - we know there's always an image
-    const imageSource = article.image_url!;
+    // Image source - safely handle potential undefined
+    const imageSource = article.image_url || '';
 
     // Enhanced gradient for better summary integration
     const imageGradientColors = useMemo(() => {

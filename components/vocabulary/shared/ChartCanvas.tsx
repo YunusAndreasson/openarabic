@@ -69,7 +69,7 @@ export const ChartCanvas = memo(
           ))}
 
         {/* Tooltip Component */}
-        {enableTooltips && <ChartTooltipData maxWidth={width} tooltip={tooltip} />}
+        {enableTooltips && <ChartTooltipData maxWidth={width || resolvedWidth} tooltip={tooltip} />}
       </View>
     );
   }

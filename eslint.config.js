@@ -163,6 +163,7 @@ export default [
       'react/no-invalid-html-attribute': 'warn',
       'react/no-namespace': 'warn',
       'react/jsx-no-duplicate-props': ['error', { ignoreCase: true }],
+      'react/display-name': 'off',
     },
   },
   {

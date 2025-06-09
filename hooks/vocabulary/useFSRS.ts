@@ -10,6 +10,8 @@ import { handleError } from '@/utils/errorHandling';
 
 // Minimum number of intervening words before showing a repeated word
 const MIN_WORD_SPACING = 3;
+// Maximum search window for position optimization (limits linear scan scope)
+const MAX_SEARCH_WINDOW = 10;
 
 // Default learning steps for new and relearning cards (in minutes)
 const DEFAULT_LEARNING_STEPS: StepUnit[] = ['1m', '10m'];
@@ -21,6 +23,12 @@ interface FSRSCounters {
   processedWords: number;
   knownWords: number;
   uniqueWords: Set<number>;
+}
+
+// Position tracking for efficient queue management
+interface PositionTracker {
+  wordPositions: Map<number, number[]>;
+  lastInsertPosition: number;
 }
 
 // Enhanced state tracking with more fields
@@ -42,6 +50,12 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
     processedWords: 0,
     knownWords: 0,
     uniqueWords: new Set<number>(),
+  });
+
+  // Position tracking for efficient queue management
+  const positionTrackerRef = useRef<PositionTracker>({
+    wordPositions: new Map(),
+    lastInsertPosition: 0,
   });
 
   // Enhanced state tracking
@@ -108,6 +122,8 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
         stateTrackingRef.current.isProcessingUpdate = false;
         setWordQueue(dueWords);
         setCurrentWord(dueWords[0] ?? null);
+        // Initialize position tracker with new queue
+        updatePositionTracker(dueWords);
       } else if (!isLoading) {
         setIsComplete(true);
         if (onComplete && !stateTrackingRef.current.completionTriggered) {
@@ -144,30 +160,68 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
     };
   }, []);
 
-  // Helper function to find optimal position for word reinsertions
+  // Helper function to update position tracking when queue changes
+  const updatePositionTracker = useCallback((queue: StudyWord[]) => {
+    const tracker = positionTrackerRef.current;
+    tracker.wordPositions.clear();
+
+    queue.forEach((word, index) => {
+      const positions = tracker.wordPositions.get(word.root_id);
+      if (positions) {
+        positions.push(index);
+      } else {
+        tracker.wordPositions.set(word.root_id, [index]);
+      }
+    });
+  }, []);
+
+  // Optimized helper function to find optimal position for word reinsertions
   const findOptimalPosition = useCallback((queue: StudyWord[], wordToInsert: StudyWord): number => {
     const currentRootId = wordToInsert.root_id;
 
     // If queue is empty or has only one item, just append
     if (queue.length <= 1) {
+      positionTrackerRef.current.lastInsertPosition = queue.length;
       return queue.length;
     }
 
-    // Start with the minimum spacing
-    let targetPosition = Math.min(MIN_WORD_SPACING, queue.length);
+    // Use position tracker for efficient lookup
+    const tracker = positionTrackerRef.current;
+    const existingPositions = tracker.wordPositions.get(currentRootId) || [];
 
-    // Check if placing at minimum spacing would lead to another instance of the same word too close
-    for (let i = targetPosition - 1; i <= targetPosition + 1; i++) {
-      if (i < queue.length && queue[i]?.root_id === currentRootId) {
-        // If we would be too close to another instance of the same word,
-        // move further out if possible
-        targetPosition = Math.min(i + MIN_WORD_SPACING, queue.length);
-        break;
+    // Start with minimum spacing or slightly after last insert position for distribution
+    const basePosition = Math.max(
+      MIN_WORD_SPACING,
+      Math.min(tracker.lastInsertPosition + 2, queue.length)
+    );
+
+    // If no existing positions, use base position
+    if (existingPositions.length === 0) {
+      const finalPosition = Math.min(basePosition, queue.length);
+      tracker.lastInsertPosition = finalPosition;
+      return finalPosition;
+    }
+
+    // Find first available position that maintains minimum spacing
+    // Limit search to a reasonable window to avoid linear scan of entire queue
+    const searchEnd = Math.min(basePosition + MAX_SEARCH_WINDOW, queue.length);
+
+    for (let pos = basePosition; pos <= searchEnd; pos++) {
+      // Check if this position maintains minimum spacing from existing positions
+      const hasConflict = existingPositions.some(
+        existingPos => Math.abs(pos - existingPos) < MIN_WORD_SPACING
+      );
+
+      if (!hasConflict) {
+        tracker.lastInsertPosition = pos;
+        return Math.min(pos, queue.length);
       }
     }
 
-    // Cap at queue length
-    return Math.min(targetPosition, queue.length);
+    // Fallback: if no good position found in search window, append to end
+    const fallbackPosition = queue.length;
+    tracker.lastInsertPosition = fallbackPosition;
+    return fallbackPosition;
   }, []);
 
   const updateWord = useCallback(
@@ -287,6 +341,8 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
             setCurrentWord(newQueue[0] ?? null);
           }
 
+          // Update position tracker with new queue state
+          updatePositionTracker(newQueue);
           return newQueue;
         });
       } catch (error) {
@@ -320,6 +376,11 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
       knownWords: 0,
       uniqueWords: new Set(),
     };
+    // Reset position tracker
+    positionTrackerRef.current = {
+      wordPositions: new Map(),
+      lastInsertPosition: 0,
+    };
   }, []);
 
   // Clean up on unmount
@@ -337,6 +398,11 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
     });
 
     stateTrackingRef.current.queueInitialized = false;
+    // Reset position tracker when invalidating queries
+    positionTrackerRef.current = {
+      wordPositions: new Map(),
+      lastInsertPosition: 0,
+    };
   }, [queryClient, userId]);
 
   return {

@@ -97,7 +97,7 @@ export default function ReadLayout() {
 
           return {
             headerShown: true,
-            headerTitle: () => <ArticleHeaderTitle title={params.headerTitle!} />,
+            headerTitle: () => <ArticleHeaderTitle title={params.headerTitle || 'Article'} />,
             headerBackTitle: 'Read',
             headerTitleAlign: 'center',
             headerTransparent: false,

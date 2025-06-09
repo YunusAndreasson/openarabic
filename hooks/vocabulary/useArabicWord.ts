@@ -1,13 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 
+import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { analytics } from '@/services/analytics';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 
-import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
-import { useAuth } from '@/hooks/auth/useAuth';
 
 export interface UseArabicWordProps {
   word: SentenceWord;

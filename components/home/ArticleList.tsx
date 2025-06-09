@@ -14,12 +14,11 @@ import React, {
 import { StyleSheet, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { ArticleListProps } from '@/types/ui/article.types';
-
+import ThemedCard from '@/components/ThemedCard';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
-import ThemedCard from '@/components/ThemedCard';
+import type { ArticleListProps } from '@/types/ui/article.types';
 
 const ITEM_HEIGHT = 360;
 const DRAW_DISTANCE = ITEM_HEIGHT * 5;

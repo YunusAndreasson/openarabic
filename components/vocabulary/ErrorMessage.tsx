@@ -2,13 +2,13 @@ import { useRouter } from 'expo-router';
 import React, { memo } from 'react';
 import { View, StyleSheet } from 'react-native';
 
-import type { RoutePath } from '@/types/navigation.types';
-import type { ErrorMessageProps } from '@/types/ui/review.types';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import type { RoutePath } from '@/types/navigation.types';
+import type { ErrorMessageProps } from '@/types/ui/review.types';
 
 /**
  * Displays an error message with a retry button

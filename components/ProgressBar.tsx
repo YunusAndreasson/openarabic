@@ -4,11 +4,10 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { cancelAnimation, useAnimatedProps } from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
+import { useProgressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { ProgressBarProps } from '@/types/ui/loader.types';
-
-import { useProgressAnimation } from '@/hooks/animations';
 
 /**
  * A customizable progress bar component that can be used to display the
@@ -52,7 +51,7 @@ function ProgressBarComponent({
     animatedStyle,
     updateProgress,
     progress: animatedProgress,
-  } = useProgressAnimation(intProgress, animationDuration);
+  } = useProgressAnimation(intProgress, animationDuration as any);
 
   // Effect to handle animation when triggered or when progress changes
   useEffect(() => {

@@ -43,13 +43,6 @@ export const FSRS_QUERY_KEYS = {
     ['fsrs-words', userId, 'filtered', category] as const,
 } as const;
 
-interface ReviewLog {
-  reviewed_at: string;
-  grade: number;
-  root_id: number;
-  learning_steps: number;
-}
-
 export const studyWordsFSRSService = {
   // Fetch study words with FSRS parameters
   async getFSRSWords(userId: string, options: GetFSRSWordsOptions = {}): Promise<StudyWord[]> {

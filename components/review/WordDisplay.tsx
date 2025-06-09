@@ -3,11 +3,11 @@ import type { TextStyle } from 'react-native';
 import { View, Platform, StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
+import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
+import { useColors } from '@/hooks/theme/useColors';
 import type { WordDisplayProps } from '@/types/ui/review.types';
 
-import { ThemedText } from '@/components/ThemedText';
-import { useColors } from '@/hooks/theme/useColors';
 
 /**
  * Component to display a word with optimal styling and sizing

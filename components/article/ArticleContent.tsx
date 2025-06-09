@@ -202,6 +202,7 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
     );
   }
 );
+AudioControlsButton.displayName = 'AudioControlsButton';
 
 interface ArticleSummaryProps {
   summary: string;

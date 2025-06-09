@@ -55,19 +55,6 @@ export type Route<T extends RoutePath> = {
   params?: RouteParams[T];
 };
 
-// Route parameter definitions for type checking
-const _routeParams: Record<RoutePath, true> = {
-  '/(tabs)/read/article/[id]': true,
-  '/(tabs)/read/filter': true,
-  '/practice/review': true,
-  '/practice/practice': true,
-  '/': true,
-  '/(tabs)': true,
-  '/(tabs)/listen': true,
-  '/settings': true,
-  '/practice': true,
-};
-
 /**
  * Type for listen parameters
  */

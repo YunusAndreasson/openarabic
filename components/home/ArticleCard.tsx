@@ -2,6 +2,8 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { ViewStyle, StyleProp } from 'react-native';
 
+import BaseCard from '@/components/BaseCard';
+import { ThemedText } from '@/components/ThemedText';
 import {
   LAYOUT,
   TYPOGRAPHY_HIERARCHY,
@@ -10,8 +12,6 @@ import {
 } from '@/constants/layout';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
-import BaseCard from '@/components/BaseCard';
-import { ThemedText } from '@/components/ThemedText';
 
 interface ArticleCardProps {
   title: string;

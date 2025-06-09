@@ -1,10 +1,10 @@
 import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { LAYOUT } from '@/constants/layout';
 
 import { ThemedText } from '@/components/ThemedText';
 import TouchableIcon from '@/components/TouchableIcon';
+import { LAYOUT } from '@/constants/layout';
 
 interface CardHeaderProps {
   title: string;

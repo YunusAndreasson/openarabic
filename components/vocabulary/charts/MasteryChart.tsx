@@ -11,8 +11,6 @@ import {
 import React, { memo, useMemo } from 'react';
 import { View } from 'react-native';
 
-import { useColors } from '@/hooks/theme/useColors';
-import type { StudyWord } from '@/types/vocabulary.types';
 
 import {
   BaseChart,
@@ -30,6 +28,8 @@ import {
   createStandardizedPerformanceZones,
   createAreaFillPath,
 } from '@/components/vocabulary/shared/utils';
+import { useColors } from '@/hooks/theme/useColors';
+import type { StudyWord } from '@/types/vocabulary.types';
 
 interface MasteryChartProps {
   studyWords: StudyWord[];

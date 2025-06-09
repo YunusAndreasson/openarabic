@@ -1,12 +1,12 @@
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, Pressable, View, Platform } from 'react-native';
 
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import type { BaseCardProps } from '@/types/ui/card.types';
 
 import { LAYOUT } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import type { BaseCardProps } from '@/types/ui/card.types';
 
 /**
  * BaseCard is the foundation component for all card-type UI elements

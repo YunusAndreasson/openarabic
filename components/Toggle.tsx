@@ -7,7 +7,6 @@ import { useToggleAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { ToggleProps } from '@/types/ui/form.types';
-
 import { selectionFeedback } from '@/utils/haptics';
 
 function ToggleComponent({ value, onValueChange }: ToggleProps) {

@@ -1,10 +1,10 @@
 import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
-import { ThemedText } from '@/components/ThemedText';
 
 interface LegendItemProps {
   type: 'area' | 'bar' | 'dot' | 'line';

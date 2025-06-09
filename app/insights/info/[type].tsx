@@ -248,7 +248,7 @@ export default function InfoModalScreen(): JSX.Element {
               Key Insights
             </ThemedText>
             {content.tips.map((tip, index) => (
-              <View key={index} style={styles.tipItem}>
+              <View key={`tip-${index}-${tip.slice(0, 20)}`} style={styles.tipItem}>
                 <View style={[styles.tipBullet, { backgroundColor: colors.tint }]} />
                 <ThemedText style={styles.tipText} type="body">
                   {tip}

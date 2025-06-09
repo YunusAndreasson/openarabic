@@ -3,13 +3,13 @@ import { StyleSheet } from 'react-native';
 import type { ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import type { AnimatedStyleProp } from '@/types/ui/base.types';
-import type { MeaningOverlayProps } from '@/types/ui/review.types';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
+import type { MeaningOverlayProps } from '@/types/ui/review.types';
 
 /**
  * Component that displays the meaning of a word with a fade animation
