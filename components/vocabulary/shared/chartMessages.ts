@@ -5,8 +5,6 @@
  * with unified terminology, display formats, and performance indicators.
  */
 
-import type { StatCategory } from '@/types/vocabulary.types';
-
 import { PERFORMANCE_THRESHOLDS } from './constants';
 
 // Standardized terminology

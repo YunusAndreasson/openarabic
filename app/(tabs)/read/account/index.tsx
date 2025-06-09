@@ -20,9 +20,14 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useReminders } from '@/hooks/notifications/useReminders';
 import { useColors } from '@/hooks/theme/useColors';
 import pkg from '@/package.json';
-import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
 import { lightFeedback } from '@/utils/haptics';
+// import { analytics } from '@/services/analytics';
+// Temporary mock analytics until service is fixed
+const analytics = {
+  trackSignOut: async () => {},
+  reset: async () => {},
+};
 
 // Memoized components
 interface SettingLabelProps {

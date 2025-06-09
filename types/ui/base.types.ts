@@ -1,8 +1,6 @@
 import type { ViewStyle, StyleProp } from 'react-native';
 import type { AnimatedStyle } from 'react-native-reanimated';
 
-import type { useColors } from '@/hooks/theme/useColors';
-
 /**
  * Base props for components with style
  */

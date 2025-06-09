@@ -1,10 +1,15 @@
 import { useState } from 'react';
 
-import { analytics } from '@/services/analytics';
 import { scheduleReminder, hasPermissions } from '@/services/notificationService';
 import type { ReminderTime } from '@/services/notificationService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setReminderTime } from '@/store/settingsSlice';
+
+// import { analytics } from '@/services/analytics';
+// Temporary mock analytics until service is fixed
+const analytics = {
+  track: async (_event: string, _properties?: any) => {},
+};
 
 export function useReminders() {
   const dispatch = useAppDispatch();

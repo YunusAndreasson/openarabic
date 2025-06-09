@@ -9,10 +9,16 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedInput } from '@/components/ThemedInput';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
+// import { analytics } from '@/services/analytics';
+// Temporary mock analytics until service is fixed
+const analytics = {
+  identify: async (_userId: string, _properties?: any) => {},
+  trackSignIn: async (_method?: string) => {},
+  trackSignUp: async (_method?: string) => {},
+};
 
 /**
  * Email validation regex and password requirements

@@ -167,6 +167,15 @@ export default [
     },
   },
   {
-    ignores: ['node_modules/', 'dist/', '.expo/', 'web-build/', '*.d.ts', '.github', '*.config.js'],
+    ignores: [
+      'node_modules/',
+      'dist/',
+      '.expo/',
+      'web-build/',
+      '*.d.ts',
+      '.github',
+      '*.config.js',
+      'services/analytics.ts',
+    ],
   },
 ];

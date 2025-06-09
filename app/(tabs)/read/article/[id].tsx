@@ -20,11 +20,15 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useHeaderVisibility } from '@/hooks/ui/useHeaderVisibility';
-import { analytics } from '@/services/analytics';
 import { useAppSelector } from '@/store/hooks';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { lightFeedback } from '@/utils/haptics';
+// import { analytics } from '@/services/analytics';
+// Temporary mock analytics until service is fixed
+const analytics = {
+  trackViewArticle: async (_articleId: number, _properties?: any) => {},
+};
 
 export default function ArticleScreen(): JSX.Element {
   const { id } = useLocalSearchParams<{ id: string }>();

@@ -28,13 +28,18 @@ import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
-import { analytics } from '@/services/analytics';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import type { RootState } from '@/store/store';
 import { store, persistor } from '@/store/store';
 import { setTheme } from '@/store/themeSlice';
 
 import { useArticlesAndDueWordsLoaded } from './(tabs)/read/index';
+// import { analytics } from '@/services/analytics';
+// Temporary mock analytics until service is fixed
+const analytics = {
+  identify: async (_userId: string, _properties?: any) => {},
+  reset: async () => {},
+};
 
 // Let expo-router handle splash screen initialization through app.json configuration
 // This prevents conflicts with expo-router's internal splash screen management

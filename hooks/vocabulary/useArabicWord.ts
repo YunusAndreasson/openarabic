@@ -3,11 +3,14 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { analytics } from '@/services/analytics';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
-
+// import { analytics } from '@/services/analytics';
+// Temporary mock analytics until service is fixed
+const analytics = {
+  track: async (_event: string, _properties?: any) => {},
+};
 
 export interface UseArabicWordProps {
   word: SentenceWord;

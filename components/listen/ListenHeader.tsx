@@ -8,7 +8,6 @@ interface ListenHeaderProps {
   progress: number;
   maxProgress: number;
   animationKey: number;
-  onClose?: () => void;
 }
 
 const ListenHeader: React.FC<ListenHeaderProps> = ({ progress, maxProgress, animationKey }) => {
