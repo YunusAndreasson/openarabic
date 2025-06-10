@@ -246,8 +246,8 @@ const FilterModal: React.FC<FilterModalProps> = ({ availableAuthors }) => {
           {expandedSections.authors && (
             <View style={styles.expandedContent}>
               <View style={styles.pillGrid}>
-                {authorChunks.map((chunk, index) => (
-                  <View key={index} style={styles.authorChunk}>
+                {authorChunks.map(chunk => (
+                  <View key={chunk[0]?.id || chunk.length} style={styles.authorChunk}>
                     {chunk.map(author => (
                       <Pill
                         key={author.id}

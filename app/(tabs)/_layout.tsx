@@ -10,6 +10,7 @@ import { Platform, StyleSheet, View, Text, type TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import HeaderProfile from '@/components/HeaderProfile';
+import EditModeButton from '@/components/listen/EditModeButton';
 import { Colors } from '@/constants/Colors';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -234,11 +235,16 @@ const HEADER_STYLE = {
   borderBottomWidth: 0,
 };
 
+// Add header right component for listen tab
+const ListenHeaderRight = memo(() => <EditModeButton />);
+ListenHeaderRight.displayName = 'ListenHeaderRight';
+
 export default function TabLayout() {
   const { session, isLoading } = useAuth();
 
   const headerBackground = useCallback(() => <CustomHeaderBackground />, []);
   const headerProfileComponent = useCallback(() => <HeaderProfile />, []);
+  const listenHeaderRightComponent = useCallback(() => <ListenHeaderRight />, []);
 
   const screenOptions = useMemo(
     () => ({
@@ -275,6 +281,9 @@ export default function TabLayout() {
             title: screen.title,
             ...(screen.name === 'read' && {
               headerRight: headerProfileComponent,
+            }),
+            ...(screen.name === 'listen' && {
+              headerRight: listenHeaderRightComponent,
             }),
           }}
         />

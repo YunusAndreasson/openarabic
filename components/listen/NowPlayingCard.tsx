@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
   container: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
-    bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY,
+    bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
     height: CARD_HEIGHT,
     left: LAYOUT.SCREEN_EDGE_PADDING,
     overflow: 'hidden',

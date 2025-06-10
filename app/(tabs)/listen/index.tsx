@@ -3,13 +3,14 @@ import { FlashList } from '@shopify/flash-list';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useFocusEffect } from 'expo-router';
 import type { JSX } from 'react';
-import React, { useState, useRef, useEffect, useMemo, useCallback, memo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
+import type { RenderItemParams } from 'react-native-draggable-flatlist';
+import DraggableFlatList from 'react-native-draggable-flatlist';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BottomControls from '@/components/BottomControls';
 import EmptyState from '@/components/EmptyState';
-import SortingControls from '@/components/SortingControls';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleCard } from '@/components/home/ArticleCard';
@@ -17,7 +18,7 @@ import NowPlayingCard from '@/components/listen/NowPlayingCard';
 import SleepTimer from '@/components/listen/SleepTimer';
 import { AUDIO_STATES } from '@/constants/audio';
 import { LAYOUT } from '@/constants/layout';
-import { useLoadingState, useScreenFocusRefresh } from '@/hooks';
+import { useScreenFocusRefresh } from '@/hooks';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
@@ -25,9 +26,10 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { readingListService } from '@/services/readingList';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { setCustomOrder, removeFromCustomOrder } from '@/store/listenSlice';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
-import type { SortOption, SortDirection } from '@/types/ui/sorting.types';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback, lightFeedback } from '@/utils/haptics';
 
@@ -52,6 +54,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
+  noAudioContainer: {
+    alignItems: 'center',
+    bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY,
+    left: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    position: 'absolute',
+    right: LAYOUT.SCREEN_EDGE_PADDING,
+  },
+  noAudioText: {
+    textAlign: 'center',
+  },
 });
 
 // Define a constant for item height calculation
@@ -62,90 +75,98 @@ const ListenListItem = memo(
   ({
     item,
     isActive,
+    editMode,
     onPress,
+    onDelete,
+    onPlayPress,
+    drag,
+    _isBeingDragged,
+    showPlayerCard,
   }: {
     item: ReadingListItem;
     isActive: boolean;
+    editMode: boolean;
     onPress: (id: number) => void;
+    onDelete: (id: number) => void;
+    onPlayPress: (id: number) => void;
+    drag?: () => void;
+    _isBeingDragged?: boolean;
+    showPlayerCard: boolean;
   }) => {
+    // Check if this article has audio available
+    const hasAudio = !!item.articles?.audio_url;
+
     return (
       <ArticleCard
         active={isActive}
         author={item.articles?.author?.name || 'Author'}
         title={item.articles?.title || 'Untitled'}
+        editMode={editMode}
+        isBeingDragged={_isBeingDragged}
         onPress={() => onPress(item.article_id)}
+        onDelete={() => onDelete(item.article_id)}
+        // Hide play buttons when NowPlayingCard is visible to avoid control conflicts
+        onPlayPress={hasAudio && !showPlayerCard ? () => onPlayPress(item.article_id) : undefined}
+        isPlaying={false} // Never show as playing - NowPlayingCard handles playback state
+        dragHandleProps={{
+          onLongPress: drag,
+          delayLongPress: 100,
+        }}
       />
     );
   },
   (prevProps, nextProps) => {
-    // Only re-render if active state changes
-    return prevProps.isActive === nextProps.isActive;
+    // Optimize: Check most likely to change first, and use early return pattern
+    if (prevProps.editMode !== nextProps.editMode) return false;
+    if (prevProps.isActive !== nextProps.isActive) return false;
+    if (prevProps._isBeingDragged !== nextProps._isBeingDragged) return false;
+    if (prevProps.showPlayerCard !== nextProps.showPlayerCard) return false;
+    // Check if audio availability changed
+    if (!!prevProps.item.articles?.audio_url !== !!nextProps.item.articles?.audio_url) return false;
+    // Item ID should rarely change, so check last
+    return prevProps.item.article_id === nextProps.item.article_id;
   }
 );
 
 ListenListItem.displayName = 'ListenListItem';
-
-export type ListenSortOption = 'title' | 'author';
-
-// Static sort options - Title and Author with hidden recent priority
-const LISTEN_SORT_OPTIONS: SortOption<ListenSortOption>[] = [
-  { key: 'title', label: 'Title' },
-  { key: 'author', label: 'Author' },
-];
 
 export default function ListenScreen(): JSX.Element {
   const colors = useColors();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { prefetchArticle } = useAppPreloader();
-  const flashListRef = useRef<FlashList<ReadingListItem>>(null);
+  const dispatch = useAppDispatch();
 
-  // --- State Hooks ---
-  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
-  // playbackMode: 'none' | 'all'
+  const editMode = useAppSelector(state => state.listen.editMode);
+  const customOrder = useAppSelector(state => state.listen.customOrder);
+
   const [playbackMode, setPlaybackMode] = useState<'all' | 'none'>('none');
 
-  // Add state to track when we're starting playback (to show player immediately)
   const [isStartingPlayback, setIsStartingPlayback] = useState(false);
-
-  // Sleep timer state
   const [showSleepTimer, setShowSleepTimer] = useState(false);
-
-  // Delay showing empty state to prevent flash
   const [canShowEmpty, setCanShowEmpty] = useState(false);
 
-  // Wait 300ms before allowing empty state to show
   useEffect(() => {
     const timer = setTimeout(() => {
       setCanShowEmpty(true);
     }, 300);
-
     return () => clearTimeout(timer);
   }, []);
 
-  // Simplified sorting state - default to title (with hidden recent priority)
-  const [currentSort, setCurrentSort] = useState<ListenSortOption>('title');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-
-  // --- Get State & Stable Actions from useAudioPlayer ---
   const enhancedAudioPlayer = useAudioPlayer();
   const { duration, position, metadata, audioState, actions } = enhancedAudioPlayer;
 
-  // Clear starting playback state once audio actually starts
   useEffect(() => {
     if (isStartingPlayback && audioState !== AUDIO_STATES.IDLE) {
       setIsStartingPlayback(false);
     }
   }, [isStartingPlayback, audioState]);
 
-  // Sleep timer functionality
   const sleepTimer = useSleepTimer(() => {
-    // Stop playback when timer completes
     actions.stopPlayback();
     setPlaybackMode('none');
   });
 
-  // --- TanStack Query Hooks ---
   const readingListQuery = useQuery({
     queryKey: ['readingList', user?.id],
     queryFn: () => {
@@ -153,11 +174,11 @@ export default function ListenScreen(): JSX.Element {
       return readingListService.getReadingList(user.id);
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes - increased from 1 minute for better caching
-    gcTime: 10 * 60 * 1000, // 10 minutes - increased for better memory management
-    retry: 2, // Reduced from 3 to fail faster on real errors
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 5000), // Reduced max delay
-    placeholderData: [], // Ensure we always have an array, even if empty
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    retry: 2,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 5000),
+    placeholderData: [],
   });
   const {
     data: readingList = [],
@@ -165,7 +186,6 @@ export default function ListenScreen(): JSX.Element {
     isFetching: isReadingListFetching,
   } = readingListQuery;
 
-  // Deduplicate reading list first
   const dedupedReadingList = useMemo(() => {
     if (!readingList?.length) return [];
 
@@ -177,56 +197,37 @@ export default function ListenScreen(): JSX.Element {
     });
   }, [readingList]);
 
-  // Enhanced sorting with hidden recent priority - always sort by added_at first, then by selected option
   const sortedReadingList = useMemo(() => {
     if (!dedupedReadingList.length) return [];
 
-    const sortedList = [...dedupedReadingList];
+    // If we have a custom order and items in it, use that order
+    if (customOrder.length > 0) {
+      const customOrderMap = new Map(customOrder.map((id, index) => [id, index]));
+      return [...dedupedReadingList].sort((a, b) => {
+        const posA = customOrderMap.get(a.article_id) ?? 999;
+        const posB = customOrderMap.get(b.article_id) ?? 999;
 
-    // Always sort by added_at first (most recent first) - this is the hidden behavior
-    sortedList.sort((a, b) => {
+        // If both have custom positions, sort by custom order
+        if (posA !== 999 && posB !== 999) {
+          return posA - posB;
+        }
+
+        // If only one has custom position, prioritize it
+        if (posA !== 999) return -1;
+        if (posB !== 999) return 1;
+
+        // For items not in custom order, sort by recent first
+        return new Date(b.added_at).getTime() - new Date(a.added_at).getTime();
+      });
+    }
+
+    // Default: Sort by added_at (most recent first)
+    return [...dedupedReadingList].sort((a, b) => {
       const dateA = new Date(a.added_at).getTime();
       const dateB = new Date(b.added_at).getTime();
       return dateB - dateA; // Most recent first
     });
-
-    // For same-day items, apply secondary sorting
-    if (currentSort === 'title') {
-      sortedList.sort((a, b) => {
-        // Keep recent priority, but for items added on the same day, sort by title
-        const dateA = new Date(a.added_at).toDateString();
-        const dateB = new Date(b.added_at).toDateString();
-
-        // If different days, maintain date order
-        if (dateA !== dateB) {
-          return new Date(b.added_at).getTime() - new Date(a.added_at).getTime();
-        }
-
-        // Same day: sort by title
-        const result = (a.articles?.title || '').localeCompare(b.articles?.title || '');
-        return sortDirection === 'desc' ? -result : result;
-      });
-    } else if (currentSort === 'author') {
-      sortedList.sort((a, b) => {
-        // Keep recent priority, but for items added on the same day, sort by author
-        const dateA = new Date(a.added_at).toDateString();
-        const dateB = new Date(b.added_at).toDateString();
-
-        // If different days, maintain date order
-        if (dateA !== dateB) {
-          return new Date(b.added_at).getTime() - new Date(a.added_at).getTime();
-        }
-
-        // Same day: sort by author
-        const result = (a.articles?.author?.name || '').localeCompare(
-          b.articles?.author?.name || ''
-        );
-        return sortDirection === 'desc' ? -result : result;
-      });
-    }
-
-    return sortedList;
-  }, [dedupedReadingList, currentSort, sortDirection]);
+  }, [dedupedReadingList, customOrder]);
 
   // Check if data is already in cache
   const isDataCached = useMemo(() => {
@@ -241,13 +242,12 @@ export default function ListenScreen(): JSX.Element {
       return enhancedAudioService.getReadingListEnhancedTracks(user.id);
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // Align with readingList staleTime
-    gcTime: 10 * 60 * 1000, // Align with readingList gcTime
-    placeholderData: [], // Added for consistency
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    placeholderData: [],
   });
-  const { data: enhancedTracks = [], isLoading: isEnhancedTracksLoading } = enhancedTracksQuery;
+  const { data: enhancedTracks = [] } = enhancedTracksQuery;
 
-  // Sort the enhanced tracks to match the article sort order
   const sortedEnhancedTracks = useMemo(() => {
     if (!enhancedTracks.length || !sortedReadingList.length) return enhancedTracks;
 
@@ -264,7 +264,6 @@ export default function ListenScreen(): JSX.Element {
     });
   }, [enhancedTracks, sortedReadingList]);
 
-  // --- Derived State & Memos (using direct state values) ---
   const metadataValues = useMemo(
     () => ({
       articleId: metadata.articleId,
@@ -273,21 +272,16 @@ export default function ListenScreen(): JSX.Element {
     [metadata.articleId, metadata.articleTitle]
   );
 
-  // Simplified extraData for FlashList - removed complex due words calculations
   const flashListExtraData = useMemo(
     () => ({
-      // Include data that affects item rendering and re-render triggers
       metadataValues,
-      audioState, // Include audioState to trigger re-renders when playback starts/stops
+      audioState,
+      editMode,
     }),
-    [metadataValues, audioState]
+    [metadataValues, audioState, editMode]
   );
-  // --- End Derived State & Memos ---
 
-  // Since data is preloaded at app level, we can rely on it being available
-  // Only show loading screen for initial uncached load (fallback only)
   const shouldShowInitialLoading = useMemo(() => {
-    // Only show loading if we truly don't have any data and are actively loading
     return (
       !isDataCached &&
       isReadingListLoading &&
@@ -296,34 +290,7 @@ export default function ListenScreen(): JSX.Element {
     );
   }, [isDataCached, isReadingListLoading, isReadingListFetching, sortedReadingList.length]);
 
-  // Legacy loading state for backwards compatibility with existing loading hook
-  const shouldBeLoading = useMemo(
-    () => (!isDataCached && isReadingListLoading) || isEnhancedTracksLoading,
-    [isDataCached, isReadingListLoading, isEnhancedTracksLoading]
-  );
-
-  // Simplified effect that only runs when the shouldBeLoading calculation changes
-  useEffect(() => {
-    // No-op if loading state already matches
-    if (shouldBeLoading === isLoadingState) return;
-
-    // Update loading state and manage cleanup
-    if (shouldBeLoading) {
-      startLoading();
-    } else {
-      stopLoading();
-    }
-  }, [shouldBeLoading, isLoadingState, startLoading, stopLoading]);
-
-  // Screen Focus Refresh Hook
-  useScreenFocusRefresh(
-    queryClient,
-    'listen',
-    user?.id,
-    1000 * 60 * 5, // 5 minutes
-    true,
-    true // Force refetch on focus
-  );
+  useScreenFocusRefresh(queryClient, 'listen', user?.id, 1000 * 60 * 5, true, true);
 
   // Focus Effect - uses stable actions.stopPlayback
   const focusEffectCallback = useCallback(() => {
@@ -345,7 +312,6 @@ export default function ListenScreen(): JSX.Element {
   }, [user?.id, queryClient]);
   useFocusEffect(focusEffectCallback);
 
-  // --- Event Handlers (use stable actions) ---
   const isCurrentlyPlaying = audioState !== AUDIO_STATES.IDLE;
 
   const handlePlayAll = useCallback(async () => {
@@ -362,6 +328,8 @@ export default function ListenScreen(): JSX.Element {
         setIsStartingPlayback(true);
         setPlaybackMode('all');
         await actions.startEnhancedPlayback(sortedEnhancedTracks, 0);
+
+        // Audio playback started - NowPlayingCard will appear automatically
       } catch (error) {
         // Reset state on error
         setIsStartingPlayback(false);
@@ -378,12 +346,6 @@ export default function ListenScreen(): JSX.Element {
     actions.stopPlayback,
   ]);
 
-  // Handle sorting
-  const handleSortChange = useCallback((sort: string, direction: SortDirection) => {
-    setCurrentSort(sort as ListenSortOption);
-    setSortDirection(direction);
-  }, []);
-
   // Handle sleep timer
   const handleSleepTimerSet = useCallback(
     (minutes: number) => {
@@ -396,11 +358,98 @@ export default function ListenScreen(): JSX.Element {
     sleepTimer.actions.cancelTimer();
   }, [sleepTimer.actions]);
 
+  // Handle article deletion
+  const handleDelete = useCallback(
+    async (articleId: number) => {
+      if (!user?.id) return;
+
+      try {
+        mediumFeedback();
+
+        // Remove from reading list
+        await readingListService.removeFromReadingList(user.id, articleId);
+
+        // Remove from custom order
+        dispatch(removeFromCustomOrder(articleId));
+
+        // Invalidate queries to refresh the list
+        queryClient.invalidateQueries({
+          queryKey: ['readingList', user.id],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ['enhancedAudioTracks', user.id],
+        });
+      } catch (error) {
+        handleError(error as Error);
+      }
+    },
+    [user?.id, dispatch, queryClient]
+  );
+
+  // Handle individual article play
+  const handleArticlePlay = useCallback(
+    async (articleId: number) => {
+      // Prevent multiple presses during transition
+      if (isStartingPlayback) return;
+
+      // If this article is already playing, pause it
+      if (isCurrentlyPlaying && parseInt(metadata.articleId || '0', 10) === articleId) {
+        await actions.stopPlayback();
+        setPlaybackMode('none');
+        setIsStartingPlayback(false);
+        return;
+      }
+
+      // Find the article in the sorted list to get the correct index
+      const articleIndex = sortedEnhancedTracks.findIndex(track => track.articleId === articleId);
+
+      if (articleIndex !== -1 && sortedEnhancedTracks.length) {
+        try {
+          // Set starting state immediately for instant UI feedback
+          setIsStartingPlayback(true);
+          setPlaybackMode('all');
+          await actions.startEnhancedPlayback(sortedEnhancedTracks, articleIndex);
+
+          // Audio playback started - NowPlayingCard will appear automatically
+        } catch (error) {
+          // Reset state on error
+          setIsStartingPlayback(false);
+          setPlaybackMode('none');
+          handleError(error as Error);
+        }
+      }
+    },
+    [
+      isStartingPlayback,
+      isCurrentlyPlaying,
+      metadata.articleId,
+      sortedEnhancedTracks,
+      actions.startEnhancedPlayback,
+      actions.stopPlayback,
+    ]
+  );
+
+  // Handle drag end for reordering
+  const handleDragEnd = useCallback(
+    ({ data }: { data: ReadingListItem[] }) => {
+      lightFeedback();
+
+      // Extract the new order of article IDs
+      const newOrder = data.map(item => item.article_id);
+
+      // Update custom order in Redux
+      dispatch(setCustomOrder(newOrder));
+    },
+    [dispatch]
+  );
+
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
 
   const handleArticlePress = useCallback(
     (articleId: number) => {
+      if (editMode) return; // Disable navigation in edit mode
+
       const article = sortedReadingList.find(item => item.article_id === articleId)?.articles;
       if (article) {
         prefetchArticle(articleId);
@@ -409,11 +458,8 @@ export default function ListenScreen(): JSX.Element {
         );
       }
     },
-    [prefetchArticle, sortedReadingList]
+    [prefetchArticle, sortedReadingList, editMode]
   );
-
-  // Use constant sort options
-  const sortOptions = LISTEN_SORT_OPTIONS;
 
   // Get current article for now playing card
   const currentArticle = useMemo(() => {
@@ -435,6 +481,9 @@ export default function ListenScreen(): JSX.Element {
   // Check if we have any texts to show controls for
   const hasArticles = sortedReadingList.length > 0;
 
+  // Check if we have any articles with audio available
+  const hasAudioArticles = sortedEnhancedTracks.length > 0;
+
   // Check if player should be visible (either starting or actually playing)
   const shouldShowPlayer = useMemo(() => {
     return (
@@ -446,6 +495,57 @@ export default function ListenScreen(): JSX.Element {
   // Since data is preloaded, only show empty state when we definitively have no articles
   // and we've waited long enough to prevent flashing
   const shouldShowEmpty = !hasArticles && canShowEmpty;
+
+  // Render item for both FlashList and DraggableFlatList
+  const renderItem = useCallback(
+    (params: { item: ReadingListItem; index?: number } | RenderItemParams<ReadingListItem>) => {
+      const { item } = params;
+      const isActive =
+        audioState !== AUDIO_STATES.IDLE &&
+        !!metadata.articleId &&
+        parseInt(metadata.articleId, 10) === item.article_id;
+
+      if (editMode && 'drag' in params) {
+        // DraggableFlatList render
+        const { drag, isActive: isDragging } = params;
+        return (
+          <ListenListItem
+            isActive={isActive}
+            editMode={editMode}
+            item={item}
+            onPress={handleArticlePress}
+            onDelete={handleDelete}
+            onPlayPress={handleArticlePlay}
+            drag={drag}
+            _isBeingDragged={isDragging}
+            showPlayerCard={shouldShowPlayer}
+          />
+        );
+      } else {
+        // FlashList render
+        return (
+          <ListenListItem
+            isActive={isActive}
+            editMode={editMode}
+            item={item}
+            onPress={handleArticlePress}
+            onDelete={handleDelete}
+            onPlayPress={handleArticlePlay}
+            showPlayerCard={shouldShowPlayer}
+          />
+        );
+      }
+    },
+    [
+      audioState,
+      metadata.articleId,
+      editMode,
+      shouldShowPlayer,
+      handleArticlePress,
+      handleDelete,
+      handleArticlePlay,
+    ]
+  );
 
   // Show loading screen only during initial uncached load
   if (shouldShowInitialLoading) {
@@ -464,71 +564,99 @@ export default function ListenScreen(): JSX.Element {
       style={styles.container}
     >
       <ThemedView includeBottomInset={false} style={styles.flexOne} useSafeArea={false}>
-        <FlashList
-          ref={flashListRef}
-          data={sortedReadingList}
-          drawDistance={ITEM_HEIGHT * 5}
-          estimatedItemSize={ITEM_HEIGHT}
-          extraData={flashListExtraData}
-          keyExtractor={item => `${item.article_id}`}
-          removeClippedSubviews={true}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingTop: headerHeight,
-            paddingBottom: hasArticles
-              ? insets.bottom +
-                LAYOUT.BOTTOM_BAR.HEIGHT +
-                LAYOUT.SPACING.TINY +
-                (shouldShowPlayer ? 120 + LAYOUT.SPACING.TINY : LAYOUT.SPACING.TINY)
-              : insets.bottom + LAYOUT.SPACING.TINY,
-            paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-          }}
-          ItemSeparatorComponent={() => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />}
-          ListEmptyComponent={
-            shouldShowEmpty ? (
-              <EmptyState
-                colors={colors}
-                description="Your listening playlist is empty"
-                icon="headset-outline"
-                iconSize={72}
-                submessage="Bookmark articles from the Read tab to build your playlist"
-                title="No Articles Saved"
-                containerStyle={{
-                  paddingTop: LAYOUT.SPACING.XLARGE,
-                  paddingBottom: LAYOUT.SPACING.LARGE,
-                }}
-              />
-            ) : null
-          }
-          ListHeaderComponent={
-            hasArticles ? (
-              <View>
-                <SortingControls
-                  currentSort={currentSort}
-                  options={sortOptions}
-                  sortDirection={sortDirection}
-                  style={{ marginTop: LAYOUT.SPACING.MEDIUM, marginBottom: LAYOUT.SPACING.MEDIUM }}
-                  onSortChange={handleSortChange}
+        {editMode ? (
+          // Use DraggableFlatList in edit mode
+          <DraggableFlatList
+            data={sortedReadingList}
+            keyExtractor={item => `${item.article_id}`}
+            renderItem={renderItem as any}
+            onDragEnd={handleDragEnd}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingTop: headerHeight + LAYOUT.SPACING.MEDIUM,
+              paddingBottom: hasArticles
+                ? insets.bottom +
+                  LAYOUT.BOTTOM_BAR.HEIGHT +
+                  LAYOUT.SPACING.TINY +
+                  (shouldShowPlayer ? 120 + LAYOUT.SPACING.TINY : LAYOUT.SPACING.TINY)
+                : insets.bottom + LAYOUT.SPACING.TINY,
+              paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+            }}
+            ItemSeparatorComponent={() => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />}
+            ListEmptyComponent={
+              shouldShowEmpty ? (
+                <EmptyState
+                  colors={colors}
+                  description="Your listening playlist is empty"
+                  icon="headset-outline"
+                  iconSize={72}
+                  submessage="Bookmark articles from the Read tab to build your playlist"
+                  title="No Articles Saved"
+                  containerStyle={{
+                    paddingTop: LAYOUT.SPACING.XLARGE,
+                    paddingBottom: LAYOUT.SPACING.LARGE,
+                  }}
                 />
-              </View>
-            ) : null
-          }
-          overrideItemLayout={layout => {
-            layout.size = ITEM_HEIGHT;
-          }}
-          renderItem={({ item }) => {
-            const isActive =
-              audioState !== AUDIO_STATES.IDLE &&
-              !!metadata.articleId &&
-              parseInt(metadata.articleId, 10) === item.article_id;
-
-            return <ListenListItem isActive={isActive} item={item} onPress={handleArticlePress} />;
-          }}
-        />
+              ) : null
+            }
+          />
+        ) : (
+          // Use FlashList in normal mode
+          <FlashList
+            data={sortedReadingList}
+            drawDistance={ITEM_HEIGHT * 5}
+            estimatedItemSize={ITEM_HEIGHT}
+            extraData={flashListExtraData}
+            keyExtractor={item => `${item.article_id}`}
+            removeClippedSubviews={true}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingTop: headerHeight + LAYOUT.SPACING.MEDIUM,
+              paddingBottom: hasArticles
+                ? insets.bottom +
+                  LAYOUT.BOTTOM_BAR.HEIGHT +
+                  LAYOUT.SPACING.TINY +
+                  (shouldShowPlayer ? 120 + LAYOUT.SPACING.TINY : LAYOUT.SPACING.TINY)
+                : insets.bottom + LAYOUT.SPACING.TINY,
+              paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+            }}
+            ItemSeparatorComponent={() => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />}
+            ListEmptyComponent={
+              shouldShowEmpty ? (
+                <EmptyState
+                  colors={colors}
+                  description="Your listening playlist is empty"
+                  icon="headset-outline"
+                  iconSize={72}
+                  submessage="Bookmark articles from the Read tab to build your playlist"
+                  title="No Articles Saved"
+                  containerStyle={{
+                    paddingTop: LAYOUT.SPACING.XLARGE,
+                    paddingBottom: LAYOUT.SPACING.LARGE,
+                  }}
+                />
+              ) : null
+            }
+            ListHeaderComponent={null}
+            overrideItemLayout={layout => {
+              layout.size = ITEM_HEIGHT;
+            }}
+            renderItem={renderItem as any}
+          />
+        )}
       </ThemedView>
 
-      {/* Only show bottom controls when there are texts to play but no active player */}
-      {hasArticles && !shouldShowPlayer && !isStartingPlayback && (
+      {/* Show helpful message when articles exist but none have audio */}
+      {hasArticles && !hasAudioArticles && !shouldShowPlayer && (
+        <View style={styles.noAudioContainer}>
+          <ThemedText style={styles.noAudioText} type="body" variant="secondary">
+            Articles are saved, but audio is not yet available
+          </ThemedText>
+        </View>
+      )}
+
+      {/* Only show bottom controls when there are texts with audio to play but no active player */}
+      {hasArticles && hasAudioArticles && !shouldShowPlayer && !isStartingPlayback && (
         <BottomControls
           primaryDisabled={false}
           primaryDisablePressAnimation={true}

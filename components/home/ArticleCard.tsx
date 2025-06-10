@@ -1,8 +1,12 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
 import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
+import DeleteButton from '@/components/listen/DeleteButton';
+import DragHandle from '@/components/listen/DragHandle';
+import PlayButton from '@/components/listen/PlayButton';
 import {
   LAYOUT,
   TYPOGRAPHY_HIERARCHY,
@@ -16,6 +20,14 @@ interface ArticleCardProps {
   author: string;
   onPress?: () => void;
   active?: boolean;
+  editMode?: boolean;
+  onDelete?: () => void;
+  dragHandleProps?: any;
+  isBeingDragged?: boolean;
+  // Play button props
+  onPlayPress?: () => void;
+  isPlaying?: boolean;
+  isLoadingAudio?: boolean;
 }
 
 export const ArticleCard: React.FC<ArticleCardProps> = ({
@@ -23,8 +35,35 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   author,
   onPress,
   active = false,
+  editMode = false,
+  onDelete,
+  dragHandleProps,
+  isBeingDragged = false,
+  onPlayPress,
+  isPlaying = false,
+  isLoadingAudio = false,
 }) => {
   const isDarkMode = useIsDarkMode();
+  const scale = useSharedValue(1);
+
+  React.useEffect(() => {
+    // Animate scale when edit mode changes or when being dragged
+    if (isBeingDragged) {
+      scale.value = withSpring(1.05, {
+        damping: 20,
+        stiffness: 300,
+      });
+    } else {
+      scale.value = withSpring(editMode ? 0.95 : 1, {
+        damping: 20,
+        stiffness: 300,
+      });
+    }
+  }, [editMode, isBeingDragged, scale]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
   const activeCardStyle = React.useMemo(
     () =>
@@ -62,30 +101,60 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   );
 
   return (
-    <View style={styles.cardContainer}>
-      <BaseCard
-        shadowSize={active ? 'medium' : 'small'}
-        style={[styles.card, activeCardStyle]}
-        onPress={onPress}
-      >
-        <View style={styles.cardContent}>
-          <View style={styles.textContent}>
-            <ThemedText colorName="headingText" style={titleStyle} type="heading3">
-              {title}
-            </ThemedText>
-            <ThemedText
-              skipDefaultColor
-              colorName="authorText"
-              numberOfLines={1}
-              style={authorStyle}
-              type="label"
-            >
-              {author}
-            </ThemedText>
-          </View>
+    <Animated.View style={[styles.cardContainer, animatedStyle]}>
+      {/* Drag Handle - shows on left in edit mode */}
+      {editMode && (
+        <View style={styles.dragHandleContainer}>
+          <DragHandle
+            onLongPress={dragHandleProps?.onLongPress}
+            delayLongPress={dragHandleProps?.delayLongPress}
+          />
         </View>
-      </BaseCard>
-    </View>
+      )}
+
+      <View style={styles.cardWrapper}>
+        <BaseCard
+          shadowSize={active ? 'medium' : 'small'}
+          style={[styles.card, activeCardStyle]}
+          onPress={editMode ? undefined : onPress}
+        >
+          <View style={styles.cardContent}>
+            <View style={styles.textContent}>
+              <ThemedText colorName="headingText" style={titleStyle} type="heading3">
+                {title}
+              </ThemedText>
+              <ThemedText
+                skipDefaultColor
+                colorName="authorText"
+                numberOfLines={1}
+                style={authorStyle}
+                type="label"
+              >
+                {author}
+              </ThemedText>
+            </View>
+
+            {/* Play Button - shows when not in edit mode */}
+            {!editMode && onPlayPress && (
+              <View style={styles.playButtonContainer}>
+                <PlayButton
+                  onPress={onPlayPress}
+                  isPlaying={isPlaying}
+                  isLoading={isLoadingAudio}
+                />
+              </View>
+            )}
+          </View>
+        </BaseCard>
+      </View>
+
+      {/* Delete Button - shows on right in edit mode */}
+      {editMode && onDelete && (
+        <View style={styles.deleteButtonContainer}>
+          <DeleteButton onPress={onDelete} />
+        </View>
+      )}
+    </Animated.View>
   );
 };
 
@@ -95,14 +164,33 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cardContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     position: 'relative',
+  },
+  cardWrapper: {
+    flex: 1,
   },
   cardContent: {
     flexDirection: 'row',
     minHeight: MIN_TOUCH_TARGET.SIZE,
     padding: LAYOUT.SPACING.MEDIUM,
+    alignItems: 'center',
   },
   textContent: {
     flex: 1,
+  },
+  playButtonContainer: {
+    marginLeft: LAYOUT.SPACING.SMALL,
+  },
+  dragHandleContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingRight: LAYOUT.SPACING.SMALL,
+  },
+  deleteButtonContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingLeft: LAYOUT.SPACING.SMALL,
   },
 });

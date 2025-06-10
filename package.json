@@ -11,7 +11,8 @@
     "test": "jest --watchAll --testTimeout=1000",
     "fullupgrade": "yarn upgrade --latest && npx expo@latest install --check",
     "types:db": "supabase gen types typescript --project-id kkmnzbeugdoajtzfjkxg > types/database.types.ts",
-    "bump": "tsc --noEmit && yarn lint && node utils/bumpVersion.js"
+    "validate": "tsc --noEmit && yarn lint",
+    "bump": "node utils/bumpVersion.js"
   },
   "dependencies": {
     "@babel/runtime": "^7.27.6",
@@ -46,6 +47,7 @@
     "moment-hijri": "^3.0.0",
     "react": "19.0.0",
     "react-native": "0.79.3",
+    "react-native-draggable-flatlist": "^4.0.3",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",

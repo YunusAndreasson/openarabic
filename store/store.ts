@@ -3,6 +3,7 @@ import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
 
 import filtersReducer from './filtersSlice';
+import listenReducer from './listenSlice';
 import readingListReducer from './readingListSlice';
 import settingsReducer from './settingsSlice';
 import themeReducer from './themeSlice';
@@ -13,6 +14,7 @@ const rootReducer = combineReducers({
   settings: settingsReducer,
   readingList: readingListReducer,
   filters: filtersReducer,
+  listen: listenReducer,
   // audio: audioReducer, // REMOVED - no longer needed
 });
 
@@ -43,7 +45,7 @@ const persistConfig = {
     }
     return Promise.resolve(state);
   },
-  whitelist: ['theme', 'settings', 'readingList', 'filters'], // Removed 'audio' and 'featuredContent' from persisted state
+  whitelist: ['theme', 'settings', 'readingList', 'filters', 'listen'], // Removed 'audio' and 'featuredContent' from persisted state
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
