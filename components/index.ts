@@ -3,7 +3,7 @@ export { ThemedText } from './ThemedText';
 export { ThemedView } from './ThemedView';
 export { ThemedButton } from './ThemedButton';
 export { ThemedInput } from './ThemedInput';
-export { default as ThemedCard } from './ThemedCard';
+export { default as ArticleCard } from './ArticleCard';
 export { default as BaseCard } from './BaseCard';
 export { default as SectionTitle } from './SectionTitle';
 export { default as EmptyState } from './EmptyState';

@@ -13,7 +13,7 @@ import React, {
 import { StyleSheet, RefreshControl, type StyleProp, type ViewStyle, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import ThemedCard from '@/components/ThemedCard';
+import ArticleCard from '@/components/ArticleCard';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
@@ -37,14 +37,14 @@ const ArticleItem = memo(({ item, onPress }: ArticleItemProps) => {
   }, [item, onPress]);
 
   return (
-    <ThemedCard
-      author={item.author?.name ?? 'Author'}
-      category={item.category?.name ?? 'General'}
+    <ArticleCard
+      author={item.author?.name || 'Author'}
+      category={item.category?.name || 'General'}
+      categoryForDisplay={item.category?.name || 'General'}
       imageUrl={item.image_url || 'https://picsum.photos/800/400'}
-      shadowSize="medium"
       style={[styles.articleCard, isPending && styles.pendingCard]}
+      summary={item.summary || 'No summary available'}
       title={item.title}
-      variant="article"
       onPress={handlePress}
     />
   );

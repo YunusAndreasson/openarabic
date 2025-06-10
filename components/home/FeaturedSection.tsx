@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import React, { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import ThemedCard from '@/components/ThemedCard';
+import ArticleCard from '@/components/ArticleCard';
 import { LAYOUT } from '@/constants/layout';
 import { articlesService } from '@/services/articles';
 import type { Article } from '@/types/articles.types';
@@ -10,13 +10,12 @@ import type { Article } from '@/types/articles.types';
 interface FeaturedSectionProps {
   article: Article;
   onPress: (article: Article) => void;
-  dueWordCount?: number;
 }
 
 /**
  * A section displaying the featured article
  */
-const FeaturedSection: React.FC<FeaturedSectionProps> = ({ article, onPress, dueWordCount }) => {
+const FeaturedSection: React.FC<FeaturedSectionProps> = ({ article, onPress }) => {
   // Use queryClient for prefetching on press
   const queryClient = useQueryClient();
 
@@ -42,17 +41,14 @@ const FeaturedSection: React.FC<FeaturedSectionProps> = ({ article, onPress, due
 
   return (
     <View style={styles.container}>
-      <ThemedCard
+      <ArticleCard
         author={article.author?.name || 'Author'}
-        category="FEATURED"
-        categoryForDisplay={article.category?.name}
-        dueWordCount={dueWordCount}
-        fullSummary={true}
+        category="RECOMMENDED"
+        categoryForDisplay={article.category?.name || 'General'}
         imageUrl={article.image_url || 'https://picsum.photos/800/400'}
         style={styles.cardStyle}
-        summary={article.summary || undefined}
+        summary={article.summary || 'No summary available'}
         title={article.title}
-        variant="article"
         onPress={handlePress}
       />
     </View>
