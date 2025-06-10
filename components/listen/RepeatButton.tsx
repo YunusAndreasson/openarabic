@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
-import { useToggleAnimation, useTransformAnimation } from '@/hooks/animations';
+import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import { selectionFeedback } from '@/utils/haptics';
 
 interface RepeatButtonProps {
   enabled: boolean;
@@ -16,10 +17,7 @@ interface RepeatButtonProps {
 const RepeatButton: React.FC<RepeatButtonProps> = ({ enabled, onToggle }) => {
   const colors = useColors();
 
-  // Use toggle animation for container state changes (scale + opacity)
-  const { containerAnimatedStyle } = useToggleAnimation(enabled, 0.02); // Small scale change
-
-  // Use transform animation for icon rotation
+  // Simple icon rotation animation
   const { animatedStyle: iconRotationStyle, startAnimation: startRotation } = useTransformAnimation(
     {
       type: 'rotate',
@@ -37,6 +35,7 @@ const RepeatButton: React.FC<RepeatButtonProps> = ({ enabled, onToggle }) => {
   }, [enabled, startRotation]);
 
   const handlePress = () => {
+    selectionFeedback();
     onToggle();
   };
 
@@ -51,25 +50,22 @@ const RepeatButton: React.FC<RepeatButtonProps> = ({ enabled, onToggle }) => {
   );
 
   return (
-    <TouchableOpacity style={styles.touchable} onPress={handlePress}>
-      <Animated.View style={[styles.container, containerStyle, containerAnimatedStyle]}>
-        <View style={styles.content}>
-          <Animated.View style={[styles.iconContainer, iconRotationStyle]}>
-            <Ionicons
-              color={enabled ? colors.tint : colors.interactiveSecondary}
-              name="repeat"
-              size={20}
-            />
-          </Animated.View>
-
-          <ThemedText
-            style={[styles.label, { color: enabled ? colors.tint : colors.interactiveSecondary }]}
-            variant={enabled ? undefined : 'subtle'}
-          >
-            Repeat
-          </ThemedText>
-        </View>
+    <TouchableOpacity style={[styles.container, containerStyle]} onPress={handlePress}>
+      <Animated.View style={[styles.iconContainer, iconRotationStyle]}>
+        <Ionicons
+          color={enabled ? colors.tint : colors.interactiveSecondary}
+          name="repeat"
+          size={20}
+        />
       </Animated.View>
+
+      <ThemedText
+        style={[styles.label, { color: enabled ? colors.tint : colors.interactiveSecondary }]}
+        variant={enabled ? undefined : 'subtle'}
+        skipDefaultColor={true}
+      >
+        Repeat
+      </ThemedText>
     </TouchableOpacity>
   );
 };
@@ -77,17 +73,16 @@ const RepeatButton: React.FC<RepeatButtonProps> = ({ enabled, onToggle }) => {
 const styles = StyleSheet.create({
   container: {
     ...LAYOUT.SHADOW.SUBTLE,
+    alignItems: 'center',
+    alignSelf: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
-    minHeight: MIN_TOUCH_TARGET.SIZE,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    minHeight: MIN_TOUCH_TARGET.MEDIUM,
     minWidth: 100,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.SMALL,
-  },
-  content: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
   },
   iconContainer: {
     alignItems: 'center',
@@ -98,10 +93,9 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '500',
     letterSpacing: 0.2,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.2,
-  },
-  touchable: {
-    alignSelf: 'center',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
 });
 
