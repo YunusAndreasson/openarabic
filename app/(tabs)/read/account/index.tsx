@@ -197,7 +197,7 @@ const AccountScreen: React.FC = () => {
             shadowSize="small"
             style={styles.sectionContainer}
           >
-            <View style={styles.remindersLinksContainer}>
+            <View style={styles.linksContainer}>
               <View style={styles.settingRow}>
                 <SettingLabel icon="notifications" iconColor={colors.icon} text="Study Reminders" />
                 <Toggle value={reminderTime.enabled} onValueChange={handleReminderToggle} />
@@ -232,7 +232,7 @@ const AccountScreen: React.FC = () => {
             shadowSize="small"
             style={styles.sectionContainer}
           >
-            <View style={styles.appearanceLinksContainer}>
+            <View style={styles.linksContainer}>
               <View style={styles.settingRow}>
                 <SettingLabel icon="moon" iconColor={colors.icon} text="Dark Mode" />
                 <ThemeToggle />
@@ -249,19 +249,19 @@ const AccountScreen: React.FC = () => {
             shadowSize="small"
             style={styles.sectionContainer}
           >
-            <View style={styles.actionLinksContainer}>
+            <View style={styles.linksContainer}>
               <BaseCard
                 includePressAnimation={true}
                 shadowSize="none"
-                style={styles.actionLinkCard}
+                style={styles.interactiveCard}
                 onPress={() => router.push('/(tabs)/read/account/learningMethod')}
               >
-                <View style={styles.actionLinkContent}>
-                  <View style={styles.actionLinkLeft}>
-                    <View style={styles.actionIconContainer}>
+                <View style={styles.cardContent}>
+                  <View style={styles.cardLeft}>
+                    <View style={styles.cardIconContainer}>
                       <Ionicons color={colors.icon} name="school-outline" size={22} />
                     </View>
-                    <ThemedText style={styles.actionLinkText} type="body" weight="medium">
+                    <ThemedText style={styles.cardText} type="body" weight="medium">
                       Language Learning Science
                     </ThemedText>
                   </View>
@@ -269,23 +269,25 @@ const AccountScreen: React.FC = () => {
                     color={colors.textTertiary}
                     name="chevron-forward-outline"
                     size={20}
-                    style={styles.actionLinkChevron}
+                    style={styles.cardChevron}
                   />
                 </View>
               </BaseCard>
 
+              <Divider />
+
               <BaseCard
                 includePressAnimation={true}
                 shadowSize="none"
-                style={styles.actionLinkCard}
+                style={styles.interactiveCard}
                 onPress={() => router.push('/(tabs)/read/account/classicalTexts')}
               >
-                <View style={styles.actionLinkContent}>
-                  <View style={styles.actionLinkLeft}>
-                    <View style={styles.actionIconContainer}>
+                <View style={styles.cardContent}>
+                  <View style={styles.cardLeft}>
+                    <View style={styles.cardIconContainer}>
                       <Ionicons color={colors.icon} name="library-outline" size={22} />
                     </View>
-                    <ThemedText style={styles.actionLinkText} type="body" weight="medium">
+                    <ThemedText style={styles.cardText} type="body" weight="medium">
                       Why Classical Texts
                     </ThemedText>
                   </View>
@@ -293,7 +295,7 @@ const AccountScreen: React.FC = () => {
                     color={colors.textTertiary}
                     name="chevron-forward-outline"
                     size={20}
-                    style={styles.actionLinkChevron}
+                    style={styles.cardChevron}
                   />
                 </View>
               </BaseCard>
@@ -309,19 +311,19 @@ const AccountScreen: React.FC = () => {
             shadowSize="small"
             style={styles.sectionContainer}
           >
-            <View style={styles.socialLinksContainer}>
+            <View style={styles.linksContainer}>
               <BaseCard
                 includePressAnimation={true}
                 shadowSize="none"
-                style={styles.socialLinkCard}
+                style={styles.interactiveCard}
                 onPress={() => handleSocialLink('https://twitter.com/OpenArabicIo')}
               >
-                <View style={styles.socialLinkContent}>
-                  <View style={styles.socialLinkLeft}>
-                    <View style={styles.socialIconContainer}>
+                <View style={styles.cardContent}>
+                  <View style={styles.cardLeft}>
+                    <View style={styles.cardIconContainer}>
                       <Ionicons color={colors.icon} name="logo-twitter" size={22} />
                     </View>
-                    <ThemedText style={styles.socialLinkText} type="body" weight="medium">
+                    <ThemedText style={styles.cardText} type="body" weight="medium">
                       Twitter
                     </ThemedText>
                   </View>
@@ -329,23 +331,25 @@ const AccountScreen: React.FC = () => {
                     color={colors.textTertiary}
                     name="open-outline"
                     size={16}
-                    style={styles.socialLinkChevron}
+                    style={styles.cardChevron}
                   />
                 </View>
               </BaseCard>
 
+              <Divider />
+
               <BaseCard
                 includePressAnimation={true}
                 shadowSize="none"
-                style={styles.socialLinkCard}
+                style={styles.interactiveCard}
                 onPress={() => handleSocialLink('https://www.facebook.com/OpenArabic.io/')}
               >
-                <View style={styles.socialLinkContent}>
-                  <View style={styles.socialLinkLeft}>
-                    <View style={styles.socialIconContainer}>
+                <View style={styles.cardContent}>
+                  <View style={styles.cardLeft}>
+                    <View style={styles.cardIconContainer}>
                       <Ionicons color={colors.icon} name="logo-facebook" size={22} />
                     </View>
-                    <ThemedText style={styles.socialLinkText} type="body" weight="medium">
+                    <ThemedText style={styles.cardText} type="body" weight="medium">
                       Facebook
                     </ThemedText>
                   </View>
@@ -353,23 +357,25 @@ const AccountScreen: React.FC = () => {
                     color={colors.textTertiary}
                     name="open-outline"
                     size={16}
-                    style={styles.socialLinkChevron}
+                    style={styles.cardChevron}
                   />
                 </View>
               </BaseCard>
 
+              <Divider />
+
               <BaseCard
                 includePressAnimation={true}
                 shadowSize="none"
-                style={styles.socialLinkCard}
+                style={styles.interactiveCard}
                 onPress={() => handleSocialLink('https://www.instagram.com/openarabic.io/')}
               >
-                <View style={styles.socialLinkContent}>
-                  <View style={styles.socialLinkLeft}>
-                    <View style={styles.socialIconContainer}>
+                <View style={styles.cardContent}>
+                  <View style={styles.cardLeft}>
+                    <View style={styles.cardIconContainer}>
                       <Ionicons color={colors.icon} name="logo-instagram" size={22} />
                     </View>
-                    <ThemedText style={styles.socialLinkText} type="body" weight="medium">
+                    <ThemedText style={styles.cardText} type="body" weight="medium">
                       Instagram
                     </ThemedText>
                   </View>
@@ -377,23 +383,25 @@ const AccountScreen: React.FC = () => {
                     color={colors.textTertiary}
                     name="open-outline"
                     size={16}
-                    style={styles.socialLinkChevron}
+                    style={styles.cardChevron}
                   />
                 </View>
               </BaseCard>
 
+              <Divider />
+
               <BaseCard
                 includePressAnimation={true}
                 shadowSize="none"
-                style={styles.socialLinkCard}
+                style={styles.interactiveCard}
                 onPress={handleSupportContact}
               >
-                <View style={styles.socialLinkContent}>
-                  <View style={styles.socialLinkLeft}>
-                    <View style={styles.socialIconContainer}>
+                <View style={styles.cardContent}>
+                  <View style={styles.cardLeft}>
+                    <View style={styles.cardIconContainer}>
                       <Ionicons color={colors.icon} name="mail" size={22} />
                     </View>
-                    <ThemedText style={styles.socialLinkText} type="body" weight="medium">
+                    <ThemedText style={styles.cardText} type="body" weight="medium">
                       Email
                     </ThemedText>
                   </View>
@@ -401,7 +409,7 @@ const AccountScreen: React.FC = () => {
                     color={colors.textTertiary}
                     name="open-outline"
                     size={16}
-                    style={styles.socialLinkChevron}
+                    style={styles.cardChevron}
                   />
                 </View>
               </BaseCard>
@@ -417,16 +425,16 @@ const AccountScreen: React.FC = () => {
             shadowSize="small"
             style={styles.sectionContainer}
           >
-            <View style={styles.manageLinksContainer}>
+            <View style={styles.linksContainer}>
               <BaseCard
                 includePressAnimation={true}
                 shadowSize="none"
-                style={styles.actionLinkCard}
+                style={styles.interactiveCard}
                 onPress={handleSignOut}
               >
-                <View style={styles.actionLinkContent}>
-                  <View style={styles.actionLinkLeft}>
-                    <View style={styles.actionIconContainer}>
+                <View style={styles.cardContent}>
+                  <View style={styles.cardLeft}>
+                    <View style={styles.cardIconContainer}>
                       <Ionicons color={colors.error} name="log-out-outline" size={22} />
                     </View>
                     <View style={styles.signOutTextContainer}>
@@ -446,7 +454,7 @@ const AccountScreen: React.FC = () => {
                     color={colors.textTertiary}
                     name="chevron-forward-outline"
                     size={20}
-                    style={styles.actionLinkChevron}
+                    style={styles.cardChevron}
                   />
                 </View>
               </BaseCard>
@@ -486,59 +494,53 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  // Common Links Container Styles
-  actionLinksContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  socialLinksContainer: {
+  // Common Links Container Styles - Unified
+  linksContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
   },
 
-  // Action Link Styles
-  actionLinkCard: {
+  // Unified Card Style - Used for all interactive cards
+  interactiveCard: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.NONE,
     marginBottom: 0,
-    minHeight: MIN_TOUCH_TARGET.SIZE,
+    minHeight: MIN_TOUCH_TARGET.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
   },
-  actionLinkContent: {
+
+  // Unified Card Content Layout
+  cardContent: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  actionLinkLeft: {
+  cardLeft: {
     alignItems: 'center',
     flexDirection: 'row',
     flex: 1,
     paddingRight: LAYOUT.SPACING.SMALL,
   },
-  actionIconContainer: {
+  cardIconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: LAYOUT.SPACING.SMALL,
   },
-  actionLinkText: {
+  cardText: {
     marginLeft: LAYOUT.SPACING.SMALL,
   },
-  actionLinkChevron: {
+  cardChevron: {
     marginRight: LAYOUT.SPACING.SMALL,
     minWidth: LAYOUT.SPACING.XLARGE,
     opacity: LAYOUT.OPACITY.MEDIUM,
     textAlign: 'center',
   },
 
-  // Appearance Links Styles
-  appearanceLinksContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-
   // App Footer Styles
   appFooterWrapper: {
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.XLARGE,
-    marginTop: LAYOUT.SPACING.XXLARGE,
+    marginBottom: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.XLARGE,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   appFooterContent: {
@@ -551,9 +553,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    minHeight: MIN_TOUCH_TARGET.SIZE, // Ensure all setting rows are easily touchable
+    minHeight: MIN_TOUCH_TARGET.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
   },
   settingLabelContainer: {
     alignItems: 'center',
@@ -582,15 +584,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  manageLinksContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-
   firstSectionOverride: {
     marginTop: -LAYOUT.SPACING.XLARGE, // Offset the SectionTitle's first section margin
-  },
-  remindersLinksContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
   },
 
   scrollContent: {
@@ -604,41 +599,6 @@ const styles = StyleSheet.create({
   signOutTextContainer: {
     flexDirection: 'column',
     marginLeft: LAYOUT.SPACING.SMALL,
-  },
-
-  // Social Link Styles (similar to action links but kept separate for clarity)
-  socialLinkCard: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.NONE,
-    marginBottom: 0,
-    minHeight: MIN_TOUCH_TARGET.SIZE,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-  },
-  socialLinkContent: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  socialLinkLeft: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    flex: 1,
-    paddingRight: LAYOUT.SPACING.SMALL,
-  },
-  socialIconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: LAYOUT.SPACING.SMALL,
-  },
-  socialLinkText: {
-    marginLeft: LAYOUT.SPACING.SMALL,
-  },
-  socialLinkChevron: {
-    marginRight: LAYOUT.SPACING.SMALL,
-    minWidth: LAYOUT.SPACING.XLARGE,
-    opacity: LAYOUT.OPACITY.MEDIUM,
-    textAlign: 'center',
   },
 
   // Time Picker Styles
