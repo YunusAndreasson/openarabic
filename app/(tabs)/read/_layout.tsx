@@ -1,6 +1,7 @@
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import React from 'react';
 
+import FilterButton from '@/components/FilterButton';
 import { createNavigationOptions } from '@/constants/modal';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ArticleParams, FilterParams } from '@/types/navigation.types';
@@ -35,12 +36,16 @@ export default function ReadLayout() {
         }}
       />
       <Stack.Screen
-        name="filter"
-        options={({ route }) =>
-          createNavigationOptions(colors, {
-            title: getFilterTitle(route.params as FilterParams),
-          })
-        }
+        name="filter-modal"
+        options={createNavigationOptions(colors, {
+          title: 'Filters',
+        })}
+      />
+      <Stack.Screen
+        name="account"
+        options={createNavigationOptions(colors, {
+          headerShown: false,
+        })}
       />
       <Stack.Screen
         name="article"
@@ -53,10 +58,20 @@ export default function ReadLayout() {
         }}
       />
       <Stack.Screen
-        name="account"
-        options={createNavigationOptions(colors, {
-          headerShown: false,
-        })}
+        name="filter"
+        options={({ route }) => {
+          const params = route.params as FilterParams;
+          const categoryId = parseInt(params.id, 10);
+
+          return createNavigationOptions(colors, {
+            title: getFilterTitle(params),
+            headerRight: () => (
+              <FilterButton
+                onPress={() => router.push(`/(tabs)/read/filter-modal?categoryId=${categoryId}`)}
+              />
+            ),
+          });
+        }}
       />
     </Stack>
   );

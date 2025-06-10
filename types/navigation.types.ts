@@ -20,6 +20,13 @@ export interface FilterParams {
 }
 
 /**
+ * Type for filters modal parameters
+ */
+export interface FiltersParams {
+  categoryId: string;
+}
+
+/**
  * Type for article parameters
  */
 export interface ArticleParams {
@@ -33,6 +40,7 @@ export interface ArticleParams {
 export type RouteParams = {
   '/(tabs)/read/article/[id]': ArticleParams;
   '/(tabs)/read/filter': FilterParams;
+  '/(tabs)/read/filter-modal': FiltersParams;
   '/practice/review': ReviewParams;
   '/practice/practice': ListenParams;
   '/': Record<string, never>;

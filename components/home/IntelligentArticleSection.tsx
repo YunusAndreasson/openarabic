@@ -1,11 +1,10 @@
 import type { JSX } from 'react';
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import FeaturedSection from '@/components/home/FeaturedSection';
 import { useIntelligentArticleSelection } from '@/hooks/articles/useIntelligentArticleSelection';
 import { useAuth } from '@/hooks/auth/useAuth';
 import type { Article } from '@/types/articles.types';
-import type { SentenceWord } from '@/types/vocabulary.types';
 
 interface IntelligentArticleSectionProps {
   articlesData: Article[];
@@ -53,46 +52,11 @@ export default function IntelligentArticleSection({
     return intelligentArticle;
   }, [intelligentArticle, refreshKey, articlesData.length]);
 
-  const calculateDueWordsForArticle = useCallback(
-    (article: Article, dueWordRootIds: Set<number>): number => {
-      if (!user?.id || !dueWordRootIds || dueWordRootIds.size === 0) return 0;
-
-      const uniqueDueRootIds = new Set<number>();
-
-      article.article_sentences?.forEach(sentence => {
-        sentence.sentence_words?.forEach((word: SentenceWord) => {
-          if (word.root_id && dueWordRootIds.has(word.root_id)) {
-            uniqueDueRootIds.add(word.root_id);
-          }
-        });
-      });
-
-      return uniqueDueRootIds.size;
-    },
-    [user?.id]
-  );
-
   // Pre-calculate due words count to avoid expensive computation in render
-  const dueWordsCount = useMemo(() => {
-    if (!currentArticle.article || !user?.id || !currentArticle.dueWordRootIds.size) return 0;
-
-    return calculateDueWordsForArticle(currentArticle.article, currentArticle.dueWordRootIds);
-  }, [
-    currentArticle.article?.id,
-    currentArticle.dueWordRootIds,
-    user?.id,
-    calculateDueWordsForArticle,
-  ]);
 
   if (!currentArticle.article) {
     return null;
   }
 
-  return (
-    <FeaturedSection
-      article={currentArticle.article}
-      dueWordCount={dueWordsCount > 0 ? dueWordsCount : undefined}
-      onPress={onArticlePress}
-    />
-  );
+  return <FeaturedSection article={currentArticle.article} onPress={onArticlePress} />;
 }

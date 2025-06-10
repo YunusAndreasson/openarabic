@@ -1,34 +1,22 @@
 import { useQuery } from '@tanstack/react-query';
-import { useGlobalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
 import type { JSX } from 'react';
-import React, { useCallback, useMemo, useEffect, useState } from 'react';
+import React, { useCallback, useMemo, useEffect } from 'react';
 
 import ErrorState from '@/components/ErrorState';
 import FilteredArticleView from '@/components/home/FilteredArticleView';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
+import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
 import { articlesService } from '@/services/articles';
 import type { Article } from '@/types/articles.types';
-import type { SortOption, SortDirection } from '@/types/ui/sorting.types';
-
-export type FilterSortOption = 'title' | 'author';
-
-// Static sort options for filtered articles
-const FILTER_SORT_OPTIONS: SortOption<FilterSortOption>[] = [
-  { key: 'title', label: 'Title' },
-  { key: 'author', label: 'Author' },
-];
 
 export default function FilterScreen(): JSX.Element {
-  const params = useGlobalSearchParams();
+  const params = useLocalSearchParams();
   const type = params.type as string;
   const id = params.id as string;
   const numericId = parseInt(id, 10);
 
   const { prefetchArticle } = useAppPreloader();
-
-  // Sorting state - same defaults as listen screen
-  const [currentSort, setCurrentSort] = useState<FilterSortOption>('title');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // Check if parameters are invalid
   const hasInvalidParams =
@@ -65,28 +53,8 @@ export default function FilterScreen(): JSX.Element {
     refetchOnMount: true,
   });
 
-  // Sort articles based on current sort and direction - same as listen screen
-  const sortedArticles = useMemo(() => {
-    if (!articles.length) return [];
-
-    const sortedList = [...articles];
-
-    if (currentSort === 'title') {
-      sortedList.sort((a, b) => {
-        const result = a.title.localeCompare(b.title);
-        return sortDirection === 'desc' ? -result : result;
-      });
-    } else if (currentSort === 'author') {
-      sortedList.sort((a, b) => {
-        const authorA = a.author?.name || '';
-        const authorB = b.author?.name || '';
-        const result = authorA.localeCompare(authorB);
-        return sortDirection === 'desc' ? -result : result;
-      });
-    }
-
-    return sortedList;
-  }, [articles, currentSort, sortDirection]);
+  // Use the new filtering hook that handles Redux state
+  const filteredAndSortedArticles = useFilteredArticles(articles);
 
   const handleArticlePress = useCallback(
     (article: Article) => {
@@ -97,15 +65,6 @@ export default function FilterScreen(): JSX.Element {
     },
     [prefetchArticle]
   );
-
-  // Handle sorting
-  const handleSortChange = useCallback((sort: string, direction: SortDirection) => {
-    setCurrentSort(sort as FilterSortOption);
-    setSortDirection(direction);
-  }, []);
-
-  // Use constant sort options
-  const sortOptions = FILTER_SORT_OPTIONS;
 
   // Show error for invalid parameters first
   if (hasInvalidParams) {
@@ -132,14 +91,6 @@ export default function FilterScreen(): JSX.Element {
   }
 
   return (
-    <FilteredArticleView
-      articles={sortedArticles}
-      onArticlePress={handleArticlePress}
-      // Pass sorting props to FilteredArticleView
-      sortOptions={sortOptions}
-      currentSort={currentSort}
-      sortDirection={sortDirection}
-      onSortChange={handleSortChange}
-    />
+    <FilteredArticleView articles={filteredAndSortedArticles} onArticlePress={handleArticlePress} />
   );
 }

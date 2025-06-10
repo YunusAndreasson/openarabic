@@ -8,6 +8,8 @@ export { default as BaseCard } from './BaseCard';
 export { default as SectionTitle } from './SectionTitle';
 export { default as EmptyState } from './EmptyState';
 export { default as ErrorState } from './ErrorState';
+export { default as FilterButton } from './FilterButton';
+export { default as FilterModal } from './FilterModal';
 
 export { AuthProvider, ToastProvider, useToast } from './providers';
 export { default as Pill } from './Pill';
