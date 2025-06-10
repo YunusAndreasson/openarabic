@@ -2,7 +2,7 @@
   "expo": {
     "name": "Open Arabic",
     "slug": "open-arabic",
-    "version": "1446.10.71",
+    "version": "1446.10.72",
     "orientation": "portrait",
     "icon": "./assets/images/oaLogo.png",
     "scheme": "open-arabic",
@@ -27,7 +27,7 @@
           "openarabic.backgroundfetch"
         ]
       },
-      "buildNumber": "71"
+      "buildNumber": "72"
     },
     "android": {
       "adaptiveIcon": {
@@ -41,7 +41,7 @@
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE"
       ],
-      "versionCode": 3
+      "versionCode": 4
     },
     "plugins": [
       "expo-router",
