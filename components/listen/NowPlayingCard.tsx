@@ -9,7 +9,6 @@ import Animated, {
   withTiming,
   interpolate,
   Extrapolation,
-  runOnUI,
   cancelAnimation,
 } from 'react-native-reanimated';
 
@@ -21,6 +20,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { Article } from '@/types/articles.types';
 import { withOpacity } from '@/utils/colorUtils';
+import { usePressAnimation } from '@/hooks/animations';
 
 const CARD_HEIGHT = 120;
 const IMAGE_SIZE = 80;
@@ -85,7 +85,11 @@ const NowPlayingCard = ({
   const translateY = useSharedValue(CARD_HEIGHT + 100);
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.95);
-  const buttonScale = useSharedValue(1);
+  const {
+    animatedStyle: buttonAnimatedStyle,
+    handlePressIn: handleStopPressIn,
+    handlePressOut: handleStopPressOut,
+  } = usePressAnimation({ scaleAmount: 0.85 });
 
   // Animate card visibility
   useEffect(() => {
@@ -111,20 +115,10 @@ const NowPlayingCard = ({
     }
   }, [isVisible, article, translateY, opacity, scale]);
 
-  // Optimized button press animation using runOnUI for better performance
+  // Press handler for stop button
   const handleStopPress = useCallback(() => {
-    // Run animation on UI thread for maximum smoothness
-    runOnUI(() => {
-      'worklet';
-      // Immediate visual feedback - scale down and up
-      buttonScale.value = withTiming(0.85, { duration: 100 }, () => {
-        buttonScale.value = withSpring(1, BUTTON_SPRING_CONFIG);
-      });
-    })();
-
-    // Call the actual handler
     onStop?.();
-  }, [onStop, buttonScale]);
+  }, [onStop]);
 
   // Cleanup animations on unmount to prevent memory leaks
   useEffect(() => {
@@ -132,9 +126,8 @@ const NowPlayingCard = ({
       cancelAnimation(translateY);
       cancelAnimation(opacity);
       cancelAnimation(scale);
-      cancelAnimation(buttonScale);
     };
-  }, [translateY, opacity, scale, buttonScale]);
+  }, [translateY, opacity, scale]);
 
   // Optimized animated styles using worklets for better performance
   const cardAnimatedStyle = useAnimatedStyle(() => {
@@ -145,12 +138,6 @@ const NowPlayingCard = ({
     };
   }, []);
 
-  const buttonAnimatedStyle = useAnimatedStyle(() => {
-    'worklet';
-    return {
-      transform: [{ scale: buttonScale.value }],
-    };
-  }, []);
 
   const backgroundImageStyle = useAnimatedStyle(() => {
     'worklet';
@@ -294,6 +281,8 @@ const NowPlayingCard = ({
           <Animated.View style={buttonAnimatedStyle}>
             <TouchableOpacity
               activeOpacity={0.8}
+              onPressIn={handleStopPressIn}
+              onPressOut={handleStopPressOut}
               style={[styles.stopButton, dynamicStyles.stopButton]}
               onPress={handleStopPress}
             >
