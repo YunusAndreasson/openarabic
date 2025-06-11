@@ -57,6 +57,7 @@ export default function ReviewScreen(): JSX.Element {
     maxProgress,
     progressAnimationKey,
     wordFontSize,
+    currentWordKey,
     isVagueMeaning,
     isStruggling,
     handleSwipeLeft,
@@ -84,6 +85,7 @@ export default function ReviewScreen(): JSX.Element {
 
         <View style={baseStyles.wordArea}>
           <ReviewCard
+            key={currentWordKey}
             fontSize={wordFontSize}
             isTransitioning={isTransitioningToCompletion}
             isUpdating={isUpdating}
