@@ -1,6 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { memo, useMemo } from 'react';
-import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { DEFAULT_IMAGES } from '@/constants/images';
@@ -19,17 +18,7 @@ import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';
 import Pill from './Pill';
 import { ThemedText } from './ThemedText';
-
-interface ArticleCardProps {
-  title: string;
-  author: string;
-  imageUrl: string;
-  category: string;
-  categoryForDisplay?: string;
-  summary: string;
-  style?: StyleProp<ViewStyle>;
-  onPress: () => void;
-}
+import type { ArticleCardProps } from '@/types/ui/card.types';
 
 const GOLDEN_RATIO_ADJUSTED = 1.5;
 
