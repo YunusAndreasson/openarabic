@@ -31,11 +31,6 @@ interface PositionTracker {
   lastInsertPosition: number;
 }
 
-interface QueueItem {
-  word: StudyWord;
-  availableAt: number;
-}
-
 // Enhanced state tracking with more fields
 interface EnhancedFSRSStateTracking extends FSRSStateTracking {
   completionTriggered: boolean;
@@ -63,8 +58,8 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
     lastInsertPosition: 0,
   });
 
-  // Priority queue for efficient reordering
-  const queueRef = useRef<PriorityQueue<QueueItem>>(new PriorityQueue<QueueItem>((a, b) => a.availableAt - b.availableAt));
+  // Priority queue for efficient reordering - using proper signature
+  const queueRef = useRef<PriorityQueue<StudyWord>>(new PriorityQueue<StudyWord>());
 
   // Enhanced state tracking
   const stateTrackingRef = useRef<EnhancedFSRSStateTracking>({
@@ -133,16 +128,15 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
         stateTrackingRef.current.completionTriggered = false;
         stateTrackingRef.current.isProcessingUpdate = false;
 
-        const pq = new PriorityQueue<QueueItem>((a, b) => a.availableAt - b.availableAt);
+        queueRef.current = new PriorityQueue<StudyWord>();
         dueWords.forEach((word, index) => {
-          pq.push({ word, availableAt: index });
+          queueRef.current.push(word, index);
         });
-        queueRef.current = pq;
 
-        const ordered = pq.toArray().map(item => item.word);
+        const ordered = queueRef.current.toArray();
         setWordQueue(ordered);
-        const first = pq.pop();
-        setCurrentWord(first ? first.word : null);
+        const first = queueRef.current.pop();
+        setCurrentWord(first || null);
         // Initialize position tracker with new queue
         updatePositionTracker(ordered);
       } else if (!isLoading) {
@@ -201,17 +195,19 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
     });
   }, []);
 
-
   const updateWord = useCallback(
     async (rootId: number, confidence: WordConfidence) => {
-      if (!userId || !currentWord || currentWord.root_id !== rootId) return;
+      if (!userId || !currentWord || currentWord.root_id !== rootId) {
+        return;
+      }
 
       if (
         isComplete ||
         stateTrackingRef.current.completionTriggered ||
         stateTrackingRef.current.isProcessingUpdate
-      )
+      ) {
         return;
+      }
 
       stateTrackingRef.current.isProcessingUpdate = true;
 
@@ -237,11 +233,11 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
           fsrs_difficulty: newCard.difficulty,
           fsrs_elapsed_days: newCard.elapsed_days,
           fsrs_scheduled_days: newCard.scheduled_days,
-          fsrs_learning_steps: newCard.learning_steps,
           fsrs_reps: newCard.reps,
+          fsrs_learning_steps: newCard.learning_steps,
           fsrs_lapses: newCard.lapses,
           fsrs_state: newCard.state,
-          fsrs_last_review: new Date().toISOString(),
+          fsrs_last_review: now.toISOString(),
         };
 
         await studyWordsFSRSService.updateWordAndReview(
@@ -252,11 +248,14 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
           newCard.learning_steps
         );
 
-        // Update the queue based on the user's response using the priority queue
+        // Track session counters
         countersRef.current.processedWords += 1;
+        countersRef.current.uniqueWords.add(rootId);
+
         if (confidence === 'known') {
           countersRef.current.knownWords += 1;
         } else {
+          // For vague/unknown responses, add the word back to the queue with spacing
           const updatedWord: StudyWord = {
             ...currentWord,
             fsrs_due: wordUpdateData.fsrs_due,
@@ -270,24 +269,21 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
             fsrs_state: wordUpdateData.fsrs_state,
             fsrs_last_review: wordUpdateData.fsrs_last_review,
           };
-          queueRef.current.push(updatedWord, countersRef.current.processedWords + MIN_WORD_SPACING);
+          // Add the word back to the queue with spacing priority
+          const futurePriority = countersRef.current.processedWords + MIN_WORD_SPACING;
+          queueRef.current.push(updatedWord, futurePriority);
         }
 
         const nextItem = queueRef.current.pop();
-        const remaining = nextItem
-          ? [nextItem.word, ...queueRef.current.toArray().map(i => i.word)]
-          : [];
+        const remaining = queueRef.current.toArray();
 
         const uniqueWordCount = countersRef.current.uniqueWords.size;
         const newProgress = uniqueWordCount
-          ? Math.min(
-              Math.round((countersRef.current.knownWords / uniqueWordCount) * 100),
-              100
-            )
+          ? Math.min(Math.round((countersRef.current.knownWords / uniqueWordCount) * 100), 100)
           : 100;
         setProgress(newProgress);
 
-        if (remaining.length === 0) {
+        if (!nextItem) {
           if (!stateTrackingRef.current.completionTriggered) {
             stateTrackingRef.current.completionTriggered = true;
             setTimeout(() => {
@@ -299,7 +295,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
           }
         }
 
-        setCurrentWord(nextItem ? nextItem.word : null);
+        setCurrentWord(nextItem || null);
         setWordQueue(remaining);
         updatePositionTracker(remaining);
       } catch (error) {
@@ -308,14 +304,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
         stateTrackingRef.current.isProcessingUpdate = false;
       }
     },
-    [
-      userId,
-      currentWord,
-      isComplete,
-      convertToFSRSCard,
-      fsrsInstance,
-      onComplete,
-    ]
+    [userId, currentWord, isComplete, convertToFSRSCard, fsrsInstance, onComplete]
   );
 
   const resetQueue = useCallback(() => {
@@ -337,7 +326,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
       wordPositions: new Map(),
       lastInsertPosition: 0,
     };
-    queueRef.current = new PriorityQueue<QueueItem>((a, b) => a.availableAt - b.availableAt);
+    queueRef.current = new PriorityQueue<StudyWord>();
   }, []);
 
   // Clean up on unmount
@@ -364,7 +353,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
       wordPositions: new Map(),
       lastInsertPosition: 0,
     };
-    queueRef.current = new PriorityQueue<QueueItem>((a, b) => a.availableAt - b.availableAt);
+    queueRef.current = new PriorityQueue<StudyWord>();
   }, [queryClient, userId]);
 
   return {

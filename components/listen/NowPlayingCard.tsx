@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
 
   stopButton: {
     alignItems: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.BUTTON.HEIGHT.LARGE / 2,
     height: LAYOUT.BUTTON.HEIGHT.LARGE,
     justifyContent: 'center',
     width: LAYOUT.BUTTON.HEIGHT.LARGE,
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
 
   timerButton: {
     alignItems: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderRadius: 18,
     height: 36,
     justifyContent: 'center',
     width: 36,

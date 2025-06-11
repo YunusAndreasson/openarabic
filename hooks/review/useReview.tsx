@@ -10,8 +10,8 @@ import { useOpacityAnimation } from '@/hooks/animations';
 import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useFSRS } from '@/hooks/vocabulary/useFSRS';
-import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import { useWordSizing } from '@/hooks/vocabulary/useWordSizing';
+import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import type { SessionMetrics, WordConfidence } from '@/types/review.types';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
@@ -106,7 +106,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   // UI state
   const [showMeaningOverlay, setShowMeaningOverlay] = useState(false);
   const [currentMeaning, setCurrentMeaning] = useState('');
-  const [currentSentence, setCurrentSentence] = useState({ wordForm: '' });
   const [isTransitioningToCompletion, setIsTransitioningToCompletion] = useState(false);
   const [progressAnimationKey, setProgressAnimationKey] = useState(0);
   const [isVagueMeaning, setIsVagueMeaning] = useState(false);
@@ -173,6 +172,12 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
   const wordFontSize = useWordSizing(currentWord?.root?.letters, fontConfig);
 
+  // Derive currentSentence directly from currentWord to avoid timing issues
+  const currentSentence = useMemo(() => {
+    const wordForm = currentWord?.root?.letters || '';
+    return { wordForm };
+  }, [currentWord]);
+
   // Unique key for the current word to trigger renders even if the text is identical
   const currentWordKey = useMemo(
     () =>
@@ -233,17 +238,16 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
   // Process the word update in FSRS
   const processFeedback = useCallback(
-    async (
-      confidence: WordConfidence,
-      isStruggling: boolean,
-      controller: AbortController
-    ) => {
-      if (!currentWord?.root_id || controller.signal.aborted) return;
+    async (confidence: WordConfidence, isStruggling: boolean, controller: AbortController) => {
+      if (!currentWord?.root_id || controller.signal.aborted) {
+        return;
+      }
 
       try {
         // If struggling, treat it more like 'unknown' than 'vague'
         const effectiveConfidence = isStruggling ? 'unknown' : confidence;
         await updateWord(currentWord.root_id, effectiveConfidence);
+
         if (!stateRefs.current.isUpdatingWord) return;
 
         setTimeout(() => fadeIn(), 150);
@@ -259,7 +263,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         }
       }
     },
-    [currentWord, updateWord, fadeIn]
+    [currentWord?.root_id, updateWord, fadeIn]
   );
 
   // Enhanced audio playback function for single audio files
@@ -314,7 +318,9 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         return;
       }
 
+      // Set updating flag immediately to prevent concurrent processing
       stateRefs.current.isUpdatingWord = true;
+
       const controller = new AbortController();
 
       // Update session metrics
@@ -486,11 +492,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
     if (currentWord?.root) {
       const wordId = String(currentWord.root_id || 'unknown');
-      const wordForm = currentWord.root.letters;
       const audioUrl = currentWord.root.audio_url;
-
-      // Always update the current sentence
-      setCurrentSentence({ wordForm });
 
       // ALWAYS play audio for Arabic words
       if (audioUrl) {

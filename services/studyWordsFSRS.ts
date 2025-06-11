@@ -147,7 +147,7 @@ export const studyWordsFSRSService = {
     // First verify the root entry exists and belongs to the user
     const { data: existingWord, error: checkError } = await supabase
       .from('study_words')
-      .select('id')
+      .select('root_id')
       .eq('root_id', rootId)
       .eq('user_id', userId)
       .single();
@@ -221,28 +221,20 @@ export const studyWordsFSRSService = {
   ): Promise<boolean> {
     await checkAuthentication(userId);
 
-    const { error } = await supabase.rpc('update_fsrs_word_and_review', {
-      user_id_input: userId,
-      root_id_input: rootId,
-      fsrs_due_input: update.fsrs_due,
-      fsrs_stability_input: update.fsrs_stability,
-      fsrs_difficulty_input: update.fsrs_difficulty,
-      fsrs_elapsed_days_input: update.fsrs_elapsed_days,
-      fsrs_scheduled_days_input: update.fsrs_scheduled_days,
-      fsrs_reps_input: update.fsrs_reps,
-      fsrs_learning_steps_input: update.fsrs_learning_steps,
-      fsrs_lapses_input: update.fsrs_lapses,
-      fsrs_state_input: update.fsrs_state,
-      fsrs_last_review_input: update.fsrs_last_review,
-      rating_input: rating,
-      learning_steps_input: learningSteps,
-    });
+    // Since the RPC function doesn't exist, use individual operations
+    // This is less efficient but will work
+    try {
+      // First update the word
+      await this.updateFSRSWord(userId, rootId, update);
 
-    if (error) {
+      // Then record the review
+      await this.recordFSRSReview(userId, rootId, rating, learningSteps);
+
+      return true;
+    } catch (error) {
+      console.log('Error in updateWordAndReview fallback:', error);
       throw error;
     }
-
-    return true;
   },
 
   // Toggle FSRS study for roots
@@ -252,7 +244,7 @@ export const studyWordsFSRSService = {
     // Check if a study entry already exists for this root
     const { data: existing, error: checkError } = await supabase
       .from('study_words')
-      .select('id')
+      .select('root_id')
       .eq('user_id', userId)
       .eq('root_id', rootId)
       .single();
