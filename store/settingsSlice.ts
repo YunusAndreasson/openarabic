@@ -1,11 +1,7 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
+import type { ReminderTime } from '@/types/notifications.types';
 
-export interface ReminderTime {
-  hour: number;
-  minute: number;
-  enabled: boolean;
-}
 
 export interface SettingsState {
   fontScale: number;

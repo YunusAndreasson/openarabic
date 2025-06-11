@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 
 import { Colors } from '@/constants/Colors';
 import { handleError } from '@/utils/errorHandling';
+import type { ReminderTime } from '@/types/notifications.types';
 
 // Configure notification behavior
 Notifications.setNotificationHandler({
@@ -15,11 +16,6 @@ Notifications.setNotificationHandler({
   }),
 });
 
-export interface ReminderTime {
-  hour: number;
-  minute: number;
-  enabled: boolean;
-}
 
 let isInitialized = false;
 
