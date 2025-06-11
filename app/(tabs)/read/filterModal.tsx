@@ -1,40 +1,29 @@
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import ErrorState from '@/components/ErrorState';
 import FilterModal from '@/components/FilterModal';
-import { articlesService } from '@/services/articles';
-import type { Author } from '@/types/articles.types';
+import { authorsService } from '@/services/authors';
+import type { Tables } from '@/types/database.types';
 
 export default function FilterModalScreen(): JSX.Element {
   const { categoryId } = useLocalSearchParams<{ categoryId: string }>();
   const numericCategoryId = parseInt(categoryId, 10);
 
-  // Get articles for this category to extract available authors
+  // Get authors for this category directly
   const {
-    data: articles = [],
+    data: availableAuthors = [],
     error,
     refetch,
   } = useQuery({
-    queryKey: ['filtered-articles', 'category', numericCategoryId],
-    queryFn: () => articlesService.getArticles({ categoryId: numericCategoryId }),
+    queryKey: ['category-authors', numericCategoryId],
+    queryFn: () => authorsService.getAuthorsByCategory(numericCategoryId),
     enabled: numericCategoryId > 0,
+    staleTime: 86400000,
+    gcTime: 172800000,
   });
-
-  // Extract unique authors from articles
-  const availableAuthors = useMemo(() => {
-    const authorsMap = new Map<number, Author>();
-
-    articles.forEach(article => {
-      if (article.author?.id && article.author.name) {
-        authorsMap.set(article.author.id, article.author);
-      }
-    });
-
-    return Array.from(authorsMap.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [articles]);
 
   // Only show error if there's a real query error
   if (error) {

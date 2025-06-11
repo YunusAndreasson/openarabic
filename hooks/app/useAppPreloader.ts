@@ -5,6 +5,7 @@ import { useState, useCallback, useRef, useMemo } from 'react';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
+import { authorsService } from '@/services/authors';
 import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import { handleError } from '@/utils/errorHandling';
@@ -92,10 +93,10 @@ export const useAppPreloader = (): AppPreloaderResult => {
       const [categories] = await Promise.all(criticalPromises);
       setPreloadProgress(30);
 
-      // Preload 15 articles per category for instant category modal loading
+      // Preload articles and authors per category for instant modal loading
       if (categories && Array.isArray(categories) && categories.length > 0) {
-        const categoryPreloadPromises = categories.map(category =>
-          queryClient
+        const categoryPreloadPromises = categories.map(category => {
+          const articlesPromise = queryClient
             .prefetchQuery({
               queryKey: ['filtered-articles', 'category', category.id],
               queryFn: () =>
@@ -108,13 +109,20 @@ export const useAppPreloader = (): AppPreloaderResult => {
               ...CACHE_TIMES.ARTICLES,
               retry: 2,
             })
-            .catch(() => {
-              // Silently handle individual category preload failures
-              // This ensures one category failure doesn't block others
-            })
-        );
+            .catch(() => {});
 
-        // Wait for category preloading with a reasonable timeout
+          const authorsPromise = queryClient
+            .prefetchQuery({
+              queryKey: ['category-authors', category.id],
+              queryFn: () => authorsService.getAuthorsByCategory(category.id),
+              ...CACHE_TIMES.STATIC,
+              retry: 2,
+            })
+            .catch(() => {});
+
+          return Promise.allSettled([articlesPromise, authorsPromise]);
+        });
+
         await Promise.allSettled(categoryPreloadPromises);
         setPreloadProgress(50);
 
