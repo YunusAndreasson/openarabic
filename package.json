@@ -1,7 +1,7 @@
 {
   "name": "OpenArabic",
   "main": "expo-router/entry",
-  "version": "1446.12.16",
+  "version": "1446.12.17",
   "scripts": {
     "postinstall": "patch-package",
     "doctor": "npx expo-doctor",
