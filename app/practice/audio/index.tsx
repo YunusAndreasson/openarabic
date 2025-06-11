@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, router } from 'expo-router';
 import type { JSX } from 'react';
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -80,6 +80,16 @@ export default function ListenScreen(): JSX.Element {
     userId: user?.id,
   });
 
+  const wordMap = useMemo(() => {
+    const map = new Map<number, StudyWord>();
+    allWords?.forEach(word => {
+      if (word.root?.id) {
+        map.set(word.root.id, word);
+      }
+    });
+    return map;
+  }, [allWords]);
+
   // Handle repeat toggle
   const handleRepeatToggle = useCallback(() => {
     const newValue = !repeatEnabled;
@@ -147,27 +157,17 @@ export default function ListenScreen(): JSX.Element {
         const selectedTracks = await listenAudioService.getRandomVocabularyTracks(allWords, 20);
         selectedTracksRef.current = selectedTracks;
 
-        // Keep the original study words for reference
-        const wordMap = new Map<number, StudyWord>();
-        allWords.forEach(word => {
-          if (word.root?.id) {
-            wordMap.set(word.root.id, word);
-          }
-        });
-
         // Initialize word list state
         if (selectedTracks.length > 0) {
-          // Get unique words (not tracks)
-          const uniqueWordIds = new Set<number>();
+          const seenIds = new Set<number>();
           const uniqueWords: StudyWord[] = [];
 
-          // Extract wordIds from tracks
           selectedTracks.forEach(track => {
             const wordId = track.rootId ?? 0;
-            if (!uniqueWordIds.has(wordId)) {
+            if (!seenIds.has(wordId)) {
               const word = wordMap.get(wordId);
               if (word) {
-                uniqueWordIds.add(wordId);
+                seenIds.add(wordId);
                 uniqueWords.push(word);
               }
             }
