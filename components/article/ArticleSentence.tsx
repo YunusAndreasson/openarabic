@@ -3,12 +3,8 @@ import type { ComponentRef } from 'react';
 import React, { createRef, useEffect, useRef, useMemo } from 'react';
 import type { ViewStyle, StyleProp, TouchableOpacity } from 'react-native';
 import { StyleSheet, View } from 'react-native';
-import Animated, {
-  useSharedValue,
-  withSequence,
-  withTiming,
-  useAnimatedStyle,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
+import { useOpacityAnimation } from '@/hooks/animations';
 
 import { LAYOUT, FONTS } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -66,8 +62,11 @@ function ArticleSentenceComponent({
   const previousWordIdRef = useRef<number | null>(null);
 
   const wordRefs = useRef<React.RefObject<any>[]>([]);
-
-  const highlightOpacity = useSharedValue(0);
+  const {
+    animatedStyle: animatedHighlightStyle,
+    startAnimation,
+    reverseAnimation,
+  } = useOpacityAnimation({ initialOpacity: 0 });
 
   useEffect(() => {
     wordRefs.current = words.map(() => createRef<any>());
@@ -75,16 +74,9 @@ function ArticleSentenceComponent({
 
   useEffect(() => {
     if (isHighlighted) {
-      highlightOpacity.value = withSequence(
-        withTiming(1, { duration: 300 }),
-        withTiming(0, { duration: 1000 })
-      );
+      startAnimation(() => reverseAnimation());
     }
-  }, [isHighlighted, highlightOpacity]);
-
-  const animatedHighlightStyle = useAnimatedStyle(() => ({
-    opacity: highlightOpacity.value,
-  }));
+  }, [isHighlighted, startAnimation, reverseAnimation]);
 
   previousWordIdRef.current = currentPlayingWordId;
 
