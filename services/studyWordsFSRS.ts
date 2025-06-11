@@ -73,12 +73,25 @@ export const studyWordsFSRSService = {
       );
     } else {
       // Get full data with relationships - root is the only relation we need
-      selectQuery = query.select(
-        `
-        *,
-        root:roots (*)
-      `
-      );
+      const columns = `
+        root_id,
+        user_id,
+        difficulty,
+        success_streak,
+        fsrs_due,
+        fsrs_stability,
+        fsrs_difficulty,
+        fsrs_elapsed_days,
+        fsrs_scheduled_days,
+        fsrs_reps,
+        fsrs_learning_steps,
+        fsrs_lapses,
+        fsrs_state,
+        fsrs_last_review,
+        created_at,
+        root:roots (id, letters, meaning, audio_url, audio_url_en)
+      `;
+      selectQuery = query.select(columns);
     }
 
     // Add filters after the select
@@ -143,7 +156,7 @@ export const studyWordsFSRSService = {
     // First verify the root entry exists and belongs to the user
     const { data: existingWord, error: checkError } = await supabase
       .from('study_words')
-      .select('*')
+      .select('id')
       .eq('root_id', rootId)
       .eq('user_id', userId)
       .single();
@@ -238,7 +251,7 @@ export const studyWordsFSRSService = {
     // Check if a study entry already exists for this root
     const { data: existing, error: checkError } = await supabase
       .from('study_words')
-      .select('*')
+      .select('id')
       .eq('user_id', userId)
       .eq('root_id', rootId)
       .single();
