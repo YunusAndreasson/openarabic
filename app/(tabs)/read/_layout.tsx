@@ -36,7 +36,7 @@ export default function ReadLayout() {
         }}
       />
       <Stack.Screen
-        name="filter-modal"
+        name="filterModal"
         options={createNavigationOptions(colors, {
           title: 'Filters',
         })}
@@ -67,7 +67,9 @@ export default function ReadLayout() {
             title: getFilterTitle(params),
             headerRight: () => (
               <FilterButton
-                onPress={() => router.push(`/(tabs)/read/filter-modal?categoryId=${categoryId}`)}
+                onPress={() =>
+                  router.push(`/(tabs)/read/filterModal?categoryId=${categoryId}`)
+                }
               />
             ),
           });
