@@ -1,5 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState, useEffect, forwardRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  forwardRef,
+  useMemo,
+  useCallback,
+} from 'react';
 import type { ComponentProps } from 'react';
 import type {
   TextInputProps,
@@ -84,24 +90,44 @@ export const ThemedInput = forwardRef<TextInput, ThemedInputProps>(
       setPrevError(error);
     }, [error, prevError]);
 
-    const containerStyles = [
-      styles.container,
-      {
-        backgroundColor: colors.background,
-        borderColor: error ? colors.tabIconSelected : isFocused ? colors.tint : colors.icon,
+    const containerStyles = useMemo(
+      () => [
+        styles.container,
+        {
+          backgroundColor: colors.background,
+          borderColor: error
+            ? colors.tabIconSelected
+            : isFocused
+            ? colors.tint
+            : colors.icon,
+        },
+        isFocused && styles.containerFocused,
+      ],
+      [
+        colors.background,
+        colors.icon,
+        colors.tabIconSelected,
+        colors.tint,
+        error,
+        isFocused,
+      ]
+    );
+
+    const handleFocus = useCallback(
+      (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+        setIsFocused(true);
+        onFocus?.(e);
       },
-      isFocused && styles.containerFocused,
-    ];
+      [onFocus]
+    );
 
-    const handleFocus = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
-      setIsFocused(true);
-      onFocus?.(e);
-    };
-
-    const handleBlur = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
-      setIsFocused(false);
-      onBlur?.(e);
-    };
+    const handleBlur = useCallback(
+      (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+        setIsFocused(false);
+        onBlur?.(e);
+      },
+      [onBlur]
+    );
 
     return (
       <View style={styles.wrapper}>
