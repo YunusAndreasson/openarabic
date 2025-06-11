@@ -1,15 +1,13 @@
 import React, { useEffect, useMemo, memo } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
-import Animated, {
-  useSharedValue,
-  withSpring,
-  withTiming,
-  withSequence,
-  useAnimatedStyle,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LAYOUT } from '@/constants/layout';
+import {
+  useOpacityAnimation,
+  useTransformAnimation,
+} from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
@@ -75,61 +73,90 @@ export const Toast = memo(
       [type]
     );
 
-    // Enhanced animations using Reanimated 3
-    const opacity = useSharedValue(0);
-    const scale = useSharedValue(animationConfig.initialScale);
-    const translateY = useSharedValue(50); // Start from below
+    // Reusable animation hooks
+    const {
+      animatedStyle: opacityStyle,
+      startAnimation: fadeIn,
+      reverseAnimation: fadeOut,
+      reset: resetOpacity,
+    } = useOpacityAnimation({
+      initialOpacity: 0,
+      duration: 200,
+    });
 
-    const animatedStyle = useAnimatedStyle(() => {
-      return {
-        opacity: opacity.value,
-        transform: [{ scale: scale.value }, { translateY: translateY.value }],
-      };
-    }, []);
+    const {
+      animatedStyle: scaleStyle,
+      startAnimation: startScale,
+      reverseAnimation: reverseScale,
+      reset: resetScale,
+    } = useTransformAnimation({
+      type: 'scale',
+      initialValue: animationConfig.initialScale,
+      targetValue: 1,
+      useSpring: true,
+      damping: animationConfig.springConfig.damping,
+      stiffness: animationConfig.springConfig.stiffness,
+    });
+
+    const {
+      animatedStyle: translateYStyle,
+      startAnimation: startTranslate,
+      reverseAnimation: reverseTranslate,
+      reset: resetTranslate,
+    } = useTransformAnimation({
+      type: 'translateY',
+      initialValue: 50,
+      targetValue: 0,
+      useSpring: true,
+      damping: 15,
+      stiffness: 200,
+    });
+
+    const animatedStyle = [opacityStyle, scaleStyle, translateYStyle];
 
     useEffect(() => {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+
       if (visible) {
-        // Dramatic entrance with staggered animations
-        opacity.value = withTiming(1, { duration: 200 });
+        fadeIn();
+        startScale();
+        startTranslate();
 
-        // Bouncy scale animation - starts small, overshoots, then settles
-        scale.value = withSequence(
-          withSpring(animationConfig.targetOvershoot, animationConfig.springConfig),
-          withSpring(1, {
-            damping: 12,
-            stiffness: 180,
-            mass: 0.8,
-          })
-        );
-
-        // Slide up animation
-        translateY.value = withSpring(0, {
-          damping: 15,
-          stiffness: 200,
-          mass: 0.8,
-        });
-
-        const timer = setTimeout(() => {
-          // Gentle exit animation
-          opacity.value = withTiming(0, { duration: 300 });
-          scale.value = withTiming(0.95, { duration: 300 });
-          translateY.value = withTiming(-20, { duration: 300 });
+        timer = setTimeout(() => {
+          fadeOut();
+          reverseScale();
+          reverseTranslate();
 
           setTimeout(() => {
             onClose();
+            resetOpacity();
+            resetScale();
+            resetTranslate();
           }, 300);
         }, duration);
-
-        return () => clearTimeout(timer);
       } else {
-        // Reset values for next show
-        opacity.value = 0;
-        scale.value = animationConfig.initialScale;
-        translateY.value = 50;
+        resetOpacity();
+        resetScale();
+        resetTranslate();
       }
 
-      return undefined;
-    }, [visible, duration, onClose, opacity, scale, translateY, animationConfig]);
+      return () => {
+        if (timer) clearTimeout(timer);
+      };
+    }, [
+      visible,
+      duration,
+      onClose,
+      fadeIn,
+      fadeOut,
+      startScale,
+      reverseScale,
+      startTranslate,
+      reverseTranslate,
+      resetOpacity,
+      resetScale,
+      resetTranslate,
+    ]);
 
     // Enhanced color scheme based on toast type
     const backgroundColor = useMemo(() => {
