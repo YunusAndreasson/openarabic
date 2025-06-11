@@ -31,7 +31,7 @@ export function filterArticles(
 export function getBeginnerArticles(articles: Article[], limit = 20): Article[] {
   if (!articles.length) return [];
 
-  return [...articles]
+  return articles
     .filter(article => article.difficulty_level >= 1 && article.difficulty_level <= 3)
     .sort((a, b) => a.difficulty_level - b.difficulty_level)
     .slice(0, limit);
