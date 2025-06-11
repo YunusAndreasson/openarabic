@@ -494,7 +494,11 @@ export default function ListenScreen(): JSX.Element {
 
   // Since data is preloaded, only show empty state when we definitively have no articles
   // and we've waited long enough to prevent flashing
-  const shouldShowEmpty = !hasArticles && canShowEmpty;
+  const shouldShowEmpty =
+    !hasArticles &&
+    canShowEmpty &&
+    !isReadingListLoading &&
+    !isReadingListFetching;
 
   // Render item for both FlashList and DraggableFlatList
   const renderItem = useCallback(
