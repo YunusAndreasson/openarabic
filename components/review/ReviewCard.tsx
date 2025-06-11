@@ -1,4 +1,4 @@
-import React, { useCallback, memo, useEffect, useRef } from 'react';
+import React, { useCallback, memo, useEffect, useRef, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 import type { ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -96,7 +96,7 @@ const ReviewCard = memo(function ReviewCard({
   );
 
   // Create pan gesture - memoized
-  const panGesture = useCallback(
+  const panGesture = useMemo(
     () =>
       Gesture.Pan()
         .enabled(!isUpdating && !isTransitioning && !isAnimatingRef.value)
@@ -127,7 +127,7 @@ const ReviewCard = memo(function ReviewCard({
   );
 
   // Create tap gesture - memoized
-  const tapGesture = useCallback(
+  const tapGesture = useMemo(
     () =>
       Gesture.Tap()
         .enabled(!isUpdating && !isTransitioning && !isAnimatingRef.value)
@@ -140,8 +140,8 @@ const ReviewCard = memo(function ReviewCard({
   );
 
   // Combine gestures - memoized
-  const combinedGestures = useCallback(
-    () => Gesture.Exclusive(panGesture(), tapGesture()),
+  const combinedGestures = useMemo(
+    () => Gesture.Exclusive(panGesture, tapGesture),
     [panGesture, tapGesture]
   );
 
@@ -160,7 +160,7 @@ const ReviewCard = memo(function ReviewCard({
   }));
 
   return (
-    <GestureDetector gesture={combinedGestures()}>
+    <GestureDetector gesture={combinedGestures}>
       <Animated.View style={[styles.swipeContainer, swipeContainerStyle]}>
         <Animated.View style={[styles.wordContainer, opacityStyle]}>
           <WordDisplay fontSize={fontSize} word={word} />
