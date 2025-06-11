@@ -40,7 +40,7 @@ export interface ArticleParams {
 export type RouteParams = {
   '/(tabs)/read/article/[id]': ArticleParams;
   '/(tabs)/read/filter': FilterParams;
-  '/(tabs)/read/filter-modal': FiltersParams;
+  '/(tabs)/read/filterModal': FiltersParams;
   '/practice/review': ReviewParams;
   '/practice/practice': ListenParams;
   '/': Record<string, never>;
