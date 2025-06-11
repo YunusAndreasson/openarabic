@@ -2,8 +2,8 @@ name: Expo EAS Build and Update
 
 on:
   push:
-    branches:
-      - root
+    tags:
+      - 'v*'
 
 jobs:
   build:
