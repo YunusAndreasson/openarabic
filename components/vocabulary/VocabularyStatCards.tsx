@@ -152,7 +152,7 @@ export const VocabularyStatCards = memo(
           >
             {/* Number Badge */}
             <View style={[styles.numberBadge, { backgroundColor: config.iconColor }]}>
-              <ThemedText style={styles.numberText}>{config.value}</ThemedText>
+              <ThemedText style={[styles.numberText, { color: colors.white }]}>{config.value}</ThemedText>
             </View>
 
             {/* Content */}
@@ -194,7 +194,6 @@ const styles = StyleSheet.create({
   numberText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '700',
-    color: '#FFFFFF',
   },
   categoryContent: {
     flex: 1,
