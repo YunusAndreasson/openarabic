@@ -74,6 +74,7 @@ function getCurrentHijriDate() {
 function calculateUpcomingEvents(): EventWithDate[] {
   const events: EventWithDate[] = [];
   const currentHijriYear = moment().iYear();
+  const now = Date.now();
 
   for (let yearOffset = 0; yearOffset <= 1; yearOffset++) {
     const targetYear = currentHijriYear + yearOffset;
@@ -84,7 +85,7 @@ function calculateUpcomingEvents(): EventWithDate[] {
         .iMonth(event.month - 1)
         .iDate(event.day);
       const gregorianDate = hijriMoment.toDate();
-      const daysFromNow = Math.ceil((gregorianDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      const daysFromNow = Math.ceil((gregorianDate.getTime() - now) / (1000 * 60 * 60 * 24));
 
       if (daysFromNow >= -30) {
         // Show events from 30 days ago to future
