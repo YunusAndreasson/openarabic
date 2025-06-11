@@ -65,4 +65,4 @@ const styles = StyleSheet.create({
 
 FeaturedSection.displayName = 'FeaturedSection';
 
-export default FeaturedSection;
+export default React.memo(FeaturedSection);
