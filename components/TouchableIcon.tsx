@@ -2,9 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { memo } from 'react';
 import type { ViewStyle } from 'react-native';
 import { TouchableOpacity, StyleSheet } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { usePressAnimation } from '@/hooks/animations';
 import { lightFeedback } from '@/utils/haptics';
 
 interface TouchableIconProps {
@@ -28,6 +30,8 @@ interface TouchableIconProps {
   hitSlop?: { top: number; right: number; bottom: number; left: number };
 }
 
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+
 const TouchableIcon: React.FC<TouchableIconProps> = memo(
   ({
     name,
@@ -41,6 +45,7 @@ const TouchableIcon: React.FC<TouchableIconProps> = memo(
     hitSlop,
   }) => {
     const colors = useColors();
+    const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation();
 
     const handlePress = React.useCallback(() => {
       if (hapticFeedback) {
@@ -71,7 +76,7 @@ const TouchableIcon: React.FC<TouchableIconProps> = memo(
     })();
 
     return (
-      <TouchableOpacity
+      <AnimatedTouchable
         activeOpacity={LAYOUT.OPACITY.PRESSED}
         disabled={disabled}
         hitSlop={hitSlop || defaultHitSlop}
@@ -83,11 +88,14 @@ const TouchableIcon: React.FC<TouchableIconProps> = memo(
             opacity: disabled ? LAYOUT.OPACITY.MEDIUM : 1,
           },
           style,
+          animatedStyle,
         ]}
         onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
       >
         <Ionicons color={color || colors.secondaryText} name={name} size={size} />
-      </TouchableOpacity>
+      </AnimatedTouchable>
     );
   }
 );
