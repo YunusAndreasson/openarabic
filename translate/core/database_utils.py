@@ -158,7 +158,7 @@ def get_or_create_root(
 
 
 def insert_sentence_words(
-    sentence_id: int, translation: Dict, word_timings: List[Dict] = None
+    sentence_id: int, translation: Dict, word_timings: List[Dict] | None = None
 ) -> Dict:
     """
     Insert words from a sentence with their roots and relationships.
@@ -171,23 +171,78 @@ def insert_sentence_words(
     total_words = len(word_by_word)
     words_with_timing = 0
 
+    words_data: List[Dict] = []
+
     # Check if we have word timings and output a clear warning if we have fewer timings than words
     if word_timings:
         if len(word_timings) < len(word_by_word):
             print(
                 f"Warning: Fewer word timings ({len(word_timings)}) than words in sentence ({len(word_by_word)})"
             )
-    else:
-        # Early return with empty stats if no timings
+        # Sort word timings by start time to ensure proper sequencing
+        sorted_timings = sorted(word_timings, key=lambda x: float(x["start_time"]))
+
+        # Use a simpler, more direct matching approach
+        timing_position = 0
+        last_end_time = 0.0
+
         for position, word in enumerate(word_by_word):
-            # Process words without timing info
             root_letters, root_meaning, english_translation = extract_root_info(word)
-            root_id = get_or_create_root(
-                root_letters, root_meaning, english_translation
-            )
+            root_id = get_or_create_root(root_letters, root_meaning, english_translation)
             word_type_id = get_word_type_id(word.get("pos", "noun"))
 
-            # Store the cleaned word form
+            original_word = clean_arabic_text(word["arabic"])
+
+            timing_info: Dict[str, str] = {}
+            match_method = "none"
+
+            if timing_position < len(sorted_timings):
+                timing_data = sorted_timings[timing_position]
+                timing_info = {
+                    "start_time": timing_data["start_time"],
+                    "end_time": timing_data["end_time"],
+                }
+                match_method = "position"
+                timing_position += 1
+
+                start_time = float(timing_info.get("start_time", 0))
+                end_time = float(timing_info.get("end_time", 0))
+
+                if start_time < last_end_time:
+                    start_time = last_end_time
+                    timing_info["start_time"] = str(start_time)
+
+                    if end_time <= start_time:
+                        end_time = start_time + 0.3
+                        timing_info["end_time"] = str(end_time)
+
+                last_end_time = end_time
+
+            match_stats[match_method] += 1
+            if match_method != "none":
+                words_with_timing += 1
+
+            word_data = {
+                "sentence_id": sentence_id,
+                "position": position,
+                "word_form": original_word,
+                "english": word["english"],
+                "word_type_id": word_type_id,
+                "root_id": root_id,
+                "difficulty_level": 1,
+                "grammar_note": word.get("notes"),
+                "audio_start": timing_info.get("start_time"),
+                "audio_end": timing_info.get("end_time"),
+            }
+
+            words_data.append(word_data)
+    else:
+        # No timings provided
+        for position, word in enumerate(word_by_word):
+            root_letters, root_meaning, english_translation = extract_root_info(word)
+            root_id = get_or_create_root(root_letters, root_meaning, english_translation)
+            word_type_id = get_word_type_id(word.get("pos", "noun"))
+
             original_word = clean_arabic_text(word["arabic"])
 
             word_data = {
@@ -201,98 +256,13 @@ def insert_sentence_words(
                 "grammar_note": word.get("notes"),
             }
 
-            supabase.table("sentence_words").insert(word_data).execute()
+            words_data.append(word_data)
             match_stats["none"] += 1
 
-        return {
-            "total_words": total_words,
-            "words_with_timing": 0,
-            "match_stats": match_stats,
-        }
+    # Bulk insert all collected word data
+    if words_data:
+        supabase.table("sentence_words").insert(words_data).execute()
 
-    # If we have word timings, prepare for matching
-
-    # Sort word timings by start time to ensure proper sequencing
-    sorted_timings = sorted(word_timings, key=lambda x: float(x["start_time"]))
-
-    # Store the word data before inserting to validate timestamps
-    words_data = []
-
-    # Use a simpler, more direct matching approach
-    # In the vast majority of cases, the order of words should match
-    # We'll use position-based matching by default, but check for exact matches
-    timing_position = 0
-    last_end_time = 0.0
-
-    for position, word in enumerate(word_by_word):
-        # Extract metadata
-        root_letters, root_meaning, english_translation = extract_root_info(word)
-        root_id = get_or_create_root(root_letters, root_meaning, english_translation)
-        word_type_id = get_word_type_id(word.get("pos", "noun"))
-
-        # Store the cleaned word form
-        original_word = clean_arabic_text(word["arabic"])
-
-        # Initialize with no timing info
-        timing_info = {}
-        match_method = "none"
-
-        # If we have a timing position available
-        if timing_position < len(sorted_timings):
-            # Use position-based matching - simplest and most reliable approach
-            timing_data = sorted_timings[timing_position]
-            timing_info = {
-                "start_time": timing_data["start_time"],
-                "end_time": timing_data["end_time"],
-            }
-            match_method = "position"
-            timing_position += 1  # Move to next position
-
-            # Ensure timestamps are monotonically increasing
-            start_time = float(timing_info.get("start_time", 0))
-            end_time = float(timing_info.get("end_time", 0))
-
-            if start_time < last_end_time:
-                start_time = last_end_time
-                timing_info["start_time"] = str(start_time)
-
-                # Ensure end time is after start time
-                if end_time <= start_time:
-                    end_time = start_time + 0.3  # Add minimum duration
-                    timing_info["end_time"] = str(end_time)
-
-            last_end_time = end_time
-
-        # Update match statistics
-        match_stats[match_method] += 1
-        if match_method != "none":
-            words_with_timing += 1
-
-        # Create the word data
-        word_data = {
-            "sentence_id": sentence_id,
-            "position": position,
-            "word_form": original_word,
-            "english": word["english"],
-            "word_type_id": word_type_id,
-            "root_id": root_id,
-            "difficulty_level": 1,
-            "grammar_note": word.get("notes"),
-            "audio_start": timing_info.get("start_time"),
-            "audio_end": timing_info.get("end_time"),
-        }
-
-        words_data.append(word_data)
-
-    # Now insert all words with validated timestamps
-    for idx, word_data in enumerate(words_data):
-        try:
-            supabase.table("sentence_words").insert(word_data).execute()
-        except Exception as e:
-            print(f"Error inserting word {idx} into database: {str(e)}")
-            raise
-
-    # Return statistics for reporting
     return {
         "total_words": total_words,
         "words_with_timing": words_with_timing,

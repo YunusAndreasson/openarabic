@@ -24,7 +24,7 @@ from translate.core.utils import load_api_keys
 load_api_keys()
 
 
-def process_json_file(file_path: str) -> None:
+def process_json_file(file_path: str, category_id: int, author_id: int) -> None:
     """Process the JSON file and insert data into Supabase."""
     with open(file_path, "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -42,10 +42,6 @@ def process_json_file(file_path: str) -> None:
         # Move files to archive even for existing articles
         archive_files(file_path, existing_article_id)
         return existing_article_id
-
-    # Get category and author IDs
-    category_id = get_category_id("aqeedah")  # Using aqeedah as default category
-    author_id = get_author_id("Ibn Kathir")  # Using Ibn Kathir as default author
 
     # Prepare article data
     article_data = {
@@ -117,9 +113,13 @@ def main():
     success_count = 0
     error_count = 0
 
+    # Fetch category and author IDs once to avoid redundant lookups
+    category_id = get_category_id("aqeedah")
+    author_id = get_author_id("Ibn Kathir")
+
     for json_path in json_files:
         try:
-            process_json_file(json_path)
+            process_json_file(json_path, category_id, author_id)
             success_count += 1
         except Exception as e:
             error_count += 1
