@@ -211,6 +211,40 @@ export const studyWordsFSRSService = {
     return true;
   },
 
+  // Batch update FSRS parameters and record a review in a single request
+  async updateWordAndReview(
+    userId: string,
+    rootId: number,
+    update: FSRSWordUpdate,
+    rating: Rating,
+    learningSteps: number
+  ): Promise<boolean> {
+    await checkAuthentication(userId);
+
+    const { error } = await supabase.rpc('update_fsrs_word_and_review', {
+      user_id_input: userId,
+      root_id_input: rootId,
+      fsrs_due_input: update.fsrs_due,
+      fsrs_stability_input: update.fsrs_stability,
+      fsrs_difficulty_input: update.fsrs_difficulty,
+      fsrs_elapsed_days_input: update.fsrs_elapsed_days,
+      fsrs_scheduled_days_input: update.fsrs_scheduled_days,
+      fsrs_reps_input: update.fsrs_reps,
+      fsrs_learning_steps_input: update.fsrs_learning_steps,
+      fsrs_lapses_input: update.fsrs_lapses,
+      fsrs_state_input: update.fsrs_state,
+      fsrs_last_review_input: update.fsrs_last_review,
+      rating_input: rating,
+      learning_steps_input: learningSteps,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return true;
+  },
+
   // Toggle FSRS study for roots
   async toggleFSRSStudyRoot(userId: string, rootId: number): Promise<boolean> {
     await checkAuthentication(userId);
