@@ -120,6 +120,11 @@ interface TransformAnimationResult {
   reverseAnimation: (onComplete?: () => void) => void;
 
   /**
+   * Function to set the shared value directly with animation
+   */
+  setValue: (newValue: number, onComplete?: () => void) => void;
+
+  /**
    * Function to reset to initial value
    */
   reset: () => void;
@@ -288,6 +293,31 @@ export const useTransformAnimation = (
     ]
   );
 
+  // Directly set the value with animation
+  const setValue = useCallback(
+    (newValue: number, onComplete?: () => void) => {
+      'worklet';
+      try {
+        cancelAnimation(value);
+        if (useSpring) {
+          value.value = withSpring(newValue, springConfig, finished =>
+            handleAnimationComplete(finished, onComplete)
+          );
+        } else {
+          value.value = withTiming(newValue, timingConfig, finished =>
+            handleAnimationComplete(finished, onComplete)
+          );
+        }
+      } catch (error) {
+        handleError(error instanceof Error ? error : String(error));
+        if (onComplete) {
+          runOnJS(onComplete)();
+        }
+      }
+    },
+    [value, useSpring, springConfig, timingConfig, handleAnimationComplete]
+  );
+
   // Reset function
   const reset = useCallback(() => {
     'worklet';
@@ -326,11 +356,12 @@ export const useTransformAnimation = (
       animatedStyle,
       startAnimation,
       reverseAnimation,
+      setValue,
       reset,
       entering,
       exiting,
       transformType: type,
     }),
-    [value, animatedStyle, startAnimation, reverseAnimation, reset, entering, exiting, type]
+    [value, animatedStyle, startAnimation, reverseAnimation, setValue, reset, entering, exiting, type]
   );
 };

@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
@@ -14,6 +14,7 @@ import {
   MIN_TOUCH_TARGET,
 } from '@/constants/layout';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import { useTransformAnimation } from '@/hooks/animations';
 
 interface ArticleCardProps {
   title: string;
@@ -44,26 +45,29 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   isLoadingAudio = false,
 }) => {
   const isDarkMode = useIsDarkMode();
-  const scale = useSharedValue(1);
+
+  const {
+    animatedStyle,
+    startAnimation,
+    setValue,
+  } = useTransformAnimation({
+    type: 'scale',
+    initialValue: 1,
+    targetValue: 1,
+    useSpring: true,
+    damping: 20,
+    stiffness: 300,
+  });
 
   React.useEffect(() => {
-    // Animate scale when edit mode changes or when being dragged
     if (isBeingDragged) {
-      scale.value = withSpring(1.05, {
-        damping: 20,
-        stiffness: 300,
-      });
+      setValue(1.05);
+    } else if (editMode) {
+      setValue(0.95);
     } else {
-      scale.value = withSpring(editMode ? 0.95 : 1, {
-        damping: 20,
-        stiffness: 300,
-      });
+      startAnimation();
     }
-  }, [editMode, isBeingDragged, scale]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  }, [editMode, isBeingDragged, startAnimation, setValue]);
 
   const activeCardStyle = React.useMemo(
     () =>
