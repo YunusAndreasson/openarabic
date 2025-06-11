@@ -3,23 +3,18 @@ import { useQueryClient } from '@tanstack/react-query';
 import React from 'react';
 import type { ViewStyle } from 'react-native';
 import { View, StyleSheet } from 'react-native';
-import Animated, {
-  FadeIn,
-  FadeInUp,
-  ZoomIn,
-  useSharedValue,
-  useAnimatedStyle,
-  withDelay,
-  withTiming,
-  withSpring,
-  runOnJS,
-} from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
-import { TIMING_CONFIG, SPRING_CONFIG } from '@/hooks/animations/animationConfigs';
+import {
+  TIMING_CONFIG,
+  SPRING_CONFIG,
+  useOpacityAnimation,
+  useTransformAnimation,
+} from '@/hooks/animations';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import type { SessionMetrics } from '@/types/review.types';
@@ -58,9 +53,24 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  // Animation values for enhanced feedback
-  const iconScale = useSharedValue(0.8);
-  const iconOpacity = useSharedValue(0);
+  // Animation values for enhanced feedback using hooks
+  const {
+    animatedStyle: opacityStyle,
+    startAnimation: startOpacityAnimation,
+  } = useOpacityAnimation({
+    initialOpacity: 0,
+    duration: TIMING_CONFIG.GENTLE.duration,
+  });
+
+  const { animatedStyle: scaleStyle, startAnimation: startScaleAnimation } =
+    useTransformAnimation({
+      type: 'scale',
+      initialValue: 0.8,
+      targetValue: 1,
+      useSpring: true,
+      damping: 12,
+      stiffness: 100,
+    });
 
   // Only invalidate queries for review flow
   React.useEffect(() => {
@@ -76,33 +86,16 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
 
   // Enhanced icon animation with haptic feedback
   React.useEffect(() => {
-    const startIconAnimation = () => {
-      'worklet';
-      iconOpacity.value = withDelay(
-        200,
-        withTiming(1, TIMING_CONFIG.GENTLE, finished => {
-          if (finished) {
-            runOnJS(successFeedback)();
-          }
-        })
-      );
-      iconScale.value = withDelay(
-        200,
-        withSpring(1, {
-          ...SPRING_CONFIG.CARD,
-          damping: 12,
-          stiffness: 100,
-        })
-      );
-    };
+    const timer = setTimeout(() => {
+      startOpacityAnimation(undefined, successFeedback);
+      startScaleAnimation();
+    }, 200);
 
-    startIconAnimation();
-  }, [iconScale, iconOpacity]);
+    return () => clearTimeout(timer);
+  }, [startOpacityAnimation, startScaleAnimation]);
 
-  const iconAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: iconOpacity.value,
-    transform: [{ scale: iconScale.value }],
-  }));
+  // Combine opacity and scale styles
+  const iconAnimatedStyle = [opacityStyle, scaleStyle];
 
   // Generate encouraging metrics text without emojis
   const getEncouragingMetrics = () => {
