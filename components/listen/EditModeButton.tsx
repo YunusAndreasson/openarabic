@@ -1,12 +1,16 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { usePressAnimation } from '@/hooks/animations';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { toggleEditMode } from '@/store/listenSlice';
 import { selectionFeedback } from '@/utils/haptics';
+
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 interface EditModeButtonProps {
   onEditModeChange?: (editMode: boolean) => void;
@@ -17,6 +21,10 @@ const EditModeButton: React.FC<EditModeButtonProps> = ({ onEditModeChange }) => 
   const dispatch = useAppDispatch();
   const editMode = useAppSelector(state => state.listen.editMode);
 
+  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
+    includeOpacity: true,
+  });
+
   const handlePress = React.useCallback(() => {
     selectionFeedback();
     dispatch(toggleEditMode());
@@ -24,14 +32,17 @@ const EditModeButton: React.FC<EditModeButtonProps> = ({ onEditModeChange }) => 
   }, [dispatch, editMode, onEditModeChange]);
 
   return (
-    <TouchableOpacity
+    <AnimatedTouchable
       style={[
         styles.button,
         {
           backgroundColor: colors.transparent,
         },
+        animatedStyle,
       ]}
       onPress={handlePress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       activeOpacity={0.6}
       accessibilityRole="button"
       accessibilityLabel={editMode ? 'Exit edit mode' : 'Enter edit mode'}
@@ -49,7 +60,7 @@ const EditModeButton: React.FC<EditModeButtonProps> = ({ onEditModeChange }) => 
       >
         {editMode ? 'Done' : 'Edit'}
       </ThemedText>
-    </TouchableOpacity>
+    </AnimatedTouchable>
   );
 };
 
