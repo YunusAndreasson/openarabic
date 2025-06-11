@@ -6,6 +6,7 @@ import {
   interpolate,
   Extrapolate,
   runOnUI,
+  useWorkletCallback,
   type WithSpringConfig,
 } from 'react-native-reanimated';
 
@@ -116,23 +117,25 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
   }, [pressed, finalScaleAmount, finalOpacityAmount, finalIncludeOpacity]);
 
   // Press handlers - optimized to run on UI thread
+  const animatePressIn = useWorkletCallback(() => {
+    pressed.value = withSpring(1, finalSpringConfig);
+  }, [pressed, finalSpringConfig]);
+
+  const animatePressOut = useWorkletCallback(() => {
+    pressed.value = withSpring(0, finalSpringConfig);
+  }, [pressed, finalSpringConfig]);
+
   const handlePressIn = useCallback(() => {
     if (isMountedRef.current) {
-      runOnUI(() => {
-        'worklet';
-        pressed.value = withSpring(1, finalSpringConfig);
-      })();
+      runOnUI(animatePressIn)();
     }
-  }, [pressed, finalSpringConfig]);
+  }, [animatePressIn]);
 
   const handlePressOut = useCallback(() => {
     if (isMountedRef.current) {
-      runOnUI(() => {
-        'worklet';
-        pressed.value = withSpring(0, finalSpringConfig);
-      })();
+      runOnUI(animatePressOut)();
     }
-  }, [pressed, finalSpringConfig]);
+  }, [animatePressOut]);
 
   // Cleanup
   useEffect(() => {
