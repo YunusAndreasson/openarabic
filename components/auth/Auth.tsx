@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Sentry from '@sentry/react-native';
 import { router } from 'expo-router';
 import type { JSX } from 'react';
@@ -54,20 +53,6 @@ function Auth(): JSX.Element {
     let isMounted = true;
     const initializeAuth = async () => {
       try {
-        // First, check AsyncStorage access
-        try {
-          await AsyncStorage.getItem('auth-test-key');
-        } catch (storageErr) {
-          handleError(
-            storageErr instanceof Error
-              ? storageErr
-              : new Error('AsyncStorage error in Auth component'),
-            { showToast: false, sentrySeverity: 'warning' }
-          );
-          // Wait a moment before trying again
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-
         if (!isMounted) return;
 
         // Clear any potentially corrupted tokens if auth is consistently failing

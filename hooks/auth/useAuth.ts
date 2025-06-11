@@ -13,7 +13,7 @@ export function useAuth(): AuthResult {
       'useAuth must be used within an AuthProvider. Check that AuthProvider wraps your component tree.'
     );
 
-    // Log to Sentry for debugging
+    // Log to Sentry
     Sentry.captureException(error, {
       tags: {
         location: 'useAuth_hook',
@@ -23,11 +23,6 @@ export function useAuth(): AuthResult {
         component_stack: 'useAuth called outside AuthProvider context',
       },
     });
-
-    // Provide a more descriptive error for development
-    if (__DEV__) {
-      handleError(error, { showToast: false, captureSentry: false });
-    }
 
     throw error;
   }
