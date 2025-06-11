@@ -1,6 +1,6 @@
 import Slider from '@react-native-community/slider';
 import type { JSX } from 'react';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
@@ -18,10 +18,13 @@ export function CustomSlider({
   const colors = useColors();
 
   // Use a conditional to apply platform-specific styles
-  const sliderStyle =
-    Platform.OS === 'android'
-      ? [styles.slider, { transform: [{ scaleX: 1.0 }, { scaleY: 1.2 }] }]
-      : styles.slider;
+  const sliderStyle = useMemo(
+    () =>
+      Platform.OS === 'android'
+        ? [styles.slider, { transform: [{ scaleX: 1.0 }, { scaleY: 1.2 }] }]
+        : styles.slider,
+    []
+  );
 
   return (
     <View style={[styles.container, style]}>
