@@ -24,7 +24,7 @@ import { categoriesService } from '@/services/categories';
 import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import { useAppDispatch } from '@/store/hooks';
 import { updateLastOpenedArticle } from '@/store/readingListSlice';
-import type { Article } from '@/types/articles.types';
+import type { Article, Category } from '@/types/articles.types';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
 
@@ -78,24 +78,26 @@ export default function ArticlesScreen(): JSX.Element {
   const categoriesWithArticles = useMemo(() => {
     if (!articlesData.length || !categoriesData.length) return [];
 
-    const categoryIdsWithArticles = new Map<number, number>();
-
-    articlesData.forEach(article => {
-      if (article?.category?.id) {
-        categoryIdsWithArticles.set(
-          article.category.id,
-          (categoryIdsWithArticles.get(article.category.id) || 0) + 1
-        );
+    const counts = articlesData.reduce<Record<number, number>>((acc, article) => {
+      const id = article?.category?.id;
+      if (id) {
+        acc[id] = (acc[id] || 0) + 1;
       }
-    });
+      return acc;
+    }, {});
 
-    return categoriesData
-      .filter(category => category?.id && categoryIdsWithArticles.has(category.id))
-      .map(category => ({
-        ...category,
-        count: categoryIdsWithArticles.get(category.id) || 0,
-      }))
-      .filter(category => category.id > 0 && category.name); // Additional safety for valid categories
+    return categoriesData.reduce<Array<Category & { count: number }>>(
+      (acc, category) => {
+        if (category?.id && category.id > 0 && category.name) {
+          const count = counts[category.id] || 0;
+          if (count > 0) {
+            acc.push({ ...category, count });
+          }
+        }
+        return acc;
+      },
+      []
+    );
   }, [articlesData, categoriesData]);
 
   const handleRefresh = useCallback(async () => {
