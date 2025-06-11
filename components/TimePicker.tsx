@@ -102,8 +102,12 @@ export const TimePicker = memo(
 
     const modalContent = useMemo(
       () => (
-        <Animated.View style={[styles.modalContainer, modalStyle]}>
+        <Animated.View
+          pointerEvents="box-none"
+          style={[styles.modalContainer, modalStyle]}
+        >
           <View
+            pointerEvents="auto"
             style={[styles.modal, { backgroundColor: colors.card, shadowColor: colors.shadow }]}
           >
             {/* Header */}
@@ -215,7 +219,7 @@ export const TimePicker = memo(
           <Animated.View
             style={[styles.backdrop, backdropStyle, { backgroundColor: colors.modalOverlay }]}
           >
-            <TouchableWithoutFeedback>{modalContent}</TouchableWithoutFeedback>
+            {modalContent}
           </Animated.View>
         </TouchableWithoutFeedback>
       </Modal>
