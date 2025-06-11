@@ -68,12 +68,19 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
     }
 
     // Enhanced calculation with FSRS algorithm principles
-    const averageStability =
-      validWords.reduce((sum, word) => sum + (word.fsrs_stability || 0), 0) / validWords.length;
-    const averageDifficulty =
-      validWords.reduce((sum, word) => sum + (word.fsrs_difficulty || 5), 0) / validWords.length;
-    const averageReps =
-      validWords.reduce((sum, word) => sum + (word.fsrs_reps || 0), 0) / validWords.length;
+    const { stabilitySum, difficultySum, repsSum } = validWords.reduce(
+      (acc, word) => {
+        acc.stabilitySum += word.fsrs_stability ?? 0;
+        acc.difficultySum += word.fsrs_difficulty ?? 5;
+        acc.repsSum += word.fsrs_reps ?? 0;
+        return acc;
+      },
+      { stabilitySum: 0, difficultySum: 0, repsSum: 0 }
+    );
+
+    const averageStability = stabilitySum / validWords.length;
+    const averageDifficulty = difficultySum / validWords.length;
+    const averageReps = repsSum / validWords.length;
 
     // More sophisticated scoring algorithm based on available FSRS data
     const stabilityFactor = Math.min(averageStability / 30, 1) * 45; // 0-45 points
