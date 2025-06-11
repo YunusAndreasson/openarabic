@@ -48,13 +48,16 @@ const BottomControls = memo<BottomControlsProps>(
     const insets = useSafeAreaInsets();
 
     // Optimize gradient colors calculation
-    const gradientColors = [
-      colors.transparent,
-      `${colors.background}40`,
-      `${colors.background}80`,
-      colors.background,
-      colors.background,
-    ] as const;
+    const gradientColors = useMemo(
+      () => [
+        colors.transparent,
+        `${colors.background}40`,
+        `${colors.background}80`,
+        colors.background,
+        colors.background,
+      ] as const,
+      [colors]
+    );
 
     const hasSecondaryButton = Boolean(secondaryLabel && onSecondaryPress);
     const hasTimerButton = showTimerButton && onTimerPress;
