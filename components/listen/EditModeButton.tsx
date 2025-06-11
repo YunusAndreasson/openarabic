@@ -68,4 +68,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default EditModeButton;
+export default React.memo(EditModeButton);
