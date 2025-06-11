@@ -145,7 +145,8 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     if (stateRefs.current.completionTriggered) return;
     stateRefs.current.completionTriggered = true;
 
-    // audioPlayerRef.current.stop();
+    // Stop any playing audio to free resources
+    audioPlayerRef.current.actions.stopPlayback().catch(() => {});
     setIsTransitioningToCompletion(true);
     fadeOut();
 
@@ -345,7 +346,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         if (controller.signal.aborted) return;
 
         // Clean up any playing audio before proceeding
-        // audioPlayerRef.current.stop();
+        audioPlayerRef.current.actions.stopPlayback().catch(() => {});
         fadeOut();
 
         setTimeout(() => {
@@ -410,7 +411,8 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     }
 
     if (isComplete) {
-      // audioPlayerRef.current.stop();
+      // Ensure any remaining audio is stopped
+      audioPlayerRef.current.actions.stopPlayback().catch(() => {});
     }
   }, [isComplete, isTransitioningToCompletion, triggerCompletionTransition]);
 
@@ -511,8 +513,8 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
   const handleClose = useCallback(() => {
     const mounted = { current: true };
-    // Removed haptic feedback for closing review
-    // audioPlayerRef.current.stop();
+    // Stop any playing audio when closing
+    audioPlayerRef.current.actions.stopPlayback().catch(() => {});
 
     if (!mounted.current) return;
 
@@ -553,7 +555,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       stateRefs.current.completionTriggered = true;
       stateRefs.current.progressUpdatedForCompletion = false;
       fadeIn();
-      // audioPlayerRef.current.stop();
+      audioPlayerRef.current.actions.stopPlayback().catch(() => {});
 
       if (stateRefs.current.meaningTimeout) {
         clearTimeout(stateRefs.current.meaningTimeout);
