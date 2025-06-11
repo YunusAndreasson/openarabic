@@ -5,11 +5,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
-interface LegendItemProps {
-  type: 'area' | 'bar' | 'dot' | 'line';
-  color: string;
-  label: string;
-}
+import type { LegendItemProps } from '@/types/ui/chart.types';
 
 interface ChartFooterProps {
   legendItems: LegendItemProps[];

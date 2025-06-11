@@ -8,12 +8,7 @@ import { useColors } from '@/hooks/theme/useColors';
 
 import { CardHeader } from './CardHeader';
 import { ChartFooter } from './ChartFooter';
-
-export interface LegendItemProps {
-  type: 'area' | 'bar' | 'dot' | 'line';
-  color: string;
-  label: string;
-}
+import type { LegendItemProps } from '@/types/ui/chart.types';
 
 interface BaseChartProps {
   // Header props
