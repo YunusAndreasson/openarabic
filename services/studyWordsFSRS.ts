@@ -270,7 +270,7 @@ export const studyWordsFSRSService = {
       user_id: userId,
       root_id: rootId,
       created_at: now.toISOString(),
-      difficulty: emptyCard.difficulty / 10.0, // Convert FSRS difficulty (1-10) to legacy scale (0-1)
+      difficulty: emptyCard.difficulty / 10.0, // Normalize difficulty to 0-1 scale for backward compatibility
       success_streak: 0,
       fsrs_due: now.toISOString(),
       fsrs_stability: emptyCard.stability,

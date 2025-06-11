@@ -68,7 +68,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
       queryClient.invalidateQueries({
         predicate: query => {
           const key = query.queryKey[0];
-          return key === 'dueWords' || key === 'studyWords' || key === 'vocabularyStats';
+          return key === 'fsrs-words' || key === 'vocabulary-stats';
         },
       });
     }

@@ -108,15 +108,10 @@ export function useFSRSQueries({
   const invalidateAllQueries = () => {
     if (!userId) return;
 
-    // Invalidate all FSRS queries with consistent key formats
+    // Invalidate all FSRS-related queries
     queryClient.invalidateQueries({ queryKey: ['fsrs-words'] });
-
-    // Also invalidate legacy keys used in other parts of the codebase
-    queryClient.invalidateQueries({ queryKey: ['dueWords', userId] });
-    queryClient.invalidateQueries({ queryKey: ['studyWords', userId] });
-    queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
     queryClient.invalidateQueries({ queryKey: ['studyWordsCounts', userId] });
-    queryClient.invalidateQueries({ queryKey: ['vocabulary-words', userId] });
+    queryClient.invalidateQueries({ queryKey: ['vocabulary-stats'] });
   };
 
   return {
