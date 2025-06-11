@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { lightFeedback } from '@/utils/haptics';
+import { usePressAnimation } from '@/hooks/animations';
 
 interface PlayButtonProps {
   onPress: () => void;
@@ -21,24 +22,16 @@ const PlayButton: React.FC<PlayButtonProps> = ({
   disabled = false,
 }) => {
   const colors = useColors();
-  const scale = useSharedValue(1);
+  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
+    scaleAmount: 0.9,
+  });
 
   const handlePress = React.useCallback(() => {
     if (disabled || isLoading) return;
 
     lightFeedback();
-
-    // Scale animation for press feedback
-    scale.value = withTiming(0.9, { duration: 100 }, () => {
-      scale.value = withTiming(1, { duration: 100 });
-    });
-
     onPress();
-  }, [disabled, isLoading, onPress, scale]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  }, [disabled, isLoading, onPress]);
 
   const getIconName = () => {
     return isPlaying ? 'pause' : 'play';
@@ -51,6 +44,8 @@ const PlayButton: React.FC<PlayButtonProps> = ({
   return (
     <TouchableOpacity
       onPress={handlePress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       disabled={disabled || isLoading}
       activeOpacity={0.7}
       style={styles.touchable}

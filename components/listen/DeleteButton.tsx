@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { mediumFeedback } from '@/utils/haptics';
+import { usePressAnimation } from '@/hooks/animations';
 
 interface DeleteButtonProps {
   onPress: () => void;
@@ -14,28 +15,22 @@ interface DeleteButtonProps {
 
 const DeleteButton: React.FC<DeleteButtonProps> = ({ onPress, disabled = false }) => {
   const colors = useColors();
-  const scale = useSharedValue(1);
+  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
+    scaleAmount: 0.9,
+  });
 
   const handlePress = React.useCallback(() => {
     if (disabled) return;
 
     mediumFeedback();
-
-    // Scale animation for press feedback
-    scale.value = withTiming(0.9, { duration: 100 }, () => {
-      scale.value = withTiming(1, { duration: 100 });
-    });
-
     onPress();
-  }, [disabled, onPress, scale]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  }, [disabled, onPress]);
 
   return (
     <TouchableOpacity
       onPress={handlePress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       disabled={disabled}
       activeOpacity={0.8}
       style={styles.touchable}

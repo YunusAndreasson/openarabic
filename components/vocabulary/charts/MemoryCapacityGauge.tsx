@@ -2,12 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Canvas, Path, Circle, Group, Skia, LinearGradient, vec } from '@shopify/react-native-skia';
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { BaseChart } from '@/components/vocabulary/shared';
@@ -15,6 +10,7 @@ import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useNavigationWithDebounce } from '@/hooks';
 import { useColors } from '@/hooks/theme/useColors';
+import { usePressAnimation } from '@/hooks/animations';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 
 interface MemoryCapacityGaugeProps {
@@ -49,8 +45,12 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
   const chartColors = useChartColors();
   const { navigateTo } = useNavigationWithDebounce();
 
-  // Animation values for smooth interactions
-  const pressScale = useSharedValue(1);
+  // Press animation for insights button
+  const {
+    animatedStyle: animatedPressStyle,
+    handlePressIn: handleInsightsPressIn,
+    handlePressOut: handleInsightsPressOut,
+  } = usePressAnimation({ scaleAmount: 0.98 });
 
   // Calculate enhanced memory capacity with better algorithm
   const memoryMetrics = useMemo(() => {
@@ -216,18 +216,8 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
 
   // Enhanced navigation with haptic feedback
   const handleInsightsPress = () => {
-    // Animate press feedback
-    pressScale.value = withTiming(0.98, { duration: 100 }, () => {
-      pressScale.value = withSpring(1, SPRING_CONFIG);
-    });
-
     navigateTo('/insights' as any);
   };
-
-  // Animated style for press feedback
-  const animatedPressStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pressScale.value }],
-  }));
 
   return (
     <BaseChart
@@ -242,7 +232,12 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
       <Animated.View style={animatedPressStyle}>
         <View style={styles.gaugeContainer}>
           {/* Info button in top right corner */}
-          <TouchableOpacity style={styles.infoButton} onPress={handleInsightsPress}>
+          <TouchableOpacity
+            style={styles.infoButton}
+            onPress={handleInsightsPress}
+            onPressIn={handleInsightsPressIn}
+            onPressOut={handleInsightsPressOut}
+          >
             <Ionicons name="analytics-outline" size={20} color={colors.tint} />
           </TouchableOpacity>
           <Canvas style={styles.canvas}>
