@@ -64,27 +64,30 @@ export const VocabularyStatCards = memo(
 
       const now = new Date();
 
-      // Calculate categories based on FSRS data and learning state
-      const dueWords = studyWords.filter(word => {
-        if (!word.fsrs_due) return false;
-        return new Date(word.fsrs_due) <= now;
-      }).length;
+      // Calculate categories based on FSRS data and learning state in one pass
+      const { dueWords, learningWords, masteredWords } = studyWords.reduce(
+        (counts, word) => {
+          const stability = word.fsrs_stability || 0;
+          const difficulty = word.fsrs_difficulty || 5;
 
-      const learningWords = studyWords.filter(word => {
-        const stability = word.fsrs_stability || 0;
-        const difficulty = word.fsrs_difficulty || 5;
-        // Words with low stability (< 21 days) and being actively learned
-        return stability > 0 && stability < 21 && difficulty > 3;
-      }).length;
+          if (word.fsrs_due && new Date(word.fsrs_due) <= now) {
+            counts.dueWords += 1;
+          }
+
+          if (stability > 0 && stability < 21 && difficulty > 3) {
+            counts.learningWords += 1;
+          }
+
+          if (stability >= 7 && difficulty <= 5) {
+            counts.masteredWords += 1;
+          }
+
+          return counts;
+        },
+        { dueWords: 0, learningWords: 0, masteredWords: 0 }
+      );
 
       const strugglingWords = getStrugglingWordsCount(studyWords);
-
-      const masteredWords = studyWords.filter(word => {
-        const stability = word.fsrs_stability || 0;
-        const difficulty = word.fsrs_difficulty || 5;
-        // Well-established words with good stability
-        return stability >= 7 && difficulty <= 5;
-      }).length;
 
       return {
         dueWords,
@@ -152,7 +155,9 @@ export const VocabularyStatCards = memo(
           >
             {/* Number Badge */}
             <View style={[styles.numberBadge, { backgroundColor: config.iconColor }]}>
-              <ThemedText style={[styles.numberText, { color: colors.white }]}>{config.value}</ThemedText>
+              <ThemedText style={[styles.numberText, { color: colors.white }]}>
+                {config.value}
+              </ThemedText>
             </View>
 
             {/* Content */}
