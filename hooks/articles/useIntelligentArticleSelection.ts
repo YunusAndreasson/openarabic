@@ -7,7 +7,7 @@ import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '@/services/studyWordsFSR
 import type { Article } from '@/types/articles.types';
 import type { UserSession } from '@/types/auth.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
-import { filterArticles, getBeginnerArticles } from '@/utils/articleUtils';
+import { getBeginnerArticles } from '@/utils/articleUtils';
 
 interface IntelligentArticleResult {
   article: Article | null;
@@ -97,7 +97,7 @@ export function useIntelligentArticleSelection(
 
     // Strategy 3: If user has no study progress, show beginner content
     if (!user?.id || !hasAnyStudyWords) {
-      const beginnerArticles = getBeginnerArticles(filterArticles(articlesData, null, null));
+      const beginnerArticles = getBeginnerArticles(articlesData);
 
       if (beginnerArticles.length > 0) {
         const randomArticle =
