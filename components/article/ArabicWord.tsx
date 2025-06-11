@@ -39,7 +39,6 @@ interface ArabicWordProps {
     fontScale: number;
   };
   wordRef?: React.RefObject<ComponentRef<typeof TouchableOpacity>>;
-  isAudioHighlighted?: boolean;
   isDueWord?: boolean;
 }
 
@@ -59,13 +58,11 @@ function ArabicWordComponent({
   const [tooltipZIndex, setTooltipZIndex] = useState<number>(0);
 
   // Use our new hook
-  const { isAudioHighlighted, isSelected, setForceSelected, handleSelectionChange } = useArabicWord(
-    {
-      word,
-      position,
-      onPress,
-    }
-  );
+  const { isSelected, setForceSelected, handleSelectionChange } = useArabicWord({
+    word,
+    position,
+    onPress,
+  });
 
   // Use transform animation for press feedback
   const {
@@ -184,20 +181,6 @@ function ArabicWordComponent({
     handleSelectionChange();
   }, [handleSelectionChange, startPressAnimation, isSelected, setForceSelected]);
 
-  // Generate dynamic styles
-  const getAudioHighlightedStyle = useCallback(
-    (): ViewStyle => ({
-      backgroundColor: colors.audioHighlight,
-      borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-      shadowColor: colors.audioHighlightBorder,
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 1,
-      shadowRadius: 1,
-      elevation: 2,
-    }),
-    [colors.audioHighlight, colors.audioHighlightBorder]
-  );
-
   const getSelectedStyle = useCallback(
     (): ViewStyle => ({
       borderBottomWidth: 1,
@@ -208,12 +191,8 @@ function ArabicWordComponent({
 
   // Compute final styles for the word container
   const containerStyle = useMemo(
-    () => [
-      styles.wordContainer,
-      isAudioHighlighted && getAudioHighlightedStyle(),
-      isSelected && getSelectedStyle(),
-    ],
-    [isAudioHighlighted, isSelected, getAudioHighlightedStyle, getSelectedStyle]
+    () => [styles.wordContainer, isSelected && getSelectedStyle()],
+    [isSelected, getSelectedStyle]
   );
 
   return (
@@ -261,7 +240,6 @@ const styles = StyleSheet.create({
 
 export const ArabicWord = memo(ArabicWordComponent, (prevProps, nextProps) => {
   return (
-    prevProps.isAudioHighlighted === nextProps.isAudioHighlighted &&
     prevProps.word.id === nextProps.word.id &&
     prevProps.settings.fontScale === nextProps.settings.fontScale &&
     prevProps.position === nextProps.position

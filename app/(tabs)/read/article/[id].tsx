@@ -1,15 +1,14 @@
 import { useLocalSearchParams, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useMemo, useCallback, useEffect, useRef } from 'react';
-import type { ComponentRef, JSX } from 'react';
+import React, { useMemo, useCallback, useEffect } from 'react';
+import type { JSX } from 'react';
 import { View, AppState } from 'react-native';
-import type { TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleSentence } from '@/components/article';
 import { ArabicWord } from '@/components/article/ArabicWord';
-import { ArticleContent, type ArticleContentRef } from '@/components/article/ArticleContent';
+import { ArticleContent } from '@/components/article/ArticleContent';
 import { ToastProvider } from '@/components/providers/ToastProvider';
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
@@ -106,8 +105,6 @@ export default function ArticleScreen(): JSX.Element {
     return;
   }, [article, sortedSentences, isLoadingArticle, fadeIn]);
 
-  const articleContentRef = useRef<ArticleContentRef>(null);
-
   // Simple root press handler for word interactions
   const handleRootPress = useCallback(
     (rootId: number) => {
@@ -127,7 +124,7 @@ export default function ArticleScreen(): JSX.Element {
     [handleRootPress]
   );
 
-  const { handleArticlePress: _handleArticlePress, getWordsForSentence } = useArticleRenderers(
+  const { getWordsForSentence } = useArticleRenderers(
     settings,
     selectedWordIds,
     sentenceWordsMap,
@@ -136,21 +133,15 @@ export default function ArticleScreen(): JSX.Element {
   );
 
   const renderWord = useCallback(
-    (
-      word: SentenceWord,
-      _isAudioHighlighted = false,
-      wordRef?: React.RefObject<ComponentRef<typeof TouchableOpacity>>
-    ) => {
+    (word: SentenceWord) => {
       // Check if this word is due for review
       const isDueWord = word.root_id ? dueWordRootIds.has(word.root_id) : false;
 
       return (
         <ArabicWord
           key={word.id}
-          isAudioHighlighted={false}
           isDueWord={isDueWord}
           word={word}
-          wordRef={wordRef}
           settings={{
             fontScale: settings.fontScale,
           }}
@@ -185,8 +176,6 @@ export default function ArticleScreen(): JSX.Element {
             backgroundColor: colors.transparent,
             paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
           }}
-          currentPlayingWordId={null}
-          currentPlayingPosition={null}
           renderWord={renderWord}
           settings={sentenceSettings}
           words={words}
@@ -209,9 +198,8 @@ export default function ArticleScreen(): JSX.Element {
 
         <View style={{ flex: 1 }}>
           {article && sortedSentences && sortedSentences.length > 0 ? (
-            <Animated.View style={[{ flex: 1 }, animatedStyle]}>
+            <Animated.View style={[{ flex: 1 }, animatedStyle as any]}>
               <ArticleContent
-                ref={articleContentRef}
                 article={article}
                 colors={colors}
                 handleScroll={handleScroll}

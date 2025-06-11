@@ -1,7 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
-import type { ComponentRef } from 'react';
 import React, { createRef, useEffect, useRef, useMemo } from 'react';
-import type { ViewStyle, StyleProp, TouchableOpacity } from 'react-native';
+import type { ViewStyle, StyleProp } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useOpacityAnimation } from '@/hooks/animations';
@@ -23,11 +22,7 @@ interface ArticleSentenceProps {
     audio_url: string | null;
   };
   words: SentenceWord[];
-  renderWord?: (
-    word: SentenceWord,
-    isAudioHighlighted: boolean,
-    wordRef: React.RefObject<ComponentRef<typeof TouchableOpacity>>
-  ) => React.ReactNode;
+  renderWord?: (word: SentenceWord) => React.ReactNode;
   onWordPress?: (word: SentenceWord) => void;
   settings: {
     showEnglish: boolean;
@@ -35,8 +30,8 @@ interface ArticleSentenceProps {
   };
   colors: ThemeColors;
   containerStyle?: StyleProp<ViewStyle>;
-  currentPlayingWordId: number | null;
-  currentPlayingPosition: number | null;
+  currentPlayingWordId?: number | null;
+  currentPlayingPosition?: number | null;
   isPlaying?: boolean;
   dueWordRootIds?: Set<number>;
 }
@@ -49,17 +44,15 @@ function ArticleSentenceComponent({
   settings,
   colors: propColors,
   containerStyle,
-  currentPlayingWordId,
-  currentPlayingPosition,
-  isPlaying,
+  currentPlayingWordId: _currentPlayingWordId = null,
+  currentPlayingPosition: _currentPlayingPosition = null,
+  isPlaying: _isPlaying = false,
   dueWordRootIds = EMPTY_DUE_WORDS_SET,
 }: ArticleSentenceProps) {
   const defaultColors = useColors();
   const colors = propColors || defaultColors;
   const { highlightSentence } = useLocalSearchParams<{ highlightSentence?: string }>();
   const isHighlighted = sentence.id != null && highlightSentence === sentence.id.toString();
-
-  const previousWordIdRef = useRef<number | null>(null);
 
   const wordRefs = useRef<React.RefObject<any>[]>([]);
   const {
@@ -77,8 +70,6 @@ function ArticleSentenceComponent({
       startAnimation(() => reverseAnimation());
     }
   }, [isHighlighted, startAnimation, reverseAnimation]);
-
-  previousWordIdRef.current = currentPlayingWordId;
 
   const englishTextStyle = useMemo(
     () => [
@@ -104,21 +95,20 @@ function ArticleSentenceComponent({
   );
 
   const renderedWords = useMemo(() => {
-    const renderWordWithProps = (word: SentenceWord, index: number, isWordHighlighted: boolean) => {
+    const renderWordWithProps = (word: SentenceWord, index: number) => {
       const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
       if (!wordRefs.current[index]) {
         wordRefs.current[index] = createRef<any>();
       }
       const isDueWord = word.root_id ? dueWordRootIds.has(word.root_id) : false;
       return renderWord ? (
-        renderWord(word, isWordHighlighted, wordRefs.current[index])
+        renderWord(word)
       ) : (
         <ArabicWord
           key={`word-${wordId}-${word.position || sentence.id}`}
           word={word}
           onPress={word => onWordPress?.(word)}
           settings={{ fontScale: settings.fontScale }}
-          isAudioHighlighted={isWordHighlighted}
           wordRef={wordRefs.current[index]}
           position={index}
           isDueWord={isDueWord}
@@ -127,22 +117,9 @@ function ArticleSentenceComponent({
     };
 
     return words.map((word, index) => {
-      const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
-      const isWordHighlighted =
-        currentPlayingWordId === wordId && currentPlayingPosition === index && !!isPlaying;
-      return renderWordWithProps(word, index, isWordHighlighted);
+      return renderWordWithProps(word, index);
     });
-  }, [
-    renderWord,
-    words,
-    currentPlayingWordId,
-    currentPlayingPosition,
-    !!isPlaying,
-    sentence.id,
-    settings,
-    onWordPress,
-    dueWordRootIds,
-  ]);
+  }, [renderWord, words, sentence.id, settings, onWordPress, dueWordRootIds]);
 
   return (
     <View style={[styles.container, containerStyle]}>
