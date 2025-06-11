@@ -90,21 +90,21 @@ const SleepTimerComponent = ({
     transform: [{ translateY: modalTranslateY.value }, { scale: modalScale.value }],
   }));
 
-  const handleSetTimer = () => {
+  const handleSetTimer = React.useCallback(() => {
     lightFeedback(); // Keep for primary action
     onTimerSet(selectedMinutes);
     onClose();
-  };
+  }, [onClose, onTimerSet, selectedMinutes]);
 
-  const handleCancelTimer = () => {
+  const handleCancelTimer = React.useCallback(() => {
     onTimerCancel();
     onClose();
-  };
+  }, [onClose, onTimerCancel]);
 
-  const handleOptionSelect = (minutes: number) => {
+  const handleOptionSelect = React.useCallback((minutes: number) => {
     selectionFeedback();
     setSelectedMinutes(minutes);
-  };
+  }, []);
 
   if (!isVisible) {
     return null;

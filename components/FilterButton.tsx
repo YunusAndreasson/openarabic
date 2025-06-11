@@ -17,10 +17,10 @@ const FilterButton = memo(({ onPress }: FilterButtonProps) => {
   const colors = useColors();
   const activeFiltersCount = useAppSelector(selectActiveFiltersCount);
 
-  const handlePress = () => {
+  const handlePress = React.useCallback(() => {
     lightFeedback();
     onPress();
-  };
+  }, [onPress]);
 
   return (
     <View style={styles.container}>

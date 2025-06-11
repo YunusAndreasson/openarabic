@@ -17,11 +17,11 @@ const EditModeButton: React.FC<EditModeButtonProps> = ({ onEditModeChange }) => 
   const dispatch = useAppDispatch();
   const editMode = useAppSelector(state => state.listen.editMode);
 
-  const handlePress = () => {
+  const handlePress = React.useCallback(() => {
     selectionFeedback();
     dispatch(toggleEditMode());
     onEditModeChange?.(!editMode);
-  };
+  }, [dispatch, editMode, onEditModeChange]);
 
   return (
     <TouchableOpacity

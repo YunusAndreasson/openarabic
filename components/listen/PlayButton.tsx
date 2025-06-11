@@ -23,7 +23,7 @@ const PlayButton: React.FC<PlayButtonProps> = ({
   const colors = useColors();
   const scale = useSharedValue(1);
 
-  const handlePress = () => {
+  const handlePress = React.useCallback(() => {
     if (disabled || isLoading) return;
 
     lightFeedback();
@@ -34,7 +34,7 @@ const PlayButton: React.FC<PlayButtonProps> = ({
     });
 
     onPress();
-  };
+  }, [disabled, isLoading, onPress, scale]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],

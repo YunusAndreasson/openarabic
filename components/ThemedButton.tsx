@@ -139,12 +139,15 @@ function ThemedButtonComponent({
     opacityAmount: LAYOUT.OPACITY.PRESSED,
   });
 
-  const handlePress = (event: GestureResponderEvent) => {
-    lightFeedback();
-    if (onPress && !disabled && !loading) {
-      onPress(event);
-    }
-  };
+  const handlePress = React.useCallback(
+    (event: GestureResponderEvent) => {
+      lightFeedback();
+      if (onPress && !disabled && !loading) {
+        onPress(event);
+      }
+    },
+    [onPress, disabled, loading]
+  );
 
   const textColor = variant === 'filled' ? colors.background : colors.tint;
   const iconSize = useMemo(() => getIconSize(size, customIconSize), [size, customIconSize]);
