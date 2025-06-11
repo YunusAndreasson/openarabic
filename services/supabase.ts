@@ -24,6 +24,9 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
   },
 });
 
+// Module-level flag to ensure authentication is only initialized once
+let isAuthInitialized = false;
+
 /**
  * Registers an AppState listener to keep the auth session active.
  *
@@ -46,7 +49,10 @@ export function setupSupabaseAppStateListener(): () => void {
 
       try {
 
-        await supabase.auth.initialize();
+        if (!isAuthInitialized) {
+          await supabase.auth.initialize();
+          isAuthInitialized = true;
+        }
         supabase.auth.startAutoRefresh();
       } catch (err) {
         await handleError(err instanceof Error ? err : new Error(String(err)), {
@@ -80,7 +86,10 @@ export async function checkAuthentication(expectedUserId?: string): Promise<{
 }> {
   try {
 
-    await supabase.auth.initialize();
+    if (!isAuthInitialized) {
+      await supabase.auth.initialize();
+      isAuthInitialized = true;
+    }
 
     const { data, error } = await supabase.auth.getSession();
 
