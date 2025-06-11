@@ -51,26 +51,12 @@ export const readingListService = {
   async addToReadingList(userId: string, articleId: number): Promise<void> {
     await checkAuthentication(userId);
 
-    const { data, error: checkError } = await supabase
+    const { error } = await supabase
       .from('reading_list')
-      .select('article_id')
-      .eq('user_id', userId)
-      .eq('article_id', articleId)
-      .single();
-
-    if (checkError && checkError.code !== 'PGRST116') {
-      await handleError(checkError);
-      throw checkError;
-    }
-
-    if (data) {
-      return;
-    }
-
-    const { error } = await supabase.from('reading_list').insert({
-      user_id: userId,
-      article_id: articleId,
-    });
+      .upsert(
+        { user_id: userId, article_id: articleId },
+        { onConflict: 'user_id,article_id' }
+      );
 
     if (error) {
       await handleError(error, {
