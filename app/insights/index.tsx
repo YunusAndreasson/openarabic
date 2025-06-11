@@ -24,10 +24,13 @@ export default function InsightsScreen(): JSX.Element {
     userId: user?.id,
   });
 
-  const handleInfoPress = useCallback((type: string) => {
-    selectionFeedback();
-    router.push(`/insights/info/${type}`);
-  }, []);
+  const handleInfoPress = useCallback(
+    (type: string) => {
+      selectionFeedback();
+      router.push(`/insights/info/${type}`);
+    },
+    [router]
+  );
 
   // Filter valid study words
   const validStudyWords = studyWords?.filter(word => word != null && word.root_id != null) ?? [];

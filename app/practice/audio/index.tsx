@@ -278,7 +278,7 @@ export default function ListenScreen(): JSX.Element {
       handleError(error instanceof Error ? error : new Error(String(error)));
       router.back();
     }
-  }, [user?.id, queryClient, fromRemember]);
+  }, [user?.id, queryClient, fromRemember, router]);
 
   // Cleanup on unmount
   useEffect(() => {

@@ -1,5 +1,5 @@
 import { Stack, router } from 'expo-router';
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import FilterButton from '@/components/FilterButton';
 import { createNavigationOptions } from '@/constants/modal';
@@ -26,6 +26,14 @@ function getFilterTitle(params: FilterParams): string {
 
 export default function ReadLayout() {
   const colors = useColors();
+
+  const FilterHeaderRight = ({ categoryId }: { categoryId: number }) => {
+    const handlePress = useCallback(() => {
+      router.push(`/(tabs)/read/filterModal?categoryId=${categoryId}`);
+    }, [categoryId, router]);
+
+    return <FilterButton onPress={handlePress} />;
+  };
 
   return (
     <Stack>
@@ -65,13 +73,7 @@ export default function ReadLayout() {
 
           return createNavigationOptions(colors, {
             title: getFilterTitle(params),
-            headerRight: () => (
-              <FilterButton
-                onPress={() =>
-                  router.push(`/(tabs)/read/filterModal?categoryId=${categoryId}`)
-                }
-              />
-            ),
+            headerRight: () => <FilterHeaderRight categoryId={categoryId} />,
           });
         }}
       />

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import moment from 'moment-hijri';
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -23,9 +23,9 @@ export const WelcomeMessage: React.FC = () => {
     return `${hijriDay} ${hijriMonth} ${hijriYear} AH`;
   }, []);
 
-  const handleCalendarPress = () => {
+  const handleCalendarPress = useCallback(() => {
     router.push('/(tabs)/read/account/islamicCalendar');
-  };
+  }, [router]);
 
   return (
     <View style={styles.container}>

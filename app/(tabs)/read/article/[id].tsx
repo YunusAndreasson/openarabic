@@ -114,11 +114,14 @@ export default function ArticleScreen(): JSX.Element {
   const articleContentRef = useRef<ArticleContentRef>(null);
 
   // Simple root press handler for word interactions
-  const handleRootPress = useCallback((rootId: number) => {
-    router.push(
-      `/(tabs)/practice/review?rootId=${rootId}&mode=random&count=1&fromVocabulary=article`
-    );
-  }, []);
+  const handleRootPress = useCallback(
+    (rootId: number) => {
+      router.push(
+        `/(tabs)/practice/review?rootId=${rootId}&mode=random&count=1&fromVocabulary=article`
+      );
+    },
+    [router]
+  );
 
   const handleWordPress = useCallback(
     (word: SentenceWord) => {

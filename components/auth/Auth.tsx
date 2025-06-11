@@ -223,7 +223,7 @@ function Auth(): JSX.Element {
         setLoading(false);
       }
     }
-  }, [email, password, validateEmail, validatePassword]);
+  }, [email, password, validateEmail, validatePassword, router]);
 
   const signUpWithEmail = useCallback(async () => {
     // Run both validations and store results
