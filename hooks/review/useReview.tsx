@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
 import { useAnimatedStyle } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
@@ -51,6 +51,7 @@ interface UseReviewReturn {
   maxProgress: number;
   progressAnimationKey: number;
   wordFontSize: number;
+  currentWordKey: string;
   isVagueMeaning: boolean;
   isStruggling: boolean;
   handleSwipeLeft: () => void;
@@ -171,6 +172,17 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   });
 
   const wordFontSize = useWordSizing(currentWord?.root?.letters, fontConfig);
+
+  // Unique key for the current word to trigger renders even if the text is identical
+  const currentWordKey = useMemo(
+    () =>
+      currentWord
+        ? `${currentWord.root_id}-${currentWord.fsrs_last_review ?? ''}-${
+            currentWord.fsrs_reps ?? 0
+          }`
+        : 'none',
+    [currentWord]
+  );
 
   // Batch state updates for meaning overlay
   const showMeaningWithTimeout = useCallback(
@@ -472,7 +484,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       return;
     }
 
-    if (currentWord?.root && !isComplete && !isTransitioningToCompletion) {
+    if (currentWord?.root) {
       const wordId = String(currentWord.root_id || 'unknown');
       const wordForm = currentWord.root.letters;
       const audioUrl = currentWord.root.audio_url;
@@ -480,7 +492,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       // Always update the current sentence
       setCurrentSentence({ wordForm });
 
-      // ALWAYS play audio for Arabic words, regardless of lastProcessedWordId
+      // ALWAYS play audio for Arabic words
       if (audioUrl) {
         playAudio(audioUrl).catch(handleError);
       }
@@ -488,14 +500,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       // Update the lastProcessedWordId after playing audio
       timeRefs.current.lastProcessedWordId = wordId;
     }
-  }, [
-    currentWord?.root_id,
-    currentWord?.root?.letters,
-    currentWord?.root?.audio_url,
-    isComplete,
-    isTransitioningToCompletion,
-    playAudio,
-  ]);
+  }, [currentWord, isComplete, isTransitioningToCompletion, playAudio]);
 
   const handleSwipeLeft = useCallback(() => {
     // Removed haptic feedback for swipe left
@@ -594,6 +599,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     maxProgress: stateRefs.current.maxProgress,
     progressAnimationKey,
     wordFontSize,
+    currentWordKey,
     isVagueMeaning,
     isStruggling,
     handleSwipeLeft,
