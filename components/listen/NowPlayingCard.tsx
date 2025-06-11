@@ -4,12 +4,8 @@ import React, { memo, useMemo, useEffect, useCallback } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import Animated, {
   useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
   interpolate,
   Extrapolation,
-  cancelAnimation,
 } from 'react-native-reanimated';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
@@ -20,7 +16,11 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { Article } from '@/types/articles.types';
 import { withOpacity } from '@/utils/colorUtils';
-import { usePressAnimation } from '@/hooks/animations';
+import {
+  usePressAnimation,
+  useOpacityAnimation,
+  useTransformAnimation,
+} from '@/hooks/animations';
 
 const CARD_HEIGHT = 120;
 const IMAGE_SIZE = 80;
@@ -37,16 +37,6 @@ const ENTRANCE_SCALE_CONFIG = {
   stiffness: 120,
 } as const;
 
-const BUTTON_SPRING_CONFIG = {
-  damping: 15,
-  stiffness: 200,
-} as const;
-
-const EXIT_SPRING_CONFIG = {
-  damping: 25,
-  stiffness: 150,
-  mass: 0.8,
-} as const;
 
 interface NowPlayingCardProps {
   /** Whether the card should be visible */
@@ -81,10 +71,42 @@ const NowPlayingCard = ({
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
-  // Animation values - use stable initial values to prevent re-creation
-  const translateY = useSharedValue(CARD_HEIGHT + 100);
-  const opacity = useSharedValue(0);
-  const scale = useSharedValue(0.95);
+  // Animation hooks for card visibility
+  const {
+    animatedStyle: translateYStyle,
+    startAnimation: slideIn,
+    reverseAnimation: slideOut,
+  } = useTransformAnimation({
+    type: 'translateY',
+    initialValue: CARD_HEIGHT + 100,
+    targetValue: 0,
+    useSpring: true,
+    damping: SPRING_CONFIG.damping,
+    stiffness: SPRING_CONFIG.stiffness,
+  });
+
+  const {
+    animatedStyle: scaleStyle,
+    startAnimation: scaleUp,
+    reverseAnimation: scaleDown,
+  } = useTransformAnimation({
+    type: 'scale',
+    initialValue: 0.95,
+    targetValue: 1,
+    useSpring: true,
+    damping: ENTRANCE_SCALE_CONFIG.damping,
+    stiffness: ENTRANCE_SCALE_CONFIG.stiffness,
+  });
+
+  const {
+    animatedStyle: opacityStyle,
+    opacity,
+    startAnimation: fadeIn,
+    reverseAnimation: fadeOut,
+  } = useOpacityAnimation({
+    initialOpacity: 0,
+    duration: 300,
+  });
   const {
     animatedStyle: buttonAnimatedStyle,
     handlePressIn: handleStopPressIn,
@@ -94,49 +116,24 @@ const NowPlayingCard = ({
   // Animate card visibility
   useEffect(() => {
     if (isVisible && article) {
-      // Slide up with elegant spring animation
-      translateY.value = withSpring(0, SPRING_CONFIG);
-
-      // Fade in
-      opacity.value = withTiming(1, { duration: 300 });
-
-      // Scale up slightly for entrance
-      scale.value = withSpring(1, ENTRANCE_SCALE_CONFIG);
+      slideIn();
+      fadeIn();
+      scaleUp();
     } else {
-      // Enhanced reverse animation - more elegant exit
-      // First slightly scale down for feedback
-      scale.value = withTiming(0.92, { duration: 100 }, () => {
-        // Then slide down with smooth spring
-        translateY.value = withSpring(CARD_HEIGHT + 100, EXIT_SPRING_CONFIG);
+      scaleDown(() => {
+        slideOut();
       });
-
-      // Fade out with slight delay for smoother transition
-      opacity.value = withTiming(0, { duration: 300 });
+      fadeOut();
     }
-  }, [isVisible, article, translateY, opacity, scale]);
+  }, [isVisible, article, slideIn, slideOut, fadeIn, fadeOut, scaleUp, scaleDown]);
 
   // Press handler for stop button
   const handleStopPress = useCallback(() => {
     onStop?.();
   }, [onStop]);
 
-  // Cleanup animations on unmount to prevent memory leaks
-  useEffect(() => {
-    return () => {
-      cancelAnimation(translateY);
-      cancelAnimation(opacity);
-      cancelAnimation(scale);
-    };
-  }, [translateY, opacity, scale]);
-
   // Optimized animated styles using worklets for better performance
-  const cardAnimatedStyle = useAnimatedStyle(() => {
-    'worklet';
-    return {
-      transform: [{ translateY: translateY.value }, { scale: scale.value }],
-      opacity: opacity.value,
-    };
-  }, []);
+  const cardAnimatedStyle = [translateYStyle, scaleStyle, opacityStyle];
 
 
   const backgroundImageStyle = useAnimatedStyle(() => {
