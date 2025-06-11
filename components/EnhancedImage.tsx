@@ -14,7 +14,7 @@ function EnhancedImageInternal({
   onLoad,
   transition = 300,
   skipTransition = false,
-  cachePolicy = 'memory-disk',
+  cachePolicy = 'disk',
   placeholder,
   allowDownscaling = true,
   priority = 'normal',

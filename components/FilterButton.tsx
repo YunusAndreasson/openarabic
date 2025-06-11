@@ -1,15 +1,14 @@
-import { Ionicons } from '@expo/vector-icons';
 import React, { memo } from 'react';
 import { StyleSheet, View, Pressable } from 'react-native';
 import Animated from 'react-native-reanimated';
 
+import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
-import { useColors } from '@/hooks/theme/useColors';
 import { usePressAnimation } from '@/hooks/animations';
-import { withOpacity } from '@/utils/colorUtils';
+import { useColors } from '@/hooks/theme/useColors';
 import { selectActiveFiltersCount } from '@/store/filtersSlice';
 import { useAppSelector } from '@/store/hooks';
-import { lightFeedback } from '@/utils/haptics';
+import { withOpacity } from '@/utils/colorUtils';
 
 interface FilterButtonProps {
   onPress: () => void;
@@ -23,7 +22,6 @@ const FilterButton = memo(({ onPress }: FilterButtonProps) => {
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation();
 
   const handlePress = React.useCallback(() => {
-    lightFeedback();
     onPress();
   }, [onPress]);
 
@@ -42,13 +40,22 @@ const FilterButton = memo(({ onPress }: FilterButtonProps) => {
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
       >
-        <Ionicons
-          name="options-outline"
-          size={20}
-          color={activeFiltersCount > 0 ? colors.tint : colors.text}
-        />
+        <ThemedText type="label" weight="medium" colorName="tint" style={styles.filterText}>
+          Filter
+        </ThemedText>
 
-        {activeFiltersCount > 0 && <View style={[styles.dot, { backgroundColor: colors.tint }]} />}
+        {activeFiltersCount > 0 && (
+          <View style={[styles.badge, { backgroundColor: colors.tint }]}>
+            <ThemedText
+              type="caption"
+              weight="bold"
+              skipDefaultColor
+              style={[styles.badgeText, { color: colors.background }]}
+            >
+              {activeFiltersCount}
+            </ThemedText>
+          </View>
+        )}
       </AnimatedPressable>
     </View>
   );
@@ -62,13 +69,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   button: {
-    width: MIN_TOUCH_TARGET.MEDIUM,
+    minWidth: MIN_TOUCH_TARGET.MEDIUM,
     height: MIN_TOUCH_TARGET.MEDIUM,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     marginRight: LAYOUT.SPACING.TINY,
     position: 'relative',
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+  },
+  filterText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
   },
   dot: {
     position: 'absolute',
@@ -77,6 +88,21 @@ const styles = StyleSheet.create({
     width: LAYOUT.SPACING.SMALL,
     height: LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.SPACING.TINY,
+  },
+  badge: {
+    position: 'absolute',
+    top: LAYOUT.SPACING.TINY - 2,
+    right: LAYOUT.SPACING.TINY - 2,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    fontSize: 10,
+    lineHeight: 12,
   },
 });
 

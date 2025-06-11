@@ -95,6 +95,10 @@ export default function FilterScreen(): JSX.Element {
   }
 
   return (
-    <FilteredArticleView articles={filteredAndSortedArticles} onArticlePress={handleArticlePress} />
+    <FilteredArticleView
+      articles={filteredAndSortedArticles}
+      onArticlePress={handleArticlePress}
+      totalCount={articles.length}
+    />
   );
 }

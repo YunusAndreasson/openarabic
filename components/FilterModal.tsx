@@ -59,7 +59,7 @@ const FilterModal: React.FC<FilterModalProps> = ({ availableAuthors }) => {
   });
 
   const toggleSection = useCallback((section: keyof typeof expandedSections) => {
-    lightFeedback();
+    selectionFeedback();
     setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section],
@@ -76,7 +76,6 @@ const FilterModal: React.FC<FilterModalProps> = ({ availableAuthors }) => {
 
   const handleAuthorToggle = useCallback(
     (authorId: number) => {
-      selectionFeedback();
       dispatch(toggleAuthor(authorId));
     },
     [dispatch]
@@ -84,7 +83,6 @@ const FilterModal: React.FC<FilterModalProps> = ({ availableAuthors }) => {
 
   const handleDifficultySelect = useCallback(
     (range: [number, number]) => {
-      selectionFeedback();
       dispatch(setDifficultyRange(range));
     },
     [dispatch]
@@ -92,7 +90,6 @@ const FilterModal: React.FC<FilterModalProps> = ({ availableAuthors }) => {
 
   const handleDateRangeSelect = useCallback(
     (dateRange: FilterState['filters']['dateRange']) => {
-      selectionFeedback();
       dispatch(setDateRange(dateRange));
     },
     [dispatch]

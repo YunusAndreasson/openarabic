@@ -3,6 +3,7 @@ import { FlashList } from '@shopify/flash-list';
 import React, { useMemo, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import FilterSummary from '@/components/FilterSummary';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
 import type { Article } from '@/types/articles.types';
@@ -21,6 +22,11 @@ interface FilteredArticleViewProps {
    * Callback when an article is pressed
    */
   onArticlePress?: (article: Article) => void;
+
+  /**
+   * Total count of articles before filtering (optional)
+   */
+  totalCount?: number;
 }
 
 /**
@@ -29,6 +35,7 @@ interface FilteredArticleViewProps {
 const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   articles,
   onArticlePress = NOOP_ARTICLE_PRESS,
+  totalCount,
 }) => {
   const renderItemCallback = useCallback(
     ({ item }: { item: Article }) => <ListArticleItem article={item} onPress={onArticlePress} />,
@@ -40,8 +47,8 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   }, []);
 
   const ListHeaderComponent = useMemo(() => {
-    return null;
-  }, []);
+    return <FilterSummary filteredCount={articles.length} totalCount={totalCount} />;
+  }, [articles.length, totalCount]);
 
   // Calculate the estimated item height based on content + padding + margins
   const ITEM_HEIGHT = 100; // Adjust this based on your actual card height
