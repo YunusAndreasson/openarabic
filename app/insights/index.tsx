@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import type { JSX } from 'react';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { StyleSheet, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -33,7 +33,10 @@ export default function InsightsScreen(): JSX.Element {
   );
 
   // Filter valid study words
-  const validStudyWords = studyWords?.filter(word => word != null && word.root_id != null) ?? [];
+  const validStudyWords = useMemo(
+    () => studyWords?.filter(word => word != null && word.root_id != null) ?? [],
+    [studyWords]
+  );
 
   if (error) {
     return (
