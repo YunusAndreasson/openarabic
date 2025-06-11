@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -29,8 +29,8 @@ const PlayButton: React.FC<PlayButtonProps> = ({
     lightFeedback();
 
     // Scale animation for press feedback
-    scale.value = withSpring(0.9, { duration: 100 }, () => {
-      scale.value = withSpring(1, { duration: 100 });
+    scale.value = withTiming(0.9, { duration: 100 }, () => {
+      scale.value = withTiming(1, { duration: 100 });
     });
 
     onPress();
