@@ -4,9 +4,9 @@ import { StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
-import { useColors } from '@/hooks/theme/useColors';
-import { lightFeedback } from '@/utils/haptics';
 import { usePressAnimation } from '@/hooks/animations';
+import { useColors } from '@/hooks/theme/useColors';
+import { selectionFeedback } from '@/utils/haptics';
 
 interface PlayButtonProps {
   onPress: () => void;
@@ -29,7 +29,7 @@ const PlayButton: React.FC<PlayButtonProps> = ({
   const handlePress = React.useCallback(() => {
     if (disabled || isLoading) return;
 
-    lightFeedback();
+    selectionFeedback();
     onPress();
   }, [disabled, isLoading, onPress]);
 

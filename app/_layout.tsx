@@ -36,7 +36,6 @@ import { setTheme } from '@/store/themeSlice';
 import { handleError } from '@/utils/errorHandling';
 
 import { useArticlesAndDueWordsLoaded } from './(tabs)/read/index';
-// import { analytics } from '@/services/analytics';
 // Temporary mock analytics until service is fixed
 const analytics = {
   identify: async (_userId: string, _properties?: any) => {},

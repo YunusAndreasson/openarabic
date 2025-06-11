@@ -1,20 +1,18 @@
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, Pressable, View, Platform } from 'react-native';
 
-
 import { LAYOUT } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { BaseCardProps } from '@/types/ui/card.types';
 
-
-
 const BaseCard: React.FC<BaseCardProps> = memo(
   ({
     children,
     style,
     onPress,
+    onLongPress,
     isLoading = false,
     shadowSize = 'medium',
     includePressAnimation = true,
@@ -25,12 +23,9 @@ const BaseCard: React.FC<BaseCardProps> = memo(
     const colors = useColors();
     const isDarkMode = useIsDarkMode();
 
-
     const { handlePressIn, handlePressOut } = usePressAnimation();
 
-
     const baseStyles = useMemo(() => {
-
       let calculatedShadow = {};
 
       if (shadowSize !== 'none') {
@@ -68,15 +63,12 @@ const BaseCard: React.FC<BaseCardProps> = memo(
       };
     }, [colors.shadow, colors.cardBorder, colors.card, isDarkMode, shadowSize]);
 
-
     const combinedCardStyle = useMemo(
       () => [styles.card, baseStyles.background, baseStyles.shadow, style],
       [baseStyles, style]
     );
 
-
     const combinedContentStyle = useMemo(() => [styles.content, contentStyle], [contentStyle]);
-
 
     if (isLoading) {
       return (
@@ -86,15 +78,13 @@ const BaseCard: React.FC<BaseCardProps> = memo(
       );
     }
 
-
-    if (!onPress) {
+    if (!onPress && !onLongPress) {
       return (
         <View style={combinedCardStyle}>
           <View style={combinedContentStyle}>{children}</View>
         </View>
       );
     }
-
 
     return (
       <Pressable
@@ -110,6 +100,7 @@ const BaseCard: React.FC<BaseCardProps> = memo(
           disabled && { opacity: LAYOUT.OPACITY.MEDIUM },
         ]}
         onPress={onPress}
+        onLongPress={onLongPress}
         onPressIn={includePressAnimation ? handlePressIn : undefined}
         onPressOut={includePressAnimation ? handlePressOut : undefined}
       >
@@ -137,7 +128,6 @@ const styles = StyleSheet.create({
     }),
   },
 });
-
 
 BaseCard.displayName = 'BaseCard';
 

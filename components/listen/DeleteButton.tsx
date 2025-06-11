@@ -4,9 +4,9 @@ import { StyleSheet, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
-import { useColors } from '@/hooks/theme/useColors';
-import { mediumFeedback } from '@/utils/haptics';
 import { usePressAnimation } from '@/hooks/animations';
+import { useColors } from '@/hooks/theme/useColors';
+import { selectionFeedback } from '@/utils/haptics';
 
 interface DeleteButtonProps {
   onPress: () => void;
@@ -22,7 +22,7 @@ const DeleteButton: React.FC<DeleteButtonProps> = ({ onPress, disabled = false }
   const handlePress = React.useCallback(() => {
     if (disabled) return;
 
-    mediumFeedback();
+    selectionFeedback();
     onPress();
   }, [disabled, onPress]);
 

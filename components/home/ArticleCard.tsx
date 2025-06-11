@@ -20,6 +20,7 @@ interface ArticleCardProps {
   title: string;
   author: string;
   onPress?: () => void;
+  onLongPress?: () => void;
   active?: boolean;
   editMode?: boolean;
   onDelete?: () => void;
@@ -35,6 +36,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   title,
   author,
   onPress,
+  onLongPress,
   active = false,
   editMode = false,
   onDelete,
@@ -121,6 +123,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
           shadowSize={active ? 'medium' : 'small'}
           style={[styles.card, activeCardStyle]}
           onPress={editMode ? undefined : onPress}
+          onLongPress={editMode ? undefined : onLongPress}
         >
           <View style={styles.cardContent}>
             <View style={styles.textContent}>
@@ -138,14 +141,18 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
               </ThemedText>
             </View>
 
-            {/* Play Button - shows when not in edit mode */}
-            {!editMode && onPlayPress && (
+            {/* Play Button - always reserve space when not in edit mode */}
+            {!editMode && (
               <View style={styles.playButtonContainer}>
-                <PlayButton
-                  onPress={onPlayPress}
-                  isPlaying={isPlaying}
-                  isLoading={isLoadingAudio}
-                />
+                {onPlayPress ? (
+                  <PlayButton
+                    onPress={onPlayPress}
+                    isPlaying={isPlaying}
+                    isLoading={isLoadingAudio}
+                  />
+                ) : (
+                  <View style={styles.playButtonPlaceholder} />
+                )}
               </View>
             )}
           </View>
@@ -186,6 +193,10 @@ const styles = StyleSheet.create({
   },
   playButtonContainer: {
     marginLeft: LAYOUT.SPACING.SMALL,
+  },
+  playButtonPlaceholder: {
+    height: MIN_TOUCH_TARGET.MEDIUM,
+    width: MIN_TOUCH_TARGET.MEDIUM,
   },
   dragHandleContainer: {
     alignItems: 'center',

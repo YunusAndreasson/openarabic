@@ -14,6 +14,8 @@ export interface BaseCardProps extends BaseAnimatedStyleProps {
   children?: React.ReactNode;
   /** Optional callback when card is pressed */
   onPress?: () => void;
+  /** Optional callback when card is long pressed */
+  onLongPress?: () => void;
   /** Shadow size for the card */
   shadowSize?: 'large' | 'medium' | 'none' | 'small';
   /** Whether to include press animation */

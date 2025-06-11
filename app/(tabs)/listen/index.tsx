@@ -31,7 +31,7 @@ import { setCustomOrder, removeFromCustomOrder } from '@/store/listenSlice';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import { handleError } from '@/utils/errorHandling';
-import { mediumFeedback, lightFeedback } from '@/utils/haptics';
+import { selectionFeedback } from '@/utils/haptics';
 
 type ReadingListItem = Tables<'reading_list'> & {
   articles: Article & {
@@ -65,6 +65,15 @@ const styles = StyleSheet.create({
   noAudioText: {
     textAlign: 'center',
   },
+  footerNote: {
+    alignItems: 'center',
+    paddingTop: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  footerNoteText: {
+    textAlign: 'center',
+    opacity: 0.3,
+  },
 });
 
 // Define a constant for item height calculation
@@ -96,6 +105,9 @@ const ListenListItem = memo(
     // Check if this article has audio available
     const hasAudio = !!item.articles?.audio_url;
 
+    // Determine if card should play on tap
+    const shouldPlayOnTap = hasAudio && !showPlayerCard && !editMode;
+
     return (
       <ArticleCard
         active={isActive}
@@ -103,9 +115,12 @@ const ListenListItem = memo(
         title={item.articles?.title || 'Untitled'}
         editMode={editMode}
         isBeingDragged={_isBeingDragged}
-        onPress={() => onPress(item.article_id)}
+        onPress={
+          shouldPlayOnTap ? () => onPlayPress(item.article_id) : () => onPress(item.article_id)
+        }
+        onLongPress={() => onPress(item.article_id)}
         onDelete={() => onDelete(item.article_id)}
-        // Hide play buttons when NowPlayingCard is visible to avoid control conflicts
+        // Keep play button visible for visual clarity
         onPlayPress={hasAudio && !showPlayerCard ? () => onPlayPress(item.article_id) : undefined}
         isPlaying={false} // Never show as playing - NowPlayingCard handles playback state
         dragHandleProps={{
@@ -319,11 +334,13 @@ export default function ListenScreen(): JSX.Element {
     if (isStartingPlayback) return;
 
     if (isCurrentlyPlaying && playbackMode === 'all') {
+      selectionFeedback();
       await actions.stopPlayback();
       setPlaybackMode('none');
       setIsStartingPlayback(false);
     } else if (sortedEnhancedTracks.length) {
       try {
+        selectionFeedback();
         // Set starting state immediately for instant UI feedback
         setIsStartingPlayback(true);
         setPlaybackMode('all');
@@ -364,7 +381,7 @@ export default function ListenScreen(): JSX.Element {
       if (!user?.id) return;
 
       try {
-        mediumFeedback();
+        selectionFeedback();
 
         // Remove from reading list
         await readingListService.removeFromReadingList(user.id, articleId);
@@ -394,6 +411,7 @@ export default function ListenScreen(): JSX.Element {
 
       // If this article is already playing, pause it
       if (isCurrentlyPlaying && parseInt(metadata.articleId || '0', 10) === articleId) {
+        selectionFeedback();
         await actions.stopPlayback();
         setPlaybackMode('none');
         setIsStartingPlayback(false);
@@ -405,6 +423,7 @@ export default function ListenScreen(): JSX.Element {
 
       if (articleIndex !== -1 && sortedEnhancedTracks.length) {
         try {
+          selectionFeedback();
           // Set starting state immediately for instant UI feedback
           setIsStartingPlayback(true);
           setPlaybackMode('all');
@@ -432,7 +451,7 @@ export default function ListenScreen(): JSX.Element {
   // Handle drag end for reordering
   const handleDragEnd = useCallback(
     ({ data }: { data: ReadingListItem[] }) => {
-      lightFeedback();
+      selectionFeedback();
 
       // Extract the new order of article IDs
       const newOrder = data.map(item => item.article_id);
@@ -492,13 +511,10 @@ export default function ListenScreen(): JSX.Element {
   // Check if we have any articles with audio available
   const hasAudioArticles = sortedEnhancedTracks.length > 0;
 
-  // Check if player should be visible (either starting or actually playing)
+  // Check if player should be visible (only when actually playing, not during startup)
   const shouldShowPlayer = useMemo(() => {
-    return (
-      (isStartingPlayback && !!currentArticle) ||
-      (audioState === AUDIO_STATES.PLAYING && !!currentArticle)
-    );
-  }, [isStartingPlayback, audioState, currentArticle]);
+    return audioState === AUDIO_STATES.PLAYING && !!currentArticle;
+  }, [audioState, currentArticle]);
 
   // Since data is preloaded, only show empty state when we definitively have no articles
   // and we've waited long enough to prevent flashing
@@ -608,6 +624,15 @@ export default function ListenScreen(): JSX.Element {
                 />
               ) : null
             }
+            ListFooterComponent={
+              hasArticles ? (
+                <View style={styles.footerNote}>
+                  <ThemedText style={styles.footerNoteText} type="caption" variant="secondary">
+                    Long press to open article for reading
+                  </ThemedText>
+                </View>
+              ) : null
+            }
           />
         ) : (
           // Use FlashList in normal mode
@@ -647,6 +672,15 @@ export default function ListenScreen(): JSX.Element {
               ) : null
             }
             ListHeaderComponent={null}
+            ListFooterComponent={
+              hasArticles ? (
+                <View style={styles.footerNote}>
+                  <ThemedText style={styles.footerNoteText} type="caption" variant="secondary">
+                    Long press to open article for reading
+                  </ThemedText>
+                </View>
+              ) : null
+            }
             overrideItemLayout={layout => {
               layout.size = ITEM_HEIGHT;
             }}
@@ -677,17 +711,17 @@ export default function ListenScreen(): JSX.Element {
         />
       )}
 
-      {/* Now Playing Card - shows when audio is playing with integrated controls */}
+      {/* Now Playing Card - shows when starting playback or playing */}
       <NowPlayingCard
         article={currentArticle}
         duration={isStartingPlayback ? 0 : duration * 1000}
         isTimerActive={sleepTimer.state.isActive}
-        isVisible={shouldShowPlayer}
+        isVisible={shouldShowPlayer || (isStartingPlayback && !!currentArticle)}
         progress={isStartingPlayback ? 0 : position * 1000}
         showTimerButton={true}
         onPress={handleNowPlayingPress}
         onStop={() => {
-          lightFeedback();
+          selectionFeedback();
           if (isStartingPlayback) {
             // If still starting, allow canceling
             setIsStartingPlayback(false);
@@ -696,7 +730,7 @@ export default function ListenScreen(): JSX.Element {
           setPlaybackMode('none');
         }}
         onTimerPress={() => {
-          mediumFeedback();
+          selectionFeedback();
           setShowSleepTimer(true);
         }}
       />

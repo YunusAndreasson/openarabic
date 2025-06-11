@@ -14,7 +14,7 @@ import type {
   ButtonSize,
   ButtonTextWeight,
 } from '@/types/ui/button.types';
-import { lightFeedback } from '@/utils/haptics';
+import { selectionFeedback } from '@/utils/haptics';
 
 import { ThemedText } from './ThemedText';
 
@@ -141,7 +141,7 @@ function ThemedButtonComponent({
 
   const handlePress = React.useCallback(
     (event: GestureResponderEvent) => {
-      lightFeedback();
+      selectionFeedback();
       if (onPress && !disabled && !loading) {
         onPress(event);
       }
