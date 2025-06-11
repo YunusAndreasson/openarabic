@@ -20,8 +20,11 @@ export const authorsService = {
   async getAuthorsByCategory(categoryId: number): Promise<Tables<'authors'>[]> {
     const { data, error } = await supabase
       .from('articles')
-      .select('author:authors(id, name)')
-      .eq('category_id', categoryId);
+      .select('author:authors!inner(id, name)', {
+        distinct: 'author_id',
+      })
+      .eq('category_id', categoryId)
+      .order('name', { foreignTable: 'author' });
 
     if (error) {
       await handleError(new Error(error.message), {
@@ -30,14 +33,8 @@ export const authorsService = {
       throw error;
     }
 
-    const map = new Map<number, Tables<'authors'>>();
-    (data || []).forEach(item => {
-      const author = (item as any).author as Tables<'authors'> | null;
-      if (author) {
-        map.set(author.id, author);
-      }
-    });
-
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+    return (data || [])
+      .map(item => (item as any).author as Tables<'authors'>)
+      .sort((a, b) => a.name.localeCompare(b.name));
   },
 };
