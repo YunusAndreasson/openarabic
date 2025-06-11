@@ -38,7 +38,7 @@ interface SettingLabelProps {
 
 const SettingLabel = memo(({ icon, text, iconColor }: SettingLabelProps) => {
   const colors = useColors();
-  const defaultIconColor = iconColor || colors.textSecondary;
+  const defaultIconColor = iconColor || colors.secondaryText;
 
   return (
     <View style={styles.settingLabelContainer}>

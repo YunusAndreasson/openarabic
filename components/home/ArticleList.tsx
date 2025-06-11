@@ -107,7 +107,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
           refreshing={isRefreshing}
           tintColor={colors.tint}
           title="Articles selected just for you"
-          titleColor={colors.textSecondary}
+          titleColor={colors.secondaryText}
           progressViewOffset={
             progressViewOffset !== undefined
               ? progressViewOffset
@@ -121,7 +121,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
         handleRefreshWithTransition,
         colors.tint,
         colors.background,
-        colors.textSecondary,
+        colors.secondaryText,
         headerHeight,
         progressViewOffset,
       ]

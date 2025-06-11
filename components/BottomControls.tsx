@@ -98,7 +98,7 @@ const BottomControls = memo<BottomControlsProps>(
                 onPress={onTimerPress}
               >
                 <Ionicons
-                  color={isTimerActive ? colors.background : colors.textSecondary}
+                  color={isTimerActive ? colors.background : colors.secondaryText}
                   name={isTimerActive ? 'timer' : 'timer-outline'}
                   size={16}
                 />

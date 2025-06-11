@@ -86,7 +86,7 @@ const TouchableIcon: React.FC<TouchableIconProps> = memo(
         ]}
         onPress={handlePress}
       >
-        <Ionicons color={color || colors.textSecondary} name={name} size={size} />
+        <Ionicons color={color || colors.secondaryText} name={name} size={size} />
       </TouchableOpacity>
     );
   }

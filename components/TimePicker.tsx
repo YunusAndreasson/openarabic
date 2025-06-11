@@ -121,7 +121,7 @@ export const TimePicker = memo(
                 {title}
               </ThemedText>
               <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                <Ionicons color={colors.textSecondary} name="close" size={24} />
+                <Ionicons color={colors.secondaryText} name="close" size={24} />
               </TouchableOpacity>
             </View>
 
