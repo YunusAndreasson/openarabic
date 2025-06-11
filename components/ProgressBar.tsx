@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect, useRef, memo } from 'react';
 import type { ViewStyle, StyleProp } from 'react-native';
 import { StyleSheet, View } from 'react-native';
-import Animated, { cancelAnimation, useAnimatedProps } from 'react-native-reanimated';
+import Animated, { cancelAnimation } from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
 import { useProgressAnimation } from '@/hooks/animations';
@@ -123,12 +123,8 @@ function ProgressBarComponent({
     [height, bgColor, style, animatedStyle, progressFillColor, fillStyle]
   );
 
-  // Animated props for progress value
-  const animatedProps = useAnimatedProps(() => ({}));
-
   return (
     <Animated.View
-      animatedProps={animatedProps}
       style={styles.container as StyleProp<ViewStyle>}
     >
       <View style={styles.fillContainer}>

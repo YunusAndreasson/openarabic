@@ -7,6 +7,7 @@ import {
   withTiming,
   withSequence,
   runOnUI,
+  useWorkletCallback,
   type SharedValue,
 } from 'react-native-reanimated';
 
@@ -34,24 +35,30 @@ export const useToggleAnimation = (
   const toggleScale = useSharedValue(1);
 
   // Create animation worklet that can run on UI thread
-  const animateToggle = (toActive: boolean, distance: number) => {
-    'worklet';
+  const animateToggle = useWorkletCallback(
+    (toActive: boolean, distance: number) => {
+      'worklet';
 
-    // Use spring for smoother, more natural movement
-    translateX.value = withSpring(toActive ? distance : 0, SPRING_CONFIG.TOGGLE);
+      // Use spring for smoother, more natural movement
+      translateX.value = withSpring(
+        toActive ? distance : 0,
+        SPRING_CONFIG.TOGGLE
+      );
 
-    // Add subtle scale animation for better feedback
-    toggleScale.value = withSequence(
-      withTiming(0.95, {
-        duration: TIMING_CONFIG.FAST.duration,
-        easing: TIMING_CONFIG.FAST.easing,
-      }),
-      withTiming(1, {
-        duration: TIMING_CONFIG.FAST.duration,
-        easing: TIMING_CONFIG.FAST.easing,
-      })
-    );
-  };
+      // Add subtle scale animation for better feedback
+      toggleScale.value = withSequence(
+        withTiming(0.95, {
+          duration: TIMING_CONFIG.FAST.duration,
+          easing: TIMING_CONFIG.FAST.easing,
+        }),
+        withTiming(1, {
+          duration: TIMING_CONFIG.FAST.duration,
+          easing: TIMING_CONFIG.FAST.easing,
+        })
+      );
+    },
+    [translateX, toggleScale]
+  );
 
   // Function to immediately set toggle state without animation
   const forceAnimateToInitialState = useCallback(
