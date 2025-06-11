@@ -1,7 +1,7 @@
 {
   "name": "OpenArabic",
   "main": "expo-router/entry",
-  "version": "1446.10.74",
+  "version": "1446.12.16",
   "scripts": {
     "postinstall": "patch-package",
     "doctor": "npx expo-doctor",
@@ -13,7 +13,7 @@
     "types:db": "supabase gen types typescript --project-id kkmnzbeugdoajtzfjkxg > types/database.types.ts",
     "validate": "tsc --noEmit && yarn lint",
     "bump": "node utils/bumpVersion.js",
-    "release": "yarn bump && git add package.json && git commit -m \"chore: bump version\" && VERSION=$(node -p \"require('./package.json').version\") && git tag v$VERSION && git push && git push origin v$VERSION"
+    "release": "yarn bump && git add package.json app.json && git commit -m \"chore: bump version to $(node -p \"require('./package.json').version\")\" && VERSION=$(node -p \"require('./package.json').version\") && git tag v$VERSION && git push && git push origin v$VERSION"
   },
   "dependencies": {
     "@babel/runtime": "^7.27.6",
