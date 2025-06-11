@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 export interface LoadingState {
   isLoading: boolean;
@@ -9,7 +9,6 @@ export interface LoadingState {
   reset: () => void;
 }
 
-
 /**
  * Hook for managing loading states with simplified control.
  *
@@ -19,6 +18,12 @@ export interface LoadingState {
 export const useLoadingState = (initialLoadingState = true): LoadingState => {
   const [isLoading, setIsLoading] = useState(initialLoadingState);
   const [dataLoaded, setDataLoadedState] = useState(false);
+  const initialRef = useRef(initialLoadingState);
+
+  // Keep the initial loading state ref in sync if the prop changes
+  useEffect(() => {
+    initialRef.current = initialLoadingState;
+  }, [initialLoadingState]);
 
   // Callback helpers to update loading state
   const startLoading = useCallback(() => {
@@ -38,8 +43,8 @@ export const useLoadingState = (initialLoadingState = true): LoadingState => {
 
   const reset = useCallback(() => {
     setDataLoadedState(false);
-    setIsLoading(initialLoadingState);
-  }, [initialLoadingState]);
+    setIsLoading(initialRef.current);
+  }, []);
 
   return {
     isLoading,
