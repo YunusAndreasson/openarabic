@@ -34,10 +34,10 @@ const RepeatButton: React.FC<RepeatButtonProps> = ({ enabled, onToggle }) => {
     }
   }, [enabled, startRotation]);
 
-  const handlePress = () => {
+  const handlePress = React.useCallback(() => {
     selectionFeedback();
     onToggle();
-  };
+  }, [onToggle]);
 
   // Memoize background colors to prevent unnecessary re-renders
   const containerStyle = useMemo(

@@ -42,12 +42,12 @@ const TouchableIcon: React.FC<TouchableIconProps> = memo(
   }) => {
     const colors = useColors();
 
-    const handlePress = () => {
+    const handlePress = React.useCallback(() => {
       if (hapticFeedback) {
         lightFeedback();
       }
       onPress();
-    };
+    }, [hapticFeedback, onPress]);
 
     const touchTargetSize = (() => {
       switch (touchSize) {

@@ -16,7 +16,7 @@ const DeleteButton: React.FC<DeleteButtonProps> = ({ onPress, disabled = false }
   const colors = useColors();
   const scale = useSharedValue(1);
 
-  const handlePress = () => {
+  const handlePress = React.useCallback(() => {
     if (disabled) return;
 
     mediumFeedback();
@@ -27,7 +27,7 @@ const DeleteButton: React.FC<DeleteButtonProps> = ({ onPress, disabled = false }
     });
 
     onPress();
-  };
+  }, [disabled, onPress, scale]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
