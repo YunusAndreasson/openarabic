@@ -11,6 +11,7 @@ import {
 } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import type { ArticleCardProps } from '@/types/ui/card.types';
 import { withOpacity } from '@/utils/colorUtils';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
@@ -18,7 +19,6 @@ import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';
 import Pill from './Pill';
 import { ThemedText } from './ThemedText';
-import type { ArticleCardProps } from '@/types/ui/card.types';
 
 const GOLDEN_RATIO_ADJUSTED = 1.5;
 

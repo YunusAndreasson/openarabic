@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { memo, useState, useEffect } from 'react';
+import type { ViewStyle } from 'react-native';
 import {
   StyleSheet,
   View,
@@ -9,11 +10,11 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { lightFeedback, selectionFeedback } from '@/utils/haptics';
 
@@ -95,15 +96,7 @@ const SleepTimerComponent = ({
       translateOut();
       scaleOut();
     }
-  }, [
-    isVisible,
-    fadeBackdropIn,
-    fadeBackdropOut,
-    translateIn,
-    translateOut,
-    scaleIn,
-    scaleOut,
-  ]);
+  }, [isVisible, fadeBackdropIn, fadeBackdropOut, translateIn, translateOut, scaleIn, scaleOut]);
 
   // Animated styles from hooks
   const modalStyle = [translateStyle, scaleStyle];
@@ -138,7 +131,11 @@ const SleepTimerComponent = ({
     >
       <TouchableWithoutFeedback onPress={onClose}>
         <Animated.View
-          style={[styles.backdrop, backdropStyle, { backgroundColor: colors.backdropOverlay }]}
+          style={[
+            styles.backdrop,
+            backdropStyle as ViewStyle,
+            { backgroundColor: colors.backdropOverlay },
+          ]}
         >
           <Animated.View pointerEvents="box-none" style={[styles.modalContainer, modalStyle]}>
             <View

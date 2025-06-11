@@ -1,15 +1,16 @@
 import React, { memo, useMemo } from 'react';
+import type { ViewStyle } from 'react-native';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 import { getStrugglingWordsCount } from '@/utils/wordClassification';
 
 import { MemoryCapacityGauge } from './charts/MemoryCapacityGauge';
-import { usePressAnimation } from '@/hooks/animations';
 
 interface VocabularyStatCardsProps {
   masteredWords?: number;
@@ -160,7 +161,11 @@ export const VocabularyStatCards = memo(
             onPressOut={handlePressOut}
           >
             <Animated.View
-              style={[styles.categoryCard, { backgroundColor: config.bgColor }, animatedStyle]}
+              style={[
+                styles.categoryCard,
+                { backgroundColor: config.bgColor },
+                animatedStyle as ViewStyle,
+              ]}
             >
               {/* Number Badge */}
               <View style={[styles.numberBadge, { backgroundColor: config.iconColor }]}>

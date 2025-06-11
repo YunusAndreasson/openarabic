@@ -4,9 +4,8 @@ import type { ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useSharedValue } from 'react-native-reanimated';
 
-import { useTransformAnimation } from '@/hooks/animations';
-
 import { WORD_AREA_MIN_HEIGHT, useScreenWidth } from '@/constants/layout';
+import { useTransformAnimation } from '@/hooks/animations';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 

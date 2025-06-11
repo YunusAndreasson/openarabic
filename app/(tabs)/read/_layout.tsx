@@ -24,16 +24,16 @@ function getFilterTitle(params: FilterParams): string {
   return 'Filter';
 }
 
+const FilterHeaderRight = ({ categoryId }: { categoryId: number }) => {
+  const handlePress = useCallback(() => {
+    router.push(`/(tabs)/read/filterModal?categoryId=${categoryId}`);
+  }, [categoryId]);
+
+  return <FilterButton onPress={handlePress} />;
+};
+
 export default function ReadLayout() {
   const colors = useColors();
-
-  const FilterHeaderRight = ({ categoryId }: { categoryId: number }) => {
-    const handlePress = useCallback(() => {
-      router.push(`/(tabs)/read/filterModal?categoryId=${categoryId}`);
-    }, [categoryId, router]);
-
-    return <FilterButton onPress={handlePress} />;
-  };
 
   return (
     <Stack>

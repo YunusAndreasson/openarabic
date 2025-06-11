@@ -4,7 +4,6 @@ import { useContext } from 'react';
 
 import { AuthContext } from '@/components/providers/AuthProvider';
 import type { AuthResult } from '@/types/auth.types';
-import { handleError } from '@/utils/errorHandling';
 
 export function useAuth(): AuthResult {
   const context = useContext(AuthContext);

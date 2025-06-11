@@ -5,7 +5,6 @@ import type { ColorValue } from 'react-native';
 import { handleError } from '@/utils/errorHandling';
 
 import { useColors } from './useColors';
-import { useIsDarkMode } from './useThemeDetection';
 
 /**
  * Centralized system UI theme management
@@ -14,7 +13,6 @@ import { useIsDarkMode } from './useThemeDetection';
  */
 export function useSystemUITheme(): void {
   const colors = useColors();
-  const isDark = useIsDarkMode();
 
   useEffect(() => {
     const updateSystemUI = async () => {

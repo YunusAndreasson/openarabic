@@ -4,7 +4,6 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-
 import type { LegendItemProps } from '@/types/ui/chart.types';
 
 interface ChartFooterProps {

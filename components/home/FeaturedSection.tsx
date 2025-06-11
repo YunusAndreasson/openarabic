@@ -42,6 +42,7 @@ const FeaturedSection: React.FC<FeaturedSectionProps> = ({ article, onPress }) =
   return (
     <View style={styles.container}>
       <ArticleCard
+        variant="article"
         author={article.author?.name || 'Author'}
         category="RECOMMENDED"
         categoryForDisplay={article.category?.name || 'General'}

@@ -86,7 +86,7 @@ export default function ArticlesScreen(): JSX.Element {
       return acc;
     }, {});
 
-    return categoriesData.reduce<Array<Category & { count: number }>>(
+    return categoriesData.reduce<(Category & { count: number })[]>(
       (acc, category) => {
         if (category?.id && category.id > 0 && category.name) {
           const count = counts[category.id] || 0;

@@ -3,9 +3,9 @@ import React, { createRef, useEffect, useRef, useMemo } from 'react';
 import type { ViewStyle, StyleProp } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { useOpacityAnimation } from '@/hooks/animations';
 
 import { LAYOUT, FONTS } from '@/constants/layout';
+import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
@@ -67,7 +67,7 @@ function ArticleSentenceComponent({
 
   useEffect(() => {
     if (isHighlighted) {
-      startAnimation(() => reverseAnimation());
+      startAnimation(0, reverseAnimation);
     }
   }, [isHighlighted, startAnimation, reverseAnimation]);
 
@@ -123,7 +123,7 @@ function ArticleSentenceComponent({
 
   return (
     <View style={[styles.container, containerStyle]}>
-      <Animated.View style={backgroundStyle} />
+      <Animated.View style={backgroundStyle as any} />
       {settings.showEnglish && sentence.english && (
         <Animated.Text style={englishTextStyle}>{sentence.english}</Animated.Text>
       )}

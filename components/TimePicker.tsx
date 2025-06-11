@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { memo, useState, useCallback, useMemo, useEffect } from 'react';
+import type { ViewStyle } from 'react-native';
 import {
   StyleSheet,
   View,
@@ -9,9 +10,9 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 
 import { LAYOUT } from '@/constants/layout';
+import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectionFeedback } from '@/utils/haptics';
 
@@ -84,15 +85,7 @@ export const TimePicker = memo(
         translateOut();
         scaleOut();
       }
-    }, [
-      isVisible,
-      fadeBackdropIn,
-      fadeBackdropOut,
-      translateIn,
-      translateOut,
-      scaleIn,
-      scaleOut,
-    ]);
+    }, [isVisible, fadeBackdropIn, fadeBackdropOut, translateIn, translateOut, scaleIn, scaleOut]);
 
     const modalStyle = [translateStyle, scaleStyle];
 
@@ -122,10 +115,7 @@ export const TimePicker = memo(
 
     const modalContent = useMemo(
       () => (
-        <Animated.View
-          pointerEvents="box-none"
-          style={[styles.modalContainer, modalStyle]}
-        >
+        <Animated.View pointerEvents="box-none" style={[styles.modalContainer, modalStyle]}>
           <View
             pointerEvents="auto"
             style={[styles.modal, { backgroundColor: colors.card, shadowColor: colors.shadow }]}
@@ -237,7 +227,11 @@ export const TimePicker = memo(
       >
         <TouchableWithoutFeedback onPress={onClose}>
           <Animated.View
-            style={[styles.backdrop, backdropStyle, { backgroundColor: colors.modalOverlay }]}
+            style={[
+              styles.backdrop,
+              backdropStyle as ViewStyle,
+              { backgroundColor: colors.modalOverlay },
+            ]}
           >
             {modalContent}
           </Animated.View>

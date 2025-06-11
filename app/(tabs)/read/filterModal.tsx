@@ -6,7 +6,6 @@ import React from 'react';
 import ErrorState from '@/components/ErrorState';
 import FilterModal from '@/components/FilterModal';
 import { authorsService } from '@/services/authors';
-import type { Tables } from '@/types/database.types';
 
 export default function FilterModalScreen(): JSX.Element {
   const { categoryId } = useLocalSearchParams<{ categoryId: string }>();

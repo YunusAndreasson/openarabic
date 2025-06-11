@@ -6,20 +6,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import React, { memo, useEffect } from 'react';
 import { StyleSheet, View, TouchableOpacity, Modal, Pressable } from 'react-native';
-import { PanGestureHandler } from 'react-native-gesture-handler';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   FadeIn,
   SlideInDown,
   FadeOut,
   SlideOutDown,
-  useAnimatedGestureHandler,
   runOnJS,
 } from 'react-native-reanimated';
 
-import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
-
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { withOpacity } from '@/utils/colorUtils';
@@ -49,11 +47,7 @@ const SessionTypeModal = memo(
       duration: 200,
     });
 
-    const {
-      opacity,
-      animatedStyle: opacityStyle,
-      setOpacity,
-    } = useOpacityAnimation({
+    const { animatedStyle: opacityStyle, setOpacity } = useOpacityAnimation({
       initialOpacity: 1,
       duration: 200,
     });
@@ -74,16 +68,16 @@ const SessionTypeModal = memo(
     };
 
     // Gesture handler for swipe down to dismiss
-    const gestureHandler = useAnimatedGestureHandler({
-      onActive: event => {
+    const gestureHandler = Gesture.Pan()
+      .onUpdate(event => {
         // Only allow downward swipes
         if (event.translationY > 0) {
           translateY.value = event.translationY;
           // Fade out as user swipes down
           setOpacity(Math.max(0.3, 1 - event.translationY / 200));
         }
-      },
-      onEnd: event => {
+      })
+      .onEnd(event => {
         const shouldDismiss = event.translationY > 100 || event.velocityY > 500;
 
         if (shouldDismiss) {
@@ -95,8 +89,7 @@ const SessionTypeModal = memo(
           resetTranslate();
           setOpacity(1);
         }
-      },
-    });
+      });
 
     // Animated style for modal container
     const animatedModalStyle = [translateStyle, opacityStyle];
@@ -126,12 +119,12 @@ const SessionTypeModal = memo(
           {/* Backdrop to close */}
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
-          <PanGestureHandler key={`gesture-${visible}`} onGestureEvent={gestureHandler}>
+          <GestureDetector gesture={gestureHandler}>
             <Animated.View
               style={[
                 styles.modalContainer,
                 { backgroundColor: colors.background },
-                animatedModalStyle,
+                animatedModalStyle as any,
               ]}
               entering={SlideInDown.duration(250).damping(15)}
               exiting={SlideOutDown.duration(200)}
@@ -153,7 +146,12 @@ const SessionTypeModal = memo(
                   style={[styles.optionCard, { backgroundColor: colors.card }]}
                   onPress={() => handleOptionPress(onStartVisual)}
                 >
-                  <View style={[styles.iconContainer, { backgroundColor: withOpacity(colors.tint, 0.08) }]}>
+                  <View
+                    style={[
+                      styles.iconContainer,
+                      { backgroundColor: withOpacity(colors.tint, 0.08) },
+                    ]}
+                  >
                     <Ionicons name="eye" size={24} color={colors.tint} />
                   </View>
                   <View style={styles.optionContent}>
@@ -175,7 +173,12 @@ const SessionTypeModal = memo(
                   style={[styles.optionCard, { backgroundColor: colors.card }]}
                   onPress={() => handleOptionPress(onStartAudio)}
                 >
-                  <View style={[styles.iconContainer, { backgroundColor: withOpacity(colors.tint, 0.08) }]}>
+                  <View
+                    style={[
+                      styles.iconContainer,
+                      { backgroundColor: withOpacity(colors.tint, 0.08) },
+                    ]}
+                  >
                     <Ionicons name="ear" size={24} color={colors.tint} />
                   </View>
                   <View style={styles.optionContent}>
@@ -193,7 +196,7 @@ const SessionTypeModal = memo(
                 </TouchableOpacity>
               </View>
             </Animated.View>
-          </PanGestureHandler>
+          </GestureDetector>
         </Animated.View>
       </Modal>
     );

@@ -13,8 +13,8 @@ import {
   getEnhancedOpacity,
   MIN_TOUCH_TARGET,
 } from '@/constants/layout';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useTransformAnimation } from '@/hooks/animations';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
 interface ArticleCardProps {
   title: string;

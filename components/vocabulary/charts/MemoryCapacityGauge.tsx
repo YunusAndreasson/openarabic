@@ -9,8 +9,8 @@ import { BaseChart } from '@/components/vocabulary/shared';
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useNavigationWithDebounce } from '@/hooks';
-import { useColors } from '@/hooks/theme/useColors';
 import { usePressAnimation } from '@/hooks/animations';
+import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 
 interface MemoryCapacityGaugeProps {
@@ -32,13 +32,6 @@ const CAPACITY_THRESHOLDS = {
   MODERATE: 50, // Yellow zone - good progress
   CRITICAL: 25, // Orange zone - needs attention
 } as const;
-
-// Enhanced animation configurations
-const SPRING_CONFIG = {
-  damping: 15,
-  stiffness: 150,
-  mass: 1,
-};
 
 export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords = [] }) => {
   const colors = useColors();
@@ -229,7 +222,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
       title=""
       onInfoPress={() => {}}
     >
-      <Animated.View style={animatedPressStyle}>
+      <Animated.View style={animatedPressStyle as any}>
         <View style={styles.gaugeContainer}>
           {/* Info button in top right corner */}
           <TouchableOpacity

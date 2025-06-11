@@ -1,11 +1,12 @@
 import React from 'react';
+import type { ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { MIN_TOUCH_TARGET } from '@/constants/layout';
-import { useColors } from '@/hooks/theme/useColors';
 import { usePressAnimation } from '@/hooks/animations';
+import { useColors } from '@/hooks/theme/useColors';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { toggleEditMode } from '@/store/listenSlice';
 import { selectionFeedback } from '@/utils/haptics';
@@ -38,7 +39,7 @@ const EditModeButton: React.FC<EditModeButtonProps> = ({ onEditModeChange }) => 
         {
           backgroundColor: colors.transparent,
         },
-        animatedStyle,
+        animatedStyle as ViewStyle,
       ]}
       onPress={handlePress}
       onPressIn={handlePressIn}

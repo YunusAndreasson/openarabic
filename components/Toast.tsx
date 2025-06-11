@@ -1,13 +1,11 @@
 import React, { useEffect, useMemo, memo } from 'react';
+import type { ViewStyle } from 'react-native';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LAYOUT } from '@/constants/layout';
-import {
-  useOpacityAnimation,
-  useTransformAnimation,
-} from '@/hooks/animations';
+import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
@@ -209,7 +207,10 @@ export const Toast = memo(
     if (!visible) return null;
 
     return (
-      <Animated.View pointerEvents="none" style={[containerStyle, animatedStyle]}>
+      <Animated.View
+        pointerEvents="none"
+        style={[containerStyle, animatedStyle as unknown as ViewStyle]}
+      >
         <View
           style={[
             styles.toast,

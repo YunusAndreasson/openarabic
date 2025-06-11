@@ -2,8 +2,8 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import { Colors } from '@/constants/Colors';
-import { handleError } from '@/utils/errorHandling';
 import type { ReminderTime } from '@/types/notifications.types';
+import { handleError } from '@/utils/errorHandling';
 
 // Configure notification behavior
 Notifications.setNotificationHandler({

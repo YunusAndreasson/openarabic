@@ -4,8 +4,8 @@ import { useState, useCallback, useRef, useMemo } from 'react';
 
 import { useAuth } from '@/hooks/auth/useAuth';
 import { articlesService } from '@/services/articles';
-import { categoriesService } from '@/services/categories';
 import { authorsService } from '@/services/authors';
+import { categoriesService } from '@/services/categories';
 import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import { handleError } from '@/utils/errorHandling';

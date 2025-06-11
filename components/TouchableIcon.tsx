@@ -5,8 +5,8 @@ import { TouchableOpacity, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
-import { useColors } from '@/hooks/theme/useColors';
 import { usePressAnimation } from '@/hooks/animations';
+import { useColors } from '@/hooks/theme/useColors';
 import { lightFeedback } from '@/utils/haptics';
 
 interface TouchableIconProps {
@@ -88,7 +88,7 @@ const TouchableIcon: React.FC<TouchableIconProps> = memo(
             opacity: disabled ? LAYOUT.OPACITY.MEDIUM : 1,
           },
           style,
-          animatedStyle,
+          animatedStyle as ViewStyle,
         ]}
         onPress={handlePress}
         onPressIn={handlePressIn}

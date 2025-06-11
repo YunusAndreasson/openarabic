@@ -5,10 +5,10 @@ import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import type { LegendItemProps } from '@/types/ui/chart.types';
 
 import { CardHeader } from './CardHeader';
 import { ChartFooter } from './ChartFooter';
-import type { LegendItemProps } from '@/types/ui/chart.types';
 
 interface BaseChartProps {
   // Header props

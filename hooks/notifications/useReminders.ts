@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
 import { scheduleReminder, hasPermissions } from '@/services/notificationService';
-import type { ReminderTime } from '@/types/notifications.types';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setReminderTime } from '@/store/settingsSlice';
+import type { ReminderTime } from '@/types/notifications.types';
 import { handleError } from '@/utils/errorHandling';
 
 // import { analytics } from '@/services/analytics';

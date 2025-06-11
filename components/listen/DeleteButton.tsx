@@ -41,7 +41,7 @@ const DeleteButton: React.FC<DeleteButtonProps> = ({ onPress, disabled = false }
       <Animated.View
         style={[
           styles.button,
-          animatedStyle,
+          animatedStyle as any,
           {
             backgroundColor: colors.error, // Using error color from Colors.ts
             opacity: disabled ? 0.5 : 1,

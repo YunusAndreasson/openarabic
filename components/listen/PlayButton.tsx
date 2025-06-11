@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
+import type { ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -56,7 +57,7 @@ const PlayButton: React.FC<PlayButtonProps> = ({
       <Animated.View
         style={[
           styles.button,
-          animatedStyle,
+          animatedStyle as ViewStyle,
           {
             backgroundColor,
             opacity: disabled ? 0.5 : 1,
