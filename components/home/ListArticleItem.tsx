@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import React, { memo } from 'react';
+import React, { memo, useCallback } from 'react';
 
 import type { Article } from '@/types/articles.types';
 
@@ -11,11 +11,13 @@ interface ListArticleItemProps {
 }
 
 const ListArticleItem = memo(({ article, onPress }: ListArticleItemProps): JSX.Element => {
+  const handlePress = useCallback(() => onPress(article), [onPress, article]);
+
   return (
     <ArticleCard
       author={article.author?.name || 'Author'}
       title={article.title}
-      onPress={() => onPress(article)}
+      onPress={handlePress}
     />
   );
 });

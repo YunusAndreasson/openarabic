@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import { memo } from 'react';
+import { memo, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import BaseCard from '@/components/BaseCard';
@@ -84,6 +84,11 @@ const compactCardStyles = StyleSheet.create({
 });
 
 const FilterSection = memo(({ items, onSelect }: FilterSectionProps): JSX.Element => {
+  const handleSelect = useCallback(
+    (id: number, name?: string) => () => onSelect(id, name),
+    [onSelect]
+  );
+
   return (
     <View style={styles.filterSectionContainer}>
       {items.map(item => (
@@ -91,7 +96,7 @@ const FilterSection = memo(({ items, onSelect }: FilterSectionProps): JSX.Elemen
           key={`filter-${item.id}`}
           count={item.count}
           label={item.name}
-          onPress={() => onSelect(item.id, item.name)}
+          onPress={handleSelect(item.id, item.name)}
         />
       ))}
     </View>
