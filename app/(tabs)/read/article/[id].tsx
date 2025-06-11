@@ -173,15 +173,14 @@ export default function ArticleScreen(): JSX.Element {
     [dueWordRootIds, handleRootPress, settings.fontScale]
   );
 
+  const sentenceSettings = useMemo(
+    () => ({ showEnglish: true, fontScale: settings.fontScale }),
+    [settings.fontScale]
+  );
+
   const renderSentenceItem = useCallback(
     (props: { item: Tables<'article_sentences'> }) => {
       const words = getWordsForSentence(props.item.id);
-
-      // Create stable settings object - English is always shown
-      const sentenceSettings = {
-        showEnglish: true,
-        fontScale: settings.fontScale,
-      };
 
       return (
         <ArticleSentence
@@ -205,7 +204,7 @@ export default function ArticleScreen(): JSX.Element {
         />
       );
     },
-    [getWordsForSentence, renderWord, settings.fontScale, colors]
+    [getWordsForSentence, renderWord, colors, sentenceSettings]
   );
 
   return (
