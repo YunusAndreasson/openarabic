@@ -2,12 +2,9 @@ import React, { useCallback, memo, useEffect, useRef, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 import type { ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  runOnJS,
-} from 'react-native-reanimated';
+import Animated, { runOnJS, useSharedValue } from 'react-native-reanimated';
+
+import { useTransformAnimation } from '@/hooks/animations';
 
 import { WORD_AREA_MIN_HEIGHT, useScreenWidth } from '@/constants/layout';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
@@ -60,7 +57,14 @@ const ReviewCard = memo(function ReviewCard({
   opacityStyle,
 }: ReviewCardProps) {
   // Animation values
-  const translateX = useSharedValue(0);
+  const {
+    value: translateX,
+    animatedStyle: swipeContainerStyle,
+    startAnimation: startAnimationToZero,
+  } = useTransformAnimation({
+    type: 'translateX',
+    duration: RESET_CONFIG.duration,
+  });
   const isAnimatingRef = useSharedValue(false);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const screenWidth = useScreenWidth();
@@ -68,12 +72,10 @@ const ReviewCard = memo(function ReviewCard({
 
   // Reset position function with callback
   const resetPosition = useCallback(() => {
-    translateX.value = withTiming(0, RESET_CONFIG, finished => {
-      if (finished) {
-        isAnimatingRef.value = false;
-      }
+    startAnimationToZero(() => {
+      isAnimatingRef.value = false;
     });
-  }, [translateX, isAnimatingRef]);
+  }, [startAnimationToZero, isAnimatingRef]);
 
   // Handle swipe completion
   const handleSwipeComplete = useCallback(
@@ -153,11 +155,6 @@ const ReviewCard = memo(function ReviewCard({
       }
     };
   }, []);
-
-  // Create animated style for the swipe container
-  const swipeContainerStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-  }));
 
   return (
     <GestureDetector gesture={combinedGestures}>
