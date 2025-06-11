@@ -61,10 +61,10 @@ export const listenAudioService = {
       const wordsWithAudio = words.filter(word => word.root?.audio_url && word.root?.audio_url_en);
 
       // Shuffle the array to randomize the order
-      const shuffled = [...wordsWithAudio].sort(() => 0.5 - Math.random());
+      wordsWithAudio.sort(() => 0.5 - Math.random());
 
       // Take limited number of words
-      const selectedWords = shuffled.slice(0, limit);
+      const selectedWords = wordsWithAudio.slice(0, limit);
 
       // Convert to tracks
       return this.generateVocabularyTracks(selectedWords);
