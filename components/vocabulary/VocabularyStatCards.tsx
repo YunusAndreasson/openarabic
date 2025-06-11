@@ -1,5 +1,6 @@
 import React, { memo, useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
@@ -8,6 +9,7 @@ import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 import { getStrugglingWordsCount } from '@/utils/wordClassification';
 
 import { MemoryCapacityGauge } from './charts/MemoryCapacityGauge';
+import { usePressAnimation } from '@/hooks/animations';
 
 interface VocabularyStatCardsProps {
   masteredWords?: number;
@@ -37,6 +39,9 @@ export const VocabularyStatCards = memo(
     studyWords = [],
   }: VocabularyStatCardsProps) => {
     const colors = useColors();
+    const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
+      type: 'card',
+    });
 
     // Validate input data
     const validatedInput = useMemo(
@@ -150,23 +155,28 @@ export const VocabularyStatCards = memo(
           <TouchableOpacity
             key={config.category}
             activeOpacity={0.7}
-            style={[styles.categoryCard, { backgroundColor: config.bgColor }]}
             onPress={onStartReview}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
           >
-            {/* Number Badge */}
-            <View style={[styles.numberBadge, { backgroundColor: config.iconColor }]}>
-              <ThemedText style={[styles.numberText, { color: colors.white }]}>
-                {config.value}
-              </ThemedText>
-            </View>
+            <Animated.View
+              style={[styles.categoryCard, { backgroundColor: config.bgColor }, animatedStyle]}
+            >
+              {/* Number Badge */}
+              <View style={[styles.numberBadge, { backgroundColor: config.iconColor }]}>
+                <ThemedText style={[styles.numberText, { color: colors.white }]}>
+                  {config.value}
+                </ThemedText>
+              </View>
 
-            {/* Content */}
-            <View style={styles.categoryContent}>
-              <ThemedText style={styles.categoryLabel}>{config.label}</ThemedText>
-              <ThemedText style={styles.categoryDescription} type="caption" variant="secondary">
-                {config.description}
-              </ThemedText>
-            </View>
+              {/* Content */}
+              <View style={styles.categoryContent}>
+                <ThemedText style={styles.categoryLabel}>{config.label}</ThemedText>
+                <ThemedText style={styles.categoryDescription} type="caption" variant="secondary">
+                  {config.description}
+                </ThemedText>
+              </View>
+            </Animated.View>
           </TouchableOpacity>
         ))}
       </View>
