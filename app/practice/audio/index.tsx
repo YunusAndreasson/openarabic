@@ -261,7 +261,7 @@ export default function ListenScreen(): JSX.Element {
 
     // Invalidate relevant queries
     if (user?.id) {
-      queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-stats'] });
     }
 
     // For non-completion scenarios, navigate away immediately

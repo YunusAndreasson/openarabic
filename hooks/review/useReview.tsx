@@ -10,6 +10,7 @@ import { useOpacityAnimation } from '@/hooks/animations';
 import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useFSRS } from '@/hooks/vocabulary/useFSRS';
+import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import { useWordSizing } from '@/hooks/vocabulary/useWordSizing';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import type { SessionMetrics, WordConfidence } from '@/types/review.types';
@@ -521,12 +522,12 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     invalidateQueries();
 
     if (user?.id) {
-      queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
-      queryClient.invalidateQueries({ queryKey: ['studyWords', user.id] });
-      queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
-      queryClient.removeQueries({ queryKey: ['dueWords', user.id] });
-      queryClient.removeQueries({ queryKey: ['studyWords', user.id] });
-      queryClient.removeQueries({ queryKey: ['vocabularyStats'] });
+      queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
+      queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) });
+      queryClient.invalidateQueries({ queryKey: ['vocabulary-stats'] });
+      queryClient.removeQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
+      queryClient.removeQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) });
+      queryClient.removeQueries({ queryKey: ['vocabulary-stats'] });
     }
 
     setTimeout(() => {

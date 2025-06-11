@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { articlesService } from '@/services/articles';
 import { readingListService } from '@/services/readingList';
-import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
+import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import type { Article } from '@/types/articles.types';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 
@@ -71,7 +71,7 @@ export const useArticleData = (
     refetch: refetchStudyWords,
     isLoading: isLoadingStudyWords,
   } = useQuery<StudyWord[]>({
-    queryKey: ['studyWords', userId],
+    queryKey: userId ? FSRS_QUERY_KEYS.all(userId) : ['fsrs-words'],
     queryFn: async () => {
       if (!userId) return [];
       return studyWordsFSRSService.getFSRSWords(userId);

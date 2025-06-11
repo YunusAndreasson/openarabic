@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import type { Card, StepUnit } from 'ts-fsrs';
 import { createEmptyCard, fsrs, Rating, State, generatorParameters } from 'ts-fsrs';
 
-import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
+import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import type { UseFSRSOptions, UseFSRSResult, FSRSStateTracking } from '@/types/fsrs.types';
 import type { WordConfidence } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -94,7 +94,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ['dueWords', userId],
+    queryKey: userId ? FSRS_QUERY_KEYS.due(userId) : ['fsrs-words', 'due'],
     queryFn: async () => {
       if (!userId) return [];
       return studyWordsFSRSService.getFSRSWords(userId, { onlyDue: true, limit: 50 });
@@ -401,7 +401,11 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
   const invalidateQueries = useCallback(() => {
     if (!userId) return;
 
-    const queryKeys = [['dueWords', userId], ['studyWords', userId], ['vocabularyStats']];
+    const queryKeys = [
+      FSRS_QUERY_KEYS.due(userId),
+      FSRS_QUERY_KEYS.all(userId),
+      ['vocabulary-stats'],
+    ];
     queryKeys.forEach(key => {
       queryClient.invalidateQueries({ queryKey: key });
       queryClient.removeQueries({ queryKey: key });

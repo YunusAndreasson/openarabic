@@ -5,7 +5,7 @@ import { useCallback, useMemo } from 'react';
 // Services
 import { useToast } from '@/components/providers/ToastProvider';
 import { readingListService } from '@/services/readingList';
-import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
+import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 
@@ -117,12 +117,12 @@ export const useArticleMutations = (
         userId: string;
         wordId: number;
       }): Promise<StudyWordContext> => {
-        await queryClient.cancelQueries({ queryKey: ['studyWords', userId] });
-        const previousStudyWords = queryClient.getQueryData(['studyWords', userId]) as {
+        await queryClient.cancelQueries({ queryKey: FSRS_QUERY_KEYS.all(userId) });
+        const previousStudyWords = queryClient.getQueryData(FSRS_QUERY_KEYS.all(userId)) as {
           root_id: number;
         }[];
 
-        queryClient.setQueryData(['studyWords', userId], (old: { root_id: number }[] = []) => {
+        queryClient.setQueryData(FSRS_QUERY_KEYS.all(userId), (old: { root_id: number }[] = []) => {
           const exists = old.some(sw => sw.root_id === wordId);
           return exists ? old.filter(sw => sw.root_id !== wordId) : [...old, { root_id: wordId }];
         });
@@ -131,20 +131,20 @@ export const useArticleMutations = (
       },
       onError: (error: Error, { userId }: { userId: string }, context?: StudyWordContext) => {
         if (context?.previousStudyWords) {
-          queryClient.setQueryData(['studyWords', userId], context.previousStudyWords);
+          queryClient.setQueryData(FSRS_QUERY_KEYS.all(userId), context.previousStudyWords);
         }
         handleError(error);
         showToast('Error updating study list', undefined, 'error');
-        queryClient.invalidateQueries({ queryKey: ['studyWords', userId] });
+        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(userId) });
       },
       onSuccess: (_: boolean, { userId }: { userId: string }) => {
         // Batch invalidate related queries
         const relatedQueries = [
-          ['studyWords', userId],
-          ['dueWords', userId],
+          FSRS_QUERY_KEYS.all(userId),
+          FSRS_QUERY_KEYS.due(userId),
           ['studyWordsCounts', userId],
           ['enhancedAudioTracks', userId],
-          ['vocabularyStats'],
+          ['vocabulary-stats'],
         ];
 
         relatedQueries.forEach(queryKey => {
@@ -172,12 +172,12 @@ export const useArticleMutations = (
         userId: string;
         rootId: number;
       }): Promise<StudyWordContext> => {
-        await queryClient.cancelQueries({ queryKey: ['studyWords', userId] });
-        const previousStudyWords = queryClient.getQueryData(['studyWords', userId]) as {
+        await queryClient.cancelQueries({ queryKey: FSRS_QUERY_KEYS.all(userId) });
+        const previousStudyWords = queryClient.getQueryData(FSRS_QUERY_KEYS.all(userId)) as {
           root_id: number;
         }[];
 
-        queryClient.setQueryData(['studyWords', userId], (old: { root_id: number }[] = []) => {
+        queryClient.setQueryData(FSRS_QUERY_KEYS.all(userId), (old: { root_id: number }[] = []) => {
           const exists = old.some(sw => sw.root_id === rootId);
           return exists ? old.filter(sw => sw.root_id !== rootId) : [...old, { root_id: rootId }];
         });
@@ -186,21 +186,21 @@ export const useArticleMutations = (
       },
       onError: (error: Error, { userId }: { userId: string }, context?: StudyWordContext) => {
         if (context?.previousStudyWords) {
-          queryClient.setQueryData(['studyWords', userId], context.previousStudyWords);
+          queryClient.setQueryData(FSRS_QUERY_KEYS.all(userId), context.previousStudyWords);
         }
         handleError(error);
         showToast('Error updating study list', undefined, 'error');
-        queryClient.invalidateQueries({ queryKey: ['studyWords', userId] });
+        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(userId) });
       },
       onSuccess: (_: boolean, { userId }: { userId: string }) => {
         // Batch invalidate related queries
         const relatedQueries = [
-          ['studyWords', userId],
-          ['dueWords', userId],
+          FSRS_QUERY_KEYS.all(userId),
+          FSRS_QUERY_KEYS.due(userId),
           ['fsrs-words', userId],
           ['studyWordsCounts', userId],
           ['enhancedAudioTracks', userId],
-          ['vocabularyStats'],
+          ['vocabulary-stats'],
         ];
 
         relatedQueries.forEach(queryKey => {
