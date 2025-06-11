@@ -8,12 +8,8 @@ import {
   useWindowDimensions,
   TouchableOpacity,
 } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
+import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
@@ -56,39 +52,61 @@ const SleepTimerComponent = ({
   const { height: screenHeight } = useWindowDimensions();
 
   // Animation values
-  const backdropOpacity = useSharedValue(0);
-  const modalTranslateY = useSharedValue(screenHeight);
-  const modalScale = useSharedValue(0.9);
+  const {
+    fadeIn: fadeBackdropIn,
+    fadeOut: fadeBackdropOut,
+    animatedStyle: backdropStyle,
+  } = useOpacityAnimation({ initialOpacity: 0 });
+
+  const {
+    startAnimation: translateIn,
+    reverseAnimation: translateOut,
+    animatedStyle: translateStyle,
+  } = useTransformAnimation({
+    type: 'translateY',
+    initialValue: screenHeight,
+    targetValue: 0,
+    useSpring: true,
+    damping: 20,
+    stiffness: 300,
+  });
+
+  const {
+    startAnimation: scaleIn,
+    reverseAnimation: scaleOut,
+    animatedStyle: scaleStyle,
+  } = useTransformAnimation({
+    type: 'scale',
+    initialValue: 0.9,
+    targetValue: 1,
+    useSpring: true,
+    damping: 20,
+    stiffness: 300,
+  });
 
   // Handle modal animations
   useEffect(() => {
     if (isVisible) {
-      // Show modal
-      backdropOpacity.value = withTiming(1, { duration: 300 });
-      modalTranslateY.value = withSpring(0, {
-        damping: 20,
-        stiffness: 300,
-      });
-      modalScale.value = withSpring(1, {
-        damping: 20,
-        stiffness: 300,
-      });
+      fadeBackdropIn();
+      translateIn();
+      scaleIn();
     } else {
-      // Hide modal
-      backdropOpacity.value = withTiming(0, { duration: 200 });
-      modalTranslateY.value = withTiming(screenHeight, { duration: 200 });
-      modalScale.value = withTiming(0.9, { duration: 200 });
+      fadeBackdropOut();
+      translateOut();
+      scaleOut();
     }
-  }, [isVisible, backdropOpacity, modalTranslateY, modalScale, screenHeight]);
+  }, [
+    isVisible,
+    fadeBackdropIn,
+    fadeBackdropOut,
+    translateIn,
+    translateOut,
+    scaleIn,
+    scaleOut,
+  ]);
 
-  // Animated styles
-  const backdropStyle = useAnimatedStyle(() => ({
-    opacity: backdropOpacity.value,
-  }));
-
-  const modalStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: modalTranslateY.value }, { scale: modalScale.value }],
-  }));
+  // Animated styles from hooks
+  const modalStyle = [translateStyle, scaleStyle];
 
   const handleSetTimer = React.useCallback(() => {
     lightFeedback(); // Keep for primary action
