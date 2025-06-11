@@ -142,16 +142,7 @@ export const studyWordsFSRSService = {
 
   // Update word with FSRS parameters
   async updateFSRSWord(userId: string, rootId: number, update: FSRSWordUpdate): Promise<boolean> {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session?.user) {
-      throw new Error('User must be authenticated to manage study words');
-    }
-
-    if (session.user.id !== userId) {
-      throw new Error('User ID mismatch');
-    }
+    await checkAuthentication(userId);
 
     // First verify the root entry exists and belongs to the user
     const { data: existingWord, error: checkError } = await supabase
@@ -202,16 +193,7 @@ export const studyWordsFSRSService = {
     rating: Rating,
     learningSteps: number
   ): Promise<boolean> {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session?.user) {
-      throw new Error('User must be authenticated to manage study words');
-    }
-
-    if (session.user.id !== userId) {
-      throw new Error('User ID mismatch');
-    }
+    await checkAuthentication(userId);
 
     // Add the review record
     const { error } = await supabase.from('reviews').insert({
@@ -231,22 +213,7 @@ export const studyWordsFSRSService = {
 
   // Toggle FSRS study for roots
   async toggleFSRSStudyRoot(userId: string, rootId: number): Promise<boolean> {
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
-
-    if (sessionError) {
-      throw new Error(`Authentication error: ${sessionError.message}`);
-    }
-
-    if (!session?.user) {
-      throw new Error('User must be authenticated to manage study words');
-    }
-
-    if (session.user.id !== userId) {
-      throw new Error('User ID mismatch');
-    }
+    await checkAuthentication(userId);
 
     // Check if a study entry already exists for this root
     const { data: existing, error: checkError } = await supabase
