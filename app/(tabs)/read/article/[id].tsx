@@ -24,8 +24,9 @@ import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { lightFeedback } from '@/utils/haptics';
 // import { analytics } from '@/services/analytics';
-// Temporary mock analytics until service is fixed
-const analytics = {
+
+// Temporary mock analytics until service is fixed - moved outside to prevent recreation
+const mockAnalytics = {
   trackViewArticle: async (_articleId: number, _properties?: any) => {},
 };
 
@@ -34,7 +35,7 @@ export default function ArticleScreen(): JSX.Element {
 
   const colors = useColors();
   const { user } = useAuth();
-  const settings = useAppSelector(state => state.settings);
+  const fontScale = useAppSelector(state => state.settings.fontScale);
   const isDarkMode = useIsDarkMode();
 
   const { handleScroll } = useHeaderVisibility();
@@ -79,7 +80,7 @@ export default function ArticleScreen(): JSX.Element {
 
   useEffect(() => {
     if (article && !isLoadingArticle) {
-      analytics.trackViewArticle(article.id, {
+      mockAnalytics.trackViewArticle(article.id, {
         ...(article.title && { title: article.title }),
         ...(article.category?.name && { category: article.category.name }),
         ...(article.article_sentences && {
@@ -125,12 +126,14 @@ export default function ArticleScreen(): JSX.Element {
   );
 
   const { getWordsForSentence } = useArticleRenderers(
-    settings,
+    { fontScale },
     selectedWordIds,
     sentenceWordsMap,
     handleWordPress,
     handleRootPress
   );
+
+  const wordSettings = useMemo(() => ({ fontScale }), [fontScale]);
 
   const renderWord = useCallback(
     (word: SentenceWord) => {
@@ -142,9 +145,7 @@ export default function ArticleScreen(): JSX.Element {
           key={word.id}
           isDueWord={isDueWord}
           word={word}
-          settings={{
-            fontScale: settings.fontScale,
-          }}
+          settings={wordSettings}
           onPress={() => {
             if (word.root) {
               if (isDueWord) {
@@ -156,12 +157,17 @@ export default function ArticleScreen(): JSX.Element {
         />
       );
     },
-    [dueWordRootIds, handleRootPress, settings.fontScale]
+    [dueWordRootIds, handleRootPress, wordSettings]
   );
 
-  const sentenceSettings = useMemo(
-    () => ({ showEnglish: true, fontScale: settings.fontScale }),
-    [settings.fontScale]
+  const sentenceSettings = useMemo(() => ({ showEnglish: true, fontScale }), [fontScale]);
+
+  const sentenceContainerStyle = useMemo(
+    () => ({
+      backgroundColor: colors.transparent,
+      paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    }),
+    [colors.transparent]
   );
 
   const renderSentenceItem = useCallback(
@@ -172,10 +178,7 @@ export default function ArticleScreen(): JSX.Element {
         <ArticleSentence
           key={props.item.id}
           colors={colors}
-          containerStyle={{
-            backgroundColor: colors.transparent,
-            paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-          }}
+          containerStyle={sentenceContainerStyle}
           renderWord={renderWord}
           settings={sentenceSettings}
           words={words}
@@ -188,17 +191,20 @@ export default function ArticleScreen(): JSX.Element {
         />
       );
     },
-    [getWordsForSentence, renderWord, colors, sentenceSettings]
+    [getWordsForSentence, renderWord, colors, sentenceSettings, sentenceContainerStyle]
   );
+
+  const containerStyle = useMemo(() => ({ flex: 1 }), []);
+  const contentStyle = useMemo(() => [{ flex: 1 }, animatedStyle as any], [animatedStyle]);
 
   return (
     <ToastProvider>
-      <ThemedView style={{ flex: 1 }} useSafeArea={false}>
+      <ThemedView style={containerStyle} useSafeArea={false}>
         <StatusBar animated={true} style={isDarkMode ? 'light' : 'dark'} translucent={true} />
 
-        <View style={{ flex: 1 }}>
+        <View style={containerStyle}>
           {article && sortedSentences && sortedSentences.length > 0 ? (
-            <Animated.View style={[{ flex: 1 }, animatedStyle as any]}>
+            <Animated.View style={contentStyle}>
               <ArticleContent
                 article={article}
                 colors={colors}

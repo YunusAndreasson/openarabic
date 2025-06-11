@@ -96,16 +96,19 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
   );
 
   const audioState = useMemo((): AudioState => {
+    // If we have no current track, we should always be IDLE regardless of player state
+    if (!currentTrack) {
+      return AUDIO_STATES.IDLE;
+    }
+
     const newState =
-      isLoading || (currentTrack && !isPlayerLoaded)
+      isLoading || !isPlayerLoaded
         ? AUDIO_STATES.LOADING
         : isPlaying
           ? AUDIO_STATES.PLAYING
           : isPaused
             ? AUDIO_STATES.PAUSED
-            : currentTrack
-              ? AUDIO_STATES.STOPPED
-              : AUDIO_STATES.IDLE;
+            : AUDIO_STATES.STOPPED;
 
     return newState;
   }, [isLoading, isPlaying, isPaused, currentTrack, isPlayerLoaded]);
@@ -210,12 +213,6 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
 
   const stop = useCallback(async () => {
     try {
-      // Clear the current track and queue first to signal stop intent
-      setCurrentTrack(null);
-      setQueue([]);
-      setCurrentIndex(-1);
-      setShouldAutoPlay(false);
-
       // Only attempt player operations if player is accessible
       if (audioPlayer && isPlayerReady) {
         // Try to pause and seek with defensive access
@@ -235,6 +232,12 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
           // Silently handle seek errors
         }
       }
+
+      // Clear the current track and queue after stopping the player
+      setCurrentTrack(null);
+      setQueue([]);
+      setCurrentIndex(-1);
+      setShouldAutoPlay(false);
     } catch (error) {
       // Only show toast for unexpected errors, not native object disposal errors
       if (
@@ -429,24 +432,43 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
     [stop, startEnhancedPlayback]
   );
 
-  return {
-    // Legacy compatibility properties
-    progress,
-    metadata,
-    audioState,
-    currentTrackIndex: currentIndex,
-    actions,
+  // Memoize the return object to prevent unnecessary re-renders
+  return useMemo(
+    () => ({
+      // Legacy compatibility properties
+      progress,
+      metadata,
+      audioState,
+      currentTrackIndex: currentIndex,
+      actions,
 
-    // State properties
-    currentTrack,
-    isLoading: isLoading || (currentTrack !== null && !isPlayerLoaded),
-    position,
-    duration,
+      // State properties
+      currentTrack,
+      isLoading: isLoading || (currentTrack !== null && !isPlayerLoaded),
+      position,
+      duration,
 
-    // Control methods
-    play,
-    pause,
-    stop,
-    seekTo,
-  };
+      // Control methods
+      play,
+      pause,
+      stop,
+      seekTo,
+    }),
+    [
+      progress,
+      metadata,
+      audioState,
+      currentIndex,
+      actions,
+      currentTrack,
+      isLoading,
+      isPlayerLoaded,
+      position,
+      duration,
+      play,
+      pause,
+      stop,
+      seekTo,
+    ]
+  );
 }

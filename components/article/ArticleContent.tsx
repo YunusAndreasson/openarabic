@@ -104,9 +104,10 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
     const { audioState } = audioPlayer;
     const [isPlayNowLoading, setIsPlayNowLoading] = React.useState(false);
 
-    const isCurrentlyPlaying = audioState !== AUDIO_STATES.IDLE;
+    const isCurrentlyPlaying = audioState === AUDIO_STATES.PLAYING;
+    const hasAudio = useMemo(() => !!article.audio_url, [article.audio_url]);
 
-    const handlePlayToggle = async () => {
+    const handlePlayToggle = useCallback(async () => {
       if (isCurrentlyPlaying) {
         // Stop playback
         lightFeedback();
@@ -115,7 +116,7 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
       }
 
       // Start playback
-      if (!article.audio_url) {
+      if (!hasAudio) {
         showToast('Audio not available for this article', 3000, 'error');
         return;
       }
@@ -144,9 +145,9 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
       } finally {
         setIsPlayNowLoading(false);
       }
-    };
+    }, [isCurrentlyPlaying, hasAudio, audioPlayer.actions, articleId, showToast]);
 
-    const handleListenLater = () => {
+    const handleListenLater = useCallback(() => {
       lightFeedback();
       onToggleReadingList(articleId, isInReadingList);
 
@@ -156,9 +157,7 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
       } else {
         showToast('Added to listening list', 3000, 'success');
       }
-    };
-
-    const hasAudio = !!article.audio_url;
+    }, [articleId, isInReadingList, onToggleReadingList, showToast]);
 
     return (
       <View style={styles.audioControlsContainer}>

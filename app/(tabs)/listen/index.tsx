@@ -312,7 +312,7 @@ export default function ListenScreen(): JSX.Element {
   }, [user?.id, queryClient]);
   useFocusEffect(focusEffectCallback);
 
-  const isCurrentlyPlaying = audioState !== AUDIO_STATES.IDLE;
+  const isCurrentlyPlaying = audioState === AUDIO_STATES.PLAYING;
 
   const handlePlayAll = useCallback(async () => {
     // Prevent multiple presses during transition
@@ -496,24 +496,21 @@ export default function ListenScreen(): JSX.Element {
   const shouldShowPlayer = useMemo(() => {
     return (
       (isStartingPlayback && !!currentArticle) ||
-      (audioState !== AUDIO_STATES.IDLE && !!currentArticle)
+      (audioState === AUDIO_STATES.PLAYING && !!currentArticle)
     );
   }, [isStartingPlayback, audioState, currentArticle]);
 
   // Since data is preloaded, only show empty state when we definitively have no articles
   // and we've waited long enough to prevent flashing
   const shouldShowEmpty =
-    !hasArticles &&
-    canShowEmpty &&
-    !isReadingListLoading &&
-    !isReadingListFetching;
+    !hasArticles && canShowEmpty && !isReadingListLoading && !isReadingListFetching;
 
   // Render item for both FlashList and DraggableFlatList
   const renderItem = useCallback(
     (params: { item: ReadingListItem; index?: number } | RenderItemParams<ReadingListItem>) => {
       const { item } = params;
       const isActive =
-        audioState !== AUDIO_STATES.IDLE &&
+        audioState === AUDIO_STATES.PLAYING &&
         !!metadata.articleId &&
         parseInt(metadata.articleId, 10) === item.article_id;
 
