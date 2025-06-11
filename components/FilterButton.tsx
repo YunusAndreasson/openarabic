@@ -4,6 +4,7 @@ import { StyleSheet, View, Pressable } from 'react-native';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { withOpacity } from '@/utils/colorUtils';
 import { selectActiveFiltersCount } from '@/store/filtersSlice';
 import { useAppSelector } from '@/store/hooks';
 import { lightFeedback } from '@/utils/haptics';
@@ -28,7 +29,7 @@ const FilterButton = memo(({ onPress }: FilterButtonProps) => {
           styles.button,
           { backgroundColor: colors.transparent },
           activeFiltersCount > 0 && {
-            backgroundColor: colors.tint + '15',
+            backgroundColor: withOpacity(colors.tint, 0.08),
           },
         ]}
         onPress={handlePress}
@@ -63,11 +64,11 @@ const styles = StyleSheet.create({
   },
   dot: {
     position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    top: LAYOUT.SPACING.TINY,
+    right: LAYOUT.SPACING.TINY,
+    width: LAYOUT.SPACING.SMALL,
+    height: LAYOUT.SPACING.SMALL,
+    borderRadius: LAYOUT.SPACING.TINY,
   },
 });
 
