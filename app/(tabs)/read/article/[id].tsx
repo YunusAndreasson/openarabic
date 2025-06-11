@@ -4,7 +4,7 @@ import React, { useMemo, useCallback, useEffect, useRef } from 'react';
 import type { ComponentRef, JSX } from 'react';
 import { View, AppState } from 'react-native';
 import type { TouchableOpacity } from 'react-native';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleSentence } from '@/components/article';
@@ -41,16 +41,11 @@ export default function ArticleScreen(): JSX.Element {
   const { handleScroll } = useHeaderVisibility();
 
   // Add fade-in animation for smooth content appearance
-  const { opacity, fadeIn } = useOpacityAnimation({
+  const { fadeIn, animatedStyle } = useOpacityAnimation({
     initialOpacity: 0,
     duration: 300,
     autoStart: false,
   });
-
-  // Create custom animated style for the view
-  const contentAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }));
 
   const articleId = useMemo(() => {
     if (!id) return undefined;
@@ -214,7 +209,7 @@ export default function ArticleScreen(): JSX.Element {
 
         <View style={{ flex: 1 }}>
           {article && sortedSentences && sortedSentences.length > 0 ? (
-            <Animated.View style={[{ flex: 1 }, contentAnimatedStyle]}>
+            <Animated.View style={[{ flex: 1 }, animatedStyle]}>
               <ArticleContent
                 ref={articleContentRef}
                 article={article}
