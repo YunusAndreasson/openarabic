@@ -24,6 +24,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import { withOpacity } from '@/utils/colorUtils';
 
 interface SessionTypeModalProps {
   visible: boolean;
@@ -142,7 +143,7 @@ const SessionTypeModal = memo(
                   style={[styles.optionCard, { backgroundColor: colors.card }]}
                   onPress={() => handleOptionPress(onStartVisual)}
                 >
-                  <View style={[styles.iconContainer, { backgroundColor: colors.tint + '15' }]}>
+                  <View style={[styles.iconContainer, { backgroundColor: withOpacity(colors.tint, 0.08) }]}>
                     <Ionicons name="eye" size={24} color={colors.tint} />
                   </View>
                   <View style={styles.optionContent}>
@@ -164,7 +165,7 @@ const SessionTypeModal = memo(
                   style={[styles.optionCard, { backgroundColor: colors.card }]}
                   onPress={() => handleOptionPress(onStartAudio)}
                 >
-                  <View style={[styles.iconContainer, { backgroundColor: colors.tint + '15' }]}>
+                  <View style={[styles.iconContainer, { backgroundColor: withOpacity(colors.tint, 0.08) }]}>
                     <Ionicons name="ear" size={24} color={colors.tint} />
                   </View>
                   <View style={styles.optionContent}>
