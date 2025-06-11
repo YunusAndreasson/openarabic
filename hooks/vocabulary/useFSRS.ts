@@ -276,13 +276,15 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
           fsrs_last_review: new Date().toISOString(),
         };
 
-        await studyWordsFSRSService.updateFSRSWord(userId, rootId, wordUpdateData);
-        await studyWordsFSRSService.recordFSRSReview(
-          userId,
-          rootId,
-          rating,
-          newCard.learning_steps
-        );
+        await Promise.all([
+          studyWordsFSRSService.updateFSRSWord(userId, rootId, wordUpdateData),
+          studyWordsFSRSService.recordFSRSReview(
+            userId,
+            rootId,
+            rating,
+            newCard.learning_steps
+          ),
+        ]);
 
         // Update the queue based on the user's response
         setWordQueue(prevQueue => {
