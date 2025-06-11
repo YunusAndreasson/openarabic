@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import React, { memo } from 'react';
+import React, { memo, useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
@@ -20,7 +20,7 @@ const ErrorMessage = memo(
     const colors = useColors();
     const router = useRouter();
 
-    const handleRetry = () => {
+    const handleRetry = useCallback(() => {
       // Map screenName to appropriate route
       let route: RoutePath = '/(tabs)';
 
@@ -31,7 +31,7 @@ const ErrorMessage = memo(
       }
 
       router.replace(route);
-    };
+    }, [router, screenName]);
 
     return (
       <View style={styles.messageContainer}>

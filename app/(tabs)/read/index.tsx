@@ -136,7 +136,7 @@ export default function ArticlesScreen(): JSX.Element {
         `/(tabs)/read/article/${article.id}?headerTitle=${encodeURIComponent(article.title)}`
       );
     },
-    [dispatch, prefetchArticle]
+    [dispatch, prefetchArticle, router]
   );
 
   const handleSelectCategory = useCallback((categoryId: number, categoryName?: string) => {
@@ -144,7 +144,7 @@ export default function ArticlesScreen(): JSX.Element {
       ? `/(tabs)/read/filter?type=category&id=${categoryId}&name=${encodeURIComponent(categoryName)}`
       : `/(tabs)/read/filter?type=category&id=${categoryId}`;
     router.push(url);
-  }, []);
+  }, [router]);
 
   // Simplified header component
   const ListHeaderComponent = useMemo(

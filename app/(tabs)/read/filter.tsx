@@ -27,7 +27,7 @@ export default function FilterScreen(): JSX.Element {
     if (hasInvalidParams && !type && id && !isNaN(numericId) && numericId > 0) {
       router.replace(`/(tabs)/read/article/${id}`);
     }
-  }, [hasInvalidParams, type, id, numericId]);
+  }, [hasInvalidParams, type, id, numericId, router]);
 
   const cacheKey = useMemo(() => ['filtered-articles', type, numericId], [type, numericId]);
 
@@ -56,6 +56,10 @@ export default function FilterScreen(): JSX.Element {
   // Use the new filtering hook that handles Redux state
   const filteredAndSortedArticles = useFilteredArticles(articles);
 
+  const handleRetry = useCallback(() => {
+    router.back();
+  }, [router]);
+
   const handleArticlePress = useCallback(
     (article: Article) => {
       prefetchArticle(article.id);
@@ -63,7 +67,7 @@ export default function FilterScreen(): JSX.Element {
         `/(tabs)/read/article/${article.id}?headerTitle=${encodeURIComponent(article.title)}`
       );
     },
-    [prefetchArticle]
+    [prefetchArticle, router]
   );
 
   // Show error for invalid parameters first
@@ -76,7 +80,7 @@ export default function FilterScreen(): JSX.Element {
     return (
       <ErrorState
         message={`Invalid filter parameters: type="${type}", id="${id}"`}
-        onRetry={() => router.back()}
+        onRetry={handleRetry}
       />
     );
   }

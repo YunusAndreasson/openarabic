@@ -544,7 +544,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     return () => {
       mounted.current = false;
     };
-  }, [invalidateQueries, user?.id, queryClient, onClose]);
+  }, [invalidateQueries, user?.id, queryClient, onClose, router]);
 
   // Cleanup effect
   useEffect(() => {

@@ -281,7 +281,7 @@ export const useArticleMutations = (
         handleError(error as Error);
       }
     },
-    [addToReadingListMutation, removeFromReadingListMutation]
+    [addToReadingListMutation, removeFromReadingListMutation, router]
   );
 
   // Handle word press
@@ -314,7 +314,7 @@ export const useArticleMutations = (
         handleError(error as Error);
       }
     },
-    [toggleWordMutation, showToast]
+    [toggleWordMutation, showToast, router]
   );
 
   // Handle root press
@@ -361,7 +361,7 @@ export const useArticleMutations = (
         handleError(error as Error);
       }
     },
-    [toggleRootMutation, showToast]
+    [toggleRootMutation, showToast, router]
   );
 
   return {

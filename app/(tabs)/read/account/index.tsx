@@ -96,7 +96,7 @@ const AccountScreen: React.FC = () => {
       ],
       { cancelable: true }
     );
-  }, []);
+  }, [router]);
 
   const handleReminderToggle = useCallback(
     async (enabled: boolean) => {
@@ -162,6 +162,14 @@ const AccountScreen: React.FC = () => {
   const handleSocialLink = useCallback((url: string) => {
     Linking.openURL(url);
   }, []);
+
+  const handleLearningMethodPress = useCallback(() => {
+    router.push('/(tabs)/read/account/learningMethod');
+  }, [router]);
+
+  const handleClassicalTextsPress = useCallback(() => {
+    router.push('/(tabs)/read/account/classicalTexts');
+  }, [router]);
 
   const appVersion = pkg.version;
   const currentYear = new Date().getFullYear();
@@ -254,7 +262,7 @@ const AccountScreen: React.FC = () => {
                 includePressAnimation={true}
                 shadowSize="none"
                 style={styles.interactiveCard}
-                onPress={() => router.push('/(tabs)/read/account/learningMethod')}
+                onPress={handleLearningMethodPress}
               >
                 <View style={styles.cardContent}>
                   <View style={styles.cardLeft}>
@@ -280,7 +288,7 @@ const AccountScreen: React.FC = () => {
                 includePressAnimation={true}
                 shadowSize="none"
                 style={styles.interactiveCard}
-                onPress={() => router.push('/(tabs)/read/account/classicalTexts')}
+                onPress={handleClassicalTextsPress}
               >
                 <View style={styles.cardContent}>
                   <View style={styles.cardLeft}>

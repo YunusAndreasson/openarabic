@@ -17,7 +17,7 @@ const HeaderProfile = memo(({ size = 28 }: HeaderProfileProps) => {
 
   const handlePress = useCallback(() => {
     router.push('/(tabs)/read/account');
-  }, []);
+  }, [router]);
 
   if (!user) return null;
 

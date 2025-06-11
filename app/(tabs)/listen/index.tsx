@@ -458,7 +458,7 @@ export default function ListenScreen(): JSX.Element {
         );
       }
     },
-    [prefetchArticle, sortedReadingList, editMode]
+    [prefetchArticle, sortedReadingList, editMode, router]
   );
 
   // Get current article for now playing card
@@ -477,6 +477,14 @@ export default function ListenScreen(): JSX.Element {
     const currentItem = sortedReadingList.find(item => item.article_id === articleIdNumber);
     return currentItem?.articles || null;
   }, [isStartingPlayback, sortedReadingList, metadata.articleId]);
+
+  const handleNowPlayingPress = useCallback(() => {
+    if (currentArticle) {
+      router.push(
+        `/(tabs)/read/article/${currentArticle.id}?headerTitle=${encodeURIComponent(currentArticle.title)}`
+      );
+    }
+  }, [currentArticle, router]);
 
   // Check if we have any texts to show controls for
   const hasArticles = sortedReadingList.length > 0;
@@ -676,13 +684,7 @@ export default function ListenScreen(): JSX.Element {
         isVisible={shouldShowPlayer}
         progress={isStartingPlayback ? 0 : position * 1000}
         showTimerButton={true}
-        onPress={() => {
-          if (currentArticle) {
-            router.push(
-              `/(tabs)/read/article/${currentArticle.id}?headerTitle=${encodeURIComponent(currentArticle.title)}`
-            );
-          }
-        }}
+        onPress={handleNowPlayingPress}
         onStop={() => {
           lightFeedback();
           if (isStartingPlayback) {

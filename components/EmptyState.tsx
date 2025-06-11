@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { memo } from 'react';
+import React, { memo, useCallback } from 'react';
 import type { ComponentType, ComponentProps } from 'react';
 import { View, StyleSheet } from 'react-native';
 
@@ -54,9 +54,9 @@ const EmptyState = memo(
     >;
     const iconName = typeof icon === 'string' ? icon : 'alert-circle-outline';
 
-    const handleBrowseArticles = () => {
+    const handleBrowseArticles = useCallback(() => {
       router.push('/(tabs)');
-    };
+    }, [router]);
 
     const defaultActionButton = !hideArticlesButton && (
       <ThemedButton
