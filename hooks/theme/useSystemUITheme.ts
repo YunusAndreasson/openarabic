@@ -29,7 +29,7 @@ export function useSystemUITheme(): void {
     };
 
     updateSystemUI();
-  }, [colors.background, isDark]);
+  }, [colors.background]);
 }
 
 /**
