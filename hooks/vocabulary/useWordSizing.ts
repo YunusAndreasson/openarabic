@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 
 import { useScreenWidth } from '@/constants/layout';
 
@@ -28,16 +28,14 @@ export const useWordSizing = (
     minFontSize = WORD_SIZING.DEFAULT_MIN_FONT_SIZE,
     maxFontSize = WORD_SIZING.DEFAULT_MAX_FONT_SIZE,
   } = options;
-  const [fontSize, setFontSize] = useState(maxFontSize);
   const screenWidth = useScreenWidth();
 
-  useEffect(() => {
-    if (!word) return;
+  return useMemo(() => {
+    if (!word) return maxFontSize;
 
     // Use fixed font size for most words
     if (word.length <= WORD_SIZING.LONG_WORD_THRESHOLD) {
-      setFontSize(maxFontSize);
-      return;
+      return maxFontSize;
     }
 
     // For very long words, calculate a reduced size
@@ -51,10 +49,8 @@ export const useWordSizing = (
     );
 
     // Ensure font size is not smaller than minimum
-    setFontSize(Math.max(minFontSize, calculatedSize));
+    return Math.max(minFontSize, calculatedSize);
   }, [word, minFontSize, maxFontSize, screenWidth]);
-
-  return fontSize;
 };
 
 export default useWordSizing;
