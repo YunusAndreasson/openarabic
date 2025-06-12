@@ -1,14 +1,6 @@
 import { FlashList } from '@shopify/flash-list';
-import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
-import React, {
-  useRef,
-  useEffect,
-  forwardRef,
-  useImperativeHandle,
-  useMemo,
-  useCallback,
-} from 'react';
+import React, { useMemo, useCallback } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -85,9 +77,6 @@ const styles = StyleSheet.create({
   },
 });
 
-export type ArticleContentRef = {
-  scrollToSentence: (sentenceId: number) => void;
-};
 
 interface AudioControlsButtonProps {
   articleId: number;
@@ -229,29 +218,16 @@ interface ArticleContentProps {
 
 const SENTENCE_ITEM_HEIGHT = 70;
 
-export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>(
-  (
-    {
-      id,
-      article,
-      sortedSentences,
-      renderSentenceItem,
-      handleScroll,
-      colors,
-      isDarkMode,
-    }: ArticleContentProps,
-    ref
-  ): JSX.Element => {
+export const ArticleContent = ({
+  id,
+  article,
+  sortedSentences,
+  renderSentenceItem,
+  handleScroll,
+  colors,
+  isDarkMode,
+}: ArticleContentProps): JSX.Element => {
     const insets = useSafeAreaInsets();
-    const flashListRef = useRef<FlashList<Tables<'article_sentences'>>>(null);
-    const isScrollingRef = useRef(false);
-    const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const resetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const { scrollToSentence: scrollToSentenceParam } = useLocalSearchParams<{
-      scrollToSentence?: string;
-      highlightWord?: string;
-      wordPosition?: string;
-    }>();
 
     const { user } = useAuth();
     const articleId = parseInt(id, 10);
@@ -264,93 +240,13 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
 
     const { handleToggleReadingList } = useArticleMutations(user?.id, refetchReadingListStatus);
 
-    // Helper function to handle scroll events
+    // Handle scroll events
     const handleAnimatedScroll = useCallback(
       (event: NativeSyntheticEvent<NativeScrollEvent>) => {
         handleScroll(event);
       },
       [handleScroll]
     );
-
-    // Helper function to scroll to an index with consistent parameters
-    const scrollToIndex = useCallback(
-      (index: number) => {
-        // Don't scroll if already scrolling to prevent conflicts
-        if (isScrollingRef.current) return;
-
-        isScrollingRef.current = true;
-
-        // Reduce delay for more responsive scrolling
-        if (scrollTimeoutRef.current) {
-          clearTimeout(scrollTimeoutRef.current);
-        }
-        scrollTimeoutRef.current = setTimeout(() => {
-          if (!flashListRef.current) {
-            isScrollingRef.current = false;
-            return;
-          }
-
-          try {
-            // Use a more conservative offset since header height is now dynamic
-            const viewOffset = 200 + LAYOUT.SPACING.SMALL; // Estimated dynamic header height
-
-            flashListRef.current.scrollToIndex({
-              index: index,
-              animated: true,
-              viewPosition: 0.05, // Position sentence very close to top for maximum visibility
-              viewOffset: viewOffset,
-            });
-          } catch {
-            // Enhanced fallback with better error handling
-            if (sortedSentences && sortedSentences.length > 0) {
-              const targetIndex = Math.min(index, sortedSentences.length - 1);
-              const fallbackOffset = 200 + LAYOUT.SPACING.SMALL; // Estimated dynamic header height
-
-              flashListRef.current?.scrollToItem({
-                item: sortedSentences[targetIndex],
-                animated: true,
-                viewPosition: 0.05,
-                viewOffset: fallbackOffset,
-              });
-            }
-          }
-
-          // Reset scrolling flag after animation completes
-          if (resetTimeoutRef.current) {
-            clearTimeout(resetTimeoutRef.current);
-          }
-          resetTimeoutRef.current = setTimeout(() => {
-            isScrollingRef.current = false;
-          }, 300);
-        }, 50); // Reduced delay for more responsive scrolling
-      },
-      [sortedSentences, insets.top]
-    );
-
-    useEffect(() => {
-      return () => {
-        if (scrollTimeoutRef.current) {
-          clearTimeout(scrollTimeoutRef.current);
-          scrollTimeoutRef.current = null;
-        }
-        if (resetTimeoutRef.current) {
-          clearTimeout(resetTimeoutRef.current);
-          resetTimeoutRef.current = null;
-        }
-      };
-    }, []);
-
-    // Effect to scroll to the specified sentence when the component mounts
-    useEffect(() => {
-      if (scrollToSentenceParam && sortedSentences) {
-        const sentenceIndex = sortedSentences.findIndex(
-          s => s.id === parseInt(scrollToSentenceParam)
-        );
-        if (sentenceIndex !== -1) {
-          scrollToIndex(sentenceIndex);
-        }
-      }
-    }, [scrollToSentenceParam, sortedSentences]);
 
     // Memoize the header component for better performance
     const headerComponent = useMemo(
@@ -381,21 +277,6 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
       ]
     );
 
-    // Expose the scrollToSentence method to the parent component
-    useImperativeHandle(
-      ref,
-      () => ({
-        scrollToSentence: (sentenceId: number) => {
-          if (sortedSentences) {
-            const sentenceIndex = sortedSentences.findIndex(s => s.id === sentenceId);
-            if (sentenceIndex !== -1) {
-              scrollToIndex(sentenceIndex);
-            }
-          }
-        },
-      }),
-      [sortedSentences, scrollToIndex]
-    );
 
     return (
       <Animated.View style={styles.flexOne}>
@@ -405,7 +286,6 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
           >
             <FlashList
               key={`article-${id}`}
-              ref={flashListRef}
               alwaysBounceVertical={false} // Only bounce when content allows it
               bounces={true} // Re-enable bounce for parallax pull-down effect
               data={sortedSentences}
@@ -437,8 +317,7 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
           </View>
         ) : null}
       </Animated.View>
-    );
-  }
-);
+      );
+};
 
 ArticleContent.displayName = 'ArticleContent';
