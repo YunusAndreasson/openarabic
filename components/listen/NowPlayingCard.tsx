@@ -1,22 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { memo, useMemo, useEffect, useCallback } from 'react';
+import React, { memo } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-  interpolate,
-  Extrapolation,
-  cancelAnimation,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ProgressBar } from '@/components/ProgressBar';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import { usePressAnimation } from '@/hooks/animations';
+import { useNowPlayingCard } from '@/hooks/listen/useNowPlayingCard';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { Article } from '@/types/articles.types';
@@ -25,23 +17,6 @@ import { withOpacity } from '@/utils/colorUtils';
 const CARD_HEIGHT = 120;
 const IMAGE_SIZE = 80;
 
-// Optimized animation configurations
-const SPRING_CONFIG = {
-  damping: 20,
-  stiffness: 90,
-  mass: 1,
-} as const;
-
-const ENTRANCE_SCALE_CONFIG = {
-  damping: 25,
-  stiffness: 120,
-} as const;
-
-const EXIT_SPRING_CONFIG = {
-  damping: 25,
-  stiffness: 150,
-  mass: 0.8,
-} as const;
 
 interface NowPlayingCardProps {
   /** Whether the card should be visible */
@@ -76,127 +51,23 @@ const NowPlayingCard = ({
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
-  // Animation values - use stable initial values to prevent re-creation
-  const translateY = useSharedValue(CARD_HEIGHT + 100);
-  const opacity = useSharedValue(0);
-  const scale = useSharedValue(0.95);
   const {
-    animatedStyle: buttonAnimatedStyle,
-    handlePressIn: handleStopPressIn,
-    handlePressOut: handleStopPressOut,
-  } = usePressAnimation({ scaleAmount: 0.85 });
-
-  // Animate card visibility
-  useEffect(() => {
-    if (isVisible && article) {
-      // Slide up with elegant spring animation
-      translateY.value = withSpring(0, SPRING_CONFIG);
-
-      // Fade in
-      opacity.value = withTiming(1, { duration: 300 });
-
-      // Scale up slightly for entrance
-      scale.value = withSpring(1, ENTRANCE_SCALE_CONFIG);
-    } else {
-      // Enhanced reverse animation - more elegant exit
-      // First slightly scale down for feedback
-      scale.value = withTiming(0.92, { duration: 100 }, () => {
-        // Then slide down with smooth spring
-        translateY.value = withSpring(CARD_HEIGHT + 100, EXIT_SPRING_CONFIG);
-      });
-
-      // Fade out with slight delay for smoother transition
-      opacity.value = withTiming(0, { duration: 300 });
-    }
-  }, [isVisible, article, translateY, opacity, scale]);
-
-  // Press handler for stop button
-  const handleStopPress = useCallback(() => {
-    onStop?.();
-  }, [onStop]);
-
-  // Cleanup animations on unmount to prevent memory leaks
-  useEffect(() => {
-    return () => {
-      cancelAnimation(translateY);
-      cancelAnimation(opacity);
-      cancelAnimation(scale);
-    };
-  }, [translateY, opacity, scale]);
-
-  // Optimized animated styles using worklets for better performance
-  const cardAnimatedStyle = useAnimatedStyle(() => {
-    'worklet';
-    return {
-      transform: [{ translateY: translateY.value }, { scale: scale.value }],
-      opacity: opacity.value,
-    };
-  }, []);
-
-  const backgroundImageStyle = useAnimatedStyle(() => {
-    'worklet';
-    return {
-      opacity: interpolate(opacity.value, [0, 1], [0, 0.6], Extrapolation.CLAMP),
-    };
-  }, []);
-
-  // Memoized styles for performance - only recalculate when colors or theme changes
-  const dynamicStyles = useMemo(
-    () => ({
-      container: {
-        ...LAYOUT.SHADOW.SMALL,
-        backgroundColor: isDarkMode ? colors.elevation2 : colors.card,
-        borderColor: isDarkMode ? colors.border : colors.cardBorder,
-        shadowColor: colors.shadow,
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: isDarkMode ? 0.3 : 0.1,
-      },
-      stopButton: {
-        ...LAYOUT.SHADOW.SUBTLE,
-        backgroundColor: colors.tint,
-        shadowColor: colors.tint,
-      },
-      timerButton: {
-        backgroundColor: isTimerActive
-          ? colors.warning + '20' // Transparent warning color when active
-          : colors.buttonOverlay, // Better contrast when inactive
-        borderColor: isTimerActive ? colors.warning : colors.border,
-        borderWidth: 1,
-      },
-    }),
-    [colors, isDarkMode, isTimerActive]
-  );
-
-  // Optimized time calculations with stable dependencies
-  const timeCalculations = useMemo(() => {
-    // Ensure progress and duration are valid numbers
-    const safeProgress = progress && isFinite(progress) ? progress : 0;
-    const safeDuration = duration && isFinite(duration) ? duration : 0;
-
-    // Both progress and duration should be in milliseconds for consistency
-    const currentSeconds = safeProgress / 1000;
-    const totalSeconds = safeDuration / 1000;
-
-    // Calculate progress percentage for the progress bar (0-100)
-    const percentage = safeDuration > 0 ? (safeProgress / safeDuration) * 100 : 0;
-    const clampedPercentage = Math.max(0, Math.min(100, percentage));
-
-    // Format time inline to avoid dependency issues with reanimated
-    const formatTime = (seconds: number): string => {
-      if (!seconds || !isFinite(seconds) || isNaN(seconds) || seconds < 0) {
-        return '0:00';
-      }
-      const mins = Math.floor(seconds / 60);
-      const secs = Math.floor(seconds % 60);
-      return `${mins}:${secs.toString().padStart(2, '0')}`;
-    };
-
-    return {
-      currentTime: formatTime(currentSeconds),
-      totalTime: formatTime(totalSeconds),
-      progressPercentage: clampedPercentage,
-    };
-  }, [progress, duration]);
+    cardAnimatedStyle,
+    backgroundImageStyle,
+    buttonAnimatedStyle,
+    handleStopPressIn,
+    handleStopPressOut,
+    handleStopPress,
+    dynamicStyles,
+    timeCalculations,
+  } = useNowPlayingCard({
+    isVisible,
+    article,
+    progress,
+    duration,
+    onStop,
+    isTimerActive,
+  });
 
   if (!article) return null;
 

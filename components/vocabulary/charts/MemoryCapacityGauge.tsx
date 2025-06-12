@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Canvas, Path, Circle, Group, Skia, LinearGradient, vec } from '@shopify/react-native-skia';
-import React, { memo, useMemo } from 'react';
+import { Canvas, Path, Circle, Group, LinearGradient, vec } from '@shopify/react-native-skia';
+import React, { memo } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -11,6 +11,7 @@ import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useNavigationWithDebounce } from '@/hooks';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import { useMemoryCapacityGauge } from '@/hooks/vocabulary';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 
 interface MemoryCapacityGaugeProps {
@@ -45,167 +46,21 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
     handlePressOut: handleInsightsPressOut,
   } = usePressAnimation({ scaleAmount: 0.98 });
 
-  // Calculate enhanced memory capacity with better algorithm
-  const memoryMetrics = useMemo(() => {
-    if (!studyWords.length) {
-      return { capacityScore: 85, trend: 'stable' as const };
-    }
-
-    // Filter words with FSRS data
-    const validWords = studyWords.filter(
-      word => word.fsrs_stability != null && word.fsrs_difficulty != null
-    );
-
-    if (!validWords.length) {
-      return { capacityScore: 85, trend: 'stable' as const };
-    }
-
-    // Enhanced calculation with FSRS algorithm principles
-    const { stabilitySum, difficultySum, repsSum } = validWords.reduce(
-      (acc, word) => {
-        acc.stabilitySum += word.fsrs_stability ?? 0;
-        acc.difficultySum += word.fsrs_difficulty ?? 5;
-        acc.repsSum += word.fsrs_reps ?? 0;
-        return acc;
-      },
-      { stabilitySum: 0, difficultySum: 0, repsSum: 0 }
-    );
-
-    const averageStability = stabilitySum / validWords.length;
-    const averageDifficulty = difficultySum / validWords.length;
-    const averageReps = repsSum / validWords.length;
-
-    // More sophisticated scoring algorithm based on available FSRS data
-    const stabilityFactor = Math.min(averageStability / 30, 1) * 45; // 0-45 points
-    const repsFactor = Math.min(averageReps / 10, 1) * 30; // 0-30 points (more reps = better retention)
-    const difficultyFactor = Math.max(0, (10 - averageDifficulty) / 10) * 25; // 0-25 points
-
-    const capacityScore = Math.round(stabilityFactor + repsFactor + difficultyFactor);
-
-    // Determine trend based on recent performance
-    const recentWords = validWords.filter(word => {
-      if (!word.created_at) return false;
-      const wordDate = new Date(word.created_at);
-      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      return wordDate >= weekAgo;
-    });
-
-    const trend = recentWords.length > 0 && averageReps > 2 ? 'improving' : 'stable';
-
-    return {
-      capacityScore: Math.max(15, Math.min(100, capacityScore)),
-      trend,
-    };
-  }, [studyWords]);
-
-  // Create enhanced gauge paths with better visual appeal
-  const gaugePaths = useMemo(() => {
-    const centerX = GAUGE_WIDTH / 2;
-    const centerY = GAUGE_HEIGHT - 15;
-    const startAngle = 185;
-    const totalSweep = 170;
-
-    // Full gauge path (background)
-    const fullPath = Skia.Path.Make();
-    fullPath.addArc(
-      {
-        x: centerX - GAUGE_RADIUS,
-        y: centerY - GAUGE_RADIUS,
-        width: GAUGE_RADIUS * 2,
-        height: GAUGE_RADIUS * 2,
-      },
-      startAngle,
-      totalSweep
-    );
-
-    // Filled portion path based on capacity score
-    const filledSweep = (memoryMetrics.capacityScore / 100) * totalSweep;
-    const filledPath = Skia.Path.Make();
-    filledPath.addArc(
-      {
-        x: centerX - GAUGE_RADIUS,
-        y: centerY - GAUGE_RADIUS,
-        width: GAUGE_RADIUS * 2,
-        height: GAUGE_RADIUS * 2,
-      },
-      startAngle,
-      filledSweep
-    );
-
-    return { fullPath, filledPath, filledSweep };
-  }, [memoryMetrics.capacityScore]);
-
-  // Helper functions for gradient calculation
-  const getFilledGradientColors = (capacityScore: number): string[] => {
-    const baseColors = [
-      chartColors.performance.poor ?? colors.error,
-      chartColors.performance.moderate ?? colors.warning,
-      chartColors.performance.good ?? colors.info,
-      chartColors.performance.excellent ?? colors.success,
-    ];
-
-    if (capacityScore <= 30) {
-      // Only red to orange transition
-      return [baseColors[0] as string, baseColors[1] as string];
-    } else if (capacityScore <= 70) {
-      // Red to orange to blue transition
-      return [baseColors[0] as string, baseColors[1] as string, baseColors[2] as string];
-    } else {
-      // Full gradient
-      return baseColors;
-    }
-  };
-
-  const getFilledGradientPositions = (capacityScore: number): number[] => {
-    if (capacityScore <= 30) {
-      // Map 0-30% to full gradient span
-      return [0, 1];
-    } else if (capacityScore <= 70) {
-      // Map 0-70% across three colors
-      return [0, 30 / capacityScore, 1];
-    } else {
-      // Map 0-100% across four colors, scaled to actual score
-      return [0, 30 / capacityScore, 70 / capacityScore, 1];
-    }
-  };
-
-  // Calculate enhanced indicator position with smooth animation potential
-  const indicatorPosition = useMemo(() => {
-    const centerX = GAUGE_WIDTH / 2;
-    const centerY = GAUGE_HEIGHT - 15;
-
-    // Convert capacity score to angle with refined mapping
-    const angle = 185 - (memoryMetrics.capacityScore / 100) * 170;
-    const angleRad = (angle * Math.PI) / 180;
-
-    const indicatorRadius = GAUGE_RADIUS - GAUGE_STROKE_WIDTH / 2;
-    const x = centerX + Math.cos(angleRad) * indicatorRadius;
-    const y = centerY + Math.sin(angleRad) * indicatorRadius;
-
-    return { x, y, angle };
-  }, [memoryMetrics.capacityScore]);
-
-  // Enhanced color system with better visual hierarchy
-  const getCapacityColor = (score: number) => {
-    if (score >= CAPACITY_THRESHOLDS.OPTIMAL) return chartColors.performance.excellent;
-    if (score >= CAPACITY_THRESHOLDS.MODERATE) return chartColors.performance.good;
-    if (score >= CAPACITY_THRESHOLDS.CRITICAL) return chartColors.performance.moderate;
-    return chartColors.performance.poor;
-  };
-
-  // Clear, actionable readiness messaging
-  const getReadinessMessage = (score: number) => {
-    if (score >= CAPACITY_THRESHOLDS.OPTIMAL) {
-      return 'Add new words';
-    }
-    if (score >= CAPACITY_THRESHOLDS.MODERATE) {
-      return 'Add words moderately';
-    }
-    if (score >= CAPACITY_THRESHOLDS.CRITICAL) {
-      return 'Review before adding';
-    }
-    return 'Focus on reviews only';
-  };
+  const {
+    memoryMetrics,
+    gaugePaths,
+    getFilledGradientColors,
+    getFilledGradientPositions,
+    indicatorPosition,
+    getCapacityColor,
+    getReadinessMessage,
+  } = useMemoryCapacityGauge({
+    studyWords,
+    width: GAUGE_WIDTH,
+    height: GAUGE_HEIGHT,
+    radius: GAUGE_RADIUS,
+    strokeWidth: GAUGE_STROKE_WIDTH,
+  });
 
   // Enhanced navigation with haptic feedback
   const handleInsightsPress = () => {

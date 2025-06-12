@@ -30,6 +30,9 @@ export * from './app';
 // Notification hooks
 export * from './notifications';
 
+// Account hooks
+export * from './account';
+
 // Utility hooks
 export * from './utils';
 export { useIslamicCalendarEvents, formatDaysUntil } from './utils';
