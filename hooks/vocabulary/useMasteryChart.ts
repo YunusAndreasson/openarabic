@@ -42,6 +42,15 @@ interface ChartInsights {
   weeklyChange?: number;
 }
 
+interface ChartData {
+  masteryPath: string;
+  hasData: boolean;
+  performanceZones?: ReturnType<typeof createStandardizedPerformanceZones>;
+  milestones: Milestone[];
+  points: ChartPoint[];
+  insights: ChartInsights;
+}
+
 interface UseMasteryChartReturn {
   masteryPath: string;
   hasData: boolean;
@@ -88,7 +97,7 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
     });
   }, [studyWords]);
 
-  const chartData = useMemo(() => {
+  const chartData = useMemo<ChartData>(() => {
     if (masteryData.length === 0) {
       return {
         masteryPath: '',
