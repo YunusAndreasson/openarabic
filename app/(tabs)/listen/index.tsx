@@ -17,10 +17,10 @@ import SleepTimer from '@/components/listen/SleepTimer';
 import { AUDIO_STATES } from '@/constants/audio';
 import { LAYOUT } from '@/constants/layout';
 import { useListenScreen, useListenUI } from '@/hooks/listen';
+import type { ReadingListItem } from '@/hooks/listen/useListenScreen';
 import { useColors } from '@/hooks/theme/useColors';
 import { useAppSelector } from '@/store/hooks';
-import type { ReadingListItem } from '@/hooks/listen/useListenScreen';
-
+import { selectionFeedback } from '@/utils/haptics';
 
 const styles = StyleSheet.create({
   container: {
@@ -154,7 +154,6 @@ export default function ListenScreen(): JSX.Element {
 
   const {
     canShowEmpty,
-    metadataValues,
     flashListExtraData,
     currentArticle,
     handleArticlePress,
@@ -165,11 +164,12 @@ export default function ListenScreen(): JSX.Element {
     metadata,
     audioState,
     isStartingPlayback,
+    setIsStartingPlayback,
+    setPlaybackMode,
   });
 
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
-
 
   // Check if we have any texts to show controls for
   const hasArticles = sortedReadingList.length > 0;

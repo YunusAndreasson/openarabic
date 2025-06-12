@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import Animated, {
+import {
   useAnimatedStyle,
   useSharedValue,
   withSpring,

@@ -7,9 +7,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useIslamicCalendarEvents, formatDaysUntil } from '@/hooks';
 import { LAYOUT } from '@/constants/layout';
 import { createNavigationOptions } from '@/constants/modal';
+import { useIslamicCalendarEvents, formatDaysUntil } from '@/hooks';
 import { useColors } from '@/hooks/theme/useColors';
 
 export default function IslamicCalendarScreen() {

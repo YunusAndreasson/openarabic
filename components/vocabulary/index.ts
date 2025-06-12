@@ -1,4 +1,3 @@
-export { default as WordListItem } from './WordListItem';
 export { VocabularyStatCards } from './VocabularyStatCards';
 export { default as ErrorMessage } from './ErrorMessage';
 

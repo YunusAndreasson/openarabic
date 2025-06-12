@@ -15,9 +15,9 @@ import { WordDisplay } from '@/components/review';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useAudioPracticeSession } from '@/hooks/practice';
 import { useColors } from '@/hooks/theme/useColors';
 import { useWordSizing } from '@/hooks/vocabulary/useWordSizing';
-import { useAudioPracticeSession } from '@/hooks/practice';
 import { handleError } from '@/utils/errorHandling';
 
 /**

@@ -51,14 +51,12 @@ export interface UseFilterModalResult {
   handleDateRangeSelect: (range: FilterState['filters']['dateRange']) => void;
   handleClearAll: () => void;
   authorChunks: Author[][];
-  selectedDifficultyOption: typeof DIFFICULTY_OPTIONS[number];
-  selectedDateRangeOption: typeof DATE_RANGE_OPTIONS[number] | undefined;
+  selectedDifficultyOption: (typeof DIFFICULTY_OPTIONS)[number];
+  selectedDateRangeOption: (typeof DATE_RANGE_OPTIONS)[number] | undefined;
   selectedAuthorsText: string;
 }
 
-export function useFilterModal(
-  availableAuthors: Author[]
-): UseFilterModalResult {
+export function useFilterModal(availableAuthors: Author[]): UseFilterModalResult {
   const dispatch = useAppDispatch();
   const { sort, filters } = useAppSelector(state => state.filters);
   const activeFiltersCount = useAppSelector(selectActiveFiltersCount);
@@ -155,9 +153,9 @@ export function useFilterModal(
     handleDateRangeSelect,
     handleClearAll,
     authorChunks,
-    selectedDifficultyOption,
     selectedDateRangeOption,
     selectedAuthorsText,
+    selectedDifficultyOption,
   };
 }
 

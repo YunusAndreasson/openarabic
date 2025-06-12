@@ -1,6 +1,7 @@
 import { Skia } from '@shopify/react-native-skia';
 import { useMemo } from 'react';
 
+import type { DataPoint } from '@/components/vocabulary/shared';
 import {
   useChartColors,
 } from '@/components/vocabulary/shared/chartColors';
@@ -17,7 +18,6 @@ import {
   generateDateRange,
   createStandardizedPerformanceZones,
 } from '@/components/vocabulary/shared/utils';
-import type { DataPoint } from '@/components/vocabulary/shared';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 interface Milestone {

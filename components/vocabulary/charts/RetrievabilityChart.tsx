@@ -27,8 +27,8 @@ import {
   CHART_VISUAL,
 } from '@/components/vocabulary/shared/constants';
 import { createAreaFillPath } from '@/components/vocabulary/shared/utils';
-import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import { useColors } from '@/hooks/theme/useColors';
+import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 interface RetrievabilityChartProps {

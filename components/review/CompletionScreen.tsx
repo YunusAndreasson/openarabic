@@ -11,8 +11,8 @@ import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
 import { TIMING_CONFIG, useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { useColors } from '@/hooks/theme/useColors';
 import { useEncouragingMetrics } from '@/hooks/review/useEncouragingMetrics';
+import { useColors } from '@/hooks/theme/useColors';
 import type { SessionMetrics } from '@/types/review.types';
 import { successFeedback } from '@/utils/haptics';
 

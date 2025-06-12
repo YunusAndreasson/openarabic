@@ -6,16 +6,10 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedInput } from '@/components/ThemedInput';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { useAuthForm, PASSWORD_REQUIREMENTS } from '@/hooks/auth/useAuthForm';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
-import { useAuthForm, PASSWORD_REQUIREMENTS } from '@/hooks/auth/useAuthForm';
 // import { analytics } from '@/services/analytics';
-// Temporary mock analytics until service is fixed
-const analytics = {
-  identify: async (_userId: string, _properties?: any) => {},
-  trackSignIn: async (_method?: string) => {},
-  trackSignUp: async (_method?: string) => {},
-};
 
 /**
  * Authentication component that handles both sign in and sign up

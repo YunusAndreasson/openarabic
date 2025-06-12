@@ -20,9 +20,6 @@ const DragHandle: React.FC<DragHandleProps> = ({ onLongPress, delayLongPress = 1
       onLongPress={onLongPress}
       delayLongPress={delayLongPress}
       activeOpacity={0.6}
-      accessibilityRole="button"
-      accessibilityLabel="Drag to reorder"
-      accessibilityHint="Long press and drag to reorder this article"
     >
       <Ionicons name="reorder-three-outline" size={22} color={colors.secondaryText} />
     </TouchableOpacity>

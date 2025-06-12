@@ -4,9 +4,9 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 
 import { AUDIO_STATES } from '@/constants/audio';
 import { useScreenFocusRefresh } from '@/hooks';
-import { useAuth } from '@/hooks/auth/useAuth';
 import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { readingListService } from '@/services/readingList';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';

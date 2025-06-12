@@ -7,8 +7,8 @@ import Pill from '@/components/Pill';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/theme/useColors';
 import { useFilterModal, DIFFICULTY_OPTIONS, DATE_RANGE_OPTIONS, SORT_OPTIONS } from '@/hooks/articles/useFilterModal';
+import { useColors } from '@/hooks/theme/useColors';
 import type { Author } from '@/types/articles.types';
 
 interface FilterModalProps {

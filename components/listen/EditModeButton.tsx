@@ -45,9 +45,6 @@ const EditModeButton: React.FC<EditModeButtonProps> = ({ onEditModeChange }) => 
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       activeOpacity={0.6}
-      accessibilityRole="button"
-      accessibilityLabel={editMode ? 'Exit edit mode' : 'Enter edit mode'}
-      accessibilityHint={editMode ? 'Tap to finish editing' : 'Tap to edit and reorder articles'}
     >
       <ThemedText
         type="body"

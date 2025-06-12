@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useWindowDimensions } from 'react-native';
 import type { ViewStyle } from 'react-native';
+
 import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { lightFeedback, selectionFeedback } from '@/utils/haptics';
 

@@ -1,12 +1,13 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
 import { router } from 'expo-router';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 
 import type { AudioState } from '@/constants/audio';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
-import type { ReadingListItem } from './useListenScreen';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setCustomOrder } from '@/store/listenSlice';
 import { selectionFeedback } from '@/utils/haptics';
+
+import type { ReadingListItem } from './useListenScreen';
 
 interface ListenUIParams {
   sortedReadingList: ReadingListItem[];

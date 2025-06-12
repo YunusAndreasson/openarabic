@@ -1,10 +1,6 @@
-import { useMemo } from 'react';
 import { Skia } from '@shopify/react-native-skia';
+import { useMemo } from 'react';
 
-import {
-  calculateRetrievability,
-  createStandardizedPerformanceZones,
-} from '@/components/vocabulary/shared/utils';
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import {
   useGraphWidth,
@@ -12,6 +8,10 @@ import {
   DAYS_7,
   CRITICAL_RETRIEVABILITY_THRESHOLD,
 } from '@/components/vocabulary/shared/constants';
+import {
+  calculateRetrievability,
+  createStandardizedPerformanceZones,
+} from '@/components/vocabulary/shared/utils';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 interface RetrievabilityForecast {

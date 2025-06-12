@@ -35,13 +35,6 @@ const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
   },
-  sourceContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
-  sourceLabel: {
-    fontSize: 14,
-  },
   audioControlsContainer: {
     flexDirection: 'row',
     gap: LAYOUT.SPACING.SMALL,
@@ -76,7 +69,6 @@ const styles = StyleSheet.create({
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.7,
   },
 });
-
 
 interface AudioControlsButtonProps {
   articleId: number;
@@ -227,97 +219,95 @@ export const ArticleContent = ({
   colors,
   isDarkMode,
 }: ArticleContentProps): JSX.Element => {
-    const insets = useSafeAreaInsets();
+  const insets = useSafeAreaInsets();
 
-    const { user } = useAuth();
-    const articleId = parseInt(id, 10);
+  const { user } = useAuth();
+  const articleId = parseInt(id, 10);
 
-    // Get reading list data for the button
-    const { isInReadingList, refetchReadingListStatus, isLoadingReadingList } = useArticleData(
+  // Get reading list data for the button
+  const { isInReadingList, refetchReadingListStatus, isLoadingReadingList } = useArticleData(
+    articleId,
+    user?.id
+  );
+
+  const { handleToggleReadingList } = useArticleMutations(user?.id, refetchReadingListStatus);
+
+  // Handle scroll events
+  const handleAnimatedScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      handleScroll(event);
+    },
+    [handleScroll]
+  );
+
+  // Memoize the header component for better performance
+  const headerComponent = useMemo(
+    () => (
+      <>
+        <ParallaxHeader article={article} colors={colors} isDarkMode={!!isDarkMode} />
+        {article.summary && <ArticleSummary summary={article.summary} />}
+        {user && (
+          <AudioControlsButton
+            articleId={articleId}
+            article={article}
+            isInReadingList={isInReadingList}
+            isLoading={isLoadingReadingList}
+            onToggleReadingList={handleToggleReadingList}
+          />
+        )}
+      </>
+    ),
+    [
+      article,
+      colors,
+      isDarkMode,
+      user,
       articleId,
-      user?.id
-    );
+      isInReadingList,
+      isLoadingReadingList,
+      handleToggleReadingList,
+    ]
+  );
 
-    const { handleToggleReadingList } = useArticleMutations(user?.id, refetchReadingListStatus);
-
-    // Handle scroll events
-    const handleAnimatedScroll = useCallback(
-      (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-        handleScroll(event);
-      },
-      [handleScroll]
-    );
-
-    // Memoize the header component for better performance
-    const headerComponent = useMemo(
-      () => (
-        <>
-          <ParallaxHeader article={article} colors={colors} isDarkMode={!!isDarkMode} />
-          {article.summary && <ArticleSummary summary={article.summary} />}
-          {user && (
-            <AudioControlsButton
-              articleId={articleId}
-              article={article}
-              isInReadingList={isInReadingList}
-              isLoading={isLoadingReadingList}
-              onToggleReadingList={handleToggleReadingList}
-            />
-          )}
-        </>
-      ),
-      [
-        article,
-        colors,
-        isDarkMode,
-        user,
-        articleId,
-        isInReadingList,
-        isLoadingReadingList,
-        handleToggleReadingList,
-      ]
-    );
-
-
-    return (
-      <Animated.View style={styles.flexOne}>
-        {sortedSentences && sortedSentences.length > 0 ? (
-          <View
-            style={[styles.listContainer, styles.content, { backgroundColor: colors.background }]}
-          >
-            <FlashList
-              key={`article-${id}`}
-              alwaysBounceVertical={false} // Only bounce when content allows it
-              bounces={true} // Re-enable bounce for parallax pull-down effect
-              data={sortedSentences}
-              drawDistance={SENTENCE_ITEM_HEIGHT * 12} // Increased for better performance
-              estimatedFirstItemOffset={0}
-              estimatedItemSize={SENTENCE_ITEM_HEIGHT}
-              extraData={''}
-              getItemType={() => 'sentence'} // Add item type for better optimization
-              initialScrollIndex={0}
-              keyExtractor={item => item.id.toString()}
-              ListHeaderComponent={headerComponent}
-              overScrollMode="auto" // Allow controlled overscroll for parallax
-              persistentScrollbar={true}
-              removeClippedSubviews={true} // Improve performance
-              renderItem={renderSentenceItem}
-              scrollEventThrottle={16} // Standard throttle for natural scrolling feel
-              showsVerticalScrollIndicator={true}
-              contentContainerStyle={{
-                paddingTop: 0, // Remove padding since ParallaxHeader handles its own layout
-                // Slight bottom padding adjustment for better closure
-                paddingBottom:
-                  LAYOUT.CONTENT_SPACING.BOTTOM + insets.bottom + LAYOUT.SPACING.MEDIUM,
-              }}
-              overrideItemLayout={layout => {
-                layout.size = SENTENCE_ITEM_HEIGHT;
-              }}
-              onScroll={handleAnimatedScroll}
-            />
-          </View>
-        ) : null}
-      </Animated.View>
-      );
+  return (
+    <Animated.View style={styles.flexOne}>
+      {sortedSentences && sortedSentences.length > 0 ? (
+        <View
+          style={[styles.listContainer, styles.content, { backgroundColor: colors.background }]}
+        >
+          <FlashList
+            key={`article-${id}`}
+            alwaysBounceVertical={false} // Only bounce when content allows it
+            bounces={true} // Re-enable bounce for parallax pull-down effect
+            data={sortedSentences}
+            drawDistance={SENTENCE_ITEM_HEIGHT * 12} // Increased for better performance
+            estimatedFirstItemOffset={0}
+            estimatedItemSize={SENTENCE_ITEM_HEIGHT}
+            extraData={''}
+            getItemType={() => 'sentence'} // Add item type for better optimization
+            initialScrollIndex={0}
+            keyExtractor={item => item.id.toString()}
+            ListHeaderComponent={headerComponent}
+            overScrollMode="auto" // Allow controlled overscroll for parallax
+            persistentScrollbar={true}
+            removeClippedSubviews={true} // Improve performance
+            renderItem={renderSentenceItem}
+            scrollEventThrottle={16} // Standard throttle for natural scrolling feel
+            showsVerticalScrollIndicator={true}
+            contentContainerStyle={{
+              paddingTop: 0, // Remove padding since ParallaxHeader handles its own layout
+              // Slight bottom padding adjustment for better closure
+              paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + insets.bottom + LAYOUT.SPACING.MEDIUM,
+            }}
+            overrideItemLayout={layout => {
+              layout.size = SENTENCE_ITEM_HEIGHT;
+            }}
+            onScroll={handleAnimatedScroll}
+          />
+        </View>
+      ) : null}
+    </Animated.View>
+  );
 };
 
 ArticleContent.displayName = 'ArticleContent';

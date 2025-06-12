@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
 import { Skia } from '@shopify/react-native-skia';
+import { useMemo } from 'react';
 
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import { useColors } from '@/hooks/theme/useColors';
@@ -11,8 +11,8 @@ export interface MemoryCapacityMetrics {
 }
 
 export interface GaugePaths {
-  fullPath: import('@shopify/react-native-skia').Path;
-  filledPath: import('@shopify/react-native-skia').Path;
+  fullPath: Skia.Path;
+  filledPath: Skia.Path;
   filledSweep: number;
 }
 
@@ -52,7 +52,7 @@ export function useMemoryCapacityGauge({
     }
 
     const validWords = studyWords.filter(
-      w => w.fsrs_stability != null && w.fsrs_difficulty != null,
+      w => w.fsrs_stability != null && w.fsrs_difficulty != null
     );
     if (!validWords.length) {
       return { capacityScore: 85, trend: 'stable' };
@@ -65,7 +65,7 @@ export function useMemoryCapacityGauge({
         acc.repsSum += word.fsrs_reps ?? 0;
         return acc;
       },
-      { stabilitySum: 0, difficultySum: 0, repsSum: 0 },
+      { stabilitySum: 0, difficultySum: 0, repsSum: 0 }
     );
 
     const averageStability = stabilitySum / validWords.length;
@@ -76,9 +76,7 @@ export function useMemoryCapacityGauge({
     const repsFactor = Math.min(averageReps / 10, 1) * 30;
     const difficultyFactor = Math.max(0, (10 - averageDifficulty) / 10) * 25;
 
-    const capacityScore = Math.round(
-      stabilityFactor + repsFactor + difficultyFactor,
-    );
+    const capacityScore = Math.round(stabilityFactor + repsFactor + difficultyFactor);
 
     const recentWords = validWords.filter(word => {
       if (!word.created_at) return false;
@@ -110,7 +108,7 @@ export function useMemoryCapacityGauge({
         height: radius * 2,
       },
       startAngle,
-      totalSweep,
+      totalSweep
     );
 
     const filledSweep = (memoryMetrics.capacityScore / 100) * totalSweep;
@@ -123,7 +121,7 @@ export function useMemoryCapacityGauge({
         height: radius * 2,
       },
       startAngle,
-      filledSweep,
+      filledSweep
     );
 
     return { fullPath, filledPath, filledSweep };
