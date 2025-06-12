@@ -32,6 +32,7 @@ export * from './notifications';
 
 // Utility hooks
 export * from './utils';
+export { useIslamicCalendarEvents, formatDaysUntil } from './utils';
 
 // UI interaction hooks
 export * from './ui';
