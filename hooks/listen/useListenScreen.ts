@@ -3,10 +3,10 @@ import { useFocusEffect } from 'expo-router';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 
 import { AUDIO_STATES } from '@/constants/audio';
-import { useScreenFocusRefresh } from '@/hooks';
 import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useScreenFocusRefresh } from '@/hooks/utils/useScreenFocusRefresh';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { readingListService } from '@/services/readingList';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -131,8 +131,8 @@ export const useListenScreen = () => {
     );
 
     return [...enhancedTracks].sort((a, b) => {
-      const posA = a.articleId ? articlePositionMap.get(a.articleId) ?? 999 : 999;
-      const posB = b.articleId ? articlePositionMap.get(b.articleId) ?? 999 : 999;
+      const posA = a.articleId ? (articlePositionMap.get(a.articleId) ?? 999) : 999;
+      const posB = b.articleId ? (articlePositionMap.get(b.articleId) ?? 999) : 999;
       return posA - posB;
     });
   }, [enhancedTracks, sortedReadingList]);

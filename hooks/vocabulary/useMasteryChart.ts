@@ -2,12 +2,8 @@ import { Skia } from '@shopify/react-native-skia';
 import { useMemo } from 'react';
 
 import type { DataPoint } from '@/components/vocabulary/shared';
-import {
-  useChartColors,
-} from '@/components/vocabulary/shared/chartColors';
-import {
-  generateChartSubtitle,
-} from '@/components/vocabulary/shared/chartMessages';
+import { useChartColors } from '@/components/vocabulary/shared/chartColors';
+import { generateChartSubtitle } from '@/components/vocabulary/shared/chartMessages';
 import {
   GRAPH_HEIGHT_LARGE,
   DAYS_7,
@@ -166,13 +162,18 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
     const currentRate = recent[recent.length - 1]?.masteryRate || 0;
     const recentAvg =
       recent.length > 0 ? recent.reduce((sum, day) => sum + day.masteryRate, 0) / recent.length : 0;
-    const olderAvg = older.length > 0 ? older.reduce((sum, day) => sum + day.masteryRate, 0) / older.length : 0;
+    const olderAvg =
+      older.length > 0 ? older.reduce((sum, day) => sum + day.masteryRate, 0) / older.length : 0;
 
     const change = recentAvg - olderAvg;
     const trend = change > 2 ? 'improving' : change < -2 ? 'declining' : 'stable';
     const totalMastered = recent[recent.length - 1]?.masteredCount || 0;
 
-    const performanceZones = createStandardizedPerformanceZones(chartHeight, TOP_PADDING, chartColors);
+    const performanceZones = createStandardizedPerformanceZones(
+      chartHeight,
+      TOP_PADDING,
+      chartColors
+    );
 
     return {
       masteryPath: path.toSVGString(),
@@ -196,7 +197,7 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
       return 'Start reviewing to build memory strength';
     }
 
-    return generateChartSubtitle.mastery(currentRate, trend as 'declining' | 'improving' | 'stable', weeklyChange ?? 0);
+    return generateChartSubtitle.mastery(currentRate, trend, weeklyChange ?? 0);
   }, [chartData.insights]);
 
   const tooltipPoints = useMemo(() => {

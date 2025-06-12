@@ -106,14 +106,15 @@ export function useFilterModal(availableAuthors: Author[]): UseFilterModalResult
     dispatch(clearAllFilters());
   }, [dispatch]);
 
-  const selectedDifficultyOption = useMemo<(typeof DIFFICULTY_OPTIONS)[number]>(() => {
-    return (
-      DIFFICULTY_OPTIONS.find(
-        option =>
-          option.range[0] === filters.difficultyRange[0] &&
-          option.range[1] === filters.difficultyRange[1]
-      ) ?? DIFFICULTY_OPTIONS[3]
+  const DIFFICULTY_FALLBACK = DIFFICULTY_OPTIONS[0] as (typeof DIFFICULTY_OPTIONS)[number];
+
+  const selectedDifficultyOption: (typeof DIFFICULTY_OPTIONS)[number] = useMemo(() => {
+    const found = DIFFICULTY_OPTIONS.find(
+      option =>
+        option.range[0] === filters.difficultyRange[0] &&
+        option.range[1] === filters.difficultyRange[1]
     );
+    return found ?? DIFFICULTY_OPTIONS[0] ?? DIFFICULTY_FALLBACK;
   }, [filters.difficultyRange]);
 
   const selectedAuthorsCount = filters.authorIds.length;

@@ -137,7 +137,6 @@ export default function ListenScreen(): JSX.Element {
     shouldShowInitialLoading,
     isStartingPlayback,
     setIsStartingPlayback,
-    playbackMode,
     setPlaybackMode,
     duration,
     position,
@@ -171,8 +170,6 @@ export default function ListenScreen(): JSX.Element {
     metadata: listenMetadata,
     audioState,
     isStartingPlayback,
-    setIsStartingPlayback,
-    setPlaybackMode,
   });
 
   const insets = useSafeAreaInsets();
