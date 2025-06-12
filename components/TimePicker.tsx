@@ -1,22 +1,20 @@
-import { Ionicons } from '@expo/vector-icons';
-import React, { memo, useState, useCallback, useMemo, useEffect } from 'react';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import React, { memo, useState, useCallback, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
-import {
-  StyleSheet,
-  View,
-  Modal,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  useWindowDimensions,
-} from 'react-native';
-import Animated from 'react-native-reanimated';
+import { StyleSheet, View, Modal, TouchableWithoutFeedback, Platform } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  runOnJS,
+} from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
-import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { selectionFeedback } from '@/utils/haptics';
 
-import { CustomSlider } from './Slider';
 import { ThemedButton } from './ThemedButton';
 import { ThemedText } from './ThemedText';
 
@@ -39,193 +37,121 @@ export const TimePicker = memo(
     title = 'Set Time',
   }: TimePickerProps) => {
     const colors = useColors();
-    const [selectedHour, setSelectedHour] = useState(initialHour);
-    const [selectedMinute, setSelectedMinute] = useState(initialMinute);
-    const { height: screenHeight } = useWindowDimensions();
+    const isDarkMode = useIsDarkMode();
 
-    const {
-      fadeIn: fadeBackdropIn,
-      fadeOut: fadeBackdropOut,
-      animatedStyle: backdropStyle,
-    } = useOpacityAnimation({ initialOpacity: 0 });
+    // Create initial date from hour and minute
+    const initialDate = useMemo(() => {
+      const date = new Date();
+      date.setHours(initialHour, initialMinute, 0, 0);
+      return date;
+    }, [initialHour, initialMinute]);
 
-    const {
-      startAnimation: translateIn,
-      reverseAnimation: translateOut,
-      animatedStyle: translateStyle,
-    } = useTransformAnimation({
-      type: 'translateY',
-      initialValue: screenHeight,
-      targetValue: 0,
-      useSpring: true,
-      damping: 20,
-      stiffness: 300,
-    });
+    const [selectedDate, setSelectedDate] = useState(initialDate);
+    const [showPicker, setShowPicker] = useState(false);
 
-    const {
-      startAnimation: scaleIn,
-      reverseAnimation: scaleOut,
-      animatedStyle: scaleStyle,
-    } = useTransformAnimation({
-      type: 'scale',
-      initialValue: 0.9,
-      targetValue: 1,
-      useSpring: true,
-      damping: 20,
-      stiffness: 300,
-    });
+    // Animation values
+    const backdropOpacity = useSharedValue(0);
+    const modalScale = useSharedValue(0.9);
+    const modalTranslateY = useSharedValue(50);
 
-    useEffect(() => {
+    // Animated styles
+    const backdropStyle = useAnimatedStyle(() => ({
+      opacity: backdropOpacity.value,
+    }));
+
+    const modalStyle = useAnimatedStyle(() => ({
+      transform: [{ scale: modalScale.value }, { translateY: modalTranslateY.value }],
+    }));
+
+    // Animation functions
+    const showModal = useCallback(() => {
+      backdropOpacity.value = withTiming(1, { duration: 200 });
+      modalScale.value = withSpring(1, { damping: 20, stiffness: 300 });
+      modalTranslateY.value = withSpring(0, { damping: 20, stiffness: 300 });
+    }, [backdropOpacity, modalScale, modalTranslateY]);
+
+    const hideModal = useCallback(() => {
+      backdropOpacity.value = withTiming(0, { duration: 200 });
+      modalScale.value = withTiming(0.9, { duration: 200 });
+      modalTranslateY.value = withTiming(50, { duration: 200 }, () => {
+        runOnJS(onClose)();
+      });
+    }, [backdropOpacity, modalScale, modalTranslateY, onClose]);
+
+    // Show modal when visible
+    React.useEffect(() => {
       if (isVisible) {
-        fadeBackdropIn();
-        translateIn();
-        scaleIn();
-      } else {
-        fadeBackdropOut();
-        translateOut();
-        scaleOut();
+        setShowPicker(Platform.OS === 'ios');
+        showModal();
       }
-    }, [isVisible, fadeBackdropIn, fadeBackdropOut, translateIn, translateOut, scaleIn, scaleOut]);
+    }, [isVisible, showModal]);
 
-    const modalStyle = [translateStyle, scaleStyle];
+    const handleDateChange = useCallback(
+      (event: any, date?: Date) => {
+        if (Platform.OS === 'android') {
+          setShowPicker(false);
 
-    const handleHourChange = useCallback((value: number) => {
-      const hour = Math.round(value);
-      setSelectedHour(hour);
-      selectionFeedback();
-    }, []);
-
-    const handleMinuteChange = useCallback((value: number) => {
-      const minute = Math.round(value);
-      setSelectedMinute(minute);
-      selectionFeedback();
-    }, []);
+          if (event.type === 'set' && date) {
+            setSelectedDate(date);
+            const hour = date.getHours();
+            const minute = date.getMinutes();
+            onTimeSet(hour, minute);
+            selectionFeedback();
+          }
+          hideModal();
+        } else if (date) {
+          setSelectedDate(date);
+          selectionFeedback();
+        }
+      },
+      [onTimeSet, hideModal]
+    );
 
     const handleConfirm = useCallback(() => {
-      onTimeSet(selectedHour, selectedMinute);
-      onClose();
-    }, [selectedHour, selectedMinute, onTimeSet, onClose]);
+      const hour = selectedDate.getHours();
+      const minute = selectedDate.getMinutes();
+      onTimeSet(hour, minute);
+      hideModal();
+    }, [selectedDate, onTimeSet, hideModal]);
 
-    const formatTime = useCallback((hour: number, minute: number) => {
+    const handleCancel = useCallback(() => {
+      hideModal();
+    }, [hideModal]);
+
+    const formatTime = useCallback((date: Date) => {
+      const hour = date.getHours();
+      const minute = date.getMinutes();
       const period = hour >= 12 ? 'PM' : 'AM';
       const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
       const displayMinute = minute.toString().padStart(2, '0');
       return `${displayHour}:${displayMinute} ${period}`;
     }, []);
 
-    const modalContent = useMemo(
-      () => (
-        <Animated.View pointerEvents="box-none" style={[styles.modalContainer, modalStyle]}>
-          <View
-            pointerEvents="auto"
-            style={[styles.modal, { backgroundColor: colors.card, shadowColor: colors.shadow }]}
-          >
-            {/* Header */}
-            <View style={styles.header}>
-              <ThemedText
-                colorName="headingText"
-                style={styles.title}
-                type="heading3"
-                weight="bold"
-              >
-                {title}
-              </ThemedText>
-              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                <Ionicons color={colors.secondaryText} name="close" size={24} />
-              </TouchableOpacity>
-            </View>
-
-            {/* Time Display */}
-            <View style={styles.timeDisplay}>
-              <ThemedText
-                colorName="subtitleText"
-                style={styles.timeText}
-                type="heading1"
-                weight="bold"
-              >
-                {formatTime(selectedHour, selectedMinute)}
-              </ThemedText>
-            </View>
-
-            {/* Hour Slider */}
-            <View style={styles.sliderSection}>
-              <View style={styles.sliderHeader}>
-                <ThemedText style={styles.sliderLabel} type="body" weight="medium">
-                  Hour
-                </ThemedText>
-                <ThemedText style={styles.sliderValue} type="body" variant="secondary">
-                  {selectedHour === 0 ? 12 : selectedHour > 12 ? selectedHour - 12 : selectedHour}{' '}
-                  {selectedHour >= 12 ? 'PM' : 'AM'}
-                </ThemedText>
-              </View>
-              <CustomSlider
-                maximumValue={23}
-                minimumValue={0}
-                step={1}
-                style={styles.slider}
-                value={selectedHour}
-                onValueChange={handleHourChange}
-              />
-            </View>
-
-            {/* Minute Slider */}
-            <View style={styles.sliderSection}>
-              <View style={styles.sliderHeader}>
-                <ThemedText style={styles.sliderLabel} type="body" weight="medium">
-                  Minute
-                </ThemedText>
-                <ThemedText style={styles.sliderValue} type="body" variant="secondary">
-                  {selectedMinute.toString().padStart(2, '0')}
-                </ThemedText>
-              </View>
-              <CustomSlider
-                maximumValue={59}
-                minimumValue={0}
-                step={5}
-                style={styles.slider}
-                value={selectedMinute}
-                onValueChange={handleMinuteChange}
-              />
-            </View>
-
-            {/* Actions */}
-            <View style={styles.actions}>
-              <ThemedButton
-                style={styles.actionButton}
-                title="Cancel"
-                variant="outlined"
-                onPress={onClose}
-              />
-              <ThemedButton style={styles.actionButton} title="Set Time" onPress={handleConfirm} />
-            </View>
-          </View>
-        </Animated.View>
-      ),
-      [
-        colors,
-        title,
-        selectedHour,
-        selectedMinute,
-        formatTime,
-        handleHourChange,
-        handleMinuteChange,
-        handleConfirm,
-        onClose,
-        modalStyle,
-      ]
-    );
-
     if (!isVisible) return null;
 
+    // Android: Show native picker directly
+    if (Platform.OS === 'android' && showPicker) {
+      return (
+        <DateTimePicker
+          value={selectedDate}
+          mode="time"
+          is24Hour={false}
+          display="default"
+          onChange={handleDateChange}
+        />
+      );
+    }
+
+    // iOS: Show custom modal with native picker
     return (
       <Modal
         statusBarTranslucent
         transparent
         animationType="none"
         visible={isVisible}
-        onRequestClose={onClose}
+        onRequestClose={handleCancel}
       >
-        <TouchableWithoutFeedback onPress={onClose}>
+        <TouchableWithoutFeedback onPress={handleCancel}>
           <Animated.View
             style={[
               styles.backdrop,
@@ -233,7 +159,71 @@ export const TimePicker = memo(
               { backgroundColor: colors.modalOverlay },
             ]}
           >
-            {modalContent}
+            <TouchableWithoutFeedback>
+              <Animated.View style={[styles.modalContainer, modalStyle]}>
+                <View
+                  style={[
+                    styles.modal,
+                    {
+                      backgroundColor: colors.card,
+                      shadowColor: colors.shadow,
+                    },
+                  ]}
+                >
+                  {/* Header */}
+                  <View style={styles.header}>
+                    <ThemedText
+                      colorName="headingText"
+                      style={styles.title}
+                      type="heading3"
+                      weight="bold"
+                    >
+                      {title}
+                    </ThemedText>
+                  </View>
+
+                  {/* Time Display */}
+                  <View style={styles.timeDisplay}>
+                    <ThemedText
+                      colorName="subtitleText"
+                      style={styles.timeText}
+                      type="heading1"
+                      weight="bold"
+                    >
+                      {formatTime(selectedDate)}
+                    </ThemedText>
+                  </View>
+
+                  {/* Native Time Picker */}
+                  <View style={styles.pickerContainer}>
+                    <DateTimePicker
+                      value={selectedDate}
+                      mode="time"
+                      is24Hour={false}
+                      display="spinner"
+                      onChange={handleDateChange}
+                      style={styles.picker}
+                      themeVariant={isDarkMode ? 'dark' : 'light'}
+                    />
+                  </View>
+
+                  {/* Actions */}
+                  <View style={styles.actions}>
+                    <ThemedButton
+                      style={styles.actionButton}
+                      title="Cancel"
+                      variant="outlined"
+                      onPress={handleCancel}
+                    />
+                    <ThemedButton
+                      style={styles.actionButton}
+                      title="Set Time"
+                      onPress={handleConfirm}
+                    />
+                  </View>
+                </View>
+              </Animated.View>
+            </TouchableWithoutFeedback>
           </Animated.View>
         </TouchableWithoutFeedback>
       </Modal>
@@ -251,7 +241,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: LAYOUT.SPACING.MEDIUM,
     justifyContent: 'space-between',
-    marginTop: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.LARGE,
   },
   backdrop: {
     alignItems: 'center',
@@ -259,47 +249,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: LAYOUT.SPACING.LARGE,
   },
-  closeButton: {
-    marginRight: -LAYOUT.SPACING.SMALL,
-    padding: LAYOUT.SPACING.SMALL,
-  },
   header: {
     alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     marginBottom: LAYOUT.SPACING.LARGE,
   },
   modal: {
     ...LAYOUT.SHADOW.LARGE,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     padding: LAYOUT.SPACING.LARGE,
+    width: '100%',
   },
   modalContainer: {
     maxWidth: 400,
     width: '100%',
   },
-  slider: {
-    height: 40,
+  picker: {
+    height: 200,
+    width: '100%',
   },
-  sliderHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  pickerContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  sliderLabel: {
-    flex: 1,
-  },
-  sliderSection: {
-    marginBottom: LAYOUT.SPACING.LARGE,
-  },
-  sliderValue: {
-    minWidth: 60,
-    textAlign: 'right',
+    marginTop: LAYOUT.SPACING.MEDIUM,
   },
   timeDisplay: {
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.XLARGE,
+    marginBottom: LAYOUT.SPACING.LARGE,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
   timeText: {
@@ -307,6 +282,6 @@ const styles = StyleSheet.create({
     lineHeight: 56,
   },
   title: {
-    flex: 1,
+    textAlign: 'center',
   },
 });

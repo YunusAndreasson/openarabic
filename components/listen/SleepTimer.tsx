@@ -1,19 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { memo } from 'react';
-import type { ViewStyle } from 'react-native';
-import {
-  StyleSheet,
-  View,
-  Modal,
-  TouchableWithoutFeedback,
-  TouchableOpacity,
-} from 'react-native';
-import Animated from 'react-native-reanimated';
+import { StyleSheet, View, Modal, TouchableWithoutFeedback, TouchableOpacity } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import { useSleepTimerModal } from '@/hooks/listen/useSleepTimerModal';
 import { useColors } from '@/hooks/theme/useColors';
 
 export interface SleepTimerProps {
@@ -27,11 +18,9 @@ export interface SleepTimerProps {
 
 const timerOptions = [5, 10, 15, 30, 45, 60]; // minutes
 
-// Optimized time formatter - defined outside component to prevent recreation
+// Simplified time formatter
 const formatTime = (seconds: number): string => {
-  if (!seconds || !isFinite(seconds) || isNaN(seconds) || seconds < 0) {
-    return '0:00';
-  }
+  if (!seconds || seconds < 0) return '0:00';
 
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
@@ -47,43 +36,36 @@ const SleepTimerComponent = ({
   isActive = false,
 }: SleepTimerProps) => {
   const colors = useColors();
-  const {
-    selectedMinutes,
-    backdropStyle,
-    modalStyle,
-    handleSetTimer,
-    handleCancelTimer,
-    handleOptionSelect,
-  } = useSleepTimerModal({
-    isVisible,
-    onClose,
-    onTimerSet,
-    onTimerCancel,
-  });
+  const [selectedMinutes, setSelectedMinutes] = React.useState<number | null>(null);
 
-  if (!isVisible) {
-    return null;
-  }
+  const handleSetTimer = () => {
+    if (selectedMinutes) {
+      onTimerSet(selectedMinutes);
+      onClose();
+    }
+  };
+
+  const handleCancelTimer = () => {
+    onTimerCancel();
+    onClose();
+  };
+
+  const handleOptionSelect = (minutes: number) => {
+    setSelectedMinutes(minutes);
+  };
 
   return (
     <Modal
       statusBarTranslucent
       transparent
-      animationType="none"
+      animationType="slide"
       visible={isVisible}
       onRequestClose={onClose}
     >
       <TouchableWithoutFeedback onPress={onClose}>
-        <Animated.View
-          style={[
-            styles.backdrop,
-            backdropStyle as ViewStyle,
-            { backgroundColor: colors.backdropOverlay },
-          ]}
-        >
-          <Animated.View pointerEvents="box-none" style={[styles.modalContainer, modalStyle]}>
+        <View style={[styles.backdrop, { backgroundColor: colors.backdropOverlay }]}>
+          <View style={styles.modalContainer}>
             <View
-              pointerEvents="auto"
               style={[
                 styles.modal,
                 {
@@ -129,7 +111,7 @@ const SleepTimerComponent = ({
                     />
                   </View>
                 ) : (
-                  <View style={styles.setupContainer}>
+                  <>
                     <View style={styles.optionsGrid}>
                       {timerOptions.map(minutes => (
                         <ThemedButton
@@ -159,39 +141,24 @@ const SleepTimerComponent = ({
                       variant="filled"
                       onPress={handleSetTimer}
                     />
-                  </View>
+                  </>
                 )}
               </View>
             </View>
-          </Animated.View>
-        </Animated.View>
+          </View>
+        </View>
       </TouchableWithoutFeedback>
     </Modal>
   );
 };
 
-SleepTimerComponent.displayName = 'SleepTimer';
-
-// Custom memo comparison for performance optimization
+// Simplified memo comparison
 const arePropsEqual = (prevProps: SleepTimerProps, nextProps: SleepTimerProps): boolean => {
-  // Always re-render if visibility changes
-  if (prevProps.isVisible !== nextProps.isVisible) {
-    return false;
-  }
-
-  // Always re-render if active state changes
-  if (prevProps.isActive !== nextProps.isActive) {
-    return false;
-  }
-
-  // Only update remaining time if difference is significant (> 1 second)
-  const timeDiff = Math.abs((prevProps.remainingTime || 0) - (nextProps.remainingTime || 0));
-  if (timeDiff > 1) {
-    return false;
-  }
-
-  // All other props are the same, skip re-render
-  return true;
+  return (
+    prevProps.isVisible === nextProps.isVisible &&
+    prevProps.isActive === nextProps.isActive &&
+    Math.abs((prevProps.remainingTime || 0) - (nextProps.remainingTime || 0)) <= 1
+  );
 };
 
 const styles = StyleSheet.create({
@@ -210,7 +177,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.LARGE,
   },
   fullWidthButton: {
     width: '100%',
@@ -254,9 +220,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: LAYOUT.SPACING.XLARGE,
   },
-  setupContainer: {
-    width: '100%',
-  },
   subtitle: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
   },
@@ -279,7 +242,6 @@ const styles = StyleSheet.create({
   },
 });
 
-// Apply custom comparison to the memoized component
 const SleepTimer = memo(SleepTimerComponent, arePropsEqual);
 
 export default SleepTimer;

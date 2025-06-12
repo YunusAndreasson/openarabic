@@ -14,6 +14,7 @@ import {
   MIN_TOUCH_TARGET,
 } from '@/constants/layout';
 import { useTransformAnimation } from '@/hooks/animations';
+import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
 interface ArticleCardProps {
@@ -47,12 +48,11 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   isLoadingAudio = false,
 }) => {
   const isDarkMode = useIsDarkMode();
+  const colors = useColors();
+  // Choose play icon color: dark in both light and dark modes
+  const playIconColor = isDarkMode ? colors.black : colors.text;
 
-  const {
-    animatedStyle,
-    startAnimation,
-    setValue,
-  } = useTransformAnimation({
+  const { animatedStyle, startAnimation, setValue } = useTransformAnimation({
     type: 'scale',
     initialValue: 1,
     targetValue: 1,
@@ -149,6 +149,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
                     onPress={onPlayPress}
                     isPlaying={isPlaying}
                     isLoading={isLoadingAudio}
+                    iconColor={playIconColor}
                   />
                 ) : (
                   <View style={styles.playButtonPlaceholder} />

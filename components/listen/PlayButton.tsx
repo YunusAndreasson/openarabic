@@ -14,6 +14,7 @@ interface PlayButtonProps {
   isPlaying?: boolean;
   isLoading?: boolean;
   disabled?: boolean;
+  iconColor?: string;
 }
 
 const PlayButton: React.FC<PlayButtonProps> = ({
@@ -21,6 +22,7 @@ const PlayButton: React.FC<PlayButtonProps> = ({
   isPlaying = false,
   isLoading = false,
   disabled = false,
+  iconColor,
 }) => {
   const colors = useColors();
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
@@ -40,7 +42,8 @@ const PlayButton: React.FC<PlayButtonProps> = ({
 
   // Use filled style like PLAY ALL button - always tint background with white icon
   const backgroundColor = colors.tint;
-  const iconColor = colors.white;
+  // Use iconColor prop if provided, otherwise use dark text/tint for contrast
+  const resolvedIconColor = iconColor || colors.text;
 
   return (
     <TouchableOpacity
@@ -65,9 +68,9 @@ const PlayButton: React.FC<PlayButtonProps> = ({
         ]}
       >
         {isLoading ? (
-          <ActivityIndicator size="small" color={iconColor} />
+          <ActivityIndicator size="small" color={resolvedIconColor} />
         ) : (
-          <Ionicons name={getIconName()} size={18} color={iconColor} style={styles.icon} />
+          <Ionicons name={getIconName()} size={18} color={resolvedIconColor} style={styles.icon} />
         )}
       </Animated.View>
     </TouchableOpacity>
