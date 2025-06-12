@@ -26,12 +26,26 @@ function getIslamicDateVersion() {
   };
 }
 
+function getHighestBuildNumber(appJson) {
+  const iosBuildNumber = parseInt(appJson.expo?.ios?.buildNumber || '0', 10);
+  const androidVersionCode = parseInt(appJson.expo?.android?.versionCode || '0', 10);
+
+  console.log(`📱 Current iOS build number: ${iosBuildNumber}`);
+  console.log(`🤖 Current Android version code: ${androidVersionCode}`);
+
+  return Math.max(iosBuildNumber, androidVersionCode);
+}
+
 function calculateNewVersion(currentVersion) {
   const { year, month, day } = getIslamicDateVersion();
-  const parts = currentVersion.split('.');
+
+  // Extract base version (remove build number if present)
+  const baseVersion = currentVersion.includes('+') ? currentVersion.split('+')[0] : currentVersion;
+
+  const parts = baseVersion.split('.');
 
   if (parts.length !== 3) {
-    throw new Error(`Invalid version format: ${currentVersion}. Expected format: YEAR.MONTH.PATCH`);
+    throw new Error(`Invalid version format: ${baseVersion}. Expected format: YEAR.MONTH.PATCH`);
   }
 
   const [currentYear, currentMonth, currentPatch] = parts.map(Number);
@@ -42,7 +56,7 @@ function calculateNewVersion(currentVersion) {
   if (currentDateString !== newDateString) {
     const newVersion = `${year}.${month}.${day}`;
     console.log(`📅 New Islamic month detected: ${currentDateString} → ${newDateString}`);
-    console.log(`🎯 Version will be: ${newVersion} (Islamic date: ${year}/${month}/${day})`);
+    console.log(`🎯 Base version will be: ${newVersion} (Islamic date: ${year}/${month}/${day})`);
     return newVersion;
   }
 
@@ -55,6 +69,10 @@ function calculateNewVersion(currentVersion) {
   console.log(`📊 Release #${newPatch} for Islamic month ${year}/${month}`);
 
   return newVersion;
+}
+
+function createVersionWithBuild(baseVersion, buildNumber) {
+  return `${baseVersion}+${buildNumber}`;
 }
 
 function validateVersion(version) {
@@ -88,8 +106,8 @@ runCheck('yarn tsc --noEmit', 'TypeScript type check');
 // Run lint
 runCheck('yarn lint', 'Lint');
 
-console.log('\n🕌 Islamic Calendar Version Bumping');
-console.log('=====================================');
+console.log('\n🕌 Islamic Calendar Version Bumping with Unified Build Numbers');
+console.log('===============================================================');
 
 // Get current versions
 const appJsonPath = './app.json';
@@ -101,22 +119,30 @@ const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
 const currentVersion = pkg.version;
 console.log(`📦 Current version: ${currentVersion}`);
 
-// Calculate new version
-const newVersion = calculateNewVersion(currentVersion);
-validateVersion(newVersion);
+// Get highest build number and increment it
+const currentHighestBuild = getHighestBuildNumber(appJson);
+const newBuildNumber = currentHighestBuild + 1;
+console.log(`🔢 New unified build number: ${newBuildNumber} (was ${currentHighestBuild})`);
+
+// Calculate new base version (without build number)
+const newBaseVersion = calculateNewVersion(currentVersion);
+validateVersion(newBaseVersion);
+
+// Create full version with build metadata (semver compliant)
+const newFullVersion = createVersionWithBuild(newBaseVersion, newBuildNumber);
 
 // Update app.json
 const expo = appJson.expo;
-expo.version = newVersion;
+expo.version = newBaseVersion; // Expo version stays as base version
 if (!expo.ios) expo.ios = {};
-expo.ios.buildNumber = newVersion.split('.')[2]; // Use patch number as build number
+expo.ios.buildNumber = newBuildNumber.toString(); // Set unified build number
 if (!expo.android) expo.android = {};
-expo.android.versionCode = Number(expo.android.versionCode || 0) + 1;
+expo.android.versionCode = newBuildNumber; // Set unified build number
 
 fs.writeFileSync(appJsonPath, JSON.stringify(appJson, null, 2));
 
-// Update package.json
-pkg.version = newVersion;
+// Update package.json with full version including build number
+pkg.version = newFullVersion;
 fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
 
 // Show Islamic date info
@@ -138,9 +164,12 @@ const islamicMonths = [
 
 console.log('\n✅ Version Bump Complete!');
 console.log('=========================');
-console.log(`📱 App version: ${newVersion}`);
+console.log(`📱 Package version (with build): ${newFullVersion}`);
+console.log(`📦 Expo version (base): ${newBaseVersion}`);
+console.log(`🔢 Unified build number: ${newBuildNumber}`);
 console.log(`🍎 iOS build: ${expo.ios.buildNumber}`);
 console.log(`🤖 Android version code: ${expo.android.versionCode}`);
 console.log(`📅 Islamic date: ${day} ${islamicMonths[month - 1]} ${year} AH`);
-console.log(`📊 This is release #${newVersion.split('.')[2]} for this Islamic month`);
+console.log(`📊 This is release #${newBaseVersion.split('.')[2]} for this Islamic month`);
+console.log(`🏗️  Build #${newBuildNumber} overall`);
 console.log('');
