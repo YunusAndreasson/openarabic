@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState, useMemo, useCallback } from 'react';
+import React from 'react';
 import { StyleSheet, View, ScrollView, Pressable } from 'react-native';
 
 import BaseCard from '@/components/BaseCard';
@@ -8,135 +8,31 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import {
-  setSortField,
-  toggleAuthor,
-  setDifficultyRange,
-  setDateRange,
-  clearAllFilters,
-  selectActiveFiltersCount,
-} from '@/store/filtersSlice';
-import type { FilterState } from '@/store/filtersSlice';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { useFilterModal, DIFFICULTY_OPTIONS, DATE_RANGE_OPTIONS, SORT_OPTIONS } from '@/hooks/articles/useFilterModal';
 import type { Author } from '@/types/articles.types';
-import { selectionFeedback, lightFeedback } from '@/utils/haptics';
 
 interface FilterModalProps {
   availableAuthors: Author[];
 }
 
-const DIFFICULTY_OPTIONS = [
-  { key: 'beginner', label: 'Beginner', range: [1, 2] as [number, number] },
-  { key: 'intermediate', label: 'Intermediate', range: [3, 3] as [number, number] },
-  { key: 'advanced', label: 'Advanced', range: [4, 5] as [number, number] },
-  { key: 'all', label: 'All difficulties', range: [1, 5] as [number, number] },
-];
-
-const DATE_RANGE_OPTIONS = [
-  { key: 'week', label: 'Past week' },
-  { key: 'month', label: 'Past month' },
-  { key: 'all', label: 'All time' },
-] as const;
-
-const SORT_OPTIONS = [
-  { key: 'title', label: 'Title', icon: 'text-outline' },
-  { key: 'author', label: 'Author', icon: 'person-outline' },
-  { key: 'date', label: 'Date added', icon: 'calendar-outline' },
-  { key: 'difficulty', label: 'Difficulty', icon: 'trending-up-outline' },
-] as const;
-
 const FilterModal: React.FC<FilterModalProps> = ({ availableAuthors }) => {
   const colors = useColors();
-  const dispatch = useAppDispatch();
-  const { sort, filters } = useAppSelector(state => state.filters);
-  const activeFiltersCount = useAppSelector(selectActiveFiltersCount);
-
-  // Local state for expanded sections
-  const [expandedSections, setExpandedSections] = useState({
-    authors: false,
-    difficulty: false,
-    dateRange: false,
-  });
-
-  const toggleSection = useCallback((section: keyof typeof expandedSections) => {
-    selectionFeedback();
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
-  }, []);
-
-  const handleSortSelect = useCallback(
-    (sortField: FilterState['sort']['field']) => {
-      selectionFeedback();
-      dispatch(setSortField(sortField));
-    },
-    [dispatch]
-  );
-
-  const handleAuthorToggle = useCallback(
-    (authorId: number) => {
-      dispatch(toggleAuthor(authorId));
-    },
-    [dispatch]
-  );
-
-  const handleDifficultySelect = useCallback(
-    (range: [number, number]) => {
-      dispatch(setDifficultyRange(range));
-    },
-    [dispatch]
-  );
-
-  const handleDateRangeSelect = useCallback(
-    (dateRange: FilterState['filters']['dateRange']) => {
-      dispatch(setDateRange(dateRange));
-    },
-    [dispatch]
-  );
-
-  const handleClearAll = useCallback(() => {
-    lightFeedback();
-    dispatch(clearAllFilters());
-  }, [dispatch]);
-
-  // Get selected difficulty option
-  const selectedDifficultyOption = useMemo(() => {
-    return (
-      DIFFICULTY_OPTIONS.find(
-        option =>
-          option.range[0] === filters.difficultyRange[0] &&
-          option.range[1] === filters.difficultyRange[1]
-      ) || DIFFICULTY_OPTIONS[3]
-    ); // default to 'all'
-  }, [filters.difficultyRange]);
-
-  // Get selected authors count and display text
-  const selectedAuthorsCount = filters.authorIds.length;
-  const selectedAuthorsText = useMemo(() => {
-    if (selectedAuthorsCount === 0) {
-      return 'All authors';
-    }
-    if (selectedAuthorsCount === 1) {
-      const selectedAuthor = availableAuthors.find(a => a.id === filters.authorIds[0]);
-      return selectedAuthor?.name || 'Author';
-    }
-    return `${selectedAuthorsCount} selected`;
-  }, [selectedAuthorsCount, availableAuthors, filters.authorIds]);
-
-  // Group authors into chunks for better UX (Miller's Law - 7±2 items)
-  const authorChunks = useMemo(() => {
-    const chunkSize = 6; // Keep under 7 items per visual group
-    const chunks = [];
-    for (let i = 0; i < availableAuthors.length; i += chunkSize) {
-      chunks.push(availableAuthors.slice(i, i + chunkSize));
-    }
-    return chunks;
-  }, [availableAuthors]);
-
-  const selectedDateRangeOption = DATE_RANGE_OPTIONS.find(
-    option => option.key === filters.dateRange
-  );
+  const {
+    sort,
+    filters,
+    activeFiltersCount,
+    expandedSections,
+    toggleSection,
+    handleSortSelect,
+    handleAuthorToggle,
+    handleDifficultySelect,
+    handleDateRangeSelect,
+    handleClearAll,
+    authorChunks,
+    selectedDifficultyOption,
+    selectedDateRangeOption,
+    selectedAuthorsText,
+  } = useFilterModal(availableAuthors);
 
   return (
     <ThemedView
