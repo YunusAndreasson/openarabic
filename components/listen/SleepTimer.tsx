@@ -1,12 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo } from 'react';
 import type { ViewStyle } from 'react-native';
 import {
   StyleSheet,
   View,
   Modal,
   TouchableWithoutFeedback,
-  useWindowDimensions,
   TouchableOpacity,
 } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -14,9 +13,8 @@ import Animated from 'react-native-reanimated';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
+import { useSleepTimerModal } from '@/hooks/listen/useSleepTimerModal';
 import { useColors } from '@/hooks/theme/useColors';
-import { lightFeedback, selectionFeedback } from '@/utils/haptics';
 
 export interface SleepTimerProps {
   isVisible: boolean;
@@ -49,73 +47,19 @@ const SleepTimerComponent = ({
   isActive = false,
 }: SleepTimerProps) => {
   const colors = useColors();
-  const [selectedMinutes, setSelectedMinutes] = useState(15);
-  const { height: screenHeight } = useWindowDimensions();
-
-  // Animation values
   const {
-    fadeIn: fadeBackdropIn,
-    fadeOut: fadeBackdropOut,
-    animatedStyle: backdropStyle,
-  } = useOpacityAnimation({ initialOpacity: 0 });
-
-  const {
-    startAnimation: translateIn,
-    reverseAnimation: translateOut,
-    animatedStyle: translateStyle,
-  } = useTransformAnimation({
-    type: 'translateY',
-    initialValue: screenHeight,
-    targetValue: 0,
-    useSpring: true,
-    damping: 20,
-    stiffness: 300,
+    selectedMinutes,
+    backdropStyle,
+    modalStyle,
+    handleSetTimer,
+    handleCancelTimer,
+    handleOptionSelect,
+  } = useSleepTimerModal({
+    isVisible,
+    onClose,
+    onTimerSet,
+    onTimerCancel,
   });
-
-  const {
-    startAnimation: scaleIn,
-    reverseAnimation: scaleOut,
-    animatedStyle: scaleStyle,
-  } = useTransformAnimation({
-    type: 'scale',
-    initialValue: 0.9,
-    targetValue: 1,
-    useSpring: true,
-    damping: 20,
-    stiffness: 300,
-  });
-
-  // Handle modal animations
-  useEffect(() => {
-    if (isVisible) {
-      fadeBackdropIn();
-      translateIn();
-      scaleIn();
-    } else {
-      fadeBackdropOut();
-      translateOut();
-      scaleOut();
-    }
-  }, [isVisible, fadeBackdropIn, fadeBackdropOut, translateIn, translateOut, scaleIn, scaleOut]);
-
-  // Animated styles from hooks
-  const modalStyle = [translateStyle, scaleStyle];
-
-  const handleSetTimer = React.useCallback(() => {
-    lightFeedback(); // Keep for primary action
-    onTimerSet(selectedMinutes);
-    onClose();
-  }, [onClose, onTimerSet, selectedMinutes]);
-
-  const handleCancelTimer = React.useCallback(() => {
-    onTimerCancel();
-    onClose();
-  }, [onClose, onTimerCancel]);
-
-  const handleOptionSelect = React.useCallback((minutes: number) => {
-    selectionFeedback();
-    setSelectedMinutes(minutes);
-  }, []);
 
   if (!isVisible) {
     return null;
