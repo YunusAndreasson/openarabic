@@ -12,6 +12,9 @@ export * from './vocabulary';
 export * from './articles';
 export * from './review';
 
+// Practice hooks
+export * from './practice';
+
 // Media hooks
 export * from './audio';
 
