@@ -1,7 +1,6 @@
 import { useHeaderHeight } from '@react-navigation/elements';
 import { FlashList } from '@shopify/flash-list';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import type { JSX } from 'react';
 import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
@@ -18,19 +17,13 @@ import NowPlayingCard from '@/components/listen/NowPlayingCard';
 import SleepTimer from '@/components/listen/SleepTimer';
 import { AUDIO_STATES } from '@/constants/audio';
 import { LAYOUT } from '@/constants/layout';
-import { useScreenFocusRefresh } from '@/hooks';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
-import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
-import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
-import { useAuth } from '@/hooks/auth/useAuth';
+import { useListenScreen } from '@/hooks/listen';
 import { useColors } from '@/hooks/theme/useColors';
-import { enhancedAudioService } from '@/services/enhancedAudioService';
-import { readingListService } from '@/services/readingList';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { setCustomOrder, removeFromCustomOrder } from '@/store/listenSlice';
+import { setCustomOrder } from '@/store/listenSlice';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
-import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
 
 type ReadingListItem = Tables<'reading_list'> & {
@@ -147,19 +140,34 @@ ListenListItem.displayName = 'ListenListItem';
 
 export default function ListenScreen(): JSX.Element {
   const colors = useColors();
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
   const { prefetchArticle } = useAppPreloader();
   const dispatch = useAppDispatch();
 
   const editMode = useAppSelector(state => state.listen.editMode);
-  const customOrder = useAppSelector(state => state.listen.customOrder);
 
-  const [playbackMode, setPlaybackMode] = useState<'all' | 'none'>('none');
-
-  const [isStartingPlayback, setIsStartingPlayback] = useState(false);
   const [showSleepTimer, setShowSleepTimer] = useState(false);
   const [canShowEmpty, setCanShowEmpty] = useState(false);
+
+  const {
+    sortedReadingList,
+    sortedEnhancedTracks,
+    shouldShowInitialLoading,
+    isStartingPlayback,
+    setIsStartingPlayback,
+    duration,
+    position,
+    metadata,
+    audioState,
+    actions,
+    isReadingListLoading,
+    isReadingListFetching,
+    sleepTimer,
+    handleSleepTimerSet,
+    handleSleepTimerCancel,
+    handlePlayAll,
+    handleArticlePlay,
+    handleDelete,
+  } = useListenScreen();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -167,117 +175,6 @@ export default function ListenScreen(): JSX.Element {
     }, 300);
     return () => clearTimeout(timer);
   }, []);
-
-  const enhancedAudioPlayer = useAudioPlayer();
-  const { duration, position, metadata, audioState, actions } = enhancedAudioPlayer;
-
-  useEffect(() => {
-    if (isStartingPlayback && audioState !== AUDIO_STATES.IDLE) {
-      setIsStartingPlayback(false);
-    }
-  }, [isStartingPlayback, audioState]);
-
-  const sleepTimer = useSleepTimer(() => {
-    actions.stopPlayback();
-    setPlaybackMode('none');
-  });
-
-  const readingListQuery = useQuery({
-    queryKey: ['readingList', user?.id],
-    queryFn: () => {
-      if (!user?.id) return Promise.resolve([]);
-      return readingListService.getReadingList(user.id);
-    },
-    enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    retry: 2,
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 5000),
-    placeholderData: [],
-  });
-  const {
-    data: readingList = [],
-    isLoading: isReadingListLoading,
-    isFetching: isReadingListFetching,
-  } = readingListQuery;
-
-  const dedupedReadingList = useMemo(() => {
-    if (!readingList?.length) return [];
-
-    const seen = new Set();
-    return readingList.filter(item => {
-      if (seen.has(item.article_id)) return false;
-      seen.add(item.article_id);
-      return true;
-    });
-  }, [readingList]);
-
-  const sortedReadingList = useMemo(() => {
-    if (!dedupedReadingList.length) return [];
-
-    // If we have a custom order and items in it, use that order
-    if (customOrder.length > 0) {
-      const customOrderMap = new Map(customOrder.map((id, index) => [id, index]));
-      return [...dedupedReadingList].sort((a, b) => {
-        const posA = customOrderMap.get(a.article_id) ?? 999;
-        const posB = customOrderMap.get(b.article_id) ?? 999;
-
-        // If both have custom positions, sort by custom order
-        if (posA !== 999 && posB !== 999) {
-          return posA - posB;
-        }
-
-        // If only one has custom position, prioritize it
-        if (posA !== 999) return -1;
-        if (posB !== 999) return 1;
-
-        // For items not in custom order, sort by recent first
-        return new Date(b.added_at).getTime() - new Date(a.added_at).getTime();
-      });
-    }
-
-    // Default: Sort by added_at (most recent first)
-    return [...dedupedReadingList].sort((a, b) => {
-      const dateA = new Date(a.added_at).getTime();
-      const dateB = new Date(b.added_at).getTime();
-      return dateB - dateA; // Most recent first
-    });
-  }, [dedupedReadingList, customOrder]);
-
-  // Check if data is already in cache
-  const isDataCached = useMemo(() => {
-    return !!(user?.id && queryClient.getQueryData(['readingList', user.id]));
-  }, [user?.id, queryClient]);
-
-  // Get enhanced tracks query (keep as is)
-  const enhancedTracksQuery = useQuery({
-    queryKey: ['enhancedAudioTracks', user?.id],
-    queryFn: () => {
-      if (!user?.id) return Promise.resolve([]);
-      return enhancedAudioService.getReadingListEnhancedTracks(user.id);
-    },
-    enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    placeholderData: [],
-  });
-  const { data: enhancedTracks = [] } = enhancedTracksQuery;
-
-  const sortedEnhancedTracks = useMemo(() => {
-    if (!enhancedTracks.length || !sortedReadingList.length) return enhancedTracks;
-
-    // Create a map of article_id to position in sortedReadingList
-    const articlePositionMap = new Map(
-      sortedReadingList.map((item, index) => [item.article_id, index])
-    );
-
-    // Sort enhanced tracks based on the article position
-    return [...enhancedTracks].sort((a, b) => {
-      const posA = a.articleId ? (articlePositionMap.get(a.articleId) ?? 999) : 999;
-      const posB = b.articleId ? (articlePositionMap.get(b.articleId) ?? 999) : 999;
-      return posA - posB;
-    });
-  }, [enhancedTracks, sortedReadingList]);
 
   const metadataValues = useMemo(
     () => ({
@@ -296,157 +193,7 @@ export default function ListenScreen(): JSX.Element {
     [metadataValues, audioState, editMode]
   );
 
-  const shouldShowInitialLoading = useMemo(() => {
-    return (
-      !isDataCached &&
-      isReadingListLoading &&
-      !isReadingListFetching &&
-      sortedReadingList.length === 0
-    );
-  }, [isDataCached, isReadingListLoading, isReadingListFetching, sortedReadingList.length]);
 
-  useScreenFocusRefresh(queryClient, 'listen', user?.id, 1000 * 60 * 5, true, true);
-
-  // Focus Effect - uses stable actions.stopPlayback
-  const focusEffectCallback = useCallback(() => {
-    if (!user?.id) return;
-
-    // Invalidate both reading list and enhanced tracks queries
-    queryClient.invalidateQueries({
-      queryKey: ['readingList', user.id],
-    });
-    queryClient.invalidateQueries({
-      queryKey: ['enhancedAudioTracks', user.id],
-    });
-
-    // Don't automatically stop playback on focus loss - let user control when to stop
-    // This prevents interrupting playback when navigating to articles or other screens
-    return () => {
-      // No automatic cleanup - user can control playback with stop button
-    };
-  }, [user?.id, queryClient]);
-  useFocusEffect(focusEffectCallback);
-
-  const isCurrentlyPlaying = audioState === AUDIO_STATES.PLAYING;
-
-  const handlePlayAll = useCallback(async () => {
-    // Prevent multiple presses during transition
-    if (isStartingPlayback) return;
-
-    if (isCurrentlyPlaying && playbackMode === 'all') {
-      selectionFeedback();
-      await actions.stopPlayback();
-      setPlaybackMode('none');
-      setIsStartingPlayback(false);
-    } else if (sortedEnhancedTracks.length) {
-      try {
-        selectionFeedback();
-        // Set starting state immediately for instant UI feedback
-        setIsStartingPlayback(true);
-        setPlaybackMode('all');
-        await actions.startEnhancedPlayback(sortedEnhancedTracks, 0);
-
-        // Audio playback started - NowPlayingCard will appear automatically
-      } catch (error) {
-        // Reset state on error
-        setIsStartingPlayback(false);
-        setPlaybackMode('none');
-        handleError(error as Error);
-      }
-    }
-  }, [
-    isStartingPlayback,
-    isCurrentlyPlaying,
-    playbackMode,
-    sortedEnhancedTracks,
-    actions.startEnhancedPlayback,
-    actions.stopPlayback,
-  ]);
-
-  // Handle sleep timer
-  const handleSleepTimerSet = useCallback(
-    (minutes: number) => {
-      sleepTimer.actions.startTimer(minutes);
-    },
-    [sleepTimer.actions]
-  );
-
-  const handleSleepTimerCancel = useCallback(() => {
-    sleepTimer.actions.cancelTimer();
-  }, [sleepTimer.actions]);
-
-  // Handle article deletion
-  const handleDelete = useCallback(
-    async (articleId: number) => {
-      if (!user?.id) return;
-
-      try {
-        selectionFeedback();
-
-        // Remove from reading list
-        await readingListService.removeFromReadingList(user.id, articleId);
-
-        // Remove from custom order
-        dispatch(removeFromCustomOrder(articleId));
-
-        // Invalidate queries to refresh the list
-        queryClient.invalidateQueries({
-          queryKey: ['readingList', user.id],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ['enhancedAudioTracks', user.id],
-        });
-      } catch (error) {
-        handleError(error as Error);
-      }
-    },
-    [user?.id, dispatch, queryClient]
-  );
-
-  // Handle individual article play
-  const handleArticlePlay = useCallback(
-    async (articleId: number) => {
-      // Prevent multiple presses during transition
-      if (isStartingPlayback) return;
-
-      // If this article is already playing, pause it
-      if (isCurrentlyPlaying && parseInt(metadata.articleId || '0', 10) === articleId) {
-        selectionFeedback();
-        await actions.stopPlayback();
-        setPlaybackMode('none');
-        setIsStartingPlayback(false);
-        return;
-      }
-
-      // Find the article in the sorted list to get the correct index
-      const articleIndex = sortedEnhancedTracks.findIndex(track => track.articleId === articleId);
-
-      if (articleIndex !== -1 && sortedEnhancedTracks.length) {
-        try {
-          selectionFeedback();
-          // Set starting state immediately for instant UI feedback
-          setIsStartingPlayback(true);
-          setPlaybackMode('all');
-          await actions.startEnhancedPlayback(sortedEnhancedTracks, articleIndex);
-
-          // Audio playback started - NowPlayingCard will appear automatically
-        } catch (error) {
-          // Reset state on error
-          setIsStartingPlayback(false);
-          setPlaybackMode('none');
-          handleError(error as Error);
-        }
-      }
-    },
-    [
-      isStartingPlayback,
-      isCurrentlyPlaying,
-      metadata.articleId,
-      sortedEnhancedTracks,
-      actions.startEnhancedPlayback,
-      actions.stopPlayback,
-    ]
-  );
 
   // Handle drag end for reordering
   const handleDragEnd = useCallback(
