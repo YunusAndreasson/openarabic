@@ -106,13 +106,13 @@ export function useFilterModal(availableAuthors: Author[]): UseFilterModalResult
     dispatch(clearAllFilters());
   }, [dispatch]);
 
-  const selectedDifficultyOption = useMemo(() => {
+  const selectedDifficultyOption = useMemo<(typeof DIFFICULTY_OPTIONS)[number]>(() => {
     return (
       DIFFICULTY_OPTIONS.find(
         option =>
           option.range[0] === filters.difficultyRange[0] &&
           option.range[1] === filters.difficultyRange[1]
-      ) || DIFFICULTY_OPTIONS[3]
+      ) ?? DIFFICULTY_OPTIONS[3]
     );
   }, [filters.difficultyRange]);
 

@@ -137,6 +137,8 @@ export default function ListenScreen(): JSX.Element {
     shouldShowInitialLoading,
     isStartingPlayback,
     setIsStartingPlayback,
+    playbackMode,
+    setPlaybackMode,
     duration,
     position,
     metadata,
@@ -152,6 +154,11 @@ export default function ListenScreen(): JSX.Element {
     handleDelete,
   } = useListenScreen();
 
+  const listenMetadata = {
+    articleId: metadata.articleId ?? null,
+    articleTitle: metadata.articleTitle ?? null,
+  };
+
   const {
     canShowEmpty,
     flashListExtraData,
@@ -161,7 +168,7 @@ export default function ListenScreen(): JSX.Element {
     handleDragEnd,
   } = useListenUI({
     sortedReadingList,
-    metadata,
+    metadata: listenMetadata,
     audioState,
     isStartingPlayback,
     setIsStartingPlayback,

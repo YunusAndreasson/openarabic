@@ -1,4 +1,4 @@
-import { Skia } from '@shopify/react-native-skia';
+import { Skia, type Path } from '@shopify/react-native-skia';
 import { useMemo } from 'react';
 
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
@@ -11,8 +11,8 @@ export interface MemoryCapacityMetrics {
 }
 
 export interface GaugePaths {
-  fullPath: Skia.Path;
-  filledPath: Skia.Path;
+  fullPath: Path;
+  filledPath: Path;
   filledSweep: number;
 }
 
