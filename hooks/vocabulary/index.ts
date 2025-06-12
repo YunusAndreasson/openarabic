@@ -4,3 +4,4 @@ export * from './useFSRSQueries';
 
 export * from './useVocabularyChartData';
 export * from './useWordSizing';
+export * from './useMemoryCapacityGauge';
