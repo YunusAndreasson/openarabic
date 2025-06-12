@@ -1,8 +1,7 @@
 import { useHeaderHeight } from '@react-navigation/elements';
 import { FlashList } from '@shopify/flash-list';
-import { router } from 'expo-router';
 import type { JSX } from 'react';
-import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
@@ -17,23 +16,11 @@ import NowPlayingCard from '@/components/listen/NowPlayingCard';
 import SleepTimer from '@/components/listen/SleepTimer';
 import { AUDIO_STATES } from '@/constants/audio';
 import { LAYOUT } from '@/constants/layout';
-import { useAppPreloader } from '@/hooks/app/useAppPreloader';
-import { useListenScreen } from '@/hooks/listen';
+import { useListenScreen, useListenUI } from '@/hooks/listen';
 import { useColors } from '@/hooks/theme/useColors';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { setCustomOrder } from '@/store/listenSlice';
-import type { Article } from '@/types/articles.types';
-import type { Tables } from '@/types/database.types';
-import { selectionFeedback } from '@/utils/haptics';
+import { useAppSelector } from '@/store/hooks';
+import type { ReadingListItem } from '@/hooks/listen/useListenScreen';
 
-type ReadingListItem = Tables<'reading_list'> & {
-  articles: Article & {
-    author: {
-      id: number;
-      name: string;
-    };
-  };
-};
 
 const styles = StyleSheet.create({
   container: {
@@ -140,13 +127,9 @@ ListenListItem.displayName = 'ListenListItem';
 
 export default function ListenScreen(): JSX.Element {
   const colors = useColors();
-  const { prefetchArticle } = useAppPreloader();
-  const dispatch = useAppDispatch();
-
   const editMode = useAppSelector(state => state.listen.editMode);
 
   const [showSleepTimer, setShowSleepTimer] = useState(false);
-  const [canShowEmpty, setCanShowEmpty] = useState(false);
 
   const {
     sortedReadingList,
@@ -169,88 +152,24 @@ export default function ListenScreen(): JSX.Element {
     handleDelete,
   } = useListenScreen();
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setCanShowEmpty(true);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const metadataValues = useMemo(
-    () => ({
-      articleId: metadata.articleId,
-      articleTitle: metadata.articleTitle,
-    }),
-    [metadata.articleId, metadata.articleTitle]
-  );
-
-  const flashListExtraData = useMemo(
-    () => ({
-      metadataValues,
-      audioState,
-      editMode,
-    }),
-    [metadataValues, audioState, editMode]
-  );
-
-
-
-  // Handle drag end for reordering
-  const handleDragEnd = useCallback(
-    ({ data }: { data: ReadingListItem[] }) => {
-      selectionFeedback();
-
-      // Extract the new order of article IDs
-      const newOrder = data.map(item => item.article_id);
-
-      // Update custom order in Redux
-      dispatch(setCustomOrder(newOrder));
-    },
-    [dispatch]
-  );
+  const {
+    canShowEmpty,
+    metadataValues,
+    flashListExtraData,
+    currentArticle,
+    handleArticlePress,
+    handleNowPlayingPress,
+    handleDragEnd,
+  } = useListenUI({
+    sortedReadingList,
+    metadata,
+    audioState,
+    isStartingPlayback,
+  });
 
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
 
-  const handleArticlePress = useCallback(
-    (articleId: number) => {
-      if (editMode) return; // Disable navigation in edit mode
-
-      const article = sortedReadingList.find(item => item.article_id === articleId)?.articles;
-      if (article) {
-        prefetchArticle(articleId);
-        router.push(
-          `/(tabs)/read/article/${articleId}?headerTitle=${encodeURIComponent(article.title)}`
-        );
-      }
-    },
-    [prefetchArticle, sortedReadingList, editMode, router]
-  );
-
-  // Get current article for now playing card
-  const currentArticle = useMemo(() => {
-    // If starting playback, use the first article from sorted list
-    if (isStartingPlayback && sortedReadingList.length > 0) {
-      return sortedReadingList[0]?.articles || null;
-    }
-
-    if (!metadata.articleId || !sortedReadingList.length) return null;
-
-    // Convert metadata.articleId (string) to number for comparison
-    const articleIdNumber = parseInt(metadata.articleId, 10);
-    if (isNaN(articleIdNumber)) return null;
-
-    const currentItem = sortedReadingList.find(item => item.article_id === articleIdNumber);
-    return currentItem?.articles || null;
-  }, [isStartingPlayback, sortedReadingList, metadata.articleId]);
-
-  const handleNowPlayingPress = useCallback(() => {
-    if (currentArticle) {
-      router.push(
-        `/(tabs)/read/article/${currentArticle.id}?headerTitle=${encodeURIComponent(currentArticle.title)}`
-      );
-    }
-  }, [currentArticle, router]);
 
   // Check if we have any texts to show controls for
   const hasArticles = sortedReadingList.length > 0;
