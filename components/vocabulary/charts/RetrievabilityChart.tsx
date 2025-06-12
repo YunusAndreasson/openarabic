@@ -2,7 +2,6 @@ import {
   Path,
   Circle,
   Group,
-  Skia,
   Rect,
   LinearGradient,
   vec,
@@ -25,15 +24,10 @@ import { generateChartSubtitle, CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/com
 import {
   useGraphWidth,
   GRAPH_HEIGHT_LARGE,
-  DAYS_7,
-  CRITICAL_RETRIEVABILITY_THRESHOLD,
   CHART_VISUAL,
 } from '@/components/vocabulary/shared/constants';
-import {
-  calculateRetrievability,
-  createStandardizedPerformanceZones,
-  createAreaFillPath,
-} from '@/components/vocabulary/shared/utils';
+import { createAreaFillPath } from '@/components/vocabulary/shared/utils';
+import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -48,132 +42,8 @@ export const RetrievabilityChart = memo(
     const chartColors = useChartColors();
     const colors = useColors();
     const graphWidth = useGraphWidth();
+    const { retrievabilityData, chartData } = useRetrievabilityChart(studyWords);
 
-    // Calculate retrievability forecast over the next 7 days
-    const retrievabilityData = useMemo(() => {
-      const today = new Date();
-      const dates: Date[] = [];
-
-      // Generate future dates for forecast
-      for (let i = 0; i < DAYS_7; i++) {
-        const date = new Date(today);
-        date.setDate(today.getDate() + i);
-        dates.push(date);
-      }
-
-      return dates.map(date => {
-        let totalRetrievability = 0;
-        let wordCount = 0;
-        let criticalWords = 0;
-        let urgentWords = 0;
-
-        studyWords.forEach(word => {
-          // Only include words that have been reviewed
-          if (word.fsrs_last_review && (word.fsrs_reps ?? 0) > 0) {
-            const retrievability = calculateRetrievability(word, date);
-            totalRetrievability += retrievability;
-            wordCount++;
-
-            if (retrievability < CRITICAL_RETRIEVABILITY_THRESHOLD) {
-              criticalWords++;
-            }
-            if (retrievability < 0.5) {
-              urgentWords++;
-            }
-          }
-        });
-
-        const averageRetrievability = wordCount > 0 ? (totalRetrievability / wordCount) * 100 : 0;
-        return { date, averageRetrievability, wordCount, criticalWords, urgentWords };
-      });
-    }, [studyWords]);
-
-    // Calculate chart data and insights
-    const chartData = useMemo(() => {
-      if (retrievabilityData.length === 0) {
-        return {
-          retrievabilityPath: '',
-          hasData: false,
-          insights: { currentRetrievability: 0, trend: 'stable' as const, criticalWords: 0 },
-          dangerZones: [],
-          dataPoints: [],
-        };
-      }
-
-      const hasData = retrievabilityData.some(d => d.wordCount > 0);
-
-      if (!hasData) {
-        return {
-          retrievabilityPath: '',
-          hasData: false,
-          insights: { currentRetrievability: 0, trend: 'stable' as const, criticalWords: 0 },
-          dangerZones: [],
-          dataPoints: [],
-        };
-      }
-
-      const maxRetrievability = Math.max(
-        100,
-        Math.max(...retrievabilityData.map(d => d.averageRetrievability))
-      );
-      const stepX = graphWidth / (retrievabilityData.length - 1);
-
-      // Create smooth curve using Skia Path
-      const path = Skia.Path.Make();
-      const points: { x: number; y: number; retrievability: number; date: Date }[] = [];
-
-      retrievabilityData.forEach((data, index) => {
-        const x = index * stepX;
-        const y =
-          GRAPH_HEIGHT_LARGE -
-          (data.averageRetrievability / maxRetrievability) * GRAPH_HEIGHT_LARGE;
-        points.push({ x, y, retrievability: data.averageRetrievability, date: data.date });
-
-        if (index === 0) {
-          path.moveTo(x, y);
-        } else {
-          // Create smooth curves using quadratic bezier
-          const prevPoint = points[index - 1];
-          if (prevPoint) {
-            const controlX = (prevPoint.x + x) / 2;
-            path.quadTo(controlX, prevPoint.y, x, y);
-          }
-        }
-      });
-
-      // Define standardized performance zones - same as other charts
-      const performanceZones = createStandardizedPerformanceZones(
-        GRAPH_HEIGHT_LARGE,
-        0,
-        chartColors
-      );
-
-      // Calculate insights
-      const firstHalf = retrievabilityData.slice(0, 4); // First 4 days
-      const secondHalf = retrievabilityData.slice(4, 7); // Last 3 days
-
-      const currentRetrievability = retrievabilityData[0]?.averageRetrievability || 0;
-      const firstHalfAvg =
-        firstHalf.reduce((sum, day) => sum + day.averageRetrievability, 0) / firstHalf.length;
-      const secondHalfAvg =
-        secondHalf.reduce((sum, day) => sum + day.averageRetrievability, 0) / secondHalf.length;
-
-      const change = firstHalfAvg - secondHalfAvg;
-      const trend = change > 3 ? 'improving' : change < -3 ? 'declining' : 'stable';
-      const criticalWords = retrievabilityData[0]?.criticalWords || 0;
-
-      return {
-        retrievabilityPath: path.toSVGString(),
-        hasData,
-        dangerZones: performanceZones,
-        dataPoints: points,
-        insights: {
-          currentRetrievability: Math.round(currentRetrievability),
-          trend,
-          criticalWords,
-        },
-      };
-    }, [retrievabilityData, chartColors]);
 
     // Generate subtitle using standardized messaging system
     const subtitle = useMemo(() => {
