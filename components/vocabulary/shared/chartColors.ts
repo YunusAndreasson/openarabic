@@ -1,5 +1,6 @@
 import { useColors } from '@/hooks/theme/useColors';
 import { withOpacity } from '@/utils/colorUtils';
+import type { ChartColors } from '@/types/ui/chart.types';
 
 /**
  * Data Visualization Color System for Vocabulary Analytics
@@ -25,7 +26,7 @@ export const CHART_OPACITY = {
  * Hook to get theme-aware chart colors optimized for data visualization
  * Uses color theory principles for maximum clarity and visual hierarchy
  */
-export const useChartColors = () => {
+export const useChartColors = (): ChartColors => {
   const colors = useColors();
 
   return {
