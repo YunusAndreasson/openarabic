@@ -111,14 +111,14 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
     ]
   );
 
-  const TabBarContainer = Platform.select({ ios: BlurView, default: View });
-  const blurProps = Platform.select({
-    ios: {
-      intensity: BLUR_INTENSITY,
-      tint: (isDarkMode ? 'dark' : 'light') as BlurTint,
-    },
-    default: {},
-  });
+  const TabBarContainer = Platform.OS === 'ios' ? BlurView : View;
+  const blurProps =
+    Platform.OS === 'ios'
+      ? {
+          intensity: BLUR_INTENSITY,
+          tint: (isDarkMode ? 'dark' : 'light') as BlurTint,
+        }
+      : {};
 
   const getTabButtonStyle = useCallback(
     (isFocused: boolean): TextStyle => ({
@@ -158,15 +158,11 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
               style={StyleSheet.absoluteFill}
               tint={isDarkMode ? 'dark' : 'light'}
             />
-            <View
-              style={[StyleSheet.absoluteFill, { backgroundColor: colors.tabBarOverlay }]}
-            />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tabBarOverlay }]} />
           </>
         ),
         default: (
-          <View
-            style={[StyleSheet.absoluteFill, { backgroundColor: colors.tabBarOverlay }]}
-          />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tabBarOverlay }]} />
         ),
       })}
       {state.routes.map((route, index) => {
@@ -221,9 +217,7 @@ const CustomHeaderBackground = memo(() => {
           style={StyleSheet.absoluteFill}
           tint={isDarkMode ? 'dark' : 'light'}
         />
-        <View
-          style={[StyleSheet.absoluteFill, { backgroundColor: colors.headerOverlay }]}
-        />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.headerOverlay }]} />
       </View>
     ),
     default: (
@@ -281,7 +275,7 @@ export default function TabLayout(): JSX.Element {
   }, [session, isLoading]);
 
   if (!session?.user) {
-    return null;
+    return <></>;
   }
 
   return (

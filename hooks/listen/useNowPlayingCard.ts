@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
+import type Animated from 'react-native-reanimated';
 import {
   useAnimatedStyle,
   useSharedValue,
@@ -63,8 +64,7 @@ export const useNowPlayingCard = ({
     handlePressIn: handleStopPressIn,
     handlePressOut: handleStopPressOut,
   } = usePressAnimation({ scaleAmount: 0.85 });
-  const buttonAnimatedStyle =
-    rawButtonAnimatedStyle as Animated.AnimateStyle<ViewStyle>;
+  const buttonAnimatedStyle = rawButtonAnimatedStyle as Animated.AnimateStyle<ViewStyle>;
 
   useEffect(() => {
     if (isVisible && article) {
@@ -122,9 +122,7 @@ export const useNowPlayingCard = ({
         shadowColor: colors.tint,
       },
       timerButton: {
-        backgroundColor: isTimerActive
-          ? colors.warning + '20'
-          : colors.buttonOverlay,
+        backgroundColor: isTimerActive ? colors.warning + '20' : colors.buttonOverlay,
         borderColor: isTimerActive ? colors.warning : colors.border,
         borderWidth: 1,
       },
@@ -171,4 +169,3 @@ export const useNowPlayingCard = ({
 };
 
 export type UseNowPlayingCardReturn = ReturnType<typeof useNowPlayingCard>;
-

@@ -1,14 +1,14 @@
-import DateTimePicker, {
+import type {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { memo, useState, useCallback, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View, Modal, TouchableWithoutFeedback, Platform } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
-
 import { LAYOUT } from '@/constants/layout';
+import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 

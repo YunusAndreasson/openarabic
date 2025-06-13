@@ -29,13 +29,13 @@ import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
+import { useArticlesAndDueWordsLoaded } from '@/hooks/useArticlesAndDueWordsLoaded';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import type { RootState } from '@/store/store';
 import { store, persistor } from '@/store/store';
 import { setTheme } from '@/store/themeSlice';
 import { handleError } from '@/utils/errorHandling';
 
-import { useArticlesAndDueWordsLoaded } from '@/hooks/useArticlesAndDueWordsLoaded';
 // Temporary mock analytics until service is fixed
 const analytics = {
   identify: async (_userId: string, _properties?: any) => {},

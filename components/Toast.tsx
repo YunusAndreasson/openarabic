@@ -112,7 +112,7 @@ export const Toast = memo(
 
     const animatedStyle = [opacityStyle, scaleStyle, translateYStyle];
 
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
       if (timerRef.current) {

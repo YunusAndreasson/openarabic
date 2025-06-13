@@ -9,11 +9,10 @@ import {
   FadeOut,
   runOnUI,
   cancelAnimation,
-  type WithTimingConfig,
 } from 'react-native-reanimated';
+import type { SharedValue, WithTimingConfig } from 'react-native-reanimated';
 
 import { TIMING_CONFIG } from './animationConfigs';
-import type { SharedValue } from 'react-native-reanimated';
 
 export type FadeAnimationStyle = 'entrance-only' | 'standard';
 

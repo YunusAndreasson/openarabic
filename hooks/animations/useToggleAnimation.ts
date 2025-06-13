@@ -1,4 +1,3 @@
- 
 import { useEffect, useCallback } from 'react';
 import {
   useSharedValue,
@@ -7,7 +6,6 @@ import {
   withTiming,
   withSequence,
   runOnUI,
-  useWorkletCallback,
   type SharedValue,
 } from 'react-native-reanimated';
 
@@ -35,15 +33,12 @@ export const useToggleAnimation = (
   const toggleScale = useSharedValue(1);
 
   // Create animation worklet that can run on UI thread
-  const animateToggle = useWorkletCallback(
+  const animateToggle = useCallback(
     (toActive: boolean, distance: number) => {
       'worklet';
 
       // Use spring for smoother, more natural movement
-      translateX.value = withSpring(
-        toActive ? distance : 0,
-        SPRING_CONFIG.TOGGLE
-      );
+      translateX.value = withSpring(toActive ? distance : 0, SPRING_CONFIG.TOGGLE);
 
       // Add subtle scale animation for better feedback
       toggleScale.value = withSequence(

@@ -15,7 +15,6 @@ import IntelligentArticleSection from '@/components/home/IntelligentArticleSecti
 import { WelcomeMessage } from '@/components/home/WelcomeMessage';
 import { LAYOUT } from '@/constants/layout';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
-import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { articlesService } from '@/services/articles';

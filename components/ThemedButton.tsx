@@ -168,7 +168,7 @@ function ThemedButtonComponent({
         buttonStyle,
         disablePressAnimation
           ? {}
-          : (animatedStyle as Animated.AnimateStyle<ViewStyle>),
+          : (animatedStyle),
       ]}
       onPressIn={disablePressAnimation ? undefined : handlePressIn}
       onPressOut={disablePressAnimation ? undefined : handlePressOut}

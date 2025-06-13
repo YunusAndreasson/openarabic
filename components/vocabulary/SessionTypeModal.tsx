@@ -5,6 +5,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import React, { memo } from 'react';
+import type { ViewStyle } from 'react-native';
 import { StyleSheet, View, TouchableOpacity, Modal, Pressable } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -15,10 +16,9 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 
-import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
-
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { withOpacity } from '@/utils/colorUtils';
@@ -76,7 +76,7 @@ const SessionTypeModal = memo(
       });
 
     // Animated styles
-    const animatedModalStyle = [translateStyle, opacityStyle];
+    const animatedModalStyle = [translateStyle, opacityStyle] as ViewStyle[];
 
     if (!visible) return null;
 

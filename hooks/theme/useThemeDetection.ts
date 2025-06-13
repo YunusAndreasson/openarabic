@@ -1,5 +1,4 @@
 import { useColorScheme } from 'react-native';
-import type { ColorSchemeName } from 'react-native';
 
 import { Theme } from '@/constants/Colors';
 import { useAppSelectorMemo } from '@/store/hooks';

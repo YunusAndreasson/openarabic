@@ -1,10 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
-import type {
-  WithTimingConfig,
-  WithSpringConfig,
-  BaseAnimationBuilder,
-} from 'react-native-reanimated';
 import {
   useSharedValue,
   useAnimatedStyle,
@@ -20,6 +15,11 @@ import {
   withDelay,
   cancelAnimation,
 } from 'react-native-reanimated';
+import type {
+  WithTimingConfig,
+  WithSpringConfig,
+  BaseAnimationBuilder,
+ SharedValue } from 'react-native-reanimated';
 
 import { useScreenWidth } from '@/constants/layout';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
@@ -27,7 +27,6 @@ import { handleError } from '@/utils/errorHandling';
 
 
 import { TIMING_CONFIG } from './animationConfigs';
-import type { SharedValue } from 'react-native-reanimated';
 
 export type TransformType = 'rotate' | 'scale' | 'slide' | 'translateX' | 'translateY';
 export type SlideDirection = 'left' | 'right';

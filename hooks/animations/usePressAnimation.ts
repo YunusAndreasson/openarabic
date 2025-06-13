@@ -4,14 +4,11 @@ import {
   useAnimatedStyle,
   withSpring,
   interpolate,
-  Extrapolate,
   runOnUI,
-  useWorkletCallback,
-  type WithSpringConfig,
 } from 'react-native-reanimated';
+import type { SharedValue, WithSpringConfig } from 'react-native-reanimated';
 
 import { SPRING_CONFIG } from './animationConfigs';
-import type { SharedValue } from 'react-native-reanimated';
 
 export type PressAnimationType = 'button' | 'card' | 'custom';
 
@@ -96,15 +93,10 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
   // Create animated style
   const animatedStyle = useAnimatedStyle(() => {
     'worklet';
-    const scale = interpolate(pressed.value, [0, 1], [1, finalScaleAmount], Extrapolate.CLAMP);
+    const scale = interpolate(pressed.value, [0, 1], [1, finalScaleAmount], 'clamp');
 
     if (finalIncludeOpacity) {
-      const opacity = interpolate(
-        pressed.value,
-        [0, 1],
-        [1, finalOpacityAmount],
-        Extrapolate.CLAMP
-      );
+      const opacity = interpolate(pressed.value, [0, 1], [1, finalOpacityAmount], 'clamp');
       return {
         transform: [{ scale }],
         opacity,
@@ -117,11 +109,13 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
   }, [pressed, finalScaleAmount, finalOpacityAmount, finalIncludeOpacity]);
 
   // Press handlers - optimized to run on UI thread
-  const animatePressIn = useWorkletCallback(() => {
+  const animatePressIn = useCallback(() => {
+    'worklet';
     pressed.value = withSpring(1, finalSpringConfig);
   }, [pressed, finalSpringConfig]);
 
-  const animatePressOut = useWorkletCallback(() => {
+  const animatePressOut = useCallback(() => {
+    'worklet';
     pressed.value = withSpring(0, finalSpringConfig);
   }, [pressed, finalSpringConfig]);
 

@@ -1,6 +1,6 @@
 import { useColors } from '@/hooks/theme/useColors';
-import { withOpacity } from '@/utils/colorUtils';
 import type { ChartColors } from '@/types/ui/chart.types';
+import { withOpacity } from '@/utils/colorUtils';
 
 /**
  * Data Visualization Color System for Vocabulary Analytics

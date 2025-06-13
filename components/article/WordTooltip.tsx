@@ -31,7 +31,7 @@ export const WordTooltip = memo(
     const colors = useColors();
     const { width: screenWidth } = useWindowDimensions();
 
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Setup opacity animation for fade effect with quick timing
     const { fadeIn, animatedStyle: opacityStyle } = useOpacityAnimation({

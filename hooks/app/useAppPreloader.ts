@@ -27,10 +27,10 @@ const CACHE_TIMES = {
     staleTime: 180000, // 3 minutes
     gcTime: 600000, // 10 minutes
   },
-  // For articles (updated maximum once a day)
+  // For articles (never update once written)
   ARTICLES: {
-    staleTime: 3600000, // 1 hour - articles update max once a day
-    gcTime: 7200000, // 2 hours
+    staleTime: Infinity, // Articles never change once written
+    gcTime: 86400000, // 24 hours - keep in memory for a day
   },
   // For data that rarely changes
   LONG: {
@@ -48,11 +48,8 @@ interface AppPreloaderResult {
   isPreloading: boolean;
   isLoaded: boolean;
   preloadAppData: () => Promise<void>;
-  preloadCriticalData: () => Promise<void>;
-  preloadUserData: () => Promise<void>;
   prefetchArticle: (articleId: number) => Promise<boolean>;
   prefetchVocabularyData: () => Promise<boolean>;
-  refreshPreloadedData: () => Promise<void>;
   preloadProgress: number; // 0-100 percentage
 }
 
@@ -244,6 +241,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
       // Background prefetch of additional data
       if (user?.id) {
         // Prefetch articles with word stats for due words analysis
+        // Articles never change, so this data is also immutable
         queryClient.prefetchQuery({
           queryKey: ['articles', 'with-word-stats'],
           queryFn: () => articlesService.getArticlesWithWordStats(),
@@ -295,7 +293,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
       setIsPreloading(false);
       preloadLockRef.current = false;
     }
-  }, [queryClient, user, isPreloading, isAuthLoading, preloadCriticalData, preloadUserData]);
+  }, [queryClient, user, isPreloading, isAuthLoading]);
 
   // Optimized function to prefetch a specific article
   const prefetchArticle = useCallback(
@@ -307,14 +305,14 @@ export const useAppPreloader = (): AppPreloaderResult => {
         const cardPromise = queryClient.prefetchQuery({
           queryKey: ['article', 'card', articleId],
           queryFn: () => articlesService.getArticleCard(articleId),
-          ...CACHE_TIMES.SHORT,
+          ...CACHE_TIMES.ARTICLES, // Articles never change
         });
 
         // Then prefetch full article data in background
         const fullPromise = queryClient.prefetchQuery({
           queryKey: ['article', articleId],
           queryFn: () => articlesService.getArticleById(articleId),
-          ...CACHE_TIMES.SHORT,
+          ...CACHE_TIMES.ARTICLES, // Articles never change
         });
 
         // Prefetch reading list status if user is authenticated
@@ -375,87 +373,22 @@ export const useAppPreloader = (): AppPreloaderResult => {
     }
   }, [queryClient, user?.id]);
 
-  // Optimized refresh with selective invalidation
-  const refreshPreloadedData = useCallback(async () => {
-    if (isPreloading) return;
-
-    setIsLoaded(false);
-    setPreloadProgress(0);
-
-    try {
-      // Invalidate critical queries first
-      const criticalQueries: (string | readonly string[])[] = [
-        ['articles'],
-        ['articles', 'minimal'],
-        ['categories'],
-      ];
-
-      if (user?.id) {
-        criticalQueries.push(
-          ['readingList', user.id],
-          FSRS_QUERY_KEYS.due(user.id),
-          FSRS_QUERY_KEYS.all(user.id)
-        );
-      }
-
-      // Invalidate and refetch in parallel
-      await Promise.all([
-        queryClient.invalidateQueries({
-          predicate: query => {
-            const queryKey = query.queryKey;
-            return criticalQueries.some(key => {
-              const keyArray = Array.isArray(key) ? key : [key];
-              return keyArray.every((keyPart, index) => queryKey[index] === keyPart);
-            });
-          },
-        }),
-        // Also invalidate category-specific article caches
-        queryClient.invalidateQueries({
-          predicate: query => {
-            const queryKey = query.queryKey;
-            return (
-              Array.isArray(queryKey) &&
-              queryKey.length >= 3 &&
-              queryKey[0] === 'filtered-articles' &&
-              queryKey[1] === 'category'
-            );
-          },
-        }),
-        preloadAppData(),
-      ]);
-    } catch (error) {
-      if (!isPreloading) {
-        setIsLoaded(true);
-        setPreloadProgress(100);
-      }
-      Sentry.captureException(error, {
-        tags: { location: 'preloader_refresh' },
-      });
-    }
-  }, [queryClient, user?.id, preloadAppData, isPreloading]);
-
   // Memoize the return object to prevent unnecessary re-renders
   const returnValue = useMemo(
     () => ({
       isPreloading,
       isLoaded,
       preloadAppData,
-      preloadCriticalData,
-      preloadUserData,
       prefetchArticle,
       prefetchVocabularyData,
-      refreshPreloadedData,
       preloadProgress,
     }),
     [
       isPreloading,
       isLoaded,
       preloadAppData,
-      preloadCriticalData,
-      preloadUserData,
       prefetchArticle,
       prefetchVocabularyData,
-      refreshPreloadedData,
       preloadProgress,
     ]
   );

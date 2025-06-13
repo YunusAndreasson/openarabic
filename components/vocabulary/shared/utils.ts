@@ -1,7 +1,7 @@
+import type { ChartColors } from '@/types/ui/chart.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 import { PERFORMANCE_THRESHOLDS } from './constants';
-import type { ChartColors } from '@/types/ui/chart.types';
 
 // Generate date range for charts
 export const generateDateRange = (days: number) => {

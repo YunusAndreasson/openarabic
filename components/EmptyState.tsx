@@ -53,7 +53,9 @@ const EmptyState = memo(
     const IconComponent: ComponentType<ComponentProps<typeof Ionicons>> =
       icon && typeof icon !== 'string' ? icon : Ionicons;
     const iconName: ComponentProps<typeof Ionicons>['name'] =
-      typeof icon === 'string' ? icon : 'alert-circle-outline';
+      typeof icon === 'string'
+        ? (icon as ComponentProps<typeof Ionicons>['name'])
+        : 'alert-circle-outline';
 
     const handleBrowseArticles = useCallback(() => {
       router.push('/(tabs)');

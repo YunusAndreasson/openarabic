@@ -1,5 +1,4 @@
 
-import type { BaseStyleProps } from './base.types';
 
 /**
  * Props for the Toggle component
