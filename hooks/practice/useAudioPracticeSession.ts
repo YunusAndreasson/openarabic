@@ -38,6 +38,7 @@ export function useAudioPracticeSession(): UseAudioPracticeSessionReturn {
   const lastAudioStateRef = useRef<string>(AUDIO_STATES.IDLE);
   const playbackCompletedRef = useRef(false);
   const hasStartedPlayback = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Enhanced audio player
   const audioPlayer = useAudioPlayer();
@@ -104,9 +105,16 @@ export function useAudioPracticeSession(): UseAudioPracticeSessionReturn {
       return;
     }
 
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     const loadTracksAndStartPlayback = async () => {
       try {
-        const selectedTracks = await listenAudioService.getRandomVocabularyTracks(allWords, 20);
+        const selectedTracks = await listenAudioService.getRandomVocabularyTracks(
+          allWords,
+          20,
+          controller.signal
+        );
         selectedTracksRef.current = selectedTracks;
 
         if (selectedTracks.length > 0) {
@@ -137,7 +145,9 @@ export function useAudioPracticeSession(): UseAudioPracticeSessionReturn {
 
           timeoutRef.current = setTimeout(() => {
             actionsRef.current.startEnhancedPlayback(selectedTracks, 0).catch(error => {
-              handleError(error instanceof Error ? error : new Error('Failed to start audio playback'));
+              handleError(
+                error instanceof Error ? error : new Error('Failed to start audio playback')
+              );
             });
           }, 500);
         }
@@ -147,6 +157,15 @@ export function useAudioPracticeSession(): UseAudioPracticeSessionReturn {
     };
 
     loadTracksAndStartPlayback();
+
+    return () => {
+      controller.abort();
+      abortControllerRef.current = null;
+
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   }, [allWords, wordList.length, wordMap]);
 
   const handleRestartPlayback = useCallback(() => {
@@ -192,6 +211,9 @@ export function useAudioPracticeSession(): UseAudioPracticeSessionReturn {
         timeoutRef.current = null;
       }
 
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
+
       maxProgressRef.current = 0;
       playbackCompletedRef.current = false;
     };
@@ -204,7 +226,8 @@ export function useAudioPracticeSession(): UseAudioPracticeSessionReturn {
   const isEnglishTrack = currentTrackIndex >= 0 && currentTrackIndex % 2 === 1;
   const translationToShow = isEnglishTrack ? currentEnglishMeaning : undefined;
 
-  const progress = wordList.length > 0 ? Math.floor(((currentWordIndex + 1) / wordList.length) * 100) : 0;
+  const progress =
+    wordList.length > 0 ? Math.floor(((currentWordIndex + 1) / wordList.length) * 100) : 0;
   const maxProgress = maxProgressRef.current;
 
   return {
@@ -219,4 +242,3 @@ export function useAudioPracticeSession(): UseAudioPracticeSessionReturn {
     stopPlayback: actionsRef.current.stopPlayback,
   };
 }
-
