@@ -2,6 +2,7 @@ import * as Crypto from 'expo-crypto';
 import * as FileSystem from 'expo-file-system';
 
 import { isRemoteAudioUrl } from '@/utils/cacheUtils';
+import { handleError } from '@/utils/errorHandling';
 
 export class AudioCacheManager {
   private static instance: AudioCacheManager;
@@ -125,7 +126,7 @@ export class AudioCacheManager {
         await this.ensureCacheDirectoryExists();
       }
     } catch (error) {
-      console.error('Error clearing cache:', error);
+      await handleError(error as Error);
       throw error;
     }
   }
@@ -153,7 +154,7 @@ export class AudioCacheManager {
 
       return totalSize;
     } catch (error) {
-      console.error('Error getting cache size:', error);
+      await handleError(error as Error);
       return 0;
     }
   }
