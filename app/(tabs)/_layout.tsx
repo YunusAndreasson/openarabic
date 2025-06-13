@@ -72,7 +72,10 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
 
   const bottomInset = useMemo(
     () =>
-      Platform.OS === 'ios' ? Math.min(insets.bottom, LAYOUT.SPACING.MEDIUM) : LAYOUT.SPACING.SMALL,
+      Platform.select({
+        ios: Math.min(insets.bottom, LAYOUT.SPACING.MEDIUM),
+        default: LAYOUT.SPACING.SMALL,
+      }),
     [insets.bottom]
   );
 
@@ -82,18 +85,19 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
       height:
         LAYOUT.BOTTOM_BAR.HEIGHT +
         bottomInset +
-        (Platform.OS === 'android' ? LAYOUT.SPACING.SMALL : 0),
+        Platform.select({ android: LAYOUT.SPACING.SMALL, default: 0 }),
       paddingBottom: bottomInset,
       ...platformStyles,
       borderTopColor: colors.borderOverlay,
-      ...(Platform.OS === 'ios'
-        ? {
-            shadowColor: isDarkMode ? colors.shadow : Colors.light.borderOverlay,
-          }
-        : {
-            backgroundColor: colors.background,
-            borderTopColor: colors.border,
-          }),
+      ...Platform.select({
+        ios: {
+          shadowColor: isDarkMode ? colors.shadow : Colors.light.borderOverlay,
+        },
+        default: {
+          backgroundColor: colors.background,
+          borderTopColor: colors.border,
+        },
+      }),
     }),
     [
       colors.shadow,
@@ -106,14 +110,14 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
     ]
   );
 
-  const TabBarContainer = Platform.OS === 'ios' ? BlurView : View;
-  const blurProps =
-    Platform.OS === 'ios'
-      ? {
-          intensity: BLUR_INTENSITY,
-          tint: (isDarkMode ? 'dark' : 'light') as BlurTint,
-        }
-      : {};
+  const TabBarContainer = Platform.select({ ios: BlurView, default: View });
+  const blurProps = Platform.select({
+    ios: {
+      intensity: BLUR_INTENSITY,
+      tint: (isDarkMode ? 'dark' : 'light') as BlurTint,
+    },
+    default: {},
+  });
 
   const getTabButtonStyle = useCallback(
     (isFocused: boolean): TextStyle => ({
@@ -145,18 +149,25 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
 
   return (
     <TabBarContainer style={containerStyle} {...blurProps}>
-      {Platform.OS === 'android' ? (
-        <>
-          <BlurView
-            intensity={BLUR_INTENSITY}
-            style={StyleSheet.absoluteFill}
-            tint={isDarkMode ? 'dark' : 'light'}
+      {Platform.select({
+        android: (
+          <>
+            <BlurView
+              intensity={BLUR_INTENSITY}
+              style={StyleSheet.absoluteFill}
+              tint={isDarkMode ? 'dark' : 'light'}
+            />
+            <View
+              style={[StyleSheet.absoluteFill, { backgroundColor: colors.tabBarOverlay }]}
+            />
+          </>
+        ),
+        default: (
+          <View
+            style={[StyleSheet.absoluteFill, { backgroundColor: colors.tabBarOverlay }]}
           />
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tabBarOverlay }]} />
-        </>
-      ) : (
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tabBarOverlay }]} />
-      )}
+        ),
+      })}
       {state.routes.map((route, index) => {
         const descriptor = descriptors[route.key];
         if (!descriptor) return null;
@@ -201,26 +212,27 @@ const CustomHeaderBackground = memo(() => {
   const isDarkMode = useIsDarkMode();
   const colors = useColors();
 
-  if (Platform.OS === 'android') {
-    return (
+  return Platform.select({
+    android: (
       <View style={StyleSheet.absoluteFill}>
         <BlurView
           intensity={BLUR_INTENSITY}
           style={StyleSheet.absoluteFill}
           tint={isDarkMode ? 'dark' : 'light'}
         />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.headerOverlay }]} />
+        <View
+          style={[StyleSheet.absoluteFill, { backgroundColor: colors.headerOverlay }]}
+        />
       </View>
-    );
-  }
-
-  return (
-    <BlurView
-      intensity={BLUR_INTENSITY}
-      style={StyleSheet.absoluteFill}
-      tint={isDarkMode ? 'dark' : 'light'}
-    />
-  );
+    ),
+    default: (
+      <BlurView
+        intensity={BLUR_INTENSITY}
+        style={StyleSheet.absoluteFill}
+        tint={isDarkMode ? 'dark' : 'light'}
+      />
+    ),
+  });
 });
 CustomHeaderBackground.displayName = 'CustomHeaderBackground';
 
