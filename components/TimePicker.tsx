@@ -1,4 +1,6 @@
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
 import React, { memo, useState, useCallback, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View, Modal, TouchableWithoutFeedback, Platform } from 'react-native';
@@ -112,7 +114,7 @@ export const TimePicker = memo(
     );
 
     const handleDateChange = useCallback(
-      (event: any, date?: Date) => {
+      (event: DateTimePickerEvent, date?: Date) => {
         if (Platform.OS === 'android') {
           setShowPicker(false);
 
