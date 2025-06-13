@@ -65,6 +65,19 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
   const graphWidth = useGraphWidth();
   const TOP_PADDING = CHART_VISUAL.CHART_TOP_PADDING;
 
+  const parsedWords = useMemo(
+    () =>
+      studyWords.map(word => ({
+        createdAt: new Date(word.created_at),
+        lastReview: word.fsrs_last_review
+          ? new Date(word.fsrs_last_review)
+          : null,
+        state: word.fsrs_state,
+        stability: word.fsrs_stability ?? 0,
+      })),
+    [studyWords]
+  );
+
   const masteryData = useMemo(() => {
     const dates = generateDateRange(DAYS_7);
 
@@ -72,15 +85,11 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
       let masteredCount = 0;
       let totalCount = 0;
 
-      studyWords.forEach(word => {
-        const createdAt = new Date(word.created_at);
-
-        if (createdAt <= date) {
+      parsedWords.forEach(word => {
+        if (word.createdAt <= date) {
           totalCount++;
 
-          const state = word.fsrs_state;
-          const stability = word.fsrs_stability ?? 0;
-          const lastReview = word.fsrs_last_review ? new Date(word.fsrs_last_review) : null;
+          const { state, stability, lastReview } = word;
 
           if (state === 2 && stability >= 5 && lastReview && lastReview <= date) {
             masteredCount++;
@@ -91,7 +100,7 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
       const masteryRate = totalCount > 0 ? (masteredCount / totalCount) * 100 : 0;
       return { date, masteredCount, totalCount, masteryRate };
     });
-  }, [studyWords]);
+  }, [parsedWords]);
 
   const chartData = useMemo<ChartData>(() => {
     if (masteryData.length === 0) {
