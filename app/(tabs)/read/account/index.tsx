@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BaseCard from '@/components/BaseCard';
 import SectionTitle from '@/components/SectionTitle';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { TimePicker } from '@/components/TimePicker';
@@ -16,6 +17,7 @@ import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useAccountScreen } from '@/hooks/account';
 import { useColors } from '@/hooks/theme/useColors';
 import pkg from '@/package.json';
+import { formatBytes } from '@/utils/cacheUtils';
 
 // Memoized components
 interface SettingLabelProps {
@@ -64,7 +66,13 @@ const AccountScreen: React.FC = () => {
     appVersion,
     currentYear,
     user,
+    handleClearCache,
+    isClearingCache,
+    cacheSize,
   } = useAccountScreen();
+
+  // Format cache size for display
+  const formattedCacheSize = cacheSize > 0 ? formatBytes(cacheSize) : 'No cached files';
 
   return (
     <ThemedView
@@ -330,6 +338,45 @@ const AccountScreen: React.FC = () => {
                 includePressAnimation={true}
                 shadowSize="none"
                 style={styles.interactiveCard}
+                onPress={handleClearCache}
+              >
+                <View style={styles.cardContent}>
+                  <View style={styles.cardLeft}>
+                    <View style={styles.cardIconContainer}>
+                      <Ionicons color={colors.icon} name="folder-open-outline" size={22} />
+                    </View>
+                    <View style={styles.cacheTextContainer}>
+                      <ThemedText type="body" weight="medium">
+                        Audio Cache
+                      </ThemedText>
+                      <ThemedText
+                        colorName="textTertiary"
+                        style={styles.cacheSubtext}
+                        type="caption"
+                      >
+                        {formattedCacheSize}
+                      </ThemedText>
+                    </View>
+                  </View>
+                  <View style={styles.cacheButtonContainer}>
+                    <ThemedButton
+                      disabled={cacheSize === 0 || isClearingCache}
+                      loading={isClearingCache}
+                      size="small"
+                      title="Clear"
+                      variant="outlined"
+                      onPress={handleClearCache}
+                    />
+                  </View>
+                </View>
+              </BaseCard>
+
+              <Divider />
+
+              <BaseCard
+                includePressAnimation={true}
+                shadowSize="none"
+                style={styles.interactiveCard}
                 onPress={handleSignOut}
               >
                 <View style={styles.cardContent}>
@@ -514,6 +561,19 @@ const styles = StyleSheet.create({
   versionText: {
     letterSpacing: 0.4,
     opacity: LAYOUT.OPACITY.HIGH,
+  },
+
+  cacheTextContainer: {
+    flexDirection: 'column',
+    marginLeft: LAYOUT.SPACING.SMALL,
+  },
+
+  cacheSubtext: {
+    marginTop: LAYOUT.SPACING.TINY,
+  },
+
+  cacheButtonContainer: {
+    marginLeft: LAYOUT.SPACING.SMALL,
   },
 });
 

@@ -7,6 +7,7 @@ import {
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
 import { AUDIO_STATES, type AudioState } from '@/constants/audio';
+import { audioCache } from '@/services/audioCache';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import { handleError } from '@/utils/errorHandling';
 
@@ -67,10 +68,6 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
     return status?.playing || false;
   }, [status?.playing]);
 
-  const isPaused = useMemo(() => {
-    return !status?.playing && position > 0;
-  }, [status?.playing, position]);
-
   const isPlayerLoaded = useMemo(() => {
     return status?.isLoaded || false;
   }, [status?.isLoaded]);
@@ -99,12 +96,10 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
         ? AUDIO_STATES.LOADING
         : isPlaying
           ? AUDIO_STATES.PLAYING
-          : isPaused
-            ? AUDIO_STATES.PAUSED
-            : AUDIO_STATES.STOPPED;
+          : AUDIO_STATES.STOPPED;
 
     return newState;
-  }, [isLoading, isPlaying, isPaused, currentTrack, isPlayerLoaded]);
+  }, [isLoading, isPlaying, currentTrack, isPlayerLoaded]);
 
   // Initialize audio session
   const initAudioSession = useCallback(async () => {
@@ -206,11 +201,28 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
       }
 
       const validStartIndex = Math.max(0, Math.min(startIndex, tracks.length - 1));
-      const initialTrack = tracks[validStartIndex];
 
-      setQueue(tracks);
+      // Process tracks to use cached audio URLs if available
+      const processedTracks = await Promise.all(
+        tracks.map(async track => {
+          try {
+            // Get cached audio URL (downloads if not cached)
+            const cachedAudioUrl = await audioCache.getAudio(track.audioUrl);
+            return {
+              ...track,
+              audioUrl: cachedAudioUrl,
+            };
+          } catch (error) {
+            // If caching fails, use original URL
+            console.warn('Failed to cache audio for track:', track.title, error);
+            return track;
+          }
+        })
+      );
+
+      setQueue(processedTracks);
       setCurrentIndex(validStartIndex);
-      setCurrentTrack(initialTrack || null);
+      setCurrentTrack(processedTracks[validStartIndex] || null);
 
       // The useAudioPlayer hook will automatically recreate the player with the new source
     } catch (error) {

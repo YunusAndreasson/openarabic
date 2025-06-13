@@ -17,7 +17,6 @@ import { withOpacity } from '@/utils/colorUtils';
 const CARD_HEIGHT = 120;
 const IMAGE_SIZE = 80;
 
-
 interface NowPlayingCardProps {
   /** Whether the card should be visible */
   isVisible: boolean;
@@ -69,7 +68,35 @@ const NowPlayingCard = ({
     isTimerActive,
   });
 
-  if (!article) return null;
+  if (!isVisible) return null;
+
+  // Show loading state if visible but no article data yet
+  if (!article) {
+    return (
+      <Animated.View style={[styles.container, dynamicStyles.container, cardAnimatedStyle]}>
+        <View style={styles.content}>
+          <View style={styles.imageContainer}>
+            <View style={[styles.articleImage, { backgroundColor: colors.elevation2 }]} />
+          </View>
+          <View style={styles.textContent}>
+            <View style={styles.primaryInfo}>
+              <ThemedText numberOfLines={1} style={styles.title} type="body">
+                Loading...
+              </ThemedText>
+              <ThemedText
+                numberOfLines={1}
+                style={styles.author}
+                type="caption"
+                variant="secondary"
+              >
+                Preparing audio
+              </ThemedText>
+            </View>
+          </View>
+        </View>
+      </Animated.View>
+    );
+  }
 
   return (
     <Animated.View style={[styles.container, dynamicStyles.container, cardAnimatedStyle]}>

@@ -63,8 +63,21 @@ export const useListenUI = ({
     if (isNaN(articleIdNumber)) return null;
 
     const currentItem = sortedReadingList.find(item => item.article_id === articleIdNumber);
-    return currentItem?.articles || null;
-  }, [isStartingPlayback, sortedReadingList, metadata.articleId]);
+    const foundArticle = currentItem?.articles;
+
+    // If we have metadata but no article yet, create a minimal article object
+    if (!foundArticle && metadata.articleTitle) {
+      return {
+        id: articleIdNumber,
+        title: metadata.articleTitle,
+        author: { name: 'Loading...' },
+        image_url: '',
+        placeholder: '',
+      } as any; // Minimal article for display purposes
+    }
+
+    return foundArticle || null;
+  }, [isStartingPlayback, sortedReadingList, metadata.articleId, metadata.articleTitle]);
 
   const handleArticlePress = useCallback(
     (articleId: number) => {
@@ -109,4 +122,3 @@ export const useListenUI = ({
     handleDragEnd,
   };
 };
-

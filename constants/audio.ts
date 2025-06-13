@@ -5,7 +5,6 @@ export const AUDIO_STATES = {
   IDLE: 'idle',
   LOADING: 'loading',
   PLAYING: 'playing',
-  PAUSED: 'paused',
   STOPPED: 'stopped',
   ERROR: 'error',
 } as const;

@@ -2,10 +2,12 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Linking } from 'react-native';
 
+import { useAudioCache } from '@/hooks/audio/useAudioCache';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useReminders } from '@/hooks/notifications/useReminders';
 import pkg from '@/package.json';
 import { supabase } from '@/services/supabase';
+import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
 
@@ -18,9 +20,62 @@ const analytics = {
 
 export const useAccountScreen = () => {
   const { reminderTime, updateReminderTime, formatReminderTime } = useReminders();
+  const { clearCache, getCacheSize } = useAudioCache();
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [notificationPermissions, setNotificationPermissions] = useState(false);
+  const [cacheSize, setCacheSize] = useState<number>(0);
+  const [isClearingCache, setIsClearingCache] = useState(false);
   const { user } = useAuth();
+
+  // Load cache size on component mount
+  useEffect(() => {
+    const loadCacheSize = async () => {
+      try {
+        const size = await getCacheSize();
+        setCacheSize(size);
+      } catch (error) {
+        console.error('Failed to load cache size:', error);
+      }
+    };
+
+    loadCacheSize();
+  }, [getCacheSize]);
+
+  const handleClearCache = useCallback(() => {
+    if (cacheSize === 0) {
+      Alert.alert('No Cache', 'There are no cached audio files to clear.');
+      return;
+    }
+
+    Alert.alert(
+      'Clear Audio Cache',
+      `This will delete ${formatBytes(cacheSize)} of cached audio files. You'll need to re-download audio when playing articles.`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Clear Cache',
+          style: 'destructive',
+          onPress: async () => {
+            setIsClearingCache(true);
+            try {
+              await clearCache();
+              setCacheSize(0);
+              lightFeedback();
+              Alert.alert('Success', 'Audio cache cleared successfully');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to clear cache');
+              handleError(error as Error, { showToast: false });
+            } finally {
+              setIsClearingCache(false);
+            }
+          },
+        },
+      ]
+    );
+  }, [cacheSize, clearCache]);
 
   const handleSignOut = useCallback(() => {
     Alert.alert(
@@ -143,6 +198,9 @@ export const useAccountScreen = () => {
     appVersion,
     currentYear,
     user,
+    handleClearCache,
+    isClearingCache,
+    cacheSize,
   };
 };
 

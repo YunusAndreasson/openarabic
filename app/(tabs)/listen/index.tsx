@@ -70,7 +70,6 @@ const ListenListItem = memo(
     onPlayPress,
     drag,
     _isBeingDragged,
-    showPlayerCard,
   }: {
     item: ReadingListItem;
     isActive: boolean;
@@ -80,13 +79,9 @@ const ListenListItem = memo(
     onPlayPress: (id: number) => void;
     drag?: () => void;
     _isBeingDragged?: boolean;
-    showPlayerCard: boolean;
   }) => {
     // Check if this article has audio available
     const hasAudio = !!item.articles?.audio_url;
-
-    // Determine if card should play on tap
-    const shouldPlayOnTap = hasAudio && !showPlayerCard && !editMode;
 
     return (
       <ArticleCard
@@ -95,13 +90,11 @@ const ListenListItem = memo(
         title={item.articles?.title || 'Untitled'}
         editMode={editMode}
         isBeingDragged={_isBeingDragged}
-        onPress={
-          shouldPlayOnTap ? () => onPlayPress(item.article_id) : () => onPress(item.article_id)
-        }
+        onPress={() => onPress(item.article_id)}
         onLongPress={() => onPress(item.article_id)}
         onDelete={() => onDelete(item.article_id)}
-        // Keep play button visible for visual clarity
-        onPlayPress={hasAudio && !showPlayerCard ? () => onPlayPress(item.article_id) : undefined}
+        // Always show play button when audio is available and not in edit mode
+        onPlayPress={hasAudio && !editMode ? () => onPlayPress(item.article_id) : undefined}
         isPlaying={false} // Never show as playing - NowPlayingCard handles playback state
         dragHandleProps={{
           onLongPress: drag,
@@ -115,7 +108,6 @@ const ListenListItem = memo(
     if (prevProps.editMode !== nextProps.editMode) return false;
     if (prevProps.isActive !== nextProps.isActive) return false;
     if (prevProps._isBeingDragged !== nextProps._isBeingDragged) return false;
-    if (prevProps.showPlayerCard !== nextProps.showPlayerCard) return false;
     // Check if audio availability changed
     if (!!prevProps.item.articles?.audio_url !== !!nextProps.item.articles?.audio_url) return false;
     // Item ID should rarely change, so check last
@@ -180,9 +172,12 @@ export default function ListenScreen(): JSX.Element {
   // Check if we have any articles with audio available
   const hasAudioArticles = sortedEnhancedTracks.length > 0;
 
-  // Check if player should be visible (only when actually playing, not during startup)
+  // Check if player should be visible (when playing or stopped with content)
   const shouldShowPlayer = useMemo(() => {
-    return audioState === AUDIO_STATES.PLAYING && !!currentArticle;
+    return (
+      (audioState === AUDIO_STATES.PLAYING || audioState === AUDIO_STATES.STOPPED) &&
+      !!currentArticle
+    );
   }, [audioState, currentArticle]);
 
   // Since data is preloaded, only show empty state when we definitively have no articles
@@ -212,7 +207,6 @@ export default function ListenScreen(): JSX.Element {
             onPlayPress={handleArticlePlay}
             drag={drag}
             _isBeingDragged={isDragging}
-            showPlayerCard={shouldShowPlayer}
           />
         );
       } else {
@@ -225,20 +219,11 @@ export default function ListenScreen(): JSX.Element {
             onPress={handleArticlePress}
             onDelete={handleDelete}
             onPlayPress={handleArticlePlay}
-            showPlayerCard={shouldShowPlayer}
           />
         );
       }
     },
-    [
-      audioState,
-      metadata.articleId,
-      editMode,
-      shouldShowPlayer,
-      handleArticlePress,
-      handleDelete,
-      handleArticlePlay,
-    ]
+    [audioState, metadata.articleId, editMode, handleArticlePress, handleDelete, handleArticlePlay]
   );
 
   // Show loading screen only during initial uncached load
@@ -385,7 +370,11 @@ export default function ListenScreen(): JSX.Element {
         article={currentArticle}
         duration={isStartingPlayback ? 0 : duration * 1000}
         isTimerActive={sleepTimer.state.isActive}
-        isVisible={shouldShowPlayer || (isStartingPlayback && !!currentArticle)}
+        isVisible={
+          shouldShowPlayer ||
+          isStartingPlayback ||
+          (audioState === AUDIO_STATES.LOADING && !!metadata.articleId)
+        }
         progress={isStartingPlayback ? 0 : position * 1000}
         showTimerButton={true}
         onPress={handleNowPlayingPress}
