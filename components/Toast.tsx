@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, memo } from 'react';
+import React, { useEffect, useMemo, memo, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -112,15 +112,20 @@ export const Toast = memo(
 
     const animatedStyle = [opacityStyle, scaleStyle, translateYStyle];
 
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
+
     useEffect(() => {
-      let timer: ReturnType<typeof setTimeout> | undefined;
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
 
       if (visible) {
         fadeIn();
         startScale();
         startTranslate();
 
-        timer = setTimeout(() => {
+        timerRef.current = setTimeout(() => {
           fadeOut();
           reverseScale();
           reverseTranslate();
@@ -139,7 +144,10 @@ export const Toast = memo(
       }
 
       return () => {
-        if (timer) clearTimeout(timer);
+        if (timerRef.current) {
+          clearTimeout(timerRef.current);
+          timerRef.current = null;
+        }
       };
     }, [
       visible,

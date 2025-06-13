@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useCallback, memo } from 'react';
+import React, { useEffect, useMemo, useCallback, memo, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -31,6 +31,8 @@ export const WordTooltip = memo(
     const colors = useColors();
     const { width: screenWidth } = useWindowDimensions();
 
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
+
     // Setup opacity animation for fade effect with quick timing
     const { fadeIn, animatedStyle: opacityStyle } = useOpacityAnimation({
       initialOpacity: 0,
@@ -44,16 +46,26 @@ export const WordTooltip = memo(
 
     // Trigger animations based on visibility
     useEffect(() => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+
       if (visible) {
         fadeIn();
 
         // Auto-close tooltip after a delay
-        const timer = setTimeout(handleClose, LAYOUT.ANIMATION.DURATION.SLOW * 3);
-        return () => clearTimeout(timer);
+        timerRef.current = setTimeout(handleClose, LAYOUT.ANIMATION.DURATION.SLOW * 3);
       } else {
         handleClose();
       }
-      return () => {};
+
+      return () => {
+        if (timerRef.current) {
+          clearTimeout(timerRef.current);
+          timerRef.current = null;
+        }
+      };
     }, [visible, fadeIn, handleClose]);
 
     // Get colors based on theme
