@@ -31,7 +31,7 @@ export const authorsService = {
       throw error;
     }
 
-    return (data || [])
+    return (data ?? [])
       .map(item => (item as any).author as Tables<'authors'>)
       .sort((a, b) => a.name.localeCompare(b.name));
   },

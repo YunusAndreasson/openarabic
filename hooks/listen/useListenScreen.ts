@@ -218,7 +218,7 @@ export const useListenScreen = () => {
     async (articleId: number) => {
       if (isStartingPlayback) return;
 
-      if (isCurrentlyPlaying && parseInt(metadata.articleId || '0', 10) === articleId) {
+      if (isCurrentlyPlaying && parseInt(metadata.articleId ?? '', 10) === articleId) {
         selectionFeedback();
         await actions.stopPlayback();
         setPlaybackMode('none');

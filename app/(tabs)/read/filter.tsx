@@ -14,7 +14,7 @@ export default function FilterScreen(): JSX.Element {
   const params = useLocalSearchParams();
   const type = params.type as string;
   const id = params.id as string;
-  const numericId = parseInt(id, 10);
+  const numericId = parseInt(id ?? '', 10);
 
   const { prefetchArticle } = useAppPreloader();
 

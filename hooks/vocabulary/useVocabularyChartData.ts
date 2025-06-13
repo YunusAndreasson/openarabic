@@ -80,10 +80,10 @@ export function useVocabularyChartData(userId: string | undefined): UseVocabular
     isLoadingUserStats,
 
     // Chart data
-    masteryProgress: chartData?.masteryProgress || [],
-    efficiencyProgress: chartData?.efficiencyProgress || [],
-    retrievabilityForecast: chartData?.retrievabilityForecast || [],
-    difficultyDistribution: chartData?.difficultyDistribution || null,
+    masteryProgress: chartData?.masteryProgress ?? [],
+    efficiencyProgress: chartData?.efficiencyProgress ?? [],
+    retrievabilityForecast: chartData?.retrievabilityForecast ?? [],
+    difficultyDistribution: chartData?.difficultyDistribution ?? null,
 
     // Loading states
     isLoadingChartData,

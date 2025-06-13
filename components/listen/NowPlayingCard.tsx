@@ -332,10 +332,10 @@ const arePropsEqual = (prevProps: NowPlayingCardProps, nextProps: NowPlayingCard
   }
 
   // For progress and duration, only update if difference is significant (> 1%)
-  const progressDiff = Math.abs((prevProps.progress || 0) - (nextProps.progress || 0));
-  const durationDiff = Math.abs((prevProps.duration || 0) - (nextProps.duration || 0));
+  const progressDiff = Math.abs((prevProps.progress ?? 0) - (nextProps.progress ?? 0));
+  const durationDiff = Math.abs((prevProps.duration ?? 0) - (nextProps.duration ?? 0));
 
-  if (progressDiff > (nextProps.progress || 0) * 0.01 || durationDiff > 1000) {
+  if (progressDiff > (nextProps.progress ?? 0) * 0.01 || durationDiff > 1000) {
     return false;
   }
 

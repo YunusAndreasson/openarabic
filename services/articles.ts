@@ -133,7 +133,7 @@ export const articlesService = {
         });
         throw error;
       }
-      return mapToArticles((data || []) as any);
+      return mapToArticles((data ?? []) as any);
     } catch (err) {
       await handleError(err instanceof Error ? err : new Error('Unknown error loading articles'), {
         toastMessage: 'Failed to load articles',
@@ -162,7 +162,7 @@ export const articlesService = {
         });
         throw error;
       }
-      return mapToArticles((data || []) as any);
+      return mapToArticles((data ?? []) as any);
     } catch (err) {
       await handleError(
         err instanceof Error ? err : new Error('Unknown error loading articles with word stats'),
@@ -262,7 +262,7 @@ export const articlesService = {
         return [];
       }
 
-      return mapToArticles(data || []);
+      return mapToArticles(data ?? []);
     } catch (err) {
       await handleError(
         err instanceof Error ? err : new Error('Unknown error loading related articles'),
@@ -307,7 +307,7 @@ export const articlesService = {
         return [];
       }
 
-      return mapToArticles(data || []);
+      return mapToArticles(data ?? []);
     } catch (err) {
       await handleError(
         err instanceof Error ? err : new Error('Unknown error loading category articles'),

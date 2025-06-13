@@ -9,7 +9,7 @@ import { authorsService } from '@/services/authors';
 
 export default function FilterModalScreen(): JSX.Element {
   const { categoryId } = useLocalSearchParams<{ categoryId: string }>();
-  const numericCategoryId = parseInt(categoryId, 10);
+  const numericCategoryId = parseInt(categoryId ?? '', 10);
 
   // Get authors for this category directly
   const {

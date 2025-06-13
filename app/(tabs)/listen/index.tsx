@@ -192,7 +192,7 @@ export default function ListenScreen(): JSX.Element {
       const isActive =
         audioState === AUDIO_STATES.PLAYING &&
         !!metadata.articleId &&
-        parseInt(metadata.articleId, 10) === item.article_id;
+        parseInt(metadata.articleId ?? '', 10) === item.article_id;
 
       if (editMode && 'drag' in params) {
         // DraggableFlatList render

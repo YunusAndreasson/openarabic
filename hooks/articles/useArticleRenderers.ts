@@ -103,7 +103,7 @@ export const useArticleRenderers = (
   // Get words for a sentence - memoize the map lookup function
   const getWordsForSentence = useCallback(
     (sentenceId: number) => {
-      return sentenceWordsMap.get(sentenceId) || [];
+      return sentenceWordsMap.get(sentenceId) ?? [];
     },
     [sentenceWordsMap]
   );
