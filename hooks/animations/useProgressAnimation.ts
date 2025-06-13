@@ -30,9 +30,9 @@ export interface ProgressAnimationResult {
  * @param timingConfig - Custom timing configuration
  * @returns Object with animated style and function to update the progress
  */
-export const useProgressAnimation = (
+export const useProgressAnimation = <D extends number = number>(
   initialPercentage: number = 0,
-  duration = TIMING_CONFIG.SLOW.duration,
+  duration: D = TIMING_CONFIG.SLOW.duration as D,
   timingConfig?: WithTimingConfig
 ): ProgressAnimationResult => {
   // Store the progress value as a shared value for animations

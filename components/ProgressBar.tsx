@@ -51,7 +51,7 @@ function ProgressBarComponent({
     animatedStyle,
     updateProgress,
     progress: animatedProgress,
-  } = useProgressAnimation(intProgress, animationDuration as any);
+  } = useProgressAnimation(intProgress, animationDuration);
 
   // Effect to handle animation when triggered or when progress changes
   useEffect(() => {
@@ -124,9 +124,7 @@ function ProgressBarComponent({
   );
 
   return (
-    <Animated.View
-      style={styles.container as StyleProp<ViewStyle>}
-    >
+    <Animated.View style={styles.container as StyleProp<ViewStyle>}>
       <View style={styles.fillContainer}>
         <Animated.View style={styles.fill} />
       </View>
