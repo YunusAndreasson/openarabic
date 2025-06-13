@@ -30,11 +30,11 @@ export interface UseMemoryCapacityGaugeProps {
   strokeWidth: number;
 }
 
-const CAPACITY_THRESHOLDS = {
+export const CAPACITY_THRESHOLDS = {
   OPTIMAL: 75,
   MODERATE: 50,
   CRITICAL: 25,
-} as const;
+} as const satisfies Record<string, number>;
 
 export function useMemoryCapacityGauge({
   studyWords,

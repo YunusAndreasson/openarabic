@@ -32,7 +32,7 @@ const CAPACITY_THRESHOLDS = {
   OPTIMAL: 75, // Green zone - excellent learning health
   MODERATE: 50, // Yellow zone - good progress
   CRITICAL: 25, // Orange zone - needs attention
-} as const;
+} as const satisfies Record<string, number>;
 
 export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords = [] }) => {
   const colors = useColors();
