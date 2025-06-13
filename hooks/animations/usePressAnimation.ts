@@ -11,7 +11,7 @@ import {
 } from 'react-native-reanimated';
 
 import { SPRING_CONFIG } from './animationConfigs';
-import type { SharedValue } from './types';
+import type { SharedValue } from 'react-native-reanimated';
 
 export type PressAnimationType = 'button' | 'card' | 'custom';
 

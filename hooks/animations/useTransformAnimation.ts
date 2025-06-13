@@ -27,7 +27,7 @@ import { handleError } from '@/utils/errorHandling';
 
 
 import { TIMING_CONFIG } from './animationConfigs';
-import type { SharedValue } from './types';
+import type { SharedValue } from 'react-native-reanimated';
 
 export type TransformType = 'rotate' | 'scale' | 'slide' | 'translateX' | 'translateY';
 export type SlideDirection = 'left' | 'right';
