@@ -16,7 +16,6 @@ Notifications.setNotificationHandler({
   }),
 });
 
-
 let isInitialized = false;
 
 async function initialize(): Promise<boolean> {

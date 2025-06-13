@@ -104,8 +104,6 @@ export const useAccountScreen = () => {
     async (hour: number, minute: number) => {
       const newReminderTime = { ...reminderTime, hour, minute };
       await updateReminderTime(newReminderTime);
-      setShowTimePicker(false);
-      lightFeedback();
     },
     [reminderTime, updateReminderTime]
   );

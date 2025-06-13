@@ -25,9 +25,7 @@ export function useReminders(): UseRemindersResult {
   const reminderTime = useAppSelector(state => state.settings.reminderTime);
   const [isScheduling, setIsScheduling] = useState(false);
 
-  const updateReminderTime = async (
-    newReminderTime: ReminderTime
-  ): Promise<void> => {
+  const updateReminderTime = async (newReminderTime: ReminderTime): Promise<void> => {
     setIsScheduling(true);
     try {
       // Schedule the reminder

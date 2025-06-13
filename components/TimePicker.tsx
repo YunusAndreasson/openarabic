@@ -13,10 +13,12 @@ import Animated, {
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import { selectionFeedback } from '@/utils/haptics';
 
 import { ThemedButton } from './ThemedButton';
 import { ThemedText } from './ThemedText';
+
+const ANIMATION_DURATION = 200;
+const SPRING_CONFIG = { damping: 20, stiffness: 300 };
 
 export interface TimePickerProps {
   isVisible: boolean;
@@ -65,15 +67,15 @@ export const TimePicker = memo(
 
     // Animation functions
     const showModal = useCallback(() => {
-      backdropOpacity.value = withTiming(1, { duration: 200 });
-      modalScale.value = withSpring(1, { damping: 20, stiffness: 300 });
-      modalTranslateY.value = withSpring(0, { damping: 20, stiffness: 300 });
+      backdropOpacity.value = withTiming(1, { duration: ANIMATION_DURATION });
+      modalScale.value = withSpring(1, SPRING_CONFIG);
+      modalTranslateY.value = withSpring(0, SPRING_CONFIG);
     }, [backdropOpacity, modalScale, modalTranslateY]);
 
     const hideModal = useCallback(() => {
-      backdropOpacity.value = withTiming(0, { duration: 200 });
-      modalScale.value = withTiming(0.9, { duration: 200 });
-      modalTranslateY.value = withTiming(50, { duration: 200 }, () => {
+      backdropOpacity.value = withTiming(0, { duration: ANIMATION_DURATION });
+      modalScale.value = withTiming(0.9, { duration: ANIMATION_DURATION });
+      modalTranslateY.value = withTiming(50, { duration: ANIMATION_DURATION }, () => {
         runOnJS(onClose)();
       });
     }, [backdropOpacity, modalScale, modalTranslateY, onClose]);
@@ -86,6 +88,15 @@ export const TimePicker = memo(
       }
     }, [isVisible, showModal]);
 
+    const extractTimeAndSet = useCallback(
+      (date: Date) => {
+        const hour = date.getHours();
+        const minute = date.getMinutes();
+        onTimeSet(hour, minute);
+      },
+      [onTimeSet]
+    );
+
     const handleDateChange = useCallback(
       (event: any, date?: Date) => {
         if (Platform.OS === 'android') {
@@ -93,26 +104,20 @@ export const TimePicker = memo(
 
           if (event.type === 'set' && date) {
             setSelectedDate(date);
-            const hour = date.getHours();
-            const minute = date.getMinutes();
-            onTimeSet(hour, minute);
-            selectionFeedback();
+            extractTimeAndSet(date);
           }
           hideModal();
         } else if (date) {
           setSelectedDate(date);
-          selectionFeedback();
         }
       },
-      [onTimeSet, hideModal]
+      [extractTimeAndSet, hideModal]
     );
 
     const handleConfirm = useCallback(() => {
-      const hour = selectedDate.getHours();
-      const minute = selectedDate.getMinutes();
-      onTimeSet(hour, minute);
+      extractTimeAndSet(selectedDate);
       hideModal();
-    }, [selectedDate, onTimeSet, hideModal]);
+    }, [selectedDate, extractTimeAndSet, hideModal]);
 
     const handleCancel = useCallback(() => {
       hideModal();
