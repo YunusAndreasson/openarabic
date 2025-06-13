@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, router } from 'expo-router';
 import type { JSX } from 'react';
 import React, { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -126,7 +126,7 @@ export default function ListenScreen(): JSX.Element {
         />
 
         <View style={styles.wordArea}>
-          <Animated.View style={[styles.wordContainer, animatedStyle as any]}>
+          <Animated.View style={[styles.wordContainer, animatedStyle as ViewStyle]}>
             <WordDisplay
               fontSize={wordFontSize}
               translation={translationToShow}
