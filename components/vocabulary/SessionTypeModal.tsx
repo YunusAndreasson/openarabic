@@ -4,7 +4,7 @@
 
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import React, { memo, useEffect } from 'react';
+import React, { memo } from 'react';
 import { StyleSheet, View, TouchableOpacity, Modal, Pressable } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -13,12 +13,9 @@ import Animated, {
   FadeOut,
   SlideOutDown,
   runOnJS,
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-  cancelAnimation,
 } from 'react-native-reanimated';
+
+import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
@@ -38,32 +35,19 @@ const SessionTypeModal = memo(
     const colors = useColors();
     const isDarkMode = useIsDarkMode();
 
-    // Simple animation values
-    const translateY = useSharedValue(0);
-    const opacity = useSharedValue(1);
+    // Animation hooks
+    const {
+      value: translateY,
+      setValue: setTranslateY,
+      animatedStyle: translateStyle,
+    } = useTransformAnimation({
+      type: 'translateY',
+      useSpring: true,
+      damping: 15,
+      stiffness: 150,
+    });
 
-    // Reset values when modal becomes visible
-    useEffect(() => {
-      if (visible) {
-        // Force immediate reset of animation values
-        cancelAnimation(translateY);
-        cancelAnimation(opacity);
-        translateY.value = 0;
-        opacity.value = 1;
-      } else {
-        // Ensure values are reset when modal is hidden
-        translateY.value = 0;
-        opacity.value = 1;
-      }
-    }, [visible, translateY, opacity]);
-
-    // Cleanup on unmount
-    useEffect(() => {
-      return () => {
-        cancelAnimation(translateY);
-        cancelAnimation(opacity);
-      };
-    }, [translateY, opacity]);
+    const { setOpacity, animatedStyle: opacityStyle } = useOpacityAnimation();
 
     // Simple gesture handler
     const gestureHandler = Gesture.Pan()
@@ -72,7 +56,7 @@ const SessionTypeModal = memo(
         if (event.translationY > 0) {
           translateY.value = event.translationY;
           // Fade out as user swipes down
-          opacity.value = Math.max(0.3, 1 - event.translationY / 200);
+          setOpacity(Math.max(0.3, 1 - event.translationY / 200));
         }
       })
       .onEnd(event => {
@@ -80,24 +64,19 @@ const SessionTypeModal = memo(
 
         if (shouldDismiss) {
           // Animate out and close
-          translateY.value = withSpring(400, { damping: 15, stiffness: 150 });
-          opacity.value = withTiming(0, { duration: 200 }, finished => {
-            if (finished) {
-              runOnJS(onClose)();
-            }
+          setTranslateY(400);
+          setOpacity(0, () => {
+            runOnJS(onClose)();
           });
         } else {
           // Snap back to original position
-          translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
-          opacity.value = withTiming(1, { duration: 150 });
+          setTranslateY(0);
+          setOpacity(1);
         }
       });
 
     // Animated styles
-    const animatedModalStyle = useAnimatedStyle(() => ({
-      transform: [{ translateY: translateY.value }],
-      opacity: opacity.value,
-    }));
+    const animatedModalStyle = [translateStyle, opacityStyle];
 
     if (!visible) return null;
 
