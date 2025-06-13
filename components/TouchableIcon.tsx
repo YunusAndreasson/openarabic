@@ -32,6 +32,18 @@ interface TouchableIconProps {
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
+const getTouchTargetSize = (size: 'large' | 'medium' | 'small'): number => {
+  switch (size) {
+    case 'small':
+      return MIN_TOUCH_TARGET.SMALL;
+    case 'large':
+      return MIN_TOUCH_TARGET.LARGE;
+    case 'medium':
+    default:
+      return MIN_TOUCH_TARGET.MEDIUM;
+  }
+};
+
 const TouchableIcon: React.FC<TouchableIconProps> = memo(
   ({
     name,
@@ -54,16 +66,7 @@ const TouchableIcon: React.FC<TouchableIconProps> = memo(
       onPress();
     }, [hapticFeedback, onPress]);
 
-    const touchTargetSize = (() => {
-      switch (touchSize) {
-        case 'small':
-          return MIN_TOUCH_TARGET.SMALL;
-        case 'large':
-          return MIN_TOUCH_TARGET.SIZE;
-        default:
-          return MIN_TOUCH_TARGET.MEDIUM;
-      }
-    })();
+    const touchTargetSize = getTouchTargetSize(touchSize);
 
     const defaultHitSlop = (() => {
       const padding = LAYOUT.TOUCH_TARGET.ENHANCE_PADDING(size);

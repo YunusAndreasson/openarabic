@@ -75,8 +75,9 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
     () =>
       active
         ? {
-            elevation: LAYOUT.ELEVATION.MEDIUM,
-            shadowOpacity: LAYOUT.OPACITY.MEDIUM,
+            shadowOpacity: 0.3, // LAYOUT.ELEVATION.MEDIUM equivalent
+            shadowRadius: 10, // LAYOUT.ELEVATION.MEDIUM equivalent
+            elevation: 8, // LAYOUT.ELEVATION.MEDIUM equivalent
           }
         : undefined,
     [active]
@@ -172,7 +173,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    minHeight: MIN_TOUCH_TARGET.SIZE,
+    minHeight: MIN_TOUCH_TARGET.LARGE,
     overflow: 'hidden',
   },
   cardContainer: {
@@ -185,7 +186,7 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     flexDirection: 'row',
-    minHeight: MIN_TOUCH_TARGET.SIZE,
+    minHeight: MIN_TOUCH_TARGET.LARGE,
     padding: LAYOUT.SPACING.MEDIUM,
     alignItems: 'center',
   },

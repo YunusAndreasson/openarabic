@@ -53,19 +53,19 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
         ios: isDarkMode
           ? {
               shadowOffset: { width: 0, height: -2 },
-              shadowOpacity: LAYOUT.OPACITY.SUBTLE,
-              shadowRadius: 6, // LAYOUT.SHADOW.SMALL radius
+              shadowOpacity: 0.15, // LAYOUT.ELEVATION.SMALL equivalent
+              shadowRadius: 2, // LAYOUT.ELEVATION.SMALL equivalent
               borderTopWidth: StyleSheet.hairlineWidth,
             }
           : {
               shadowOffset: { width: 0, height: -2 },
-              shadowOpacity: 0.3, // LAYOUT.SHADOW.MEDIUM opacity
-              shadowRadius: 10, // LAYOUT.SHADOW.MEDIUM radius
+              shadowOpacity: 0.3, // LAYOUT.ELEVATION.MEDIUM equivalent
+              shadowRadius: 10, // LAYOUT.ELEVATION.MEDIUM equivalent
               borderTopWidth: StyleSheet.hairlineWidth,
             },
         android: {
           borderTopWidth: StyleSheet.hairlineWidth,
-          elevation: LAYOUT.ELEVATION.MEDIUM,
+          elevation: 8, // LAYOUT.ELEVATION.MEDIUM equivalent
         },
       }) ?? {},
     [isDarkMode]
@@ -338,8 +338,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    minHeight: MIN_TOUCH_TARGET.SIZE, // Ensure tabs meet accessibility requirements
-    minWidth: MIN_TOUCH_TARGET.MEDIUM, // Ensure minimum width for touch
+    minHeight: MIN_TOUCH_TARGET.LARGE,
+    minWidth: MIN_TOUCH_TARGET.MEDIUM,
     ...Platform.select({
       ios: {
         paddingBottom: LAYOUT.SPACING.TINY / 2,

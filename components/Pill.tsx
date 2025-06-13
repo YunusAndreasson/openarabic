@@ -55,8 +55,11 @@ const Pill = memo(
           borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
           paddingHorizontal: LAYOUT.SPACING.MEDIUM,
           paddingVertical: LAYOUT.SPACING.TINY,
-          ...LAYOUT.SHADOW.SMALL,
           shadowColor: isDarkMode ? colors.black : colors.shadow,
+          elevation: 4, // LAYOUT.ELEVATION.SMALL equivalent
+          shadowOpacity: 0.25, // LAYOUT.ELEVATION.SMALL equivalent
+          shadowRadius: 6, // LAYOUT.ELEVATION.SMALL equivalent
+          shadowOffset: { width: 0, height: 2 }, // LAYOUT.ELEVATION.SMALL equivalent
         };
       }
 
@@ -75,8 +78,11 @@ const Pill = memo(
         paddingVertical: LAYOUT.SPACING.SMALL,
         marginBottom: LAYOUT.SPACING.SMALL,
         marginRight: LAYOUT.SPACING.SMALL,
-        ...LAYOUT.SHADOW.SUBTLE,
         shadowColor: colors.shadow,
+        elevation: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
+        shadowOpacity: 0.15, // LAYOUT.ELEVATION.SUBTLE equivalent
+        shadowRadius: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
+        shadowOffset: { width: 0, height: 1 }, // LAYOUT.ELEVATION.SUBTLE equivalent
       };
     }, [colors, isDarkMode, isSelected, isCategory, pillBg]);
 

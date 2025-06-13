@@ -55,7 +55,10 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   summaryCard: {
-    ...LAYOUT.SHADOW.SMALL,
+    elevation: 4, // LAYOUT.ELEVATION.SMALL equivalent
+    shadowOpacity: 0.25, // LAYOUT.ELEVATION.SMALL equivalent
+    shadowRadius: 6, // LAYOUT.ELEVATION.SMALL equivalent
+    shadowOffset: { width: 0, height: 2 }, // LAYOUT.ELEVATION.SMALL equivalent
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     padding: LAYOUT.SPACING.LARGE,
     borderWidth: 1,

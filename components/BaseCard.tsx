@@ -4,7 +4,6 @@ import { StyleSheet, Pressable, View, Platform } from 'react-native';
 import { LAYOUT } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { BaseCardProps } from '@/types/ui/card.types';
 
 const BaseCard: React.FC<BaseCardProps> = memo(
@@ -21,7 +20,6 @@ const BaseCard: React.FC<BaseCardProps> = memo(
     disabled = false,
   }) => {
     const colors = useColors();
-    const isDarkMode = useIsDarkMode();
 
     const { handlePressIn, handlePressOut } = usePressAnimation();
 
@@ -31,23 +29,29 @@ const BaseCard: React.FC<BaseCardProps> = memo(
       if (shadowSize !== 'none') {
         const baseShadow = {
           shadowColor: colors.shadow,
-          ...LAYOUT.SHADOW.MEDIUM,
-          elevation: isDarkMode ? 0 : 4,
+          elevation: 8, // LAYOUT.ELEVATION.MEDIUM equivalent
+          shadowOpacity: 0.3, // LAYOUT.ELEVATION.MEDIUM equivalent
+          shadowRadius: 10, // LAYOUT.ELEVATION.MEDIUM equivalent
+          shadowOffset: { width: 0, height: 4 }, // LAYOUT.ELEVATION.MEDIUM equivalent
         };
 
         switch (shadowSize) {
           case 'small':
             calculatedShadow = {
               ...baseShadow,
-              ...LAYOUT.SHADOW.SMALL,
-              elevation: isDarkMode ? 0 : 2,
+              elevation: 4, // LAYOUT.ELEVATION.SMALL equivalent
+              shadowOpacity: 0.25, // LAYOUT.ELEVATION.SMALL equivalent
+              shadowRadius: 6, // LAYOUT.ELEVATION.SMALL equivalent
+              shadowOffset: { width: 0, height: 2 }, // LAYOUT.ELEVATION.SMALL equivalent
             };
             break;
           case 'large':
             calculatedShadow = {
               ...baseShadow,
-              ...LAYOUT.SHADOW.LARGE,
-              elevation: isDarkMode ? 0 : 6,
+              elevation: 12, // LAYOUT.ELEVATION.LARGE equivalent
+              shadowOpacity: 0.35, // LAYOUT.ELEVATION.LARGE equivalent
+              shadowRadius: 14, // LAYOUT.ELEVATION.LARGE equivalent
+              shadowOffset: { width: 0, height: 6 }, // LAYOUT.ELEVATION.LARGE equivalent
             };
             break;
           default:
@@ -61,7 +65,7 @@ const BaseCard: React.FC<BaseCardProps> = memo(
           backgroundColor: colors.card,
         },
       };
-    }, [colors.shadow, colors.cardBorder, colors.card, isDarkMode, shadowSize]);
+    }, [colors.shadow, colors.card, shadowSize]);
 
     const combinedCardStyle = useMemo(
       () => [styles.card, baseStyles.background, baseStyles.shadow, style],

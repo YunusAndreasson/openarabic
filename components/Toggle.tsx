@@ -108,8 +108,8 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
     <TouchableOpacity
       activeOpacity={1}
       style={{
-        minWidth: MIN_TOUCH_TARGET.SIZE,
-        minHeight: MIN_TOUCH_TARGET.SIZE,
+        minWidth: MIN_TOUCH_TARGET.LARGE,
+        minHeight: MIN_TOUCH_TARGET.LARGE,
         alignItems: 'center',
         justifyContent: 'center',
       }}
@@ -134,7 +134,12 @@ const styles = StyleSheet.create({
   handle: {
     position: 'relative',
   },
-  shadow: LAYOUT.SHADOW.SUBTLE,
+  shadow: {
+    elevation: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
+    shadowOpacity: 0.15, // LAYOUT.ELEVATION.SUBTLE equivalent
+    shadowRadius: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
+    shadowOffset: { width: 0, height: 1 }, // LAYOUT.ELEVATION.SUBTLE equivalent
+  },
   toggleTrack: {
     alignItems: 'flex-start',
     justifyContent: 'center',

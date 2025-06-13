@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
-import type Animated from 'react-native-reanimated';
 import {
   useAnimatedStyle,
   useSharedValue,
@@ -10,8 +9,8 @@ import {
   Extrapolation,
   cancelAnimation,
 } from 'react-native-reanimated';
+import type { AnimatedStyle } from 'react-native-reanimated';
 
-import { LAYOUT } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
@@ -64,7 +63,7 @@ export const useNowPlayingCard = ({
     handlePressIn: handleStopPressIn,
     handlePressOut: handleStopPressOut,
   } = usePressAnimation({ scaleAmount: 0.85 });
-  const buttonAnimatedStyle = rawButtonAnimatedStyle as Animated.AnimateStyle<ViewStyle>;
+  const buttonAnimatedStyle = rawButtonAnimatedStyle as AnimatedStyle<ViewStyle>;
 
   useEffect(() => {
     if (isVisible && article) {
@@ -109,7 +108,8 @@ export const useNowPlayingCard = ({
   const dynamicStyles = useMemo(
     () => ({
       container: {
-        ...LAYOUT.SHADOW.SMALL,
+        elevation: 4, // LAYOUT.ELEVATION.SMALL equivalent
+        shadowRadius: 6, // LAYOUT.ELEVATION.SMALL equivalent
         backgroundColor: isDarkMode ? colors.elevation2 : colors.card,
         borderColor: isDarkMode ? colors.border : colors.cardBorder,
         shadowColor: colors.shadow,
@@ -117,7 +117,10 @@ export const useNowPlayingCard = ({
         shadowOpacity: isDarkMode ? 0.3 : 0.1,
       },
       stopButton: {
-        ...LAYOUT.SHADOW.SUBTLE,
+        elevation: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
+        shadowOpacity: 0.15, // LAYOUT.ELEVATION.SUBTLE equivalent
+        shadowRadius: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
+        shadowOffset: { width: 0, height: 1 }, // LAYOUT.ELEVATION.SUBTLE equivalent
         backgroundColor: colors.tint,
         shadowColor: colors.tint,
       },

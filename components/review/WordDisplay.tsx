@@ -37,7 +37,7 @@ const WordDisplay = memo(
           fontWeight: '700',
           textAlign: 'center', // Override to center for review cards
           // Remove conflicting paddingVertical - use container padding instead
-          paddingVertical: 0,
+          paddingVertical: LAYOUT.SPACING.MICRO,
           // Ensure proper text rendering without clipping
           includeFontPadding: false, // Disable to prevent clipping on Android
           textAlignVertical: 'center',
@@ -48,10 +48,12 @@ const WordDisplay = memo(
         ...(Platform.OS === 'ios'
           ? {
               shadowColor: colors.shadow,
-              ...LAYOUT.SHADOW.SMALL,
+              shadowOpacity: 0.25, // LAYOUT.ELEVATION.SMALL equivalent
+              shadowRadius: 6, // LAYOUT.ELEVATION.SMALL equivalent
+              shadowOffset: { width: 0, height: 2 }, // LAYOUT.ELEVATION.SMALL equivalent
             }
           : {
-              elevation: LAYOUT.ELEVATION.SUBTLE,
+              elevation: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
             }),
       }),
       [colors.arabicText, fontSize, colors.shadow]

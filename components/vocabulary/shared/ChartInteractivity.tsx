@@ -61,7 +61,7 @@ export const DataPointOverlay = memo<DataPointOverlayProps>(({ x, y, value, labe
     onPress(x, y, value, label);
   }, [x, y, value, label, onPress]);
 
-  const touchTargetSize = MIN_TOUCH_TARGET.SIZE;
+  const touchTargetSize = MIN_TOUCH_TARGET.LARGE;
   const offset = touchTargetSize / 2;
 
   return (
@@ -127,7 +127,10 @@ export const useChartTooltip = (autoHideDelay: number = 3000) => {
 
 const styles = StyleSheet.create({
   tooltip: {
-    ...LAYOUT.SHADOW.SUBTLE,
+    elevation: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
+    shadowOpacity: 0.15, // LAYOUT.ELEVATION.SUBTLE equivalent
+    shadowRadius: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
+    shadowOffset: { width: 0, height: 1 }, // LAYOUT.ELEVATION.SUBTLE equivalent
     borderRadius: LAYOUT.INPUT.BORDER_RADIUS,
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     padding: LAYOUT.SPACING.SMALL,

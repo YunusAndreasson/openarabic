@@ -49,13 +49,14 @@ const BottomControls = memo<BottomControlsProps>(
 
     // Optimize gradient colors calculation
     const gradientColors = useMemo(
-      () => [
-        colors.transparent,
-        `${colors.background}40`,
-        `${colors.background}80`,
-        colors.background,
-        colors.background,
-      ] as const,
+      () =>
+        [
+          colors.transparent,
+          `${colors.background}40`,
+          `${colors.background}80`,
+          colors.background,
+          colors.background,
+        ] as const,
       [colors]
     );
 
@@ -196,18 +197,24 @@ const styles = StyleSheet.create({
     top: -LAYOUT.SPACING.LARGE,
   },
   secondaryButton: {
-    ...LAYOUT.SHADOW.SUBTLE,
+    elevation: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
+    shadowOpacity: 0.15, // LAYOUT.ELEVATION.SUBTLE equivalent
+    shadowRadius: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
+    shadowOffset: { width: 0, height: 1 }, // LAYOUT.ELEVATION.SUBTLE equivalent
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
   },
   timerButton: {
-    ...LAYOUT.SHADOW.SUBTLE,
+    elevation: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
+    shadowOpacity: 0.15, // LAYOUT.ELEVATION.SUBTLE equivalent
+    shadowRadius: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
+    shadowOffset: { width: 0, height: 1 }, // LAYOUT.ELEVATION.SUBTLE equivalent
     alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'center',
     minHeight: MIN_TOUCH_TARGET.MEDIUM, // Enhanced for better accessibility
-    minWidth: MIN_TOUCH_TARGET.SIZE,
+    minWidth: MIN_TOUCH_TARGET.LARGE,
     paddingHorizontal: LAYOUT.SPACING.SMALL,
     paddingVertical: LAYOUT.SPACING.SMALL, // Increased padding for easier touch
   },

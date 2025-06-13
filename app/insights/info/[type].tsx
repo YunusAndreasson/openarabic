@@ -168,7 +168,12 @@ export default function InfoModalScreen(): JSX.Element {
           <View key={section.title} style={styles.section}>
             <View style={styles.sectionHeader}>
               {section.icon && (
-                <View style={[styles.iconContainer, { backgroundColor: withOpacity(colors.tint, 0.08) }]}>
+                <View
+                  style={[
+                    styles.iconContainer,
+                    { backgroundColor: withOpacity(colors.tint, 0.08) },
+                  ]}
+                >
                   <Ionicons name={section.icon} size={24} color={colors.tint} />
                 </View>
               )}
@@ -240,8 +245,8 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   iconContainer: {
-    width: MIN_TOUCH_TARGET.SIZE - LAYOUT.SPACING.SMALL,
-    height: MIN_TOUCH_TARGET.SIZE - LAYOUT.SPACING.SMALL,
+    width: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
+    height: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     alignItems: 'center',
     justifyContent: 'center',

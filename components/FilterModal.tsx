@@ -7,7 +7,12 @@ import Pill from '@/components/Pill';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
-import { useFilterModal, DIFFICULTY_OPTIONS, DATE_RANGE_OPTIONS, SORT_OPTIONS } from '@/hooks/articles/useFilterModal';
+import {
+  useFilterModal,
+  DIFFICULTY_OPTIONS,
+  DATE_RANGE_OPTIONS,
+  SORT_OPTIONS,
+} from '@/hooks/articles/useFilterModal';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Author } from '@/types/articles.types';
 
@@ -64,7 +69,10 @@ const FilterModal: React.FC<FilterModalProps> = ({ availableAuthors }) => {
                     isSelected && {
                       backgroundColor: colors.elevation1,
                       borderColor: colors.tint + '40',
-                      ...LAYOUT.SHADOW.SUBTLE,
+                      elevation: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
+                      shadowOpacity: 0.15, // LAYOUT.ELEVATION.SUBTLE equivalent
+                      shadowRadius: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
+                      shadowOffset: { width: 0, height: 1 }, // LAYOUT.ELEVATION.SUBTLE equivalent
                       shadowColor: colors.tint,
                     },
                   ]}

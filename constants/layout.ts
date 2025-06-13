@@ -10,6 +10,52 @@ export const FONTS = {
   ARABIC: 'Madina',
 } as const;
 
+// Base scale for systematic sizing
+const BASE_UNIT = 4;
+
+// Systematic spacing scale based on base unit
+const SPACING_SCALE = {
+  MICRO: BASE_UNIT * 0.25, // 1
+  TINY: BASE_UNIT, // 4
+  SMALL: BASE_UNIT * 2, // 8
+  MEDIUM: BASE_UNIT * 3, // 12
+  LARGE: BASE_UNIT * 4, // 16
+  XLARGE: BASE_UNIT * 5, // 20
+  XXLARGE: BASE_UNIT * 6, // 24
+  XXXLARGE: BASE_UNIT * 8, // 32
+  SECTION_INTERNAL: BASE_UNIT * 2, // 8
+} as const;
+
+// Touch target system based on accessibility guidelines
+const TOUCH_TARGETS = {
+  SMALL: 32,
+  MEDIUM: 44,
+  LARGE: 48, // iOS/Android minimum recommended
+  ICON_PADDING: BASE_UNIT * 3, // 12
+} as const;
+
+// Unified shadow/elevation system
+const createShadow = (elevation: number, opacity: number, radius: number) => ({
+  ...Platform.select({
+    ios: {
+      shadowOffset: { width: 0, height: Math.ceil(elevation / 2) },
+      shadowOpacity: opacity,
+      shadowRadius: radius,
+    },
+    android: {
+      elevation,
+    },
+  }),
+});
+
+const ELEVATION_SYSTEM = {
+  NONE: { level: 0, ...createShadow(0, 0, 0) },
+  SUBTLE: { level: 2, ...createShadow(2, 0.15, 2) },
+  SMALL: { level: 4, ...createShadow(4, 0.25, 6) },
+  MEDIUM: { level: 8, ...createShadow(8, 0.3, 10) },
+  LARGE: { level: 12, ...createShadow(12, 0.35, 14) },
+} as const;
+
 export const TYPOGRAPHY_HIERARCHY = {
   WEIGHTS: {
     REGULAR: '400' as const,
@@ -37,6 +83,7 @@ export const TYPOGRAPHY_HIERARCHY = {
     TIGHT: 1.2,
     NORMAL: 1.4,
     LOOSE: 1.6,
+    ARABIC: 2.2, // Moved from LAYOUT.TYPOGRAPHY for consistency
   },
 
   SEMANTIC_COLORS: {
@@ -50,7 +97,6 @@ export const TYPOGRAPHY_HIERARCHY = {
     SUCCESS_CONTENT: 'success',
     WARNING_CONTENT: 'warning',
     INFO_CONTENT: 'info',
-
     HEADING_CONTENT: 'headingText',
     SUBTITLE_CONTENT: 'subtitleText',
     METADATA_CONTENT: 'metadataText',
@@ -84,7 +130,6 @@ export const TYPOGRAPHY_HIERARCHY = {
       NORMAL_TEXT: 4.5,
       ENHANCED: 7.0,
     },
-
     DYNAMIC_OPACITY: {
       LIGHT_THEME_BOOST: 0.05,
       DARK_THEME_BOOST: 0.08,
@@ -94,30 +139,31 @@ export const TYPOGRAPHY_HIERARCHY = {
 
 export const WORD_AREA_MIN_HEIGHT = 364;
 
-export const MIN_TOUCH_TARGET = {
-  SIZE: 48,
-  MEDIUM: 44,
-  SMALL: 32,
-  ICON_PADDING: 12,
-} as const;
+// Export touch targets for backward compatibility and external use
+export const MIN_TOUCH_TARGET = TOUCH_TARGETS;
 
-// Extract SPACING and MIN_TOUCH_TARGET for use before LAYOUT is declared
-const SPACING = {
-  MICRO: 1,
-  TINY: 4,
-  SMALL: 8,
-  MEDIUM: 12,
-  LARGE: 16,
-  XLARGE: 20,
-  XXLARGE: 24,
-  SECTION_INTERNAL: 8,
+// Helper functions for systematic design
+export const getSystematicSpacing = (multiplier: number): number => {
+  return BASE_UNIT * multiplier;
 };
 
-const MIN_TOUCH = {
-  SIZE: 48,
-  MEDIUM: 44,
-  SMALL: 32,
-  ICON_PADDING: 12,
+export const getOptimalLineHeight = (
+  fontSize: number,
+  contentType: 'arabic' | 'english' = 'english'
+): number => {
+  const multiplier =
+    contentType === 'arabic'
+      ? TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.ARABIC
+      : TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL;
+  return Math.round(fontSize * multiplier);
+};
+
+export const getAccessibleTouchTarget = (
+  currentSize: number
+): { padding: number; minSize: number } => {
+  const minSize = TOUCH_TARGETS.MEDIUM;
+  const padding = currentSize < minSize ? Math.ceil((minSize - currentSize) / 2) : 0;
+  return { padding, minSize };
 };
 
 export const LAYOUT = {
@@ -128,7 +174,7 @@ export const LAYOUT = {
     BOTTOM: 12,
   },
 
-  SPACING,
+  SPACING: SPACING_SCALE,
 
   /**
    * Standardized opacity values for consistent visual appearance
@@ -156,9 +202,9 @@ export const LAYOUT = {
 
   CARD: {
     PADDING: {
-      SMALL: SPACING.SMALL,
-      MEDIUM: SPACING.MEDIUM,
-      LARGE: SPACING.LARGE,
+      SMALL: SPACING_SCALE.SMALL,
+      MEDIUM: SPACING_SCALE.MEDIUM,
+      LARGE: SPACING_SCALE.LARGE,
     },
   },
 
@@ -173,9 +219,9 @@ export const LAYOUT = {
 
   BUTTON: {
     HEIGHT: {
-      SMALL: MIN_TOUCH.SMALL,
-      MEDIUM: MIN_TOUCH.MEDIUM,
-      LARGE: MIN_TOUCH.SIZE,
+      SMALL: TOUCH_TARGETS.SMALL,
+      MEDIUM: TOUCH_TARGETS.MEDIUM,
+      LARGE: TOUCH_TARGETS.LARGE,
     },
     ICON_SIZE: {
       SMALL: 16,
@@ -194,72 +240,10 @@ export const LAYOUT = {
       XXLARGE: 22,
       HUGE: 28,
     },
-    LINE_HEIGHT: {
-      TIGHT: 1.2,
-      NORMAL: 1.4,
-      LOOSE: 1.6,
-      ARABIC: 2.2,
-    },
+    LINE_HEIGHT: TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS,
   },
 
-  SHADOW: {
-    SUBTLE: {
-      ...Platform.select({
-        ios: {
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.15,
-          shadowRadius: 2,
-        },
-        android: {
-          elevation: 2,
-        },
-      }),
-    },
-    SMALL: {
-      ...Platform.select({
-        ios: {
-          shadowOffset: { width: 0, height: 3 },
-          shadowOpacity: 0.25,
-          shadowRadius: 6,
-        },
-        android: {
-          elevation: 4,
-        },
-      }),
-    },
-    MEDIUM: {
-      ...Platform.select({
-        ios: {
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 0.3,
-          shadowRadius: 10,
-        },
-        android: {
-          elevation: 8,
-        },
-      }),
-    },
-    LARGE: {
-      ...Platform.select({
-        ios: {
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.35,
-          shadowRadius: 14,
-        },
-        android: {
-          elevation: 12,
-        },
-      }),
-    },
-  },
-
-  ELEVATION: {
-    NONE: 0,
-    SUBTLE: 2,
-    SMALL: 4,
-    MEDIUM: 8,
-    LARGE: 12,
-  },
+  ELEVATION: ELEVATION_SYSTEM,
 
   Z_INDEX: {
     BASE: 0,
@@ -284,17 +268,22 @@ export const LAYOUT = {
   },
 
   HIT_SLOP: {
-    MEDIUM: { top: 12, bottom: 12, left: 12, right: 12 },
+    MEDIUM: {
+      top: SPACING_SCALE.MEDIUM,
+      bottom: SPACING_SCALE.MEDIUM,
+      left: SPACING_SCALE.MEDIUM,
+      right: SPACING_SCALE.MEDIUM,
+    },
   },
 
   TOUCH_TARGET: {
     MIN_CONTAINER: {
-      WIDTH: MIN_TOUCH.SIZE,
-      HEIGHT: MIN_TOUCH.SIZE,
+      WIDTH: TOUCH_TARGETS.LARGE,
+      HEIGHT: TOUCH_TARGETS.LARGE,
     },
 
     ENHANCE_PADDING: (currentSize: number) => {
-      const needed = MIN_TOUCH.MEDIUM - currentSize;
+      const needed = TOUCH_TARGETS.MEDIUM - currentSize;
       return needed > 0 ? Math.ceil(needed / 2) : 0;
     },
   },
@@ -324,18 +313,16 @@ export const LAYOUT = {
     TITLE: {
       MAIN: {
         fontSize: 28,
-        fontWeight: '700',
+        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
         marginLeft: -4,
       },
-
       SECONDARY: {
         fontSize: 20,
-        fontWeight: '600',
+        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
       },
-
       COMPACT: {
         fontSize: 17,
-        fontWeight: '600',
+        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
       },
     },
   },
@@ -348,14 +335,11 @@ export const getArabicTextStyle = (
   return {
     fontFamily: FONTS.ARABIC,
     fontSize,
-
-    lineHeight: Math.round(fontSize * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.ARABIC),
+    lineHeight: Math.round(fontSize * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.ARABIC),
     writingDirection: 'rtl',
     textAlign: 'right',
-
     includeFontPadding: false,
-
-    paddingVertical: LAYOUT.SPACING.TINY * 1.5,
+    paddingVertical: SPACING_SCALE.TINY * 1.5,
     paddingHorizontal: 0,
     textAlignVertical: 'center',
     ...additionalStyles,

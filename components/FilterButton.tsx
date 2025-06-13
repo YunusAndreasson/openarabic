@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     marginRight: LAYOUT.SPACING.TINY,
     position: 'relative',
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.TINY,
   },
   filterText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
+    paddingHorizontal: LAYOUT.SPACING.TINY,
   },
   badgeText: {
     fontSize: 10,

@@ -203,14 +203,13 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.SMALL,
   },
   modalContainer: {
-    ...LAYOUT.SHADOW.LARGE,
+    elevation: 12, // LAYOUT.ELEVATION.LARGE equivalent
+    shadowOpacity: 0.35, // LAYOUT.ELEVATION.LARGE equivalent
+    shadowRadius: 14, // LAYOUT.ELEVATION.LARGE equivalent
+    shadowOffset: { width: 0, height: 6 }, // LAYOUT.ELEVATION.LARGE equivalent
     borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     paddingBottom: LAYOUT.SPACING.XLARGE,
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
   },
   header: {
     paddingHorizontal: LAYOUT.SPACING.LARGE,
@@ -228,7 +227,10 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.MEDIUM,
   },
   optionCard: {
-    ...LAYOUT.SHADOW.SUBTLE,
+    elevation: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
+    shadowOpacity: 0.15, // LAYOUT.ELEVATION.SUBTLE equivalent
+    shadowRadius: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
+    shadowOffset: { width: 0, height: 1 }, // LAYOUT.ELEVATION.SUBTLE equivalent
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: LAYOUT.SPACING.LARGE,

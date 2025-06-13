@@ -4,7 +4,7 @@ import type { ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { MIN_TOUCH_TARGET } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectionFeedback } from '@/utils/haptics';
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   button: {
-    ...LAYOUT.SHADOW.SMALL,
+    elevation: 2,
     alignItems: 'center',
     borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2, // Circular
     height: MIN_TOUCH_TARGET.MEDIUM,

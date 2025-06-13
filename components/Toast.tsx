@@ -25,7 +25,12 @@ const DEFAULT_DURATION = 3500;
 const MAX_TOAST_WIDTH_RATIO = 0.9;
 
 // Enhanced shadow styles for more prominence
-const SHADOW_STYLES = LAYOUT.SHADOW.LARGE;
+const SHADOW_STYLES = {
+  elevation: 12, // LAYOUT.ELEVATION.LARGE equivalent
+  shadowOpacity: 0.35, // LAYOUT.ELEVATION.LARGE equivalent
+  shadowRadius: 14, // LAYOUT.ELEVATION.LARGE equivalent
+  shadowOffset: { width: 0, height: 6 }, // LAYOUT.ELEVATION.LARGE equivalent
+};
 
 const styles = StyleSheet.create({
   toast: {

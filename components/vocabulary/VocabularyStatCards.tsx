@@ -196,7 +196,9 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.MEDIUM,
   },
   categoryCard: {
-    ...LAYOUT.SHADOW.SUBTLE,
+    elevation: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
+    shadowOpacity: 0.15, // LAYOUT.ELEVATION.SUBTLE equivalent
+    shadowRadius: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: LAYOUT.SPACING.LARGE,
@@ -204,8 +206,8 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.SPACING.XLARGE,
   },
   numberBadge: {
-    width: MIN_TOUCH_TARGET.SIZE - LAYOUT.SPACING.SMALL,
-    height: MIN_TOUCH_TARGET.SIZE - LAYOUT.SPACING.SMALL,
+    width: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
+    height: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.SPACING.XLARGE,
     alignItems: 'center',
     justifyContent: 'center',

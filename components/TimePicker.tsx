@@ -1,6 +1,4 @@
-import type {
-  DateTimePickerEvent,
-} from '@react-native-community/datetimepicker';
+import type { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { memo, useState, useCallback, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
@@ -276,7 +274,10 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.LARGE,
   },
   modal: {
-    ...LAYOUT.SHADOW.LARGE,
+    elevation: 12, // LAYOUT.ELEVATION.LARGE equivalent
+    shadowOpacity: 0.35, // LAYOUT.ELEVATION.LARGE equivalent
+    shadowRadius: 14, // LAYOUT.ELEVATION.LARGE equivalent
+    shadowOffset: { width: 0, height: 6 }, // LAYOUT.ELEVATION.LARGE equivalent
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     padding: LAYOUT.SPACING.LARGE,
     width: '100%',

@@ -122,7 +122,10 @@ const styles = StyleSheet.create({
     borderRadius: ICON_SIZE / 2,
     justifyContent: 'center',
     alignItems: 'center',
-    ...LAYOUT.SHADOW.SMALL,
+    elevation: 4, // LAYOUT.ELEVATION.SMALL equivalent
+    shadowOpacity: 0.25, // LAYOUT.ELEVATION.SMALL equivalent
+    shadowRadius: 6, // LAYOUT.ELEVATION.SMALL equivalent
+    shadowOffset: { width: 0, height: 2 }, // LAYOUT.ELEVATION.SMALL equivalent
   } as ViewStyle,
   instructionItem: {
     flexDirection: 'row',

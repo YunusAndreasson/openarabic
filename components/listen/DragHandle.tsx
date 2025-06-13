@@ -29,9 +29,9 @@ const DragHandle: React.FC<DragHandleProps> = ({ onLongPress, delayLongPress = 1
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    height: MIN_TOUCH_TARGET.SIZE,
+    height: MIN_TOUCH_TARGET.LARGE,
     justifyContent: 'center',
-    width: MIN_TOUCH_TARGET.SIZE,
+    width: MIN_TOUCH_TARGET.LARGE,
   },
 });
 

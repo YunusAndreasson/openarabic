@@ -103,7 +103,10 @@ function SortingControls<T extends string>({
                 pillStyle={[
                   styles.sortPill,
                   isSelected && {
-                    ...LAYOUT.SHADOW.SUBTLE,
+                    elevation: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
+                    shadowOpacity: 0.15, // LAYOUT.ELEVATION.SUBTLE equivalent
+                    shadowRadius: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
+                    shadowOffset: { width: 0, height: 1 }, // LAYOUT.ELEVATION.SUBTLE equivalent
                     backgroundColor: colors.elevation1,
                     borderWidth: 1,
                     borderColor: colors.tint + '25', // Increased opacity for better visibility
@@ -131,7 +134,7 @@ const styles = StyleSheet.create({
   },
   sortCard: {
     marginBottom: LAYOUT.SPACING.SMALL,
-    marginHorizontal: 0,
+    marginHorizontal: LAYOUT.SPACING.MICRO,
     overflow: 'hidden', // Ensures clean card edges
   },
   sortContent: {
