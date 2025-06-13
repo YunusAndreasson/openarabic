@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
+import type { ViewStyle } from 'react-native';
 import {
   useAnimatedStyle,
   useSharedValue,
@@ -58,10 +59,12 @@ export const useNowPlayingCard = ({
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.95);
   const {
-    animatedStyle: buttonAnimatedStyle,
+    animatedStyle: rawButtonAnimatedStyle,
     handlePressIn: handleStopPressIn,
     handlePressOut: handleStopPressOut,
   } = usePressAnimation({ scaleAmount: 0.85 });
+  const buttonAnimatedStyle =
+    rawButtonAnimatedStyle as Animated.AnimateStyle<ViewStyle>;
 
   useEffect(() => {
     if (isVisible && article) {

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { memo } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
@@ -170,8 +170,9 @@ const NowPlayingCard = ({
         {/* Controls */}
         <View style={styles.controls}>
           {/* Stop Button */}
-          {/* @ts-expect-error - Known type issue with Reanimated's animated style */}
-          <Animated.View style={buttonAnimatedStyle}>
+          <Animated.View
+            style={buttonAnimatedStyle as Animated.AnimateStyle<ViewStyle>}
+          >
             <TouchableOpacity
               activeOpacity={0.8}
               onPressIn={handleStopPressIn}

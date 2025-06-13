@@ -134,10 +134,15 @@ function ThemedButtonComponent({
   const colors = useColors();
 
   // Use the same animation config as BaseCard for consistency
-  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
+  const {
+    animatedStyle: rawAnimatedStyle,
+    handlePressIn,
+    handlePressOut,
+  } = usePressAnimation({
     type: 'card',
     opacityAmount: LAYOUT.OPACITY.PRESSED,
   });
+  const animatedStyle = rawAnimatedStyle as Animated.AnimateStyle<ViewStyle>;
 
   const handlePress = React.useCallback(
     (event: GestureResponderEvent) => {
@@ -159,8 +164,12 @@ function ThemedButtonComponent({
 
   return (
     <AnimatedTouchable
-      // @ts-expect-error - Known type issue with Reanimated's animated style
-      style={[buttonStyle, disablePressAnimation ? {} : animatedStyle]}
+      style={[
+        buttonStyle,
+        disablePressAnimation
+          ? {}
+          : (animatedStyle as Animated.AnimateStyle<ViewStyle>),
+      ]}
       onPressIn={disablePressAnimation ? undefined : handlePressIn}
       onPressOut={disablePressAnimation ? undefined : handlePressOut}
       disabled={disabled || loading}
