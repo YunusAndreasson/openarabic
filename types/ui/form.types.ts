@@ -11,35 +11,3 @@ export interface ToggleProps {
   onValueChange: (value: boolean) => void;
 }
 
-/**
- * Props for the CustomSlider component
- */
-export interface CustomSliderProps extends BaseStyleProps {
-  /**
-   * Current value of the slider
-   */
-  value: number;
-
-  /**
-   * Callback when the value changes
-   */
-  onValueChange: (value: number) => void;
-
-  /**
-   * Minimum possible value
-   * @default 0
-   */
-  minimumValue?: number;
-
-  /**
-   * Maximum possible value
-   * @default 1
-   */
-  maximumValue?: number;
-
-  /**
-   * Step size for value changes
-   * @default 0.1
-   */
-  step?: number;
-}

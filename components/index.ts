@@ -14,7 +14,6 @@ export { default as FilterModal } from './FilterModal';
 export { AuthProvider, ToastProvider, useToast } from './providers';
 export { default as Pill } from './Pill';
 export { Toggle } from './Toggle';
-export { CustomSlider } from './Slider';
 export { ThemeToggle } from './ThemeToggle';
 export { EnhancedImage } from './EnhancedImage';
 export { default as Auth } from './auth';
