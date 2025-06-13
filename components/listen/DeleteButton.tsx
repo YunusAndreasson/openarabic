@@ -3,7 +3,7 @@ import React from 'react';
 import { StyleSheet, TouchableOpacity, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectionFeedback } from '@/utils/haptics';
@@ -32,7 +32,7 @@ const DeleteButton: React.FC<DeleteButtonProps> = ({ onPress, disabled = false }
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       disabled={disabled}
-      activeOpacity={0.8}
+      activeOpacity={LAYOUT.OPACITY.HOVER}
       style={styles.touchable}
       accessibilityRole="button"
       accessibilityLabel="Delete article"
@@ -50,7 +50,7 @@ const DeleteButton: React.FC<DeleteButtonProps> = ({ onPress, disabled = false }
       >
         <Ionicons
           name="trash"
-          size={16}
+          size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
           color={colors.white} // Using white color from Colors.ts
         />
       </Animated.View>
@@ -64,9 +64,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   button: {
-    elevation: 4, // LAYOUT.ELEVATION.SMALL equivalent
-    shadowOpacity: 0.25, // LAYOUT.ELEVATION.SMALL equivalent
-    shadowRadius: 6, // LAYOUT.ELEVATION.SMALL equivalent
+    ...LAYOUT.ELEVATION.SMALL,
     alignItems: 'center',
     borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2, // Circular
     height: MIN_TOUCH_TARGET.MEDIUM,
