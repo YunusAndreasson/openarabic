@@ -35,7 +35,7 @@ import { store, persistor } from '@/store/store';
 import { setTheme } from '@/store/themeSlice';
 import { handleError } from '@/utils/errorHandling';
 
-import { useArticlesAndDueWordsLoaded } from './(tabs)/read/index';
+import { useArticlesAndDueWordsLoaded } from '@/hooks/useArticlesAndDueWordsLoaded';
 // Temporary mock analytics until service is fixed
 const analytics = {
   identify: async (_userId: string, _properties?: any) => {},

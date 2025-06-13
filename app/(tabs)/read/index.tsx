@@ -1,4 +1,3 @@
-// Move content from the existing index.tsx file here
 
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
@@ -208,18 +207,3 @@ export default function ArticlesScreen(): JSX.Element {
   );
 }
 
-export function useArticlesAndDueWordsLoaded() {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-
-  const articlesQueryState = queryClient.getQueryState(['articles']);
-  const articlesLoaded =
-    articlesQueryState?.status === 'success' || articlesQueryState?.status === 'error';
-
-  const { isLoading: isDueWordsLoading } = useArticlesByDueWords(user?.id, 10);
-
-  return useMemo(() => {
-    if (!user?.id) return articlesLoaded;
-    return articlesLoaded && !isDueWordsLoading;
-  }, [articlesLoaded, isDueWordsLoading, user?.id]);
-}
