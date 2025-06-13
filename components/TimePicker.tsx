@@ -2,13 +2,9 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { memo, useState, useCallback, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View, Modal, TouchableWithoutFeedback, Platform } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  runOnJS,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
+
+import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -17,7 +13,6 @@ import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { ThemedButton } from './ThemedButton';
 import { ThemedText } from './ThemedText';
 
-const ANIMATION_DURATION = 200;
 const SPRING_CONFIG = { damping: 20, stiffness: 300 };
 
 export interface TimePickerProps {
@@ -51,34 +46,53 @@ export const TimePicker = memo(
     const [selectedDate, setSelectedDate] = useState(initialDate);
     const [showPicker, setShowPicker] = useState(false);
 
-    // Animation values
-    const backdropOpacity = useSharedValue(0);
-    const modalScale = useSharedValue(0.9);
-    const modalTranslateY = useSharedValue(50);
+    // Animation hooks
+    const {
+      animatedStyle: backdropStyle,
+      startAnimation: fadeBackdropIn,
+      reverseAnimation: fadeBackdropOut,
+    } = useOpacityAnimation({ initialOpacity: 0 });
 
-    // Animated styles
-    const backdropStyle = useAnimatedStyle(() => ({
-      opacity: backdropOpacity.value,
-    }));
+    const {
+      animatedStyle: scaleStyle,
+      startAnimation: scaleIn,
+      reverseAnimation: scaleOut,
+    } = useTransformAnimation({
+      type: 'scale',
+      initialValue: 0.9,
+      targetValue: 1,
+      useSpring: true,
+      damping: SPRING_CONFIG.damping,
+      stiffness: SPRING_CONFIG.stiffness,
+    });
 
-    const modalStyle = useAnimatedStyle(() => ({
-      transform: [{ scale: modalScale.value }, { translateY: modalTranslateY.value }],
-    }));
+    const {
+      animatedStyle: translateStyle,
+      startAnimation: translateIn,
+      reverseAnimation: translateOut,
+    } = useTransformAnimation({
+      type: 'translateY',
+      initialValue: 50,
+      targetValue: 0,
+      useSpring: true,
+      damping: SPRING_CONFIG.damping,
+      stiffness: SPRING_CONFIG.stiffness,
+    });
+
+    const modalStyle = [scaleStyle, translateStyle];
 
     // Animation functions
     const showModal = useCallback(() => {
-      backdropOpacity.value = withTiming(1, { duration: ANIMATION_DURATION });
-      modalScale.value = withSpring(1, SPRING_CONFIG);
-      modalTranslateY.value = withSpring(0, SPRING_CONFIG);
-    }, [backdropOpacity, modalScale, modalTranslateY]);
+      fadeBackdropIn();
+      scaleIn();
+      translateIn();
+    }, [fadeBackdropIn, scaleIn, translateIn]);
 
     const hideModal = useCallback(() => {
-      backdropOpacity.value = withTiming(0, { duration: ANIMATION_DURATION });
-      modalScale.value = withTiming(0.9, { duration: ANIMATION_DURATION });
-      modalTranslateY.value = withTiming(50, { duration: ANIMATION_DURATION }, () => {
-        runOnJS(onClose)();
-      });
-    }, [backdropOpacity, modalScale, modalTranslateY, onClose]);
+      fadeBackdropOut();
+      scaleOut();
+      translateOut(onClose);
+    }, [fadeBackdropOut, scaleOut, translateOut, onClose]);
 
     // Show modal when visible
     React.useEffect(() => {
