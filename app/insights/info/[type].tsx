@@ -11,7 +11,7 @@ import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { withOpacity } from '@/utils/colorUtils';
 
-type InfoModalType = 'efficiency' | 'mastery' | 'progress' | 'recommendation' | 'retrievability';
+type InfoModalType = 'efficiency' | 'mastery' | 'retrievability';
 
 interface InfoContent {
   title: string;
@@ -25,36 +25,6 @@ interface InfoContent {
 }
 
 const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
-  recommendation: {
-    title: 'Next Steps',
-    subtitle: 'Your personalized study guidance based on memory science and cognitive load.',
-    sections: [
-      {
-        title: 'Review First',
-        content:
-          'This appears when you have 15+ overdue words or more than 25% of your vocabulary needs review.\n\nYour brain can only process limited new information when working memory is occupied with overdue reviews. Think of it like trying to learn new dance moves while still struggling with basic steps – it creates cognitive overload and reduces how well you remember everything.\n\nWhen you have too many overdue words, adding new vocabulary actually hurts your learning. Your mental workspace gets cluttered, and both old and new words suffer. This is why the system recommends focusing on reviews first.\n\nComplete all overdue reviews before adding new words. This clears your mental workspace and maximizes your capacity for learning new vocabulary effectively.',
-        icon: 'stop-circle',
-      },
-      {
-        title: 'Review Then Add',
-        content:
-          'This appears when you have 5-15 due words with moderate review load.\n\nYou have some review burden, but your brain can still handle new information. The key is smart sequencing – reviews first, then new words. This prevents cognitive overload while allowing controlled growth.\n\nWhen you review first, you refresh existing memories and clear mental space. Then when you encounter new words, your brain has full capacity to encode them properly. This sequencing dramatically improves retention rates.\n\nPause new word addition temporarily. Complete your due reviews first, then add a few new words. This maintains strong retention of what you know while allowing steady vocabulary expansion.',
-        icon: 'pause-circle',
-      },
-      {
-        title: 'Add New Words',
-        content:
-          'This appears when you have minimal review load and optimal conditions.\n\nYour brain has maximum capacity for new learning right now. With few overdue reviews, your working memory is clear and ready to encode new vocabulary effectively. This is the perfect time to expand without compromising what you already know.\n\nResearch shows that learning is most effective when you have this kind of mental clarity. New words get stronger initial encoding, and you can connect them to existing knowledge more easily.\n\nGo ahead and add new words confidently. Your memory system is primed for growth. Focus on quality over quantity – a few well-learned words beat many poorly remembered ones.',
-        icon: 'play-circle',
-      },
-    ],
-    tips: [
-      'Following these recommendations can improve retention by 2-3x',
-      'Add 3-5 new words when optimal, focus on consistency over volume',
-      'Review when mentally fresh for maximum effectiveness',
-      'Trust the system – it adapts to your individual patterns',
-    ],
-  },
   mastery: {
     title: 'Word Mastery',
     subtitle: 'Track how vocabulary moves from new learning to permanent knowledge.',
@@ -144,36 +114,6 @@ const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
       'Connect new words to existing knowledge for stronger networks',
       'Focus on understanding context, not just memorizing definitions',
       'Consistent daily practice beats intensive cramming sessions',
-    ],
-  },
-  progress: {
-    title: 'Progress Stages',
-    subtitle: 'Understand how words move through your memory system and what each stage means.',
-    sections: [
-      {
-        title: 'Due Words: Optimal Opportunities',
-        content:
-          "Due words represent your highest-impact practice opportunities. These words have reached their scientifically optimal review timing based on spaced repetition research – they're at the perfect moment for memory strengthening.\n\nThe timing isn't arbitrary. Each word's review schedule adapts to your individual forgetting pattern for that specific vocabulary item. Some words you remember longer, others fade faster. The system learns these personal patterns and schedules accordingly.\n\nWhen you review words at this optimal timing, you create the strongest possible memory reinforcement. Each successful recall extends how long you'll remember and builds more durable vocabulary knowledge. This is the core principle behind spaced repetition's effectiveness.\n\nPrioritizing due words over new words maximizes efficiency. Adding new vocabulary when you have overdue reviews creates cognitive interference – your brain struggles to process new information while existing memories are unstable.\n\nThis reflects emphasis on comprehensible input. When your existing vocabulary is well-maintained, new words appear in contexts you can understand, enabling natural acquisition.",
-        icon: 'alarm-outline',
-      },
-      {
-        title: 'Learning Words: Building Strength',
-        content:
-          "Learning words represent vocabulary in the critical memory formation stage. With each successful review, they move closer to long-term stability. This is where most of your active language development happens.\n\nThese words are developing from initial weak memory traces into stable knowledge. The process isn't linear – some reviews will feel easy, others challenging, as your brain consolidates the information through different memory pathways.\n\nConsistent practice with learning words is crucial. Skipping reviews can send them backward in the memory strength sequence, requiring more total practice time to reach stability. Regular engagement maintains forward momentum.\n\nThis stage demonstrates acquisition process in action. Words are moving from conscious effort to automatic recognition. Eventually, they'll require minimal attention and become available for natural, spontaneous use.\n\nMaintain steady practice with these words. They're on the path to becoming permanent vocabulary that you can use naturally and confidently in real communication situations.",
-        icon: 'school-outline',
-      },
-      {
-        title: 'Strong Words: Permanent Assets',
-        content:
-          "Strong words represent the ultimate goal: vocabulary that has reached memory stability and become part of your permanent language ability. These words require minimal review and are ready for natural use in any context.\n\nEvery strong word is genuine language acquisition, not temporary memorization. They represent vocabulary you truly own rather than words you've crammed for a test. This distinction is crucial – strong words become part of your thinking process.\n\nStrong words enable natural language use. They're available automatically during reading, listening, speaking, and writing. You don't need to consciously recall them – they emerge naturally when needed, just like words in your native language.\n\nThis achievement validates acquisition theory. These words were learned through comprehensible input and meaningful practice, not through drilling isolated vocabulary lists. They demonstrate that natural language acquisition processes work effectively.\n\nCelebrate this count as your measure of real progress. Each strong word is a building block for more advanced learning and natural communication ability.",
-        icon: 'checkmark-circle-outline',
-      },
-    ],
-    tips: [
-      'Due words offer your highest-impact practice opportunities',
-      'Learning words need consistent practice to keep progressing',
-      'Strong words represent genuine vocabulary ownership',
-      'Focus on moving words through stages rather than adding quantity',
     ],
   },
 };
