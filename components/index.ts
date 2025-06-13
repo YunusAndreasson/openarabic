@@ -18,7 +18,6 @@ export { CustomSlider } from './Slider';
 export { ThemeToggle } from './ThemeToggle';
 export { EnhancedImage } from './EnhancedImage';
 export { default as Auth } from './auth';
-export { DifficultyIndicator } from './home/ArticleHelpers';
 
 // Re-export from subdirectories (except article to avoid circular dependency)
 export * from './review';
