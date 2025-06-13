@@ -24,12 +24,3 @@ export function useIsDarkMode(): boolean {
   // Return whether the theme is dark
   return theme === Theme.Dark;
 }
-
-/**
- * Hook to get the system's preferred color scheme
- * Useful for initializing theme or providing theme suggestions
- * @returns 'light' | 'dark' | null
- */
-export function useSystemColorScheme(): ColorSchemeName {
-  return useColorScheme();
-}
