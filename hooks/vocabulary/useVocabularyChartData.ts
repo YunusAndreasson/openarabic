@@ -7,6 +7,7 @@ import type {
   EfficiencyProgressData,
   RetrievabilityData,
   DifficultyStats,
+  VocabularyChartData,
 } from '@/services/vocabularyStats';
 
 interface UseVocabularyChartDataResult {
@@ -38,7 +39,7 @@ export function useVocabularyChartData(userId: string | undefined): UseVocabular
     data: userStats = null,
     isLoading: isLoadingUserStats,
     error: userStatsError,
-  } = useQuery({
+  } = useQuery<VocabularyStatsFromDB | null>({
     queryKey: ['vocabulary-stats', 'user', userId],
     queryFn: () => {
       if (!userId) return Promise.resolve(null);
@@ -55,7 +56,7 @@ export function useVocabularyChartData(userId: string | undefined): UseVocabular
     data: chartData,
     isLoading: isLoadingChartData,
     error: chartDataError,
-  } = useQuery({
+  } = useQuery<VocabularyChartData>({
     queryKey: ['vocabulary-stats', 'charts', userId],
     queryFn: () => {
       if (!userId)
