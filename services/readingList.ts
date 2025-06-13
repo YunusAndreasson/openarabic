@@ -135,6 +135,6 @@ export const readingListService = {
       throw error;
     }
 
-    return (data || []) as ReadingListItem[];
+    return (data ?? []) as ReadingListItem[];
   },
 };

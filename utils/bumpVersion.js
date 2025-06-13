@@ -27,8 +27,8 @@ function getIslamicDateVersion() {
 }
 
 function getHighestBuildNumber(appJson) {
-  const iosBuildNumber = parseInt(appJson.expo?.ios?.buildNumber || '0', 10);
-  const androidVersionCode = parseInt(appJson.expo?.android?.versionCode || '0', 10);
+  const iosBuildNumber = parseInt(appJson.expo?.ios?.buildNumber ?? '', 10);
+  const androidVersionCode = parseInt(appJson.expo?.android?.versionCode ?? '', 10);
 
   console.log(`📱 Current iOS build number: ${iosBuildNumber}`);
   console.log(`🤖 Current Android version code: ${androidVersionCode}`);

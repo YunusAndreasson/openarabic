@@ -225,7 +225,7 @@ export const ArticleContent = ({
   const insets = useSafeAreaInsets();
 
   const { user } = useAuth();
-  const articleId = parseInt(id, 10);
+  const articleId = parseInt(id ?? '', 10);
 
   // Get reading list data for the button
   const { isInReadingList, refetchReadingListStatus, isLoadingReadingList } = useArticleData(

@@ -140,7 +140,7 @@ export default function IslamicCalendarScreen() {
                             ]}
                           >
                             {event.isActive
-                              ? `Day ${Math.floor((event.progress || 0) * (event.duration || 1))} of ${event.duration}`
+                              ? `Day ${Math.floor((event.progress ?? 0) * (event.duration ?? 1))} of ${event.duration}`
                               : formatDaysUntil(event.daysFromNow)}
                           </ThemedText>
 

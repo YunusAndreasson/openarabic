@@ -59,7 +59,7 @@ export const useListenUI = ({
 
     if (!metadata.articleId || !sortedReadingList.length) return null;
 
-    const articleIdNumber = parseInt(metadata.articleId, 10);
+    const articleIdNumber = parseInt(metadata.articleId ?? '', 10);
     if (isNaN(articleIdNumber)) return null;
 
     const currentItem = sortedReadingList.find(item => item.article_id === articleIdNumber);

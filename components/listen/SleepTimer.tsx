@@ -157,7 +157,7 @@ const arePropsEqual = (prevProps: SleepTimerProps, nextProps: SleepTimerProps): 
   return (
     prevProps.isVisible === nextProps.isVisible &&
     prevProps.isActive === nextProps.isActive &&
-    Math.abs((prevProps.remainingTime || 0) - (nextProps.remainingTime || 0)) <= 1
+    Math.abs((prevProps.remainingTime ?? 0) - (nextProps.remainingTime ?? 0)) <= 1
   );
 };
 

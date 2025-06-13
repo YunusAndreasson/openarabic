@@ -60,8 +60,8 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
   }, [status, currentTrack]);
 
   // Get position and duration from status
-  const position = status?.currentTime || 0;
-  const duration = status?.duration || 0;
+  const position = status?.currentTime ?? 0;
+  const duration = status?.duration ?? 0;
 
   // Player state derived from expo-audio status
   const isPlaying = useMemo(() => {

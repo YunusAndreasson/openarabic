@@ -49,7 +49,7 @@ export default function ArticleScreen(): JSX.Element {
 
   const articleId = useMemo(() => {
     if (!id) return undefined;
-    const parsed = parseInt(id, 10);
+    const parsed = parseInt(id ?? '', 10);
     return isNaN(parsed) ? undefined : parsed;
   }, [id]);
 

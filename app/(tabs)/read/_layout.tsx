@@ -69,7 +69,7 @@ export default function ReadLayout() {
         name="filter"
         options={({ route }) => {
           const params = route.params as FilterParams;
-          const categoryId = parseInt(params.id, 10);
+          const categoryId = parseInt(params.id ?? '', 10);
 
           return createNavigationOptions(colors, {
             title: getFilterTitle(params),
