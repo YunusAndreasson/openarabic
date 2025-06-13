@@ -85,7 +85,7 @@ export const useNavigationWithDebounce = (
         timeoutRef.current = null;
       }, debounceDuration);
     },
-    [isNavigating, debounceDuration, router]
+    [isNavigating, debounceDuration]
   );
 
   return {
