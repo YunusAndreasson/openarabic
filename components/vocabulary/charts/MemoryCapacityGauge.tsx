@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Canvas, Path, Circle, Group, LinearGradient, vec } from '@shopify/react-native-skia';
 import React, { memo } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -77,7 +77,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
       title=""
       onInfoPress={() => {}}
     >
-      <Animated.View style={animatedPressStyle as any}>
+      <Animated.View style={animatedPressStyle as ViewStyle}>
         <View style={styles.gaugeContainer}>
           {/* Info button in top right corner */}
           <TouchableOpacity

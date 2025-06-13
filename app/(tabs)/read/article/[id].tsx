@@ -2,7 +2,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useMemo, useCallback, useEffect } from 'react';
 import type { JSX } from 'react';
-import { View, AppState } from 'react-native';
+import { View, AppState, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedView } from '@/components/ThemedView';
@@ -195,7 +195,7 @@ export default function ArticleScreen(): JSX.Element {
   );
 
   const containerStyle = useMemo(() => ({ flex: 1 }), []);
-  const contentStyle = useMemo(() => [{ flex: 1 }, animatedStyle as any], [animatedStyle]);
+  const contentStyle = useMemo(() => [{ flex: 1 }, animatedStyle as ViewStyle], [animatedStyle]);
 
   return (
     <ToastProvider>

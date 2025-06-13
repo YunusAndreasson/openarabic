@@ -123,7 +123,7 @@ function ArticleSentenceComponent({
 
   return (
     <View style={[styles.container, containerStyle]}>
-      <Animated.View style={backgroundStyle as any} />
+      <Animated.View style={backgroundStyle as ViewStyle} />
       {settings.showEnglish && sentence.english && (
         <Animated.Text style={englishTextStyle}>{sentence.english}</Animated.Text>
       )}

@@ -245,7 +245,7 @@ export default function ListenScreen(): JSX.Element {
       <ThemedView includeBottomInset={false} style={styles.flexOne} useSafeArea={false}>
         {editMode ? (
           // Use DraggableFlatList in edit mode
-          <DraggableFlatList
+          <DraggableFlatList<ReadingListItem>
             data={sortedReadingList}
             keyExtractor={item => `${item.article_id}`}
             renderItem={renderItem as any}
@@ -290,7 +290,7 @@ export default function ListenScreen(): JSX.Element {
           />
         ) : (
           // Use FlashList in normal mode
-          <FlashList
+          <FlashList<ReadingListItem>
             data={sortedReadingList}
             drawDistance={ITEM_HEIGHT * 5}
             estimatedItemSize={ITEM_HEIGHT}

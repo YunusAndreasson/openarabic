@@ -1,6 +1,6 @@
 import React, { useMemo, memo, useEffect } from 'react';
 import type { TextStyle } from 'react-native';
-import { View, Platform, StyleSheet } from 'react-native';
+import { View, Platform, StyleSheet, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -76,7 +76,7 @@ const WordDisplay = memo(
 
         {/* Fixed translation container - always reserves space */}
         <View style={styles.translationContainer}>
-          <Animated.View style={translationAnimatedStyle as any}>
+          <Animated.View style={translationAnimatedStyle as ViewStyle}>
             <ThemedText skipDefaultColor colorName="englishText" style={styles.translationText}>
               {translation || ' '}
             </ThemedText>

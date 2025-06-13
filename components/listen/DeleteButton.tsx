@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, TouchableOpacity, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
@@ -41,7 +41,7 @@ const DeleteButton: React.FC<DeleteButtonProps> = ({ onPress, disabled = false }
       <Animated.View
         style={[
           styles.button,
-          animatedStyle as any,
+          animatedStyle as ViewStyle,
           {
             backgroundColor: colors.error, // Using error color from Colors.ts
             opacity: disabled ? 0.5 : 1,
