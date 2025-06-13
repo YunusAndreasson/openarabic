@@ -186,8 +186,10 @@ export default function ListenScreen(): JSX.Element {
     !hasArticles && canShowEmpty && !isReadingListLoading && !isReadingListFetching;
 
   // Render item for both FlashList and DraggableFlatList
-  const renderItem = useCallback(
-    (params: { item: ReadingListItem; index?: number } | RenderItemParams<ReadingListItem>) => {
+  const renderItem: (
+    params: { item: ReadingListItem; index?: number } | RenderItemParams<ReadingListItem>
+  ) => JSX.Element = useCallback(
+    params => {
       const { item } = params;
       const isActive =
         audioState === AUDIO_STATES.PLAYING &&
@@ -245,10 +247,10 @@ export default function ListenScreen(): JSX.Element {
       <ThemedView includeBottomInset={false} style={styles.flexOne} useSafeArea={false}>
         {editMode ? (
           // Use DraggableFlatList in edit mode
-          <DraggableFlatList
+          <DraggableFlatList<ReadingListItem>
             data={sortedReadingList}
             keyExtractor={item => `${item.article_id}`}
-            renderItem={renderItem as any}
+            renderItem={renderItem}
             onDragEnd={handleDragEnd}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{
@@ -290,7 +292,7 @@ export default function ListenScreen(): JSX.Element {
           />
         ) : (
           // Use FlashList in normal mode
-          <FlashList
+          <FlashList<ReadingListItem>
             data={sortedReadingList}
             drawDistance={ITEM_HEIGHT * 5}
             estimatedItemSize={ITEM_HEIGHT}
@@ -338,7 +340,7 @@ export default function ListenScreen(): JSX.Element {
             overrideItemLayout={layout => {
               layout.size = ITEM_HEIGHT;
             }}
-            renderItem={renderItem as any}
+            renderItem={renderItem}
           />
         )}
       </ThemedView>
