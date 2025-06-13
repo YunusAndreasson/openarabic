@@ -26,8 +26,8 @@ const AuthScreen = memo(function AuthScreen(): JSX.Element {
       />
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        behavior={Platform.select({ ios: 'padding', default: 'height' })}
+        keyboardVerticalOffset={Platform.select({ ios: 0, default: 20 })}
         style={styles.keyboardAvoidingView}
       >
         <ScrollView
