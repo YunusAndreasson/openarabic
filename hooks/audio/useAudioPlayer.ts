@@ -4,7 +4,7 @@ import {
   useAudioPlayerStatus,
   setAudioModeAsync,
 } from 'expo-audio';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useReducer } from 'react';
 
 import { AUDIO_STATES, type AudioState } from '@/constants/audio';
 import { audioCache } from '@/services/audioCache';
@@ -34,16 +34,65 @@ export interface EnhancedPlayerAPI {
   duration: number;
 }
 
+interface PlayerState {
+  currentTrack: EnhancedAudioTrack | null;
+  queue: EnhancedAudioTrack[];
+  currentIndex: number;
+  isLoading: boolean;
+  shouldAutoPlay: boolean;
+}
+
+type PlayerAction =
+  | { type: 'SET_QUEUE'; queue: EnhancedAudioTrack[]; index: number }
+  | { type: 'SET_CURRENT_TRACK'; track: EnhancedAudioTrack | null }
+  | { type: 'SET_INDEX'; index: number }
+  | { type: 'SET_LOADING'; isLoading: boolean }
+  | { type: 'SET_AUTOPLAY'; value: boolean }
+  | { type: 'RESET' };
+
+const initialState: PlayerState = {
+  currentTrack: null,
+  queue: [],
+  currentIndex: -1,
+  isLoading: false,
+  shouldAutoPlay: false,
+};
+
+function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
+  switch (action.type) {
+    case 'SET_QUEUE':
+      return {
+        ...state,
+        queue: action.queue,
+        currentIndex: action.index,
+        currentTrack: action.queue[action.index] || null,
+      };
+    case 'SET_CURRENT_TRACK':
+      return { ...state, currentTrack: action.track };
+    case 'SET_INDEX':
+      return {
+        ...state,
+        currentIndex: action.index,
+        currentTrack: state.queue[action.index] || null,
+      };
+    case 'SET_LOADING':
+      return { ...state, isLoading: action.isLoading };
+    case 'SET_AUTOPLAY':
+      return { ...state, shouldAutoPlay: action.value };
+    case 'RESET':
+      return initialState;
+    default:
+      return state;
+  }
+}
+
 /**
  * Hook for enhanced audio player using expo-audio
  */
 export function useAudioPlayer(): EnhancedPlayerAPI {
-  // Main state management
-  const [currentTrack, setCurrentTrack] = useState<EnhancedAudioTrack | null>(null);
-  const [queue, setQueue] = useState<EnhancedAudioTrack[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(-1);
-  const [isLoading, setIsLoading] = useState(false);
-  const [shouldAutoPlay, setShouldAutoPlay] = useState(false);
+  // Main state management via reducer
+  const [state, dispatch] = useReducer(playerReducer, initialState);
+  const { currentTrack, queue, currentIndex, isLoading, shouldAutoPlay } = state;
 
   // Create audio player with current track source - following expo-audio docs pattern exactly
   const audioSource = currentTrack ? { uri: currentTrack.audioUrl } : null;
@@ -132,7 +181,7 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
   useEffect(() => {
     if (shouldAutoPlay && audioPlayer && currentTrack && isPlayerLoaded) {
       // Clear the flag immediately to prevent multiple calls
-      setShouldAutoPlay(false);
+      dispatch({ type: 'SET_AUTOPLAY', value: false });
 
       // Use immediate execution in microtask to avoid setTimeout race conditions
       Promise.resolve().then(() => {
@@ -141,11 +190,11 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
           if (typeof audioPlayer.play === 'function') {
             audioPlayer.play();
             // Clear loading state once playback starts
-            setIsLoading(false);
+            dispatch({ type: 'SET_LOADING', isLoading: false });
           }
         } catch {
           // Auto-play failed silently
-          setIsLoading(false);
+          dispatch({ type: 'SET_LOADING', isLoading: false });
         }
       });
     }
@@ -174,10 +223,7 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
       }
 
       // Clear the current track and queue after stopping the player
-      setCurrentTrack(null);
-      setQueue([]);
-      setCurrentIndex(-1);
-      setShouldAutoPlay(false);
+      dispatch({ type: 'RESET' });
     } catch (error) {
       // Only show toast for unexpected errors, not native object disposal errors
       if (
@@ -193,10 +239,8 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
   const loadQueue = useCallback(async (tracks: EnhancedAudioTrack[], startIndex = 0) => {
     try {
       if (tracks.length === 0) {
-        setQueue([]);
-        setCurrentIndex(-1);
-        setCurrentTrack(null);
-        setIsLoading(false);
+        dispatch({ type: 'RESET' });
+        dispatch({ type: 'SET_LOADING', isLoading: false });
         return;
       }
 
@@ -220,14 +264,16 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
         })
       );
 
-      setQueue(processedTracks);
-      setCurrentIndex(validStartIndex);
-      setCurrentTrack(processedTracks[validStartIndex] || null);
+      dispatch({
+        type: 'SET_QUEUE',
+        queue: processedTracks,
+        index: validStartIndex,
+      });
 
       // The useAudioPlayer hook will automatically recreate the player with the new source
     } catch (error) {
       handleError(error as Error, { toastMessage: 'Failed to load queue' });
-      setIsLoading(false);
+      dispatch({ type: 'SET_LOADING', isLoading: false });
     }
   }, []);
 
@@ -236,18 +282,18 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
     async (tracks: EnhancedAudioTrack[], startIndex = 0): Promise<boolean> => {
       try {
         // Immediate feedback - set loading state before any async work
-        setIsLoading(true);
+        dispatch({ type: 'SET_LOADING', isLoading: true });
 
         // Set auto-play flag to maintain user interaction context
-        setShouldAutoPlay(true);
+        dispatch({ type: 'SET_AUTOPLAY', value: true });
 
         // Load the queue - the auto-play effect will handle playback when ready
         await loadQueue(tracks, startIndex);
 
         return true; // Success
       } catch (error) {
-        setShouldAutoPlay(false); // Reset flag on error
-        setIsLoading(false); // Reset loading on error
+        dispatch({ type: 'SET_AUTOPLAY', value: false }); // Reset flag on error
+        dispatch({ type: 'SET_LOADING', isLoading: false }); // Reset loading on error
         handleError(error as Error, { toastMessage: 'Failed to start enhanced playback' });
         return false; // Failure
       }
@@ -260,21 +306,20 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
     if (currentIndex >= queue.length - 1) return;
 
     try {
-      setIsLoading(true);
+      dispatch({ type: 'SET_LOADING', isLoading: true });
       const nextIndex = currentIndex + 1;
       const nextTrack = queue[nextIndex];
 
       if (nextTrack) {
-        setCurrentIndex(nextIndex);
-        setCurrentTrack(nextTrack);
-        setShouldAutoPlay(true); // Ensure next track auto-plays
+        dispatch({ type: 'SET_INDEX', index: nextIndex });
+        dispatch({ type: 'SET_AUTOPLAY', value: true }); // Ensure next track auto-plays
 
         // The useAudioPlayer hook will automatically recreate the player with the new source
       }
     } catch (error) {
       handleError(error as Error, { toastMessage: 'Failed to skip to next track' });
     } finally {
-      setIsLoading(false);
+      dispatch({ type: 'SET_LOADING', isLoading: false });
     }
   }, [currentIndex, queue]);
 
@@ -317,8 +362,8 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
           next();
         } else {
           // Clear current track to signal completion
-          setCurrentTrack(null);
-          setCurrentIndex(-1);
+          dispatch({ type: 'SET_CURRENT_TRACK', track: null });
+          dispatch({ type: 'SET_INDEX', index: -1 });
         }
       }, 200); // Small delay to prevent rapid transitions
     }
