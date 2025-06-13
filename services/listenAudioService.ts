@@ -52,13 +52,16 @@ export const listenAudioService = {
    */
   async getRandomVocabularyTracks(
     words: StudyWord[],
-    limit: number = 20
+    limit: number = 20,
+    signal?: AbortSignal
   ): Promise<EnhancedAudioTrack[]> {
     try {
-      if (!words?.length) return [];
+      if (!words?.length || signal?.aborted) return [];
 
       // Filter words with both audio types
       const wordsWithAudio = words.filter(word => word.root?.audio_url && word.root?.audio_url_en);
+
+      if (signal?.aborted) return [];
 
       // Shuffle the array to randomize the order
       wordsWithAudio.sort(() => 0.5 - Math.random());
@@ -66,14 +69,18 @@ export const listenAudioService = {
       // Take limited number of words
       const selectedWords = wordsWithAudio.slice(0, limit);
 
+      if (signal?.aborted) return [];
+
       // Convert to tracks
-      return this.generateVocabularyTracks(selectedWords);
+      return signal?.aborted ? [] : this.generateVocabularyTracks(selectedWords);
     } catch (error) {
-      await handleError(error instanceof Error ? error : new Error(String(error)), {
-        toastMessage: 'Failed to generate vocabulary audio tracks',
-        analyticsEventName: 'Listen_Audio_Generation_Error',
-        sentrySeverity: 'error',
-      });
+      if (!signal?.aborted) {
+        await handleError(error instanceof Error ? error : new Error(String(error)), {
+          toastMessage: 'Failed to generate vocabulary audio tracks',
+          analyticsEventName: 'Listen_Audio_Generation_Error',
+          sentrySeverity: 'error',
+        });
+      }
       return [];
     }
   },
