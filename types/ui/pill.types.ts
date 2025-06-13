@@ -1,22 +1,18 @@
-/**
- * Pill variant types
- */
-
-export type PillVariant = 'category' | 'filter' | 'horizontal-category';
+import type { ReactNode } from 'react';
 
 /**
- * Base props for pill components
+ * Props for the simplified Pill component
  */
-export interface BasePillProps {
+export interface PillProps {
   /**
    * Unique identifier for the item
    */
   id: number | string;
 
   /**
-   * Label text to display in the pill
+   * Label text or ReactNode to display in the pill
    */
-  label: string;
+  label: ReactNode;
 
   /**
    * Whether the pill is currently selected
@@ -29,50 +25,17 @@ export interface BasePillProps {
   onSelect?: (id: number | string) => void;
 
   /**
-   * Whether the pill should be positioned absolutely
-   */
-  absolute?: boolean;
-}
-
-/**
- * Props for filter variant of Pill
- */
-export interface FilterPillProps extends BasePillProps {
-  /**
    * Variant of the pill
    */
-  variant: 'filter';
-}
+  variant?: 'filter' | 'category';
 
-/**
- * Props for category variant of Pill
- */
-export interface CategoryPillProps extends BasePillProps {
   /**
-   * Variant of the pill
+   * Custom background color for the pill
    */
-  variant: 'category';
-}
+  pillBg?: string;
 
-/**
- * Props for horizontal-category variant of Pill
- */
-export interface HorizontalCategoryPillProps extends BasePillProps {
   /**
-   * Variant of the pill
+   * Custom style overrides for the pill container
    */
-  variant: 'horizontal-category';
+  pillStyle?: object;
 }
-
-/**
- * Props for the Pill component
- */
-export type PillProps =
-  CategoryPillProps | FilterPillProps | HorizontalCategoryPillProps | BasePillProps & {
-      /**
-       * Variant of the pill
-       */
-      variant?: PillVariant;
-    };
-
-

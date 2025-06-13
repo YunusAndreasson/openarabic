@@ -1,25 +1,25 @@
 import type { ReactNode } from 'react';
 import React, { useCallback, useMemo, memo } from 'react';
-import { Pressable, StyleSheet, View, Platform, type TextStyle } from 'react-native';
-import Animated from 'react-native-reanimated';
+import { Pressable, View, type TextStyle } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
-import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import type { PillProps as OriginalPillProps } from '@/types/ui/pill.types';
 
 import { ThemedText } from './ThemedText';
 
-// Opacity constants for category pills
-const CATEGORY_OPACITY = {
-  SELECTED: 'CC', // 80% opacity
-  BLUR_DARK: '99', // 60% opacity for dark mode blur effect
-  BLUR_LIGHT: 'B3', // 70% opacity for light mode blur effect
-} as const;
+interface PillProps {
+  id: number | string;
+  label: ReactNode;
+  isSelected?: boolean;
+  onSelect?: (id: number | string) => void;
+  variant?: 'filter' | 'category';
+  pillBg?: string;
+  pillStyle?: object;
+}
 
 /**
- * A unified pill component that can be used for filters, categories, and other selectable items
+ * A simple pill component for filters and categories
  */
 const Pill = memo(
   ({
@@ -27,29 +27,12 @@ const Pill = memo(
     label,
     isSelected = false,
     onSelect,
-    absolute = false,
     variant = 'filter',
     pillBg,
     pillStyle,
-  }: Omit<OriginalPillProps, 'label'> & {
-    label: ReactNode;
-    pillBg?: string;
-    pillStyle?: object;
-  }) => {
+  }: PillProps) => {
     const colors = useColors();
     const isDarkMode = useIsDarkMode();
-
-    // Use scale animation hook for press feedback
-    const {
-      animatedStyle: scaleStyle,
-      startAnimation: startScaleDown,
-      reverseAnimation: resetScale,
-    } = useTransformAnimation({
-      type: 'scale',
-      initialValue: 0.98,
-      targetValue: 1,
-      duration: LAYOUT.ANIMATION.DURATION.FAST / 2,
-    });
 
     const handlePress = useCallback(() => {
       if (onSelect) {
@@ -58,21 +41,44 @@ const Pill = memo(
     }, [id, onSelect]);
 
     const isCategory = variant === 'category';
-    const isHorizontalCategory = variant === 'horizontal-category';
-    const textType = isCategory || isHorizontalCategory ? 'overline' : 'label';
-
+    const textType = isCategory ? 'overline' : 'label';
     const textStyle: TextStyle = isDarkMode ? { color: colors.text } : {};
 
     const containerStyle = useMemo(() => {
-      return getContainerStyle(
-        isCategory,
-        isHorizontalCategory,
-        isDarkMode,
-        isSelected,
-        colors,
-        pillBg
-      );
-    }, [colors, isDarkMode, isSelected, isCategory, isHorizontalCategory, pillBg]);
+      if (isCategory) {
+        return {
+          backgroundColor: isSelected
+            ? `${colors.tint}CC` // 80% opacity
+            : isDarkMode
+              ? `${colors.elevation2}99` // 60% opacity
+              : `${colors.elevation1}B3`, // 70% opacity
+          borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+          paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+          paddingVertical: LAYOUT.SPACING.TINY,
+          ...LAYOUT.SHADOW.SMALL,
+          shadowColor: isDarkMode ? colors.black : colors.shadow,
+        };
+      }
+
+      // Filter variant
+      return {
+        backgroundColor:
+          pillBg !== undefined
+            ? pillBg
+            : isSelected
+              ? colors.tint
+              : isDarkMode
+                ? colors.elevation2
+                : colors.elevation1,
+        borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+        paddingHorizontal: LAYOUT.SPACING.LARGE,
+        paddingVertical: LAYOUT.SPACING.SMALL,
+        marginBottom: LAYOUT.SPACING.SMALL,
+        marginRight: LAYOUT.SPACING.SMALL,
+        ...LAYOUT.SHADOW.SUBTLE,
+        shadowColor: colors.shadow,
+      };
+    }, [colors, isDarkMode, isSelected, isCategory, pillBg]);
 
     const pressedStyle = useMemo(
       () => ({
@@ -81,44 +87,10 @@ const Pill = memo(
       [isDarkMode, colors]
     );
 
-    const androidRipple = useMemo(
-      () =>
-        !isSelected
-          ? {
-              color: colors.navigationRipple,
-              borderless: false,
-              radius: -5,
-            }
-          : null,
-      [isSelected, colors]
-    );
-
-    const handlePressIn = useCallback(() => {
-      startScaleDown();
-    }, [startScaleDown]);
-
-    const handlePressOut = useCallback(() => {
-      resetScale();
-    }, [resetScale]);
-
-    const shadowStyle = useMemo(
-      () => ({
-        ...LAYOUT.SHADOW.SUBTLE,
-        shadowColor: isDarkMode ? colors.black : colors.shadow,
-      }),
-      [isDarkMode, colors]
-    );
-
+    // Non-interactive category pill
     if (isCategory && !onSelect) {
       return (
-        <View
-          style={[
-            styles.container,
-            absolute && styles.absoluteContainer,
-            containerStyle,
-            isDarkMode && shadowStyle,
-          ]}
-        >
+        <View style={containerStyle}>
           <ThemedText
             colorName={isSelected ? 'background' : 'text'}
             ellipsizeMode="tail"
@@ -132,127 +104,27 @@ const Pill = memo(
       );
     }
 
+    // Interactive pill
     return (
-      <Animated.View style={scaleStyle}>
-        <Pressable
-          android_ripple={androidRipple}
-          disabled={!onSelect}
-          style={({ pressed: isPressedState }) => [
-            styles.pill,
-            containerStyle,
-            pillStyle,
-            isPressedState && !isSelected && pressedStyle,
-            absolute && styles.absoluteContainer,
-          ]}
-          onPress={handlePress}
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
+      <Pressable
+        disabled={!onSelect}
+        style={({ pressed }) => [containerStyle, pillStyle, pressed && !isSelected && pressedStyle]}
+        onPress={handlePress}
+      >
+        <ThemedText
+          colorName={isSelected ? 'background' : 'text'}
+          ellipsizeMode="tail"
+          numberOfLines={1}
+          style={textStyle}
+          type={textType}
         >
-          <ThemedText
-            colorName={isSelected ? 'background' : 'text'}
-            ellipsizeMode="tail"
-            numberOfLines={1}
-            style={textStyle}
-            type={textType}
-          >
-            {label}
-          </ThemedText>
-        </Pressable>
-      </Animated.View>
+          {label}
+        </ThemedText>
+      </Pressable>
     );
   }
 );
 
-function getContainerStyle(
-  isCategory: boolean,
-  isHorizontalCategory: boolean,
-  isDarkMode: boolean,
-  isSelected: boolean,
-  colors: ReturnType<typeof useColors>,
-  pillBg?: string
-) {
-  if (isCategory || isHorizontalCategory) {
-    return getCategoryStyle(isDarkMode, isSelected, colors);
-  }
-  return getFilterStyle(isDarkMode, isSelected, colors, pillBg);
-}
-
-const getCategoryStyle = (
-  isDarkMode: boolean,
-  isSelected: boolean,
-  colors: ReturnType<typeof useColors>
-) => ({
-  backgroundColor: isSelected
-    ? isDarkMode
-      ? `${colors.tint}${CATEGORY_OPACITY.SELECTED}` // 80% opacity for selected state
-      : `${colors.tint}${CATEGORY_OPACITY.SELECTED}`
-    : isDarkMode
-      ? `${colors.elevation2}${CATEGORY_OPACITY.BLUR_DARK}` // 60% opacity for blur-like effect
-      : `${colors.elevation1}${CATEGORY_OPACITY.BLUR_LIGHT}`, // 70% opacity for blur-like effect
-  borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  paddingVertical: LAYOUT.SPACING.TINY,
-  // Enhanced shadow for depth perception (simulates blur effect)
-  ...(Platform.OS === 'ios'
-    ? {
-        ...LAYOUT.SHADOW.SMALL,
-        shadowColor: isDarkMode ? colors.black : colors.shadow,
-        shadowOpacity: isDarkMode ? 0.4 : 0.25, // Increased opacity for blur-like effect
-      }
-    : {
-        elevation: isSelected ? 4 : 3, // Higher elevation for blur-like effect
-      }),
-});
-
-const getFilterStyle = (
-  isDarkMode: boolean,
-  isSelected: boolean,
-  colors: ReturnType<typeof useColors>,
-  pillBg?: string
-) => ({
-  backgroundColor:
-    pillBg !== undefined
-      ? pillBg
-      : isSelected
-        ? colors.tint
-        : isDarkMode
-          ? colors.elevation2
-          : colors.elevation1,
-  borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  ...(Platform.OS === 'ios'
-    ? {
-        ...LAYOUT.SHADOW.SUBTLE,
-        shadowColor: colors.shadow,
-      }
-    : {
-        elevation: isSelected ? 2 : 1,
-      }),
-});
-
-const styles = StyleSheet.create({
-  absoluteContainer: {
-    left: LAYOUT.SPACING.MEDIUM,
-    position: 'absolute',
-    top: LAYOUT.SPACING.MEDIUM,
-    zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
-  },
-  container: {
-    minWidth: LAYOUT.BUTTON.HEIGHT.LARGE + LAYOUT.SPACING.TINY / 2, // ~50px
-    zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
-  },
-  pill: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    marginBottom: LAYOUT.SPACING.SMALL,
-    marginRight: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-  },
-});
-
 Pill.displayName = 'Pill';
-
-/**
- * pillStyle: Optional style override for the pill container (e.g., to remove margin for sort controls)
- */
 
 export default Pill;
