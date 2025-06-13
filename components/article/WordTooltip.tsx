@@ -230,10 +230,7 @@ const styles = StyleSheet.create({
     width: 0,
   },
   tooltip: {
-    elevation: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
-    shadowOpacity: 0.15, // LAYOUT.ELEVATION.SUBTLE equivalent
-    shadowRadius: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
-    shadowOffset: { width: 0, height: 1 }, // LAYOUT.ELEVATION.SUBTLE equivalent
+    ...LAYOUT.ELEVATION.SUBTLE,
     alignSelf: 'flex-start',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
