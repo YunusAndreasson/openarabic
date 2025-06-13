@@ -58,8 +58,20 @@ export interface UseFilterModalResult {
 
 export function useFilterModal(availableAuthors: Author[]): UseFilterModalResult {
   const dispatch = useAppDispatch();
-  const { sort, filters } = useAppSelector(state => state.filters);
+  const filtersState = useAppSelector(state => state.filters);
   const activeFiltersCount = useAppSelector(selectActiveFiltersCount);
+
+  // Provide default values if the state hasn't been rehydrated yet
+  const sort = filtersState?.sort || {
+    field: 'date' as const,
+    direction: 'desc' as const,
+  };
+
+  const filters = filtersState?.filters || {
+    authorIds: [],
+    difficultyRange: [1, 5] as [number, number],
+    dateRange: 'all' as const,
+  };
 
   const [expandedSections, setExpandedSections] = useState<ExpandedSections>({
     authors: false,

@@ -70,8 +70,10 @@ const filtersSlice = createSlice({
 
 // Computed selector for active filters count
 export const selectActiveFiltersCount = createSelector(
-  (state: { filters: FilterState }) => state.filters.filters,
+  (state: { filters: FilterState }) => state.filters?.filters,
   filters => {
+    if (!filters) return 0;
+
     let count = 0;
     if (filters.authorIds.length > 0) count++;
     if (filters.difficultyRange[0] > 1 || filters.difficultyRange[1] < 5) count++;

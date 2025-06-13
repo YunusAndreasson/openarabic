@@ -1,23 +1,31 @@
 import { useMemo } from 'react';
 
+import type { FilterState } from '@/store/filtersSlice';
 import { useAppSelector } from '@/store/hooks';
 import type { Article } from '@/types/articles.types';
-import type { FilterState } from '@/store/filtersSlice';
 
 /**
  * Custom hook to filter and sort articles based on Redux filter state
  */
 export const useFilteredArticles = (articles: Article[]) => {
-  const { sort, filters } = useAppSelector(state => state.filters);
+  const filtersState = useAppSelector(state => state.filters);
 
-  const comparators: Record<
-    FilterState['sort']['field'],
-    (a: Article, b: Article) => number
-  > = {
+  // Provide default values if the state hasn't been rehydrated yet
+  const sort = filtersState?.sort || {
+    field: 'date' as const,
+    direction: 'desc' as const,
+  };
+
+  const filters = filtersState?.filters || {
+    authorIds: [],
+    difficultyRange: [1, 5] as [number, number],
+    dateRange: 'all' as const,
+  };
+
+  const comparators: Record<FilterState['sort']['field'], (a: Article, b: Article) => number> = {
     title: (a, b) => a.title.localeCompare(b.title),
     author: (a, b) => (a.author?.name || '').localeCompare(b.author?.name || ''),
-    date: (a, b) =>
-      new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    date: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
     difficulty: (a, b) => a.difficulty_level - b.difficulty_level,
   };
 
@@ -34,7 +42,8 @@ export const useFilteredArticles = (articles: Article[]) => {
   }, [filters.dateRange]);
 
   const filteredAndSortedArticles = useMemo(() => {
-    if (!articles.length) return [];
+    // Return empty array if articles are not provided or filters state is not ready
+    if (!articles?.length || !filtersState) return [];
 
     // Apply filters
     const filteredArticles = articles.filter(article => {
@@ -69,7 +78,7 @@ export const useFilteredArticles = (articles: Article[]) => {
       const result = comparator ? comparator(a, b) : 0;
       return sort.direction === 'desc' ? -result : result;
     });
-  }, [articles, sort, filters, filterDate]);
+  }, [articles, sort, filters, filterDate, filtersState]);
 
   return filteredAndSortedArticles;
 };
