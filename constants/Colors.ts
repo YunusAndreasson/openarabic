@@ -37,10 +37,10 @@ const basePalette = {
     warningDark: '#D4A876', // Enriched gold for dark
   },
 
-  // Pure values
+  // Green-tinted pure values (never pure white/black)
   pure: {
-    white: '#FFFFFF',
-    black: '#000000',
+    white: '#FDFEFE', // Subtle green-tinted white
+    black: '#0A0F0B', // Subtle green-tinted black
     transparent: 'transparent',
   },
 };
@@ -91,15 +91,15 @@ const opacity = {
 const elevation = {
   light: {
     level0: basePalette.sage.lightest, // Background
-    level1: basePalette.pure.white, // Cards
-    level2: '#F9FCF8', // Raised elements
+    level1: basePalette.pure.white, // Cards (green-tinted white)
+    level2: basePalette.sage.lightest, // Raised elements - use palette reference
     level3: basePalette.sage.lighter, // Floating elements
   },
   dark: {
     level0: basePalette.sage.darkest, // Background
     level1: basePalette.sage.dark, // Cards
     level2: basePalette.sage.medium, // Raised elements
-    level3: '#3A453D', // Floating elements
+    level3: basePalette.sage.medium, // Floating elements - use consistent reference
   },
 };
 
@@ -111,9 +111,9 @@ export const Colors = {
     text: basePalette.forest.darkest,
     secondaryText: basePalette.forest.medium,
     textTertiary: basePalette.forest.light,
-    border: '#D4E1D8', // Stronger border than sage.light for better definition
+    border: basePalette.sage.light, // Use palette reference instead of hardcoded
     card: basePalette.pure.white,
-    cardBorder: '#E0EBE4', // More visible than sage.lighter, less than full border
+    cardBorder: basePalette.sage.light, // Use palette reference for consistency
 
     // Semantic colors
     error: basePalette.semantic.error,
@@ -124,18 +124,18 @@ export const Colors = {
     // Text hierarchy - enhanced for better readability
     englishText: basePalette.forest.medium,
     arabicText: basePalette.forest.darkest,
-    authorText: '#5A6B61', // Slightly darker than forest.light for better contrast
+    authorText: basePalette.forest.light,
     headingText: basePalette.forest.darkest,
-    subtitleText: '#2F3F37', // Slightly lighter than darkest for subtle hierarchy
+    subtitleText: textHierarchy.light.subtitle,
     metadataText: textHierarchy.light.metadata,
     captionText: textHierarchy.light.caption,
 
     // Interactive elements
     tint: basePalette.tint.primary,
-    tabIconDefault: '#8A9D8F', // Slightly darker than forest.lighter for visibility
+    tabIconDefault: basePalette.forest.lighter,
     tabIconSelected: basePalette.tint.primary,
     icon: basePalette.forest.light,
-    disabled: '#C8D4CC', // Slightly darker for better contrast
+    disabled: basePalette.forest.lighter,
 
     // Overlays - adjusted for new background
     transparent: basePalette.pure.transparent,
@@ -147,16 +147,16 @@ export const Colors = {
 
     // Elevation system - enhanced contrast
     shadow: basePalette.forest.dark,
-    elevation1: basePalette.pure.white, // Cards remain pure white for maximum contrast
-    elevation2: '#FDFEFD', // Very subtle tint for raised elements
-    elevation3: '#F8FBF9', // Slightly more tinted for floating elements
+    elevation1: elevation.light.level1,
+    elevation2: elevation.light.level2,
+    elevation3: elevation.light.level3,
 
     // Reading experience - improved visibility
-    audioHighlight: '#F8FBF9', // Slightly more visible than before
-    audioHighlightBorder: '#D4E1D8', // Matching stronger border
+    audioHighlight: elevation.light.level2,
+    audioHighlightBorder: basePalette.sage.light,
     wordTooltipBg: basePalette.pure.white,
     wordTooltipText: basePalette.forest.darkest,
-    wordTooltipBorder: '#D4E1D8', // Matching stronger border
+    wordTooltipBorder: basePalette.sage.light,
     wordTooltipShadow: alpha(basePalette.forest.dark, opacity.active),
     wordSelectionUnderline: alpha(basePalette.tint.primary, opacity.selection),
     wordDueUnderline: alpha(basePalette.semantic.warning, opacity.due),
@@ -173,22 +173,22 @@ export const Colors = {
     completionSuccess: basePalette.semantic.success,
 
     // Utility colors - enhanced contrast
-    imagePlaceholder: '#E8F1EC', // Using sage.light for better visibility
+    imagePlaceholder: basePalette.sage.light,
     textOverlay: alpha(basePalette.tint.primary, opacity.subtle),
     textShadowDark: alpha(basePalette.forest.dark, opacity.shadow),
     textShadowLight: alpha(basePalette.pure.white, opacity.shadow),
-    modalIndicator: '#C4C4C4',
+    modalIndicator: basePalette.forest.lighter,
     white: basePalette.pure.white,
     black: basePalette.pure.black,
   } as ThemeColors,
 
   dark: {
     // Core brand colors
-    primary: '#F4F6F4',
+    primary: basePalette.pure.white,
     background: basePalette.sage.darkest,
-    text: '#F4F6F4',
-    secondaryText: '#D8DDD9',
-    textTertiary: '#B6C2B8',
+    text: basePalette.pure.white,
+    secondaryText: textHierarchy.dark.subtitle,
+    textTertiary: textHierarchy.dark.metadata,
     border: basePalette.sage.medium,
     card: basePalette.sage.dark,
     cardBorder: basePalette.sage.medium,
@@ -197,23 +197,23 @@ export const Colors = {
     error: basePalette.semantic.errorDark,
     success: basePalette.semantic.successDark,
     warning: basePalette.semantic.warningDark,
-    info: '#92A99A',
+    info: basePalette.forest.lighter,
 
     // Text hierarchy - dark mode optimized
-    englishText: '#D8DDD9',
-    arabicText: '#F4F6F4',
-    authorText: '#B6C2B8',
-    headingText: '#F4F6F4',
+    englishText: textHierarchy.dark.subtitle,
+    arabicText: basePalette.pure.white,
+    authorText: textHierarchy.dark.metadata,
+    headingText: basePalette.pure.white,
     subtitleText: textHierarchy.dark.subtitle,
     metadataText: textHierarchy.dark.metadata,
     captionText: textHierarchy.dark.caption,
 
     // Interactive elements
     tint: basePalette.tint.primaryDark,
-    tabIconDefault: '#6E7F71',
+    tabIconDefault: basePalette.forest.light,
     tabIconSelected: basePalette.tint.primaryDark,
-    icon: '#B6C2B8',
-    disabled: '#3C453E',
+    icon: textHierarchy.dark.metadata,
+    disabled: basePalette.sage.medium,
 
     // Overlays - dark mode with standardized opacity
     transparent: basePalette.pure.transparent,
@@ -233,7 +233,7 @@ export const Colors = {
     audioHighlight: basePalette.sage.medium,
     audioHighlightBorder: elevation.dark.level3,
     wordTooltipBg: basePalette.sage.medium,
-    wordTooltipText: '#F4F6F4',
+    wordTooltipText: basePalette.pure.white,
     wordTooltipBorder: elevation.dark.level3,
     wordTooltipShadow: alpha(basePalette.pure.black, opacity.due),
     wordSelectionUnderline: alpha(basePalette.tint.primaryDark, opacity.tooltip),
@@ -247,15 +247,15 @@ export const Colors = {
     // UI semantics
     progressIndicator: basePalette.tint.primaryDark,
     progressBackground: alpha(basePalette.tint.primaryDark, opacity.disabled),
-    interactiveSecondary: '#B6C2B8',
+    interactiveSecondary: textHierarchy.dark.metadata,
     completionSuccess: basePalette.semantic.successDark,
 
     // Utility colors
     imagePlaceholder: basePalette.sage.medium,
     textOverlay: alpha(basePalette.tint.primaryDark, opacity.light),
     textShadowDark: alpha(basePalette.pure.black, opacity.shadow),
-    textShadowLight: alpha('#F4F6F4', opacity.shadow),
-    modalIndicator: '#C4C4C4',
+    textShadowLight: alpha(basePalette.pure.white, opacity.shadow),
+    modalIndicator: basePalette.forest.light,
     white: basePalette.pure.white,
     black: basePalette.pure.black,
   } as ThemeColors,
