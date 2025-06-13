@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     right: LAYOUT.SPACING.TINY - 2,
     minWidth: 16,
     height: 16,
-    borderRadius: 8,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: LAYOUT.SPACING.TINY,

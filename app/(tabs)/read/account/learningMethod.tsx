@@ -22,7 +22,7 @@ const LearningMethodScreen: React.FC = () => {
           headerTitle: '',
           headerTitleStyle: {
             color: colors.text,
-            fontSize: 17,
+            fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
             fontWeight: '600',
           },
           headerStyle: {

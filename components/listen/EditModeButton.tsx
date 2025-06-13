@@ -4,7 +4,11 @@ import { StyleSheet, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { MIN_TOUCH_TARGET } from '@/constants/layout';
+import {
+  LAYOUT,
+  MIN_TOUCH_TARGET,
+  TYPOGRAPHY_HIERARCHY,
+} from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -44,7 +48,7 @@ const EditModeButton: React.FC<EditModeButtonProps> = ({ onEditModeChange }) => 
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      activeOpacity={0.6}
+      activeOpacity={LAYOUT.OPACITY.PRESSED}
     >
       <ThemedText
         type="body"
@@ -65,15 +69,15 @@ const EditModeButton: React.FC<EditModeButtonProps> = ({ onEditModeChange }) => 
 const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     justifyContent: 'center',
     minHeight: MIN_TOUCH_TARGET.MEDIUM,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
   },
   buttonText: {
-    fontSize: 17,
-    letterSpacing: -0.24,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT,
   },
 });
 
