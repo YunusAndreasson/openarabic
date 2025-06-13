@@ -18,7 +18,7 @@ interface NavigateToOptions {
   replace?: boolean;
 }
 
-type NavigationRoute = Route<RoutePath>;
+type NavigationRoute = Route<RoutePath> | RoutePath;
 
 interface NavigationWithDebounceReturn {
   isNavigating: boolean;

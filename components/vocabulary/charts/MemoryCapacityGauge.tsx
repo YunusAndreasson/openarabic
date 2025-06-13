@@ -64,7 +64,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
 
   // Enhanced navigation with haptic feedback
   const handleInsightsPress = () => {
-    navigateTo('/insights' as any);
+    navigateTo('/insights');
   };
 
   return (
