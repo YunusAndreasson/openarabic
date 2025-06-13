@@ -1,9 +1,10 @@
 import { Stack } from 'expo-router';
+import type { JSX } from 'react';
 
 import { createNavigationOptions } from '@/constants/modal';
 import { useColors } from '@/hooks/theme/useColors';
 
-export default function AccountLayout() {
+export default function AccountLayout(): JSX.Element {
   const colors = useColors();
 
   return (
