@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { Alert, Linking } from 'react-native';
 
 import { useAudioCache } from '@/hooks/audio/useAudioCache';
@@ -26,19 +26,26 @@ export const useAccountScreen = () => {
   const [cacheSize, setCacheSize] = useState<number>(0);
   const [isClearingCache, setIsClearingCache] = useState(false);
   const { user } = useAuth();
+  const isMounted = useRef(true);
 
   // Load cache size on component mount
   useEffect(() => {
     const loadCacheSize = async () => {
       try {
         const size = await getCacheSize();
-        setCacheSize(size);
+        if (isMounted.current) {
+          setCacheSize(size);
+        }
       } catch (error) {
         console.error('Failed to load cache size:', error);
       }
     };
 
     loadCacheSize();
+
+    return () => {
+      isMounted.current = false;
+    };
   }, [getCacheSize]);
 
   const handleClearCache = useCallback(() => {
@@ -136,14 +143,21 @@ export const useAccountScreen = () => {
       try {
         const { hasPermissions } = await import('@/services/notificationService');
         const permissionsGranted = await hasPermissions();
-        setNotificationPermissions(permissionsGranted);
+        if (isMounted.current) {
+          setNotificationPermissions(permissionsGranted);
+        }
       } catch (error) {
         handleError(error as Error, { showToast: false });
-        setNotificationPermissions(false);
+        if (isMounted.current) {
+          setNotificationPermissions(false);
+        }
       }
     };
 
     checkNotificationPermissions();
+    return () => {
+      isMounted.current = false;
+    };
   }, []);
 
   const handleTimePickerOpen = useCallback(() => {
