@@ -42,6 +42,14 @@ export interface DifficultyStats {
   hardPercentage: number;
 }
 
+export interface VocabularyChartData {
+  userStats: VocabularyStatsFromDB | null;
+  masteryProgress: MasteryProgressData[];
+  efficiencyProgress: EfficiencyProgressData[];
+  retrievabilityForecast: RetrievabilityData[];
+  difficultyDistribution: DifficultyStats | null;
+}
+
 export const vocabularyStatsService = {
   /**
    * Get user's vocabulary statistics using the optimized database view
@@ -196,13 +204,7 @@ export const vocabularyStatsService = {
   /**
    * Get all chart data in a single optimized call
    */
-  async getAllChartData(userId: string): Promise<{
-    userStats: VocabularyStatsFromDB | null;
-    masteryProgress: MasteryProgressData[];
-    efficiencyProgress: EfficiencyProgressData[];
-    retrievabilityForecast: RetrievabilityData[];
-    difficultyDistribution: DifficultyStats | null;
-  }> {
+  async getAllChartData(userId: string): Promise<VocabularyChartData> {
     try {
       // Execute all queries in parallel for maximum performance
       const [
