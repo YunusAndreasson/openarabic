@@ -13,11 +13,15 @@ import Animated, {
   FadeOut,
   SlideOutDown,
   runOnJS,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  cancelAnimation,
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { withOpacity } from '@/utils/colorUtils';
@@ -34,47 +38,41 @@ const SessionTypeModal = memo(
     const colors = useColors();
     const isDarkMode = useIsDarkMode();
 
-    // Gesture values
-    const {
-      value: translateY,
-      animatedStyle: translateStyle,
-      startAnimation: startTranslate,
-      reverseAnimation: resetTranslate,
-    } = useTransformAnimation({
-      type: 'translateY',
-      initialValue: 0,
-      targetValue: 300,
-      duration: 200,
-    });
+    // Simple animation values
+    const translateY = useSharedValue(0);
+    const opacity = useSharedValue(1);
 
-    const { animatedStyle: opacityStyle, setOpacity } = useOpacityAnimation({
-      initialOpacity: 1,
-      duration: 200,
-    });
-
-    // Reset animated values when modal becomes visible
+    // Reset values when modal becomes visible
     useEffect(() => {
       if (visible) {
+        // Force immediate reset of animation values
+        cancelAnimation(translateY);
+        cancelAnimation(opacity);
         translateY.value = 0;
-        setOpacity(1);
+        opacity.value = 1;
       } else {
+        // Ensure values are reset when modal is hidden
         translateY.value = 0;
-        setOpacity(1);
+        opacity.value = 1;
       }
-    }, [visible, translateY, setOpacity]);
+    }, [visible, translateY, opacity]);
 
-    const handleOptionPress = (onAction: () => void) => {
-      onAction();
-    };
+    // Cleanup on unmount
+    useEffect(() => {
+      return () => {
+        cancelAnimation(translateY);
+        cancelAnimation(opacity);
+      };
+    }, [translateY, opacity]);
 
-    // Gesture handler for swipe down to dismiss
+    // Simple gesture handler
     const gestureHandler = Gesture.Pan()
       .onUpdate(event => {
         // Only allow downward swipes
         if (event.translationY > 0) {
           translateY.value = event.translationY;
           // Fade out as user swipes down
-          setOpacity(Math.max(0.3, 1 - event.translationY / 200));
+          opacity.value = Math.max(0.3, 1 - event.translationY / 200);
         }
       })
       .onEnd(event => {
@@ -82,23 +80,30 @@ const SessionTypeModal = memo(
 
         if (shouldDismiss) {
           // Animate out and close
-          startTranslate(() => runOnJS(onClose)());
-          setOpacity(0);
+          translateY.value = withSpring(400, { damping: 15, stiffness: 150 });
+          opacity.value = withTiming(0, { duration: 200 }, finished => {
+            if (finished) {
+              runOnJS(onClose)();
+            }
+          });
         } else {
           // Snap back to original position
-          resetTranslate();
-          setOpacity(1);
+          translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
+          opacity.value = withTiming(1, { duration: 150 });
         }
       });
 
-    // Animated style for modal container
-    const animatedModalStyle = [translateStyle, opacityStyle];
+    // Animated styles
+    const animatedModalStyle = useAnimatedStyle(() => ({
+      transform: [{ translateY: translateY.value }],
+      opacity: opacity.value,
+    }));
 
     if (!visible) return null;
 
     return (
       <Modal
-        key={visible ? 'open' : 'closed'}
+        key={visible ? 'modal-open' : 'modal-closed'}
         transparent
         visible={visible}
         animationType="none"
@@ -124,7 +129,7 @@ const SessionTypeModal = memo(
               style={[
                 styles.modalContainer,
                 { backgroundColor: colors.background },
-                animatedModalStyle as any,
+                animatedModalStyle,
               ]}
               entering={SlideInDown.duration(250).damping(15)}
               exiting={SlideOutDown.duration(200)}
@@ -144,7 +149,7 @@ const SessionTypeModal = memo(
                 {/* Visual Session */}
                 <TouchableOpacity
                   style={[styles.optionCard, { backgroundColor: colors.card }]}
-                  onPress={() => handleOptionPress(onStartVisual)}
+                  onPress={onStartVisual}
                 >
                   <View
                     style={[
@@ -171,7 +176,7 @@ const SessionTypeModal = memo(
                 {/* Audio Session */}
                 <TouchableOpacity
                   style={[styles.optionCard, { backgroundColor: colors.card }]}
-                  onPress={() => handleOptionPress(onStartAudio)}
+                  onPress={onStartAudio}
                 >
                   <View
                     style={[
@@ -237,10 +242,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     marginBottom: LAYOUT.SPACING.TINY,
-  },
-  subtitle: {
-    fontSize: 14,
-    fontWeight: '500',
   },
 
   optionsContainer: {
