@@ -2,12 +2,24 @@ import { useMemo } from 'react';
 
 import { useAppSelector } from '@/store/hooks';
 import type { Article } from '@/types/articles.types';
+import type { FilterState } from '@/store/filtersSlice';
 
 /**
  * Custom hook to filter and sort articles based on Redux filter state
  */
 export const useFilteredArticles = (articles: Article[]) => {
   const { sort, filters } = useAppSelector(state => state.filters);
+
+  const comparators: Record<
+    FilterState['sort']['field'],
+    (a: Article, b: Article) => number
+  > = {
+    title: (a, b) => a.title.localeCompare(b.title),
+    author: (a, b) => (a.author?.name || '').localeCompare(b.author?.name || ''),
+    date: (a, b) =>
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    difficulty: (a, b) => a.difficulty_level - b.difficulty_level,
+  };
 
   // Pre-calculate date filter if needed
   const filterDate = useMemo(() => {
@@ -53,23 +65,8 @@ export const useFilteredArticles = (articles: Article[]) => {
 
     // Apply sorting
     return filteredArticles.sort((a, b) => {
-      let result = 0;
-
-      switch (sort.field) {
-        case 'title':
-          result = a.title.localeCompare(b.title);
-          break;
-        case 'author':
-          result = (a.author?.name || '').localeCompare(b.author?.name || '');
-          break;
-        case 'date':
-          result = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-          break;
-        case 'difficulty':
-          result = a.difficulty_level - b.difficulty_level;
-          break;
-      }
-
+      const comparator = comparators[sort.field];
+      const result = comparator ? comparator(a, b) : 0;
       return sort.direction === 'desc' ? -result : result;
     });
   }, [articles, sort, filters, filterDate]);
