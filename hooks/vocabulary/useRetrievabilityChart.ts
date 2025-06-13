@@ -48,6 +48,14 @@ export function useRetrievabilityChart(
   const chartColors = useChartColors();
   const graphWidth = useGraphWidth();
 
+  const validWords = useMemo<(StudyWord & { lastReviewDate: Date })[]>(
+    () =>
+      studyWords
+        .filter(w => w.fsrs_last_review && (w.fsrs_reps ?? 0) > 0)
+        .map(w => ({ ...w, lastReviewDate: new Date(w.fsrs_last_review as string) })),
+    [studyWords]
+  );
+
   const retrievabilityData = useMemo<RetrievabilityForecast[]>(() => {
     const today = new Date();
     const dates: Date[] = [];
@@ -64,18 +72,20 @@ export function useRetrievabilityChart(
       let criticalWords = 0;
       let urgentWords = 0;
 
-      studyWords.forEach(word => {
-        if (word.fsrs_last_review && (word.fsrs_reps ?? 0) > 0) {
-          const retrievability = calculateRetrievability(word, date);
-          totalRetrievability += retrievability;
-          wordCount++;
+      validWords.forEach(word => {
+        const retrievability = calculateRetrievability(
+          word,
+          date,
+          word.lastReviewDate
+        );
+        totalRetrievability += retrievability;
+        wordCount++;
 
-          if (retrievability < CRITICAL_RETRIEVABILITY_THRESHOLD) {
-            criticalWords++;
-          }
-          if (retrievability < 0.5) {
-            urgentWords++;
-          }
+        if (retrievability < CRITICAL_RETRIEVABILITY_THRESHOLD) {
+          criticalWords++;
+        }
+        if (retrievability < 0.5) {
+          urgentWords++;
         }
       });
 
@@ -83,7 +93,7 @@ export function useRetrievabilityChart(
         wordCount > 0 ? (totalRetrievability / wordCount) * 100 : 0;
       return { date, averageRetrievability, wordCount, criticalWords, urgentWords };
     });
-  }, [studyWords]);
+  }, [validWords]);
 
   const chartData = useMemo<RetrievabilityChartData>(() => {
     if (retrievabilityData.length === 0) {
