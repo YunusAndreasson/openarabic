@@ -127,10 +127,7 @@ export const useChartTooltip = (autoHideDelay: number = 3000) => {
 
 const styles = StyleSheet.create({
   tooltip: {
-    elevation: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
-    shadowOpacity: 0.15, // LAYOUT.ELEVATION.SUBTLE equivalent
-    shadowRadius: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
-    shadowOffset: { width: 0, height: 1 }, // LAYOUT.ELEVATION.SUBTLE equivalent
+    ...LAYOUT.ELEVATION.SUBTLE,
     borderRadius: LAYOUT.INPUT.BORDER_RADIUS,
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     padding: LAYOUT.SPACING.SMALL,
