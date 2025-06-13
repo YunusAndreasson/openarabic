@@ -1,5 +1,6 @@
 import { Stack, router } from 'expo-router';
 import React, { useCallback } from 'react';
+import type { JSX } from 'react';
 
 import FilterButton from '@/components/FilterButton';
 import { createNavigationOptions } from '@/constants/modal';
@@ -32,7 +33,7 @@ const FilterHeaderRight = ({ categoryId }: { categoryId: number }) => {
   return <FilterButton onPress={handlePress} />;
 };
 
-export default function ReadLayout() {
+export default function ReadLayout(): JSX.Element {
   const colors = useColors();
 
   return (

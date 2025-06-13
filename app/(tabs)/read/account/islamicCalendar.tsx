@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack } from 'expo-router';
 import React from 'react';
+import type { JSX } from 'react';
 import { StyleSheet, View, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -12,7 +13,7 @@ import { createNavigationOptions } from '@/constants/modal';
 import { useIslamicCalendarEvents, formatDaysUntil } from '@/hooks';
 import { useColors } from '@/hooks/theme/useColors';
 
-export default function IslamicCalendarScreen() {
+export default function IslamicCalendarScreen(): JSX.Element {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { events, currentHijriDate } = useIslamicCalendarEvents();

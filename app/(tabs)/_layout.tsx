@@ -6,6 +6,7 @@ import { BlurView } from 'expo-blur';
 import type { BlurTint } from 'expo-blur';
 import { Tabs, router } from 'expo-router';
 import React, { useMemo, useCallback, memo, useEffect } from 'react';
+import type { JSX } from 'react';
 import { Platform, StyleSheet, View, Text, type TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -251,7 +252,7 @@ const HEADER_STYLE = {
 const ListenHeaderRight = memo(() => <EditModeButton />);
 ListenHeaderRight.displayName = 'ListenHeaderRight';
 
-export default function TabLayout() {
+export default function TabLayout(): JSX.Element {
   const { session, isLoading } = useAuth();
 
   const headerBackground = useCallback(() => <CustomHeaderBackground />, []);
