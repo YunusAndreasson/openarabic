@@ -88,6 +88,9 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
     const isCurrentlyPlaying = audioState === AUDIO_STATES.PLAYING;
     const hasAudio = useMemo(() => !!article.audio_url, [article.audio_url]);
 
+    // Combined loading state for optimal UX - instant local feedback + ongoing audio feedback
+    const isPlayButtonLoading = isPlayNowLoading || audioState === AUDIO_STATES.LOADING;
+
     const handlePlayToggle = useCallback(async () => {
       if (isCurrentlyPlaying) {
         // Stop playback
@@ -114,7 +117,7 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
           return;
         }
 
-        // Start playback with single track
+        // Start playback with single track - audio loading state will now provide feedback
         const success = await audioPlayer.actions.startEnhancedPlayback([track], 0);
 
         if (!success) {
@@ -147,8 +150,8 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
           variant="filled"
           title={isCurrentlyPlaying ? 'STOP' : 'PLAY NOW'}
           size="medium"
-          loading={isPlayNowLoading}
-          disabled={(!hasAudio && !isCurrentlyPlaying) || isPlayNowLoading}
+          loading={isPlayButtonLoading}
+          disabled={(!hasAudio && !isCurrentlyPlaying) || isPlayButtonLoading}
           onPress={handlePlayToggle}
           style={styles.playNowButton}
         />

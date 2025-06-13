@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useFocusEffect } from 'expo-router';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 
 import { AUDIO_STATES } from '@/constants/audio';
 import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
@@ -33,16 +33,11 @@ export const useListenScreen = () => {
   const customOrder = useAppSelector(state => state.listen.customOrder);
 
   const [playbackMode, setPlaybackMode] = useState<'all' | 'none'>('none');
-  const [isStartingPlayback, setIsStartingPlayback] = useState(false);
 
   const enhancedAudioPlayer = useAudioPlayer();
   const { duration, position, metadata, audioState, actions } = enhancedAudioPlayer;
 
-  useEffect(() => {
-    if (isStartingPlayback && audioState !== AUDIO_STATES.IDLE) {
-      setIsStartingPlayback(false);
-    }
-  }, [isStartingPlayback, audioState]);
+  const isStartingPlayback = audioState === AUDIO_STATES.LOADING;
 
   const sleepTimer = useSleepTimer(() => {
     actions.stopPlayback();
@@ -169,15 +164,12 @@ export const useListenScreen = () => {
       selectionFeedback();
       await actions.stopPlayback();
       setPlaybackMode('none');
-      setIsStartingPlayback(false);
     } else if (sortedEnhancedTracks.length) {
       try {
         selectionFeedback();
-        setIsStartingPlayback(true);
         setPlaybackMode('all');
         await actions.startEnhancedPlayback(sortedEnhancedTracks, 0);
       } catch (error) {
-        setIsStartingPlayback(false);
         setPlaybackMode('none');
         handleError(error as Error);
       }
@@ -230,7 +222,6 @@ export const useListenScreen = () => {
         selectionFeedback();
         await actions.stopPlayback();
         setPlaybackMode('none');
-        setIsStartingPlayback(false);
         return;
       }
 
@@ -239,11 +230,9 @@ export const useListenScreen = () => {
       if (articleIndex !== -1 && sortedEnhancedTracks.length) {
         try {
           selectionFeedback();
-          setIsStartingPlayback(true);
           setPlaybackMode('all');
           await actions.startEnhancedPlayback(sortedEnhancedTracks, articleIndex);
         } catch (error) {
-          setIsStartingPlayback(false);
           setPlaybackMode('none');
           handleError(error as Error);
         }
@@ -266,9 +255,8 @@ export const useListenScreen = () => {
     isReadingListLoading,
     isReadingListFetching,
     isStartingPlayback,
-    setIsStartingPlayback,
-    playbackMode,
     setPlaybackMode,
+    playbackMode,
     duration,
     position,
     metadata,

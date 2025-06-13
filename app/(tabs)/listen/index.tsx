@@ -136,7 +136,6 @@ export default function ListenScreen(): JSX.Element {
     sortedEnhancedTracks,
     shouldShowInitialLoading,
     isStartingPlayback,
-    setIsStartingPlayback,
     setPlaybackMode,
     duration,
     position,
@@ -394,10 +393,9 @@ export default function ListenScreen(): JSX.Element {
           selectionFeedback();
           if (isStartingPlayback) {
             // If still starting, allow canceling
-            setIsStartingPlayback(false);
+            setPlaybackMode('none');
           }
           actions.stopPlayback();
-          setPlaybackMode('none');
         }}
         onTimerPress={() => {
           selectionFeedback();

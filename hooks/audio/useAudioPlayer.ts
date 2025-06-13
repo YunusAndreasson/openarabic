@@ -14,7 +14,7 @@ import { handleError } from '@/utils/errorHandling';
  * Enhanced audio player interface
  */
 export interface EnhancedPlayerAPI {
-  // Legacy compatibility properties
+  // Legacy compatibility properties (still used)
   progress: number;
   metadata: {
     articleId?: string;
@@ -27,17 +27,10 @@ export interface EnhancedPlayerAPI {
     startEnhancedPlayback: (tracks: EnhancedAudioTrack[], startIndex?: number) => Promise<boolean>;
   };
 
-  // State properties (only used ones)
-  currentTrack: EnhancedAudioTrack | null;
+  // State properties (only the ones actually used)
   isLoading: boolean;
   position: number;
   duration: number;
-
-  // Control methods (only used ones)
-  play: () => Promise<void>;
-  pause: () => Promise<void>;
-  stop: () => Promise<void>;
-  seekTo: (position: number) => Promise<void>;
 }
 
 /**
@@ -152,64 +145,16 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
           // Defensive call to play()
           if (typeof audioPlayer.play === 'function') {
             audioPlayer.play();
+            // Clear loading state once playback starts
+            setIsLoading(false);
           }
         } catch {
           // Auto-play failed silently
+          setIsLoading(false);
         }
       });
     }
   }, [shouldAutoPlay, audioPlayer, currentTrack, isPlayerLoaded]);
-
-  // Control methods - following expo-audio docs pattern exactly
-  const play = useCallback(async () => {
-    try {
-      if (!isPlayerReady || !currentTrack) {
-        return;
-      }
-
-      // Following expo-audio docs: if audio is at the end, seek to start first
-      // "expo-audio doesn't automatically reset the playback position when audio finishes"
-      if (duration > 0 && Math.abs(position - duration) < 0.5) {
-        try {
-          if (typeof audioPlayer?.seekTo === 'function') {
-            await audioPlayer.seekTo(0);
-          }
-        } catch {
-          // Silently handle seek failures, continue with play
-        }
-      }
-
-      // Defensive call to play() with readiness check
-      if (typeof audioPlayer?.play === 'function') {
-        audioPlayer.play();
-      }
-    } catch (error) {
-      // Only show toast for unexpected errors, not native object disposal errors
-      if (
-        error instanceof Error &&
-        !error.message.includes('NativeSharedObjectNotFoundException')
-      ) {
-        handleError(error, { toastMessage: 'Failed to play audio' });
-      }
-    }
-  }, [isPlayerReady, currentTrack, duration, position, audioPlayer]);
-
-  const pause = useCallback(async () => {
-    try {
-      if (!isPlayerReady) return;
-      if (typeof audioPlayer?.pause === 'function') {
-        audioPlayer.pause();
-      }
-    } catch (error) {
-      // Only show toast for unexpected errors, not native object disposal errors
-      if (
-        error instanceof Error &&
-        !error.message.includes('NativeSharedObjectNotFoundException')
-      ) {
-        handleError(error, { toastMessage: 'Failed to pause audio' });
-      }
-    }
-  }, [isPlayerReady, audioPlayer]);
 
   const stop = useCallback(async () => {
     try {
@@ -249,35 +194,14 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
     }
   }, [audioPlayer, isPlayerReady]);
 
-  const seekTo = useCallback(
-    async (position: number) => {
-      try {
-        if (!isPlayerReady) return;
-        if (typeof audioPlayer?.seekTo === 'function') {
-          await audioPlayer.seekTo(position);
-        }
-      } catch (error) {
-        // Only show toast for unexpected errors, not native object disposal errors
-        if (
-          error instanceof Error &&
-          !error.message.includes('NativeSharedObjectNotFoundException')
-        ) {
-          handleError(error, { toastMessage: 'Failed to seek audio' });
-        }
-      }
-    },
-    [isPlayerReady, audioPlayer]
-  );
-
   // Queue loading - following expo-audio docs pattern exactly
   const loadQueue = useCallback(async (tracks: EnhancedAudioTrack[], startIndex = 0) => {
     try {
-      setIsLoading(true);
-
       if (tracks.length === 0) {
         setQueue([]);
         setCurrentIndex(-1);
         setCurrentTrack(null);
+        setIsLoading(false);
         return;
       }
 
@@ -291,7 +215,6 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
       // The useAudioPlayer hook will automatically recreate the player with the new source
     } catch (error) {
       handleError(error as Error, { toastMessage: 'Failed to load queue' });
-    } finally {
       setIsLoading(false);
     }
   }, []);
@@ -300,6 +223,9 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
   const startEnhancedPlayback = useCallback(
     async (tracks: EnhancedAudioTrack[], startIndex = 0): Promise<boolean> => {
       try {
+        // Immediate feedback - set loading state before any async work
+        setIsLoading(true);
+
         // Set auto-play flag to maintain user interaction context
         setShouldAutoPlay(true);
 
@@ -309,6 +235,7 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
         return true; // Success
       } catch (error) {
         setShouldAutoPlay(false); // Reset flag on error
+        setIsLoading(false); // Reset loading on error
         handleError(error as Error, { toastMessage: 'Failed to start enhanced playback' });
         return false; // Failure
       }
@@ -443,32 +370,10 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
       actions,
 
       // State properties
-      currentTrack,
-      isLoading: isLoading || (currentTrack !== null && !isPlayerLoaded),
-      position,
-      duration,
-
-      // Control methods
-      play,
-      pause,
-      stop,
-      seekTo,
-    }),
-    [
-      progress,
-      metadata,
-      audioState,
-      currentIndex,
-      actions,
-      currentTrack,
       isLoading,
-      isPlayerLoaded,
       position,
       duration,
-      play,
-      pause,
-      stop,
-      seekTo,
-    ]
+    }),
+    [progress, metadata, audioState, currentIndex, actions, isLoading, position, duration]
   );
 }
