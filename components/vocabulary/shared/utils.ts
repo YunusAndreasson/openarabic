@@ -1,6 +1,7 @@
 import type { StudyWord } from '@/types/vocabulary.types';
 
 import { PERFORMANCE_THRESHOLDS } from './constants';
+import type { ChartColors } from '@/types/ui/chart.types';
 
 // Generate date range for charts
 export const generateDateRange = (days: number) => {
@@ -112,7 +113,7 @@ export const calculateEfficiencyScore = (word: StudyWord): number => {
 export const createStandardizedPerformanceZones = (
   chartHeight: number,
   topPadding: number = 0,
-  chartColors: any
+  chartColors: ChartColors
 ) => {
   const availableHeight = chartHeight - topPadding;
 
