@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { memo, useCallback } from 'react';
 import type { ComponentType, ComponentProps } from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { View, StyleSheet } from 'react-native';
 
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
@@ -14,14 +15,14 @@ interface EmptyStateProps {
   title: string;
   description: string;
   actionText?: string;
-  icon?: string | ComponentType<any>;
+  icon?: string | ComponentType<ComponentProps<typeof Ionicons>>;
   onAction?: () => void;
-  containerStyle?: any;
+  containerStyle?: StyleProp<ViewStyle>;
   colors: { tint: string };
   submessage?: string;
   customActionButton?: React.ReactNode;
   iconSize?: number;
-  iconContainerStyle?: any;
+  iconContainerStyle?: StyleProp<ViewStyle>;
   hideArticlesButton?: boolean;
 }
 
@@ -49,10 +50,10 @@ const EmptyState = memo(
     iconContainerStyle,
     hideArticlesButton = false,
   }: Partial<EmptyStateProps> & Pick<EmptyStateProps, 'colors' | 'description' | 'title'>) => {
-    const IconComponent = (icon && typeof icon !== 'string' ? icon : Ionicons) as ComponentType<
-      ComponentProps<typeof Ionicons>
-    >;
-    const iconName = typeof icon === 'string' ? icon : 'alert-circle-outline';
+    const IconComponent: ComponentType<ComponentProps<typeof Ionicons>> =
+      icon && typeof icon !== 'string' ? icon : Ionicons;
+    const iconName: ComponentProps<typeof Ionicons>['name'] =
+      typeof icon === 'string' ? icon : 'alert-circle-outline';
 
     const handleBrowseArticles = useCallback(() => {
       router.push('/(tabs)');
@@ -76,7 +77,7 @@ const EmptyState = memo(
             <View style={[styles.iconContainer, iconContainerStyle]}>
               <IconComponent
                 color={colors?.tint}
-                name={iconName as any}
+                name={iconName}
                 size={iconSize}
                 style={styles.icon}
               />
