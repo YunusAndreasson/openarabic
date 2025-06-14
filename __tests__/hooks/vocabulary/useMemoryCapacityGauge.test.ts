@@ -41,47 +41,31 @@ describe('useMemoryCapacityGauge', () => {
 
   it('calculates metrics and positions for valid words', () => {
     const now = Date.now();
-    const words = [
-      {
-        root_id: 1,
-        user_id: 'u',
-        created_at: new Date(now - 3 * 24 * 3600 * 1000).toISOString(),
-        fsrs_due: null,
-        fsrs_stability: 15,
-        fsrs_difficulty: 8,
-        fsrs_elapsed_days: 0,
-        fsrs_scheduled_days: 0,
-        fsrs_learning_steps: 0,
-        fsrs_reps: 4,
-        fsrs_lapses: 0,
-        fsrs_state: 0,
-        fsrs_last_review: null,
-      },
-      {
-        root_id: 2,
-        user_id: 'u',
-        created_at: new Date(now - 10 * 24 * 3600 * 1000).toISOString(),
-        fsrs_due: null,
-        fsrs_stability: 5,
-        fsrs_difficulty: 6,
-        fsrs_elapsed_days: 0,
-        fsrs_scheduled_days: 0,
-        fsrs_learning_steps: 0,
-        fsrs_reps: 2,
-        fsrs_lapses: 0,
-        fsrs_state: 0,
-        fsrs_last_review: null,
-      },
-    ];
+    // Generate more than 50 words with varying stability and difficulty
+    const words = Array.from({ length: 60 }, (_, i) => ({
+      root_id: i + 1,
+      user_id: 'u',
+      created_at: new Date(now - (i % 10) * 24 * 3600 * 1000).toISOString(),
+      fsrs_due: null,
+      fsrs_stability: (i % 30) + 1,
+      fsrs_difficulty: (i % 10) + 1,
+      fsrs_elapsed_days: 0,
+      fsrs_scheduled_days: 0,
+      fsrs_learning_steps: 0,
+      fsrs_reps: (i % 5) + 1,
+      fsrs_lapses: 0,
+      fsrs_state: 0,
+      fsrs_last_review: null,
+    }));
 
     const { result } = renderHook(() =>
       useMemoryCapacityGauge({ ...baseProps, studyWords: words })
     );
 
-    expect(result.current.memoryMetrics).toEqual({ capacityScore: 32, trend: 'improving' });
-    expect(result.current.gaugePaths.filledSweep).toBeCloseTo(54.4);
-    expect(result.current.indicatorPosition.x).toBeCloseTo(70.715, 2);
-    expect(result.current.indicatorPosition.y).toBeCloseTo(119.167, 2);
+    expect(result.current.memoryMetrics).toEqual({ capacityScore: 44, trend: 'improving' });
+    expect(result.current.gaugePaths.filledSweep).toBeCloseTo(74.8);
+    expect(result.current.indicatorPosition.x).toBeCloseTo(84.462, 2);
+    expect(result.current.indicatorPosition.y).toBeCloseTo(127.232, 2);
   });
 
   it('maps score to colors and messages', () => {
@@ -95,6 +79,8 @@ describe('useMemoryCapacityGauge', () => {
     expect(getCapacityColor(60)).toBe('#g');
     expect(getCapacityColor(40)).toBe('#m');
     expect(getCapacityColor(10)).toBe('#p');
+    expect(getCapacityColor(100)).toBe('#e');
+    expect(getCapacityColor(0)).toBe('#p');
 
     expect(getReadinessMessage(80)).toBe('Add new words');
     expect(getReadinessMessage(60)).toBe('Add words moderately');
