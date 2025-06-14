@@ -1,0 +1,62 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['package.json']
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' || 
+      (github.event_name == 'push' && contains(github.event.head_commit.message, 'chore: bump version'))
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Run validation
+        run: yarn validate
+
+      - name: Run tests
+        run: yarn test
+
+      - name: Check for unused code
+        run: yarn knip:ci
+
+      - name: Bump version (manual trigger)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          yarn bump
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          git add package.json app.json
+          git commit -m "chore: bump version to $NEW_VERSION"
+          git tag "v$NEW_VERSION"
+          git push origin main
+          git push origin "v$NEW_VERSION"
+
+      - name: Create GitHub Release
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          gh release create "v$NEW_VERSION" \
+            --title "Release v$NEW_VERSION" \
+            --generate-notes \
+            --latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

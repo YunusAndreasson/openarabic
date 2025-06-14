@@ -1,0 +1,35 @@
+name: Auto-merge
+
+on:
+  workflow_run:
+    workflows: ['Test & Validate']
+    types: [completed]
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    if: |
+      github.event.workflow_run.conclusion == 'success' && 
+      github.event.workflow_run.event == 'pull_request' &&
+      !contains(github.event.workflow_run.head_commit.message, 'chore: bump version')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get PR number
+        id: pr
+        run: |
+          PR_NUMBER=$(gh pr list --head "${{ github.event.workflow_run.head_branch }}" --json number --jq '.[0].number')
+          echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge
+        if: steps.pr.outputs.number != 'null' && steps.pr.outputs.number != ''
+        run: |
+          echo "Enabling auto-merge for PR #${{ steps.pr.outputs.number }}"
+          gh pr merge --auto --squash "${{ steps.pr.outputs.number }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

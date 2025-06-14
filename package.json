@@ -10,14 +10,19 @@
     "start": "expo start -c",
     "test": "jest --testTimeout=10000",
     "test:watch": "jest --watchAll --testTimeout=10000",
+    "test:coverage": "jest --coverage --testTimeout=10000",
     "fullupgrade": "yarn upgrade --latest && npx expo@latest install --check",
     "types:db": "supabase gen types typescript --project-id kkmnzbeugdoajtzfjkxg > types/database.types.ts",
     "knip": "knip",
     "knip:ci": "knip --exclude duplicates",
     "knip:production": "knip --production",
-    "validate": "tsc --noEmit && yarn lint",
+    "typecheck": "tsc --noEmit",
+    "validate": "yarn typecheck && yarn lint && yarn knip:ci",
+    "ci": "yarn validate && yarn test:coverage",
     "bump": "node utils/bumpVersion.js",
-    "release": "yarn validate && yarn knip:ci && yarn bump && git add package.json app.json && git commit -m \"chore: bump version to $(node -p \"require('./package.json').version\")\" && VERSION=$(node -p \"require('./package.json').version\") && git tag v$VERSION && git push && git push origin v$VERSION"
+    "release": "gh workflow run release.yml",
+    "dev": "yarn start",
+    "build:check": "yarn validate && yarn test"
   },
   "dependencies": {
     "@babel/runtime": "^7.27.6",
@@ -98,13 +103,18 @@
     "typescript": "^5.8.3"
   },
   "private": true,
+  "engines": {
+    "node": ">=18.0.0",
+    "yarn": ">=1.22.0"
+  },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "eslint --fix",
       "prettier --write"
     ],
-    "*.{json,md}": [
+    "*.{json,md,yml,yaml}": [
       "prettier --write"
     ]
-  }
+  },
+  "packageManager": "yarn@1.22.19"
 }

@@ -1,4 +1,4 @@
-name: Test
+name: Test & Validate
 
 on:
   pull_request:
@@ -6,8 +6,34 @@ on:
     branches: [main]
 
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    name: Validate Code
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: TypeScript check
+        run: yarn tsc --noEmit
+
+      - name: ESLint check
+        run: yarn lint
+
+      - name: Check for unused code
+        run: yarn knip:ci
+
   test:
     runs-on: ubuntu-latest
+    name: Run Tests
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
