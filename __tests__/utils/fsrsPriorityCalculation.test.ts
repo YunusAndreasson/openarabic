@@ -285,4 +285,30 @@ describe('Priority Queue Integration', () => {
 
     expect(order[0]).toBe(2);
   });
+
+  test('words with invalid due date are skipped in queue ordering', () => {
+    const validEarly = createTestWord({
+      root_id: 1,
+      fsrs_due: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+    });
+
+    const invalidWord = createTestWord({ root_id: 2, fsrs_due: 'not-a-date' });
+
+    const validLate = createTestWord({ root_id: 3, fsrs_due: new Date().toISOString() });
+
+    const queue = new PriorityQueue<typeof validEarly>();
+    queue.push(validEarly, calculateWordPriority(validEarly));
+    queue.push(invalidWord, calculateWordPriority(invalidWord));
+    queue.push(validLate, calculateWordPriority(validLate));
+
+    const priorityInvalid = calculateWordPriority(invalidWord);
+    expect(isNaN(priorityInvalid)).toBe(true);
+
+    const order: number[] = [];
+    while (!queue.isEmpty()) {
+      order.push(queue.pop()!.root_id);
+    }
+
+    expect(order).toEqual([1, 3, 2]);
+  });
 });
