@@ -1,5 +1,5 @@
 import { useHeaderHeight } from '@react-navigation/elements';
-import { FlashList } from '@shopify/flash-list';
+import { FlashList, type OverrideItemLayoutParams } from '@shopify/flash-list';
 import type { JSX } from 'react';
 import React, { useState, useMemo, useCallback, memo } from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
@@ -337,7 +337,10 @@ export default function ListenScreen(): JSX.Element {
                 </View>
               ) : null
             }
-            overrideItemLayout={layout => {
+            overrideItemLayout={(
+              layout: OverrideItemLayoutParams,
+              _item: ReadingListItem
+            ) => {
               layout.size = ITEM_HEIGHT;
             }}
             renderItem={renderItem}
