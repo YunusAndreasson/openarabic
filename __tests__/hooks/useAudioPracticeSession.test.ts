@@ -52,6 +52,8 @@ const baseWord = (id: number) => ({
 const tracks = [
   { id: 't1', rootId: 1, audioUrl: 'ar1.mp3', title: 'ar1' },
   { id: 't2', rootId: 1, audioUrl: 'en1.mp3', title: 'en1' },
+  { id: 't3', rootId: 2, audioUrl: 'ar2.mp3', title: 'ar2' },
+  { id: 't4', rootId: 2, audioUrl: 'en2.mp3', title: 'en2' },
 ];
 
 
@@ -67,7 +69,9 @@ beforeEach(() => {
   }));
 
   listenAudioService.getRandomVocabularyTracks.mockResolvedValue(tracks);
-  (useFSRSQueries as jest.Mock).mockReturnValue({ allWords: [baseWord(1)] });
+  (useFSRSQueries as jest.Mock).mockReturnValue({
+    allWords: [baseWord(1), baseWord(2)],
+  });
 });
 
 describe('useAudioPracticeSession', () => {
@@ -103,5 +107,71 @@ describe('useAudioPracticeSession', () => {
     rerender();
 
     expect(result.current.isComplete).toBe(true);
+  });
+
+  it.each([
+    {
+      name: 'normal completion',
+      states: [
+        AUDIO_STATES.PLAYING,
+        AUDIO_STATES.PLAYING,
+        AUDIO_STATES.PLAYING,
+        AUDIO_STATES.PLAYING,
+        AUDIO_STATES.IDLE,
+      ],
+      indices: [0, 1, 2, 3, 3],
+      toggleRepeat: false,
+      expected: { isComplete: true, progress: 100, repeatEnabled: false },
+    },
+    {
+      name: 'early stop',
+      states: [AUDIO_STATES.PLAYING, AUDIO_STATES.IDLE],
+      indices: [0, 0],
+      toggleRepeat: false,
+      expected: { isComplete: true, progress: 50, repeatEnabled: false },
+    },
+    {
+      name: 'repeat mode',
+      states: [
+        AUDIO_STATES.PLAYING,
+        AUDIO_STATES.PLAYING,
+        AUDIO_STATES.PLAYING,
+        AUDIO_STATES.PLAYING,
+        AUDIO_STATES.IDLE,
+        AUDIO_STATES.PLAYING,
+      ],
+      indices: [0, 1, 2, 3, 3, 0],
+      toggleRepeat: true,
+      expected: { isComplete: false, progress: 50, repeatEnabled: true },
+    },
+  ])('handles $name scenario', ({ states, indices, toggleRepeat, expected }) => {
+    const { result, rerender } = renderHook(() => useAudioPracticeSession());
+
+    if (toggleRepeat) {
+      act(() => {
+        result.current.handleRepeatToggle();
+      });
+    }
+
+    act(() => {
+      jest.runAllTimers();
+    });
+
+    states.forEach((state, idx) => {
+      mockAudioState = state;
+      mockTrackIndex = indices[idx];
+      rerender();
+
+      if (state === AUDIO_STATES.IDLE) {
+        act(() => {
+          jest.runAllTimers();
+        });
+        rerender();
+      }
+    });
+
+    expect(result.current.isComplete).toBe(expected.isComplete);
+    expect(result.current.progress).toBe(expected.progress);
+    expect(result.current.repeatEnabled).toBe(expected.repeatEnabled);
   });
 });
