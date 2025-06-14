@@ -9,6 +9,9 @@ import { useColors } from '@/hooks/theme/useColors';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { ProgressBarProps } from '@/types/ui/loader.types';
 
+// Progress change required to trigger an animation (0-10000 scale)
+const PROGRESS_THRESHOLD = 100; // 1%
+
 /**
  * A customizable progress bar component that can be used to display the
  * progress of an action or process.
@@ -58,11 +61,15 @@ function ProgressBarComponent({
     // Always ensure progress doesn't go backwards
     const targetProgress = Math.max(intProgress, prevProgressRef.current);
 
-    // Determine if animation should be immediate or animated
-    const shouldAnimate = animationTriggered && prevProgressRef.current !== targetProgress;
+    const progressDelta = targetProgress - prevProgressRef.current;
 
-    // Only animate if progress is actually changing and increasing
-    if (shouldAnimate && targetProgress > prevProgressRef.current) {
+    // Determine if animation should be immediate or animated
+    const shouldAnimate =
+      animationTriggered &&
+      progressDelta >= PROGRESS_THRESHOLD &&
+      progressDelta > 0;
+
+    if (shouldAnimate) {
       // Animate to the new target value
       updateProgress(targetProgress);
     } else {
