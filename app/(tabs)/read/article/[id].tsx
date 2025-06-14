@@ -19,7 +19,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useHeaderVisibility } from '@/hooks/ui/useHeaderVisibility';
-import { useAppSelector } from '@/store/hooks';
+import { useAppSelectorMemo } from '@/store/hooks';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { lightFeedback } from '@/utils/haptics';
@@ -35,7 +35,7 @@ export default function ArticleScreen(): JSX.Element {
 
   const colors = useColors();
   const { user } = useAuth();
-  const fontScale = useAppSelector(state => state.settings.fontScale);
+  const fontScale = useAppSelectorMemo(state => state.settings.fontScale);
   const isDarkMode = useIsDarkMode();
 
   const { handleScroll } = useHeaderVisibility();

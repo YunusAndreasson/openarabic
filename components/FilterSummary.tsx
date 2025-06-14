@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { selectActiveFiltersCount } from '@/store/filtersSlice';
-import { useAppSelector } from '@/store/hooks';
+import { useAppSelectorMemo } from '@/store/hooks';
 
 interface FilterSummaryProps {
   filteredCount: number;
@@ -12,7 +12,7 @@ interface FilterSummaryProps {
 }
 
 const FilterSummary = memo(({ filteredCount, totalCount }: FilterSummaryProps) => {
-  const activeFiltersCount = useAppSelector(selectActiveFiltersCount);
+  const activeFiltersCount = useAppSelectorMemo(selectActiveFiltersCount);
 
   const summaryText = React.useMemo(() => {
     if (totalCount !== undefined && filteredCount !== totalCount) {

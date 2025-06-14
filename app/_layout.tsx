@@ -31,7 +31,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
 import { useArticlesAndDueWordsLoaded } from '@/hooks/useArticlesAndDueWordsLoaded';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import type { RootState } from '@/store/store';
 import { store, persistor } from '@/store/store';
 import { setTheme } from '@/store/themeSlice';
@@ -99,7 +99,7 @@ Sentry.init({
 
 function AppContent() {
   const dispatch = useAppDispatch();
-  const { theme } = useAppSelector((state: RootState) => state.theme);
+  const theme = useAppSelectorMemo((state: RootState) => state.theme.theme);
   const isDark = theme === Theme.Dark;
   const [appReady, setAppReady] = useState(false);
   const appState = useRef(AppState.currentState);
