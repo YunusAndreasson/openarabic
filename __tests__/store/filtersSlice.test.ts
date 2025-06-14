@@ -34,22 +34,34 @@ describe('filtersSlice reducers', () => {
     expect(next.sort.direction).toBe('desc');
   });
 
-  it('adds and removes author ids', () => {
-    let state = reducer(initialState, toggleAuthor(42));
-    expect(state.filters.authorIds).toEqual([42]);
+  describe('toggleAuthor', () => {
+    const ids = [42, 7];
+    test.each(ids)('adds and removes author id %p', id => {
+      let state = reducer(initialState, toggleAuthor(id));
+      expect(state.filters.authorIds).toEqual([id]);
 
-    state = reducer(state, toggleAuthor(42));
-    expect(state.filters.authorIds).toEqual([]);
+      state = reducer(state, toggleAuthor(id));
+      expect(state.filters.authorIds).toEqual([]);
+    });
   });
 
-  it('sets difficulty range', () => {
-    const state = reducer(initialState, setDifficultyRange([2, 4]));
-    expect(state.filters.difficultyRange).toEqual([2, 4]);
+  describe('setDifficultyRange', () => {
+    const ranges: [number, number][] = [
+      [2, 4],
+      [1, 3],
+    ];
+    test.each(ranges)('sets difficulty range %p', range => {
+      const state = reducer(initialState, setDifficultyRange(range));
+      expect(state.filters.difficultyRange).toEqual(range);
+    });
   });
 
-  it('sets date range', () => {
-    const state = reducer(initialState, setDateRange('week'));
-    expect(state.filters.dateRange).toBe('week');
+  describe('setDateRange', () => {
+    const ranges: FilterState['filters']['dateRange'][] = ['week', 'month'];
+    test.each(ranges)('sets date range %p', range => {
+      const state = reducer(initialState, setDateRange(range));
+      expect(state.filters.dateRange).toBe(range);
+    });
   });
 
   it('clears all filters', () => {
@@ -67,42 +79,50 @@ describe('filtersSlice reducers', () => {
 });
 
 describe('selectActiveFiltersCount', () => {
-  let state: { filters: FilterState };
+  const base: FilterState = {
+    sort: { field: 'date', direction: 'desc' },
+    filters: { authorIds: [], difficultyRange: [1, 5], dateRange: 'all' },
+  };
 
-  beforeEach(() => {
-    state = {
-      filters: {
-        sort: { field: 'date', direction: 'desc' },
-        filters: { authorIds: [], difficultyRange: [1, 5], dateRange: 'all' },
+  const cases: Array<{ desc: string; state: { filters: FilterState }; expected: number }> = [
+    {
+      desc: 'no filters active',
+      state: { filters: base },
+      expected: 0,
+    },
+    {
+      desc: 'author filter active',
+      state: {
+        filters: {
+          ...base,
+          filters: { ...base.filters, authorIds: [1] },
+        },
       },
-    };
-  });
-
-  it('counts active filters across all categories', () => {
-    expect(selectActiveFiltersCount(state)).toBe(0);
-
-    state = {
-      filters: {
-        ...state.filters,
-        filters: { ...state.filters.filters, authorIds: [1] },
+      expected: 1,
+    },
+    {
+      desc: 'difficulty filter active',
+      state: {
+        filters: {
+          ...base,
+          filters: { ...base.filters, difficultyRange: [2, 5] },
+        },
       },
-    };
-    expect(selectActiveFiltersCount(state)).toBe(1);
-
-    state = {
-      filters: {
-        ...state.filters,
-        filters: { ...state.filters.filters, difficultyRange: [2, 5] },
+      expected: 1,
+    },
+    {
+      desc: 'all filters active',
+      state: {
+        filters: {
+          ...base,
+          filters: { authorIds: [1], difficultyRange: [2, 4], dateRange: 'week' },
+        },
       },
-    };
-    expect(selectActiveFiltersCount(state)).toBe(2);
+      expected: 3,
+    },
+  ];
 
-    state = {
-      filters: {
-        ...state.filters,
-        filters: { ...state.filters.filters, dateRange: 'week' },
-      },
-    };
-    expect(selectActiveFiltersCount(state)).toBe(3);
+  test.each(cases)('$desc => $expected', ({ state, expected }) => {
+    expect(selectActiveFiltersCount(state)).toBe(expected);
   });
 });
