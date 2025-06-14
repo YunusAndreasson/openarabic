@@ -2,12 +2,6 @@ import type { EnhancedAudioTrack } from '@/types/audio.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 
-// Constants for track types
-export const TRACK_TYPES = {
-  ARABIC: 'ar',
-  ENGLISH: 'en',
-} as const;
-
 export const listenAudioService = {
   /**
    * Converts vocabulary words to enhanced audio tracks for the listen screen
@@ -29,7 +23,7 @@ export const listenAudioService = {
 
       // Add Arabic track
       tracks.push({
-        id: `word-${index}-${TRACK_TYPES.ARABIC}`,
+        id: `word-${index}-ar`,
         rootId: word.root.id,
         audioUrl: arabicAudio,
         title: word.root.letters || 'Arabic', // Use Arabic word as title
@@ -37,7 +31,7 @@ export const listenAudioService = {
 
       // Add English track
       tracks.push({
-        id: `word-${index}-${TRACK_TYPES.ENGLISH}`,
+        id: `word-${index}-en`,
         rootId: word.root.id,
         audioUrl: englishAudio,
         title: word.root.meaning || 'English', // Use English meaning as title
