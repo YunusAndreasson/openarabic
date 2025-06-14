@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import { audioCache } from '@/services/audioCache';
+import { handleError } from '@/utils/errorHandling';
 
 /**
  * Hook for accessing audio cache functionality
@@ -10,7 +11,7 @@ export function useAudioCache() {
     try {
       await audioCache.clearCache();
     } catch (error) {
-      console.error('Failed to clear audio cache:', error);
+      await handleError(error as Error, { toastMessage: 'Failed to clear audio cache' });
       throw error;
     }
   }, []);
@@ -19,7 +20,7 @@ export function useAudioCache() {
     try {
       return await audioCache.getCacheSize();
     } catch (error) {
-      console.error('Failed to get cache size:', error);
+      await handleError(error as Error, { toastMessage: 'Failed to get cache size' });
       return 0;
     }
   }, []);
