@@ -14,7 +14,6 @@ import type { AnimatedStyle } from 'react-native-reanimated';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import type { Article } from '@/types/articles.types';
 
 const CARD_HEIGHT = 120;
 
@@ -37,7 +36,6 @@ const EXIT_SPRING_CONFIG = {
 
 interface UseNowPlayingCardProps {
   isVisible: boolean;
-  article: Partial<Article> | null;
   progress: number;
   duration: number;
   onStop?: () => void;
@@ -56,7 +54,6 @@ const formatTime = (seconds: number): string => {
 
 export const useNowPlayingCard = ({
   isVisible,
-  article,
   progress,
   duration,
   onStop,
@@ -76,7 +73,7 @@ export const useNowPlayingCard = ({
   const buttonAnimatedStyle = rawButtonAnimatedStyle as AnimatedStyle<ViewStyle>;
 
   useEffect(() => {
-    if (isVisible && article) {
+    if (isVisible) {
       translateY.value = withSpring(0, SPRING_CONFIG);
       opacity.value = withTiming(1, { duration: 300 });
       scale.value = withSpring(1, ENTRANCE_SCALE_CONFIG);
@@ -86,7 +83,8 @@ export const useNowPlayingCard = ({
       });
       opacity.value = withTiming(0, { duration: 300 });
     }
-  }, [isVisible, article, translateY, opacity, scale]);
+    // Only trigger when visibility changes to avoid unnecessary re-runs
+  }, [isVisible]);
 
   const handleStopPress = useCallback(() => {
     onStop?.();

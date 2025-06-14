@@ -61,7 +61,6 @@ const NowPlayingCard = ({
     timeCalculations,
   } = useNowPlayingCard({
     isVisible,
-    article,
     progress,
     duration,
     onStop,
