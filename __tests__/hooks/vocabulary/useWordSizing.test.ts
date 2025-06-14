@@ -13,14 +13,13 @@ describe('useWordSizing', () => {
     expect(result.current).toBe(100);
   });
 
-  it('scales down font size for long words but not below min', () => {
+  it('returns min font size for extremely long words', () => {
     jest.spyOn(layout, 'useScreenWidth').mockReturnValue(300);
-    const longWord = 'abcdefghijklmnopqrstuvwxyz';
+    const longWord = 'a'.repeat(51); // word length > 50 characters
     const { result } = renderHook(() =>
       useWordSizing(longWord, { maxFontSize: 100, minFontSize: 40 })
     );
-    expect(result.current).toBeLessThan(100);
-    expect(result.current).toBeGreaterThanOrEqual(40);
+    expect(result.current).toBe(40);
   });
 
   it('returns max font size when word is undefined', () => {
