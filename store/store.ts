@@ -15,7 +15,6 @@ const rootReducer = combineReducers({
   readingList: readingListReducer,
   filters: filtersReducer,
   listen: listenReducer,
-  // audio: audioReducer, // REMOVED - no longer needed
 });
 
 // Migration function for settings
@@ -45,7 +44,7 @@ const persistConfig = {
     }
     return Promise.resolve(state);
   },
-  whitelist: ['theme', 'settings', 'readingList', 'filters', 'listen'], // Removed 'audio' and 'featuredContent' from persisted state
+  whitelist: ['theme', 'settings', 'readingList', 'filters', 'listen'],
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

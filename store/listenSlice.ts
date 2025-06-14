@@ -15,9 +15,6 @@ const listenSlice = createSlice({
   name: 'listen',
   initialState,
   reducers: {
-    setEditMode: (state, action: PayloadAction<boolean>) => {
-      state.editMode = action.payload;
-    },
     setCustomOrder: (state, action: PayloadAction<number[]>) => {
       state.customOrder = action.payload;
     },
@@ -31,7 +28,7 @@ const listenSlice = createSlice({
   },
 });
 
-export const { setEditMode, setCustomOrder, removeFromCustomOrder, toggleEditMode } =
+export const { setCustomOrder, removeFromCustomOrder, toggleEditMode } =
   listenSlice.actions;
 
 export default listenSlice.reducer;
