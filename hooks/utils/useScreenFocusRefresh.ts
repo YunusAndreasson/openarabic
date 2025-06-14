@@ -13,6 +13,7 @@ import { useCallback, useRef } from 'react';
  * @param staleTime Time in ms after which data is considered stale (default: 60000ms).
  * @param skipInitialFocus Whether to skip refresh on the very first focus event after mount (default: true).
  * @param forceRefreshOnFocus Force refresh on every focus, regardless of staleness (default: false).
+ * @param throttleInterval Minimum time in ms between refreshes (default: 1000ms).
  * @returns Object with a stable `refreshData` function.
  */
 export const useScreenFocusRefresh = (
@@ -21,7 +22,8 @@ export const useScreenFocusRefresh = (
   userId: string | undefined,
   staleTime = 60000,
   skipInitialFocus = true,
-  forceRefreshOnFocus = false
+  forceRefreshOnFocus = false,
+  throttleInterval = 1000
 ): { refreshData: () => void } => {
   // Ref holds all hook state and props to ensure stability of callbacks.
   const stateRef = useRef({
@@ -34,6 +36,7 @@ export const useScreenFocusRefresh = (
     staleTime,
     skipInitialFocus,
     forceRefreshOnFocus,
+    throttleInterval,
     // Derived state
     fullQueryKey: [] as QueryKey,
   });
@@ -46,6 +49,7 @@ export const useScreenFocusRefresh = (
   stateRef.current.staleTime = staleTime;
   stateRef.current.skipInitialFocus = skipInitialFocus;
   stateRef.current.forceRefreshOnFocus = forceRefreshOnFocus;
+  stateRef.current.throttleInterval = throttleInterval;
   stateRef.current.fullQueryKey = (userId ? [queryKey, userId] : [queryKey]) as QueryKey;
 
   // Stable refresh function that reads current state from the ref.
@@ -57,7 +61,7 @@ export const useScreenFocusRefresh = (
 
     // Throttle refreshes to prevent rapid calls
     const now = Date.now();
-    if (now - state.lastRefreshTime < 1000) return; // Throttle for 1 second
+    if (now - state.lastRefreshTime < state.throttleInterval) return; // Throttle for interval
 
     state.lastRefreshTime = now;
     // Invalidate the query to trigger a refetch
