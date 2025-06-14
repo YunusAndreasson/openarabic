@@ -1,6 +1,5 @@
 // External Libraries
 import { Ionicons } from '@expo/vector-icons';
-import { Stack } from 'expo-router';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,298 +14,266 @@ const LearningMethodScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTitle: '',
-          headerTitleStyle: {
-            color: colors.text,
-            fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-            fontWeight: '600',
-          },
-          headerStyle: {
-            backgroundColor: colors.background,
-          },
-          headerShadowVisible: false,
-          headerTransparent: false,
-          headerTitleAlign: 'left',
-          headerTintColor: colors.tint,
-          headerBackTitle: 'Account',
-          headerBackTitleStyle: {
-            fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-          },
-        }}
-      />
-
+    <ThemedView
+      includeBottomInset={false}
+      safeAreaEdges={['left', 'right']}
+      style={styles.container}
+    >
       <ThemedView
         includeBottomInset={false}
-        safeAreaEdges={['left', 'right']}
-        style={styles.container}
+        scrollable={true}
+        style={styles.flexOne}
+        useSafeArea={false}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingBottom: insets.bottom + LAYOUT.CONTENT_SPACING.BOTTOM,
+          },
+        ]}
+        scrollViewProps={{
+          style: styles.scrollView,
+          showsVerticalScrollIndicator: false,
+        }}
       >
-        <ThemedView
-          includeBottomInset={false}
-          scrollable={true}
-          style={styles.flexOne}
-          useSafeArea={false}
-          contentContainerStyle={[
-            styles.content,
-            {
-              paddingBottom: insets.bottom + LAYOUT.CONTENT_SPACING.BOTTOM,
-            },
-          ]}
-          scrollViewProps={{
-            style: styles.scrollView,
-            showsVerticalScrollIndicator: false,
-          }}
-        >
-          {/* Custom Header */}
-          <View style={styles.customHeader}>
-            <ThemedText style={styles.customHeaderTitle} type="heading1" weight="bold">
-              The Science of Language Learning
-            </ThemedText>
-          </View>
+        {/* Introduction */}
+        <View style={styles.section}>
+          <ThemedText style={styles.bodyText} type="body">
+            Language acquisition occurs through understanding meaningful messages, not grammar
+            instruction. According to Krashens Input Hypothesis, the brain naturally identifies
+            patterns through exposure to comprehensible input.
+          </ThemedText>
+        </View>
 
-          {/* Introduction */}
-          <View style={styles.section}>
-            <ThemedText style={styles.bodyText} type="body">
-              Language acquisition occurs through understanding meaningful messages, not grammar
-              instruction. According to Krashens Input Hypothesis, the brain naturally identifies
-              patterns through exposure to comprehensible input.
-            </ThemedText>
-          </View>
+        {/* Process */}
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
+            The Acquisition Process
+          </ThemedText>
 
-          {/* Process */}
-          <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
-              The Acquisition Process
-            </ThemedText>
-
-            <View style={styles.stepsList}>
-              <View style={styles.stepItem}>
-                <View style={[styles.stepIcon, { backgroundColor: colors.buttonOverlay }]}>
-                  <Ionicons color={colors.tint} name="eye-outline" size={20} />
-                </View>
-                <View style={styles.stepContent}>
-                  <ThemedText style={styles.stepTitle} type="body" weight="bold">
-                    Comprehensible input (i+1)
-                  </ThemedText>
-                  <ThemedText style={styles.stepText} type="body" variant="secondary">
-                    Translations provide meaning context while exposing you to Arabic structures
-                    just beyond your current level.
-                  </ThemedText>
-                </View>
+          <View style={styles.stepsList}>
+            <View style={styles.stepItem}>
+              <View style={[styles.stepIcon, { backgroundColor: colors.buttonOverlay }]}>
+                <Ionicons color={colors.tint} name="eye-outline" size={20} />
               </View>
-
-              <View style={styles.stepItem}>
-                <View style={[styles.stepIcon, { backgroundColor: colors.buttonOverlay }]}>
-                  <Ionicons color={colors.tint} name="bulb-outline" size={20} />
-                </View>
-                <View style={styles.stepContent}>
-                  <ThemedText style={styles.stepTitle} type="body" weight="bold">
-                    Unconscious pattern recognition
-                  </ThemedText>
-                  <ThemedText style={styles.stepText} type="body" variant="secondary">
-                    The brain automatically identifies recurring structures without conscious
-                    analysis or grammar study.
-                  </ThemedText>
-                </View>
+              <View style={styles.stepContent}>
+                <ThemedText style={styles.stepTitle} type="body" weight="bold">
+                  Comprehensible input (i+1)
+                </ThemedText>
+                <ThemedText style={styles.stepText} type="body" variant="secondary">
+                  Translations provide meaning context while exposing you to Arabic structures just
+                  beyond your current level.
+                </ThemedText>
               </View>
+            </View>
 
-              <View style={styles.stepItem}>
-                <View style={[styles.stepIcon, { backgroundColor: colors.buttonOverlay }]}>
-                  <Ionicons color={colors.tint} name="refresh-outline" size={20} />
-                </View>
-                <View style={styles.stepContent}>
-                  <ThemedText style={styles.stepTitle} type="body" weight="bold">
-                    Natural order acquisition
-                  </ThemedText>
-                  <ThemedText style={styles.stepText} type="body" variant="secondary">
-                    Language structures are acquired in a predictable sequence through repeated
-                    meaningful exposure.
-                  </ThemedText>
-                </View>
+            <View style={styles.stepItem}>
+              <View style={[styles.stepIcon, { backgroundColor: colors.buttonOverlay }]}>
+                <Ionicons color={colors.tint} name="bulb-outline" size={20} />
               </View>
+              <View style={styles.stepContent}>
+                <ThemedText style={styles.stepTitle} type="body" weight="bold">
+                  Unconscious pattern recognition
+                </ThemedText>
+                <ThemedText style={styles.stepText} type="body" variant="secondary">
+                  The brain automatically identifies recurring structures without conscious analysis
+                  or grammar study.
+                </ThemedText>
+              </View>
+            </View>
 
-              <View style={styles.stepItem}>
-                <View style={[styles.stepIcon, { backgroundColor: colors.progressBackground }]}>
-                  <Ionicons color={colors.tint} name="checkmark-circle-outline" size={20} />
-                </View>
-                <View style={styles.stepContent}>
-                  <ThemedText style={styles.stepTitle} type="body" weight="bold">
-                    Internalized competence
-                  </ThemedText>
-                  <ThemedText style={styles.stepText} type="body" variant="secondary">
-                    Arabic structures become part of your acquired language system, enabling fluent
-                    use.
-                  </ThemedText>
-                </View>
+            <View style={styles.stepItem}>
+              <View style={[styles.stepIcon, { backgroundColor: colors.buttonOverlay }]}>
+                <Ionicons color={colors.tint} name="refresh-outline" size={20} />
+              </View>
+              <View style={styles.stepContent}>
+                <ThemedText style={styles.stepTitle} type="body" weight="bold">
+                  Natural order acquisition
+                </ThemedText>
+                <ThemedText style={styles.stepText} type="body" variant="secondary">
+                  Language structures are acquired in a predictable sequence through repeated
+                  meaningful exposure.
+                </ThemedText>
+              </View>
+            </View>
+
+            <View style={styles.stepItem}>
+              <View style={[styles.stepIcon, { backgroundColor: colors.progressBackground }]}>
+                <Ionicons color={colors.tint} name="checkmark-circle-outline" size={20} />
+              </View>
+              <View style={styles.stepContent}>
+                <ThemedText style={styles.stepTitle} type="body" weight="bold">
+                  Internalized competence
+                </ThemedText>
+                <ThemedText style={styles.stepText} type="body" variant="secondary">
+                  Arabic structures become part of your acquired language system, enabling fluent
+                  use.
+                </ThemedText>
               </View>
             </View>
           </View>
+        </View>
 
-          {/* Why Classical Texts */}
-          <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
-              Why Classical Islamic Texts
-            </ThemedText>
+        {/* Why Classical Texts */}
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
+            Why Classical Islamic Texts
+          </ThemedText>
 
-            <View style={styles.reasonsList}>
-              <View style={styles.reasonItem}>
-                <View style={[styles.reasonIcon, { backgroundColor: colors.progressBackground }]}>
-                  <Ionicons color={colors.tint} name="heart-outline" size={20} />
-                </View>
-                <View style={styles.reasonContent}>
-                  <ThemedText style={styles.reasonTitle} type="body" weight="bold">
-                    Low affective filter
-                  </ThemedText>
-                  <ThemedText style={styles.reasonText} type="body" variant="secondary">
-                    Personal interest in content reduces anxiety and increases motivation, enabling
-                    optimal acquisition.
-                  </ThemedText>
-                </View>
+          <View style={styles.reasonsList}>
+            <View style={styles.reasonItem}>
+              <View style={[styles.reasonIcon, { backgroundColor: colors.progressBackground }]}>
+                <Ionicons color={colors.tint} name="heart-outline" size={20} />
               </View>
-
-              <View style={styles.reasonItem}>
-                <View style={[styles.reasonIcon, { backgroundColor: colors.progressBackground }]}>
-                  <Ionicons color={colors.tint} name="library-outline" size={20} />
-                </View>
-                <View style={styles.reasonContent}>
-                  <ThemedText style={styles.reasonTitle} type="body" weight="bold">
-                    Rich linguistic input
-                  </ThemedText>
-                  <ThemedText style={styles.reasonText} type="body" variant="secondary">
-                    Complete Arabic grammatical system and extensive vocabulary in authentic,
-                    meaningful contexts.
-                  </ThemedText>
-                </View>
+              <View style={styles.reasonContent}>
+                <ThemedText style={styles.reasonTitle} type="body" weight="bold">
+                  Low affective filter
+                </ThemedText>
+                <ThemedText style={styles.reasonText} type="body" variant="secondary">
+                  Personal interest in content reduces anxiety and increases motivation, enabling
+                  optimal acquisition.
+                </ThemedText>
               </View>
+            </View>
 
-              <View style={styles.reasonItem}>
-                <View style={[styles.reasonIcon, { backgroundColor: colors.progressBackground }]}>
-                  <Ionicons color={colors.tint} name="trending-up-outline" size={20} />
-                </View>
-                <View style={styles.reasonContent}>
-                  <ThemedText style={styles.reasonTitle} type="body" weight="bold">
-                    Optimal comprehensibility
-                  </ThemedText>
-                  <ThemedText style={styles.reasonText} type="body" variant="secondary">
-                    Familiar concepts in Arabic with translation support create ideal i+1 conditions
-                    for acquisition.
-                  </ThemedText>
-                </View>
+            <View style={styles.reasonItem}>
+              <View style={[styles.reasonIcon, { backgroundColor: colors.progressBackground }]}>
+                <Ionicons color={colors.tint} name="library-outline" size={20} />
+              </View>
+              <View style={styles.reasonContent}>
+                <ThemedText style={styles.reasonTitle} type="body" weight="bold">
+                  Rich linguistic input
+                </ThemedText>
+                <ThemedText style={styles.reasonText} type="body" variant="secondary">
+                  Complete Arabic grammatical system and extensive vocabulary in authentic,
+                  meaningful contexts.
+                </ThemedText>
+              </View>
+            </View>
+
+            <View style={styles.reasonItem}>
+              <View style={[styles.reasonIcon, { backgroundColor: colors.progressBackground }]}>
+                <Ionicons color={colors.tint} name="trending-up-outline" size={20} />
+              </View>
+              <View style={styles.reasonContent}>
+                <ThemedText style={styles.reasonTitle} type="body" weight="bold">
+                  Optimal comprehensibility
+                </ThemedText>
+                <ThemedText style={styles.reasonText} type="body" variant="secondary">
+                  Familiar concepts in Arabic with translation support create ideal i+1 conditions
+                  for acquisition.
+                </ThemedText>
               </View>
             </View>
           </View>
+        </View>
 
-          {/* Research */}
-          <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
-              Research Foundation
-            </ThemedText>
-            <ThemedText style={styles.bodyText} type="body">
-              Krashens Input Hypothesis demonstrates that comprehensible input is the primary
-              mechanism for language acquisition. Research shows optimal learning occurs when
-              learners understand 90-95% of content.
-            </ThemedText>
-          </View>
+        {/* Research */}
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
+            Research Foundation
+          </ThemedText>
+          <ThemedText style={styles.bodyText} type="body">
+            Krashens Input Hypothesis demonstrates that comprehensible input is the primary
+            mechanism for language acquisition. Research shows optimal learning occurs when learners
+            understand 90-95% of content.
+          </ThemedText>
+        </View>
 
-          {/* Practical Implications */}
-          <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
-              What This Means
-            </ThemedText>
+        {/* Practical Implications */}
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
+            What This Means
+          </ThemedText>
 
-            <View style={styles.benefitsList}>
-              <View style={styles.benefitItem}>
-                <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
-                  <Ionicons color={colors.tint} name="bulb-outline" size={20} />
-                </View>
-                <View style={styles.benefitContent}>
-                  <ThemedText style={styles.benefitText} type="body">
-                    <ThemedText weight="bold">Acquisition, not learning</ThemedText>
-                    {'\n'}Language develops through understanding, not memorization
-                  </ThemedText>
-                </View>
+          <View style={styles.benefitsList}>
+            <View style={styles.benefitItem}>
+              <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
+                <Ionicons color={colors.tint} name="bulb-outline" size={20} />
               </View>
-              <View style={styles.benefitItem}>
-                <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
-                  <Ionicons color={colors.tint} name="eye-outline" size={20} />
-                </View>
-                <View style={styles.benefitContent}>
-                  <ThemedText style={styles.benefitText} type="body">
-                    <ThemedText weight="bold">Focus on meaning</ThemedText>
-                    {'\n'}Understanding messages drives language development
-                  </ThemedText>
-                </View>
+              <View style={styles.benefitContent}>
+                <ThemedText style={styles.benefitText} type="body">
+                  <ThemedText weight="bold">Acquisition, not learning</ThemedText>
+                  {'\n'}Language develops through understanding, not memorization
+                </ThemedText>
               </View>
-              <View style={styles.benefitItem}>
-                <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
-                  <Ionicons color={colors.tint} name="leaf-outline" size={20} />
-                </View>
-                <View style={styles.benefitContent}>
-                  <ThemedText style={styles.benefitText} type="body">
-                    <ThemedText weight="bold">Natural process</ThemedText>
-                    {'\n'}Acquisition occurs automatically with sufficient comprehensible input
-                  </ThemedText>
-                </View>
+            </View>
+            <View style={styles.benefitItem}>
+              <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
+                <Ionicons color={colors.tint} name="eye-outline" size={20} />
+              </View>
+              <View style={styles.benefitContent}>
+                <ThemedText style={styles.benefitText} type="body">
+                  <ThemedText weight="bold">Focus on meaning</ThemedText>
+                  {'\n'}Understanding messages drives language development
+                </ThemedText>
+              </View>
+            </View>
+            <View style={styles.benefitItem}>
+              <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
+                <Ionicons color={colors.tint} name="leaf-outline" size={20} />
+              </View>
+              <View style={styles.benefitContent}>
+                <ThemedText style={styles.benefitText} type="body">
+                  <ThemedText weight="bold">Natural process</ThemedText>
+                  {'\n'}Acquisition occurs automatically with sufficient comprehensible input
+                </ThemedText>
               </View>
             </View>
           </View>
+        </View>
 
-          {/* Scientific References */}
-          <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
-              Scientific Foundation
-            </ThemedText>
+        {/* Scientific References */}
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
+            Scientific Foundation
+          </ThemedText>
 
-            <View style={styles.referencesList}>
-              <View style={styles.referenceItem}>
-                <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
-                  <Ionicons color={colors.tint} name="document-text-outline" size={20} />
-                </View>
-                <View style={styles.referenceContent}>
-                  <ThemedText style={styles.referenceTitle} type="body" weight="bold">
-                    Krashen, S. (1985)
-                  </ThemedText>
-                  <ThemedText style={styles.referenceText} type="body" variant="secondary">
-                    The Input Hypothesis: Issues and Implications. Longman.
-                  </ThemedText>
-                </View>
+          <View style={styles.referencesList}>
+            <View style={styles.referenceItem}>
+              <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
+                <Ionicons color={colors.tint} name="document-text-outline" size={20} />
               </View>
-
-              <View style={styles.referenceItem}>
-                <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
-                  <Ionicons color={colors.tint} name="document-text-outline" size={20} />
-                </View>
-                <View style={styles.referenceContent}>
-                  <ThemedText style={styles.referenceTitle} type="body" weight="bold">
-                    Krashen, S. & Terrell, T. (1983)
-                  </ThemedText>
-                  <ThemedText style={styles.referenceText} type="body" variant="secondary">
-                    The Natural Approach: Language Acquisition in the Classroom. Prentice Hall.
-                  </ThemedText>
-                </View>
+              <View style={styles.referenceContent}>
+                <ThemedText style={styles.referenceTitle} type="body" weight="bold">
+                  Krashen, S. (1985)
+                </ThemedText>
+                <ThemedText style={styles.referenceText} type="body" variant="secondary">
+                  The Input Hypothesis: Issues and Implications. Longman.
+                </ThemedText>
               </View>
+            </View>
 
-              <View style={styles.referenceItem}>
-                <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
-                  <Ionicons color={colors.tint} name="document-text-outline" size={20} />
-                </View>
-                <View style={styles.referenceContent}>
-                  <ThemedText style={styles.referenceTitle} type="body" weight="bold">
-                    Lightbown, P. & Spada, N. (2013)
-                  </ThemedText>
-                  <ThemedText style={styles.referenceText} type="body" variant="secondary">
-                    How Languages are Learned (4th ed.). Oxford University Press.
-                  </ThemedText>
-                </View>
+            <View style={styles.referenceItem}>
+              <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
+                <Ionicons color={colors.tint} name="document-text-outline" size={20} />
+              </View>
+              <View style={styles.referenceContent}>
+                <ThemedText style={styles.referenceTitle} type="body" weight="bold">
+                  Krashen, S. & Terrell, T. (1983)
+                </ThemedText>
+                <ThemedText style={styles.referenceText} type="body" variant="secondary">
+                  The Natural Approach: Language Acquisition in the Classroom. Prentice Hall.
+                </ThemedText>
+              </View>
+            </View>
+
+            <View style={styles.referenceItem}>
+              <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
+                <Ionicons color={colors.tint} name="document-text-outline" size={20} />
+              </View>
+              <View style={styles.referenceContent}>
+                <ThemedText style={styles.referenceTitle} type="body" weight="bold">
+                  Lightbown, P. & Spada, N. (2013)
+                </ThemedText>
+                <ThemedText style={styles.referenceText} type="body" variant="secondary">
+                  How Languages are Learned (4th ed.). Oxford University Press.
+                </ThemedText>
               </View>
             </View>
           </View>
-        </ThemedView>
+        </View>
       </ThemedView>
-    </>
+    </ThemedView>
   );
 };
 
@@ -452,19 +419,6 @@ const styles = StyleSheet.create({
   referenceText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.1,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.6,
-  },
-
-  // Custom Header Styles
-  customHeader: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.XLARGE,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.LARGE,
-  },
-  customHeaderTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.2,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.3,
-    marginBottom: LAYOUT.SPACING.SMALL,
   },
 });
 

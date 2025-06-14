@@ -20,14 +20,12 @@ export default function AccountLayout(): JSX.Element {
         name="classicalTexts"
         options={createNavigationOptions(colors, {
           title: 'Classical Texts',
-          isRegularScreen: true,
         })}
       />
       <Stack.Screen
         name="learningMethod"
         options={createNavigationOptions(colors, {
           title: 'Learning Method',
-          isRegularScreen: true,
         })}
       />
       <Stack.Screen
