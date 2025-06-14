@@ -16,6 +16,12 @@ const { handleError } = require('@/utils/errorHandling');
 describe('useNavigationWithDebounce', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.runOnlyPendingTimers();
+    jest.useRealTimers();
   });
 
   it('navigates with push by default', () => {
@@ -52,5 +58,31 @@ describe('useNavigationWithDebounce', () => {
 
       expect(handleError).toHaveBeenCalledWith(expect.any(Error));
     });
+  });
+
+  it('debounces rapid navigation calls', () => {
+    const { result } = renderHook(() => useNavigationWithDebounce());
+
+    act(() => {
+      result.current.navigateTo('/home');
+    });
+
+    act(() => {
+      jest.advanceTimersByTime(10);
+    });
+
+    act(() => {
+      result.current.navigateTo('/profile');
+    });
+
+    act(() => {
+      jest.advanceTimersByTime(10);
+    });
+
+    act(() => {
+      result.current.navigateTo('/settings');
+    });
+
+    expect(router.push).toHaveBeenCalledTimes(1);
   });
 });
