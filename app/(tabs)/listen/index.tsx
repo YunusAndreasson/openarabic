@@ -144,10 +144,13 @@ export default function ListenScreen(): JSX.Element {
     handleDelete,
   } = useListenScreen();
 
-  const listenMetadata = {
-    articleId: metadata.articleId ?? null,
-    articleTitle: metadata.articleTitle ?? null,
-  };
+  const listenMetadata = useMemo(
+    () => ({
+      articleId: metadata.articleId ?? null,
+      articleTitle: metadata.articleTitle ?? null,
+    }),
+    [metadata.articleId, metadata.articleTitle]
+  );
 
   const {
     canShowEmpty,
