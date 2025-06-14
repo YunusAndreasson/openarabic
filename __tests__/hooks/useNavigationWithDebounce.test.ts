@@ -84,5 +84,16 @@ describe('useNavigationWithDebounce', () => {
     });
 
     expect(router.push).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      jest.advanceTimersByTime(100);
+    });
+
+    act(() => {
+      result.current.navigateTo('/again');
+    });
+
+    expect(router.push).toHaveBeenCalledTimes(2);
+    expect(router.push).toHaveBeenNthCalledWith(2, '/again');
   });
 });
