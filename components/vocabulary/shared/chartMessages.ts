@@ -13,7 +13,6 @@ export const CHART_LABELS = {
   STRENGTH: 'recent strength', // Latest from 7-day progression
   RETENTION: "today's retention", // Today's memory forecast
   SPEED: 'recent learning speed', // Latest from 7-day efficiency data
-  DIFFICULTY: 'overall challenge level', // Analysis across all words
 
   // Word categories
   MASTERED: 'mastered',
@@ -134,27 +133,6 @@ export const generateChartSubtitle = {
 
     return `${PERFORMANCE_DESCRIPTORS[performance].medium} - ${criticalWords} words fading`;
   },
-
-  difficulty: (
-    hardWordsPercentage: number,
-    distribution: 'balanced' | 'challenging' | 'easy'
-  ): string => {
-    if (hardWordsPercentage === 0) {
-      return 'Add words to see difficulty levels';
-    }
-
-    switch (distribution) {
-      case 'easy':
-        return `${Math.round(hardWordsPercentage)}% struggling - ready for harder content`;
-      case 'challenging':
-        return `${Math.round(hardWordsPercentage)}% struggling - focus on review`;
-      default:
-        if (hardWordsPercentage > 25) {
-          return `${Math.round(hardWordsPercentage)}% struggling - prioritize practice`;
-        }
-        return 'Well-balanced difficulty spread';
-    }
-  },
 } as const;
 
 // Standardized empty state messages
@@ -162,6 +140,5 @@ export const EMPTY_STATE_MESSAGES = {
   mastery: 'Review words to track your memory strength',
   efficiency: 'Practice to see your learning speed',
   retrievability: 'Study words to monitor your retention',
-  difficulty: 'Add words to see challenge levels',
   general: 'Start studying to see your progress',
 } as const;

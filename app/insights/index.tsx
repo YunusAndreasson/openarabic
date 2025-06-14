@@ -12,7 +12,8 @@ import { LAYOUT } from '@/constants/layout';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
-import { selectionFeedback } from '@/utils/haptics';
+
+import { INFO_TITLES } from './_layout';
 
 export default function InsightsScreen(): JSX.Element {
   const { user } = useAuth();
@@ -26,7 +27,6 @@ export default function InsightsScreen(): JSX.Element {
 
   const handleInfoPress = useCallback(
     (type: string) => {
-      selectionFeedback();
       router.push(`/insights/info/${type}`);
     },
     [router]
@@ -65,7 +65,7 @@ export default function InsightsScreen(): JSX.Element {
         {/* Word Mastery Chart */}
         <View style={styles.chartSection}>
           <SectionTitle
-            title="Word Mastery"
+            title={INFO_TITLES.mastery}
             subtitle="Memory strength across your vocabulary"
             onInfoPress={() => handleInfoPress('mastery')}
           />
@@ -79,7 +79,7 @@ export default function InsightsScreen(): JSX.Element {
         {/* Learning Progress Chart */}
         <View style={styles.chartSection}>
           <SectionTitle
-            title="Learning Progress"
+            title={INFO_TITLES.efficiency}
             subtitle="Vocabulary acquisition velocity"
             onInfoPress={() => handleInfoPress('efficiency')}
           />
@@ -93,7 +93,7 @@ export default function InsightsScreen(): JSX.Element {
         {/* Review Timing Chart */}
         <View style={styles.chartSection}>
           <SectionTitle
-            title="Review Timing"
+            title={INFO_TITLES.retrievability}
             subtitle="Memory retention and optimal practice timing"
             onInfoPress={() => handleInfoPress('retrievability')}
           />

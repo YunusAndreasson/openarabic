@@ -14,7 +14,6 @@ import { withOpacity } from '@/utils/colorUtils';
 type InfoModalType = 'efficiency' | 'mastery' | 'retrievability';
 
 interface InfoContent {
-  title: string;
   subtitle: string;
   sections: {
     title: string;
@@ -26,7 +25,6 @@ interface InfoContent {
 
 const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
   mastery: {
-    title: 'Word Mastery',
     subtitle: 'Track how vocabulary moves from new learning to permanent knowledge.',
     sections: [
       {
@@ -56,7 +54,6 @@ const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
     ],
   },
   retrievability: {
-    title: 'Review Timing',
     subtitle: 'Understand memory decay patterns and discover optimal timing for maximum retention.',
     sections: [
       {
@@ -86,7 +83,6 @@ const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
     ],
   },
   efficiency: {
-    title: 'Learning Speed',
     subtitle:
       'Measure learning velocity and discover how to optimize your vocabulary acquisition rate.',
     sections: [
@@ -149,13 +145,6 @@ export default function InfoModalScreen(): JSX.Element {
         showsVerticalScrollIndicator={true}
         bounces={true}
       >
-        {/* Content Title */}
-        <View style={styles.titleContainer}>
-          <ThemedText style={styles.contentTitle} type="heading2" weight="bold">
-            {content.title}
-          </ThemedText>
-        </View>
-
         {/* Subtitle */}
         <View style={styles.subtitleContainer}>
           <ThemedText style={styles.subtitle} type="body" variant="secondary">
@@ -222,13 +211,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingTop: LAYOUT.SPACING.LARGE,
   },
-  titleContainer: {
-    marginBottom: LAYOUT.SPACING.XLARGE,
-  },
-  contentTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE + LAYOUT.SPACING.TINY / 2,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE + LAYOUT.SPACING.TINY / 2,
-  },
+
   subtitleContainer: {
     marginBottom: LAYOUT.SPACING.XLARGE,
   },
