@@ -1,11 +1,13 @@
 import { useMemo } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react-native';
 
 import type { SessionMetrics } from '@/types/review.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 
 export interface EncouragingMetric {
   text: string;
-  icon: string;
+  icon: ComponentProps<typeof Ionicons>['name'];
   color: string;
   type: 'accuracy' | 'efficiency' | 'effort' | 'mastery' | 'streak';
 }

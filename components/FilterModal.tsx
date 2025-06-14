@@ -79,7 +79,7 @@ const FilterModal: React.FC<FilterModalProps> = ({ availableAuthors }) => {
                   onPress={() => handleSortSelect(option.key)}
                 >
                   <Ionicons
-                    name={option.icon as any}
+                    name={option.icon}
                     size={20}
                     color={isSelected ? colors.tint : colors.secondaryText}
                   />
