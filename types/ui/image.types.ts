@@ -57,12 +57,6 @@ export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressabl
   priority?: 'high' | 'low' | 'normal';
 
 
-  /** Whether to prefetch this image before it's displayed */
-  prefetch?: boolean;
-
-  /** ThumbHash string for efficient placeholder generation */
-  thumbhash?: string;
-
   /** Placeholder image using blurhash or thumbhash */
   placeholder?: { blurhash?: string; thumbhash?: string };
 
