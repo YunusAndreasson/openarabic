@@ -22,4 +22,34 @@ describe('useWordSizing', () => {
     expect(result.current).toBeLessThan(100);
     expect(result.current).toBeGreaterThanOrEqual(40);
   });
+
+  it('returns max font size when word is undefined', () => {
+    jest.spyOn(layout, 'useScreenWidth').mockReturnValue(320);
+    const { result } = renderHook(() => useWordSizing(undefined, { maxFontSize: 120, minFontSize: 60 }));
+    expect(result.current).toBe(120);
+  });
+
+  it('returns max font size for words equal to long word threshold', () => {
+    jest.spyOn(layout, 'useScreenWidth').mockReturnValue(400);
+    const thresholdWord = 'abcdefghijklmno'; // 15 characters
+    const { result } = renderHook(() =>
+      useWordSizing(thresholdWord, { maxFontSize: 100, minFontSize: 50 })
+    );
+    expect(result.current).toBe(100);
+  });
+
+  it('calculates scaled size between min and max for long words', () => {
+    jest.spyOn(layout, 'useScreenWidth').mockReturnValue(1000);
+    const longWord = 'abcdefghijklmnopqrst'; // 20 characters
+    const { result } = renderHook(() =>
+      useWordSizing(longWord, { maxFontSize: 100, minFontSize: 50 })
+    );
+    expect(result.current).toBe(75);
+  });
+
+  it('uses default options when none provided', () => {
+    jest.spyOn(layout, 'useScreenWidth').mockReturnValue(375);
+    const { result } = renderHook(() => useWordSizing('short')); // defaults 50/100
+    expect(result.current).toBe(100);
+  });
 });
