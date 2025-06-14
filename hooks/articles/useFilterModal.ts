@@ -28,6 +28,8 @@ export const DATE_RANGE_OPTIONS = [
   { key: 'all', label: 'All time' },
 ] as const;
 
+export const AUTHOR_CHUNK_SIZE = 6;
+
 interface SortOption {
   key: FilterState['sort']['field'];
   label: string;
@@ -150,10 +152,9 @@ export function useFilterModal(availableAuthors: Author[]): UseFilterModalResult
   }, [selectedAuthorsCount, availableAuthors, filters.authorIds]);
 
   const authorChunks = useMemo(() => {
-    const chunkSize = 6;
     const chunks: Author[][] = [];
-    for (let i = 0; i < availableAuthors.length; i += chunkSize) {
-      chunks.push(availableAuthors.slice(i, i + chunkSize));
+    for (let i = 0; i < availableAuthors.length; i += AUTHOR_CHUNK_SIZE) {
+      chunks.push(availableAuthors.slice(i, i + AUTHOR_CHUNK_SIZE));
     }
     return chunks;
   }, [availableAuthors]);
