@@ -15,8 +15,8 @@ import { useWordSizing } from '@/hooks/vocabulary/useWordSizing';
 import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import type { SessionMetrics, WordConfidence } from '@/types/review.types';
-import type { StudyWord } from '@/types/vocabulary.types';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
+import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 
 // Consolidated refs for easier state management

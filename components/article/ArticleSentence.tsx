@@ -72,7 +72,10 @@ function ArticleSentenceComponent({
   useEffect(() => {
     // Recreate refs when the word list changes
     wordRefs.current = words.map(
-      () => createRef<ComponentRef<typeof TouchableOpacity>>() as React.RefObject<ComponentRef<typeof TouchableOpacity>>
+      () =>
+        createRef<ComponentRef<typeof TouchableOpacity>>() as React.RefObject<
+          ComponentRef<typeof TouchableOpacity>
+        >
     );
   }, [words]);
 
@@ -109,8 +112,9 @@ function ArticleSentenceComponent({
     const renderWordWithProps = (word: SentenceWord, index: number) => {
       const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
       if (!wordRefs.current[index]) {
-        wordRefs.current[index] =
-          createRef<ComponentRef<typeof TouchableOpacity>>() as React.RefObject<ComponentRef<typeof TouchableOpacity>>;
+        wordRefs.current[index] = createRef<
+          ComponentRef<typeof TouchableOpacity>
+        >() as React.RefObject<ComponentRef<typeof TouchableOpacity>>;
       }
       const isDueWord = word.root_id ? dueWordRootIds.has(word.root_id) : false;
       return renderWord ? (

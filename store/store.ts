@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
-import type { PersistConfig, PersistedState } from 'redux-persist/es/types';
+import type { PersistedState } from 'redux-persist';
+import type { PersistConfig } from 'redux-persist/es/types';
 
 import filtersReducer from './filtersSlice';
 import listenReducer from './listenSlice';
@@ -43,9 +44,7 @@ const persistConfig: PersistConfig<RootStateShape> = {
   migrate: (state: PersistedState) => {
     const typedState = state as RootStateShape | undefined;
     if (typedState && typedState.settings && !typedState.settings.reminderTime) {
-      return Promise.resolve(
-        migrations[0](typedState) as unknown as PersistedState
-      );
+      return Promise.resolve(migrations[0](typedState) as unknown as PersistedState);
     }
     return Promise.resolve(state);
   },
