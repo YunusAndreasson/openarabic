@@ -5,7 +5,7 @@ import Animated from 'react-native-reanimated';
 import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
 import DeleteButton from '@/components/listen/DeleteButton';
-import DragHandle from '@/components/listen/DragHandle';
+import DragHandle, { type DragHandleProps } from '@/components/listen/DragHandle';
 import PlayButton from '@/components/listen/PlayButton';
 import {
   LAYOUT,
@@ -25,7 +25,7 @@ interface ArticleCardProps {
   active?: boolean;
   editMode?: boolean;
   onDelete?: () => void;
-  dragHandleProps?: any;
+  dragHandleProps?: DragHandleProps;
   isBeingDragged?: boolean;
   // Play button props
   onPlayPress?: () => void;

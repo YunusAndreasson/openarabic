@@ -5,7 +5,7 @@ import { StyleSheet, TouchableOpacity } from 'react-native';
 import { MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
-interface DragHandleProps {
+export interface DragHandleProps {
   onLongPress?: () => void;
   delayLongPress?: number;
   style?: any;
