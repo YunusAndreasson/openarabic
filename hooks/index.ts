@@ -40,4 +40,3 @@ export * from './utils';
 export * from './ui';
 
 // Misc hooks
-export * from './useArticlesAndDueWordsLoaded';

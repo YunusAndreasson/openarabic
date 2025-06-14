@@ -32,8 +32,9 @@ jest.mock('../../hooks/app/useAppPreloader', () => ({
   }),
 }));
 
-jest.mock('../../hooks/useArticlesAndDueWordsLoaded', () => ({
-  useArticlesAndDueWordsLoaded: () => true,
+jest.mock('../../hooks/app/useArticlesAndDueWordsLoaded', () => ({
+  useReadTabDataLoaded: () => true,
+  useArticlesAndDueWordsLoaded: () => true, // Keep for backward compatibility
 }));
 
 jest.mock('../../hooks/theme/useColors', () => ({

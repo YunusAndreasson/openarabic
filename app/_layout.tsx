@@ -27,10 +27,10 @@ import { Theme } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
 import { createNavigationOptions } from '@/constants/modal';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
+import { useReadTabDataLoaded } from '@/hooks/app/useArticlesAndDueWordsLoaded';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
-import { useArticlesAndDueWordsLoaded } from '@/hooks/useArticlesAndDueWordsLoaded';
 import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import type { RootState } from '@/store/store';
 import { store, persistor } from '@/store/store';
@@ -117,7 +117,7 @@ function AppContent() {
   });
 
   const { preloadAppData, isLoaded } = useAppPreloader();
-  const articlesAndDueWordsLoaded = useArticlesAndDueWordsLoaded();
+  const readTabDataLoaded = useReadTabDataLoaded();
 
   useEffect(() => {
     if (navigationRef?.current) {
@@ -182,13 +182,13 @@ function AppContent() {
     const authIsReady = !isAuthLoading || session !== null;
 
     // Content is ready or we've waited long enough
-    const contentIsReady = isLoaded && articlesAndDueWordsLoaded;
+    const contentIsReady = isLoaded && readTabDataLoaded;
 
     // Only proceed when fonts are ready AND (auth is ready OR we have content)
     if (fontsAreReady && (authIsReady || contentIsReady)) {
       setAppReady(true);
     }
-  }, [fontsLoaded, isAuthLoading, session, isLoaded, articlesAndDueWordsLoaded]);
+  }, [fontsLoaded, isAuthLoading, session, isLoaded, readTabDataLoaded]);
 
   // Cleanup effect for AppState subscription
   useEffect(() => {
