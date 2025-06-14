@@ -16,6 +16,12 @@ from translate.core.arabic_text import (
     preprocess_text_for_tts,
 )
 from translate.core.utils import load_api_keys
+from translate.core.storage_utils import (
+    supabase,
+    SUPABASE_URL,
+    check_file_exists,
+    upload_to_storage,
+)
 
 # Load environment variables once
 load_api_keys()
@@ -179,6 +185,59 @@ def ensure_valid_cache_files():
 def generate_audio_filename() -> str:
     """Generate a unique filename for the audio file."""
     return f"{uuid.uuid4()}.mp3"
+
+
+def get_cached_audio_url(cache_key: str, label: str | None = None) -> Optional[str]:
+    """Return the audio URL from cache or storage and ensure local cache is valid."""
+
+    cache_path = os.path.join(AUDIO_CACHE_DIR, cache_key)
+    storage_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{cache_key}"
+
+    if check_file_exists("audio", cache_key):
+        if not os.path.exists(cache_path):
+            try:
+                response = supabase.storage.from_("audio").download(cache_key)
+                if response:
+                    with open(cache_path, "wb") as f:
+                        f.write(response)
+            except Exception:
+                pass
+        if label:
+            print(f"Using existing audio for {label}: {storage_url}")
+        return storage_url
+
+    if os.path.exists(cache_path):
+        try:
+            with open(cache_path, "rb") as f:
+                file_content = f.read()
+            if validate_mp3(file_content, is_cached_file=True):
+                try:
+                    with open(cache_path, "rb") as f:
+                        result_url = upload_to_storage("audio", cache_key, f)
+                        if result_url:
+                            if label:
+                                print(f"Uploaded cache audio for {label}: {result_url}")
+                            else:
+                                print(f"Uploaded cache audio for {cache_key}: {result_url}")
+                            return result_url
+                        else:
+                            if label:
+                                print(f"Failed to get URL for {label} cache upload")
+                            else:
+                                print(f"Failed to get URL for {cache_key} cache upload")
+                except Exception as e:
+                    print(f"Cache upload failed for {label or cache_key}: {e}")
+                    return None
+            else:
+                os.remove(cache_path)
+                return None
+        except Exception as e:
+            print(f"Error with cache file for {label or cache_key}: {e}")
+            if os.path.exists(cache_path):
+                os.remove(cache_path)
+            return None
+
+    return None
 
 
 @retry_operation(max_attempts=3, delay=1, backoff=2)
