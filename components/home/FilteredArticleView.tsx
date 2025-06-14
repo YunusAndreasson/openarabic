@@ -1,5 +1,5 @@
 /* eslint-disable react/no-unused-prop-types */
-import { FlashList } from '@shopify/flash-list';
+import { FlashList, type OverrideItemLayoutParams } from '@shopify/flash-list';
 import React, { useMemo, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -70,7 +70,10 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
         ItemSeparatorComponent={() => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />}
         renderItem={renderItemCallback}
         showsVerticalScrollIndicator={true}
-        overrideItemLayout={layout => {
+        overrideItemLayout={(
+          layout: OverrideItemLayoutParams,
+          _item: Article
+        ) => {
           layout.size = ITEM_HEIGHT;
         }}
       />
