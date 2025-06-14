@@ -33,6 +33,10 @@ jest.mock('expo-router', () => ({
 
 jest.mock('@sentry/react-native', () => ({}));
 
+jest.mock('@/utils/errorHandling', () => ({
+  handleError: jest.fn(),
+}));
+
 jest.mock('@/services/supabase', () => ({
   supabase: {
     auth: {
@@ -154,5 +158,24 @@ describe('useArticleMutations', () => {
     expect(router.replace).toHaveBeenCalledWith('/auth');
     const { studyWordsFSRSService } = require('@/services/studyWordsFSRS');
     expect(studyWordsFSRSService.toggleFSRSStudyRoot).not.toHaveBeenCalled();
+  });
+
+  describe('error handling', () => {
+    it('calls handleError when session retrieval fails', async () => {
+      const err = new Error('session fail');
+      supabase.auth.getSession.mockRejectedValueOnce(err);
+      const { handleError } = require('@/utils/errorHandling');
+
+      const { result } = renderHook(
+        () => useArticleMutations('user-1', jest.fn()),
+        { wrapper: createWrapper() }
+      );
+
+      await act(async () => {
+        await result.current.handleToggleReadingList(10, false);
+      });
+
+      expect(handleError).toHaveBeenCalledWith(err);
+    });
   });
 });
