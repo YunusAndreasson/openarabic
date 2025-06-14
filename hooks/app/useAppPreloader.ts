@@ -168,7 +168,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
           queryFn: () =>
             studyWordsFSRSService.getFSRSWords(user.id, {
               onlyDue: true,
-              limit: 50, // Limit initial load
+              limit: 100, // Increased limit for better initial coverage
             }),
           ...CACHE_TIMES.CRITICAL,
           retry: 3,
@@ -350,7 +350,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
           queryFn: () =>
             studyWordsFSRSService.getFSRSWords(user.id, {
               onlyDue: true,
-              limit: 50,
+              limit: 100,
             }),
           ...CACHE_TIMES.CRITICAL,
           retry: 2,

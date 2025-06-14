@@ -17,6 +17,8 @@ interface FSRSWordUpdate {
   fsrs_lapses: number;
   fsrs_state: number;
   fsrs_last_review: string;
+  success_streak?: number;
+  difficulty?: number;
 }
 
 // Define options for fetching FSRS words
@@ -211,7 +213,7 @@ export const studyWordsFSRSService = {
     return true;
   },
 
-  // Batch update FSRS parameters and record a review in a single request
+  // Batch update FSRS parameters and record a review in a single atomic operation
   async updateWordAndReview(
     userId: string,
     rootId: number,
@@ -221,19 +223,44 @@ export const studyWordsFSRSService = {
   ): Promise<boolean> {
     await checkAuthentication(userId);
 
-    // Since the RPC function doesn't exist, use individual operations
-    // This is less efficient but will work
     try {
-      // First update the word
-      await this.updateFSRSWord(userId, rootId, update);
+      // Use RPC function for atomic update and review recording
+      const { data, error } = await (supabase as any).rpc('update_word_and_review', {
+        p_user_id: userId,
+        p_root_id: rootId,
+        p_fsrs_due: update.fsrs_due,
+        p_fsrs_stability: update.fsrs_stability,
+        p_fsrs_difficulty: update.fsrs_difficulty,
+        p_fsrs_elapsed_days: update.fsrs_elapsed_days,
+        p_fsrs_scheduled_days: update.fsrs_scheduled_days,
+        p_fsrs_learning_steps: update.fsrs_learning_steps,
+        p_fsrs_reps: update.fsrs_reps,
+        p_fsrs_lapses: update.fsrs_lapses,
+        p_fsrs_state: update.fsrs_state,
+        p_fsrs_last_review: update.fsrs_last_review,
+        p_rating: rating,
+        p_learning_steps: learningSteps,
+        p_success_streak: update.success_streak ?? null,
+        p_difficulty: update.difficulty ?? null,
+      });
 
-      // Then record the review
-      await this.recordFSRSReview(userId, rootId, rating, learningSteps);
+      if (error) {
+        throw error;
+      }
 
-      return true;
+      return Boolean(data);
     } catch (error) {
-      console.log('Error in updateWordAndReview fallback:', error);
-      throw error;
+      console.log('Error in updateWordAndReview RPC:', error);
+
+      // Fallback to individual operations if RPC fails (e.g., during migration)
+      try {
+        await this.updateFSRSWord(userId, rootId, update);
+        await this.recordFSRSReview(userId, rootId, rating, learningSteps);
+        return true;
+      } catch (fallbackError) {
+        console.log('Error in updateWordAndReview fallback:', fallbackError);
+        throw fallbackError;
+      }
     }
   },
 

@@ -25,17 +25,35 @@ interface FSRSCounters {
   uniqueWords: Set<number>;
 }
 
-// Position tracking for efficient queue management
-interface PositionTracker {
-  wordPositions: Map<number, number[]>;
-  lastInsertPosition: number;
-}
-
 // Enhanced state tracking with more fields
 interface EnhancedFSRSStateTracking extends FSRSStateTracking {
   completionTriggered: boolean;
   isProcessingUpdate: boolean;
   queueInitialized: boolean;
+}
+
+/**
+ * Calculate priority for a word based on due date and FSRS metrics
+ * Lower priority values = higher priority in queue (processed first)
+ */
+function calculateWordPriority(word: StudyWord): number {
+  const now = new Date();
+  const dueDate = word.fsrs_due ? new Date(word.fsrs_due) : now;
+
+  // Primary factor: how overdue the word is (in hours)
+  // Negative values for overdue words, positive for future words
+  const hoursOverdue = (now.getTime() - dueDate.getTime()) / (1000 * 60 * 60);
+
+  // Secondary factor: stability (lower stability = higher priority for review)
+  const stability = word.fsrs_stability ?? 1;
+  const stabilityFactor = Math.max(0, 10 - stability) * 0.1; // 0-1 range
+
+  // Tertiary factor: difficulty (higher difficulty = slightly higher priority)
+  const difficulty = word.fsrs_difficulty ?? 6.5;
+  const difficultyFactor = (difficulty - 5) * 0.01; // Small adjustment
+
+  // Combine factors: overdue time is primary, stability and difficulty are minor adjustments
+  return -hoursOverdue + stabilityFactor + difficultyFactor;
 }
 
 export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
@@ -50,12 +68,6 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
     processedWords: 0,
     knownWords: 0,
     uniqueWords: new Set<number>(),
-  });
-
-  // Position tracking for efficient queue management
-  const positionTrackerRef = useRef<PositionTracker>({
-    wordPositions: new Map(),
-    lastInsertPosition: 0,
   });
 
   // Priority queue for efficient reordering - using proper signature
@@ -99,7 +111,8 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
     queryKey: userId ? FSRS_QUERY_KEYS.due(userId) : ['fsrs-words', 'due'],
     queryFn: async () => {
       if (!userId) return [];
-      return studyWordsFSRSService.getFSRSWords(userId, { onlyDue: true, limit: 50 });
+      // Remove the 50-word limit to fetch all due words
+      return studyWordsFSRSService.getFSRSWords(userId, { onlyDue: true });
     },
     enabled: !!userId,
     refetchOnMount: true,
@@ -129,17 +142,18 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
         stateTrackingRef.current.isProcessingUpdate = false;
 
         queueRef.current = new PriorityQueue<StudyWord>();
-        dueWords.forEach((word, index) => {
-          queueRef.current.push(word, index);
+
+        // Prioritize words by due date and FSRS metrics instead of array index
+        dueWords.forEach(word => {
+          const priority = calculateWordPriority(word);
+          queueRef.current.push(word, priority);
         });
 
         const ordered = queueRef.current.toArray();
         setWordQueue(ordered);
         const first = queueRef.current.pop();
         setCurrentWord(first || null);
-        // Initialize position tracker with new queue
-        updatePositionTracker(ordered);
-      } else if (!isLoading) {
+      } else {
         setIsComplete(true);
         if (onComplete && !stateTrackingRef.current.completionTriggered) {
           stateTrackingRef.current.completionTriggered = true;
@@ -180,21 +194,6 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
     };
   }, []);
 
-  // Helper function to update position tracking when queue changes
-  const updatePositionTracker = useCallback((queue: StudyWord[]) => {
-    const tracker = positionTrackerRef.current;
-    tracker.wordPositions.clear();
-
-    queue.forEach((word, index) => {
-      const positions = tracker.wordPositions.get(word.root_id);
-      if (positions) {
-        positions.push(index);
-      } else {
-        tracker.wordPositions.set(word.root_id, [index]);
-      }
-    });
-  }, []);
-
   const updateWord = useCallback(
     async (rootId: number, confidence: WordConfidence) => {
       if (!userId || !currentWord || currentWord.root_id !== rootId) {
@@ -219,8 +218,8 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
           confidence === 'known'
             ? Rating.Good
             : confidence === 'vague'
-              ? Rating.Hard
-              : Rating.Again;
+            ? Rating.Hard
+            : Rating.Again;
 
         const { card: newCard } = fsrsInstance.next(card, now, rating);
 
@@ -269,8 +268,12 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
             fsrs_state: wordUpdateData.fsrs_state,
             fsrs_last_review: wordUpdateData.fsrs_last_review,
           };
+
           // Add the word back to the queue with spacing priority
-          const futurePriority = countersRef.current.processedWords + MIN_WORD_SPACING;
+          // Calculate priority to ensure spacing while maintaining due date priority
+          const basePriority = calculateWordPriority(updatedWord);
+          const spacingPenalty = MIN_WORD_SPACING * 0.5; // Small penalty to ensure spacing
+          const futurePriority = basePriority + spacingPenalty;
           queueRef.current.push(updatedWord, futurePriority);
         }
 
@@ -297,7 +300,6 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
 
         setCurrentWord(nextItem || null);
         setWordQueue(remaining);
-        updatePositionTracker(remaining);
       } catch (error) {
         handleError(error instanceof Error ? error : new Error(String(error)));
       } finally {
@@ -321,11 +323,6 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
       knownWords: 0,
       uniqueWords: new Set(),
     };
-    // Reset position tracker
-    positionTrackerRef.current = {
-      wordPositions: new Map(),
-      lastInsertPosition: 0,
-    };
     queueRef.current = new PriorityQueue<StudyWord>();
   }, []);
 
@@ -348,11 +345,6 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
     });
 
     stateTrackingRef.current.queueInitialized = false;
-    // Reset position tracker when invalidating queries
-    positionTrackerRef.current = {
-      wordPositions: new Map(),
-      lastInsertPosition: 0,
-    };
     queueRef.current = new PriorityQueue<StudyWord>();
   }, [queryClient, userId]);
 
