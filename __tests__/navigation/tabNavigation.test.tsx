@@ -12,7 +12,7 @@ jest.mock('@react-navigation/native', () => {
 
 import { NavigationContainer } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Provider } from 'react-redux';
+import TestStoreProvider from '../helpers/testStore';
 
 import TabLayout from '../../app/(tabs)/_layout';
 
@@ -127,13 +127,12 @@ const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  const store = {} as any;
   return ({ children }: { children: React.ReactNode }) => (
-    <Provider store={store}>
+    <TestStoreProvider>
       <QueryClientProvider client={queryClient}>
         <NavigationContainer>{children}</NavigationContainer>
       </QueryClientProvider>
-    </Provider>
+    </TestStoreProvider>
   );
 };
 
