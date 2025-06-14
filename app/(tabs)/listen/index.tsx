@@ -14,7 +14,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { ArticleCard } from '@/components/home/ArticleCard';
 import NowPlayingCard from '@/components/listen/NowPlayingCard';
 import SleepTimer from '@/components/listen/SleepTimer';
-import { AUDIO_STATES } from '@/constants/audio';
+import { AUDIO_STATES, type AudioState } from '@/constants/audio';
 import { LAYOUT } from '@/constants/layout';
 import { useListenScreen, useListenUI } from '@/hooks/listen';
 import type { ReadingListItem } from '@/hooks/listen/useListenScreen';
@@ -60,6 +60,7 @@ const ListenListItem = memo(
     drag,
     _isBeingDragged,
     isStartingPlayback,
+    audioState,
   }: {
     item: ReadingListItem;
     isActive: boolean;
@@ -70,6 +71,7 @@ const ListenListItem = memo(
     drag?: () => void;
     _isBeingDragged?: boolean;
     isStartingPlayback?: boolean;
+    audioState: AudioState;
   }) => {
     // Check if this article has audio available
     const hasAudio = !!item.articles?.audio_url;
@@ -92,9 +94,13 @@ const ListenListItem = memo(
         // Secondary action: long press to open article (when not in edit mode)
         onLongPress={!editMode ? () => onPress(item.article_id) : undefined}
         onDelete={() => onDelete(item.article_id)}
-        // Show play button as visual indicator when audio is available
-        onPlayPress={hasAudio && !editMode ? () => onPlayPress(item.article_id) : undefined}
-        isPlaying={false} // Never show as playing - NowPlayingCard handles playback state
+        // Show play button as visual indicator when audio is available, but hide when any audio is playing
+        onPlayPress={
+          hasAudio && !editMode && audioState !== AUDIO_STATES.PLAYING
+            ? () => onPlayPress(item.article_id)
+            : undefined
+        }
+        isPlaying={false} // Individual cards don't show playing state - NowPlayingCard handles that
         isLoadingAudio={isStartingPlayback && isActive} // Show loading when this article is starting
         dragHandleProps={{
           onLongPress: drag,
@@ -109,6 +115,7 @@ const ListenListItem = memo(
     if (prevProps.isActive !== nextProps.isActive) return false;
     if (prevProps._isBeingDragged !== nextProps._isBeingDragged) return false;
     if (prevProps.isStartingPlayback !== nextProps.isStartingPlayback) return false;
+    if (prevProps.audioState !== nextProps.audioState) return false;
     // Check if audio availability changed
     if (!!prevProps.item.articles?.audio_url !== !!nextProps.item.articles?.audio_url) return false;
     // Item ID should rarely change, so check last
@@ -214,6 +221,7 @@ export default function ListenScreen(): JSX.Element {
             drag={drag}
             _isBeingDragged={isDragging}
             isStartingPlayback={isStartingPlayback}
+            audioState={audioState}
           />
         );
       } else {
@@ -227,6 +235,7 @@ export default function ListenScreen(): JSX.Element {
             onDelete={handleDelete}
             onPlayPress={handleArticlePlay}
             isStartingPlayback={isStartingPlayback}
+            audioState={audioState}
           />
         );
       }
