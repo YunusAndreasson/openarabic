@@ -144,4 +144,26 @@ describe('useAudioPracticeSession', () => {
     expect(result.current.currentArabicWord).toBe('');
     expect(result.current.currentWord).toBe(null);
   });
+
+  it('aborts pending track load on unmount', async () => {
+    (listenAudioService.getRandomVocabularyTracks as jest.Mock).mockReturnValue(new Promise(() => {}));
+
+    const abortSpy = jest.spyOn(AbortController.prototype, 'abort');
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { unmount } = renderHook(() => useAudioPracticeSession());
+
+    unmount();
+
+    await act(async () => {
+      jest.runOnlyPendingTimers();
+      await Promise.resolve();
+    });
+
+    expect(abortSpy).toHaveBeenCalled();
+    expect(startEnhancedPlayback).not.toHaveBeenCalled();
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
+
+    consoleErrorSpy.mockRestore();
+  });
 });
