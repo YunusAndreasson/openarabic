@@ -79,12 +79,18 @@ export const useAppPreloader = (): AppPreloaderResult => {
           ...CACHE_TIMES.STATIC,
           retry: 3,
         }),
-        queryClient.fetchQuery({
-          queryKey: ['articles', 'minimal'],
-          queryFn: () => articlesService.getArticles({ limit: 20 }), // Load first 20 articles
-          ...CACHE_TIMES.ARTICLES,
-          retry: 3,
-        }),
+        queryClient
+          .fetchQuery({
+            queryKey: ['articles', 'minimal'],
+            queryFn: () => articlesService.getArticles({ limit: 20 }), // Load first 20 articles
+            ...CACHE_TIMES.ARTICLES,
+            retry: 3,
+          })
+          .then(data => {
+            // Make initial articles available under the main key for reuse in the Read tab
+            queryClient.setQueryData(['articles'], data);
+            return data;
+          }),
       ];
 
       const [categories] = await Promise.all(criticalPromises);
@@ -284,8 +290,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
 
       // Set partial load state - app can still function with critical data
       const hasCategories = queryClient.getQueryData(['categories']);
-      const hasArticles =
-        queryClient.getQueryData(['articles', 'minimal']) || queryClient.getQueryData(['articles']);
+      const hasArticles = queryClient.getQueryData(['articles']);
 
       if (hasCategories && hasArticles) {
         setIsLoaded(true);
