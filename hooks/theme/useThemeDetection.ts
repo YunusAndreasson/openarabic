@@ -9,8 +9,8 @@ import { useAppSelectorMemo } from '@/store/hooks';
  * @returns boolean indicating if the current theme is dark
  */
 export function useIsDarkMode(): boolean {
-  // Get theme from Redux store
-  const theme = useAppSelectorMemo(state => state.theme.theme);
+  // Get theme from Redux store with error handling for missing context
+  const theme = useAppSelectorMemo(state => state?.theme?.theme);
 
   // Get system color scheme preference
   const systemColorScheme = useColorScheme();

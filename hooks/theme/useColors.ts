@@ -6,8 +6,9 @@ import type { ThemeColors } from '@/types/ui/theme.types';
 
 export function useColors(): ThemeColors {
   // Use the selector with shallowEqual comparison to prevent unnecessary rerenders
+  // Add error handling for cases where Redux context is not available
   const theme = useAppSelector(
-    state => state.theme.theme,
+    state => state?.theme?.theme || Theme.Light,
     (prev, next) => prev === next
   );
 

@@ -1,12 +1,12 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 import { ThemedText } from './ThemedText';
-import TouchableIcon from './TouchableIcon';
 
 interface SectionTitleProps {
   title: string;
@@ -58,14 +58,17 @@ const SectionTitle: React.FC<SectionTitleProps> = ({
         )}
       </View>
       {onInfoPress && (
-        <TouchableIcon
-          color={colors.tint}
-          name="information-outline"
-          size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+        <TouchableOpacity
           style={styles.infoIcon}
-          touchSize="small"
           onPress={onInfoPress}
-        />
+          activeOpacity={LAYOUT.OPACITY.PRESSED}
+        >
+          <Ionicons
+            name="information-outline"
+            size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+            color={colors.tint}
+          />
+        </TouchableOpacity>
       )}
     </View>
   );
@@ -73,10 +76,7 @@ const SectionTitle: React.FC<SectionTitleProps> = ({
 
 SectionTitle.displayName = 'SectionTitle';
 
-const areEqual = (
-  prevProps: SectionTitleProps,
-  nextProps: SectionTitleProps
-) => {
+const areEqual = (prevProps: SectionTitleProps, nextProps: SectionTitleProps) => {
   return (
     prevProps.title === nextProps.title &&
     prevProps.subtitle === nextProps.subtitle &&
