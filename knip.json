@@ -35,9 +35,9 @@
     "jest.config.js",
     "jest.setup.js"
   ],
-  "ignoreDependencies": ["postinstall-postinstall", "@sentry/cli"],
+  "ignoreDependencies": ["postinstall-postinstall", "@sentry/cli", "strip-ansi"],
   "ignoreExportsUsedInFile": true,
   "includeEntryExports": false,
-  "ignoreBinaries": ["expo-doctor", "supabase"],
+  "ignoreBinaries": ["expo-doctor", "supabase", "gh"],
   "exclude": ["duplicates"]
 }

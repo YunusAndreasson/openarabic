@@ -13,7 +13,7 @@
     "test:coverage": "jest --coverage --testTimeout=10000",
     "fullupgrade": "yarn upgrade --latest && npx expo@latest install --check",
     "types:db": "supabase gen types typescript --project-id kkmnzbeugdoajtzfjkxg > types/database.types.ts",
-    "knip": "knip",
+    "knip:dev": "knip",
     "knip:ci": "knip --exclude duplicates",
     "knip:production": "knip --production",
     "typecheck": "tsc --noEmit",

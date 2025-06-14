@@ -1,7 +1,8 @@
 import { Group, Line } from '@shopify/react-native-skia';
 import React, { memo } from 'react';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+
 import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { withOpacity } from '@/utils/colorUtils';
 
 interface ChartGridProps {
