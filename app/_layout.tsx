@@ -193,6 +193,15 @@ function AppContent() {
     }
   }, [fontsLoaded, isAuthLoading, session, isLoaded, readTabDataLoaded]);
 
+  // Fallback timeout so the app doesn't remain stuck on the splash screen
+  useEffect(() => {
+    if (!fontsLoaded || appReady) return;
+    const timer = setTimeout(() => {
+      setAppReady(true);
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [fontsLoaded, appReady]);
+
   // Cleanup effect for AppState subscription
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextAppState => {

@@ -1,7 +1,12 @@
 import { useLocalSearchParams } from 'expo-router';
 import React, { createRef, useEffect, useRef, useMemo, type ComponentRef } from 'react';
-import type { ViewStyle, StyleProp } from 'react-native';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  type TouchableOpacity,
+  type ViewStyle,
+  type StyleProp,
+} from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { LAYOUT, FONTS } from '@/constants/layout';
@@ -54,6 +59,9 @@ function ArticleSentenceComponent({
   const { highlightSentence } = useLocalSearchParams<{ highlightSentence?: string }>();
   const isHighlighted = sentence.id != null && highlightSentence === sentence.id.toString();
 
+  // Store refs to each word for highlighting and playback control
+  // Use ComponentRef to correctly type React Native component instances
+  // Each ref may hold a TouchableOpacity instance or null
   const wordRefs = useRef<React.RefObject<ComponentRef<typeof TouchableOpacity>>[]>([]);
   const {
     animatedStyle: animatedHighlightStyle,
@@ -62,7 +70,10 @@ function ArticleSentenceComponent({
   } = useOpacityAnimation({ initialOpacity: 0 });
 
   useEffect(() => {
-    wordRefs.current = words.map(() => createRef<ComponentRef<typeof TouchableOpacity>>());
+    // Recreate refs when the word list changes
+    wordRefs.current = words.map(
+      () => createRef<ComponentRef<typeof TouchableOpacity>>() as React.RefObject<ComponentRef<typeof TouchableOpacity>>
+    );
   }, [words]);
 
   useEffect(() => {
@@ -98,7 +109,8 @@ function ArticleSentenceComponent({
     const renderWordWithProps = (word: SentenceWord, index: number) => {
       const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
       if (!wordRefs.current[index]) {
-        wordRefs.current[index] = createRef<ComponentRef<typeof TouchableOpacity>>();
+        wordRefs.current[index] =
+          createRef<ComponentRef<typeof TouchableOpacity>>() as React.RefObject<ComponentRef<typeof TouchableOpacity>>;
       }
       const isDueWord = word.root_id ? dueWordRootIds.has(word.root_id) : false;
       return renderWord ? (
