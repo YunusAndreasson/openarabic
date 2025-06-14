@@ -60,6 +60,12 @@ jest.mock('react-native-reanimated', () => ({
       delay: () => ({}),
     }),
   },
+  Easing: {
+    out: jest.fn(fn => fn),
+    quad: jest.fn(),
+    cubic: jest.fn(),
+    bezier: jest.fn(() => jest.fn()),
+  },
   default: {
     View: 'View',
     Text: 'Text',
