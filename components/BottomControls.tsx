@@ -156,6 +156,7 @@ const BottomControls = memo<BottomControlsProps>(
                 title={primaryLabel}
                 variant={primaryVariant}
                 onPress={onPrimaryPress}
+                testID="primary-action-button"
               />
             </View>
           </View>

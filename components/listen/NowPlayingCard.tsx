@@ -179,6 +179,7 @@ const NowPlayingCard = ({
               onPressOut={handleStopPressOut}
               style={[styles.stopButton, dynamicStyles.stopButton]}
               onPress={handleStopPress}
+              testID="stop-playback-button"
             >
               <Ionicons color={colors.background} name="stop" size={24} />
             </TouchableOpacity>
