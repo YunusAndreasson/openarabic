@@ -1,9 +1,10 @@
 import type { Article } from '@/types/articles.types';
-import type { ArticleRow } from '@/types/dbRow.types';
 import { handleError } from '@/utils/errorHandling';
 import { mapToArticle, mapToArticles } from '@/utils/typeMappers';
 
 import { supabase } from './supabase';
+
+type DatabaseRecord = Record<string, unknown>;
 
 // Define different column sets for different use cases
 const LIST_VIEW_COLUMNS = `
@@ -105,7 +106,7 @@ export const articlesService = {
       } = options;
 
       const columns = includeWordStats ? ARTICLES_WITH_WORD_STATS : LIST_VIEW_COLUMNS;
-      let query = supabase.from('articles').select<ArticleRow>(columns);
+      let query = supabase.from('articles').select(columns);
 
       // Apply filters
       if (categoryId) query = query.eq('category_id', categoryId);
@@ -134,7 +135,7 @@ export const articlesService = {
         });
         throw error;
       }
-      return mapToArticles(data ?? []);
+      return mapToArticles((data ?? []) as unknown as DatabaseRecord[]);
     } catch (err) {
       await handleError(err instanceof Error ? err : new Error('Unknown error loading articles'), {
         toastMessage: 'Failed to load articles',
@@ -154,7 +155,7 @@ export const articlesService = {
     try {
       const { data, error } = await supabase
         .from('articles')
-        .select<ArticleRow>(ARTICLES_WITH_WORD_STATS)
+        .select(ARTICLES_WITH_WORD_STATS)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -163,7 +164,7 @@ export const articlesService = {
         });
         throw error;
       }
-      return mapToArticles(data ?? []);
+      return mapToArticles((data ?? []) as unknown as DatabaseRecord[]);
     } catch (err) {
       await handleError(
         err instanceof Error ? err : new Error('Unknown error loading articles with word stats'),
@@ -179,7 +180,7 @@ export const articlesService = {
     try {
       const { data, error } = await supabase
         .from('articles')
-        .select<ArticleRow>(DETAIL_VIEW_COLUMNS)
+        .select(DETAIL_VIEW_COLUMNS)
         .eq('id', id)
         .single();
 
@@ -191,7 +192,7 @@ export const articlesService = {
         throw error;
       }
 
-      return mapToArticle(data);
+      return mapToArticle(data as unknown as DatabaseRecord);
     } catch (err) {
       await handleError(err instanceof Error ? err : new Error('Unknown error loading article'), {
         toastMessage: 'Failed to load article',
@@ -206,7 +207,7 @@ export const articlesService = {
     try {
       const { data, error } = await supabase
         .from('articles')
-        .select<ArticleRow>(CARD_VIEW_COLUMNS)
+        .select(CARD_VIEW_COLUMNS)
         .eq('id', id)
         .single();
 
@@ -218,7 +219,7 @@ export const articlesService = {
         throw error;
       }
 
-      return mapToArticle(data);
+      return mapToArticle(data as unknown as DatabaseRecord);
     } catch (err) {
       await handleError(err instanceof Error ? err : new Error('Unknown error loading article'), {
         toastMessage: 'Failed to load article',
@@ -227,5 +228,4 @@ export const articlesService = {
       throw err;
     }
   },
-
 };

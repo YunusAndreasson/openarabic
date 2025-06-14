@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import React from 'react';
-import type { ViewStyle, ComponentProps } from 'react-native';
+import type { ComponentProps } from 'react';
+import type { ViewStyle } from 'react-native';
 import { View, StyleSheet } from 'react-native';
 import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
 

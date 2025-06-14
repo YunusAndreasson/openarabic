@@ -71,7 +71,7 @@ export const useListenUI = ({
       return {
         id: articleIdNumber,
         title: metadata.articleTitle,
-        author: { name: 'Loading...' },
+        author: { id: 0, name: 'Loading...' },
         image_url: '',
         placeholder: '',
       } as Partial<Article>; // Minimal article for display purposes
@@ -96,9 +96,11 @@ export const useListenUI = ({
   );
 
   const handleNowPlayingPress = useCallback(() => {
-    if (currentArticle) {
+    if (currentArticle && currentArticle.title) {
       router.push(
-        `/(tabs)/read/article/${currentArticle.id}?headerTitle=${encodeURIComponent(currentArticle.title)}`
+        `/(tabs)/read/article/${currentArticle.id}?headerTitle=${encodeURIComponent(
+          currentArticle.title
+        )}`
       );
     }
   }, [currentArticle]);

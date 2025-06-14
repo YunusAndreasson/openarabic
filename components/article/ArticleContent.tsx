@@ -1,4 +1,4 @@
-import { FlashList, type OverrideItemLayoutParams } from '@shopify/flash-list';
+import { FlashList } from '@shopify/flash-list';
 import type { JSX } from 'react';
 import React, { useMemo, useCallback } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
@@ -305,10 +305,7 @@ export const ArticleContent = ({
               // Slight bottom padding adjustment for better closure
               paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + insets.bottom + LAYOUT.SPACING.MEDIUM,
             }}
-            overrideItemLayout={(
-              layout: OverrideItemLayoutParams,
-              _item: Tables<'article_sentences'>
-            ) => {
+            overrideItemLayout={(layout, _item: Tables<'article_sentences'>) => {
               layout.size = SENTENCE_ITEM_HEIGHT;
             }}
             onScroll={handleAnimatedScroll}

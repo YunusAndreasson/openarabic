@@ -344,16 +344,13 @@ const styles = StyleSheet.create({
   },
 });
 
-const areEqual = (
-  prevProps: FilterModalProps,
-  nextProps: FilterModalProps
-) => {
+const areEqual = (prevProps: FilterModalProps, nextProps: FilterModalProps) => {
   if (prevProps.availableAuthors.length !== nextProps.availableAuthors.length) {
     return false;
   }
 
   for (let i = 0; i < prevProps.availableAuthors.length; i++) {
-    if (prevProps.availableAuthors[i].id !== nextProps.availableAuthors[i].id) {
+    if (prevProps.availableAuthors[i]?.id !== nextProps.availableAuthors[i]?.id) {
       return false;
     }
   }

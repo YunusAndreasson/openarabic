@@ -1,6 +1,6 @@
 import type { Ionicons } from '@expo/vector-icons';
 import { useState, useCallback, useMemo } from 'react';
-import type { ComponentProps } from 'react-native';
+import type { ComponentProps } from 'react';
 
 import {
   setSortField,

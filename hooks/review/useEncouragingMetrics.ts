@@ -1,6 +1,6 @@
 import type { Ionicons } from '@expo/vector-icons';
 import { useMemo } from 'react';
-import type { ComponentProps } from 'react-native';
+import type { ComponentProps } from 'react';
 
 import type { SessionMetrics } from '@/types/review.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
@@ -28,9 +28,7 @@ export const useEncouragingMetrics = (
 
     const metrics = sessionMetrics;
     const sessionDuration = Math.round((Date.now() - metrics.startTime) / 60000); // minutes
-    const accuracyRate = Math.round(
-      (metrics.wordsKnown / metrics.wordsReviewed) * 100
-    );
+    const accuracyRate = Math.round((metrics.wordsKnown / metrics.wordsReviewed) * 100);
 
     const encouragingFacts: EncouragingMetric[] = [];
 
@@ -38,7 +36,7 @@ export const useEncouragingMetrics = (
     if (accuracyRate >= 80) {
       encouragingFacts.push({
         text: `${accuracyRate}% accuracy - excellent recall`,
-        icon: 'target',
+        icon: 'checkmark-circle',
         color: colors.completionSuccess,
         type: 'accuracy',
       });
@@ -129,4 +127,3 @@ export const useEncouragingMetrics = (
 };
 
 export default useEncouragingMetrics;
-

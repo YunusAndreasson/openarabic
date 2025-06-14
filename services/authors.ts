@@ -5,23 +5,20 @@ import { supabase } from './supabase';
 
 export const authorsService = {
   async getAuthors(): Promise<AuthorRow[]> {
-    const { data, error } = await supabase
-      .from('authors')
-      .select<AuthorRow>('id, name')
-      .order('name');
+    const { data, error } = await supabase.from('authors').select('id, name').order('name');
     if (error) {
       await handleError(new Error(error.message), {
         toastMessage: 'Failed to load authors',
       });
       throw error;
     }
-    return data ?? [];
+    return (data ?? []) as AuthorRow[];
   },
 
   async getAuthorsByCategory(categoryId: number): Promise<AuthorRow[]> {
     const { data, error } = await supabase
       .from('articles')
-      .select<{ author: AuthorRow }>('author:authors!inner(id, name)', {
+      .select('author:authors!inner(id, name)', {
         head: true,
       })
       .eq('category_id', categoryId)
@@ -34,7 +31,7 @@ export const authorsService = {
       throw error;
     }
 
-    return (data ?? [])
+    return ((data ?? []) as unknown as { author: AuthorRow }[])
       .map(item => item.author)
       .sort((a, b) => a.name.localeCompare(b.name));
   },
