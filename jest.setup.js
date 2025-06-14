@@ -91,6 +91,7 @@ jest.mock('react-native', () => {
     Dimensions: {
       get: jest.fn().mockReturnValue({ width: 375, height: 812 }),
     },
+    useColorScheme: jest.fn(),
     NativeModules: {},
     Platform: {
       OS: 'ios',
