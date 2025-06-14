@@ -72,7 +72,7 @@ export async function scheduleReminder(reminderTime: ReminderTime): Promise<stri
     }
 
     // Simple, reliable notification content
-    const title = 'Time to practice Arabic! 📚';
+    const title = 'Time to practice Arabic!';
     const body = "Continue your Arabic learning journey with today's lesson.";
 
     const identifier = await Notifications.scheduleNotificationAsync({
