@@ -1,25 +1,8 @@
 import React from 'react';
 import { renderHook, act } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Provider } from 'react-redux';
-
-import { configureStore, combineReducers } from '@reduxjs/toolkit';
-import themeReducer from '@/store/themeSlice';
-import settingsReducer from '@/store/settingsSlice';
-import readingListReducer from '@/store/readingListSlice';
-import filtersReducer from '@/store/filtersSlice';
-import listenReducer from '@/store/listenSlice';
+import TestStoreProvider from '../helpers/testStore';
 import useArticleMutations from '@/hooks/articles/useArticleMutations';
-
-const store = configureStore({
-  reducer: combineReducers({
-    theme: themeReducer,
-    settings: settingsReducer,
-    readingList: readingListReducer,
-    filters: filtersReducer,
-    listen: listenReducer,
-  }),
-});
 
 // Mock services used by the hook
 jest.mock('@/services/readingList', () => ({
@@ -72,9 +55,9 @@ const createWrapper = () => {
   });
 
   return ({ children }: { children: React.ReactNode }) => (
-    <Provider store={store}>
+    <TestStoreProvider>
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    </Provider>
+    </TestStoreProvider>
   );
 };
 
