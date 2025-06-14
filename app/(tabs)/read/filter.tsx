@@ -49,8 +49,9 @@ export default function FilterScreen(): JSX.Element {
       }
     },
     enabled: !hasInvalidParams,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    placeholderData: old => old,
   });
 
   // Use the new filtering hook that handles Redux state
