@@ -184,7 +184,7 @@ export const wordManagementService = {
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(9, 0, 0, 0); // Set to 9 AM tomorrow
+    tomorrow.setUTCHours(9, 0, 0, 0); // Set to 9 AM UTC tomorrow
 
     const { error } = await supabase
       .from('study_words')
