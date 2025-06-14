@@ -177,7 +177,7 @@ export const Toast = memo(
         case 'error':
           return colors.error;
         case 'important':
-          return colors.warning || colors.accent || colors.tint;
+          return colors.warning || colors.tint;
         default:
           return isDarkMode ? colors.card : colors.tint || colors.primary;
       }

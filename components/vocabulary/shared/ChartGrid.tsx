@@ -1,8 +1,7 @@
 import { Group, Line } from '@shopify/react-native-skia';
 import React, { memo } from 'react';
-import { useColorScheme } from 'react-native';
-
-import { Colors } from '@/constants/Colors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import { useColors } from '@/hooks/theme/useColors';
 import { withOpacity } from '@/utils/colorUtils';
 
 interface ChartGridProps {
@@ -18,13 +17,14 @@ interface ChartGridProps {
  */
 export const ChartGrid = memo(
   ({ width, height, gridLines = 4, topPadding = 0 }: ChartGridProps) => {
-    const colorScheme = useColorScheme();
+    const isDarkMode = useIsDarkMode();
+    const colors = useColors();
 
     // Optimized grid color for perfect visual balance
-    const gridColor =
-      colorScheme === 'dark'
-        ? withOpacity(Colors.dark.white, 0.06)
-        : withOpacity(Colors.light.black, 0.06);
+    const gridColor = withOpacity(
+      isDarkMode ? colors.white : colors.black,
+      0.06
+    );
 
     // Calculate grid line positions
     const gridSpacing = (height - topPadding) / (gridLines + 1);
