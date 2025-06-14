@@ -6,6 +6,7 @@ export interface PriorityItem<T> {
 export class PriorityQueue<T> {
   private heap: T[] = [];
   private priorities: number[] = [];
+  private prevTrimLength = 0;
 
   constructor(private compare: (a: number, b: number) => number = (a, b) => a - b) {}
 
@@ -154,10 +155,11 @@ export class PriorityQueue<T> {
   trim() {
     // In JavaScript, arrays automatically resize, but we can force garbage collection
     // of unused capacity by creating new arrays
-    if (this.heap.length > 0 && this.heap.length < this.heap.length * 0.5) {
+    if (this.heap.length < this.prevTrimLength / 2) {
       this.heap = this.heap.slice();
       this.priorities = this.priorities.slice();
     }
+    this.prevTrimLength = this.heap.length;
   }
 
   // New method: clone the priority queue

@@ -53,4 +53,25 @@ describe('PriorityQueue', () => {
     expect(cloned.pop()).toBe('c');
     expect(cloned.pop()).toBe('a');
   });
+
+  it('trims internal arrays after many pops', () => {
+    const queue = new PriorityQueue<number>();
+    for (let i = 0; i < 100; i++) {
+      queue.push(i, i);
+    }
+
+    queue.trim();
+    const oldHeap = (queue as any).heap;
+    const oldPriorities = (queue as any).priorities;
+
+    for (let i = 0; i < 75; i++) {
+      queue.pop();
+    }
+
+    queue.trim();
+
+    expect((queue as any).heap.length).toBe(25);
+    expect((queue as any).heap).not.toBe(oldHeap);
+    expect((queue as any).priorities).not.toBe(oldPriorities);
+  });
 });
