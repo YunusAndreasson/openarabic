@@ -92,10 +92,18 @@ const ListenListItem = memo(
         title={item.articles?.title || 'Untitled'}
         editMode={editMode}
         isBeingDragged={_isBeingDragged}
-        onPress={() => onPress(item.article_id)}
-        onLongPress={() => onPress(item.article_id)}
+        // Primary action: tap to play audio (when available) or open article (when no audio)
+        onPress={
+          !editMode
+            ? hasAudio
+              ? () => onPlayPress(item.article_id)
+              : () => onPress(item.article_id)
+            : undefined
+        }
+        // Secondary action: long press to open article (when not in edit mode)
+        onLongPress={!editMode ? () => onPress(item.article_id) : undefined}
         onDelete={() => onDelete(item.article_id)}
-        // Always show play button when audio is available and not in edit mode
+        // Show play button as visual indicator when audio is available
         onPlayPress={hasAudio && !editMode ? () => onPlayPress(item.article_id) : undefined}
         isPlaying={false} // Never show as playing - NowPlayingCard handles playback state
         isLoadingAudio={isStartingPlayback && isActive} // Show loading when this article is starting
@@ -349,7 +357,7 @@ export default function ListenScreen(): JSX.Element {
               hasArticles ? (
                 <View style={styles.footerNote}>
                   <ThemedText style={styles.footerNoteText} type="caption" variant="secondary">
-                    Long press to open article for reading
+                    Tap to play audio or open article • Long press for reading
                   </ThemedText>
                 </View>
               ) : null
