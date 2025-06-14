@@ -344,4 +344,23 @@ const styles = StyleSheet.create({
   },
 });
 
-export default FilterModal;
+const areEqual = (
+  prevProps: FilterModalProps,
+  nextProps: FilterModalProps
+) => {
+  if (prevProps.availableAuthors.length !== nextProps.availableAuthors.length) {
+    return false;
+  }
+
+  for (let i = 0; i < prevProps.availableAuthors.length; i++) {
+    if (prevProps.availableAuthors[i].id !== nextProps.availableAuthors[i].id) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+FilterModal.displayName = 'FilterModal';
+
+export default React.memo(FilterModal, areEqual);

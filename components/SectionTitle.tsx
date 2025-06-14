@@ -73,7 +73,20 @@ const SectionTitle: React.FC<SectionTitleProps> = ({
 
 SectionTitle.displayName = 'SectionTitle';
 
-export default SectionTitle;
+const areEqual = (
+  prevProps: SectionTitleProps,
+  nextProps: SectionTitleProps
+) => {
+  return (
+    prevProps.title === nextProps.title &&
+    prevProps.subtitle === nextProps.subtitle &&
+    prevProps.onInfoPress === nextProps.onInfoPress &&
+    prevProps.isFirstSection === nextProps.isFirstSection &&
+    prevProps.containerStyle === nextProps.containerStyle
+  );
+};
+
+export default React.memo(SectionTitle, areEqual);
 
 const styles = StyleSheet.create({
   container: {
