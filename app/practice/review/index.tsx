@@ -93,7 +93,13 @@ export default function ReviewScreen(): JSX.Element {
   };
 
   if (isComplete || isTransitioningToCompletion) {
-    return <CompletionScreen sessionMetrics={sessionMetrics} onClose={handleClose} />;
+    return (
+      <CompletionScreen
+        sessionMetrics={sessionMetrics}
+        onClose={handleClose}
+        testID="completion-screen"
+      />
+    );
   }
 
   return (
@@ -114,6 +120,7 @@ export default function ReviewScreen(): JSX.Element {
             isTransitioning={isTransitioningToCompletion}
             isUpdating={isUpdating}
             opacityStyle={animatedStyle}
+            testID="review-card"
             word={currentSentence.wordForm}
             onSwipeLeft={handleSwipeLeft}
             onSwipeRight={handleSwipeRight}

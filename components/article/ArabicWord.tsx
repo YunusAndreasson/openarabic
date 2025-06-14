@@ -40,6 +40,7 @@ interface ArabicWordProps {
   };
   wordRef?: React.RefObject<ComponentRef<typeof TouchableOpacity>>;
   isDueWord?: boolean;
+  testID?: string;
 }
 
 function ArabicWordComponent({
@@ -49,6 +50,7 @@ function ArabicWordComponent({
   settings,
   wordRef,
   isDueWord = false,
+  testID,
 }: ArabicWordProps) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
@@ -202,6 +204,7 @@ function ArabicWordComponent({
         activeOpacity={0.7}
         delayLongPress={250}
         style={containerStyle}
+        testID={testID}
         onLayout={handleLayout}
         onLongPress={handleLongPress}
         onPress={handlePress}

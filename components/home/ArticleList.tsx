@@ -46,6 +46,7 @@ const ArticleItem = memo(({ item, onPress }: ArticleItemProps) => {
       summary={item.summary || 'No summary available'}
       title={item.title}
       onPress={handlePress}
+      testID={`article-${item.id}`}
     />
   );
 });

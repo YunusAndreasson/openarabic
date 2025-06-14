@@ -159,6 +159,7 @@ export const VocabularyStatCards = memo(
             onPress={onStartReview}
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
+            testID={`start-review-${config.category}`}
           >
             <Animated.View
               style={[

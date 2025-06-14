@@ -18,6 +18,7 @@ const BaseCard: React.FC<BaseCardProps> = memo(
     loadingComponent,
     contentStyle,
     disabled = false,
+    testID,
   }) => {
     const colors = useColors();
 
@@ -76,7 +77,7 @@ const BaseCard: React.FC<BaseCardProps> = memo(
 
     if (isLoading) {
       return (
-        <View style={combinedCardStyle}>
+        <View style={combinedCardStyle} testID={testID}>
           {loadingComponent || <View style={combinedContentStyle} />}
         </View>
       );
@@ -84,7 +85,7 @@ const BaseCard: React.FC<BaseCardProps> = memo(
 
     if (!onPress && !onLongPress) {
       return (
-        <View style={combinedCardStyle}>
+        <View style={combinedCardStyle} testID={testID}>
           <View style={combinedContentStyle}>{children}</View>
         </View>
       );
@@ -92,6 +93,7 @@ const BaseCard: React.FC<BaseCardProps> = memo(
 
     return (
       <Pressable
+        testID={testID}
         disabled={disabled}
         android_ripple={{
           color: colors.navigationRipple,

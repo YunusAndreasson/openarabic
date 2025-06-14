@@ -43,6 +43,7 @@ interface ReviewCardProps {
   isUpdating: boolean;
   isTransitioning: boolean;
   opacityStyle: AnimatedStyleProp<ViewStyle>;
+  testID?: string;
 }
 
 const ReviewCard = memo(function ReviewCard({
@@ -55,6 +56,7 @@ const ReviewCard = memo(function ReviewCard({
   isUpdating,
   isTransitioning,
   opacityStyle,
+  testID,
 }: ReviewCardProps) {
   // Animation values
   const {
@@ -172,7 +174,10 @@ const ReviewCard = memo(function ReviewCard({
 
   return (
     <GestureDetector gesture={combinedGestures}>
-      <Animated.View style={[styles.swipeContainer, swipeContainerStyle]}>
+      <Animated.View
+        style={[styles.swipeContainer, swipeContainerStyle]}
+        testID={testID}
+      >
         <Animated.View style={[styles.wordContainer, opacityStyle]}>
           <WordDisplay fontSize={fontSize} word={word} />
         </Animated.View>
