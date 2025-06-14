@@ -25,10 +25,6 @@ import type { SentenceWord } from '@/types/vocabulary.types';
 import { lightFeedback } from '@/utils/haptics';
 // import { analytics } from '@/services/analytics';
 
-// Temporary mock analytics until service is fixed - moved outside to prevent recreation
-const mockAnalytics = {
-  trackViewArticle: async (_articleId: number, _properties?: any) => {},
-};
 
 export default function ArticleScreen(): JSX.Element {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -78,21 +74,6 @@ export default function ArticleScreen(): JSX.Element {
     };
   }, [user?.id, refetchStudyWords]);
 
-  useEffect(() => {
-    if (article && !isLoadingArticle) {
-      mockAnalytics.trackViewArticle(article.id, {
-        ...(article.title && { title: article.title }),
-        ...(article.category?.name && { category: article.category.name }),
-        ...(article.article_sentences && {
-          wordCount: article.article_sentences.reduce(
-            (total, sentence) => total + (sentence.sentence_words?.length || 0),
-            0
-          ),
-          sentenceCount: article.article_sentences.length,
-        }),
-      });
-    }
-  }, [article, isLoadingArticle]);
 
   // Trigger fade-in when article content is ready
   useEffect(() => {
