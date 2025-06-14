@@ -73,10 +73,10 @@ export function useArticlesByDueWords(
   const { data: articlesData = [], isLoading: isLoadingArticles } = useQuery({
     queryKey: ['articles', 'with-word-stats'],
     queryFn: () => {
-      if (!wordsToUse.length) return Promise.resolve([]);
+      if (!wordsToUse.length || limit <= 0) return Promise.resolve([]);
       return articlesService.getArticlesWithWordStats();
     },
-    enabled: !!userId && wordsToUse.length > 0,
+    enabled: !!userId && wordsToUse.length > 0 && limit > 0,
     staleTime: 3600000, // 1 hour - articles update max once a day
     gcTime: 7200000, // 2 hours
     retry: 2,
@@ -84,8 +84,14 @@ export function useArticlesByDueWords(
 
   // Process and sort articles by words count
   const sortedArticles = useMemo(() => {
-    const isLoadingWords = isLoadingDueWords || (dueWords.length === 0 && isLoadingAllWords);
-    if (isLoadingWords || (isLoadingArticles && wordsToUse.length > 0) || !wordsToUse.length) {
+    if (limit <= 0) return [];
+    const isLoadingWords =
+      isLoadingDueWords || (dueWords.length === 0 && isLoadingAllWords);
+    if (
+      isLoadingWords ||
+      (isLoadingArticles && wordsToUse.length > 0) ||
+      !wordsToUse.length
+    ) {
       return [];
     }
     return getArticlesByDueWords(articlesData, wordsToUse, limit);
@@ -101,8 +107,9 @@ export function useArticlesByDueWords(
 
   // Flag to determine if we have enough articles with words (≥1)
   const hasEnoughArticles = useMemo(() => {
+    if (limit <= 0) return false;
     return sortedArticles.length >= 1; // Reduced from 3 to 1 for better accessibility
-  }, [sortedArticles.length]);
+  }, [sortedArticles.length, limit]);
 
   // Count of due words for stats (only actual due words, not fallback)
   const dueWordsCount = useMemo(() => {
@@ -112,7 +119,7 @@ export function useArticlesByDueWords(
   const isLoading =
     isLoadingDueWords ||
     (dueWords.length === 0 && isLoadingAllWords) ||
-    (isLoadingArticles && wordsToUse.length > 0);
+    (limit > 0 && isLoadingArticles && wordsToUse.length > 0);
 
   return {
     articles: sortedArticles,
