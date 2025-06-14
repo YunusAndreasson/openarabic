@@ -18,7 +18,7 @@ const basePalette = {
     medium: '#2A352D', // Rich sage border
     light: '#E8F1EC', // Refined sage border
     lighter: '#F2F7F4', // Whisper-soft sage
-    lightest: '#FAFCF9', // Crisp warm white
+    lightest: '#F8FAF9', // Crisp warm white
   },
 
   // Interactive sage tints
@@ -33,13 +33,13 @@ const basePalette = {
     errorDark: '#DD6B5A', // Warmer terracotta for dark mode
     success: '#4C7F5A', // Deep forest success
     successDark: '#72A47F', // Lighter forest for dark mode
-    warning: '#B8860B', // Rich goldenrod
-    warningDark: '#D4A876', // Enriched gold for dark
+    warning: '#C9B938', // Rich goldenrod
+    warningDark: '#E0CC78', // Enriched gold for dark
   },
 
   // Green-tinted pure values (never pure white/black)
   pure: {
-    white: '#FDFEFE', // Subtle green-tinted white
+    white: '#F2F6F4', // Subtle green-tinted white
     black: '#0A0F0B', // Subtle green-tinted black
     transparent: 'transparent',
   },
@@ -56,7 +56,7 @@ const textHierarchy = {
   light: {
     subtitle: '#35463E', // 25% blend between darkest and medium - Use for: section headers, card subtitles
     metadata: '#5C6F65', // 50% blend between medium and light - Use for: timestamps, author names, secondary info
-    caption: '#6A7D74', // 75% blend between medium and light - Use for: help text, placeholders, tertiary info
+    caption: '#5E7268', // 75% blend between medium and light - Use for: help text, placeholders, tertiary info
   },
   dark: {
     subtitle: '#E6EAE7', // Light mode equivalent - Use for: section headers, card subtitles
