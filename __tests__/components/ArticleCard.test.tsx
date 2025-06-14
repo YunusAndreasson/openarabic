@@ -111,33 +111,32 @@ describe('ArticleCard Play Button Visibility Logic', () => {
   });
 
   describe('Logic Validation', () => {
-    it('validates the exact logic: hasAudio && !editMode && audioState !== PLAYING', () => {
-      const testCases: Array<[boolean, boolean, string, boolean]> = [
-        // hasAudio, editMode, audioState, expectedVisible
-        [true, false, AUDIO_STATES.IDLE, true],
-        [true, false, AUDIO_STATES.PLAYING, false], // Key case: should hide when playing
-        [true, false, AUDIO_STATES.STOPPED, true],
-        [true, false, AUDIO_STATES.LOADING, true],
-        [true, true, AUDIO_STATES.IDLE, false], // Edit mode hides button
-        [false, false, AUDIO_STATES.IDLE, false], // No audio hides button
-      ];
+    const cases: Array<[boolean, boolean, string, boolean]> = [
+      // hasAudio, editMode, audioState, expectedVisible
+      [true, false, AUDIO_STATES.IDLE, true],
+      [true, false, AUDIO_STATES.LOADING, true],
+      [true, false, AUDIO_STATES.PLAYING, false],
+      [true, false, AUDIO_STATES.STOPPED, true],
+      [true, false, AUDIO_STATES.ERROR, true],
+      [true, true, AUDIO_STATES.IDLE, false],
+      [false, false, AUDIO_STATES.IDLE, false],
+    ];
 
-      testCases.forEach(([hasAudio, editMode, audioState, expectedVisible]) => {
-        const { queryByTestId } = render(
-          <TestArticleCard
-            onPlayPress={hasAudio ? jest.fn() : undefined}
-            editMode={editMode}
-            audioState={audioState}
-          />
-        );
+    test.each(cases)('hasAudio=%s editMode=%s state=%s → visible=%s', (hasAudio, editMode, audioState, expectedVisible) => {
+      const { queryByTestId } = render(
+        <TestArticleCard
+          onPlayPress={hasAudio ? jest.fn() : undefined}
+          editMode={editMode}
+          audioState={audioState}
+        />
+      );
 
-        const playButton = queryByTestId('play-button');
-        if (expectedVisible) {
-          expect(playButton).toBeTruthy();
-        } else {
-          expect(playButton).toBeNull();
-        }
-      });
+      const playButton = queryByTestId('play-button');
+      if (expectedVisible) {
+        expect(playButton).toBeTruthy();
+      } else {
+        expect(playButton).toBeNull();
+      }
     });
   });
 });
