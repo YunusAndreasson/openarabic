@@ -41,7 +41,7 @@ export const useAccountScreen = () => {
           setQueryCacheSize(querySize);
         }
       } catch (error) {
-        console.error('Failed to load cache sizes:', error);
+        handleError(error as Error, { showToast: false });
       }
     };
 
