@@ -37,6 +37,8 @@ interface ArticleCardProps {
   style?: StyleProp<ViewStyle>;
   /** Optional callback when card is pressed */
   onPress?: () => void;
+  /** Optional test identifier used for testing */
+  testID?: string;
 }
 
 const GOLDEN_RATIO_ADJUSTED = 1.5;
@@ -93,6 +95,7 @@ function ArticleCardComponent({
   summary,
   style,
   onPress,
+  testID,
 }: ArticleCardProps): React.JSX.Element {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
@@ -150,7 +153,7 @@ function ArticleCardComponent({
   );
 
   return (
-    <BaseCard style={style} onPress={onPress}>
+    <BaseCard style={style} onPress={onPress} testID={testID}>
       <View style={[styles.imageContainer, { height: imageHeight }]}>
         <EnhancedImage
           alt={`Image for ${title}`}

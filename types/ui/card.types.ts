@@ -26,6 +26,8 @@ export interface BaseCardProps extends BaseAnimatedStyleProps {
   contentStyle?: StyleProp<ViewStyle>;
   /** Whether the card is disabled (reduces opacity and prevents interactions) */
   disabled?: boolean;
+  /** Optional test identifier used for testing */
+  testID?: string;
 }
 
 /**

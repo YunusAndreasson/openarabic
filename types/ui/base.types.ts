@@ -23,6 +23,8 @@ export interface BaseAnimatedStyleProps {
 export interface BaseOptionalPressableProps {
   /** Optional callback when the component is pressed */
   onPress?: () => void;
+  /** Optional test identifier used for testing */
+  testID?: string;
 }
 
 /**

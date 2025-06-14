@@ -31,6 +31,7 @@ interface CompletionScreenProps {
   contentStyle?: object;
   buttonStyle?: object;
   sessionMetrics?: SessionMetrics;
+  testID?: string;
 }
 
 const CompletionScreen: React.FC<CompletionScreenProps> = ({
@@ -45,6 +46,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
   contentStyle = EMPTY_OBJECT,
   buttonStyle = EMPTY_OBJECT,
   sessionMetrics,
+  testID,
 }) => {
   const colors = useColors();
   const queryClient = useQueryClient();
@@ -156,7 +158,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
 
   if (useThemedView) {
     return (
-      <ThemedView style={styles.container} useSafeArea={true}>
+      <ThemedView style={styles.container} useSafeArea={true} testID={testID}>
         {Content}
       </ThemedView>
     );
@@ -170,6 +172,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
           backgroundColor: colors.background,
         },
       ]}
+      testID={testID}
     >
       {Content}
     </View>
