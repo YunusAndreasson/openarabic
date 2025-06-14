@@ -95,7 +95,7 @@ export function mapToArticles(items: DatabaseRecord[]): Article[] {
  * @param item Database row from article_sentences table with related data
  * @returns A fully typed ArticleSentence object
  */
-export function mapToArticleSentence(item: DatabaseRecord): ArticleSentence {
+function mapToArticleSentence(item: DatabaseRecord): ArticleSentence {
   const base = item as Tables<'article_sentences'>;
   return {
     ...base,
