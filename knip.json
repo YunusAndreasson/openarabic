@@ -1,0 +1,43 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "app/**/*.{ts,tsx}",
+    "components/**/*.{ts,tsx}",
+    "hooks/**/*.{ts,tsx}",
+    "services/**/*.{ts,tsx}",
+    "store/**/*.{ts,tsx}",
+    "utils/**/*.{ts,tsx}",
+    "constants/**/*.{ts,tsx}",
+    "types/**/*.{ts,tsx}"
+  ],
+  "project": [
+    "**/*.{js,jsx,ts,tsx}",
+    "!**/*.test.{js,jsx,ts,tsx}",
+    "!**/*.spec.{js,jsx,ts,tsx}",
+    "!**/__tests__/**",
+    "!**/node_modules/**",
+    "!**/patches/**",
+    "!**/docs/**",
+    "!**/translate/**",
+    "!**/supabase/migrations/**"
+  ],
+  "ignore": [
+    "patches/**",
+    "docs/**",
+    "translate/**",
+    "supabase/migrations/**",
+    "assets/**",
+    "**/*.d.ts",
+    "types/database.types.ts",
+    "__mocks__/**",
+    "babel.config.js",
+    "metro.config.cjs",
+    "jest.config.js",
+    "jest.setup.js"
+  ],
+  "ignoreDependencies": ["postinstall-postinstall", "@sentry/cli"],
+  "ignoreExportsUsedInFile": true,
+  "includeEntryExports": false,
+  "ignoreBinaries": ["expo-doctor", "supabase"],
+  "exclude": ["duplicates"]
+}
