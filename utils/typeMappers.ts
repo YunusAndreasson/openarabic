@@ -50,7 +50,7 @@ function safeGet<T>(
  * @param item Database row from sentence_words table with related data
  * @returns A fully typed SentenceWord object
  */
-export function mapToSentenceWord(item: DatabaseRecord): SentenceWord {
+function mapToSentenceWord(item: DatabaseRecord): SentenceWord {
   const base = item as Tables<'sentence_words'>;
   return {
     ...base,
