@@ -11,6 +11,7 @@ import { handleError } from '@/utils/errorHandling';
 
 interface UseAudioPracticeSessionReturn {
   currentArabicWord: string;
+  currentWord: StudyWord | null;
   translationToShow?: string;
   progress: number;
   maxProgress: number;
@@ -232,6 +233,7 @@ export function useAudioPracticeSession(): UseAudioPracticeSessionReturn {
 
   return {
     currentArabicWord,
+    currentWord,
     translationToShow,
     progress,
     maxProgress,

@@ -12,11 +12,13 @@ import { ThemedView } from '@/components/ThemedView';
 import { ListenHeader, CompletionScreen } from '@/components/listen';
 import RepeatButton from '@/components/listen/RepeatButton';
 import { WordDisplay } from '@/components/review';
+import { WordManagementModal } from '@/components/vocabulary';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useAudioPracticeSession } from '@/hooks/practice';
 import { useColors } from '@/hooks/theme/useColors';
+import { useWordManagement } from '@/hooks/vocabulary/useWordManagement';
 import { useWordSizing } from '@/hooks/vocabulary/useWordSizing';
 import { handleError } from '@/utils/errorHandling';
 
@@ -44,6 +46,7 @@ export default function ListenScreen(): JSX.Element {
 
   const {
     currentArabicWord,
+    currentWord,
     translationToShow,
     progress,
     maxProgress,
@@ -53,6 +56,32 @@ export default function ListenScreen(): JSX.Element {
     handleRepeatToggle,
     stopPlayback,
   } = useAudioPracticeSession();
+
+  // Word management integration
+  const {
+    isModalVisible: isWordManagementVisible,
+    selectedWord: selectedWordForManagement,
+    showWordManagement,
+    hideWordManagement,
+    handleRemoveFromStudy,
+    handleResetProgress,
+    handleSkipForToday,
+    handleMarkAsEasy,
+    handleMarkAsHard,
+  } = useWordManagement({
+    onWordRemoved: () => {
+      // Refresh queries after word removal
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ['vocabulary-stats'] });
+      }
+    },
+    onWordUpdated: () => {
+      // Refresh queries after word update
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ['vocabulary-stats'] });
+      }
+    },
+  });
 
   // Animation
   const { animatedStyle, fadeIn, fadeOut } = useOpacityAnimation({
@@ -98,6 +127,16 @@ export default function ListenScreen(): JSX.Element {
   // Calculate font size based on word length
   const wordFontSize = useWordSizing(currentArabicWord, fontConfig);
 
+  // Check if we have a current word to show the management icon
+  const hasCurrentWord = Boolean(currentWord && !isComplete);
+
+  // Handle management icon press
+  const handleManageWord = () => {
+    if (currentWord && hasCurrentWord) {
+      showWordManagement(currentWord);
+    }
+  };
+
   // Only show completion screen if we're not in the process of closing
   if (isComplete && !isClosing) {
     return (
@@ -122,6 +161,8 @@ export default function ListenScreen(): JSX.Element {
           animationKey={progressAnimationKey}
           maxProgress={maxProgress}
           progress={progress}
+          hasCurrentWord={hasCurrentWord}
+          onManageWord={handleManageWord}
           onClose={handleClose}
         />
 
@@ -149,6 +190,18 @@ export default function ListenScreen(): JSX.Element {
           </View>
         </View>
       </View>
+
+      {/* Word Management Modal */}
+      <WordManagementModal
+        visible={isWordManagementVisible}
+        word={selectedWordForManagement}
+        onClose={hideWordManagement}
+        onRemoveFromStudy={handleRemoveFromStudy}
+        onResetProgress={handleResetProgress}
+        onSkipForToday={handleSkipForToday}
+        onMarkAsEasy={handleMarkAsEasy}
+        onMarkAsHard={handleMarkAsHard}
+      />
     </ThemedView>
   );
 }

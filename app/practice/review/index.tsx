@@ -12,6 +12,7 @@ import {
   MeaningOverlay,
   InstructionFooter,
 } from '@/components/review';
+import WordManagementModal from '@/components/vocabulary/WordManagementModal';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { useReview } from '@/hooks/review';
 
@@ -63,11 +64,33 @@ export default function ReviewScreen(): JSX.Element {
     handleSwipeLeft,
     handleSwipeRight,
     handleTap,
+    handleLongPress,
     handleClose,
     isUpdating,
     animatedStyle,
     sessionMetrics,
+    // Word management
+    isWordManagementVisible,
+    selectedWordForManagement,
+    hideWordManagement,
+    handleRemoveFromStudy,
+    handleResetProgress,
+    handleSkipForToday,
+    handleMarkAsEasy,
+    handleMarkAsHard,
   } = useReview({ fromRemember });
+
+  // Check if we have a current word to show the management icon
+  const hasCurrentWord = Boolean(
+    currentSentence.wordForm && !isComplete && !isTransitioningToCompletion
+  );
+
+  // Handle management icon press - use the same logic as long press
+  const handleManageWord = () => {
+    if (hasCurrentWord) {
+      handleLongPress();
+    }
+  };
 
   if (isComplete || isTransitioningToCompletion) {
     return <CompletionScreen sessionMetrics={sessionMetrics} onClose={handleClose} />;
@@ -80,7 +103,8 @@ export default function ReviewScreen(): JSX.Element {
           animationKey={progressAnimationKey}
           maxProgress={maxProgress}
           progress={progress}
-          onClose={handleClose}
+          onManageWord={handleManageWord}
+          hasCurrentWord={hasCurrentWord}
         />
 
         <View style={baseStyles.wordArea}>
@@ -94,6 +118,7 @@ export default function ReviewScreen(): JSX.Element {
             onSwipeLeft={handleSwipeLeft}
             onSwipeRight={handleSwipeRight}
             onTap={handleTap}
+            onLongPress={handleLongPress}
           />
           <MeaningOverlay
             isStruggling={isStruggling}
@@ -106,6 +131,18 @@ export default function ReviewScreen(): JSX.Element {
 
         <InstructionFooter />
       </View>
+
+      {/* Word Management Modal */}
+      <WordManagementModal
+        visible={isWordManagementVisible}
+        word={selectedWordForManagement}
+        onClose={hideWordManagement}
+        onRemoveFromStudy={handleRemoveFromStudy}
+        onResetProgress={handleResetProgress}
+        onSkipForToday={handleSkipForToday}
+        onMarkAsEasy={handleMarkAsEasy}
+        onMarkAsHard={handleMarkAsHard}
+      />
     </ThemedView>
   );
 }

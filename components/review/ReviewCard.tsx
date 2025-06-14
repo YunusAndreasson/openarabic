@@ -8,7 +8,6 @@ import { WORD_AREA_MIN_HEIGHT, useScreenWidth } from '@/constants/layout';
 import { useTransformAnimation } from '@/hooks/animations';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
-
 import WordDisplay from './WordDisplay';
 
 // Animation config constants
@@ -40,6 +39,7 @@ interface ReviewCardProps {
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
   onTap: () => void;
+  onLongPress?: () => void;
   isUpdating: boolean;
   isTransitioning: boolean;
   opacityStyle: AnimatedStyleProp<ViewStyle>;
@@ -51,6 +51,7 @@ const ReviewCard = memo(function ReviewCard({
   onSwipeLeft,
   onSwipeRight,
   onTap,
+  onLongPress,
   isUpdating,
   isTransitioning,
   opacityStyle,
@@ -140,10 +141,24 @@ const ReviewCard = memo(function ReviewCard({
     [isUpdating, isTransitioning, isAnimatingRef, onTap]
   );
 
+  // Create long press gesture - memoized
+  const longPressGesture = useMemo(
+    () =>
+      Gesture.LongPress()
+        .minDuration(500)
+        .enabled(!isUpdating && !isTransitioning && !isAnimatingRef.value)
+        .onEnd(() => {
+          if (!isUpdating && !isTransitioning && !isAnimatingRef.value && onLongPress) {
+            runOnJS(onLongPress)();
+          }
+        }),
+    [isUpdating, isTransitioning, isAnimatingRef, onLongPress]
+  );
+
   // Combine gestures - memoized
   const combinedGestures = useMemo(
-    () => Gesture.Exclusive(panGesture, tapGesture),
-    [panGesture, tapGesture]
+    () => Gesture.Exclusive(panGesture, Gesture.Race(tapGesture, longPressGesture)),
+    [panGesture, tapGesture, longPressGesture]
   );
 
   useEffect(() => {

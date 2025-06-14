@@ -1,22 +1,36 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ProgressBar } from '@/components/ProgressBar';
 import { LAYOUT } from '@/constants/layout';
+import { useColors } from '@/hooks/theme/useColors';
+import { selectionFeedback } from '@/utils/haptics';
 
 interface ReviewHeaderProps {
   progress: number;
   maxProgress: number;
   animationKey: number;
-  onClose?: () => void;
+  onManageWord?: () => void;
+  hasCurrentWord?: boolean;
 }
 
 const ReviewHeader: React.FC<ReviewHeaderProps> = ({
   progress,
   maxProgress,
   animationKey,
-  onClose: _onClose,
+  onManageWord,
+  hasCurrentWord = false,
 }) => {
+  const colors = useColors();
+
+  const handleManagePress = () => {
+    if (onManageWord && hasCurrentWord) {
+      selectionFeedback();
+      onManageWord();
+    }
+  };
+
   return (
     <View style={styles.header}>
       <View style={styles.progressContainer}>
@@ -27,6 +41,17 @@ const ReviewHeader: React.FC<ReviewHeaderProps> = ({
           progress={Math.max(progress, maxProgress)}
         />
       </View>
+
+      {/* Word Management Icon */}
+      {hasCurrentWord && (
+        <TouchableOpacity
+          style={[styles.manageButton, { backgroundColor: colors.card }]}
+          onPress={handleManagePress}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="ellipsis-horizontal" size={16} color={colors.secondaryText} />
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -44,6 +69,15 @@ const styles = StyleSheet.create({
   progressContainer: {
     flex: 1,
     marginVertical: LAYOUT.SPACING.MEDIUM,
+  },
+  manageButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: LAYOUT.SPACING.SMALL,
+    opacity: 0.8,
   },
 });
 

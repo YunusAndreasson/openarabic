@@ -10,6 +10,7 @@ import { useOpacityAnimation } from '@/hooks/animations';
 import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useFSRS } from '@/hooks/vocabulary/useFSRS';
+import { useWordManagement } from '@/hooks/vocabulary/useWordManagement';
 import { useWordSizing } from '@/hooks/vocabulary/useWordSizing';
 import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
@@ -57,9 +58,19 @@ interface UseReviewReturn {
   handleSwipeLeft: () => void;
   handleSwipeRight: () => void;
   handleTap: () => void;
+  handleLongPress: () => void;
   handleClose: () => void;
   animatedStyle: AnimatedStyleProp<ViewStyle>;
   sessionMetrics: SessionMetrics;
+  // Word management
+  isWordManagementVisible: boolean;
+  selectedWordForManagement: any;
+  hideWordManagement: () => void;
+  handleRemoveFromStudy: (word: any) => Promise<void>;
+  handleResetProgress: (word: any) => Promise<void>;
+  handleSkipForToday: (word: any) => Promise<void>;
+  handleMarkAsEasy: (word: any) => Promise<void>;
+  handleMarkAsHard: (word: any) => Promise<void>;
 }
 
 interface WordSizingConfig {
@@ -168,6 +179,28 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   const { currentWord, isComplete, progress, updateWord, invalidateQueries } = useFSRS({
     userId: user?.id,
     onComplete: triggerCompletionTransition,
+  });
+
+  // Word management integration
+  const {
+    isModalVisible: isWordManagementVisible,
+    selectedWord: selectedWordForManagement,
+    showWordManagement,
+    hideWordManagement,
+    handleRemoveFromStudy,
+    handleResetProgress,
+    handleSkipForToday,
+    handleMarkAsEasy,
+    handleMarkAsHard,
+  } = useWordManagement({
+    onWordRemoved: () => {
+      // Refresh the current session after word removal
+      invalidateQueries();
+    },
+    onWordUpdated: () => {
+      // Refresh the current session after word update
+      invalidateQueries();
+    },
   });
 
   const wordFontSize = useWordSizing(currentWord?.root?.letters, fontConfig);
@@ -353,8 +386,8 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
           confidence === 'known'
             ? currentWord.fsrs_stability * 0.3
             : confidence === 'vague'
-              ? currentWord.fsrs_stability * 0.1
-              : 0;
+            ? currentWord.fsrs_stability * 0.1
+            : 0;
         const totalIncrease =
           metrics.averageStabilityIncrease * (metrics.wordsReviewed - 1) + estimatedIncrease;
         metrics.averageStabilityIncrease = totalIncrease / metrics.wordsReviewed;
@@ -519,6 +552,12 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     handleKnowledgeResponse('vague');
   }, [handleKnowledgeResponse]);
 
+  const handleLongPress = useCallback(() => {
+    if (isComplete || stateRefs.current.isUpdatingWord || !currentWord) return;
+
+    showWordManagement(currentWord);
+  }, [currentWord, isComplete, showWordManagement]);
+
   const handleClose = useCallback(() => {
     const mounted = { current: true };
     // Stop any playing audio when closing
@@ -607,8 +646,18 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     handleSwipeLeft,
     handleSwipeRight,
     handleTap,
+    handleLongPress,
     handleClose,
     animatedStyle,
     sessionMetrics: sessionMetricsRef.current,
+    // Word management
+    isWordManagementVisible,
+    selectedWordForManagement,
+    hideWordManagement,
+    handleRemoveFromStudy,
+    handleResetProgress,
+    handleSkipForToday,
+    handleMarkAsEasy,
+    handleMarkAsHard,
   };
 }

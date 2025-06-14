@@ -34,17 +34,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-  noAudioContainer: {
-    alignItems: 'center',
-    bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY,
-    left: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    position: 'absolute',
-    right: LAYOUT.SCREEN_EDGE_PADDING,
-  },
-  noAudioText: {
-    textAlign: 'center',
-  },
   footerNote: {
     alignItems: 'center',
     paddingTop: LAYOUT.SPACING.LARGE,
@@ -357,7 +346,7 @@ export default function ListenScreen(): JSX.Element {
               hasArticles ? (
                 <View style={styles.footerNote}>
                   <ThemedText style={styles.footerNoteText} type="caption" variant="secondary">
-                    Tap to play audio or open article • Long press for reading
+                    Long press to open article for reading
                   </ThemedText>
                 </View>
               ) : null
@@ -369,15 +358,6 @@ export default function ListenScreen(): JSX.Element {
           />
         )}
       </ThemedView>
-
-      {/* Show helpful message when articles exist but none have audio */}
-      {hasArticles && !hasAudioArticles && !shouldShowPlayer && (
-        <View style={styles.noAudioContainer}>
-          <ThemedText style={styles.noAudioText} type="body" variant="secondary">
-            Articles are saved, but audio is not yet available
-          </ThemedText>
-        </View>
-      )}
 
       {/* Only show bottom controls when there are texts with audio to play but no active player */}
       {hasArticles && hasAudioArticles && !shouldShowPlayer && !isStartingPlayback && (
