@@ -32,7 +32,6 @@
     "coverage",
     "translate",
     "assets",
-    ".venv",
-    "services/analytics.ts"
+    ".venv"
   ]
 }
