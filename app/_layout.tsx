@@ -6,7 +6,8 @@ import {
   ThemeProvider as NavigationThemeProvider,
 } from '@react-navigation/native';
 import * as Sentry from '@sentry/react-native';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { useFonts } from 'expo-font';
 import { Stack, useNavigationContainerRef, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -35,6 +36,7 @@ import type { RootState } from '@/store/store';
 import { store, persistor } from '@/store/store';
 import { setTheme } from '@/store/themeSlice';
 import { handleError } from '@/utils/errorHandling';
+import { PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
 
 // Temporary mock analytics until service is fixed
 const analytics = {
@@ -45,34 +47,40 @@ const analytics = {
 // Let expo-router handle splash screen initialization through app.json configuration
 // This prevents conflicts with expo-router's internal splash screen management
 
+// Constants for QueryClient configuration
+const QUERY_DEFAULTS = {
+  STALE_TIME: 300000, // 5 minutes
+  GC_TIME: 1000 * 60 * 60 * 24 * 7, // 7 days - match persistence maxAge
+  MAX_RETRIES: 3,
+  MUTATION_MAX_RETRIES: 2,
+  MAX_RETRY_DELAY: 30000, // 30 seconds
+} as const;
+
+// Optimized retry logic
+const createRetryFunction = (maxRetries: number) => (failureCount: number, error: unknown) => {
+  // Don't retry on 4xx errors (client errors)
+  if (error && typeof error === 'object' && 'status' in error) {
+    const status = (error as { status: number }).status;
+    if (status >= 400 && status < 500) return false;
+  }
+  return failureCount < maxRetries;
+};
+
 // Move queryClient outside component scope for better performance
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 300000, // 5 minutes default (for general data)
-      gcTime: 600000, // 10 minutes default
+      staleTime: QUERY_DEFAULTS.STALE_TIME,
+      gcTime: QUERY_DEFAULTS.GC_TIME,
       refetchOnMount: 'always', // Always refetch on mount for fresh data
       refetchOnReconnect: true,
       refetchOnWindowFocus: false, // Disable for mobile
-      retry: (failureCount, error) => {
-        // Don't retry on 4xx errors (client errors)
-        if (error && typeof error === 'object' && 'status' in error) {
-          const status = error.status as number;
-          if (status >= 400 && status < 500) return false;
-        }
-        return failureCount < 3;
-      },
-      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+      retry: createRetryFunction(QUERY_DEFAULTS.MAX_RETRIES),
+      retryDelay: attemptIndex =>
+        Math.min(1000 * 2 ** attemptIndex, QUERY_DEFAULTS.MAX_RETRY_DELAY),
     },
     mutations: {
-      retry: (failureCount, error) => {
-        // Don't retry mutations on client errors
-        if (error && typeof error === 'object' && 'status' in error) {
-          const status = error.status as number;
-          if (status >= 400 && status < 500) return false;
-        }
-        return failureCount < 2;
-      },
+      retry: createRetryFunction(QUERY_DEFAULTS.MUTATION_MAX_RETRIES),
       gcTime: 0, // Don't cache mutation results
     },
   },
@@ -316,7 +324,7 @@ export default Sentry.wrap(function RootLayout() {
     <GestureHandlerRootView style={styles.gestureRoot}>
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
-          <QueryClientProvider client={queryClient}>
+          <PersistQueryClientProvider client={queryClient} persistOptions={PERSISTENCE_OPTIONS}>
             <AuthProvider>
               <SafeAreaProvider>
                 <ToastProvider>
@@ -326,7 +334,7 @@ export default Sentry.wrap(function RootLayout() {
                 </ToastProvider>
               </SafeAreaProvider>
             </AuthProvider>
-          </QueryClientProvider>
+          </PersistQueryClientProvider>
         </PersistGate>
       </Provider>
     </GestureHandlerRootView>

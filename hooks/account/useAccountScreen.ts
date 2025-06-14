@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useCallback, useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import { Alert, Linking } from 'react-native';
 
 import { useAudioCache } from '@/hooks/audio/useAudioCache';
@@ -10,6 +10,7 @@ import { supabase } from '@/services/supabase';
 import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
+import { clearPersistedCache, getPersistedCacheSize } from '@/utils/queryPersistence';
 
 // import { analytics } from '@/services/analytics';
 // Temporary mock analytics until service is fixed
@@ -24,65 +25,115 @@ export const useAccountScreen = () => {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [notificationPermissions, setNotificationPermissions] = useState(false);
   const [cacheSize, setCacheSize] = useState<number>(0);
+  const [queryCacheSize, setQueryCacheSize] = useState<number>(0);
   const [isClearingCache, setIsClearingCache] = useState(false);
   const { user } = useAuth();
   const isMounted = useRef(true);
 
-  // Load cache size on component mount
+  // Load cache sizes on component mount
   useEffect(() => {
-    const loadCacheSize = async () => {
+    const loadCacheSizes = async () => {
       try {
-        const size = await getCacheSize();
+        const [audioSize, querySize] = await Promise.all([getCacheSize(), getPersistedCacheSize()]);
         if (isMounted.current) {
-          setCacheSize(size);
+          setCacheSize(audioSize);
+          setQueryCacheSize(querySize);
         }
       } catch (error) {
-        console.error('Failed to load cache size:', error);
+        console.error('Failed to load cache sizes:', error);
       }
     };
 
-    loadCacheSize();
+    loadCacheSizes();
 
     return () => {
       isMounted.current = false;
     };
   }, [getCacheSize]);
 
-  const handleClearCache = useCallback(() => {
-    if (cacheSize === 0) {
-      Alert.alert('No Cache', 'There are no cached audio files to clear.');
-      return;
-    }
+  // Consolidated cache clearing logic
+  const createCacheClearHandler = useCallback(
+    (
+      type: 'audio' | 'query',
+      size: number,
+      clearFunction: () => Promise<void>,
+      setSizeFunction: (size: number) => void,
+      title: string,
+      description: string
+    ) => {
+      return () => {
+        if (size === 0) {
+          Alert.alert(
+            'No Cache',
+            `There is no ${type === 'audio' ? 'cached audio files' : 'offline data cache'} to clear.`
+          );
+          return;
+        }
 
-    Alert.alert(
-      'Clear Audio Cache',
-      `This will delete ${formatBytes(cacheSize)} of cached audio files. You'll need to re-download audio when playing articles.`,
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Clear Cache',
-          style: 'destructive',
-          onPress: async () => {
-            setIsClearingCache(true);
-            try {
-              await clearCache();
-              setCacheSize(0);
-              lightFeedback();
-              Alert.alert('Success', 'Audio cache cleared successfully');
-            } catch (error) {
-              Alert.alert('Error', 'Failed to clear cache');
-              handleError(error as Error, { showToast: false });
-            } finally {
-              setIsClearingCache(false);
-            }
-          },
-        },
-      ]
-    );
-  }, [cacheSize, clearCache]);
+        Alert.alert(
+          title,
+          `${description} ${formatBytes(size)} of cached data. ${type === 'audio' ? "You'll need to re-download audio when playing articles." : 'The app will need to reload this data when you use it again.'}`,
+          [
+            {
+              text: 'Cancel',
+              style: 'cancel',
+            },
+            {
+              text: 'Clear Cache',
+              style: 'destructive',
+              onPress: async () => {
+                setIsClearingCache(true);
+                try {
+                  await clearFunction();
+                  setSizeFunction(0);
+                  lightFeedback();
+                  Alert.alert(
+                    'Success',
+                    `${type === 'audio' ? 'Audio' : 'Offline data'} cache cleared successfully`
+                  );
+                } catch (error) {
+                  Alert.alert(
+                    'Error',
+                    `Failed to clear ${type === 'audio' ? 'audio' : 'offline data'} cache`
+                  );
+                  handleError(error as Error, { showToast: false });
+                } finally {
+                  setIsClearingCache(false);
+                }
+              },
+            },
+          ]
+        );
+      };
+    },
+    []
+  );
+
+  const handleClearCache = useMemo(
+    () =>
+      createCacheClearHandler(
+        'audio',
+        cacheSize,
+        clearCache,
+        setCacheSize,
+        'Clear Audio Cache',
+        'This will delete'
+      ),
+    [createCacheClearHandler, cacheSize, clearCache]
+  );
+
+  const handleClearQueryCache = useMemo(
+    () =>
+      createCacheClearHandler(
+        'query',
+        queryCacheSize,
+        clearPersistedCache,
+        setQueryCacheSize,
+        'Clear Offline Data',
+        'This will delete'
+      ),
+    [createCacheClearHandler, queryCacheSize]
+  );
 
   const handleSignOut = useCallback(() => {
     Alert.alert(
@@ -213,8 +264,10 @@ export const useAccountScreen = () => {
     currentYear,
     user,
     handleClearCache,
+    handleClearQueryCache,
     isClearingCache,
     cacheSize,
+    queryCacheSize,
   };
 };
 
