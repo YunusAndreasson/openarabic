@@ -58,6 +58,21 @@ describe('useNavigationWithDebounce', () => {
 
       expect(handleError).toHaveBeenCalledWith(expect.any(Error));
     });
+
+    it('calls handleError when replace navigation throws and does not retry', () => {
+      (router.replace as jest.Mock).mockImplementationOnce(() => {
+        throw new Error('replace bad');
+      });
+
+      const { result } = renderHook(() => useNavigationWithDebounce());
+
+      act(() => {
+        result.current.navigateTo('/path', undefined, { replace: true });
+      });
+
+      expect(handleError).toHaveBeenCalledWith(expect.any(Error));
+      expect(router.replace).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('debounces rapid navigation calls', () => {
