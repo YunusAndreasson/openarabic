@@ -1,4 +1,7 @@
 from pathlib import Path
+import logging
+
+logger = logging.getLogger(__name__)
 
 from translate.core.audio_utils import AUDIO_CACHE_DIR
 
@@ -16,7 +19,7 @@ def ensure_valid_cache_files() -> None:
                     file_path.rename(new_path)
                     fixed_count += 1
                 except Exception as e:
-                    print(f"Error fixing cache file {file_path.name}: {str(e)}")
+                    logger.info(f"Error fixing cache file {file_path.name}: {str(e)}")
 
     if fixed_count > 0:
-        print(f"Fixed {fixed_count} cache files with missing extensions")
+        logger.info(f"Fixed {fixed_count} cache files with missing extensions")

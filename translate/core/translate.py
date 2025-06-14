@@ -17,8 +17,10 @@ from translate.core.batch_utils import create_batches, process_batch
 
 # Configure logging to show only errors
 logging.basicConfig(
-    level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
+
+logger = logging.getLogger(__name__)
 
 # Configuration constants
 MAX_BATCH_SIZE = 5  # Maximum number of sentences to process in one batch
@@ -87,14 +89,14 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
 
     # If any batch failed, don't write incomplete data
     if batch_errors:
-        print(f"❌ Translation failed - {len(batch_errors)} batch(es) failed:")
+        logger.info(f"❌ Translation failed - {len(batch_errors)} batch(es) failed:")
         for error in batch_errors:
-            print(f"  - {error}")
+            logger.info(f"  - {error}")
         return None
 
     # Verify we have all expected translations
     if len(results) != len(all_units):
-        print(
+        logger.info(
             f"❌ Translation incomplete - expected {len(all_units)} translations, got {len(results)}"
         )
         return None
@@ -122,11 +124,11 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
                 failed_count += 1
 
     if failed_count > 0:
-        print(f"❌ Translation contains {failed_count} failed sentence(s)")
+        logger.info(f"❌ Translation contains {failed_count} failed sentence(s)")
         return None
 
     if issue_count > 0:
-        print(
+        logger.info(
             f"❌ Translation contains {issue_count} sentence(s) with validation issues"
         )
         return None
@@ -161,7 +163,7 @@ def main():
     # Check if the split file exists
     split_file = os.path.splitext(input_file)[0] + "_split.json"
     if not os.path.exists(split_file):
-        print(f"❌ Split file not found: {split_file}")
+        logger.info(f"❌ Split file not found: {split_file}")
         sys.exit(1)
 
     # Parse batch size parameter
@@ -181,7 +183,7 @@ def main():
         success = translate_file(input_file, output_file, batch_size)
 
         if not success:
-            print("❌ Translation failed to produce results.")
+            logger.info("❌ Translation failed to produce results.")
             sys.exit(1)
 
         sys.exit(0)
@@ -189,7 +191,7 @@ def main():
     except KeyboardInterrupt:
         sys.exit(130)
     except Exception as e:
-        print(f"❌ Error: {str(e)}")
+        logger.info(f"❌ Error: {str(e)}")
         sys.exit(1)
 
 

@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+import logging
 from datetime import datetime, UTC
 
 # Import from the newly created modules
@@ -19,6 +20,8 @@ from translate.core.database_utils import (
 )
 from translate.core.cache_utils import ensure_valid_cache_files
 from translate.core.utils import load_api_keys
+
+logger = logging.getLogger(__name__)
 
 # Load environment variables once
 load_api_keys()
@@ -87,7 +90,7 @@ def main():
     articles_dir = os.path.abspath(os.path.join(script_dir, "..", "article"))
 
     if not os.path.exists(articles_dir):
-        print(f"❌ Could not find articles directory at {articles_dir}")
+        logger.info(f"❌ Could not find articles directory at {articles_dir}")
         sys.exit(1)
 
     # Get all json files in the articles directory
@@ -107,7 +110,7 @@ def main():
                 json_files.append(output_json)
 
     if not json_files:
-        print("❌ No article output.json files found in the articles directory")
+        logger.info("❌ No article output.json files found in the articles directory")
         sys.exit(1)
 
     success_count = 0
@@ -123,10 +126,10 @@ def main():
             success_count += 1
         except Exception as e:
             error_count += 1
-            print(f"❌ Error processing {json_path}: {str(e)}")
+            logger.info(f"❌ Error processing {json_path}: {str(e)}")
 
     if error_count > 0:
-        print(f"❌ Failed to process: {error_count} articles")
+        logger.info(f"❌ Failed to process: {error_count} articles")
         sys.exit(1)
 
     # Normal successful completion

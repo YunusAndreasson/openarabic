@@ -1,6 +1,7 @@
 import os
 import re
 from typing import Optional
+import logging
 
 from translate.core.audio_utils import (
     get_cache_key,
@@ -12,6 +13,8 @@ from translate.core.storage_utils import (
     SUPABASE_URL,
     check_file_exists,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def is_arabic_text(text: str) -> bool:
@@ -51,12 +54,12 @@ def get_or_generate_root_audio(
     # --- Arabic audio ---
     audio_url = get_cached_audio_url(cache_key_ar, arabic_word)
     if not audio_url:
-        print(f"Generating new audio for Arabic word: {arabic_word}")
+        logger.info(f"Generating new audio for Arabic word: {arabic_word}")
         result = generate_arabic_word_audio(arabic_word, cache_key_ar)
-        print(f"Result from generate_arabic_word_audio: {result}")
+        logger.info(f"Result from generate_arabic_word_audio: {result}")
         audio_url = result.get("url") if result else None
         if audio_url:
-            print(f"Generated Arabic audio URL: {audio_url}")
+            logger.info(f"Generated Arabic audio URL: {audio_url}")
             temp_path = os.path.join(root_dir, "audio", cache_key_ar)
             if os.path.exists(temp_path):
                 try:
@@ -65,12 +68,12 @@ def get_or_generate_root_audio(
                     shutil.copy2(temp_path, cache_path_ar)
                     os.remove(temp_path)
                 except Exception as e:
-                    print(f"Error caching audio file for {arabic_word}: {e}")
+                    logger.info(f"Error caching audio file for {arabic_word}: {e}")
 
     # --- English audio ---
     # Validate that english_translation is actually English (not Arabic)
     if english_translation and is_arabic_text(english_translation):
-        print(
+        logger.info(
             f"Warning: Detected Arabic text in English translation: {english_translation}"
         )
         english_translation = None
@@ -85,12 +88,12 @@ def get_or_generate_root_audio(
     audio_url_en = get_cached_audio_url(cache_key_en, english_word_to_use)
     if not audio_url_en:
         # Pass the English translation to generate English audio
-        print(f"Generating new audio for English word: {english_word_to_use}")
+        logger.info(f"Generating new audio for English word: {english_word_to_use}")
         result_en = generate_english_word_audio(english_word_to_use, cache_key_en)
-        print(f"Result from generate_english_word_audio: {result_en}")
+        logger.info(f"Result from generate_english_word_audio: {result_en}")
         audio_url_en = result_en.get("url") if result_en else None
         if audio_url_en:
-            print(f"Generated English audio URL: {audio_url_en}")
+            logger.info(f"Generated English audio URL: {audio_url_en}")
             temp_path_en = os.path.join(root_dir, "audio", cache_key_en)
             if os.path.exists(temp_path_en):
                 try:
@@ -99,18 +102,18 @@ def get_or_generate_root_audio(
                     shutil.copy2(temp_path_en, cache_path_en)
                     os.remove(temp_path_en)
                 except Exception as e:
-                    print(
+                    logger.info(
                         f"Error caching English audio file for {english_word_to_use}: {e}"
                     )
 
     # If we don't have audio URLs but files exist in storage, construct URLs
     if not audio_url and check_file_exists("audio", cache_key_ar):
         audio_url = storage_url_ar
-        print(f"Found audio in storage without URL: {audio_url}")
+        logger.info(f"Found audio in storage without URL: {audio_url}")
 
     if not audio_url_en and check_file_exists("audio", cache_key_en):
         audio_url_en = storage_url_en
-        print(f"Found EN audio in storage without URL: {audio_url_en}")
+        logger.info(f"Found EN audio in storage without URL: {audio_url_en}")
 
     # Return both URLs even if one is None
     return {"audio_url": audio_url, "audio_url_en": audio_url_en}

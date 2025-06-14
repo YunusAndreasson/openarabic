@@ -17,6 +17,8 @@ if not all([SUPABASE_URL, SUPABASE_KEY]):
 # Initialize client
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+logger = logging.getLogger(__name__)
+
 # Word type mapping from POS to word_types table
 WORD_TYPE_MAPPING = {
     "verb": 1,
@@ -64,7 +66,7 @@ def upload_to_storage(
 
     # If file doesn't exist, upload it
     try:
-        print(f"Uploading file {file_path} to {bucket}...")
+        logger.info(f"Uploading file {file_path} to {bucket}...")
         supabase.storage.from_(bucket).upload(
             file_path, file_data, file_options={"content-type": content_type}
         )
@@ -89,7 +91,7 @@ def upload_to_storage(
         if hasattr(e, "statusCode") and e.statusCode == 409:
             return f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{file_path}"
         # Otherwise, propagate the exception to trigger retry
-        print(f"Upload failed: {str(e)}")
+        logger.info(f"Upload failed: {str(e)}")
         raise
 
 

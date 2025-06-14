@@ -30,10 +30,12 @@ def load_api_keys() -> None:
         exec(f.read(), globals())
     _keys_loaded = True
 
-# Configure logging to show only errors
+# Configure logging
 logging.basicConfig(
-    level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
+
+logger = logging.getLogger(__name__)
 
 # Configuration constants are now centralized in config.py
 

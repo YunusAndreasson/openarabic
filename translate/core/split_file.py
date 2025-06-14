@@ -10,6 +10,8 @@ from translate.core.utils import (
     call_openai_api,
     token_tracker,
 )
+
+logger = logging.getLogger(__name__)
 from translate.core.config import MODEL_ANALYSIS
 
 # Import schemas and prompt templates
@@ -19,9 +21,9 @@ from translate.core.schemas import (
     SENTENCE_SPLITTING_USER_PROMPT,
 )
 
-# Configure logging to show only errors
+# Configure logging
 logging.basicConfig(
-    level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
 
@@ -120,7 +122,7 @@ def main():
     except KeyboardInterrupt:
         sys.exit(130)  # Standard exit code for SIGINT
     except Exception as e:
-        print(f"❌ Fatal error during text splitting: {str(e)}")
+        logger.info(f"❌ Fatal error during text splitting: {str(e)}")
         sys.exit(1)
 
 

@@ -2,6 +2,7 @@
 import os
 import sys
 import subprocess
+import logging
 
 # Set constants
 DEFAULT_INPUT_FILE = os.path.join(
@@ -13,6 +14,9 @@ DEFAULT_OUTPUT_FILE = os.path.join(
 DEFAULT_BATCH_SIZE = 5
 
 from translate.core.utils import load_api_keys
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 # Load environment variables once
 load_api_keys()
@@ -27,7 +31,7 @@ def confirm_step(prompt):
             return True
         elif response in ["n", "no"]:
             return False
-        print("Please answer 'y' or 'n'.")
+        logger.info("Please answer 'y' or 'n'.")
 
 
 def split_file(input_file):
@@ -40,11 +44,11 @@ def split_file(input_file):
     )
 
     if result.returncode != 0:
-        print(f"❌ Error splitting file: {result.stderr}")
+        logger.info(f"❌ Error splitting file: {result.stderr}")
         sys.exit(1)
 
     if not os.path.exists(split_file):
-        print(f"❌ Split file not created: {split_file}")
+        logger.info(f"❌ Split file not created: {split_file}")
         sys.exit(1)
 
     return split_file
@@ -65,7 +69,7 @@ def translate_file(input_file, output_file, batch_size):
     )
 
     if result.returncode != 0:
-        print("❌ Translation failed.")
+        logger.info("❌ Translation failed.")
         sys.exit(1)
 
 
@@ -91,7 +95,7 @@ def main():
             capture_output=False,
         )
         if result.returncode != 0:
-            print("❌ insert.py failed.")
+            logger.info("❌ insert.py failed.")
             sys.exit(1)
 
     # Normal successful completion

@@ -10,6 +10,9 @@ from typing import Dict, List, Optional
 from elevenlabs.client import ElevenLabs
 from elevenlabs import VoiceSettings
 from mutagen.mp3 import MP3
+import logging
+
+logger = logging.getLogger(__name__)
 
 from translate.core.arabic_text import (
     wrap_in_arabic_ssml,
@@ -76,7 +79,7 @@ def retry_operation(max_attempts=3, delay=1, backoff=2):
                 except Exception as e:
                     attempts += 1
                     if attempts == max_attempts:
-                        print(f"Failed after {max_attempts} attempts: {str(e)}")
+                        logger.info(f"Failed after {max_attempts} attempts: {str(e)}")
                         raise
                     time.sleep(current_delay)
                     current_delay *= backoff
@@ -149,7 +152,7 @@ def validate_mp3(audio_data: bytes, is_cached_file: bool = False) -> bool:
             return False
 
     except Exception as e:
-        print(f"Invalid MP3: {str(e)}")
+        logger.info(f"Invalid MP3: {str(e)}")
         return False
 
 
@@ -183,7 +186,7 @@ def get_cached_audio_url(cache_key: str, label: str | None = None) -> Optional[s
             except Exception:
                 pass
         if label:
-            print(f"Using existing audio for {label}: {storage_url}")
+            logger.info(f"Using existing audio for {label}: {storage_url}")
         return storage_url
 
     if os.path.exists(cache_path):
@@ -196,23 +199,23 @@ def get_cached_audio_url(cache_key: str, label: str | None = None) -> Optional[s
                         result_url = upload_to_storage("audio", cache_key, f)
                         if result_url:
                             if label:
-                                print(f"Uploaded cache audio for {label}: {result_url}")
+                                logger.info(f"Uploaded cache audio for {label}: {result_url}")
                             else:
-                                print(f"Uploaded cache audio for {cache_key}: {result_url}")
+                                logger.info(f"Uploaded cache audio for {cache_key}: {result_url}")
                             return result_url
                         else:
                             if label:
-                                print(f"Failed to get URL for {label} cache upload")
+                                logger.info(f"Failed to get URL for {label} cache upload")
                             else:
-                                print(f"Failed to get URL for {cache_key} cache upload")
+                                logger.info(f"Failed to get URL for {cache_key} cache upload")
                 except Exception as e:
-                    print(f"Cache upload failed for {label or cache_key}: {e}")
+                    logger.info(f"Cache upload failed for {label or cache_key}: {e}")
                     return None
             else:
                 os.remove(cache_path)
                 return None
         except Exception as e:
-            print(f"Error with cache file for {label or cache_key}: {e}")
+            logger.info(f"Error with cache file for {label or cache_key}: {e}")
             if os.path.exists(cache_path):
                 os.remove(cache_path)
             return None
@@ -343,7 +346,7 @@ def concatenate_audio_files(audio_files: List[str], output_file: str) -> Optiona
     """Concatenate multiple MP3 files using ffmpeg."""
     try:
         if not audio_files:
-            print("No audio files to concatenate")
+            logger.info("No audio files to concatenate")
             return None
 
         # Create a temporary directory for processing
@@ -377,7 +380,7 @@ def concatenate_audio_files(audio_files: List[str], output_file: str) -> Optiona
         result = subprocess.run(cmd, capture_output=True, text=True)
 
         if result.returncode != 0:
-            print(f"Error concatenating audio files: {result.stderr}")
+            logger.info(f"Error concatenating audio files: {result.stderr}")
             return None
 
         # Clean up
@@ -385,17 +388,17 @@ def concatenate_audio_files(audio_files: List[str], output_file: str) -> Optiona
             os.remove(list_file)
             os.rmdir(temp_dir)
         except Exception as e:
-            print(f"Warning: Cleanup error: {str(e)}")
+            logger.info(f"Warning: Cleanup error: {str(e)}")
 
         if os.path.exists(output_file):
-            print(f"Successfully created concatenated audio file: {output_file}")
+            logger.info(f"Successfully created concatenated audio file: {output_file}")
             return output_file
         else:
-            print("Output file was not created")
+            logger.info("Output file was not created")
             return None
 
     except Exception as e:
-        print(f"Error in audio concatenation: {str(e)}")
+        logger.info(f"Error in audio concatenation: {str(e)}")
         import traceback
 
         traceback.print_exc()
@@ -424,12 +427,12 @@ def generate_arabic_word_audio(word: str, filename: str) -> Optional[Dict]:
         )
 
         if not audio_response:
-            print("Error: Empty audio response from ElevenLabs API")
+            logger.info("Error: Empty audio response from ElevenLabs API")
             return None
 
         # Validate the MP3 data
         if not validate_mp3(audio_response):
-            print(f"Skipping upload of invalid MP3 file for word '{word}'")
+            logger.info(f"Skipping upload of invalid MP3 file for word '{word}'")
             return None
 
         # Save and upload the audio file
@@ -442,11 +445,11 @@ def generate_arabic_word_audio(word: str, filename: str) -> Optional[Dict]:
         try:
             with open(temp_audio_path, "rb") as f:
                 url = upload_to_storage("audio", filename, f)
-                print(f"Arabic upload result for '{word}': {url}")
+                logger.info(f"Arabic upload result for '{word}': {url}")
                 if not url:
                     raise Exception("Failed to get URL from upload")
         except Exception as e:
-            print(f"Upload failed despite retries: {str(e)}")
+            logger.info(f"Upload failed despite retries: {str(e)}")
             return None
 
         # IMPORTANT: Explicitly create storage URL if upload succeeded
@@ -454,12 +457,12 @@ def generate_arabic_word_audio(word: str, filename: str) -> Optional[Dict]:
             from translate.core.storage_utils import SUPABASE_URL
 
             final_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{filename}"
-            print(f"Final Arabic URL for '{word}': {final_url}")
+            logger.info(f"Final Arabic URL for '{word}': {final_url}")
             return {"url": final_url}
         return None
 
     except Exception as e:
-        print(f"Error generating/uploading Arabic word audio for '{word}': {str(e)}")
+        logger.info(f"Error generating/uploading Arabic word audio for '{word}': {str(e)}")
         import traceback
 
         traceback.print_exc()
@@ -495,12 +498,12 @@ def generate_english_word_audio(word: str, filename: str) -> Optional[Dict]:
         )
 
         if not audio_response:
-            print("Error: Empty audio response from ElevenLabs API (EN)")
+            logger.info("Error: Empty audio response from ElevenLabs API (EN)")
             return None
 
         # Validate the MP3 data
         if not validate_mp3(audio_response):
-            print(f"Skipping upload of invalid MP3 file for English word '{word}'")
+            logger.info(f"Skipping upload of invalid MP3 file for English word '{word}'")
             return None
 
         # Save and upload the audio file
@@ -513,11 +516,11 @@ def generate_english_word_audio(word: str, filename: str) -> Optional[Dict]:
         try:
             with open(temp_audio_path, "rb") as f:
                 url = upload_to_storage("audio", filename, f)
-                print(f"English upload result for '{word}': {url}")
+                logger.info(f"English upload result for '{word}': {url}")
                 if not url:
                     raise Exception("Failed to get URL from upload")
         except Exception as e:
-            print(f"Upload failed despite retries (EN): {str(e)}")
+            logger.info(f"Upload failed despite retries (EN): {str(e)}")
             return None
 
         # IMPORTANT: Explicitly create storage URL if upload succeeded
@@ -525,12 +528,12 @@ def generate_english_word_audio(word: str, filename: str) -> Optional[Dict]:
             from translate.core.storage_utils import SUPABASE_URL
 
             final_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{filename}"
-            print(f"Final English URL for '{word}': {final_url}")
+            logger.info(f"Final English URL for '{word}': {final_url}")
             return {"url": final_url}
         return None
 
     except Exception as e:
-        print(f"Error generating/uploading English word audio for '{word}': {str(e)}")
+        logger.info(f"Error generating/uploading English word audio for '{word}': {str(e)}")
         import traceback
 
         traceback.print_exc()
@@ -542,7 +545,7 @@ def generate_english_word_audio(word: str, filename: str) -> Optional[Dict]:
 def extract_word_timings_from_alignment(alignment, text):
     """Extract word timings from ElevenLabs alignment data."""
     if not alignment:
-        print("No alignment data found in response")
+        logger.info("No alignment data found in response")
         raise ValueError("Missing alignment data in API response")
 
     chars = getattr(alignment, "characters", []) if alignment else []
@@ -559,7 +562,7 @@ def extract_word_timings_from_alignment(alignment, text):
         and end_times
         and len(chars) == len(start_times) == len(end_times)
     ):
-        print("Invalid alignment data structure")
+        logger.info("Invalid alignment data structure")
         raise ValueError("Invalid or missing timing data in API response")
 
     # Only keep characters that are Arabic, Arabic diacritics, or whitespace
@@ -606,10 +609,10 @@ def extract_word_timings_from_alignment(alignment, text):
                 }
             )
         except Exception as e:
-            print(f"Failed to extract timings for word '{word}': {str(e)}")
+            logger.info(f"Failed to extract timings for word '{word}': {str(e)}")
 
     if not word_timings:
-        print("Failed to extract any word timings from the response")
+        logger.info("Failed to extract any word timings from the response")
         raise ValueError("Failed to extract any word timings from the response")
 
     # Sort word timings by start time to ensure proper sequencing
@@ -657,11 +660,11 @@ def generate_sentence_audio(
                 audio_data = base64.b64decode(audio_base64)
         alignment = getattr(response, "alignment", None) if response else None
         if not audio_data:
-            print("No audio data returned from TTS API")
+            logger.info("No audio data returned from TTS API")
             return None
         # Validate and save audio
         if not validate_mp3(audio_data):
-            print("Invalid MP3 data returned from TTS API")
+            logger.info("Invalid MP3 data returned from TTS API")
             return None
         temp_audio_path = os.path.join(AUDIO_TEMP_DIR, filename)
         with open(temp_audio_path, "wb") as f:
@@ -677,5 +680,5 @@ def generate_sentence_audio(
             word_timings = extract_word_timings_from_alignment(alignment, tts_text)
         return {"url": url, "word_timings": word_timings}
     except Exception as e:
-        print(f"Error generating sentence audio: {str(e)}")
+        logger.info(f"Error generating sentence audio: {str(e)}")
         return None

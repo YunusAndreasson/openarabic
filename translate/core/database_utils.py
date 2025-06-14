@@ -1,5 +1,6 @@
 import os
 import shutil
+import logging
 from datetime import datetime, UTC
 from typing import Dict, List, Optional
 
@@ -13,6 +14,8 @@ from translate.core.audio_utils import (
     generate_sentence_audio,
     concatenate_audio_files,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def extract_root_info(word: Dict) -> tuple[str, Optional[str], Optional[str]]:
@@ -87,7 +90,7 @@ def get_or_create_root(
                 audio_urls = get_or_generate_root_audio(letters, english_audio_text)
 
                 # Debug info for audio URL generation
-                print(f"Audio URLs for existing root '{letters}': {audio_urls}")
+                logger.info(f"Audio URLs for existing root '{letters}': {audio_urls}")
 
                 update_data = {}
                 if audio_urls:
@@ -97,12 +100,12 @@ def get_or_create_root(
                         update_data["audio_url_en"] = audio_urls["audio_url_en"]
 
                 if update_data:
-                    print(f"Updating root {root_id} with audio URLs: {update_data}")
+                    logger.info(f"Updating root {root_id} with audio URLs: {update_data}")
                     supabase.table("roots").update(update_data).eq(
                         "id", root_id
                     ).execute()
             except Exception as e:
-                print(f"Error generating audio for root '{letters}': {e}")
+                logger.info(f"Error generating audio for root '{letters}': {e}")
                 import traceback
 
                 traceback.print_exc()  # Print full stack trace for debugging
@@ -112,7 +115,7 @@ def get_or_create_root(
     root_data = {"letters": letters, "meaning": meaning}
     result = supabase.table("roots").insert(root_data).execute()
     root_id = result.data[0]["id"]
-    print(f"Created new root with ID {root_id} for '{letters}'")
+    logger.info(f"Created new root with ID {root_id} for '{letters}'")
 
     # Generate and update audio_url/audio_url_en for the new root
     try:
@@ -134,7 +137,7 @@ def get_or_create_root(
         audio_urls = get_or_generate_root_audio(letters, english_audio_text)
 
         # Debug info for audio URL generation
-        print(f"Audio URLs for new root '{letters}': {audio_urls}")
+        logger.info(f"Audio URLs for new root '{letters}': {audio_urls}")
 
         update_data = {}
         if audio_urls:
@@ -144,12 +147,12 @@ def get_or_create_root(
                 update_data["audio_url_en"] = audio_urls["audio_url_en"]
 
         if update_data:
-            print(f"Updating new root {root_id} with audio URLs: {update_data}")
+            logger.info(f"Updating new root {root_id} with audio URLs: {update_data}")
             supabase.table("roots").update(update_data).eq("id", root_id).execute()
         else:
-            print(f"Warning: No audio URLs generated for root '{letters}'")
+            logger.info(f"Warning: No audio URLs generated for root '{letters}'")
     except Exception as e:
-        print(f"Error generating audio for new root '{letters}': {e}")
+        logger.info(f"Error generating audio for new root '{letters}': {e}")
         import traceback
 
         traceback.print_exc()  # Print full stack trace for debugging
@@ -176,7 +179,7 @@ def insert_sentence_words(
     # Check if we have word timings and output a clear warning if we have fewer timings than words
     if word_timings:
         if len(word_timings) < len(word_by_word):
-            print(
+            logger.info(
                 f"Warning: Fewer word timings ({len(word_timings)}) than words in sentence ({len(word_by_word)})"
             )
         # Sort word timings by start time to ensure proper sequencing
@@ -335,7 +338,7 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> Dict:
                             f.write(response)
                         sentence_audio_files.append(temp_audio_file)
                 except Exception as e:
-                    print(f"Error downloading audio file: {str(e)}")
+                    logger.info(f"Error downloading audio file: {str(e)}")
 
                 if word_timings:
                     timing_stats["sentences_with_timings"] += 1
@@ -366,7 +369,7 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> Dict:
                 timing_stats["total_words"] += word_stats["total_words"]
                 timing_stats["words_with_timings"] += word_stats["words_with_timing"]
             else:
-                print(
+                logger.info(
                     "Warning: No word-by-word translation found, skipping word insertion"
                 )
 
@@ -391,11 +394,11 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> Dict:
                         {"audio_url": article_audio_url}
                     ).eq("id", article_id).execute()
 
-                    print(
+                    logger.info(
                         "Successfully created and uploaded concatenated article audio"
                     )
                 except Exception as e:
-                    print(f"Error uploading concatenated audio: {str(e)}")
+                    logger.info(f"Error uploading concatenated audio: {str(e)}")
 
             # Clean up temporary files
             for file in sentence_audio_files:
@@ -410,7 +413,7 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> Dict:
                 pass
 
     except Exception as e:
-        print(f"Error processing sentences: {str(e)}")
+        logger.info(f"Error processing sentences: {str(e)}")
         # Clean up on error
         for file in sentence_audio_files:
             try:
@@ -479,10 +482,10 @@ def save_timing_report(
                 f"{quality}\n"
             )
 
-        print(f"Saved timing report to {report_file}")
+        logger.info(f"Saved timing report to {report_file}")
 
     except Exception as e:
-        print(f"Failed to save timing report: {str(e)}")
+        logger.info(f"Failed to save timing report: {str(e)}")
 
 
 def archive_files(json_path: str, article_id: int) -> None:

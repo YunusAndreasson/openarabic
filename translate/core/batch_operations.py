@@ -1,5 +1,6 @@
 import sys
 import time
+import logging
 
 from typing import List, Dict, Any, Optional
 
@@ -21,6 +22,8 @@ from translate.core.schemas import (
     WORD_BY_WORD_USER_PROMPT,
     FINAL_VERIFICATION_USER_PROMPT,
 )
+
+logger = logging.getLogger(__name__)
 
 from translate.core.models import WordTranslationOptions
 
@@ -345,9 +348,9 @@ def batch_translate_words(
                 raise Exception("No valid word translations returned from model.")
             except Exception as e:
                 attempt += 1
-                print(f"Sentence {i} failed, retrying attempt {attempt}")
+                logger.info(f"Sentence {i} failed, retrying attempt {attempt}")
                 if attempt >= MAX_RETRIES:
-                    print(
+                    logger.info(
                         f"[FATAL] Sentence {i} failed {MAX_RETRIES} times. Aborting batch."
                     )
                     sys.exit(1)
