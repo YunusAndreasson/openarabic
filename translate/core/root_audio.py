@@ -3,17 +3,14 @@ import re
 from typing import Optional
 
 from translate.core.audio_utils import (
-    AUDIO_CACHE_DIR,
-    validate_mp3,
     get_cache_key,
     generate_arabic_word_audio,
     generate_english_word_audio,
+    get_cached_audio_url,
 )
 from translate.core.storage_utils import (
-    supabase,
     SUPABASE_URL,
     check_file_exists,
-    upload_to_storage,
 )
 
 
@@ -52,45 +49,8 @@ def get_or_generate_root_audio(
     audio_url_en = None
 
     # --- Arabic audio ---
-    if check_file_exists("audio", cache_key_ar):
-        if not os.path.exists(cache_path_ar):
-            try:
-                response = supabase.storage.from_("audio").download(cache_key_ar)
-                if response:
-                    with open(cache_path_ar, "wb") as f:
-                        f.write(response)
-            except Exception:
-                pass
-        audio_url = storage_url_ar
-        print(f"Using existing audio for {arabic_word}: {audio_url}")
-    elif os.path.exists(cache_path_ar):
-        try:
-            with open(cache_path_ar, "rb") as f:
-                file_content = f.read()
-            if validate_mp3(file_content, is_cached_file=True):
-                try:
-                    with open(cache_path_ar, "rb") as f:
-                        result_url = upload_to_storage("audio", cache_key_ar, f)
-                        if result_url:
-                            audio_url = result_url
-                            print(
-                                f"Uploaded cache audio for {arabic_word}: {audio_url}"
-                            )
-                        else:
-                            audio_url = None
-                            print(f"Failed to get URL for {arabic_word} cache upload")
-                except Exception as e:
-                    print(f"Cache upload failed for {arabic_word}: {e}")
-                    audio_url = None
-            else:
-                os.remove(cache_path_ar)
-                audio_url = None
-        except Exception as e:
-            print(f"Error with cache file for {arabic_word}: {e}")
-            if os.path.exists(cache_path_ar):
-                os.remove(cache_path_ar)
-            audio_url = None
-    else:
+    audio_url = get_cached_audio_url(cache_key_ar, arabic_word)
+    if not audio_url:
         print(f"Generating new audio for Arabic word: {arabic_word}")
         result = generate_arabic_word_audio(arabic_word, cache_key_ar)
         print(f"Result from generate_arabic_word_audio: {result}")
@@ -122,47 +82,8 @@ def get_or_generate_root_audio(
         else "English translation unavailable"
     )
 
-    if check_file_exists("audio", cache_key_en):
-        if not os.path.exists(cache_path_en):
-            try:
-                response = supabase.storage.from_("audio").download(cache_key_en)
-                if response:
-                    with open(cache_path_en, "wb") as f:
-                        f.write(response)
-            except Exception:
-                pass
-        audio_url_en = storage_url_en
-        print(f"Using existing EN audio for {english_word_to_use}: {audio_url_en}")
-    elif os.path.exists(cache_path_en):
-        try:
-            with open(cache_path_en, "rb") as f:
-                file_content = f.read()
-            if validate_mp3(file_content, is_cached_file=True):
-                try:
-                    with open(cache_path_en, "rb") as f:
-                        result_url = upload_to_storage("audio", cache_key_en, f)
-                        if result_url:
-                            audio_url_en = result_url
-                            print(
-                                f"Uploaded EN cache audio for {english_word_to_use}: {audio_url_en}"
-                            )
-                        else:
-                            audio_url_en = None
-                            print(
-                                f"Failed to get URL for {english_word_to_use} EN cache upload"
-                            )
-                except Exception as e:
-                    print(f"Cache upload failed (EN) for {english_word_to_use}: {e}")
-                    audio_url_en = None
-            else:
-                os.remove(cache_path_en)
-                audio_url_en = None
-        except Exception as e:
-            print(f"Error with cache file (EN) for {english_word_to_use}: {e}")
-            if os.path.exists(cache_path_en):
-                os.remove(cache_path_en)
-            audio_url_en = None
-    else:
+    audio_url_en = get_cached_audio_url(cache_key_en, english_word_to_use)
+    if not audio_url_en:
         # Pass the English translation to generate English audio
         print(f"Generating new audio for English word: {english_word_to_use}")
         result_en = generate_english_word_audio(english_word_to_use, cache_key_en)
