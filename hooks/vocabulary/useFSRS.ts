@@ -8,10 +8,15 @@ import type { UseFSRSOptions, UseFSRSResult, FSRSStateTracking } from '@/types/f
 import type { WordConfidence } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
+import {
+  calculateWordPriority,
+  getNextWordWithSpacing as getNextFromSpacingQueue,
+  updateSpacingCounters as updateSpacingState,
+  createSpacingState,
+  MIN_WORD_SPACING,
+  type SpacingState,
+} from '@/utils/fsrsSpacing';
 import { PriorityQueue } from '@/utils/priorityQueue';
-
-// Minimum number of intervening words before showing a repeated word
-const MIN_WORD_SPACING = 3;
 
 // Default learning steps for new and relearning cards (in minutes)
 const DEFAULT_LEARNING_STEPS: StepUnit[] = ['1m', '10m'];
@@ -33,34 +38,7 @@ interface EnhancedFSRSStateTracking extends FSRSStateTracking {
 }
 
 // Spacing queue to track recently processed words
-interface SpacingQueue {
-  recentWords: number[]; // Recently processed word IDs
-  spacedWords: { word: StudyWord; remainingSpacing: number }[]; // Words waiting for spacing
-}
-
-/**
- * Calculate priority for a word based on due date and FSRS metrics
- * Lower priority values = higher priority in queue (processed first)
- */
-function calculateWordPriority(word: StudyWord): number {
-  const now = new Date();
-  const dueDate = word.fsrs_due ? new Date(word.fsrs_due) : now;
-
-  // Primary factor: how overdue the word is (in hours)
-  // Negative values for overdue words, positive for future words
-  const hoursOverdue = (now.getTime() - dueDate.getTime()) / (1000 * 60 * 60);
-
-  // Secondary factor: stability (lower stability = higher priority for review)
-  const stability = word.fsrs_stability ?? 1;
-  const stabilityFactor = Math.max(0, 10 - stability) * 0.1; // 0-1 range
-
-  // Tertiary factor: difficulty (higher difficulty = slightly higher priority)
-  const difficulty = word.fsrs_difficulty ?? 6.5;
-  const difficultyFactor = (difficulty - 5) * 0.01; // Small adjustment
-
-  // Combine factors: overdue time is primary, stability and difficulty are minor adjustments
-  return -hoursOverdue + stabilityFactor + difficultyFactor;
-}
+type SpacingQueue = SpacingState;
 
 export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
   const [wordQueue, setWordQueue] = useState<StudyWord[]>([]);
@@ -80,10 +58,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
   const queueRef = useRef<PriorityQueue<StudyWord>>(new PriorityQueue<StudyWord>());
 
   // Spacing queue to enforce MIN_WORD_SPACING
-  const spacingQueueRef = useRef<SpacingQueue>({
-    recentWords: [],
-    spacedWords: [],
-  });
+  const spacingQueueRef = useRef<SpacingQueue>(createSpacingState());
 
   // Enhanced state tracking
   const stateTrackingRef = useRef<EnhancedFSRSStateTracking>({
@@ -134,61 +109,12 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
 
   // Helper function to get next available word with proper spacing
   const getNextWordWithSpacing = useCallback((): StudyWord | null => {
-    // First, check if any spaced words are ready to be shown
-    const readySpacedWords = spacingQueueRef.current.spacedWords.filter(
-      item => item.remainingSpacing <= 0
-    );
-
-    if (readySpacedWords.length > 0) {
-      // Remove ready words from spacing queue and add them back to main queue
-      spacingQueueRef.current.spacedWords = spacingQueueRef.current.spacedWords.filter(
-        item => item.remainingSpacing > 0
-      );
-
-      // Add ready words back to main queue with their original priority
-      readySpacedWords.forEach(item => {
-        const priority = calculateWordPriority(item.word);
-        queueRef.current.push(item.word, priority);
-      });
-    }
-
-    // Get next word from main queue
-    let nextWord = queueRef.current.pop();
-    let checkedWords: StudyWord[] = []; // Track words we've checked to prevent infinite loop
-
-    // Ensure the word doesn't violate spacing rules
-    while (nextWord && spacingQueueRef.current.recentWords.includes(nextWord.root_id)) {
-      // This word was recently processed, put it in spacing queue
-      spacingQueueRef.current.spacedWords.push({
-        word: nextWord,
-        remainingSpacing: MIN_WORD_SPACING,
-      });
-      checkedWords.push(nextWord);
-      nextWord = queueRef.current.pop();
-
-      // Prevent infinite loop: if we've checked all available words, break
-      if (checkedWords.length > 20 || queueRef.current.size() === 0) {
-        break;
-      }
-    }
-
-    return nextWord || null;
+    return getNextFromSpacingQueue(queueRef.current, spacingQueueRef.current);
   }, []);
 
   // Helper function to update spacing counters
   const updateSpacingCounters = useCallback((processedWordId: number) => {
-    // Add processed word to recent words
-    spacingQueueRef.current.recentWords.push(processedWordId);
-
-    // Keep only the last MIN_WORD_SPACING words in recent list
-    if (spacingQueueRef.current.recentWords.length > MIN_WORD_SPACING) {
-      spacingQueueRef.current.recentWords.shift();
-    }
-
-    // Decrease spacing counter for all spaced words
-    spacingQueueRef.current.spacedWords.forEach(item => {
-      item.remainingSpacing -= 1;
-    });
+    updateSpacingState(spacingQueueRef.current, processedWordId);
   }, []);
 
   // Initialize queue when due words are fetched
@@ -207,10 +133,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
         countersRef.current.knownWords = 0;
 
         // Reset spacing queue
-        spacingQueueRef.current = {
-          recentWords: [],
-          spacedWords: [],
-        };
+        spacingQueueRef.current = createSpacingState();
 
         // Set all state in a predictable order
         setProgress(0);
@@ -412,10 +335,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
       uniqueWords: new Set(),
     };
     queueRef.current = new PriorityQueue<StudyWord>();
-    spacingQueueRef.current = {
-      recentWords: [],
-      spacedWords: [],
-    };
+    spacingQueueRef.current = createSpacingState();
   }, []);
 
   // Clean up on unmount
@@ -438,10 +358,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
 
     stateTrackingRef.current.queueInitialized = false;
     queueRef.current = new PriorityQueue<StudyWord>();
-    spacingQueueRef.current = {
-      recentWords: [],
-      spacedWords: [],
-    };
+    spacingQueueRef.current = createSpacingState();
   }, [queryClient, userId]);
 
   return {
