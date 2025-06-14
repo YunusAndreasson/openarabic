@@ -232,7 +232,7 @@ CustomHeaderBackground.displayName = 'CustomHeaderBackground';
 
 const HEADER_TITLE_STYLE = {
   fontSize: LAYOUT.HEADER.TITLE.MAIN.fontSize,
-  fontWeight: LAYOUT.HEADER.TITLE.MAIN.fontWeight as any,
+  fontWeight: LAYOUT.HEADER.TITLE.MAIN.fontWeight as TextStyle['fontWeight'],
 } as TextStyle;
 
 const HEADER_STYLE = {

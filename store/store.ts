@@ -18,8 +18,10 @@ const rootReducer = combineReducers({
 });
 
 // Migration function for settings
+type RootStateShape = ReturnType<typeof rootReducer>;
+
 const migrations = {
-  0: (state: any) => {
+  0: (state: RootStateShape) => {
     // Ensure settings has reminderTime property
     if (state.settings && !state.settings.reminderTime) {
       state.settings.reminderTime = {
@@ -37,7 +39,7 @@ const persistConfig = {
   key: 'root',
   storage: AsyncStorage,
   version: 0,
-  migrate: (state: any) => {
+  migrate: (state: RootStateShape) => {
     // Apply migration if needed
     if (state && state.settings && !state.settings.reminderTime) {
       return migrations[0](state);

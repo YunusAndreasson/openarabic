@@ -1,6 +1,7 @@
 import { renderHook, act } from '@testing-library/react-native';
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { AppState } from 'react-native';
+import type { Session } from '@supabase/supabase-js';
 
 const flushPromises = () => new Promise(resolve => setImmediate(resolve));
 
@@ -76,7 +77,7 @@ describe('useProvideAuth', () => {
     const { result } = renderHook(() => useProvideAuth());
     await act(flushPromises);
 
-    let newSession: any = 'not null';
+    let newSession: Session | null | string = 'not null';
     await act(async () => {
       newSession = await result.current.refreshSession();
     });
