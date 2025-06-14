@@ -61,7 +61,13 @@ async function initialize(): Promise<boolean> {
 
 export async function scheduleReminder(reminderTime: ReminderTime): Promise<string | null> {
   const initialized = await initialize();
-  if (!initialized) return null;
+  if (!initialized) {
+    handleError(new Error('Notifications disabled'), {
+      toastMessage: 'Notifications disabled',
+      captureSentry: false,
+    });
+    return null;
+  }
 
   try {
     // Cancel existing reminder first
