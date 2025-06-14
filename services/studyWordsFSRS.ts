@@ -2,6 +2,7 @@ import type { Rating } from 'ts-fsrs';
 import { createEmptyCard } from 'ts-fsrs';
 
 import type { StudyWord } from '@/types/vocabulary.types';
+import { handleError } from '@/utils/errorHandling';
 
 import { supabase, checkAuthentication } from './supabase';
 
@@ -250,7 +251,7 @@ export const studyWordsFSRSService = {
 
       return Boolean(data);
     } catch (error) {
-      console.log('Error in updateWordAndReview RPC:', error);
+      await handleError(error as Error, { showToast: false });
 
       // Fallback to individual operations if RPC fails (e.g., during migration)
       try {
@@ -258,7 +259,7 @@ export const studyWordsFSRSService = {
         await this.recordFSRSReview(userId, rootId, rating, learningSteps);
         return true;
       } catch (fallbackError) {
-        console.log('Error in updateWordAndReview fallback:', fallbackError);
+        await handleError(fallbackError as Error, { showToast: false });
         throw fallbackError;
       }
     }
