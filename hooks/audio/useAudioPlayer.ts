@@ -25,13 +25,8 @@ export interface EnhancedPlayerAPI {
   currentTrackIndex: number;
   actions: {
     stopPlayback: () => Promise<void>;
-    startEnhancedPlayback: (
-      tracks: EnhancedAudioTrack[],
-      startIndex?: number,
-    ) => Promise<boolean>;
-    prefetchTracks: (
-      tracks: EnhancedAudioTrack[],
-    ) => Promise<EnhancedAudioTrack[]>;
+    startEnhancedPlayback: (tracks: EnhancedAudioTrack[], startIndex?: number) => Promise<boolean>;
+    prefetchTracks: (tracks: EnhancedAudioTrack[]) => Promise<EnhancedAudioTrack[]>;
   };
 
   // State properties (only the ones actually used)
@@ -360,10 +355,16 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
         dispatch({ type: 'SET_AUTOPLAY', value: true });
 
         const validStartIndex = Math.max(0, Math.min(startIndex, tracks.length - 1));
-        const trackToPlay = tracks[validStartIndex]!;
+        const trackToPlay = tracks[validStartIndex];
+        if (!trackToPlay) {
+          throw new Error('Selected track not found');
+        }
 
         // Load only the first track to start playback quickly
         const [firstProcessed] = await loadQueue(trackToPlay, 0);
+        if (!firstProcessed) {
+          throw new Error('Failed to process first track');
+        }
 
         // Prefetch remaining tracks after playback starts
         const remaining = tracks.filter((_, i) => i !== validStartIndex);
@@ -371,7 +372,7 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
           .then(prefetched => {
             dispatch({
               type: 'SET_QUEUE',
-              queue: [firstProcessed!, ...prefetched],
+              queue: [firstProcessed, ...prefetched],
               index: 0,
             });
           })

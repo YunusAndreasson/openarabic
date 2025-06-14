@@ -2,6 +2,7 @@ import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
 import type { PersistedState } from 'redux-persist';
 import type { PersistConfig } from 'redux-persist/es/types';
+
 import { getSafeStorage } from '@/utils/safeAsyncStorage';
 
 import filtersReducer from './filtersSlice';
