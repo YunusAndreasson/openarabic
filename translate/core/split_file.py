@@ -9,8 +9,8 @@ from typing import Dict, Any
 from translate.core.utils import (
     call_openai_api,
     token_tracker,
-    MODEL_ANALYSIS,
 )
+from translate.core.config import MODEL_ANALYSIS
 
 # Import schemas and prompt templates
 from translate.core.schemas import (
