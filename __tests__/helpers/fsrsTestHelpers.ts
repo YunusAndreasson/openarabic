@@ -256,31 +256,40 @@ export const testUtils = {
   },
 };
 
-// Simple test to prevent Jest from complaining about no tests
-describe('FSRS Test Helpers', () => {
-  test('createTestWord factory works correctly', () => {
-    const word = createTestWord({ root_id: 123 });
-    expect(word.root_id).toBe(123);
-    expect(word.user_id).toBe('test-user');
-    expect(word.fsrs_stability).toBe(5);
-  });
+describe('fsrsTestHelpers factories', () => {
+  it('createLargeWordSet returns the correct number of varied words', () => {
+    const words = createLargeWordSet(5);
 
-  test('createWordSet factory creates correct scenarios', () => {
-    const words = createWordSet([
-      { id: 1, hoursOverdue: 24 },
-      { id: 2, hoursOverdue: 12 },
-    ]);
-
-    expect(words).toHaveLength(2);
+    expect(words).toHaveLength(5);
     expect(words[0].root_id).toBe(1);
-    expect(words[1].root_id).toBe(2);
+    expect(words[4].root_id).toBe(5);
+
+    const uniqueStability = new Set(words.map(w => w.fsrs_stability)).size;
+    const uniqueDifficulty = new Set(words.map(w => w.fsrs_difficulty)).size;
+
+    expect(uniqueStability).toBeGreaterThan(1);
+    expect(uniqueDifficulty).toBeGreaterThan(1);
   });
 
-  test('createMockQueryClient provides all required methods', () => {
-    const mockClient = createMockQueryClient();
-    expect(mockClient.invalidateQueries).toBeDefined();
-    expect(mockClient.removeQueries).toBeDefined();
-    expect(mockClient.getQueryData).toBeDefined();
-    expect(mockClient.setQueryData).toBeDefined();
+  it('createEdgeCaseWords provides words with edge conditions', () => {
+    const edgeCases = createEdgeCaseWords();
+
+    expect(edgeCases.corruptedDates.fsrs_due).toBe('invalid-date');
+    expect(edgeCases.corruptedDates.fsrs_last_review).toBe('also-invalid');
+
+    expect(edgeCases.nullFSRSData.fsrs_stability).toBeNull();
+    expect(edgeCases.nullFSRSData.fsrs_difficulty).toBeNull();
+    expect(edgeCases.nullFSRSData.fsrs_reps).toBeNull();
+    expect(edgeCases.nullFSRSData.fsrs_state).toBeNull();
+    expect(edgeCases.nullFSRSData.fsrs_last_review).toBeNull();
+
+    expect(edgeCases.extremeValues.fsrs_stability).toBe(999);
+    expect(edgeCases.extremeValues.fsrs_difficulty).toBe(15);
+    expect(edgeCases.extremeValues.fsrs_reps).toBe(1000);
+    expect(edgeCases.extremeValues.fsrs_lapses).toBe(50);
+
+    expect(edgeCases.partialData.fsrs_difficulty).toBeNull();
+    expect(edgeCases.partialData.fsrs_last_review).toBeNull();
+    expect(edgeCases.partialData.fsrs_state).toBe(1);
   });
 });
