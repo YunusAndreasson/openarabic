@@ -1,5 +1,4 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useFocusEffect } from 'expo-router';
 import { useState, useMemo, useCallback } from 'react';
 
 import { AUDIO_STATES } from '@/constants/audio';
@@ -141,19 +140,8 @@ export const useListenScreen = () => {
     );
   }, [isDataCached, isReadingListLoading, isReadingListFetching, sortedReadingList.length]);
 
-  useScreenFocusRefresh(queryClient, 'listen', user?.id, 1000 * 60 * 5, true, true);
-
-  const focusEffectCallback = useCallback(() => {
-    if (!user?.id) return;
-    queryClient.invalidateQueries({
-      queryKey: ['readingList', user.id],
-    });
-    queryClient.invalidateQueries({
-      queryKey: ['enhancedAudioTracks', user.id],
-    });
-    return () => {};
-  }, [user?.id, queryClient]);
-  useFocusEffect(focusEffectCallback);
+  useScreenFocusRefresh(queryClient, 'readingList', user?.id, 1000 * 60 * 5, true, true);
+  useScreenFocusRefresh(queryClient, 'enhancedAudioTracks', user?.id, 1000 * 60 * 5, true, true);
 
   const isCurrentlyPlaying = audioState === AUDIO_STATES.PLAYING;
 
