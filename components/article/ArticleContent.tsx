@@ -157,6 +157,7 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
           disabled={(!hasAudio && !isCurrentlyPlaying) || isPlayButtonLoading}
           onPress={handlePlayToggle}
           style={styles.playNowButton}
+          testID="play-now-button"
         />
 
         {/* Listen Later Button */}
@@ -168,6 +169,7 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
           disabled={isLoading}
           onPress={handleListenLater}
           style={styles.listenLaterButton}
+          testID="listen-later-button"
         />
       </View>
     );
