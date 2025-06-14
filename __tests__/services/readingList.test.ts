@@ -125,4 +125,24 @@ describe('readingListService', () => {
       expect(query.order).toHaveBeenCalledWith('added_at', { ascending: false });
     });
   });
+
+  describe('error handling', () => {
+    it('calls handleError when removal fails', async () => {
+      const error = new Error('bad');
+      const query: FromReturn = {} as FromReturn;
+      query.delete = jest.fn(() => query);
+      query.eq = jest.fn(() => query) as any;
+      query.error = error;
+      fromMock.mockReturnValue(query);
+
+      await expect(
+        readingListService.removeFromReadingList('u1', 5)
+      ).rejects.toThrow(error);
+
+      expect(handleError).toHaveBeenCalledWith(
+        error,
+        expect.objectContaining({ toastMessage: 'Failed to remove from reading list' })
+      );
+    });
+  });
 });
