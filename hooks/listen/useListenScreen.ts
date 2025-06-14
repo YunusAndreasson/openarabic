@@ -126,8 +126,8 @@ export const useListenScreen = () => {
     );
 
     return [...enhancedTracks].sort((a, b) => {
-      const posA = a.articleId ? (articlePositionMap.get(a.articleId) ?? 999) : 999;
-      const posB = b.articleId ? (articlePositionMap.get(b.articleId) ?? 999) : 999;
+      const posA = a.articleId ? articlePositionMap.get(a.articleId) ?? 999 : 999;
+      const posB = b.articleId ? articlePositionMap.get(b.articleId) ?? 999 : 999;
       return posA - posB;
     });
   }, [enhancedTracks, sortedReadingList]);
@@ -216,7 +216,9 @@ export const useListenScreen = () => {
 
   const handleArticlePlay = useCallback(
     async (articleId: number) => {
-      if (isStartingPlayback) return;
+      if (isStartingPlayback) {
+        return;
+      }
 
       if (isCurrentlyPlaying && parseInt(metadata.articleId ?? '', 10) === articleId) {
         selectionFeedback();
@@ -228,10 +230,38 @@ export const useListenScreen = () => {
       const articleIndex = sortedEnhancedTracks.findIndex(track => track.articleId === articleId);
 
       if (articleIndex !== -1 && sortedEnhancedTracks.length) {
+        // Normal case: play from existing enhanced tracks
         try {
           selectionFeedback();
           setPlaybackMode('all');
-          await actions.startEnhancedPlayback(sortedEnhancedTracks, articleIndex);
+          const success = await actions.startEnhancedPlayback(sortedEnhancedTracks, articleIndex);
+
+          if (!success) {
+            setPlaybackMode('none');
+          }
+        } catch (error) {
+          setPlaybackMode('none');
+          handleError(error as Error);
+        }
+      } else {
+        // Fallback: generate single track for this article
+        try {
+          selectionFeedback();
+          setPlaybackMode('all');
+
+          const track = await enhancedAudioService.generateEnhancedAudioTrack(articleId);
+          if (track) {
+            const success = await actions.startEnhancedPlayback([track], 0);
+            if (!success) {
+              setPlaybackMode('none');
+            }
+          } else {
+            setPlaybackMode('none');
+            handleError(new Error('Audio not available for this article'), {
+              toastMessage: 'Audio not available for this article',
+              showToast: true,
+            });
+          }
         } catch (error) {
           setPlaybackMode('none');
           handleError(error as Error);

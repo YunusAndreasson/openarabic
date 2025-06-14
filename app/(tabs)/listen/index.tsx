@@ -1,5 +1,5 @@
 import { useHeaderHeight } from '@react-navigation/elements';
-import { FlashList, type OverrideItemLayoutParams } from '@shopify/flash-list';
+import { FlashList } from '@shopify/flash-list';
 import type { JSX } from 'react';
 import React, { useState, useMemo, useCallback, memo } from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
@@ -70,6 +70,7 @@ const ListenListItem = memo(
     onPlayPress,
     drag,
     _isBeingDragged,
+    isStartingPlayback,
   }: {
     item: ReadingListItem;
     isActive: boolean;
@@ -79,6 +80,7 @@ const ListenListItem = memo(
     onPlayPress: (id: number) => void;
     drag?: () => void;
     _isBeingDragged?: boolean;
+    isStartingPlayback?: boolean;
   }) => {
     // Check if this article has audio available
     const hasAudio = !!item.articles?.audio_url;
@@ -96,6 +98,7 @@ const ListenListItem = memo(
         // Always show play button when audio is available and not in edit mode
         onPlayPress={hasAudio && !editMode ? () => onPlayPress(item.article_id) : undefined}
         isPlaying={false} // Never show as playing - NowPlayingCard handles playback state
+        isLoadingAudio={isStartingPlayback && isActive} // Show loading when this article is starting
         dragHandleProps={{
           onLongPress: drag,
           delayLongPress: 100,
@@ -108,6 +111,7 @@ const ListenListItem = memo(
     if (prevProps.editMode !== nextProps.editMode) return false;
     if (prevProps.isActive !== nextProps.isActive) return false;
     if (prevProps._isBeingDragged !== nextProps._isBeingDragged) return false;
+    if (prevProps.isStartingPlayback !== nextProps.isStartingPlayback) return false;
     // Check if audio availability changed
     if (!!prevProps.item.articles?.audio_url !== !!nextProps.item.articles?.audio_url) return false;
     // Item ID should rarely change, so check last
@@ -212,6 +216,7 @@ export default function ListenScreen(): JSX.Element {
             onPlayPress={handleArticlePlay}
             drag={drag}
             _isBeingDragged={isDragging}
+            isStartingPlayback={isStartingPlayback}
           />
         );
       } else {
@@ -224,11 +229,20 @@ export default function ListenScreen(): JSX.Element {
             onPress={handleArticlePress}
             onDelete={handleDelete}
             onPlayPress={handleArticlePlay}
+            isStartingPlayback={isStartingPlayback}
           />
         );
       }
     },
-    [audioState, metadata.articleId, editMode, handleArticlePress, handleDelete, handleArticlePlay]
+    [
+      audioState,
+      metadata.articleId,
+      editMode,
+      handleArticlePress,
+      handleDelete,
+      handleArticlePlay,
+      isStartingPlayback,
+    ]
   );
 
   // Show loading screen only during initial uncached load
@@ -340,10 +354,7 @@ export default function ListenScreen(): JSX.Element {
                 </View>
               ) : null
             }
-            overrideItemLayout={(
-              layout: OverrideItemLayoutParams,
-              _item: ReadingListItem
-            ) => {
+            overrideItemLayout={layout => {
               layout.size = ITEM_HEIGHT;
             }}
             renderItem={renderItem}

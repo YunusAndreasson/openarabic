@@ -52,6 +52,7 @@ export const enhancedAudioService = {
 
       for (const item of readingList) {
         const article = item.articles;
+
         if (!article?.audio_url) continue;
 
         allTracks.push({

@@ -144,8 +144,8 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
       isLoading || !isPlayerLoaded
         ? AUDIO_STATES.LOADING
         : isPlaying
-          ? AUDIO_STATES.PLAYING
-          : AUDIO_STATES.STOPPED;
+        ? AUDIO_STATES.PLAYING
+        : AUDIO_STATES.STOPPED;
 
     return newState;
   }, [isLoading, isPlaying, currentTrack, isPlayerLoaded]);
@@ -183,20 +183,25 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
       // Clear the flag immediately to prevent multiple calls
       dispatch({ type: 'SET_AUTOPLAY', value: false });
 
-      // Use immediate execution in microtask to avoid setTimeout race conditions
-      Promise.resolve().then(() => {
+      // Add a small delay to ensure player is fully ready
+      const playAudio = async () => {
         try {
-          // Defensive call to play()
           if (typeof audioPlayer.play === 'function') {
-            audioPlayer.play();
-            // Clear loading state once playback starts
+            await audioPlayer.play();
+            // Clear loading state once playback starts successfully
             dispatch({ type: 'SET_LOADING', isLoading: false });
           }
-        } catch {
-          // Auto-play failed silently
+        } catch (error) {
           dispatch({ type: 'SET_LOADING', isLoading: false });
+          handleError(error as Error, {
+            toastMessage: 'Failed to start audio playback',
+            showToast: true,
+          });
         }
-      });
+      };
+
+      // Use a small delay to ensure the player is fully initialized
+      setTimeout(playAudio, 50);
     }
   }, [shouldAutoPlay, audioPlayer, currentTrack, isPlayerLoaded]);
 
@@ -248,7 +253,7 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
 
       // Process tracks to use cached audio URLs if available
       const processedTracks = await Promise.all(
-        tracks.map(async track => {
+        tracks.map(async (track, index) => {
           try {
             // Get cached audio URL (downloads if not cached)
             const cachedAudioUrl = await audioCache.getAudio(track.audioUrl);
@@ -258,11 +263,17 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
             };
           } catch (error) {
             // If caching fails, use original URL
-            console.warn('Failed to cache audio for track:', track.title, error);
+            console.warn(`Failed to cache audio for track ${index + 1}:`, track.title, error);
             return track;
           }
         })
       );
+
+      // Verify the selected track has a valid audio URL
+      const selectedTrack = processedTracks[validStartIndex];
+      if (!selectedTrack?.audioUrl) {
+        throw new Error('Selected track has no audio URL');
+      }
 
       dispatch({
         type: 'SET_QUEUE',
@@ -272,7 +283,11 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
 
       // The useAudioPlayer hook will automatically recreate the player with the new source
     } catch (error) {
-      handleError(error as Error, { toastMessage: 'Failed to load queue' });
+      console.error('Queue loading failed:', error);
+      handleError(error as Error, {
+        toastMessage: 'Failed to load audio',
+        showToast: true,
+      });
       dispatch({ type: 'SET_LOADING', isLoading: false });
     }
   }, []);
@@ -294,7 +309,10 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
       } catch (error) {
         dispatch({ type: 'SET_AUTOPLAY', value: false }); // Reset flag on error
         dispatch({ type: 'SET_LOADING', isLoading: false }); // Reset loading on error
-        handleError(error as Error, { toastMessage: 'Failed to start enhanced playback' });
+        handleError(error as Error, {
+          toastMessage: 'Failed to start audio playback',
+          showToast: true,
+        });
         return false; // Failure
       }
     },
