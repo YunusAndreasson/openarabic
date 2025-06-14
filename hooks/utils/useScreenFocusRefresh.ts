@@ -1,6 +1,7 @@
 import { useFocusEffect } from '@react-navigation/native';
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
 import { useCallback, useRef } from 'react';
+import { handleError } from '@/utils/errorHandling';
 
 /**
  * Hook to refresh data when a screen comes into focus.
@@ -65,7 +66,11 @@ export const useScreenFocusRefresh = (
 
     state.lastRefreshTime = now;
     // Invalidate the query to trigger a refetch
-    state.queryClient.invalidateQueries({ queryKey: state.fullQueryKey });
+    try {
+      state.queryClient.invalidateQueries({ queryKey: state.fullQueryKey });
+    } catch (error) {
+      handleError(error as Error, { showToast: false });
+    }
   }, []);
 
   // Focus effect using the stable refreshData callback.
