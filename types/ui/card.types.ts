@@ -76,12 +76,6 @@ export interface CompactCardProps extends BaseCardProps, BaseOptionalPressablePr
   /** Article data to display in the card */
   article: Article;
 
-  /** Hide difficulty completely */
-  hideDifficulty?: boolean;
-  /** When the article was last opened */
-  lastOpenedAt?: string;
-  /** Number of words due for review in this article */
-  dueWordCount?: number;
 }
 
 /**
@@ -114,12 +108,6 @@ export type ThemedCardProps =
         /** Article data to display (for compact variant) */
         article: Article;
 
-        /** Hide difficulty completely (for compact variant) */
-        hideDifficulty?: boolean;
-        /** When the article was last opened (for compact variant) */
-        lastOpenedAt?: string;
-        /** Number of words due for review in this article (for compact variant) */
-        dueWordCount?: number;
         /** Variant of the card */
         variant?: CardVariant;
       });

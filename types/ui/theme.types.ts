@@ -46,10 +46,6 @@ export interface ThemeColors {
 
 
   backdropOverlay: string;
-
-
-  audioHighlight: string;
-  audioHighlightBorder: string;
   wordTooltipBg: string;
   wordTooltipText: string;
   wordTooltipBorder: string;

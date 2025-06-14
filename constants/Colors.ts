@@ -152,8 +152,6 @@ export const Colors = {
     elevation3: elevation.light.level3,
 
     // Reading experience - improved visibility
-    audioHighlight: elevation.light.level2,
-    audioHighlightBorder: basePalette.sage.light,
     wordTooltipBg: basePalette.pure.white,
     wordTooltipText: basePalette.forest.darkest,
     wordTooltipBorder: basePalette.sage.light,
@@ -230,8 +228,6 @@ export const Colors = {
     elevation3: elevation.dark.level3,
 
     // Reading experience - dark mode with standardized values
-    audioHighlight: basePalette.sage.medium,
-    audioHighlightBorder: elevation.dark.level3,
     wordTooltipBg: basePalette.sage.medium,
     wordTooltipText: basePalette.pure.white,
     wordTooltipBorder: elevation.dark.level3,
