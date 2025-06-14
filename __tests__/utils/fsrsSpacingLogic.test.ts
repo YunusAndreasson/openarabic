@@ -206,6 +206,17 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
       expect(state.recentWords).toHaveLength(customSpacing);
       expect(state.recentWords[0]).toBe(3); // First two should be removed
     });
+
+    test('should handle negative spacing without loops', () => {
+      const state = createSpacingState();
+
+      for (let i = 1; i <= MIN_WORD_SPACING * 5; i++) {
+        updateSpacingCounters(state, i, -5);
+        expect(state.recentWords.length).toBeLessThanOrEqual(MIN_WORD_SPACING);
+      }
+
+      expect(state.recentWords.length).toBeLessThanOrEqual(MIN_WORD_SPACING);
+    });
   });
 
   describe('getNextWordWithSpacing - Basic Functionality', () => {
