@@ -1,6 +1,7 @@
 import os
 import time
 import uuid
+import logging
 from supabase import create_client
 from typing import Dict, Optional
 
@@ -32,51 +33,24 @@ WORD_TYPE_MAPPING = {
 
 
 def check_file_exists(bucket: str, file_path: str) -> bool:
-    """Check if a file exists in Supabase storage using multiple methods."""
-    # Method 1: Using list
+    """Check if a file exists in Supabase storage."""
     try:
-        # Get the directory path and filename
-        path_parts = file_path.rsplit("/", 1)
-
-        if len(path_parts) > 1:
-            dir_path, filename = path_parts
-            # List files in directory with search option
-            response = supabase.storage.from_(bucket).list(dir_path)
-        else:
-            # If no directory part, search in root
-            filename = path_parts[0]
-            response = supabase.storage.from_(bucket).list()
-
-        # Check if the file exists in the response
-        for item in response:
-            if isinstance(item, dict) and item.get("name") == filename:
-                return True
-            elif isinstance(item, str) and item == filename:
-                return True
-    except Exception as e:
-        print(f"List method failed for {file_path}: {str(e)}")
-
-    # Method 2: Using signed URL creation
-    try:
-        # Try to get the file metadata using createSignedUrl with very short expiry
-        # This is a lightweight way to check existence
-        supabase.storage.from_(bucket).create_signed_url(
-            file_path, 1
-        )  # 1 second expiry
+        supabase.storage.from_(bucket).create_signed_url(file_path, 1)
         return True
     except Exception as e:
-        if "The specified key does not exist" in str(e) or "Object not found" in str(e):
+        msg = str(e)
+        if any(
+            token in msg
+            for token in (
+                "The specified key does not exist",
+                "Object not found",
+                "No such object",
+                "Not Found",
+            )
+        ):
             return False
-        print(f"Signed URL method failed: {str(e)}")
 
-    # Method 3: Final fallback - try to get the public URL and retrieve headers
-    try:
-        # Get public URL then try a HEAD request
-        public_url = supabase.storage.from_(bucket).get_public_url(file_path)
-        if public_url:
-            return True
-    except Exception as e:
-        print(f"Public URL method failed for {file_path}: {str(e)}")
+        logging.error(f"check_file_exists failed for {file_path}: {msg}")
         return False
 
 
