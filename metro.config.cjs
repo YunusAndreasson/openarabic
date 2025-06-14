@@ -1,58 +1,48 @@
 const { getDefaultConfig } = require('expo/metro-config');
 
 /** @type {import('expo/metro-config').MetroConfig} */
-const config = getDefaultConfig(process.cwd());
+const config = getDefaultConfig(process.cwd(), {
+  // Enable CSS support for potential web usage
+  isCSSEnabled: false, // Disabled since this is mobile-only
+});
 
 // Disable package exports resolution to avoid Node.js module issues
 config.resolver.unstable_enablePackageExports = false;
 
-// React Native 0.79 performance optimizations
+// React Native 0.79 + Hermes optimizations
 config.transformer = {
   ...config.transformer,
-  // Enable Hermes bytecode compilation for better performance
-  hermesCommand: 'hermes',
-  // Optimize bundle size
+  // Optimize bundle size with better minification
   minifierConfig: {
-    mangle: {
-      keep_fnames: true,
-    },
-    output: {
-      ascii_only: true,
-      quote_style: 3,
-      wrap_iife: true,
-    },
-    sourceMap: {
-      includeSources: false,
-    },
-    toplevel: false,
+    ...config.transformer.minifierConfig,
     compress: {
-      reduce_funcs: false,
+      ...config.transformer.minifierConfig?.compress,
+      // Additional optimizations for mobile
+      drop_console: process.env.NODE_ENV === 'production',
+      drop_debugger: true,
+      pure_funcs: ['console.log', 'console.info', 'console.debug'],
     },
   },
 };
 
-// Optimize resolver for better performance
+// Optimize resolver for language learning app assets
 config.resolver = {
   ...config.resolver,
-  // Optimize asset resolution
+  // Add audio file extensions for language learning
   assetExts: [
     ...config.resolver.assetExts,
-    'bin',
-    'txt',
-    'jpg',
-    'png',
-    'json',
-    'mp4',
-    'mp3',
-    'ttf',
-    'otf',
-    'woff',
-    'woff2',
+    'wav', // Audio files for language learning
+    'aac',
+    'm4a',
   ],
-  // Optimize source extensions
-  sourceExts: [...config.resolver.sourceExts, 'jsx', 'js', 'ts', 'tsx', 'json', 'cjs', 'mjs'],
-  // Enable symlinks for better development experience
-  unstable_enableSymlinks: true,
+  // Disable package exports resolution to avoid Node.js module issues
+  unstable_enablePackageExports: false,
 };
+
+// Development optimizations
+if (process.env.NODE_ENV === 'development') {
+  // Faster development builds
+  config.transformer.minifierConfig = undefined;
+}
 
 module.exports = config;

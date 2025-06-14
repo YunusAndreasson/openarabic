@@ -3,37 +3,37 @@
     "name": "Open Arabic",
     "slug": "open-arabic",
     "version": "1446.12.19",
+    "description": "Learn Arabic through immersive reading, listening, and spaced repetition practice. Master vocabulary with authentic articles and audio content.",
     "orientation": "portrait",
     "icon": "./assets/images/oaLogo.png",
     "scheme": "open-arabic",
     "userInterfaceStyle": "automatic",
+    "backgroundColor": "#0F1311",
+    "primaryColor": "#5B7F68",
     "newArchEnabled": true,
     "jsEngine": "hermes",
-    "platforms": [
-      "ios",
-      "android"
-    ],
+    "platforms": ["ios", "android"],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "openarabic",
+      "buildNumber": "19",
       "infoPlist": {
-        "UIBackgroundModes": [
-          "audio",
-          "processing"
-        ],
+        "UIBackgroundModes": ["audio", "processing"],
         "ITSAppUsesNonExemptEncryption": false,
         "BGTaskSchedulerPermittedIdentifiers": [
           "openarabic.backgroundtask",
           "openarabic.backgroundfetch"
-        ]
-      },
-      "buildNumber": "19"
+        ],
+        "NSUserTrackingUsageDescription": "This app uses tracking to provide personalized learning analytics and improve your Arabic learning experience."
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#0F1311"
+        "backgroundColor": "#0F1311",
+        "foregroundImage": "./assets/images/oaLogo.png"
       },
       "package": "com.edenmind.OpenArabic",
+      "versionCode": 19,
       "permissions": [
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.WAKE_LOCK",
@@ -41,7 +41,13 @@
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE"
       ],
-      "versionCode": 19
+      "blockedPermissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"]
+    },
+    "notification": {
+      "icon": "./assets/images/oaLogo.png",
+      "color": "#5B7F68",
+      "iosDisplayInForeground": true,
+      "androidMode": "default"
     },
     "plugins": [
       "expo-router",
@@ -66,7 +72,7 @@
         "expo-notifications",
         {
           "icon": "./assets/images/oaLogo.png",
-          "color": "#2C312B",
+          "color": "#5B7F68",
           "defaultChannel": "default"
         }
       ],
