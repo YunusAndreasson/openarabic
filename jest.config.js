@@ -40,4 +40,13 @@ module.exports = {
   transform: {
     '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
   },
+  // Fail tests if coverage drops below these thresholds
+  coverageThreshold: {
+    global: {
+      branches: 15,
+      functions: 15,
+      lines: 20,
+      statements: 20,
+    },
+  },
 };
