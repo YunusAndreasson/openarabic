@@ -3,8 +3,8 @@ import time
 
 from typing import List, Dict, Any, Optional
 
-from translate.core.utils import (
-    call_openai_api,
+from translate.core.utils import call_openai_api
+from translate.core.config import (
     MODEL_TRANSLATION,
     MODEL_OTHER,
     MODEL_VERIFICATION,

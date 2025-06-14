@@ -5,6 +5,13 @@ import logging
 import sys
 from typing import List, Dict, Any, Optional
 
+from translate.core.config import (
+    MODEL_ANALYSIS,
+    MODEL_TRANSLATION,
+    MODEL_OTHER,
+    MODEL_VERIFICATION,
+)
+
 from openai import OpenAI
 
 # Flag to ensure we only load API keys once
@@ -28,11 +35,7 @@ logging.basicConfig(
     level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-# Configuration constants
-MODEL_ANALYSIS = "gpt-4.1"  # For text splitting and analysis
-MODEL_TRANSLATION = "gpt-4.1"  # For English translation and word translation
-MODEL_OTHER = "gpt-4o"  # For tashkeel and support tasks
-MODEL_VERIFICATION = "o4-mini"  # For final verification/refinement
+# Configuration constants are now centralized in config.py
 
 
 class TokenUsageTracker:
