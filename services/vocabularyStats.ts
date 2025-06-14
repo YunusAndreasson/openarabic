@@ -58,7 +58,9 @@ export const vocabularyStatsService = {
     try {
       const { data, error } = await supabase
         .from('user_study_stats')
-        .select('*')
+        .select(
+          'total_words, mastered_words, learning_words, due_words, avg_difficulty, avg_stability'
+        )
         .eq('user_id', userId)
         .single();
 
@@ -88,7 +90,7 @@ export const vocabularyStatsService = {
     try {
       const { data, error } = await supabase
         .from('daily_mastery_stats')
-        .select('*')
+        .select('date, cumulative_words, cumulative_mastered')
         .eq('user_id', userId)
         .order('date', { ascending: true })
         .limit(days);
@@ -120,7 +122,7 @@ export const vocabularyStatsService = {
     try {
       const { data, error } = await supabase
         .from('daily_efficiency_stats')
-        .select('*')
+        .select('date, words_reviewed, avg_efficiency')
         .eq('user_id', userId)
         .order('date', { ascending: true })
         .limit(days);
@@ -148,7 +150,9 @@ export const vocabularyStatsService = {
     try {
       const { data, error } = await supabase
         .from('retrievability_forecast')
-        .select('*')
+        .select(
+          'forecast_date, word_count, avg_retrievability_percent, critical_words, urgent_words'
+        )
         .eq('user_id', userId)
         .order('forecast_date', { ascending: true });
 
@@ -177,7 +181,9 @@ export const vocabularyStatsService = {
     try {
       const { data, error } = await supabase
         .from('difficulty_distribution')
-        .select('*')
+        .select(
+          'total_words, easy_words, medium_words, hard_words, easy_percentage, medium_percentage, hard_percentage'
+        )
         .eq('user_id', userId)
         .single();
 
