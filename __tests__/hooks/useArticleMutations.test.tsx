@@ -39,8 +39,9 @@ jest.mock('@/services/studyWordsFSRS', () => ({
   },
 }));
 
+const mockShowToast = jest.fn();
 jest.mock('@/components/providers/ToastProvider', () => ({
-  useToast: () => ({ showToast: jest.fn() }),
+  useToast: () => ({ showToast: mockShowToast }),
 }));
 
 jest.mock('expo-router', () => ({
@@ -108,5 +109,67 @@ describe('useArticleMutations', () => {
       'user-1',
       99
     );
+  });
+
+  it('toggles word study state using session user id', async () => {
+    const { result } = renderHook(
+      () => useArticleMutations('user-1', jest.fn()),
+      { wrapper: createWrapper() }
+    );
+
+    await act(async () => {
+      await result.current.handleWordPress(5);
+    });
+
+    const { studyWordsFSRSService } = require('@/services/studyWordsFSRS');
+    expect(studyWordsFSRSService.toggleFSRSStudyRoot).toHaveBeenCalledWith(
+      'user-1',
+      5
+    );
+  });
+
+  it('refreshes session if missing when toggling word', async () => {
+    supabase.auth.getSession.mockResolvedValueOnce({ data: { session: null } });
+
+    const { result } = renderHook(
+      () => useArticleMutations('user-1', jest.fn()),
+      { wrapper: createWrapper() }
+    );
+
+    await act(async () => {
+      await result.current.handleWordPress(7);
+    });
+
+    expect(supabase.auth.refreshSession).toHaveBeenCalled();
+    const { studyWordsFSRSService } = require('@/services/studyWordsFSRS');
+    expect(studyWordsFSRSService.toggleFSRSStudyRoot).toHaveBeenCalledWith(
+      'user-1',
+      7
+    );
+  });
+
+  it('shows sign in message when refresh fails on root press', async () => {
+    supabase.auth.getSession.mockResolvedValueOnce({ data: { session: null } });
+    supabase.auth.refreshSession.mockResolvedValueOnce({ data: { session: null }, error: new Error('No session') });
+
+    const { router } = require('expo-router');
+
+    const { result } = renderHook(
+      () => useArticleMutations('user-1', jest.fn()),
+      { wrapper: createWrapper() }
+    );
+
+    await act(async () => {
+      await result.current.handleRootPress(3);
+    });
+
+    expect(mockShowToast).toHaveBeenCalledWith(
+      'Please sign in to add roots to your study list',
+      undefined,
+      'info'
+    );
+    expect(router.replace).toHaveBeenCalledWith('/auth');
+    const { studyWordsFSRSService } = require('@/services/studyWordsFSRS');
+    expect(studyWordsFSRSService.toggleFSRSStudyRoot).not.toHaveBeenCalled();
   });
 });
