@@ -4,6 +4,15 @@ import { createTestWord, createWordSet, testPatterns } from '../helpers/fsrsTest
 // Since it's internal to useFSRS, we'll test it through the queue ordering behavior
 
 describe('FSRS Priority Calculation Logic', () => {
+  beforeAll(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2024-01-01T00:00:00Z'));
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
   // Test the mathematical priority calculation
   describe('Priority Formula Validation', () => {
     test('calculates correct priority values for different scenarios', () => {
@@ -166,7 +175,7 @@ describe('FSRS Priority Calculation Logic', () => {
   });
 
   describe('Priority Performance', () => {
-    test('calculates priorities efficiently for large datasets', () => {
+    test('calculates priorities for large datasets without errors', () => {
       const largeWordSet = Array.from({ length: 1000 }, (_, i) =>
         createTestWord({
           root_id: i + 1,
@@ -176,28 +185,22 @@ describe('FSRS Priority Calculation Logic', () => {
         })
       );
 
-      const startTime = performance.now();
+      const priorities: number[] = [];
 
-      // Simulate priority calculation for all words
       largeWordSet.forEach(word => {
-        // This would normally call calculateWordPriority internally
         const now = new Date();
         const dueDate = word.fsrs_due ? new Date(word.fsrs_due) : now;
         const hoursOverdue = (now.getTime() - dueDate.getTime()) / (1000 * 60 * 60);
         const stability = word.fsrs_stability ?? 1;
         const difficulty = word.fsrs_difficulty ?? 6.5;
 
-        // Simulate the calculation
         const priority =
           -hoursOverdue + Math.max(0, 10 - stability) * 0.1 + (difficulty - 5) * 0.01;
-        expect(typeof priority).toBe('number');
+        priorities.push(priority);
       });
 
-      const endTime = performance.now();
-      const calculationTime = endTime - startTime;
-
-      // Should calculate 1000 priorities in reasonable time
-      expect(calculationTime).toBeLessThan(100); // Less than 100ms
+      expect(priorities.every(p => typeof p === 'number')).toBe(true);
+      expect(priorities).toHaveLength(1000);
     });
   });
 

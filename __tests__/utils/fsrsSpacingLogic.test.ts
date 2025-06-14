@@ -32,6 +32,15 @@ const createTestWord = (overrides: Partial<StudyWord> = {}): StudyWord => {
 };
 
 describe('FSRS Spacing Logic', () => {
+  beforeAll(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date('2024-01-01T00:00:00Z'));
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
   const setupQueue = (words: StudyWord[]) => {
     const queue = new PriorityQueue<StudyWord>();
     words.forEach(w => queue.push(w, calculateWordPriority(w)));
