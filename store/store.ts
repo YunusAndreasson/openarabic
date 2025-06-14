@@ -1,8 +1,8 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
 import type { PersistedState } from 'redux-persist';
 import type { PersistConfig } from 'redux-persist/es/types';
+import { getSafeStorage } from '@/utils/safeAsyncStorage';
 
 import filtersReducer from './filtersSlice';
 import listenReducer from './listenSlice';
@@ -39,7 +39,7 @@ const migrations = {
 // Configure redux-persist
 const persistConfig: PersistConfig<RootStateShape> = {
   key: 'root',
-  storage: AsyncStorage,
+  storage: getSafeStorage(),
   version: 0,
   migrate: (state: PersistedState) => {
     const typedState = state as RootStateShape | undefined;

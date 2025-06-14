@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import type { Query } from '@tanstack/react-query';
 import { handleError } from './errorHandling';
+import { getSafeStorage, isAsyncStorageAvailable } from './safeAsyncStorage';
 
 // Constants for better performance and maintainability
 const CACHE_KEY = 'REACT_QUERY_OFFLINE_CACHE';
@@ -16,9 +17,9 @@ const VOCABULARY_KEYS = new Set(['fsrs-words', 'vocabulary-stats']);
 const EXCLUDED_KEYS = new Set(['isInReadingList', 'audio-tracks', 'struggling-words']);
 const EXCLUDED_PATTERNS = new Set(['due', 'live']);
 
-// Create the persister using AsyncStorage
+// Create the persister using AsyncStorage when available
 export const queryPersister = createAsyncStoragePersister({
-  storage: AsyncStorage,
+  storage: getSafeStorage(),
   key: CACHE_KEY,
   throttleTime: THROTTLE_TIME,
   serialize: JSON.stringify,
@@ -72,6 +73,10 @@ export const PERSISTENCE_OPTIONS = {
  * Clear persisted cache (useful for debugging or user logout)
  */
 export const clearPersistedCache = async (): Promise<void> => {
+  if (!isAsyncStorageAvailable()) {
+    console.warn('AsyncStorage unavailable, cannot clear cache');
+    return;
+  }
   try {
     await AsyncStorage.removeItem(CACHE_KEY);
   } catch (error) {
@@ -83,6 +88,10 @@ export const clearPersistedCache = async (): Promise<void> => {
  * Get the size of persisted cache for debugging
  */
 export const getPersistedCacheSize = async (): Promise<number> => {
+  if (!isAsyncStorageAvailable()) {
+    console.warn('AsyncStorage unavailable, cannot read cache');
+    return 0;
+  }
   try {
     const cache = await AsyncStorage.getItem(CACHE_KEY);
     if (!cache) return 0;

@@ -1,5 +1,4 @@
 import 'react-native-url-polyfill/auto';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Sentry from '@sentry/react-native';
 import type { User, Session } from '@supabase/supabase-js';
 import { createClient } from '@supabase/supabase-js';
@@ -8,6 +7,7 @@ import { AppState } from 'react-native';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
 import type { Database } from '@/types/database.types';
 import { handleError } from '@/utils/errorHandling';
+import { getSafeStorage, isAsyncStorageAvailable } from '@/utils/safeAsyncStorage';
 
 /**
  * Supabase client configuration and initialization
@@ -15,9 +15,9 @@ import { handleError } from '@/utils/errorHandling';
  */
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
-    storage: AsyncStorage,
+    storage: getSafeStorage(),
     autoRefreshToken: true,
-    persistSession: true,
+    persistSession: isAsyncStorageAvailable(),
     detectSessionInUrl: false,
     flowType: 'implicit',
     debug: false,
