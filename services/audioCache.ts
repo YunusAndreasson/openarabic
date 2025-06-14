@@ -29,7 +29,7 @@ export class AudioCacheManager {
         await FileSystem.makeDirectoryAsync(this.cacheDir, { intermediates: true });
       }
     } catch (error) {
-      console.error('Failed to create cache directory:', error);
+      await handleError(error as Error, { showToast: false });
     }
   }
 
@@ -60,7 +60,7 @@ export class AudioCacheManager {
 
       return null;
     } catch (error) {
-      console.error('Error checking cached audio:', error);
+      await handleError(error as Error, { showToast: false });
       return null;
     }
   }
@@ -84,7 +84,7 @@ export class AudioCacheManager {
         throw new Error(`Download failed with status: ${downloadResult.status}`);
       }
     } catch (error) {
-      console.error('Error caching audio:', error);
+      await handleError(error as Error, { showToast: false });
       throw error;
     }
   }
@@ -109,7 +109,7 @@ export class AudioCacheManager {
       // If not cached, download and cache it
       return await this.cacheAudio(url);
     } catch (error) {
-      console.error('Error getting audio:', error);
+      await handleError(error as Error, { showToast: false });
       // Fallback to original URL if caching fails
       return url;
     }
