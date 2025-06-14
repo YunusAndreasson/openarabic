@@ -32,6 +32,10 @@
     "coverage",
     "translate",
     "assets",
-    ".venv"
+    ".venv",
+    "__mocks__",
+    "__tests__",
+    "**/*.test.*",
+    "**/*.spec.*"
   ]
 }

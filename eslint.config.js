@@ -175,6 +175,10 @@ module.exports = [
       '*.d.ts',
       '.github',
       '*.config.js',
+      '__mocks__/',
+      '__tests__/',
+      '**/*.test.*',
+      '**/*.spec.*',
     ],
   },
 ];

@@ -10,6 +10,8 @@ module.exports = {
   clearMocks: true,
   // Bail after the first test failure
   bail: false,
+  // Disable watch mode by default
+  watchman: false,
   // Use a more realistic test environment for React Native
   testEnvironment: 'node',
   // Ignore specific paths for tests
@@ -21,7 +23,6 @@ module.exports = {
       'identity-obj-proxy',
     // Mock problematic libraries
     '@shopify/react-native-skia': '<rootDir>/__mocks__/react-native-skia.js',
-    '@testing-library/react-native': '<rootDir>/__mocks__/@testing-library/react-native.js',
     'react-native-reanimated': '<rootDir>/__mocks__/react-native-reanimated.js',
     'react-native-gesture-handler': '<rootDir>/__mocks__/react-native-gesture-handler.js',
     'react-redux': '<rootDir>/__mocks__/react-redux.js',
