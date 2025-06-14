@@ -19,7 +19,7 @@ import { LAYOUT } from '@/constants/layout';
 import { useListenScreen, useListenUI } from '@/hooks/listen';
 import type { ReadingListItem } from '@/hooks/listen/useListenScreen';
 import { useColors } from '@/hooks/theme/useColors';
-import { useAppSelector } from '@/store/hooks';
+import { useAppSelectorMemo } from '@/store/hooks';
 import { selectionFeedback } from '@/utils/haptics';
 
 const styles = StyleSheet.create({
@@ -119,7 +119,7 @@ ListenListItem.displayName = 'ListenListItem';
 
 export default function ListenScreen(): JSX.Element {
   const colors = useColors();
-  const editMode = useAppSelector(state => state.listen.editMode);
+  const editMode = useAppSelectorMemo(state => state.listen.editMode);
 
   const [showSleepTimer, setShowSleepTimer] = useState(false);
 

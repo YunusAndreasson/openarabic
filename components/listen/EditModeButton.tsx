@@ -11,7 +11,7 @@ import {
 } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import { toggleEditMode } from '@/store/listenSlice';
 import { selectionFeedback } from '@/utils/haptics';
 
@@ -24,7 +24,7 @@ interface EditModeButtonProps {
 const EditModeButton: React.FC<EditModeButtonProps> = ({ onEditModeChange }) => {
   const colors = useColors();
   const dispatch = useAppDispatch();
-  const editMode = useAppSelector(state => state.listen.editMode);
+  const editMode = useAppSelectorMemo(state => state.listen.editMode);
 
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     includeOpacity: true,

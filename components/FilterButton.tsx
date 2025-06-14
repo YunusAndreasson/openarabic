@@ -7,7 +7,7 @@ import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectActiveFiltersCount } from '@/store/filtersSlice';
-import { useAppSelector } from '@/store/hooks';
+import { useAppSelectorMemo } from '@/store/hooks';
 import { withOpacity } from '@/utils/colorUtils';
 
 interface FilterButtonProps {
@@ -18,7 +18,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const FilterButton = memo(({ onPress }: FilterButtonProps) => {
   const colors = useColors();
-  const activeFiltersCount = useAppSelector(selectActiveFiltersCount);
+  const activeFiltersCount = useAppSelectorMemo(selectActiveFiltersCount);
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation();
 
   const handlePress = React.useCallback(() => {
