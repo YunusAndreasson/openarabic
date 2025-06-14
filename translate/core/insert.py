@@ -17,7 +17,7 @@ from translate.core.database_utils import (
     archive_files,
     validate_article_data,
 )
-from translate.core.audio_utils import ensure_valid_cache_files
+from translate.core.cache_utils import ensure_valid_cache_files
 from translate.core.utils import load_api_keys
 
 # Load environment variables once

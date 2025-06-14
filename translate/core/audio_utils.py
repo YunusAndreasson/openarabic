@@ -160,26 +160,6 @@ def get_cache_key(word: str) -> str:
     return f"ar_{word_hash}.mp3"
 
 
-def ensure_valid_cache_files():
-    """Scan cache directory to ensure all files have .mp3 extension."""
-    fixed_count = 0
-    for filename in os.listdir(AUDIO_CACHE_DIR):
-        if not filename.endswith(".mp3") and not filename.startswith("."):
-            # Fix filenames without extensions
-            basename, ext = os.path.splitext(filename)
-            if not ext:
-                new_filename = f"{basename}.mp3"
-                old_path = os.path.join(AUDIO_CACHE_DIR, filename)
-                new_path = os.path.join(AUDIO_CACHE_DIR, new_filename)
-
-                try:
-                    os.rename(old_path, new_path)
-                    fixed_count += 1
-                except Exception as e:
-                    print(f"Error fixing cache file {filename}: {str(e)}")
-
-    if fixed_count > 0:
-        print(f"Fixed {fixed_count} cache files with missing extensions")
 
 
 def generate_audio_filename() -> str:
