@@ -13,7 +13,14 @@ jest.mock('expo-audio', () => ({
   setAudioModeAsync: jest.fn(),
 }));
 
+jest.mock('../../services/audioCache', () => ({
+  audioCache: {
+    getAudio: jest.fn(),
+  },
+}));
+
 // Import after mocking
+const { audioCache } = require('../../services/audioCache');
 const { useAudioPlayer } = require('../../hooks/audio/useAudioPlayer');
 
 const createState = (isLoading: boolean) => ({
@@ -34,6 +41,10 @@ describe('useAudioPlayer audioState', () => {
 
   afterEach(() => {
     reducerSpy.mockReset();
+  });
+
+  afterAll(() => {
+    reducerSpy.mockRestore();
   });
 
   test.each([
@@ -58,4 +69,39 @@ describe('useAudioPlayer audioState', () => {
       expect(result.current.audioState).toBe(expected);
     },
   );
+});
+
+describe('prefetchTracks', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('returns tracks with cached urls when available', async () => {
+    (audioCache.getAudio as jest.Mock).mockImplementation(url =>
+      url.includes('two') ? Promise.reject(new Error('fail')) : Promise.resolve(`cached-${url}`),
+    );
+
+    const tracks = [
+      { id: '1', audioUrl: 'one.mp3', title: 'one' },
+      { id: '2', audioUrl: 'two.mp3', title: 'two' },
+    ];
+
+    const { result } = renderHook(() => useAudioPlayer());
+
+    const processed = await result.current.actions.prefetchTracks(tracks);
+
+    expect(processed[0].audioUrl).toBe('cached-one.mp3');
+    expect(processed[1].audioUrl).toBe('two.mp3');
+    expect(audioCache.getAudio).toHaveBeenCalledTimes(2);
+  });
+
+  test('resolves even when cache rejects', async () => {
+    (audioCache.getAudio as jest.Mock).mockRejectedValue(new Error('fail'));
+
+    const tracks = [{ id: '1', audioUrl: 'one.mp3', title: 'one' }];
+
+    const { result } = renderHook(() => useAudioPlayer());
+
+    await expect(result.current.actions.prefetchTracks(tracks)).resolves.toEqual(tracks);
+  });
 });
