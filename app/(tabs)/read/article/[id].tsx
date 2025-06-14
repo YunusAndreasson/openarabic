@@ -78,13 +78,8 @@ export default function ArticleScreen(): JSX.Element {
   // Trigger fade-in when article content is ready
   useEffect(() => {
     if (article && sortedSentences && sortedSentences.length > 0 && !isLoadingArticle) {
-      // Small delay to ensure everything is rendered before fading in
-      const timer = setTimeout(() => {
-        fadeIn();
-      }, 50);
-      return () => clearTimeout(timer);
+      fadeIn();
     }
-    return;
   }, [article, sortedSentences, isLoadingArticle, fadeIn]);
 
   // Simple root press handler for word interactions
