@@ -196,6 +196,20 @@ export default function ListenScreen(): JSX.Element {
   const shouldShowEmpty =
     !hasArticles && canShowEmpty && !isReadingListLoading && !isReadingListFetching;
 
+  const listContainerStyle = useMemo(
+    () => ({
+      paddingTop: headerHeight + LAYOUT.SPACING.MEDIUM,
+      paddingBottom: hasArticles
+        ? insets.bottom +
+          LAYOUT.BOTTOM_BAR.HEIGHT +
+          LAYOUT.SPACING.TINY +
+          (shouldShowPlayer ? 120 + LAYOUT.SPACING.TINY : LAYOUT.SPACING.TINY)
+        : insets.bottom + LAYOUT.SPACING.TINY,
+      paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    }),
+    [headerHeight, insets.bottom, hasArticles, shouldShowPlayer]
+  );
+
   // Render item for both FlashList and DraggableFlatList
   const renderItem: (
     params: { item: ReadingListItem; index?: number } | RenderItemParams<ReadingListItem>
@@ -276,16 +290,7 @@ export default function ListenScreen(): JSX.Element {
             renderItem={renderItem}
             onDragEnd={handleDragEnd}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{
-              paddingTop: headerHeight + LAYOUT.SPACING.MEDIUM,
-              paddingBottom: hasArticles
-                ? insets.bottom +
-                  LAYOUT.BOTTOM_BAR.HEIGHT +
-                  LAYOUT.SPACING.TINY +
-                  (shouldShowPlayer ? 120 + LAYOUT.SPACING.TINY : LAYOUT.SPACING.TINY)
-                : insets.bottom + LAYOUT.SPACING.TINY,
-              paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-            }}
+            contentContainerStyle={listContainerStyle}
             ItemSeparatorComponent={() => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />}
             ListEmptyComponent={
               shouldShowEmpty ? (
@@ -323,16 +328,7 @@ export default function ListenScreen(): JSX.Element {
             keyExtractor={item => `${item.article_id}`}
             removeClippedSubviews={true}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{
-              paddingTop: headerHeight + LAYOUT.SPACING.MEDIUM,
-              paddingBottom: hasArticles
-                ? insets.bottom +
-                  LAYOUT.BOTTOM_BAR.HEIGHT +
-                  LAYOUT.SPACING.TINY +
-                  (shouldShowPlayer ? 120 + LAYOUT.SPACING.TINY : LAYOUT.SPACING.TINY)
-                : insets.bottom + LAYOUT.SPACING.TINY,
-              paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-            }}
+            contentContainerStyle={listContainerStyle}
             ItemSeparatorComponent={() => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />}
             ListEmptyComponent={
               shouldShowEmpty ? (
