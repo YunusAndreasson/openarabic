@@ -1,9 +1,9 @@
-export interface DataPoint {
+export interface DataPoint<T = unknown> {
   x: number;
   y: number;
   value: string;
   label: string;
-  data?: any;
+  data?: T;
 }
 
 export interface LegendItemProps {

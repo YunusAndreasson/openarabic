@@ -37,6 +37,14 @@ interface RetrievabilityChartProps {
   hideTitle?: boolean;
 }
 
+interface RetrievabilityRecord {
+  date: Date;
+  averageRetrievability: number;
+  wordCount: number;
+  criticalWords: number;
+  urgentWords: number;
+}
+
 export const RetrievabilityChart = memo(
   ({ studyWords = [], onInfoPress, hideTitle = false }: RetrievabilityChartProps) => {
     const chartColors = useChartColors();
@@ -59,7 +67,7 @@ export const RetrievabilityChart = memo(
     }, [chartData.insights, studyWords.length]);
 
     // Prepare data points for interactive tooltips
-    const dataPoints: DataPoint[] = useMemo(() => {
+    const dataPoints: DataPoint<RetrievabilityRecord>[] = useMemo(() => {
       return chartData.dataPoints
         .map((point, index) => {
           const data = retrievabilityData[index];
@@ -71,9 +79,9 @@ export const RetrievabilityChart = memo(
             value: `${Math.round(point.retrievability)}%`,
             label: data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
             data: data,
-          } as DataPoint;
+          } as DataPoint<RetrievabilityRecord>;
         })
-        .filter((point): point is DataPoint => point !== null);
+        .filter((point): point is DataPoint<RetrievabilityRecord> => point !== null);
     }, [chartData.dataPoints, retrievabilityData]);
 
     return (

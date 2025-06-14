@@ -39,6 +39,12 @@ interface EfficiencyChartProps {
   hideTitle?: boolean;
 }
 
+interface EfficiencyRecord {
+  date: Date;
+  averageEfficiency: number;
+  wordCount: number;
+}
+
 export const EfficiencyChart = memo(
   ({ studyWords = [], onInfoPress, hideTitle = false }: EfficiencyChartProps) => {
     const chartColors = useChartColors();
@@ -46,7 +52,7 @@ export const EfficiencyChart = memo(
     const graphWidth = useGraphWidth();
 
     // Calculate efficiency data over the last 7 days
-    const efficiencyData = useMemo(() => {
+    const efficiencyData = useMemo<EfficiencyRecord[]>(() => {
       const dates = generateDateRange(DAYS_7);
 
       return dates.map(date => {
@@ -178,7 +184,7 @@ export const EfficiencyChart = memo(
     }, [chartData.insights]);
 
     // Prepare data points for interactive tooltips
-    const dataPoints: DataPoint[] = useMemo(() => {
+    const dataPoints: DataPoint<EfficiencyRecord>[] = useMemo(() => {
       return chartData.dataPoints
         .map((point, index) => {
           const data = efficiencyData[index];
@@ -189,10 +195,10 @@ export const EfficiencyChart = memo(
             y: point.y,
             value: `${Math.round(point.efficiency)}%`,
             label: data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            data: data,
-          } as DataPoint;
-        })
-        .filter((point): point is DataPoint => point !== null);
+          data: data,
+        } as DataPoint<EfficiencyRecord>;
+      })
+        .filter((point): point is DataPoint<EfficiencyRecord> => point !== null);
     }, [chartData.dataPoints, efficiencyData]);
 
     return (
