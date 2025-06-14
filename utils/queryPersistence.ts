@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import type { Query } from '@tanstack/react-query';
+import { handleError } from './errorHandling';
 
 // Constants for better performance and maintainability
 const CACHE_KEY = 'REACT_QUERY_OFFLINE_CACHE';
@@ -73,9 +74,8 @@ export const PERSISTENCE_OPTIONS = {
 export const clearPersistedCache = async (): Promise<void> => {
   try {
     await AsyncStorage.removeItem(CACHE_KEY);
-    console.log('✅ Persisted React Query cache cleared');
   } catch (error) {
-    console.error('❌ Failed to clear persisted cache:', error);
+    handleError(error as Error, { showToast: false });
   }
 };
 
@@ -90,7 +90,7 @@ export const getPersistedCacheSize = async (): Promise<number> => {
     // Calculate size in bytes (approximate)
     return new TextEncoder().encode(cache).length;
   } catch (error) {
-    console.error('❌ Failed to get persisted cache size:', error);
+    handleError(error as Error, { showToast: false });
     return 0;
   }
 };
