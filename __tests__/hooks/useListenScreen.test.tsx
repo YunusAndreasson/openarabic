@@ -131,6 +131,13 @@ const Wrapper = ({ children }: { children: React.ReactNode }) => <>{children}</>
 
 
 describe('useListenScreen', () => {
+  beforeEach(() => {
+    mockUseQuery.mockReset();
+    mockUseQuery
+      .mockReturnValueOnce({ data: readingListItems, isLoading: false, isFetching: false })
+      .mockReturnValueOnce({ data: enhancedTracks, isLoading: false, isFetching: false })
+      .mockReturnValue({ data: [], isLoading: false, isFetching: false });
+  });
   it('dedupes and sorts reading list according to custom order', async () => {
     const { result } = renderHook(() => useListenScreen(), { wrapper: Wrapper });
 
@@ -153,5 +160,18 @@ describe('useListenScreen', () => {
       result.current.handleSleepTimerCancel();
     });
     expect(cancelTimer).toHaveBeenCalled();
+  });
+
+  it('returns enhanced tracks error', () => {
+    const error = new Error('fail');
+    mockUseQuery.mockReset();
+    mockUseQuery
+      .mockReturnValueOnce({ data: readingListItems, isLoading: false, isFetching: false })
+      .mockReturnValueOnce({ data: [], isLoading: false, isFetching: false, error })
+      .mockReturnValue({ data: [], isLoading: false, isFetching: false });
+
+    const { result } = renderHook(() => useListenScreen(), { wrapper: Wrapper });
+
+    expect(result.current.enhancedTracksError).toBe(error);
   });
 });
