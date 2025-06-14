@@ -175,7 +175,6 @@ module.exports = [
       '*.d.ts',
       '.github',
       '*.config.js',
-      'services/analytics.ts',
     ],
   },
 ];
