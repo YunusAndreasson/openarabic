@@ -1,4 +1,3 @@
-
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -12,7 +11,7 @@ import { ThemedView } from '@/components/ThemedView';
 import ArticleList from '@/components/home/ArticleList';
 import FilterSection from '@/components/home/FilterSection';
 import IntelligentArticleSection from '@/components/home/IntelligentArticleSection';
-import { WelcomeMessage } from '@/components/home/WelcomeMessage';
+import WelcomeMessage from '@/components/home/WelcomeMessage';
 import { LAYOUT } from '@/constants/layout';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -84,18 +83,15 @@ export default function ArticlesScreen(): JSX.Element {
       return acc;
     }, {});
 
-    return categoriesData.reduce<(Category & { count: number })[]>(
-      (acc, category) => {
-        if (category?.id && category.id > 0 && category.name) {
-          const count = counts[category.id] || 0;
-          if (count > 0) {
-            acc.push({ ...category, count });
-          }
+    return categoriesData.reduce<(Category & { count: number })[]>((acc, category) => {
+      if (category?.id && category.id > 0 && category.name) {
+        const count = counts[category.id] || 0;
+        if (count > 0) {
+          acc.push({ ...category, count });
         }
-        return acc;
-      },
-      []
-    );
+      }
+      return acc;
+    }, []);
   }, [articlesData, categoriesData]);
 
   const handleRefresh = useCallback(async () => {
@@ -139,12 +135,17 @@ export default function ArticlesScreen(): JSX.Element {
     [dispatch, prefetchArticle, router]
   );
 
-  const handleSelectCategory = useCallback((categoryId: number, categoryName?: string) => {
-    const url = categoryName
-      ? `/(tabs)/read/filter?type=category&id=${categoryId}&name=${encodeURIComponent(categoryName)}`
-      : `/(tabs)/read/filter?type=category&id=${categoryId}`;
-    router.push(url);
-  }, [router]);
+  const handleSelectCategory = useCallback(
+    (categoryId: number, categoryName?: string) => {
+      const url = categoryName
+        ? `/(tabs)/read/filter?type=category&id=${categoryId}&name=${encodeURIComponent(
+            categoryName
+          )}`
+        : `/(tabs)/read/filter?type=category&id=${categoryId}`;
+      router.push(url);
+    },
+    [router]
+  );
 
   // Simplified header component
   const ListHeaderComponent = useMemo(
@@ -205,4 +206,3 @@ export default function ArticlesScreen(): JSX.Element {
     </ThemedView>
   );
 }
-

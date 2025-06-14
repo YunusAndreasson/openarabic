@@ -1,9 +1,5 @@
 import { useHeaderHeight } from '@react-navigation/elements';
-import type {
-  ListRenderItem,
-  ContentStyle,
-  OverrideItemLayoutParams,
-} from '@shopify/flash-list';
+import type { ListRenderItem, ContentStyle } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import React, {
   useCallback,
@@ -50,7 +46,6 @@ const ArticleItem = memo(({ item, onPress }: ArticleItemProps) => {
       summary={item.summary || 'No summary available'}
       title={item.title}
       onPress={handlePress}
-      variant={'article'}
     />
   );
 });
@@ -156,8 +151,10 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
         scrollEventThrottle: 16,
         ItemSeparatorComponent: () => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />,
         overrideItemLayout: (
-          layout: OverrideItemLayoutParams,
-          _item: Article
+          layout: { span?: number; size?: number },
+          _item: Article,
+          _index: number,
+          _maxColumns: number
         ) => {
           layout.size = ITEM_HEIGHT;
         },

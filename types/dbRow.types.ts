@@ -1,7 +1,7 @@
 import type { Tables } from './database.types';
 
 /** Raw author record returned from Supabase queries */
-export interface AuthorRow extends Tables<'authors'> {}
+export type AuthorRow = Tables<'authors'>;
 
 /** Raw sentence word with optional root and word type relations */
 export interface SentenceWordRow extends Tables<'sentence_words'> {
