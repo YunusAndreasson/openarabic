@@ -24,18 +24,31 @@ jest.mock('@expo/vector-icons', () => ({
   Ionicons: () => null,
 }));
 
-// Mock ListenScreen with basic controls
+// Mock ListenScreen with basic controls that respect reading list state
 jest.mock('@/app/(tabs)/listen', () => {
   const React = require('react');
   const { TouchableOpacity } = require('react-native');
   return {
     __esModule: true,
-    default: () => (
-      <>
-        <TouchableOpacity testID="primary-action-button" onPress={() => (global as any).handlePlayAllMock()} />
-        <TouchableOpacity testID="stop-playback-button" onPress={() => (global as any).stopPlaybackMock()} />
-      </>
-    ),
+    default: () => {
+      const disabled = !((global as any).readingListItems?.length);
+      return (
+        <>
+          {disabled ? (
+            <TouchableOpacity testID="primary-action-button" disabled />
+          ) : (
+            <TouchableOpacity
+              testID="primary-action-button"
+              onPress={() => (global as any).handlePlayAllMock()}
+            />
+          )}
+          <TouchableOpacity
+            testID="stop-playback-button"
+            onPress={() => (global as any).stopPlaybackMock()}
+          />
+        </>
+      );
+    },
   };
 });
 
@@ -80,6 +93,9 @@ jest.mock('@/hooks/theme/useThemeDetection', () => ({
 }));
 
 describe('listen later flow', () => {
+  beforeEach(() => {
+    (global as any).readingListItems = [1];
+  });
   afterEach(() => {
     jest.clearAllMocks();
   });
@@ -119,6 +135,20 @@ describe('listen later flow', () => {
     expect((global as any).stopPlaybackMock).toHaveBeenCalled();
 
     expect(queryByTestId('stop-playback-button')).toBeTruthy();
+  });
+
+  it('disables play all when list is empty', () => {
+    (global as any).readingListItems = [];
+
+    const { queryByTestId } = render(<ListenScreen />);
+
+    const primaryButton = queryByTestId('primary-action-button');
+    if (primaryButton) {
+      expect(primaryButton.props.disabled).toBe(true);
+      fireEvent.press(primaryButton);
+    }
+
+    expect((global as any).handlePlayAllMock).not.toHaveBeenCalled();
   });
 });
 
