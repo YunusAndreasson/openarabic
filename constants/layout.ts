@@ -142,30 +142,6 @@ export const WORD_AREA_MIN_HEIGHT = 364;
 // Export touch targets for backward compatibility and external use
 export const MIN_TOUCH_TARGET = TOUCH_TARGETS;
 
-// Helper functions for systematic design
-export const getSystematicSpacing = (multiplier: number): number => {
-  return BASE_UNIT * multiplier;
-};
-
-export const getOptimalLineHeight = (
-  fontSize: number,
-  contentType: 'arabic' | 'english' = 'english'
-): number => {
-  const multiplier =
-    contentType === 'arabic'
-      ? TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.ARABIC
-      : TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL;
-  return Math.round(fontSize * multiplier);
-};
-
-export const getAccessibleTouchTarget = (
-  currentSize: number
-): { padding: number; minSize: number } => {
-  const minSize = TOUCH_TARGETS.MEDIUM;
-  const padding = currentSize < minSize ? Math.ceil((minSize - currentSize) / 2) : 0;
-  return { padding, minSize };
-};
-
 export const LAYOUT = {
   SCREEN_EDGE_PADDING: 12,
 
