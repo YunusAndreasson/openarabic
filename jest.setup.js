@@ -20,11 +20,11 @@ global.cancelAnimationFrame = function (id) {
 
 // Mock AsyncStorage
 jest.mock('@react-native-async-storage/async-storage', () => ({
-  setItem: jest.fn(),
-  getItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
-  getAllKeys: jest.fn(),
+  setItem: jest.fn().mockResolvedValue(undefined),
+  getItem: jest.fn().mockResolvedValue(null),
+  removeItem: jest.fn().mockResolvedValue(undefined),
+  clear: jest.fn().mockResolvedValue(undefined),
+  getAllKeys: jest.fn().mockResolvedValue([]),
 }));
 
 // Mock timers
