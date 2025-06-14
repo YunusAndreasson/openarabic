@@ -35,6 +35,7 @@ export default function FilterScreen(): JSX.Element {
     data: articles = [],
     error,
     refetch,
+    isLoading,
   } = useQuery({
     queryKey: cacheKey,
     queryFn: async () => {
@@ -100,6 +101,7 @@ export default function FilterScreen(): JSX.Element {
       articles={filteredAndSortedArticles}
       onArticlePress={handleArticlePress}
       totalCount={articles.length}
+      loading={isLoading}
     />
   );
 }
