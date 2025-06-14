@@ -1,3 +1,4 @@
+import * as MailComposer from 'expo-mail-composer';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import { Alert, Linking } from 'react-native';
@@ -65,14 +66,20 @@ export const useAccountScreen = () => {
         if (size === 0) {
           Alert.alert(
             'No Cache',
-            `There is no ${type === 'audio' ? 'cached audio files' : 'offline data cache'} to clear.`
+            `There is no ${
+              type === 'audio' ? 'cached audio files' : 'offline data cache'
+            } to clear.`
           );
           return;
         }
 
         Alert.alert(
           title,
-          `${description} ${formatBytes(size)} of cached data. ${type === 'audio' ? "You'll need to re-download audio when playing articles." : 'The app will need to reload this data when you use it again.'}`,
+          `${description} ${formatBytes(size)} of cached data. ${
+            type === 'audio'
+              ? "You'll need to re-download audio when playing articles."
+              : 'The app will need to reload this data when you use it again.'
+          }`,
           [
             {
               text: 'Cancel',
@@ -228,9 +235,47 @@ export const useAccountScreen = () => {
     [reminderTime, updateReminderTime]
   );
 
-  const handleSupportContact = useCallback(() => {
-    Linking.openURL('mailto:yunus@edenmind.com');
-  }, []);
+  const handleSupportContact = useCallback(async () => {
+    try {
+      // Check if mail composer is available
+      const isAvailable = await MailComposer.isAvailableAsync();
+
+      if (!isAvailable) {
+        // Fallback to mailto link if mail composer is not available
+        Linking.openURL('mailto:yunus@edenmind.com');
+        return;
+      }
+
+      // Compose email with pre-filled information
+      const result = await MailComposer.composeAsync({
+        recipients: ['yunus@edenmind.com'],
+        subject: 'Open Arabic App Support',
+        body: `Hi there,
+
+I need help with the Open Arabic app.
+
+App Version: ${pkg.version}
+User Email: ${user?.email || 'Not signed in'}
+
+Please describe your issue below:
+
+`,
+        isHtml: false,
+      });
+
+      // Handle the result if needed
+      if (result.status === MailComposer.MailComposerStatus.SENT) {
+        lightFeedback();
+      }
+    } catch (error) {
+      // Fallback to mailto link if there's an error
+      handleError(error as Error, {
+        showToast: false,
+        analyticsEventName: 'Mail_Composer_Error',
+      });
+      Linking.openURL('mailto:yunus@edenmind.com');
+    }
+  }, [user?.email]);
 
   const handleSocialLink = useCallback((url: string) => {
     Linking.openURL(url);

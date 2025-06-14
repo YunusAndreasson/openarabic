@@ -70,7 +70,8 @@
           "defaultChannel": "default"
         }
       ],
-      "expo-audio"
+      "expo-audio",
+      "expo-mail-composer"
     ],
     "experiments": {
       "typedRoutes": true

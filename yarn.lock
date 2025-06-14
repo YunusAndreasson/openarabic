@@ -4446,6 +4446,11 @@ expo-linking@^7.1.5:
     expo-constants "~17.1.6"
     invariant "^2.2.4"
 
+expo-mail-composer@~14.1.4:
+  version "14.1.4"
+  resolved "https://registry.yarnpkg.com/expo-mail-composer/-/expo-mail-composer-14.1.4.tgz#b5bbed1426e5b5c2c6a76e90c496518a5b1b9a38"
+  integrity sha512-0s3HD45xf7ow2YeoS76WSbzZDAXcE5hOQnxFJwF6gIHzuYxgSX+al06+fl0Z3cfTOZTu4ohHRseQ9xOFFNiWIg==
+
 expo-manifests@~0.16.5:
   version "0.16.5"
   resolved "https://registry.yarnpkg.com/expo-manifests/-/expo-manifests-0.16.5.tgz#bb57ceff3db4eb74679d4a155b2ca2050375ce10"
