@@ -253,7 +253,7 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
 
       // Process tracks to use cached audio URLs if available
       const processedTracks = await Promise.all(
-        tracks.map(async (track, index) => {
+        tracks.map(async (track, _index) => {
           try {
             // Get cached audio URL (downloads if not cached)
             const cachedAudioUrl = await audioCache.getAudio(track.audioUrl);
@@ -261,9 +261,8 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
               ...track,
               audioUrl: cachedAudioUrl,
             };
-          } catch (error) {
+          } catch {
             // If caching fails, use original URL
-            console.warn(`Failed to cache audio for track ${index + 1}:`, track.title, error);
             return track;
           }
         })

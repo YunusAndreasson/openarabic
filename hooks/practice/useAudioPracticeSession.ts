@@ -40,6 +40,7 @@ export function useAudioPracticeSession(): UseAudioPracticeSessionReturn {
   const playbackCompletedRef = useRef(false);
   const hasStartedPlayback = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const isInitialized = useRef(false);
 
   // Enhanced audio player
   const audioPlayer = useAudioPlayer();
@@ -95,17 +96,26 @@ export function useAudioPracticeSession(): UseAudioPracticeSessionReturn {
     if (audioState !== lastAudioStateRef.current) {
       lastAudioStateRef.current = audioState;
 
+      // Track when playback actually starts
+      if (audioState === AUDIO_STATES.PLAYING) {
+        hasStartedPlayback.current = true;
+      }
+
       if (audioState === AUDIO_STATES.IDLE && hasStartedPlayback.current) {
         setIsComplete(true);
       }
     }
   }, [audioState]);
 
+  // Load tracks and start playback when words are available
   useEffect(() => {
-    if (!allWords?.length || wordList.length > 0) {
+    if (!user || !allWords || allWords.length === 0 || isComplete || isInitialized.current) {
       return;
     }
 
+    isInitialized.current = true; // Mark as initialized
+
+    // Create abort controller for this session
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
@@ -116,6 +126,7 @@ export function useAudioPracticeSession(): UseAudioPracticeSessionReturn {
           20,
           controller.signal
         );
+
         selectedTracksRef.current = selectedTracks;
 
         if (selectedTracks.length > 0) {
@@ -139,6 +150,7 @@ export function useAudioPracticeSession(): UseAudioPracticeSessionReturn {
           setCurrentWordIndex(0);
           lastAudioStateRef.current = AUDIO_STATES.IDLE;
           playbackCompletedRef.current = false;
+          hasStartedPlayback.current = false;
 
           if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
@@ -150,7 +162,7 @@ export function useAudioPracticeSession(): UseAudioPracticeSessionReturn {
                 error instanceof Error ? error : new Error('Failed to start audio playback')
               );
             });
-          }, 500);
+          }, 100);
         }
       } catch (error) {
         handleError(error instanceof Error ? error : new Error('Failed to load vocabulary tracks'));
@@ -159,15 +171,16 @@ export function useAudioPracticeSession(): UseAudioPracticeSessionReturn {
 
     loadTracksAndStartPlayback();
 
+    // Cleanup function
     return () => {
-      controller.abort();
-      abortControllerRef.current = null;
-
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
       }
+      controller.abort();
+      isInitialized.current = false; // Reset initialization flag
     };
-  }, [allWords, wordList.length, wordMap]);
+  }, [user, allWords, isComplete]);
 
   const handleRestartPlayback = useCallback(() => {
     if (selectedTracksRef.current.length === 0) {
@@ -184,11 +197,13 @@ export function useAudioPracticeSession(): UseAudioPracticeSessionReturn {
       maxProgressRef.current = 0;
       setProgressAnimationKey(prev => prev + 1);
       playbackCompletedRef.current = false;
+      hasStartedPlayback.current = false;
+      isInitialized.current = false; // Reset initialization flag to allow restart
 
       actionsRef.current.startEnhancedPlayback(selectedTracksRef.current, 0).catch(error => {
         handleError(error instanceof Error ? error : new Error('Failed to restart audio playback'));
       });
-    }, 500);
+    }, 100);
   }, []);
 
   useEffect(() => {
