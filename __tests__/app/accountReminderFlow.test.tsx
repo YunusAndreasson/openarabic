@@ -58,7 +58,13 @@ jest.mock('@/app/(tabs)/read/account/index.tsx', () => {
             <Text>Open Time</Text>
           </TouchableOpacity>
           {open && (
-            <TouchableOpacity testID="confirm-time" onPress={() => handleTimeSet(7, 30)}>
+            <TouchableOpacity
+              testID="confirm-time"
+              onPress={() => {
+                handleTimeSet(7, 30);
+                setOpen(false);
+              }}
+            >
               <Text>Confirm</Text>
             </TouchableOpacity>
           )}
@@ -92,5 +98,18 @@ describe('account reminder flow', () => {
 
     fireEvent.press(getByTestId('confirm-time'));
     expect(setMock).toHaveBeenCalledWith(7, 30);
+  });
+
+  it('ignores rapid double confirm', () => {
+    const { getByTestId, queryByTestId } = render(<AccountScreen />);
+
+    fireEvent.press(getByTestId('open-time'));
+
+    const confirm = getByTestId('confirm-time');
+    fireEvent.press(confirm);
+    fireEvent.press(confirm);
+
+    expect(setMock).toHaveBeenCalledTimes(1);
+    expect(queryByTestId('confirm-time')).toBeNull();
   });
 });
