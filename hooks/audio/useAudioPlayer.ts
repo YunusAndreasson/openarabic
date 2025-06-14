@@ -282,7 +282,6 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
 
       // The useAudioPlayer hook will automatically recreate the player with the new source
     } catch (error) {
-      console.error('Queue loading failed:', error);
       handleError(error as Error, {
         toastMessage: 'Failed to load audio',
         showToast: true,
