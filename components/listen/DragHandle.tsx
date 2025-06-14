@@ -1,6 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  StyleSheet,
+  TouchableOpacity,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
 import { MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -8,7 +13,7 @@ import { useColors } from '@/hooks/theme/useColors';
 interface DragHandleProps {
   onLongPress?: () => void;
   delayLongPress?: number;
-  style?: any;
+  style?: StyleProp<ViewStyle>;
 }
 
 const DragHandle: React.FC<DragHandleProps> = ({ onLongPress, delayLongPress = 100, style }) => {

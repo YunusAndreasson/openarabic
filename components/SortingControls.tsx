@@ -1,6 +1,11 @@
 import type { JSX } from 'react';
 import React, { memo, useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -16,7 +21,7 @@ export interface SortingControlsProps<T = string> {
   sortDirection?: SortDirection;
   onSortChange: (sort: T, direction: SortDirection) => void;
   options: SortOption<T>[];
-  style?: any;
+  style?: StyleProp<ViewStyle>;
 }
 
 function SortingControls<T extends string>({
