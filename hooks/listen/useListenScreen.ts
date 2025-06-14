@@ -115,7 +115,7 @@ export const useListenScreen = () => {
     gcTime: 10 * 60 * 1000,
     placeholderData: [],
   });
-  const { data: enhancedTracks = [] } = enhancedTracksQuery;
+  const { data: enhancedTracks = [], error: enhancedTracksError } = enhancedTracksQuery;
 
   const sortedEnhancedTracks = useMemo(() => {
     if (!enhancedTracks.length || !sortedReadingList.length) return enhancedTracks;
@@ -309,5 +309,6 @@ export const useListenScreen = () => {
     handlePlayAll,
     handleArticlePlay,
     handleDelete,
+    enhancedTracksError,
   };
 };

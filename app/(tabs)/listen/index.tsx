@@ -1,7 +1,7 @@
 import { useHeaderHeight } from '@react-navigation/elements';
 import { FlashList } from '@shopify/flash-list';
 import type { JSX } from 'react';
-import React, { useState, useMemo, useCallback, memo } from 'react';
+import React, { useState, useMemo, useCallback, memo, useEffect } from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
@@ -14,6 +14,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { ArticleCard } from '@/components/home/ArticleCard';
 import NowPlayingCard from '@/components/listen/NowPlayingCard';
 import SleepTimer from '@/components/listen/SleepTimer';
+import { useToast } from '@/components/providers/ToastProvider';
 import { AUDIO_STATES, type AudioState } from '@/constants/audio';
 import { LAYOUT } from '@/constants/layout';
 import { useListenScreen, useListenUI } from '@/hooks/listen';
@@ -128,6 +129,7 @@ ListenListItem.displayName = 'ListenListItem';
 export default function ListenScreen(): JSX.Element {
   const colors = useColors();
   const editMode = useAppSelectorMemo(state => state.listen.editMode);
+  const { showToast } = useToast();
 
   const [showSleepTimer, setShowSleepTimer] = useState(false);
 
@@ -150,6 +152,7 @@ export default function ListenScreen(): JSX.Element {
     handlePlayAll,
     handleArticlePlay,
     handleDelete,
+    enhancedTracksError,
   } = useListenScreen();
 
   const listenMetadata = useMemo(
@@ -176,6 +179,12 @@ export default function ListenScreen(): JSX.Element {
 
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
+
+  useEffect(() => {
+    if (enhancedTracksError) {
+      showToast('Failed to load audio tracks', 4000, 'error');
+    }
+  }, [enhancedTracksError, showToast]);
 
   // Check if we have any texts to show controls for
   const hasArticles = sortedReadingList.length > 0;
