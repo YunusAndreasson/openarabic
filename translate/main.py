@@ -18,10 +18,6 @@ from translate.core.utils import load_api_keys
 load_api_keys()
 
 
-def print_header():
-    """Print a fancy header for the application"""
-    pass
-
 
 def confirm_step(prompt):
     """Get user confirmation for a step"""
@@ -74,8 +70,6 @@ def translate_file(input_file, output_file, batch_size):
 
 
 def main():
-    print_header()
-
     # Step 0: Use default parameters
     input_file = DEFAULT_INPUT_FILE
     output_file = DEFAULT_OUTPUT_FILE
