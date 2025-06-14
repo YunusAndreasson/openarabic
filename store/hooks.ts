@@ -2,9 +2,8 @@ import { useMemo } from 'react';
 import type { TypedUseSelectorHook } from 'react-redux';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 
-import { Theme } from '@/constants/Colors';
-
 import type { RootState, AppDispatch } from './store';
+import { store } from './store'; // used to generate fallback state when Redux context is missing
 
 // Use throughout your app instead of plain `useDispatch` and `useSelector`
 export const useAppDispatch = () => {
@@ -24,18 +23,9 @@ export const useAppSelector: TypedUseSelectorHook<RootState> = (selector, equali
   } catch {
     // Fallback for when Redux context is not available
     console.warn('Redux context not available, returning fallback state');
-    // Return a minimal fallback state that matches the expected structure
-    const fallbackState = {
-      theme: { theme: Theme.Light },
-      settings: {
-        fontScale: 1,
-        showEnglish: true,
-        reminderTime: { hour: 19, minute: 0, enabled: false },
-      },
-      readingList: { articles: [], lastOpenedArticle: null },
-      filters: { selectedCategories: [], selectedDifficulties: [], searchQuery: '' },
-      listen: { currentArticle: null, isPlaying: false, queue: [], currentIndex: 0 },
-    } as unknown as RootState;
+    // Generate the fallback state from the store so all slices are included.
+    // Update this logic if new slices are added or the store shape changes.
+    const fallbackState = store.getState();
     return selector(fallbackState);
   }
 };
