@@ -125,8 +125,11 @@ describe('updateWordAndReview', () => {
     expect(result).toBe(true);
   });
 
-  it('falls back to individual updates on RPC failure', async () => {
-    (supabase.rpc as jest.Mock).mockRejectedValue(new Error('fail'));
+  test.each([
+    new Error('fail'),
+    { message: 'network down', status: 0 },
+  ])('falls back to individual updates when RPC rejects with %p', async (err) => {
+    (supabase.rpc as jest.Mock).mockRejectedValue(err);
     const updateSpy = jest
       .spyOn(studyWordsFSRSService, 'updateFSRSWord')
       .mockResolvedValue(true);
