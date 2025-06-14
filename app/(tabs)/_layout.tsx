@@ -12,7 +12,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import HeaderProfile from '@/components/HeaderProfile';
 import EditModeButton from '@/components/listen/EditModeButton';
-import { Colors } from '@/constants/Colors';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
@@ -92,7 +91,7 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
       borderTopColor: colors.borderOverlay,
       ...Platform.select({
         ios: {
-          shadowColor: isDarkMode ? colors.shadow : Colors.light.borderOverlay,
+          shadowColor: isDarkMode ? colors.shadow : colors.borderOverlay,
         },
         default: {
           backgroundColor: colors.background,
