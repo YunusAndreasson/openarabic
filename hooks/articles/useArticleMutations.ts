@@ -56,12 +56,13 @@ type StudyWordContext = {
  * @param _userId - The current user ID (might be stale)
  * @param refetchReadingListStatus - Function to refetch reading list status
  * @param refetchStudyWords - Function to refetch study words
+ *   (returns a Promise)
  * @returns Object with mutation functions
  */
 export const useArticleMutations = (
   _userId: string | undefined,
   refetchReadingListStatus: () => void,
-  refetchStudyWords?: () => void
+  refetchStudyWords?: () => Promise<void>
 ): ArticleMutationsResult => {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -151,15 +152,13 @@ export const useArticleMutations = (
         showToast('Error updating study list', undefined, 'error');
         queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(userId) });
       },
-      onSuccess: (_: boolean, { userId }: { userId: string }) => {
+      onSuccess: async (_: boolean, { userId }: { userId: string }) => {
         // Batch invalidate related queries
         RELATED_QUERY_KEYS(userId).forEach(queryKey => {
           queryClient.invalidateQueries({ queryKey });
         });
 
-        if (refetchStudyWords) {
-          setTimeout(refetchStudyWords, 100);
-        }
+        await refetchStudyWords?.();
       },
     }),
     [queryClient, refetchStudyWords, showToast]
@@ -198,7 +197,7 @@ export const useArticleMutations = (
         showToast('Error updating study list', undefined, 'error');
         queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(userId) });
       },
-      onSuccess: (_: boolean, { userId }: { userId: string }) => {
+      onSuccess: async (_: boolean, { userId }: { userId: string }) => {
         // Batch invalidate related queries
         [
           ...RELATED_QUERY_KEYS(userId),
@@ -207,9 +206,7 @@ export const useArticleMutations = (
           queryClient.invalidateQueries({ queryKey });
         });
 
-        if (refetchStudyWords) {
-          setTimeout(refetchStudyWords, 100);
-        }
+        await refetchStudyWords?.();
       },
     }),
     [queryClient, refetchStudyWords, showToast]
