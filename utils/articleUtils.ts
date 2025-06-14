@@ -8,19 +8,6 @@ import type { StudyWord } from '@/types/vocabulary.types';
  * @param categoryId - The category ID to filter by
  * @returns Filtered articles by author or category ID
  */
-export function filterArticles(
-  articles: Article[],
-  authorId: number | null,
-  categoryId: number | null
-): Article[] {
-  if (!articles.length) return [];
-
-  return articles.filter(article => {
-    if (authorId !== null && article.author_id !== authorId) return false;
-    if (categoryId !== null && article.category_id !== categoryId) return false;
-    return true;
-  });
-}
 
 /**
  * Gets beginner-friendly articles (difficulty level 1-3)
