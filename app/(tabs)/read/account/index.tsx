@@ -358,16 +358,15 @@ const AccountScreen: React.FC = () => {
                       </ThemedText>
                     </View>
                   </View>
-                  <View style={styles.cacheButtonContainer}>
-                    <ThemedButton
-                      disabled={cacheSize === 0 || isClearingCache}
-                      loading={isClearingCache}
-                      size="small"
-                      title="Clear"
-                      variant="outlined"
-                      onPress={handleClearCache}
-                    />
-                  </View>
+                  <ThemedButton
+                    disabled={cacheSize === 0 || isClearingCache}
+                    loading={isClearingCache}
+                    size="small"
+                    style={styles.clearButton}
+                    title="Clear"
+                    variant="outlined"
+                    onPress={handleClearCache}
+                  />
                 </View>
               </BaseCard>
 
@@ -572,8 +571,10 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.TINY,
   },
 
-  cacheButtonContainer: {
-    marginLeft: LAYOUT.SPACING.SMALL,
+  clearButton: {
+    alignSelf: 'flex-end',
+    minWidth: 50,
+    paddingHorizontal: LAYOUT.SPACING.TINY,
   },
 });
 
