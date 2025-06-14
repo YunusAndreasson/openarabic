@@ -5,8 +5,14 @@ import ArticleCard from '../../components/ArticleCard';
 import { ArabicWord } from '../../components/article/ArabicWord';
 import VocabularyStatCards from '../../components/vocabulary/VocabularyStatCards';
 import CompletionScreen from '../../components/review/CompletionScreen';
+import ErrorMessage from '../../components/vocabulary/ErrorMessage';
 import { TouchableOpacity } from 'react-native';
 import { useReview } from '../../hooks/review';
+
+jest.mock('expo-router', () => {
+  const router = { push: jest.fn(), replace: jest.fn() };
+  return { router, useRouter: () => router };
+});
 
 jest.mock('expo-linear-gradient', () => {
   const React = require('react');
@@ -22,6 +28,17 @@ jest.mock('expo-image', () => {
   return {
     Image: () => <></>,
   };
+});
+
+jest.mock('../../components/ThemedButton', () => {
+  const React = require('react');
+  const { TouchableOpacity, Text } = require('react-native');
+  const ThemedButton = ({ title, onPress, disabled, testID }: any) => (
+    <TouchableOpacity onPress={onPress} disabled={disabled} testID={testID}>
+      <Text>{title}</Text>
+    </TouchableOpacity>
+  );
+  return { __esModule: true, ThemedButton };
 });
 
 jest.mock('../../components/ArticleCard', () => {
@@ -133,6 +150,7 @@ jest.mock('../../hooks/review', () => {
 });
 
 const { state } = require('../../hooks/review');
+const { router } = require('expo-router');
 
 function DummyReview() {
   const { handleSwipeLeft: swipeLeft, isComplete } = useReview();
@@ -191,6 +209,45 @@ describe('UI flow', () => {
 
     fireEvent.press(getByTestId('start-review-due'));
     expect(onStartReview).toHaveBeenCalled();
+  });
+
+  it('shows error when review session fails to start', async () => {
+    const startReview = jest.fn().mockRejectedValue(new Error('fail'));
+
+    function ReviewStarter() {
+      const [error, setError] = React.useState(false);
+
+      const handleStart = async () => {
+        try {
+          await startReview();
+          router.push('/practice/review');
+        } catch {
+          setError(true);
+        }
+      };
+
+      if (error) {
+        return <ErrorMessage />;
+      }
+
+      return (
+        <VocabularyStatCards
+          studyWords={[{ root_id: 1 } as any]}
+          dueWords={1}
+          onStartReview={handleStart}
+        />
+      );
+    }
+
+    const { getByTestId, queryByText } = render(<ReviewStarter />);
+
+    await act(async () => {
+      fireEvent.press(getByTestId('start-review-due'));
+      await Promise.resolve();
+    });
+
+    expect(router.push).not.toHaveBeenCalled();
+    expect(queryByText("Your progress isn't available right now.")).toBeTruthy();
   });
 
   it('completes review after swipe', () => {
