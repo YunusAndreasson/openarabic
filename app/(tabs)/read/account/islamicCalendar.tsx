@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, FONTS } from '@/constants/layout';
 import { createNavigationOptions } from '@/constants/modal';
 import { useIslamicCalendarEvents, formatDaysUntil } from '@/hooks';
 import { useColors } from '@/hooks/theme/useColors';
@@ -176,7 +176,7 @@ export default function IslamicCalendarScreen(): JSX.Element {
                           type="body"
                           style={[
                             styles.eventArabicName,
-                            { fontFamily: 'Madina', color: colors.arabicText },
+                            { fontFamily: FONTS.ARABIC, color: colors.arabicText },
                           ]}
                         >
                           {event.arabicName}
