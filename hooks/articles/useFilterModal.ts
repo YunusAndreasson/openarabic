@@ -1,4 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react-native';
 
 import {
   setSortField,
@@ -26,7 +28,13 @@ export const DATE_RANGE_OPTIONS = [
   { key: 'all', label: 'All time' },
 ] as const;
 
-export const SORT_OPTIONS = [
+interface SortOption {
+  key: FilterState['sort']['field'];
+  label: string;
+  icon: ComponentProps<typeof Ionicons>['name'];
+}
+
+export const SORT_OPTIONS: readonly SortOption[] = [
   { key: 'title', label: 'Title', icon: 'text-outline' },
   { key: 'author', label: 'Author', icon: 'person-outline' },
   { key: 'date', label: 'Date added', icon: 'calendar-outline' },

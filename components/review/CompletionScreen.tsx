@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import React from 'react';
-import type { ViewStyle } from 'react-native';
+import type { ViewStyle, ComponentProps } from 'react-native';
 import { View, StyleSheet } from 'react-native';
 import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
 
@@ -24,7 +24,7 @@ interface CompletionScreenProps {
   subtitle?: string;
   buttonText?: string;
   buttonVariant?: 'filled' | 'outlined';
-  iconName?: string;
+  iconName?: ComponentProps<typeof Ionicons>['name'];
   iconSize?: number;
   useThemedView?: boolean;
   contentStyle?: object;
@@ -98,7 +98,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
         entering={ZoomIn.delay(100).duration(400).springify()}
         style={[styles.iconContainer, iconAnimatedStyle as unknown as ViewStyle]}
       >
-        <Ionicons color={colors.completionSuccess} name={iconName as any} size={iconSize} />
+        <Ionicons color={colors.completionSuccess} name={iconName} size={iconSize} />
       </Animated.View>
 
       <View style={styles.textContainer}>
@@ -127,7 +127,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
                     <View
                       style={[styles.metricIconContainer, { backgroundColor: `${metric.color}20` }]}
                     >
-                      <Ionicons color={metric.color} name={metric.icon as any} size={22} />
+                      <Ionicons color={metric.color} name={metric.icon} size={22} />
                     </View>
                     <View style={styles.metricTextContainer}>
                       <ThemedText style={styles.metricText} type="body" variant="primary">
