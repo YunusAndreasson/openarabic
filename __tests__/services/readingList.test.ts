@@ -44,6 +44,34 @@ describe('readingListService', () => {
       );
     });
 
+    it('avoids duplicate entries when called twice', async () => {
+      const data: Array<{ user_id: string; article_id: number }> = [];
+      const upsert = jest.fn(async ({ user_id, article_id }) => {
+        if (!data.find(d => d.user_id === user_id && d.article_id === article_id)) {
+          data.push({ user_id, article_id });
+        }
+        return { error: null };
+      });
+      const upsertBuilder = { upsert } as FromReturn;
+
+      const listQuery: FromReturn = {} as FromReturn;
+      listQuery.select = jest.fn(() => listQuery);
+      listQuery.eq = jest.fn(() => listQuery) as any;
+      listQuery.order = jest.fn(() => ({ data, error: null }));
+
+      fromMock
+        .mockReturnValueOnce(upsertBuilder)
+        .mockReturnValueOnce(upsertBuilder)
+        .mockReturnValue(listQuery);
+
+      await readingListService.addToReadingList('u1', 7);
+      await readingListService.addToReadingList('u1', 7);
+      const list = await readingListService.getReadingList('u1');
+
+      expect(list).toHaveLength(1);
+      expect(list[0]).toEqual(expect.objectContaining({ user_id: 'u1', article_id: 7 }));
+    });
+
     it('handles errors from supabase', async () => {
       const error = new Error('fail');
       const upsert = jest.fn().mockResolvedValue({ error });
