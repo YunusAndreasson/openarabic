@@ -50,6 +50,7 @@ const ListenHeader: React.FC<ListenHeaderProps> = ({
           style={[styles.manageButton, { backgroundColor: colors.card }]}
           onPress={handleManagePress}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          testID="manage-word-button"
         >
           <Ionicons name="ellipsis-horizontal" size={16} color={colors.secondaryText} />
         </TouchableOpacity>

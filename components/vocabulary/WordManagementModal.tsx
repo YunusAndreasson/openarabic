@@ -236,6 +236,7 @@ const WordManagementModal = memo(
         animationType="none"
         statusBarTranslucent
         onRequestClose={onClose}
+        testID="word-management-modal"
       >
         <Animated.View
           style={styles.overlay}
@@ -282,6 +283,7 @@ const WordManagementModal = memo(
                 {actions.map(action => (
                   <TouchableOpacity
                     key={action.id}
+                    testID={`word-action-${action.id}`}
                     style={[
                       styles.actionCard,
                       { backgroundColor: colors.card },
