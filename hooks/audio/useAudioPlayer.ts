@@ -240,13 +240,35 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
     }
   }, [audioPlayer, isPlayerReady]);
 
+  const prefetchTracks = useCallback(
+    async (tracks: EnhancedAudioTrack[]): Promise<EnhancedAudioTrack[]> => {
+      return Promise.all(
+        tracks.map(async track => {
+          try {
+            const cachedAudioUrl = await audioCache.getAudio(track.audioUrl);
+            return { ...track, audioUrl: cachedAudioUrl };
+          } catch {
+            return track;
+          }
+        })
+      );
+    },
+    []
+  );
+
   // Queue loading - following expo-audio docs pattern exactly
-  const loadQueue = useCallback(async (tracks: EnhancedAudioTrack[], startIndex = 0) => {
+  const loadQueue = useCallback(
+    async (
+      tracksInput: EnhancedAudioTrack | EnhancedAudioTrack[],
+      startIndex = 0
+    ): Promise<EnhancedAudioTrack[]> => {
     try {
+      const tracks = Array.isArray(tracksInput) ? tracksInput : [tracksInput];
+
       if (tracks.length === 0) {
         dispatch({ type: 'RESET' });
         dispatch({ type: 'SET_LOADING', isLoading: false });
-        return;
+        return [];
       }
 
       const validStartIndex = Math.max(0, Math.min(startIndex, tracks.length - 1));
@@ -281,40 +303,63 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
       });
 
       // The useAudioPlayer hook will automatically recreate the player with the new source
+      return processedTracks;
     } catch (error) {
       handleError(error as Error, {
         toastMessage: 'Failed to load audio',
         showToast: true,
       });
       dispatch({ type: 'SET_LOADING', isLoading: false });
+      return [];
     }
-  }, []);
+    },
+    []
+  );
 
   // Enhanced playback that loads and immediately plays (user-initiated)
   const startEnhancedPlayback = useCallback(
     async (tracks: EnhancedAudioTrack[], startIndex = 0): Promise<boolean> => {
       try {
+        if (tracks.length === 0) {
+          return false;
+        }
+
         // Immediate feedback - set loading state before any async work
         dispatch({ type: 'SET_LOADING', isLoading: true });
 
         // Set auto-play flag to maintain user interaction context
         dispatch({ type: 'SET_AUTOPLAY', value: true });
 
-        // Load the queue - the auto-play effect will handle playback when ready
-        await loadQueue(tracks, startIndex);
+        const validStartIndex = Math.max(0, Math.min(startIndex, tracks.length - 1));
+        const trackToPlay = tracks[validStartIndex]!;
+
+        // Load only the first track to start playback quickly
+        const [firstProcessed] = await loadQueue(trackToPlay, 0);
+
+        // Prefetch remaining tracks after playback starts
+        const remaining = tracks.filter((_, i) => i !== validStartIndex);
+        prefetchTracks(remaining)
+          .then(prefetched => {
+            dispatch({
+              type: 'SET_QUEUE',
+              queue: [firstProcessed!, ...prefetched],
+              index: 0,
+            });
+          })
+          .catch(() => {});
 
         return true; // Success
       } catch (error) {
-        dispatch({ type: 'SET_AUTOPLAY', value: false }); // Reset flag on error
-        dispatch({ type: 'SET_LOADING', isLoading: false }); // Reset loading on error
+        dispatch({ type: 'SET_AUTOPLAY', value: false });
+        dispatch({ type: 'SET_LOADING', isLoading: false });
         handleError(error as Error, {
           toastMessage: 'Failed to start audio playback',
           showToast: true,
         });
-        return false; // Failure
+        return false;
       }
     },
-    [loadQueue]
+    [loadQueue, prefetchTracks]
   );
 
   // Navigation methods (only next is used internally)
