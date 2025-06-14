@@ -14,13 +14,13 @@ export interface ThemeColors {
   arabicText: string;
   authorText: string;
 
-
   headingText: string;
   subtitleText: string;
   metadataText: string;
   captionText: string;
 
   tint: string;
+  tintBackground: string;
   tabIconDefault: string;
   tabIconSelected: string;
   icon: string;
@@ -39,11 +39,10 @@ export interface ThemeColors {
   black: string;
   textOverlay: string;
   textShadowDark: string;
-    textShadowLight: string;
-    info: string;
+  textShadowLight: string;
+  info: string;
 
-    modalIndicator: string;
-
+  modalIndicator: string;
 
   backdropOverlay: string;
   wordTooltipBg: string;
@@ -53,11 +52,9 @@ export interface ThemeColors {
   wordSelectionUnderline: string;
   wordDueUnderline: string;
 
-
   navigationRipple: string;
   headerOverlay: string;
   tabBarOverlay: string;
-
 
   progressIndicator: string;
   progressBackground: string;
@@ -66,4 +63,3 @@ export interface ThemeColors {
 
   [key: string]: string;
 }
-

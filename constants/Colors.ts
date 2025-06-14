@@ -54,37 +54,37 @@ const alpha = (color: string, opacity: number) =>
 // Calculated intermediate colors for perfect hierarchy
 const textHierarchy = {
   light: {
-    subtitle: '#35463E', // 25% blend between darkest and medium
-    metadata: '#5C6F65', // 50% blend between medium and light
-    caption: '#6A7D74', // 75% blend between medium and light
+    subtitle: '#35463E', // 25% blend between darkest and medium - Use for: section headers, card subtitles
+    metadata: '#5C6F65', // 50% blend between medium and light - Use for: timestamps, author names, secondary info
+    caption: '#6A7D74', // 75% blend between medium and light - Use for: help text, placeholders, tertiary info
   },
   dark: {
-    subtitle: '#E6EAE7', // Light mode equivalent
-    metadata: '#CAD3CC', // Light mode equivalent
-    caption: '#BDC6BF', // Light mode equivalent
+    subtitle: '#E6EAE7', // Light mode equivalent - Use for: section headers, card subtitles
+    metadata: '#CAD3CC', // Light mode equivalent - Use for: timestamps, author names, secondary info
+    caption: '#BDC6BF', // Light mode equivalent - Use for: help text, placeholders, tertiary info
   },
 };
 
-// Standardized opacity system
+// Standardized opacity system - Designed for consistent visual hierarchy
 const opacity = {
-  subtle: 0.04, // Very subtle overlays
-  light: 0.06, // Light overlays
-  medium: 0.08, // Standard hover states
-  strong: 0.1, // Active backgrounds
-  active: 0.12, // Strong active states
-  border: 0.15, // Border overlays
-  progress: 0.15, // Progress backgrounds
-  disabled: 0.2, // Disabled backgrounds
-  selection: 0.28, // Text selection
-  tooltip: 0.32, // Tooltips and shadows
-  due: 0.42, // Due word indicators
-  overlay: 0.52, // Strong overlays
-  backdrop: 0.68, // Modal backdrops
-  shadow: 0.75, // Text shadows
-  darkBackdrop: 0.85, // Dark mode backdrops
-  modal: 0.92, // Modal overlays
-  header: 0.96, // Header overlays
-  full: 0.97, // Full modal overlays
+  subtle: 0.04, // Very subtle overlays - Use for: light background tints
+  light: 0.06, // Light overlays - Use for: hover states on light backgrounds
+  medium: 0.08, // Standard hover states - Use for: button hovers, card highlights
+  strong: 0.1, // Active backgrounds - Use for: pressed states, active tabs
+  active: 0.12, // Strong active states - Use for: selected items, focus rings
+  border: 0.15, // Border overlays - Use for: subtle borders, dividers
+  progress: 0.15, // Progress backgrounds - Use for: progress bar tracks
+  disabled: 0.2, // Disabled backgrounds - Use for: disabled button states
+  selection: 0.28, // Text selection - Use for: text selection highlights
+  tooltip: 0.32, // Tooltips and shadows - Use for: tooltip backgrounds, light shadows
+  due: 0.42, // Due word indicators - Use for: vocabulary due indicators
+  overlay: 0.52, // Strong overlays - Use for: modal content overlays
+  backdrop: 0.68, // Modal backdrops - Use for: modal background overlays
+  shadow: 0.75, // Text shadows - Use for: text shadow effects
+  darkBackdrop: 0.85, // Dark mode backdrops - Use for: dark theme modal backgrounds
+  modal: 0.92, // Modal overlays - Use for: full modal backgrounds
+  header: 0.96, // Header overlays - Use for: navigation header backgrounds
+  full: 0.97, // Full modal overlays - Use for: maximum opacity overlays
 };
 
 // Elevation system
@@ -132,6 +132,7 @@ export const Colors = {
 
     // Interactive elements
     tint: basePalette.tint.primary,
+    tintBackground: alpha(basePalette.tint.primary, opacity.medium), // Common tint + 0.08 pattern
     tabIconDefault: basePalette.forest.lighter,
     tabIconSelected: basePalette.tint.primary,
     icon: basePalette.forest.light,
@@ -208,6 +209,7 @@ export const Colors = {
 
     // Interactive elements
     tint: basePalette.tint.primaryDark,
+    tintBackground: alpha(basePalette.tint.primaryDark, opacity.medium), // Common tint + 0.08 pattern
     tabIconDefault: basePalette.forest.light,
     tabIconSelected: basePalette.tint.primaryDark,
     icon: textHierarchy.dark.metadata,
@@ -263,3 +265,11 @@ export enum Theme {
 }
 
 export type ColorName = keyof typeof Colors.light;
+
+// Simple validation helpers - Use these to verify critical color relationships
+export const colorValidation = {
+  // Critical text/background pairs that must maintain accessibility
+  criticalPairs: ['text on background', 'text on card', 'tint on background'] as const,
+  // Opacity levels that work well for interactive states
+  safeOpacityRange: { min: 0.08, max: 0.15 } as const,
+} as const;
