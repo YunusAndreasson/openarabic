@@ -8,6 +8,7 @@ import { setCustomOrder } from '@/store/listenSlice';
 import { selectionFeedback } from '@/utils/haptics';
 
 import type { ReadingListItem } from './useListenScreen';
+import type { Article } from '@/types/articles.types';
 
 interface ListenUIParams {
   sortedReadingList: ReadingListItem[];
@@ -52,7 +53,7 @@ export const useListenUI = ({
     [metadataValues, audioState, editMode]
   );
 
-  const currentArticle = useMemo(() => {
+  const currentArticle = useMemo<Partial<Article> | Article | null>(() => {
     if (isStartingPlayback && sortedReadingList.length > 0) {
       return sortedReadingList[0]?.articles || null;
     }
@@ -73,7 +74,7 @@ export const useListenUI = ({
         author: { name: 'Loading...' },
         image_url: '',
         placeholder: '',
-      } as any; // Minimal article for display purposes
+      } as Partial<Article>; // Minimal article for display purposes
     }
 
     return foundArticle || null;

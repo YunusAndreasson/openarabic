@@ -21,7 +21,7 @@ interface NowPlayingCardProps {
   /** Whether the card should be visible */
   isVisible: boolean;
   /** Current article being played */
-  article: Article | null;
+  article: Partial<Article> | null;
   /** Progress of current playback in milliseconds */
   progress: number;
   /** Duration of current track in milliseconds */

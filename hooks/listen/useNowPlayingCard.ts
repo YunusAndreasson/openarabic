@@ -37,7 +37,7 @@ const EXIT_SPRING_CONFIG = {
 
 interface UseNowPlayingCardProps {
   isVisible: boolean;
-  article: Article | null;
+  article: Partial<Article> | null;
   progress: number;
   duration: number;
   onStop?: () => void;
