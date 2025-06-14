@@ -108,9 +108,16 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
     }
   }, [status, currentTrack]);
 
-  // Get position and duration from status
-  const position = status?.currentTime ?? 0;
-  const duration = status?.duration ?? 0;
+  // Get position and duration from status with NaN safety
+  const position = useMemo(() => {
+    const rawPosition = status?.currentTime ?? 0;
+    return isNaN(rawPosition) || !isFinite(rawPosition) ? 0 : Math.max(0, rawPosition);
+  }, [status?.currentTime]);
+
+  const duration = useMemo(() => {
+    const rawDuration = status?.duration ?? 0;
+    return isNaN(rawDuration) || !isFinite(rawDuration) ? 0 : Math.max(0, rawDuration);
+  }, [status?.duration]);
 
   // Player state derived from expo-audio status
   const isPlaying = useMemo(() => {
@@ -121,9 +128,25 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
     return status?.isLoaded || false;
   }, [status?.isLoaded]);
 
-  // Derived state for compatibility
+  // Derived state for compatibility with robust progress calculation
   const progress = useMemo(() => {
-    return duration > 0 ? position / duration : 0;
+    // Ensure we always return a valid number between 0 and 1
+    if (!duration || duration <= 0 || !isFinite(duration)) {
+      return 0;
+    }
+
+    if (!isFinite(position) || position < 0) {
+      return 0;
+    }
+
+    const calculatedProgress = position / duration;
+
+    // Clamp progress between 0 and 1, handling edge cases
+    if (!isFinite(calculatedProgress) || calculatedProgress < 0) {
+      return 0;
+    }
+
+    return Math.min(calculatedProgress, 1); // Cap at 100%
   }, [position, duration]);
 
   const metadata = useMemo(
@@ -262,56 +285,56 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
       tracksInput: EnhancedAudioTrack | EnhancedAudioTrack[],
       startIndex = 0
     ): Promise<EnhancedAudioTrack[]> => {
-    try {
-      const tracks = Array.isArray(tracksInput) ? tracksInput : [tracksInput];
+      try {
+        const tracks = Array.isArray(tracksInput) ? tracksInput : [tracksInput];
 
-      if (tracks.length === 0) {
-        dispatch({ type: 'RESET' });
+        if (tracks.length === 0) {
+          dispatch({ type: 'RESET' });
+          dispatch({ type: 'SET_LOADING', isLoading: false });
+          return [];
+        }
+
+        const validStartIndex = Math.max(0, Math.min(startIndex, tracks.length - 1));
+
+        // Process tracks to use cached audio URLs if available
+        const processedTracks = await Promise.all(
+          tracks.map(async (track, _index) => {
+            try {
+              // Get cached audio URL (downloads if not cached)
+              const cachedAudioUrl = await audioCache.getAudio(track.audioUrl);
+              return {
+                ...track,
+                audioUrl: cachedAudioUrl,
+              };
+            } catch {
+              // If caching fails, use original URL
+              return track;
+            }
+          })
+        );
+
+        // Verify the selected track has a valid audio URL
+        const selectedTrack = processedTracks[validStartIndex];
+        if (!selectedTrack?.audioUrl) {
+          throw new Error('Selected track has no audio URL');
+        }
+
+        dispatch({
+          type: 'SET_QUEUE',
+          queue: processedTracks,
+          index: validStartIndex,
+        });
+
+        // The useAudioPlayer hook will automatically recreate the player with the new source
+        return processedTracks;
+      } catch (error) {
+        handleError(error as Error, {
+          toastMessage: 'Failed to load audio',
+          showToast: true,
+        });
         dispatch({ type: 'SET_LOADING', isLoading: false });
         return [];
       }
-
-      const validStartIndex = Math.max(0, Math.min(startIndex, tracks.length - 1));
-
-      // Process tracks to use cached audio URLs if available
-      const processedTracks = await Promise.all(
-        tracks.map(async (track, _index) => {
-          try {
-            // Get cached audio URL (downloads if not cached)
-            const cachedAudioUrl = await audioCache.getAudio(track.audioUrl);
-            return {
-              ...track,
-              audioUrl: cachedAudioUrl,
-            };
-          } catch {
-            // If caching fails, use original URL
-            return track;
-          }
-        })
-      );
-
-      // Verify the selected track has a valid audio URL
-      const selectedTrack = processedTracks[validStartIndex];
-      if (!selectedTrack?.audioUrl) {
-        throw new Error('Selected track has no audio URL');
-      }
-
-      dispatch({
-        type: 'SET_QUEUE',
-        queue: processedTracks,
-        index: validStartIndex,
-      });
-
-      // The useAudioPlayer hook will automatically recreate the player with the new source
-      return processedTracks;
-    } catch (error) {
-      handleError(error as Error, {
-        toastMessage: 'Failed to load audio',
-        showToast: true,
-      });
-      dispatch({ type: 'SET_LOADING', isLoading: false });
-      return [];
-    }
     },
     []
   );
