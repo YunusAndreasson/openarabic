@@ -42,7 +42,9 @@ export const useProgressAnimation = <D extends number = number>(
   const hasAnimated = useRef(false);
 
   // This tracks whether an animation is currently in progress
-  const isAnimating = useRef(false);
+  // Using a shared value prevents the object from becoming read-only
+  // when captured by worklets
+  const isAnimating = useSharedValue(false);
 
   // Track if component is mounted
   const isMounted = useSharedValue(true);
@@ -70,7 +72,7 @@ export const useProgressAnimation = <D extends number = number>(
 
       // Set animation state on JS thread
       hasAnimated.current = true;
-      isAnimating.current = true;
+      isAnimating.value = true;
 
       // Run animation on UI thread
       runOnUI(() => {
@@ -84,7 +86,7 @@ export const useProgressAnimation = <D extends number = number>(
           if (finished && isMounted.value) {
             runOnJS(() => {
               if (isMounted.value) {
-                isAnimating.current = false;
+                isAnimating.value = false;
               }
             })();
           }
@@ -94,7 +96,7 @@ export const useProgressAnimation = <D extends number = number>(
       // Return cleanup function that cancels the animation if needed
       return () => {
         if (isMounted.value) {
-          isAnimating.current = false;
+          isAnimating.value = false;
           runOnUI(() => {
             'worklet';
             cancelAnimation(progress);
@@ -107,8 +109,8 @@ export const useProgressAnimation = <D extends number = number>(
 
   // Function to reset progress to initial value
   const reset = useCallback(() => {
-    hasAnimated.current = false;
-    isAnimating.current = false;
+      hasAnimated.current = false;
+      isAnimating.value = false;
 
     runOnUI(() => {
       'worklet';
@@ -135,8 +137,8 @@ export const useProgressAnimation = <D extends number = number>(
       // Cancel any ongoing animations to prevent memory leaks
       isMounted.value = false;
       cancelAnimation(progress);
-      hasAnimated.current = false;
-      isAnimating.current = false;
+    hasAnimated.current = false;
+    isAnimating.value = false;
     };
   }, [progress, isMounted]);
 
@@ -145,7 +147,7 @@ export const useProgressAnimation = <D extends number = number>(
     updateProgress,
     progress,
     hasAnimated: () => hasAnimated.current,
-    isAnimating: () => isAnimating.current,
+    isAnimating: () => isAnimating.value,
     reset,
   };
 };
