@@ -44,6 +44,16 @@ interface UseNowPlayingCardProps {
   isTimerActive?: boolean;
 }
 
+// Simplified time formatter used in progress calculations
+const formatTime = (seconds: number): string => {
+  if (!seconds || !isFinite(seconds) || isNaN(seconds) || seconds < 0) {
+    return '0:00';
+  }
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
 export const useNowPlayingCard = ({
   isVisible,
   article,
@@ -142,15 +152,6 @@ export const useNowPlayingCard = ({
 
     const percentage = safeDuration > 0 ? (safeProgress / safeDuration) * 100 : 0;
     const clampedPercentage = Math.max(0, Math.min(100, percentage));
-
-    const formatTime = (seconds: number): string => {
-      if (!seconds || !isFinite(seconds) || isNaN(seconds) || seconds < 0) {
-        return '0:00';
-      }
-      const mins = Math.floor(seconds / 60);
-      const secs = Math.floor(seconds % 60);
-      return `${mins}:${secs.toString().padStart(2, '0')}`;
-    };
 
     return {
       currentTime: formatTime(currentSeconds),
