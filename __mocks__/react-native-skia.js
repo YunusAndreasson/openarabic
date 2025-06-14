@@ -6,6 +6,14 @@ module.exports = {
   runOnJS: () => {},
   Skia: {
     Paint: () => ({}),
-    Path: () => ({ moveTo: () => {}, lineTo: () => {}, close: () => {} }),
+    Path: {
+      Make: () => ({
+        addArc: () => {},
+        moveTo: () => {},
+        lineTo: () => {},
+        quadTo: () => {},
+        close: () => {},
+      }),
+    },
   },
 };
