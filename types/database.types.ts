@@ -570,6 +570,27 @@ export type Database = {
           severity: string;
         }[];
       };
+      update_word_and_review: {
+        Args: {
+          p_user_id: string;
+          p_root_id: number;
+          p_fsrs_due: string;
+          p_fsrs_stability: number;
+          p_fsrs_difficulty: number;
+          p_fsrs_elapsed_days: number;
+          p_fsrs_scheduled_days: number;
+          p_fsrs_learning_steps: number;
+          p_fsrs_reps: number;
+          p_fsrs_lapses: number;
+          p_fsrs_state: number;
+          p_fsrs_last_review: string;
+          p_rating: number;
+          p_learning_steps: number;
+          p_success_streak?: number | null;
+          p_difficulty?: number | null;
+        };
+        Returns: boolean;
+      };
     };
     Enums: {
       [_ in never]: never;

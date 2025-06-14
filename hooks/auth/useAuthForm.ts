@@ -9,7 +9,10 @@ import { successFeedback } from '@/utils/haptics';
 // import { analytics } from '@/services/analytics';
 // Temporary mock analytics until service is fixed
 const analytics = {
-  identify: async (_userId: string, _properties?: any) => {},
+  identify: async (
+    _userId: string,
+    _properties?: Record<string, unknown>
+  ) => {},
   trackSignIn: async (_method?: string) => {},
   trackSignUp: async (_method?: string) => {},
 };

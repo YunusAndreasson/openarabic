@@ -225,7 +225,7 @@ export const studyWordsFSRSService = {
 
     try {
       // Use RPC function for atomic update and review recording
-      const { data, error } = await (supabase as any).rpc('update_word_and_review', {
+      const { data, error } = await supabase.rpc('update_word_and_review', {
         p_user_id: userId,
         p_root_id: rootId,
         p_fsrs_due: update.fsrs_due,

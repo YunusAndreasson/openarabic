@@ -40,7 +40,10 @@ import { PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
 
 // Temporary mock analytics until service is fixed
 const analytics = {
-  identify: async (_userId: string, _properties?: any) => {},
+  identify: async (
+    _userId: string,
+    _properties?: Record<string, unknown>
+  ) => {},
   reset: async () => {},
 };
 

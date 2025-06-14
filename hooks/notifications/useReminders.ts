@@ -9,7 +9,10 @@ import { handleError } from '@/utils/errorHandling';
 // import { analytics } from '@/services/analytics';
 // Temporary mock analytics until service is fixed
 const analytics = {
-  track: async (_event: string, _properties?: any) => {},
+  track: async (
+    _event: string,
+    _properties?: Record<string, unknown>
+  ) => {},
 };
 
 export interface UseRemindersResult {

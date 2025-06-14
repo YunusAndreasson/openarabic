@@ -15,6 +15,7 @@ import { useWordSizing } from '@/hooks/vocabulary/useWordSizing';
 import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import type { SessionMetrics, WordConfidence } from '@/types/review.types';
+import type { StudyWord } from '@/types/vocabulary.types';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import { handleError } from '@/utils/errorHandling';
 
@@ -64,13 +65,13 @@ interface UseReviewReturn {
   sessionMetrics: SessionMetrics;
   // Word management
   isWordManagementVisible: boolean;
-  selectedWordForManagement: any;
+  selectedWordForManagement: StudyWord | null;
   hideWordManagement: () => void;
-  handleRemoveFromStudy: (word: any) => Promise<void>;
-  handleResetProgress: (word: any) => Promise<void>;
-  handleSkipForToday: (word: any) => Promise<void>;
-  handleMarkAsEasy: (word: any) => Promise<void>;
-  handleMarkAsHard: (word: any) => Promise<void>;
+  handleRemoveFromStudy: (word: StudyWord) => Promise<void>;
+  handleResetProgress: (word: StudyWord) => Promise<void>;
+  handleSkipForToday: (word: StudyWord) => Promise<void>;
+  handleMarkAsEasy: (word: StudyWord) => Promise<void>;
+  handleMarkAsHard: (word: StudyWord) => Promise<void>;
 }
 
 interface WordSizingConfig {

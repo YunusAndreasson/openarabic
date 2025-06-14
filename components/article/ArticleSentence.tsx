@@ -1,7 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
-import React, { createRef, useEffect, useRef, useMemo } from 'react';
+import React, { createRef, useEffect, useRef, useMemo, type ComponentRef } from 'react';
 import type { ViewStyle, StyleProp } from 'react-native';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { LAYOUT, FONTS } from '@/constants/layout';
@@ -54,7 +54,7 @@ function ArticleSentenceComponent({
   const { highlightSentence } = useLocalSearchParams<{ highlightSentence?: string }>();
   const isHighlighted = sentence.id != null && highlightSentence === sentence.id.toString();
 
-  const wordRefs = useRef<React.RefObject<any>[]>([]);
+  const wordRefs = useRef<React.RefObject<ComponentRef<typeof TouchableOpacity>>[]>([]);
   const {
     animatedStyle: animatedHighlightStyle,
     startAnimation,
@@ -62,7 +62,7 @@ function ArticleSentenceComponent({
   } = useOpacityAnimation({ initialOpacity: 0 });
 
   useEffect(() => {
-    wordRefs.current = words.map(() => createRef<any>());
+    wordRefs.current = words.map(() => createRef<ComponentRef<typeof TouchableOpacity>>());
   }, [words]);
 
   useEffect(() => {
@@ -98,7 +98,7 @@ function ArticleSentenceComponent({
     const renderWordWithProps = (word: SentenceWord, index: number) => {
       const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
       if (!wordRefs.current[index]) {
-        wordRefs.current[index] = createRef<any>();
+        wordRefs.current[index] = createRef<ComponentRef<typeof TouchableOpacity>>();
       }
       const isDueWord = word.root_id ? dueWordRootIds.has(word.root_id) : false;
       return renderWord ? (
