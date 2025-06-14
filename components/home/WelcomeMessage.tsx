@@ -9,7 +9,7 @@ import { HIJRI_MONTHS } from '@/constants/hijri';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
-export const WelcomeMessage: React.FC = () => {
+const WelcomeMessage: React.FC = () => {
   const colors = useColors();
 
   const dateMessage = useMemo(() => {
@@ -47,6 +47,10 @@ export const WelcomeMessage: React.FC = () => {
     </View>
   );
 };
+
+WelcomeMessage.displayName = 'WelcomeMessage';
+
+export default React.memo(WelcomeMessage);
 
 const styles = StyleSheet.create({
   chevronIcon: {
