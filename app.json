@@ -5,7 +5,7 @@
     "version": "1446.12.19",
     "description": "Learn Arabic through immersive reading, listening, and spaced repetition practice. Master vocabulary with authentic articles and audio content.",
     "orientation": "portrait",
-    "icon": "./assets/images/oaLogo.png",
+    "icon": "./assets/images/oaLogo-square.png",
     "scheme": "open-arabic",
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#0F1311",
@@ -30,7 +30,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#0F1311",
-        "foregroundImage": "./assets/images/oaLogo.png"
+        "foregroundImage": "./assets/images/oaLogo-square.png"
       },
       "package": "com.edenmind.OpenArabic",
       "versionCode": 19,
@@ -44,7 +44,7 @@
       "blockedPermissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"]
     },
     "notification": {
-      "icon": "./assets/images/oaLogo.png",
+      "icon": "./assets/images/oaLogo-square.png",
       "color": "#5B7F68",
       "iosDisplayInForeground": true,
       "androidMode": "default"
@@ -71,7 +71,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/oaLogo.png",
+          "icon": "./assets/images/oaLogo-square.png",
           "color": "#5B7F68",
           "defaultChannel": "default"
         }

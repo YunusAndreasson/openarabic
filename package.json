@@ -116,5 +116,21 @@
       "prettier --write"
     ]
   },
-  "packageManager": "yarn@1.22.22"
+  "packageManager": "yarn@1.22.22",
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "@babel/runtime",
+          "@tanstack/query-async-storage-persister",
+          "@tanstack/react-query-persist-client",
+          "moment-hijri",
+          "strip-ansi",
+          "ts-fsrs",
+          "redux-persist"
+        ],
+        "listUnknownPackages": false
+      }
+    }
+  }
 }
