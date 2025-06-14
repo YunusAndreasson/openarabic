@@ -88,6 +88,17 @@ export const useAppPreloader = (): AppPreloaderResult => {
       ];
 
       const [categories] = await Promise.all(criticalPromises);
+
+      // Prefetch full authors list for search/filter screens
+      queryClient
+        .prefetchQuery({
+          queryKey: ['authors'],
+          queryFn: () => authorsService.getAuthors(),
+          ...CACHE_TIMES.STATIC,
+          retry: 2,
+        })
+        .catch(() => {});
+
       setPreloadProgress(30);
 
       // Preload articles and authors per category for instant modal loading

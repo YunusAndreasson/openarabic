@@ -7,7 +7,7 @@ export const authorsService = {
   async getAuthors(): Promise<AuthorRow[]> {
     const { data, error } = await supabase
       .from('authors')
-      .select<AuthorRow>('*')
+      .select<AuthorRow>('id, name')
       .order('name');
     if (error) {
       await handleError(new Error(error.message), {
