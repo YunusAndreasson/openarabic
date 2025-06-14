@@ -31,6 +31,13 @@ interface ChartPoint {
   date: Date;
 }
 
+interface MasteryRecord {
+  date: Date;
+  masteredCount: number;
+  totalCount: number;
+  masteryRate: number;
+}
+
 interface ChartInsights {
   currentRate: number;
   trend: 'declining' | 'improving' | 'stable';
@@ -53,7 +60,7 @@ interface UseMasteryChartReturn {
   performanceZones?: ReturnType<typeof createStandardizedPerformanceZones>;
   milestones: Milestone[];
   points: ChartPoint[];
-  tooltipPoints: DataPoint[];
+  tooltipPoints: DataPoint<MasteryRecord>[];
   subtitle: string;
   xLabels: string[];
   xLabelPositions: number[];
@@ -209,7 +216,7 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
     return generateChartSubtitle.mastery(currentRate, trend, weeklyChange ?? 0);
   }, [chartData.insights]);
 
-  const tooltipPoints = useMemo(() => {
+  const tooltipPoints: DataPoint<MasteryRecord>[] = useMemo(() => {
     return chartData.points
       .map((point, index) => {
         const data = masteryData[index];
@@ -221,9 +228,9 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
           value: `${Math.round(point.rate)}%`,
           label: data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
           data,
-        } as DataPoint;
+        } as DataPoint<MasteryRecord>;
       })
-      .filter((point): point is DataPoint => point !== null);
+      .filter((point): point is DataPoint<MasteryRecord> => point !== null);
   }, [chartData.points, masteryData]);
 
   const xLabels = useMemo(
