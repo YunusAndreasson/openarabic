@@ -301,43 +301,39 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   );
 
   // Enhanced audio playback function for single audio files
-  const playAudio = useCallback(async (url: string) => {
-    try {
-      if (!url) return;
+  const playAudio = useCallback((url: string) => {
+    if (!url) return Promise.resolve();
 
-      // Create a single track for the enhanced audio player
-      const track: EnhancedAudioTrack = {
-        id: `review-${Date.now()}`,
-        audioUrl: url,
-        title: 'Review Audio',
-        duration: 0, // Will be populated by the player
-      };
+    const track: EnhancedAudioTrack = {
+      id: `review-${Date.now()}`,
+      audioUrl: url,
+      title: 'Review Audio',
+      duration: 0,
+    };
 
-      // Use the enhanced player to play the single track
-      await audioPlayerRef.current.actions.startEnhancedPlayback([track], 0);
-    } catch (error) {
-      handleError(error instanceof Error ? error : new Error(String(error)));
-    }
+    return audioPlayerRef.current.actions
+      .startEnhancedPlayback([track], 0)
+      .catch(error => {
+        handleError(error instanceof Error ? error : new Error(String(error)));
+      });
   }, []);
 
   // Enhanced audio playback for English feedback (non-blocking)
-  const playEnglishFeedback = useCallback(async (url: string) => {
-    try {
-      if (!url) return;
+  const playEnglishFeedback = useCallback((url: string) => {
+    if (!url) return Promise.resolve();
 
-      // Create a feedback track that doesn't interfere with main playback
-      const feedbackTrack: EnhancedAudioTrack = {
-        id: `feedback-${Date.now()}`,
-        audioUrl: url,
-        title: 'English Feedback',
-        duration: 0,
-      };
+    const feedbackTrack: EnhancedAudioTrack = {
+      id: `feedback-${Date.now()}`,
+      audioUrl: url,
+      title: 'English Feedback',
+      duration: 0,
+    };
 
-      // Play feedback audio independently
-      await audioPlayerRef.current.actions.startEnhancedPlayback([feedbackTrack], 0);
-    } catch (error) {
-      handleError(error instanceof Error ? error : new Error(String(error)));
-    }
+    return audioPlayerRef.current.actions
+      .startEnhancedPlayback([feedbackTrack], 0)
+      .catch(error => {
+        handleError(error instanceof Error ? error : new Error(String(error)));
+      });
   }, []);
 
   const handleKnowledgeResponse = useCallback(

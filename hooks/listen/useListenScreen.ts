@@ -156,7 +156,17 @@ export const useListenScreen = () => {
       try {
         selectionFeedback();
         setPlaybackMode('all');
-        await actions.startEnhancedPlayback(sortedEnhancedTracks, 0);
+        actions
+          .startEnhancedPlayback(sortedEnhancedTracks, 0)
+          .then(success => {
+            if (!success) {
+              setPlaybackMode('none');
+            }
+          })
+          .catch(err => {
+            setPlaybackMode('none');
+            handleError(err as Error);
+          });
       } catch (error) {
         setPlaybackMode('none');
         handleError(error as Error);
@@ -222,11 +232,17 @@ export const useListenScreen = () => {
         try {
           selectionFeedback();
           setPlaybackMode('all');
-          const success = await actions.startEnhancedPlayback(sortedEnhancedTracks, articleIndex);
-
-          if (!success) {
-            setPlaybackMode('none');
-          }
+          actions
+            .startEnhancedPlayback(sortedEnhancedTracks, articleIndex)
+            .then(success => {
+              if (!success) {
+                setPlaybackMode('none');
+              }
+            })
+            .catch(err => {
+              setPlaybackMode('none');
+              handleError(err as Error);
+            });
         } catch (error) {
           setPlaybackMode('none');
           handleError(error as Error);
@@ -239,10 +255,17 @@ export const useListenScreen = () => {
 
           const track = await enhancedAudioService.generateEnhancedAudioTrack(articleId);
           if (track) {
-            const success = await actions.startEnhancedPlayback([track], 0);
-            if (!success) {
-              setPlaybackMode('none');
-            }
+            actions
+              .startEnhancedPlayback([track], 0)
+              .then(success => {
+                if (!success) {
+                  setPlaybackMode('none');
+                }
+              })
+              .catch(err => {
+                setPlaybackMode('none');
+                handleError(err as Error);
+              });
           } else {
             setPlaybackMode('none');
             handleError(new Error('Audio not available for this article'), {

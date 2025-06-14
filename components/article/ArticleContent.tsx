@@ -121,11 +121,17 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
         }
 
         // Start playback with single track - audio loading state will now provide feedback
-        const success = await audioPlayer.actions.startEnhancedPlayback([track], 0);
-
-        if (!success) {
-          showToast('Failed to start playback', 3000, 'error');
-        }
+        audioPlayer.actions
+          .startEnhancedPlayback([track], 0)
+          .then(success => {
+            if (!success) {
+              showToast('Failed to start playback', 3000, 'error');
+            }
+          })
+          .catch(err => {
+            handleError(err as Error, { showToast: false });
+            showToast('Failed to start playback', 3000, 'error');
+          });
       } catch (error) {
         handleError(error as Error, { showToast: false });
         showToast('Failed to start playback', 3000, 'error');
