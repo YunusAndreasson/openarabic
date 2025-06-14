@@ -88,6 +88,26 @@ export function useAudioPracticeSession(): UseAudioPracticeSessionReturn {
     }
   }, [currentTrackIndex, currentWordIndex, wordList.length]);
 
+  const startPlayback = useCallback(
+    (tracks: EnhancedAudioTrack[], errorMessage = 'Failed to start audio playback') => {
+      maxProgressRef.current = 0;
+      setCurrentWordIndex(0);
+      playbackCompletedRef.current = false;
+      hasStartedPlayback.current = false;
+
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      timeoutRef.current = setTimeout(() => {
+        actionsRef.current.startEnhancedPlayback(tracks, 0).catch(error => {
+          handleError(error instanceof Error ? error : new Error(errorMessage));
+        });
+      }, 100);
+    },
+    []
+  );
+
   useEffect(() => {
     handleTrackChange();
   }, [currentTrackIndex, handleTrackChange]);
@@ -146,23 +166,8 @@ export function useAudioPracticeSession(): UseAudioPracticeSessionReturn {
 
           setWordList(uniqueWords);
 
-          maxProgressRef.current = 0;
-          setCurrentWordIndex(0);
           lastAudioStateRef.current = AUDIO_STATES.IDLE;
-          playbackCompletedRef.current = false;
-          hasStartedPlayback.current = false;
-
-          if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-          }
-
-          timeoutRef.current = setTimeout(() => {
-            actionsRef.current.startEnhancedPlayback(selectedTracks, 0).catch(error => {
-              handleError(
-                error instanceof Error ? error : new Error('Failed to start audio playback')
-              );
-            });
-          }, 100);
+          startPlayback(selectedTracks, 'Failed to start audio playback');
         }
       } catch (error) {
         handleError(error instanceof Error ? error : new Error('Failed to load vocabulary tracks'));
@@ -187,24 +192,12 @@ export function useAudioPracticeSession(): UseAudioPracticeSessionReturn {
       return;
     }
 
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+    setIsComplete(false);
+    setProgressAnimationKey(prev => prev + 1);
+    isInitialized.current = false; // Reset initialization flag to allow restart
 
-    timeoutRef.current = setTimeout(() => {
-      setIsComplete(false);
-      setCurrentWordIndex(0);
-      maxProgressRef.current = 0;
-      setProgressAnimationKey(prev => prev + 1);
-      playbackCompletedRef.current = false;
-      hasStartedPlayback.current = false;
-      isInitialized.current = false; // Reset initialization flag to allow restart
-
-      actionsRef.current.startEnhancedPlayback(selectedTracksRef.current, 0).catch(error => {
-        handleError(error instanceof Error ? error : new Error('Failed to restart audio playback'));
-      });
-    }, 100);
-  }, []);
+    startPlayback(selectedTracksRef.current, 'Failed to restart audio playback');
+  }, [startPlayback]);
 
   useEffect(() => {
     if (playbackCompletedRef.current && audioState === AUDIO_STATES.IDLE && wordList.length > 0) {
