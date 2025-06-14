@@ -1,24 +1,27 @@
-import type { Tables } from '@/types/database.types';
+import type { AuthorRow } from '@/types/dbRow.types';
 import { handleError } from '@/utils/errorHandling';
 
 import { supabase } from './supabase';
 
 export const authorsService = {
-  async getAuthors(): Promise<Tables<'authors'>[]> {
-    const { data, error } = await supabase.from('authors').select('*').order('name');
+  async getAuthors(): Promise<AuthorRow[]> {
+    const { data, error } = await supabase
+      .from('authors')
+      .select<AuthorRow>('*')
+      .order('name');
     if (error) {
       await handleError(new Error(error.message), {
         toastMessage: 'Failed to load authors',
       });
       throw error;
     }
-    return (data ?? []) as Tables<'authors'>[];
+    return data ?? [];
   },
 
-  async getAuthorsByCategory(categoryId: number): Promise<Tables<'authors'>[]> {
+  async getAuthorsByCategory(categoryId: number): Promise<AuthorRow[]> {
     const { data, error } = await supabase
       .from('articles')
-      .select('author:authors!inner(id, name)', {
+      .select<{ author: AuthorRow }>('author:authors!inner(id, name)', {
         head: true,
       })
       .eq('category_id', categoryId)
@@ -32,7 +35,7 @@ export const authorsService = {
     }
 
     return (data ?? [])
-      .map(item => (item as any).author as Tables<'authors'>)
+      .map(item => item.author)
       .sort((a, b) => a.name.localeCompare(b.name));
   },
 };

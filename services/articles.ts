@@ -1,4 +1,5 @@
 import type { Article } from '@/types/articles.types';
+import type { ArticleRow } from '@/types/dbRow.types';
 import { handleError } from '@/utils/errorHandling';
 import { mapToArticle, mapToArticles } from '@/utils/typeMappers';
 
@@ -104,7 +105,7 @@ export const articlesService = {
       } = options;
 
       const columns = includeWordStats ? ARTICLES_WITH_WORD_STATS : LIST_VIEW_COLUMNS;
-      let query = supabase.from('articles').select(columns);
+      let query = supabase.from('articles').select<ArticleRow>(columns);
 
       // Apply filters
       if (categoryId) query = query.eq('category_id', categoryId);
@@ -133,7 +134,7 @@ export const articlesService = {
         });
         throw error;
       }
-      return mapToArticles((data ?? []) as any);
+      return mapToArticles(data ?? []);
     } catch (err) {
       await handleError(err instanceof Error ? err : new Error('Unknown error loading articles'), {
         toastMessage: 'Failed to load articles',
@@ -153,7 +154,7 @@ export const articlesService = {
     try {
       const { data, error } = await supabase
         .from('articles')
-        .select(ARTICLES_WITH_WORD_STATS)
+        .select<ArticleRow>(ARTICLES_WITH_WORD_STATS)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -162,7 +163,7 @@ export const articlesService = {
         });
         throw error;
       }
-      return mapToArticles((data ?? []) as any);
+      return mapToArticles(data ?? []);
     } catch (err) {
       await handleError(
         err instanceof Error ? err : new Error('Unknown error loading articles with word stats'),
@@ -178,7 +179,7 @@ export const articlesService = {
     try {
       const { data, error } = await supabase
         .from('articles')
-        .select(DETAIL_VIEW_COLUMNS)
+        .select<ArticleRow>(DETAIL_VIEW_COLUMNS)
         .eq('id', id)
         .single();
 
@@ -205,7 +206,7 @@ export const articlesService = {
     try {
       const { data, error } = await supabase
         .from('articles')
-        .select(CARD_VIEW_COLUMNS)
+        .select<ArticleRow>(CARD_VIEW_COLUMNS)
         .eq('id', id)
         .single();
 
@@ -231,7 +232,7 @@ export const articlesService = {
     try {
       const { data: article, error: articleError } = await supabase
         .from('articles')
-        .select('author_id, category_id')
+        .select<{ author_id: number; category_id: number }>('author_id, category_id')
         .eq('id', articleId)
         .single();
 
@@ -248,7 +249,7 @@ export const articlesService = {
       // Prioritize same author, then same category
       const { data, error } = await supabase
         .from('articles')
-        .select(LIST_VIEW_COLUMNS)
+        .select<ArticleRow>(LIST_VIEW_COLUMNS)
         .neq('id', articleId)
         .or(`author_id.eq.${article.author_id},category_id.eq.${article.category_id}`)
         .order('created_at', { ascending: false })
@@ -284,7 +285,7 @@ export const articlesService = {
     try {
       let query = supabase
         .from('articles')
-        .select(LIST_VIEW_COLUMNS)
+        .select<ArticleRow>(LIST_VIEW_COLUMNS)
         .eq('category_id', categoryId)
         .order('created_at', { ascending: false })
         .limit(limit);
