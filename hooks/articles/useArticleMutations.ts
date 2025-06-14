@@ -1,4 +1,8 @@
-import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQueryClient,
+  type UseMutationResult,
+} from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 
@@ -8,6 +12,16 @@ import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
+
+// Shared query keys used across mutation success handlers
+const RELATED_QUERY_KEYS = (userId: string) =>
+  [
+    FSRS_QUERY_KEYS.all(userId),
+    FSRS_QUERY_KEYS.due(userId),
+    ['studyWordsCounts', userId] as const,
+    ['enhancedAudioTracks', userId] as const,
+    ['vocabulary-stats'] as const,
+  ] as const;
 
 interface ArticleMutationsResult {
   handleToggleReadingList: (articleId: number | undefined, isInReadingList: boolean) => void;
@@ -139,15 +153,7 @@ export const useArticleMutations = (
       },
       onSuccess: (_: boolean, { userId }: { userId: string }) => {
         // Batch invalidate related queries
-        const relatedQueries = [
-          FSRS_QUERY_KEYS.all(userId),
-          FSRS_QUERY_KEYS.due(userId),
-          ['studyWordsCounts', userId],
-          ['enhancedAudioTracks', userId],
-          ['vocabulary-stats'],
-        ];
-
-        relatedQueries.forEach(queryKey => {
+        RELATED_QUERY_KEYS(userId).forEach(queryKey => {
           queryClient.invalidateQueries({ queryKey });
         });
 
@@ -194,16 +200,10 @@ export const useArticleMutations = (
       },
       onSuccess: (_: boolean, { userId }: { userId: string }) => {
         // Batch invalidate related queries
-        const relatedQueries = [
-          FSRS_QUERY_KEYS.all(userId),
-          FSRS_QUERY_KEYS.due(userId),
-          ['fsrs-words', userId],
-          ['studyWordsCounts', userId],
-          ['enhancedAudioTracks', userId],
-          ['vocabulary-stats'],
-        ];
-
-        relatedQueries.forEach(queryKey => {
+        [
+          ...RELATED_QUERY_KEYS(userId),
+          ['fsrs-words', userId] as const,
+        ].forEach(queryKey => {
           queryClient.invalidateQueries({ queryKey });
         });
 
