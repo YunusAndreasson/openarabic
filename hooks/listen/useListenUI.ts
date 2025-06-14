@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 
 import type { AudioState } from '@/constants/audio';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
@@ -28,12 +28,17 @@ export const useListenUI = ({
   const editMode = useAppSelector(state => state.listen.editMode);
 
   const [canShowEmpty, setCanShowEmpty] = useState(false);
+  const showEmptyRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    showEmptyRef.current = requestAnimationFrame(() => {
       setCanShowEmpty(true);
-    }, 300);
-    return () => clearTimeout(timer);
+    });
+    return () => {
+      if (showEmptyRef.current !== null) {
+        cancelAnimationFrame(showEmptyRef.current);
+      }
+    };
   }, []);
 
   const metadataValues = useMemo(
