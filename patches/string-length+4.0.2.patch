@@ -1,16 +1,10 @@
---- /tmp/node_modules/string-length/index.js	2025-06-14 16:36:51.154000000 +0200
-+++ node_modules/string-length/index.js	2025-06-14 16:41:33.536837495 +0200
-@@ -1,5 +1,12 @@
- 'use strict';
--const stripAnsi = require('strip-ansi');
-+let stripAnsi;
-+try {
-+	// Try ES module import first
-+	stripAnsi = require('strip-ansi').default || require('strip-ansi');
-+} catch (e) {
-+	// Fallback to CommonJS
-+	stripAnsi = require('strip-ansi');
-+}
- const charRegex = require('char-regex');
- 
- const stringLength = string => {
+'use strict';
+const stripAnsiModule = require('strip-ansi');
+const stripAnsi = stripAnsiModule.default || stripAnsiModule;
+const charRegex = require('char-regex');
+
+const stringLength = string => {
+  // Implementation of stringLength function
+};
+
+module.exports = stringLength; 
