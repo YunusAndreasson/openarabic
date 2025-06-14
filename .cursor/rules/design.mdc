@@ -11,7 +11,7 @@ alwaysApply: true
 - Limit the number of choices presented at any decision point to reduce user decision time.
 - Organize options hierarchically or progressively to prevent overwhelming the user.
 
-# Fittss Law
+# Fitts' Law
 - Design interactive elements (e.g., buttons, links) to be large enough for easy selection.
 - Position frequently used controls closer to the user's typical interaction areas to minimize movement time.
 
