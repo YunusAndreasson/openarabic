@@ -25,7 +25,13 @@ export interface EnhancedPlayerAPI {
   currentTrackIndex: number;
   actions: {
     stopPlayback: () => Promise<void>;
-    startEnhancedPlayback: (tracks: EnhancedAudioTrack[], startIndex?: number) => Promise<boolean>;
+    startEnhancedPlayback: (
+      tracks: EnhancedAudioTrack[],
+      startIndex?: number,
+    ) => Promise<boolean>;
+    prefetchTracks: (
+      tracks: EnhancedAudioTrack[],
+    ) => Promise<EnhancedAudioTrack[]>;
   };
 
   // State properties (only the ones actually used)
@@ -496,8 +502,9 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
     () => ({
       stopPlayback: stop,
       startEnhancedPlayback: startEnhancedPlayback,
+      prefetchTracks,
     }),
-    [stop, startEnhancedPlayback]
+    [stop, startEnhancedPlayback, prefetchTracks]
   );
 
   // Memoize the return object to prevent unnecessary re-renders
