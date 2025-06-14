@@ -20,7 +20,7 @@ module.exports = {
   moduleNameMapper: {
     // Mock static file imports
     '\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$':
-      'identity-obj-proxy',
+      '<rootDir>/__mocks__/fileMock.js',
     // Mock problematic libraries
     '@shopify/react-native-skia': '<rootDir>/__mocks__/react-native-skia.js',
     'react-native-reanimated': '<rootDir>/__mocks__/react-native-reanimated.js',
