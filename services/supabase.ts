@@ -126,6 +126,11 @@ export async function checkAuthentication(expectedUserId?: string): Promise<{
     });
     throw error_;
   } catch (err) {
+    await handleError(err instanceof Error ? err : new Error(String(err)), {
+      sentrySeverity: 'error',
+      analyticsEventName: 'Auth_Check_Error',
+      showToast: false,
+    });
     Sentry.captureException(err, {
       tags: { location: 'check_authentication' },
       level: 'error',

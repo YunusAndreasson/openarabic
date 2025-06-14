@@ -67,4 +67,14 @@ describe('checkAuthentication', () => {
       sentrySeverity: 'info',
     }));
   });
+
+  it('logs and rejects when getSession fails with network error', async () => {
+    const networkError = new Error('Network error');
+    getSessionMock.mockRejectedValueOnce(networkError);
+
+    await expect(checkAuthentication('user-1')).rejects.toThrow(networkError);
+    expect(handleError).toHaveBeenCalledWith(networkError, expect.objectContaining({
+      sentrySeverity: 'error',
+    }));
+  });
 });
