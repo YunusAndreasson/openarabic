@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { memo, useMemo } from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { DEFAULT_IMAGES } from '@/constants/images';
 import {
@@ -18,28 +18,13 @@ import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';
 import Pill from './Pill';
 import { ThemedText } from './ThemedText';
+import type { ArticleCardProps as BaseArticleCardProps } from '@/types/ui/card.types';
 
 // Simplified interface specifically for ArticleCard (always article variant)
-interface ArticleCardProps {
-  /** URL of the image to display in the card */
-  imageUrl: string;
-  /** Title text to display in the card */
-  title: string;
-  /** Category text to display in a pill on the card */
-  category: string;
-  /** Category to display with author (separate from pill) */
-  categoryForDisplay?: string;
-  /** Author name to display in the card */
-  author?: string;
-  /** Summary text to display in the card */
-  summary?: string;
-  /** Custom styling for the card */
-  style?: StyleProp<ViewStyle>;
-  /** Optional callback when card is pressed */
-  onPress?: () => void;
-  /** Optional test identifier used for testing */
-  testID?: string;
-}
+type ArticleCardProps = Omit<
+  BaseArticleCardProps,
+  'variant' | 'placeholder' | 'dueWordCount'
+>;
 
 const GOLDEN_RATIO_ADJUSTED = 1.5;
 
