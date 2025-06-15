@@ -75,7 +75,7 @@ jobs:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ALLOW_FAILURE: true
-          SENTRY_DISABLE_AUTO_UPLOAD: true
+          SENTRY_DISABLE_AUTO_UPLOAD: false
 
       - name: Wait for build completion
         if: steps.build.outputs.build_id
