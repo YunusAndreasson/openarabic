@@ -3,11 +3,6 @@ import { describe, it, expect, jest } from '@jest/globals';
 
 import { useAuthForm, PASSWORD_REQUIREMENTS } from './useAuthForm';
 
-jest.mock('@sentry/react-native', () => ({
-  captureException: jest.fn(),
-  addBreadcrumb: jest.fn(),
-}));
-
 jest.mock('expo-router', () => ({
   router: { replace: jest.fn() },
 }));

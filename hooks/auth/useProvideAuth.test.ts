@@ -7,11 +7,6 @@ const flushPromises = () => new Promise(resolve => setImmediate(resolve));
 
 import { useProvideAuth } from './useProvideAuth';
 
-jest.mock('@sentry/react-native', () => ({
-  captureException: jest.fn(),
-  addBreadcrumb: jest.fn(),
-}));
-
 jest.mock('@/services/supabase', () => {
   const auth = {
     initialize: jest.fn().mockResolvedValue(undefined),

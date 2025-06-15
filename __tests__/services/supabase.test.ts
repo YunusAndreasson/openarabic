@@ -11,10 +11,6 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   getAllKeys: jest.fn(),
 }));
 
-jest.mock('@sentry/react-native', () => ({
-  captureException: jest.fn(),
-  addBreadcrumb: jest.fn(),
-}));
 
 jest.mock('../../utils/errorHandling', () => ({
   handleError: jest.fn(),
