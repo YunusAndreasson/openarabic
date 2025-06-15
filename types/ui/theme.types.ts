@@ -32,6 +32,7 @@ export interface ThemeColors {
   borderOverlay: string;
   buttonOverlay: string;
   shadow: string;
+  elevation0: string;
   elevation1: string;
   elevation2: string;
   elevation3: string;

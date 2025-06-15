@@ -91,18 +91,59 @@ const opacity = {
 // Elevation system
 const elevation = {
   light: {
-    level0: basePalette.sage.lightest, // Background
+    level0: basePalette.sage.lighter, // Background - matches current background
     level1: basePalette.pure.white, // Cards (green-tinted white)
     level2: basePalette.sage.lightest, // Raised elements - use palette reference
     level3: basePalette.sage.lighter, // Floating elements
   },
   dark: {
-    level0: basePalette.sage.darkest, // Background
+    level0: basePalette.sage.darkest, // Background - matches current background
     level1: basePalette.sage.dark, // Cards
     level2: basePalette.sage.mediumDark, // Raised elements
     level3: basePalette.sage.medium, // Floating elements - use consistent reference
   },
 };
+
+/**
+ * ELEVATION HIERARCHY GUIDE
+ *
+ * Use elevations intelligently to create proper visual hierarchy:
+ *
+ * Level 0 (elevation0): Base surfaces
+ * - ThemedView backgrounds
+ * - Screen backgrounds
+ * - Base container backgrounds
+ *
+ * Level 1 (elevation1): Primary surfaces
+ * - Cards (BaseCard, ArticleCard)
+ * - Input fields
+ * - Primary buttons (inactive state)
+ * - Modal backgrounds
+ * - Bottom sheets
+ *
+ * Level 2 (elevation2): Raised surfaces
+ * - Active/selected states
+ * - Hover states
+ * - Cards inside modals (raised above modal background)
+ * - Icon containers in cards
+ * - Raised buttons
+ * - Secondary interactive elements
+ *
+ * Level 3 (elevation3): Floating surfaces
+ * - Tooltips
+ * - Dropdowns
+ * - Floating action buttons
+ * - Overlays
+ * - Toast messages
+ *
+ * RULES:
+ * 1. Always start with level 0 for base components
+ * 2. Each stacked component should use the next elevation level
+ * 3. Interactive states can temporarily elevate (e.g., level1 → level2 on press)
+ * 4. Never skip elevation levels in the same component hierarchy
+ * 5. Use shadows (LAYOUT.ELEVATION) for visual depth, colors for surface hierarchy
+ * 6. Cards inside modals use elevation2 to be raised above modal background (elevation1)
+ */
 
 export const Colors = {
   light: {
@@ -149,6 +190,7 @@ export const Colors = {
 
     // Elevation system - enhanced contrast
     shadow: basePalette.forest.dark,
+    elevation0: elevation.light.level0,
     elevation1: elevation.light.level1,
     elevation2: elevation.light.level2,
     elevation3: elevation.light.level3,
@@ -226,6 +268,7 @@ export const Colors = {
 
     // Elevation system
     shadow: basePalette.pure.black,
+    elevation0: elevation.dark.level0,
     elevation1: elevation.dark.level1,
     elevation2: elevation.dark.level2,
     elevation3: elevation.dark.level3,

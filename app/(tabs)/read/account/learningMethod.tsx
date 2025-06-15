@@ -230,7 +230,7 @@ const LearningMethodScreen: FC = () => {
 
           <View style={styles.referencesList}>
             <View style={styles.referenceItem}>
-              <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
+              <View style={[styles.referenceIcon, { backgroundColor: colors.elevation1 }]}>
                 <Ionicons color={colors.tint} name="document-text-outline" size={20} />
               </View>
               <View style={styles.referenceContent}>
@@ -244,7 +244,7 @@ const LearningMethodScreen: FC = () => {
             </View>
 
             <View style={styles.referenceItem}>
-              <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
+              <View style={[styles.referenceIcon, { backgroundColor: colors.elevation1 }]}>
                 <Ionicons color={colors.tint} name="document-text-outline" size={20} />
               </View>
               <View style={styles.referenceContent}>
@@ -258,7 +258,7 @@ const LearningMethodScreen: FC = () => {
             </View>
 
             <View style={styles.referenceItem}>
-              <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
+              <View style={[styles.referenceIcon, { backgroundColor: colors.elevation1 }]}>
                 <Ionicons color={colors.tint} name="document-text-outline" size={20} />
               </View>
               <View style={styles.referenceContent}>

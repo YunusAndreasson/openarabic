@@ -63,7 +63,7 @@ export const BaseChart = memo(
             {!hideTitle && (
               <CardHeader subtitle="Error loading data" title={title} onInfoPress={onInfoPress} />
             )}
-            <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
+            <View style={[styles.emptyContainer, { backgroundColor: colors.elevation1 }]}>
               <ThemedText colorName="error" style={styles.emptyText}>
                 {errorText}
               </ThemedText>
@@ -81,7 +81,7 @@ export const BaseChart = memo(
             {!hideTitle && (
               <CardHeader subtitle={subtitle} title={title} onInfoPress={onInfoPress} />
             )}
-            <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
+            <View style={[styles.emptyContainer, { backgroundColor: colors.elevation1 }]}>
               <ThemedText colorName="secondaryText" style={styles.emptyText}>
                 {emptyStateText}
               </ThemedText>
@@ -104,7 +104,7 @@ export const BaseChart = memo(
 
           {/* Loading State */}
           {isLoading && (
-            <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+            <View style={[styles.loadingContainer, { backgroundColor: colors.elevation1 }]}>
               <ActivityIndicator color={colors.tint} size="large" />
               <ThemedText colorName="secondaryText" style={styles.loadingText}>
                 Loading chart...

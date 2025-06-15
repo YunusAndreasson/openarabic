@@ -166,7 +166,7 @@ export const Toast = memo(
       resetTranslate,
     ]);
 
-    // Enhanced color scheme based on toast type
+    // Enhanced color scheme based on toast type - use elevation3 for floating elements
     const backgroundColor = useMemo(() => {
       switch (type) {
         case 'success':
@@ -176,9 +176,9 @@ export const Toast = memo(
         case 'important':
           return colors.warning || colors.tint;
         default:
-          return isDarkMode ? colors.card : colors.tint || colors.primary;
+          return colors.elevation3; // Use elevation3 for floating toast messages
       }
-    }, [type, isDarkMode, colors]);
+    }, [type, colors]);
 
     const textColor = useMemo(() => {
       // For important and error, use white text for better contrast

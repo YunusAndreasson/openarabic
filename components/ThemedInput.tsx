@@ -58,11 +58,7 @@ const RightInputIcon = ({
   colors: ReturnType<typeof useColors>;
   onPress?: (e: GestureResponderEvent) => void;
 }) => (
-  <TouchableOpacity
-    hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-    style={styles.rightIcon}
-    onPress={onPress}
-  >
+  <TouchableOpacity hitSlop={LAYOUT.HIT_SLOP.MEDIUM} style={styles.rightIcon} onPress={onPress}>
     <Ionicons
       color={error ? colors.tabIconSelected : isFocused ? colors.tint : colors.icon}
       name={name}
@@ -88,23 +84,12 @@ export const ThemedInput = forwardRef<TextInput, ThemedInputProps>(
       () => [
         styles.container,
         {
-          backgroundColor: colors.background,
-          borderColor: error
-            ? colors.tabIconSelected
-            : isFocused
-            ? colors.tint
-            : colors.icon,
+          backgroundColor: colors.elevation1,
+          borderColor: error ? colors.tabIconSelected : isFocused ? colors.tint : colors.icon,
         },
         isFocused && styles.containerFocused,
       ],
-      [
-        colors.background,
-        colors.icon,
-        colors.tabIconSelected,
-        colors.tint,
-        error,
-        isFocused,
-      ]
+      [colors.elevation1, colors.icon, colors.tabIconSelected, colors.tint, error, isFocused]
     );
 
     const handleFocus = useCallback(

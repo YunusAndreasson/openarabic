@@ -68,11 +68,11 @@ export const WordTooltip = memo(
       };
     }, [visible, fadeIn, handleClose]);
 
-    // Get colors based on theme
-    const backgroundColor = colors.wordTooltipBg;
-    const textColor = colors.wordTooltipText;
-    const borderColor = colors.wordTooltipBorder;
-    const shadowColor = colors.wordTooltipShadow;
+    // Get colors based on theme - use elevation3 for floating tooltips
+    const backgroundColor = colors.elevation3; // Use elevation3 for floating tooltips
+    const textColor = colors.text; // Use standard text color for consistency
+    const borderColor = colors.border; // Use standard border color
+    const shadowColor = colors.shadow; // Use standard shadow color
 
     // Memoize the tooltip content to reduce re-renders
     const tooltipContent = useMemo(

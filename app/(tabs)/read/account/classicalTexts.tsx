@@ -144,7 +144,7 @@ const ClassicalTextsScreen: FC = () => {
 
           <View style={styles.comparisonList}>
             <View style={styles.comparisonItem}>
-              <View style={[styles.comparisonIcon, { backgroundColor: colors.elevation2 }]}>
+              <View style={[styles.comparisonIcon, { backgroundColor: colors.elevation1 }]}>
                 <Ionicons color={colors.tint} name="library-outline" size={20} />
               </View>
               <View style={styles.comparisonContent}>
@@ -159,7 +159,7 @@ const ClassicalTextsScreen: FC = () => {
             </View>
 
             <View style={styles.comparisonItem}>
-              <View style={[styles.comparisonIcon, { backgroundColor: colors.elevation2 }]}>
+              <View style={[styles.comparisonIcon, { backgroundColor: colors.elevation1 }]}>
                 <Ionicons color={colors.tint} name="chatbubble-outline" size={20} />
               </View>
               <View style={styles.comparisonContent}>
@@ -200,7 +200,7 @@ const ClassicalTextsScreen: FC = () => {
 
           <View style={styles.referencesList}>
             <View style={styles.referenceItem}>
-              <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
+              <View style={[styles.referenceIcon, { backgroundColor: colors.elevation1 }]}>
                 <Ionicons color={colors.tint} name="document-text-outline" size={20} />
               </View>
               <View style={styles.referenceContent}>
@@ -215,7 +215,7 @@ const ClassicalTextsScreen: FC = () => {
             </View>
 
             <View style={styles.referenceItem}>
-              <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
+              <View style={[styles.referenceIcon, { backgroundColor: colors.elevation1 }]}>
                 <Ionicons color={colors.tint} name="document-text-outline" size={20} />
               </View>
               <View style={styles.referenceContent}>
@@ -230,7 +230,7 @@ const ClassicalTextsScreen: FC = () => {
             </View>
 
             <View style={styles.referenceItem}>
-              <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
+              <View style={[styles.referenceIcon, { backgroundColor: colors.elevation1 }]}>
                 <Ionicons color={colors.tint} name="document-text-outline" size={20} />
               </View>
               <View style={styles.referenceContent}>
