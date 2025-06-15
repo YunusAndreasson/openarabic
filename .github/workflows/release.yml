@@ -44,10 +44,11 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           NEW_VERSION=$(node -p "require('./package.json').version")
+          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
           git add package.json app.json
           git commit -m "chore: bump version to $NEW_VERSION"
           git tag "v$NEW_VERSION"
-          git push origin root
+          git push origin $CURRENT_BRANCH
           git push origin "v$NEW_VERSION"
 
       - name: Create GitHub Release
@@ -75,10 +76,14 @@ jobs:
           yarn add expo-updates expo-asset
 
       - name: Publish update to Expo Go
-        run: eas update --auto
+        run: |
+          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          eas update --branch $CURRENT_BRANCH --auto
 
       - name: Build and Submit to TestFlight
-        run: eas build --platform ios --profile production --auto-submit --non-interactive
+        run: |
+          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          eas build --platform ios --profile production --auto-submit --non-interactive --branch $CURRENT_BRANCH
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
