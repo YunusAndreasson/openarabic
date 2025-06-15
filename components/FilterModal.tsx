@@ -349,13 +349,9 @@ const areEqual = (prevProps: FilterModalProps, nextProps: FilterModalProps) => {
     return false;
   }
 
-  for (let i = 0; i < prevProps.availableAuthors.length; i++) {
-    if (prevProps.availableAuthors[i]?.id !== nextProps.availableAuthors[i]?.id) {
-      return false;
-    }
-  }
-
-  return true;
+  return prevProps.availableAuthors.every(
+    (a, i) => a?.id === nextProps.availableAuthors[i]?.id
+  );
 };
 
 FilterModal.displayName = 'FilterModal';
