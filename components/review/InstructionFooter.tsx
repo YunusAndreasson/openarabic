@@ -119,7 +119,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     ...LAYOUT.ELEVATION.SMALL,
-    shadowColor: colors.shadow,
   } as ViewStyle,
   instructionItem: {
     flexDirection: 'row',
