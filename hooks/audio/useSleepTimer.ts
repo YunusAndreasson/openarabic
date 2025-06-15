@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 import { handleError } from '@/utils/errorHandling';
 
@@ -107,8 +107,13 @@ export function useSleepTimer(onTimerComplete?: () => void): UseSleepTimerResult
     cancelTimer,
   };
 
-  return {
-    state,
-    actions,
-  };
+  const result = useMemo(
+    () => ({
+      state,
+      actions,
+    }),
+    [state.isActive, state.remainingTime]
+  );
+
+  return result;
 }
