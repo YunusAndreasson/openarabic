@@ -1,5 +1,7 @@
 import { useCallback, useRef, useEffect } from 'react';
 import type { SharedValue, WithTimingConfig } from 'react-native-reanimated';
+import type { ViewStyle } from 'react-native';
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import {
   useSharedValue,
   useAnimatedStyle,
@@ -15,7 +17,7 @@ import { TIMING_CONFIG } from './animationConfigs';
  * Result type for the useProgressAnimation hook
  */
 export interface ProgressAnimationResult {
-  animatedStyle: ReturnType<typeof useAnimatedStyle>;
+  animatedStyle: AnimatedStyleProp<ViewStyle>;
   updateProgress: (newPercentage: number) => () => void;
   progress: SharedValue<number>;
   hasAnimated: () => boolean;
@@ -121,7 +123,7 @@ export const useProgressAnimation = <D extends number = number>(
   }, [progress, initialPercentage]);
 
   // Create animated style based on the progress value
-  const animatedStyle = useAnimatedStyle(() => {
+  const animatedStyle = useAnimatedStyle<ViewStyle>(() => {
     'worklet';
     // Ensure the value is within valid range
     const clampedValue = Math.max(0, Math.min(10000, progress.value));
@@ -129,7 +131,7 @@ export const useProgressAnimation = <D extends number = number>(
     return {
       width: `${clampedValue / 100}%`,
     };
-  }, [progress]);
+  }, [progress]) as AnimatedStyleProp<ViewStyle>;
 
   // Reset animation state on unmount
   useEffect(() => {

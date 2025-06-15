@@ -14,6 +14,7 @@ import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 import { ArabicWord } from './ArabicWord';
 
@@ -98,13 +99,14 @@ function ArticleSentenceComponent({
   );
 
   const backgroundStyle = useMemo(
-    () => [
-      styles.sentenceBackground,
-      {
-        backgroundColor: colors.tint ? `${colors.tint}40` : colors.transparent,
-      },
-      animatedHighlightStyle,
-    ],
+    () =>
+      [
+        styles.sentenceBackground,
+        {
+          backgroundColor: colors.tint ? `${colors.tint}40` : colors.transparent,
+        },
+        animatedHighlightStyle,
+      ] as AnimatedStyleProp<ViewStyle>,
     [colors.tint, colors.transparent, animatedHighlightStyle]
   );
 
@@ -139,7 +141,7 @@ function ArticleSentenceComponent({
 
   return (
     <View style={[styles.container, containerStyle]}>
-      <Animated.View style={backgroundStyle as unknown as ViewStyle} />
+      <Animated.View style={backgroundStyle} />
       {settings.showEnglish && sentence.english && (
         <Animated.Text style={englishTextStyle}>{sentence.english}</Animated.Text>
       )}

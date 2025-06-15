@@ -7,6 +7,8 @@ import {
   runOnUI,
 } from 'react-native-reanimated';
 import type { SharedValue, WithSpringConfig } from 'react-native-reanimated';
+import type { ViewStyle } from 'react-native';
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 import { SPRING_CONFIG } from './animationConfigs';
 
@@ -51,7 +53,7 @@ export interface PressAnimationResult {
   /**
    * Animated style to apply to the component
    */
-  animatedStyle: ReturnType<typeof useAnimatedStyle>;
+  animatedStyle: AnimatedStyleProp<ViewStyle>;
 
   /**
    * Shared value representing press state (0 = not pressed, 1 = pressed)
@@ -91,7 +93,7 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
   const isMountedRef = useRef(true);
 
   // Create animated style
-  const animatedStyle = useAnimatedStyle(() => {
+  const animatedStyle = useAnimatedStyle<ViewStyle>(() => {
     'worklet';
     const scale = interpolate(pressed.value, [0, 1], [1, finalScaleAmount], 'clamp');
 
@@ -106,7 +108,7 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
     return {
       transform: [{ scale }],
     };
-  }, [pressed, finalScaleAmount, finalOpacityAmount, finalIncludeOpacity]);
+  }, [pressed, finalScaleAmount, finalOpacityAmount, finalIncludeOpacity]) as AnimatedStyleProp<ViewStyle>;
 
   // Press handlers - optimized to run on UI thread
   const animatePressIn = useCallback(() => {

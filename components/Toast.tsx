@@ -220,10 +220,7 @@ export const Toast = memo(
     if (!visible) return null;
 
     return (
-      <Animated.View
-        pointerEvents="none"
-        style={[containerStyle, animatedStyle as unknown as ViewStyle]}
-      >
+      <Animated.View pointerEvents="none" style={[containerStyle, ...animatedStyle]}>
         <View
           style={[
             styles.toast,
