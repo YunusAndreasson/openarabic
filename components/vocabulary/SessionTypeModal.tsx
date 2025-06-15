@@ -22,6 +22,7 @@ import Animated, {
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { SPRING_CONFIG, TIMING_CONFIG } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { withOpacity } from '@/utils/colorUtils';
@@ -39,7 +40,7 @@ const SessionTypeModal = memo(
     const isDarkMode = useIsDarkMode();
     const isClosingRef = useRef(false);
 
-    // Direct shared values for better performance
+    // Direct shared values with optimized configs from hooks/animations
     const translateY = useSharedValue(0);
     const opacity = useSharedValue(1);
 
@@ -73,27 +74,27 @@ const SessionTypeModal = memo(
       onClose();
     }, [onClose]);
 
-    // Animated close
+    // Optimized animated close using standardized configs
     const animateClose = useCallback(() => {
       if (isClosingRef.current) return;
 
-      translateY.value = withTiming(400, { duration: 200 });
-      opacity.value = withTiming(0, { duration: 200 }, finished => {
+      translateY.value = withTiming(400, TIMING_CONFIG.MEDIUM);
+      opacity.value = withTiming(0, TIMING_CONFIG.MEDIUM, (finished?: boolean) => {
         if (finished) {
           runOnJS(handleClose)();
         }
       });
     }, [translateY, opacity, handleClose]);
 
-    // Animate back to position
+    // Animate back to position using standardized spring config
     const animateBack = useCallback(() => {
       if (isClosingRef.current) return;
 
-      translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
-      opacity.value = withSpring(1, { damping: 15, stiffness: 150 });
+      translateY.value = withSpring(0, SPRING_CONFIG.SLIDE);
+      opacity.value = withSpring(1, SPRING_CONFIG.SLIDE);
     }, [translateY, opacity]);
 
-    // Gesture handler for swipe to dismiss
+    // Gesture handler for swipe to dismiss using standardized configs
     const gestureHandler = Gesture.Pan()
       .onUpdate(event => {
         if (isClosingRef.current || event.translationY <= 0) return;
