@@ -1,0 +1,405 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# API Reference Guide
+
+## Services
+
+### Articles Service (`services/articles.ts`)
+```typescript
+articlesService.getArticles(userId: string, filters?: ArticleFilters): Promise<Article[]>
+articlesService.getArticleById(id: number): Promise<Article>
+articlesService.getArticlesByDueWords(userId: string, limit: number): Promise<ArticleWithWordStats[]>
+```
+
+### Reading List Service (`services/readingList.ts`)
+```typescript
+readingListService.getReadingList(userId: string): Promise<ReadingListItem[]>
+readingListService.addToReadingList(userId: string, articleId: number): Promise<void>
+readingListService.removeFromReadingList(userId: string, articleId: number): Promise<void>
+readingListService.isInReadingList(userId: string, articleId: number): Promise<boolean>
+```
+
+### FSRS Service (`services/studyWordsFSRS.ts`)
+```typescript
+studyWordsFSRSService.getStudyWords(userId: string): Promise<StudyWord[]>
+studyWordsFSRSService.getDueWords(userId: string, limit?: number): Promise<StudyWord[]>
+studyWordsFSRSService.addStudyWord(userId: string, rootId: number): Promise<void>
+studyWordsFSRSService.removeStudyWord(userId: string, rootId: number): Promise<void>
+studyWordsFSRSService.reviewWord(userId: string, rootId: number, grade: Grade): Promise<void>
+studyWordsFSRSService.getStudyStats(userId: string): Promise<StudyStats>
+```
+
+### Enhanced Audio Service (`services/enhancedAudioService.ts`)
+```typescript
+enhancedAudioService.generateEnhancedAudioTrack(articleId: number): Promise<EnhancedAudioTrack | null>
+enhancedAudioService.getReadingListEnhancedTracks(userId: string): Promise<EnhancedAudioTrack[]>
+```
+
+## Hooks
+
+### Authentication Hooks
+
+#### `useAuth()` - Authentication state management
+```typescript
+const { user, session, isLoading, signIn, signOut, signUp } = useAuth();
+```
+
+#### `useAuthForm()` - Form handling for auth screens
+```typescript
+const {
+  email, setEmail,
+  password, setPassword,
+  isLoading,
+  handleSignIn,
+  handleSignUp,
+  validateForm
+} = useAuthForm();
+```
+
+### Article Hooks
+
+#### `useArticleData()` - Fetch article and related data
+```typescript
+const {
+  article,
+  isLoadingArticle,
+  selectedWordIds,
+  sortedSentences,
+  sentenceWordsMap,
+  isInReadingList,
+  refetchStudyWords,
+  refetchReadingListStatus
+} = useArticleData(articleId, userId);
+```
+
+#### `useArticleMutations()` - Article-related mutations
+```typescript
+const {
+  handleToggleReadingList,
+  isLoading
+} = useArticleMutations(userId, onSuccess);
+```
+
+#### `useArticlesByDueWords()` - Articles with vocabulary data
+```typescript
+const {
+  articles,
+  isLoading,
+  dueWordRootIds,
+  refetch
+} = useArticlesByDueWords(userId, limit);
+```
+
+### Vocabulary/FSRS Hooks
+
+#### `useFSRSWords()` - FSRS vocabulary management
+```typescript
+const {
+  studyWords,
+  dueWords,
+  isLoading,
+  addWord,
+  removeWord,
+  reviewWord,
+  refetch
+} = useFSRSWords(userId);
+```
+
+#### `useArabicWord()` - Individual word interaction
+```typescript
+const {
+  isAudioHighlighted,
+  isSelected,
+  setForceSelected,
+  handleSelectionChange
+} = useArabicWord({ word, position, onPress });
+```
+
+### Audio Hooks
+
+#### `useAudioPlayer()` - Enhanced audio playback
+```typescript
+const {
+  progress,
+  metadata,
+  audioState,
+  currentTrackIndex,
+  isLoading,
+  position,
+  duration,
+  actions: { stopPlayback, startEnhancedPlayback, prefetchTracks }
+} = useAudioPlayer();
+```
+
+#### `useListenScreen()` - Listen tab functionality
+```typescript
+const {
+  sortedReadingList,
+  sortedEnhancedTracks,
+  isReadingListLoading,
+  enhancedTracksError,
+  shouldShowInitialLoading,
+  isCurrentlyPlaying,
+  listenMetadata
+} = useListenScreen();
+```
+
+### UI Hooks
+
+#### `useColors()` - Theme-aware colors
+```typescript
+const colors = useColors(); // Returns current theme colors
+```
+
+#### `useIsDarkMode()` - Dark mode detection
+```typescript
+const isDarkMode = useIsDarkMode();
+```
+
+#### `useHeaderVisibility()` - Header scroll behavior
+```typescript
+const { handleScroll } = useHeaderVisibility();
+```
+
+#### `useOpacityAnimation()` - Fade animations
+```typescript
+const { fadeIn, animatedStyle } = useOpacityAnimation({
+  initialOpacity: 0,
+  duration: 300,
+  autoStart: false
+});
+```
+
+#### `useScaleAnimation()` - Press animations
+```typescript
+const { handlePressIn, handlePressOut, animatedStyle } = useScaleAnimation();
+```
+
+### Navigation Hooks
+
+#### `useScreenFocusRefresh()` - Auto-refresh on screen focus
+```typescript
+useScreenFocusRefresh(
+  queryClient,
+  'readingList',
+  userId,
+  1000 * 60 * 5, // 5 minutes
+  true, // enabled
+  true  // refetchOnMount
+);
+```
+
+## Utilities
+
+### Error Handling (`utils/errorHandling.ts`)
+```typescript
+handleError(error: Error | string, options?: ErrorOptions): Promise<void>
+
+interface ErrorOptions {
+  showToast?: boolean;
+  toastMessage?: string;
+  toastDuration?: number;
+  toastType?: 'error' | 'important' | 'info' | 'success';
+  trackAnalytics?: boolean;
+  analyticsEventName?: string;
+  analyticsProperties?: Record<string, boolean | number | string>;
+  captureSentry?: boolean;
+  sentrySeverity?: 'debug' | 'error' | 'fatal' | 'info' | 'warning';
+}
+```
+
+### Haptic Feedback (`utils/haptics.ts`)
+```typescript
+lightFeedback(): void        // Light tap feedback
+mediumFeedback(): void       // Medium tap feedback
+heavyFeedback(): void        // Heavy tap feedback
+selectionFeedback(): void    // Selection change feedback
+successFeedback(): void      // Success action feedback
+warningFeedback(): void      // Warning/error feedback
+```
+
+### Toast Messages (`utils/toast.ts`)
+```typescript
+showToast(
+  message: string,
+  duration?: number,
+  type?: 'error' | 'important' | 'info' | 'success'
+): void
+```
+
+### Cache Management (`utils/queryPersistence.ts`)
+```typescript
+clearPersistedCache(): Promise<void>
+getPersistedCacheSize(): Promise<number>
+```
+
+### Cache Utilities (`utils/cacheUtils.ts`)
+```typescript
+formatBytes(bytes: number): string
+calculateCacheSize(data: unknown): number
+```
+
+## Constants
+
+### Layout Constants (`constants/layout.ts`)
+```typescript
+LAYOUT.SPACING.TINY          // 4px
+LAYOUT.SPACING.SMALL         // 8px
+LAYOUT.SPACING.MEDIUM        // 12px
+LAYOUT.SPACING.LARGE         // 16px
+LAYOUT.SPACING.XLARGE        // 20px
+
+LAYOUT.SHADOW.SUBTLE         // Light shadow
+LAYOUT.SHADOW.SMALL          // Small shadow
+LAYOUT.SHADOW.MEDIUM         // Medium shadow
+LAYOUT.SHADOW.LARGE          // Large shadow
+
+TYPOGRAPHY_HIERARCHY.SIZES.SMALL     // 13px
+TYPOGRAPHY_HIERARCHY.SIZES.MEDIUM    // 15px
+TYPOGRAPHY_HIERARCHY.SIZES.LARGE     // 17px
+TYPOGRAPHY_HIERARCHY.SIZES.XLARGE    // 20px
+
+TYPOGRAPHY_HIERARCHY.WEIGHTS.REGULAR   // 400
+TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM    // 500
+TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD  // 600
+TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD      // 700
+```
+
+### Color System (`constants/Colors.ts`)
+```typescript
+colors.background      // Main background
+colors.card           // Card background
+colors.text           // Primary text
+colors.secondaryText  // Secondary text
+colors.textTertiary   // Tertiary text
+colors.tint           // Brand tint color
+colors.border         // Border color
+colors.error          // Error color
+colors.success        // Success color
+colors.warning        // Warning color
+```
+
+## Types
+
+### Core Types (`types/`)
+```typescript
+// Article types
+interface Article {
+  id: number;
+  title: string;
+  author_name: string;
+  summary: string;
+  audio_url: string | null;
+  image_url: string | null;
+  difficulty_level: number;
+  category_name: string;
+}
+
+// Vocabulary types
+interface StudyWord {
+  root_id: number;
+  user_id: string;
+  fsrs_due: string;
+  fsrs_state: number;
+  fsrs_difficulty: number;
+  fsrs_stability: number;
+  root?: Root;
+}
+
+interface Root {
+  id: number;
+  letters: string;
+  meaning: string;
+  audio_url: string | null;
+  audio_url_en: string | null;
+}
+
+// Audio types
+interface EnhancedAudioTrack {
+  id: string;
+  articleId: number;
+  audioUrl: string | null;
+  title: string;
+}
+
+// Navigation types
+interface TabParamList {
+  read: undefined;
+  practice: undefined;
+  listen: undefined;
+}
+```
+
+## Query Keys Reference
+
+### Standard Query Key Patterns
+```typescript
+// Articles
+['articles', userId, filters]
+['article', articleId]
+['articles-by-due-words', userId, limit]
+
+// FSRS/Vocabulary
+['fsrs-words', userId]
+['fsrs-due-words', userId, limit]
+['fsrs-stats', userId]
+
+// Reading List
+['readingList', userId]
+['readingListStatus', userId, articleId]
+
+// Audio
+['enhancedAudioTracks', userId]
+
+// Categories
+['categories']
+['bookmarkCategories', userId]
+```
+
+## Redux Store Structure
+
+### State Shape
+```typescript
+interface RootState {
+  theme: {
+    theme: 'light' | 'dark';
+  };
+  settings: {
+    fontScale: number;
+    reminderTime: ReminderTime;
+  };
+  readingList: {
+    cachedData: ReadingListItem[];
+    lastFetch: number | null;
+  };
+  filters: {
+    selectedCategories: number[];
+    selectedAuthors: number[];
+    difficultyRange: [number, number];
+    sortBy: SortOption;
+  };
+  listen: {
+    currentTrackId: string | null;
+    isPlaying: boolean;
+  };
+}
+```
+
+### Actions
+```typescript
+// Theme actions
+setTheme(theme: 'light' | 'dark')
+
+// Settings actions
+setFontScale(scale: number)
+setReminderTime(time: ReminderTime)
+
+// Filter actions
+setSelectedCategories(categories: number[])
+setSelectedAuthors(authors: number[])
+setDifficultyRange(range: [number, number])
+setSortBy(sortBy: SortOption)
+```

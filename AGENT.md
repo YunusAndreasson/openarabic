@@ -62,6 +62,15 @@ You are a senior React Native developer tasked with writing performant, reliable
 - Shadow system: Use `LAYOUT.SHADOW` constants for consistent elevation
 - Spacing system: Use `LAYOUT.SPACING` scale (TINY=4px, SMALL=8px, MEDIUM=12px, etc.)
 
+## Documentation Reference
+
+For detailed development guidance, refer to these comprehensive documentation files:
+
+- **[Architecture Guide](.cursor/rules/architecture.mdc)** - App architecture, data flow patterns, and architectural decisions
+- **[Common Patterns](.cursor/rules/common-patterns.mdc)** - Frequently used code patterns, hooks, and implementations
+- **[Troubleshooting Guide](.cursor/rules/troubleshooting.mdc)** - Common issues, solutions, and debugging strategies
+- **[API Reference](.cursor/rules/api-reference.mdc)** - Complete reference for services, hooks, utilities, and types
+
 ## Technical Stack
 
 - **React Native**: 0.79.3 with React 19.0.0
