@@ -17,7 +17,7 @@
     "knip:ci": "knip --exclude duplicates",
     "knip:production": "knip --production",
     "typecheck": "tsc --noEmit",
-    "validate": "yarn typecheck && yarn lint && yarn knip:ci",
+    "validate": "yarn typecheck && yarn lint:fix && yarn knip:ci",
     "ci": "yarn validate && yarn test:coverage",
     "bump": "node utils/bumpVersion.js",
     "release": "gh workflow run release.yml",
@@ -105,7 +105,7 @@
   },
   "private": true,
   "engines": {
-    "node": ">=20.0.0",
+    "node": ">=22.0.0",
     "yarn": ">=1.22.22"
   },
   "lint-staged": {

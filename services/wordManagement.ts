@@ -1,5 +1,6 @@
 import { createEmptyCard, fsrs, generatorParameters, Rating } from 'ts-fsrs';
 
+import type { TablesUpdate } from '@/types/database.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 import { supabase, checkAuthentication } from './supabase';
@@ -35,7 +36,7 @@ export const wordManagementService = {
     const now = new Date();
     const emptyCard = createEmptyCard(now);
 
-    const resetData = {
+    const resetData: TablesUpdate<'study_words'> = {
       difficulty: emptyCard.difficulty / 10.0, // Normalize to 0-1 scale
       success_streak: 0,
       fsrs_due: now.toISOString(),
@@ -94,7 +95,7 @@ export const wordManagementService = {
       stability: newCard.stability * 1.5, // Increase stability
     };
 
-    const updateData = {
+    const updateData: TablesUpdate<'study_words'> = {
       fsrs_due: adjustedCard.due.toISOString(),
       fsrs_stability: adjustedCard.stability,
       fsrs_difficulty: adjustedCard.difficulty,
@@ -152,7 +153,7 @@ export const wordManagementService = {
       due: now, // Make it due immediately
     };
 
-    const updateData = {
+    const updateData: TablesUpdate<'study_words'> = {
       fsrs_due: adjustedCard.due.toISOString(),
       fsrs_stability: adjustedCard.stability,
       fsrs_difficulty: adjustedCard.difficulty,
@@ -186,11 +187,13 @@ export const wordManagementService = {
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setUTCHours(9, 0, 0, 0); // Set to 9 AM UTC tomorrow
 
+    const updateData: TablesUpdate<'study_words'> = {
+      fsrs_due: tomorrow.toISOString(),
+    };
+
     const { error } = await supabase
       .from('study_words')
-      .update({
-        fsrs_due: tomorrow.toISOString(),
-      })
+      .update(updateData)
       .eq('user_id', userId)
       .eq('root_id', rootId);
 

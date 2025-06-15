@@ -1,6 +1,7 @@
 import type { Rating } from 'ts-fsrs';
 import { createEmptyCard } from 'ts-fsrs';
 
+import type { TablesInsert, TablesUpdate } from '@/types/database.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 
@@ -163,7 +164,7 @@ export const studyWordsFSRSService = {
       throw new Error('Root entry not found or does not belong to user');
     }
 
-    const wordUpdateData = {
+    const wordUpdateData: TablesUpdate<'study_words'> = {
       fsrs_due: update.fsrs_due,
       fsrs_stability: update.fsrs_stability,
       fsrs_difficulty: update.fsrs_difficulty,
@@ -199,13 +200,14 @@ export const studyWordsFSRSService = {
     await checkAuthentication(userId);
 
     // Add the review record
-    const { error } = await supabase.from('reviews').insert({
+    const reviewPayload: TablesInsert<'reviews'> = {
       user_id: userId,
       root_id: rootId,
       grade: rating,
       learning_steps: learningSteps,
       reviewed_at: new Date().toISOString(),
-    });
+    };
+    const { error } = await supabase.from('reviews').insert(reviewPayload);
 
     if (error) {
       throw error;
@@ -241,8 +243,8 @@ export const studyWordsFSRSService = {
         p_fsrs_last_review: update.fsrs_last_review,
         p_rating: rating,
         p_learning_steps: learningSteps,
-        p_success_streak: update.success_streak ?? null,
-        p_difficulty: update.difficulty ?? null,
+        p_success_streak: update.success_streak ?? undefined,
+        p_difficulty: update.difficulty ?? undefined,
       });
 
       if (error) {
@@ -300,7 +302,7 @@ export const studyWordsFSRSService = {
     const emptyCard = createEmptyCard(now);
 
     // Create entry matching the actual database schema columns
-    const newEntry = {
+    const newEntry: TablesInsert<'study_words'> = {
       user_id: userId,
       root_id: rootId,
       created_at: now.toISOString(),
