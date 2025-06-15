@@ -174,7 +174,6 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     minHeight: MIN_TOUCH_TARGET.LARGE,
-    overflow: 'hidden',
   },
   cardContainer: {
     flexDirection: 'row',
