@@ -39,7 +39,6 @@ interface ReviewCardProps {
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
   onTap: () => void;
-  onLongPress?: () => void;
   isUpdating: boolean;
   isTransitioning: boolean;
   opacityStyle: AnimatedStyleProp<ViewStyle>;
@@ -52,7 +51,6 @@ const ReviewCard = memo(function ReviewCard({
   onSwipeLeft,
   onSwipeRight,
   onTap,
-  onLongPress,
   isUpdating,
   isTransitioning,
   opacityStyle,
@@ -143,24 +141,10 @@ const ReviewCard = memo(function ReviewCard({
     [isUpdating, isTransitioning, isAnimatingRef, onTap]
   );
 
-  // Create long press gesture - memoized
-  const longPressGesture = useMemo(
-    () =>
-      Gesture.LongPress()
-        .minDuration(500)
-        .enabled(!isUpdating && !isTransitioning && !isAnimatingRef.value)
-        .onEnd(() => {
-          if (!isUpdating && !isTransitioning && !isAnimatingRef.value && onLongPress) {
-            runOnJS(onLongPress)();
-          }
-        }),
-    [isUpdating, isTransitioning, isAnimatingRef, onLongPress]
-  );
-
   // Combine gestures - memoized
   const combinedGestures = useMemo(
-    () => Gesture.Exclusive(panGesture, Gesture.Race(tapGesture, longPressGesture)),
-    [panGesture, tapGesture, longPressGesture]
+    () => Gesture.Exclusive(panGesture, tapGesture),
+    [panGesture, tapGesture]
   );
 
   useEffect(() => {
@@ -174,10 +158,7 @@ const ReviewCard = memo(function ReviewCard({
 
   return (
     <GestureDetector gesture={combinedGestures}>
-      <Animated.View
-        style={[styles.swipeContainer, swipeContainerStyle]}
-        testID={testID}
-      >
+      <Animated.View style={[styles.swipeContainer, swipeContainerStyle]} testID={testID}>
         <Animated.View style={[styles.wordContainer, opacityStyle]}>
           <WordDisplay fontSize={fontSize} word={word} />
         </Animated.View>
