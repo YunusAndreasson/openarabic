@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 
 import type { Route, RoutePath } from '@/types/navigation.types';
 import { handleError } from '@/utils/errorHandling';
@@ -56,7 +56,11 @@ export const useNavigationWithDebounce = (
    * @param navigateOptions - Additional navigation options
    */
   const navigateTo = useCallback(
-    (route: NavigationRoute, callback?: () => void, navigateOptions?: NavigateToOptions) => {
+    (
+      route: NavigationRoute,
+      callback?: () => void,
+      navigateOptions?: NavigateToOptions,
+    ) => {
       if (isNavigating) return;
 
       if (timeoutRef.current) {
@@ -88,8 +92,13 @@ export const useNavigationWithDebounce = (
     [isNavigating, debounceDuration]
   );
 
-  return {
-    isNavigating,
-    navigateTo,
-  };
+  const result = useMemo(
+    () => ({
+      isNavigating,
+      navigateTo,
+    }),
+    [isNavigating, navigateTo],
+  );
+
+  return result;
 };
