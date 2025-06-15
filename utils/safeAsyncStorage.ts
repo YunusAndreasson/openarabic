@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { handleError } from './errorHandling';
 
 let hasLoggedWarning = false;
 
@@ -28,7 +29,9 @@ export const getSafeStorage = () => {
   }
 
   if (!hasLoggedWarning) {
-    console.warn('AsyncStorage unavailable, persistence disabled');
+    handleError(new Error('AsyncStorage unavailable, persistence disabled'), {
+      showToast: false,
+    });
     hasLoggedWarning = true;
   }
 
