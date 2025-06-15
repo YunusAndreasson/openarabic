@@ -1,13 +1,14 @@
 // Fix for expo-router v5.0.7 + React Native 0.79.3 splash screen compatibility issue
 import '@/utils/splashPolyfill';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import NetInfo from '@react-native-community/netinfo';
 import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider as NavigationThemeProvider,
 } from '@react-navigation/native';
 import * as Sentry from '@sentry/react-native';
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, onlineManager } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { useFonts } from 'expo-font';
 import { Stack, useNavigationContainerRef, useRouter } from 'expo-router';
@@ -57,8 +58,20 @@ const QUERY_DEFAULTS = {
   MAX_RETRY_DELAY: 30000, // 30 seconds
 } as const;
 
-// Optimized retry logic
-const createRetryFunction = (maxRetries: number) => (failureCount: number, error: unknown) => {
+// Sync React Query online status with device connectivity
+onlineManager.setEventListener(setOnline => {
+  return NetInfo.addEventListener(state => {
+    setOnline(Boolean(state.isConnected));
+  });
+});
+NetInfo.fetch().then(state => onlineManager.setOnline(Boolean(state.isConnected)));
+
+// Optimized retry logic that stops when offline
+const createRetryFunction = (maxRetries: number) => (
+  failureCount: number,
+  error: unknown
+) => {
+  if (!onlineManager.isOnline()) return false;
   // Don't retry on 4xx errors (client errors)
   if (error && typeof error === 'object' && 'status' in error) {
     const status = (error as { status: number }).status;
@@ -76,12 +89,14 @@ const queryClient = new QueryClient({
       refetchOnMount: 'always', // Always refetch on mount for fresh data
       refetchOnReconnect: true,
       refetchOnWindowFocus: false, // Disable for mobile
+      networkMode: 'online',
       retry: createRetryFunction(QUERY_DEFAULTS.MAX_RETRIES),
       retryDelay: attemptIndex =>
         Math.min(1000 * 2 ** attemptIndex, QUERY_DEFAULTS.MAX_RETRY_DELAY),
     },
     mutations: {
       retry: createRetryFunction(QUERY_DEFAULTS.MUTATION_MAX_RETRIES),
+      networkMode: 'online',
       gcTime: 0, // Don't cache mutation results
     },
   },
