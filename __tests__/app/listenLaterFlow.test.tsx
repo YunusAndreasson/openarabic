@@ -150,5 +150,25 @@ describe('listen later flow', () => {
 
     expect((global as any).handlePlayAllMock).not.toHaveBeenCalled();
   });
+
+  it('disables play all after removing last item', () => {
+    (global as any).readingListItems = [1];
+
+    const { queryByTestId, rerender } = render(<ListenScreen />);
+
+    // Remove the item using the toggle handler
+    (global as any).handleToggleReadingList(1, true);
+    (global as any).readingListItems = [];
+    rerender(<ListenScreen />);
+
+    const primaryButton = queryByTestId('primary-action-button');
+    if (primaryButton) {
+      expect(primaryButton.props.disabled).toBe(true);
+      fireEvent.press(primaryButton);
+    }
+
+    expect((global as any).handlePlayAllMock).not.toHaveBeenCalled();
+    expect((global as any).handleToggleReadingList).toHaveBeenCalledWith(1, true);
+  });
 });
 
