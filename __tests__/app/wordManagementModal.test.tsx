@@ -1,3 +1,4 @@
+import React from 'react';
 import type { ReactNode } from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { View } from 'react-native';
@@ -117,7 +118,6 @@ jest.mock('react-native-reanimated', () => ({
   },
 }));
 
-
 import ReviewHeader from '../../components/review/ReviewHeader';
 import WordManagementModal from '../../components/vocabulary/WordManagementModal';
 
@@ -224,4 +224,3 @@ describe('Word management modal flow', () => {
     expect(queryByTestId('word-action-hard')).toBeNull();
   });
 });
-

@@ -1,6 +1,6 @@
+import React from 'react';
 import { renderHook, act } from '@testing-library/react-native';
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import * as React from 'react';
 
 import { AUDIO_STATES } from '../../constants/audio';
 
@@ -61,13 +61,13 @@ describe('useAudioPlayer audioState', () => {
     (isPlaying, isLoaded, isLoading, expected) => {
       mockStatus = { playing: isPlaying, isLoaded } as any;
       reducerSpy.mockImplementation(() =>
-        originalUseReducer(() => createState(isLoading), createState(isLoading)),
+        originalUseReducer(() => createState(isLoading), createState(isLoading))
       );
 
       const { result } = renderHook(() => useAudioPlayer());
 
       expect(result.current.audioState).toBe(expected);
-    },
+    }
   );
 });
 
@@ -78,7 +78,7 @@ describe('prefetchTracks', () => {
 
   test('returns tracks with cached urls when available', async () => {
     (audioCache.getAudio as jest.Mock).mockImplementation(url =>
-      url.includes('two') ? Promise.reject(new Error('fail')) : Promise.resolve(`cached-${url}`),
+      url.includes('two') ? Promise.reject(new Error('fail')) : Promise.resolve(`cached-${url}`)
     );
 
     const tracks = [
@@ -121,9 +121,7 @@ describe('startEnhancedPlayback', () => {
     (audioCache.getAudio as jest.Mock).mockResolvedValue('cached-one.mp3');
 
     const { result } = renderHook(() => useAudioPlayer());
-    jest
-      .spyOn(result.current.actions, 'prefetchTracks')
-      .mockResolvedValue([]);
+    jest.spyOn(result.current.actions, 'prefetchTracks').mockResolvedValue([]);
 
     const tracks = [{ id: '1', audioUrl: 'one.mp3', title: 'one' }];
     let res: boolean | undefined;
@@ -158,4 +156,3 @@ describe('startEnhancedPlayback', () => {
     expect(mockAudioPlayer.play).not.toHaveBeenCalled();
   });
 });
-

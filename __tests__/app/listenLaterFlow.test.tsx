@@ -1,3 +1,4 @@
+import React from 'react';
 import { TouchableOpacity } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 
@@ -30,7 +31,7 @@ jest.mock('@/app/(tabs)/listen', () => {
   return {
     __esModule: true,
     default: () => {
-      const disabled = !((global as any).readingListItems?.length);
+      const disabled = !(global as any).readingListItems?.length;
       return (
         <>
           {disabled ? (
@@ -75,11 +76,9 @@ jest.mock('@/hooks/auth/useAuth', () => ({
 // Use global variable for toggle handler to satisfy ESM jest.mock restrictions
 (global as any).handleToggleReadingList = jest.fn();
 
-
 // Global mocks used by the stubbed Listen screen
 (global as any).stopPlaybackMock = jest.fn();
 (global as any).handlePlayAllMock = jest.fn();
-
 
 // Basic colors hook for ThemedButton and other components
 jest.mock('@/hooks/theme/useColors', () => {
@@ -170,4 +169,3 @@ describe('listen later flow', () => {
     expect((global as any).handleToggleReadingList).toHaveBeenCalledWith(1, true);
   });
 });
-

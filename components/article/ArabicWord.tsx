@@ -1,4 +1,13 @@
-import { memo, useCallback, useEffect, useState, useMemo, type RefObject, type ComponentRef } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useState,
+  useMemo,
+  type RefObject,
+  type ComponentRef,
+  Fragment,
+} from 'react';
 import type { LayoutRectangle, LayoutChangeEvent, ViewStyle, TextStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -197,7 +206,7 @@ function ArabicWordComponent({
   );
 
   return (
-    <>
+    <Fragment>
       <TouchableOpacity
         ref={wordRef}
         activeOpacity={0.7}
@@ -221,7 +230,7 @@ function ArabicWordComponent({
           onClose={handleTooltipClose}
         />
       ) : null}
-    </>
+    </Fragment>
   );
 }
 

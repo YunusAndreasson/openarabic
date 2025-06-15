@@ -1,5 +1,5 @@
 import { FlashList } from '@shopify/flash-list';
-import { useMemo, useCallback, useState, memo, type JSX, type ReactElement } from 'react';
+import { useMemo, useCallback, useState, memo, type JSX, type ReactElement, Fragment } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -257,7 +257,7 @@ export const ArticleContent = ({
   // Memoize the header component for better performance
   const headerComponent = useMemo(
     () => (
-      <>
+      <Fragment>
         <ParallaxHeader article={article} colors={colors} />
         <ArticleSummary summary={String(article.summary)} />
         {user && (
@@ -268,7 +268,7 @@ export const ArticleContent = ({
             onToggleReadingList={handleToggleReadingList}
           />
         )}
-      </>
+      </Fragment>
     ),
     [
       article,

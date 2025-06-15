@@ -1,3 +1,4 @@
+import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react-native';
 import { Text, TouchableOpacity } from 'react-native';
 
@@ -49,8 +50,7 @@ jest.mock('../../hooks/review', () => {
   const state = { queue: [...words], isComplete: false };
   let onCloseCallback: (() => void) | null = null;
 
-  const computeProgress = () =>
-    ((words.length - state.queue.length) / words.length) * 100;
+  const computeProgress = () => ((words.length - state.queue.length) / words.length) * 100;
 
   const updateCompletion = () => {
     if (state.queue.length === 0) {
@@ -116,7 +116,13 @@ jest.mock('../../hooks/review', () => {
   };
 });
 
-const { state, words, computeProgress, handleSwipeLeft, handleSwipeRight } = require('../../hooks/review');
+const {
+  state,
+  words,
+  computeProgress,
+  handleSwipeLeft,
+  handleSwipeRight,
+} = require('../../hooks/review');
 
 function DummyReview({ onClose }: { onClose: () => void }) {
   const review = useReview({ onClose });

@@ -1,9 +1,10 @@
+import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
 import ArticleCard from '../../components/ArticleCard';
 import { ArabicWord } from '../../components/article/ArabicWord';
-import VocabularyStatCards from '../../components/vocabulary/VocabularyStatCards';
+import { VocabularyStatCards } from '../../components/vocabulary/VocabularyStatCards';
 import CompletionScreen from '../../components/review/CompletionScreen';
 import ErrorMessage from '../../components/vocabulary/ErrorMessage';
 import { TouchableOpacity } from 'react-native';
@@ -17,9 +18,7 @@ jest.mock('expo-router', () => {
 jest.mock('expo-linear-gradient', () => {
   const React = require('react');
   return {
-    LinearGradient: ({ children }: { children: ReactNode }) => (
-      <>{children}</>
-    ),
+    LinearGradient: ({ children }: { children: ReactNode }) => <>{children}</>,
   };
 });
 
@@ -46,9 +45,7 @@ jest.mock('../../components/ArticleCard', () => {
   const { TouchableOpacity } = require('react-native');
   return {
     __esModule: true,
-    default: ({ onPress, testID }: any) => (
-      <TouchableOpacity onPress={onPress} testID={testID} />
-    ),
+    default: ({ onPress, testID }: any) => <TouchableOpacity onPress={onPress} testID={testID} />,
   };
 });
 
@@ -67,9 +64,7 @@ jest.mock('../../components/review/CompletionScreen', () => {
   const React = require('react');
   return {
     __esModule: true,
-    default: ({ testID = 'completion-screen' }: { testID?: string }) => (
-      <div testID={testID} />
-    ),
+    default: ({ testID = 'completion-screen' }: { testID?: string }) => <div testID={testID} />,
   };
 });
 
@@ -78,7 +73,7 @@ jest.mock('../../components/vocabulary/VocabularyStatCards', () => {
   const { TouchableOpacity } = require('react-native');
   return {
     __esModule: true,
-    default: ({ onStartReview }: { onStartReview: () => void }) => (
+    VocabularyStatCards: ({ onStartReview }: { onStartReview: () => void }) => (
       <TouchableOpacity onPress={onStartReview} testID="start-review-due" />
     ),
   };
@@ -104,7 +99,6 @@ jest.mock('../../constants/layout', () => {
 jest.mock('../../hooks/auth/useAuth', () => ({
   useAuth: () => ({ user: { id: '1' } }),
 }));
-
 
 // Mock hooks used by ReviewScreen
 jest.mock('../../hooks/review', () => {
@@ -184,12 +178,7 @@ describe('UI flow', () => {
     const onPress = jest.fn();
     const word = { id: 1, word_form: 'w', english: 'w', root_id: 1 } as any;
     const { getByTestId } = render(
-      <ArabicWord
-        word={word}
-        settings={{ fontScale: 1 }}
-        onPress={onPress}
-        testID="word-1"
-      />
+      <ArabicWord word={word} settings={{ fontScale: 1 }} onPress={onPress} testID="word-1" />
     );
 
     fireEvent(getByTestId('word-1'), 'longPress');
@@ -200,11 +189,7 @@ describe('UI flow', () => {
     const onStartReview = jest.fn();
     const studyWord = { root_id: 1 } as any;
     const { getByTestId } = render(
-      <VocabularyStatCards
-        studyWords={[studyWord]}
-        dueWords={1}
-        onStartReview={onStartReview}
-      />
+      <VocabularyStatCards studyWords={[studyWord]} dueWords={1} onStartReview={onStartReview} />
     );
 
     fireEvent.press(getByTestId('start-review-due'));
@@ -262,4 +247,3 @@ describe('UI flow', () => {
     expect(getByTestId('completion-screen')).toBeTruthy();
   });
 });
-
