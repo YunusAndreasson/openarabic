@@ -44,7 +44,7 @@ const SessionTypeModal = memo(
     const translateY = useSharedValue(0);
     const opacity = useSharedValue(1);
 
-    // Reset animation values when modal visibility changes
+    // Reset animation values when modal visibility changes and cleanup on unmount
     useEffect(() => {
       if (visible) {
         isClosingRef.current = false;
@@ -54,18 +54,14 @@ const SessionTypeModal = memo(
         opacity.value = 1;
       } else {
         isClosingRef.current = false;
-        translateY.value = 0;
-        opacity.value = 1;
       }
-    }, [visible, translateY, opacity]);
 
-    // Cleanup animations on unmount
-    useEffect(() => {
+      // Cleanup function for unmount
       return () => {
         cancelAnimation(translateY);
         cancelAnimation(opacity);
       };
-    }, [translateY, opacity]);
+    }, [visible, translateY, opacity]);
 
     // Safe close handler
     const handleClose = useCallback(() => {
@@ -135,8 +131,8 @@ const SessionTypeModal = memo(
       >
         <Animated.View
           style={styles.overlay}
-          entering={FadeIn.duration(200)}
-          exiting={FadeOut.duration(150)}
+          entering={FadeIn.duration(TIMING_CONFIG.FAST.duration)}
+          exiting={FadeOut.duration(TIMING_CONFIG.FAST.duration)}
         >
           <BlurView
             intensity={20}
@@ -153,8 +149,8 @@ const SessionTypeModal = memo(
                 { backgroundColor: colors.background },
                 animatedModalStyle,
               ]}
-              entering={SlideInDown.duration(250).damping(15)}
-              exiting={SlideOutDown.duration(200)}
+              entering={SlideInDown.duration(TIMING_CONFIG.MEDIUM.duration).damping(15)}
+              exiting={SlideOutDown.duration(TIMING_CONFIG.FAST.duration)}
             >
               <View style={[styles.closeIndicator, { backgroundColor: colors.modalIndicator }]} />
 
@@ -181,11 +177,7 @@ const SessionTypeModal = memo(
                     <ThemedText style={styles.optionTitle} type="body" weight="semibold">
                       Visual
                     </ThemedText>
-                    <ThemedText
-                      colorName="secondaryText"
-                      style={styles.optionDescription}
-                      type="caption"
-                    >
+                    <ThemedText colorName="secondaryText" type="caption">
                       Tap and swipe
                     </ThemedText>
                   </View>
@@ -207,11 +199,7 @@ const SessionTypeModal = memo(
                     <ThemedText style={styles.optionTitle} type="body" weight="semibold">
                       Audio
                     </ThemedText>
-                    <ThemedText
-                      colorName="secondaryText"
-                      style={styles.optionDescription}
-                      type="caption"
-                    >
+                    <ThemedText colorName="secondaryText" type="caption">
                       Listen while multitasking
                     </ThemedText>
                   </View>
@@ -252,8 +240,6 @@ const styles = StyleSheet.create({
     paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
     marginBottom: LAYOUT.SPACING.TINY,
   },
   optionsContainer: {
@@ -280,12 +266,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   optionTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     marginBottom: LAYOUT.SPACING.TINY,
-  },
-  optionDescription: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
   },
 });
 
