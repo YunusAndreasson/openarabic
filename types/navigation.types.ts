@@ -49,12 +49,12 @@ export type RouteParams = {
   '/(tabs)/read/filter': FilterParams;
   '/(tabs)/read/filterModal': FiltersParams;
   '/practice/review': ReviewParams;
-  '/practice/practice': ListenParams;
+  '/practice/audio': ListenParams;
   '/': Record<string, never>;
   '/(tabs)': Record<string, never>;
+  '/(tabs)/practice': Record<string, never>;
   '/(tabs)/listen': Record<string, never>;
   '/settings': Record<string, never>;
-  '/practice': Record<string, never>;
   '/insights': Record<string, never>;
   '/insights/info/[type]': InsightsInfoParams;
 };

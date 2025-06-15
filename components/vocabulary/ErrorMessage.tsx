@@ -25,7 +25,7 @@ const ErrorMessage = memo(
       let route: RoutePath = '/(tabs)';
 
       if (screenName === 'practice') {
-        route = '/practice' as RoutePath;
+        route = '/(tabs)/practice' as RoutePath;
       } else if (screenName === 'account') {
         route = '/(tabs)/read/account' as RoutePath;
       }
