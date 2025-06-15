@@ -103,10 +103,10 @@ export const TimePicker = memo(
     // Memoize dynamic styles to prevent recalculation
     const dynamicStyles = useMemo(
       () => ({
-        bottomSheet: [styles.bottomSheet, { backgroundColor: colors.card }],
+        bottomSheet: [styles.bottomSheet, { backgroundColor: colors.elevation1 }],
         indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
       }),
-      [colors.card, colors.modalIndicator]
+      [colors.elevation1, colors.modalIndicator]
     );
 
     // Android: Show native picker directly

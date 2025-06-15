@@ -201,17 +201,11 @@ const styles = StyleSheet.create({
     top: -LAYOUT.SPACING.LARGE,
   },
   secondaryButton: {
-    elevation: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
-    shadowOpacity: 0.15, // LAYOUT.ELEVATION.SUBTLE equivalent
-    shadowRadius: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
-    shadowOffset: { width: 0, height: 1 }, // LAYOUT.ELEVATION.SUBTLE equivalent
+    ...LAYOUT.ELEVATION.SUBTLE,
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
   },
   timerButton: {
-    elevation: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
-    shadowOpacity: 0.15, // LAYOUT.ELEVATION.SUBTLE equivalent
-    shadowRadius: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
-    shadowOffset: { width: 0, height: 1 }, // LAYOUT.ELEVATION.SUBTLE equivalent
+    ...LAYOUT.ELEVATION.SUBTLE,
     alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: 1,

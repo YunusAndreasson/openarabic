@@ -54,7 +54,7 @@ const SessionTypeModal = memo(
     // Memoize dynamic styles to prevent recalculation
     const dynamicStyles = useMemo(
       () => ({
-        background: [styles.background, { backgroundColor: colors.card }],
+        background: [styles.background, { backgroundColor: colors.elevation1 }],
         indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
         optionCard: { backgroundColor: colors.elevation1 },
         iconContainer: { backgroundColor: colors.tintBackground },

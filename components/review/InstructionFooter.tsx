@@ -59,14 +59,10 @@ const InstructionFooter: FC<InstructionFooterProps> = ({ style }) => {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    backgroundColor: colors.elevation1,
+    backgroundColor: colors.elevation2,
     opacity: 0.7,
-    ...Platform.select({
-      ios: {
-        shadowColor: colors.shadow,
-        shadowOpacity: LAYOUT.OPACITY.SUBTLE,
-      },
-    }),
+    ...LAYOUT.ELEVATION.SUBTLE,
+    shadowColor: colors.shadow,
   };
 
   return (
@@ -122,10 +118,8 @@ const styles = StyleSheet.create({
     borderRadius: ICON_SIZE / 2,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 4, // LAYOUT.ELEVATION.SMALL equivalent
-    shadowOpacity: 0.25, // LAYOUT.ELEVATION.SMALL equivalent
-    shadowRadius: 6, // LAYOUT.ELEVATION.SMALL equivalent
-    shadowOffset: { width: 0, height: 2 }, // LAYOUT.ELEVATION.SMALL equivalent
+    ...LAYOUT.ELEVATION.SMALL,
+    shadowColor: colors.shadow,
   } as ViewStyle,
   instructionItem: {
     flexDirection: 'row',
