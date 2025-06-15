@@ -18,6 +18,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 
 import figtreeFont from '@/assets/fonts/Figtree.ttf';
 import madinaFont from '@/assets/fonts/Madina.otf';
@@ -40,10 +41,7 @@ import { PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
 
 // Temporary mock analytics until service is fixed
 const analytics = {
-  identify: async (
-    _userId: string,
-    _properties?: Record<string, unknown>
-  ) => {},
+  identify: async (_userId: string, _properties?: Record<string, unknown>) => {},
   reset: async () => {},
 };
 
@@ -339,11 +337,13 @@ export default Sentry.wrap(function RootLayout() {
           <PersistQueryClientProvider client={queryClient} persistOptions={PERSISTENCE_OPTIONS}>
             <AuthProvider>
               <SafeAreaProvider>
-                <ToastProvider>
-                  <Sentry.ErrorBoundary fallback={({ error }) => <ErrorFallback error={error} />}>
-                    <AppContent />
-                  </Sentry.ErrorBoundary>
-                </ToastProvider>
+                <BottomSheetModalProvider>
+                  <ToastProvider>
+                    <Sentry.ErrorBoundary fallback={({ error }) => <ErrorFallback error={error} />}>
+                      <AppContent />
+                    </Sentry.ErrorBoundary>
+                  </ToastProvider>
+                </BottomSheetModalProvider>
               </SafeAreaProvider>
             </AuthProvider>
           </PersistQueryClientProvider>

@@ -103,6 +103,33 @@ const WordManagementModal = memo(
       ]
     );
 
+    // Memoize backdrop component to prevent re-renders
+    const backdropComponent = useCallback(
+      (props: any) => (
+        <View
+          style={[props.style, [styles.backdrop, { backgroundColor: colors.backdropOverlay }]]}
+          onTouchStart={onClose}
+          pointerEvents="auto"
+        />
+      ),
+      [colors.backdropOverlay, onClose]
+    );
+
+    // Memoize dynamic styles to prevent recalculation
+    const dynamicStyles = useMemo(
+      () => ({
+        background: [styles.background, { backgroundColor: colors.card }],
+        indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
+        wordHeader: [styles.wordHeader, { borderBottomColor: colors.border }],
+        actionCard: { backgroundColor: colors.elevation1 },
+        destructiveBorder: {
+          borderColor: colors.error,
+          borderWidth: StyleSheet.hairlineWidth,
+        },
+      }),
+      [colors.card, colors.modalIndicator, colors.border, colors.elevation1, colors.error]
+    );
+
     // Don't render if not visible or no word
     if (!visible || !word) return null;
 
@@ -118,20 +145,15 @@ const WordManagementModal = memo(
         enableOverDrag={false}
         enableDynamicSizing={false}
         animateOnMount={true}
+        activeOffsetY={[-10, 10]}
         onClose={onClose}
-        backgroundStyle={[styles.background, { backgroundColor: colors.card }]}
-        handleIndicatorStyle={[styles.indicator, { backgroundColor: colors.modalIndicator }]}
-        backdropComponent={({ style }) => (
-          <View
-            style={[style, [styles.backdrop, { backgroundColor: colors.backdropOverlay }]]}
-            onTouchStart={onClose}
-            pointerEvents="auto"
-          />
-        )}
+        backgroundStyle={dynamicStyles.background}
+        handleIndicatorStyle={dynamicStyles.indicator}
+        backdropComponent={backdropComponent}
       >
         <BottomSheetView style={styles.content}>
           {/* Word Header */}
-          <View style={[styles.wordHeader, { borderBottomColor: colors.border }]}>
+          <View style={dynamicStyles.wordHeader}>
             <ThemedText style={styles.wordText} type="heading2" weight="bold">
               {wordText}
             </ThemedText>
@@ -153,11 +175,8 @@ const WordManagementModal = memo(
                 testID={`word-action-${action.id}`}
                 style={[
                   styles.actionCard,
-                  { backgroundColor: colors.elevation1 },
-                  action.destructive && {
-                    borderColor: colors.error,
-                    borderWidth: StyleSheet.hairlineWidth,
-                  },
+                  dynamicStyles.actionCard,
+                  action.destructive && dynamicStyles.destructiveBorder,
                 ]}
                 onPress={() => handleActionPress(action)}
               >

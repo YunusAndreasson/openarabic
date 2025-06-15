@@ -1,19 +1,14 @@
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import type { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import React, { memo, useState, useCallback, useMemo } from 'react';
-import type { ViewStyle } from 'react-native';
-import { StyleSheet, View, Modal, TouchableWithoutFeedback, Platform } from 'react-native';
-import Animated from 'react-native-reanimated';
+import React, { memo, useState, useCallback, useMemo, useRef } from 'react';
+import { StyleSheet, View, Platform } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
-import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
 import { ThemedButton } from './ThemedButton';
 import { ThemedText } from './ThemedText';
-
-const SPRING_CONFIG = { damping: 20, stiffness: 300 };
 
 export interface TimePickerProps {
   isVisible: boolean;
@@ -21,20 +16,12 @@ export interface TimePickerProps {
   onTimeSet: (hour: number, minute: number) => void;
   initialHour?: number;
   initialMinute?: number;
-  title?: string;
 }
 
 export const TimePicker = memo(
-  ({
-    isVisible,
-    onClose,
-    onTimeSet,
-    initialHour = 12,
-    initialMinute = 0,
-    title = 'Set Time',
-  }: TimePickerProps) => {
+  ({ isVisible, onClose, onTimeSet, initialHour = 12, initialMinute = 0 }: TimePickerProps) => {
     const colors = useColors();
-    const isDarkMode = useIsDarkMode();
+    const bottomSheetRef = useRef<BottomSheet>(null);
 
     // Create initial date from hour and minute
     const initialDate = useMemo(() => {
@@ -46,61 +33,20 @@ export const TimePicker = memo(
     const [selectedDate, setSelectedDate] = useState(initialDate);
     const [showPicker, setShowPicker] = useState(false);
 
-    // Animation hooks
-    const {
-      animatedStyle: backdropStyle,
-      startAnimation: fadeBackdropIn,
-      reverseAnimation: fadeBackdropOut,
-    } = useOpacityAnimation({ initialOpacity: 0 });
+    // Calculate snap point - use numeric value like SessionTypeModal
+    const snapPoints = useMemo(() => [500], []);
 
-    const {
-      animatedStyle: scaleStyle,
-      startAnimation: scaleIn,
-      reverseAnimation: scaleOut,
-    } = useTransformAnimation({
-      type: 'scale',
-      initialValue: 0.9,
-      targetValue: 1,
-      useSpring: true,
-      damping: SPRING_CONFIG.damping,
-      stiffness: SPRING_CONFIG.stiffness,
-    });
-
-    const {
-      animatedStyle: translateStyle,
-      startAnimation: translateIn,
-      reverseAnimation: translateOut,
-    } = useTransformAnimation({
-      type: 'translateY',
-      initialValue: 50,
-      targetValue: 0,
-      useSpring: true,
-      damping: SPRING_CONFIG.damping,
-      stiffness: SPRING_CONFIG.stiffness,
-    });
-
-    const modalStyle = [scaleStyle, translateStyle];
-
-    // Animation functions
-    const showModal = useCallback(() => {
-      fadeBackdropIn();
-      scaleIn();
-      translateIn();
-    }, [fadeBackdropIn, scaleIn, translateIn]);
-
-    const hideModal = useCallback(() => {
-      fadeBackdropOut();
-      scaleOut();
-      translateOut(onClose);
-    }, [fadeBackdropOut, scaleOut, translateOut, onClose]);
-
-    // Show modal when visible
+    // Show/hide modal based on isVisible prop
     React.useEffect(() => {
       if (isVisible) {
-        setShowPicker(Platform.OS === 'ios');
-        showModal();
+        setShowPicker(Platform.OS === 'android');
+        if (Platform.OS === 'ios') {
+          bottomSheetRef.current?.expand();
+        }
+      } else {
+        bottomSheetRef.current?.close();
       }
-    }, [isVisible, showModal]);
+    }, [isVisible]);
 
     const extractTimeAndSet = useCallback(
       (date: Date) => {
@@ -120,22 +66,18 @@ export const TimePicker = memo(
             setSelectedDate(date);
             extractTimeAndSet(date);
           }
-          hideModal();
+          onClose();
         } else if (date) {
           setSelectedDate(date);
         }
       },
-      [extractTimeAndSet, hideModal]
+      [extractTimeAndSet, onClose]
     );
 
     const handleConfirm = useCallback(() => {
       extractTimeAndSet(selectedDate);
-      hideModal();
-    }, [selectedDate, extractTimeAndSet, hideModal]);
-
-    const handleCancel = useCallback(() => {
-      hideModal();
-    }, [hideModal]);
+      onClose();
+    }, [selectedDate, extractTimeAndSet, onClose]);
 
     const formatTime = useCallback((date: Date) => {
       const hour = date.getHours();
@@ -146,7 +88,26 @@ export const TimePicker = memo(
       return `${displayHour}:${displayMinute} ${period}`;
     }, []);
 
-    if (!isVisible) return null;
+    // Memoize backdrop component to prevent re-renders
+    const backdropComponent = useCallback(
+      (props: any) => (
+        <View
+          style={[props.style, [styles.backdrop, { backgroundColor: colors.backdropOverlay }]]}
+          onTouchStart={onClose}
+          pointerEvents="auto"
+        />
+      ),
+      [colors.backdropOverlay, onClose]
+    );
+
+    // Memoize dynamic styles to prevent recalculation
+    const dynamicStyles = useMemo(
+      () => ({
+        bottomSheet: [styles.bottomSheet, { backgroundColor: colors.card }],
+        indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
+      }),
+      [colors.card, colors.modalIndicator]
+    );
 
     // Android: Show native picker directly
     if (Platform.OS === 'android' && showPicker) {
@@ -161,91 +122,58 @@ export const TimePicker = memo(
       );
     }
 
-    // iOS: Show custom modal with native picker
+    // Only render on iOS and when visible
+    if (Platform.OS !== 'ios' || !isVisible) {
+      return null;
+    }
+
+    // iOS: Show bottom sheet with native picker
     return (
-      <Modal
-        statusBarTranslucent
-        transparent
-        animationType="none"
-        visible={isVisible}
-        onRequestClose={handleCancel}
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={0}
+        snapPoints={snapPoints}
+        enablePanDownToClose
+        enableOverDrag={false}
+        enableDynamicSizing={false}
+        animateOnMount={true}
+        activeOffsetY={[-10, 10]}
+        onClose={onClose}
+        backgroundStyle={dynamicStyles.bottomSheet}
+        handleIndicatorStyle={dynamicStyles.indicator}
+        backdropComponent={backdropComponent}
       >
-        <TouchableWithoutFeedback onPress={handleCancel}>
-          <Animated.View
-            style={[
-              styles.backdrop,
-              backdropStyle as ViewStyle,
-              { backgroundColor: colors.modalOverlay },
-            ]}
-          >
-            <TouchableWithoutFeedback>
-              <Animated.View style={[styles.modalContainer, modalStyle]}>
-                <View
-                  style={[
-                    styles.modal,
-                    {
-                      backgroundColor: colors.card,
-                      shadowColor: colors.shadow,
-                    },
-                  ]}
-                >
-                  {/* Header */}
-                  <View style={styles.header}>
-                    <ThemedText
-                      colorName="headingText"
-                      style={styles.title}
-                      type="heading3"
-                      weight="bold"
-                    >
-                      {title}
-                    </ThemedText>
-                  </View>
+        <BottomSheetView style={styles.container}>
+          {/* Time Display */}
+          <View style={styles.timeDisplay}>
+            <ThemedText
+              colorName="subtitleText"
+              style={styles.timeText}
+              type="heading1"
+              weight="bold"
+            >
+              {formatTime(selectedDate)}
+            </ThemedText>
+          </View>
 
-                  {/* Time Display */}
-                  <View style={styles.timeDisplay}>
-                    <ThemedText
-                      colorName="subtitleText"
-                      style={styles.timeText}
-                      type="heading1"
-                      weight="bold"
-                    >
-                      {formatTime(selectedDate)}
-                    </ThemedText>
-                  </View>
+          {/* Native Time Picker */}
+          <View style={styles.pickerContainer}>
+            <DateTimePicker
+              value={selectedDate}
+              mode="time"
+              is24Hour={false}
+              display="spinner"
+              onChange={handleDateChange}
+              style={styles.picker}
+            />
+          </View>
 
-                  {/* Native Time Picker */}
-                  <View style={styles.pickerContainer}>
-                    <DateTimePicker
-                      value={selectedDate}
-                      mode="time"
-                      is24Hour={false}
-                      display="spinner"
-                      onChange={handleDateChange}
-                      style={styles.picker}
-                      themeVariant={isDarkMode ? 'dark' : 'light'}
-                    />
-                  </View>
-
-                  {/* Actions */}
-                  <View style={styles.actions}>
-                    <ThemedButton
-                      style={styles.actionButton}
-                      title="Cancel"
-                      variant="outlined"
-                      onPress={handleCancel}
-                    />
-                    <ThemedButton
-                      style={styles.actionButton}
-                      title="Set Time"
-                      onPress={handleConfirm}
-                    />
-                  </View>
-                </View>
-              </Animated.View>
-            </TouchableWithoutFeedback>
-          </Animated.View>
-        </TouchableWithoutFeedback>
-      </Modal>
+          {/* Actions */}
+          <View style={styles.actions}>
+            <ThemedButton title="Set Time" onPress={handleConfirm} />
+          </View>
+        </BottomSheetView>
+      </BottomSheet>
     );
   }
 );
@@ -253,38 +181,25 @@ export const TimePicker = memo(
 TimePicker.displayName = 'TimePicker';
 
 const styles = StyleSheet.create({
-  actionButton: {
-    flex: 1,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: LAYOUT.SPACING.MEDIUM,
-    justifyContent: 'space-between',
-    marginTop: LAYOUT.SPACING.LARGE,
+  bottomSheet: {
+    ...LAYOUT.ELEVATION.LARGE,
+    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   backdrop: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
+    // backgroundColor handled dynamically via colors.backdropOverlay
+  },
+  indicator: {
+    width: 32,
+    height: 4,
+  },
+  container: {
+    paddingBottom: LAYOUT.SPACING.LARGE,
+  },
+
+  actions: {
     paddingHorizontal: LAYOUT.SPACING.LARGE,
-  },
-  header: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: LAYOUT.SPACING.LARGE,
-  },
-  modal: {
-    elevation: 12, // LAYOUT.ELEVATION.LARGE equivalent
-    shadowOpacity: 0.35, // LAYOUT.ELEVATION.LARGE equivalent
-    shadowRadius: 14, // LAYOUT.ELEVATION.LARGE equivalent
-    shadowOffset: { width: 0, height: 6 }, // LAYOUT.ELEVATION.LARGE equivalent
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    padding: LAYOUT.SPACING.LARGE,
-    width: '100%',
-  },
-  modalContainer: {
-    maxWidth: 400,
-    width: '100%',
+    marginTop: LAYOUT.SPACING.LARGE,
   },
   picker: {
     height: 200,
@@ -293,6 +208,9 @@ const styles = StyleSheet.create({
   pickerContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
     marginTop: LAYOUT.SPACING.MEDIUM,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
   },
   timeDisplay: {
     alignItems: 'center',
@@ -302,8 +220,5 @@ const styles = StyleSheet.create({
   timeText: {
     fontSize: 48,
     lineHeight: 56,
-  },
-  title: {
-    textAlign: 'center',
   },
 });

@@ -40,6 +40,29 @@ const SessionTypeModal = memo(
       onClose();
     }, [onClose]);
 
+    // Memoize backdrop component to prevent re-renders
+    const backdropComponent = useCallback(
+      (props: any) => (
+        <View
+          style={[props.style, [styles.backdrop, { backgroundColor: colors.backdropOverlay }]]}
+          onTouchStart={handleSheetClose}
+          pointerEvents="auto"
+        />
+      ),
+      [colors.backdropOverlay, handleSheetClose]
+    );
+
+    // Memoize dynamic styles to prevent recalculation
+    const dynamicStyles = useMemo(
+      () => ({
+        background: [styles.background, { backgroundColor: colors.card }],
+        indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
+        optionCard: { backgroundColor: colors.elevation1 },
+        iconContainer: { backgroundColor: colors.tintBackground },
+      }),
+      [colors.card, colors.modalIndicator, colors.elevation1, colors.tintBackground]
+    );
+
     // Don't render if not visible (optimization)
     if (!visible) return null;
 
@@ -52,16 +75,11 @@ const SessionTypeModal = memo(
         enableOverDrag={false}
         enableDynamicSizing={false}
         animateOnMount={true}
+        activeOffsetY={[-10, 10]}
         onClose={handleSheetClose}
-        backgroundStyle={[styles.background, { backgroundColor: colors.card }]}
-        handleIndicatorStyle={[styles.indicator, { backgroundColor: colors.modalIndicator }]}
-        backdropComponent={({ style }) => (
-          <View
-            style={[style, [styles.backdrop, { backgroundColor: colors.backdropOverlay }]]}
-            onTouchStart={handleSheetClose}
-            pointerEvents="auto"
-          />
-        )}
+        backgroundStyle={dynamicStyles.background}
+        handleIndicatorStyle={dynamicStyles.indicator}
+        backdropComponent={backdropComponent}
       >
         <BottomSheetView style={styles.content}>
           <View style={styles.header}>
@@ -72,10 +90,10 @@ const SessionTypeModal = memo(
 
           <View style={styles.optionsContainer}>
             <TouchableOpacity
-              style={[styles.optionCard, { backgroundColor: colors.elevation1 }]}
+              style={[styles.optionCard, dynamicStyles.optionCard]}
               onPress={onStartVisual}
             >
-              <View style={[styles.iconContainer, { backgroundColor: colors.tintBackground }]}>
+              <View style={[styles.iconContainer, dynamicStyles.iconContainer]}>
                 <Ionicons name="eye" size={24} color={colors.tint} />
               </View>
               <View style={styles.optionContent}>
@@ -89,10 +107,10 @@ const SessionTypeModal = memo(
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.optionCard, { backgroundColor: colors.elevation1 }]}
+              style={[styles.optionCard, dynamicStyles.optionCard]}
               onPress={onStartAudio}
             >
-              <View style={[styles.iconContainer, { backgroundColor: colors.tintBackground }]}>
+              <View style={[styles.iconContainer, dynamicStyles.iconContainer]}>
                 <Ionicons name="ear" size={24} color={colors.tint} />
               </View>
               <View style={styles.optionContent}>
