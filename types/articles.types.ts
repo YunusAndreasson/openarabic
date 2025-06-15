@@ -26,13 +26,13 @@ export interface ArticleSentence extends Tables<'article_sentences'> {
  */
 export interface Article extends Tables<'articles'> {
   /** Sentences that make up this article, with word-level data */
-  article_sentences?: ArticleSentence[];
+  article_sentences: ArticleSentence[];
   /** Category information for the article */
-  category?: Category;
+  category: Category;
   /** Author information for the article */
-  author: Author | null;
+  author: Author;
   /** URL to the audio recording for the article */
-  audio_url: string | null;
+  audio_url: string;
   /** Image placeholders for optimized loading */
   placeholder?: {
     /** BlurHash encoding for progressive image loading */

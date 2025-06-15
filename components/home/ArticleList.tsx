@@ -38,12 +38,12 @@ const ArticleItem = memo(({ item, onPress }: ArticleItemProps) => {
 
   return (
     <ArticleCard
-      author={item.author?.name || 'Author'}
-      category={item.category?.name || 'General'}
-      categoryForDisplay={item.category?.name || 'General'}
-      imageUrl={item.image_url || 'https://picsum.photos/800/400'}
+      author={item.author.name}
+      category={item.category.name}
+      categoryForDisplay={item.category.name}
+      imageUrl={String(item.image_url)}
       style={[styles.articleCard, isPending && styles.pendingCard]}
-      summary={item.summary || 'No summary available'}
+      summary={String(item.summary)}
       title={item.title}
       onPress={handlePress}
       testID={`article-${item.id}`}

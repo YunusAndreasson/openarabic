@@ -21,10 +21,14 @@ import Pill from './Pill';
 import { ThemedText } from './ThemedText';
 
 // Simplified interface specifically for ArticleCard (always article variant)
-type ArticleCardProps = Omit<
-  BaseArticleCardProps,
-  'variant' | 'placeholder' | 'dueWordCount'
->;
+type ArticleCardProps = Omit<BaseArticleCardProps, 'variant' | 'placeholder' | 'dueWordCount'> & {
+  author: string;
+  category: string;
+  categoryForDisplay: string;
+  imageUrl: string;
+  summary: string;
+  title: string;
+};
 
 const GOLDEN_RATIO_ADJUSTED = 1.5;
 

@@ -16,8 +16,8 @@ export interface ArticleSentenceRow extends Tables<'article_sentences'> {
 
 /** Raw article with related category, author and sentences */
 export interface ArticleRow extends Tables<'articles'> {
-  category?: Tables<'categories'> | null;
-  author?: AuthorRow | null;
-  article_sentences?: ArticleSentenceRow[];
-  audio_url: string | null;
+  category: Tables<'categories'>;
+  author: AuthorRow;
+  article_sentences: ArticleSentenceRow[];
+  audio_url: string;
 }

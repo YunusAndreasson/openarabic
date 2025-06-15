@@ -42,12 +42,12 @@ const FeaturedSection: React.FC<FeaturedSectionProps> = ({ article, onPress }) =
   return (
     <View style={styles.container}>
       <ArticleCard
-        author={article.author?.name || 'Author'}
+        author={article.author.name}
         category="RECOMMENDED"
-        categoryForDisplay={article.category?.name || 'General'}
-        imageUrl={article.image_url || 'https://picsum.photos/800/400'}
+        categoryForDisplay={article.category.name}
+        imageUrl={String(article.image_url)}
         style={styles.cardStyle}
-        summary={article.summary || 'No summary available'}
+        summary={String(article.summary)}
         title={article.title}
         onPress={handlePress}
       />

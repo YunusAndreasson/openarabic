@@ -13,13 +13,7 @@ interface ListArticleItemProps {
 const ListArticleItem = memo(({ article, onPress }: ListArticleItemProps): JSX.Element => {
   const handlePress = useCallback(() => onPress(article), [onPress, article]);
 
-  return (
-    <ArticleCard
-      author={article.author?.name || 'Author'}
-      title={article.title}
-      onPress={handlePress}
-    />
-  );
+  return <ArticleCard author={article.author.name} title={article.title} onPress={handlePress} />;
 });
 
 ListArticleItem.displayName = 'ListArticleItem';

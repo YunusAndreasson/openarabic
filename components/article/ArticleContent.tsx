@@ -266,7 +266,7 @@ export const ArticleContent = ({
     () => (
       <>
         <ParallaxHeader article={article} colors={colors} />
-        {article.summary && <ArticleSummary summary={article.summary} />}
+        <ArticleSummary summary={String(article.summary)} />
         {user && (
           <AudioControlsButton
             articleId={articleId}

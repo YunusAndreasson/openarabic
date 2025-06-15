@@ -56,11 +56,11 @@ export interface ArticleCardProps extends BaseCardProps, BaseOptionalPressablePr
   /** Category text to display in a pill on the card */
   category: string;
   /** Category to display with author (separate from pill) */
-  categoryForDisplay?: string;
+  categoryForDisplay: string;
   /** Author name to display in the card */
-  author?: string;
+  author: string;
   /** Summary text to display in the card */
-  summary?: string;
+  summary: string;
   /** Placeholder image using blurhash or thumbhash */
   placeholder?: { blurhash?: string; thumbhash?: string };
   /** Number of words due for review in this article */
@@ -77,7 +77,6 @@ export interface CompactCardProps extends BaseCardProps, BaseOptionalPressablePr
   children?: React.ReactNode;
   /** Article data to display in the card */
   article: Article;
-
 }
 
 /**

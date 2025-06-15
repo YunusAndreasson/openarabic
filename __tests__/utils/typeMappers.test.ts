@@ -62,15 +62,24 @@ describe('typeMappers', () => {
           sentence_words: 'bad',
         },
       ],
+      created_at: '',
+      image_url: '',
+      difficulty_level: 1,
+      category_id: 1,
+      author_id: 1,
+      summary: '',
+      audio_url: 'audio.mp3',
+      category: { id: 1, name: 'cat' },
+      author: { id: 1, name: 'auth' },
     } as any;
 
     const mapped = mapToArticle(invalidArticle);
 
     expect(mapped.article_sentences?.[0].sentence_words).toEqual([]);
     expect(mapped.article_sentences?.[0].position).toBeUndefined();
-    expect(mapped.audio_url).toBeNull();
-    expect(mapped.author).toBeNull();
-    expect(mapped.category).toBeUndefined();
+    expect(mapped.audio_url).toBe('audio.mp3');
+    expect(mapped.author).toEqual({ id: 1, name: 'auth' });
+    expect(mapped.category).toEqual({ id: 1, name: 'cat' });
   });
 
   it('maps arrays of records and handles invalid input', () => {
