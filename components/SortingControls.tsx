@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import React, { memo, useState, useEffect, useCallback } from 'react';
+import React, { memo, useState, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   View,
@@ -57,6 +57,19 @@ function SortingControls<T extends string>({
     },
     [currentSort, internalDirection, onSortChange]
   );
+
+  const getSortHandler = useCallback(
+    (key: T) => () => handleSortChange(key),
+    [handleSortChange]
+  );
+
+  const sortHandlers = useMemo(() => {
+    const handlers: Record<T, () => void> = {} as Record<T, () => void>;
+    options.forEach(option => {
+      handlers[option.key] = getSortHandler(option.key);
+    });
+    return handlers;
+  }, [options, getSortHandler]);
 
   return (
     <BaseCard shadowSize="small" style={[styles.sortCard, style]}>
@@ -118,7 +131,7 @@ function SortingControls<T extends string>({
                     shadowColor: colors.tint,
                   },
                 ]}
-                onSelect={() => handleSortChange(option.key)}
+                onSelect={sortHandlers[option.key]}
               />
             );
           })}
