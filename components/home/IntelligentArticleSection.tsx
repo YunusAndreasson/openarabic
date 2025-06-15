@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 
 import FeaturedSection from '@/components/home/FeaturedSection';
 import { useIntelligentArticleSelection } from '@/hooks/articles/useIntelligentArticleSelection';
@@ -12,7 +12,7 @@ interface IntelligentArticleSectionProps {
   onArticlePress: (article: Article) => void;
 }
 
-export default function IntelligentArticleSection({
+const IntelligentArticleSection = memo(function IntelligentArticleSection({
   articlesData,
   refreshKey,
   onArticlePress,
@@ -59,4 +59,6 @@ export default function IntelligentArticleSection({
   }
 
   return <FeaturedSection article={currentArticle.article} onPress={onArticlePress} />;
-}
+});
+
+export default IntelligentArticleSection;
