@@ -99,7 +99,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
     <View style={[styles.contentContainer, contentStyle]}>
       <Animated.View
         entering={ZoomIn.delay(100).duration(400).springify()}
-        style={[styles.iconContainer, iconAnimatedStyle as unknown as ViewStyle]}
+        style={[styles.iconContainer, ...iconAnimatedStyle]}
       >
         <Ionicons color={colors.completionSuccess} name={iconName} size={iconSize} />
       </Animated.View>
