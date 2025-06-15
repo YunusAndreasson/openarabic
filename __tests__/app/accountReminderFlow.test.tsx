@@ -21,14 +21,13 @@ jest.mock('@/hooks/account', () => {
       handleSocialLink: jest.fn(),
       handleLearningMethodPress: jest.fn(),
       handleClassicalTextsPress: jest.fn(),
+      handleFontSelectorPress: jest.fn(),
       appVersion: '1.0.0',
       currentYear: 2024,
       user: { email: 'user@test.com' },
       handleClearCache: jest.fn(),
-      handleClearQueryCache: jest.fn(),
       isClearingCache: false,
       cacheSize: 0,
-      queryCacheSize: 0,
     }),
     __mocks: {
       openMock,
@@ -48,12 +47,8 @@ jest.mock('@/app/(tabs)/read/account/index.tsx', () => {
   return {
     __esModule: true,
     default: () => {
-      const {
-        handleReminderToggle,
-        handleTimePickerOpen,
-        handleTimeSet,
-        reminderTime,
-      } = useAccountScreen();
+      const { handleReminderToggle, handleTimePickerOpen, handleTimeSet, reminderTime } =
+        useAccountScreen();
       const [open, setOpen] = React.useState(false);
       const [enabled, setEnabled] = React.useState(reminderTime.enabled);
       return (

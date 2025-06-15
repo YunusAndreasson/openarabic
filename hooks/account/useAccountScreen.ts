@@ -11,7 +11,6 @@ import { supabase } from '@/services/supabase';
 import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
-import { clearPersistedCache, getPersistedCacheSize } from '@/utils/queryPersistence';
 
 // import { analytics } from '@/services/analytics';
 // Temporary mock analytics until service is fixed
@@ -26,26 +25,24 @@ export const useAccountScreen = () => {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [notificationPermissions, setNotificationPermissions] = useState(false);
   const [cacheSize, setCacheSize] = useState<number>(0);
-  const [queryCacheSize, setQueryCacheSize] = useState<number>(0);
   const [isClearingCache, setIsClearingCache] = useState(false);
   const { user } = useAuth();
   const isMounted = useRef(true);
 
-  // Load cache sizes on component mount
+  // Load cache size on component mount
   useEffect(() => {
-    const loadCacheSizes = async () => {
+    const loadCacheSize = async () => {
       try {
-        const [audioSize, querySize] = await Promise.all([getCacheSize(), getPersistedCacheSize()]);
+        const audioSize = await getCacheSize();
         if (isMounted.current) {
           setCacheSize(audioSize);
-          setQueryCacheSize(querySize);
         }
       } catch (error) {
         handleError(error as Error, { showToast: false });
       }
     };
 
-    loadCacheSizes();
+    loadCacheSize();
 
     return () => {
       isMounted.current = false;
@@ -127,19 +124,6 @@ export const useAccountScreen = () => {
         'This will delete'
       ),
     [createCacheClearHandler, cacheSize, clearCache]
-  );
-
-  const handleClearQueryCache = useMemo(
-    () =>
-      createCacheClearHandler(
-        'query',
-        queryCacheSize,
-        clearPersistedCache,
-        setQueryCacheSize,
-        'Clear Offline Data',
-        'This will delete'
-      ),
-    [createCacheClearHandler, queryCacheSize]
   );
 
   const handleSignOut = useCallback(() => {
@@ -315,10 +299,8 @@ Please describe your issue below:
       currentYear,
       user,
       handleClearCache,
-      handleClearQueryCache,
       isClearingCache,
       cacheSize,
-      queryCacheSize,
     }),
     [
       reminderTime,
@@ -338,10 +320,8 @@ Please describe your issue below:
       currentYear,
       user,
       handleClearCache,
-      handleClearQueryCache,
       isClearingCache,
       cacheSize,
-      queryCacheSize,
     ]
   );
 
