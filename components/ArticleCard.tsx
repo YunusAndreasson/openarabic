@@ -11,6 +11,7 @@ import {
 } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import type { ArticleCardProps as BaseArticleCardProps } from '@/types/ui/card.types';
 import { withOpacity } from '@/utils/colorUtils';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
@@ -18,7 +19,6 @@ import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';
 import Pill from './Pill';
 import { ThemedText } from './ThemedText';
-import type { ArticleCardProps as BaseArticleCardProps } from '@/types/ui/card.types';
 
 // Simplified interface specifically for ArticleCard (always article variant)
 type ArticleCardProps = Omit<

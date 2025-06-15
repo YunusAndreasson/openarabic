@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
+import type { ViewStyle } from 'react-native';
 import {
   useSharedValue,
   useAnimatedStyle,
@@ -7,7 +8,7 @@ import {
   runOnUI,
 } from 'react-native-reanimated';
 import type { SharedValue, WithSpringConfig } from 'react-native-reanimated';
-import type { ViewStyle } from 'react-native';
+
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 import { SPRING_CONFIG } from './animationConfigs';

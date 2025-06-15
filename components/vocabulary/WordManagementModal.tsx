@@ -6,8 +6,8 @@ import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import type { StudyWord } from '@/types/vocabulary.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
+import type { StudyWord } from '@/types/vocabulary.types';
 import { selectionFeedback } from '@/utils/haptics';
 
 interface WordManagementAction {

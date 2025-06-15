@@ -12,9 +12,9 @@ import Animated from 'react-native-reanimated';
 import { LAYOUT, FONTS } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
-import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 import { ArabicWord } from './ArabicWord';
 

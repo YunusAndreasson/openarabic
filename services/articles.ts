@@ -1,7 +1,7 @@
 import type { Article } from '@/types/articles.types';
+import type { ArticleRow } from '@/types/dbRow.types';
 import { handleError } from '@/utils/errorHandling';
 import { mapToArticle, mapToArticles } from '@/utils/typeMappers';
-import type { ArticleRow } from '@/types/dbRow.types';
 
 import { supabase } from './supabase';
 

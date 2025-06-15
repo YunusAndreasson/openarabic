@@ -1,6 +1,5 @@
 import React, { useEffect, useState, memo, useCallback, useRef } from 'react';
 import { StyleSheet } from 'react-native';
-import type { ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 
@@ -8,7 +7,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { MeaningOverlayProps } from '@/types/ui/review.types';
 
 /**
@@ -88,7 +86,7 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
       style={[
         styles.overlay,
         { backgroundColor: colors.background },
-        animatedStyle as AnimatedStyleProp<ViewStyle>,
+        animatedStyle,
       ]}
     >
       <ThemedText

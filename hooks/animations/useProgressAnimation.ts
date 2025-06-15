@@ -1,7 +1,6 @@
 import { useCallback, useRef, useEffect } from 'react';
-import type { SharedValue, WithTimingConfig } from 'react-native-reanimated';
 import type { ViewStyle } from 'react-native';
-import type { AnimatedStyleProp } from '@/types/ui/base.types';
+import type { SharedValue, WithTimingConfig } from 'react-native-reanimated';
 import {
   useSharedValue,
   useAnimatedStyle,
@@ -10,6 +9,9 @@ import {
   cancelAnimation,
   runOnUI,
 } from 'react-native-reanimated';
+
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
+
 
 import { TIMING_CONFIG } from './animationConfigs';
 

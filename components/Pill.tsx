@@ -4,9 +4,9 @@ import { Pressable, View, type TextStyle } from 'react-native';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import type { PillProps } from '@/types/ui/pill.types';
 
 import { ThemedText } from './ThemedText';
-import type { PillProps } from '@/types/ui/pill.types';
 
 /**
  * A simple pill component for filters and categories

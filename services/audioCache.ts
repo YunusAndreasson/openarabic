@@ -150,7 +150,7 @@ export class AudioCacheManager {
 
       const totalSize = fileInfos.reduce((size, info) => {
         if (info.exists && 'size' in info) {
-          return size + (info.size as number);
+          return size + (info.size);
         }
         return size;
       }, 0);

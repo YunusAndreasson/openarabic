@@ -1,11 +1,11 @@
 import type { Article, ArticleSentence } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
-import type { SentenceWord } from '@/types/vocabulary.types';
 import type {
   ArticleRow,
   ArticleSentenceRow,
   SentenceWordRow,
 } from '@/types/dbRow.types';
+import type { SentenceWord } from '@/types/vocabulary.types';
 
 function mapToSentenceWord(item: SentenceWordRow): SentenceWord {
   const base = item as Tables<'sentence_words'>;

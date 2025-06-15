@@ -6,7 +6,6 @@ import Animated, { cancelAnimation } from 'react-native-reanimated';
 import { LAYOUT } from '@/constants/layout';
 import { useProgressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { ProgressBarProps } from '@/types/ui/loader.types';
 
 // Progress change required to trigger an animation (0-10000 scale)
@@ -119,7 +118,7 @@ function ProgressBarComponent({
       ],
       fill: [
         defaultStyles.fill,
-        animatedStyle as AnimatedStyleProp<ViewStyle>,
+        animatedStyle,
         {
           backgroundColor: progressFillColor,
           borderRadius: height / 2,
