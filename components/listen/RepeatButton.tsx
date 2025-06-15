@@ -55,7 +55,12 @@ const RepeatButton: React.FC<RepeatButtonProps> = ({ enabled, onToggle, ...rest 
   );
 
   return (
-    <TouchableOpacity style={[styles.container, containerStyle]} onPress={handlePress} {...rest}>
+    <TouchableOpacity
+      style={[styles.container, containerStyle]}
+      onPress={handlePress}
+      hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+      {...rest}
+    >
       <Animated.View style={[styles.iconContainer, iconRotationStyle]}>
         <Ionicons
           color={enabled ? colors.tint : colors.interactiveSecondary}

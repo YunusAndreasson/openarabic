@@ -56,6 +56,7 @@ const PlayButton: React.FC<PlayButtonProps> = ({
       accessibilityRole="button"
       accessibilityLabel={isPlaying ? 'Pause audio' : 'Play audio'}
       accessibilityHint={isPlaying ? 'Pause the audio playback' : 'Start playing this article'}
+      hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
     >
       <Animated.View
         style={[

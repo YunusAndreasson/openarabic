@@ -39,6 +39,7 @@ const FilterButton = memo(({ onPress }: FilterButtonProps) => {
         onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
+        hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
       >
         <ThemedText type="label" weight="medium" colorName="tint" style={styles.filterText}>
           Filter

@@ -62,6 +62,7 @@ const SectionTitle: React.FC<SectionTitleProps> = ({
           style={styles.infoIcon}
           onPress={onInfoPress}
           activeOpacity={LAYOUT.OPACITY.PRESSED}
+          hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
         >
           <Ionicons
             name="information-outline"

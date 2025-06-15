@@ -35,6 +35,7 @@ const DeleteButton: React.FC<
       accessibilityRole="button"
       accessibilityLabel="Delete article"
       accessibilityHint="Remove this article from your listening playlist"
+      hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
     >
       <Animated.View
         style={[
