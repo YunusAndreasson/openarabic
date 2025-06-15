@@ -14,6 +14,7 @@ import type { AnimatedStyle } from 'react-native-reanimated';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import { LAYOUT } from '@/constants/layout';
 
 const CARD_HEIGHT = 120;
 
@@ -116,19 +117,15 @@ export const useNowPlayingCard = ({
   const dynamicStyles = useMemo(
     () => ({
       container: {
-        elevation: 4, // LAYOUT.ELEVATION.SMALL equivalent
-        shadowRadius: 6, // LAYOUT.ELEVATION.SMALL equivalent
-        backgroundColor: isDarkMode ? colors.elevation2 : colors.card,
+        ...LAYOUT.ELEVATION.SMALL,
+        backgroundColor: colors.elevation2,
         borderColor: isDarkMode ? colors.border : colors.cardBorder,
         shadowColor: colors.shadow,
         shadowOffset: { width: 0, height: -2 },
         shadowOpacity: isDarkMode ? 0.3 : 0.1,
       },
       stopButton: {
-        elevation: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
-        shadowOpacity: 0.15, // LAYOUT.ELEVATION.SUBTLE equivalent
-        shadowRadius: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
-        shadowOffset: { width: 0, height: 1 }, // LAYOUT.ELEVATION.SUBTLE equivalent
+        ...LAYOUT.ELEVATION.SUBTLE,
         backgroundColor: colors.tint,
         shadowColor: colors.tint,
       },

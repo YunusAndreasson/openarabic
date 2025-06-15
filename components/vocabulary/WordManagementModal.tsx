@@ -100,7 +100,7 @@ const WordManagementModal = memo(
     // Memoize dynamic styles to prevent recalculation
     const dynamicStyles = useMemo(
       () => ({
-        background: [styles.background, { backgroundColor: colors.card }],
+        background: [styles.background, { backgroundColor: colors.elevation1 }],
         indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
         wordHeader: [styles.wordHeader, { borderBottomColor: colors.border }],
         actionCard: { backgroundColor: colors.elevation1 },

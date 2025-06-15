@@ -103,11 +103,9 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                     isSelected && {
                       backgroundColor: colors.elevation1,
                       borderColor: colors.tint + '40',
-                      elevation: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
-                      shadowOpacity: 0.15, // LAYOUT.ELEVATION.SUBTLE equivalent
-                      shadowRadius: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
-                      shadowOffset: { width: 0, height: 1 }, // LAYOUT.ELEVATION.SUBTLE equivalent
+                      ...LAYOUT.ELEVATION.SUBTLE,
                       shadowColor: colors.tint,
+                      borderWidth: 1,
                     },
                   ]}
                   onPress={() => handleSortSelect(option.key)}

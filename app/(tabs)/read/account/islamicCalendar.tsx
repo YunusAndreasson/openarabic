@@ -105,7 +105,7 @@ export default function IslamicCalendarScreen(): JSX.Element {
                   shadowSize="small"
                   style={[
                     styles.eventCard,
-                    { backgroundColor: isPast ? colors.elevation1 : colors.card },
+                    { backgroundColor: colors.elevation1 },
                     event.isActive && {
                       borderLeftWidth: 3,
                       borderLeftColor: colors.warning,

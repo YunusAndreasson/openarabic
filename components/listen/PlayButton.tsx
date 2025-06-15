@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   button: {
-    elevation: 2,
+    ...LAYOUT.ELEVATION.SUBTLE,
     alignItems: 'center',
     borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2, // Circular
     height: MIN_TOUCH_TARGET.MEDIUM,

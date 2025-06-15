@@ -198,9 +198,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   modal: {
-    elevation: 12, // LAYOUT.ELEVATION.LARGE equivalent
-    shadowOpacity: 0.35, // LAYOUT.ELEVATION.LARGE equivalent
-    shadowRadius: 14, // LAYOUT.ELEVATION.LARGE equivalent
+    ...LAYOUT.ELEVATION.LARGE,
     shadowOffset: {
       width: 0,
       height: -8,

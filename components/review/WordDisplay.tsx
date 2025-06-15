@@ -46,15 +46,8 @@ const WordDisplay = memo(
           paddingBottom: fontSize * 0.05,
         }),
         ...(Platform.OS === 'ios'
-          ? {
-              shadowColor: colors.shadow,
-              shadowOpacity: 0.25, // LAYOUT.ELEVATION.SMALL equivalent
-              shadowRadius: 6, // LAYOUT.ELEVATION.SMALL equivalent
-              shadowOffset: { width: 0, height: 2 }, // LAYOUT.ELEVATION.SMALL equivalent
-            }
-          : {
-              elevation: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
-            }),
+          ? { ...LAYOUT.ELEVATION.SMALL, shadowColor: colors.shadow }
+          : LAYOUT.ELEVATION.SUBTLE),
       }),
       [colors.arabicText, fontSize, colors.shadow]
     );

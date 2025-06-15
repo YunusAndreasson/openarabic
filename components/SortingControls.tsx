@@ -121,10 +121,7 @@ function SortingControls<T extends string>({
                 pillStyle={[
                   styles.sortPill,
                   isSelected && {
-                    elevation: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
-                    shadowOpacity: 0.15, // LAYOUT.ELEVATION.SUBTLE equivalent
-                    shadowRadius: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
-                    shadowOffset: { width: 0, height: 1 }, // LAYOUT.ELEVATION.SUBTLE equivalent
+                    ...LAYOUT.ELEVATION.SUBTLE,
                     backgroundColor: colors.elevation1,
                     borderWidth: 1,
                     borderColor: colors.tint + '25', // Increased opacity for better visibility
