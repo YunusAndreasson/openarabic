@@ -12,6 +12,10 @@ jest.mock('expo-crypto', () => ({
   digestStringAsync: jest.fn(),
 }));
 
+jest.mock('../../utils/errorHandling', () => ({
+  handleError: jest.fn(),
+}));
+
 let audioCache: any;
 
 beforeEach(() => {
@@ -56,6 +60,24 @@ describe('audioCache', () => {
     expect(result).toBe(cachedPath);
   });
 
+  test('getAudio returns original URL on failed download', async () => {
+    const FileSystem = require('expo-file-system');
+    const Crypto = require('expo-crypto');
+    const { handleError } = require('../../utils/errorHandling');
+    (Crypto.digestStringAsync as jest.Mock).mockResolvedValue(hash);
+    (FileSystem.getInfoAsync as jest.Mock)
+      .mockResolvedValueOnce({ exists: true }) // constructor check
+      .mockResolvedValueOnce({ exists: false }) // file missing
+      .mockResolvedValueOnce({ exists: true }); // cache dir exists
+    (FileSystem.downloadAsync as jest.Mock).mockResolvedValue({ status: 500 });
+    audioCache = require('../../services/audioCache').audioCache;
+
+    const result = await audioCache.getAudio(url);
+
+    expect(result).toBe(url);
+    expect(handleError).toHaveBeenCalled();
+  });
+
   test('clearCache removes files and recreates directory', async () => {
     const FileSystem = require('expo-file-system');
     (FileSystem.getInfoAsync as jest.Mock)
@@ -68,6 +90,20 @@ describe('audioCache', () => {
 
     expect(FileSystem.deleteAsync).toHaveBeenCalledWith('/cache/audio/');
     expect(FileSystem.makeDirectoryAsync).toHaveBeenCalledWith('/cache/audio/', { intermediates: true });
+  });
+
+  test('clearCache rethrows errors from deleteAsync', async () => {
+    const FileSystem = require('expo-file-system');
+    const { handleError } = require('../../utils/errorHandling');
+    const err = new Error('fail');
+    (FileSystem.getInfoAsync as jest.Mock)
+      .mockResolvedValueOnce({ exists: true }) // constructor check
+      .mockResolvedValueOnce({ exists: true }); // dir exists
+    (FileSystem.deleteAsync as jest.Mock).mockRejectedValueOnce(err);
+    audioCache = require('../../services/audioCache').audioCache;
+
+    await expect(audioCache.clearCache()).rejects.toThrow(err);
+    expect(handleError).toHaveBeenCalledWith(err);
   });
 
   test('getCacheSize sums file sizes correctly', async () => {
