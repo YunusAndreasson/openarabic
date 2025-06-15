@@ -13,7 +13,6 @@ const HEADER_IMAGE_HEIGHT = 280;
 interface ParallaxHeaderProps {
   article: Article;
   colors: ThemeColors;
-  isDarkMode?: boolean;
 }
 
 const ParallaxHeader = React.memo<ParallaxHeaderProps>(({ article, colors }) => {

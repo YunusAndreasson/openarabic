@@ -184,7 +184,6 @@ export default function ArticleScreen(): JSX.Element {
                 colors={colors}
                 handleScroll={handleScroll}
                 id={id}
-                isDarkMode={isDarkMode}
                 renderSentenceItem={renderSentenceItem}
                 sortedSentences={sortedSentences}
               />

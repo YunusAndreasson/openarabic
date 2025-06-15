@@ -79,7 +79,6 @@ const ListenListItem = memo(
 
     return (
       <ArticleCard
-        active={isActive}
         author={item.articles?.author?.name || 'Author'}
         title={item.articles?.title || 'Untitled'}
         editMode={editMode}

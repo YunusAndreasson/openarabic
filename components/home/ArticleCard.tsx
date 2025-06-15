@@ -22,7 +22,6 @@ interface ArticleCardProps {
   author: string;
   onPress?: () => void;
   onLongPress?: () => void;
-  active?: boolean;
   editMode?: boolean;
   onDelete?: () => void;
   dragHandleProps?: DragHandleProps;
@@ -37,7 +36,6 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   author,
   onPress,
   onLongPress,
-  active: _active = false,
   editMode = false,
   onDelete,
   dragHandleProps,
