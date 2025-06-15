@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import React, { memo, useCallback } from 'react';
+import { memo, useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';

@@ -1,4 +1,13 @@
-import React, { createContext, useCallback, useContext, useState, useEffect, useMemo } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+  type FC,
+  type ReactNode,
+} from 'react';
 
 import { Toast, type ToastType } from '@/components/Toast';
 import { setGlobalToastHandler } from '@/utils/errorHandling';
@@ -18,7 +27,7 @@ export const useToast = (): ToastContextType => {
   return context;
 };
 
-export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const ToastProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [toastState, setToastState] = useState({
     visible: false,
     message: '',

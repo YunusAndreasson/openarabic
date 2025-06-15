@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import type { FC } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ProgressBar } from '@/components/ProgressBar';
@@ -15,7 +15,7 @@ interface ReviewHeaderProps {
   hasCurrentWord?: boolean;
 }
 
-const ReviewHeader: React.FC<ReviewHeaderProps> = ({
+const ReviewHeader: FC<ReviewHeaderProps> = ({
   progress,
   maxProgress,
   animationKey,

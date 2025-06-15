@@ -1,6 +1,5 @@
 import { renderHook } from '@testing-library/react-native';
 import { describe, it, expect, jest } from '@jest/globals';
-import React from 'react';
 
 import { AuthContext } from '@/components/providers/AuthProvider';
 import { useAuth } from './useAuth';

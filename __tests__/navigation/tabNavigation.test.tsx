@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Text } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 jest.mock('@react-navigation/native', () => {

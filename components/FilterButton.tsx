@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import { memo, useCallback } from 'react';
 import { StyleSheet, View, Pressable } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -21,7 +21,7 @@ const FilterButton = memo(({ onPress }: FilterButtonProps) => {
   const activeFiltersCount = useAppSelectorMemo(selectActiveFiltersCount);
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation();
 
-  const handlePress = React.useCallback(() => {
+  const handlePress = useCallback(() => {
     onPress();
   }, [onPress]);
 

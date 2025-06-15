@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import React, { memo, useState, useEffect, useCallback, useMemo } from 'react';
+import { memo, useState, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   View,

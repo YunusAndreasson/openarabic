@@ -1,5 +1,5 @@
 import { Stack, router } from 'expo-router';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import type { JSX } from 'react';
 
 import FilterButton from '@/components/FilterButton';

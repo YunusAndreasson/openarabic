@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { memo } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { StyleSheet, View, Modal, TouchableWithoutFeedback, TouchableOpacity } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
@@ -36,7 +36,7 @@ const SleepTimerComponent = ({
   isActive = false,
 }: SleepTimerProps) => {
   const colors = useColors();
-  const [selectedMinutes, setSelectedMinutes] = React.useState<number | null>(null);
+  const [selectedMinutes, setSelectedMinutes] = useState<number | null>(null);
 
   const handleSetTimer = () => {
     if (selectedMinutes) {
@@ -50,11 +50,11 @@ const SleepTimerComponent = ({
     onClose();
   };
 
-  const handleOptionSelect = React.useCallback((minutes: number) => {
+  const handleOptionSelect = useCallback((minutes: number) => {
     setSelectedMinutes(minutes);
   }, []);
 
-  const handleOptionSelectCallback = React.useCallback(
+  const handleOptionSelectCallback = useCallback(
     (minutes: number) => () => handleOptionSelect(minutes),
     [handleOptionSelect]
   );

@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import React from 'react';
 
 import ErrorState from '@/components/ErrorState';
 import FilterModal from '@/components/FilterModal';

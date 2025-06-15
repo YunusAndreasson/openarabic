@@ -1,4 +1,4 @@
-import React from 'react';
+import { useEffect, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -31,7 +31,7 @@ interface ArticleCardProps {
   isLoadingAudio?: boolean;
 }
 
-export const ArticleCard: React.FC<ArticleCardProps> = ({
+export const ArticleCard: FC<ArticleCardProps> = ({
   title,
   author,
   onPress,
@@ -57,7 +57,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
     stiffness: 300,
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isBeingDragged) {
       setValue(1.05);
     } else if (editMode) {

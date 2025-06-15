@@ -1,4 +1,4 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 jest.mock('@/utils/splashPolyfill');
 jest.mock('expo', () => ({ requireOptionalNativeModule: () => undefined }));
 jest.mock('../../store/store', () => ({
@@ -46,13 +46,13 @@ jest.mock('../../hooks/theme/useSystemUITheme', () => ({
 }));
 
 jest.mock('expo-router', () => ({
-  Stack: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  Stack: ({ children }: { children: ReactNode }) => <>{children}</>,
   useRouter: () => ({ replace: jest.fn() }),
   useNavigationContainerRef: () => null,
 }));
 
 jest.mock('@gorhom/bottom-sheet', () => ({
-  BottomSheetModalProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  BottomSheetModalProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
 test('app entry loads without crashing', () => {

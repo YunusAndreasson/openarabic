@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import React, { useMemo, memo } from 'react';
+import { useMemo, memo } from 'react';
 
 import FeaturedSection from '@/components/home/FeaturedSection';
 import { useIntelligentArticleSelection } from '@/hooks/articles/useIntelligentArticleSelection';

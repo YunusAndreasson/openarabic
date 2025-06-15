@@ -1,6 +1,5 @@
 import { FlashList } from '@shopify/flash-list';
-import type { JSX } from 'react';
-import React, { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState, memo, type JSX, type ReactElement } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -80,12 +79,12 @@ interface AudioControlsButtonProps {
   onToggleReadingList: (articleId: number, isInReadingList: boolean) => void;
 }
 
-const AudioControlsButton = React.memo<Omit<AudioControlsButtonProps, 'article'>>(
+const AudioControlsButton = memo<Omit<AudioControlsButtonProps, 'article'>>(
   ({ articleId, isInReadingList, isLoading, onToggleReadingList }) => {
     const { showToast } = useToast();
     const audioPlayer = useAudioPlayer();
     const { audioState } = audioPlayer;
-    const [isPlayNowLoading, setIsPlayNowLoading] = React.useState(false);
+    const [isPlayNowLoading, setIsPlayNowLoading] = useState(false);
 
     const isCurrentlyPlaying = audioState === AUDIO_STATES.PLAYING;
 
@@ -190,7 +189,7 @@ interface ArticleSummaryProps {
   summary: string;
 }
 
-const ArticleSummary = React.memo<ArticleSummaryProps>(({ summary }) => {
+const ArticleSummary = memo<ArticleSummaryProps>(({ summary }) => {
   const colors = useColors();
 
   return (
@@ -219,7 +218,7 @@ interface ArticleContentProps {
   id: string;
   article: Article;
   sortedSentences: Tables<'article_sentences'>[];
-  renderSentenceItem: ({ item }: { item: Tables<'article_sentences'> }) => React.ReactElement;
+  renderSentenceItem: ({ item }: { item: Tables<'article_sentences'> }) => ReactElement;
   handleScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   colors: ThemeColors;
 }

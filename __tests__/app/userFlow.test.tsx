@@ -1,5 +1,5 @@
-import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react-native';
+import type { ReactNode } from 'react';
 
 import ArticleCard from '../../components/ArticleCard';
 import { ArabicWord } from '../../components/article/ArabicWord';
@@ -17,7 +17,7 @@ jest.mock('expo-router', () => {
 jest.mock('expo-linear-gradient', () => {
   const React = require('react');
   return {
-    LinearGradient: ({ children }: { children: React.ReactNode }) => (
+    LinearGradient: ({ children }: { children: ReactNode }) => (
       <>{children}</>
     ),
   };

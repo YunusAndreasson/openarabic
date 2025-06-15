@@ -1,7 +1,7 @@
 // External Libraries
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
-import React, { memo } from 'react';
+import { memo, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -47,7 +47,7 @@ const Divider = memo(() => {
 });
 Divider.displayName = 'Divider';
 
-const AccountScreen: React.FC = () => {
+const AccountScreen: FC = () => {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const {

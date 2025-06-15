@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react-native';
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import React from 'react';
+import * as React from 'react';
 
 import { AUDIO_STATES } from '../../constants/audio';
 

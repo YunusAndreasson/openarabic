@@ -1,4 +1,4 @@
-import React, { useCallback, memo, useEffect, useRef, useMemo } from 'react';
+import { useCallback, memo, useEffect, useRef, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 import type { ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';

@@ -1,4 +1,4 @@
-import React, { useMemo, memo } from 'react';
+import { useMemo, memo } from 'react';
 import type { StyleProp, TextStyle } from 'react-native';
 import { Text, StyleSheet } from 'react-native';
 

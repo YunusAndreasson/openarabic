@@ -1,4 +1,4 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 import { renderHook, act } from '@testing-library/react-native';
 
 import { useListenScreen } from '../../hooks/listen/useListenScreen';
@@ -141,7 +141,7 @@ jest.mock('expo-router', () => ({
   useFocusEffect: (cb: () => void) => cb(),
 }));
 
-const Wrapper = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+const Wrapper = ({ children }: { children: ReactNode }) => <>{children}</>;
 
 
 describe('useListenScreen', () => {

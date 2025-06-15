@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
-import React from 'react';
-import type { ComponentProps } from 'react';
+import { useEffect, Fragment, type FC, type ComponentProps } from 'react';
 import type { ViewStyle } from 'react-native';
 import { View, StyleSheet } from 'react-native';
 import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
@@ -34,7 +33,7 @@ interface CompletionScreenProps {
   testID?: string;
 }
 
-const CompletionScreen: React.FC<CompletionScreenProps> = ({
+const CompletionScreen: FC<CompletionScreenProps> = ({
   onClose,
   title = 'Great job',
   subtitle = 'You completed your review session.',
@@ -69,7 +68,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
   });
 
   // Only invalidate queries for review flow
-  React.useEffect(() => {
+  useEffect(() => {
     if (!useThemedView && user?.id) {
       queryClient.invalidateQueries({
         predicate: query => {
@@ -81,7 +80,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
   }, [user?.id, queryClient, useThemedView]);
 
   // Enhanced icon animation with haptic feedback
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setTimeout(() => {
       startOpacityAnimation(undefined, successFeedback);
       startScaleAnimation();
@@ -121,7 +120,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
         {encouragingMetrics && encouragingMetrics.length > 0 && (
           <View style={styles.metricsContainer}>
             {encouragingMetrics.map((metric, index) => (
-              <React.Fragment key={metric.type + metric.text}>
+              <Fragment key={metric.type + metric.text}>
                 <Animated.View
                   entering={FadeInUp.delay(800 + index * 150).duration(300)}
                   style={styles.metricItem}
@@ -139,7 +138,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
                     </View>
                   </View>
                 </Animated.View>
-              </React.Fragment>
+              </Fragment>
             ))}
           </View>
         )}

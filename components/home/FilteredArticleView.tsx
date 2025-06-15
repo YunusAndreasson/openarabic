@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unused-prop-types */
 import { FlashList } from '@shopify/flash-list';
-import React, { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import EmptyState from '@/components/EmptyState';
@@ -39,7 +39,7 @@ interface FilteredArticleViewProps {
 /**
  * A specialized component for displaying filtered articles in modal contexts
  */
-const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
+const FilteredArticleView: FC<FilteredArticleViewProps> = ({
   articles,
   onArticlePress = NOOP_ARTICLE_PRESS,
   totalCount,

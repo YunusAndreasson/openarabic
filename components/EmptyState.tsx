@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { memo, useCallback } from 'react';
-import type { ComponentType, ComponentProps } from 'react';
+import { memo, useCallback, type ReactNode, type ComponentType, type ComponentProps } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { View, StyleSheet } from 'react-native';
 
@@ -20,7 +19,7 @@ interface EmptyStateProps {
   containerStyle?: StyleProp<ViewStyle>;
   colors: { tint: string };
   submessage?: string;
-  customActionButton?: React.ReactNode;
+  customActionButton?: ReactNode;
   iconSize?: number;
   iconContainerStyle?: StyleProp<ViewStyle>;
   hideArticlesButton?: boolean;

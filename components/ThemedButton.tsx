@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { JSX } from 'react';
-import React, { memo, useMemo } from 'react';
+import { memo, useMemo, useCallback, type JSX, type ReactNode } from 'react';
 import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -71,7 +70,7 @@ const IconContent = ({
   iconSize,
 }: {
   loading: boolean;
-  iconComponent?: React.ReactNode;
+  iconComponent?: ReactNode;
   icon?: string;
   textColor: string;
   iconSize: number;
@@ -144,7 +143,7 @@ function ThemedButtonComponent({
   });
   const animatedStyle = rawAnimatedStyle as Animated.AnimateStyle<ViewStyle>;
 
-  const handlePress = React.useCallback(
+  const handlePress = useCallback(
     (event: GestureResponderEvent) => {
       selectionFeedback();
       if (onPress && !disabled && !loading) {
@@ -175,9 +174,9 @@ function ThemedButtonComponent({
       <View style={[styles.innerContainer, innerContainerStyle]}>
         {loading ? (
           // When loading, show only the ActivityIndicator centered with fade-in
-          <Animated.View entering={FadeIn.duration(200)}>
+          (<Animated.View entering={FadeIn.duration(200)}>
             <ActivityIndicator color={textColor} size="small" />
-          </Animated.View>
+          </Animated.View>)
         ) : (
           <>
             {hasIcon ? (

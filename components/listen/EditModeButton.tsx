@@ -1,4 +1,4 @@
-import React from 'react';
+import { memo, useCallback, type FC } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -21,7 +21,7 @@ interface EditModeButtonProps {
   onEditModeChange?: (editMode: boolean) => void;
 }
 
-const EditModeButton: React.FC<EditModeButtonProps> = ({ onEditModeChange }) => {
+const EditModeButton: FC<EditModeButtonProps> = ({ onEditModeChange }) => {
   const colors = useColors();
   const dispatch = useAppDispatch();
   const editMode = useAppSelectorMemo(state => state.listen.editMode);
@@ -30,7 +30,7 @@ const EditModeButton: React.FC<EditModeButtonProps> = ({ onEditModeChange }) => 
     includeOpacity: true,
   });
 
-  const handlePress = React.useCallback(() => {
+  const handlePress = useCallback(() => {
     selectionFeedback();
     dispatch(toggleEditMode());
     onEditModeChange?.(!editMode);
@@ -81,4 +81,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default React.memo(EditModeButton);
+export default memo(EditModeButton);

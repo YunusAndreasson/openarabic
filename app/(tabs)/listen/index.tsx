@@ -1,7 +1,7 @@
 import { useHeaderHeight } from '@react-navigation/elements';
 import { FlashList } from '@shopify/flash-list';
 import type { JSX } from 'react';
-import React, { useState, useMemo, useCallback, memo, useEffect } from 'react';
+import { useState, useMemo, useCallback, memo, useEffect } from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
@@ -283,7 +283,7 @@ export default function ListenScreen(): JSX.Element {
       <ThemedView includeBottomInset={false} style={styles.flexOne} useSafeArea={false}>
         {editMode ? (
           // Use DraggableFlatList in edit mode
-          <DraggableFlatList<ReadingListItem>
+          (<DraggableFlatList<ReadingListItem>
             data={sortedReadingList}
             keyExtractor={item => `${item.article_id}`}
             renderItem={renderItem}
@@ -316,10 +316,10 @@ export default function ListenScreen(): JSX.Element {
                 </View>
               ) : null
             }
-          />
+          />)
         ) : (
           // Use FlashList in normal mode
-          <FlashList<ReadingListItem>
+          (<FlashList<ReadingListItem>
             data={sortedReadingList}
             drawDistance={ITEM_HEIGHT * 5}
             estimatedItemSize={ITEM_HEIGHT}
@@ -359,10 +359,9 @@ export default function ListenScreen(): JSX.Element {
               layout.size = ITEM_HEIGHT;
             }}
             renderItem={renderItem}
-          />
+          />)
         )}
       </ThemedView>
-
       {/* Only show bottom controls when there are texts with audio to play but no active player */}
       {hasArticles && hasAudioArticles && !shouldShowPlayer && !isStartingPlayback && (
         <BottomControls
@@ -376,7 +375,6 @@ export default function ListenScreen(): JSX.Element {
           onPrimaryPress={() => handlePlayAll(setIsPlayAllLoading)}
         />
       )}
-
       {/* Now Playing Card - shows when starting playback or playing */}
       <NowPlayingCard
         article={currentArticle}
@@ -403,7 +401,6 @@ export default function ListenScreen(): JSX.Element {
           setShowSleepTimer(true);
         }}
       />
-
       {/* Sleep Timer Modal - only show when there are texts and timer is active/visible */}
       {hasArticles && (
         <SleepTimer

@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import React, { memo, useCallback } from 'react';
+import { memo, useCallback } from 'react';
 
 import type { Article } from '@/types/articles.types';
 

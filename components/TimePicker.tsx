@@ -1,7 +1,7 @@
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import type { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import React, { memo, useState, useCallback, useMemo, useRef } from 'react';
+import { memo, useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
@@ -37,7 +37,7 @@ export const TimePicker = memo(
     const snapPoints = useMemo(() => [500], []);
 
     // Show/hide modal based on isVisible prop
-    React.useEffect(() => {
+    useEffect(() => {
       if (isVisible) {
         setShowPicker(Platform.OS === 'android');
         if (Platform.OS === 'ios') {

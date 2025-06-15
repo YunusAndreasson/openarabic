@@ -1,4 +1,4 @@
-import React from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { Provider } from 'react-redux';
 import {
   configureStore,
@@ -35,12 +35,12 @@ export const setupTestStore = (
   });
 
 type Props = {
-  children: React.ReactNode;
+  children: ReactNode;
   preloadedState?: PreloadedState<TestRootState>;
 };
 
 export const TestStoreProvider = ({ children, preloadedState }: Props) => {
-  const store = React.useMemo(() => setupTestStore(preloadedState), [preloadedState]);
+  const store = useMemo(() => setupTestStore(preloadedState), [preloadedState]);
   return <Provider store={store}>{children}</Provider>;
 };
 

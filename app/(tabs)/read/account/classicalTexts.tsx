@@ -1,6 +1,6 @@
 // External Libraries
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import type { FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,7 +9,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
-const ClassicalTextsScreen: React.FC = () => {
+const ClassicalTextsScreen: FC = () => {
   const colors = useColors();
   const insets = useSafeAreaInsets();
 

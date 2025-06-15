@@ -1,6 +1,6 @@
 import { useLocalSearchParams, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useMemo, useCallback, useEffect } from 'react';
+import { useMemo, useCallback, useEffect } from 'react';
 import type { JSX } from 'react';
 import { View, AppState, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';

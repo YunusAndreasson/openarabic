@@ -1,6 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
-import React from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 

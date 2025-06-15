@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect } from 'react';
+import { useEffect, type FC } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import type { ViewStyle, TextStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -18,7 +18,7 @@ import type { InstructionFooterProps } from '@/types/ui/review.types';
  * The component functionally works correctly, but type safety could be improved
  * by creating a proper union type or restructuring the styled components.
  */
-const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
+const InstructionFooter: FC<InstructionFooterProps> = ({ style }) => {
   const colors = useColors();
   const { startAnimation } = useOpacityAnimation({
     initialOpacity: 0,
