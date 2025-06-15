@@ -306,10 +306,11 @@ export const LAYOUT = {
 
 export const getArabicTextStyle = (
   fontSize: number,
-  additionalStyles: TextStyle = {}
+  additionalStyles: TextStyle = {},
+  fontFamily: string = FONTS.ARABIC
 ): TextStyle => {
   return {
-    fontFamily: FONTS.ARABIC,
+    fontFamily,
     fontSize,
     lineHeight: Math.round(fontSize * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.ARABIC),
     writingDirection: 'rtl',

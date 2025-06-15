@@ -1,7 +1,7 @@
 // External Libraries
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
-import { memo, type FC, useCallback } from 'react';
+import { Fragment, memo, type FC, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -63,6 +63,7 @@ const AccountScreen: FC = () => {
     handleSocialLink,
     handleLearningMethodPress,
     handleClassicalTextsPress,
+    handleFontSelectorPress,
     appVersion,
     currentYear,
     user,
@@ -123,7 +124,7 @@ const AccountScreen: FC = () => {
                 <Toggle value={reminderTime.enabled} onValueChange={handleReminderToggle} />
               </View>
               {reminderTime.enabled && (
-                <>
+                <Fragment>
                   <Divider />
                   <BaseCard
                     includePressAnimation={true}
@@ -138,7 +139,7 @@ const AccountScreen: FC = () => {
                       </ThemedText>
                     </View>
                   </BaseCard>
-                </>
+                </Fragment>
               )}
             </View>
           </BaseCard>
@@ -157,6 +158,32 @@ const AccountScreen: FC = () => {
                 <SettingLabel icon="moon" iconColor={colors.icon} text="Dark Mode" />
                 <ThemeToggle />
               </View>
+
+              <Divider />
+
+              <BaseCard
+                includePressAnimation={true}
+                shadowSize="none"
+                style={styles.interactiveCard}
+                onPress={handleFontSelectorPress}
+              >
+                <View style={styles.cardContent}>
+                  <View style={styles.cardLeft}>
+                    <View style={styles.cardIconContainer}>
+                      <Ionicons color={colors.icon} name="text-outline" size={22} />
+                    </View>
+                    <ThemedText style={styles.cardText} type="body" weight="medium">
+                      Arabic Font
+                    </ThemedText>
+                  </View>
+                  <Ionicons
+                    color={colors.textTertiary}
+                    name="chevron-forward-outline"
+                    size={20}
+                    style={styles.cardChevron}
+                  />
+                </View>
+              </BaseCard>
             </View>
           </BaseCard>
         </View>

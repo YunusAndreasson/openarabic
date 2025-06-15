@@ -33,6 +33,14 @@ const migrations: { 0: (state: RootStateShape) => RootStateShape } = {
         enabled: false,
       };
     }
+    // Ensure settings has arabicFont property
+    if (state.settings && !state.settings.arabicFont) {
+      state.settings.arabicFont = 'Madina';
+    }
+    // Ensure settings has arabicFontSize property
+    if (state.settings && !state.settings.arabicFontSize) {
+      state.settings.arabicFontSize = 17; // LAYOUT.TYPOGRAPHY.SCALE.LARGE
+    }
     return state;
   },
 };
@@ -44,7 +52,13 @@ const persistConfig: PersistConfig<RootStateShape> = {
   version: 0,
   migrate: (state: PersistedState): Promise<PersistedState> => {
     const typedState = state as (RootStateShape & PersistedState) | undefined;
-    if (typedState && typedState.settings && !typedState.settings.reminderTime) {
+    if (
+      typedState &&
+      typedState.settings &&
+      (!typedState.settings.reminderTime ||
+        !typedState.settings.arabicFont ||
+        !typedState.settings.arabicFontSize)
+    ) {
       const migrated = migrations[0](typedState);
       return Promise.resolve({ ...state, ...migrated } as PersistedState);
     }

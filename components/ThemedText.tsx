@@ -11,6 +11,7 @@ import {
 } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import { useAppSelector } from '@/store/hooks';
 import type { ThemedTextProps } from '@/types/ui/text.types';
 
 /**
@@ -41,11 +42,13 @@ function ThemedTextComponent({
   skipDefaultColor = false,
   numberOfLines,
   ellipsizeMode,
-  arabicFontSize = LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+  arabicFontSize,
   ...rest
 }: ThemedTextProps) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
+  const selectedArabicFont = useAppSelector(state => state.settings.arabicFont);
+  const selectedArabicFontSize = useAppSelector(state => state.settings.arabicFontSize);
 
   // Enhanced text color function with semantic color support
   const getTextColor = (
@@ -93,9 +96,12 @@ function ThemedTextComponent({
     const textColor = getTextColor(colors, variant, colorName, skipDefaultColor);
 
     if (type === 'arabic') {
+      // Use Redux font size, fallback to prop, then default
+      const fontSize = selectedArabicFontSize || arabicFontSize || LAYOUT.TYPOGRAPHY.SCALE.LARGE;
+
       return {
         finalStyle: [
-          getArabicTextStyle(arabicFontSize),
+          getArabicTextStyle(fontSize, {}, selectedArabicFont),
           textColor && { color: textColor },
           weight && { fontWeight: weight },
           align && { textAlign: align },
@@ -128,7 +134,9 @@ function ThemedTextComponent({
     colorName,
     skipDefaultColor,
     colors,
+    selectedArabicFontSize,
     arabicFontSize,
+    selectedArabicFont,
     weight,
     align,
     style,

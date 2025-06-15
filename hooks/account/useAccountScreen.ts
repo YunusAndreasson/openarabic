@@ -289,6 +289,10 @@ Please describe your issue below:
     router.push('/(tabs)/read/account/classicalTexts');
   }, []);
 
+  const handleFontSelectorPress = useCallback(() => {
+    router.push('/(tabs)/read/account/font-selector');
+  }, []);
+
   const appVersion = pkg.version;
   const currentYear = new Date().getFullYear();
 
@@ -306,6 +310,7 @@ Please describe your issue below:
       handleSocialLink,
       handleLearningMethodPress,
       handleClassicalTextsPress,
+      handleFontSelectorPress,
       appVersion,
       currentYear,
       user,
@@ -328,6 +333,7 @@ Please describe your issue below:
       handleSocialLink,
       handleLearningMethodPress,
       handleClassicalTextsPress,
+      handleFontSelectorPress,
       appVersion,
       currentYear,
       user,

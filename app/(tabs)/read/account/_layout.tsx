@@ -35,6 +35,12 @@ export default function AccountLayout(): JSX.Element {
           isRegularScreen: true,
         })}
       />
+      <Stack.Screen
+        name="font-selector"
+        options={createNavigationOptions(colors, {
+          title: 'Arabic Font',
+        })}
+      />
     </Stack>
   );
 }
