@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { CACHE_TIMES } from '@/constants/queryConfig';
 import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -39,8 +40,7 @@ export function useFSRSQueries({
       return studyWordsFSRSService.getFSRSWords(userId, { forStats: false });
     },
     enabled: !!userId,
-    staleTime: 180000, // 3 minutes - study words change moderately
-    gcTime: 600000, // 10 minutes
+    ...CACHE_TIMES.MEDIUM, // 3 minutes - study words change moderately
     initialData: () => {
       if (!userId) return undefined;
       return queryClient.getQueryData(FSRS_QUERY_KEYS.all(userId));
@@ -55,8 +55,7 @@ export function useFSRSQueries({
       return studyWordsFSRSService.getFSRSWords(userId, { onlyDue: true, limit });
     },
     enabled: !!userId,
-    staleTime: 60000, // 1 minute - due words change frequently
-    gcTime: 300000, // 5 minutes
+    ...CACHE_TIMES.SHORT, // 1 minute - due words change frequently
     // Use data from allWordsQuery if available and filter client-side
     initialData: () => {
       if (!userId) return undefined;
@@ -95,8 +94,7 @@ export function useFSRSQueries({
       return studyWordsFSRSService.getFSRSWords(userId, { category });
     },
     enabled: !!userId && !!category,
-    staleTime: 180000, // 3 minutes - filtered words change moderately
-    gcTime: 600000, // 10 minutes
+    ...CACHE_TIMES.MEDIUM, // 3 minutes - filtered words change moderately
     // Use data from allWordsQuery if available
     initialData: () => {
       if (!userId) return undefined;

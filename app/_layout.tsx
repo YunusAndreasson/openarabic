@@ -28,6 +28,7 @@ import { AuthProvider, ToastProvider } from '@/components/providers';
 import { Theme } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
 import { createNavigationOptions } from '@/constants/modal';
+import { QUERY_DEFAULTS } from '@/constants/queryConfig';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useReadTabDataLoaded } from '@/hooks/app/useArticlesAndDueWordsLoaded';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -48,15 +49,6 @@ const analytics = {
 
 // Let expo-router handle splash screen initialization through app.json configuration
 // This prevents conflicts with expo-router's internal splash screen management
-
-// Constants for QueryClient configuration
-const QUERY_DEFAULTS = {
-  STALE_TIME: 300000, // 5 minutes
-  GC_TIME: 1000 * 60 * 60 * 24 * 7, // 7 days - match persistence maxAge
-  MAX_RETRIES: 3,
-  MUTATION_MAX_RETRIES: 2,
-  MAX_RETRY_DELAY: 30000, // 30 seconds
-} as const;
 
 // Sync React Query online status with device connectivity
 onlineManager.setEventListener(setOnline => {

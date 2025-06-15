@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback, useRef, useMemo } from 'react';
 
+import { CACHE_TIMES } from '@/constants/queryConfig';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { articlesService } from '@/services/articles';
 import { authorsService } from '@/services/authors';
@@ -9,40 +10,6 @@ import { categoriesService } from '@/services/categories';
 import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import { handleError } from '@/utils/errorHandling';
-
-// Cache time constants in milliseconds - optimized for different data types
-const CACHE_TIMES = {
-  // For data that changes frequently (user study progress, due words)
-  CRITICAL: {
-    staleTime: 30000, // 30 seconds - for critical data that changes frequently
-    gcTime: 120000, // 2 minutes
-  },
-  // For user-specific data that changes moderately
-  SHORT: {
-    staleTime: 60000, // 1 minute
-    gcTime: 300000, // 5 minutes
-  },
-  // For data that changes occasionally
-  MEDIUM: {
-    staleTime: 180000, // 3 minutes
-    gcTime: 600000, // 10 minutes
-  },
-  // For articles (never update once written)
-  ARTICLES: {
-    staleTime: Infinity, // Articles never change once written
-    gcTime: 86400000, // 24 hours - keep in memory for a day
-  },
-  // For data that rarely changes
-  LONG: {
-    staleTime: 300000, // 5 minutes
-    gcTime: 900000, // 15 minutes
-  },
-  // For categories and authors (never change)
-  STATIC: {
-    staleTime: 86400000, // 24 hours - categories and authors never change
-    gcTime: 172800000, // 48 hours
-  },
-} as const;
 
 interface AppPreloaderResult {
   isPreloading: boolean;

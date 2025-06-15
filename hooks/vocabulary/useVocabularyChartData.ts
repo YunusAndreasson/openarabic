@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { CACHE_TIMES } from '@/constants/queryConfig';
 import { vocabularyStatsService } from '@/services/vocabularyStats';
 import type {
   VocabularyStatsFromDB,
@@ -46,8 +47,7 @@ export function useVocabularyChartData(userId: string | undefined): UseVocabular
       return vocabularyStatsService.getUserStats(userId);
     },
     enabled: !!userId,
-    staleTime: 60000, // 1 minute - stats change frequently
-    gcTime: 300000, // 5 minutes
+    ...CACHE_TIMES.SHORT, // 1 minute - stats change frequently
     retry: 2,
   });
 
@@ -70,8 +70,7 @@ export function useVocabularyChartData(userId: string | undefined): UseVocabular
       return vocabularyStatsService.getAllChartData(userId);
     },
     enabled: !!userId,
-    staleTime: 180000, // 3 minutes - chart data changes less frequently
-    gcTime: 600000, // 10 minutes
+    ...CACHE_TIMES.MEDIUM, // 3 minutes - chart data changes less frequently
     retry: 2,
   });
 

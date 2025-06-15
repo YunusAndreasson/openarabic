@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { CACHE_TIMES } from '@/constants/queryConfig';
 import { articlesService } from '@/services/articles';
 import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
@@ -60,8 +61,7 @@ export const useArticleData = (
       return readingListService.isInReadingList(userId, articleId);
     },
     enabled: !!userId && !!articleId,
-    staleTime: 180000, // 3 minutes - reading list changes moderately
-    gcTime: 600000, // 10 minutes
+    ...CACHE_TIMES.MEDIUM, // 3 minutes - reading list changes moderately
     refetchOnMount: false,
   });
 
@@ -77,8 +77,7 @@ export const useArticleData = (
       return studyWordsFSRSService.getFSRSWords(userId);
     },
     enabled: !!userId,
-    staleTime: 180000, // 3 minutes - study words change moderately
-    gcTime: 600000, // 10 minutes
+    ...CACHE_TIMES.MEDIUM, // 3 minutes - study words change moderately
     networkMode: 'always',
     retry: 3,
     refetchOnMount: true, // Previously 'always', now true to respect staleTime
