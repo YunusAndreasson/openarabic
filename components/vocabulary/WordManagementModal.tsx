@@ -1,26 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import React, { memo, useCallback } from 'react';
-import { StyleSheet, View, TouchableOpacity, Modal, Pressable } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  FadeIn,
-  SlideInDown,
-  FadeOut,
-  SlideOutDown,
-  runOnJS,
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import React, { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { withOpacity } from '@/utils/colorUtils';
 import { selectionFeedback } from '@/utils/haptics';
 
 interface WordManagementAction {
@@ -55,136 +41,29 @@ const WordManagementModal = memo(
     onMarkAsHard,
   }: WordManagementModalProps) => {
     const colors = useColors();
-    const isDarkMode = useIsDarkMode();
+    const bottomSheetRef = useRef<BottomSheet>(null);
 
-    // Animation values for swipe to dismiss
-    const translateY = useSharedValue(0);
-    const opacity = useSharedValue(1);
+    // Generate actions and calculate dynamic height
+    const actions = useMemo(() => {
+      if (!word) return [];
+      return getActionsForWord(word, colors);
+    }, [word, colors]);
 
-    // Animated close
-    const animateClose = useCallback(() => {
-      translateY.value = withTiming(400, { duration: 200 });
-      opacity.value = withTiming(0, { duration: 200 }, finished => {
-        if (finished) {
-          runOnJS(onClose)();
-        }
-      });
-    }, [translateY, opacity, onClose]);
+    // Configure snap points based on content
+    const snapPoints = useMemo(() => {
+      // Base height: header (100px) + word info (80px) + actions (70px each) + padding (60px)
+      const dynamicHeight = 240 + actions.length * 70;
+      return [Math.min(dynamicHeight, 500)];
+    }, [actions.length]);
 
-    // Animate back to position
-    const animateBack = useCallback(() => {
-      translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
-      opacity.value = withSpring(1, { damping: 15, stiffness: 150 });
-    }, [translateY, opacity]);
-
-    // Gesture handler for swipe to dismiss
-    const gestureHandler = Gesture.Pan()
-      .onUpdate(event => {
-        if (event.translationY <= 0) return;
-        translateY.value = event.translationY;
-        opacity.value = Math.max(0.3, 1 - event.translationY / 300);
-      })
-      .onEnd(event => {
-        const shouldDismiss = event.translationY > 80 || event.velocityY > 300;
-        if (shouldDismiss) {
-          runOnJS(animateClose)();
-        } else {
-          runOnJS(animateBack)();
-        }
-      });
-
-    // Animated styles
-    const animatedModalStyle = useAnimatedStyle(
-      () => ({
-        transform: [{ translateY: translateY.value }],
-        opacity: opacity.value,
-      }),
-      [translateY, opacity]
-    );
-
-    // Reset animation values when modal becomes visible
-    React.useEffect(() => {
+    // Handle visibility changes
+    useEffect(() => {
       if (visible) {
-        translateY.value = 0;
-        opacity.value = 1;
+        bottomSheetRef.current?.expand();
+      } else {
+        bottomSheetRef.current?.close();
       }
-    }, [visible, translateY, opacity]);
-
-    // Generate contextual actions based on word state
-    const getActions = useCallback(
-      (word: StudyWord): WordManagementAction[] => {
-        const difficulty = word.fsrs_difficulty ?? 6.5;
-        const stability = word.fsrs_stability ?? 0;
-        const lapses = word.fsrs_lapses ?? 0;
-        const isStruggling = difficulty >= 8.0 && lapses > 0;
-        const isMastered = stability >= 21 && difficulty <= 5;
-
-        const baseActions: WordManagementAction[] = [
-          {
-            id: 'skip',
-            label: 'Skip for Today',
-            description: "Don't show again in this session",
-            icon: 'play-forward-outline',
-            color: colors.tint,
-          },
-          {
-            id: 'reset',
-            label: 'Reset Progress',
-            description: 'Start fresh with this word',
-            icon: 'refresh-outline',
-            color: colors.warning,
-          },
-          {
-            id: 'remove',
-            label: 'Remove from Study',
-            description: 'Stop studying this word entirely',
-            icon: 'trash-outline',
-            color: colors.error,
-            destructive: true,
-          },
-        ];
-
-        // Add context-specific actions
-        if (isStruggling) {
-          baseActions.unshift({
-            id: 'easy',
-            label: 'Mark as Easier',
-            description: 'Reduce difficulty for this word',
-            icon: 'trending-down-outline',
-            color: colors.success,
-          });
-        } else if (isMastered) {
-          baseActions.unshift({
-            id: 'hard',
-            label: 'Needs More Practice',
-            description: 'Increase practice frequency',
-            icon: 'trending-up-outline',
-            color: colors.warning,
-          });
-        } else {
-          // For learning words, offer both options
-          baseActions.unshift(
-            {
-              id: 'easy',
-              label: 'Mark as Easy',
-              description: 'Reduce practice frequency',
-              icon: 'trending-down-outline',
-              color: colors.success,
-            },
-            {
-              id: 'hard',
-              label: 'Mark as Hard',
-              description: 'Increase practice frequency',
-              icon: 'trending-up-outline',
-              color: colors.warning,
-            }
-          );
-        }
-
-        return baseActions;
-      },
-      [colors]
-    );
+    }, [visible]);
 
     const handleActionPress = useCallback(
       (action: WordManagementAction) => {
@@ -223,145 +102,197 @@ const WordManagementModal = memo(
       ]
     );
 
-    const getActionHandler = useCallback(
-      (action: WordManagementAction) => () => handleActionPress(action),
-      [handleActionPress]
-    );
-
+    // Don't render if not visible or no word
     if (!visible || !word) return null;
 
-    const actions = getActions(word);
     const wordText = word.root?.letters || 'Unknown word';
     const wordMeaning = word.root?.meaning || 'No translation';
 
     return (
-      <Modal
-        transparent
-        visible={visible}
-        animationType="none"
-        statusBarTranslucent
-        onRequestClose={onClose}
-        testID="word-management-modal"
-      >
-        <Animated.View
-          style={styles.overlay}
-          entering={FadeIn.duration(200)}
-          exiting={FadeOut.duration(150)}
-        >
-          <BlurView
-            intensity={20}
-            style={StyleSheet.absoluteFill}
-            tint={isDarkMode ? 'dark' : 'light'}
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={0}
+        snapPoints={snapPoints}
+        enablePanDownToClose
+        enableOverDrag={false}
+        enableDynamicSizing={false}
+        animateOnMount={true}
+        onClose={onClose}
+        backgroundStyle={[styles.background, { backgroundColor: colors.card }]}
+        handleIndicatorStyle={[styles.indicator, { backgroundColor: colors.modalIndicator }]}
+        backdropComponent={({ style }) => (
+          <View
+            style={[style, [styles.backdrop, { backgroundColor: colors.backdropOverlay }]]}
+            onTouchStart={onClose}
+            pointerEvents="auto"
           />
-
-          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-
-          <GestureDetector gesture={gestureHandler}>
-            <Animated.View
-              style={[
-                styles.modalContainer,
-                { backgroundColor: colors.background },
-                animatedModalStyle,
-              ]}
-              entering={SlideInDown.duration(250).damping(15)}
-              exiting={SlideOutDown.duration(200)}
+        )}
+      >
+        <BottomSheetView style={styles.content}>
+          {/* Word Header */}
+          <View style={[styles.wordHeader, { borderBottomColor: colors.border }]}>
+            <ThemedText style={styles.wordText} type="heading2" weight="bold">
+              {wordText}
+            </ThemedText>
+            <ThemedText
+              style={styles.wordMeaning}
+              type="body"
+              colorName="secondaryText"
+              weight="medium"
             >
-              <View style={[styles.closeIndicator, { backgroundColor: colors.modalIndicator }]} />
+              {wordMeaning}
+            </ThemedText>
+          </View>
 
-              {/* Word Header */}
-              <View style={styles.wordHeader}>
-                <ThemedText style={styles.wordText} type="heading2" weight="bold">
-                  {wordText}
-                </ThemedText>
-                <ThemedText
-                  style={styles.wordMeaning}
-                  type="body"
-                  colorName="secondaryText"
-                  weight="medium"
+          {/* Actions */}
+          <View style={styles.actionsContainer}>
+            {actions.map(action => (
+              <TouchableOpacity
+                key={action.id}
+                testID={`word-action-${action.id}`}
+                style={[
+                  styles.actionCard,
+                  { backgroundColor: colors.elevation1 },
+                  action.destructive && {
+                    borderColor: colors.error,
+                    borderWidth: StyleSheet.hairlineWidth,
+                  },
+                ]}
+                onPress={() => handleActionPress(action)}
+              >
+                <View
+                  style={[
+                    styles.iconContainer,
+                    {
+                      backgroundColor: action.destructive
+                        ? colors.error + '14' // 8% opacity
+                        : colors.tintBackground,
+                    },
+                  ]}
                 >
-                  {wordMeaning}
-                </ThemedText>
-              </View>
-
-              {/* Actions */}
-              <View style={styles.actionsContainer}>
-                {actions.map(action => (
-                  <TouchableOpacity
-                    key={action.id}
-                    testID={`word-action-${action.id}`}
-                    style={[
-                      styles.actionCard,
-                      { backgroundColor: colors.card },
-                      action.destructive && {
-                        borderColor: withOpacity(colors.error, 0.2),
-                        borderWidth: 1,
-                      },
-                    ]}
-                    onPress={getActionHandler(action)}
+                  <Ionicons name={action.icon} size={24} color={action.color} />
+                </View>
+                <View style={styles.actionContent}>
+                  <ThemedText
+                    style={[styles.actionTitle, action.destructive && { color: colors.error }]}
+                    type="body"
+                    weight="semibold"
                   >
-                    <View
-                      style={[
-                        styles.iconContainer,
-                        { backgroundColor: withOpacity(action.color, 0.08) },
-                      ]}
-                    >
-                      <Ionicons name={action.icon} size={24} color={action.color} />
-                    </View>
-                    <View style={styles.actionContent}>
-                      <ThemedText
-                        style={[styles.actionTitle, action.destructive && { color: colors.error }]}
-                        type="body"
-                        weight="semibold"
-                      >
-                        {action.label}
-                      </ThemedText>
-                      <ThemedText
-                        colorName="secondaryText"
-                        style={styles.actionDescription}
-                        type="caption"
-                      >
-                        {action.description}
-                      </ThemedText>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </Animated.View>
-          </GestureDetector>
-        </Animated.View>
-      </Modal>
+                    {action.label}
+                  </ThemedText>
+                  <ThemedText
+                    colorName="secondaryText"
+                    style={styles.actionDescription}
+                    type="caption"
+                  >
+                    {action.description}
+                  </ThemedText>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </BottomSheetView>
+      </BottomSheet>
     );
   }
 );
 
+// Helper function to generate actions (moved outside component for better performance)
+function getActionsForWord(word: StudyWord, colors: any): WordManagementAction[] {
+  const difficulty = word.fsrs_difficulty ?? 6.5;
+  const stability = word.fsrs_stability ?? 0;
+  const lapses = word.fsrs_lapses ?? 0;
+  const isStruggling = difficulty >= 8.0 && lapses > 0;
+  const isMastered = stability >= 21 && difficulty <= 5;
+
+  const baseActions: WordManagementAction[] = [
+    {
+      id: 'skip',
+      label: 'Skip for Today',
+      description: "Don't show again in this session",
+      icon: 'play-forward-outline',
+      color: colors.tint,
+    },
+    {
+      id: 'reset',
+      label: 'Reset Progress',
+      description: 'Start fresh with this word',
+      icon: 'refresh-outline',
+      color: colors.warning,
+    },
+    {
+      id: 'remove',
+      label: 'Remove from Study',
+      description: 'Stop studying this word entirely',
+      icon: 'trash-outline',
+      color: colors.error,
+      destructive: true,
+    },
+  ];
+
+  // Add context-specific actions
+  if (isStruggling) {
+    baseActions.unshift({
+      id: 'easy',
+      label: 'Mark as Easier',
+      description: 'Reduce difficulty for this word',
+      icon: 'trending-down-outline',
+      color: colors.success,
+    });
+  } else if (isMastered) {
+    baseActions.unshift({
+      id: 'hard',
+      label: 'Needs More Practice',
+      description: 'Increase practice frequency',
+      icon: 'trending-up-outline',
+      color: colors.warning,
+    });
+  } else {
+    // For learning words, offer both options
+    baseActions.unshift(
+      {
+        id: 'easy',
+        label: 'Mark as Easy',
+        description: 'Reduce practice frequency',
+        icon: 'trending-down-outline',
+        color: colors.success,
+      },
+      {
+        id: 'hard',
+        label: 'Mark as Hard',
+        description: 'Increase practice frequency',
+        icon: 'trending-up-outline',
+        color: colors.warning,
+      }
+    );
+  }
+
+  return baseActions;
+}
+
 WordManagementModal.displayName = 'WordManagementModal';
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  modalContainer: {
+  background: {
     ...LAYOUT.ELEVATION.LARGE,
     borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.XLARGE,
-    maxHeight: '80%',
   },
-  closeIndicator: {
-    alignSelf: 'center',
-    borderRadius: 2,
-    height: 4,
-    marginTop: LAYOUT.SPACING.SMALL,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+  backdrop: {
+    // backgroundColor handled dynamically via colors.backdropOverlay
+  },
+  indicator: {
     width: 36,
+    height: 4,
+  },
+  content: {
+    paddingBottom: LAYOUT.SPACING.LARGE,
   },
   wordHeader: {
     alignItems: 'center',
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingBottom: LAYOUT.SPACING.MEDIUM,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   wordText: {
