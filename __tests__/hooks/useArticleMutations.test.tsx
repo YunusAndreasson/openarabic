@@ -31,8 +31,6 @@ jest.mock('expo-router', () => ({
   router: { replace: jest.fn() },
 }));
 
-jest.mock('@sentry/react-native', () => ({}));
-
 jest.mock('@/utils/errorHandling', () => ({
   handleError: jest.fn(),
 }));

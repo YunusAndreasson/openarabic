@@ -2,11 +2,6 @@ import { renderHook, act } from '@testing-library/react-native';
 
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 
-jest.mock('@sentry/react-native', () => ({
-  addBreadcrumb: jest.fn(),
-  captureException: jest.fn(),
-}));
-
 const mockFetchQuery = jest.fn().mockResolvedValue([]);
 const mockPrefetchQuery = jest.fn().mockResolvedValue(undefined);
 const mockGetQueryData = jest.fn();

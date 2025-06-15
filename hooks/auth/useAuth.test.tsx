@@ -4,11 +4,6 @@ import { describe, it, expect, jest } from '@jest/globals';
 import { AuthContext } from '@/components/providers/AuthProvider';
 import { useAuth } from './useAuth';
 
-jest.mock('@sentry/react-native', () => ({
-  captureException: jest.fn(),
-  addBreadcrumb: jest.fn(),
-}));
-
 describe('useAuth', () => {
   it('throws when used outside AuthProvider', () => {
     expect(() => renderHook(() => useAuth())).toThrow(/AuthProvider/);
