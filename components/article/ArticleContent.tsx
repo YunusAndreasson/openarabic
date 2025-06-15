@@ -228,7 +228,6 @@ interface ArticleContentProps {
   renderSentenceItem: ({ item }: { item: Tables<'article_sentences'> }) => React.ReactElement;
   handleScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   colors: ThemeColors;
-  isDarkMode?: boolean;
 }
 
 const SENTENCE_ITEM_HEIGHT = 70;
@@ -240,7 +239,6 @@ export const ArticleContent = ({
   renderSentenceItem,
   handleScroll,
   colors,
-  isDarkMode,
 }: ArticleContentProps): JSX.Element => {
   const insets = useSafeAreaInsets();
 
@@ -267,7 +265,7 @@ export const ArticleContent = ({
   const headerComponent = useMemo(
     () => (
       <>
-        <ParallaxHeader article={article} colors={colors} isDarkMode={!!isDarkMode} />
+        <ParallaxHeader article={article} colors={colors} />
         {article.summary && <ArticleSummary summary={article.summary} />}
         {user && (
           <AudioControlsButton
@@ -283,7 +281,6 @@ export const ArticleContent = ({
     [
       article,
       colors,
-      isDarkMode,
       user,
       articleId,
       isInReadingList,

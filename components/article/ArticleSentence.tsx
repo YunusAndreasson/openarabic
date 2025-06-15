@@ -36,9 +36,6 @@ interface ArticleSentenceProps {
   };
   colors: ThemeColors;
   containerStyle?: StyleProp<ViewStyle>;
-  currentPlayingWordId?: number | null;
-  currentPlayingPosition?: number | null;
-  isPlaying?: boolean;
   dueWordRootIds?: Set<number>;
 }
 
@@ -50,9 +47,6 @@ function ArticleSentenceComponent({
   settings,
   colors: propColors,
   containerStyle,
-  currentPlayingWordId: _currentPlayingWordId = null,
-  currentPlayingPosition: _currentPlayingPosition = null,
-  isPlaying: _isPlaying = false,
   dueWordRootIds = EMPTY_DUE_WORDS_SET,
 }: ArticleSentenceProps) {
   const defaultColors = useColors();
