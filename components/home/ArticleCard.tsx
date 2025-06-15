@@ -49,8 +49,8 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
 }) => {
   const isDarkMode = useIsDarkMode();
   const colors = useColors();
-  // Choose play icon color: dark in both light and dark modes
-  const playIconColor = isDarkMode ? colors.black : colors.text;
+  // Play button has tint background: white icon in light mode, dark icon in dark mode
+  const playIconColor = isDarkMode ? colors.black : colors.white;
 
   const { animatedStyle, startAnimation, setValue } = useTransformAnimation({
     type: 'scale',
