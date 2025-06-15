@@ -140,7 +140,7 @@ const NowPlayingCard = ({
             </ThemedText>
 
             <ThemedText numberOfLines={1} style={styles.author} type="caption" variant="secondary">
-              {String(article.author!.name)}
+              {String(article.author?.name ?? '')}
             </ThemedText>
           </View>
 
