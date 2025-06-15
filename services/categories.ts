@@ -6,10 +6,10 @@ export const categoriesService = {
   async getCategories(): Promise<Tables<'categories'>[]> {
     const { data, error } = await supabase
       .from('categories')
-      .select('id, name')
+      .select<Tables<'categories'>>('id, name')
       .order('name');
 
     if (error) throw error;
-    return (data ?? []) as Tables<'categories'>[];
+    return data ?? [];
   },
 };

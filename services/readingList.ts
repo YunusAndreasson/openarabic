@@ -94,7 +94,7 @@ export const readingListService = {
     await checkAuthentication(userId);
     const { data, error } = await supabase
       .from('reading_list')
-      .select('article_id')
+      .select<{ article_id: number }>('article_id')
       .eq('user_id', userId)
       .eq('article_id', articleId)
       .single();
@@ -117,7 +117,7 @@ export const readingListService = {
     await checkAuthentication(userId);
     const { data, error } = await supabase
       .from('reading_list')
-      .select(
+      .select<ReadingListItem>(
         `
         *,
         articles:article_id(
@@ -135,6 +135,6 @@ export const readingListService = {
       throw error;
     }
 
-    return (data ?? []) as ReadingListItem[];
+    return data ?? [];
   },
 };
