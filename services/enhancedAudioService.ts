@@ -19,10 +19,6 @@ export const enhancedAudioService = {
       // Fetch article details
       const article = await articlesService.getArticleById(articleId);
 
-      if (!article.audio_url) {
-        return null;
-      }
-
       return {
         id: generateTrackId(articleId),
         articleId,
@@ -52,8 +48,6 @@ export const enhancedAudioService = {
 
       for (const item of readingList) {
         const article = item.articles;
-
-        if (!article?.audio_url) continue;
 
         allTracks.push({
           id: generateTrackId(item.article_id),

@@ -62,7 +62,7 @@ export default function ReadLayout(): JSX.Element {
           const params = route.params as ArticleParams;
 
           return createNavigationOptions(colors, {
-            title: params.headerTitle || 'Article',
+            title: params.headerTitle,
           });
         }}
       />

@@ -31,8 +31,7 @@ export const DATE_RANGE_OPTIONS = [
 
 export const AUTHOR_CHUNK_SIZE = 6;
 
-interface SortOptionWithIcon
-  extends BaseSortOption<FilterState['sort']['field']> {
+interface SortOptionWithIcon extends BaseSortOption<FilterState['sort']['field']> {
   icon: ComponentProps<typeof Ionicons>['name'];
 }
 
@@ -146,7 +145,7 @@ export function useFilterModal(availableAuthors: Author[]): UseFilterModalResult
     }
     if (selectedAuthorsCount === 1) {
       const selectedAuthor = availableAuthors.find(a => a.id === filters.authorIds[0]);
-      return selectedAuthor?.name || 'Author';
+      return selectedAuthor ? selectedAuthor.name : `${selectedAuthorsCount} selected`;
     }
     return `${selectedAuthorsCount} selected`;
   }, [selectedAuthorsCount, availableAuthors, filters.authorIds]);

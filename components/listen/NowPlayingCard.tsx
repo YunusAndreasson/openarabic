@@ -105,7 +105,7 @@ const NowPlayingCard = ({
           <EnhancedImage
             contentFit="cover"
             placeholder={article.placeholder}
-            source={article.image_url || ''}
+            source={String(article.image_url)}
             style={styles.backgroundImageInner}
           />
         </Animated.View>
@@ -126,7 +126,7 @@ const NowPlayingCard = ({
           <EnhancedImage
             contentFit="cover"
             placeholder={article.placeholder}
-            source={article.image_url || ''}
+            source={String(article.image_url)}
             style={styles.articleImage}
           />
         </View>
@@ -140,7 +140,7 @@ const NowPlayingCard = ({
             </ThemedText>
 
             <ThemedText numberOfLines={1} style={styles.author} type="caption" variant="secondary">
-              {article.author?.name || 'Author'}
+              {String(article.author!.name)}
             </ThemedText>
           </View>
 
@@ -169,9 +169,7 @@ const NowPlayingCard = ({
         {/* Controls */}
         <View style={styles.controls}>
           {/* Stop Button */}
-          <Animated.View
-            style={buttonAnimatedStyle}
-          >
+          <Animated.View style={buttonAnimatedStyle}>
             <TouchableOpacity
               activeOpacity={0.8}
               onPressIn={handleStopPressIn}

@@ -34,7 +34,7 @@ const IntelligentArticleSection = memo(function IntelligentArticleSection({
     // For refresh: pick a different random article
     if (refreshKey > 0 && intelligentArticle.article) {
       const availableArticles = articlesData.filter(
-        article => article.id !== intelligentArticle.article?.id
+        article => article.id !== intelligentArticle.article!.id
       );
 
       if (availableArticles.length > 0) {

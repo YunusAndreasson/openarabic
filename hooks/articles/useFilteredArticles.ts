@@ -24,7 +24,7 @@ export const useFilteredArticles = (articles: Article[]) => {
 
   const comparators: Record<FilterState['sort']['field'], (a: Article, b: Article) => number> = {
     title: (a, b) => a.title.localeCompare(b.title),
-    author: (a, b) => (a.author?.name || '').localeCompare(b.author?.name || ''),
+    author: (a, b) => a.author.name.localeCompare(b.author.name),
     date: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
     difficulty: (a, b) => a.difficulty_level - b.difficulty_level,
   };

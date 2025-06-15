@@ -80,15 +80,14 @@ interface AudioControlsButtonProps {
   onToggleReadingList: (articleId: number, isInReadingList: boolean) => void;
 }
 
-const AudioControlsButton = React.memo<AudioControlsButtonProps>(
-  ({ articleId, article, isInReadingList, isLoading, onToggleReadingList }) => {
+const AudioControlsButton = React.memo<Omit<AudioControlsButtonProps, 'article'>>(
+  ({ articleId, isInReadingList, isLoading, onToggleReadingList }) => {
     const { showToast } = useToast();
     const audioPlayer = useAudioPlayer();
     const { audioState } = audioPlayer;
     const [isPlayNowLoading, setIsPlayNowLoading] = React.useState(false);
 
     const isCurrentlyPlaying = audioState === AUDIO_STATES.PLAYING;
-    const hasAudio = useMemo(() => !!article.audio_url, [article.audio_url]);
 
     // Combined loading state for optimal UX - instant local feedback + ongoing audio feedback
     const isPlayButtonLoading = isPlayNowLoading || audioState === AUDIO_STATES.LOADING;
@@ -101,12 +100,7 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
         return;
       }
 
-      // Start playback
-      if (!hasAudio) {
-        showToast('Audio not available for this article', 3000, 'error');
-        return;
-      }
-
+      // Start playback (audio_url is always present)
       try {
         setIsPlayNowLoading(true);
         selectionFeedback();
@@ -147,7 +141,7 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
         // Ensure minimum loading time even for errors
         setTimeout(() => setIsPlayNowLoading(false), 300);
       }
-    }, [isCurrentlyPlaying, hasAudio, audioPlayer.actions, articleId, showToast]);
+    }, [isCurrentlyPlaying, audioPlayer.actions, articleId, showToast]);
 
     const handleListenLater = useCallback(() => {
       selectionFeedback();
@@ -169,7 +163,7 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
           title={isCurrentlyPlaying ? 'STOP' : 'PLAY NOW'}
           size="medium"
           loading={isPlayButtonLoading}
-          disabled={(!hasAudio && !isCurrentlyPlaying) || isPlayButtonLoading}
+          disabled={!isCurrentlyPlaying || isPlayButtonLoading}
           onPress={handlePlayToggle}
           style={styles.playNowButton}
           testID="play-now-button"
@@ -270,7 +264,6 @@ export const ArticleContent = ({
         {user && (
           <AudioControlsButton
             articleId={articleId}
-            article={article}
             isInReadingList={isInReadingList}
             isLoading={isLoadingReadingList}
             onToggleReadingList={handleToggleReadingList}

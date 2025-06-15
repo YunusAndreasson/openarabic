@@ -74,29 +74,20 @@ const ListenListItem = memo(
     isStartingPlayback?: boolean;
     audioState: AudioState;
   }) => {
-    // Check if this article has audio available
-    const hasAudio = !!item.articles?.audio_url;
-
     return (
       <ArticleCard
-        author={item.articles?.author?.name || 'Author'}
-        title={item.articles?.title || 'Untitled'}
+        author={item.articles.author.name}
+        title={item.articles.title}
         editMode={editMode}
         isBeingDragged={_isBeingDragged}
         // Primary action: tap to play audio (when available) or open article (when no audio)
-        onPress={
-          !editMode
-            ? hasAudio
-              ? () => onPlayPress(item.article_id)
-              : () => onPress(item.article_id)
-            : undefined
-        }
+        onPress={!editMode ? () => onPlayPress(item.article_id) : undefined}
         // Secondary action: long press to open article (when not in edit mode)
         onLongPress={!editMode ? () => onPress(item.article_id) : undefined}
         onDelete={() => onDelete(item.article_id)}
         // Show play button as visual indicator when audio is available, but hide when any audio is playing
         onPlayPress={
-          hasAudio && !editMode && audioState !== AUDIO_STATES.PLAYING
+          !editMode && audioState !== AUDIO_STATES.PLAYING
             ? () => onPlayPress(item.article_id)
             : undefined
         }
