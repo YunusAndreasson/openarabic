@@ -124,7 +124,6 @@ export default function ReviewScreen(): JSX.Element {
             onSwipeLeft={handleSwipeLeft}
             onSwipeRight={handleSwipeRight}
             onTap={handleTap}
-            onLongPress={handleLongPress}
           />
           <MeaningOverlay
             isStruggling={isStruggling}
