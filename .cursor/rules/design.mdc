@@ -1,7 +1,7 @@
 ---
-description: 
+description: When developing or changing UI compoenents or flows
 globs: 
-alwaysApply: true
+alwaysApply: false
 ---
 # Teslers Law (Law of Conservation of Complexity)
 - Shift inherent system complexity away from the user; handle it within the system design.
