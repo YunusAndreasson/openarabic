@@ -32,7 +32,9 @@ const SettingLabel = memo(({ icon, text, iconColor }: SettingLabelProps) => {
 
   return (
     <View style={styles.settingLabelContainer}>
-      <Ionicons color={defaultIconColor} name={icon} size={22} />
+      <View style={styles.settingIconContainer}>
+        <Ionicons color={defaultIconColor} name={icon} size={22} />
+      </View>
       <View style={styles.settingLabelTextContainer}>
         <ThemedText type="body">{text}</ThemedText>
       </View>
@@ -613,6 +615,10 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
     minWidth: 50,
     paddingHorizontal: LAYOUT.SPACING.TINY,
+  },
+
+  settingIconContainer: {
+    padding: LAYOUT.SPACING.SMALL,
   },
 });
 
