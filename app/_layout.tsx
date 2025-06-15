@@ -67,10 +67,7 @@ onlineManager.setEventListener(setOnline => {
 NetInfo.fetch().then(state => onlineManager.setOnline(Boolean(state.isConnected)));
 
 // Optimized retry logic that stops when offline
-const createRetryFunction = (maxRetries: number) => (
-  failureCount: number,
-  error: unknown
-) => {
+const createRetryFunction = (maxRetries: number) => (failureCount: number, error: unknown) => {
   if (!onlineManager.isOnline()) return false;
   // Don't retry on 4xx errors (client errors)
   if (error && typeof error === 'object' && 'status' in error) {
@@ -272,14 +269,12 @@ function AppContent() {
             name="(tabs)"
             options={{
               headerShown: false,
-              animation: 'none',
             }}
           />
           <Stack.Screen
             name="auth"
             options={{
               headerShown: false,
-              animation: 'none',
             }}
           />
           <Stack.Screen

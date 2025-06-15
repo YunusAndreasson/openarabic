@@ -1,18 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { PlatformPressable } from '@react-navigation/elements';
-import type { Route } from '@react-navigation/native';
 import { BlurView } from 'expo-blur';
-import type { BlurTint } from 'expo-blur';
 import { Tabs, router } from 'expo-router';
-import { useMemo, useCallback, memo, useEffect } from 'react';
+import { useCallback, memo, useEffect, Fragment } from 'react';
 import type { JSX } from 'react';
-import { Platform, StyleSheet, View, Text, type TextStyle } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Platform, StyleSheet } from 'react-native';
 
 import HeaderProfile from '@/components/HeaderProfile';
 import EditModeButton from '@/components/listen/EditModeButton';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
@@ -38,234 +33,45 @@ const TAB_SCREENS = [
   },
 ] as const;
 
-const ICON_SIZE = 24;
 const BLUR_INTENSITY = 55;
 
-const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps) => {
-  const colors = useColors();
+// Simplified header background - works for both platforms
+const HeaderBackground = memo(() => {
   const isDarkMode = useIsDarkMode();
-  const insets = useSafeAreaInsets();
-
-  const platformStyles = useMemo(
-    () =>
-      Platform.select({
-        ios: isDarkMode
-          ? {
-              shadowOffset: { width: 0, height: -2 },
-              shadowOpacity: 0.15, // LAYOUT.ELEVATION.SMALL equivalent
-              shadowRadius: 2, // LAYOUT.ELEVATION.SMALL equivalent
-              borderTopWidth: StyleSheet.hairlineWidth,
-            }
-          : {
-              shadowOffset: { width: 0, height: -2 },
-              shadowOpacity: 0.3, // LAYOUT.ELEVATION.MEDIUM equivalent
-              shadowRadius: 10, // LAYOUT.ELEVATION.MEDIUM equivalent
-              borderTopWidth: StyleSheet.hairlineWidth,
-            },
-        android: {
-          borderTopWidth: StyleSheet.hairlineWidth,
-          elevation: 8, // LAYOUT.ELEVATION.MEDIUM equivalent
-        },
-      }) ?? {},
-    [isDarkMode]
-  );
-
-  const bottomInset = useMemo(
-    () =>
-      Platform.select({
-        ios: Math.min(insets.bottom, LAYOUT.SPACING.MEDIUM),
-        default: LAYOUT.SPACING.SMALL,
-      }),
-    [insets.bottom]
-  );
-
-  const containerStyle = useMemo(
-    () => ({
-      ...styles.container,
-      height:
-        LAYOUT.BOTTOM_BAR.HEIGHT +
-        bottomInset +
-        Platform.select({ android: LAYOUT.SPACING.SMALL, default: 0 }),
-      paddingBottom: bottomInset,
-      ...platformStyles,
-      borderTopColor: colors.borderOverlay,
-      ...Platform.select({
-        ios: {
-          shadowColor: isDarkMode ? colors.shadow : colors.borderOverlay,
-        },
-        default: {
-          backgroundColor: colors.background,
-          borderTopColor: colors.border,
-        },
-      }),
-    }),
-    [
-      colors.shadow,
-      colors.background,
-      colors.borderOverlay,
-      colors.border,
-      bottomInset,
-      isDarkMode,
-      platformStyles,
-    ]
-  );
-
-  const TabBarContainer = Platform.OS === 'ios' ? BlurView : View;
-  const blurProps =
-    Platform.OS === 'ios'
-      ? {
-          intensity: BLUR_INTENSITY,
-          tint: (isDarkMode ? 'dark' : 'light') as BlurTint,
-        }
-      : {};
-
-  const getTabButtonStyle = useCallback(
-    (isFocused: boolean): TextStyle => ({
-      ...styles.label,
-      ...styles.labelPlatform,
-      color: isFocused ? colors.tint : colors.tabIconDefault,
-    }),
-    [colors.tint, colors.tabIconDefault]
-  );
-
-  const rippleColor = useMemo(() => colors.navigationRipple, [colors.navigationRipple]);
-
-  const getTabPressHandler = useCallback(
-    (route: Route<string>, isFocused: boolean) => {
-      return () => {
-        const event = navigation.emit({
-          type: 'tabPress',
-          target: route.key,
-          canPreventDefault: true,
-        });
-
-        if (!isFocused && !event.defaultPrevented) {
-          navigation.navigate(route.name);
-        }
-      };
-    },
-    [navigation]
-  );
 
   return (
-    <TabBarContainer style={containerStyle} {...blurProps}>
-      {Platform.select({
-        android: (
-          <>
-            <BlurView
-              intensity={BLUR_INTENSITY}
-              style={StyleSheet.absoluteFill}
-              tint={isDarkMode ? 'dark' : 'light'}
-            />
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tabBarOverlay }]} />
-          </>
-        ),
-        default: (
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tabBarOverlay }]} />
-        ),
-      })}
-      {state.routes.map((route, index) => {
-        const descriptor = descriptors[route.key];
-        if (!descriptor) return null;
-
-        const { options } = descriptor;
-        const label = options.title ?? route.name;
-        const isFocused = state.index === index;
-
-        const screen = TAB_SCREENS.find(s => s.name === route.name);
-        if (!screen) return null;
-
-        return (
-          <PlatformPressable
-            key={route.key}
-            android_ripple={{ color: rippleColor, borderless: true }}
-            style={styles.tabButton}
-            onPress={getTabPressHandler(route, isFocused)}
-          >
-            <Ionicons
-              color={isFocused ? colors.tint : colors.tabIconDefault}
-              name={isFocused ? screen.iconFilled : screen.iconOutline}
-              size={ICON_SIZE}
-              style={[
-                isFocused ? styles.activeIcon : styles.inactiveIcon,
-                {
-                  textShadowColor: isDarkMode ? colors.textShadowLight : colors.textShadowDark,
-                  textShadowOffset: { width: 0, height: 0.5 },
-                  textShadowRadius: 1,
-                },
-              ]}
-            />
-            <Text style={getTabButtonStyle(isFocused)}>{label}</Text>
-          </PlatformPressable>
-        );
-      })}
-    </TabBarContainer>
+    <BlurView
+      intensity={BLUR_INTENSITY}
+      style={StyleSheet.absoluteFill}
+      tint={isDarkMode ? 'dark' : 'light'}
+    />
   );
 });
-CustomTabBar.displayName = 'CustomTabBar';
+HeaderBackground.displayName = 'HeaderBackground';
 
-const CustomHeaderBackground = memo(() => {
+// Simplified tab bar background - works for both platforms
+const TabBarBackground = memo(() => {
   const isDarkMode = useIsDarkMode();
-  const colors = useColors();
 
-  return Platform.select({
-    android: (
-      <View style={StyleSheet.absoluteFill}>
-        <BlurView
-          intensity={BLUR_INTENSITY}
-          style={StyleSheet.absoluteFill}
-          tint={isDarkMode ? 'dark' : 'light'}
-        />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.headerOverlay }]} />
-      </View>
-    ),
-    default: (
-      <BlurView
-        intensity={BLUR_INTENSITY}
-        style={StyleSheet.absoluteFill}
-        tint={isDarkMode ? 'dark' : 'light'}
-      />
-    ),
-  });
+  return (
+    <BlurView
+      intensity={BLUR_INTENSITY}
+      style={StyleSheet.absoluteFill}
+      tint={isDarkMode ? 'dark' : 'light'}
+    />
+  );
 });
-CustomHeaderBackground.displayName = 'CustomHeaderBackground';
-
-const HEADER_TITLE_STYLE = {
-  fontSize: LAYOUT.HEADER.TITLE.MAIN.fontSize,
-  fontWeight: LAYOUT.HEADER.TITLE.MAIN.fontWeight as TextStyle['fontWeight'],
-} as TextStyle;
-
-const HEADER_STYLE = {
-  elevation: 0,
-  shadowOpacity: 0,
-  borderBottomWidth: 0,
-};
-
-// Add header right component for listen tab
-const ListenHeaderRight = memo(() => <EditModeButton />);
-ListenHeaderRight.displayName = 'ListenHeaderRight';
+TabBarBackground.displayName = 'TabBarBackground';
 
 export default function TabLayout(): JSX.Element {
   const { session, isLoading } = useAuth();
+  const colors = useColors();
+  const isDarkMode = useIsDarkMode();
 
-  const headerBackground = useCallback(() => <CustomHeaderBackground />, []);
+  const headerBackground = useCallback(() => <HeaderBackground />, []);
+  const tabBarBackground = useCallback(() => <TabBarBackground />, []);
   const headerProfileComponent = useCallback(() => <HeaderProfile />, []);
-  const listenHeaderRightComponent = useCallback(() => <ListenHeaderRight />, []);
-
-  const screenOptions = useMemo(
-    () => ({
-      headerShown: true,
-      headerTitleAlign: 'left' as const,
-      headerTitleStyle: HEADER_TITLE_STYLE,
-      headerStyle: HEADER_STYLE,
-      headerBackground: headerBackground,
-      headerTransparent: true,
-      freezeOnBlur: true,
-      animation: 'fade' as const,
-      lazy: true,
-    }),
-    [headerBackground]
-  );
+  const listenHeaderRightComponent = useCallback(() => <EditModeButton />, []);
 
   useEffect(() => {
     if (!isLoading && !session?.user) {
@@ -274,17 +80,66 @@ export default function TabLayout(): JSX.Element {
   }, [session, isLoading]);
 
   if (!session?.user) {
-    return <></>;
+    return <Fragment />;
   }
 
   return (
-    <Tabs screenOptions={screenOptions} tabBar={props => <CustomTabBar {...props} />}>
+    <Tabs
+      screenOptions={{
+        headerShown: true,
+        headerTitleAlign: 'left',
+        headerTitleStyle: {
+          fontSize: LAYOUT.HEADER.TITLE.MAIN.fontSize,
+          fontWeight: LAYOUT.HEADER.TITLE.MAIN.fontWeight,
+        },
+        headerTransparent: true,
+        headerBackground: headerBackground,
+
+        // Tab bar styling with blur
+        tabBarBackground: tabBarBackground,
+        tabBarActiveTintColor: colors.tint,
+        tabBarInactiveTintColor: colors.tabIconDefault,
+        tabBarStyle: Platform.select({
+          ios: {
+            position: 'absolute',
+            borderTopWidth: 0,
+          },
+          android: {
+            borderTopWidth: StyleSheet.hairlineWidth,
+            borderTopColor: colors.border,
+            elevation: 8,
+          },
+        }),
+        tabBarLabelStyle: {
+          fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+          fontWeight: Platform.OS === 'ios' ? '500' : '400',
+        },
+
+        // Performance optimizations
+        freezeOnBlur: true,
+        animation: 'fade',
+        lazy: true,
+      }}
+    >
       {TAB_SCREENS.map(screen => (
         <Tabs.Screen
           key={screen.name}
           name={screen.name}
           options={{
             title: screen.title,
+            tabBarIcon: ({ focused, color, size }) => (
+              <Ionicons
+                name={focused ? screen.iconFilled : screen.iconOutline}
+                size={size}
+                color={color}
+                style={{
+                  opacity: focused ? 1 : 0.7,
+                  textShadowColor: isDarkMode ? colors.textShadowLight : colors.textShadowDark,
+                  textShadowOffset: { width: 0, height: 0.5 },
+                  textShadowRadius: 1,
+                }}
+              />
+            ),
             ...(screen.name === 'read' && {
               headerRight: headerProfileComponent,
             }),
@@ -297,57 +152,3 @@ export default function TabLayout(): JSX.Element {
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  activeIcon: {
-    opacity: 1,
-  },
-  container: {
-    borderTopWidth: 0,
-    bottom: 0,
-    flexDirection: 'row',
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    zIndex: LAYOUT.Z_INDEX.HEADER,
-    ...Platform.select({
-      android: {
-        paddingTop: LAYOUT.SPACING.SMALL,
-        paddingBottom: LAYOUT.SPACING.TINY,
-      },
-    }),
-  },
-  inactiveIcon: {
-    opacity: 0.7,
-  },
-  label: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    marginTop: LAYOUT.SPACING.TINY / 2,
-    textAlign: 'center',
-  },
-  labelPlatform: Platform.select({
-    ios: {
-      fontWeight: '500',
-    },
-    android: {
-      paddingBottom: LAYOUT.SPACING.TINY,
-    },
-  }) as TextStyle,
-  tabButton: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-    minHeight: MIN_TOUCH_TARGET.LARGE,
-    minWidth: MIN_TOUCH_TARGET.MEDIUM,
-    ...Platform.select({
-      ios: {
-        paddingBottom: LAYOUT.SPACING.TINY / 2,
-        paddingTop: LAYOUT.SPACING.TINY,
-      },
-      android: {
-        paddingBottom: LAYOUT.SPACING.TINY,
-        paddingTop: LAYOUT.SPACING.SMALL,
-      },
-    }),
-  },
-});
