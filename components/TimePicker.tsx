@@ -1,4 +1,4 @@
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import type { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { memo, useState, useCallback, useMemo, useRef, useEffect } from 'react';
@@ -88,16 +88,17 @@ export const TimePicker = memo(
       return `${displayHour}:${displayMinute} ${period}`;
     }, []);
 
-    // Memoize backdrop component to prevent re-renders
-    const backdropComponent = useCallback(
+    // Use built-in backdrop component
+    const renderBackdrop = useCallback(
       (props: any) => (
-        <View
-          style={[props.style, [styles.backdrop, { backgroundColor: colors.backdropOverlay }]]}
-          onTouchStart={onClose}
-          pointerEvents="auto"
+        <BottomSheetBackdrop
+          {...props}
+          disappearsOnIndex={-1}
+          appearsOnIndex={0}
+          onPress={onClose}
         />
       ),
-      [colors.backdropOverlay, onClose]
+      [onClose]
     );
 
     // Memoize dynamic styles to prevent recalculation
@@ -141,7 +142,7 @@ export const TimePicker = memo(
         onClose={onClose}
         backgroundStyle={dynamicStyles.bottomSheet}
         handleIndicatorStyle={dynamicStyles.indicator}
-        backdropComponent={backdropComponent}
+        backdropComponent={renderBackdrop}
       >
         <BottomSheetView style={styles.container}>
           {/* Time Display */}

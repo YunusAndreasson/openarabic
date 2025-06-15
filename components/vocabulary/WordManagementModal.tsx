@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 
@@ -31,6 +31,8 @@ interface WordManagementModalProps extends BaseModalProps {
 
 const WordManagementModal = memo(
   ({
+    visible,
+    onClose,
     word,
     onRemoveFromStudy,
     onResetProgress,
@@ -56,8 +58,12 @@ const WordManagementModal = memo(
 
     // Handle visibility changes
     useEffect(() => {
-      bottomSheetRef.current?.expand();
-    }, []);
+      if (visible) {
+        bottomSheetRef.current?.expand();
+      } else {
+        bottomSheetRef.current?.close();
+      }
+    }, [visible]);
 
     const handleActionPress = useCallback(
       (action: WordManagementAction) => {
@@ -86,15 +92,17 @@ const WordManagementModal = memo(
       [word, onRemoveFromStudy, onResetProgress, onSkipForToday, onMarkAsEasy, onMarkAsHard]
     );
 
-    // Memoize backdrop component to prevent re-renders
-    const backdropComponent = useCallback(
+    // Use built-in backdrop component
+    const renderBackdrop = useCallback(
       (props: any) => (
-        <View
-          style={[props.style, [styles.backdrop, { backgroundColor: colors.backdropOverlay }]]}
-          pointerEvents="auto"
+        <BottomSheetBackdrop
+          {...props}
+          disappearsOnIndex={-1}
+          appearsOnIndex={0}
+          onPress={onClose}
         />
       ),
-      [colors.backdropOverlay]
+      [onClose]
     );
 
     // Memoize dynamic styles to prevent recalculation
@@ -113,7 +121,7 @@ const WordManagementModal = memo(
     );
 
     // Don't render if not visible or no word
-    if (!word) return null;
+    if (!visible || !word) return null;
 
     const wordText = word.root?.letters || 'Unknown word';
     const wordMeaning = word.root?.meaning || 'No translation';
@@ -128,9 +136,10 @@ const WordManagementModal = memo(
         enableDynamicSizing={false}
         animateOnMount={true}
         activeOffsetY={[-10, 10]}
+        onClose={onClose}
         backgroundStyle={dynamicStyles.background}
         handleIndicatorStyle={dynamicStyles.indicator}
-        backdropComponent={backdropComponent}
+        backdropComponent={renderBackdrop}
       >
         <BottomSheetView style={styles.content}>
           {/* Word Header */}

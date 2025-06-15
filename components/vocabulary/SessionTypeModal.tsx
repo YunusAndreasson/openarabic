@@ -3,7 +3,7 @@
 // This custom Modal should be replaced with native Expo Router modal for better performance
 
 import { Ionicons } from '@expo/vector-icons';
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 
@@ -39,27 +39,17 @@ const SessionTypeModal = memo(
       onClose();
     }, [onClose]);
 
-    // Memoize backdrop component to prevent re-renders
-    const backdropComponent = useCallback(
+    // Use built-in backdrop component
+    const renderBackdrop = useCallback(
       (props: any) => (
-        <View
-          style={[props.style, [styles.backdrop, { backgroundColor: colors.backdropOverlay }]]}
-          onTouchStart={handleSheetClose}
-          pointerEvents="auto"
+        <BottomSheetBackdrop
+          {...props}
+          disappearsOnIndex={-1}
+          appearsOnIndex={0}
+          onPress={handleSheetClose}
         />
       ),
       [colors.backdropOverlay, handleSheetClose]
-    );
-
-    // Memoize dynamic styles to prevent recalculation
-    const dynamicStyles = useMemo(
-      () => ({
-        background: [styles.background, { backgroundColor: colors.elevation1 }],
-        indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
-        optionCard: { backgroundColor: colors.elevation1 },
-        iconContainer: { backgroundColor: colors.tintBackground },
-      }),
-      [colors.card, colors.modalIndicator, colors.elevation1, colors.tintBackground]
     );
 
     // Don't render if not visible (optimization)
@@ -71,14 +61,14 @@ const SessionTypeModal = memo(
         index={0}
         snapPoints={snapPoints}
         enablePanDownToClose
-        enableOverDrag={false}
-        enableDynamicSizing={false}
+        enableOverDrag={true}
         animateOnMount={true}
-        activeOffsetY={[-10, 10]}
+        enableDynamicSizing={false}
         onClose={handleSheetClose}
-        backgroundStyle={dynamicStyles.background}
-        handleIndicatorStyle={dynamicStyles.indicator}
-        backdropComponent={backdropComponent}
+        backdropComponent={renderBackdrop}
+        backgroundStyle={{ backgroundColor: colors.card }}
+        handleIndicatorStyle={{ backgroundColor: colors.modalIndicator }}
+        style={{ zIndex: 1000 }}
       >
         <BottomSheetView style={styles.content}>
           <View style={styles.header}>
@@ -89,10 +79,15 @@ const SessionTypeModal = memo(
 
           <View style={styles.optionsContainer}>
             <TouchableOpacity
-              style={[styles.optionCard, dynamicStyles.optionCard]}
+              style={[
+                styles.optionCard,
+                {
+                  backgroundColor: colors.elevation2,
+                },
+              ]}
               onPress={onStartVisual}
             >
-              <View style={[styles.iconContainer, dynamicStyles.iconContainer]}>
+              <View style={[styles.iconContainer, { backgroundColor: colors.tintBackground }]}>
                 <Ionicons name="eye" size={24} color={colors.tint} />
               </View>
               <View style={styles.optionContent}>
@@ -106,10 +101,15 @@ const SessionTypeModal = memo(
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.optionCard, dynamicStyles.optionCard]}
+              style={[
+                styles.optionCard,
+                {
+                  backgroundColor: colors.elevation3,
+                },
+              ]}
               onPress={onStartAudio}
             >
-              <View style={[styles.iconContainer, dynamicStyles.iconContainer]}>
+              <View style={[styles.iconContainer, { backgroundColor: colors.tintBackground }]}>
                 <Ionicons name="ear" size={24} color={colors.tint} />
               </View>
               <View style={styles.optionContent}>
@@ -131,18 +131,6 @@ const SessionTypeModal = memo(
 SessionTypeModal.displayName = 'SessionTypeModal';
 
 const styles = StyleSheet.create({
-  background: {
-    ...LAYOUT.ELEVATION.LARGE,
-    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
-  backdrop: {
-    // backgroundColor handled dynamically via colors.backdropOverlay
-  },
-  indicator: {
-    width: 32,
-    height: 4,
-  },
   content: {
     paddingBottom: LAYOUT.SPACING.LARGE,
   },
