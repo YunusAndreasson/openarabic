@@ -39,6 +39,39 @@ const FilterModal: React.FC<FilterModalProps> = ({ availableAuthors }) => {
     selectedAuthorsText,
   } = useFilterModal(availableAuthors);
 
+  const handleToggleAuthors = React.useCallback(() => {
+    toggleSection('authors');
+  }, [toggleSection]);
+
+  const handleToggleDifficulty = React.useCallback(() => {
+    toggleSection('difficulty');
+  }, [toggleSection]);
+
+  const handleToggleDateRange = React.useCallback(() => {
+    toggleSection('dateRange');
+  }, [toggleSection]);
+
+  const selectAuthor = React.useCallback(
+    (authorId: number) => () => {
+      handleAuthorToggle(authorId);
+    },
+    [handleAuthorToggle]
+  );
+
+  const selectDifficulty = React.useCallback(
+    (range: [number, number]) => () => {
+      handleDifficultySelect(range);
+    },
+    [handleDifficultySelect]
+  );
+
+  const selectDateRange = React.useCallback(
+    (range: typeof DATE_RANGE_OPTIONS[number]['key']) => () => {
+      handleDateRangeSelect(range);
+    },
+    [handleDateRangeSelect]
+  );
+
   return (
     <ThemedView
       includeBottomInset={false}
@@ -124,7 +157,7 @@ const FilterModal: React.FC<FilterModalProps> = ({ availableAuthors }) => {
           {/* Authors Filter */}
           <Pressable
             style={[styles.filterRow, { borderBottomColor: colors.borderOverlay }]}
-            onPress={() => toggleSection('authors')}
+            onPress={handleToggleAuthors}
           >
             <View style={styles.filterRowLeft}>
               <Ionicons name="person-outline" size={20} color={colors.secondaryText} />
@@ -155,7 +188,7 @@ const FilterModal: React.FC<FilterModalProps> = ({ availableAuthors }) => {
                         id={author.id}
                         label={author.name}
                         isSelected={filters.authorIds.includes(author.id)}
-                        onSelect={() => handleAuthorToggle(author.id)}
+                        onSelect={selectAuthor(author.id)}
                         variant="filter"
                         pillStyle={styles.filterPill}
                       />
@@ -169,7 +202,7 @@ const FilterModal: React.FC<FilterModalProps> = ({ availableAuthors }) => {
           {/* Difficulty Filter */}
           <Pressable
             style={[styles.filterRow, { borderBottomColor: colors.borderOverlay }]}
-            onPress={() => toggleSection('difficulty')}
+            onPress={handleToggleDifficulty}
           >
             <View style={styles.filterRowLeft}>
               <Ionicons name="trending-up-outline" size={20} color={colors.secondaryText} />
@@ -201,7 +234,7 @@ const FilterModal: React.FC<FilterModalProps> = ({ availableAuthors }) => {
                       option.range[0] === filters.difficultyRange[0] &&
                       option.range[1] === filters.difficultyRange[1]
                     }
-                    onSelect={() => handleDifficultySelect(option.range)}
+                    onSelect={selectDifficulty(option.range)}
                     variant="filter"
                     pillStyle={styles.filterPill}
                   />
@@ -213,7 +246,7 @@ const FilterModal: React.FC<FilterModalProps> = ({ availableAuthors }) => {
           {/* Date Range Filter */}
           <Pressable
             style={[styles.filterRow, styles.lastFilterRow]}
-            onPress={() => toggleSection('dateRange')}
+            onPress={handleToggleDateRange}
           >
             <View style={styles.filterRowLeft}>
               <Ionicons name="calendar-outline" size={20} color={colors.secondaryText} />
@@ -242,7 +275,7 @@ const FilterModal: React.FC<FilterModalProps> = ({ availableAuthors }) => {
                     id={option.key}
                     label={option.label}
                     isSelected={filters.dateRange === option.key}
-                    onSelect={() => handleDateRangeSelect(option.key)}
+                    onSelect={selectDateRange(option.key)}
                     variant="filter"
                     pillStyle={styles.filterPill}
                   />
