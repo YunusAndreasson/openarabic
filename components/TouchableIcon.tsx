@@ -7,7 +7,7 @@ import Animated from 'react-native-reanimated';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { lightFeedback } from '@/utils/haptics';
+import { selectionFeedback } from '@/utils/haptics';
 
 interface TouchableIconProps {
   /** Icon name from Ionicons */
@@ -61,7 +61,7 @@ const TouchableIcon: React.FC<TouchableIconProps> = memo(
 
     const handlePress = React.useCallback(() => {
       if (hapticFeedback) {
-        lightFeedback();
+        selectionFeedback();
       }
       onPress();
     }, [hapticFeedback, onPress]);

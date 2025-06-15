@@ -22,9 +22,8 @@ import { useHeaderVisibility } from '@/hooks/ui/useHeaderVisibility';
 import { useAppSelectorMemo } from '@/store/hooks';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
-import { lightFeedback } from '@/utils/haptics';
+import { selectionFeedback } from '@/utils/haptics';
 // import { analytics } from '@/services/analytics';
-
 
 export default function ArticleScreen(): JSX.Element {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -73,7 +72,6 @@ export default function ArticleScreen(): JSX.Element {
       subscription.remove();
     };
   }, [user?.id, refetchStudyWords]);
-
 
   // Trigger fade-in when article content is ready
   useEffect(() => {
@@ -125,7 +123,7 @@ export default function ArticleScreen(): JSX.Element {
           onPress={() => {
             if (word.root) {
               if (isDueWord) {
-                lightFeedback();
+                selectionFeedback();
               }
               handleRootPress(word.root.id);
             }

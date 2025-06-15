@@ -6,7 +6,7 @@ import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import { wordManagementService } from '@/services/wordManagement';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
-import { lightFeedback } from '@/utils/haptics';
+import { selectionFeedback } from '@/utils/haptics';
 
 interface UseWordManagementOptions {
   onWordRemoved?: (word: StudyWord) => void;
@@ -36,7 +36,7 @@ export function useWordManagement(options: UseWordManagementOptions = {}): UseWo
   const [isProcessing, setIsProcessing] = useState(false);
 
   const showWordManagement = useCallback((word: StudyWord) => {
-    lightFeedback();
+    selectionFeedback();
     setSelectedWord(word);
     setIsModalVisible(true);
   }, []);

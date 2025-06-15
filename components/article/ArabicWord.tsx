@@ -12,7 +12,7 @@ import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useArabicWord } from '@/hooks/vocabulary/useArabicWord';
 import type { TextWeight } from '@/types/ui/text.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
-import { lightFeedback } from '@/utils/haptics';
+import { selectionFeedback } from '@/utils/haptics';
 
 import { WordTooltip } from './WordTooltip';
 
@@ -168,7 +168,7 @@ function ArabicWordComponent({
   // Add to study list on long press with animated feedback
   const handleLongPress = useCallback(() => {
     // Provide haptic feedback
-    lightFeedback();
+    selectionFeedback();
 
     // Execute the animation and selection separately
     startPressAnimation();

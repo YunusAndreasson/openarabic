@@ -13,7 +13,7 @@ import {
 } from '@/store/filtersSlice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import type { Author } from '@/types/articles.types';
-import { selectionFeedback, lightFeedback } from '@/utils/haptics';
+import { selectionFeedback } from '@/utils/haptics';
 
 export const DIFFICULTY_OPTIONS = [
   { key: 'beginner', label: 'Beginner', range: [1, 2] as [number, number] },
@@ -124,7 +124,7 @@ export function useFilterModal(availableAuthors: Author[]): UseFilterModalResult
   );
 
   const handleClearAll = useCallback(() => {
-    lightFeedback();
+    selectionFeedback();
     dispatch(clearAllFilters());
   }, [dispatch]);
 

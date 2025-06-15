@@ -22,7 +22,7 @@ import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { handleError } from '@/utils/errorHandling';
-import { lightFeedback } from '@/utils/haptics';
+import { selectionFeedback } from '@/utils/haptics';
 
 const styles = StyleSheet.create({
   content: {
@@ -97,7 +97,7 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
     const handlePlayToggle = useCallback(async () => {
       if (isCurrentlyPlaying) {
         // Stop playback
-        lightFeedback();
+        selectionFeedback();
         await audioPlayer.actions.stopPlayback();
         return;
       }
@@ -110,7 +110,7 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
 
       try {
         setIsPlayNowLoading(true);
-        lightFeedback();
+        selectionFeedback();
 
         // Record start time for minimum loading duration
         const loadingStartTime = Date.now();
@@ -151,7 +151,7 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
     }, [isCurrentlyPlaying, hasAudio, audioPlayer.actions, articleId, showToast]);
 
     const handleListenLater = useCallback(() => {
-      lightFeedback();
+      selectionFeedback();
       onToggleReadingList(articleId, isInReadingList);
 
       // Show toast message
