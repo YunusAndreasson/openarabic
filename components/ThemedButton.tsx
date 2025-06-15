@@ -3,7 +3,7 @@ import type { JSX } from 'react';
 import React, { memo, useMemo } from 'react';
 import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity, View, ActivityIndicator } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
@@ -164,12 +164,7 @@ function ThemedButtonComponent({
 
   return (
     <AnimatedTouchable
-      style={[
-        buttonStyle,
-        disablePressAnimation
-          ? {}
-          : (animatedStyle),
-      ]}
+      style={[buttonStyle, disablePressAnimation ? {} : animatedStyle]}
       onPressIn={disablePressAnimation ? undefined : handlePressIn}
       onPressOut={disablePressAnimation ? undefined : handlePressOut}
       disabled={disabled || loading}
@@ -179,8 +174,10 @@ function ThemedButtonComponent({
     >
       <View style={[styles.innerContainer, innerContainerStyle]}>
         {loading ? (
-          // When loading, show only the ActivityIndicator centered
-          <ActivityIndicator color={textColor} size="small" />
+          // When loading, show only the ActivityIndicator centered with fade-in
+          <Animated.View entering={FadeIn.duration(200)}>
+            <ActivityIndicator color={textColor} size="small" />
+          </Animated.View>
         ) : (
           <>
             {hasIcon ? (

@@ -112,31 +112,41 @@ const AudioControlsButton = React.memo<AudioControlsButtonProps>(
         setIsPlayNowLoading(true);
         lightFeedback();
 
+        // Record start time for minimum loading duration
+        const loadingStartTime = Date.now();
+        const MIN_LOADING_DURATION = 300; // 300ms minimum
+
         // Generate enhanced audio track for this article
         const track = await enhancedAudioService.generateEnhancedAudioTrack(articleId);
 
         if (!track) {
           showToast('Failed to prepare audio', 3000, 'error');
+          // Ensure minimum loading time even for errors
+          const elapsed = Date.now() - loadingStartTime;
+          const remainingTime = Math.max(0, MIN_LOADING_DURATION - elapsed);
+          setTimeout(() => setIsPlayNowLoading(false), remainingTime);
           return;
         }
 
-        // Start playback with single track - audio loading state will now provide feedback
-        audioPlayer.actions
-          .startEnhancedPlayback([track], 0)
-          .then(success => {
-            if (!success) {
-              showToast('Failed to start playback', 3000, 'error');
-            }
-          })
-          .catch(err => {
-            handleError(err as Error, { showToast: false });
-            showToast('Failed to start playback', 3000, 'error');
-          });
+        // Start playback with single track - let audio loading state provide feedback
+        const success = await audioPlayer.actions.startEnhancedPlayback([track], 0);
+
+        if (!success) {
+          showToast('Failed to start playback', 3000, 'error');
+        }
+
+        // Ensure minimum loading duration before clearing loading state
+        const elapsed = Date.now() - loadingStartTime;
+        const remainingTime = Math.max(0, MIN_LOADING_DURATION - elapsed);
+
+        setTimeout(() => {
+          setIsPlayNowLoading(false);
+        }, remainingTime);
       } catch (error) {
         handleError(error as Error, { showToast: false });
         showToast('Failed to start playback', 3000, 'error');
-      } finally {
-        setIsPlayNowLoading(false);
+        // Ensure minimum loading time even for errors
+        setTimeout(() => setIsPlayNowLoading(false), 300);
       }
     }, [isCurrentlyPlaying, hasAudio, audioPlayer.actions, articleId, showToast]);
 
