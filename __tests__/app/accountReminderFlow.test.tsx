@@ -7,9 +7,10 @@ jest.mock('@/hooks/account', () => {
   const openMock = jest.fn();
   const toggleMock = jest.fn();
   const setMock = jest.fn();
+  let reminderEnabled = false;
   return {
     useAccountScreen: () => ({
-      reminderTime: { enabled: false, hour: 7, minute: 0 },
+      reminderTime: { enabled: reminderEnabled, hour: 7, minute: 0 },
       formatReminderTime: jest.fn(),
       showTimePicker: false,
       handleTimePickerOpen: openMock,
@@ -30,7 +31,14 @@ jest.mock('@/hooks/account', () => {
       cacheSize: 0,
       queryCacheSize: 0,
     }),
-    __mocks: { openMock, toggleMock, setMock },
+    __mocks: {
+      openMock,
+      toggleMock,
+      setMock,
+      setReminderEnabled: (value: boolean) => {
+        reminderEnabled = value;
+      },
+    },
   };
 });
 
@@ -41,11 +49,23 @@ jest.mock('@/app/(tabs)/read/account/index.tsx', () => {
   return {
     __esModule: true,
     default: () => {
-      const { handleReminderToggle, handleTimePickerOpen, handleTimeSet } = useAccountScreen();
+      const {
+        handleReminderToggle,
+        handleTimePickerOpen,
+        handleTimeSet,
+        reminderTime,
+      } = useAccountScreen();
       const [open, setOpen] = React.useState(false);
+      const [enabled, setEnabled] = React.useState(reminderTime.enabled);
       return (
         <>
-          <TouchableOpacity testID="reminder-toggle" onPress={() => handleReminderToggle(true)}>
+          <TouchableOpacity
+            testID="reminder-toggle"
+            onPress={() => {
+              handleReminderToggle(!enabled);
+              setEnabled(!enabled);
+            }}
+          >
             <Text>Toggle</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -75,7 +95,7 @@ jest.mock('@/app/(tabs)/read/account/index.tsx', () => {
 });
 
 const {
-  __mocks: { openMock, toggleMock, setMock },
+  __mocks: { openMock, toggleMock, setMock, setReminderEnabled },
 } = require('@/hooks/account');
 
 const AccountScreen = require('@/app/(tabs)/read/account/index.tsx').default;
@@ -83,6 +103,7 @@ const AccountScreen = require('@/app/(tabs)/read/account/index.tsx').default;
 describe('account reminder flow', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    setReminderEnabled(false);
   });
 
   it('opens notifications and sets a reminder', () => {
@@ -98,6 +119,16 @@ describe('account reminder flow', () => {
 
     fireEvent.press(getByTestId('confirm-time'));
     expect(setMock).toHaveBeenCalledWith(7, 30);
+  });
+
+  it('disables reminders without opening the time picker', () => {
+    setReminderEnabled(true);
+    const { getByTestId, queryByTestId } = render(<AccountScreen />);
+
+    fireEvent.press(getByTestId('reminder-toggle'));
+    expect(toggleMock).toHaveBeenCalledWith(false);
+    expect(openMock).not.toHaveBeenCalled();
+    expect(queryByTestId('confirm-time')).toBeNull();
   });
 
   it('ignores rapid double confirm', () => {
