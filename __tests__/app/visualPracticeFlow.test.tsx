@@ -199,4 +199,27 @@ describe('visual practice session flow', () => {
 
     expect(getByTestId('due-count').props.children).toBe(0);
   });
+
+  it('shows completion immediately when no words are due', () => {
+    const originalWords = [...words];
+    const originalQueue = [...state.queue];
+    const originalIsComplete = state.isComplete;
+
+    words.splice(0, words.length);
+    state.queue = [];
+    state.isComplete = true;
+
+    const { getByTestId } = render(<PracticeFlow />);
+
+    expect(getByTestId('due-count').props.children).toBe(0);
+
+    fireEvent.press(getByTestId('start'));
+
+    expect(getByTestId('completion-screen')).toBeTruthy();
+
+    // restore
+    words.splice(0, words.length, ...originalWords);
+    state.queue = originalQueue;
+    state.isComplete = originalIsComplete;
+  });
 });
