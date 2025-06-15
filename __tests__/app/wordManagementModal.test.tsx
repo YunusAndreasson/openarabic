@@ -209,5 +209,19 @@ describe('Word management modal flow', () => {
     expect(getByTestId('word-action-hard')).toBeTruthy();
     expect(queryByTestId('word-action-easy')).toBeNull();
   });
+
+  it('shows correct actions for struggling word', () => {
+    const strugglingWord = { ...baseWord, fsrs_difficulty: 9, fsrs_lapses: 2 };
+    const { getByTestId, queryByTestId } = renderWithWord(strugglingWord);
+
+    fireEvent.press(getByTestId('manage-word-button'));
+    expect(getByTestId('word-management-modal')).toBeTruthy();
+
+    expect(getByTestId('word-action-easy')).toBeTruthy();
+    expect(getByTestId('word-action-skip')).toBeTruthy();
+    expect(getByTestId('word-action-reset')).toBeTruthy();
+    expect(getByTestId('word-action-remove')).toBeTruthy();
+    expect(queryByTestId('word-action-hard')).toBeNull();
+  });
 });
 
