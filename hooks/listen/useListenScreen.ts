@@ -156,17 +156,10 @@ export const useListenScreen = () => {
       try {
         selectionFeedback();
         setPlaybackMode('all');
-        actions
-          .startEnhancedPlayback(sortedEnhancedTracks, 0)
-          .then(success => {
-            if (!success) {
-              setPlaybackMode('none');
-            }
-          })
-          .catch(err => {
-            setPlaybackMode('none');
-            handleError(err as Error);
-          });
+        const success = await actions.startEnhancedPlayback(sortedEnhancedTracks, 0);
+        if (!success) {
+          setPlaybackMode('none');
+        }
       } catch (error) {
         setPlaybackMode('none');
         handleError(error as Error);
@@ -232,17 +225,10 @@ export const useListenScreen = () => {
         try {
           selectionFeedback();
           setPlaybackMode('all');
-          actions
-            .startEnhancedPlayback(sortedEnhancedTracks, articleIndex)
-            .then(success => {
-              if (!success) {
-                setPlaybackMode('none');
-              }
-            })
-            .catch(err => {
-              setPlaybackMode('none');
-              handleError(err as Error);
-            });
+          const success = await actions.startEnhancedPlayback(sortedEnhancedTracks, articleIndex);
+          if (!success) {
+            setPlaybackMode('none');
+          }
         } catch (error) {
           setPlaybackMode('none');
           handleError(error as Error);
@@ -255,17 +241,10 @@ export const useListenScreen = () => {
 
           const track = await enhancedAudioService.generateEnhancedAudioTrack(articleId);
           if (track) {
-            actions
-              .startEnhancedPlayback([track], 0)
-              .then(success => {
-                if (!success) {
-                  setPlaybackMode('none');
-                }
-              })
-              .catch(err => {
-                setPlaybackMode('none');
-                handleError(err as Error);
-              });
+            const success = await actions.startEnhancedPlayback([track], 0);
+            if (!success) {
+              setPlaybackMode('none');
+            }
           } else {
             setPlaybackMode('none');
             handleError(new Error('Audio not available for this article'), {
