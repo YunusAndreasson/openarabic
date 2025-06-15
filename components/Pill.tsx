@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import React, { useCallback, useMemo, memo } from 'react';
 import { Pressable, View, type TextStyle } from 'react-native';
 
@@ -7,16 +6,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
 import { ThemedText } from './ThemedText';
-
-interface PillProps {
-  id: number | string;
-  label: ReactNode;
-  isSelected?: boolean;
-  onSelect?: (id: number | string) => void;
-  variant?: 'filter' | 'category';
-  pillBg?: string;
-  pillStyle?: object;
-}
+import type { PillProps } from '@/types/ui/pill.types';
 
 /**
  * A simple pill component for filters and categories
