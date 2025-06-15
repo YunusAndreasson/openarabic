@@ -95,4 +95,36 @@ describe('useSleepTimer', () => {
 
     expect(onComplete).not.toHaveBeenCalled();
   });
+
+  it('allows starting a new timer after completion', () => {
+    const onComplete = jest.fn();
+    const { result } = renderHook(() => useSleepTimer(onComplete));
+
+    act(() => {
+      result.current.actions.startTimer(1);
+    });
+
+    act(() => {
+      jest.advanceTimersByTime(60 * 1000);
+    });
+
+    expect(result.current.state.isActive).toBe(false);
+    expect(result.current.state.remainingTime).toBe(0);
+    expect(onComplete).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      result.current.actions.startTimer(1);
+    });
+
+    expect(result.current.state.isActive).toBe(true);
+    expect(result.current.state.remainingTime).toBe(60);
+
+    act(() => {
+      jest.advanceTimersByTime(60 * 1000);
+    });
+
+    expect(result.current.state.isActive).toBe(false);
+    expect(result.current.state.remainingTime).toBe(0);
+    expect(onComplete).toHaveBeenCalledTimes(2);
+  });
 });
