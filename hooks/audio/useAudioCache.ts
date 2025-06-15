@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { audioCache } from '@/services/audioCache';
 import { handleError } from '@/utils/errorHandling';
@@ -27,8 +27,7 @@ export function useAudioCache() {
     }
   }, []);
 
-  return {
-    clearCache,
-    getCacheSize,
-  };
+  const cacheAPI = useMemo(() => ({ clearCache, getCacheSize }), [clearCache, getCacheSize]);
+
+  return cacheAPI;
 }

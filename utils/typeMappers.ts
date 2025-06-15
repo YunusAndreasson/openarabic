@@ -21,11 +21,12 @@ function mapToSentenceWord(item: SentenceWordRow): SentenceWord {
 
 function mapToArticleSentence(item: ArticleSentenceRow): ArticleSentence {
   const base = item as Tables<'article_sentences'>;
+  const sentenceWords = Array.isArray(item.sentence_words)
+    ? item.sentence_words.map(mapToSentenceWord)
+    : [];
   return {
     ...base,
-    sentence_words: Array.isArray(item.sentence_words)
-      ? item.sentence_words.map(mapToSentenceWord)
-      : [],
+    sentence_words: sentenceWords,
   };
 }
 
