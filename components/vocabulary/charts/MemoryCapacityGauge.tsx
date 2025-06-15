@@ -85,6 +85,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
             onPress={handleInsightsPress}
             onPressIn={handleInsightsPressIn}
             onPressOut={handleInsightsPressOut}
+            hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
           >
             <Ionicons name="analytics-outline" size={20} color={colors.tint} />
           </TouchableOpacity>
