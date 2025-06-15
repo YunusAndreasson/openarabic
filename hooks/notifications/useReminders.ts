@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 import { scheduleReminder, hasPermissions } from '@/services/notificationService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -66,11 +66,20 @@ export function useReminders(): UseRemindersResult {
     return `${displayHour}:${displayMinute} ${period}`;
   };
 
-  return {
-    reminderTime,
-    updateReminderTime,
-    checkPermissions,
-    isScheduling,
-    formatReminderTime,
-  };
+  return useMemo(
+    () => ({
+      reminderTime,
+      updateReminderTime,
+      checkPermissions,
+      isScheduling,
+      formatReminderTime,
+    }),
+    [
+      reminderTime,
+      isScheduling,
+      updateReminderTime,
+      checkPermissions,
+      formatReminderTime,
+    ]
+  );
 }
