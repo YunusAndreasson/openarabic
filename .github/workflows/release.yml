@@ -82,8 +82,7 @@ jobs:
 
       - name: Build and Submit to TestFlight
         run: |
-          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          eas build --platform ios --profile production --auto-submit --non-interactive --branch $CURRENT_BRANCH
+          eas build --platform ios --profile production --auto-submit --non-interactive
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
