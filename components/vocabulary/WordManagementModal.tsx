@@ -7,6 +7,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
+import type { ThemeColors } from '@/types/ui/theme.types';
 import { selectionFeedback } from '@/utils/haptics';
 
 interface WordManagementAction {
@@ -198,7 +199,10 @@ const WordManagementModal = memo(
 );
 
 // Helper function to generate actions (moved outside component for better performance)
-function getActionsForWord(word: StudyWord, colors: any): WordManagementAction[] {
+function getActionsForWord(
+  word: StudyWord,
+  colors: ThemeColors
+): WordManagementAction[] {
   const difficulty = word.fsrs_difficulty ?? 6.5;
   const stability = word.fsrs_stability ?? 0;
   const lapses = word.fsrs_lapses ?? 0;
