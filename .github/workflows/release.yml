@@ -37,32 +37,7 @@ jobs:
       - name: Check for unused code
         run: yarn knip:ci
 
-      - name: Bump version (manual trigger)
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          yarn bump
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          NEW_VERSION=$(node -p "require('./package.json').version")
-          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          git add package.json app.json
-          git commit -m "chore: bump version to $NEW_VERSION"
-          git tag "v$NEW_VERSION"
-          git push origin $CURRENT_BRANCH
-          git push origin "v$NEW_VERSION"
-
-      - name: Create GitHub Release
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          NEW_VERSION=$(node -p "require('./package.json').version")
-          gh release create "v$NEW_VERSION" \
-            --title "Release v$NEW_VERSION" \
-            --generate-notes \
-            --latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # === EAS Build and Update Steps (merged from eas.yaml) ===
+      # === EAS Build and Update Steps (run before version bumping) ===
       - name: Setup Expo and EAS CLI
         uses: expo/expo-github-action@v8
         with:
@@ -80,11 +55,113 @@ jobs:
           CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
           eas update --branch $CURRENT_BRANCH --auto
 
-      - name: Build and Submit to TestFlight
+      - name: Build for TestFlight
+        id: build
         run: |
-          eas build --platform ios --profile production --auto-submit --non-interactive
+          echo "Starting iOS build for TestFlight..."
+          BUILD_OUTPUT=$(eas build --platform ios --profile production --auto-submit --non-interactive --json)
+          echo "build_output=$BUILD_OUTPUT" >> $GITHUB_OUTPUT
+
+          # Extract build ID for tracking
+          BUILD_ID=$(echo "$BUILD_OUTPUT" | jq -r '.[0].id // empty')
+          if [ -n "$BUILD_ID" ]; then
+            echo "build_id=$BUILD_ID" >> $GITHUB_OUTPUT
+            echo "✅ Build submitted successfully with ID: $BUILD_ID"
+          else
+            echo "❌ Failed to extract build ID"
+            exit 1
+          fi
         env:
           EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ALLOW_FAILURE: true
           SENTRY_DISABLE_AUTO_UPLOAD: true
+
+      - name: Wait for build completion
+        if: steps.build.outputs.build_id
+        run: |
+          BUILD_ID="${{ steps.build.outputs.build_id }}"
+          echo "Monitoring build $BUILD_ID..."
+
+          # Wait for build to complete (max 30 minutes)
+          for i in {1..60}; do
+            STATUS=$(eas build:view $BUILD_ID --json | jq -r '.status')
+            echo "Build status: $STATUS (check $i/60)"
+            
+            case $STATUS in
+              "finished")
+                echo "✅ Build completed successfully!"
+                exit 0
+                ;;
+              "errored"|"canceled")
+                echo "❌ Build failed with status: $STATUS"
+                exit 1
+                ;;
+              "in-progress"|"in-queue"|"pending")
+                echo "⏳ Build still in progress, waiting 30s..."
+                sleep 30
+                ;;
+              *)
+                echo "⚠️ Unknown status: $STATUS, continuing to wait..."
+                sleep 30
+                ;;
+            esac
+          done
+
+          echo "❌ Build timeout after 30 minutes"
+          exit 1
+
+      # === Version Bumping and Release Creation (only after successful builds) ===
+      - name: Bump version and create release
+        if: github.event_name == 'workflow_dispatch' && success()
+        run: |
+          echo "🚀 Creating release after successful build..."
+          yarn bump
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+          echo "📝 Committing version $NEW_VERSION"
+          git add package.json app.json
+          git commit -m "chore: bump version to $NEW_VERSION"
+          git tag "v$NEW_VERSION"
+
+          echo "📤 Pushing changes and tags"
+          git push origin $CURRENT_BRANCH
+          git push origin "v$NEW_VERSION"
+
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+        id: version
+
+      - name: Create GitHub Release
+        if: github.event_name == 'workflow_dispatch' && success() && steps.version.outputs.version
+        run: |
+          NEW_VERSION="${{ steps.version.outputs.version }}"
+          BUILD_ID="${{ steps.build.outputs.build_id }}"
+
+          # Create release notes with build info
+          RELEASE_NOTES="## Release v$NEW_VERSION
+
+          🚀 **TestFlight Build**: Successfully submitted to App Store Connect
+          📱 **Build ID**: $BUILD_ID
+          🔗 **EAS Build**: [View build details](https://expo.dev/accounts/[your-account]/projects/[your-project]/builds/$BUILD_ID)
+
+          ### What's Changed
+          "
+
+          echo "🎉 Creating GitHub release v$NEW_VERSION"
+          gh release create "v$NEW_VERSION" \
+            --title "Release v$NEW_VERSION" \
+            --notes "$RELEASE_NOTES" \
+            --generate-notes \
+            --latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Release workflow failed!"
+          echo "Check the logs above for details."
+          # You could add Slack/Discord notifications here
