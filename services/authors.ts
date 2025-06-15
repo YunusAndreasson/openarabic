@@ -1,14 +1,11 @@
+import { supabase } from '@/services/supabase';
 import type { AuthorRow } from '@/types/dbRow.types';
 import { handleError } from '@/utils/errorHandling';
 
-import { supabase } from './supabase';
-
 export const authorsService = {
   async getAuthors(): Promise<AuthorRow[]> {
-    const { data, error } = await supabase
-      .from('authors')
-      .select<AuthorRow>('id, name')
-      .order('name');
+    const { data, error } = await supabase.from('authors').select('id, name').order('name');
+
     if (error) {
       await handleError(new Error(error.message), {
         toastMessage: 'Failed to load authors',
@@ -18,10 +15,31 @@ export const authorsService = {
     return data ?? [];
   },
 
+  async getUniqueAuthors(): Promise<AuthorRow[]> {
+    const { data, error } = await supabase
+      .from('articles')
+      .select('author:authors!inner(id, name)', {
+        count: 'exact',
+      })
+      .order('author(name)', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching unique authors:', error);
+      throw error;
+    }
+
+    // Extract unique authors and ensure no duplicates
+    const uniqueAuthors = (data ?? [])
+      .map(item => (item as any).author)
+      .filter((author, index, self) => index === self.findIndex(a => a.id === author.id));
+
+    return uniqueAuthors;
+  },
+
   async getAuthorsByCategory(categoryId: number): Promise<AuthorRow[]> {
     const { data, error } = await supabase
       .from('articles')
-      .select<{ author: AuthorRow }>('author:authors!inner(id, name)', {
+      .select('author:authors!inner(id, name)', {
         head: true,
       })
       .eq('category_id', categoryId)
@@ -35,7 +53,7 @@ export const authorsService = {
     }
 
     return (data ?? [])
-      .map(item => item.author)
+      .map(item => (item as any).author)
       .sort((a, b) => a.name.localeCompare(b.name));
   },
 };

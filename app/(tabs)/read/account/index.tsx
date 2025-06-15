@@ -426,7 +426,6 @@ const AccountScreen: React.FC = () => {
         initialHour={reminderTime.hour}
         initialMinute={reminderTime.minute}
         isVisible={showTimePicker}
-        title="Set Time"
         onClose={handleTimePickerClose}
         onTimeSet={handleTimeSet}
       />

@@ -77,9 +77,7 @@ describe('readingListService', () => {
       const upsert = jest.fn().mockResolvedValue({ error });
       fromMock.mockReturnValue({ upsert } as FromReturn);
 
-      await expect(
-        readingListService.addToReadingList('u1', 5)
-      ).rejects.toThrow(error);
+      await expect(readingListService.addToReadingList('u1', 5)).rejects.toThrow(error);
 
       expect(handleError).toHaveBeenCalledWith(
         error,
@@ -142,11 +140,23 @@ describe('readingListService', () => {
 
       const called = query.select.mock.calls[0][0].replace(/\s/g, '');
       const expected = `
-        *,
-        articles:article_id(
-          *,
-          author:authors(*),
-          category:categories(*)
+        user_id,
+        article_id,
+        added_at,
+        category_id,
+        articles!inner (
+          id,
+          title,
+          author_id,
+          category_id,
+          content_hash,
+          audio_url,
+          image_url,
+          summary,
+          difficulty_level,
+          created_at,
+          category:categories(id, name),
+          author:authors(id, name)
         )
       `.replace(/\s/g, '');
       expect(called).toBe(expected);
@@ -163,9 +173,7 @@ describe('readingListService', () => {
       query.error = error;
       fromMock.mockReturnValue(query);
 
-      await expect(
-        readingListService.removeFromReadingList('u1', 5)
-      ).rejects.toThrow(error);
+      await expect(readingListService.removeFromReadingList('u1', 5)).rejects.toThrow(error);
 
       expect(handleError).toHaveBeenCalledWith(
         error,

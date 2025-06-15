@@ -51,6 +51,10 @@ jest.mock('expo-router', () => ({
   useNavigationContainerRef: () => null,
 }));
 
+jest.mock('@gorhom/bottom-sheet', () => ({
+  BottomSheetModalProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
 test('app entry loads without crashing', () => {
   expect(() => require('../../app/_layout')).not.toThrow();
 });

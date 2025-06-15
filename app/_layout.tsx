@@ -1,5 +1,6 @@
 // Fix for expo-router v5.0.7 + React Native 0.79.3 splash screen compatibility issue
 import '@/utils/splashPolyfill';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import {
   DarkTheme,
   DefaultTheme,
@@ -18,7 +19,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 
 import figtreeFont from '@/assets/fonts/Figtree.ttf';
 import madinaFont from '@/assets/fonts/Madina.otf';

@@ -53,10 +53,7 @@ export const readingListService = {
 
     const { error } = await supabase
       .from('reading_list')
-      .upsert(
-        { user_id: userId, article_id: articleId },
-        { onConflict: 'user_id,article_id' }
-      );
+      .upsert({ user_id: userId, article_id: articleId }, { onConflict: 'user_id,article_id' });
 
     if (error) {
       await handleError(error, {
@@ -94,7 +91,7 @@ export const readingListService = {
     await checkAuthentication(userId);
     const { data, error } = await supabase
       .from('reading_list')
-      .select<{ article_id: number }>('article_id')
+      .select('article_id')
       .eq('user_id', userId)
       .eq('article_id', articleId)
       .single();
@@ -114,27 +111,44 @@ export const readingListService = {
    * Gets the user's reading list
    */
   async getReadingList(userId: string): Promise<ReadingListItem[]> {
-    await checkAuthentication(userId);
     const { data, error } = await supabase
       .from('reading_list')
-      .select<ReadingListItem>(
+      .select(
         `
-        *,
-        articles:article_id(
-          *,
-          author:authors(*),
-          category:categories(*)
+        user_id,
+        article_id,
+        added_at,
+        category_id,
+        articles!inner (
+          id,
+          title,
+          author_id,
+          category_id,
+          content_hash,
+          audio_url,
+          image_url,
+          summary,
+          difficulty_level,
+          created_at,
+          category:categories(id, name),
+          author:authors(id, name)
         )
       `
       )
       .eq('user_id', userId)
       .order('added_at', { ascending: false });
 
-    if (error) {
-      await handleError(error, errorConfig.readingList.load);
-      throw error;
-    }
+    if (error) throw error;
+    return (data ?? []) as ReadingListItem[];
+  },
 
-    return data ?? [];
+  async getArticleIds(userId: string): Promise<number[]> {
+    const { data, error } = await supabase
+      .from('reading_list')
+      .select('article_id')
+      .eq('user_id', userId);
+
+    if (error) throw error;
+    return (data ?? []).map(item => item.article_id);
   },
 };
