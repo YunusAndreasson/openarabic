@@ -40,7 +40,11 @@ interface EnhancedFSRSStateTracking extends FSRSStateTracking {
 // Spacing queue to track recently processed words
 type SpacingQueue = SpacingState;
 
-export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
+export function useFSRS({
+  userId,
+  onComplete,
+  useAllWords = false,
+}: UseFSRSOptions): UseFSRSResult {
   const [wordQueue, setWordQueue] = useState<StudyWord[]>([]);
   const [currentWord, setCurrentWord] = useState<StudyWord | null>(null);
   const [progress, setProgress] = useState<number>(0);
@@ -95,11 +99,17 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: userId ? FSRS_QUERY_KEYS.due(userId) : ['fsrs-words', 'due'],
+    queryKey: userId
+      ? useAllWords
+        ? FSRS_QUERY_KEYS.all(userId)
+        : FSRS_QUERY_KEYS.due(userId)
+      : ['fsrs-words', useAllWords ? 'all' : 'due'],
     queryFn: async () => {
       if (!userId) return [];
-      // Remove the 50-word limit to fetch all due words
-      return studyWordsFSRSService.getFSRSWords(userId, { onlyDue: true });
+      return studyWordsFSRSService.getFSRSWords(userId, {
+        onlyDue: !useAllWords,
+        forStats: false, // We need full data with root relationships
+      });
     },
     enabled: !!userId,
     refetchOnMount: true,
@@ -346,19 +356,18 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
   const invalidateQueries = useCallback(() => {
     if (!userId) return;
 
-    const queryKeys = [
-      FSRS_QUERY_KEYS.due(userId),
-      FSRS_QUERY_KEYS.all(userId),
-      ['vocabulary-stats'],
-    ];
-    queryKeys.forEach(key => {
-      queryClient.invalidateQueries({ queryKey: key });
-    });
+    // Invalidate the specific query type we're using
+    const currentQueryKey = useAllWords ? FSRS_QUERY_KEYS.all(userId) : FSRS_QUERY_KEYS.due(userId);
+    queryClient.invalidateQueries({ queryKey: currentQueryKey });
+
+    // Also invalidate related queries
+    queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.stats(userId) });
+    queryClient.invalidateQueries({ queryKey: ['vocabulary-stats'] });
 
     stateTrackingRef.current.queueInitialized = false;
     queueRef.current = new PriorityQueue<StudyWord>();
     spacingQueueRef.current = createSpacingState();
-  }, [queryClient, userId]);
+  }, [queryClient, userId, useAllWords]);
 
   return {
     currentWord,

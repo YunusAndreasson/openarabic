@@ -104,7 +104,7 @@ const SessionTypeModal = memo(
               style={[
                 styles.optionCard,
                 {
-                  backgroundColor: colors.elevation3,
+                  backgroundColor: colors.elevation2,
                 },
               ]}
               onPress={onStartAudio}

@@ -49,7 +49,7 @@ export function useWordManagement(options: UseWordManagementOptions = {}): UseWo
   const invalidateQueries = useCallback(() => {
     if (!user?.id) return;
 
-    // Invalidate all FSRS-related queries to refresh data
+    // Invalidate specific FSRS queries
     queryClient.invalidateQueries({
       queryKey: FSRS_QUERY_KEYS.all(user.id),
     });
@@ -57,7 +57,17 @@ export function useWordManagement(options: UseWordManagementOptions = {}): UseWo
       queryKey: FSRS_QUERY_KEYS.due(user.id),
     });
     queryClient.invalidateQueries({
-      queryKey: ['user-study-stats', user.id],
+      queryKey: FSRS_QUERY_KEYS.stats(user.id),
+    });
+
+    // Invalidate vocabulary stats used by Practice screen
+    queryClient.invalidateQueries({
+      queryKey: ['vocabulary-stats', user.id],
+    });
+
+    // Invalidate broader patterns for any remaining queries
+    queryClient.invalidateQueries({
+      queryKey: ['fsrs-words'],
     });
   }, [user?.id, queryClient]);
 

@@ -15,6 +15,7 @@ const basePalette = {
   sage: {
     darkest: '#0E1512', // Rich dark forest background
     dark: '#1A211C', // Warm dark forest cards
+    mediumDark: '#1E2720', // Rich sage border
     medium: '#2A352D', // Rich sage border
     light: '#E8F1EC', // Refined sage border
     lighter: '#F2F7F4', // Whisper-soft sage
@@ -98,7 +99,7 @@ const elevation = {
   dark: {
     level0: basePalette.sage.darkest, // Background
     level1: basePalette.sage.dark, // Cards
-    level2: basePalette.sage.medium, // Raised elements
+    level2: basePalette.sage.mediumDark, // Raised elements
     level3: basePalette.sage.medium, // Floating elements - use consistent reference
   },
 };

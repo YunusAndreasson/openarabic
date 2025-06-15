@@ -4,6 +4,7 @@ import type { StudyWord } from './vocabulary.types';
 export interface UseFSRSOptions {
   userId: string | undefined;
   onComplete?: () => void;
+  useAllWords?: boolean; // If true, fetch all words instead of just due words
 }
 
 export type UseFSRSResult = {

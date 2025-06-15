@@ -100,8 +100,8 @@ export default function VocabularyScreen(): JSX.Element {
   const isDataCached = !!(user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id)));
   const showLoadingIndicator = (isDataLoading || isFetching || isLoadingUserStats) && !isDataCached;
 
-  // Get stats - simplified for due words focus
-  const dueWords = userStats?.dueWords ?? dueWordsData?.length ?? 0;
+  // Get stats - prioritize fresh data from useFSRSQueries over potentially stale database view
+  const dueWords = dueWordsData?.length ?? userStats?.dueWords ?? 0;
 
   // Main content
   return (

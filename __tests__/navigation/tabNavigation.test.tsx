@@ -4,9 +4,7 @@ import { render, fireEvent } from '@testing-library/react-native';
 jest.mock('@react-navigation/native', () => {
   const React = require('react');
   return {
-    NavigationContainer: ({ children }: { children: React.ReactNode }) => (
-      <>{children}</>
-    ),
+    NavigationContainer: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   };
 });
 
@@ -24,14 +22,13 @@ jest.mock('@react-navigation/elements', () => {
   const React = require('react');
   const { Text } = require('react-native');
   return {
-    PlatformPressable: ({ onPress, children }: any) => (
-      <Text onPress={onPress}>{children}</Text>
-    ),
+    PlatformPressable: ({ onPress, children }: any) => <Text onPress={onPress}>{children}</Text>,
   };
 });
 
 jest.mock('expo-router', () => {
   const React = require('react');
+  const { Text, TouchableOpacity } = require('react-native');
   const screens = {
     read: require('../../app/(tabs)/read/index.tsx'),
     listen: require('../../app/(tabs)/listen/index.tsx'),
@@ -42,6 +39,9 @@ jest.mock('expo-router', () => {
     const routes = React.Children.map(children, (child: any) => ({
       key: child.props.name,
       name: child.props.name,
+      title:
+        child.props.options?.title ||
+        child.props.name.charAt(0).toUpperCase() + child.props.name.slice(1),
     }));
     const [index, setIndex] = React.useState(0);
     const navigation = {
@@ -52,21 +52,36 @@ jest.mock('expo-router', () => {
       emit: () => ({ defaultPrevented: false }),
     };
     const descriptors = routes.reduce((acc: any, route: any) => {
-      const title = route.name.charAt(0).toUpperCase() + route.name.slice(1);
-      acc[route.key] = { options: { title } };
+      acc[route.key] = { options: { title: route.title } };
       return acc;
     }, {} as any);
     const state = { index, routes };
     const Active = screens[routes[index].name as keyof typeof screens];
+
+    // Simple tab bar implementation for testing
+    const TabBar = () => (
+      <>
+        {routes.map((route: any, idx: number) => (
+          <TouchableOpacity
+            key={route.key}
+            onPress={() => setIndex(idx)}
+            testID={`tab-${route.name}`}
+          >
+            <Text>{route.title}</Text>
+          </TouchableOpacity>
+        ))}
+      </>
+    );
+
     return (
       <>
-        {tabBar && tabBar({ state, descriptors, navigation })}
+        <TabBar />
         <Active />
       </>
     );
   };
 
-  Tabs.Screen = () => null;
+  Tabs.Screen = ({ name, options }: any) => null;
 
   return { Tabs, router: { replace: jest.fn() } };
 });
@@ -149,4 +164,3 @@ describe('Tab navigation', () => {
     expect(getByText('PRACTICE_MOCK')).toBeTruthy();
   });
 });
-

@@ -88,8 +88,19 @@ const WordManagementModal = memo(
             onMarkAsHard(word);
             break;
         }
+
+        // Close the modal after any action is performed
+        onClose();
       },
-      [word, onRemoveFromStudy, onResetProgress, onSkipForToday, onMarkAsEasy, onMarkAsHard]
+      [
+        word,
+        onRemoveFromStudy,
+        onResetProgress,
+        onSkipForToday,
+        onMarkAsEasy,
+        onMarkAsHard,
+        onClose,
+      ]
     );
 
     // Use built-in backdrop component
@@ -111,13 +122,13 @@ const WordManagementModal = memo(
         background: [styles.background, { backgroundColor: colors.elevation1 }],
         indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
         wordHeader: [styles.wordHeader, { borderBottomColor: colors.border }],
-        actionCard: { backgroundColor: colors.elevation1 },
+        actionCard: { backgroundColor: colors.elevation2 },
         destructiveBorder: {
           borderColor: colors.error,
           borderWidth: StyleSheet.hairlineWidth,
         },
       }),
-      [colors.card, colors.modalIndicator, colors.border, colors.elevation1, colors.error]
+      [colors.card, colors.modalIndicator, colors.border, colors.elevation2, colors.error]
     );
 
     // Don't render if not visible or no word

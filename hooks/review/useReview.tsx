@@ -180,6 +180,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
   const { currentWord, isComplete, progress, updateWord, invalidateQueries } = useFSRS({
     userId: user?.id,
     onComplete: triggerCompletionTransition,
+    useAllWords: fromRemember, // When fromRemember is true, use all words instead of just due words
   });
 
   // Word management integration
@@ -311,11 +312,9 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       duration: 0,
     };
 
-    return audioPlayerRef.current.actions
-      .startEnhancedPlayback([track], 0)
-      .catch(error => {
-        handleError(error instanceof Error ? error : new Error(String(error)));
-      });
+    return audioPlayerRef.current.actions.startEnhancedPlayback([track], 0).catch(error => {
+      handleError(error instanceof Error ? error : new Error(String(error)));
+    });
   }, []);
 
   // Enhanced audio playback for English feedback (non-blocking)
@@ -329,11 +328,9 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       duration: 0,
     };
 
-    return audioPlayerRef.current.actions
-      .startEnhancedPlayback([feedbackTrack], 0)
-      .catch(error => {
-        handleError(error instanceof Error ? error : new Error(String(error)));
-      });
+    return audioPlayerRef.current.actions.startEnhancedPlayback([feedbackTrack], 0).catch(error => {
+      handleError(error instanceof Error ? error : new Error(String(error)));
+    });
   }, []);
 
   const handleKnowledgeResponse = useCallback(
