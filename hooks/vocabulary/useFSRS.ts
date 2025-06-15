@@ -353,7 +353,6 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
     ];
     queryKeys.forEach(key => {
       queryClient.invalidateQueries({ queryKey: key });
-      queryClient.removeQueries({ queryKey: key });
     });
 
     stateTrackingRef.current.queueInitialized = false;
