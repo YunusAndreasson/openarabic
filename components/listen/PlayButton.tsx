@@ -7,13 +7,13 @@ import Animated from 'react-native-reanimated';
 import { MIN_TOUCH_TARGET } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import type { BaseIconButtonProps } from '@/types/ui/button.types';
 import { selectionFeedback } from '@/utils/haptics';
 
-interface PlayButtonProps {
-  onPress: () => void;
+interface PlayButtonProps
+  extends Omit<BaseIconButtonProps<React.ComponentProps<typeof Ionicons>['name']>, 'icon'> {
   isPlaying?: boolean;
   isLoading?: boolean;
-  disabled?: boolean;
   iconColor?: string;
 }
 

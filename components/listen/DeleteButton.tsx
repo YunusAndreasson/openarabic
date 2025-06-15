@@ -6,14 +6,12 @@ import Animated from 'react-native-reanimated';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import type { BaseIconButtonProps } from '@/types/ui/button.types';
 import { selectionFeedback } from '@/utils/haptics';
 
-interface DeleteButtonProps {
-  onPress: () => void;
-  disabled?: boolean;
-}
-
-const DeleteButton: React.FC<DeleteButtonProps> = ({ onPress, disabled = false }) => {
+const DeleteButton: React.FC<
+  Omit<BaseIconButtonProps<React.ComponentProps<typeof Ionicons>['name']>, 'icon'>
+> = ({ onPress, disabled = false }) => {
   const colors = useColors();
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     scaleAmount: 0.9,

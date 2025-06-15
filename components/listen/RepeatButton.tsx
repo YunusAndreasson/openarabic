@@ -7,14 +7,19 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import type { BaseIconButtonProps } from '@/types/ui/button.types';
 import { selectionFeedback } from '@/utils/haptics';
 
-interface RepeatButtonProps {
+interface RepeatButtonProps
+  extends Omit<
+    BaseIconButtonProps<React.ComponentProps<typeof Ionicons>['name']>,
+    'icon' | 'onPress'
+  > {
   enabled: boolean;
   onToggle: () => void;
 }
 
-const RepeatButton: React.FC<RepeatButtonProps> = ({ enabled, onToggle }) => {
+const RepeatButton: React.FC<RepeatButtonProps> = ({ enabled, onToggle, ...rest }) => {
   const colors = useColors();
 
   // Simple icon rotation animation
@@ -50,7 +55,7 @@ const RepeatButton: React.FC<RepeatButtonProps> = ({ enabled, onToggle }) => {
   );
 
   return (
-    <TouchableOpacity style={[styles.container, containerStyle]} onPress={handlePress}>
+    <TouchableOpacity style={[styles.container, containerStyle]} onPress={handlePress} {...rest}>
       <Animated.View style={[styles.iconContainer, iconRotationStyle]}>
         <Ionicons
           color={enabled ? colors.tint : colors.interactiveSecondary}

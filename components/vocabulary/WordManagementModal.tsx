@@ -6,6 +6,7 @@ import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import type { BaseModalProps } from '@/types/ui/modal.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { selectionFeedback } from '@/utils/haptics';
@@ -19,10 +20,8 @@ interface WordManagementAction {
   destructive?: boolean;
 }
 
-interface WordManagementModalProps {
-  visible: boolean;
+interface WordManagementModalProps extends BaseModalProps {
   word: StudyWord | null;
-  onClose: () => void;
   onRemoveFromStudy: (word: StudyWord) => void;
   onResetProgress: (word: StudyWord) => void;
   onSkipForToday: (word: StudyWord) => void;
@@ -32,9 +31,7 @@ interface WordManagementModalProps {
 
 const WordManagementModal = memo(
   ({
-    visible,
     word,
-    onClose,
     onRemoveFromStudy,
     onResetProgress,
     onSkipForToday,
@@ -59,12 +56,8 @@ const WordManagementModal = memo(
 
     // Handle visibility changes
     useEffect(() => {
-      if (visible) {
-        bottomSheetRef.current?.expand();
-      } else {
-        bottomSheetRef.current?.close();
-      }
-    }, [visible]);
+      bottomSheetRef.current?.expand();
+    }, []);
 
     const handleActionPress = useCallback(
       (action: WordManagementAction) => {
@@ -89,18 +82,8 @@ const WordManagementModal = memo(
             onMarkAsHard(word);
             break;
         }
-
-        onClose();
       },
-      [
-        word,
-        onRemoveFromStudy,
-        onResetProgress,
-        onSkipForToday,
-        onMarkAsEasy,
-        onMarkAsHard,
-        onClose,
-      ]
+      [word, onRemoveFromStudy, onResetProgress, onSkipForToday, onMarkAsEasy, onMarkAsHard]
     );
 
     // Memoize backdrop component to prevent re-renders
@@ -108,11 +91,10 @@ const WordManagementModal = memo(
       (props: any) => (
         <View
           style={[props.style, [styles.backdrop, { backgroundColor: colors.backdropOverlay }]]}
-          onTouchStart={onClose}
           pointerEvents="auto"
         />
       ),
-      [colors.backdropOverlay, onClose]
+      [colors.backdropOverlay]
     );
 
     // Memoize dynamic styles to prevent recalculation
@@ -131,7 +113,7 @@ const WordManagementModal = memo(
     );
 
     // Don't render if not visible or no word
-    if (!visible || !word) return null;
+    if (!word) return null;
 
     const wordText = word.root?.letters || 'Unknown word';
     const wordMeaning = word.root?.meaning || 'No translation';
@@ -146,7 +128,6 @@ const WordManagementModal = memo(
         enableDynamicSizing={false}
         animateOnMount={true}
         activeOffsetY={[-10, 10]}
-        onClose={onClose}
         backgroundStyle={dynamicStyles.background}
         handleIndicatorStyle={dynamicStyles.indicator}
         backdropComponent={backdropComponent}
@@ -218,10 +199,7 @@ const WordManagementModal = memo(
 );
 
 // Helper function to generate actions (moved outside component for better performance)
-function getActionsForWord(
-  word: StudyWord,
-  colors: ThemeColors
-): WordManagementAction[] {
+function getActionsForWord(word: StudyWord, colors: ThemeColors): WordManagementAction[] {
   const difficulty = word.fsrs_difficulty ?? 6.5;
   const stability = word.fsrs_stability ?? 0;
   const lapses = word.fsrs_lapses ?? 0;

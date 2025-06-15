@@ -10,10 +10,9 @@ import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import type { BaseModalProps } from '@/types/ui/modal.types';
 
-interface SessionTypeModalProps {
-  visible: boolean;
-  onClose: () => void;
+interface SessionTypeModalProps extends BaseModalProps {
   onStartAudio: () => void;
   onStartVisual: () => void;
 }

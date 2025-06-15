@@ -18,3 +18,15 @@ export interface WordTooltipProps {
   /** Optional zIndex value to control tooltip stacking order */
   zIndex?: number;
 }
+
+/**
+ * Generic base props for modal components
+ */
+export interface BaseModalProps {
+  /** Whether the modal is visible */
+  visible: boolean;
+  /** Function to close the modal */
+  onClose: () => void;
+  /** Optional children to render inside the modal */
+  children?: React.ReactNode;
+}

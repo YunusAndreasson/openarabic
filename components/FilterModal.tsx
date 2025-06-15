@@ -15,8 +15,9 @@ import {
 } from '@/hooks/articles/useFilterModal';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Author } from '@/types/articles.types';
+import type { BaseModalProps } from '@/types/ui/modal.types';
 
-interface FilterModalProps {
+interface FilterModalProps extends BaseModalProps {
   availableAuthors: Author[];
 }
 
@@ -66,7 +67,7 @@ const FilterModal: React.FC<FilterModalProps> = ({ availableAuthors }) => {
   );
 
   const selectDateRange = React.useCallback(
-    (range: typeof DATE_RANGE_OPTIONS[number]['key']) => () => {
+    (range: (typeof DATE_RANGE_OPTIONS)[number]['key']) => () => {
       handleDateRangeSelect(range);
     },
     [handleDateRangeSelect]
@@ -382,9 +383,7 @@ const areEqual = (prevProps: FilterModalProps, nextProps: FilterModalProps) => {
     return false;
   }
 
-  return prevProps.availableAuthors.every(
-    (a, i) => a?.id === nextProps.availableAuthors[i]?.id
-  );
+  return prevProps.availableAuthors.every((a, i) => a?.id === nextProps.availableAuthors[i]?.id);
 };
 
 FilterModal.displayName = 'FilterModal';

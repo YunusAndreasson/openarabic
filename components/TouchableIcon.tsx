@@ -7,21 +7,12 @@ import Animated from 'react-native-reanimated';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import type { BaseIconButtonProps } from '@/types/ui/button.types';
 import { selectionFeedback } from '@/utils/haptics';
 
-interface TouchableIconProps {
+interface TouchableIconProps extends Omit<BaseIconButtonProps, 'icon'> {
   /** Icon name from Ionicons */
-  name: React.ComponentProps<typeof Ionicons>['name'];
-  /** Icon size in pixels */
-  size?: number;
-  /** Icon color */
-  color?: string;
-  /** Press handler */
-  onPress: () => void;
-  /** Whether the button is disabled */
-  disabled?: boolean;
-  /** Additional styles for the container */
-  style?: ViewStyle;
+  icon: React.ComponentProps<typeof Ionicons>['name'];
   /** Size variant for the touch target */
   touchSize?: 'large' | 'medium' | 'small';
   /** Whether to use haptic feedback */
@@ -46,7 +37,7 @@ const getTouchTargetSize = (size: 'large' | 'medium' | 'small'): number => {
 
 const TouchableIcon: React.FC<TouchableIconProps> = memo(
   ({
-    name,
+    icon,
     size = 24,
     color,
     onPress,
@@ -97,7 +88,7 @@ const TouchableIcon: React.FC<TouchableIconProps> = memo(
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
       >
-        <Ionicons color={color || colors.secondaryText} name={name} size={size} />
+        <Ionicons color={color || colors.secondaryText} name={icon} size={size} />
       </AnimatedTouchable>
     );
   }

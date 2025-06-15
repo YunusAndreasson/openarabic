@@ -83,3 +83,20 @@ export type ThemedButtonProps =
         variant?: ButtonVariant;
       });
 
+/**
+ * Generic base props for icon-based buttons
+ */
+export interface BaseIconButtonProps<TIcon = string> {
+  /** Icon name (string or union of icon names) */
+  icon: TIcon;
+  /** Icon size in pixels */
+  size?: number;
+  /** Icon color */
+  color?: string;
+  /** Whether the button is disabled */
+  disabled?: boolean;
+  /** Additional styles for the container */
+  style?: ViewStyle;
+  /** Press handler */
+  onPress: () => void;
+}

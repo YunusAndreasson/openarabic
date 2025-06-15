@@ -23,7 +23,7 @@ export const CardHeader = memo(({ title, subtitle, onInfoPress }: CardHeaderProp
         </ThemedText>
       </View>
       <TouchableIcon
-        name="information-outline"
+        icon="information-outline"
         size={18}
         style={styles.infoIcon}
         touchSize="small"

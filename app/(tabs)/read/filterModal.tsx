@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import React from 'react';
 
@@ -8,6 +8,7 @@ import FilterModal from '@/components/FilterModal';
 import { authorsService } from '@/services/authors';
 
 export default function FilterModalScreen(): JSX.Element {
+  const router = useRouter();
   const { categoryId } = useLocalSearchParams<{ categoryId: string }>();
   const numericCategoryId = parseInt(categoryId ?? '', 10);
 
@@ -35,5 +36,5 @@ export default function FilterModalScreen(): JSX.Element {
   }
 
   // Always show FilterModal (even while loading)
-  return <FilterModal availableAuthors={availableAuthors} />;
+  return <FilterModal availableAuthors={availableAuthors} visible={true} onClose={router.back} />;
 }
