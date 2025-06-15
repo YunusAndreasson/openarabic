@@ -568,9 +568,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
       queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) });
       queryClient.invalidateQueries({ queryKey: ['vocabulary-stats'] });
-      queryClient.removeQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
-      queryClient.removeQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) });
-      queryClient.removeQueries({ queryKey: ['vocabulary-stats'] });
     }
 
     setTimeout(() => {
