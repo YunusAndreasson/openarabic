@@ -50,10 +50,10 @@ const createShadow = (elevation: number, opacity: number, radius: number) => ({
 
 const ELEVATION_SYSTEM = {
   NONE: { level: 0, ...createShadow(0, 0, 0) },
-  SUBTLE: { level: 2, ...createShadow(2, 0.15, 2) },
-  SMALL: { level: 4, ...createShadow(4, 0.25, 6) },
-  MEDIUM: { level: 8, ...createShadow(8, 0.3, 10) },
-  LARGE: { level: 12, ...createShadow(12, 0.35, 14) },
+  SUBTLE: { level: 2, ...createShadow(2, 0.12, 3) },
+  SMALL: { level: 4, ...createShadow(4, 0.16, 6) },
+  MEDIUM: { level: 6, ...createShadow(6, 0.2, 8) },
+  LARGE: { level: 10, ...createShadow(10, 0.25, 12) },
 } as const;
 
 export const TYPOGRAPHY_HIERARCHY = {

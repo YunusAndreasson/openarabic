@@ -75,7 +75,9 @@ export const PERSISTENCE_OPTIONS = {
  */
 export const clearPersistedCache = async (): Promise<void> => {
   if (!isAsyncStorageAvailable()) {
-    console.warn('AsyncStorage unavailable, cannot clear cache');
+    handleError(new Error('AsyncStorage unavailable, cannot clear cache'), {
+      showToast: false,
+    });
     return;
   }
   try {
@@ -90,7 +92,9 @@ export const clearPersistedCache = async (): Promise<void> => {
  */
 export const getPersistedCacheSize = async (): Promise<number> => {
   if (!isAsyncStorageAvailable()) {
-    console.warn('AsyncStorage unavailable, cannot read cache');
+    handleError(new Error('AsyncStorage unavailable, cannot read cache'), {
+      showToast: false,
+    });
     return 0;
   }
   try {

@@ -223,6 +223,11 @@ const WordManagementModal = memo(
       ]
     );
 
+    const getActionHandler = useCallback(
+      (action: WordManagementAction) => () => handleActionPress(action),
+      [handleActionPress]
+    );
+
     if (!visible || !word) return null;
 
     const actions = getActions(word);
@@ -292,7 +297,7 @@ const WordManagementModal = memo(
                         borderWidth: 1,
                       },
                     ]}
-                    onPress={() => handleActionPress(action)}
+                    onPress={getActionHandler(action)}
                   >
                     <View
                       style={[

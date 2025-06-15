@@ -142,15 +142,18 @@ export class AudioCacheManager {
       }
 
       const files = await FileSystem.readDirectoryAsync(this.cacheDir);
-      let totalSize = 0;
 
-      for (const file of files) {
-        const filePath = this.cacheDir + file;
-        const fileInfo = await FileSystem.getInfoAsync(filePath);
-        if (fileInfo.exists && 'size' in fileInfo) {
-          totalSize += fileInfo.size;
+      const infoPromises = files.map((file) =>
+        FileSystem.getInfoAsync(this.cacheDir + file)
+      );
+      const fileInfos = await Promise.all(infoPromises);
+
+      const totalSize = fileInfos.reduce((size, info) => {
+        if (info.exists && 'size' in info) {
+          return size + (info.size as number);
         }
-      }
+        return size;
+      }, 0);
 
       return totalSize;
     } catch (error) {

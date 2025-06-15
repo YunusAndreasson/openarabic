@@ -189,7 +189,6 @@ ArticleList.displayName = 'ArticleList';
 const styles = StyleSheet.create({
   articleCard: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    overflow: 'hidden',
   },
   pendingCard: {
     opacity: LAYOUT.OPACITY.HIGH,

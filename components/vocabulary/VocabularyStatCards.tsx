@@ -197,9 +197,7 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.MEDIUM,
   },
   categoryCard: {
-    elevation: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
-    shadowOpacity: 0.15, // LAYOUT.ELEVATION.SUBTLE equivalent
-    shadowRadius: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
+    ...LAYOUT.ELEVATION.SMALL,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: LAYOUT.SPACING.LARGE,

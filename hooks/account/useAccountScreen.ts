@@ -292,28 +292,54 @@ Please describe your issue below:
   const appVersion = pkg.version;
   const currentYear = new Date().getFullYear();
 
-  return {
-    reminderTime,
-    formatReminderTime,
-    showTimePicker,
-    handleTimePickerOpen,
-    handleTimePickerClose,
-    handleTimeSet,
-    handleReminderToggle,
-    handleSignOut,
-    handleSupportContact,
-    handleSocialLink,
-    handleLearningMethodPress,
-    handleClassicalTextsPress,
-    appVersion,
-    currentYear,
-    user,
-    handleClearCache,
-    handleClearQueryCache,
-    isClearingCache,
-    cacheSize,
-    queryCacheSize,
-  };
+  const result = useMemo(
+    () => ({
+      reminderTime,
+      formatReminderTime,
+      showTimePicker,
+      handleTimePickerOpen,
+      handleTimePickerClose,
+      handleTimeSet,
+      handleReminderToggle,
+      handleSignOut,
+      handleSupportContact,
+      handleSocialLink,
+      handleLearningMethodPress,
+      handleClassicalTextsPress,
+      appVersion,
+      currentYear,
+      user,
+      handleClearCache,
+      handleClearQueryCache,
+      isClearingCache,
+      cacheSize,
+      queryCacheSize,
+    }),
+    [
+      reminderTime,
+      formatReminderTime,
+      showTimePicker,
+      handleTimePickerOpen,
+      handleTimePickerClose,
+      handleTimeSet,
+      handleReminderToggle,
+      handleSignOut,
+      handleSupportContact,
+      handleSocialLink,
+      handleLearningMethodPress,
+      handleClassicalTextsPress,
+      appVersion,
+      currentYear,
+      user,
+      handleClearCache,
+      handleClearQueryCache,
+      isClearingCache,
+      cacheSize,
+      queryCacheSize,
+    ]
+  );
+
+  return result;
 };
 
 export type UseAccountScreenReturn = ReturnType<typeof useAccountScreen>;

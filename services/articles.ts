@@ -91,18 +91,18 @@ interface GetArticlesOptions {
 export const articlesService = {
   // Optimized method for getting articles with different detail levels
   async getArticles(options: GetArticlesOptions = {}): Promise<Article[]> {
+    const {
+      categoryId,
+      authorId,
+      limit = 100,
+      offset = 0,
+      minDifficulty,
+      maxDifficulty,
+      includeWordStats = false,
+      sortBy = 'created_at',
+      sortOrder = 'desc',
+    } = options;
     try {
-      const {
-        categoryId,
-        authorId,
-        limit = 100,
-        offset = 0,
-        minDifficulty,
-        maxDifficulty,
-        includeWordStats = false,
-        sortBy = 'created_at',
-        sortOrder = 'desc',
-      } = options;
 
       const columns = includeWordStats ? ARTICLES_WITH_WORD_STATS : LIST_VIEW_COLUMNS;
       let query = supabase.from('articles').select<ArticleRow>(columns);
@@ -139,10 +139,10 @@ export const articlesService = {
       await handleError(err instanceof Error ? err : new Error('Unknown error loading articles'), {
         toastMessage: 'Failed to load articles',
         analyticsProperties: {
-          ...(options.categoryId !== undefined && { categoryId: options.categoryId }),
-          ...(options.authorId !== undefined && { authorId: options.authorId }),
-          ...(options.limit !== undefined && { limit: options.limit }),
-          ...(options.offset !== undefined && { offset: options.offset }),
+          ...(categoryId !== undefined && { categoryId }),
+          ...(authorId !== undefined && { authorId }),
+          ...(limit !== undefined && { limit }),
+          ...(offset !== undefined && { offset }),
         },
       });
       throw err;

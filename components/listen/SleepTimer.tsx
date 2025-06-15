@@ -50,9 +50,14 @@ const SleepTimerComponent = ({
     onClose();
   };
 
-  const handleOptionSelect = (minutes: number) => {
+  const handleOptionSelect = React.useCallback((minutes: number) => {
     setSelectedMinutes(minutes);
-  };
+  }, []);
+
+  const handleOptionSelectCallback = React.useCallback(
+    (minutes: number) => () => handleOptionSelect(minutes),
+    [handleOptionSelect]
+  );
 
   return (
     <Modal
@@ -130,7 +135,7 @@ const SleepTimerComponent = ({
                                   backgroundColor: colors.elevation1,
                                 },
                           ]}
-                          onPress={() => handleOptionSelect(minutes)}
+                          onPress={handleOptionSelectCallback(minutes)}
                         />
                       ))}
                     </View>

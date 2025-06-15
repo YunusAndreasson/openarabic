@@ -58,13 +58,11 @@ export function useRetrievabilityChart(
 
   const retrievabilityData = useMemo<RetrievabilityForecast[]>(() => {
     const today = new Date();
-    const dates: Date[] = [];
-
-    for (let i = 0; i < DAYS_7; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
-      dates.push(date);
-    }
+    const dates = Array.from({ length: DAYS_7 }, (_, i) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      return d;
+    });
 
     return dates.map(date => {
       let totalRetrievability = 0;

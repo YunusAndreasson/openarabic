@@ -33,6 +33,8 @@ const enhancedTracks = [
   { id: 'article-2', articleId: 2, audioUrl: 'url2', title: 'B' },
 ];
 
+const sortedEnhanced = [enhancedTracks[1], enhancedTracks[0]];
+
 import { AUDIO_STATES } from '../../constants/audio';
 
 const mockUseQuery = jest.fn()
@@ -40,13 +42,20 @@ const mockUseQuery = jest.fn()
   .mockReturnValueOnce({ data: enhancedTracks, isLoading: false, isFetching: false })
   .mockReturnValue({ data: [], isLoading: false, isFetching: false });
 
-jest.mock('@tanstack/react-query', () => ({
-  useQuery: (...args: any[]) => mockUseQuery(...args),
-  useQueryClient: () => ({
-    getQueryData: () => readingListItems,
-    invalidateQueries: jest.fn(),
-  }),
-}));
+jest.mock('@tanstack/react-query', () => {
+  const invalidateQueries = jest.fn();
+  return {
+    __esModule: true,
+    useQuery: (...args: any[]) => mockUseQuery(...args),
+    useQueryClient: () => ({
+      getQueryData: () => readingListItems,
+      invalidateQueries,
+    }),
+    __invalidateQueries: invalidateQueries,
+  };
+});
+
+const { __invalidateQueries: invalidateQueries } = require('@tanstack/react-query');
 
 jest.mock('../../hooks/auth/useAuth', () => ({
   useAuth: () => ({ user: { id: 'user-1' } }),
@@ -97,6 +106,11 @@ const { startTimer, cancelTimer } = require('../../hooks/audio/useSleepTimer');
 // Extract mocked functions for assertions
 const { startEnhancedPlayback, stopPlayback } = require('../../hooks/audio/useAudioPlayer');
 
+// Additional mocked services and actions
+const { readingListService } = require('../../services/readingList');
+const { enhancedAudioService } = require('../../services/enhancedAudioService');
+const { removeFromCustomOrder } = require('../../store/listenSlice');
+
 jest.mock('../../hooks/utils/useScreenFocusRefresh', () => ({
   useScreenFocusRefresh: () => ({ refreshData: jest.fn() }),
 }));
@@ -132,6 +146,7 @@ const Wrapper = ({ children }: { children: React.ReactNode }) => <>{children}</>
 
 describe('useListenScreen', () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     mockUseQuery.mockReset();
     mockUseQuery
       .mockReturnValueOnce({ data: readingListItems, isLoading: false, isFetching: false })
@@ -173,5 +188,59 @@ describe('useListenScreen', () => {
     const { result } = renderHook(() => useListenScreen(), { wrapper: Wrapper });
 
     expect(result.current.enhancedTracksError).toBe(error);
+  });
+
+  it('plays all tracks and updates playbackMode', async () => {
+    const { result } = renderHook(() => useListenScreen(), { wrapper: Wrapper });
+
+    await act(async () => {
+      await result.current.handlePlayAll();
+    });
+
+    expect(startEnhancedPlayback).toHaveBeenCalled();
+    expect(startEnhancedPlayback.mock.calls[0][0]).toEqual(sortedEnhanced);
+    expect(startEnhancedPlayback.mock.calls[0][1]).toBe(0);
+    expect(result.current.playbackMode).toBe('all');
+  });
+
+  it('plays selected article from existing track', async () => {
+    const { result } = renderHook(() => useListenScreen(), { wrapper: Wrapper });
+    const index = sortedEnhanced.findIndex(t => t.articleId === 2);
+
+    await act(async () => {
+      await result.current.handleArticlePlay(2);
+    });
+
+    expect(startEnhancedPlayback).toHaveBeenCalled();
+    expect(startEnhancedPlayback.mock.calls[0][0]).toEqual(sortedEnhanced);
+    expect(startEnhancedPlayback.mock.calls[0][1]).toBe(index);
+    expect(result.current.playbackMode).toBe('all');
+  });
+
+  it('generates track when missing and plays it', async () => {
+    const newTrack = { id: 'n', articleId: 3, audioUrl: 'u3', title: 'C' };
+    enhancedAudioService.generateEnhancedAudioTrack.mockResolvedValueOnce(newTrack);
+    const { result } = renderHook(() => useListenScreen(), { wrapper: Wrapper });
+
+    await act(async () => {
+      await result.current.handleArticlePlay(3);
+    });
+
+    expect(enhancedAudioService.generateEnhancedAudioTrack).toHaveBeenCalledWith(3);
+    expect(startEnhancedPlayback).toHaveBeenCalledWith([newTrack], 0);
+    expect(result.current.playbackMode).toBe('all');
+  });
+
+  it('deletes article and invalidates queries', async () => {
+    const { result } = renderHook(() => useListenScreen(), { wrapper: Wrapper });
+
+    await act(async () => {
+      await result.current.handleDelete(1);
+    });
+
+    expect(readingListService.removeFromReadingList).toHaveBeenCalledWith('user-1', 1);
+    expect(mockDispatch).toHaveBeenCalledWith(removeFromCustomOrder(1));
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['readingList', 'user-1'] });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['enhancedAudioTracks', 'user-1'] });
   });
 });

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { TypedUseSelectorHook } from 'react-redux';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
+import { handleError } from '@/utils/errorHandling';
 
 import type { RootState, AppDispatch } from './store';
 import { store } from './store'; // used to generate fallback state when Redux context is missing
@@ -11,7 +12,7 @@ export const useAppDispatch = () => {
     return useDispatch<AppDispatch>();
   } catch {
     // Fallback for when Redux context is not available
-    console.warn('Redux context not available, returning no-op dispatch');
+    handleError(new Error('Redux context not available'), { showToast: false });
     return () => {};
   }
 };
@@ -22,7 +23,7 @@ export const useAppSelector: TypedUseSelectorHook<RootState> = (selector, equali
     return useSelector(selector, equalityFn);
   } catch {
     // Fallback for when Redux context is not available
-    console.warn('Redux context not available, returning fallback state');
+    handleError(new Error('Redux context not available'), { showToast: false });
     // Generate the fallback state from the store so all slices are included.
     // Update this logic if new slices are added or the store shape changes.
     const fallbackState = store.getState();
