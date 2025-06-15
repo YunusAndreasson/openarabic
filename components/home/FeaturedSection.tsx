@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useCallback } from 'react';
+import { useCallback, memo, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import ArticleCard from '@/components/ArticleCard';
@@ -15,7 +15,7 @@ interface FeaturedSectionProps {
 /**
  * A section displaying the featured article
  */
-const FeaturedSection: React.FC<FeaturedSectionProps> = ({ article, onPress }) => {
+const FeaturedSection: FC<FeaturedSectionProps> = ({ article, onPress }) => {
   // Use queryClient for prefetching on press
   const queryClient = useQueryClient();
 
@@ -65,4 +65,4 @@ const styles = StyleSheet.create({
 
 FeaturedSection.displayName = 'FeaturedSection';
 
-export default React.memo(FeaturedSection);
+export default memo(FeaturedSection);

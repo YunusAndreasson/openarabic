@@ -1,11 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, {
-  useState,
-  useEffect,
-  forwardRef,
-  useMemo,
-  useCallback,
-} from 'react';
+import { useState, useEffect, forwardRef, useMemo, useCallback } from 'react';
 import type { ComponentProps } from 'react';
 import type {
   TextInputProps,

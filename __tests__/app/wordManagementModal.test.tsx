@@ -1,4 +1,4 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import { View } from 'react-native';
 import { describe, it, expect } from '@jest/globals';
@@ -10,7 +10,7 @@ jest.mock('@expo/vector-icons', () => ({
 jest.mock('expo-blur', () => {
   const React = require('react');
   return {
-    BlurView: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    BlurView: ({ children }: { children: ReactNode }) => <>{children}</>,
   };
 });
 

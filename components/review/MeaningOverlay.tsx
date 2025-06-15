@@ -1,4 +1,4 @@
-import React, { useEffect, useState, memo, useCallback, useRef } from 'react';
+import { useEffect, useState, memo, useCallback, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 

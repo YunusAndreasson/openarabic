@@ -1,4 +1,4 @@
-import React, { memo, useEffect } from 'react';
+import { memo, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';

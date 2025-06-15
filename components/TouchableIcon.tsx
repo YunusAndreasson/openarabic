@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { memo } from 'react';
+import { memo, useCallback, type FC, type ComponentProps } from 'react';
 import type { ViewStyle } from 'react-native';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -12,7 +12,7 @@ import { selectionFeedback } from '@/utils/haptics';
 
 interface TouchableIconProps extends Omit<BaseIconButtonProps, 'icon'> {
   /** Icon name from Ionicons */
-  icon: React.ComponentProps<typeof Ionicons>['name'];
+  icon: ComponentProps<typeof Ionicons>['name'];
   /** Size variant for the touch target */
   touchSize?: 'large' | 'medium' | 'small';
   /** Whether to use haptic feedback */
@@ -35,7 +35,7 @@ const getTouchTargetSize = (size: 'large' | 'medium' | 'small'): number => {
   }
 };
 
-const TouchableIcon: React.FC<TouchableIconProps> = memo(
+const TouchableIcon: FC<TouchableIconProps> = memo(
   ({
     icon,
     size = 24,
@@ -50,7 +50,7 @@ const TouchableIcon: React.FC<TouchableIconProps> = memo(
     const colors = useColors();
     const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation();
 
-    const handlePress = React.useCallback(() => {
+    const handlePress = useCallback(() => {
       if (hapticFeedback) {
         selectionFeedback();
       }

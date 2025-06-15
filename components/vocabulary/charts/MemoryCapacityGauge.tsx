@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Canvas, Path, Circle, Group, LinearGradient, vec } from '@shopify/react-native-skia';
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { StyleSheet, View, TouchableOpacity, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 

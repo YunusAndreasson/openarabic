@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import { memo, useCallback, type FC } from 'react';
 import { StyleSheet, View, ScrollView, Pressable } from 'react-native';
 
 import BaseCard from '@/components/BaseCard';
@@ -21,7 +21,7 @@ interface FilterModalProps extends BaseModalProps {
   availableAuthors: Author[];
 }
 
-const FilterModal: React.FC<FilterModalProps> = ({ availableAuthors }) => {
+const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
   const colors = useColors();
   const {
     sort,
@@ -40,33 +40,33 @@ const FilterModal: React.FC<FilterModalProps> = ({ availableAuthors }) => {
     selectedAuthorsText,
   } = useFilterModal(availableAuthors);
 
-  const handleToggleAuthors = React.useCallback(() => {
+  const handleToggleAuthors = useCallback(() => {
     toggleSection('authors');
   }, [toggleSection]);
 
-  const handleToggleDifficulty = React.useCallback(() => {
+  const handleToggleDifficulty = useCallback(() => {
     toggleSection('difficulty');
   }, [toggleSection]);
 
-  const handleToggleDateRange = React.useCallback(() => {
+  const handleToggleDateRange = useCallback(() => {
     toggleSection('dateRange');
   }, [toggleSection]);
 
-  const selectAuthor = React.useCallback(
+  const selectAuthor = useCallback(
     (authorId: number) => () => {
       handleAuthorToggle(authorId);
     },
     [handleAuthorToggle]
   );
 
-  const selectDifficulty = React.useCallback(
+  const selectDifficulty = useCallback(
     (range: [number, number]) => () => {
       handleDifficultySelect(range);
     },
     [handleDifficultySelect]
   );
 
-  const selectDateRange = React.useCallback(
+  const selectDateRange = useCallback(
     (range: (typeof DATE_RANGE_OPTIONS)[number]['key']) => () => {
       handleDateRangeSelect(range);
     },
@@ -388,4 +388,4 @@ const areEqual = (prevProps: FilterModalProps, nextProps: FilterModalProps) => {
 
 FilterModal.displayName = 'FilterModal';
 
-export default React.memo(FilterModal, areEqual);
+export default memo(FilterModal, areEqual);

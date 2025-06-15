@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import React, { useState, useCallback, useEffect, memo } from 'react';
+import { useState, useCallback, useEffect, memo } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';

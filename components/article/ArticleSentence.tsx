@@ -1,5 +1,13 @@
 import { useLocalSearchParams } from 'expo-router';
-import React, { createRef, useEffect, useRef, useMemo, type ComponentRef } from 'react';
+import {
+  createRef,
+  useEffect,
+  useRef,
+  useMemo,
+  type ComponentRef,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import {
   StyleSheet,
   View,
@@ -28,7 +36,7 @@ interface ArticleSentenceProps {
     audio_url: string | null;
   };
   words: SentenceWord[];
-  renderWord?: (word: SentenceWord) => React.ReactNode;
+  renderWord?: (word: SentenceWord) => ReactNode;
   onWordPress?: (word: SentenceWord) => void;
   settings: {
     showEnglish: boolean;
@@ -57,7 +65,7 @@ function ArticleSentenceComponent({
   // Store refs to each word for highlighting and playback control
   // Use ComponentRef to correctly type React Native component instances
   // Each ref may hold a TouchableOpacity instance or null
-  const wordRefs = useRef<React.RefObject<ComponentRef<typeof TouchableOpacity>>[]>([]);
+  const wordRefs = useRef<RefObject<ComponentRef<typeof TouchableOpacity>>[]>([]);
   const {
     animatedStyle: animatedHighlightStyle,
     startAnimation,
@@ -68,7 +76,7 @@ function ArticleSentenceComponent({
     // Recreate refs when the word list changes
     wordRefs.current = words.map(
       () =>
-        createRef<ComponentRef<typeof TouchableOpacity>>() as React.RefObject<
+        createRef<ComponentRef<typeof TouchableOpacity>>() as RefObject<
           ComponentRef<typeof TouchableOpacity>
         >
     );
@@ -110,7 +118,7 @@ function ArticleSentenceComponent({
       if (!wordRefs.current[index]) {
         wordRefs.current[index] = createRef<
           ComponentRef<typeof TouchableOpacity>
-        >() as React.RefObject<ComponentRef<typeof TouchableOpacity>>;
+        >() as RefObject<ComponentRef<typeof TouchableOpacity>>;
       }
       const isDueWord = word.root_id ? dueWordRootIds.has(word.root_id) : false;
       return renderWord ? (

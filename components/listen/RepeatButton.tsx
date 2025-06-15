@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useMemo } from 'react';
+import { useMemo, useEffect, useCallback, type FC, type ComponentProps } from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -12,14 +12,14 @@ import { selectionFeedback } from '@/utils/haptics';
 
 interface RepeatButtonProps
   extends Omit<
-    BaseIconButtonProps<React.ComponentProps<typeof Ionicons>['name']>,
+    BaseIconButtonProps<ComponentProps<typeof Ionicons>['name']>,
     'icon' | 'onPress'
   > {
   enabled: boolean;
   onToggle: () => void;
 }
 
-const RepeatButton: React.FC<RepeatButtonProps> = ({ enabled, onToggle, ...rest }) => {
+const RepeatButton: FC<RepeatButtonProps> = ({ enabled, onToggle, ...rest }) => {
   const colors = useColors();
 
   // Simple icon rotation animation
@@ -33,13 +33,13 @@ const RepeatButton: React.FC<RepeatButtonProps> = ({ enabled, onToggle, ...rest 
   );
 
   // Trigger rotation animation when enabled state changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (enabled) {
       startRotation();
     }
   }, [enabled, startRotation]);
 
-  const handlePress = React.useCallback(() => {
+  const handlePress = useCallback(() => {
     selectionFeedback();
     onToggle();
   }, [onToggle]);

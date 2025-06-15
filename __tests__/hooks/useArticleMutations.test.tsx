@@ -1,4 +1,4 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 import { renderHook, act } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import TestStoreProvider from '../helpers/testStore';
@@ -58,7 +58,7 @@ const createWrapper = () => {
     defaultOptions: { queries: { retry: false } },
   });
 
-  return ({ children }: { children: React.ReactNode }) => (
+  return ({ children }: { children: ReactNode }) => (
     <TestStoreProvider>
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     </TestStoreProvider>

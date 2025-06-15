@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import type { FC } from 'react';
 import {
   StyleSheet,
   TouchableOpacity,
@@ -16,7 +16,7 @@ export interface DragHandleProps {
   style?: StyleProp<ViewStyle>;
 }
 
-const DragHandle: React.FC<DragHandleProps> = ({ onLongPress, delayLongPress = 100, style }) => {
+const DragHandle: FC<DragHandleProps> = ({ onLongPress, delayLongPress = 100, style }) => {
   const colors = useColors();
 
   return (

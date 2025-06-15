@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import { memo, useMemo, type FC } from 'react';
 import { StyleSheet, Pressable, View, Platform } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
@@ -6,7 +6,7 @@ import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { BaseCardProps } from '@/types/ui/card.types';
 
-const BaseCard: React.FC<BaseCardProps> = memo(
+const BaseCard: FC<BaseCardProps> = memo(
   ({
     children,
     style,

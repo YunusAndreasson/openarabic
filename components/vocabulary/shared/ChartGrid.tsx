@@ -1,5 +1,5 @@
 import { Group, Line } from '@shopify/react-native-skia';
-import React, { memo } from 'react';
+import { memo } from 'react';
 
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';

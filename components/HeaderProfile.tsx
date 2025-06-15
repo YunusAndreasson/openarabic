@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { memo, useCallback } from 'react';
+import { memo, useCallback } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { MIN_TOUCH_TARGET, LAYOUT } from '@/constants/layout';

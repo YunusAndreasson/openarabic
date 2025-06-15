@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import moment from 'moment-hijri';
-import React, { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, memo, type FC } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -9,7 +9,7 @@ import { HIJRI_MONTHS } from '@/constants/hijri';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
-const WelcomeMessage: React.FC = () => {
+const WelcomeMessage: FC = () => {
   const colors = useColors();
 
   const dateMessage = useMemo(() => {
@@ -50,7 +50,7 @@ const WelcomeMessage: React.FC = () => {
 
 WelcomeMessage.displayName = 'WelcomeMessage';
 
-export default React.memo(WelcomeMessage);
+export default memo(WelcomeMessage);
 
 const styles = StyleSheet.create({
   chevronIcon: {

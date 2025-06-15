@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import { useCallback, type FC, type ComponentProps } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -11,13 +11,13 @@ import type { BaseIconButtonProps } from '@/types/ui/button.types';
 import { selectionFeedback } from '@/utils/haptics';
 
 interface PlayButtonProps
-  extends Omit<BaseIconButtonProps<React.ComponentProps<typeof Ionicons>['name']>, 'icon'> {
+  extends Omit<BaseIconButtonProps<ComponentProps<typeof Ionicons>['name']>, 'icon'> {
   isPlaying?: boolean;
   isLoading?: boolean;
   iconColor?: string;
 }
 
-const PlayButton: React.FC<PlayButtonProps> = ({
+const PlayButton: FC<PlayButtonProps> = ({
   onPress,
   isPlaying = false,
   isLoading = false,
@@ -29,7 +29,7 @@ const PlayButton: React.FC<PlayButtonProps> = ({
     scaleAmount: 0.9,
   });
 
-  const handlePress = React.useCallback(() => {
+  const handlePress = useCallback(() => {
     if (disabled || isLoading) return;
 
     selectionFeedback();

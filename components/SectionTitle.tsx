@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import { memo, useMemo, type FC } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 
@@ -16,7 +16,7 @@ interface SectionTitleProps {
   isFirstSection?: boolean;
 }
 
-const SectionTitle: React.FC<SectionTitleProps> = ({
+const SectionTitle: FC<SectionTitleProps> = ({
   title,
   subtitle,
   onInfoPress,
@@ -25,7 +25,7 @@ const SectionTitle: React.FC<SectionTitleProps> = ({
 }) => {
   const colors = useColors();
 
-  const titleStyle = React.useMemo(
+  const titleStyle = useMemo(
     () => ({
       marginBottom: 0,
       fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
@@ -36,7 +36,7 @@ const SectionTitle: React.FC<SectionTitleProps> = ({
     []
   );
 
-  const subtitleStyle = React.useMemo(
+  const subtitleStyle = useMemo(
     () => ({
       lineHeight:
         LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
@@ -87,7 +87,7 @@ const areEqual = (prevProps: SectionTitleProps, nextProps: SectionTitleProps) =>
   );
 };
 
-export default React.memo(SectionTitle, areEqual);
+export default memo(SectionTitle, areEqual);
 
 const styles = StyleSheet.create({
   container: {

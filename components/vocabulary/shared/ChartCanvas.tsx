@@ -1,6 +1,6 @@
 import { Canvas } from '@shopify/react-native-skia';
 import type { ReactNode } from 'react';
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import type { DataPoint } from '@/types/ui/chart.types';

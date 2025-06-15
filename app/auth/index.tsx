@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 import type { JSX } from 'react';
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { StyleSheet, View, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 

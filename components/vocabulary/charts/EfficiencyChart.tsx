@@ -8,7 +8,7 @@ import {
   vec,
   Mask,
 } from '@shopify/react-native-skia';
-import React, { memo, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { View } from 'react-native';
 
 

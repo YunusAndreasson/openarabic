@@ -1,7 +1,7 @@
 import { useHeaderHeight } from '@react-navigation/elements';
 import type { ListRenderItem, ContentStyle } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
-import React, {
+import {
   useCallback,
   useMemo,
   useRef,
@@ -9,6 +9,8 @@ import React, {
   useImperativeHandle,
   memo,
   useTransition,
+  type ComponentType,
+  type ReactElement,
 } from 'react';
 import { StyleSheet, RefreshControl, type StyleProp, type ViewStyle, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -57,8 +59,8 @@ ArticleItem.displayName = 'ArticleItem';
 interface ArticleListProps {
   onRefresh?: () => void;
   onArticlePress: (article: Article) => void;
-  ListHeaderComponent?: React.ComponentType<object> | React.ReactElement | null;
-  ListFooterComponent?: React.ComponentType<object> | React.ReactElement | null;
+  ListHeaderComponent?: ComponentType<object> | ReactElement | null;
+  ListFooterComponent?: ComponentType<object> | ReactElement | null;
   contentContainerStyle?: StyleProp<ViewStyle>;
   progressViewOffset?: number;
   isRefreshing?: boolean;

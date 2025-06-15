@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import React, { useMemo, memo } from 'react';
+import { useMemo, memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';

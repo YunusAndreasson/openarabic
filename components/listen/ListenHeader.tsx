@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import type { FC } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ProgressBar } from '@/components/ProgressBar';
@@ -16,7 +16,7 @@ interface ListenHeaderProps {
   hasCurrentWord?: boolean;
 }
 
-const ListenHeader: React.FC<ListenHeaderProps> = ({
+const ListenHeader: FC<ListenHeaderProps> = ({
   progress,
   maxProgress,
   animationKey,

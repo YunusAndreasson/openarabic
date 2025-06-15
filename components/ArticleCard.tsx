@@ -1,5 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { memo, useMemo } from 'react';
+import type { JSX } from 'react';
+import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { DEFAULT_IMAGES } from '@/constants/images';
@@ -85,7 +86,7 @@ function ArticleCardComponent({
   style,
   onPress,
   testID,
-}: ArticleCardProps): React.JSX.Element {
+}: ArticleCardProps): JSX.Element {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
   const screenWidth = useScreenWidth();

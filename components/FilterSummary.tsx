@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -14,7 +14,7 @@ interface FilterSummaryProps {
 const FilterSummary = memo(({ filteredCount, totalCount }: FilterSummaryProps) => {
   const activeFiltersCount = useAppSelectorMemo(selectActiveFiltersCount);
 
-  const summaryText = React.useMemo(() => {
+  const summaryText = useMemo(() => {
     if (totalCount !== undefined && filteredCount !== totalCount) {
       return `${filteredCount} of ${totalCount} articles`;
     }

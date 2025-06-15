@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
@@ -15,7 +15,7 @@ interface ParallaxHeaderProps {
   colors: ThemeColors;
 }
 
-const ParallaxHeader = React.memo<ParallaxHeaderProps>(({ article, colors }) => {
+const ParallaxHeader = memo<ParallaxHeaderProps>(({ article, colors }) => {
   // Image source - safely handle potential undefined
   const imageSource = String(article.image_url);
 

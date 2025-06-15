@@ -12,7 +12,7 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { useFonts } from 'expo-font';
 import { Stack, useNavigationContainerRef, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useState, useRef, useMemo, memo } from 'react';
+import { useEffect, useState, useRef, useMemo, memo } from 'react';
 import 'react-native-reanimated';
 import { AppState, View, StyleSheet, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -150,7 +150,7 @@ function AppContent() {
   const navigationTheme = useMemo(() => (isDark ? DarkTheme : DefaultTheme), [isDark]);
 
   // Extend the navigation theme with custom colors for iOS back buttons
-  React.useEffect(() => {
+  useEffect(() => {
     // Update the navigation theme to ensure iOS back buttons use the tint color
     if (Platform.OS === 'ios') {
       // This affects the native iOS back button text color

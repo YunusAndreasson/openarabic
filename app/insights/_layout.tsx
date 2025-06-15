@@ -1,6 +1,5 @@
 import { Stack } from 'expo-router';
 import type { JSX } from 'react';
-import React from 'react';
 
 import { createNavigationOptions } from '@/constants/modal';
 import { useColors } from '@/hooks/theme/useColors';

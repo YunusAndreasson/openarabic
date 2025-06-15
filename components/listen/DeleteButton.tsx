@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import { useCallback, type FC, type ComponentProps } from 'react';
 import { StyleSheet, TouchableOpacity, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -9,15 +9,15 @@ import { useColors } from '@/hooks/theme/useColors';
 import type { BaseIconButtonProps } from '@/types/ui/button.types';
 import { selectionFeedback } from '@/utils/haptics';
 
-const DeleteButton: React.FC<
-  Omit<BaseIconButtonProps<React.ComponentProps<typeof Ionicons>['name']>, 'icon'>
+const DeleteButton: FC<
+  Omit<BaseIconButtonProps<ComponentProps<typeof Ionicons>['name']>, 'icon'>
 > = ({ onPress, disabled = false }) => {
   const colors = useColors();
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     scaleAmount: 0.9,
   });
 
-  const handlePress = React.useCallback(() => {
+  const handlePress = useCallback(() => {
     if (disabled) return;
 
     selectionFeedback();
