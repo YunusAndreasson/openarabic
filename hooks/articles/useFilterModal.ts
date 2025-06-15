@@ -13,6 +13,7 @@ import {
 } from '@/store/filtersSlice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import type { Author } from '@/types/articles.types';
+import type { SortOption as BaseSortOption } from '@/types/ui/sorting.types';
 import { selectionFeedback } from '@/utils/haptics';
 
 export const DIFFICULTY_OPTIONS = [
@@ -30,13 +31,12 @@ export const DATE_RANGE_OPTIONS = [
 
 export const AUTHOR_CHUNK_SIZE = 6;
 
-interface SortOption {
-  key: FilterState['sort']['field'];
-  label: string;
+interface SortOptionWithIcon
+  extends BaseSortOption<FilterState['sort']['field']> {
   icon: ComponentProps<typeof Ionicons>['name'];
 }
 
-export const SORT_OPTIONS: readonly SortOption[] = [
+export const SORT_OPTIONS: readonly SortOptionWithIcon[] = [
   { key: 'title', label: 'Title', icon: 'text-outline' },
   { key: 'author', label: 'Author', icon: 'person-outline' },
   { key: 'date', label: 'Date added', icon: 'calendar-outline' },
