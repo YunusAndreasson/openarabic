@@ -257,6 +257,23 @@ describe('Auth flow', () => {
     alertSpy.mockRestore();
   });
 
+  it('shows alert on failed registration', async () => {
+    signUpMock.mockResolvedValueOnce({ data: null, error: { message: 'Bad' } });
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const { getByPlaceholderText, getByText } = render(<Auth />);
+
+    fireEvent.changeText(getByPlaceholderText('Your email'), 'test@example.com');
+    fireEvent.changeText(getByPlaceholderText('Your password'), 'Password1');
+
+    await act(async () => {
+      fireEvent.press(getByText('Create Account'));
+    });
+
+    expect(Alert.alert).toHaveBeenCalled();
+    expect(routerReplaceMock).not.toHaveBeenCalled();
+    alertSpy.mockRestore();
+  });
+
   it('shows error for weak password', async () => {
     const { getByPlaceholderText, getByText } = render(<Auth />);
 
