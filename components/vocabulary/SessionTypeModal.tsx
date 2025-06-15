@@ -3,29 +3,13 @@
 // This custom Modal should be replaced with native Expo Router modal for better performance
 
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import React, { memo, useCallback, useRef, useEffect } from 'react';
-import { StyleSheet, View, TouchableOpacity, Modal, Pressable } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  FadeIn,
-  SlideInDown,
-  FadeOut,
-  SlideOutDown,
-  runOnJS,
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  cancelAnimation,
-} from 'react-native-reanimated';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import React, { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import { SPRING_CONFIG, TIMING_CONFIG } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import { withOpacity } from '@/utils/colorUtils';
 
 interface SessionTypeModalProps {
   visible: boolean;
@@ -37,178 +21,92 @@ interface SessionTypeModalProps {
 const SessionTypeModal = memo(
   ({ visible, onClose, onStartAudio, onStartVisual }: SessionTypeModalProps) => {
     const colors = useColors();
-    const isDarkMode = useIsDarkMode();
-    const isClosingRef = useRef(false);
+    const bottomSheetRef = useRef<BottomSheet>(null);
 
-    // Direct shared values with optimized configs from hooks/animations
-    const translateY = useSharedValue(0);
-    const opacity = useSharedValue(1);
+    // Configure snap points - use fixed height to guarantee both buttons are visible
+    const snapPoints = useMemo(() => [330], []);
 
-    // Reset animation values when modal visibility changes and cleanup on unmount
+    // Handle visibility changes
     useEffect(() => {
       if (visible) {
-        isClosingRef.current = false;
-        cancelAnimation(translateY);
-        cancelAnimation(opacity);
-        translateY.value = 0;
-        opacity.value = 1;
+        bottomSheetRef.current?.expand();
       } else {
-        isClosingRef.current = false;
+        bottomSheetRef.current?.close();
       }
+    }, [visible]);
 
-      // Cleanup function for unmount
-      return () => {
-        cancelAnimation(translateY);
-        cancelAnimation(opacity);
-      };
-    }, [visible, translateY, opacity]);
-
-    // Safe close handler
-    const handleClose = useCallback(() => {
-      if (isClosingRef.current) return;
-      isClosingRef.current = true;
+    // Handle when bottom sheet closes (via swipe or backdrop)
+    const handleSheetClose = useCallback(() => {
       onClose();
     }, [onClose]);
 
-    // Optimized animated close using standardized configs
-    const animateClose = useCallback(() => {
-      if (isClosingRef.current) return;
-
-      translateY.value = withTiming(400, TIMING_CONFIG.MEDIUM);
-      opacity.value = withTiming(0, TIMING_CONFIG.MEDIUM, (finished?: boolean) => {
-        if (finished) {
-          runOnJS(handleClose)();
-        }
-      });
-    }, [translateY, opacity, handleClose]);
-
-    // Animate back to position using standardized spring config
-    const animateBack = useCallback(() => {
-      if (isClosingRef.current) return;
-
-      translateY.value = withSpring(0, SPRING_CONFIG.SLIDE);
-      opacity.value = withSpring(1, SPRING_CONFIG.SLIDE);
-    }, [translateY, opacity]);
-
-    // Gesture handler for swipe to dismiss using standardized configs
-    const gestureHandler = Gesture.Pan()
-      .onUpdate(event => {
-        if (isClosingRef.current || event.translationY <= 0) return;
-
-        translateY.value = event.translationY;
-        opacity.value = Math.max(0.3, 1 - event.translationY / 300);
-      })
-      .onEnd(event => {
-        if (isClosingRef.current) return;
-
-        const shouldDismiss = event.translationY > 80 || event.velocityY > 300;
-
-        if (shouldDismiss) {
-          runOnJS(animateClose)();
-        } else {
-          runOnJS(animateBack)();
-        }
-      });
-
-    // Animated styles
-    const animatedModalStyle = useAnimatedStyle(
-      () => ({
-        transform: [{ translateY: translateY.value }],
-        opacity: opacity.value,
-      }),
-      [translateY, opacity]
-    );
-
+    // Don't render if not visible (optimization)
     if (!visible) return null;
 
     return (
-      <Modal
-        transparent
-        visible={visible}
-        animationType="none"
-        statusBarTranslucent
-        onRequestClose={handleClose}
-      >
-        <Animated.View
-          style={styles.overlay}
-          entering={FadeIn.duration(TIMING_CONFIG.FAST.duration)}
-          exiting={FadeOut.duration(TIMING_CONFIG.FAST.duration)}
-        >
-          <BlurView
-            intensity={20}
-            style={StyleSheet.absoluteFill}
-            tint={isDarkMode ? 'dark' : 'light'}
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={0}
+        snapPoints={snapPoints}
+        enablePanDownToClose
+        enableOverDrag={false}
+        enableDynamicSizing={false}
+        animateOnMount={true}
+        onClose={handleSheetClose}
+        backgroundStyle={[styles.background, { backgroundColor: colors.card }]}
+        handleIndicatorStyle={[styles.indicator, { backgroundColor: colors.modalIndicator }]}
+        backdropComponent={({ style }) => (
+          <View
+            style={[style, [styles.backdrop, { backgroundColor: colors.backdropOverlay }]]}
+            onTouchStart={handleSheetClose}
+            pointerEvents="auto"
           />
+        )}
+      >
+        <BottomSheetView style={styles.content}>
+          <View style={styles.header}>
+            <ThemedText style={styles.title} type="heading3">
+              Choose session type
+            </ThemedText>
+          </View>
 
-          <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
-
-          <GestureDetector gesture={gestureHandler}>
-            <Animated.View
-              style={[
-                styles.modalContainer,
-                { backgroundColor: colors.background },
-                animatedModalStyle,
-              ]}
-              entering={SlideInDown.duration(TIMING_CONFIG.MEDIUM.duration).damping(15)}
-              exiting={SlideOutDown.duration(TIMING_CONFIG.FAST.duration)}
+          <View style={styles.optionsContainer}>
+            <TouchableOpacity
+              style={[styles.optionCard, { backgroundColor: colors.elevation1 }]}
+              onPress={onStartVisual}
             >
-              <View style={[styles.closeIndicator, { backgroundColor: colors.modalIndicator }]} />
-
-              <View style={styles.header}>
-                <ThemedText style={styles.title} type="heading3">
-                  Choose session type
+              <View style={[styles.iconContainer, { backgroundColor: colors.tintBackground }]}>
+                <Ionicons name="eye" size={24} color={colors.tint} />
+              </View>
+              <View style={styles.optionContent}>
+                <ThemedText style={styles.optionTitle} type="body" weight="semibold">
+                  Visual
+                </ThemedText>
+                <ThemedText colorName="secondaryText" type="caption">
+                  Tap and swipe
                 </ThemedText>
               </View>
+            </TouchableOpacity>
 
-              <View style={styles.optionsContainer}>
-                <TouchableOpacity
-                  style={[styles.optionCard, { backgroundColor: colors.card }]}
-                  onPress={onStartVisual}
-                >
-                  <View
-                    style={[
-                      styles.iconContainer,
-                      { backgroundColor: withOpacity(colors.tint, 0.08) },
-                    ]}
-                  >
-                    <Ionicons name="eye" size={24} color={colors.tint} />
-                  </View>
-                  <View style={styles.optionContent}>
-                    <ThemedText style={styles.optionTitle} type="body" weight="semibold">
-                      Visual
-                    </ThemedText>
-                    <ThemedText colorName="secondaryText" type="caption">
-                      Tap and swipe
-                    </ThemedText>
-                  </View>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.optionCard, { backgroundColor: colors.card }]}
-                  onPress={onStartAudio}
-                >
-                  <View
-                    style={[
-                      styles.iconContainer,
-                      { backgroundColor: withOpacity(colors.tint, 0.08) },
-                    ]}
-                  >
-                    <Ionicons name="ear" size={24} color={colors.tint} />
-                  </View>
-                  <View style={styles.optionContent}>
-                    <ThemedText style={styles.optionTitle} type="body" weight="semibold">
-                      Audio
-                    </ThemedText>
-                    <ThemedText colorName="secondaryText" type="caption">
-                      Listen while multitasking
-                    </ThemedText>
-                  </View>
-                </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.optionCard, { backgroundColor: colors.elevation1 }]}
+              onPress={onStartAudio}
+            >
+              <View style={[styles.iconContainer, { backgroundColor: colors.tintBackground }]}>
+                <Ionicons name="ear" size={24} color={colors.tint} />
               </View>
-            </Animated.View>
-          </GestureDetector>
-        </Animated.View>
-      </Modal>
+              <View style={styles.optionContent}>
+                <ThemedText style={styles.optionTitle} type="body" weight="semibold">
+                  Audio
+                </ThemedText>
+                <ThemedText colorName="secondaryText" type="caption">
+                  Listen while multitasking
+                </ThemedText>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </BottomSheetView>
+      </BottomSheet>
     );
   }
 );
@@ -216,28 +114,25 @@ const SessionTypeModal = memo(
 SessionTypeModal.displayName = 'SessionTypeModal';
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  closeIndicator: {
-    width: 32,
-    height: 4,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    alignSelf: 'center',
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  modalContainer: {
+  background: {
     ...LAYOUT.ELEVATION.LARGE,
     borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.XLARGE,
+  },
+  backdrop: {
+    // backgroundColor handled dynamically via colors.backdropOverlay
+  },
+  indicator: {
+    width: 32,
+    height: 4,
+  },
+  content: {
+    paddingBottom: LAYOUT.SPACING.LARGE,
   },
   header: {
     paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.SMALL,
   },
   title: {
     marginBottom: LAYOUT.SPACING.TINY,
