@@ -23,8 +23,8 @@ const rootReducer = combineReducers({
 // Migration function for settings
 type RootStateShape = ReturnType<typeof rootReducer>;
 
-const migrations = {
-  0: (state: RootStateShape) => {
+const migrations: { 0: (state: RootStateShape) => RootStateShape } = {
+  0: (state: RootStateShape): RootStateShape => {
     // Ensure settings has reminderTime property
     if (state.settings && !state.settings.reminderTime) {
       state.settings.reminderTime = {
@@ -42,10 +42,11 @@ const persistConfig: PersistConfig<RootStateShape> = {
   key: 'root',
   storage: getSafeStorage(),
   version: 0,
-  migrate: (state: PersistedState) => {
-    const typedState = state as RootStateShape | undefined;
+  migrate: (state: PersistedState): Promise<PersistedState> => {
+    const typedState = state as (RootStateShape & PersistedState) | undefined;
     if (typedState && typedState.settings && !typedState.settings.reminderTime) {
-      return Promise.resolve(migrations[0](typedState) as unknown as PersistedState);
+      const migrated = migrations[0](typedState);
+      return Promise.resolve({ ...state, ...migrated } as PersistedState);
     }
     return Promise.resolve(state);
   },
