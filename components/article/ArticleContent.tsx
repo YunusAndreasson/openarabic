@@ -3,7 +3,6 @@ import type { JSX } from 'react';
 import React, { useMemo, useCallback } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedButton } from '@/components/ThemedButton';
@@ -294,7 +293,7 @@ export const ArticleContent = ({
   );
 
   return (
-    <Animated.View style={styles.flexOne}>
+    <View style={styles.flexOne}>
       {sortedSentences && sortedSentences.length > 0 ? (
         <View
           style={[styles.listContainer, styles.content, { backgroundColor: colors.background }]}
@@ -330,7 +329,7 @@ export const ArticleContent = ({
           />
         </View>
       ) : null}
-    </Animated.View>
+    </View>
   );
 };
 

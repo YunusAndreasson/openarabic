@@ -131,11 +131,11 @@ function ProgressBarComponent({
   );
 
   return (
-    <Animated.View style={styles.container as StyleProp<ViewStyle>}>
+    <View style={styles.container as StyleProp<ViewStyle>}>
       <View style={styles.fillContainer}>
         <Animated.View style={styles.fill} />
       </View>
-    </Animated.View>
+    </View>
   );
 }
 
