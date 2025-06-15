@@ -15,6 +15,7 @@ export type BottomControlsProps = {
   onPrimaryPress: () => void;
   primaryVariant?: 'filled' | 'outlined';
   primaryDisabled?: boolean;
+  primaryLoading?: boolean;
   primaryAccessibilityLabel?: string;
   primaryDisablePressAnimation?: boolean;
   secondaryLabel?: string;
@@ -35,6 +36,7 @@ const BottomControls = memo<BottomControlsProps>(
     onPrimaryPress,
     primaryVariant = 'filled',
     primaryDisabled = false,
+    primaryLoading = false,
     primaryDisablePressAnimation,
     secondaryLabel,
     onSecondaryPress,
@@ -151,6 +153,7 @@ const BottomControls = memo<BottomControlsProps>(
             >
               <ThemedButton
                 disabled={primaryDisabled}
+                loading={primaryLoading}
                 disablePressAnimation={primaryDisablePressAnimation}
                 style={styles.button}
                 title={primaryLabel}

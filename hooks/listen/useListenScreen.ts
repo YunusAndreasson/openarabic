@@ -145,34 +145,81 @@ export const useListenScreen = () => {
 
   const isCurrentlyPlaying = audioState === AUDIO_STATES.PLAYING;
 
-  const handlePlayAll = useCallback(async () => {
-    if (isStartingPlayback) return;
+  const handlePlayAll = useCallback(
+    async (setLoading?: (loading: boolean) => void) => {
+      if (isStartingPlayback) return;
 
-    if (isCurrentlyPlaying && playbackMode === 'all') {
-      selectionFeedback();
-      await actions.stopPlayback();
-      setPlaybackMode('none');
-    } else if (sortedEnhancedTracks.length) {
-      try {
-        selectionFeedback();
-        setPlaybackMode('all');
-        const success = await actions.startEnhancedPlayback(sortedEnhancedTracks, 0);
-        if (!success) {
+      if (isCurrentlyPlaying && playbackMode === 'all') {
+        try {
+          selectionFeedback();
+          await actions.stopPlayback();
+          setPlaybackMode('none');
+        } catch {
           setPlaybackMode('none');
         }
-      } catch (error) {
-        setPlaybackMode('none');
-        handleError(error as Error);
+      } else if (sortedEnhancedTracks.length) {
+        try {
+          selectionFeedback();
+
+          // Set loading state with minimum duration
+          if (setLoading) {
+            setLoading(true);
+            const loadingStartTime = Date.now();
+            const MIN_LOADING_DURATION = 300; // 300ms minimum
+
+            setPlaybackMode('all');
+            actions
+              .startEnhancedPlayback(sortedEnhancedTracks, 0)
+              .then(success => {
+                if (!success) {
+                  setPlaybackMode('none');
+                }
+                // Ensure minimum loading duration
+                const elapsed = Date.now() - loadingStartTime;
+                const remainingTime = Math.max(0, MIN_LOADING_DURATION - elapsed);
+                setTimeout(() => setLoading(false), remainingTime);
+              })
+              .catch(err => {
+                setPlaybackMode('none');
+                handleError(err as Error);
+                // Ensure minimum loading duration even for errors
+                const elapsed = Date.now() - loadingStartTime;
+                const remainingTime = Math.max(0, MIN_LOADING_DURATION - elapsed);
+                setTimeout(() => setLoading(false), remainingTime);
+              });
+          } else {
+            // Fallback for when no loading setter is provided
+            setPlaybackMode('all');
+            actions
+              .startEnhancedPlayback(sortedEnhancedTracks, 0)
+              .then(success => {
+                if (!success) {
+                  setPlaybackMode('none');
+                }
+              })
+              .catch(err => {
+                setPlaybackMode('none');
+                handleError(err as Error);
+              });
+          }
+        } catch (error) {
+          setPlaybackMode('none');
+          handleError(error as Error);
+          if (setLoading) {
+            setTimeout(() => setLoading(false), 300);
+          }
+        }
       }
-    }
-  }, [
-    isStartingPlayback,
-    isCurrentlyPlaying,
-    playbackMode,
-    sortedEnhancedTracks,
-    actions.startEnhancedPlayback,
-    actions.stopPlayback,
-  ]);
+    },
+    [
+      isStartingPlayback,
+      isCurrentlyPlaying,
+      playbackMode,
+      sortedEnhancedTracks,
+      actions.startEnhancedPlayback,
+      actions.stopPlayback,
+    ]
+  );
 
   const handleSleepTimerSet = useCallback(
     (minutes: number) => {

@@ -101,7 +101,6 @@ const ListenListItem = memo(
             ? () => onPlayPress(item.article_id)
             : undefined
         }
-        isPlaying={false} // Individual cards don't show playing state - NowPlayingCard handles that
         isLoadingAudio={isStartingPlayback && isActive} // Show loading when this article is starting
         dragHandleProps={{
           onLongPress: drag,
@@ -132,6 +131,7 @@ export default function ListenScreen(): JSX.Element {
   const { showToast } = useToast();
 
   const [showSleepTimer, setShowSleepTimer] = useState(false);
+  const [isPlayAllLoading, setIsPlayAllLoading] = useState(false);
 
   const {
     sortedReadingList,
@@ -157,8 +157,8 @@ export default function ListenScreen(): JSX.Element {
 
   const listenMetadata = useMemo(
     () => ({
-      articleId: metadata.articleId ?? null,
-      articleTitle: metadata.articleTitle ?? null,
+      articleId: metadata.articleId || null,
+      articleTitle: metadata.articleTitle || null,
     }),
     [metadata.articleId, metadata.articleTitle]
   );
@@ -376,13 +376,14 @@ export default function ListenScreen(): JSX.Element {
       {/* Only show bottom controls when there are texts with audio to play but no active player */}
       {hasArticles && hasAudioArticles && !shouldShowPlayer && !isStartingPlayback && (
         <BottomControls
-          primaryDisabled={false}
+          primaryDisabled={isPlayAllLoading}
+          primaryLoading={isPlayAllLoading}
           primaryDisablePressAnimation={true}
           primaryLabel="Play All"
           primaryVariant="filled"
           showTimerButton={false}
           primaryAccessibilityLabel="Play all texts"
-          onPrimaryPress={handlePlayAll}
+          onPrimaryPress={() => handlePlayAll(setIsPlayAllLoading)}
         />
       )}
 

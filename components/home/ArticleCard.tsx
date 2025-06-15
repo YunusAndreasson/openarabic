@@ -29,7 +29,6 @@ interface ArticleCardProps {
   isBeingDragged?: boolean;
   // Play button props
   onPlayPress?: () => void;
-  isPlaying?: boolean;
   isLoadingAudio?: boolean;
 }
 
@@ -38,13 +37,12 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   author,
   onPress,
   onLongPress,
-  active = false,
+  active: _active = false,
   editMode = false,
   onDelete,
   dragHandleProps,
   isBeingDragged = false,
   onPlayPress,
-  isPlaying = false,
   isLoadingAudio = false,
 }) => {
   const isDarkMode = useIsDarkMode();
@@ -71,40 +69,11 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
     }
   }, [editMode, isBeingDragged, startAnimation, setValue]);
 
-  const activeCardStyle = React.useMemo(
-    () =>
-      active
-        ? {
-            shadowOpacity: 0.3, // LAYOUT.ELEVATION.MEDIUM equivalent
-            shadowRadius: 10, // LAYOUT.ELEVATION.MEDIUM equivalent
-            elevation: 8, // LAYOUT.ELEVATION.MEDIUM equivalent
-          }
-        : undefined,
-    [active]
-  );
-
   // Enhanced title and author styles with semantic colors
-  const titleStyle = React.useMemo(
-    () => ({
-      marginBottom: LAYOUT.SPACING.TINY,
-      fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-      letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
-      lineHeight:
-        LAYOUT.TYPOGRAPHY.SCALE.LARGE *
-        TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.lineHeightMultiplier,
-      opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY, isDarkMode),
-    }),
-    [isDarkMode]
-  );
-
-  const authorStyle = React.useMemo(
-    () => ({
-      fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
-      letterSpacing:
-        TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.AUTHOR_BYLINE.letterSpacing,
-      opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.SECONDARY, isDarkMode),
-    }),
-    [isDarkMode]
+  const titleOpacity = getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY, isDarkMode);
+  const authorOpacity = getEnhancedOpacity(
+    TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.SECONDARY,
+    isDarkMode
   );
 
   return (
@@ -121,21 +90,25 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
 
       <View style={styles.cardWrapper}>
         <BaseCard
-          shadowSize={active ? 'medium' : 'small'}
-          style={[styles.card, activeCardStyle]}
+          shadowSize="small"
+          style={styles.card}
           onPress={editMode ? undefined : onPress}
           onLongPress={editMode ? undefined : onLongPress}
         >
           <View style={styles.cardContent}>
             <View style={styles.textContent}>
-              <ThemedText colorName="headingText" style={titleStyle} type="heading3">
+              <ThemedText
+                colorName="headingText"
+                style={[styles.titleText, { opacity: titleOpacity }]}
+                type="heading3"
+              >
                 {title}
               </ThemedText>
               <ThemedText
                 skipDefaultColor
                 colorName="authorText"
                 numberOfLines={1}
-                style={authorStyle}
+                style={[styles.authorText, { opacity: authorOpacity }]}
                 type="label"
               >
                 {author}
@@ -148,7 +121,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
                 {onPlayPress ? (
                   <PlayButton
                     onPress={onPlayPress}
-                    isPlaying={isPlaying}
+                    isPlaying={false}
                     isLoading={isLoadingAudio}
                     iconColor={playIconColor}
                   />
@@ -191,6 +164,18 @@ const styles = StyleSheet.create({
   },
   textContent: {
     flex: 1,
+  },
+  titleText: {
+    marginBottom: LAYOUT.SPACING.TINY,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
+    lineHeight:
+      LAYOUT.TYPOGRAPHY.SCALE.LARGE *
+      TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.lineHeightMultiplier,
+  },
+  authorText: {
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.AUTHOR_BYLINE.letterSpacing,
   },
   playButtonContainer: {
     marginLeft: LAYOUT.SPACING.SMALL,
