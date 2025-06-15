@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react-native';
+import { renderHook, act } from '@testing-library/react-native';
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import React from 'react';
 
@@ -105,3 +105,57 @@ describe('prefetchTracks', () => {
     await expect(result.current.actions.prefetchTracks(tracks)).resolves.toEqual(tracks);
   });
 });
+
+describe('startEnhancedPlayback', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  test('loads valid track, sets loading state and triggers autoplay', async () => {
+    mockStatus = { playing: false, isLoaded: true } as any;
+    (audioCache.getAudio as jest.Mock).mockResolvedValue('cached-one.mp3');
+
+    const { result } = renderHook(() => useAudioPlayer());
+    jest
+      .spyOn(result.current.actions, 'prefetchTracks')
+      .mockResolvedValue([]);
+
+    const tracks = [{ id: '1', audioUrl: 'one.mp3', title: 'one' }];
+    let res: boolean | undefined;
+    await act(async () => {
+      res = await result.current.actions.startEnhancedPlayback(tracks);
+    });
+    await act(async () => {
+      jest.advanceTimersByTime(60);
+    });
+
+    expect(res).toBe(true);
+    expect(result.current.isLoading).toBe(false);
+    expect(mockAudioPlayer.play).toHaveBeenCalled();
+  });
+
+  test('returns false and resets state when loading fails', async () => {
+    mockStatus = { playing: false, isLoaded: true } as any;
+    (audioCache.getAudio as jest.Mock).mockRejectedValue(new Error('fail'));
+
+    const { result } = renderHook(() => useAudioPlayer());
+    jest.spyOn(result.current.actions, 'prefetchTracks').mockResolvedValue([]);
+
+    const tracks = [{ id: '1', audioUrl: undefined as any, title: 'bad' }];
+
+    let res: boolean | undefined;
+    await act(async () => {
+      res = await result.current.actions.startEnhancedPlayback(tracks);
+    });
+
+    expect(res).toBe(false);
+    expect(result.current.isLoading).toBe(false);
+    expect(mockAudioPlayer.play).not.toHaveBeenCalled();
+  });
+});
+
