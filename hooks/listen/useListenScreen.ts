@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 
 import { AUDIO_STATES } from '@/constants/audio';
 import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
@@ -37,6 +37,13 @@ export const useListenScreen = () => {
   const { duration, position, metadata, audioState, actions } = enhancedAudioPlayer;
 
   const isStartingPlayback = audioState === AUDIO_STATES.LOADING;
+
+  const loadingTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const clearLoadingTimeouts = useCallback(() => {
+    loadingTimeoutsRef.current.forEach(timeout => clearTimeout(timeout));
+    loadingTimeoutsRef.current = [];
+  }, []);
 
   const sleepTimer = useSleepTimer(() => {
     actions.stopPlayback();
@@ -147,6 +154,7 @@ export const useListenScreen = () => {
 
   const handlePlayAll = useCallback(
     async (setLoading?: (loading: boolean) => void) => {
+      clearLoadingTimeouts();
       if (isStartingPlayback) return;
 
       if (isCurrentlyPlaying && playbackMode === 'all') {
@@ -177,7 +185,8 @@ export const useListenScreen = () => {
                 // Ensure minimum loading duration
                 const elapsed = Date.now() - loadingStartTime;
                 const remainingTime = Math.max(0, MIN_LOADING_DURATION - elapsed);
-                setTimeout(() => setLoading(false), remainingTime);
+                const timeout = setTimeout(() => setLoading(false), remainingTime);
+                loadingTimeoutsRef.current.push(timeout);
               })
               .catch(err => {
                 setPlaybackMode('none');
@@ -185,7 +194,8 @@ export const useListenScreen = () => {
                 // Ensure minimum loading duration even for errors
                 const elapsed = Date.now() - loadingStartTime;
                 const remainingTime = Math.max(0, MIN_LOADING_DURATION - elapsed);
-                setTimeout(() => setLoading(false), remainingTime);
+                const timeout = setTimeout(() => setLoading(false), remainingTime);
+                loadingTimeoutsRef.current.push(timeout);
               });
           } else {
             // Fallback for when no loading setter is provided
@@ -206,7 +216,8 @@ export const useListenScreen = () => {
           setPlaybackMode('none');
           handleError(error as Error);
           if (setLoading) {
-            setTimeout(() => setLoading(false), 300);
+            const timeout = setTimeout(() => setLoading(false), 300);
+            loadingTimeoutsRef.current.push(timeout);
           }
         }
       }
@@ -314,6 +325,10 @@ export const useListenScreen = () => {
       actions.stopPlayback,
     ]
   );
+
+  useEffect(() => {
+    return clearLoadingTimeouts;
+  }, [clearLoadingTimeouts]);
 
   return {
     sortedReadingList,
