@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
+import { InteractionManager } from 'react-native';
 
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -9,10 +10,7 @@ import { handleError } from '@/utils/errorHandling';
 // import { analytics } from '@/services/analytics';
 // Temporary mock analytics until service is fixed
 const analytics = {
-  track: async (
-    _event: string,
-    _properties?: Record<string, unknown>
-  ) => {},
+  track: async (_event: string, _properties?: Record<string, unknown>) => {},
 };
 
 export interface UseArabicWordProps {
@@ -79,18 +77,21 @@ export function useArabicWord({
   const handleSelectionChange = useCallback(() => {
     if (!user?.id || !onPress) return;
 
-    // Analytics tracking - use ADD_STUDY_WORD or REMOVE_STUDY_WORD based on the selection state
-    if (!directlySelected) {
-      analytics.track('ADD_STUDY_WORD', {
-        wordId: word.id,
-        rootId: word.root_id,
-      });
-    } else {
-      analytics.track('REMOVE_STUDY_WORD', {
-        wordId: word.id,
-        rootId: word.root_id,
-      });
-    }
+    // Defer analytics tracking until after UI interaction completes
+    InteractionManager.runAfterInteractions(() => {
+      // Analytics tracking - use ADD_STUDY_WORD or REMOVE_STUDY_WORD based on the selection state
+      if (!directlySelected) {
+        analytics.track('ADD_STUDY_WORD', {
+          wordId: word.id,
+          rootId: word.root_id,
+        });
+      } else {
+        analytics.track('REMOVE_STUDY_WORD', {
+          wordId: word.id,
+          rootId: word.root_id,
+        });
+      }
+    });
 
     onPress(word);
   }, [user?.id, onPress, word, directlySelected]);

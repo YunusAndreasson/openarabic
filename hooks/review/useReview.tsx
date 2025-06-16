@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
+import { InteractionManager } from 'react-native';
 import { useAnimatedStyle } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
 
@@ -559,13 +560,18 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
     if (!mounted.current) return;
 
-    invalidateQueries();
+    // Defer query invalidation until after navigation animation completes
+    InteractionManager.runAfterInteractions(() => {
+      if (!mounted.current) return;
 
-    if (user?.id) {
-      queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
-      queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) });
-      queryClient.invalidateQueries({ queryKey: ['vocabulary-stats'] });
-    }
+      invalidateQueries();
+
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
+        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) });
+        queryClient.invalidateQueries({ queryKey: ['vocabulary-stats'] });
+      }
+    });
 
     setTimeout(() => {
       if (mounted.current) {

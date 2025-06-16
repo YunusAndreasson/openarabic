@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, router } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type ViewStyle, InteractionManager } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -74,10 +74,12 @@ export default function ListenScreen(): JSX.Element {
 
     stopPlayback().catch(() => {});
 
-    // Invalidate relevant queries
-    if (user?.id) {
-      queryClient.invalidateQueries({ queryKey: ['vocabulary-stats'] });
-    }
+    // Defer query invalidation until after navigation animation completes
+    InteractionManager.runAfterInteractions(() => {
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ['vocabulary-stats'] });
+      }
+    });
 
     // For non-completion scenarios, navigate away immediately
     try {

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, Fragment, type FC, type ComponentProps } from 'react';
 import type { ViewStyle } from 'react-native';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, InteractionManager } from 'react-native';
 import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
 
 import { ThemedButton } from '@/components/ThemedButton';
@@ -70,11 +70,14 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
   // Only invalidate queries for review flow
   useEffect(() => {
     if (!useThemedView && user?.id) {
-      queryClient.invalidateQueries({
-        predicate: query => {
-          const key = query.queryKey[0];
-          return key === 'fsrs-words' || key === 'vocabulary-stats';
-        },
+      // Defer query invalidation until after completion screen animation completes
+      InteractionManager.runAfterInteractions(() => {
+        queryClient.invalidateQueries({
+          predicate: query => {
+            const key = query.queryKey[0];
+            return key === 'fsrs-words' || key === 'vocabulary-stats';
+          },
+        });
       });
     }
   }, [user?.id, queryClient, useThemedView]);
