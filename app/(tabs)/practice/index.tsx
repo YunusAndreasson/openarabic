@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useState, useCallback, useMemo } from 'react';
-import { StyleSheet, ScrollView, ActivityIndicator, View } from 'react-native';
+import { StyleSheet, ScrollView, ActivityIndicator, View, InteractionManager } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
@@ -42,7 +42,9 @@ export default function VocabularyScreen(): JSX.Element {
 
       // Only fetch if we're missing either data set
       if (!hasStudyWords || !hasDueWords) {
-        prefetchVocabularyData();
+        InteractionManager.runAfterInteractions(() => {
+          prefetchVocabularyData();
+        });
       }
     }, [user?.id, prefetchVocabularyData, queryClient])
   );

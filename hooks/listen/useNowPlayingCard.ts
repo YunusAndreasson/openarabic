@@ -11,10 +11,10 @@ import {
 } from 'react-native-reanimated';
 import type { AnimatedStyle } from 'react-native-reanimated';
 
+import { LAYOUT } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import { LAYOUT } from '@/constants/layout';
 
 const CARD_HEIGHT = 120;
 
