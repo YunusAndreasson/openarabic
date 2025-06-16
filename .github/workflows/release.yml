@@ -55,11 +55,11 @@ jobs:
           CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
           eas update --branch $CURRENT_BRANCH --auto
 
-      # === Version Bumping and Release Creation (only after successful builds) ===
-      - name: Bump version and create release
-        if: github.event_name == 'workflow_dispatch' && success()
+      # === Version Bumping (before building so build has new version) ===
+      - name: Bump version
+        if: github.event_name == 'workflow_dispatch'
         run: |
-          echo "🚀 Creating release after successful build..."
+          echo "🚀 Bumping version before build..."
           yarn bump
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
@@ -77,38 +77,6 @@ jobs:
 
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
         id: version
-
-      - name: Create GitHub Release
-        if: github.event_name == 'workflow_dispatch' && success() && steps.version.outputs.version
-        run: |
-          NEW_VERSION="${{ steps.version.outputs.version }}"
-          BUILD_ID="${{ steps.build.outputs.build_id }}"
-
-          # Create release notes with build info
-          RELEASE_NOTES="## Release v$NEW_VERSION
-
-          🚀 **TestFlight Build**: Successfully submitted to App Store Connect
-          📱 **Build ID**: $BUILD_ID
-          🔗 **EAS Build**: [View build details](https://expo.dev/accounts/[your-account]/projects/[your-project]/builds/$BUILD_ID)
-
-          ### What's Changed
-          "
-
-          echo "🎉 Creating GitHub release v$NEW_VERSION"
-          gh release create "v$NEW_VERSION" \
-            --title "Release v$NEW_VERSION" \
-            --notes "$RELEASE_NOTES" \
-            --generate-notes \
-            --latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Notify on failure
-        if: failure()
-        run: |
-          echo "❌ Release workflow failed!"
-          echo "Check the logs above for details."
-          # You could add Slack/Discord notifications here
 
       - name: Build for TestFlight
         id: build
@@ -165,3 +133,36 @@ jobs:
 
           echo "❌ Build timeout after 30 minutes"
           exit 1
+
+      # === GitHub Release Creation (after successful build) ===
+      - name: Create GitHub Release
+        if: github.event_name == 'workflow_dispatch' && success() && steps.version.outputs.version
+        run: |
+          NEW_VERSION="${{ steps.version.outputs.version }}"
+          BUILD_ID="${{ steps.build.outputs.build_id }}"
+
+          # Create release notes with build info
+          RELEASE_NOTES="## Release v$NEW_VERSION
+
+          🚀 **TestFlight Build**: Successfully submitted to App Store Connect
+          📱 **Build ID**: $BUILD_ID
+          🔗 **EAS Build**: [View build details](https://expo.dev/accounts/[your-account]/projects/[your-project]/builds/$BUILD_ID)
+
+          ### What's Changed
+          "
+
+          echo "🎉 Creating GitHub release v$NEW_VERSION"
+          gh release create "v$NEW_VERSION" \
+            --title "Release v$NEW_VERSION" \
+            --notes "$RELEASE_NOTES" \
+            --generate-notes \
+            --latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Release workflow failed!"
+          echo "Check the logs above for details."
+          # You could add Slack/Discord notifications here
