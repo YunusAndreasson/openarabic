@@ -3,7 +3,7 @@ import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import type { JSX } from 'react';
 import { useState, useCallback, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, InteractionManager } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import ErrorState from '@/components/ErrorState';
@@ -127,7 +127,9 @@ export default function ArticlesScreen(): JSX.Element {
   const handleArticlePress = useCallback(
     (article: Article) => {
       dispatch(updateLastOpenedArticle(article.id));
-      prefetchArticle(article.id);
+      InteractionManager.runAfterInteractions(() => {
+        prefetchArticle(article.id);
+      });
       router.push(
         `/(tabs)/read/article/${article.id}?headerTitle=${encodeURIComponent(article.title)}`
       );
