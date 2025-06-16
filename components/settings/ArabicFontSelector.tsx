@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import { memo, useCallback, type FC } from 'react';
 import { StyleSheet, View, ScrollView } from 'react-native';
@@ -43,12 +42,14 @@ const FontPreviewCard = memo(({ option, isSelected, fontSize, onSelect }: FontPr
       ]}
       onPress={handlePress}
     >
-      {/* Header with font name and selection indicator */}
-      <View style={styles.cardHeader}>
+      {/* Font name and style description grouped together */}
+      <View style={styles.fontHeader}>
         <ThemedText style={styles.fontName} type="body" weight="semibold">
           {option.displayName}
         </ThemedText>
-        {isSelected && <Ionicons color={colors.tint} name="checkmark-circle" size={20} />}
+        <ThemedText colorName="textTertiary" style={styles.fontDescription} type="caption">
+          {option.description}
+        </ThemedText>
       </View>
 
       {/* Large Arabic preview - uses current font size */}
@@ -58,11 +59,6 @@ const FontPreviewCard = memo(({ option, isSelected, fontSize, onSelect }: FontPr
         type="arabic"
       >
         {option.previewText}
-      </ThemedText>
-
-      {/* Single descriptive word */}
-      <ThemedText colorName="textTertiary" style={styles.descriptionText} type="caption">
-        {option.description}
       </ThemedText>
     </BaseCard>
   );
@@ -93,44 +89,20 @@ const ArabicFontSelector: FC = () => {
 
   return (
     <View style={styles.container}>
-      <ThemedText colorName="textTertiary" style={styles.subtitle} type="caption">
-        Tap to preview and select
-      </ThemedText>
-
-      {/* Font Size Slider Section */}
+      {/* Font Size Slider Section - Simplified */}
       <BaseCard includePressAnimation={false} shadowSize="small" style={styles.sliderCard}>
-        <View style={styles.sliderHeader}>
-          <ThemedText style={styles.sliderTitle} type="body" weight="semibold">
-            Font Size
-          </ThemedText>
-          <ThemedText colorName="textTertiary" style={styles.sizeValue} type="caption">
-            {selectedFontSize}px
-          </ThemedText>
-        </View>
-
-        <View style={styles.sliderContainer}>
-          <View style={styles.sliderLabels}>
-            <ThemedText colorName="textTertiary" style={styles.sliderLabel} type="caption">
-              Small
-            </ThemedText>
-            <ThemedText colorName="textTertiary" style={styles.sliderLabel} type="caption">
-              Large
-            </ThemedText>
-          </View>
-
-          <Slider
-            style={styles.slider}
-            minimumValue={fontSizeRange.MIN}
-            maximumValue={fontSizeRange.MAX}
-            step={fontSizeRange.STEP}
-            value={selectedFontSize}
-            onValueChange={handleFontSizeChange}
-            onSlidingComplete={handleSlidingComplete}
-            minimumTrackTintColor={colors.tint}
-            maximumTrackTintColor={colors.borderOverlay}
-            thumbTintColor={colors.tint}
-          />
-        </View>
+        <Slider
+          style={styles.slider}
+          minimumValue={fontSizeRange.MIN}
+          maximumValue={fontSizeRange.MAX}
+          step={fontSizeRange.STEP}
+          value={selectedFontSize}
+          onValueChange={handleFontSizeChange}
+          onSlidingComplete={handleSlidingComplete}
+          minimumTrackTintColor={colors.tint}
+          maximumTrackTintColor={colors.borderOverlay}
+          thumbTintColor={colors.tint}
+        />
       </BaseCard>
 
       <ScrollView
@@ -158,47 +130,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
 
-  subtitle: {
-    lineHeight: 16,
-    textAlign: 'center',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-
   sliderCard: {
     padding: LAYOUT.SPACING.LARGE,
     marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-
-  sliderHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-
-  sliderTitle: {
-    flex: 1,
-  },
-
-  sizeValue: {
-    fontWeight: '600',
-    minWidth: 40,
-    textAlign: 'right',
-  },
-
-  sliderContainer: {
-    gap: LAYOUT.SPACING.SMALL,
-  },
-
-  sliderLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: LAYOUT.SPACING.TINY,
-  },
-
-  sliderLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    opacity: 0.7,
   },
 
   slider: {
@@ -220,16 +154,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  fontHeader: {
     alignItems: 'center',
-    width: '100%',
     marginBottom: LAYOUT.SPACING.MEDIUM,
+    gap: LAYOUT.SPACING.TINY,
   },
 
   fontName: {
-    flex: 1,
+    textAlign: 'center',
+  },
+
+  fontDescription: {
+    lineHeight: 14,
+    textAlign: 'center',
+    opacity: 0.8,
   },
 
   previewText: {
@@ -239,12 +177,6 @@ const styles = StyleSheet.create({
     minHeight: 80,
     textAlignVertical: 'center',
     // Dynamic line height will be calculated by getArabicTextStyle
-  },
-
-  descriptionText: {
-    lineHeight: 16,
-    textAlign: 'center',
-    opacity: 0.8,
   },
 });
 

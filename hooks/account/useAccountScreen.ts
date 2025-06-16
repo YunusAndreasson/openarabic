@@ -204,7 +204,6 @@ export const useAccountScreen = () => {
 
   const handleTimePickerOpen = useCallback(() => {
     setShowTimePicker(true);
-    lightFeedback();
   }, []);
 
   const handleTimePickerClose = useCallback(() => {
