@@ -6,7 +6,6 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BaseCard from '@/components/BaseCard';
-import SectionTitle from '@/components/SectionTitle';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
@@ -20,27 +19,6 @@ import pkg from '@/package.json';
 import { formatBytes } from '@/utils/cacheUtils';
 
 // Memoized components
-interface SettingLabelProps {
-  readonly icon: keyof typeof Ionicons.glyphMap;
-  readonly text: string;
-  readonly iconColor?: string;
-}
-
-const SettingLabel = memo(({ icon, text, iconColor }: SettingLabelProps) => {
-  const colors = useColors();
-  const defaultIconColor = iconColor || colors.secondaryText;
-
-  return (
-    <View style={styles.settingLabelContainer}>
-      <Ionicons color={defaultIconColor} name={icon} size={22} />
-      <View style={styles.settingLabelTextContainer}>
-        <ThemedText type="body">{text}</ThemedText>
-      </View>
-    </View>
-  );
-});
-SettingLabel.displayName = 'SettingLabel';
-
 const Divider = memo(() => {
   const colors = useColors();
   return <View style={[styles.commonDivider, { backgroundColor: colors.cardBorder }]} />;
@@ -101,7 +79,7 @@ const AccountScreen: FC = () => {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: LAYOUT.SPACING.LARGE, // Reduced padding for tighter layout
+            paddingTop: LAYOUT.SPACING.XLARGE,
             paddingBottom: insets.bottom + LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
           },
         ]}
@@ -110,342 +88,333 @@ const AccountScreen: FC = () => {
           showsVerticalScrollIndicator: false,
         }}
       >
-        {/* Notifications Section - Moved to top as most frequently used */}
-        <View style={styles.firstSectionOverride}>
-          <SectionTitle isFirstSection={true} title="Notifications" />
-          <BaseCard
-            includePressAnimation={false}
-            shadowSize="small"
-            style={styles.sectionContainer}
-          >
-            <View style={styles.linksContainer}>
-              <View style={styles.settingRow}>
-                <SettingLabel icon="notifications" iconColor={colors.icon} text="Study Reminders" />
-                <Toggle value={reminderTime.enabled} onValueChange={handleReminderToggle} />
+        {/* Core Settings - Most frequently used */}
+        <BaseCard includePressAnimation={false} shadowSize="small" style={styles.sectionContainer}>
+          <View style={styles.linksContainer}>
+            <View style={styles.settingRow}>
+              <View style={styles.settingLabelContainer}>
+                <View style={styles.cardIconContainer}>
+                  <Ionicons color={colors.icon} name="notifications" size={22} />
+                </View>
+                <View style={styles.settingLabelTextContainer}>
+                  <ThemedText type="body">Study Reminders</ThemedText>
+                </View>
               </View>
-              {reminderTime.enabled && (
-                <Fragment>
-                  <Divider />
-                  <BaseCard
-                    includePressAnimation={true}
-                    shadowSize="none"
-                    style={styles.timePickerSettingRow}
-                    onPress={handleTimePickerOpen}
-                  >
-                    <View style={styles.settingRow}>
-                      <SettingLabel icon="time" iconColor={colors.icon} text="Time" />
-                      <ThemedText type="body" variant="secondary">
-                        {formatReminderTime(reminderTime.hour, reminderTime.minute)}
-                      </ThemedText>
-                    </View>
-                  </BaseCard>
-                </Fragment>
-              )}
+              <Toggle value={reminderTime.enabled} onValueChange={handleReminderToggle} />
             </View>
-          </BaseCard>
-        </View>
+            {reminderTime.enabled && (
+              <Fragment>
+                <Divider />
+                <BaseCard
+                  includePressAnimation={true}
+                  shadowSize="none"
+                  style={styles.timePickerSettingRow}
+                  onPress={handleTimePickerOpen}
+                >
+                  <View style={styles.settingRow}>
+                    <View style={styles.settingLabelContainer}>
+                      <View style={styles.cardIconContainer}>
+                        <Ionicons color={colors.icon} name="time" size={22} />
+                      </View>
+                      <View style={styles.settingLabelTextContainer}>
+                        <ThemedText type="body">Time</ThemedText>
+                      </View>
+                    </View>
+                    <ThemedText type="body" variant="secondary">
+                      {formatReminderTime(reminderTime.hour, reminderTime.minute)}
+                    </ThemedText>
+                  </View>
+                </BaseCard>
+              </Fragment>
+            )}
 
-        {/* Appearance Section - Second most frequently used */}
-        <View>
-          <SectionTitle title="Appearance" />
-          <BaseCard
-            includePressAnimation={false}
-            shadowSize="small"
-            style={styles.sectionContainer}
-          >
-            <View style={styles.linksContainer}>
-              <View style={styles.settingRow}>
-                <SettingLabel icon="moon" iconColor={colors.icon} text="Dark Mode" />
-                <ThemeToggle />
+            <Divider />
+
+            <View style={styles.settingRow}>
+              <View style={styles.settingLabelContainer}>
+                <View style={styles.cardIconContainer}>
+                  <Ionicons color={colors.icon} name="moon" size={22} />
+                </View>
+                <View style={styles.settingLabelTextContainer}>
+                  <ThemedText type="body">Dark Mode</ThemedText>
+                </View>
               </View>
-
-              <Divider />
-
-              <BaseCard
-                includePressAnimation={true}
-                shadowSize="none"
-                style={styles.interactiveCard}
-                onPress={handleFontSelectorPress}
-              >
-                <View style={styles.cardContent}>
-                  <View style={styles.cardLeft}>
-                    <View style={styles.cardIconContainer}>
-                      <Ionicons color={colors.icon} name="text-outline" size={22} />
-                    </View>
-                    <ThemedText style={styles.cardText} type="body" weight="medium">
-                      Arabic Font
-                    </ThemedText>
-                  </View>
-                  <Ionicons
-                    color={colors.textTertiary}
-                    name="chevron-forward-outline"
-                    size={20}
-                    style={styles.cardChevron}
-                  />
-                </View>
-              </BaseCard>
+              <ThemeToggle />
             </View>
-          </BaseCard>
-        </View>
 
-        {/* Science Section - Educational content, valuable for understanding */}
-        <View>
-          <SectionTitle title="Science" />
-          <BaseCard
-            includePressAnimation={false}
-            shadowSize="small"
-            style={styles.sectionContainer}
-          >
-            <View style={styles.linksContainer}>
-              <BaseCard
-                includePressAnimation={true}
-                shadowSize="none"
-                style={styles.interactiveCard}
-                onPress={handleLearningMethodPress}
-              >
-                <View style={styles.cardContent}>
-                  <View style={styles.cardLeft}>
-                    <View style={styles.cardIconContainer}>
-                      <Ionicons color={colors.icon} name="school-outline" size={22} />
-                    </View>
-                    <ThemedText style={styles.cardText} type="body" weight="medium">
-                      Language Learning Science
+            <Divider />
+
+            <BaseCard
+              includePressAnimation={true}
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={handleFontSelectorPress}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons color={colors.icon} name="text-outline" size={22} />
+                  </View>
+                  <ThemedText style={styles.cardText} type="body" weight="medium">
+                    Arabic Font
+                  </ThemedText>
+                </View>
+                <Ionicons
+                  color={colors.textTertiary}
+                  name="chevron-forward-outline"
+                  size={20}
+                  style={styles.cardChevron}
+                />
+              </View>
+            </BaseCard>
+
+            <Divider />
+
+            <BaseCard
+              includePressAnimation={true}
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={handleSupportContact}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons color={colors.icon} name="mail" size={22} />
+                  </View>
+                  <ThemedText style={styles.cardText} type="body" weight="medium">
+                    Contact Support
+                  </ThemedText>
+                </View>
+                <Ionicons
+                  color={colors.textTertiary}
+                  name="open-outline"
+                  size={16}
+                  style={styles.cardChevron}
+                />
+              </View>
+            </BaseCard>
+          </View>
+        </BaseCard>
+
+        {/* Learning Resources - Educational content */}
+        <BaseCard
+          includePressAnimation={false}
+          shadowSize="small"
+          style={[styles.sectionContainer, styles.sectionSpacing]}
+        >
+          <View style={styles.linksContainer}>
+            <BaseCard
+              includePressAnimation={true}
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={handleLearningMethodPress}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons color={colors.icon} name="school-outline" size={22} />
+                  </View>
+                  <ThemedText style={styles.cardText} type="body" weight="medium">
+                    Language Learning Science
+                  </ThemedText>
+                </View>
+                <Ionicons
+                  color={colors.textTertiary}
+                  name="chevron-forward-outline"
+                  size={20}
+                  style={styles.cardChevron}
+                />
+              </View>
+            </BaseCard>
+
+            <Divider />
+
+            <BaseCard
+              includePressAnimation={true}
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={handleClassicalTextsPress}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons color={colors.icon} name="library-outline" size={22} />
+                  </View>
+                  <ThemedText style={styles.cardText} type="body" weight="medium">
+                    Why Classical Texts
+                  </ThemedText>
+                </View>
+                <Ionicons
+                  color={colors.textTertiary}
+                  name="chevron-forward-outline"
+                  size={20}
+                  style={styles.cardChevron}
+                />
+              </View>
+            </BaseCard>
+          </View>
+        </BaseCard>
+
+        {/* Account Management - Important but less frequent */}
+        <BaseCard
+          includePressAnimation={false}
+          shadowSize="small"
+          style={[styles.sectionContainer, styles.sectionSpacing]}
+        >
+          <View style={styles.linksContainer}>
+            <BaseCard
+              includePressAnimation={true}
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={handleClearCache}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons color={colors.icon} name="folder-open-outline" size={22} />
+                  </View>
+                  <View style={styles.cacheTextContainer}>
+                    <ThemedText type="body" weight="medium">
+                      Audio Cache
+                    </ThemedText>
+                    <ThemedText colorName="textTertiary" style={styles.cacheSubtext} type="caption">
+                      {formattedCacheSize}
                     </ThemedText>
                   </View>
-                  <Ionicons
-                    color={colors.textTertiary}
-                    name="chevron-forward-outline"
-                    size={20}
-                    style={styles.cardChevron}
-                  />
                 </View>
-              </BaseCard>
+                <ThemedButton
+                  disabled={cacheSize === 0 || isClearingCache}
+                  loading={isClearingCache}
+                  size="small"
+                  style={styles.clearButton}
+                  title="Clear"
+                  variant="outlined"
+                  onPress={handleClearCache}
+                />
+              </View>
+            </BaseCard>
 
-              <Divider />
+            <Divider />
 
-              <BaseCard
-                includePressAnimation={true}
-                shadowSize="none"
-                style={styles.interactiveCard}
-                onPress={handleClassicalTextsPress}
-              >
-                <View style={styles.cardContent}>
-                  <View style={styles.cardLeft}>
-                    <View style={styles.cardIconContainer}>
-                      <Ionicons color={colors.icon} name="library-outline" size={22} />
-                    </View>
-                    <ThemedText style={styles.cardText} type="body" weight="medium">
-                      Why Classical Texts
+            <BaseCard
+              includePressAnimation={true}
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={handleSignOut}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons color={colors.error} name="log-out-outline" size={22} />
+                  </View>
+                  <View style={styles.signOutTextContainer}>
+                    <ThemedText type="body" weight="medium">
+                      Sign Out
+                    </ThemedText>
+                    <ThemedText
+                      colorName="textTertiary"
+                      style={styles.userEmailText}
+                      type="caption"
+                    >
+                      {user?.email || 'No email'}
                     </ThemedText>
                   </View>
-                  <Ionicons
-                    color={colors.textTertiary}
-                    name="chevron-forward-outline"
-                    size={20}
-                    style={styles.cardChevron}
-                  />
                 </View>
-              </BaseCard>
-            </View>
-          </BaseCard>
-        </View>
+                <Ionicons
+                  color={colors.textTertiary}
+                  name="chevron-forward-outline"
+                  size={20}
+                  style={styles.cardChevron}
+                />
+              </View>
+            </BaseCard>
+          </View>
+        </BaseCard>
 
-        {/* Connect Section - Social links, less frequently used */}
-        <View>
-          <SectionTitle title="Connect" />
-          <BaseCard
-            includePressAnimation={false}
-            shadowSize="small"
-            style={styles.sectionContainer}
-          >
-            <View style={styles.linksContainer}>
-              <BaseCard
-                includePressAnimation={true}
-                shadowSize="none"
-                style={styles.interactiveCard}
-                onPress={openTwitter}
-              >
-                <View style={styles.cardContent}>
-                  <View style={styles.cardLeft}>
-                    <View style={styles.cardIconContainer}>
-                      <Ionicons color={colors.icon} name="logo-twitter" size={22} />
-                    </View>
-                    <ThemedText style={styles.cardText} type="body" weight="medium">
-                      Twitter
-                    </ThemedText>
+        {/* Social Media - Least frequently used */}
+        <BaseCard
+          includePressAnimation={false}
+          shadowSize="small"
+          style={[styles.sectionContainer, styles.sectionSpacing]}
+        >
+          <View style={styles.linksContainer}>
+            <BaseCard
+              includePressAnimation={true}
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={openTwitter}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons color={colors.icon} name="logo-twitter" size={22} />
                   </View>
-                  <Ionicons
-                    color={colors.textTertiary}
-                    name="open-outline"
-                    size={16}
-                    style={styles.cardChevron}
-                  />
+                  <ThemedText style={styles.cardText} type="body" weight="medium">
+                    Twitter
+                  </ThemedText>
                 </View>
-              </BaseCard>
+                <Ionicons
+                  color={colors.textTertiary}
+                  name="open-outline"
+                  size={16}
+                  style={styles.cardChevron}
+                />
+              </View>
+            </BaseCard>
 
-              <Divider />
+            <Divider />
 
-              <BaseCard
-                includePressAnimation={true}
-                shadowSize="none"
-                style={styles.interactiveCard}
-                onPress={openFacebook}
-              >
-                <View style={styles.cardContent}>
-                  <View style={styles.cardLeft}>
-                    <View style={styles.cardIconContainer}>
-                      <Ionicons color={colors.icon} name="logo-facebook" size={22} />
-                    </View>
-                    <ThemedText style={styles.cardText} type="body" weight="medium">
-                      Facebook
-                    </ThemedText>
+            <BaseCard
+              includePressAnimation={true}
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={openFacebook}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons color={colors.icon} name="logo-facebook" size={22} />
                   </View>
-                  <Ionicons
-                    color={colors.textTertiary}
-                    name="open-outline"
-                    size={16}
-                    style={styles.cardChevron}
-                  />
+                  <ThemedText style={styles.cardText} type="body" weight="medium">
+                    Facebook
+                  </ThemedText>
                 </View>
-              </BaseCard>
+                <Ionicons
+                  color={colors.textTertiary}
+                  name="open-outline"
+                  size={16}
+                  style={styles.cardChevron}
+                />
+              </View>
+            </BaseCard>
 
-              <Divider />
+            <Divider />
 
-              <BaseCard
-                includePressAnimation={true}
-                shadowSize="none"
-                style={styles.interactiveCard}
-                onPress={openInstagram}
-              >
-                <View style={styles.cardContent}>
-                  <View style={styles.cardLeft}>
-                    <View style={styles.cardIconContainer}>
-                      <Ionicons color={colors.icon} name="logo-instagram" size={22} />
-                    </View>
-                    <ThemedText style={styles.cardText} type="body" weight="medium">
-                      Instagram
-                    </ThemedText>
+            <BaseCard
+              includePressAnimation={true}
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={openInstagram}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons color={colors.icon} name="logo-instagram" size={22} />
                   </View>
-                  <Ionicons
-                    color={colors.textTertiary}
-                    name="open-outline"
-                    size={16}
-                    style={styles.cardChevron}
-                  />
+                  <ThemedText style={styles.cardText} type="body" weight="medium">
+                    Instagram
+                  </ThemedText>
                 </View>
-              </BaseCard>
-
-              <Divider />
-
-              <BaseCard
-                includePressAnimation={true}
-                shadowSize="none"
-                style={styles.interactiveCard}
-                onPress={handleSupportContact}
-              >
-                <View style={styles.cardContent}>
-                  <View style={styles.cardLeft}>
-                    <View style={styles.cardIconContainer}>
-                      <Ionicons color={colors.icon} name="mail" size={22} />
-                    </View>
-                    <ThemedText style={styles.cardText} type="body" weight="medium">
-                      Email
-                    </ThemedText>
-                  </View>
-                  <Ionicons
-                    color={colors.textTertiary}
-                    name="open-outline"
-                    size={16}
-                    style={styles.cardChevron}
-                  />
-                </View>
-              </BaseCard>
-            </View>
-          </BaseCard>
-        </View>
-
-        {/* Manage Section - Kept at bottom as destructive action */}
-        <View>
-          <SectionTitle title="Manage" />
-          <BaseCard
-            includePressAnimation={false}
-            shadowSize="small"
-            style={styles.sectionContainer}
-          >
-            <View style={styles.linksContainer}>
-              <BaseCard
-                includePressAnimation={true}
-                shadowSize="none"
-                style={styles.interactiveCard}
-                onPress={handleClearCache}
-              >
-                <View style={styles.cardContent}>
-                  <View style={styles.cardLeft}>
-                    <View style={styles.cardIconContainer}>
-                      <Ionicons color={colors.icon} name="folder-open-outline" size={22} />
-                    </View>
-                    <View style={styles.cacheTextContainer}>
-                      <ThemedText type="body" weight="medium">
-                        Audio Cache
-                      </ThemedText>
-                      <ThemedText
-                        colorName="textTertiary"
-                        style={styles.cacheSubtext}
-                        type="caption"
-                      >
-                        {formattedCacheSize}
-                      </ThemedText>
-                    </View>
-                  </View>
-                  <ThemedButton
-                    disabled={cacheSize === 0 || isClearingCache}
-                    loading={isClearingCache}
-                    size="small"
-                    style={styles.clearButton}
-                    title="Clear"
-                    variant="outlined"
-                    onPress={handleClearCache}
-                  />
-                </View>
-              </BaseCard>
-
-              <Divider />
-
-              <BaseCard
-                includePressAnimation={true}
-                shadowSize="none"
-                style={styles.interactiveCard}
-                onPress={handleSignOut}
-              >
-                <View style={styles.cardContent}>
-                  <View style={styles.cardLeft}>
-                    <View style={styles.cardIconContainer}>
-                      <Ionicons color={colors.error} name="log-out-outline" size={22} />
-                    </View>
-                    <View style={styles.signOutTextContainer}>
-                      <ThemedText type="body" weight="medium">
-                        Sign Out
-                      </ThemedText>
-                      <ThemedText
-                        colorName="textTertiary"
-                        style={styles.userEmailText}
-                        type="caption"
-                      >
-                        {user?.email || 'No email'}
-                      </ThemedText>
-                    </View>
-                  </View>
-                  <Ionicons
-                    color={colors.textTertiary}
-                    name="chevron-forward-outline"
-                    size={20}
-                    style={styles.cardChevron}
-                  />
-                </View>
-              </BaseCard>
-            </View>
-          </BaseCard>
-        </View>
+                <Ionicons
+                  color={colors.textTertiary}
+                  name="open-outline"
+                  size={16}
+                  style={styles.cardChevron}
+                />
+              </View>
+            </BaseCard>
+          </View>
+        </BaseCard>
 
         {/* App Footer */}
         <View style={styles.appFooterWrapper}>
@@ -476,6 +445,11 @@ const styles = StyleSheet.create({
   // Common Section Container Styles
   sectionContainer: {
     overflow: 'hidden',
+  },
+
+  // Section spacing between cards
+  sectionSpacing: {
+    marginTop: LAYOUT.SPACING.LARGE,
   },
 
   // Common Links Container Styles - Unified
@@ -566,10 +540,6 @@ const styles = StyleSheet.create({
 
   flexOne: {
     flex: 1,
-  },
-
-  firstSectionOverride: {
-    marginTop: -LAYOUT.SPACING.XLARGE, // Offset the SectionTitle's first section margin
   },
 
   scrollContent: {
