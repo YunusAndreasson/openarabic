@@ -16,6 +16,9 @@ import { handleError } from '@/utils/errorHandling';
  */
 function Auth(): JSX.Element {
   const [showPassword, setShowPassword] = useState(false);
+  const handleTogglePassword = useCallback(() => {
+    setShowPassword(prev => !prev);
+  }, []);
 
   const {
     email,
@@ -136,7 +139,7 @@ function Auth(): JSX.Element {
             }
             onBlur={handlePasswordBlur}
             onChangeText={handlePasswordChange}
-            onRightIconPress={() => setShowPassword(!showPassword)}
+            onRightIconPress={handleTogglePassword}
           />
         </View>
 

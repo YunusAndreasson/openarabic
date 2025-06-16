@@ -99,6 +99,18 @@ export default function ArticleScreen(): JSX.Element {
     [handleRootPress]
   );
 
+  const handleWordPressWithFeedback = useCallback(
+    (word: SentenceWord) => {
+      if (word.root) {
+        if (word.root_id && dueWordRootIds.has(word.root_id)) {
+          selectionFeedback();
+        }
+        handleRootPress(word.root.id);
+      }
+    },
+    [dueWordRootIds, handleRootPress]
+  );
+
   const { getWordsForSentence } = useArticleRenderers(
     { fontScale },
     selectedWordIds,
@@ -120,18 +132,11 @@ export default function ArticleScreen(): JSX.Element {
           isDueWord={isDueWord}
           word={word}
           settings={wordSettings}
-          onPress={() => {
-            if (word.root) {
-              if (isDueWord) {
-                selectionFeedback();
-              }
-              handleRootPress(word.root.id);
-            }
-          }}
+          onPress={handleWordPressWithFeedback}
         />
       );
     },
-    [dueWordRootIds, handleRootPress, wordSettings]
+    [dueWordRootIds, handleRootPress, wordSettings, handleWordPressWithFeedback]
   );
 
   const sentenceSettings = useMemo(() => ({ showEnglish: true, fontScale }), [fontScale]);

@@ -27,6 +27,8 @@ const GAUGE_STROKE_WIDTH = 20;
 const INDICATOR_SIZE = 12;
 const INDICATOR_GLOW_SIZE = 24;
 
+const noop = () => {};
+
 // Memory capacity thresholds with refined ranges
 const CAPACITY_THRESHOLDS = {
   OPTIMAL: 75, // Green zone - excellent learning health
@@ -75,7 +77,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
       hideTitle={true}
       subtitle=""
       title=""
-      onInfoPress={() => {}}
+      onInfoPress={noop}
     >
       <Animated.View style={animatedPressStyle as ViewStyle}>
         <View style={styles.gaugeContainer}>

@@ -49,6 +49,7 @@ const WordManagementModal = memo(
       return getActionsForWord(word, colors);
     }, [word, colors]);
 
+
     // Configure snap points based on content
     const snapPoints = useMemo(() => {
       // Base height: header (100px) + word info (80px) + actions (70px each) + padding (60px)
@@ -102,6 +103,14 @@ const WordManagementModal = memo(
         onClose,
       ]
     );
+
+    const actionHandlers = useMemo(() => {
+      const handlers: Record<string, () => void> = {};
+      actions.forEach(action => {
+        handlers[action.id] = () => handleActionPress(action);
+      });
+      return handlers;
+    }, [actions, handleActionPress]);
 
     // Use built-in backdrop component
     const renderBackdrop = useCallback(
@@ -179,7 +188,7 @@ const WordManagementModal = memo(
                   dynamicStyles.actionCard,
                   action.destructive && dynamicStyles.destructiveBorder,
                 ]}
-                onPress={() => handleActionPress(action)}
+                onPress={actionHandlers[action.id]}
               >
                 <View
                   style={[

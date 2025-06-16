@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { memo, useCallback, type FC } from 'react';
+import { memo, useCallback, useMemo, type FC } from 'react';
 import { StyleSheet, View, ScrollView, Pressable } from 'react-native';
 
 import BaseCard from '@/components/BaseCard';
@@ -51,6 +51,14 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
   const handleToggleDateRange = useCallback(() => {
     toggleSection('dateRange');
   }, [toggleSection]);
+
+  const sortOptionHandlers = useMemo(() => {
+    const handlers: Record<string, () => void> = {};
+    SORT_OPTIONS.forEach(option => {
+      handlers[option.key] = () => handleSortSelect(option.key);
+    });
+    return handlers;
+  }, [handleSortSelect]);
 
   const selectAuthor = useCallback(
     (authorId: number) => () => {
@@ -108,7 +116,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                       borderWidth: 1,
                     },
                   ]}
-                  onPress={() => handleSortSelect(option.key)}
+                  onPress={sortOptionHandlers[option.key]}
                 >
                   <Ionicons
                     name={option.icon}

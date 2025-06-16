@@ -1,4 +1,5 @@
 import { Stack } from 'expo-router';
+import { useCallback } from 'react';
 import type { JSX } from 'react';
 
 import { createNavigationOptions } from '@/constants/modal';
@@ -14,6 +15,19 @@ export const INFO_TITLES = {
 export default function InsightsLayout(): JSX.Element {
   const colors = useColors();
 
+  const getInfoOptions = useCallback(
+    ({ route }: { route: { params?: { type?: string } } }) => {
+      const type = (route.params as { type?: string })?.type as keyof typeof INFO_TITLES;
+      const title = type && INFO_TITLES[type] ? INFO_TITLES[type] : 'Info';
+
+      return createNavigationOptions(colors, {
+        title,
+        // Removed isRegularScreen: true to use modal presentation by default
+      });
+    },
+    [colors]
+  );
+
   return (
     <Stack>
       <Stack.Screen
@@ -25,15 +39,7 @@ export default function InsightsLayout(): JSX.Element {
       />
       <Stack.Screen
         name="info/[type]"
-        options={({ route }) => {
-          const type = (route.params as { type?: string })?.type as keyof typeof INFO_TITLES;
-          const title = type && INFO_TITLES[type] ? INFO_TITLES[type] : 'Info';
-
-          return createNavigationOptions(colors, {
-            title,
-            // Removed isRegularScreen: true to use modal presentation by default
-          });
-        }}
+        options={getInfoOptions}
       />
     </Stack>
   );
