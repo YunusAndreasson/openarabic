@@ -1,4 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
+import { useState, useCallback } from 'react';
 import type { JSX } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
@@ -9,11 +10,13 @@ import {
   ReviewHeader,
   CompletionScreen,
   MeaningOverlay,
-  InstructionFooter,
+  MeaningBottomSheet,
+  ReviewBottomActions,
 } from '@/components/review';
 import WordManagementModal from '@/components/vocabulary/WordManagementModal';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { useReview } from '@/hooks/review';
+import { selectionFeedback } from '@/utils/haptics';
 
 const baseStyles = StyleSheet.create({
   container: {
@@ -46,6 +49,9 @@ const baseStyles = StyleSheet.create({
 export default function ReviewScreen(): JSX.Element {
   const params = useLocalSearchParams();
   const fromRemember = params['fromRemember'] === 'true';
+
+  // State for the meaning bottom sheet
+  const [isMeaningSheetVisible, setIsMeaningSheetVisible] = useState(false);
 
   const {
     showMeaningOverlay,
@@ -84,12 +90,24 @@ export default function ReviewScreen(): JSX.Element {
     currentSentence.wordForm && !isComplete && !isTransitioningToCompletion
   );
 
-  // Handle management icon press - use the same logic as long press
-  const handleManageWord = () => {
+  // Handle showing meaning in bottom sheet
+  const handleShowMeaning = useCallback(() => {
+    selectionFeedback();
+    setIsMeaningSheetVisible(true);
+  }, []);
+
+  // Handle closing meaning bottom sheet
+  const handleCloseMeaningSheet = useCallback(() => {
+    setIsMeaningSheetVisible(false);
+  }, []);
+
+  // Handle management icon press - use the existing handleLongPress logic
+  const handleManageWord = useCallback(() => {
     if (hasCurrentWord) {
+      selectionFeedback();
       handleLongPress();
     }
-  };
+  }, [hasCurrentWord, handleLongPress]);
 
   if (isComplete || isTransitioningToCompletion) {
     return (
@@ -108,8 +126,6 @@ export default function ReviewScreen(): JSX.Element {
           animationKey={progressAnimationKey}
           maxProgress={maxProgress}
           progress={progress}
-          onManageWord={handleManageWord}
-          hasCurrentWord={hasCurrentWord}
         />
 
         <View style={baseStyles.wordArea}>
@@ -134,8 +150,15 @@ export default function ReviewScreen(): JSX.Element {
           />
         </View>
 
-        <InstructionFooter />
+        <ReviewBottomActions
+          onShowMeaning={handleShowMeaning}
+          onManageWord={handleManageWord}
+          hasCurrentWord={hasCurrentWord}
+        />
       </View>
+
+      {/* Instructions Bottom Sheet */}
+      <MeaningBottomSheet visible={isMeaningSheetVisible} onClose={handleCloseMeaningSheet} />
 
       {/* Word Management Modal */}
       <WordManagementModal

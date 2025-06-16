@@ -1,30 +1,27 @@
 import React from 'react';
-import type { ReactNode } from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
 import { View } from 'react-native';
-import { describe, it, expect } from '@jest/globals';
+import { render, fireEvent } from '@testing-library/react-native';
 
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: (props: any) => <props.name {...props} />,
 }));
 
-jest.mock('expo-blur', () => {
+jest.mock('@gorhom/bottom-sheet', () => {
   const React = require('react');
+  const { View, TouchableOpacity } = require('react-native');
   return {
-    BlurView: ({ children }: { children: ReactNode }) => <>{children}</>,
+    __esModule: true,
+    default: React.forwardRef((props: any, ref: any) => {
+      const { children, backgroundStyle, handleIndicatorStyle, ...otherProps } = props;
+      return <View {...otherProps}>{children}</View>;
+    }),
+    BottomSheetView: ({ children, ...props }: any) => <View {...props}>{children}</View>,
+    BottomSheetBackdrop: (props: any) => <TouchableOpacity {...props} />,
   };
 });
 
-jest.mock('../../components/ProgressBar', () => {
-  const React = require('react');
-  const { View } = require('react-native');
-  return { ProgressBar: (props: any) => <View {...props} /> };
-});
-
 jest.mock('react-native-gesture-handler', () => {
-  const React = require('react');
   return {
-    GestureDetector: ({ children }: any) => <>{children}</>,
     Gesture: {
       Pan: () => {
         const chain = {
@@ -58,7 +55,7 @@ jest.mock('../../components/vocabulary/WordManagementModal', () => {
     if (isMastered) return ['hard', 'skip', 'reset', 'remove'];
     return ['easy', 'hard', 'skip', 'reset', 'remove'];
   }
-  return ({
+  const MockWordManagementModal = ({
     visible,
     word,
     onClose,
@@ -70,7 +67,7 @@ jest.mock('../../components/vocabulary/WordManagementModal', () => {
   }: any) =>
     visible ? (
       <View testID="word-management-modal">
-        {getActions(word).map(id => {
+        {getActions(word).map((id: string) => {
           const onPressMap: any = {
             easy: () => onMarkAsEasy(word),
             hard: () => onMarkAsHard(word),
@@ -91,6 +88,8 @@ jest.mock('../../components/vocabulary/WordManagementModal', () => {
         })}
       </View>
     ) : null;
+
+  return { __esModule: true, default: MockWordManagementModal };
 });
 
 jest.mock('react-native-reanimated', () => ({
@@ -118,7 +117,7 @@ jest.mock('react-native-reanimated', () => ({
   },
 }));
 
-import ReviewHeader from '../../components/review/ReviewHeader';
+import ReviewBottomActions from '../../components/review/ReviewBottomActions';
 import WordManagementModal from '../../components/vocabulary/WordManagementModal';
 
 const baseWord: any = {
@@ -144,13 +143,12 @@ function renderWithWord(word: any) {
     const [visible, setVisible] = React.useState(false);
     return (
       <View>
-        <ReviewHeader
-          animationKey={0}
-          maxProgress={1}
-          progress={0}
-          hasCurrentWord={true}
+        <ReviewBottomActions
+          onShowMeaning={() => {}}
           onManageWord={() => setVisible(true)}
+          hasCurrentWord={true}
         />
+        {/* @ts-expect-error - Mock component interface conflict */}
         <WordManagementModal
           visible={visible}
           word={word}

@@ -174,9 +174,9 @@ function ThemedButtonComponent({
       <View style={[styles.innerContainer, innerContainerStyle]}>
         {loading ? (
           // When loading, show only the ActivityIndicator centered with fade-in
-          (<Animated.View entering={FadeIn.duration(200)}>
+          <Animated.View entering={FadeIn.duration(200)}>
             <ActivityIndicator color={textColor} size="small" />
-          </Animated.View>)
+          </Animated.View>
         ) : (
           <>
             {hasIcon ? (

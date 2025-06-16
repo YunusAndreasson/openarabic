@@ -49,12 +49,11 @@ const WordManagementModal = memo(
       return getActionsForWord(word, colors);
     }, [word, colors]);
 
-
-    // Configure snap points based on content
+    // Configure snap points based on content (removed word header height)
     const snapPoints = useMemo(() => {
-      // Base height: header (100px) + word info (80px) + actions (70px each) + padding (60px)
-      const dynamicHeight = 240 + actions.length * 70;
-      return [Math.min(dynamicHeight, 500)];
+      // Base height: header (60px) + actions (70px each) + padding (60px)
+      const dynamicHeight = 120 + actions.length * 70;
+      return [Math.min(dynamicHeight, 400)];
     }, [actions.length]);
 
     // Handle visibility changes
@@ -130,21 +129,17 @@ const WordManagementModal = memo(
       () => ({
         background: [styles.background, { backgroundColor: colors.elevation1 }],
         indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
-        wordHeader: [styles.wordHeader, { borderBottomColor: colors.border }],
         actionCard: { backgroundColor: colors.elevation2 },
         destructiveBorder: {
           borderColor: colors.error,
           borderWidth: StyleSheet.hairlineWidth,
         },
       }),
-      [colors.card, colors.modalIndicator, colors.border, colors.elevation2, colors.error]
+      [colors.card, colors.modalIndicator, colors.elevation2, colors.error]
     );
 
     // Don't render if not visible or no word
     if (!visible || !word) return null;
-
-    const wordText = word.root?.letters || 'Unknown word';
-    const wordMeaning = word.root?.meaning || 'No translation';
 
     return (
       <BottomSheet
@@ -162,19 +157,9 @@ const WordManagementModal = memo(
         backdropComponent={renderBackdrop}
       >
         <BottomSheetView style={styles.content}>
-          {/* Word Header */}
-          <View style={dynamicStyles.wordHeader}>
-            <ThemedText style={styles.wordText} type="heading2" weight="bold">
-              {wordText}
-            </ThemedText>
-            <ThemedText
-              style={styles.wordMeaning}
-              type="body"
-              colorName="secondaryText"
-              weight="medium"
-            >
-              {wordMeaning}
-            </ThemedText>
+          {/* Header */}
+          <View style={styles.header}>
+            <ThemedText type="heading3">Word options</ThemedText>
           </View>
 
           {/* Actions */}
@@ -238,22 +223,22 @@ function getActionsForWord(word: StudyWord, colors: ThemeColors): WordManagement
   const baseActions: WordManagementAction[] = [
     {
       id: 'skip',
-      label: 'Skip for Today',
-      description: "Don't show again in this session",
+      label: 'Skip today',
+      description: 'Hide from current session',
       icon: 'play-forward-outline',
       color: colors.tint,
     },
     {
       id: 'reset',
-      label: 'Reset Progress',
-      description: 'Start fresh with this word',
+      label: 'Reset progress',
+      description: 'Start over with this word',
       icon: 'refresh-outline',
       color: colors.warning,
     },
     {
       id: 'remove',
-      label: 'Remove from Study',
-      description: 'Stop studying this word entirely',
+      label: 'Stop studying',
+      description: 'Remove from vocabulary list',
       icon: 'trash-outline',
       color: colors.error,
       destructive: true,
@@ -264,16 +249,16 @@ function getActionsForWord(word: StudyWord, colors: ThemeColors): WordManagement
   if (isStruggling) {
     baseActions.unshift({
       id: 'easy',
-      label: 'Mark as Easier',
-      description: 'Reduce difficulty for this word',
+      label: 'Make easier',
+      description: 'Reduce difficulty level',
       icon: 'trending-down-outline',
       color: colors.success,
     });
   } else if (isMastered) {
     baseActions.unshift({
       id: 'hard',
-      label: 'Needs More Practice',
-      description: 'Increase practice frequency',
+      label: 'Needs practice',
+      description: 'Show more often',
       icon: 'trending-up-outline',
       color: colors.warning,
     });
@@ -282,15 +267,15 @@ function getActionsForWord(word: StudyWord, colors: ThemeColors): WordManagement
     baseActions.unshift(
       {
         id: 'easy',
-        label: 'Mark as Easy',
-        description: 'Reduce practice frequency',
+        label: 'Mark easy',
+        description: 'Show less often',
         icon: 'trending-down-outline',
         color: colors.success,
       },
       {
         id: 'hard',
-        label: 'Mark as Hard',
-        description: 'Increase practice frequency',
+        label: 'Mark hard',
+        description: 'Show more often',
         icon: 'trending-up-outline',
         color: colors.warning,
       }
@@ -308,9 +293,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
-  backdrop: {
-    // backgroundColor handled dynamically via colors.backdropOverlay
-  },
   indicator: {
     width: 36,
     height: 4,
@@ -318,19 +300,10 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: LAYOUT.SPACING.LARGE,
   },
-  wordHeader: {
-    alignItems: 'center',
+  header: {
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingBottom: LAYOUT.SPACING.MEDIUM,
-    borderBottomWidth: StyleSheet.hairlineWidth,
     marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  wordText: {
-    textAlign: 'center',
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
-  wordMeaning: {
-    textAlign: 'center',
   },
   actionsContainer: {
     paddingHorizontal: LAYOUT.SPACING.LARGE,
