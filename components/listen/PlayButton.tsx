@@ -17,6 +17,10 @@ interface PlayButtonProps
   iconColor?: string;
 }
 
+function getIconName(isPlaying: boolean) {
+  return isPlaying ? 'pause' : 'play';
+}
+
 const PlayButton: FC<PlayButtonProps> = ({
   onPress,
   isPlaying = false,
@@ -35,10 +39,6 @@ const PlayButton: FC<PlayButtonProps> = ({
     selectionFeedback();
     onPress();
   }, [disabled, isLoading, onPress]);
-
-  const getIconName = () => {
-    return isPlaying ? 'pause' : 'play';
-  };
 
   // Use filled style like PLAY ALL button - always tint background with white icon
   const backgroundColor = colors.tint;
@@ -71,7 +71,12 @@ const PlayButton: FC<PlayButtonProps> = ({
         {isLoading ? (
           <ActivityIndicator size="small" color={resolvedIconColor} />
         ) : (
-          <Ionicons name={getIconName()} size={18} color={resolvedIconColor} style={styles.icon} />
+          <Ionicons
+            name={getIconName(isPlaying)}
+            size={18}
+            color={resolvedIconColor}
+            style={styles.icon}
+          />
         )}
       </Animated.View>
     </TouchableOpacity>

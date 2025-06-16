@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { memo, useCallback, useMemo, type FC } from 'react';
+import { memo, useCallback, type FC } from 'react';
 import { StyleSheet, View, ScrollView, Pressable } from 'react-native';
 
 import BaseCard from '@/components/BaseCard';
@@ -19,6 +19,16 @@ import type { BaseModalProps } from '@/types/ui/modal.types';
 
 interface FilterModalProps extends BaseModalProps {
   availableAuthors: Author[];
+}
+
+function getSortOptionHandlers(
+  handleSortSelect: (key: (typeof SORT_OPTIONS)[number]['key']) => void
+) {
+  const keys = SORT_OPTIONS.map(option => option.key);
+  const handlers = Object.fromEntries(
+    keys.map(key => [key, () => handleSortSelect(key)])
+  ) as Record<(typeof SORT_OPTIONS)[number]['key'], () => void>;
+  return handlers;
 }
 
 const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
@@ -52,13 +62,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
     toggleSection('dateRange');
   }, [toggleSection]);
 
-  const sortOptionHandlers = useMemo(() => {
-    const handlers: Record<string, () => void> = {};
-    SORT_OPTIONS.forEach(option => {
-      handlers[option.key] = () => handleSortSelect(option.key);
-    });
-    return handlers;
-  }, [handleSortSelect]);
+  const sortOptionHandlers = getSortOptionHandlers(handleSortSelect);
 
   const selectAuthor = useCallback(
     (authorId: number) => () => {

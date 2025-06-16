@@ -27,6 +27,26 @@ const formatTime = (seconds: number): string => {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
+function handleSetTimer(
+  selectedMinutes: number | null,
+  onTimerSet: (minutes: number) => void,
+  onClose: () => void
+) {
+  if (selectedMinutes) {
+    onTimerSet(selectedMinutes);
+    onClose();
+  }
+}
+
+function handleCancelTimer(onTimerCancel: () => void, onClose: () => void) {
+  onTimerCancel();
+  onClose();
+}
+
+function handleOptionSelect(minutes: number, setSelectedMinutes: (m: number) => void) {
+  setSelectedMinutes(minutes);
+}
+
 const SleepTimerComponent = ({
   isVisible,
   onClose,
@@ -38,25 +58,17 @@ const SleepTimerComponent = ({
   const colors = useColors();
   const [selectedMinutes, setSelectedMinutes] = useState<number | null>(null);
 
-  const handleSetTimer = () => {
-    if (selectedMinutes) {
-      onTimerSet(selectedMinutes);
-      onClose();
-    }
-  };
+  const handleSetTimerCallback = useCallback(() => {
+    handleSetTimer(selectedMinutes, onTimerSet, onClose);
+  }, [selectedMinutes, onTimerSet, onClose]);
 
-  const handleCancelTimer = () => {
-    onTimerCancel();
-    onClose();
-  };
-
-  const handleOptionSelect = useCallback((minutes: number) => {
-    setSelectedMinutes(minutes);
-  }, []);
+  const handleCancelTimerCallback = useCallback(() => {
+    handleCancelTimer(onTimerCancel, onClose);
+  }, [onTimerCancel, onClose]);
 
   const handleOptionSelectCallback = useCallback(
-    (minutes: number) => () => handleOptionSelect(minutes),
-    [handleOptionSelect]
+    (minutes: number) => () => handleOptionSelect(minutes, setSelectedMinutes),
+    [setSelectedMinutes]
   );
 
   return (
@@ -112,7 +124,7 @@ const SleepTimerComponent = ({
                       style={[styles.fullWidthButton, { borderColor: colors.borderOverlay }]}
                       title="Cancel Timer"
                       variant="outlined"
-                      onPress={handleCancelTimer}
+                      onPress={handleCancelTimerCallback}
                     />
                   </View>
                 ) : (
@@ -144,7 +156,7 @@ const SleepTimerComponent = ({
                       style={styles.fullWidthButton}
                       title="Start Timer"
                       variant="filled"
-                      onPress={handleSetTimer}
+                      onPress={handleSetTimerCallback}
                     />
                   </>
                 )}

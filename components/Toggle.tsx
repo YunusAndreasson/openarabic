@@ -9,28 +9,27 @@ import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { ToggleProps } from '@/types/ui/form.types';
 import { selectionFeedback } from '@/utils/haptics';
 
+function getToggleDimensions() {
+  const TOGGLE_HEIGHT = LAYOUT.BUTTON.HEIGHT.SMALL - 4;
+  const TOGGLE_PADDING = LAYOUT.SPACING.TINY;
+  const HANDLE_SIZE = TOGGLE_HEIGHT - TOGGLE_PADDING * 2;
+  const TOGGLE_WIDTH = TOGGLE_HEIGHT * 1.75;
+  const TRAVEL_DISTANCE = TOGGLE_WIDTH - HANDLE_SIZE - TOGGLE_PADDING * 2;
+  return {
+    TOGGLE_HEIGHT,
+    TOGGLE_PADDING,
+    HANDLE_SIZE,
+    TOGGLE_WIDTH,
+    TRAVEL_DISTANCE,
+  };
+}
+
 function ToggleComponent({ value, onValueChange }: ToggleProps) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
   const isMounted = useRef(false);
 
-  const dimensions = useMemo(() => {
-    const TOGGLE_HEIGHT = LAYOUT.BUTTON.HEIGHT.SMALL - 4;
-    const TOGGLE_PADDING = LAYOUT.SPACING.TINY;
-    const HANDLE_SIZE = TOGGLE_HEIGHT - TOGGLE_PADDING * 2;
-    const TOGGLE_WIDTH = TOGGLE_HEIGHT * 1.75;
-    const TRAVEL_DISTANCE = TOGGLE_WIDTH - HANDLE_SIZE - TOGGLE_PADDING * 2;
-
-    return {
-      TOGGLE_HEIGHT,
-      TOGGLE_PADDING,
-      HANDLE_SIZE,
-      TOGGLE_WIDTH,
-      TRAVEL_DISTANCE,
-    };
-  }, []);
-
-  const { TOGGLE_HEIGHT, HANDLE_SIZE, TOGGLE_WIDTH, TRAVEL_DISTANCE } = dimensions;
+  const { TOGGLE_HEIGHT, HANDLE_SIZE, TOGGLE_WIDTH, TRAVEL_DISTANCE } = getToggleDimensions();
 
   const { containerAnimatedStyle, handleAnimatedStyle, forceAnimateToInitialState } =
     useToggleAnimation(value, TRAVEL_DISTANCE);
@@ -87,8 +86,8 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
         backgroundColor: value
           ? colors.background
           : isDarkMode
-            ? colors.textTertiary
-            : colors.white,
+          ? colors.textTertiary
+          : colors.white,
         ...shadowStyle,
       },
       styles.shadow,

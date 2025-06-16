@@ -47,6 +47,38 @@ interface ArticleSentenceProps {
   dueWordRootIds?: Set<number>;
 }
 
+function renderWordWithProps(
+  word: SentenceWord,
+  index: number,
+  wordRefs: RefObject<ComponentRef<typeof TouchableOpacity>>[],
+  dueWordRootIds: Set<number>,
+  renderWord: ((word: SentenceWord) => ReactNode) | undefined,
+  onWordPress: ((word: SentenceWord) => void) | undefined,
+  settings: { fontScale: number },
+  sentenceId: string | number
+) {
+  const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
+  if (!wordRefs[index]) {
+    wordRefs[index] = createRef<ComponentRef<typeof TouchableOpacity>>() as RefObject<
+      ComponentRef<typeof TouchableOpacity>
+    >;
+  }
+  const isDueWord = word.root_id ? dueWordRootIds.has(word.root_id) : false;
+  return renderWord ? (
+    renderWord(word)
+  ) : (
+    <ArabicWord
+      key={`word-${wordId}-${word.position || sentenceId}`}
+      word={word}
+      onPress={word => onWordPress?.(word)}
+      settings={{ fontScale: settings.fontScale }}
+      wordRef={wordRefs[index]}
+      position={index}
+      isDueWord={isDueWord}
+    />
+  );
+}
+
 function ArticleSentenceComponent({
   sentence,
   words,
@@ -113,32 +145,18 @@ function ArticleSentenceComponent({
   );
 
   const renderedWords = useMemo(() => {
-    const renderWordWithProps = (word: SentenceWord, index: number) => {
-      const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
-      if (!wordRefs.current[index]) {
-        wordRefs.current[index] = createRef<
-          ComponentRef<typeof TouchableOpacity>
-        >() as RefObject<ComponentRef<typeof TouchableOpacity>>;
-      }
-      const isDueWord = word.root_id ? dueWordRootIds.has(word.root_id) : false;
-      return renderWord ? (
-        renderWord(word)
-      ) : (
-        <ArabicWord
-          key={`word-${wordId}-${word.position || sentence.id}`}
-          word={word}
-          onPress={word => onWordPress?.(word)}
-          settings={{ fontScale: settings.fontScale }}
-          wordRef={wordRefs.current[index]}
-          position={index}
-          isDueWord={isDueWord}
-        />
-      );
-    };
-
-    return words.map((word, index) => {
-      return renderWordWithProps(word, index);
-    });
+    return words.map((word, index) =>
+      renderWordWithProps(
+        word,
+        index,
+        wordRefs.current,
+        dueWordRootIds,
+        renderWord,
+        onWordPress,
+        settings,
+        sentence.id
+      )
+    );
   }, [renderWord, words, sentence.id, settings, onWordPress, dueWordRootIds]);
 
   return (

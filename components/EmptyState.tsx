@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { memo, useCallback, type ReactNode, type ComponentType, type ComponentProps } from 'react';
+import { memo, type ReactNode, type ComponentType, type ComponentProps } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { View, StyleSheet } from 'react-native';
 
@@ -26,6 +26,10 @@ interface EmptyStateProps {
 }
 
 const DEFAULT_ICON_SIZE = 64;
+
+function handleBrowseArticles() {
+  router.push('/(tabs)');
+}
 
 /**
  * EmptyState component following Gestalt principles and visual hierarchy
@@ -55,10 +59,6 @@ const EmptyState = memo(
       typeof icon === 'string'
         ? (icon as ComponentProps<typeof Ionicons>['name'])
         : 'alert-circle-outline';
-
-    const handleBrowseArticles = useCallback(() => {
-      router.push('/(tabs)');
-    }, [router]);
 
     const defaultActionButton = !hideArticlesButton && (
       <ThemedButton
