@@ -1,7 +1,7 @@
 // External Libraries
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
-import { memo, type FC } from 'react';
+import { memo, type FC, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -70,6 +70,18 @@ const AccountScreen: FC = () => {
     isClearingCache,
     cacheSize,
   } = useAccountScreen();
+
+  const openTwitter = useCallback(() => {
+    handleSocialLink('https://twitter.com/OpenArabicIo');
+  }, [handleSocialLink]);
+
+  const openFacebook = useCallback(() => {
+    handleSocialLink('https://www.facebook.com/OpenArabic.io/');
+  }, [handleSocialLink]);
+
+  const openInstagram = useCallback(() => {
+    handleSocialLink('https://www.instagram.com/openarabic.io/');
+  }, [handleSocialLink]);
 
   // Format cache size for display
   const formattedCacheSize = cacheSize > 0 ? formatBytes(cacheSize) : 'No cached files';
@@ -224,7 +236,7 @@ const AccountScreen: FC = () => {
                 includePressAnimation={true}
                 shadowSize="none"
                 style={styles.interactiveCard}
-                onPress={() => handleSocialLink('https://twitter.com/OpenArabicIo')}
+                onPress={openTwitter}
               >
                 <View style={styles.cardContent}>
                   <View style={styles.cardLeft}>
@@ -250,7 +262,7 @@ const AccountScreen: FC = () => {
                 includePressAnimation={true}
                 shadowSize="none"
                 style={styles.interactiveCard}
-                onPress={() => handleSocialLink('https://www.facebook.com/OpenArabic.io/')}
+                onPress={openFacebook}
               >
                 <View style={styles.cardContent}>
                   <View style={styles.cardLeft}>
@@ -276,7 +288,7 @@ const AccountScreen: FC = () => {
                 includePressAnimation={true}
                 shadowSize="none"
                 style={styles.interactiveCard}
-                onPress={() => handleSocialLink('https://www.instagram.com/openarabic.io/')}
+                onPress={openInstagram}
               >
                 <View style={styles.cardContent}>
                   <View style={styles.cardLeft}>

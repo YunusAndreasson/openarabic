@@ -32,6 +32,20 @@ export default function InsightsScreen(): JSX.Element {
     [router]
   );
 
+  const handleMasteryInfoPress = useCallback(() => handleInfoPress('mastery'), [
+    handleInfoPress,
+  ]);
+
+  const handleEfficiencyInfoPress = useCallback(
+    () => handleInfoPress('efficiency'),
+    [handleInfoPress]
+  );
+
+  const handleRetrievabilityInfoPress = useCallback(
+    () => handleInfoPress('retrievability'),
+    [handleInfoPress]
+  );
+
   // Filter valid study words
   const validStudyWords = useMemo(
     () => studyWords?.filter(word => word != null && word.root_id != null) ?? [],
@@ -67,11 +81,11 @@ export default function InsightsScreen(): JSX.Element {
           <SectionTitle
             title={INFO_TITLES.mastery}
             subtitle="Memory strength across your vocabulary"
-            onInfoPress={() => handleInfoPress('mastery')}
+            onInfoPress={handleMasteryInfoPress}
           />
           <MasteryChart
             studyWords={validStudyWords}
-            onInfoPress={() => handleInfoPress('mastery')}
+            onInfoPress={handleMasteryInfoPress}
             hideTitle={true}
           />
         </View>
@@ -81,11 +95,11 @@ export default function InsightsScreen(): JSX.Element {
           <SectionTitle
             title={INFO_TITLES.efficiency}
             subtitle="Vocabulary acquisition velocity"
-            onInfoPress={() => handleInfoPress('efficiency')}
+            onInfoPress={handleEfficiencyInfoPress}
           />
           <EfficiencyChart
             studyWords={validStudyWords}
-            onInfoPress={() => handleInfoPress('efficiency')}
+            onInfoPress={handleEfficiencyInfoPress}
             hideTitle={true}
           />
         </View>
@@ -95,11 +109,11 @@ export default function InsightsScreen(): JSX.Element {
           <SectionTitle
             title={INFO_TITLES.retrievability}
             subtitle="Memory retention and optimal practice timing"
-            onInfoPress={() => handleInfoPress('retrievability')}
+            onInfoPress={handleRetrievabilityInfoPress}
           />
           <RetrievabilityChart
             studyWords={validStudyWords}
-            onInfoPress={() => handleInfoPress('retrievability')}
+            onInfoPress={handleRetrievabilityInfoPress}
             hideTitle={true}
           />
         </View>

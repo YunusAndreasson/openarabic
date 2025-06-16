@@ -60,6 +60,15 @@ const FilteredArticleView: FC<FilteredArticleViewProps> = ({
     return <FilterSummary filteredCount={articles.length} totalCount={totalCount} />;
   }, [articles.length, totalCount]);
 
+  const renderSeparator = useCallback(
+    () => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />,
+    []
+  );
+
+  const overrideItemLayout = useCallback((layout: any) => {
+    layout.size = ITEM_HEIGHT;
+  }, []);
+
   // Calculate the estimated item height based on content + padding + margins
   const ITEM_HEIGHT = 100; // Adjust this based on your actual card height
 
@@ -96,12 +105,10 @@ const FilteredArticleView: FC<FilteredArticleViewProps> = ({
         keyExtractor={item => item.id.toString()}
         ListFooterComponent={ListFooterComponent}
         ListHeaderComponent={ListHeaderComponent}
-        ItemSeparatorComponent={() => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />}
+        ItemSeparatorComponent={renderSeparator}
         renderItem={renderItemCallback}
         showsVerticalScrollIndicator={true}
-        overrideItemLayout={(layout, _item: Article) => {
-          layout.size = ITEM_HEIGHT;
-        }}
+        overrideItemLayout={overrideItemLayout}
       />
     </ThemedView>
   );

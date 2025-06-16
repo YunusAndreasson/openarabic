@@ -278,6 +278,12 @@ export const ArticleContent = ({
     ]
   );
 
+  const getItemType = useCallback(() => 'sentence', []);
+
+  const overrideItemLayout = useCallback((layout: any) => {
+    layout.size = SENTENCE_ITEM_HEIGHT;
+  }, []);
+
   return (
     <View style={styles.flexOne}>
       {sortedSentences && sortedSentences.length > 0 ? (
@@ -293,7 +299,7 @@ export const ArticleContent = ({
             estimatedFirstItemOffset={0}
             estimatedItemSize={SENTENCE_ITEM_HEIGHT}
             extraData={''}
-            getItemType={() => 'sentence'} // Add item type for better optimization
+            getItemType={getItemType} // Add item type for better optimization
             initialScrollIndex={0}
             keyExtractor={item => item.id.toString()}
             ListHeaderComponent={headerComponent}
@@ -308,9 +314,7 @@ export const ArticleContent = ({
               // Slight bottom padding adjustment for better closure
               paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + insets.bottom + LAYOUT.SPACING.MEDIUM,
             }}
-            overrideItemLayout={(layout, _item: Tables<'article_sentences'>) => {
-              layout.size = SENTENCE_ITEM_HEIGHT;
-            }}
+            overrideItemLayout={overrideItemLayout}
             onScroll={handleAnimatedScroll}
           />
         </View>
