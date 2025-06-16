@@ -23,9 +23,7 @@ const createBuilder = (response: any = { data: [], error: null }) => {
     order: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
   };
-  builder.then = jest.fn((resolve, reject) =>
-    Promise.resolve(response).then(resolve, reject)
-  );
+  builder.then = jest.fn((resolve, reject) => Promise.resolve(response).then(resolve, reject));
   return builder;
 };
 
@@ -50,9 +48,7 @@ describe('toggleFSRSStudyRoot', () => {
 
     const result = await studyWordsFSRSService.toggleFSRSStudyRoot('u1', 1);
 
-    expect(insertMock).toHaveBeenCalledWith(
-      expect.objectContaining({ user_id: 'u1', root_id: 1 })
-    );
+    expect(insertMock).toHaveBeenCalledWith(expect.objectContaining({ user_id: 'u1', root_id: 1 }));
     expect(result).toBe(true);
   });
 
@@ -101,20 +97,10 @@ describe('updateWordAndReview', () => {
 
   it('calls RPC to update and record review', async () => {
     (supabase.rpc as jest.Mock).mockResolvedValue({ data: true, error: null });
-    const updateSpy = jest
-      .spyOn(studyWordsFSRSService, 'updateFSRSWord')
-      .mockResolvedValue(true);
-    const reviewSpy = jest
-      .spyOn(studyWordsFSRSService, 'recordFSRSReview')
-      .mockResolvedValue(true);
+    const updateSpy = jest.spyOn(studyWordsFSRSService, 'updateFSRSWord').mockResolvedValue(true);
+    const reviewSpy = jest.spyOn(studyWordsFSRSService, 'recordFSRSReview').mockResolvedValue(true);
 
-    const result = await studyWordsFSRSService.updateWordAndReview(
-      'u1',
-      5,
-      update,
-      Rating.Good,
-      3
-    );
+    const result = await studyWordsFSRSService.updateWordAndReview('u1', 5, update, Rating.Good, 3);
 
     expect(supabase.rpc).toHaveBeenCalledWith(
       'update_word_and_review',
@@ -125,30 +111,28 @@ describe('updateWordAndReview', () => {
     expect(result).toBe(true);
   });
 
-  test.each([
-    new Error('fail'),
-    { message: 'network down', status: 0 },
-  ])('falls back to individual updates when RPC rejects with %p', async (err) => {
-    (supabase.rpc as jest.Mock).mockRejectedValue(err);
-    const updateSpy = jest
-      .spyOn(studyWordsFSRSService, 'updateFSRSWord')
-      .mockResolvedValue(true);
-    const reviewSpy = jest
-      .spyOn(studyWordsFSRSService, 'recordFSRSReview')
-      .mockResolvedValue(true);
+  test.each([new Error('fail'), { message: 'network down', status: 0 }])(
+    'falls back to individual updates when RPC rejects with %p',
+    async err => {
+      (supabase.rpc as jest.Mock).mockRejectedValue(err);
+      const updateSpy = jest.spyOn(studyWordsFSRSService, 'updateFSRSWord').mockResolvedValue(true);
+      const reviewSpy = jest
+        .spyOn(studyWordsFSRSService, 'recordFSRSReview')
+        .mockResolvedValue(true);
 
-    const result = await studyWordsFSRSService.updateWordAndReview(
-      'u1',
-      5,
-      update,
-      Rating.Hard,
-      2
-    );
+      const result = await studyWordsFSRSService.updateWordAndReview(
+        'u1',
+        5,
+        update,
+        Rating.Hard,
+        2
+      );
 
-    expect(updateSpy).toHaveBeenCalledWith('u1', 5, update);
-    expect(reviewSpy).toHaveBeenCalledWith('u1', 5, Rating.Hard, 2);
-    expect(result).toBe(true);
-  });
+      expect(updateSpy).toHaveBeenCalledWith('u1', 5, update);
+      expect(reviewSpy).toHaveBeenCalledWith('u1', 5, Rating.Hard, 2);
+      expect(result).toBe(true);
+    }
+  );
 });
 
 describe('getFSRSWords', () => {
@@ -222,8 +206,89 @@ describe('getFSRSWords', () => {
     const builder = createBuilder({ data: null, error: err });
     (supabase.from as jest.Mock).mockReturnValue(builder);
 
-    await expect(
-      studyWordsFSRSService.getFSRSWords('u1')
-    ).rejects.toThrow(err);
+    await expect(studyWordsFSRSService.getFSRSWords('u1')).rejects.toThrow(err);
+  });
+
+  describe('getFSRSWords - Session Cooldown', () => {
+    it('should exclude words reviewed within cooldown period', async () => {
+      const userId = 'test-user-cooldown';
+
+      const olderWord = {
+        root_id: 2,
+        user_id: userId,
+        fsrs_last_review: '2023-12-31T22:00:00.000Z',
+      };
+      const neverReviewedWord = { root_id: 3, user_id: userId, fsrs_last_review: null };
+
+      const builder = createBuilder({
+        data: [olderWord, neverReviewedWord],
+        error: null,
+      });
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await studyWordsFSRSService.getFSRSWords(userId, {
+        onlyDue: true,
+        sessionCooldownHours: 1.5, // 1.5 hour cooldown
+      });
+
+      expect(result).toHaveLength(2);
+      expect(result).toEqual([olderWord, neverReviewedWord]);
+
+      // Verify that the cooldown filter was applied correctly
+      expect(builder.or).toHaveBeenCalledWith(
+        expect.stringContaining('fsrs_last_review.is.null,fsrs_last_review.lt.')
+      );
+    });
+
+    it('should not apply cooldown when sessionCooldownHours is 0', async () => {
+      const userId = 'test-user-no-cooldown';
+
+      const recentWord = {
+        root_id: 1,
+        user_id: userId,
+        fsrs_last_review: '2023-12-31T23:30:00.000Z',
+      };
+
+      const builder = createBuilder({ data: [recentWord], error: null });
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await studyWordsFSRSService.getFSRSWords(userId, {
+        onlyDue: true,
+        sessionCooldownHours: 0, // No cooldown
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual(recentWord);
+
+      // Verify that or() was not called (no cooldown filter applied)
+      expect(builder.or).not.toHaveBeenCalled();
+    });
+
+    it('should apply both due date and cooldown filters together', async () => {
+      const userId = 'test-user-combined-filters';
+
+      const dueAndCoolWord = {
+        root_id: 1,
+        user_id: userId,
+        fsrs_last_review: '2023-12-31T21:00:00.000Z',
+      };
+
+      const builder = createBuilder({ data: [dueAndCoolWord], error: null });
+      (supabase.from as jest.Mock).mockReturnValue(builder);
+
+      const result = await studyWordsFSRSService.getFSRSWords(userId, {
+        onlyDue: true,
+        sessionCooldownHours: 2, // 2 hour cooldown
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual(dueAndCoolWord);
+
+      // Verify both filters were applied
+      expect(builder.lte).toHaveBeenCalledWith('fsrs_due', expect.any(String));
+      expect(builder.or).toHaveBeenCalledWith(
+        expect.stringContaining('fsrs_last_review.is.null,fsrs_last_review.lt.')
+      );
+    });
   });
 });

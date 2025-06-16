@@ -31,6 +31,12 @@ interface GetFSRSWordsOptions {
   sortByDifficultyAndStability?: boolean;
   reviewedOnly?: boolean;
   /**
+   * Session cooldown: Exclude words reviewed within this many hours.
+   * Useful to prevent words from appearing immediately after a study session.
+   * Default: 0 (no cooldown), common values: 1-24 hours
+   */
+  sessionCooldownHours?: number;
+  /**
    * Server-side filter for vocabulary category.
    * - "mastered": fsrs_state = 2 (Review) and fsrs_stability >= 5
    * - "learning": fsrs_state in (0,1,3) or (fsrs_state = 2 and fsrs_stability < 5)
@@ -109,6 +115,14 @@ export const studyWordsFSRSService = {
     if (options.onlyDue) {
       const now = new Date().toISOString();
       filteredQuery = filteredQuery.lte('fsrs_due', now);
+    }
+
+    // Session cooldown: Exclude words reviewed within the specified hours
+    if (options.sessionCooldownHours && options.sessionCooldownHours > 0) {
+      const cooldownTime = new Date(Date.now() - options.sessionCooldownHours * 60 * 60 * 1000);
+      filteredQuery = filteredQuery.or(
+        `fsrs_last_review.is.null,fsrs_last_review.lt.${cooldownTime.toISOString()}`
+      );
     }
 
     // Apply category filters server-side to reduce payload

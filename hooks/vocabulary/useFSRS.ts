@@ -22,6 +22,16 @@ import { PriorityQueue } from '@/utils/priorityQueue';
 const DEFAULT_LEARNING_STEPS: StepUnit[] = ['1m', '10m'];
 const DEFAULT_RELEARNING_STEPS: StepUnit[] = ['5m', '10m'];
 
+const OPTIMIZED_FSRS_CONFIG = {
+  learning_steps: DEFAULT_LEARNING_STEPS,
+  relearning_steps: DEFAULT_RELEARNING_STEPS,
+  request_retention: 0.95,
+  maximum_interval: 180,
+  enable_fuzz: true,
+  enable_short_term: true,
+  timeout: 120000, // 2 minutes timeout for FSRS calculations
+} as const;
+
 // Consolidated counters and tracking data
 interface FSRSCounters {
   totalWords: number;
@@ -44,6 +54,7 @@ export function useFSRS({
   userId,
   onComplete,
   useAllWords = false,
+  sessionCooldownHours = 1, // Default 1 hour cooldown
 }: UseFSRSOptions): UseFSRSResult {
   const [wordQueue, setWordQueue] = useState<StudyWord[]>([]);
   const [currentWord, setCurrentWord] = useState<StudyWord | null>(null);
@@ -78,18 +89,7 @@ export function useFSRS({
   const queryClient = useQueryClient();
 
   // Configure FSRS with proper learning steps
-  const fsrsParams = useMemo(
-    () =>
-      generatorParameters({
-        learning_steps: DEFAULT_LEARNING_STEPS,
-        relearning_steps: DEFAULT_RELEARNING_STEPS,
-        request_retention: 0.9, // Target retention rate (90%)
-        maximum_interval: 365, // Maximum interval of 1 year
-        enable_fuzz: true, // Enable fuzzy intervals
-        enable_short_term: true, // Enable short-term learning steps
-      }),
-    []
-  );
+  const fsrsParams = useMemo(() => generatorParameters(OPTIMIZED_FSRS_CONFIG), []);
 
   // Create FSRS instance with configured parameters
   const fsrsInstance = useMemo(() => fsrs(fsrsParams), [fsrsParams]);
@@ -109,6 +109,7 @@ export function useFSRS({
       return studyWordsFSRSService.getFSRSWords(userId, {
         onlyDue: !useAllWords,
         forStats: false, // We need full data with root relationships
+        sessionCooldownHours: sessionCooldownHours, // Apply session cooldown
       });
     },
     enabled: !!userId,

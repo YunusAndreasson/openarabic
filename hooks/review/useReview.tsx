@@ -182,6 +182,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     userId: user?.id,
     onComplete: triggerCompletionTransition,
     useAllWords: fromRemember, // When fromRemember is true, use all words instead of just due words
+    sessionCooldownHours: fromRemember ? 0 : 1, // No cooldown for "Remember" mode, 1 hour for regular practice
   });
 
   // Word management integration
