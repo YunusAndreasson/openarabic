@@ -101,19 +101,21 @@ export default function ArticlesScreen(): JSX.Element {
     mediumFeedback();
 
     try {
-      const queriesToInvalidate: (string | readonly string[])[] = [['articles'], ['categories']];
+      // Refetch core queries explicitly for immediate data update
+      const refreshPromises = [
+        queryClient.refetchQueries({ queryKey: ['articles'] }),
+        queryClient.refetchQueries({ queryKey: ['categories'] }),
+      ];
 
+      // Add user-specific queries if authenticated
       if (user?.id) {
-        queriesToInvalidate.push(FSRS_QUERY_KEYS.due(user.id), FSRS_QUERY_KEYS.all(user.id));
+        refreshPromises.push(
+          queryClient.refetchQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) }),
+          queryClient.refetchQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) })
+        );
       }
 
-      await Promise.all(
-        queriesToInvalidate.map(queryKey =>
-          queryClient.invalidateQueries({
-            queryKey: Array.isArray(queryKey) ? [...queryKey] : [queryKey],
-          })
-        )
-      );
+      await Promise.all(refreshPromises);
 
       // Force new article selection
       setRefreshKey(prev => prev + 1);
@@ -127,6 +129,7 @@ export default function ArticlesScreen(): JSX.Element {
   const handleArticlePress = useCallback(
     (article: Article) => {
       dispatch(updateLastOpenedArticle(article.id));
+      // Prefetch article data after navigation animation completes
       InteractionManager.runAfterInteractions(() => {
         prefetchArticle(article.id);
       });
@@ -182,11 +185,14 @@ export default function ArticlesScreen(): JSX.Element {
 
   // Simplified loading and error handling
   const isLoading = isArticlesLoading || isCategoriesLoading;
-  const articlesQueryState = queryClient.getQueryState(['articles']);
-  const hasArticlesError = articlesQueryState?.status === 'error';
 
-  // Show error state only for actual errors, not loading states
-  if (hasArticlesError && !isRefreshing && !isLoading) {
+  // Show error state only for actual errors, not loading states, and not during refresh
+  if (
+    (isArticlesLoading && !articlesData.length) ||
+    (isCategoriesLoading && !categoriesData.length)
+  ) {
+    // Show loading state - handled by ArticleList
+  } else if (!isLoading && !isRefreshing && !articlesData.length) {
     return <ErrorState message="Unable to load articles" onRetry={handleRefresh} />;
   }
 

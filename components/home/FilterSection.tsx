@@ -89,6 +89,11 @@ const FilterSection = memo(({ items, onSelect }: FilterSectionProps): JSX.Elemen
     [onSelect]
   );
 
+  // Guard against undefined or empty items
+  if (!items?.length) {
+    return <View style={styles.filterSectionContainer} />;
+  }
+
   return (
     <View style={styles.filterSectionContainer}>
       {items.map(item => (

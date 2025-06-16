@@ -29,7 +29,9 @@ export function mapToArticle(item: ArticleRow): Article {
   const base = item as Tables<'articles'>;
   return {
     ...base,
-    article_sentences: item.article_sentences.map(mapToArticleSentence),
+    article_sentences: Array.isArray(item.article_sentences)
+      ? item.article_sentences.map(mapToArticleSentence)
+      : [],
     category: item.category,
     author: item.author,
     audio_url: item.audio_url,

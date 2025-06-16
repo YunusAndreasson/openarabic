@@ -1,7 +1,7 @@
 import { FlashList } from '@shopify/flash-list';
 import { useMemo, useCallback, useState, memo, type JSX, type ReactElement, Fragment } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
-import { StyleSheet, View, InteractionManager } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedButton } from '@/components/ThemedButton';
@@ -106,9 +106,7 @@ const AudioControlsButton = memo<Omit<AudioControlsButtonProps, 'article'>>(
         const MIN_LOADING_DURATION = 300; // 300ms minimum
 
         // Generate enhanced audio track for this article
-        const track = await InteractionManager.runAfterInteractions(async () =>
-          enhancedAudioService.generateEnhancedAudioTrack(articleId)
-        );
+        const track = await enhancedAudioService.generateEnhancedAudioTrack(articleId);
 
         if (!track) {
           showToast('Failed to prepare audio', 3000, 'error');
