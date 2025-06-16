@@ -168,7 +168,7 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
       style={[
         styles.container,
         {
-          backgroundColor: colors.background,
+          backgroundColor: colors.elevation0,
         },
       ]}
       testID={testID}

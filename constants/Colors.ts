@@ -91,10 +91,10 @@ const opacity = {
 // Elevation system
 const elevation = {
   light: {
-    level0: basePalette.sage.lighter, // Background - matches current background
-    level1: basePalette.pure.white, // Cards (green-tinted white)
-    level2: basePalette.sage.lightest, // Raised elements - use palette reference
-    level3: basePalette.sage.lighter, // Floating elements
+    level0: basePalette.sage.lighter, // Background - #F2F7F4 (matches background color)
+    level1: basePalette.sage.lightest, // Cards - #F8FAF9 (elevated above background)
+    level2: '#FCFDFC', // Raised elements - calculated to be lighter than level1 for proper elevation
+    level3: '#FEFEFE', // Floating elements - calculated for maximum visual elevation
   },
   dark: {
     level0: basePalette.sage.darkest, // Background - matches current background

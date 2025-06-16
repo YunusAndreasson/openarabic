@@ -8,7 +8,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { withOpacity } from '@/utils/colorUtils';
 
 type InfoModalType = 'efficiency' | 'mastery' | 'retrievability';
 
@@ -156,12 +155,7 @@ export default function InfoModalScreen(): JSX.Element {
           <View key={section.title} style={styles.section}>
             <View style={styles.sectionHeader}>
               {section.icon && (
-                <View
-                  style={[
-                    styles.iconContainer,
-                    { backgroundColor: withOpacity(colors.tint, 0.08) },
-                  ]}
-                >
+                <View style={[styles.iconContainer, { backgroundColor: colors.elevation2 }]}>
                   <Ionicons name={section.icon} size={24} color={colors.tint} />
                 </View>
               )}

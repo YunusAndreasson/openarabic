@@ -216,12 +216,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
             style={[
               styles.statusBadge,
               {
-                backgroundColor: chartColors.withOpacity(
-                  memoryMetrics.capacityScore >= CAPACITY_THRESHOLDS.MODERATE
-                    ? chartColors.performance.excellent
-                    : chartColors.performance.moderate,
-                  0.08
-                ),
+                backgroundColor: colors.elevation3,
               },
             ]}
           >

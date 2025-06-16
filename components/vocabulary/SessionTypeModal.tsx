@@ -66,7 +66,7 @@ const SessionTypeModal = memo(
         enableDynamicSizing={false}
         onClose={handleSheetClose}
         backdropComponent={renderBackdrop}
-        backgroundStyle={{ backgroundColor: colors.card }}
+        backgroundStyle={{ backgroundColor: colors.elevation1 }}
         handleIndicatorStyle={{ backgroundColor: colors.modalIndicator }}
         style={{ zIndex: 1000 }}
       >
@@ -87,7 +87,7 @@ const SessionTypeModal = memo(
               ]}
               onPress={onStartVisual}
             >
-              <View style={[styles.iconContainer, { backgroundColor: colors.tintBackground }]}>
+              <View style={[styles.iconContainer, { backgroundColor: colors.elevation3 }]}>
                 <Ionicons name="eye" size={24} color={colors.tint} />
               </View>
               <View style={styles.optionContent}>
@@ -109,7 +109,7 @@ const SessionTypeModal = memo(
               ]}
               onPress={onStartAudio}
             >
-              <View style={[styles.iconContainer, { backgroundColor: colors.tintBackground }]}>
+              <View style={[styles.iconContainer, { backgroundColor: colors.elevation3 }]}>
                 <Ionicons name="ear" size={24} color={colors.tint} />
               </View>
               <View style={styles.optionContent}>

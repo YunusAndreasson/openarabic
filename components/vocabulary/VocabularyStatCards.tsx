@@ -114,7 +114,7 @@ export const VocabularyStatCards = memo(
           value: wordCategories.dueWords,
           label: 'Due Now',
           iconColor: colors.error,
-          bgColor: colors.card,
+          bgColor: colors.elevation1,
           category: 'due' as StatCategory,
           description: 'Regular practice for scheduled words',
         });
@@ -126,7 +126,7 @@ export const VocabularyStatCards = memo(
           value: wordCategories.strugglingWords,
           label: 'Challenging',
           iconColor: colors.warning,
-          bgColor: colors.card,
+          bgColor: colors.elevation1,
           category: 'needsAttention' as StatCategory,
           description: 'Drill down on challenging words',
         });
@@ -138,7 +138,7 @@ export const VocabularyStatCards = memo(
           value: totalWords,
           label: 'All Words',
           iconColor: colors.tint,
-          bgColor: colors.card,
+          bgColor: colors.elevation1,
           category: 'total' as StatCategory,
           description: 'If you want to do additional practice',
         });

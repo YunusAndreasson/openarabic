@@ -97,7 +97,7 @@ const BottomControls = memo<BottomControlsProps>(
                   styles.timerButton,
                   dynamicStyles.timerButton,
                   {
-                    backgroundColor: isTimerActive ? colors.tint : colors.card,
+                    backgroundColor: isTimerActive ? colors.tint : colors.elevation1,
                     borderColor: isTimerActive ? colors.tint : colors.border,
                   },
                 ]}
@@ -141,7 +141,7 @@ const BottomControls = memo<BottomControlsProps>(
                     dynamicStyles.secondaryButton,
                     {
                       borderColor: colors.tint,
-                      backgroundColor: colors.card, // Use theme-aware card background
+                      backgroundColor: colors.elevation1, // Use elevation1 for card surface hierarchy
                     },
                   ]}
                   onPress={onSecondaryPress}

@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack } from 'expo-router';
+import React from 'react';
 import type { JSX } from 'react';
 import { StyleSheet, View, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -132,25 +133,24 @@ export default function IslamicCalendarScreen(): JSX.Element {
                                 color: event.isActive
                                   ? colors.warning
                                   : isUpcoming
-                                    ? colors.success
-                                    : isPast
-                                      ? colors.textTertiary
-                                      : colors.interactiveSecondary,
+                                  ? colors.success
+                                  : isPast
+                                  ? colors.textTertiary
+                                  : colors.interactiveSecondary,
                               },
                             ]}
                           >
                             {event.isActive
-                              ? `Day ${Math.floor((event.progress ?? 0) * (event.duration ?? 1))} of ${event.duration}`
+                              ? `Day ${Math.floor(
+                                  (event.progress ?? 0) * (event.duration ?? 1)
+                                )} of ${event.duration}`
                               : formatDaysUntil(event.daysFromNow)}
                           </ThemedText>
 
                           {event.isActive && event.progress && (
                             <View style={styles.progressContainer}>
                               <View
-                                style={[
-                                  styles.progressBar,
-                                  { backgroundColor: colors.progressBackground },
-                                ]}
+                                style={[styles.progressBar, { backgroundColor: colors.elevation2 }]}
                               >
                                 <View
                                   style={[

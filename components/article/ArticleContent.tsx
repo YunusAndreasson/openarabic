@@ -197,7 +197,7 @@ const ArticleSummary = memo<ArticleSummaryProps>(({ summary }) => {
         style={[
           styles.summaryCard,
           {
-            backgroundColor: colors.background, // Use main background for clean, prominent look
+            backgroundColor: colors.elevation1, // Use elevation1 for card surface hierarchy
             borderColor: colors.border,
           },
         ]}

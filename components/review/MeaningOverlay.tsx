@@ -2,7 +2,6 @@ import { useEffect, useState, memo, useCallback, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
@@ -73,8 +72,8 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
   const textColor = isWarning
     ? colors.error
     : isVague || isStruggling
-      ? colors.warning
-      : colors.tint;
+    ? colors.warning
+    : colors.tint;
 
   const fontSize =
     isWarning || isVague || isStruggling
@@ -82,13 +81,7 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
       : LAYOUT.TYPOGRAPHY.SCALE.XLARGE;
 
   return (
-    <Animated.View
-      style={[
-        styles.overlay,
-        { backgroundColor: colors.background },
-        animatedStyle,
-      ]}
-    >
+    <Animated.View style={[styles.overlay, { backgroundColor: colors.elevation0 }, animatedStyle]}>
       <ThemedText
         skipDefaultColor
         style={[

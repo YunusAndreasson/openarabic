@@ -8,7 +8,6 @@ import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectActiveFiltersCount } from '@/store/filtersSlice';
 import { useAppSelectorMemo } from '@/store/hooks';
-import { withOpacity } from '@/utils/colorUtils';
 
 interface FilterButtonProps {
   onPress: () => void;
@@ -32,7 +31,7 @@ const FilterButton = memo(({ onPress }: FilterButtonProps) => {
           styles.button,
           { backgroundColor: colors.transparent },
           activeFiltersCount > 0 && {
-            backgroundColor: withOpacity(colors.tint, 0.08),
+            backgroundColor: colors.elevation2,
           },
           animatedStyle,
         ]}

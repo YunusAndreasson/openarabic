@@ -33,7 +33,7 @@ function EnhancedImageInternal({
   }, [transition, skipTransition]);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.imagePlaceholder }, style]}>
+    <View style={[styles.container, { backgroundColor: colors.elevation2 }, style]}>
       <Image
         allowDownscaling={allowDownscaling}
         autoplay={autoplay}

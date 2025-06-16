@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { memo, useCallback, useState } from 'react';
+import React, { useState, memo, useCallback } from 'react';
 import { StyleSheet, View, Modal, TouchableWithoutFeedback, TouchableOpacity } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
@@ -74,7 +74,7 @@ const SleepTimerComponent = ({
               style={[
                 styles.modal,
                 {
-                  backgroundColor: colors.background,
+                  backgroundColor: colors.elevation0,
                   shadowColor: colors.shadow,
                 },
               ]}

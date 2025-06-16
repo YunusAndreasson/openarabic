@@ -45,7 +45,7 @@ const ReviewHeader: FC<ReviewHeaderProps> = ({
       {/* Word Management Icon */}
       {hasCurrentWord && (
         <TouchableOpacity
-          style={[styles.manageButton, { backgroundColor: colors.card }]}
+          style={[styles.manageButton, { backgroundColor: colors.elevation1 }]}
           onPress={handleManagePress}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           testID="manage-word-button"

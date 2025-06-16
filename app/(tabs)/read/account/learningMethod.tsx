@@ -52,7 +52,7 @@ const LearningMethodScreen: FC = () => {
 
           <View style={styles.stepsList}>
             <View style={styles.stepItem}>
-              <View style={[styles.stepIcon, { backgroundColor: colors.buttonOverlay }]}>
+              <View style={[styles.stepIcon, { backgroundColor: colors.elevation2 }]}>
                 <Ionicons color={colors.tint} name="eye-outline" size={20} />
               </View>
               <View style={styles.stepContent}>
@@ -67,7 +67,7 @@ const LearningMethodScreen: FC = () => {
             </View>
 
             <View style={styles.stepItem}>
-              <View style={[styles.stepIcon, { backgroundColor: colors.buttonOverlay }]}>
+              <View style={[styles.stepIcon, { backgroundColor: colors.elevation2 }]}>
                 <Ionicons color={colors.tint} name="bulb-outline" size={20} />
               </View>
               <View style={styles.stepContent}>
@@ -82,7 +82,7 @@ const LearningMethodScreen: FC = () => {
             </View>
 
             <View style={styles.stepItem}>
-              <View style={[styles.stepIcon, { backgroundColor: colors.buttonOverlay }]}>
+              <View style={[styles.stepIcon, { backgroundColor: colors.elevation2 }]}>
                 <Ionicons color={colors.tint} name="refresh-outline" size={20} />
               </View>
               <View style={styles.stepContent}>
@@ -97,7 +97,7 @@ const LearningMethodScreen: FC = () => {
             </View>
 
             <View style={styles.stepItem}>
-              <View style={[styles.stepIcon, { backgroundColor: colors.progressBackground }]}>
+              <View style={[styles.stepIcon, { backgroundColor: colors.elevation2 }]}>
                 <Ionicons color={colors.tint} name="checkmark-circle-outline" size={20} />
               </View>
               <View style={styles.stepContent}>
@@ -121,7 +121,7 @@ const LearningMethodScreen: FC = () => {
 
           <View style={styles.reasonsList}>
             <View style={styles.reasonItem}>
-              <View style={[styles.reasonIcon, { backgroundColor: colors.progressBackground }]}>
+              <View style={[styles.reasonIcon, { backgroundColor: colors.elevation2 }]}>
                 <Ionicons color={colors.tint} name="heart-outline" size={20} />
               </View>
               <View style={styles.reasonContent}>
@@ -136,7 +136,7 @@ const LearningMethodScreen: FC = () => {
             </View>
 
             <View style={styles.reasonItem}>
-              <View style={[styles.reasonIcon, { backgroundColor: colors.progressBackground }]}>
+              <View style={[styles.reasonIcon, { backgroundColor: colors.elevation2 }]}>
                 <Ionicons color={colors.tint} name="library-outline" size={20} />
               </View>
               <View style={styles.reasonContent}>
@@ -151,7 +151,7 @@ const LearningMethodScreen: FC = () => {
             </View>
 
             <View style={styles.reasonItem}>
-              <View style={[styles.reasonIcon, { backgroundColor: colors.progressBackground }]}>
+              <View style={[styles.reasonIcon, { backgroundColor: colors.elevation2 }]}>
                 <Ionicons color={colors.tint} name="trending-up-outline" size={20} />
               </View>
               <View style={styles.reasonContent}>
@@ -187,7 +187,7 @@ const LearningMethodScreen: FC = () => {
 
           <View style={styles.benefitsList}>
             <View style={styles.benefitItem}>
-              <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
+              <View style={[styles.benefitIcon, { backgroundColor: colors.elevation2 }]}>
                 <Ionicons color={colors.tint} name="bulb-outline" size={20} />
               </View>
               <View style={styles.benefitContent}>
@@ -198,7 +198,7 @@ const LearningMethodScreen: FC = () => {
               </View>
             </View>
             <View style={styles.benefitItem}>
-              <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
+              <View style={[styles.benefitIcon, { backgroundColor: colors.elevation2 }]}>
                 <Ionicons color={colors.tint} name="eye-outline" size={20} />
               </View>
               <View style={styles.benefitContent}>
@@ -209,7 +209,7 @@ const LearningMethodScreen: FC = () => {
               </View>
             </View>
             <View style={styles.benefitItem}>
-              <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
+              <View style={[styles.benefitIcon, { backgroundColor: colors.elevation2 }]}>
                 <Ionicons color={colors.tint} name="leaf-outline" size={20} />
               </View>
               <View style={styles.benefitContent}>

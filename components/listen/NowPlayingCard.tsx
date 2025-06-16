@@ -157,7 +157,7 @@ const NowPlayingCard = ({
 
             <ProgressBar
               animationTriggered={timeCalculations.progressPercentage > 0}
-              backgroundColor={isDarkMode ? colors.elevation3 : colors.progressBackground}
+              backgroundColor={isDarkMode ? colors.elevation3 : colors.elevation2}
               fillColor={colors.tint}
               height={3}
               progress={timeCalculations.progressPercentage}

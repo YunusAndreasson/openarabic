@@ -51,7 +51,7 @@ const ClassicalTextsScreen: FC = () => {
 
           <View style={styles.benefitsList}>
             <View style={styles.benefitItem}>
-              <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
+              <View style={[styles.benefitIcon, { backgroundColor: colors.elevation2 }]}>
                 <Ionicons color={colors.tint} name="library-outline" size={20} />
               </View>
               <View style={styles.benefitContent}>
@@ -62,7 +62,7 @@ const ClassicalTextsScreen: FC = () => {
               </View>
             </View>
             <View style={styles.benefitItem}>
-              <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
+              <View style={[styles.benefitIcon, { backgroundColor: colors.elevation2 }]}>
                 <Ionicons color={colors.tint} name="book-outline" size={20} />
               </View>
               <View style={styles.benefitContent}>
@@ -73,7 +73,7 @@ const ClassicalTextsScreen: FC = () => {
               </View>
             </View>
             <View style={styles.benefitItem}>
-              <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
+              <View style={[styles.benefitIcon, { backgroundColor: colors.elevation2 }]}>
                 <Ionicons color={colors.tint} name="language-outline" size={20} />
               </View>
               <View style={styles.benefitContent}>
@@ -84,7 +84,7 @@ const ClassicalTextsScreen: FC = () => {
               </View>
             </View>
             <View style={styles.benefitItem}>
-              <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
+              <View style={[styles.benefitIcon, { backgroundColor: colors.elevation2 }]}>
                 <Ionicons color={colors.tint} name="bulb-outline" size={20} />
               </View>
               <View style={styles.benefitContent}>
@@ -105,7 +105,7 @@ const ClassicalTextsScreen: FC = () => {
 
           <View style={styles.concernsList}>
             <View style={styles.concernItem}>
-              <View style={[styles.concernIcon, { backgroundColor: colors.buttonOverlay }]}>
+              <View style={[styles.concernIcon, { backgroundColor: colors.elevation2 }]}>
                 <Ionicons color={colors.tint} name="shield-checkmark-outline" size={20} />
               </View>
               <View style={styles.concernContent}>
@@ -120,7 +120,7 @@ const ClassicalTextsScreen: FC = () => {
             </View>
 
             <View style={styles.concernItem}>
-              <View style={[styles.concernIcon, { backgroundColor: colors.buttonOverlay }]}>
+              <View style={[styles.concernIcon, { backgroundColor: colors.elevation2 }]}>
                 <Ionicons color={colors.tint} name="heart-outline" size={20} />
               </View>
               <View style={styles.concernContent}>

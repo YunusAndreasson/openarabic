@@ -36,7 +36,7 @@ const CompactNavCard = memo(
             {capitalizeFirstLetter(label)}
           </ThemedText>
           {count !== undefined && (
-            <View style={[compactCardStyles.countBadge, { backgroundColor: colors.elevation2 }]}>
+            <View style={[compactCardStyles.countBadge, { backgroundColor: colors.elevation3 }]}>
               <ThemedText
                 skipDefaultColor
                 style={[compactCardStyles.countText, { color: colors.text }]}
