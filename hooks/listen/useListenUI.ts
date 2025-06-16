@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { InteractionManager } from 'react-native';
 
 import type { AudioState } from '@/constants/audio';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
@@ -91,7 +92,7 @@ export const useListenUI = ({
 
       const article = sortedReadingList.find(item => item.article_id === articleId)?.articles;
       if (article) {
-        prefetchArticle(articleId);
+        InteractionManager.runAfterInteractions(() => prefetchArticle(articleId));
         router.push(
           `/(tabs)/read/article/${articleId}?headerTitle=${encodeURIComponent(article.title)}`
         );
