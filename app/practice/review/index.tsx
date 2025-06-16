@@ -45,7 +45,7 @@ const baseStyles = StyleSheet.create({
 
 export default function ReviewScreen(): JSX.Element {
   const params = useLocalSearchParams();
-  const fromRemember = params.fromRemember === 'true';
+  const fromRemember = params['fromRemember'] === 'true';
 
   const {
     showMeaningOverlay,

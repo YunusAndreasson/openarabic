@@ -37,7 +37,6 @@ export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressabl
   /** Callback when image fails to load */
   onError?: () => void;
 
-
   /** Image transition duration in ms or transition object */
   transition?: ImageTransition | number;
 
@@ -55,7 +54,6 @@ export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressabl
 
   /** Loading priority */
   priority?: 'high' | 'low' | 'normal';
-
 
   /** Placeholder image using blurhash or thumbhash */
   placeholder?: { blurhash?: string; thumbhash?: string };

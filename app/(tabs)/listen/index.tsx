@@ -92,10 +92,14 @@ const ListenListItem = memo(
             : undefined
         }
         isLoadingAudio={isStartingPlayback && isActive} // Show loading when this article is starting
-        dragHandleProps={{
-          onLongPress: drag,
-          delayLongPress: 100,
-        }}
+        {...(drag
+          ? {
+              dragHandleProps: {
+                onLongPress: drag,
+                delayLongPress: 100,
+              },
+            }
+          : {})}
       />
     );
   },
@@ -283,7 +287,7 @@ export default function ListenScreen(): JSX.Element {
       <ThemedView includeBottomInset={false} style={styles.flexOne} useSafeArea={false}>
         {editMode ? (
           // Use DraggableFlatList in edit mode
-          (<DraggableFlatList<ReadingListItem>
+          <DraggableFlatList<ReadingListItem>
             data={sortedReadingList}
             keyExtractor={item => `${item.article_id}`}
             renderItem={renderItem}
@@ -316,10 +320,10 @@ export default function ListenScreen(): JSX.Element {
                 </View>
               ) : null
             }
-          />)
+          />
         ) : (
           // Use FlashList in normal mode
-          (<FlashList<ReadingListItem>
+          <FlashList<ReadingListItem>
             data={sortedReadingList}
             drawDistance={ITEM_HEIGHT * 5}
             estimatedItemSize={ITEM_HEIGHT}
@@ -359,7 +363,7 @@ export default function ListenScreen(): JSX.Element {
               layout.size = ITEM_HEIGHT;
             }}
             renderItem={renderItem}
-          />)
+          />
         )}
       </ThemedView>
       {/* Only show bottom controls when there are texts with audio to play but no active player */}

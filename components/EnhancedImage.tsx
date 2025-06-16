@@ -40,12 +40,12 @@ function EnhancedImageInternal({
         cachePolicy={cachePolicy}
         contentFit={contentFit}
         contentPosition={contentPosition}
-        placeholder={placeholder}
+        {...(placeholder ? { placeholder } : {})}
         priority={priority}
         source={source}
         style={styles.image}
         transition={transitionObject}
-        onLoad={onLoad}
+        {...(onLoad ? { onLoad } : {})}
       />
     </View>
   );

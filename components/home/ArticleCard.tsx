@@ -77,11 +77,11 @@ export const ArticleCard: FC<ArticleCardProps> = ({
   return (
     <Animated.View style={[styles.cardContainer, animatedStyle]}>
       {/* Drag Handle - shows on left in edit mode */}
-      {editMode && (
+      {editMode && dragHandleProps && (
         <View style={styles.dragHandleContainer}>
           <DragHandle
-            onLongPress={dragHandleProps?.onLongPress}
-            delayLongPress={dragHandleProps?.delayLongPress}
+            onLongPress={dragHandleProps.onLongPress}
+            delayLongPress={dragHandleProps.delayLongPress}
           />
         </View>
       )}
@@ -90,8 +90,8 @@ export const ArticleCard: FC<ArticleCardProps> = ({
         <BaseCard
           shadowSize="small"
           style={styles.card}
-          onPress={editMode ? undefined : onPress}
-          onLongPress={editMode ? undefined : onLongPress}
+          {...(editMode ? {} : onPress ? { onPress } : {})}
+          {...(editMode ? {} : onLongPress ? { onLongPress } : {})}
         >
           <View style={styles.cardContent}>
             <View style={styles.textContent}>

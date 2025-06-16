@@ -1,18 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { FC } from 'react';
-import {
-  StyleSheet,
-  TouchableOpacity,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { StyleSheet, TouchableOpacity, type StyleProp, type ViewStyle } from 'react-native';
 
 import { MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 export interface DragHandleProps {
-  onLongPress?: () => void;
-  delayLongPress?: number;
+  onLongPress: () => void;
+  delayLongPress: number;
   style?: StyleProp<ViewStyle>;
 }
 

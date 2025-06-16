@@ -33,7 +33,7 @@ const fontConfig = {
 
 export default function ListenScreen(): JSX.Element {
   const params = useLocalSearchParams();
-  const fromRemember = params.fromRemember === 'true';
+  const fromRemember = params['fromRemember'] === 'true';
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const colors = useColors();
