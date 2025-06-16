@@ -115,7 +115,7 @@ describe('useWordManagement', () => {
 
     const service = require('../../../services/wordManagement').wordManagementService;
     expect(service[serviceMethod]).toHaveBeenCalledWith('u1', argFn(baseWord));
-    expect(invalidateQueries).toHaveBeenCalledTimes(3);
+    expect(invalidateQueries).toHaveBeenCalledTimes(5);
     expect(callbacks[callbackKey]).toHaveBeenCalledWith(baseWord);
     expect(result.current.isProcessing).toBe(false);
   });

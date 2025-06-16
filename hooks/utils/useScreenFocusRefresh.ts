@@ -1,6 +1,7 @@
 import { useFocusEffect } from '@react-navigation/native';
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
 import { useCallback, useRef } from 'react';
+import { InteractionManager } from 'react-native';
 
 import { handleError } from '@/utils/errorHandling';
 
@@ -66,12 +67,14 @@ export const useScreenFocusRefresh = (
     if (now - state.lastRefreshTime < state.throttleInterval) return; // Throttle for interval
 
     state.lastRefreshTime = now;
-    // Invalidate the query to trigger a refetch
-    try {
-      state.queryClient.invalidateQueries({ queryKey: state.fullQueryKey });
-    } catch (error) {
-      handleError(error as Error, { showToast: false });
-    }
+    // Invalidate the query after interactions to avoid blocking UI
+    InteractionManager.runAfterInteractions(() => {
+      try {
+        state.queryClient.invalidateQueries({ queryKey: state.fullQueryKey });
+      } catch (error) {
+        handleError(error as Error, { showToast: false });
+      }
+    });
   }, []);
 
   // Focus effect using the stable refreshData callback.

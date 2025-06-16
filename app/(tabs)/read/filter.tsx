@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, router } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useMemo, useEffect } from 'react';
+import { InteractionManager } from 'react-native';
 
 import ErrorState from '@/components/ErrorState';
 import FilteredArticleView from '@/components/home/FilteredArticleView';
@@ -64,7 +65,9 @@ export default function FilterScreen(): JSX.Element {
 
   const handleArticlePress = useCallback(
     (article: Article) => {
-      prefetchArticle(article.id);
+      InteractionManager.runAfterInteractions(() => {
+        prefetchArticle(article.id);
+      });
       router.push(
         `/(tabs)/read/article/${article.id}?headerTitle=${encodeURIComponent(article.title)}`
       );
