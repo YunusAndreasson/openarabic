@@ -12,4 +12,4 @@ export { useProgressAnimation } from './useProgressAnimation';
 export { useToggleAnimation } from './useToggleAnimation';
 
 // Export animation configs
-export { TIMING_CONFIG, SPRING_CONFIG } from './animationConfigs';
+export { TIMING_CONFIG, SPRING_CONFIG } from '@/constants/animation';

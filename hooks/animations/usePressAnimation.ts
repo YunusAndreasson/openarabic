@@ -9,9 +9,9 @@ import {
 } from 'react-native-reanimated';
 import type { SharedValue, WithSpringConfig } from 'react-native-reanimated';
 
+import { SPRING_CONFIG, PRESS_SCALE, CARD_PRESS_OPACITY } from '@/constants/animation';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
-import { SPRING_CONFIG } from './animationConfigs';
 
 export type PressAnimationType = 'button' | 'card' | 'custom';
 
@@ -81,9 +81,9 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
   const { type = 'button', scaleAmount, opacityAmount, includeOpacity, springConfig } = options;
 
   // Set defaults based on type
-  const defaultScaleAmount = type === 'card' ? 0.985 : 0.97;
+  const defaultScaleAmount = type === 'card' ? PRESS_SCALE.CARD : PRESS_SCALE.BUTTON;
   const finalScaleAmount = scaleAmount ?? defaultScaleAmount;
-  const finalOpacityAmount = opacityAmount ?? 0.97;
+  const finalOpacityAmount = opacityAmount ?? CARD_PRESS_OPACITY;
   const finalIncludeOpacity = includeOpacity ?? type === 'card';
   const finalSpringConfig = useRef(
     springConfig ?? (type === 'card' ? SPRING_CONFIG.CARD : SPRING_CONFIG.BUTTON)
