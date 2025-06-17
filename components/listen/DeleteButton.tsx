@@ -5,6 +5,7 @@ import Animated from 'react-native-reanimated';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
+import { ICON_BUTTON_PRESS_SCALE } from '@/constants/animation';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { BaseIconButtonProps } from '@/types/ui/button.types';
@@ -15,7 +16,7 @@ const DeleteButton: FC<
 > = ({ onPress, disabled = false }) => {
   const colors = useColors();
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
-    scaleAmount: 0.9,
+    scaleAmount: ICON_BUTTON_PRESS_SCALE,
   });
 
   const handlePress = useCallback(() => {

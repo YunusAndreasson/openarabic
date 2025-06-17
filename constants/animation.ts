@@ -72,6 +72,12 @@ export const PRESS_SCALE = {
   CARD: 0.985,
 } as const;
 
+/** Scale amount for icon button press animations */
+export const ICON_BUTTON_PRESS_SCALE = 0.9;
+
+/** Scale amount for insights button press animation */
+export const INSIGHTS_BUTTON_PRESS_SCALE = 0.98;
+
 /** Default opacity reduction for card press animations */
 export const CARD_PRESS_OPACITY = 0.97;
 
@@ -114,6 +120,9 @@ export const NOW_PLAYING_DISMISS_SCALE = 0.92;
 /** Shared height for the Now Playing card component */
 export const NOW_PLAYING_CARD_HEIGHT = 120;
 
+/** Offset used to position the Now Playing card off-screen */
+export const NOW_PLAYING_HIDDEN_OFFSET = 100;
+
 /** Initial scale for the Now Playing card when hidden */
 export const NOW_PLAYING_START_SCALE = 0.95;
 
@@ -134,6 +143,9 @@ export const NOW_PLAYING_EXIT_SPRING = {
   stiffness: 150,
   mass: 0.8,
 } as const;
+
+/** Scale amount for stop button press animation */
+export const NOW_PLAYING_STOP_PRESS_SCALE = 0.85;
 
 /** Spring config for completion screen icon */
 export const COMPLETION_ICON_SPRING = {
