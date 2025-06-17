@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import ArticleCard from '@/components/ArticleCard';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { articlesService } from '@/services/articles';
 import type { Article } from '@/types/articles.types';
 
@@ -43,7 +44,7 @@ const FeaturedSection: FC<FeaturedSectionProps> = ({ article, onPress }) => {
     <View style={styles.container}>
       <ArticleCard
         author={article.author.name}
-        category="RECOMMENDED"
+        category={STRINGS.RECOMMENDED}
         categoryForDisplay={article.category.name}
         imageUrl={String(article.image_url)}
         style={styles.cardStyle}

@@ -263,6 +263,9 @@ export const STRINGS = {
   WORD_OF_LABEL: 'of',
   DAY_OF_TEMPLATE: 'Day {day} of {duration}',
   AH: 'AH',
+  RECOMMENDED: 'RECOMMENDED',
+  TIMER: 'Timer',
+  MINUTES: '{minutes} min',
 } as const;
 
 export type StringKey = keyof typeof STRINGS;

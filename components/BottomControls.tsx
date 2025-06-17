@@ -5,6 +5,7 @@ import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
 import { ThemedButton } from './ThemedButton';
@@ -120,7 +121,7 @@ const BottomControls = memo<BottomControlsProps>(
                       },
                     ]}
                   >
-                    Timer
+                    {STRINGS.TIMER}
                   </ThemedText>
                 )}
               </TouchableOpacity>
