@@ -3,6 +3,10 @@ import type { NativeSyntheticEvent, NativeScrollEvent, ViewStyle } from 'react-n
 import { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
+import {
+  DEFAULT_ANIMATION_DURATION,
+  HEADER_SCROLL_THRESHOLD,
+} from '@/constants/animation';
 
 interface UseHeaderVisibilityOptions {
   threshold?: number;
@@ -17,8 +21,8 @@ export interface UseHeaderVisibilityResult {
 }
 
 export function useHeaderVisibility({
-  threshold = 50,
-  animationDuration = 200,
+  threshold = HEADER_SCROLL_THRESHOLD,
+  animationDuration = DEFAULT_ANIMATION_DURATION,
 }: UseHeaderVisibilityOptions = {}): UseHeaderVisibilityResult {
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const prevScrollYValue = useRef(0);

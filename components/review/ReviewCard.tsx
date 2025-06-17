@@ -7,12 +7,12 @@ import Animated, { runOnJS, useSharedValue } from 'react-native-reanimated';
 import { WORD_AREA_MIN_HEIGHT, useScreenWidth } from '@/constants/layout';
 import { useTransformAnimation } from '@/hooks/animations';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
+import { TIMING_CONFIG } from '@/constants/animation';
 
 import WordDisplay from './WordDisplay';
 
 // Animation config constants
 const SWIPE_THRESHOLD_RATIO = 0.04;
-const RESET_CONFIG = { duration: 150 }; // Faster reset animation
 
 // Styles moved outside component
 const styles = StyleSheet.create({
@@ -63,7 +63,7 @@ const ReviewCard = memo(function ReviewCard({
     startAnimation: startAnimationToZero,
   } = useTransformAnimation({
     type: 'translateX',
-    duration: RESET_CONFIG.duration,
+    duration: TIMING_CONFIG.FAST.duration,
   });
   const isAnimatingRef = useSharedValue(false);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

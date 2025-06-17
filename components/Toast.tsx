@@ -7,6 +7,11 @@ import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import {
+  DEFAULT_ANIMATION_DURATION,
+  TOAST_INITIAL_TRANSLATE_Y,
+  TOAST_SPRING,
+} from '@/constants/animation';
 
 import { ThemedText } from './ThemedText';
 
@@ -81,7 +86,7 @@ export const Toast = memo(
       reset: resetOpacity,
     } = useOpacityAnimation({
       initialOpacity: 0,
-      duration: 200,
+      duration: DEFAULT_ANIMATION_DURATION,
     });
 
     const {
@@ -105,11 +110,11 @@ export const Toast = memo(
       reset: resetTranslate,
     } = useTransformAnimation({
       type: 'translateY',
-      initialValue: 50,
+      initialValue: TOAST_INITIAL_TRANSLATE_Y,
       targetValue: 0,
       useSpring: true,
-      damping: 15,
-      stiffness: 200,
+      damping: TOAST_SPRING.damping,
+      stiffness: TOAST_SPRING.stiffness,
     });
 
     const animatedStyle = [opacityStyle, scaleStyle, translateYStyle];
@@ -137,7 +142,7 @@ export const Toast = memo(
             resetOpacity();
             resetScale();
             resetTranslate();
-          }, 300);
+          }, DEFAULT_ANIMATION_DURATION);
         }, duration);
       } else {
         resetOpacity();

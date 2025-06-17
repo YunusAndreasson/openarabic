@@ -15,6 +15,7 @@ import { WordDisplay } from '@/components/review';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations';
+import { DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useAudioPracticeSession } from '@/hooks/practice';
 import { useColors } from '@/hooks/theme/useColors';
@@ -58,14 +59,14 @@ export default function ListenScreen(): JSX.Element {
   // Animation
   const { animatedStyle, fadeIn, fadeOut } = useOpacityAnimation({
     initialOpacity: 0,
-    duration: 200,
+    duration: DEFAULT_ANIMATION_DURATION,
     autoStart: true,
   });
 
   // Trigger word fade animations when the current word changes
   useEffect(() => {
     fadeOut();
-    const t = setTimeout(() => fadeIn(), 200);
+    const t = setTimeout(() => fadeIn(), DEFAULT_ANIMATION_DURATION);
     return () => clearTimeout(t);
   }, [currentArabicWord, fadeIn, fadeOut]);
 

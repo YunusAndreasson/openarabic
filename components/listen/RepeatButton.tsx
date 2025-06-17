@@ -8,6 +8,7 @@ import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import { ROTATION_ANIMATION_DURATION } from '@/constants/animation';
 import type { BaseIconButtonProps } from '@/types/ui/button.types';
 import { selectionFeedback } from '@/utils/haptics';
 
@@ -29,7 +30,7 @@ const RepeatButton: FC<RepeatButtonProps> = ({ enabled, onToggle, ...rest }) => 
       type: 'rotate',
       initialValue: 0,
       targetValue: 360,
-      duration: 400,
+      duration: ROTATION_ANIMATION_DURATION,
     }
   );
 

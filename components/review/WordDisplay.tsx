@@ -7,6 +7,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import { TIMING_CONFIG } from '@/constants/animation';
 import type { WordDisplayProps } from '@/types/ui/review.types';
 
 /**
@@ -18,10 +19,11 @@ const WordDisplay = memo(
     const colors = useColors();
 
     // Use opacity animation hook for translation visibility
-    const { animatedStyle: translationAnimatedStyle, setOpacity } = useOpacityAnimation({
-      initialOpacity: translation ? 1 : 0,
-      duration: 300,
-    });
+    const { animatedStyle: translationAnimatedStyle, setOpacity } =
+      useOpacityAnimation({
+        initialOpacity: translation ? 1 : 0,
+        duration: TIMING_CONFIG.GENTLE.duration,
+      });
 
     // Update opacity when translation changes
     useEffect(() => {

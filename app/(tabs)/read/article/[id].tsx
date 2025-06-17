@@ -12,6 +12,7 @@ import { ArticleContent } from '@/components/article/ArticleContent';
 import { ToastProvider } from '@/components/providers/ToastProvider';
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
+import { TIMING_CONFIG } from '@/constants/animation';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleRenderers } from '@/hooks/articles/useArticleRenderers';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
@@ -39,7 +40,7 @@ export default function ArticleScreen(): JSX.Element {
   // Add fade-in animation for smooth content appearance
   const { fadeIn, animatedStyle } = useOpacityAnimation({
     initialOpacity: 0,
-    duration: 300,
+    duration: TIMING_CONFIG.GENTLE.duration,
     autoStart: false,
   });
 
