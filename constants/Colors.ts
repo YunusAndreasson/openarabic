@@ -44,10 +44,10 @@ const basePalette = {
     black: '#0A0F0B', // Subtle green-tinted black
     transparent: 'transparent',
   },
-};
+} as const;
 
-// Helper function for consistent opacity
-const alpha = (color: string, opacity: number) =>
+// Helper to apply opacity to a hex color
+const applyOpacity = (color: string, opacity: number): string =>
   `${color}${Math.round(opacity * 255)
     .toString(16)
     .padStart(2, '0')}`;
@@ -64,7 +64,7 @@ const textHierarchy = {
     metadata: '#CAD3CC', // Light mode equivalent - Use for: timestamps, author names, secondary info
     caption: '#BDC6BF', // Light mode equivalent - Use for: help text, placeholders, tertiary info
   },
-};
+} as const;
 
 // Standardized opacity system - Designed for consistent visual hierarchy
 const opacity = {
@@ -86,7 +86,7 @@ const opacity = {
   modal: 0.92, // Modal overlays - Use for: full modal backgrounds
   header: 0.96, // Header overlays - Use for: navigation header backgrounds
   full: 0.97, // Full modal overlays - Use for: maximum opacity overlays
-};
+} as const;
 
 // Elevation system
 const elevation = {
@@ -102,7 +102,7 @@ const elevation = {
     level2: basePalette.sage.mediumDark, // Raised elements
     level3: basePalette.sage.medium, // Floating elements - use consistent reference
   },
-};
+} as const;
 
 /**
  * ELEVATION HIERARCHY GUIDE
@@ -145,8 +145,7 @@ const elevation = {
  * 6. Cards inside modals use elevation2 to be raised above modal background (elevation1)
  */
 
-export const Colors = {
-  light: {
+const lightColors: ThemeColors = {
     // Core brand colors - improved contrast
     primary: basePalette.forest.dark,
     background: basePalette.sage.lighter, // Changed from lightest for better contrast
@@ -174,7 +173,7 @@ export const Colors = {
 
     // Interactive elements
     tint: basePalette.tint.primary,
-    tintBackground: alpha(basePalette.tint.primary, opacity.medium), // Common tint + 0.08 pattern
+    tintBackground: applyOpacity(basePalette.tint.primary, opacity.medium), // Common tint + 0.08 pattern
     tabIconDefault: basePalette.forest.lighter,
     tabIconSelected: basePalette.tint.primary,
     icon: basePalette.forest.light,
@@ -182,11 +181,11 @@ export const Colors = {
 
     // Overlays - adjusted for new background
     transparent: basePalette.pure.transparent,
-    overlay: alpha(basePalette.sage.lighter, opacity.modal),
-    modalOverlay: alpha(basePalette.sage.lighter, opacity.full),
-    borderOverlay: alpha(basePalette.tint.primary, opacity.light),
-    buttonOverlay: alpha(basePalette.tint.primary, opacity.medium),
-    backdropOverlay: alpha(basePalette.forest.dark, opacity.backdrop),
+    overlay: applyOpacity(basePalette.sage.lighter, opacity.modal),
+    modalOverlay: applyOpacity(basePalette.sage.lighter, opacity.full),
+    borderOverlay: applyOpacity(basePalette.tint.primary, opacity.light),
+    buttonOverlay: applyOpacity(basePalette.tint.primary, opacity.medium),
+    backdropOverlay: applyOpacity(basePalette.forest.dark, opacity.backdrop),
 
     // Elevation system - enhanced contrast
     shadow: basePalette.forest.dark,
@@ -199,32 +198,32 @@ export const Colors = {
     wordTooltipBg: basePalette.pure.white,
     wordTooltipText: basePalette.forest.darkest,
     wordTooltipBorder: basePalette.sage.light,
-    wordTooltipShadow: alpha(basePalette.forest.dark, opacity.active),
-    wordSelectionUnderline: alpha(basePalette.tint.primary, opacity.selection),
-    wordDueUnderline: alpha(basePalette.semantic.warning, opacity.due),
+    wordTooltipShadow: applyOpacity(basePalette.forest.dark, opacity.active),
+    wordSelectionUnderline: applyOpacity(basePalette.tint.primary, opacity.selection),
+    wordDueUnderline: applyOpacity(basePalette.semantic.warning, opacity.due),
 
     // Navigation - adjusted for new background
-    navigationRipple: alpha(basePalette.tint.primary, opacity.strong),
-    headerOverlay: alpha(basePalette.sage.lighter, opacity.header),
-    tabBarOverlay: alpha(basePalette.sage.lighter, opacity.modal),
+    navigationRipple: applyOpacity(basePalette.tint.primary, opacity.strong),
+    headerOverlay: applyOpacity(basePalette.sage.lighter, opacity.header),
+    tabBarOverlay: applyOpacity(basePalette.sage.lighter, opacity.modal),
 
     // UI semantics
     progressIndicator: basePalette.tint.primary,
-    progressBackground: alpha(basePalette.tint.primary, opacity.progress),
+    progressBackground: applyOpacity(basePalette.tint.primary, opacity.progress),
     interactiveSecondary: basePalette.forest.light,
     completionSuccess: basePalette.semantic.success,
 
     // Utility colors - enhanced contrast
     imagePlaceholder: basePalette.sage.light,
-    textOverlay: alpha(basePalette.tint.primary, opacity.subtle),
-    textShadowDark: alpha(basePalette.forest.dark, opacity.shadow),
-    textShadowLight: alpha(basePalette.pure.white, opacity.shadow),
+    textOverlay: applyOpacity(basePalette.tint.primary, opacity.subtle),
+    textShadowDark: applyOpacity(basePalette.forest.dark, opacity.shadow),
+    textShadowLight: applyOpacity(basePalette.pure.white, opacity.shadow),
     modalIndicator: basePalette.forest.lighter,
     white: basePalette.pure.white,
     black: basePalette.pure.black,
-  } as ThemeColors,
+} as const;
 
-  dark: {
+const darkColors: ThemeColors = {
     // Core brand colors
     primary: basePalette.pure.white,
     background: basePalette.sage.darkest,
@@ -252,7 +251,7 @@ export const Colors = {
 
     // Interactive elements
     tint: basePalette.tint.primaryDark,
-    tintBackground: alpha(basePalette.tint.primaryDark, opacity.medium), // Common tint + 0.08 pattern
+    tintBackground: applyOpacity(basePalette.tint.primaryDark, opacity.medium), // Common tint + 0.08 pattern
     tabIconDefault: basePalette.forest.light,
     tabIconSelected: basePalette.tint.primaryDark,
     icon: textHierarchy.dark.metadata,
@@ -260,11 +259,11 @@ export const Colors = {
 
     // Overlays - dark mode with standardized opacity
     transparent: basePalette.pure.transparent,
-    overlay: alpha(basePalette.sage.darkest, opacity.modal),
-    modalOverlay: alpha(basePalette.sage.darkest, opacity.full),
-    borderOverlay: alpha(basePalette.tint.primaryDark, opacity.medium),
-    buttonOverlay: alpha(basePalette.tint.primaryDark, opacity.strong),
-    backdropOverlay: alpha(basePalette.sage.darkest, opacity.darkBackdrop),
+    overlay: applyOpacity(basePalette.sage.darkest, opacity.modal),
+    modalOverlay: applyOpacity(basePalette.sage.darkest, opacity.full),
+    borderOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.medium),
+    buttonOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.strong),
+    backdropOverlay: applyOpacity(basePalette.sage.darkest, opacity.darkBackdrop),
 
     // Elevation system
     shadow: basePalette.pure.black,
@@ -277,31 +276,32 @@ export const Colors = {
     wordTooltipBg: basePalette.sage.medium,
     wordTooltipText: basePalette.pure.white,
     wordTooltipBorder: elevation.dark.level3,
-    wordTooltipShadow: alpha(basePalette.pure.black, opacity.due),
-    wordSelectionUnderline: alpha(basePalette.tint.primaryDark, opacity.tooltip),
-    wordDueUnderline: alpha(basePalette.semantic.warningDark, opacity.overlay),
+    wordTooltipShadow: applyOpacity(basePalette.pure.black, opacity.due),
+    wordSelectionUnderline: applyOpacity(basePalette.tint.primaryDark, opacity.tooltip),
+    wordDueUnderline: applyOpacity(basePalette.semantic.warningDark, opacity.overlay),
 
     // Navigation
-    navigationRipple: alpha(basePalette.tint.primaryDark, opacity.active),
-    headerOverlay: alpha(basePalette.sage.darkest, opacity.header),
-    tabBarOverlay: alpha(basePalette.sage.darkest, opacity.modal),
+    navigationRipple: applyOpacity(basePalette.tint.primaryDark, opacity.active),
+    headerOverlay: applyOpacity(basePalette.sage.darkest, opacity.header),
+    tabBarOverlay: applyOpacity(basePalette.sage.darkest, opacity.modal),
 
     // UI semantics
     progressIndicator: basePalette.tint.primaryDark,
-    progressBackground: alpha(basePalette.tint.primaryDark, opacity.disabled),
+    progressBackground: applyOpacity(basePalette.tint.primaryDark, opacity.disabled),
     interactiveSecondary: textHierarchy.dark.metadata,
     completionSuccess: basePalette.semantic.successDark,
 
     // Utility colors
     imagePlaceholder: basePalette.sage.medium,
-    textOverlay: alpha(basePalette.tint.primaryDark, opacity.light),
-    textShadowDark: alpha(basePalette.pure.black, opacity.shadow),
-    textShadowLight: alpha(basePalette.pure.white, opacity.shadow),
+    textOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.light),
+    textShadowDark: applyOpacity(basePalette.pure.black, opacity.shadow),
+    textShadowLight: applyOpacity(basePalette.pure.white, opacity.shadow),
     modalIndicator: basePalette.forest.light,
     white: basePalette.pure.white,
     black: basePalette.pure.black,
-  } as ThemeColors,
-};
+} as const;
+
+export const Colors = { light: lightColors, dark: darkColors } as const;
 
 export enum Theme {
   Light = 'light',
