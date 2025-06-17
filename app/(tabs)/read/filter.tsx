@@ -6,6 +6,7 @@ import { InteractionManager } from 'react-native';
 
 import ErrorState from '@/components/ErrorState';
 import FilteredArticleView from '@/components/home/FilteredArticleView';
+import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
@@ -14,22 +15,22 @@ import type { Article } from '@/types/articles.types';
 
 export default function FilterScreen(): JSX.Element {
   const params = useLocalSearchParams();
-  const type = params['type'] as string;
-  const id = params['id'] as string;
-  const numericId = parseInt(id ?? '', 10);
+  const type = params['type'] as string | undefined;
+  const id = params['id'] as string | undefined;
+  const numericId = Number(id);
 
   const { prefetchArticle } = useAppPreloader();
 
   // Check if parameters are invalid
   const hasInvalidParams =
-    !type || !id || type !== 'category' || isNaN(numericId) || numericId <= 0;
+    type !== 'category' || !id || Number.isNaN(numericId) || numericId <= 0;
 
   // Handle navigation leak in useEffect to avoid setState during render
   useEffect(() => {
-    if (hasInvalidParams && !type && id && !isNaN(numericId) && numericId > 0) {
-      router.replace(`/(tabs)/read/article/${id}`);
+    if (hasInvalidParams && !type && numericId > 0) {
+      router.replace(getArticleRoute(numericId));
     }
-  }, [hasInvalidParams, type, id, numericId, router]);
+  }, [hasInvalidParams, type, numericId]);
 
   const cacheKey = useMemo(() => ['filtered-articles', type, numericId], [type, numericId]);
 
@@ -41,19 +42,19 @@ export default function FilterScreen(): JSX.Element {
   } = useQuery({
     queryKey: cacheKey,
     queryFn: async () => {
-      if (!numericId || isNaN(numericId)) {
+      if (Number.isNaN(numericId) || numericId <= 0) {
         throw new Error(
           STRINGS.INVALID_FILTER_ID.replace('{id}', String(id))
         );
       }
 
-      if (type === 'category') {
-        return await articlesService.getArticles({ categoryId: numericId });
-      } else {
+      if (type !== 'category') {
         throw new Error(
           STRINGS.INVALID_FILTER_TYPE.replace('{type}', String(type))
         );
       }
+
+      return await articlesService.getArticles({ categoryId: numericId });
     },
     enabled: !hasInvalidParams,
     refetchOnWindowFocus: false,
@@ -73,9 +74,7 @@ export default function FilterScreen(): JSX.Element {
       InteractionManager.runAfterInteractions(() => {
         prefetchArticle(article.id);
       });
-      router.push(
-        `/(tabs)/read/article/${article.id}?headerTitle=${encodeURIComponent(article.title)}`
-      );
+      router.push(getArticleRoute(article.id, article.title));
     },
     [prefetchArticle, router]
   );
@@ -83,7 +82,7 @@ export default function FilterScreen(): JSX.Element {
   // Show error for invalid parameters first
   if (hasInvalidParams) {
     // If it looks like an article navigation leak, show loading while redirecting
-    if (!type && id && !isNaN(numericId) && numericId > 0) {
+    if (!type && numericId > 0) {
       return <></>;
     }
 

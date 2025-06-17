@@ -12,14 +12,18 @@ import ArticleList from '@/components/home/ArticleList';
 import FilterSection from '@/components/home/FilterSection';
 import IntelligentArticleSection from '@/components/home/IntelligentArticleSection';
 import WelcomeMessage from '@/components/home/WelcomeMessage';
+import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
+import {
+  getArticleRoute,
+  getFilterRoute,
+} from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { useAppDispatch } from '@/store/hooks';
 import { updateLastOpenedArticle } from '@/store/readingListSlice';
 import type { Article, Category } from '@/types/articles.types';
@@ -136,21 +140,14 @@ export default function ArticlesScreen(): JSX.Element {
       InteractionManager.runAfterInteractions(() => {
         prefetchArticle(article.id);
       });
-      router.push(
-        `/(tabs)/read/article/${article.id}?headerTitle=${encodeURIComponent(article.title)}`
-      );
+      router.push(getArticleRoute(article.id, article.title));
     },
     [dispatch, prefetchArticle, router]
   );
 
   const handleSelectCategory = useCallback(
     (categoryId: number, categoryName?: string) => {
-      const url = categoryName
-        ? `/(tabs)/read/filter?type=category&id=${categoryId}&name=${encodeURIComponent(
-            categoryName
-          )}`
-        : `/(tabs)/read/filter?type=category&id=${categoryId}`;
-      router.push(url);
+      router.push(getFilterRoute('category', categoryId, categoryName));
     },
     [router]
   );
