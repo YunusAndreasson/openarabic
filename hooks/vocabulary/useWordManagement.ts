@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 
+import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import { wordManagementService } from '@/services/wordManagement';
@@ -82,7 +83,9 @@ export function useWordManagement(options: UseWordManagementOptions = {}): UseWo
         onWordRemoved?.(word);
       } catch (error) {
         handleError(
-          error instanceof Error ? error : new Error('Failed to remove word from study'),
+          error instanceof Error
+            ? error
+            : new Error(STRINGS.FAILED_TO_REMOVE_WORD_FROM_STUDY),
           {
             analyticsEventName: 'Word_Management_Remove_Error',
             showToast: true,
@@ -105,10 +108,15 @@ export function useWordManagement(options: UseWordManagementOptions = {}): UseWo
         invalidateQueries();
         onWordUpdated?.(word);
       } catch (error) {
-        handleError(error instanceof Error ? error : new Error('Failed to reset word progress'), {
-          analyticsEventName: 'Word_Management_Reset_Error',
-          showToast: true,
-        });
+        handleError(
+          error instanceof Error
+            ? error
+            : new Error(STRINGS.FAILED_TO_RESET_WORD_PROGRESS),
+          {
+            analyticsEventName: 'Word_Management_Reset_Error',
+            showToast: true,
+          }
+        );
       } finally {
         setIsProcessing(false);
       }
@@ -126,10 +134,15 @@ export function useWordManagement(options: UseWordManagementOptions = {}): UseWo
         invalidateQueries();
         onWordUpdated?.(word);
       } catch (error) {
-        handleError(error instanceof Error ? error : new Error('Failed to skip word for today'), {
-          analyticsEventName: 'Word_Management_Skip_Error',
-          showToast: true,
-        });
+        handleError(
+          error instanceof Error
+            ? error
+            : new Error(STRINGS.FAILED_TO_SKIP_WORD_FOR_TODAY),
+          {
+            analyticsEventName: 'Word_Management_Skip_Error',
+            showToast: true,
+          }
+        );
       } finally {
         setIsProcessing(false);
       }
@@ -147,10 +160,15 @@ export function useWordManagement(options: UseWordManagementOptions = {}): UseWo
         invalidateQueries();
         onWordUpdated?.(word);
       } catch (error) {
-        handleError(error instanceof Error ? error : new Error('Failed to mark word as easy'), {
-          analyticsEventName: 'Word_Management_Easy_Error',
-          showToast: true,
-        });
+        handleError(
+          error instanceof Error
+            ? error
+            : new Error(STRINGS.FAILED_TO_MARK_WORD_AS_EASY),
+          {
+            analyticsEventName: 'Word_Management_Easy_Error',
+            showToast: true,
+          }
+        );
       } finally {
         setIsProcessing(false);
       }
@@ -168,10 +186,15 @@ export function useWordManagement(options: UseWordManagementOptions = {}): UseWo
         invalidateQueries();
         onWordUpdated?.(word);
       } catch (error) {
-        handleError(error instanceof Error ? error : new Error('Failed to mark word as hard'), {
-          analyticsEventName: 'Word_Management_Hard_Error',
-          showToast: true,
-        });
+        handleError(
+          error instanceof Error
+            ? error
+            : new Error(STRINGS.FAILED_TO_MARK_WORD_AS_HARD),
+          {
+            analyticsEventName: 'Word_Management_Hard_Error',
+            showToast: true,
+          }
+        );
       } finally {
         setIsProcessing(false);
       }
