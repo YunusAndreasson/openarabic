@@ -6,6 +6,7 @@ import { StyleSheet, View, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { BaseModalProps } from '@/types/ui/modal.types';
 
@@ -72,7 +73,7 @@ const SessionTypeModal = memo(
         <BottomSheetView style={styles.content}>
           <View style={styles.header}>
             <ThemedText style={styles.title} type="heading3">
-              Choose session type
+              {STRINGS.CHOOSE_SESSION_TYPE}
             </ThemedText>
           </View>
 
@@ -91,10 +92,10 @@ const SessionTypeModal = memo(
               </View>
               <View style={styles.optionContent}>
                 <ThemedText style={styles.optionTitle} type="body" weight="semibold">
-                  Visual
+                  {STRINGS.VISUAL}
                 </ThemedText>
                 <ThemedText colorName="secondaryText" type="caption">
-                  Tap and swipe
+                  {STRINGS.TAP_AND_SWIPE}
                 </ThemedText>
               </View>
             </TouchableOpacity>
@@ -113,10 +114,10 @@ const SessionTypeModal = memo(
               </View>
               <View style={styles.optionContent}>
                 <ThemedText style={styles.optionTitle} type="body" weight="semibold">
-                  Audio
+                  {STRINGS.AUDIO}
                 </ThemedText>
                 <ThemedText colorName="secondaryText" type="caption">
-                  Listen while multitasking
+                  {STRINGS.LISTEN_WHILE_MULTITASKING}
                 </ThemedText>
               </View>
             </TouchableOpacity>

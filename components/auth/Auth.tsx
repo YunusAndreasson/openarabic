@@ -108,7 +108,7 @@ function Auth(): JSX.Element {
             icon="mail-outline"
             importantForAutofill="yes"
             keyboardType="email-address"
-            placeholder="Your email"
+            placeholder={STRINGS.YOUR_EMAIL}
             returnKeyType="next"
             textAlignVertical="center"
             textContentType="emailAddress"
@@ -125,7 +125,7 @@ function Auth(): JSX.Element {
             error={passwordError}
             icon="lock-closed-outline"
             importantForAutofill="yes"
-            placeholder="Your password"
+            placeholder={STRINGS.YOUR_PASSWORD}
             returnKeyType="done"
             rightIcon={showPassword ? 'eye-off-outline' : 'eye-outline'}
             secureTextEntry={!showPassword}
@@ -134,7 +134,10 @@ function Auth(): JSX.Element {
             value={password}
             hint={
               isRegistering
-                ? `At least ${PASSWORD_REQUIREMENTS.minLength} characters with uppercase, lowercase and number`
+                ? STRINGS.PASSWORD_REQUIREMENTS_HINT.replace(
+                    '{minLength}',
+                    PASSWORD_REQUIREMENTS.minLength.toString()
+                  )
                 : undefined
             }
             onBlur={handlePasswordBlur}

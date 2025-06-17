@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import type { JSX } from 'react';
 
 import { createNavigationOptions } from '@/constants/modal';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
 export default function AccountLayout(): JSX.Element {
@@ -12,33 +13,33 @@ export default function AccountLayout(): JSX.Element {
       <Stack.Screen
         name="index"
         options={createNavigationOptions(colors, {
-          title: 'Account',
+          title: STRINGS.ACCOUNT,
           isRegularScreen: true,
         })}
       />
       <Stack.Screen
         name="classicalTexts"
         options={createNavigationOptions(colors, {
-          title: 'Classical Texts',
+          title: STRINGS.CLASSICAL_TEXTS,
         })}
       />
       <Stack.Screen
         name="learningMethod"
         options={createNavigationOptions(colors, {
-          title: 'Learning Method',
+          title: STRINGS.LEARNING_METHOD,
         })}
       />
       <Stack.Screen
         name="islamicCalendar"
         options={createNavigationOptions(colors, {
-          title: 'Islamic Calendar',
+          title: STRINGS.ISLAMIC_CALENDAR,
           isRegularScreen: true,
         })}
       />
       <Stack.Screen
         name="font-selector"
         options={createNavigationOptions(colors, {
-          title: 'Arabic Font',
+          title: STRINGS.ARABIC_FONT,
         })}
       />
     </Stack>

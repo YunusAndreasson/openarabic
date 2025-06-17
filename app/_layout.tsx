@@ -307,7 +307,8 @@ const styles = StyleSheet.create({
 });
 
 const ErrorFallback = memo(function ErrorFallback({ error }: FallbackProps) {
-  const errorMessage = error instanceof Error ? error.toString() : 'Unknown error occurred';
+  const errorMessage =
+    error instanceof Error ? error.toString() : STRINGS.UNKNOWN_ERROR_OCCURRED;
   return (
     <View style={styles.errorContainer}>
       <ThemedText

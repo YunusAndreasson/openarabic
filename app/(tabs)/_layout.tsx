@@ -8,6 +8,7 @@ import { Platform, StyleSheet } from 'react-native';
 import HeaderProfile from '@/components/HeaderProfile';
 import EditModeButton from '@/components/listen/EditModeButton';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
@@ -15,19 +16,19 @@ import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 const TAB_SCREENS = [
   {
     name: 'read',
-    title: 'Read',
+    title: STRINGS.READ,
     iconOutline: 'book-outline',
     iconFilled: 'book',
   },
   {
     name: 'listen',
-    title: 'Listen',
+    title: STRINGS.LISTEN,
     iconOutline: 'headset-outline',
     iconFilled: 'headset',
   },
   {
     name: 'practice',
-    title: 'Practice',
+    title: STRINGS.PRACTICE,
     iconOutline: 'trending-up-outline',
     iconFilled: 'trending-up',
   },
