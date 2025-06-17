@@ -24,7 +24,9 @@ export const authorsService = {
       .order('author(name)', { ascending: true });
 
     if (error) {
-      console.error('Error fetching unique authors:', error);
+      await handleError(new Error(error.message), {
+        toastMessage: 'Failed to load authors',
+      });
       throw error;
     }
 
