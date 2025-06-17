@@ -3,9 +3,20 @@ import type { AuthorRow } from '@/types/dbRow.types';
 import { handleError } from '@/utils/errorHandling';
 import { STRINGS } from '@/constants/strings';
 
+/**
+ * Result shape when selecting the `author` relation from `articles`.
+ */
+interface ArticleAuthorResult {
+  author: AuthorRow;
+}
+
 export const authorsService = {
   async getAuthors(): Promise<AuthorRow[]> {
-    const { data, error } = await supabase.from('authors').select('id, name').order('name');
+    const { data, error } = await supabase
+      .from('authors')
+      .select('id, name')
+      .order('name')
+      .returns<AuthorRow[]>();
 
     if (error) {
       await handleError(new Error(error.message), {
@@ -22,7 +33,8 @@ export const authorsService = {
       .select('author:authors!inner(id, name)', {
         count: 'exact',
       })
-      .order('author(name)', { ascending: true });
+      .order('author(name)', { ascending: true })
+      .returns<ArticleAuthorResult[]>();
 
     if (error) {
       await handleError(new Error(error.message), {
@@ -31,22 +43,21 @@ export const authorsService = {
       throw error;
     }
 
-    // Extract unique authors and ensure no duplicates
-    const uniqueAuthors = (data ?? [])
-      .map(item => (item as any).author)
-      .filter((author, index, self) => index === self.findIndex(a => a.id === author.id));
-
-    return uniqueAuthors;
+    // Build a map of unique authors to avoid duplicates
+    const uniqueMap = new Map<number, AuthorRow>();
+    for (const row of data ?? []) {
+      uniqueMap.set(row.author.id, row.author);
+    }
+    return Array.from(uniqueMap.values());
   },
 
   async getAuthorsByCategory(categoryId: number): Promise<AuthorRow[]> {
     const { data, error } = await supabase
       .from('articles')
-      .select('author:authors!inner(id, name)', {
-        head: true,
-      })
+      .select('author:authors!inner(id, name)')
       .eq('category_id', categoryId)
-      .order('name', { foreignTable: 'author' });
+      .order('name', { foreignTable: 'author' })
+      .returns<ArticleAuthorResult[]>();
 
     if (error) {
       await handleError(new Error(error.message), {
@@ -56,7 +67,7 @@ export const authorsService = {
     }
 
     return (data ?? [])
-      .map(item => (item as any).author)
+      .map(item => item.author)
       .sort((a, b) => a.name.localeCompare(b.name));
   },
 };
