@@ -28,10 +28,7 @@ import { Theme } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
 import { createNavigationOptions } from '@/constants/modal';
 import { STRINGS } from '@/constants/strings';
-import {
-  AUTH_ROUTE,
-  READ_TAB_ROUTE,
-} from '@/constants/routes';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { QUERY_DEFAULTS } from '@/constants/queryConfig';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useReadTabDataLoaded } from '@/hooks/app/useArticlesAndDueWordsLoaded';
@@ -231,9 +228,9 @@ function AppContent() {
 
       try {
         if (session) {
-          router.replace(READ_TAB_ROUTE);
+          router.replace(ROUTE_PATHS.READ_TAB);
         } else {
-          router.replace(AUTH_ROUTE);
+          router.replace(ROUTE_PATHS.AUTH);
         }
       } catch (err) {
         Sentry.captureException(err, {
@@ -242,7 +239,7 @@ function AppContent() {
             action: 'session_redirect',
           },
         });
-        router.replace(AUTH_ROUTE);
+        router.replace(ROUTE_PATHS.AUTH);
       }
     }
   }, [appReady, isAuthLoading, hasAttemptedRedirect, session, router]);

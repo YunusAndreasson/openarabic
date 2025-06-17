@@ -5,10 +5,10 @@ import { View, StyleSheet } from 'react-native';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { RoutePath } from '@/types/navigation.types';
-import { ACCOUNT_ROUTE, PRACTICE_TAB_ROUTE } from '@/constants/routes';
 import type { ErrorMessageProps } from '@/types/ui/review.types';
 
 /**
@@ -24,12 +24,12 @@ const ErrorMessage = memo(
 
     const handleRetry = useCallback(() => {
       // Map screenName to appropriate route
-      let route: RoutePath = '/(tabs)';
+      let route: RoutePath = ROUTE_PATHS.TABS as RoutePath;
 
       if (screenName === 'practice') {
-        route = PRACTICE_TAB_ROUTE as RoutePath;
+        route = ROUTE_PATHS.PRACTICE_TAB as RoutePath;
       } else if (screenName === 'account') {
-        route = ACCOUNT_ROUTE as RoutePath;
+        route = ROUTE_PATHS.ACCOUNT as RoutePath;
       }
 
       router.replace(route);

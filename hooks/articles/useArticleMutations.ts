@@ -9,7 +9,7 @@ import { useCallback, useMemo } from 'react';
 // Services
 import { useToast } from '@/components/providers/ToastProvider';
 import { STRINGS } from '@/constants/strings';
-import { AUTH_ROUTE } from '@/constants/routes';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
@@ -255,7 +255,7 @@ export const useArticleMutations = (
 
           if (refreshError || !refreshData.session) {
             // Silently redirect to auth - no toast for playlist actions
-            router.replace(AUTH_ROUTE);
+            router.replace(ROUTE_PATHS.AUTH);
             return;
           }
 
@@ -299,7 +299,7 @@ export const useArticleMutations = (
 
           if (refreshError || !refreshData.session) {
             showToast(STRINGS.PLEASE_SIGN_IN_TO_ADD_WORDS, undefined, 'info');
-            router.replace(AUTH_ROUTE);
+            router.replace(ROUTE_PATHS.AUTH);
             return;
           }
 
@@ -332,7 +332,7 @@ export const useArticleMutations = (
 
           if (refreshError || !refreshData.session) {
             showToast(STRINGS.PLEASE_SIGN_IN_TO_ADD_ROOTS, undefined, 'info');
-            router.replace(AUTH_ROUTE);
+            router.replace(ROUTE_PATHS.AUTH);
             return;
           }
 

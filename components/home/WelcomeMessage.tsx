@@ -8,7 +8,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { HIJRI_MONTHS } from '@/constants/hijri';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { ACCOUNT_ISLAMIC_CALENDAR_ROUTE } from '@/constants/routes';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { useColors } from '@/hooks/theme/useColors';
 
 const WelcomeMessage: FC = () => {
@@ -26,7 +26,7 @@ const WelcomeMessage: FC = () => {
   }, []);
 
   const handleCalendarPress = useCallback(() => {
-    router.push(ACCOUNT_ISLAMIC_CALENDAR_ROUTE);
+    router.push(ROUTE_PATHS.ACCOUNT_ISLAMIC_CALENDAR);
   }, [router]);
 
   return (
