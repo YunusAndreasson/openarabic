@@ -24,6 +24,8 @@ import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { selectionFeedback } from '@/utils/haptics';
 
+const FLEX_ONE_STYLE = { flex: 1 } as const;
+
 export default function ArticleScreen(): JSX.Element {
   const { id } = useLocalSearchParams<{ id: string }>();
 
@@ -172,8 +174,8 @@ export default function ArticleScreen(): JSX.Element {
     [getWordsForSentence, renderWord, colors, sentenceSettings, sentenceContainerStyle]
   );
 
-  const containerStyle = useMemo(() => ({ flex: 1 }), []);
-  const contentStyle = useMemo(() => [{ flex: 1 }, animatedStyle as ViewStyle], [animatedStyle]);
+  const containerStyle = FLEX_ONE_STYLE;
+  const contentStyle = useMemo(() => [FLEX_ONE_STYLE, animatedStyle as ViewStyle], [animatedStyle]);
 
   return (
     <ToastProvider>

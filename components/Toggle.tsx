@@ -9,6 +9,13 @@ import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { ToggleProps } from '@/types/ui/form.types';
 import { selectionFeedback } from '@/utils/haptics';
 
+const TOUCHABLE_WRAPPER_STYLE = {
+  minWidth: MIN_TOUCH_TARGET.LARGE,
+  minHeight: MIN_TOUCH_TARGET.LARGE,
+  alignItems: 'center',
+  justifyContent: 'center',
+} as const;
+
 function getToggleDimensions() {
   const TOGGLE_HEIGHT = LAYOUT.BUTTON.HEIGHT.SMALL - 4;
   const TOGGLE_PADDING = LAYOUT.SPACING.TINY;
@@ -106,12 +113,7 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
   return (
     <TouchableOpacity
       activeOpacity={1}
-      style={{
-        minWidth: MIN_TOUCH_TARGET.LARGE,
-        minHeight: MIN_TOUCH_TARGET.LARGE,
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
+      style={TOUCHABLE_WRAPPER_STYLE}
       onPress={handlePress}
     >
       <Animated.View style={[containerStyle, combinedContainerStyle]}>

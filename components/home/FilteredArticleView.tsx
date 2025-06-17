@@ -13,6 +13,8 @@ import type { Article } from '@/types/articles.types';
 import ListArticleItem from './ListArticleItem';
 
 const NOOP_ARTICLE_PRESS = () => {};
+const ITEM_HEIGHT = 100; // Adjust this based on your actual card height
+const SeparatorComponent = () => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />;
 
 interface FilteredArticleViewProps {
   /**
@@ -60,17 +62,12 @@ const FilteredArticleView: FC<FilteredArticleViewProps> = ({
     return <FilterSummary filteredCount={articles.length} totalCount={totalCount} />;
   }, [articles.length, totalCount]);
 
-  const renderSeparator = useCallback(
-    () => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />,
-    []
-  );
+  const renderSeparator = useCallback(SeparatorComponent, []);
 
   const overrideItemLayout = useCallback((layout: any) => {
     layout.size = ITEM_HEIGHT;
   }, []);
 
-  // Calculate the estimated item height based on content + padding + margins
-  const ITEM_HEIGHT = 100; // Adjust this based on your actual card height
 
   if (!loading && articles.length === 0) {
     return (

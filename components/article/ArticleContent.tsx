@@ -221,6 +221,7 @@ interface ArticleContentProps {
 }
 
 const SENTENCE_ITEM_HEIGHT = 70;
+const getItemType = () => 'sentence';
 
 export const ArticleContent = ({
   id,
@@ -278,7 +279,7 @@ export const ArticleContent = ({
     ]
   );
 
-  const getItemType = useCallback(() => 'sentence', []);
+  const getItemTypeCallback = useCallback(getItemType, []);
 
   const overrideItemLayout = useCallback((layout: any) => {
     layout.size = SENTENCE_ITEM_HEIGHT;
@@ -299,7 +300,7 @@ export const ArticleContent = ({
             estimatedFirstItemOffset={0}
             estimatedItemSize={SENTENCE_ITEM_HEIGHT}
             extraData={''}
-            getItemType={getItemType} // Add item type for better optimization
+            getItemType={getItemTypeCallback} // Add item type for better optimization
             initialScrollIndex={0}
             keyExtractor={item => item.id.toString()}
             ListHeaderComponent={headerComponent}
