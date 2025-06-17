@@ -176,7 +176,7 @@ describe('articlesService', () => {
       fromMock.mockReturnValue(builder);
 
       await expect(articlesService.getArticlesWithWordStats()).rejects.toThrow(err);
-      expect(handleError).toHaveBeenCalledWith(err, { toastMessage: 'Failed to load articles with word stats' });
+      expect(handleError).toHaveBeenCalledWith(err, { toastMessage: 'Failed to load articles' });
     });
   });
 

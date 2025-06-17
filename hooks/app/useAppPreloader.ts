@@ -8,7 +8,8 @@ import { articlesService } from '@/services/articles';
 import { authorsService } from '@/services/authors';
 import { categoriesService } from '@/services/categories';
 import { readingListService } from '@/services/readingList';
-import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
+import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
+import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { handleError } from '@/utils/errorHandling';
 
 interface AppPreloaderResult {

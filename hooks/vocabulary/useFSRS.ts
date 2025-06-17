@@ -1,9 +1,14 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import type { Card, StepUnit } from 'ts-fsrs';
+import type { Card } from 'ts-fsrs';
 import { createEmptyCard, fsrs, Rating, State, generatorParameters } from 'ts-fsrs';
 
-import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
+import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
+import {
+  OPTIMIZED_FSRS_CONFIG,
+  FSRS_QUERY_KEYS,
+  MIN_WORD_SPACING,
+} from '@/constants/fsrs';
 import type { UseFSRSOptions, UseFSRSResult, FSRSStateTracking } from '@/types/fsrs.types';
 import type { WordConfidence } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -13,24 +18,10 @@ import {
   getNextWordWithSpacing as getNextFromSpacingQueue,
   updateSpacingCounters as updateSpacingState,
   createSpacingState,
-  MIN_WORD_SPACING,
   type SpacingState,
 } from '@/utils/fsrsSpacing';
 import { PriorityQueue } from '@/utils/priorityQueue';
 
-// Default learning steps for new and relearning cards (in minutes)
-const DEFAULT_LEARNING_STEPS: StepUnit[] = ['1m', '10m'];
-const DEFAULT_RELEARNING_STEPS: StepUnit[] = ['5m', '10m'];
-
-const OPTIMIZED_FSRS_CONFIG = {
-  learning_steps: DEFAULT_LEARNING_STEPS,
-  relearning_steps: DEFAULT_RELEARNING_STEPS,
-  request_retention: 0.95,
-  maximum_interval: 180,
-  enable_fuzz: true,
-  enable_short_term: true,
-  timeout: 120000, // 2 minutes timeout for FSRS calculations
-} as const;
 
 // Consolidated counters and tracking data
 interface FSRSCounters {

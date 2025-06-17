@@ -10,7 +10,8 @@ import { useCallback, useMemo } from 'react';
 import { useToast } from '@/components/providers/ToastProvider';
 import { STRINGS } from '@/constants/strings';
 import { readingListService } from '@/services/readingList';
-import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
+import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
+import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 

@@ -1,13 +1,12 @@
 import type { StudyWord } from '../types/vocabulary.types';
 
 import type { PriorityQueue } from './priorityQueue';
+import { MIN_WORD_SPACING } from '@/constants/fsrs';
 
 export interface SpacingState {
   recentWords: number[];
   spacedWords: { word: StudyWord; remainingSpacing: number }[];
 }
-
-export const MIN_WORD_SPACING = 3;
 
 export function calculateWordPriority(word: StudyWord): number {
   const now = new Date();
