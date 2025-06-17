@@ -223,6 +223,24 @@ export const STRINGS = {
   CLASSICAL_TEXTS: 'Classical Texts',
   LEARNING_METHOD: 'Learning Method',
   ISLAMIC_CALENDAR: 'Islamic Calendar',
+  CATEGORY: 'Category',
+  FILTER: 'Filter',
+  INVALID_FILTER_PARAMETERS:
+    'Invalid filter parameters: type="{type}", id="{id}"',
+  INVALID_FILTER_ID: 'Invalid ID provided: {id}',
+  INVALID_FILTER_TYPE: 'Invalid filter type: "{type}"',
+  PRACTICE_TO_TRACK_LEARNING_SPEED: 'Practice to track learning speed',
+  STUDY_WORDS_TO_TRACK_MEMORY_RETENTION: 'Study words to track memory retention',
+  ACTIVE: 'active',
+  WHAT_YOU_GET: 'What You Get',
+  COMMON_CONCERNS: 'Common Concerns',
+  CLASSICAL_VS_MODERN_ARABIC: 'Classical vs Modern Arabic',
+  THE_ACQUISITION_PROCESS: 'The Acquisition Process',
+  WHY_CLASSICAL_ISLAMIC_TEXTS: 'Why Classical Islamic Texts',
+  RESEARCH_FOUNDATION: 'Research Foundation',
+  WHAT_THIS_MEANS: 'What This Means',
+  SCIENTIFIC_FOUNDATION: 'Scientific Foundation',
+  RESEARCH_SUPPORT: 'Research Support',
 } as const;
 
 export type StringKey = keyof typeof STRINGS;

@@ -4,6 +4,7 @@ import type { JSX } from 'react';
 
 import FilterButton from '@/components/FilterButton';
 import { createNavigationOptions } from '@/constants/modal';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ArticleParams, FilterParams } from '@/types/navigation.types';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
@@ -19,10 +20,10 @@ function getFilterTitle(params: FilterParams): string {
   }
 
   if (type === 'category') {
-    return 'Category';
+    return STRINGS.CATEGORY;
   }
 
-  return 'Filter';
+  return STRINGS.FILTER;
 }
 
 const FilterHeaderRight = ({ categoryId }: { categoryId: number }) => {
@@ -47,7 +48,7 @@ export default function ReadLayout(): JSX.Element {
       <Stack.Screen
         name="filterModal"
         options={createNavigationOptions(colors, {
-          title: 'Filters',
+          title: STRINGS.FILTERS,
         })}
       />
       <Stack.Screen
