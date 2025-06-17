@@ -2,6 +2,7 @@ import type { Article } from '@/types/articles.types';
 import { handleError } from '@/utils/errorHandling';
 
 import { supabase, checkAuthentication } from './supabase';
+import { STRINGS } from '@/constants/strings';
 
 type ReadingListItem = {
   user_id: string;
@@ -19,22 +20,22 @@ type ReadingListItem = {
 const errorConfig = {
   readingList: {
     load: {
-      toastMessage: 'Failed to load reading list',
+      toastMessage: STRINGS.FAILED_TO_LOAD_READING_LIST,
       analyticsEventName: 'Reading_List_Load_Error',
       sentrySeverity: 'error' as const,
     },
     add: {
-      toastMessage: 'Failed to add to reading list',
+      toastMessage: STRINGS.FAILED_TO_ADD_TO_READING_LIST,
       analyticsEventName: 'Reading_List_Add_Error',
       sentrySeverity: 'error' as const,
     },
     remove: {
-      toastMessage: 'Failed to remove from reading list',
+      toastMessage: STRINGS.FAILED_TO_REMOVE_FROM_READING_LIST,
       analyticsEventName: 'Reading_List_Remove_Error',
       sentrySeverity: 'error' as const,
     },
     check: {
-      toastMessage: 'Failed to check reading list status',
+      toastMessage: STRINGS.FAILED_TO_CHECK_READING_LIST_STATUS,
       analyticsEventName: 'Reading_List_Check_Error',
       sentrySeverity: 'warning' as const,
       showToast: false,

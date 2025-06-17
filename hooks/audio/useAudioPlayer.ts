@@ -10,6 +10,7 @@ import { AUDIO_STATES, type AudioState } from '@/constants/audio';
 import { audioCache } from '@/services/audioCache';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import { handleError } from '@/utils/errorHandling';
+import { STRINGS } from '@/constants/strings';
 
 /**
  * Enhanced audio player interface
@@ -183,7 +184,7 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
         shouldRouteThroughEarpiece: false,
       });
     } catch (error) {
-      handleError(error as Error, { toastMessage: 'Failed to initialize audio session' });
+      handleError(error as Error, { toastMessage: STRINGS.FAILED_TO_INITIALIZE_AUDIO_SESSION });
     }
   }, []);
 
@@ -218,7 +219,7 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
         } catch (error) {
           dispatch({ type: 'SET_LOADING', isLoading: false });
           handleError(error as Error, {
-            toastMessage: 'Failed to start audio playback',
+            toastMessage: STRINGS.FAILED_TO_START_PLAYBACK,
             showToast: true,
           });
         }
@@ -259,7 +260,7 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
         error instanceof Error &&
         !error.message.includes('NativeSharedObjectNotFoundException')
       ) {
-        handleError(error, { toastMessage: 'Failed to stop audio' });
+        handleError(error, { toastMessage: STRINGS.FAILED_TO_STOP_AUDIO });
       }
     }
   }, [audioPlayer, isPlayerReady]);
@@ -330,7 +331,7 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
         return processedTracks;
       } catch (error) {
         handleError(error as Error, {
-          toastMessage: 'Failed to load audio',
+          toastMessage: STRINGS.FAILED_TO_LOAD_AUDIO,
           showToast: true,
         });
         dispatch({ type: 'SET_LOADING', isLoading: false });
@@ -383,7 +384,7 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
         dispatch({ type: 'SET_AUTOPLAY', value: false });
         dispatch({ type: 'SET_LOADING', isLoading: false });
         handleError(error as Error, {
-          toastMessage: 'Failed to start audio playback',
+          toastMessage: STRINGS.FAILED_TO_START_PLAYBACK,
           showToast: true,
         });
         return false;
@@ -408,7 +409,7 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
         // The useAudioPlayer hook will automatically recreate the player with the new source
       }
     } catch (error) {
-      handleError(error as Error, { toastMessage: 'Failed to skip to next track' });
+      handleError(error as Error, { toastMessage: STRINGS.FAILED_TO_SKIP_TO_NEXT_TRACK });
     } finally {
       dispatch({ type: 'SET_LOADING', isLoading: false });
     }

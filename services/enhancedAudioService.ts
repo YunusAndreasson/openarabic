@@ -1,6 +1,7 @@
 // Import the type from the central location
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import { handleError } from '@/utils/errorHandling';
+import { STRINGS } from '@/constants/strings';
 
 import { articlesService } from './articles';
 import { readingListService } from './readingList';
@@ -27,7 +28,7 @@ export const enhancedAudioService = {
       };
     } catch (error) {
       await handleError(error instanceof Error ? error : new Error(String(error)), {
-        toastMessage: 'Failed to generate audio track',
+        toastMessage: STRINGS.FAILED_TO_GENERATE_AUDIO_TRACK,
         analyticsEventName: 'Enhanced_Audio_Generation_Error',
         sentrySeverity: 'error',
       });
@@ -60,7 +61,7 @@ export const enhancedAudioService = {
       return allTracks;
     } catch (error) {
       await handleError(error instanceof Error ? error : String(error), {
-        toastMessage: 'Failed to get enhanced audio tracks',
+        toastMessage: STRINGS.FAILED_TO_GET_ENHANCED_AUDIO_TRACKS,
         analyticsEventName: 'Enhanced_Audio_Playlist_Error',
         sentrySeverity: 'error',
       });

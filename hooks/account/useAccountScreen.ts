@@ -11,6 +11,7 @@ import { supabase } from '@/services/supabase';
 import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
+import { STRINGS } from '@/constants/strings';
 
 const analytics = {
   trackSignOut: async () => {},
@@ -60,28 +61,28 @@ export const useAccountScreen = () => {
       return () => {
         if (size === 0) {
           Alert.alert(
-            'No Cache',
-            `There is no ${
-              type === 'audio' ? 'cached audio files' : 'offline data cache'
-            } to clear.`
+            STRINGS.NO_CACHE,
+            type === 'audio'
+              ? STRINGS.NO_CACHED_AUDIO_FILES_TO_CLEAR
+              : STRINGS.NO_OFFLINE_DATA_CACHE_TO_CLEAR
           );
           return;
         }
 
-        Alert.alert(
-          title,
-          `${description} ${formatBytes(size)} of cached data. ${
-            type === 'audio'
-              ? "You'll need to re-download audio when playing articles."
-              : 'The app will need to reload this data when you use it again.'
-          }`,
+          Alert.alert(
+            title,
+            `${description} ${formatBytes(size)} of cached data. ${
+              type === 'audio'
+                ? STRINGS.AUDIO_REDOWNLOAD_REQUIRED
+                : STRINGS.DATA_RELOAD_REQUIRED
+            }`,
           [
             {
-              text: 'Cancel',
+              text: STRINGS.CANCEL,
               style: 'cancel',
             },
             {
-              text: 'Clear Cache',
+              text: STRINGS.CLEAR_CACHE,
               style: 'destructive',
               onPress: async () => {
                 setIsClearingCache(true);
@@ -90,13 +91,21 @@ export const useAccountScreen = () => {
                   setSizeFunction(0);
                   lightFeedback();
                   Alert.alert(
-                    'Success',
-                    `${type === 'audio' ? 'Audio' : 'Offline data'} cache cleared successfully`
+                    STRINGS.SUCCESS,
+                    `${
+                      type === 'audio'
+                        ? STRINGS.AUDIO_CACHE_CLEARED_SUCCESSFULLY
+                        : STRINGS.OFFLINE_DATA_CACHE_CLEARED_SUCCESSFULLY
+                    }`
                   );
                 } catch (error) {
                   Alert.alert(
-                    'Error',
-                    `Failed to clear ${type === 'audio' ? 'audio' : 'offline data'} cache`
+                    STRINGS.ERROR,
+                    `${
+                      type === 'audio'
+                        ? STRINGS.FAILED_TO_CLEAR_AUDIO_CACHE
+                        : STRINGS.FAILED_TO_CLEAR_OFFLINE_CACHE
+                    }`
                   );
                   handleError(error as Error, { showToast: false });
                 } finally {
@@ -118,36 +127,39 @@ export const useAccountScreen = () => {
         cacheSize,
         clearCache,
         setCacheSize,
-        'Clear Audio Cache',
-        'This will delete'
+        STRINGS.CLEAR_AUDIO_CACHE,
+        STRINGS.THIS_WILL_DELETE
       ),
     [createCacheClearHandler, cacheSize, clearCache]
   );
 
   const handleSignOut = useCallback(() => {
     Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
+      STRINGS.SIGN_OUT,
+      STRINGS.ARE_YOU_SURE_SIGN_OUT,
       [
         {
-          text: 'Cancel',
+          text: STRINGS.CANCEL,
           style: 'cancel',
         },
         {
-          text: 'Sign Out',
+          text: STRINGS.SIGN_OUT,
           style: 'destructive',
           onPress: async () => {
             try {
               await analytics.trackSignOut();
               const { error } = await supabase.auth.signOut();
-              if (error) {
-                Alert.alert('Error', error.message);
-                return;
-              }
+                if (error) {
+                  Alert.alert(STRINGS.ERROR, error.message);
+                  return;
+                }
               await analytics.reset();
               router.replace('/auth');
             } catch (error) {
-              Alert.alert('Error', error instanceof Error ? error.message : 'Failed to sign out');
+              Alert.alert(
+                STRINGS.ERROR,
+                error instanceof Error ? error.message : STRINGS.FAILED_TO_SIGN_OUT
+              );
             }
           },
         },
@@ -159,10 +171,13 @@ export const useAccountScreen = () => {
   const handleReminderToggle = useCallback(
     async (enabled: boolean) => {
       if (enabled && !notificationPermissions) {
-        Alert.alert('Enable Notifications', 'Turn on notifications to get daily study reminders.', [
-          { text: 'Cancel', style: 'cancel' },
+        Alert.alert(
+          STRINGS.ENABLE_NOTIFICATIONS,
+          STRINGS.TURN_ON_NOTIFICATIONS,
+          [
+          { text: STRINGS.CANCEL, style: 'cancel' },
           {
-            text: 'Settings',
+            text: STRINGS.SETTINGS,
             onPress: () => {
               Linking.openSettings();
             },

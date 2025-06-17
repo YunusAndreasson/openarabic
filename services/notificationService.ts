@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import type { ReminderTime } from '@/types/notifications.types';
 import { handleError } from '@/utils/errorHandling';
+import { STRINGS } from '@/constants/strings';
 
 // Configure notification behavior
 Notifications.setNotificationHandler({
@@ -63,7 +64,7 @@ export async function scheduleReminder(reminderTime: ReminderTime): Promise<stri
   const initialized = await initialize();
   if (!initialized) {
     handleError(new Error('Notifications disabled'), {
-      toastMessage: 'Notifications disabled',
+      toastMessage: STRINGS.NOTIFICATIONS_DISABLED,
       captureSentry: false,
     });
     return null;

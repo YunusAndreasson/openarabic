@@ -177,7 +177,7 @@ export default function ListenScreen(): JSX.Element {
 
   useEffect(() => {
     if (enhancedTracksError) {
-      showToast('Failed to load audio tracks', 4000, 'error');
+      showToast(STRINGS.FAILED_TO_LOAD_AUDIO_TRACKS, 4000, 'error');
     }
   }, [enhancedTracksError, showToast]);
 

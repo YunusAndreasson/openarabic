@@ -13,6 +13,7 @@ import { removeFromCustomOrder } from '@/store/listenSlice';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import { handleError } from '@/utils/errorHandling';
+import { STRINGS } from '@/constants/strings';
 import { selectionFeedback } from '@/utils/haptics';
 
 export type ReadingListItem = Tables<'reading_list'> & {
@@ -306,7 +307,7 @@ export const useListenScreen = () => {
           } else {
             setPlaybackMode('none');
             handleError(new Error('Audio not available for this article'), {
-              toastMessage: 'Audio not available for this article',
+              toastMessage: STRINGS.AUDIO_NOT_AVAILABLE_FOR_ARTICLE,
               showToast: true,
             });
           }
