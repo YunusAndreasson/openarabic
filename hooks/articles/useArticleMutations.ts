@@ -8,6 +8,7 @@ import { useCallback, useMemo } from 'react';
 
 // Services
 import { useToast } from '@/components/providers/ToastProvider';
+import { STRINGS } from '@/constants/strings';
 import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import { supabase } from '@/services/supabase';
@@ -149,7 +150,7 @@ export const useArticleMutations = (
           queryClient.setQueryData(FSRS_QUERY_KEYS.all(userId), context.previousStudyWords);
         }
         handleError(error);
-        showToast('Error updating study list', undefined, 'error');
+        showToast(STRINGS.ERROR_UPDATING_STUDY_LIST, undefined, 'error');
         queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(userId) });
       },
       onSuccess: async (_: boolean, { userId }: { userId: string }) => {
@@ -194,7 +195,7 @@ export const useArticleMutations = (
           queryClient.setQueryData(FSRS_QUERY_KEYS.all(userId), context.previousStudyWords);
         }
         handleError(error);
-        showToast('Error updating study list', undefined, 'error');
+        showToast(STRINGS.ERROR_UPDATING_STUDY_LIST, undefined, 'error');
         queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(userId) });
       },
       onSuccess: async (_: boolean, { userId }: { userId: string }) => {
@@ -295,7 +296,7 @@ export const useArticleMutations = (
           const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
 
           if (refreshError || !refreshData.session) {
-            showToast('Please sign in to add words to your study list', undefined, 'info');
+            showToast(STRINGS.PLEASE_SIGN_IN_TO_ADD_WORDS, undefined, 'info');
             router.replace('/auth');
             return;
           }
@@ -328,7 +329,7 @@ export const useArticleMutations = (
           const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
 
           if (refreshError || !refreshData.session) {
-            showToast('Please sign in to add roots to your study list', undefined, 'info');
+            showToast(STRINGS.PLEASE_SIGN_IN_TO_ADD_ROOTS, undefined, 'info');
             router.replace('/auth');
             return;
           }
@@ -338,7 +339,7 @@ export const useArticleMutations = (
             { userId: refreshData.session.user.id, rootId },
             {
               onError: () => {
-                showToast('Error updating study list', undefined, 'error');
+                showToast(STRINGS.ERROR_UPDATING_STUDY_LIST, undefined, 'error');
               },
             }
           );
@@ -350,7 +351,7 @@ export const useArticleMutations = (
           { userId: session.user.id, rootId },
           {
             onError: () => {
-              showToast('Error updating study list', undefined, 'error');
+              showToast(STRINGS.ERROR_UPDATING_STUDY_LIST, undefined, 'error');
             },
           }
         );

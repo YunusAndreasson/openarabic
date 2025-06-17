@@ -1,6 +1,7 @@
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
+import { STRINGS } from '@/constants/strings';
 
 export const listenAudioService = {
   /**
@@ -70,7 +71,7 @@ export const listenAudioService = {
     } catch (error) {
       if (!signal?.aborted) {
         await handleError(error instanceof Error ? error : new Error(String(error)), {
-          toastMessage: 'Failed to generate vocabulary audio tracks',
+          toastMessage: STRINGS.FAILED_TO_GENERATE_VOCABULARY_AUDIO_TRACKS,
           analyticsEventName: 'Listen_Audio_Generation_Error',
           sentrySeverity: 'error',
         });

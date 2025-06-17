@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 
 import { audioCache } from '@/services/audioCache';
 import { handleError } from '@/utils/errorHandling';
+import { STRINGS } from '@/constants/strings';
 
 /**
  * Hook for accessing audio cache functionality
@@ -11,7 +12,7 @@ export function useAudioCache() {
     try {
       await audioCache.clearCache();
     } catch (error) {
-      await handleError(error as Error, { toastMessage: 'Failed to clear audio cache' });
+      await handleError(error as Error, { toastMessage: STRINGS.FAILED_TO_CLEAR_AUDIO_CACHE });
       throw error;
     }
   }, []);
@@ -22,7 +23,7 @@ export function useAudioCache() {
       // Ensure we always return a valid number, default to 0 for invalid values
       return typeof size === 'number' && !isNaN(size) && size >= 0 ? size : 0;
     } catch (error) {
-      await handleError(error as Error, { toastMessage: 'Failed to get cache size' });
+      await handleError(error as Error, { toastMessage: STRINGS.FAILED_TO_GET_CACHE_SIZE });
       return 0;
     }
   }, []);

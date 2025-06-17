@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 import { handleError } from '@/utils/errorHandling';
+import { STRINGS } from '@/constants/strings';
 
 export interface SleepTimerState {
   isActive: boolean;
@@ -68,7 +69,7 @@ export function useSleepTimer(onTimerComplete?: () => void): UseSleepTimerResult
         }, 1000);
       } catch (error) {
         handleError(error as Error, {
-          toastMessage: 'Failed to start sleep timer',
+          toastMessage: STRINGS.FAILED_TO_START_SLEEP_TIMER,
           analyticsEventName: 'Sleep_Timer_Start_Error',
         });
       }
@@ -84,7 +85,7 @@ export function useSleepTimer(onTimerComplete?: () => void): UseSleepTimerResult
       clearTimerInterval();
     } catch (error) {
       handleError(error as Error, {
-        toastMessage: 'Failed to cancel sleep timer',
+        toastMessage: STRINGS.FAILED_TO_CANCEL_SLEEP_TIMER,
         analyticsEventName: 'Sleep_Timer_Cancel_Error',
       });
     }

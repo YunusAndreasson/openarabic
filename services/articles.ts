@@ -1,6 +1,7 @@
 import type { Article } from '@/types/articles.types';
 import type { ArticleRow } from '@/types/dbRow.types';
 import { handleError } from '@/utils/errorHandling';
+import { STRINGS } from '@/constants/strings';
 import { mapToArticle, mapToArticles } from '@/utils/typeMappers';
 
 import { supabase } from './supabase';
@@ -123,7 +124,7 @@ export const articlesService = {
       const { data, error } = await query;
       if (error) {
         await handleError(new Error(error.message), {
-          toastMessage: 'Failed to load articles',
+          toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLES,
           analyticsProperties: {
             ...(categoryId !== undefined && { categoryId }),
             ...(authorId !== undefined && { authorId }),
@@ -136,7 +137,7 @@ export const articlesService = {
       return mapToArticles((data ?? []) as unknown as ArticleRow[]);
     } catch (err) {
       await handleError(err instanceof Error ? err : new Error('Unknown error loading articles'), {
-        toastMessage: 'Failed to load articles',
+        toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLES,
         analyticsProperties: {
           ...(categoryId !== undefined && { categoryId }),
           ...(authorId !== undefined && { authorId }),
@@ -158,7 +159,7 @@ export const articlesService = {
 
       if (error) {
         await handleError(new Error(error.message), {
-          toastMessage: 'Failed to load articles with word stats',
+          toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLES,
         });
         throw error;
       }
@@ -167,7 +168,7 @@ export const articlesService = {
       await handleError(
         err instanceof Error ? err : new Error('Unknown error loading articles with word stats'),
         {
-          toastMessage: 'Failed to load articles with word stats',
+          toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLES,
         }
       );
       throw err;
@@ -184,7 +185,7 @@ export const articlesService = {
 
       if (error) {
         await handleError(new Error(error.message), {
-          toastMessage: 'Failed to load article',
+          toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLE,
           analyticsProperties: { id },
         });
         throw error;
@@ -197,7 +198,7 @@ export const articlesService = {
       return mapToArticle(data as unknown as ArticleRow);
     } catch (err) {
       await handleError(err instanceof Error ? err : new Error('Unknown error loading article'), {
-        toastMessage: 'Failed to load article',
+        toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLE,
         analyticsProperties: { id },
       });
       throw err;
@@ -215,7 +216,7 @@ export const articlesService = {
 
       if (error) {
         await handleError(new Error(error.message), {
-          toastMessage: 'Failed to load article',
+          toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLE,
           analyticsProperties: { id },
         });
         throw error;
@@ -228,7 +229,7 @@ export const articlesService = {
       return mapToArticle(data as unknown as ArticleRow);
     } catch (err) {
       await handleError(err instanceof Error ? err : new Error('Unknown error loading article'), {
-        toastMessage: 'Failed to load article',
+        toastMessage: STRINGS.FAILED_TO_LOAD_ARTICLE,
         analyticsProperties: { id },
       });
       throw err;

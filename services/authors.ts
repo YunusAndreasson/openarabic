@@ -1,6 +1,7 @@
 import { supabase } from '@/services/supabase';
 import type { AuthorRow } from '@/types/dbRow.types';
 import { handleError } from '@/utils/errorHandling';
+import { STRINGS } from '@/constants/strings';
 
 export const authorsService = {
   async getAuthors(): Promise<AuthorRow[]> {
@@ -8,7 +9,7 @@ export const authorsService = {
 
     if (error) {
       await handleError(new Error(error.message), {
-        toastMessage: 'Failed to load authors',
+        toastMessage: STRINGS.FAILED_TO_LOAD_AUTHORS,
       });
       throw error;
     }
@@ -25,7 +26,7 @@ export const authorsService = {
 
     if (error) {
       await handleError(new Error(error.message), {
-        toastMessage: 'Failed to load authors',
+        toastMessage: STRINGS.FAILED_TO_LOAD_AUTHORS,
       });
       throw error;
     }
@@ -49,7 +50,7 @@ export const authorsService = {
 
     if (error) {
       await handleError(new Error(error.message), {
-        toastMessage: 'Failed to load authors',
+        toastMessage: STRINGS.FAILED_TO_LOAD_AUTHORS,
       });
       throw error;
     }

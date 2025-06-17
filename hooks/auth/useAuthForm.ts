@@ -6,6 +6,7 @@ import { Alert } from 'react-native';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
+import { STRINGS } from '@/constants/strings';
 const analytics = {
   identify: async (
     _userId: string,
@@ -122,7 +123,7 @@ export function useAuthForm(): UseAuthFormReturn {
           tags: { location: 'auth_component' },
           extra: { error: error.message },
         });
-        Alert.alert('Sign in failed', error.message);
+        Alert.alert(STRINGS.SIGN_IN_FAILED, error.message);
       } else {
         supabase.auth.startAutoRefresh();
         Sentry.addBreadcrumb({
@@ -146,11 +147,11 @@ export function useAuthForm(): UseAuthFormReturn {
     } catch (err) {
       if (!isMountedRef.current) return;
       handleError(err instanceof Error ? err : new Error('Sign in error'), {
-        toastMessage: 'Sign in failed. Please try again',
+        toastMessage: `${STRINGS.SIGN_IN_FAILED}. ${STRINGS.PLEASE_TRY_AGAIN}`,
         analyticsEventName: 'Sign_In_Error',
         sentrySeverity: 'error',
       });
-      Alert.alert('Sign in failed', 'Please try again');
+      Alert.alert(STRINGS.SIGN_IN_FAILED, STRINGS.PLEASE_TRY_AGAIN);
     } finally {
       if (isMountedRef.current) {
         setLoading(false);
@@ -174,7 +175,7 @@ export function useAuthForm(): UseAuthFormReturn {
       });
       if (error) {
         if (!isMountedRef.current) return;
-        Alert.alert('Account creation failed', error.message);
+        Alert.alert(STRINGS.ACCOUNT_CREATION_FAILED, error.message);
       } else {
         supabase.auth.startAutoRefresh();
         if (data?.user) {
@@ -186,11 +187,11 @@ export function useAuthForm(): UseAuthFormReturn {
         await analytics.trackSignUp('email');
         successFeedback();
         if (!isMountedRef.current) return;
-        Alert.alert('Account created', 'Check your email for the confirmation link');
+        Alert.alert(STRINGS.ACCOUNT_CREATED, STRINGS.CHECK_EMAIL_CONFIRMATION);
       }
     } catch (err) {
       if (!isMountedRef.current) return;
-      Alert.alert('Account creation failed', 'Please try again');
+      Alert.alert(STRINGS.ACCOUNT_CREATION_FAILED, STRINGS.PLEASE_TRY_AGAIN);
       handleError(err as Error);
     } finally {
       if (isMountedRef.current) {
