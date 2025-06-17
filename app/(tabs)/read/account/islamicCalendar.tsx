@@ -10,6 +10,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT, FONTS } from '@/constants/layout';
 import { createNavigationOptions } from '@/constants/modal';
+import { STRINGS } from '@/constants/strings';
 import { useIslamicCalendarEvents, formatDaysUntil } from '@/hooks';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -22,11 +23,11 @@ export default function IslamicCalendarScreen(): JSX.Element {
 
   return (
     <>
-      <Stack.Screen
-        options={createNavigationOptions(colors, {
-          title: 'Calendar',
-          isRegularScreen: true,
-        })}
+        <Stack.Screen
+          options={createNavigationOptions(colors, {
+            title: STRINGS.CALENDAR,
+            isRegularScreen: true,
+          })}
       />
 
       <ThemedView
@@ -58,7 +59,7 @@ export default function IslamicCalendarScreen(): JSX.Element {
                     style={[styles.currentDateText, { color: colors.primary }]}
                     type="bodyBold"
                   >
-                    Today
+                    {STRINGS.TODAY}
                   </ThemedText>
                   <ThemedText
                     skipDefaultColor
@@ -223,8 +224,7 @@ export default function IslamicCalendarScreen(): JSX.Element {
               size={16}
             />
             <ThemedText style={styles.noteText} type="caption" variant="secondary">
-              Dates may vary by 1-2 days depending on moon sighting. Active events show current
-              progress.
+              {STRINGS.DATE_VARIANCE_NOTE}
             </ThemedText>
           </View>
         </ScrollView>

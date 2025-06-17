@@ -177,7 +177,7 @@ export default function InfoModalScreen(): JSX.Element {
         {content.tips.length > 0 && (
           <View style={[styles.tipsContainer, { borderTopColor: colors.borderOverlay }]}>
             <ThemedText style={styles.tipsTitle} type="heading3" weight="bold">
-              Key Insights
+              {STRINGS.KEY_INSIGHTS}
             </ThemedText>
             {content.tips.map(tip => (
               <View key={tip} style={styles.tipItem}>
