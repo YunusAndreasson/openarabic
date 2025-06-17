@@ -9,7 +9,8 @@ import {
   type ReactNode,
 } from 'react';
 
-import { Toast, type ToastType } from '@/components/Toast';
+import { Toast } from '@/components/Toast';
+import type { ToastType } from '@/types/ui/toast.types';
 import { setGlobalToastHandler } from '@/utils/errorHandling';
 
 interface ToastContextType {

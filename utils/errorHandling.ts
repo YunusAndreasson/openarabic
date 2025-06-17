@@ -1,21 +1,14 @@
 import * as Sentry from '@sentry/react-native';
+import type { ToastType } from '@/types/ui/toast.types';
 
 // Store toast handler globally - updated to support types
 let globalToastHandler:
-  | ((
-      message: string,
-      duration?: number,
-      type?: 'error' | 'important' | 'info' | 'success'
-    ) => void)
+  | ((message: string, duration?: number, type?: ToastType) => void)
   | null = null;
 
 // Function to set the toast handler (call this in your ToastProvider)
 export const setGlobalToastHandler = (
-  handler: (
-    message: string,
-    duration?: number,
-    type?: 'error' | 'important' | 'info' | 'success'
-  ) => void
+  handler: (message: string, duration?: number, type?: ToastType) => void
 ): void => {
   globalToastHandler = handler;
 };
@@ -28,7 +21,7 @@ interface ErrorOptions {
   // Toast duration in ms (default: 2500)
   toastDuration?: number;
   // Toast type for visual styling
-  toastType?: 'error' | 'important' | 'info' | 'success';
+  toastType?: ToastType;
   // Whether to track in Mixpanel
   trackAnalytics?: boolean;
   // Custom analytics event name (default: 'Error Occurred')
@@ -65,7 +58,7 @@ const showToastMessage = (
   errorObj: Error,
   message?: string,
   duration?: number,
-  type?: 'error' | 'important' | 'info' | 'success'
+  type?: ToastType
 ): void => {
   if (globalToastHandler) {
     const toastMessage = message || errorObj.message;

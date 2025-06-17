@@ -16,8 +16,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
 import { ThemedText } from './ThemedText';
-
-export type ToastType = 'error' | 'important' | 'info' | 'success';
+import type { ToastType } from '@/types/ui/toast.types';
 
 interface ToastProps {
   visible: boolean;
