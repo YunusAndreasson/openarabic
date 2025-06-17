@@ -282,9 +282,12 @@ export const ArticleContent = ({
 
   const getItemTypeCallback = useCallback(getItemType, []);
 
-  const overrideItemLayout = useCallback((layout: any) => {
-    layout.size = SENTENCE_ITEM_HEIGHT;
-  }, []);
+  const overrideItemLayout = useCallback(
+    (layout: { span?: number; size?: number }) => {
+      layout.size = SENTENCE_ITEM_HEIGHT;
+    },
+    []
+  );
 
   return (
     <View style={styles.flexOne}>

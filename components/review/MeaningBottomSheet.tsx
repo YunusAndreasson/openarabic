@@ -1,5 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import BottomSheet, { BottomSheetView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
+import BottomSheet, {
+  BottomSheetView,
+  BottomSheetBackdrop,
+  type BottomSheetBackdropProps,
+} from '@gorhom/bottom-sheet';
 import { useCallback, useRef, useEffect, memo, type FC } from 'react';
 import { View, StyleSheet } from 'react-native';
 
@@ -32,7 +36,7 @@ const MeaningBottomSheet: FC<MeaningBottomSheetProps> = memo(({ visible, onClose
   }, [onClose]);
 
   const renderBackdrop = useCallback(
-    (props: any) => (
+    (props: BottomSheetBackdropProps) => (
       <BottomSheetBackdrop
         {...props}
         disappearsOnIndex={-1}

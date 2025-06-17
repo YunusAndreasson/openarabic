@@ -1,5 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import BottomSheet, { BottomSheetView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
+import BottomSheet, {
+  BottomSheetView,
+  BottomSheetBackdrop,
+  type BottomSheetBackdropProps,
+} from '@gorhom/bottom-sheet';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 
@@ -114,7 +118,7 @@ const WordManagementModal = memo(
 
     // Use built-in backdrop component
     const renderBackdrop = useCallback(
-      (props: any) => (
+      (props: BottomSheetBackdropProps) => (
         <BottomSheetBackdrop
           {...props}
           disappearsOnIndex={-1}

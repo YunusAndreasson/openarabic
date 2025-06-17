@@ -65,9 +65,12 @@ const FilteredArticleView: FC<FilteredArticleViewProps> = ({
 
   const renderSeparator = useCallback(SeparatorComponent, []);
 
-  const overrideItemLayout = useCallback((layout: any) => {
-    layout.size = ITEM_HEIGHT;
-  }, []);
+  const overrideItemLayout = useCallback(
+    (layout: { span?: number; size?: number }) => {
+      layout.size = ITEM_HEIGHT;
+    },
+    []
+  );
 
 
   if (!loading && articles.length === 0) {
