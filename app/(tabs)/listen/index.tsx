@@ -17,6 +17,7 @@ import SleepTimer from '@/components/listen/SleepTimer';
 import { useToast } from '@/components/providers/ToastProvider';
 import { AUDIO_STATES, type AudioState } from '@/constants/audio';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useListenScreen, useListenUI } from '@/hooks/listen';
 import type { ReadingListItem } from '@/hooks/listen/useListenScreen';
 import { useColors } from '@/hooks/theme/useColors';
@@ -273,7 +274,9 @@ export default function ListenScreen(): JSX.Element {
     return (
       <ThemedView style={styles.loadingContainer}>
         <ActivityIndicator color={colors.tint} size="large" />
-        <ThemedText style={{ marginTop: LAYOUT.SPACING.MEDIUM }}>Loading your playlist</ThemedText>
+        <ThemedText style={{ marginTop: LAYOUT.SPACING.MEDIUM }}>
+          {STRINGS.LOADING_PLAYLIST}
+        </ThemedText>
       </ThemedView>
     );
   }

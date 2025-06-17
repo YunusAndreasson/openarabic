@@ -5,6 +5,7 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
@@ -56,7 +57,7 @@ const EditModeButton: FC<EditModeButtonProps> = ({ onEditModeChange }) => {
           },
         ]}
       >
-        {editMode ? 'Done' : 'Edit'}
+        {editMode ? STRINGS.DONE : STRINGS.EDIT}
       </ThemedText>
     </AnimatedTouchable>
   );

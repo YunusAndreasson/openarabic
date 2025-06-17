@@ -13,6 +13,7 @@ import { ListenHeader, CompletionScreen } from '@/components/listen';
 import RepeatButton from '@/components/listen/RepeatButton';
 import { WordDisplay } from '@/components/review';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useAudioPracticeSession } from '@/hooks/practice';
@@ -151,7 +152,9 @@ export default function ListenScreen(): JSX.Element {
               size={18}
               style={styles.noteIcon}
             />
-            <ThemedText style={styles.noteText}>Works with screen off</ThemedText>
+            <ThemedText style={styles.noteText}>
+              {STRINGS.WORKS_WITH_SCREEN_OFF}
+            </ThemedText>
           </View>
         </View>
       </View>

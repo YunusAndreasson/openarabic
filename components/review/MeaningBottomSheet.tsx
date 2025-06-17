@@ -5,6 +5,7 @@ import { View, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
 interface MeaningBottomSheetProps {
@@ -56,7 +57,7 @@ const MeaningBottomSheet: FC<MeaningBottomSheetProps> = memo(({ visible, onClose
     >
       <BottomSheetView style={[styles.content, { backgroundColor: colors.elevation1 }]}>
         <View style={styles.header}>
-          <ThemedText type="heading3">How to practice</ThemedText>
+          <ThemedText type="heading3">{STRINGS.HOW_TO_PRACTICE}</ThemedText>
         </View>
 
         <View style={styles.instructionsContainer}>
@@ -64,21 +65,21 @@ const MeaningBottomSheet: FC<MeaningBottomSheetProps> = memo(({ visible, onClose
             <View style={[styles.instructionIcon, { backgroundColor: colors.elevation2 }]}>
               <Ionicons name="arrow-back" size={18} color={colors.captionText} />
             </View>
-            <ThemedText>Swipe left if you do not know</ThemedText>
+            <ThemedText>{STRINGS.SWIPE_LEFT}</ThemedText>
           </View>
 
           <View style={styles.instructionItem}>
             <View style={[styles.instructionIcon, { backgroundColor: colors.elevation2 }]}>
               <Ionicons name="finger-print" size={18} color={colors.captionText} />
             </View>
-            <ThemedText>Tap if you know it vaguely</ThemedText>
+            <ThemedText>{STRINGS.TAP_IF_VAGUE}</ThemedText>
           </View>
 
           <View style={styles.instructionItem}>
             <View style={[styles.instructionIcon, { backgroundColor: colors.elevation2 }]}>
               <Ionicons name="arrow-forward" size={18} color={colors.captionText} />
             </View>
-            <ThemedText>Swipe right if you know</ThemedText>
+            <ThemedText>{STRINGS.SWIPE_RIGHT}</ThemedText>
           </View>
         </View>
       </BottomSheetView>

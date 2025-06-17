@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
 type InfoModalType = 'efficiency' | 'mastery' | 'retrievability';
@@ -123,7 +124,7 @@ export default function InfoModalScreen(): JSX.Element {
   if (!content) {
     return (
       <ThemedView style={styles.container}>
-        <ThemedText type="body">Content not found</ThemedText>
+        <ThemedText type="body">{STRINGS.CONTENT_NOT_FOUND}</ThemedText>
       </ThemedView>
     );
   }

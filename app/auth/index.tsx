@@ -7,6 +7,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ThemedText } from '@/components/ThemedText';
 import Auth from '@/components/auth';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
 const AuthScreen = memo(function AuthScreen(): JSX.Element {
@@ -46,10 +47,10 @@ const AuthScreen = memo(function AuthScreen(): JSX.Element {
           {/* Header Section - Visual Hierarchy Level 1 */}
           <View style={styles.headerContainer}>
             <ThemedText align="center" type="heading1" colorName="headingText">
-              Welcome to OpenArabic
+              {STRINGS.WELCOME_TITLE}
             </ThemedText>
             <ThemedText align="center" type="body" variant="secondary" style={styles.subtitle}>
-              Sign in to continue learning Arabic
+              {STRINGS.WELCOME_SUBTITLE}
             </ThemedText>
           </View>
 

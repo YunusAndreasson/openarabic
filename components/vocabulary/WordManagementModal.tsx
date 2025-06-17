@@ -5,6 +5,7 @@ import { StyleSheet, View, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { BaseModalProps } from '@/types/ui/modal.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
@@ -159,7 +160,7 @@ const WordManagementModal = memo(
         <BottomSheetView style={styles.content}>
           {/* Header */}
           <View style={styles.header}>
-            <ThemedText type="heading3">Word options</ThemedText>
+            <ThemedText type="heading3">{STRINGS.WORD_OPTIONS}</ThemedText>
           </View>
 
           {/* Actions */}
