@@ -9,6 +9,12 @@ import { StyleSheet, View, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import {
+  STRUGGLING_DIFFICULTY_THRESHOLD,
+  STRUGGLING_LAPSES_THRESHOLD,
+  STRICT_MASTERED_STABILITY_THRESHOLD,
+  MASTERED_DIFFICULTY_MAX,
+} from '@/constants/fsrs';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { BaseModalProps } from '@/types/ui/modal.types';
@@ -222,8 +228,12 @@ function getActionsForWord(word: StudyWord, colors: ThemeColors): WordManagement
   const difficulty = word.fsrs_difficulty ?? 6.5;
   const stability = word.fsrs_stability ?? 0;
   const lapses = word.fsrs_lapses ?? 0;
-  const isStruggling = difficulty >= 8.0 && lapses > 0;
-  const isMastered = stability >= 21 && difficulty <= 5;
+  const isStruggling =
+    difficulty >= STRUGGLING_DIFFICULTY_THRESHOLD &&
+    lapses >= STRUGGLING_LAPSES_THRESHOLD;
+  const isMastered =
+    stability >= STRICT_MASTERED_STABILITY_THRESHOLD &&
+    difficulty <= MASTERED_DIFFICULTY_MAX;
 
   const baseActions: WordManagementAction[] = [
     {

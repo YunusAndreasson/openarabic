@@ -8,6 +8,7 @@ import {
   OPTIMIZED_FSRS_CONFIG,
   FSRS_QUERY_KEYS,
   MIN_WORD_SPACING,
+  DEFAULT_SESSION_COOLDOWN_HOURS,
 } from '@/constants/fsrs';
 import type { UseFSRSOptions, UseFSRSResult, FSRSStateTracking } from '@/types/fsrs.types';
 import type { WordConfidence } from '@/types/review.types';
@@ -45,7 +46,7 @@ export function useFSRS({
   userId,
   onComplete,
   useAllWords = false,
-  sessionCooldownHours = 1, // Default 1 hour cooldown
+  sessionCooldownHours = DEFAULT_SESSION_COOLDOWN_HOURS,
 }: UseFSRSOptions): UseFSRSResult {
   const [wordQueue, setWordQueue] = useState<StudyWord[]>([]);
   const [currentWord, setCurrentWord] = useState<StudyWord | null>(null);

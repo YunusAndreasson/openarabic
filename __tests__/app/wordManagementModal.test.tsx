@@ -1,6 +1,12 @@
 import React from 'react';
 import { View } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
+import {
+  STRUGGLING_DIFFICULTY_THRESHOLD,
+  STRUGGLING_LAPSES_THRESHOLD,
+  STRICT_MASTERED_STABILITY_THRESHOLD,
+  MASTERED_DIFFICULTY_MAX,
+} from '../../constants/fsrs';
 
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: (props: any) => <props.name {...props} />,
@@ -49,8 +55,12 @@ jest.mock('../../components/vocabulary/WordManagementModal', () => {
     const difficulty = word.fsrs_difficulty ?? 6.5;
     const stability = word.fsrs_stability ?? 0;
     const lapses = word.fsrs_lapses ?? 0;
-    const isStruggling = difficulty >= 8.0 && lapses > 0;
-    const isMastered = stability >= 21 && difficulty <= 5;
+    const isStruggling =
+      difficulty >= STRUGGLING_DIFFICULTY_THRESHOLD &&
+      lapses >= STRUGGLING_LAPSES_THRESHOLD;
+    const isMastered =
+      stability >= STRICT_MASTERED_STABILITY_THRESHOLD &&
+      difficulty <= MASTERED_DIFFICULTY_MAX;
     if (isStruggling) return ['easy', 'skip', 'reset', 'remove'];
     if (isMastered) return ['hard', 'skip', 'reset', 'remove'];
     return ['easy', 'hard', 'skip', 'reset', 'remove'];

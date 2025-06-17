@@ -1,4 +1,10 @@
 import type { StudyWord } from '@/types/vocabulary.types';
+import {
+  STRUGGLING_DIFFICULTY_THRESHOLD,
+  STRUGGLING_LAPSES_THRESHOLD,
+  UNSTABLE_STABILITY_THRESHOLD,
+  UNSTABLE_DIFFICULTY_THRESHOLD,
+} from '@/constants/fsrs';
 
 /**
  * Determines if a word needs attention (is struggling/hard) based on FSRS metrics
@@ -13,9 +19,15 @@ export function isStrugglingWord(word: StudyWord): boolean {
   const stability = word.fsrs_stability ?? 0;
   const state = word.fsrs_state;
 
-  const isHighDifficultyWithLapses = difficulty >= 8.0 && lapses > 0; // Hard difficulty with lapses
-  const isStrugglingInLearning = (state === 1 || state === 2) && lapses > 1;
-  const isUnstableAndDifficult = stability < 7 && difficulty >= 7.0 && lapses > 0; // Above medium difficulty
+  const isHighDifficultyWithLapses =
+    difficulty >= STRUGGLING_DIFFICULTY_THRESHOLD &&
+    lapses >= STRUGGLING_LAPSES_THRESHOLD;
+  const isStrugglingInLearning =
+    (state === 1 || state === 2) && lapses > STRUGGLING_LAPSES_THRESHOLD;
+  const isUnstableAndDifficult =
+    stability < UNSTABLE_STABILITY_THRESHOLD &&
+    difficulty >= UNSTABLE_DIFFICULTY_THRESHOLD &&
+    lapses >= STRUGGLING_LAPSES_THRESHOLD;
 
   return isHighDifficultyWithLapses || isStrugglingInLearning || isUnstableAndDifficult;
 }
