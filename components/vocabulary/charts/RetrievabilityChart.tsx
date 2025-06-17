@@ -21,6 +21,7 @@ import {
 } from '@/components/vocabulary/shared';
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import { generateChartSubtitle, CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/components/vocabulary/shared/chartMessages';
+import { STRINGS } from '@/constants/strings';
 import {
   useGraphWidth,
   GRAPH_HEIGHT_LARGE,
@@ -59,7 +60,7 @@ export const RetrievabilityChart = memo(
       const totalWords = studyWords.length;
 
       if (totalWords === 0) {
-        return 'Study words to track memory retention';
+        return STRINGS.STUDY_WORDS_TO_TRACK_MEMORY_RETENTION;
       }
 
       // Use standardized subtitle generator

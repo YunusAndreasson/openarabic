@@ -22,6 +22,7 @@ import {
 } from '@/components/vocabulary/shared';
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import { generateChartSubtitle, CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/components/vocabulary/shared/chartMessages';
+import { STRINGS } from '@/constants/strings';
 import { useGraphWidth, GRAPH_HEIGHT_LARGE, DAYS_7, CHART_VISUAL } from '@/components/vocabulary/shared/constants';
 import {
   generateDateRange,
@@ -176,7 +177,7 @@ export const EfficiencyChart = memo(
       const { currentEfficiency, weeklyAverage } = chartData.insights;
 
       if (currentEfficiency === 0) {
-        return 'Practice to track learning speed';
+        return STRINGS.PRACTICE_TO_TRACK_LEARNING_SPEED;
       }
 
       // Use standardized subtitle generator

@@ -47,7 +47,7 @@ const ClassicalTextsScreen: FC = () => {
         {/* Benefits */}
         <View style={styles.section}>
           <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
-            What You Get
+            {STRINGS.WHAT_YOU_GET}
           </ThemedText>
 
           <View style={styles.benefitsList}>
@@ -109,7 +109,7 @@ const ClassicalTextsScreen: FC = () => {
         {/* Addressing Concerns */}
         <View style={styles.section}>
           <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
-            Common Concerns
+            {STRINGS.COMMON_CONCERNS}
           </ThemedText>
 
           <View style={styles.concernsList}>
@@ -148,7 +148,7 @@ const ClassicalTextsScreen: FC = () => {
         {/* Comparison */}
         <View style={styles.section}>
           <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
-            Classical vs Modern Arabic
+            {STRINGS.CLASSICAL_VS_MODERN_ARABIC}
           </ThemedText>
 
           <View style={styles.comparisonList}>
@@ -187,7 +187,7 @@ const ClassicalTextsScreen: FC = () => {
         {/* Process */}
         <View style={styles.section}>
           <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
-            How Acquisition Works
+            {STRINGS.THE_ACQUISITION_PROCESS}
           </ThemedText>
           <ThemedText style={styles.bodyText} type="body">
             Consistent exposure to comprehensible input builds linguistic competence over time. Each
@@ -204,7 +204,7 @@ const ClassicalTextsScreen: FC = () => {
         {/* Scientific References */}
         <View style={styles.section}>
           <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
-            Research Support
+            {STRINGS.RESEARCH_SUPPORT}
           </ThemedText>
 
           <View style={styles.referencesList}>

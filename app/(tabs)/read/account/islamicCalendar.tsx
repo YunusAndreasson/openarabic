@@ -87,7 +87,7 @@ export default function IslamicCalendarScreen(): JSX.Element {
                       style={[styles.statLabel, { color: colors.textTertiary }]}
                       type="caption"
                     >
-                      active
+                      {STRINGS.ACTIVE}
                     </ThemedText>
                   </View>
                 )}

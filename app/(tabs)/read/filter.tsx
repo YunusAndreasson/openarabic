@@ -42,13 +42,17 @@ export default function FilterScreen(): JSX.Element {
     queryKey: cacheKey,
     queryFn: async () => {
       if (!numericId || isNaN(numericId)) {
-        throw new Error(`Invalid ID provided: ${id}`);
+        throw new Error(
+          STRINGS.INVALID_FILTER_ID.replace('{id}', String(id))
+        );
       }
 
       if (type === 'category') {
         return await articlesService.getArticles({ categoryId: numericId });
       } else {
-        throw new Error(`Invalid filter type: "${type}"`);
+        throw new Error(
+          STRINGS.INVALID_FILTER_TYPE.replace('{type}', String(type))
+        );
       }
     },
     enabled: !hasInvalidParams,
@@ -85,7 +89,7 @@ export default function FilterScreen(): JSX.Element {
 
     return (
       <ErrorState
-        message={`Invalid filter parameters: type="${type}", id="${id}"`}
+        message={STRINGS.INVALID_FILTER_PARAMETERS.replace('{type}', String(type)).replace('{id}', String(id))}
         onRetry={handleRetry}
       />
     );

@@ -48,7 +48,7 @@ const LearningMethodScreen: FC = () => {
         {/* Process */}
         <View style={styles.section}>
           <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
-            The Acquisition Process
+            {STRINGS.THE_ACQUISITION_PROCESS}
           </ThemedText>
 
           <View style={styles.stepsList}>
@@ -117,7 +117,7 @@ const LearningMethodScreen: FC = () => {
         {/* Why Classical Texts */}
         <View style={styles.section}>
           <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
-            Why Classical Islamic Texts
+            {STRINGS.WHY_CLASSICAL_ISLAMIC_TEXTS}
           </ThemedText>
 
           <View style={styles.reasonsList}>
@@ -171,7 +171,7 @@ const LearningMethodScreen: FC = () => {
         {/* Research */}
         <View style={styles.section}>
           <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
-            Research Foundation
+            {STRINGS.RESEARCH_FOUNDATION}
           </ThemedText>
           <ThemedText style={styles.bodyText} type="body">
             Krashens Input Hypothesis demonstrates that comprehensible input is the primary
@@ -183,7 +183,7 @@ const LearningMethodScreen: FC = () => {
         {/* Practical Implications */}
         <View style={styles.section}>
           <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
-            What This Means
+            {STRINGS.WHAT_THIS_MEANS}
           </ThemedText>
 
           <View style={styles.benefitsList}>
@@ -228,7 +228,7 @@ const LearningMethodScreen: FC = () => {
         {/* Scientific References */}
         <View style={styles.section}>
           <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
-            Scientific Foundation
+            {STRINGS.SCIENTIFIC_FOUNDATION}
           </ThemedText>
 
           <View style={styles.referencesList}>
