@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import { STRINGS } from '@/constants/strings';
+import { CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -31,11 +32,6 @@ export interface UseMemoryCapacityGaugeProps {
   strokeWidth: number;
 }
 
-export const CAPACITY_THRESHOLDS = {
-  OPTIMAL: 75,
-  MODERATE: 50,
-  CRITICAL: 25,
-} as const satisfies Record<string, number>;
 
 export function useMemoryCapacityGauge({
   studyWords,

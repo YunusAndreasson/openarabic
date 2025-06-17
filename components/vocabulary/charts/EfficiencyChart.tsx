@@ -24,6 +24,7 @@ import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import { generateChartSubtitle, CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/components/vocabulary/shared/chartMessages';
 import { STRINGS } from '@/constants/strings';
 import { useGraphWidth, GRAPH_HEIGHT_LARGE, DAYS_7, CHART_VISUAL } from '@/components/vocabulary/shared/constants';
+import { TREND_CHANGE_THRESHOLD } from '@/constants/fsrs';
 import {
   generateDateRange,
   isSameDay,
@@ -157,7 +158,12 @@ export const EfficiencyChart = memo(
           : 0;
 
       const change = recentAvg - olderAvg;
-      const trend = change > 3 ? 'improving' : change < -3 ? 'declining' : 'stable';
+      const trend =
+        change > TREND_CHANGE_THRESHOLD
+          ? 'improving'
+          : change < -TREND_CHANGE_THRESHOLD
+          ? 'declining'
+          : 'stable';
 
       return {
         efficiencyPath: path.toSVGString(),

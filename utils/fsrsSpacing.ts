@@ -1,7 +1,10 @@
 import type { StudyWord } from '../types/vocabulary.types';
 
 import type { PriorityQueue } from './priorityQueue';
-import { MIN_WORD_SPACING } from '@/constants/fsrs';
+import {
+  MIN_WORD_SPACING,
+  SPACING_ITERATION_LIMIT,
+} from '@/constants/fsrs';
 
 export interface SpacingState {
   recentWords: number[];
@@ -40,7 +43,7 @@ export function getNextWordWithSpacing(
     spacingState.spacedWords.push({ word: nextWord, remainingSpacing: minSpacing });
     checked.push(nextWord);
     nextWord = queue.pop();
-    if (checked.length > 20 || queue.size() === 0) {
+    if (checked.length > SPACING_ITERATION_LIMIT || queue.size() === 0) {
       break;
     }
   }

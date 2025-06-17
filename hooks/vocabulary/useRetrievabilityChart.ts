@@ -7,7 +7,11 @@ import {
   GRAPH_HEIGHT_LARGE,
   DAYS_7,
 } from '@/components/vocabulary/shared/constants';
-import { CRITICAL_RETRIEVABILITY_THRESHOLD } from '@/constants/fsrs';
+import {
+  CRITICAL_RETRIEVABILITY_THRESHOLD,
+  URGENT_RETRIEVABILITY_THRESHOLD,
+  TREND_CHANGE_THRESHOLD,
+} from '@/constants/fsrs';
 import {
   calculateRetrievability,
   createStandardizedPerformanceZones,
@@ -82,7 +86,7 @@ export function useRetrievabilityChart(
         if (retrievability < CRITICAL_RETRIEVABILITY_THRESHOLD) {
           criticalWords++;
         }
-        if (retrievability < 0.5) {
+        if (retrievability < URGENT_RETRIEVABILITY_THRESHOLD) {
           urgentWords++;
         }
       });
@@ -157,7 +161,12 @@ export function useRetrievabilityChart(
       secondHalf.reduce((sum, day) => sum + day.averageRetrievability, 0) / secondHalf.length;
 
     const change = firstHalfAvg - secondHalfAvg;
-    const trend = change > 3 ? 'improving' : change < -3 ? 'declining' : 'stable';
+    const trend =
+      change > TREND_CHANGE_THRESHOLD
+        ? 'improving'
+        : change < -TREND_CHANGE_THRESHOLD
+        ? 'declining'
+        : 'stable';
     const criticalWords = retrievabilityData[0]?.criticalWords || 0;
 
     return {

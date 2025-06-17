@@ -1,5 +1,15 @@
 import { createEmptyCard, fsrs, generatorParameters, Rating } from 'ts-fsrs';
 
+import {
+  EASY_DIFFICULTY_ADJUSTMENT,
+  EASY_STABILITY_MULTIPLIER,
+  EASY_LAPSE_DECREMENT,
+  HARD_DIFFICULTY_ADJUSTMENT,
+  HARD_STABILITY_MULTIPLIER,
+  HARD_LAPSE_INCREMENT,
+  SKIP_FOR_TODAY_DUE_HOUR,
+} from '@/constants/fsrs';
+
 import type { TablesUpdate } from '@/types/database.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -91,8 +101,8 @@ export const wordManagementService = {
     // Further adjust to make it even easier
     const adjustedCard = {
       ...newCard,
-      difficulty: Math.max(1, newCard.difficulty - 1), // Reduce difficulty
-      stability: newCard.stability * 1.5, // Increase stability
+      difficulty: Math.max(1, newCard.difficulty - EASY_DIFFICULTY_ADJUSTMENT),
+      stability: newCard.stability * EASY_STABILITY_MULTIPLIER,
     };
 
     const updateData: TablesUpdate<'study_words'> = {
@@ -103,7 +113,7 @@ export const wordManagementService = {
       fsrs_scheduled_days: adjustedCard.scheduled_days,
       fsrs_reps: adjustedCard.reps,
       fsrs_learning_steps: adjustedCard.learning_steps,
-      fsrs_lapses: Math.max(0, adjustedCard.lapses - 1), // Reduce lapses
+      fsrs_lapses: Math.max(0, adjustedCard.lapses - EASY_LAPSE_DECREMENT),
       fsrs_state: adjustedCard.state,
       fsrs_last_review: now.toISOString(),
     };
@@ -148,8 +158,8 @@ export const wordManagementService = {
     // Further adjust to make it harder
     const adjustedCard = {
       ...newCard,
-      difficulty: Math.min(10, newCard.difficulty + 1), // Increase difficulty
-      stability: newCard.stability * 0.7, // Reduce stability
+      difficulty: Math.min(10, newCard.difficulty + HARD_DIFFICULTY_ADJUSTMENT),
+      stability: newCard.stability * HARD_STABILITY_MULTIPLIER,
       due: now, // Make it due immediately
     };
 
@@ -161,7 +171,7 @@ export const wordManagementService = {
       fsrs_scheduled_days: adjustedCard.scheduled_days,
       fsrs_reps: adjustedCard.reps,
       fsrs_learning_steps: adjustedCard.learning_steps,
-      fsrs_lapses: adjustedCard.lapses + 1, // Increase lapses
+      fsrs_lapses: adjustedCard.lapses + HARD_LAPSE_INCREMENT,
       fsrs_state: adjustedCard.state,
       fsrs_last_review: now.toISOString(),
     };
@@ -185,7 +195,7 @@ export const wordManagementService = {
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setUTCHours(9, 0, 0, 0); // Set to 9 AM UTC tomorrow
+    tomorrow.setUTCHours(SKIP_FOR_TODAY_DUE_HOUR, 0, 0, 0);
 
     const updateData: TablesUpdate<'study_words'> = {
       fsrs_due: tomorrow.toISOString(),
