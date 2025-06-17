@@ -8,6 +8,7 @@ import { EnhancedImage } from '@/components/EnhancedImage';
 import { ProgressBar } from '@/components/ProgressBar';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useNowPlayingCard } from '@/hooks/listen/useNowPlayingCard';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
@@ -80,7 +81,7 @@ const NowPlayingCard = ({
           <View style={styles.textContent}>
             <View style={styles.primaryInfo}>
               <ThemedText numberOfLines={1} style={styles.title} type="body">
-                Loading...
+                {STRINGS.LOADING}
               </ThemedText>
               <ThemedText
                 numberOfLines={1}
@@ -88,7 +89,7 @@ const NowPlayingCard = ({
                 type="caption"
                 variant="secondary"
               >
-                Preparing audio
+                {STRINGS.PREPARING_AUDIO}
               </ThemedText>
             </View>
           </View>

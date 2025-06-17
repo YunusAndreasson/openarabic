@@ -8,6 +8,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setCustomOrder } from '@/store/listenSlice';
 import type { Article } from '@/types/articles.types';
 import { selectionFeedback } from '@/utils/haptics';
+import { STRINGS } from '@/constants/strings';
 
 import type { ReadingListItem } from './useListenScreen';
 
@@ -77,7 +78,7 @@ export const useListenUI = ({
       return {
         id: articleIdNumber,
         title: metadata.articleTitle,
-        author: { id: 0, name: 'Loading...' },
+        author: { id: 0, name: STRINGS.LOADING },
         image_url: '',
         placeholder: '',
       } as Partial<Article>; // Minimal article for display purposes
