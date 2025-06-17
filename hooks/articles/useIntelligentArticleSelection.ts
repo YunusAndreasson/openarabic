@@ -3,7 +3,8 @@ import { useMemo } from 'react';
 
 import { useArticlesByDifficultWords } from '@/hooks/articles/useArticlesByDifficultWords';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
-import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
+import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
+import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import type { Article } from '@/types/articles.types';
 import type { UserSession } from '@/types/auth.types';
 import type { SentenceWord } from '@/types/vocabulary.types';

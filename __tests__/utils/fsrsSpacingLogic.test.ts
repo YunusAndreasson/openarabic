@@ -4,9 +4,9 @@ import {
   getNextWordWithSpacing,
   updateSpacingCounters,
   createSpacingState,
-  MIN_WORD_SPACING,
   type SpacingState,
 } from '../../utils/fsrsSpacing';
+import { MIN_WORD_SPACING } from '../../constants/fsrs';
 import type { StudyWord } from '../../types/vocabulary.types';
 
 const createTestWord = (overrides: Partial<StudyWord> = {}): StudyWord => {

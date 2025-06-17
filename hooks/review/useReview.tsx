@@ -13,7 +13,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useFSRS } from '@/hooks/vocabulary/useFSRS';
 import { useWordManagement } from '@/hooks/vocabulary/useWordManagement';
 import { useWordSizing } from '@/hooks/vocabulary/useWordSizing';
-import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
+import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import type { SessionMetrics, WordConfidence } from '@/types/review.types';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';

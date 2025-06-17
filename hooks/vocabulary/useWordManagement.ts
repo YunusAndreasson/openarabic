@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
+import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { wordManagementService } from '@/services/wordManagement';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';

@@ -1,6 +1,7 @@
 import { renderHook, act } from '@testing-library/react-native';
 
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
+import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 
 const mockFetchQuery = jest.fn().mockResolvedValue([]);
 const mockPrefetchQuery = jest.fn().mockResolvedValue(undefined);
@@ -51,10 +52,6 @@ jest.mock('@/services/readingList', () => ({
 jest.mock('@/services/studyWordsFSRS', () => ({
   studyWordsFSRSService: {
     getFSRSWords: jest.fn().mockResolvedValue([]),
-  },
-  FSRS_QUERY_KEYS: {
-    due: (id: string) => ['due', id] as const,
-    all: (id: string) => ['all', id] as const,
   },
 }));
 
@@ -120,10 +117,10 @@ describe('useAppPreloader', () => {
     const success = await result.current.prefetchVocabularyData();
     expect(success).toBe(true);
     expect(mockPrefetchQuery).toHaveBeenCalledWith(
-      expect.objectContaining({ queryKey: ['due', 'u2'] })
+      expect.objectContaining({ queryKey: FSRS_QUERY_KEYS.due('u2') })
     );
     expect(mockPrefetchQuery).toHaveBeenCalledWith(
-      expect.objectContaining({ queryKey: ['all', 'u2'] })
+      expect.objectContaining({ queryKey: FSRS_QUERY_KEYS.all('u2') })
     );
   });
 });
