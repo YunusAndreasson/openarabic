@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 
+import { getArticleRoute } from '@/constants/routes';
 import type { Article } from '@/types/articles.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
@@ -76,10 +77,7 @@ export const useArticleRenderers = (
       const articleId = typeof articleOrId === 'number' ? articleOrId : articleOrId.id;
       const articleTitle = typeof articleOrId === 'number' ? undefined : articleOrId.title;
 
-      // Build URL with title if available
-      const url = articleTitle
-        ? `/(tabs)/read/article/${articleId}?headerTitle=${encodeURIComponent(articleTitle)}`
-        : `/(tabs)/read/article/${articleId}`;
+      const url = getArticleRoute(articleId, articleTitle);
 
       try {
         // Use replace for related articles to avoid building up the navigation stack
@@ -94,7 +92,7 @@ export const useArticleRenderers = (
         const errorMessage = error instanceof Error ? error : new Error(String(error));
         handleError(errorMessage);
         // Fallback to most basic navigation if all else fails
-        router.push(`/(tabs)/read/article/${articleId}`);
+        router.push(getArticleRoute(articleId));
       }
     },
     [router]

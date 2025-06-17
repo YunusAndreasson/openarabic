@@ -3,12 +3,13 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { InteractionManager } from 'react-native';
 
 import type { AudioState } from '@/constants/audio';
+import { getArticleRoute } from '@/constants/routes';
+import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setCustomOrder } from '@/store/listenSlice';
 import type { Article } from '@/types/articles.types';
 import { selectionFeedback } from '@/utils/haptics';
-import { STRINGS } from '@/constants/strings';
 
 import type { ReadingListItem } from './useListenScreen';
 
@@ -94,21 +95,15 @@ export const useListenUI = ({
       const article = sortedReadingList.find(item => item.article_id === articleId)?.articles;
       if (article) {
         InteractionManager.runAfterInteractions(() => prefetchArticle(articleId));
-        router.push(
-          `/(tabs)/read/article/${articleId}?headerTitle=${encodeURIComponent(article.title)}`
-        );
+        router.push(getArticleRoute(articleId, article.title));
       }
     },
     [prefetchArticle, sortedReadingList, editMode]
   );
 
   const handleNowPlayingPress = useCallback(() => {
-    if (currentArticle && currentArticle.title) {
-      router.push(
-        `/(tabs)/read/article/${currentArticle.id}?headerTitle=${encodeURIComponent(
-          currentArticle.title
-        )}`
-      );
+    if (currentArticle?.id && currentArticle.title) {
+      router.push(getArticleRoute(currentArticle.id, currentArticle.title));
     }
   }, [currentArticle]);
 

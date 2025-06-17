@@ -4,6 +4,7 @@ import type { JSX } from 'react';
 
 import FilterButton from '@/components/FilterButton';
 import { createNavigationOptions } from '@/constants/modal';
+import { getFilterModalRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ArticleParams, FilterParams } from '@/types/navigation.types';
@@ -28,7 +29,7 @@ function getFilterTitle(params: FilterParams): string {
 
 const FilterHeaderRight = ({ categoryId }: { categoryId: number }) => {
   const handlePress = useCallback(() => {
-    router.push(`/(tabs)/read/filterModal?categoryId=${categoryId}`);
+    router.push(getFilterModalRoute(categoryId));
   }, [categoryId]);
 
   return <FilterButton onPress={handlePress} />;
