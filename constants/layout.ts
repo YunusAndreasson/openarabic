@@ -1,9 +1,9 @@
 import type { TextStyle } from 'react-native';
 import { Platform, useWindowDimensions } from 'react-native';
 
-export const useScreenWidth = (): number => {
-  return useWindowDimensions().width;
-};
+const IS_IOS = Platform.OS === 'ios';
+
+export const useScreenWidth = (): number => useWindowDimensions().width;
 
 export const FONTS = {
   ENGLISH: 'Figtree',
@@ -48,12 +48,21 @@ const createShadow = (elevation: number, opacity: number, radius: number) => ({
   }),
 });
 
+const createElevation = (
+  level: number,
+  opacity: number,
+  radius: number,
+) => ({
+  level,
+  ...createShadow(level, opacity, radius),
+});
+
 const ELEVATION_SYSTEM = {
-  NONE: { level: 0, ...createShadow(0, 0, 0) },
-  SUBTLE: { level: 2, ...createShadow(2, 0.12, 3) },
-  SMALL: { level: 4, ...createShadow(4, 0.16, 6) },
-  MEDIUM: { level: 6, ...createShadow(6, 0.2, 8) },
-  LARGE: { level: 10, ...createShadow(10, 0.25, 12) },
+  NONE: createElevation(0, 0, 0),
+  SUBTLE: createElevation(2, 0.12, 3),
+  SMALL: createElevation(4, 0.16, 6),
+  MEDIUM: createElevation(6, 0.2, 8),
+  LARGE: createElevation(10, 0.25, 12),
 } as const;
 
 export const TYPOGRAPHY_HIERARCHY = {
@@ -168,7 +177,7 @@ export const LAYOUT = {
   },
 
   BOTTOM_BAR: {
-    HEIGHT: Platform.OS === 'ios' ? 65 : 45,
+    HEIGHT: IS_IOS ? 65 : 45,
   },
 
   BORDER_RADIUS: {
@@ -283,8 +292,8 @@ export const LAYOUT = {
       EXPANDED: 380,
       COLLAPSED: 0,
     },
-    NAV_HEIGHT: Platform.OS === 'ios' ? 44 : 56,
-    NAV_HEADER_HEIGHT: Platform.OS === 'ios' ? 100 : 80,
+    NAV_HEIGHT: IS_IOS ? 44 : 56,
+    NAV_HEADER_HEIGHT: IS_IOS ? 100 : 80,
 
     TITLE: {
       MAIN: {
