@@ -6,8 +6,8 @@ import {
   useGraphWidth,
   GRAPH_HEIGHT_LARGE,
   DAYS_7,
-  CRITICAL_RETRIEVABILITY_THRESHOLD,
 } from '@/components/vocabulary/shared/constants';
+import { CRITICAL_RETRIEVABILITY_THRESHOLD } from '@/constants/fsrs';
 import {
   calculateRetrievability,
   createStandardizedPerformanceZones,

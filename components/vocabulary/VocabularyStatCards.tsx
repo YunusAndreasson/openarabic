@@ -10,6 +10,12 @@ import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 import { getStrugglingWordsCount } from '@/utils/wordClassification';
+import {
+  LEARNING_STABILITY_UPPER_BOUND,
+  LEARNING_DIFFICULTY_MIN,
+  MASTERED_STABILITY_THRESHOLD,
+  MASTERED_DIFFICULTY_MAX,
+} from '@/constants/fsrs';
 
 import { MemoryCapacityGauge } from './charts/MemoryCapacityGauge';
 
@@ -81,11 +87,18 @@ export const VocabularyStatCards = memo(
             counts.dueWords += 1;
           }
 
-          if (stability > 0 && stability < 21 && difficulty > 3) {
+          if (
+            stability > 0 &&
+            stability < LEARNING_STABILITY_UPPER_BOUND &&
+            difficulty > LEARNING_DIFFICULTY_MIN
+          ) {
             counts.learningWords += 1;
           }
 
-          if (stability >= 7 && difficulty <= 5) {
+          if (
+            stability >= MASTERED_STABILITY_THRESHOLD &&
+            difficulty <= MASTERED_DIFFICULTY_MAX
+          ) {
             counts.masteredWords += 1;
           }
 

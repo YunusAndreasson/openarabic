@@ -7,7 +7,10 @@ import { useAnimatedStyle } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
 
 import { TIMING_CONFIG, DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import {
+  FSRS_QUERY_KEYS,
+  DEFAULT_SESSION_COOLDOWN_HOURS,
+} from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { useOpacityAnimation } from '@/hooks/animations';
@@ -184,7 +187,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     userId: user?.id,
     onComplete: triggerCompletionTransition,
     useAllWords: fromRemember, // When fromRemember is true, use all words instead of just due words
-    sessionCooldownHours: fromRemember ? 0 : 1, // No cooldown for "Remember" mode, 1 hour for regular practice
+    sessionCooldownHours: fromRemember ? 0 : DEFAULT_SESSION_COOLDOWN_HOURS,
   });
 
   // Word management integration
