@@ -22,7 +22,8 @@
     "bump": "node utils/bumpVersion.js",
     "release": "gh workflow run release.yml",
     "dev": "yarn start",
-    "build:check": "yarn validate && yarn test"
+    "build:check": "yarn validate && yarn test",
+    "reassure": "reassure"
   },
   "dependencies": {
     "@babel/runtime": "^7.27.6",
@@ -105,6 +106,7 @@
     "patch-package": "^8.0.0",
     "postinstall-postinstall": "^2.1.0",
     "react-test-renderer": "19.0.0",
+    "reassure": "^1.4.0",
     "typescript": "^5.8.3"
   },
   "private": true,

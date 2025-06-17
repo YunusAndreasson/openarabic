@@ -1,10 +1,13 @@
 import { TextEncoder, TextDecoder } from 'util';
 
 import { jest } from '@jest/globals';
+import { configure } from 'reassure';
 
 if (typeof global.jest === 'undefined') {
   global.jest = jest;
 }
+
+configure({ testingLibrary: 'react-native' });
 
 // Mock requestAnimationFrame and cancelAnimationFrame
 global.requestAnimationFrame = function (callback) {
