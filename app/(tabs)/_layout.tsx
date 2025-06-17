@@ -12,6 +12,7 @@ import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import { AUTH_ROUTE } from '@/constants/routes';
 
 const TAB_SCREENS = [
   {
@@ -77,7 +78,7 @@ export default function TabLayout(): JSX.Element {
 
   useEffect(() => {
     if (!isLoading && !session?.user) {
-      router.replace('/auth');
+      router.replace(AUTH_ROUTE);
     }
   }, [session, isLoading]);
 

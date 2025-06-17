@@ -9,6 +9,7 @@ import type { SharedValue } from 'react-native-reanimated';
 import { TIMING_CONFIG, DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
+import { PRACTICE_TAB_ROUTE } from '@/constants/routes';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -580,7 +581,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
         if (onClose) {
           onClose();
         } else if (fromRemember) {
-          router.replace('/(tabs)/practice');
+          router.replace(PRACTICE_TAB_ROUTE);
         } else {
           router.back();
         }

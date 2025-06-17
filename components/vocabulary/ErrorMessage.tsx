@@ -8,6 +8,7 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { RoutePath } from '@/types/navigation.types';
+import { ACCOUNT_ROUTE, PRACTICE_TAB_ROUTE } from '@/constants/routes';
 import type { ErrorMessageProps } from '@/types/ui/review.types';
 
 /**
@@ -26,9 +27,9 @@ const ErrorMessage = memo(
       let route: RoutePath = '/(tabs)';
 
       if (screenName === 'practice') {
-        route = '/(tabs)/practice' as RoutePath;
+        route = PRACTICE_TAB_ROUTE as RoutePath;
       } else if (screenName === 'account') {
-        route = '/(tabs)/read/account' as RoutePath;
+        route = ACCOUNT_ROUTE as RoutePath;
       }
 
       router.replace(route);

@@ -7,6 +7,7 @@ import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
 import { STRINGS } from '@/constants/strings';
+import { READ_TAB_ROUTE } from '@/constants/routes';
 const analytics = {
   identify: async (
     _userId: string,
@@ -142,7 +143,7 @@ export function useAuthForm(): UseAuthFormReturn {
           message: 'Redirecting to main app after successful login',
           level: 'info',
         });
-        router.replace('/(tabs)/read');
+        router.replace(READ_TAB_ROUTE);
       }
     } catch (err) {
       if (!isMountedRef.current) return;

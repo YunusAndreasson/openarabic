@@ -18,6 +18,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useVocabularyChartData } from '@/hooks/vocabulary/useVocabularyChartData';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { getPracticeAudioRoute, getPracticeReviewRoute } from '@/constants/routes';
 
 export default function VocabularyScreen(): JSX.Element {
   const { user } = useAuth();
@@ -81,12 +82,12 @@ export default function VocabularyScreen(): JSX.Element {
 
   const handleStartAudio = useCallback(() => {
     setModalVisible(false);
-    router.push('/practice/audio?fromRemember=true');
+    router.push(getPracticeAudioRoute(true));
   }, [router]);
 
   const handleStartVisual = useCallback(() => {
     setModalVisible(false);
-    router.push('/practice/review?fromRemember=true');
+    router.push(getPracticeReviewRoute({ fromRemember: 'true' }));
   }, [router]);
 
   // Show error message if there was an error loading data

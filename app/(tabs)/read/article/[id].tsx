@@ -24,6 +24,7 @@ import { useAppSelectorMemo } from '@/store/hooks';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { selectionFeedback } from '@/utils/haptics';
+import { getPracticeReviewRoute } from '@/constants/routes';
 
 const FLEX_ONE_STYLE = { flex: 1 } as const;
 
@@ -86,7 +87,12 @@ export default function ArticleScreen(): JSX.Element {
   const handleRootPress = useCallback(
     (rootId: number) => {
       router.push(
-        `/(tabs)/practice/review?rootId=${rootId}&mode=random&count=1&fromVocabulary=article`
+        getPracticeReviewRoute({
+          rootId,
+          mode: 'random',
+          count: 1,
+          fromVocabulary: 'article',
+        })
       );
     },
     [router]
