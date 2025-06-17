@@ -2,6 +2,7 @@ import type { FC } from 'react';
 import { View, StyleSheet } from 'react-native';
 
 import { ProgressBar } from '@/components/ProgressBar';
+import { PROGRESS_BAR_ANIMATION_DURATION } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 
 interface ReviewHeaderProps {
@@ -16,7 +17,7 @@ const ReviewHeader: FC<ReviewHeaderProps> = ({ progress, maxProgress, animationK
       <View style={styles.progressContainer}>
         <ProgressBar
           key={animationKey}
-          animationDuration={500}
+          animationDuration={PROGRESS_BAR_ANIMATION_DURATION}
           animationTriggered={animationKey > 1}
           progress={Math.max(progress, maxProgress)}
         />

@@ -6,6 +6,8 @@ import { InteractionManager } from 'react-native';
 import { useAnimatedStyle } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
 
+import { TIMING_CONFIG, DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
+import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
@@ -13,7 +15,6 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useFSRS } from '@/hooks/vocabulary/useFSRS';
 import { useWordManagement } from '@/hooks/vocabulary/useWordManagement';
 import { useWordSizing } from '@/hooks/vocabulary/useWordSizing';
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import type { SessionMetrics, WordConfidence } from '@/types/review.types';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
@@ -91,8 +92,8 @@ const fontConfig: WordSizingConfig = {
 
 // Timing constants for transitions (milliseconds)
 const TRANSITION_DELAYS = {
-  initial: 150, // Initial delay before animation (was 200)
-  fadeAnimation: 200, // Delay for fade animation (was 300)
+  initial: TIMING_CONFIG.FAST.duration, // Initial delay before animation
+  fadeAnimation: DEFAULT_ANIMATION_DURATION, // Delay for fade animation
   meaningDisplay: {
     normal: 1500, // Display time for meaning overlay (was 2000)
     struggling: 2500, // Display time for struggling words (was 3000)
@@ -175,7 +176,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       if (stateRefs.current.completionTriggered) {
         setIsTransitioningToCompletion(false);
       }
-    }, 200);
+    }, DEFAULT_ANIMATION_DURATION);
   }, [fadeOut]);
 
   const { currentWord, isComplete, progress, updateWord, invalidateQueries } = useFSRS({
@@ -287,7 +288,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
         if (!stateRefs.current.isUpdatingWord) return;
 
-        setTimeout(() => fadeIn(), 150);
+        setTimeout(() => fadeIn(), TIMING_CONFIG.FAST.duration);
       } catch (error) {
         handleError(error instanceof Error ? error : new Error(String(error)));
         if (!stateRefs.current.isUpdatingWord) return;

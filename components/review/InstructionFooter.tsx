@@ -5,11 +5,11 @@ import type { ViewStyle, TextStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
+import { TIMING_CONFIG, INSTRUCTION_ANIMATION_DELAY } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { TIMING_CONFIG } from '@/constants/animation';
 import type { InstructionFooterProps } from '@/types/ui/review.types';
 
 /**
@@ -32,7 +32,7 @@ const InstructionFooter: FC<InstructionFooterProps> = ({ style }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       startAnimation();
-    }, 500);
+    }, INSTRUCTION_ANIMATION_DELAY);
 
     return () => clearTimeout(timer);
   }, [startAnimation]);

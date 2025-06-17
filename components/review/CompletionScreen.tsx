@@ -8,9 +8,21 @@ import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import {
+  TIMING_CONFIG,
+  COMPLETION_ICON_SPRING,
+  COMPLETION_METRIC_BASE_DELAY,
+  COMPLETION_METRIC_STAGGER,
+  COMPLETION_BUTTON_DELAY,
+  ICON_ENTRANCE_DURATION,
+  COMPLETION_TITLE_DELAY,
+  COMPLETION_SUBTITLE_DELAY,
+  QUICK_ANIMATION_DURATION,
+  DEFAULT_ANIMATION_DURATION,
+} from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { TIMING_CONFIG, useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
+import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useEncouragingMetrics } from '@/hooks/review/useEncouragingMetrics';
 import { useColors } from '@/hooks/theme/useColors';
@@ -64,8 +76,8 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
     initialValue: 0.8,
     targetValue: 1,
     useSpring: true,
-    damping: 12,
-    stiffness: 100,
+    damping: COMPLETION_ICON_SPRING.damping,
+    stiffness: COMPLETION_ICON_SPRING.stiffness,
   });
 
   // Only invalidate queries for review flow
@@ -88,7 +100,7 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
     const timer = setTimeout(() => {
       startOpacityAnimation(undefined, successFeedback);
       startScaleAnimation();
-    }, 200);
+    }, DEFAULT_ANIMATION_DURATION);
 
     return () => clearTimeout(timer);
   }, [startOpacityAnimation, startScaleAnimation]);
@@ -101,20 +113,20 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
   const Content = (
     <View style={[styles.contentContainer, contentStyle]}>
       <Animated.View
-        entering={ZoomIn.delay(100).duration(400).springify()}
+        entering={ZoomIn.delay(QUICK_ANIMATION_DURATION).duration(ICON_ENTRANCE_DURATION).springify()}
         style={[styles.iconContainer, ...iconAnimatedStyle]}
       >
         <Ionicons color={colors.completionSuccess} name={iconName} size={iconSize} />
       </Animated.View>
 
       <View style={styles.textContainer}>
-        <Animated.View entering={FadeInUp.delay(400).duration(300)}>
+        <Animated.View entering={FadeInUp.delay(COMPLETION_TITLE_DELAY).duration(TIMING_CONFIG.GENTLE.duration)}>
           <ThemedText colorName="headingText" style={styles.titleText} type="heading2">
             {title}
           </ThemedText>
         </Animated.View>
 
-        <Animated.View entering={FadeInUp.delay(600).duration(300)}>
+        <Animated.View entering={FadeInUp.delay(COMPLETION_SUBTITLE_DELAY).duration(TIMING_CONFIG.GENTLE.duration)}>
           <ThemedText colorName="subtitleText" style={styles.subtitleText} type="heading3">
             {subtitle}
           </ThemedText>
@@ -126,7 +138,7 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
             {encouragingMetrics.map((metric, index) => (
               <Fragment key={metric.type + metric.text}>
                 <Animated.View
-                  entering={FadeInUp.delay(800 + index * 150).duration(300)}
+                  entering={FadeInUp.delay(COMPLETION_METRIC_BASE_DELAY + index * COMPLETION_METRIC_STAGGER).duration(TIMING_CONFIG.GENTLE.duration)}
                   style={styles.metricItem}
                 >
                   <View style={styles.metricContent}>
@@ -148,7 +160,11 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
         )}
       </View>
 
-      <Animated.View entering={FadeIn.delay(encouragingMetrics ? 1400 : 1000).duration(300)}>
+      <Animated.View
+        entering={FadeIn.delay(
+          encouragingMetrics ? COMPLETION_BUTTON_DELAY.WITH_METRICS : COMPLETION_BUTTON_DELAY.BASE,
+        ).duration(TIMING_CONFIG.GENTLE.duration)}
+      >
         <ThemedButton
           style={[styles.doneButton, buttonStyle]}
           title={buttonText}
