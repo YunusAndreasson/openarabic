@@ -27,6 +27,8 @@ module.exports = {
     'react-native-gesture-handler': '<rootDir>/__mocks__/react-native-gesture-handler.js',
     '@sentry/react-native': '<rootDir>/__mocks__/sentry-react-native.js',
     'react-redux': '<rootDir>/__mocks__/react-redux.js',
+    'expo-image': '<rootDir>/__mocks__/expo-image.js',
+    'expo-linear-gradient': '<rootDir>/__mocks__/expo-linear-gradient.js',
   },
   // Collect coverage from specific directories
   collectCoverageFrom: [
