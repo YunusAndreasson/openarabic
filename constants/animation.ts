@@ -134,3 +134,53 @@ export const NOW_PLAYING_EXIT_SPRING = {
   stiffness: 150,
   mass: 0.8,
 } as const;
+
+/** Spring config for completion screen icon */
+export const COMPLETION_ICON_SPRING = {
+  damping: 12,
+  stiffness: 100,
+} as const;
+
+/** Delay before showing instruction footer */
+export const INSTRUCTION_ANIMATION_DELAY = 500;
+
+/** Spring config for ArticleCard scale animation */
+export const ARTICLE_CARD_SPRING = {
+  damping: 20,
+  stiffness: 300,
+} as const;
+
+/** Delay before completion metrics appear */
+export const COMPLETION_METRIC_BASE_DELAY = 800;
+
+/** Delay step between each completion metric */
+export const COMPLETION_METRIC_STAGGER = 150;
+
+/** Delay before the continue button appears */
+export const COMPLETION_BUTTON_DELAY = {
+  BASE: 1000,
+  WITH_METRICS: 1400,
+} as const;
+
+/** Animation duration for progress bars */
+export const PROGRESS_BAR_ANIMATION_DURATION = 500;
+
+/** Spring config for toast scale animations */
+export const TOAST_SCALE_SPRING = {
+  IMPORTANT: { damping: 6, stiffness: 250, mass: 0.4 },
+  DEFAULT: { damping: 8, stiffness: 200, mass: 0.5 },
+} as const;
+
+export const TOAST_SCALE_CONFIG = {
+  IMPORTANT: { initialScale: 0.2, overshoot: 1.15 },
+  DEFAULT: { initialScale: 0.3, overshoot: 1.1 },
+} as const;
+
+/** Duration for icon entrance animations */
+export const ICON_ENTRANCE_DURATION = 400;
+
+/** Delay before completion title appears */
+export const COMPLETION_TITLE_DELAY = 400;
+
+/** Delay before completion subtitle appears */
+export const COMPLETION_SUBTITLE_DELAY = 600;

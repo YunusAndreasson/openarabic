@@ -3,6 +3,7 @@ import type { FC } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ProgressBar } from '@/components/ProgressBar';
+import { PROGRESS_BAR_ANIMATION_DURATION } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectionFeedback } from '@/utils/haptics';
@@ -38,7 +39,7 @@ const ListenHeader: FC<ListenHeaderProps> = ({
       <View style={styles.progressContainer}>
         <ProgressBar
           key={animationKey}
-          animationDuration={500}
+          animationDuration={PROGRESS_BAR_ANIMATION_DURATION}
           animationTriggered={animationKey > 1}
           progress={Math.max(progress, maxProgress)}
         />

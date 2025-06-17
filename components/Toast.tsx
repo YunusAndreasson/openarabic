@@ -3,15 +3,17 @@ import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { LAYOUT } from '@/constants/layout';
-import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
-import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import {
   DEFAULT_ANIMATION_DURATION,
   TOAST_INITIAL_TRANSLATE_Y,
   TOAST_SPRING,
+  TOAST_SCALE_SPRING,
+  TOAST_SCALE_CONFIG,
 } from '@/constants/animation';
+import { LAYOUT } from '@/constants/layout';
+import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
+import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
 import { ThemedText } from './ThemedText';
 
@@ -68,12 +70,9 @@ export const Toast = memo(
     // Memoize animation config to prevent unnecessary re-creation
     const animationConfig = useMemo(
       () => ({
-        initialScale: type === 'important' ? 0.2 : 0.3,
-        targetOvershoot: type === 'important' ? 1.15 : 1.1,
-        springConfig:
-          type === 'important'
-            ? { damping: 6, stiffness: 250, mass: 0.4 }
-            : { damping: 8, stiffness: 200, mass: 0.5 },
+        initialScale: TOAST_SCALE_CONFIG[type === 'important' ? 'IMPORTANT' : 'DEFAULT'].initialScale,
+        targetOvershoot: TOAST_SCALE_CONFIG[type === 'important' ? 'IMPORTANT' : 'DEFAULT'].overshoot,
+        springConfig: TOAST_SCALE_SPRING[type === 'important' ? 'IMPORTANT' : 'DEFAULT'],
       }),
       [type]
     );

@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
+import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations';
@@ -20,7 +21,7 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
     isWarning = false,
     isVague = false,
     isStruggling = false,
-    duration = 150,
+    duration = TIMING_CONFIG.FAST.duration,
     animate = true,
     onClose,
   } = props;

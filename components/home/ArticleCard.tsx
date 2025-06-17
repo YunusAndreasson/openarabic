@@ -7,13 +7,13 @@ import { ThemedText } from '@/components/ThemedText';
 import DeleteButton from '@/components/listen/DeleteButton';
 import DragHandle, { type DragHandleProps } from '@/components/listen/DragHandle';
 import PlayButton from '@/components/listen/PlayButton';
+import { WORD_PRESS_SCALE, ARTICLE_CARD_SPRING } from '@/constants/animation';
 import {
   LAYOUT,
   TYPOGRAPHY_HIERARCHY,
   getEnhancedOpacity,
   MIN_TOUCH_TARGET,
 } from '@/constants/layout';
-import { WORD_PRESS_SCALE } from '@/constants/animation';
 import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
@@ -54,8 +54,8 @@ export const ArticleCard: FC<ArticleCardProps> = ({
     initialValue: 1,
     targetValue: 1,
     useSpring: true,
-    damping: 20,
-    stiffness: 300,
+    damping: ARTICLE_CARD_SPRING.damping,
+    stiffness: ARTICLE_CARD_SPRING.stiffness,
   });
 
   useEffect(() => {
