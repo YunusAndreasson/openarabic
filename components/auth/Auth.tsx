@@ -9,7 +9,6 @@ import { LAYOUT } from '@/constants/layout';
 import { useAuthForm, PASSWORD_REQUIREMENTS } from '@/hooks/auth/useAuthForm';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
-// import { analytics } from '@/services/analytics';
 
 /**
  * Authentication component that handles both sign in and sign up

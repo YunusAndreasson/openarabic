@@ -2,9 +2,6 @@ import { TextEncoder, TextDecoder } from 'util';
 
 import { jest } from '@jest/globals';
 
-// Setup React Native Testing Library (commented out as jest-native is deprecated)
-// import '@testing-library/jest-native/extend-expect';
-
 if (typeof global.jest === 'undefined') {
   global.jest = jest;
 }

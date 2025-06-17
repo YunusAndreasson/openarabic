@@ -1,4 +1,3 @@
-// Fix for expo-router v5.0.7 + React Native 0.79.3 splash screen compatibility issue
 import '@/utils/splashPolyfill';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import NetInfo from '@react-native-community/netinfo';
@@ -41,7 +40,6 @@ import { setTheme } from '@/store/themeSlice';
 import { handleError } from '@/utils/errorHandling';
 import { PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
 
-// Temporary mock analytics until service is fixed
 const analytics = {
   identify: async (_userId: string, _properties?: Record<string, unknown>) => {},
   reset: async () => {},
