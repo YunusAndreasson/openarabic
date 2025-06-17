@@ -13,6 +13,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { TimePicker } from '@/components/TimePicker';
 import { Toggle } from '@/components/Toggle';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useAccountScreen } from '@/hooks/account';
 import { useColors } from '@/hooks/theme/useColors';
 import pkg from '@/package.json';
@@ -97,7 +98,7 @@ const AccountScreen: FC = () => {
                   <Ionicons color={colors.icon} name="notifications" size={22} />
                 </View>
                 <View style={styles.settingLabelTextContainer}>
-                  <ThemedText type="body">Study Reminders</ThemedText>
+                  <ThemedText type="body">{STRINGS.STUDY_REMINDERS}</ThemedText>
                 </View>
               </View>
               <Toggle value={reminderTime.enabled} onValueChange={handleReminderToggle} />
@@ -117,7 +118,7 @@ const AccountScreen: FC = () => {
                         <Ionicons color={colors.icon} name="time" size={22} />
                       </View>
                       <View style={styles.settingLabelTextContainer}>
-                        <ThemedText type="body">Time</ThemedText>
+                        <ThemedText type="body">{STRINGS.TIME}</ThemedText>
                       </View>
                     </View>
                     <ThemedText type="body" variant="secondary">
@@ -136,7 +137,7 @@ const AccountScreen: FC = () => {
                   <Ionicons color={colors.icon} name="moon" size={22} />
                 </View>
                 <View style={styles.settingLabelTextContainer}>
-                  <ThemedText type="body">Dark Mode</ThemedText>
+                  <ThemedText type="body">{STRINGS.DARK_MODE}</ThemedText>
                 </View>
               </View>
               <ThemeToggle />

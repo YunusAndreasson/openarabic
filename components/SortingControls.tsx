@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { SortDirection, SortOption } from '@/types/ui/sorting.types';
 import { selectionFeedback } from '@/utils/haptics';
@@ -114,7 +115,11 @@ function SortingControls<T extends string>({
                         },
                       ]}
                     >
-                      {isSelected ? (internalDirection === 'desc' ? 'Z-A' : 'A-Z') : 'A-Z'}
+                      {isSelected
+                        ? internalDirection === 'desc'
+                          ? STRINGS.Z_TO_A
+                          : STRINGS.A_TO_Z
+                        : STRINGS.A_TO_Z}
                     </ThemedText>
                   </View>
                 }

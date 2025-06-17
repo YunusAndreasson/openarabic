@@ -4,6 +4,7 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { MeaningOverlayProps } from '@/types/ui/review.types';
@@ -92,7 +93,7 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
           },
         ]}
       >
-        {meaning || 'No translation available'}
+        {meaning || STRINGS.NO_TRANSLATION_AVAILABLE}
       </ThemedText>
     </Animated.View>
   );

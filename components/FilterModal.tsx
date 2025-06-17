@@ -7,6 +7,7 @@ import Pill from '@/components/Pill';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import {
   useFilterModal,
   DIFFICULTY_OPTIONS,
@@ -100,7 +101,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
         <BaseCard shadowSize="small" style={styles.card}>
           <View style={styles.cardHeader}>
             <ThemedText type="heading3" weight="bold">
-              Sort by
+              {STRINGS.SORT_BY}
             </ThemedText>
           </View>
 
@@ -154,12 +155,12 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
         <BaseCard shadowSize="small" style={styles.card}>
           <View style={styles.cardHeader}>
             <ThemedText type="heading3" weight="bold">
-              Filters
+              {STRINGS.FILTERS}
             </ThemedText>
             {activeFiltersCount > 0 && (
               <Pressable onPress={handleClearAll} style={styles.clearButton}>
                 <ThemedText type="label" colorName="tint" weight="medium">
-                  Reset filters
+                  {STRINGS.RESET_FILTERS}
                 </ThemedText>
               </Pressable>
             )}
@@ -173,7 +174,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
             <View style={styles.filterRowLeft}>
               <Ionicons name="person-outline" size={20} color={colors.secondaryText} />
               <ThemedText type="body" weight="medium">
-                Authors
+                {STRINGS.AUTHORS}
               </ThemedText>
             </View>
             <View style={styles.filterRowRight}>
@@ -218,7 +219,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
             <View style={styles.filterRowLeft}>
               <Ionicons name="trending-up-outline" size={20} color={colors.secondaryText} />
               <ThemedText type="body" weight="medium">
-                Difficulty
+                {STRINGS.DIFFICULTY}
               </ThemedText>
             </View>
             <View style={styles.filterRowRight}>

@@ -27,6 +27,7 @@ import { AuthProvider, ToastProvider } from '@/components/providers';
 import { Theme } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
 import { createNavigationOptions } from '@/constants/modal';
+import { STRINGS } from '@/constants/strings';
 import { QUERY_DEFAULTS } from '@/constants/queryConfig';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useReadTabDataLoaded } from '@/hooks/app/useArticlesAndDueWordsLoaded';
@@ -317,10 +318,10 @@ const ErrorFallback = memo(function ErrorFallback({ error }: FallbackProps) {
           marginBottom: LAYOUT.SPACING.SMALL,
         }}
       >
-        Something went wrong
+        {STRINGS.SOMETHING_WENT_WRONG}
       </ThemedText>
       <ThemedText style={{ marginBottom: LAYOUT.SPACING.XLARGE }} type="body">
-        Please try again
+        {STRINGS.PLEASE_TRY_AGAIN}
       </ThemedText>
       <ThemedText colorName="textTertiary" type="caption">
         {errorMessage}

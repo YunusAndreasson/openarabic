@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
 const LearningMethodScreen: FC = () => {
@@ -192,7 +193,9 @@ const LearningMethodScreen: FC = () => {
               </View>
               <View style={styles.benefitContent}>
                 <ThemedText style={styles.benefitText} type="body">
-                  <ThemedText weight="bold">Acquisition, not learning</ThemedText>
+                  <ThemedText weight="bold">
+                    {STRINGS.ACQUISITION_NOT_LEARNING}
+                  </ThemedText>
                   {'\n'}Language develops through understanding, not memorization
                 </ThemedText>
               </View>
@@ -203,7 +206,7 @@ const LearningMethodScreen: FC = () => {
               </View>
               <View style={styles.benefitContent}>
                 <ThemedText style={styles.benefitText} type="body">
-                  <ThemedText weight="bold">Focus on meaning</ThemedText>
+                  <ThemedText weight="bold">{STRINGS.FOCUS_ON_MEANING}</ThemedText>
                   {'\n'}Understanding messages drives language development
                 </ThemedText>
               </View>
@@ -214,7 +217,7 @@ const LearningMethodScreen: FC = () => {
               </View>
               <View style={styles.benefitContent}>
                 <ThemedText style={styles.benefitText} type="body">
-                  <ThemedText weight="bold">Natural process</ThemedText>
+                  <ThemedText weight="bold">{STRINGS.NATURAL_PROCESS}</ThemedText>
                   {'\n'}Acquisition occurs automatically with sufficient comprehensible input
                 </ThemedText>
               </View>

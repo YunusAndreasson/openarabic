@@ -6,6 +6,7 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { InstructionFooterProps } from '@/types/ui/review.types';
@@ -73,7 +74,7 @@ const InstructionFooter: FC<InstructionFooterProps> = ({ style }) => {
             <Ionicons color={colors.interactiveSecondary} name="arrow-back" size={18} />
           </View>
           <ThemedText style={textStyle} variant="subtle">
-            Unknown
+            {STRINGS.UNKNOWN}
           </ThemedText>
         </View>
 
@@ -82,13 +83,13 @@ const InstructionFooter: FC<InstructionFooterProps> = ({ style }) => {
             <Ionicons color={colors.interactiveSecondary} name="finger-print" size={18} />
           </View>
           <ThemedText style={textStyle} variant="subtle">
-            Unsure
+            {STRINGS.UNSURE}
           </ThemedText>
         </View>
 
         <View style={[styles.instructionItem, styles.instructionItemRight]}>
           <ThemedText style={textStyle} variant="subtle">
-            Known
+            {STRINGS.KNOWN}
           </ThemedText>
           <View style={iconStyle}>
             <Ionicons color={colors.interactiveSecondary} name="arrow-forward" size={18} />

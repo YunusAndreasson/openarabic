@@ -5,6 +5,7 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { BaseIconButtonProps } from '@/types/ui/button.types';
@@ -74,7 +75,7 @@ const RepeatButton: FC<RepeatButtonProps> = ({ enabled, onToggle, ...rest }) => 
         variant={enabled ? undefined : 'subtle'}
         skipDefaultColor={true}
       >
-        Repeat
+        {STRINGS.REPEAT}
       </ThemedText>
     </TouchableOpacity>
   );
