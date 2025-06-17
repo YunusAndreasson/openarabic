@@ -51,8 +51,8 @@ export const BaseChart = memo(
     legendItems,
     timeRange,
     contentHeight = 176, // Optimized to match GRAPH_HEIGHT_LARGE
-    emptyStateText = 'Study words to see your progress',
-    errorText = 'Unable to load chart data',
+    emptyStateText = STRINGS.STUDY_WORDS_TO_SEE_PROGRESS,
+    errorText = STRINGS.UNABLE_TO_LOAD_CHART_DATA,
   }: BaseChartProps) => {
     const colors = useColors();
 

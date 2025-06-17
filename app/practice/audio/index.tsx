@@ -109,12 +109,12 @@ export default function ListenScreen(): JSX.Element {
       <CompletionScreen
         useThemedView
         buttonStyle={{ minWidth: 180 }}
-        buttonText="Continue"
+        buttonText={STRINGS.CONTINUE}
         buttonVariant="outlined"
         iconName="checkmark-circle-outline"
         iconSize={120}
-        subtitle="All words practiced"
-        title="Session Complete!"
+        subtitle={STRINGS.ALL_WORDS_PRACTICED}
+        title={STRINGS.SESSION_COMPLETE}
         onClose={handleClose}
       />
     );

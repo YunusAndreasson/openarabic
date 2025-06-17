@@ -5,6 +5,7 @@ import { StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { BaseIconButtonProps } from '@/types/ui/button.types';
@@ -54,8 +55,12 @@ const PlayButton: FC<PlayButtonProps> = ({
       activeOpacity={0.7}
       style={styles.touchable}
       accessibilityRole="button"
-      accessibilityLabel={isPlaying ? 'Pause audio' : 'Play audio'}
-      accessibilityHint={isPlaying ? 'Pause the audio playback' : 'Start playing this article'}
+      accessibilityLabel={
+        isPlaying ? STRINGS.PAUSE_AUDIO_A11Y_LABEL : STRINGS.PLAY_AUDIO_A11Y_LABEL
+      }
+      accessibilityHint={
+        isPlaying ? STRINGS.PAUSE_AUDIO_A11Y_HINT : STRINGS.PLAY_AUDIO_A11Y_HINT
+      }
       hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
     >
       <Animated.View

@@ -2,9 +2,9 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import { Colors } from '@/constants/Colors';
+import { STRINGS } from '@/constants/strings';
 import type { ReminderTime } from '@/types/notifications.types';
 import { handleError } from '@/utils/errorHandling';
-import { STRINGS } from '@/constants/strings';
 
 // Configure notification behavior
 Notifications.setNotificationHandler({
@@ -79,8 +79,8 @@ export async function scheduleReminder(reminderTime: ReminderTime): Promise<stri
     }
 
     // Simple, reliable notification content
-    const title = 'Time to practice Arabic!';
-    const body = "Continue your Arabic learning journey with today's lesson.";
+    const title = STRINGS.NOTIFICATION_REMINDER_TITLE;
+    const body = STRINGS.NOTIFICATION_REMINDER_BODY;
 
     const identifier = await Notifications.scheduleNotificationAsync({
       content: {

@@ -386,7 +386,7 @@ export default function ListenScreen(): JSX.Element {
           primaryLabel={STRINGS.PLAY_ALL}
           primaryVariant="filled"
           showTimerButton={false}
-          primaryAccessibilityLabel="Play all texts"
+          primaryAccessibilityLabel={STRINGS.PLAY_ALL_TEXTS_A11Y_LABEL}
           onPrimaryPress={() => handlePlayAll(setIsPlayAllLoading)}
         />
       )}

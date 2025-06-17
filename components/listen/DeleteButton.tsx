@@ -4,6 +4,7 @@ import { StyleSheet, TouchableOpacity, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { BaseIconButtonProps } from '@/types/ui/button.types';
@@ -33,8 +34,8 @@ const DeleteButton: FC<
       activeOpacity={LAYOUT.OPACITY.HOVER}
       style={styles.touchable}
       accessibilityRole="button"
-      accessibilityLabel="Delete article"
-      accessibilityHint="Remove this article from your listening playlist"
+      accessibilityLabel={STRINGS.DELETE_ARTICLE_A11Y_LABEL}
+      accessibilityHint={STRINGS.DELETE_ARTICLE_A11Y_HINT}
       hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
     >
       <Animated.View

@@ -277,7 +277,7 @@ const AccountScreen: FC = () => {
                   </View>
                   <View style={styles.cacheTextContainer}>
                     <ThemedText type="body" weight="medium">
-                      Audio Cache
+                      {STRINGS.AUDIO_CACHE}
                     </ThemedText>
                     <ThemedText colorName="textTertiary" style={styles.cacheSubtext} type="caption">
                       {formattedCacheSize}
