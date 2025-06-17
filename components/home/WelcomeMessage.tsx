@@ -7,6 +7,7 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { HIJRI_MONTHS } from '@/constants/hijri';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
 const WelcomeMessage: FC = () => {
@@ -20,7 +21,7 @@ const WelcomeMessage: FC = () => {
     const hijriYear = hijriMoment.iYear();
 
     // Create the minimal date message
-    return `${hijriDay} ${hijriMonth} ${hijriYear} AH`;
+    return `${hijriDay} ${hijriMonth} ${hijriYear} ${STRINGS.AH}`;
   }, []);
 
   const handleCalendarPress = useCallback(() => {

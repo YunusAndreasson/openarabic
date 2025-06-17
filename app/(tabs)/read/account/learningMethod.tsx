@@ -58,7 +58,7 @@ const LearningMethodScreen: FC = () => {
               </View>
               <View style={styles.stepContent}>
                 <ThemedText style={styles.stepTitle} type="body" weight="bold">
-                  Comprehensible input (i+1)
+                  {STRINGS.COMPREHENSIBLE_INPUT}
                 </ThemedText>
                 <ThemedText style={styles.stepText} type="body" variant="secondary">
                   Translations provide meaning context while exposing you to Arabic structures just
@@ -73,7 +73,7 @@ const LearningMethodScreen: FC = () => {
               </View>
               <View style={styles.stepContent}>
                 <ThemedText style={styles.stepTitle} type="body" weight="bold">
-                  Unconscious pattern recognition
+                  {STRINGS.UNCONSCIOUS_PATTERN_RECOGNITION}
                 </ThemedText>
                 <ThemedText style={styles.stepText} type="body" variant="secondary">
                   The brain automatically identifies recurring structures without conscious analysis
@@ -88,7 +88,7 @@ const LearningMethodScreen: FC = () => {
               </View>
               <View style={styles.stepContent}>
                 <ThemedText style={styles.stepTitle} type="body" weight="bold">
-                  Natural order acquisition
+                  {STRINGS.NATURAL_ORDER_ACQUISITION}
                 </ThemedText>
                 <ThemedText style={styles.stepText} type="body" variant="secondary">
                   Language structures are acquired in a predictable sequence through repeated
@@ -103,7 +103,7 @@ const LearningMethodScreen: FC = () => {
               </View>
               <View style={styles.stepContent}>
                 <ThemedText style={styles.stepTitle} type="body" weight="bold">
-                  Internalized competence
+                  {STRINGS.INTERNALIZED_COMPETENCE}
                 </ThemedText>
                 <ThemedText style={styles.stepText} type="body" variant="secondary">
                   Arabic structures become part of your acquired language system, enabling fluent
@@ -127,7 +127,7 @@ const LearningMethodScreen: FC = () => {
               </View>
               <View style={styles.reasonContent}>
                 <ThemedText style={styles.reasonTitle} type="body" weight="bold">
-                  Low affective filter
+                  {STRINGS.LOW_AFFECTIVE_FILTER}
                 </ThemedText>
                 <ThemedText style={styles.reasonText} type="body" variant="secondary">
                   Personal interest in content reduces anxiety and increases motivation, enabling
@@ -142,7 +142,7 @@ const LearningMethodScreen: FC = () => {
               </View>
               <View style={styles.reasonContent}>
                 <ThemedText style={styles.reasonTitle} type="body" weight="bold">
-                  Rich linguistic input
+                  {STRINGS.RICH_LINGUISTIC_INPUT_TITLE}
                 </ThemedText>
                 <ThemedText style={styles.reasonText} type="body" variant="secondary">
                   Complete Arabic grammatical system and extensive vocabulary in authentic,
@@ -157,7 +157,7 @@ const LearningMethodScreen: FC = () => {
               </View>
               <View style={styles.reasonContent}>
                 <ThemedText style={styles.reasonTitle} type="body" weight="bold">
-                  Optimal comprehensibility
+                  {STRINGS.OPTIMAL_COMPREHENSIBILITY}
                 </ThemedText>
                 <ThemedText style={styles.reasonText} type="body" variant="secondary">
                   Familiar concepts in Arabic with translation support create ideal i+1 conditions
@@ -193,9 +193,7 @@ const LearningMethodScreen: FC = () => {
               </View>
               <View style={styles.benefitContent}>
                 <ThemedText style={styles.benefitText} type="body">
-                  <ThemedText weight="bold">
-                    {STRINGS.ACQUISITION_NOT_LEARNING}
-                  </ThemedText>
+                  <ThemedText weight="bold">{STRINGS.ACQUISITION_NOT_LEARNING}</ThemedText>
                   {'\n'}Language develops through understanding, not memorization
                 </ThemedText>
               </View>

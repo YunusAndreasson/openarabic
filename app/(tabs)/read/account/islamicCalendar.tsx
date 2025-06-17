@@ -142,9 +142,12 @@ export default function IslamicCalendarScreen(): JSX.Element {
                             ]}
                           >
                             {event.isActive
-                              ? `Day ${Math.floor(
-                                  (event.progress ?? 0) * (event.duration ?? 1)
-                                )} of ${event.duration}`
+                              ? STRINGS.DAY_OF_TEMPLATE.replace(
+                                  '{day}',
+                                  Math.floor(
+                                    (event.progress ?? 0) * (event.duration ?? 1)
+                                  ).toString()
+                                ).replace('{duration}', String(event.duration))
                               : formatDaysUntil(event.daysFromNow)}
                           </ThemedText>
 

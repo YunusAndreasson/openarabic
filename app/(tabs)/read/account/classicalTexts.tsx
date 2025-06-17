@@ -57,9 +57,7 @@ const ClassicalTextsScreen: FC = () => {
               </View>
               <View style={styles.benefitContent}>
                 <ThemedText style={styles.benefitText} type="body">
-                  <ThemedText weight="bold">
-                    {STRINGS.COMPLETE_LINGUISTIC_SYSTEM}
-                  </ThemedText>
+                  <ThemedText weight="bold">{STRINGS.COMPLETE_LINGUISTIC_SYSTEM}</ThemedText>
                   {'\n'}All Arabic grammatical structures in authentic contexts
                 </ThemedText>
               </View>
@@ -70,9 +68,7 @@ const ClassicalTextsScreen: FC = () => {
               </View>
               <View style={styles.benefitContent}>
                 <ThemedText style={styles.benefitText} type="body">
-                  <ThemedText weight="bold">
-                    {STRINGS.RICH_VOCABULARY_INPUT}
-                  </ThemedText>
+                  <ThemedText weight="bold">{STRINGS.RICH_VOCABULARY_INPUT}</ThemedText>
                   {'\n'}Thousands of words in meaningful, comprehensible contexts
                 </ThemedText>
               </View>
@@ -83,9 +79,7 @@ const ClassicalTextsScreen: FC = () => {
               </View>
               <View style={styles.benefitContent}>
                 <ThemedText style={styles.benefitText} type="body">
-                  <ThemedText weight="bold">
-                    {STRINGS.AUTHENTIC_LANGUAGE_PATTERNS}
-                  </ThemedText>
+                  <ThemedText weight="bold">{STRINGS.AUTHENTIC_LANGUAGE_PATTERNS}</ThemedText>
                   {'\n'}Arabic as actually written and used by native speakers
                 </ThemedText>
               </View>
@@ -96,9 +90,7 @@ const ClassicalTextsScreen: FC = () => {
               </View>
               <View style={styles.benefitContent}>
                 <ThemedText style={styles.benefitText} type="body">
-                  <ThemedText weight="bold">
-                    {STRINGS.CULTURAL_AND_CONCEPTUAL_FRAMEWORK}
-                  </ThemedText>
+                  <ThemedText weight="bold">{STRINGS.CULTURAL_AND_CONCEPTUAL_FRAMEWORK}</ThemedText>
                   {'\n'}Understanding of Arabic thought patterns and expression
                 </ThemedText>
               </View>
@@ -119,7 +111,7 @@ const ClassicalTextsScreen: FC = () => {
               </View>
               <View style={styles.concernContent}>
                 <ThemedText style={styles.concernTitle} type="body" weight="bold">
-                  &quot;Too difficult without grammar study&quot;
+                  {STRINGS.TOO_DIFFICULT_WITHOUT_GRAMMAR}
                 </ThemedText>
                 <ThemedText style={styles.concernText} type="body" variant="secondary">
                   Translations provide comprehensible input while exposing you to authentic
@@ -134,7 +126,7 @@ const ClassicalTextsScreen: FC = () => {
               </View>
               <View style={styles.concernContent}>
                 <ThemedText style={styles.concernTitle} type="body" weight="bold">
-                  &quot;Content is too advanced&quot;
+                  {STRINGS.CONTENT_TOO_ADVANCED}
                 </ThemedText>
                 <ThemedText style={styles.concernText} type="body" variant="secondary">
                   Personal interest lowers the affective filter and improves acquisition. Familiar
@@ -158,7 +150,7 @@ const ClassicalTextsScreen: FC = () => {
               </View>
               <View style={styles.comparisonContent}>
                 <ThemedText style={styles.comparisonTitle} type="body" weight="bold">
-                  Classical Arabic
+                  {STRINGS.CLASSICAL_ARABIC}
                 </ThemedText>
                 <ThemedText style={styles.comparisonText} type="body" variant="secondary">
                   Foundation of all Arabic varieties. Enables reading Quran, hadith, literature,
@@ -173,7 +165,7 @@ const ClassicalTextsScreen: FC = () => {
               </View>
               <View style={styles.comparisonContent}>
                 <ThemedText style={styles.comparisonTitle} type="body" weight="bold">
-                  Modern Standard Arabic
+                  {STRINGS.MODERN_STANDARD_ARABIC}
                 </ThemedText>
                 <ThemedText style={styles.comparisonText} type="body" variant="secondary">
                   Simplified classical Arabic for contemporary media and formal contexts. Easy
@@ -214,7 +206,7 @@ const ClassicalTextsScreen: FC = () => {
               </View>
               <View style={styles.referenceContent}>
                 <ThemedText style={styles.referenceTitle} type="body" weight="bold">
-                  Input Hypothesis
+                  {STRINGS.INPUT_HYPOTHESIS}
                 </ThemedText>
                 <ThemedText style={styles.referenceText} type="body" variant="secondary">
                   Krashen, S. (1985). The Input Hypothesis: Issues and Implications. Demonstrates
@@ -229,7 +221,7 @@ const ClassicalTextsScreen: FC = () => {
               </View>
               <View style={styles.referenceContent}>
                 <ThemedText style={styles.referenceTitle} type="body" weight="bold">
-                  Affective Filter Hypothesis
+                  {STRINGS.AFFECTIVE_FILTER_HYPOTHESIS}
                 </ThemedText>
                 <ThemedText style={styles.referenceText} type="body" variant="secondary">
                   Krashen, S. (1982). Principles and Practice in Second Language Acquisition. Shows
@@ -244,7 +236,7 @@ const ClassicalTextsScreen: FC = () => {
               </View>
               <View style={styles.referenceContent}>
                 <ThemedText style={styles.referenceTitle} type="body" weight="bold">
-                  Natural Approach
+                  {STRINGS.NATURAL_APPROACH}
                 </ThemedText>
                 <ThemedText style={styles.referenceText} type="body" variant="secondary">
                   Krashen, S. & Terrell, T. (1983). The Natural Approach. Demonstrates effective

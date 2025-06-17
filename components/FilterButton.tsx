@@ -4,6 +4,7 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectActiveFiltersCount } from '@/store/filtersSlice';
@@ -41,7 +42,7 @@ const FilterButton = memo(({ onPress }: FilterButtonProps) => {
         hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
       >
         <ThemedText type="label" weight="medium" colorName="tint" style={styles.filterText}>
-          Filter
+          {STRINGS.FILTER}
         </ThemedText>
 
         {activeFiltersCount > 0 && (

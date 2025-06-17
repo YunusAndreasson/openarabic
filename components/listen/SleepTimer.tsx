@@ -96,12 +96,12 @@ const SleepTimerComponent = ({
               <View style={[styles.header, { borderBottomColor: colors.borderOverlay }]}>
                 <View style={styles.headerContent}>
                   <ThemedText style={styles.title} type="heading2" weight="bold">
-                    Sleep Timer
+                    {STRINGS.SLEEP_TIMER_TITLE}
                   </ThemedText>
                   <ThemedText style={styles.subtitle} type="body" variant="secondary">
                     {isActive && remainingTime > 0
-                      ? 'Playback will stop automatically'
-                      : 'Choose when to stop playback'}
+                      ? STRINGS.SLEEP_TIMER_AUTOMATIC
+                      : STRINGS.SLEEP_TIMER_CHOOSE_WHEN}
                   </ThemedText>
                 </View>
                 <TouchableOpacity style={styles.closeButton} onPress={onClose}>
@@ -119,7 +119,7 @@ const SleepTimerComponent = ({
                       </ThemedText>
                     </View>
                     <ThemedText style={styles.activeDescription} type="body" variant="secondary">
-                      remaining
+                      {STRINGS.REMAINING}
                     </ThemedText>
                     <ThemedButton
                       style={[styles.fullWidthButton, { borderColor: colors.borderOverlay }]}
