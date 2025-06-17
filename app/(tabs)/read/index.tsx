@@ -121,7 +121,9 @@ export default function ArticlesScreen(): JSX.Element {
       // Force new article selection
       setRefreshKey(prev => prev + 1);
     } catch (error) {
-      handleError(error instanceof Error ? error : new Error('Refresh failed'));
+      handleError(
+        error instanceof Error ? error : new Error(STRINGS.REFRESH_FAILED)
+      );
     } finally {
       setIsRefreshing(false);
     }

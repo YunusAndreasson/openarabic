@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AUDIO_STATES } from '@/constants/audio';
+import { STRINGS } from '@/constants/strings';
 import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
@@ -89,7 +90,10 @@ export function useAudioPracticeSession(): UseAudioPracticeSessionReturn {
   }, [currentTrackIndex, currentWordIndex, wordList.length]);
 
   const startPlayback = useCallback(
-    (tracks: EnhancedAudioTrack[], errorMessage = 'Failed to start audio playback') => {
+    (
+      tracks: EnhancedAudioTrack[],
+      errorMessage: string = STRINGS.FAILED_TO_START_AUDIO_PLAYBACK
+    ) => {
       maxProgressRef.current = 0;
       setCurrentWordIndex(0);
       playbackCompletedRef.current = false;
@@ -167,10 +171,14 @@ export function useAudioPracticeSession(): UseAudioPracticeSessionReturn {
           setWordList(uniqueWords);
 
           lastAudioStateRef.current = AUDIO_STATES.IDLE;
-          startPlayback(selectedTracks, 'Failed to start audio playback');
+          startPlayback(selectedTracks, STRINGS.FAILED_TO_START_AUDIO_PLAYBACK);
         }
       } catch (error) {
-        handleError(error instanceof Error ? error : new Error('Failed to load vocabulary tracks'));
+        handleError(
+          error instanceof Error
+            ? error
+            : new Error(STRINGS.FAILED_TO_LOAD_VOCABULARY_TRACKS)
+        );
       }
     };
 
@@ -196,7 +204,7 @@ export function useAudioPracticeSession(): UseAudioPracticeSessionReturn {
     setProgressAnimationKey(prev => prev + 1);
     isInitialized.current = false; // Reset initialization flag to allow restart
 
-    startPlayback(selectedTracksRef.current, 'Failed to restart audio playback');
+    startPlayback(selectedTracksRef.current, STRINGS.FAILED_TO_RESTART_AUDIO_PLAYBACK);
   }, [startPlayback]);
 
   useEffect(() => {
