@@ -73,7 +73,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
   return (
     <BaseChart
       contentHeight={GAUGE_HEIGHT + 140}
-      emptyStateText="Add words to see your learning capacity"
+      emptyStateText={STRINGS.ADD_WORDS_TO_SEE_CAPACITY}
       hasData={studyWords.length > 0}
       hideTitle={true}
       subtitle=""

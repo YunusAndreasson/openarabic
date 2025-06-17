@@ -263,7 +263,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
             <View style={styles.filterRowLeft}>
               <Ionicons name="calendar-outline" size={20} color={colors.secondaryText} />
               <ThemedText type="body" weight="medium">
-                Date range
+                {STRINGS.DATE_RANGE}
               </ThemedText>
             </View>
             <View style={styles.filterRowRight}>

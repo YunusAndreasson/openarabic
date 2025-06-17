@@ -5,6 +5,8 @@
  * with unified terminology, display formats, and performance indicators.
  */
 
+import { STRINGS } from '@/constants/strings';
+
 import { PERFORMANCE_THRESHOLDS } from './constants';
 
 // Standardized terminology
@@ -85,7 +87,7 @@ export const generateChartSubtitle = {
     weeklyChange: number
   ): string => {
     if (currentRate === 0) {
-      return 'Review words to build memory strength';
+      return STRINGS.REVIEW_WORDS_TO_BUILD_MEMORY_STRENGTH;
     }
 
     const performance = getPerformanceLevel(currentRate);
@@ -100,7 +102,7 @@ export const generateChartSubtitle = {
 
   efficiency: (currentEfficiency: number, weeklyAverage: number): string => {
     if (currentEfficiency === 0) {
-      return 'Practice to see learning speed';
+      return STRINGS.PRACTICE_TO_SEE_LEARNING_SPEED;
     }
 
     const performance = getPerformanceLevel(currentEfficiency);
@@ -117,7 +119,7 @@ export const generateChartSubtitle = {
 
   retrievability: (currentRetention: number, criticalWords: number, totalWords: number): string => {
     if (totalWords === 0) {
-      return 'Review words to track retention';
+      return STRINGS.REVIEW_WORDS_TO_TRACK_RETENTION;
     }
 
     const performance = getPerformanceLevel(currentRetention);
@@ -137,8 +139,8 @@ export const generateChartSubtitle = {
 
 // Standardized empty state messages
 export const EMPTY_STATE_MESSAGES = {
-  mastery: 'Review words to track your memory strength',
-  efficiency: 'Practice to see your learning speed',
-  retrievability: 'Study words to monitor your retention',
-  general: 'Start studying to see your progress',
+  mastery: STRINGS.REVIEW_WORDS_TO_TRACK_MEMORY_STRENGTH,
+  efficiency: STRINGS.PRACTICE_TO_SEE_YOUR_LEARNING_SPEED,
+  retrievability: STRINGS.STUDY_WORDS_TO_MONITOR_RETENTION,
+  general: STRINGS.START_STUDYING_TO_SEE_PROGRESS,
 } as const;

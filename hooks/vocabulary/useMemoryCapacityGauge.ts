@@ -2,6 +2,7 @@ import { Skia } from '@shopify/react-native-skia';
 import { useMemo } from 'react';
 
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -176,10 +177,10 @@ export function useMemoryCapacityGauge({
   };
 
   const getReadinessMessage = (score: number) => {
-    if (score >= CAPACITY_THRESHOLDS.OPTIMAL) return 'Add new words';
-    if (score >= CAPACITY_THRESHOLDS.MODERATE) return 'Add words moderately';
-    if (score >= CAPACITY_THRESHOLDS.CRITICAL) return 'Review before adding';
-    return 'Focus on reviews only';
+    if (score >= CAPACITY_THRESHOLDS.OPTIMAL) return STRINGS.ADD_NEW_WORDS;
+    if (score >= CAPACITY_THRESHOLDS.MODERATE) return STRINGS.ADD_WORDS_MODERATELY;
+    if (score >= CAPACITY_THRESHOLDS.CRITICAL) return STRINGS.REVIEW_BEFORE_ADDING;
+    return STRINGS.FOCUS_ON_REVIEWS_ONLY;
   };
 
   return {
