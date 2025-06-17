@@ -18,6 +18,8 @@ import {
   NOW_PLAYING_EXIT_SPRING,
   NOW_PLAYING_START_SCALE,
   NOW_PLAYING_DISMISS_SCALE,
+  NOW_PLAYING_HIDDEN_OFFSET,
+  NOW_PLAYING_STOP_PRESS_SCALE,
   TIMING_CONFIG,
   QUICK_ANIMATION_DURATION,
 } from '@/constants/animation';
@@ -55,14 +57,16 @@ export const useNowPlayingCard = ({
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
-  const translateY = useSharedValue(NOW_PLAYING_CARD_HEIGHT + 100);
+  const translateY = useSharedValue(
+    NOW_PLAYING_CARD_HEIGHT + NOW_PLAYING_HIDDEN_OFFSET,
+  );
   const opacity = useSharedValue(0);
   const scale = useSharedValue(NOW_PLAYING_START_SCALE);
   const {
     animatedStyle: rawButtonAnimatedStyle,
     handlePressIn: handleStopPressIn,
     handlePressOut: handleStopPressOut,
-  } = usePressAnimation({ scaleAmount: 0.85 });
+  } = usePressAnimation({ scaleAmount: NOW_PLAYING_STOP_PRESS_SCALE });
   const buttonAnimatedStyle = rawButtonAnimatedStyle as AnimatedStyle<ViewStyle>;
 
   useEffect(() => {
@@ -76,7 +80,7 @@ export const useNowPlayingCard = ({
         { duration: QUICK_ANIMATION_DURATION },
         () => {
           translateY.value = withSpring(
-            NOW_PLAYING_CARD_HEIGHT + 100,
+            NOW_PLAYING_CARD_HEIGHT + NOW_PLAYING_HIDDEN_OFFSET,
             NOW_PLAYING_EXIT_SPRING,
           );
         },

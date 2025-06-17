@@ -5,6 +5,7 @@ import { StyleSheet, TouchableOpacity, View, ActivityIndicator } from 'react-nat
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type {
@@ -174,7 +175,7 @@ function ThemedButtonComponent({
       <View style={[styles.innerContainer, innerContainerStyle]}>
         {loading ? (
           // When loading, show only the ActivityIndicator centered with fade-in
-          <Animated.View entering={FadeIn.duration(200)}>
+          <Animated.View entering={FadeIn.duration(DEFAULT_ANIMATION_DURATION)}>
             <ActivityIndicator color={textColor} size="small" />
           </Animated.View>
         ) : (

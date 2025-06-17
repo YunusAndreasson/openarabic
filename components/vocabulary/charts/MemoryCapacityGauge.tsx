@@ -9,6 +9,7 @@ import { BaseChart } from '@/components/vocabulary/shared';
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
+import { INSIGHTS_BUTTON_PRESS_SCALE } from '@/constants/animation';
 import { useNavigationWithDebounce } from '@/hooks';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
@@ -47,7 +48,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
     animatedStyle: animatedPressStyle,
     handlePressIn: handleInsightsPressIn,
     handlePressOut: handleInsightsPressOut,
-  } = usePressAnimation({ scaleAmount: 0.98 });
+  } = usePressAnimation({ scaleAmount: INSIGHTS_BUTTON_PRESS_SCALE });
 
   const {
     memoryMetrics,
