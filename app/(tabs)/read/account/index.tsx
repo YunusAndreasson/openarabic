@@ -64,7 +64,8 @@ const AccountScreen: FC = () => {
   }, [handleSocialLink]);
 
   // Format cache size for display
-  const formattedCacheSize = cacheSize > 0 ? formatBytes(cacheSize) : 'No cached files';
+  const formattedCacheSize =
+    cacheSize > 0 ? formatBytes(cacheSize) : STRINGS.NO_CACHED_FILES;
 
   return (
     <ThemedView
@@ -157,7 +158,7 @@ const AccountScreen: FC = () => {
                     <Ionicons color={colors.icon} name="text-outline" size={22} />
                   </View>
                   <ThemedText style={styles.cardText} type="body" weight="medium">
-                    Arabic Font
+                    {STRINGS.ARABIC_FONT}
                   </ThemedText>
                 </View>
                 <Ionicons
@@ -183,7 +184,7 @@ const AccountScreen: FC = () => {
                     <Ionicons color={colors.icon} name="mail" size={22} />
                   </View>
                   <ThemedText style={styles.cardText} type="body" weight="medium">
-                    Contact Support
+                    {STRINGS.CONTACT_SUPPORT}
                   </ThemedText>
                 </View>
                 <Ionicons
@@ -216,7 +217,7 @@ const AccountScreen: FC = () => {
                     <Ionicons color={colors.icon} name="school-outline" size={22} />
                   </View>
                   <ThemedText style={styles.cardText} type="body" weight="medium">
-                    Language Learning Science
+                    {STRINGS.LANGUAGE_LEARNING_SCIENCE}
                   </ThemedText>
                 </View>
                 <Ionicons
@@ -242,7 +243,7 @@ const AccountScreen: FC = () => {
                     <Ionicons color={colors.icon} name="library-outline" size={22} />
                   </View>
                   <ThemedText style={styles.cardText} type="body" weight="medium">
-                    Why Classical Texts
+                    {STRINGS.WHY_CLASSICAL_TEXTS}
                   </ThemedText>
                 </View>
                 <Ionicons
@@ -377,7 +378,7 @@ const AccountScreen: FC = () => {
                     <Ionicons color={colors.icon} name="logo-facebook" size={22} />
                   </View>
                   <ThemedText style={styles.cardText} type="body" weight="medium">
-                    Facebook
+                    {STRINGS.FACEBOOK}
                   </ThemedText>
                 </View>
                 <Ionicons
@@ -403,7 +404,7 @@ const AccountScreen: FC = () => {
                     <Ionicons color={colors.icon} name="logo-instagram" size={22} />
                   </View>
                   <ThemedText style={styles.cardText} type="body" weight="medium">
-                    Instagram
+                    {STRINGS.INSTAGRAM}
                   </ThemedText>
                 </View>
                 <Ionicons

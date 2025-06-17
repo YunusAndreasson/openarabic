@@ -147,6 +147,32 @@ export const STRINGS = {
   FAILED_TO_SKIP_TO_NEXT_TRACK: 'Failed to skip to next track',
   FAILED_TO_START_SLEEP_TIMER: 'Failed to start sleep timer',
   FAILED_TO_CANCEL_SLEEP_TIMER: 'Failed to cancel sleep timer',
+  // New UI strings
+  YOUR_EMAIL: 'Your email',
+  YOUR_PASSWORD: 'Your password',
+  PASSWORD_REQUIREMENTS_HINT:
+    'At least {minLength} characters with uppercase, lowercase and number',
+  UNKNOWN_ERROR_OCCURRED: 'Unknown error occurred',
+  ARABIC_FONT: 'Arabic Font',
+  CONTACT_SUPPORT: 'Contact Support',
+  LANGUAGE_LEARNING_SCIENCE: 'Language Learning Science',
+  WHY_CLASSICAL_TEXTS: 'Why Classical Texts',
+  FACEBOOK: 'Facebook',
+  INSTAGRAM: 'Instagram',
+  CHOOSE_SESSION_TYPE: 'Choose session type',
+  VISUAL: 'Visual',
+  TAP_AND_SWIPE: 'Tap and swipe',
+  AUDIO: 'Audio',
+  LISTEN_WHILE_MULTITASKING: 'Listen while multitasking',
+  NO_CACHED_FILES: 'No cached files',
+  READ: 'Read',
+  LISTEN: 'Listen',
+  PRACTICE: 'Practice',
+  CALENDAR: 'Calendar',
+  ACCOUNT: 'Account',
+  CLASSICAL_TEXTS: 'Classical Texts',
+  LEARNING_METHOD: 'Learning Method',
+  ISLAMIC_CALENDAR: 'Islamic Calendar',
 } as const;
 
 export type StringKey = keyof typeof STRINGS;
