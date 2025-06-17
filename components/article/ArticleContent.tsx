@@ -10,6 +10,7 @@ import ParallaxHeader from '@/components/article/ParallaxHeader';
 import { useToast } from '@/components/providers/ToastProvider';
 import { AUDIO_STATES } from '@/constants/audio';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
 import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
@@ -109,7 +110,7 @@ const AudioControlsButton = memo<Omit<AudioControlsButtonProps, 'article'>>(
         const track = await enhancedAudioService.generateEnhancedAudioTrack(articleId);
 
         if (!track) {
-          showToast('Failed to prepare audio', 3000, 'error');
+          showToast(STRINGS.FAILED_TO_PREPARE_AUDIO, 3000, 'error');
           // Ensure minimum loading time even for errors
           const elapsed = Date.now() - loadingStartTime;
           const remainingTime = Math.max(0, MIN_LOADING_DURATION - elapsed);
@@ -121,7 +122,7 @@ const AudioControlsButton = memo<Omit<AudioControlsButtonProps, 'article'>>(
         const success = await audioPlayer.actions.startEnhancedPlayback([track], 0);
 
         if (!success) {
-          showToast('Failed to start playback', 3000, 'error');
+          showToast(STRINGS.FAILED_TO_START_PLAYBACK, 3000, 'error');
         }
 
         // Ensure minimum loading duration before clearing loading state
@@ -133,7 +134,7 @@ const AudioControlsButton = memo<Omit<AudioControlsButtonProps, 'article'>>(
         }, remainingTime);
       } catch (error) {
         handleError(error as Error, { showToast: false });
-        showToast('Failed to start playback', 3000, 'error');
+        showToast(STRINGS.FAILED_TO_START_PLAYBACK, 3000, 'error');
         // Ensure minimum loading time even for errors
         setTimeout(() => setIsPlayNowLoading(false), 300);
       }
@@ -145,9 +146,9 @@ const AudioControlsButton = memo<Omit<AudioControlsButtonProps, 'article'>>(
 
       // Show toast message
       if (isInReadingList) {
-        showToast('Removed from listening list', 3000, 'success');
+        showToast(STRINGS.REMOVED_FROM_LISTENING_LIST, 3000, 'success');
       } else {
-        showToast('Added to listening list', 3000, 'success');
+        showToast(STRINGS.ADDED_TO_LISTENING_LIST, 3000, 'success');
       }
     }, [articleId, isInReadingList, onToggleReadingList, showToast]);
 
@@ -156,7 +157,7 @@ const AudioControlsButton = memo<Omit<AudioControlsButtonProps, 'article'>>(
         {/* Play/Stop Button */}
         <ThemedButton
           variant="filled"
-          title={isCurrentlyPlaying ? 'STOP' : 'PLAY NOW'}
+          title={isCurrentlyPlaying ? STRINGS.STOP : STRINGS.PLAY_NOW}
           size="medium"
           loading={isPlayButtonLoading}
           disabled={isPlayButtonLoading}
@@ -168,7 +169,7 @@ const AudioControlsButton = memo<Omit<AudioControlsButtonProps, 'article'>>(
         {/* Listen Later Button */}
         <ThemedButton
           variant={isInReadingList ? 'outlined' : 'outlined'}
-          title={isInReadingList ? 'REMOVE' : 'LISTEN LATER'}
+          title={isInReadingList ? STRINGS.REMOVE : STRINGS.LISTEN_LATER}
           size="medium"
           loading={isLoading}
           disabled={isLoading}
@@ -201,7 +202,7 @@ const ArticleSummary = memo<ArticleSummaryProps>(({ summary }) => {
         ]}
       >
         <ThemedText type="label" variant="secondary" style={styles.summaryLabel}>
-          Summary
+          {STRINGS.SUMMARY}
         </ThemedText>
         <ThemedText type="body" style={styles.summaryText}>
           {summary}

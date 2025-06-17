@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import ArticleCard from '@/components/ArticleCard';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 
@@ -111,7 +112,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
           progressBackgroundColor={colors.background}
           refreshing={isRefreshing}
           tintColor={colors.tint}
-          title="Articles selected just for you"
+          title={STRINGS.ARTICLES_SELECTED_FOR_YOU}
           titleColor={colors.secondaryText}
           progressViewOffset={
             progressViewOffset !== undefined

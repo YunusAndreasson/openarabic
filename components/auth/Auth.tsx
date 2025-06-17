@@ -6,6 +6,7 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedInput } from '@/components/ThemedInput';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useAuthForm, PASSWORD_REQUIREMENTS } from '@/hooks/auth/useAuthForm';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
@@ -146,14 +147,14 @@ function Auth(): JSX.Element {
           disabled={loading}
           loading={loading}
           style={styles.button}
-          title={isRegistering ? 'Create Account' : 'Sign In'}
+          title={isRegistering ? STRINGS.CREATE_ACCOUNT : STRINGS.SIGN_IN}
           onPress={isRegistering ? signUpWithEmail : signInWithEmail}
         />
       </View>
 
       <TouchableOpacity activeOpacity={0.7} style={styles.toggleContainer} onPress={toggleMode}>
         <ThemedText align="center" type="body" variant="secondary">
-          {isRegistering ? 'Have an account? Sign in' : 'Need an account? Create one'}
+          {isRegistering ? STRINGS.HAVE_ACCOUNT_SIGN_IN : STRINGS.NEED_ACCOUNT_CREATE_ONE}
         </ThemedText>
       </TouchableOpacity>
     </View>

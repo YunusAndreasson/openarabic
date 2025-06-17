@@ -5,6 +5,7 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { View, StyleSheet } from 'react-native';
 
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 
 import { ThemedButton } from './ThemedButton';
 import { ThemedText } from './ThemedText';
@@ -65,7 +66,7 @@ const EmptyState = memo(
         size="medium"
         style={styles.customActionButton}
         textWeight="bold"
-        title="Browse Articles"
+        title={STRINGS.BROWSE_ARTICLES}
         variant="filled"
         onPress={handleBrowseArticles}
       />

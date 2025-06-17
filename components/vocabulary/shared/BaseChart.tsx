@@ -4,6 +4,7 @@ import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { LegendItemProps } from '@/types/ui/chart.types';
 
@@ -61,7 +62,7 @@ export const BaseChart = memo(
         <BaseCard includePressAnimation={false} shadowSize="small">
           <View style={styles.content}>
             {!hideTitle && (
-              <CardHeader subtitle="Error loading data" title={title} onInfoPress={onInfoPress} />
+              <CardHeader subtitle={STRINGS.ERROR_LOADING_DATA} title={title} onInfoPress={onInfoPress} />
             )}
             <View style={[styles.emptyContainer, { backgroundColor: colors.elevation1 }]}>
               <ThemedText colorName="error" style={styles.emptyText}>
@@ -107,7 +108,7 @@ export const BaseChart = memo(
             <View style={[styles.loadingContainer, { backgroundColor: colors.elevation1 }]}>
               <ActivityIndicator color={colors.tint} size="large" />
               <ThemedText colorName="secondaryText" style={styles.loadingText}>
-                Loading chart...
+                {STRINGS.LOADING_CHART}
               </ThemedText>
             </View>
           )}

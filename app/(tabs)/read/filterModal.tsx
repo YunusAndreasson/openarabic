@@ -5,6 +5,7 @@ import type { JSX } from 'react';
 import ErrorState from '@/components/ErrorState';
 import FilterModal from '@/components/FilterModal';
 import { authorsService } from '@/services/authors';
+import { STRINGS } from '@/constants/strings';
 
 export default function FilterModalScreen(): JSX.Element {
   const router = useRouter();
@@ -28,7 +29,7 @@ export default function FilterModalScreen(): JSX.Element {
   if (error) {
     return (
       <ErrorState
-        message={error instanceof Error ? error.message : 'Failed to load filter options'}
+        message={error instanceof Error ? error.message : STRINGS.FAILED_TO_LOAD_FILTER_OPTIONS}
         onRetry={refetch}
       />
     );

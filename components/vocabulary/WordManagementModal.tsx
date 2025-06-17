@@ -224,22 +224,22 @@ function getActionsForWord(word: StudyWord, colors: ThemeColors): WordManagement
   const baseActions: WordManagementAction[] = [
     {
       id: 'skip',
-      label: 'Skip today',
-      description: 'Hide from current session',
+      label: STRINGS.SKIP_TODAY,
+      description: STRINGS.HIDE_FROM_CURRENT_SESSION,
       icon: 'play-forward-outline',
       color: colors.tint,
     },
     {
       id: 'reset',
-      label: 'Reset progress',
-      description: 'Start over with this word',
+      label: STRINGS.RESET_PROGRESS,
+      description: STRINGS.START_OVER_WITH_THIS_WORD,
       icon: 'refresh-outline',
       color: colors.warning,
     },
     {
       id: 'remove',
-      label: 'Stop studying',
-      description: 'Remove from vocabulary list',
+      label: STRINGS.STOP_STUDYING,
+      description: STRINGS.REMOVE_FROM_VOCABULARY_LIST,
       icon: 'trash-outline',
       color: colors.error,
       destructive: true,
@@ -250,16 +250,16 @@ function getActionsForWord(word: StudyWord, colors: ThemeColors): WordManagement
   if (isStruggling) {
     baseActions.unshift({
       id: 'easy',
-      label: 'Make easier',
-      description: 'Reduce difficulty level',
+      label: STRINGS.MAKE_EASIER,
+      description: STRINGS.REDUCE_DIFFICULTY_LEVEL,
       icon: 'trending-down-outline',
       color: colors.success,
     });
   } else if (isMastered) {
     baseActions.unshift({
       id: 'hard',
-      label: 'Needs practice',
-      description: 'Show more often',
+      label: STRINGS.NEEDS_PRACTICE,
+      description: STRINGS.SHOW_MORE_OFTEN,
       icon: 'trending-up-outline',
       color: colors.warning,
     });
@@ -268,15 +268,15 @@ function getActionsForWord(word: StudyWord, colors: ThemeColors): WordManagement
     baseActions.unshift(
       {
         id: 'easy',
-        label: 'Mark easy',
-        description: 'Show less often',
+        label: STRINGS.MARK_EASY,
+        description: STRINGS.SHOW_LESS_OFTEN,
         icon: 'trending-down-outline',
         color: colors.success,
       },
       {
         id: 'hard',
-        label: 'Mark hard',
-        description: 'Show more often',
+        label: STRINGS.MARK_HARD,
+        description: STRINGS.SHOW_MORE_OFTEN,
         icon: 'trending-up-outline',
         color: colors.warning,
       }

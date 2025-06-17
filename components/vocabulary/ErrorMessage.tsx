@@ -5,6 +5,7 @@ import { View, StyleSheet } from 'react-native';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { RoutePath } from '@/types/navigation.types';
 import type { ErrorMessageProps } from '@/types/ui/review.types';
@@ -15,7 +16,7 @@ import type { ErrorMessageProps } from '@/types/ui/review.types';
 const ErrorMessage = memo(
   ({
     screenName = 'practice',
-    customMessage = "Your progress isn't available right now.",
+    customMessage = STRINGS.PROGRESS_NOT_AVAILABLE,
   }: ErrorMessageProps) => {
     const colors = useColors();
     const router = useRouter();
@@ -36,7 +37,11 @@ const ErrorMessage = memo(
     return (
       <View style={styles.messageContainer}>
         <ThemedText style={[styles.message, { color: colors.error }]}>{customMessage}</ThemedText>
-        <ThemedButton style={styles.retryButton} title="Refresh" onPress={handleRetry} />
+        <ThemedButton
+          style={styles.retryButton}
+          title={STRINGS.REFRESH}
+          onPress={handleRetry}
+        />
       </View>
     );
   }

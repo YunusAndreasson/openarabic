@@ -288,7 +288,7 @@ const AccountScreen: FC = () => {
                   loading={isClearingCache}
                   size="small"
                   style={styles.clearButton}
-                  title="Clear"
+                  title={STRINGS.CLEAR}
                   variant="outlined"
                   onPress={handleClearCache}
                 />
@@ -310,14 +310,14 @@ const AccountScreen: FC = () => {
                   </View>
                   <View style={styles.signOutTextContainer}>
                     <ThemedText type="body" weight="medium">
-                      Sign Out
+                      {STRINGS.SIGN_OUT}
                     </ThemedText>
                     <ThemedText
                       colorName="textTertiary"
                       style={styles.userEmailText}
                       type="caption"
                     >
-                      {user?.email || 'No email'}
+                      {user?.email || STRINGS.NO_EMAIL}
                     </ThemedText>
                   </View>
                 </View>
@@ -351,7 +351,7 @@ const AccountScreen: FC = () => {
                     <Ionicons color={colors.icon} name="logo-twitter" size={22} />
                   </View>
                   <ThemedText style={styles.cardText} type="body" weight="medium">
-                    Twitter
+                    {STRINGS.TWITTER}
                   </ThemedText>
                 </View>
                 <Ionicons

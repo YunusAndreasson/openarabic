@@ -7,6 +7,7 @@ import EmptyState from '@/components/EmptyState';
 import FilterSummary from '@/components/FilterSummary';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 
@@ -78,9 +79,9 @@ const FilteredArticleView: FC<FilteredArticleViewProps> = ({
       >
         <EmptyState
           colors={colors}
-          description="Try adjusting your filters"
+          description={STRINGS.TRY_ADJUSTING_FILTERS}
           icon="search-outline"
-          title="No Articles Found"
+          title={STRINGS.NO_ARTICLES_FOUND}
           hideArticlesButton={true}
           containerStyle={styles.emptyContainer}
         />
