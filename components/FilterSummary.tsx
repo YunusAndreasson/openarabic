@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { selectActiveFiltersCount } from '@/store/filtersSlice';
 import { useAppSelectorMemo } from '@/store/hooks';
 
@@ -16,9 +17,13 @@ const FilterSummary = memo(({ filteredCount, totalCount }: FilterSummaryProps) =
 
   const summaryText = useMemo(() => {
     if (totalCount !== undefined && filteredCount !== totalCount) {
-      return `${filteredCount} of ${totalCount} articles`;
+      return `${filteredCount} ${STRINGS.WORD_OF_LABEL} ${totalCount} ${STRINGS.ARTICLES_LABEL_PLURAL}`;
     }
-    return `${filteredCount} ${filteredCount === 1 ? 'article' : 'articles'}`;
+    return `${filteredCount} ${
+      filteredCount === 1
+        ? STRINGS.ARTICLES_LABEL_SINGULAR
+        : STRINGS.ARTICLES_LABEL_PLURAL
+    }`;
   }, [filteredCount, totalCount]);
 
   // Don't show summary if no filters are active and we have total count
