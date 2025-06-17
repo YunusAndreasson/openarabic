@@ -13,6 +13,7 @@ import {
   getEnhancedOpacity,
   MIN_TOUCH_TARGET,
 } from '@/constants/layout';
+import { WORD_PRESS_SCALE } from '@/constants/animation';
 import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
@@ -61,7 +62,7 @@ export const ArticleCard: FC<ArticleCardProps> = ({
     if (isBeingDragged) {
       setValue(1.05);
     } else if (editMode) {
-      setValue(0.95);
+      setValue(WORD_PRESS_SCALE);
     } else {
       startAnimation();
     }

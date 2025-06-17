@@ -21,12 +21,12 @@ import type {
   BaseAnimationBuilder,
  SharedValue } from 'react-native-reanimated';
 
+import { TIMING_CONFIG } from '@/constants/animation';
 import { useScreenWidth } from '@/constants/layout';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import { handleError } from '@/utils/errorHandling';
 
 
-import { TIMING_CONFIG } from './animationConfigs';
 
 export type TransformType = 'rotate' | 'scale' | 'slide' | 'translateX' | 'translateY';
 export type SlideDirection = 'left' | 'right';

@@ -14,6 +14,7 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { WORD_PRESS_SCALE } from '@/constants/animation';
 import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
@@ -82,7 +83,7 @@ function ArabicWordComponent({
   } = useTransformAnimation({
     type: 'scale',
     initialValue: 1,
-    targetValue: 0.95,
+    targetValue: WORD_PRESS_SCALE,
     duration: 200,
   });
 

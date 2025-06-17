@@ -11,29 +11,18 @@ import {
 } from 'react-native-reanimated';
 import type { AnimatedStyle } from 'react-native-reanimated';
 
+import {
+  NOW_PLAYING_CARD_HEIGHT,
+  NOW_PLAYING_CARD_SPRING,
+  NOW_PLAYING_ENTRANCE_SCALE,
+  NOW_PLAYING_EXIT_SPRING,
+  NOW_PLAYING_START_SCALE,
+} from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
-const CARD_HEIGHT = 120;
-
-const SPRING_CONFIG = {
-  damping: 20,
-  stiffness: 90,
-  mass: 1,
-} as const;
-
-const ENTRANCE_SCALE_CONFIG = {
-  damping: 25,
-  stiffness: 120,
-} as const;
-
-const EXIT_SPRING_CONFIG = {
-  damping: 25,
-  stiffness: 150,
-  mass: 0.8,
-} as const;
 
 interface UseNowPlayingCardProps {
   isVisible: boolean;
@@ -63,9 +52,9 @@ export const useNowPlayingCard = ({
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
-  const translateY = useSharedValue(CARD_HEIGHT + 100);
+  const translateY = useSharedValue(NOW_PLAYING_CARD_HEIGHT + 100);
   const opacity = useSharedValue(0);
-  const scale = useSharedValue(0.95);
+  const scale = useSharedValue(NOW_PLAYING_START_SCALE);
   const {
     animatedStyle: rawButtonAnimatedStyle,
     handlePressIn: handleStopPressIn,
@@ -75,12 +64,15 @@ export const useNowPlayingCard = ({
 
   useEffect(() => {
     if (isVisible) {
-      translateY.value = withSpring(0, SPRING_CONFIG);
+      translateY.value = withSpring(0, NOW_PLAYING_CARD_SPRING);
       opacity.value = withTiming(1, { duration: 300 });
-      scale.value = withSpring(1, ENTRANCE_SCALE_CONFIG);
+      scale.value = withSpring(1, NOW_PLAYING_ENTRANCE_SCALE);
     } else {
       scale.value = withTiming(0.92, { duration: 100 }, () => {
-        translateY.value = withSpring(CARD_HEIGHT + 100, EXIT_SPRING_CONFIG);
+        translateY.value = withSpring(
+          NOW_PLAYING_CARD_HEIGHT + 100,
+          NOW_PLAYING_EXIT_SPRING,
+        );
       });
       opacity.value = withTiming(0, { duration: 300 });
     }

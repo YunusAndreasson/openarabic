@@ -10,10 +10,14 @@ import {
   runOnUI,
 } from 'react-native-reanimated';
 
+import {
+  TIMING_CONFIG,
+  PROGRESS_SKIP_THRESHOLD,
+  PROGRESS_MAX_VALUE,
+} from '@/constants/animation';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 
-import { TIMING_CONFIG } from './animationConfigs';
 
 /**
  * Result type for the useProgressAnimation hook
@@ -70,7 +74,7 @@ export const useProgressAnimation = <D extends number = number>(
       }
 
       // Skip animation if value isn't changing significantly
-      if (Math.abs(progress.value - newPercentage) < 50) {
+      if (Math.abs(progress.value - newPercentage) < PROGRESS_SKIP_THRESHOLD) {
         return () => {};
       }
 
@@ -128,7 +132,7 @@ export const useProgressAnimation = <D extends number = number>(
   const animatedStyle = useAnimatedStyle<ViewStyle>(() => {
     'worklet';
     // Ensure the value is within valid range
-    const clampedValue = Math.max(0, Math.min(10000, progress.value));
+    const clampedValue = Math.max(0, Math.min(PROGRESS_MAX_VALUE, progress.value));
     // Convert the integer value (0-10000) back to a percentage string (0-100%)
     return {
       width: `${clampedValue / 100}%`,

@@ -13,9 +13,13 @@ import {
 } from 'react-native-reanimated';
 import type { SharedValue, WithTimingConfig } from 'react-native-reanimated';
 
+import {
+  TIMING_CONFIG,
+  MIN_OPACITY_DURATION,
+  MIN_MOUNT_DELAY,
+} from '@/constants/animation';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
-import { TIMING_CONFIG } from './animationConfigs';
 
 export type FadeAnimationStyle = 'entrance-only' | 'standard';
 
@@ -118,9 +122,6 @@ export interface FadeAnimationResult {
   exiting: ReturnType<typeof FadeOut.duration>;
 }
 
-// Constants moved outside to prevent recreation
-const MIN_DURATION = 1;
-const MIN_MOUNT_DELAY = 5;
 
 /**
  * Unified hook for opacity and fade animations
@@ -139,7 +140,7 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
   } = options;
 
   // Validate parameters - memoized to prevent recalculation
-  const duration = useRef(Math.max(MIN_DURATION, rawDuration)).current;
+  const duration = useRef(Math.max(MIN_OPACITY_DURATION, rawDuration)).current;
   const delay = useRef(Math.max(0, rawDelay)).current;
   const validInitialOpacity = useRef(Math.max(0, Math.min(1, initialOpacity))).current;
 
