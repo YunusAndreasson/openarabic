@@ -4,6 +4,7 @@ import { useMemo, memo } from 'react';
 import FeaturedSection from '@/components/home/FeaturedSection';
 import { useIntelligentArticleSelection } from '@/hooks/articles/useIntelligentArticleSelection';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { STRINGS } from '@/constants/strings';
 import type { Article } from '@/types/articles.types';
 
 interface IntelligentArticleSectionProps {
@@ -25,7 +26,7 @@ const IntelligentArticleSection = memo(function IntelligentArticleSection({
     if (!articlesData.length) {
       return {
         article: null,
-        reason: 'Loading articles...',
+        reason: STRINGS.LOADING_ARTICLES,
         type: 'random' as const,
         dueWordRootIds: new Set<number>(),
       };
@@ -44,7 +45,7 @@ const IntelligentArticleSection = memo(function IntelligentArticleSection({
         return {
           ...intelligentArticle,
           article: newArticle,
-          reason: 'New recommendation selected for you',
+          reason: STRINGS.NEW_RECOMMENDATION_SELECTED,
         };
       }
     }

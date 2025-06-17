@@ -8,6 +8,7 @@ import type { Article } from '@/types/articles.types';
 import type { UserSession } from '@/types/auth.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { getBeginnerArticles } from '@/utils/articleUtils';
+import { STRINGS } from '@/constants/strings';
 
 interface IntelligentArticleResult {
   article: Article | null;
@@ -47,7 +48,7 @@ export function useIntelligentArticleSelection(
     if (!articlesData.length) {
       return {
         article: null,
-        reason: 'Loading articles...',
+        reason: STRINGS.LOADING_ARTICLES,
         type: 'random',
         dueWordRootIds: new Set<number>(),
       };
@@ -66,7 +67,7 @@ export function useIntelligentArticleSelection(
           dueWordArticles[Math.floor(Math.random() * dueWordArticles.length)] ?? null;
         return {
           article: randomArticle,
-          reason: 'Selected to help you practice words that are due for review',
+          reason: STRINGS.SELECTED_TO_HELP_PRACTICE_DUE,
           type: 'due-words',
           dueWordRootIds,
         };
@@ -88,7 +89,7 @@ export function useIntelligentArticleSelection(
           difficultWordArticles[Math.floor(Math.random() * difficultWordArticles.length)] ?? null;
         return {
           article: randomArticle,
-          reason: "Chosen to reinforce words you're finding challenging",
+          reason: STRINGS.CHOSEN_TO_REINFORCE_CHALLENGING,
           type: 'difficult-words',
           dueWordRootIds,
         };
@@ -104,7 +105,7 @@ export function useIntelligentArticleSelection(
           beginnerArticles[Math.floor(Math.random() * beginnerArticles.length)] ?? null;
         return {
           article: randomArticle,
-          reason: 'Perfect for getting started with your reading journey',
+          reason: STRINGS.PERFECT_FOR_GETTING_STARTED,
           type: 'beginner',
           dueWordRootIds,
         };
@@ -115,7 +116,7 @@ export function useIntelligentArticleSelection(
     const randomArticle = articlesData[Math.floor(Math.random() * articlesData.length)] ?? null;
     return {
       article: randomArticle,
-      reason: 'Randomly selected for you to discover new content',
+      reason: STRINGS.RANDOMLY_SELECTED_FOR_DISCOVERY,
       type: 'random',
       dueWordRootIds,
     };
