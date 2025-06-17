@@ -134,7 +134,7 @@ const SleepTimerComponent = ({
                       {timerOptions.map(minutes => (
                         <ThemedButton
                           key={minutes}
-                          title={`${minutes} min`}
+                          title={STRINGS.MINUTES.replace('{minutes}', minutes.toString())}
                           variant={selectedMinutes === minutes ? 'filled' : 'outlined'}
                           style={[
                             styles.optionButton,
