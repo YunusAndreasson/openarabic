@@ -4,6 +4,7 @@ import { memo, useCallback } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { MIN_TOUCH_TARGET, LAYOUT } from '@/constants/layout';
+import { ACCOUNT_ROUTE } from '@/constants/routes';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -16,7 +17,7 @@ const HeaderProfile = memo(({ size = 28 }: HeaderProfileProps) => {
   const { user } = useAuth();
 
   const handlePress = useCallback(() => {
-    router.push('/(tabs)/read/account');
+    router.push(ACCOUNT_ROUTE);
   }, [router]);
 
   if (!user) return null;

@@ -12,6 +12,12 @@ import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
 import { STRINGS } from '@/constants/strings';
+import {
+  AUTH_ROUTE,
+  ACCOUNT_LEARNING_METHOD_ROUTE,
+  ACCOUNT_CLASSICAL_TEXTS_ROUTE,
+  ACCOUNT_FONT_SELECTOR_ROUTE,
+} from '@/constants/routes';
 
 const analytics = {
   trackSignOut: async () => {},
@@ -154,7 +160,7 @@ export const useAccountScreen = () => {
                   return;
                 }
               await analytics.reset();
-              router.replace('/auth');
+              router.replace(AUTH_ROUTE);
             } catch (error) {
               Alert.alert(
                 STRINGS.ERROR,
@@ -278,15 +284,15 @@ Please describe your issue below:
   }, []);
 
   const handleLearningMethodPress = useCallback(() => {
-    router.push('/(tabs)/read/account/learningMethod');
+    router.push(ACCOUNT_LEARNING_METHOD_ROUTE);
   }, []);
 
   const handleClassicalTextsPress = useCallback(() => {
-    router.push('/(tabs)/read/account/classicalTexts');
+    router.push(ACCOUNT_CLASSICAL_TEXTS_ROUTE);
   }, []);
 
   const handleFontSelectorPress = useCallback(() => {
-    router.push('/(tabs)/read/account/font-selector');
+    router.push(ACCOUNT_FONT_SELECTOR_ROUTE);
   }, []);
 
   const appVersion = pkg.version;
