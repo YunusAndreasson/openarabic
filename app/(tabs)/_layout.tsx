@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { Tabs, router } from 'expo-router';
-import { useCallback, memo, useEffect, Fragment } from 'react';
+import { memo, useEffect, Fragment } from 'react';
 import type { JSX } from 'react';
 import { Platform, StyleSheet } from 'react-native';
 
@@ -63,15 +63,16 @@ const TabBarBackground = memo(() => {
 });
 TabBarBackground.displayName = 'TabBarBackground';
 
+const headerBackground = () => <HeaderBackground />;
+const tabBarBackground = () => <TabBarBackground />;
+const headerProfileComponent = () => <HeaderProfile />;
+const listenHeaderRightComponent = () => <EditModeButton />;
+
 export default function TabLayout(): JSX.Element {
   const { session, isLoading } = useAuth();
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
-  const headerBackground = useCallback(() => <HeaderBackground />, []);
-  const tabBarBackground = useCallback(() => <TabBarBackground />, []);
-  const headerProfileComponent = useCallback(() => <HeaderProfile />, []);
-  const listenHeaderRightComponent = useCallback(() => <EditModeButton />, []);
 
   useEffect(() => {
     if (!isLoading && !session?.user) {

@@ -18,6 +18,8 @@ export interface TimePickerProps {
   initialMinute?: number;
 }
 
+const SNAP_POINTS = [500];
+
 export const TimePicker = memo(
   ({ isVisible, onClose, onTimeSet, initialHour = 12, initialMinute = 0 }: TimePickerProps) => {
     const colors = useColors();
@@ -33,8 +35,8 @@ export const TimePicker = memo(
     const [selectedDate, setSelectedDate] = useState(initialDate);
     const [showPicker, setShowPicker] = useState(false);
 
-    // Calculate snap point - use numeric value like SessionTypeModal
-    const snapPoints = useMemo(() => [500], []);
+    // Snap point is static so define outside component
+    const snapPoints = SNAP_POINTS;
 
     // Show/hide modal based on isVisible prop
     useEffect(() => {

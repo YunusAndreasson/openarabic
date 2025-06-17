@@ -23,6 +23,8 @@ import type { Article } from '@/types/articles.types';
 const ITEM_HEIGHT = 360;
 const DRAW_DISTANCE = ITEM_HEIGHT * 5;
 const ESTIMATED_LIST_SIZE = { height: ITEM_HEIGHT * 10, width: 0 };
+const articleKeyExtractor = (item: Article) => `article-${item.id}`;
+const SeparatorComponent = () => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />;
 
 interface ArticleItemProps {
   item: Article;
@@ -87,7 +89,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
 
     useImperativeHandle(ref, () => listRef.current as FlashList<Article>, []);
 
-    const keyExtractor = useCallback((item: Article) => `article-${item.id}`, []);
+    const keyExtractor = useCallback(articleKeyExtractor, []);
 
     const renderItem: ListRenderItem<Article> = useCallback(
       ({ item }) => <ArticleItem item={item} onPress={onArticlePress} />,
@@ -152,7 +154,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
         ListEmptyComponent: null,
         refreshControl,
         scrollEventThrottle: 16,
-        ItemSeparatorComponent: () => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />,
+        ItemSeparatorComponent: SeparatorComponent,
         overrideItemLayout: (
           layout: { span?: number; size?: number },
           _item: Article,

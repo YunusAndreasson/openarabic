@@ -4,13 +4,15 @@
 
 import { Ionicons } from '@expo/vector-icons';
 import BottomSheet, { BottomSheetView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { BaseModalProps } from '@/types/ui/modal.types';
+
+const SNAP_POINTS = [330];
 
 interface SessionTypeModalProps extends BaseModalProps {
   onStartAudio: () => void;
@@ -22,8 +24,8 @@ const SessionTypeModal = memo(
     const colors = useColors();
     const bottomSheetRef = useRef<BottomSheet>(null);
 
-    // Configure snap points - use fixed height to guarantee both buttons are visible
-    const snapPoints = useMemo(() => [330], []);
+    // Snap points are static
+    const snapPoints = SNAP_POINTS;
 
     // Handle visibility changes
     useEffect(() => {
