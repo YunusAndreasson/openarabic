@@ -1,5 +1,5 @@
 import { Group, Line } from '@shopify/react-native-skia';
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
@@ -21,19 +21,19 @@ export const ChartGrid = memo(
     const isDarkMode = useIsDarkMode();
     const colors = useColors();
 
-    // Optimized grid color for perfect visual balance
-    const gridColor = withOpacity(
-      isDarkMode ? colors.white : colors.black,
-      0.06
+    const gridColor = useMemo(
+      () => withOpacity(isDarkMode ? colors.white : colors.black, 0.06),
+      [isDarkMode, colors.white, colors.black]
     );
 
-    // Calculate grid line positions
-    const gridSpacing = (height - topPadding) / (gridLines + 1);
-    const lines: number[] = [];
-
-    for (let i = 1; i <= gridLines; i++) {
-      lines.push(topPadding + i * gridSpacing);
-    }
+    const lines = useMemo(() => {
+      const gridSpacing = (height - topPadding) / (gridLines + 1);
+      const result: number[] = [];
+      for (let i = 1; i <= gridLines; i++) {
+        result.push(topPadding + i * gridSpacing);
+      }
+      return result;
+    }, [height, topPadding, gridLines]);
 
     return (
       <Group>

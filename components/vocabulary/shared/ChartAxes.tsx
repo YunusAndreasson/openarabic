@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -37,18 +37,24 @@ export const ChartAxes = memo(
   }: AxisLabelsProps) => {
     const isDarkMode = useIsDarkMode();
     const colors = useColors();
-    const textColor = isDarkMode ? withOpacity(colors.white, 0.7) : withOpacity(colors.black, 0.7);
+    const textColor = useMemo(
+      () =>
+        isDarkMode ? withOpacity(colors.white, 0.7) : withOpacity(colors.black, 0.7),
+      [isDarkMode, colors.white, colors.black]
+    );
 
     // Calculate y-axis label positions and values
     // Account for top padding used by the chart
-    const chartHeight = height - topPadding;
-    const yLabels = [];
-    for (let i = 0; i < yAxisLines; i++) {
-      const value = (yMax * i) / (yAxisLines - 1);
-      // Position labels to match chart coordinate system with top padding
-      const y = topPadding + chartHeight - (i * chartHeight) / (yAxisLines - 1);
-      yLabels.push({ value: Math.round(value), y });
-    }
+    const yLabels = useMemo(() => {
+      const chartHeight = height - topPadding;
+      const labels = [] as Array<{ value: number; y: number }>;
+      for (let i = 0; i < yAxisLines; i++) {
+        const value = (yMax * i) / (yAxisLines - 1);
+        const y = topPadding + chartHeight - (i * chartHeight) / (yAxisLines - 1);
+        labels.push({ value: Math.round(value), y });
+      }
+      return labels;
+    }, [height, topPadding, yAxisLines, yMax]);
 
     // Use the exported Y_AXIS_WIDTH constant
 
