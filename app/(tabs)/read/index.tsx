@@ -13,6 +13,7 @@ import FilterSection from '@/components/home/FilterSection';
 import IntelligentArticleSection from '@/components/home/IntelligentArticleSection';
 import WelcomeMessage from '@/components/home/WelcomeMessage';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
@@ -193,7 +194,7 @@ export default function ArticlesScreen(): JSX.Element {
   ) {
     // Show loading state - handled by ArticleList
   } else if (!isLoading && !isRefreshing && !articlesData.length) {
-    return <ErrorState message="Unable to load articles" onRetry={handleRefresh} />;
+    return <ErrorState message={STRINGS.UNABLE_TO_LOAD_ARTICLES} onRetry={handleRefresh} />;
   }
 
   return (

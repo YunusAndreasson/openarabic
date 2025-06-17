@@ -9,6 +9,7 @@ import SectionTitle from '@/components/SectionTitle';
 import { ThemedView } from '@/components/ThemedView';
 import { EfficiencyChart, MasteryChart, RetrievabilityChart } from '@/components/vocabulary/charts';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
@@ -57,7 +58,7 @@ export default function InsightsScreen(): JSX.Element {
       <ThemedView style={styles.container}>
         <StatusBar style={isDarkMode ? 'light' : 'dark'} />
         <View style={styles.errorContainer}>
-          <SectionTitle title="Insights unavailable" />
+          <SectionTitle title={STRINGS.INSIGHTS_UNAVAILABLE} />
         </View>
       </ThemedView>
     );
@@ -80,7 +81,7 @@ export default function InsightsScreen(): JSX.Element {
         <View style={styles.chartSection}>
           <SectionTitle
             title={INFO_TITLES.mastery}
-            subtitle="Memory strength across your vocabulary"
+            subtitle={STRINGS.MEMORY_STRENGTH_ACROSS_VOCABULARY}
             onInfoPress={handleMasteryInfoPress}
           />
           <MasteryChart
@@ -94,7 +95,7 @@ export default function InsightsScreen(): JSX.Element {
         <View style={styles.chartSection}>
           <SectionTitle
             title={INFO_TITLES.efficiency}
-            subtitle="Vocabulary acquisition velocity"
+            subtitle={STRINGS.VOCABULARY_ACQUISITION_VELOCITY}
             onInfoPress={handleEfficiencyInfoPress}
           />
           <EfficiencyChart
@@ -108,7 +109,7 @@ export default function InsightsScreen(): JSX.Element {
         <View style={styles.chartSection}>
           <SectionTitle
             title={INFO_TITLES.retrievability}
-            subtitle="Memory retention and optimal practice timing"
+            subtitle={STRINGS.MEMORY_RETENTION_OPTIMAL_TIMING}
             onInfoPress={handleRetrievabilityInfoPress}
           />
           <RetrievabilityChart

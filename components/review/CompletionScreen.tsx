@@ -9,6 +9,7 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { TIMING_CONFIG, useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useEncouragingMetrics } from '@/hooks/review/useEncouragingMetrics';
@@ -35,9 +36,9 @@ interface CompletionScreenProps {
 
 const CompletionScreen: FC<CompletionScreenProps> = ({
   onClose,
-  title = 'Great job',
-  subtitle = 'You completed your review session.',
-  buttonText = 'Continue',
+  title = STRINGS.SESSION_COMPLETE,
+  subtitle = STRINGS.ALL_WORDS_PRACTICED,
+  buttonText = STRINGS.CONTINUE,
   buttonVariant = 'outlined',
   iconName = 'checkmark-circle',
   iconSize = 100,

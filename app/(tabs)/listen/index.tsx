@@ -302,11 +302,11 @@ export default function ListenScreen(): JSX.Element {
               shouldShowEmpty ? (
                 <EmptyState
                   colors={colors}
-                  description="Your listening playlist is empty"
+                  description={STRINGS.LISTENING_PLAYLIST_EMPTY}
                   icon="headset-outline"
                   iconSize={72}
-                  submessage="Bookmark articles from the Read tab to build your playlist"
-                  title="No Articles Saved"
+                  submessage={STRINGS.BOOKMARK_ARTICLES_HINT}
+                  title={STRINGS.NO_ARTICLES_SAVED}
                   containerStyle={{
                     paddingTop: LAYOUT.SPACING.XLARGE,
                     paddingBottom: LAYOUT.SPACING.LARGE,
@@ -317,8 +317,12 @@ export default function ListenScreen(): JSX.Element {
             ListFooterComponent={
               hasArticles ? (
                 <View style={styles.footerNote}>
-                  <ThemedText style={styles.footerNoteText} type="caption" variant="secondary">
-                    Long press to open article for reading
+                  <ThemedText
+                    style={styles.footerNoteText}
+                    type="caption"
+                    variant="secondary"
+                  >
+                    {STRINGS.LONG_PRESS_HINT}
                   </ThemedText>
                 </View>
               ) : null
@@ -340,11 +344,11 @@ export default function ListenScreen(): JSX.Element {
               shouldShowEmpty ? (
                 <EmptyState
                   colors={colors}
-                  description="Your listening playlist is empty"
+                  description={STRINGS.LISTENING_PLAYLIST_EMPTY}
                   icon="headset-outline"
                   iconSize={72}
-                  submessage="Bookmark articles from the Read tab to build your playlist"
-                  title="No Articles Saved"
+                  submessage={STRINGS.BOOKMARK_ARTICLES_HINT}
+                  title={STRINGS.NO_ARTICLES_SAVED}
                   containerStyle={{
                     paddingTop: LAYOUT.SPACING.XLARGE,
                     paddingBottom: LAYOUT.SPACING.LARGE,
@@ -356,8 +360,12 @@ export default function ListenScreen(): JSX.Element {
             ListFooterComponent={
               hasArticles ? (
                 <View style={styles.footerNote}>
-                  <ThemedText style={styles.footerNoteText} type="caption" variant="secondary">
-                    Long press to open article for reading
+                  <ThemedText
+                    style={styles.footerNoteText}
+                    type="caption"
+                    variant="secondary"
+                  >
+                    {STRINGS.LONG_PRESS_HINT}
                   </ThemedText>
                 </View>
               ) : null
@@ -375,7 +383,7 @@ export default function ListenScreen(): JSX.Element {
           primaryDisabled={isPlayAllLoading}
           primaryLoading={isPlayAllLoading}
           primaryDisablePressAnimation={true}
-          primaryLabel="Play All"
+          primaryLabel={STRINGS.PLAY_ALL}
           primaryVariant="filled"
           showTimerButton={false}
           primaryAccessibilityLabel="Play all texts"

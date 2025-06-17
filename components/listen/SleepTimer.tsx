@@ -5,6 +5,7 @@ import { StyleSheet, View, Modal, TouchableWithoutFeedback, TouchableOpacity } f
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
 export interface SleepTimerProps {
@@ -122,7 +123,7 @@ const SleepTimerComponent = ({
                     </ThemedText>
                     <ThemedButton
                       style={[styles.fullWidthButton, { borderColor: colors.borderOverlay }]}
-                      title="Cancel Timer"
+                      title={STRINGS.CANCEL_TIMER}
                       variant="outlined"
                       onPress={handleCancelTimerCallback}
                     />
@@ -154,7 +155,7 @@ const SleepTimerComponent = ({
 
                     <ThemedButton
                       style={styles.fullWidthButton}
-                      title="Start Timer"
+                      title={STRINGS.START_TIMER}
                       variant="filled"
                       onPress={handleSetTimerCallback}
                     />

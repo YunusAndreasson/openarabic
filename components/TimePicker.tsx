@@ -5,6 +5,7 @@ import { memo, useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
 import { ThemedButton } from './ThemedButton';
@@ -173,7 +174,10 @@ export const TimePicker = memo(
 
           {/* Actions */}
           <View style={styles.actions}>
-            <ThemedButton title="Set Time" onPress={handleConfirm} />
+            <ThemedButton
+              title={STRINGS.SET_TIME}
+              onPress={handleConfirm}
+            />
           </View>
         </BottomSheetView>
       </BottomSheet>

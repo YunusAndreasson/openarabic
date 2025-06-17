@@ -6,6 +6,7 @@ import { InteractionManager } from 'react-native';
 
 import ErrorState from '@/components/ErrorState';
 import FilteredArticleView from '@/components/home/FilteredArticleView';
+import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
 import { articlesService } from '@/services/articles';
@@ -93,7 +94,7 @@ export default function FilterScreen(): JSX.Element {
   if (error) {
     return (
       <ErrorState
-        message={error instanceof Error ? error.message : 'Failed to load articles'}
+        message={error instanceof Error ? error.message : STRINGS.FAILED_TO_LOAD_ARTICLES}
         onRetry={refetch}
       />
     );

@@ -2,6 +2,7 @@ import { memo, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { errorFeedback } from '@/utils/haptics';
 
 import { ThemedButton } from './ThemedButton';
@@ -31,7 +32,11 @@ const ErrorState = memo(({ message, onRetry }: ErrorStateProps) => {
       </View>
       {onRetry ? (
         <View style={styles.buttonContainer}>
-          <ThemedButton title="Refresh" variant="filled" onPress={onRetry} />
+          <ThemedButton
+            title={STRINGS.REFRESH}
+            variant="filled"
+            onPress={onRetry}
+          />
         </View>
       ) : null}
     </View>

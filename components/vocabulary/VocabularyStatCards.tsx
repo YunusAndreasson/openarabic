@@ -5,6 +5,7 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
@@ -112,11 +113,11 @@ export const VocabularyStatCards = memo(
       if (wordCategories.dueWords > 0) {
         cards.push({
           value: wordCategories.dueWords,
-          label: 'Due Now',
+          label: STRINGS.DUE_NOW,
           iconColor: colors.error,
           bgColor: colors.elevation1,
           category: 'due' as StatCategory,
-          description: 'Regular practice for scheduled words',
+          description: STRINGS.REGULAR_PRACTICE_FOR_SCHEDULED_WORDS,
         });
       }
 
@@ -124,11 +125,11 @@ export const VocabularyStatCards = memo(
       if (wordCategories.strugglingWords > 0) {
         cards.push({
           value: wordCategories.strugglingWords,
-          label: 'Challenging',
+          label: STRINGS.CHALLENGING,
           iconColor: colors.warning,
           bgColor: colors.elevation1,
           category: 'needsAttention' as StatCategory,
-          description: 'Drill down on challenging words',
+          description: STRINGS.DRILL_DOWN_ON_CHALLENGING_WORDS,
         });
       }
 
@@ -136,11 +137,11 @@ export const VocabularyStatCards = memo(
       if (totalWords > 0) {
         cards.push({
           value: totalWords,
-          label: 'All Words',
+          label: STRINGS.ALL_WORDS,
           iconColor: colors.tint,
           bgColor: colors.elevation1,
           category: 'total' as StatCategory,
-          description: 'If you want to do additional practice',
+          description: STRINGS.ADDITIONAL_PRACTICE,
         });
       }
 
