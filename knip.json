@@ -30,12 +30,20 @@
     "**/*.d.ts",
     "types/database.types.ts",
     "__mocks__/**",
+    "__perf__/**",
     "babel.config.js",
     "metro.config.cjs",
     "jest.config.js",
     "jest.setup.js"
   ],
-  "ignoreDependencies": ["postinstall-postinstall", "@sentry/cli", "strip-ansi"],
+  "ignoreDependencies": [
+    "postinstall-postinstall",
+    "@sentry/cli",
+    "strip-ansi",
+    "expo-asset",
+    "@babel/plugin-transform-runtime",
+    "metro-react-native-babel-preset"
+  ],
   "ignoreExportsUsedInFile": true,
   "includeEntryExports": false,
   "ignoreBinaries": ["expo-doctor", "supabase", "gh"],
