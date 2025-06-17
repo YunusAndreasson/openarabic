@@ -15,6 +15,7 @@ import { useNavigationWithDebounce } from '@/hooks';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useMemoryCapacityGauge } from '@/hooks/vocabulary';
+import { CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 
 interface MemoryCapacityGaugeProps {
@@ -32,12 +33,6 @@ const INDICATOR_GLOW_SIZE = 24;
 
 const noop = () => {};
 
-// Memory capacity thresholds with refined ranges
-const CAPACITY_THRESHOLDS = {
-  OPTIMAL: 75, // Green zone - excellent learning health
-  MODERATE: 50, // Yellow zone - good progress
-  CRITICAL: 25, // Orange zone - needs attention
-} as const satisfies Record<string, number>;
 
 export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords = [] }) => {
   const colors = useColors();

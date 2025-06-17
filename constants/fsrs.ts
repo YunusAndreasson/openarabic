@@ -42,3 +42,29 @@ export const STRUGGLING_LAPSES_THRESHOLD = 1;
 export const UNSTABLE_DIFFICULTY_THRESHOLD = 7.0;
 
 export const DEFAULT_SESSION_COOLDOWN_HOURS = 1;
+
+// Spacing and scheduling constants
+export const SPACING_ITERATION_LIMIT = 20;
+export const SKIP_FOR_TODAY_DUE_HOUR = 9;
+
+// Adjustments applied when marking words easy/hard
+export const EASY_DIFFICULTY_ADJUSTMENT = 1;
+export const EASY_STABILITY_MULTIPLIER = 1.5;
+export const EASY_LAPSE_DECREMENT = 1;
+
+export const HARD_DIFFICULTY_ADJUSTMENT = 1;
+export const HARD_STABILITY_MULTIPLIER = 0.7;
+export const HARD_LAPSE_INCREMENT = 1;
+
+// Chart thresholds
+export const URGENT_RETRIEVABILITY_THRESHOLD = 0.5;
+export const TREND_CHANGE_THRESHOLD = 3;
+
+export const MASTERY_TREND_THRESHOLD = 2;
+export const MASTERY_MILESTONES = [25, 50, 75, 90] as const;
+
+export const CAPACITY_THRESHOLDS = {
+  OPTIMAL: 75,
+  MODERATE: 50,
+  CRITICAL: 25,
+} as const;

@@ -10,6 +10,7 @@ import {
   CHART_VISUAL,
   useGraphWidth,
 } from '@/components/vocabulary/shared/constants';
+import { MASTERY_MILESTONES, MASTERY_TREND_THRESHOLD } from '@/constants/fsrs';
 import {
   generateDateRange,
   createStandardizedPerformanceZones,
@@ -159,7 +160,7 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
       }
     });
 
-    const milestones = [25, 50, 75, 90]
+    const milestones = MASTERY_MILESTONES
       .map(target => {
         const milestone = masteryData.find(d => d.masteryRate >= target);
         if (milestone) {
@@ -182,7 +183,12 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
       older.length > 0 ? older.reduce((sum, day) => sum + day.masteryRate, 0) / older.length : 0;
 
     const change = recentAvg - olderAvg;
-    const trend = change > 2 ? 'improving' : change < -2 ? 'declining' : 'stable';
+    const trend =
+      change > MASTERY_TREND_THRESHOLD
+        ? 'improving'
+        : change < -MASTERY_TREND_THRESHOLD
+        ? 'declining'
+        : 'stable';
     const totalMastered = recent[recent.length - 1]?.masteredCount || 0;
 
     const performanceZones = createStandardizedPerformanceZones(
