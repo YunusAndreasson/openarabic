@@ -87,6 +87,30 @@ export const PROGRESS_SKIP_THRESHOLD = 50;
 /** Maximum progress value representing 100% */
 export const PROGRESS_MAX_VALUE = 10000;
 
+/** Default animation duration for UI feedback */
+export const DEFAULT_ANIMATION_DURATION = 200;
+
+/** Extra quick animation duration */
+export const QUICK_ANIMATION_DURATION = 100;
+
+/** Duration for rotation based animations */
+export const ROTATION_ANIMATION_DURATION = 400;
+
+/** Starting offset for toast translate animations */
+export const TOAST_INITIAL_TRANSLATE_Y = 50;
+
+/** Spring config for toast translate animations */
+export const TOAST_SPRING = {
+  damping: 15,
+  stiffness: 200,
+} as const;
+
+/** Threshold to hide the header when scrolling */
+export const HEADER_SCROLL_THRESHOLD = 50;
+
+/** Scale value used when dismissing the Now Playing card */
+export const NOW_PLAYING_DISMISS_SCALE = 0.92;
+
 /** Shared height for the Now Playing card component */
 export const NOW_PLAYING_CARD_HEIGHT = 120;
 

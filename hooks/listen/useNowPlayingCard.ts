@@ -17,6 +17,9 @@ import {
   NOW_PLAYING_ENTRANCE_SCALE,
   NOW_PLAYING_EXIT_SPRING,
   NOW_PLAYING_START_SCALE,
+  NOW_PLAYING_DISMISS_SCALE,
+  TIMING_CONFIG,
+  QUICK_ANIMATION_DURATION,
 } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
@@ -65,16 +68,20 @@ export const useNowPlayingCard = ({
   useEffect(() => {
     if (isVisible) {
       translateY.value = withSpring(0, NOW_PLAYING_CARD_SPRING);
-      opacity.value = withTiming(1, { duration: 300 });
+      opacity.value = withTiming(1, { duration: TIMING_CONFIG.GENTLE.duration });
       scale.value = withSpring(1, NOW_PLAYING_ENTRANCE_SCALE);
     } else {
-      scale.value = withTiming(0.92, { duration: 100 }, () => {
-        translateY.value = withSpring(
-          NOW_PLAYING_CARD_HEIGHT + 100,
-          NOW_PLAYING_EXIT_SPRING,
-        );
-      });
-      opacity.value = withTiming(0, { duration: 300 });
+      scale.value = withTiming(
+        NOW_PLAYING_DISMISS_SCALE,
+        { duration: QUICK_ANIMATION_DURATION },
+        () => {
+          translateY.value = withSpring(
+            NOW_PLAYING_CARD_HEIGHT + 100,
+            NOW_PLAYING_EXIT_SPRING,
+          );
+        },
+      );
+      opacity.value = withTiming(0, { duration: TIMING_CONFIG.GENTLE.duration });
     }
     // Only trigger when visibility changes to avoid unnecessary re-runs
   }, [isVisible]);

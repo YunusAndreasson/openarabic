@@ -14,7 +14,7 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import { WORD_PRESS_SCALE } from '@/constants/animation';
+import { WORD_PRESS_SCALE, DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
 import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
@@ -84,19 +84,19 @@ function ArabicWordComponent({
     type: 'scale',
     initialValue: 1,
     targetValue: WORD_PRESS_SCALE,
-    duration: 200,
+    duration: DEFAULT_ANIMATION_DURATION,
   });
 
   // Use opacity animation for border
   const { setOpacity: setBorderOpacity } = useOpacityAnimation({
     initialOpacity: isSelected ? 1 : 0,
-    duration: 200,
+    duration: DEFAULT_ANIMATION_DURATION,
   });
 
   // Use opacity animation for word fade
   const { setOpacity: setWordOpacity } = useOpacityAnimation({
     initialOpacity: 1,
-    duration: 200,
+    duration: DEFAULT_ANIMATION_DURATION,
   });
 
   // Handle the animation reversal after a brief delay
@@ -106,7 +106,7 @@ function ArabicWordComponent({
     const timer = setTimeout(() => {
       reversePressAnimation();
       setNeedsReverseAnimation(false);
-    }, 200);
+    }, DEFAULT_ANIMATION_DURATION);
 
     return () => clearTimeout(timer);
   }, [needsReverseAnimation, reversePressAnimation]);

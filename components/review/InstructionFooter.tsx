@@ -9,6 +9,7 @@ import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import { TIMING_CONFIG } from '@/constants/animation';
 import type { InstructionFooterProps } from '@/types/ui/review.types';
 
 /**
@@ -24,7 +25,7 @@ const InstructionFooter: FC<InstructionFooterProps> = ({ style }) => {
   const { startAnimation } = useOpacityAnimation({
     initialOpacity: 0,
     delay: 0,
-    duration: 300,
+    duration: TIMING_CONFIG.GENTLE.duration,
   });
 
   // Start the animation with a delay
