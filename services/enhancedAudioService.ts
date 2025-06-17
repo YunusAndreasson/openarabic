@@ -1,7 +1,7 @@
 // Import the type from the central location
+import { STRINGS } from '@/constants/strings';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import { handleError } from '@/utils/errorHandling';
-import { STRINGS } from '@/constants/strings';
 
 import { articlesService } from './articles';
 import { readingListService } from './readingList';

@@ -1,15 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { STRINGS } from '@/constants/strings';
 import { useArticlesByDifficultWords } from '@/hooks/articles/useArticlesByDifficultWords';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import type { Article } from '@/types/articles.types';
 import type { UserSession } from '@/types/auth.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { getBeginnerArticles } from '@/utils/articleUtils';
-import { STRINGS } from '@/constants/strings';
 
 interface IntelligentArticleResult {
   article: Article | null;

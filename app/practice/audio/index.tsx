@@ -12,16 +12,16 @@ import { ThemedView } from '@/components/ThemedView';
 import { ListenHeader, CompletionScreen } from '@/components/listen';
 import RepeatButton from '@/components/listen/RepeatButton';
 import { WordDisplay } from '@/components/review';
+import { DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations';
-import { DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useAudioPracticeSession } from '@/hooks/practice';
 import { useColors } from '@/hooks/theme/useColors';
 import { useWordSizing } from '@/hooks/vocabulary/useWordSizing';
 import { handleError } from '@/utils/errorHandling';
-import { ROUTE_PATHS } from '@/constants/routes';
 
 /**
  * Screen that plays Arabic words followed by their English translations

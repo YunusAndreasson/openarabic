@@ -24,7 +24,6 @@ export const isSameDay = (date1: Date, date2: Date): boolean => {
   return date1.toDateString() === date2.toDateString();
 };
 
-
 // Calculate retrievability using FSRS formula
 export const calculateRetrievability = (
   word: StudyWord,
@@ -32,14 +31,14 @@ export const calculateRetrievability = (
   lastReviewDate?: Date
 ): number => {
   const stability = word.fsrs_stability ?? 0;
-  const lastReview = lastReviewDate ?? (word.fsrs_last_review ? new Date(word.fsrs_last_review) : null);
+  const lastReview =
+    lastReviewDate ?? (word.fsrs_last_review ? new Date(word.fsrs_last_review) : null);
 
   if (!lastReview || stability <= 0) {
     return 0;
   }
 
-  const daysSinceReview =
-    (targetDate.getTime() - lastReview.getTime()) / (1000 * 60 * 60 * 24);
+  const daysSinceReview = (targetDate.getTime() - lastReview.getTime()) / (1000 * 60 * 60 * 24);
 
   // Correct FSRS retrievability formula: R = exp(-t/S)
   // where t = days since review, S = stability
@@ -92,12 +91,9 @@ export const calculateEfficiencyScore = (word: StudyWord): number => {
   // No points for 5+ lapses
 
   // Difficulty balance (10% weight) - FSRS difficulty ranges 5-10, optimal around 6.5-8.0
-  if (difficulty >= 6.0 && difficulty <= 8.5)
-    score += 10; // Optimal learning zone
-  else if (difficulty >= 5.5 && difficulty <= 9.0)
-    score += 7; // Good range
-  else if (difficulty >= 5.0 && difficulty <= 9.5)
-    score += 5; // Acceptable range
+  if (difficulty >= 6.0 && difficulty <= 8.5) score += 10; // Optimal learning zone
+  else if (difficulty >= 5.5 && difficulty <= 9.0) score += 7; // Good range
+  else if (difficulty >= 5.0 && difficulty <= 9.5) score += 5; // Acceptable range
   else if (difficulty >= 4.5 && difficulty <= 10.0) score += 2; // Edge cases
 
   return Math.min(100, score); // Cap at 100

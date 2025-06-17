@@ -4,8 +4,8 @@ import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
-import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type {

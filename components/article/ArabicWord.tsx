@@ -13,8 +13,8 @@ import { StyleSheet, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
 import { WORD_PRESS_SCALE, DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
+import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';

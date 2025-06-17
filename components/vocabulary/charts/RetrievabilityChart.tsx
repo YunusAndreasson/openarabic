@@ -21,13 +21,13 @@ import {
 } from '@/components/vocabulary/shared';
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import { generateChartSubtitle, CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/components/vocabulary/shared/chartMessages';
-import { STRINGS } from '@/constants/strings';
 import {
   useGraphWidth,
   GRAPH_HEIGHT_LARGE,
   CHART_VISUAL,
 } from '@/components/vocabulary/shared/constants';
 import { createAreaFillPath } from '@/components/vocabulary/shared/utils';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import type { StudyWord } from '@/types/vocabulary.types';

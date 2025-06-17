@@ -10,9 +10,10 @@ import { ArticleSentence } from '@/components/article';
 import { ArabicWord } from '@/components/article/ArabicWord';
 import { ArticleContent } from '@/components/article/ArticleContent';
 import { ToastProvider } from '@/components/providers/ToastProvider';
-import { LAYOUT } from '@/constants/layout';
-import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { TIMING_CONFIG } from '@/constants/animation';
+import { LAYOUT } from '@/constants/layout';
+import { getPracticeReviewRoute } from '@/constants/routes';
+import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleRenderers } from '@/hooks/articles/useArticleRenderers';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
@@ -24,7 +25,6 @@ import { useAppSelectorMemo } from '@/store/hooks';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { selectionFeedback } from '@/utils/haptics';
-import { getPracticeReviewRoute } from '@/constants/routes';
 
 const FLEX_ONE_STYLE = { flex: 1 } as const;
 

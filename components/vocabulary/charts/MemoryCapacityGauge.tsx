@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { BaseChart } from '@/components/vocabulary/shared';
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import { INSIGHTS_BUTTON_PRESS_SCALE } from '@/constants/animation';
+import { CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -15,7 +16,6 @@ import { useNavigationWithDebounce } from '@/hooks';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useMemoryCapacityGauge } from '@/hooks/vocabulary';
-import { CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 
 interface MemoryCapacityGaugeProps {

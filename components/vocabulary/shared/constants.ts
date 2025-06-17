@@ -1,5 +1,4 @@
 import { LAYOUT, useScreenWidth } from '@/constants/layout';
-import { CRITICAL_RETRIEVABILITY_THRESHOLD } from '@/constants/fsrs';
 
 // Graph dimensions - optimized for perfect alignment and space usage
 export const useGraphWidth = (): number => {

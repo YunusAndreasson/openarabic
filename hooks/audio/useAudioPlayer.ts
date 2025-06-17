@@ -7,10 +7,10 @@ import {
 import { useState, useEffect, useCallback, useMemo, useReducer } from 'react';
 
 import { AUDIO_STATES, type AudioState } from '@/constants/audio';
+import { STRINGS } from '@/constants/strings';
 import { audioCache } from '@/services/audioCache';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import { handleError } from '@/utils/errorHandling';
-import { STRINGS } from '@/constants/strings';
 
 /**
  * Enhanced audio player interface

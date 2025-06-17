@@ -4,10 +4,10 @@ import type { TextStyle, ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
+import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { TIMING_CONFIG } from '@/constants/animation';
 import type { WordDisplayProps } from '@/types/ui/review.types';
 
 /**

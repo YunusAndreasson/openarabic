@@ -8,8 +8,9 @@ import {
   HARD_STABILITY_MULTIPLIER,
   HARD_LAPSE_INCREMENT,
   SKIP_FOR_TODAY_DUE_HOUR,
+  DEFAULT_FSRS_DIFFICULTY,
+  FSRS_DIFFICULTY_SCALE,
 } from '@/constants/fsrs';
-
 import type { TablesUpdate } from '@/types/database.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -47,7 +48,7 @@ export const wordManagementService = {
     const emptyCard = createEmptyCard(now);
 
     const resetData: TablesUpdate<'study_words'> = {
-      difficulty: emptyCard.difficulty / 10.0, // Normalize to 0-1 scale
+      difficulty: emptyCard.difficulty / FSRS_DIFFICULTY_SCALE, // Normalize to 0-1 scale
       success_streak: 0,
       fsrs_due: now.toISOString(),
       fsrs_stability: emptyCard.stability,
@@ -85,7 +86,7 @@ export const wordManagementService = {
     const currentCard = {
       due: word.fsrs_due ? new Date(word.fsrs_due) : now,
       stability: word.fsrs_stability ?? 0,
-      difficulty: word.fsrs_difficulty ?? 6.5,
+      difficulty: word.fsrs_difficulty ?? DEFAULT_FSRS_DIFFICULTY,
       elapsed_days: word.fsrs_elapsed_days ?? 0,
       scheduled_days: word.fsrs_scheduled_days ?? 0,
       learning_steps: word.fsrs_learning_steps ?? 0,
@@ -142,7 +143,7 @@ export const wordManagementService = {
     const currentCard = {
       due: word.fsrs_due ? new Date(word.fsrs_due) : now,
       stability: word.fsrs_stability ?? 0,
-      difficulty: word.fsrs_difficulty ?? 6.5,
+      difficulty: word.fsrs_difficulty ?? DEFAULT_FSRS_DIFFICULTY,
       elapsed_days: word.fsrs_elapsed_days ?? 0,
       scheduled_days: word.fsrs_scheduled_days ?? 0,
       learning_steps: word.fsrs_learning_steps ?? 0,

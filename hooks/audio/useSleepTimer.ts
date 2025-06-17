@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
-import { handleError } from '@/utils/errorHandling';
 import { STRINGS } from '@/constants/strings';
+import { handleError } from '@/utils/errorHandling';
 
 export interface SleepTimerState {
   isActive: boolean;

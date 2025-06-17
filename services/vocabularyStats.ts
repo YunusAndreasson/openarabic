@@ -1,3 +1,4 @@
+import { DEFAULT_FSRS_DIFFICULTY } from '@/constants/fsrs';
 import { handleError } from '@/utils/errorHandling';
 
 import { supabase } from './supabase';
@@ -74,7 +75,7 @@ export const vocabularyStatsService = {
         masteredWords: data.mastered_words || 0,
         learningWords: data.learning_words || 0,
         dueWords: data.due_words || 0,
-        avgDifficulty: data.avg_difficulty || 6.5,
+        avgDifficulty: data.avg_difficulty || DEFAULT_FSRS_DIFFICULTY,
         avgStability: data.avg_stability || 0,
       };
     } catch (error) {

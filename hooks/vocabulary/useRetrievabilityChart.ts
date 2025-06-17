@@ -8,14 +8,14 @@ import {
   DAYS_7,
 } from '@/components/vocabulary/shared/constants';
 import {
+  calculateRetrievability,
+  createStandardizedPerformanceZones,
+} from '@/components/vocabulary/shared/utils';
+import {
   CRITICAL_RETRIEVABILITY_THRESHOLD,
   URGENT_RETRIEVABILITY_THRESHOLD,
   TREND_CHANGE_THRESHOLD,
 } from '@/constants/fsrs';
-import {
-  calculateRetrievability,
-  createStandardizedPerformanceZones,
-} from '@/components/vocabulary/shared/utils';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 interface RetrievabilityForecast {

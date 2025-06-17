@@ -4,18 +4,18 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
-import { STRINGS } from '@/constants/strings';
-import { usePressAnimation } from '@/hooks/animations';
-import { useColors } from '@/hooks/theme/useColors';
-import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
-import { getStrugglingWordsCount } from '@/utils/wordClassification';
 import {
   LEARNING_STABILITY_UPPER_BOUND,
   LEARNING_DIFFICULTY_MIN,
   MASTERED_STABILITY_THRESHOLD,
   MASTERED_DIFFICULTY_MAX,
 } from '@/constants/fsrs';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
+import { usePressAnimation } from '@/hooks/animations';
+import { useColors } from '@/hooks/theme/useColors';
+import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
+import { getStrugglingWordsCount } from '@/utils/wordClassification';
 
 import { MemoryCapacityGauge } from './charts/MemoryCapacityGauge';
 

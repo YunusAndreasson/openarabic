@@ -1,6 +1,18 @@
 import { renderHook, act } from '@testing-library/react-native';
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 
+// Mock animation constants before importing the hook
+jest.mock('@/constants/animation', () => ({
+  TIMING_CONFIG: {
+    FAST: { duration: 150, easing: () => {} },
+    MEDIUM: { duration: 250, easing: () => {} },
+    SLOW: { duration: 350, easing: () => {} },
+    GENTLE: { duration: 300, easing: () => {} },
+  },
+  NOW_PLAYING_DISMISS_SCALE: 0.92,
+  NOW_PLAYING_STOP_PRESS_SCALE: 0.85,
+}));
+
 import { useNowPlayingCard } from '@/hooks/listen/useNowPlayingCard';
 
 const mockColors = {
@@ -69,7 +81,7 @@ describe('useNowPlayingCard', () => {
         progress: 30000,
         duration: 60000,
         onStop: jest.fn(),
-      }),
+      })
     );
 
     expect(result.current.timeCalculations).toEqual({
@@ -88,7 +100,7 @@ describe('useNowPlayingCard', () => {
         progress: Infinity,
         duration: NaN,
         onStop: jest.fn(),
-      }),
+      })
     );
 
     expect(result.current.timeCalculations).toEqual({
@@ -108,7 +120,7 @@ describe('useNowPlayingCard', () => {
         duration: 0,
         onStop: jest.fn(),
         isTimerActive: true,
-      }),
+      })
     );
 
     expect(result.current.dynamicStyles.container).toEqual(
@@ -116,14 +128,14 @@ describe('useNowPlayingCard', () => {
         backgroundColor: mockColors.elevation2,
         borderColor: mockColors.border,
         shadowColor: mockColors.shadow,
-      }),
+      })
     );
     expect(result.current.dynamicStyles.timerButton).toEqual(
       expect.objectContaining({
         backgroundColor: `${mockColors.warning}20`,
         borderColor: mockColors.warning,
         borderWidth: 1,
-      }),
+      })
     );
   });
 
@@ -137,7 +149,7 @@ describe('useNowPlayingCard', () => {
         progress: 0,
         duration: 0,
         onStop,
-      }),
+      })
     );
 
     act(() => {

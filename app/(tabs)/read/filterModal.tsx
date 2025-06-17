@@ -4,8 +4,8 @@ import type { JSX } from 'react';
 
 import ErrorState from '@/components/ErrorState';
 import FilterModal from '@/components/FilterModal';
-import { authorsService } from '@/services/authors';
 import { STRINGS } from '@/constants/strings';
+import { authorsService } from '@/services/authors';
 
 export default function FilterModalScreen(): JSX.Element {
   const router = useRouter();

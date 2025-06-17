@@ -254,7 +254,7 @@ describe('Priority Queue Integration', () => {
   test('priority queue maintains correct order after insertions', () => {
     const caseData = testPatterns.priorityTestCases[0];
     const words = createWordSet(caseData.words);
-    const queue = new PriorityQueue<typeof words[0]>();
+    const queue = new PriorityQueue<(typeof words)[0]>();
     words.forEach(w => queue.push(w, calculateWordPriority(w)));
 
     const order: number[] = [];
@@ -266,8 +266,14 @@ describe('Priority Queue Integration', () => {
   });
 
   test('requeued words get appropriate spacing priority', () => {
-    const wordA = createTestWord({ root_id: 1, fsrs_due: new Date(Date.now() - 2 * 3600 * 1000).toISOString() });
-    const wordB = createTestWord({ root_id: 2, fsrs_due: new Date(Date.now() - 1 * 3600 * 1000).toISOString() });
+    const wordA = createTestWord({
+      root_id: 1,
+      fsrs_due: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+    });
+    const wordB = createTestWord({
+      root_id: 2,
+      fsrs_due: new Date(Date.now() - 1 * 3600 * 1000).toISOString(),
+    });
 
     const queue = new PriorityQueue<typeof wordA>();
     queue.push(wordA, calculateWordPriority(wordA));

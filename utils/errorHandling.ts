@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/react-native';
+
 import type { ToastType } from '@/types/ui/toast.types';
 
 // Store toast handler globally - updated to support types

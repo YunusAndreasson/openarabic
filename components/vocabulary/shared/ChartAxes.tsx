@@ -47,7 +47,7 @@ export const ChartAxes = memo(
     // Account for top padding used by the chart
     const yLabels = useMemo(() => {
       const chartHeight = height - topPadding;
-      const labels = [] as Array<{ value: number; y: number }>;
+      const labels = [] as { value: number; y: number }[];
       for (let i = 0; i < yAxisLines; i++) {
         const value = (yMax * i) / (yAxisLines - 1);
         const y = topPadding + chartHeight - (i * chartHeight) / (yAxisLines - 1);

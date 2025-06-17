@@ -1,7 +1,7 @@
+import { STRINGS } from '@/constants/strings';
 import type { Article } from '@/types/articles.types';
 import type { ArticleRow } from '@/types/dbRow.types';
 import { handleError } from '@/utils/errorHandling';
-import { STRINGS } from '@/constants/strings';
 import { mapToArticle, mapToArticles } from '@/utils/typeMappers';
 
 import { supabase } from './supabase';

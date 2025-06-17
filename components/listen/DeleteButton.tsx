@@ -3,9 +3,9 @@ import { useCallback, type FC, type ComponentProps } from 'react';
 import { StyleSheet, TouchableOpacity, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
+import { ICON_BUTTON_PRESS_SCALE } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { ICON_BUTTON_PRESS_SCALE } from '@/constants/animation';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { BaseIconButtonProps } from '@/types/ui/button.types';

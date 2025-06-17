@@ -19,9 +19,9 @@ import { AUDIO_STATES, type AudioState } from '@/constants/audio';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useListenScreen, useListenUI } from '@/hooks/listen';
-import type { ReadingListItem } from '@/types/readingList.types';
 import { useColors } from '@/hooks/theme/useColors';
 import { useAppSelectorMemo } from '@/store/hooks';
+import type { ReadingListItem } from '@/types/readingList.types';
 import { selectionFeedback } from '@/utils/haptics';
 
 const styles = StyleSheet.create({

@@ -1,7 +1,7 @@
+import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
 import type { AuthorRow } from '@/types/dbRow.types';
 import { handleError } from '@/utils/errorHandling';
-import { STRINGS } from '@/constants/strings';
 
 /**
  * Result shape when selecting the `author` relation from `articles`.

@@ -1,8 +1,8 @@
 import { useCallback, useMemo } from 'react';
 
+import { STRINGS } from '@/constants/strings';
 import { audioCache } from '@/services/audioCache';
 import { handleError } from '@/utils/errorHandling';
-import { STRINGS } from '@/constants/strings';
 
 /**
  * Hook for accessing audio cache functionality

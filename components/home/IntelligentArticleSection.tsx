@@ -2,9 +2,9 @@ import type { JSX } from 'react';
 import { useMemo, memo } from 'react';
 
 import FeaturedSection from '@/components/home/FeaturedSection';
+import { STRINGS } from '@/constants/strings';
 import { useIntelligentArticleSelection } from '@/hooks/articles/useIntelligentArticleSelection';
 import { useAuth } from '@/hooks/auth/useAuth';
-import { STRINGS } from '@/constants/strings';
 import type { Article } from '@/types/articles.types';
 
 interface IntelligentArticleSectionProps {

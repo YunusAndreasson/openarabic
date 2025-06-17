@@ -11,14 +11,14 @@ import { ThemedView } from '@/components/ThemedView';
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
 import SessionTypeModal from '@/components/vocabulary/SessionTypeModal';
 import { VocabularyStatCards } from '@/components/vocabulary/VocabularyStatCards';
+import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
+import { getPracticeAudioRoute, getPracticeReviewRoute } from '@/constants/routes';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useVocabularyChartData } from '@/hooks/vocabulary/useVocabularyChartData';
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
-import { getPracticeAudioRoute, getPracticeReviewRoute } from '@/constants/routes';
 
 export default function VocabularyScreen(): JSX.Element {
   const { user } = useAuth();

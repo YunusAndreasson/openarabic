@@ -3,13 +3,13 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import type { Card } from 'ts-fsrs';
 import { createEmptyCard, fsrs, Rating, State, generatorParameters } from 'ts-fsrs';
 
-import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import {
   OPTIMIZED_FSRS_CONFIG,
   FSRS_QUERY_KEYS,
   MIN_WORD_SPACING,
   DEFAULT_SESSION_COOLDOWN_HOURS,
 } from '@/constants/fsrs';
+import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { UseFSRSOptions, UseFSRSResult, FSRSStateTracking } from '@/types/fsrs.types';
 import type { WordConfidence } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -22,7 +22,6 @@ import {
   type SpacingState,
 } from '@/utils/fsrsSpacing';
 import { PriorityQueue } from '@/utils/priorityQueue';
-
 
 // Consolidated counters and tracking data
 interface FSRSCounters {

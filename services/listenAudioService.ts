@@ -1,7 +1,7 @@
+import { STRINGS } from '@/constants/strings';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
-import { STRINGS } from '@/constants/strings';
 
 export const listenAudioService = {
   /**

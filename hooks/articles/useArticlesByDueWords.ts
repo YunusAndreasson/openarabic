@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { articlesService } from '@/services/articles';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import type { Article } from '@/types/articles.types';
 import { getArticlesByDueWords } from '@/utils/articleUtils';
 

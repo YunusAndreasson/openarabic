@@ -8,11 +8,11 @@ import { Platform, StyleSheet } from 'react-native';
 import HeaderProfile from '@/components/HeaderProfile';
 import EditModeButton from '@/components/listen/EditModeButton';
 import { LAYOUT } from '@/constants/layout';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import { ROUTE_PATHS } from '@/constants/routes';
 
 const TAB_SCREENS = [
   {

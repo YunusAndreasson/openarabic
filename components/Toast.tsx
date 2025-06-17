@@ -14,9 +14,9 @@ import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import type { ToastType } from '@/types/ui/toast.types';
 
 import { ThemedText } from './ThemedText';
-import type { ToastType } from '@/types/ui/toast.types';
 
 interface ToastProps {
   visible: boolean;

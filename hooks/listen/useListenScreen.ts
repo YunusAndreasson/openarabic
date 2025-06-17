@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 
 import { AUDIO_STATES } from '@/constants/audio';
+import { STRINGS } from '@/constants/strings';
 import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -11,7 +12,6 @@ import { readingListService } from '@/services/readingList';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { removeFromCustomOrder } from '@/store/listenSlice';
 import { handleError } from '@/utils/errorHandling';
-import { STRINGS } from '@/constants/strings';
 import { selectionFeedback } from '@/utils/haptics';
 
 

@@ -25,7 +25,8 @@ describe('authorsService', () => {
       ];
       const builder: any = {
         select: jest.fn().mockReturnThis(),
-        order: jest.fn().mockResolvedValue({ data: authors, error: null }),
+        order: jest.fn().mockReturnThis(),
+        returns: jest.fn().mockResolvedValue({ data: authors, error: null }),
       };
       fromMock.mockReturnValue(builder);
 
@@ -43,7 +44,8 @@ describe('authorsService', () => {
       const error = new Error('fail');
       const builder: any = {
         select: jest.fn().mockReturnThis(),
-        order: jest.fn().mockResolvedValue({ data: null, error }),
+        order: jest.fn().mockReturnThis(),
+        returns: jest.fn().mockResolvedValue({ data: null, error }),
       };
       fromMock.mockReturnValue(builder);
 
@@ -56,24 +58,19 @@ describe('authorsService', () => {
 
   describe('getAuthorsByCategory', () => {
     it('maps and sorts returned authors', async () => {
-      const rows = [
-        { author: { id: 2, name: 'Zayd' } },
-        { author: { id: 1, name: 'Ali' } },
-      ];
+      const rows = [{ author: { id: 2, name: 'Zayd' } }, { author: { id: 1, name: 'Ali' } }];
       const builder: any = {
         select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
-        order: jest.fn().mockResolvedValue({ data: rows, error: null }),
+        order: jest.fn().mockReturnThis(),
+        returns: jest.fn().mockResolvedValue({ data: rows, error: null }),
       };
       fromMock.mockReturnValue(builder);
 
       const result = await authorsService.getAuthorsByCategory(5);
 
       expect(fromMock).toHaveBeenCalledWith('articles');
-      expect(builder.select).toHaveBeenCalledWith(
-        'author:authors!inner(id, name)',
-        { head: true }
-      );
+      expect(builder.select).toHaveBeenCalledWith('author:authors!inner(id, name)');
       expect(builder.eq).toHaveBeenCalledWith('category_id', 5);
       expect(builder.order).toHaveBeenCalledWith('name', { foreignTable: 'author' });
       expect(result).toEqual([
@@ -88,7 +85,8 @@ describe('authorsService', () => {
       const builder: any = {
         select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
-        order: jest.fn().mockResolvedValue({ data: null, error }),
+        order: jest.fn().mockReturnThis(),
+        returns: jest.fn().mockResolvedValue({ data: null, error }),
       };
       fromMock.mockReturnValue(builder);
 

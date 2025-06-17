@@ -3,6 +3,8 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import { Alert, Linking } from 'react-native';
 
+import { ROUTE_PATHS } from '@/constants/routes';
+import { STRINGS } from '@/constants/strings';
 import { useAudioCache } from '@/hooks/audio/useAudioCache';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useReminders } from '@/hooks/notifications/useReminders';
@@ -11,8 +13,6 @@ import { supabase } from '@/services/supabase';
 import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
-import { STRINGS } from '@/constants/strings';
-import { ROUTE_PATHS } from '@/constants/routes';
 
 const analytics = {
   trackSignOut: async () => {},

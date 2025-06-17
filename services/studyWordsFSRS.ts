@@ -44,7 +44,6 @@ interface GetFSRSWordsOptions {
   category?: 'learning' | 'mastered';
 }
 
-
 export const studyWordsFSRSService = {
   // Fetch study words with FSRS parameters
   async getFSRSWords(userId: string, options: GetFSRSWordsOptions = {}): Promise<StudyWord[]> {

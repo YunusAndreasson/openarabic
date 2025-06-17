@@ -10,11 +10,11 @@ import {
   CHART_VISUAL,
   useGraphWidth,
 } from '@/components/vocabulary/shared/constants';
-import { MASTERY_MILESTONES, MASTERY_TREND_THRESHOLD } from '@/constants/fsrs';
 import {
   generateDateRange,
   createStandardizedPerformanceZones,
 } from '@/components/vocabulary/shared/utils';
+import { MASTERY_MILESTONES, MASTERY_TREND_THRESHOLD } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 interface Milestone {

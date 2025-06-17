@@ -2,8 +2,8 @@ import { Skia } from '@shopify/react-native-skia';
 import { useMemo } from 'react';
 
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
-import { STRINGS } from '@/constants/strings';
 import { CAPACITY_THRESHOLDS } from '@/constants/fsrs';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
 

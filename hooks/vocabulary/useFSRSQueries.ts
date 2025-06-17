@@ -1,8 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { CACHE_TIMES } from '@/constants/queryConfig';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 interface UseFSRSQueriesOptions {

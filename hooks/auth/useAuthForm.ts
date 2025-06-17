@@ -3,11 +3,11 @@ import { router } from 'expo-router';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { Alert } from 'react-native';
 
+import { ROUTE_PATHS } from '@/constants/routes';
+import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
-import { STRINGS } from '@/constants/strings';
-import { ROUTE_PATHS } from '@/constants/routes';
 const analytics = {
   identify: async (
     _userId: string,

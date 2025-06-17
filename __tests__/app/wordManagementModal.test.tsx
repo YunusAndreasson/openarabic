@@ -6,6 +6,7 @@ import {
   STRUGGLING_LAPSES_THRESHOLD,
   STRICT_MASTERED_STABILITY_THRESHOLD,
   MASTERED_DIFFICULTY_MAX,
+  DEFAULT_FSRS_DIFFICULTY,
 } from '../../constants/fsrs';
 
 jest.mock('@expo/vector-icons', () => ({
@@ -51,16 +52,22 @@ jest.mock('expo-haptics', () => ({
 jest.mock('../../components/vocabulary/WordManagementModal', () => {
   const React = require('react');
   const { View, TouchableOpacity } = require('react-native');
+
+  // Use hardcoded values to avoid Jest scope issues
+  const STRUGGLING_DIFFICULTY_THRESHOLD = 8.0;
+  const STRUGGLING_LAPSES_THRESHOLD = 1;
+  const STRICT_MASTERED_STABILITY_THRESHOLD = 21;
+  const MASTERED_DIFFICULTY_MAX = 5;
+  const DEFAULT_FSRS_DIFFICULTY = 6.5;
+
   function getActions(word: any) {
-    const difficulty = word.fsrs_difficulty ?? 6.5;
+    const difficulty = word.fsrs_difficulty ?? DEFAULT_FSRS_DIFFICULTY;
     const stability = word.fsrs_stability ?? 0;
     const lapses = word.fsrs_lapses ?? 0;
     const isStruggling =
-      difficulty >= STRUGGLING_DIFFICULTY_THRESHOLD &&
-      lapses >= STRUGGLING_LAPSES_THRESHOLD;
+      difficulty >= STRUGGLING_DIFFICULTY_THRESHOLD && lapses >= STRUGGLING_LAPSES_THRESHOLD;
     const isMastered =
-      stability >= STRICT_MASTERED_STABILITY_THRESHOLD &&
-      difficulty <= MASTERED_DIFFICULTY_MAX;
+      stability >= STRICT_MASTERED_STABILITY_THRESHOLD && difficulty <= MASTERED_DIFFICULTY_MAX;
     if (isStruggling) return ['easy', 'skip', 'reset', 'remove'];
     if (isMastered) return ['hard', 'skip', 'reset', 'remove'];
     return ['easy', 'hard', 'skip', 'reset', 'remove'];

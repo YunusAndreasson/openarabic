@@ -9,9 +9,9 @@ import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setCustomOrder } from '@/store/listenSlice';
 import type { Article } from '@/types/articles.types';
+import type { ReadingListItem } from '@/types/readingList.types';
 import { selectionFeedback } from '@/utils/haptics';
 
-import type { ReadingListItem } from '@/types/readingList.types';
 
 interface ListenUIParams {
   sortedReadingList: ReadingListItem[];
