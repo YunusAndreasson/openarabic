@@ -1,21 +1,9 @@
-import type { Article } from '@/types/articles.types';
 import { handleError } from '@/utils/errorHandling';
+import type { ReadingListItem } from '@/types/readingList.types';
 
 import { supabase, checkAuthentication } from './supabase';
 import { STRINGS } from '@/constants/strings';
 
-type ReadingListItem = {
-  user_id: string;
-  article_id: number;
-  category_id: number | null;
-  added_at: string;
-  articles: Article & {
-    author: {
-      id: number;
-      name: string;
-    };
-  };
-};
 
 const errorConfig = {
   readingList: {

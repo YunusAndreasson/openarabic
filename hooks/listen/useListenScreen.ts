@@ -10,20 +10,10 @@ import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { readingListService } from '@/services/readingList';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { removeFromCustomOrder } from '@/store/listenSlice';
-import type { Article } from '@/types/articles.types';
-import type { Tables } from '@/types/database.types';
 import { handleError } from '@/utils/errorHandling';
 import { STRINGS } from '@/constants/strings';
 import { selectionFeedback } from '@/utils/haptics';
 
-export type ReadingListItem = Tables<'reading_list'> & {
-  articles: Article & {
-    author: {
-      id: number;
-      name: string;
-    };
-  };
-};
 
 export const useListenScreen = () => {
   const { user } = useAuth();

@@ -10,7 +10,7 @@ import type { Article } from '@/types/articles.types';
 import { selectionFeedback } from '@/utils/haptics';
 import { STRINGS } from '@/constants/strings';
 
-import type { ReadingListItem } from './useListenScreen';
+import type { ReadingListItem } from '@/types/readingList.types';
 
 interface ListenUIParams {
   sortedReadingList: ReadingListItem[];
