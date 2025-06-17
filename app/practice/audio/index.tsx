@@ -21,7 +21,7 @@ import { useAudioPracticeSession } from '@/hooks/practice';
 import { useColors } from '@/hooks/theme/useColors';
 import { useWordSizing } from '@/hooks/vocabulary/useWordSizing';
 import { handleError } from '@/utils/errorHandling';
-import { PRACTICE_TAB_ROUTE } from '@/constants/routes';
+import { ROUTE_PATHS } from '@/constants/routes';
 
 /**
  * Screen that plays Arabic words followed by their English translations
@@ -89,7 +89,7 @@ export default function ListenScreen(): JSX.Element {
       // For user-initiated cancellations during session
       if (fromRemember) {
         // Use replace instead of navigate to avoid navigation stack issues
-        router.replace(PRACTICE_TAB_ROUTE);
+        router.replace(ROUTE_PATHS.PRACTICE_TAB);
       } else {
         router.back();
       }

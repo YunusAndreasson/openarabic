@@ -5,6 +5,7 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { View, StyleSheet } from 'react-native';
 
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 
 import { ThemedButton } from './ThemedButton';
@@ -29,7 +30,7 @@ interface EmptyStateProps {
 const DEFAULT_ICON_SIZE = 64;
 
 function handleBrowseArticles() {
-  router.push('/(tabs)');
+  router.push(ROUTE_PATHS.TABS);
 }
 
 /**

@@ -1,6 +1,8 @@
 export const getArticleRoute = (id: number, headerTitle?: string): string => {
   const base = `/(tabs)/read/article/${id}`;
-  return headerTitle ? `${base}?headerTitle=${encodeURIComponent(headerTitle)}` : base;
+  if (!headerTitle) return base;
+  const search = new URLSearchParams({ headerTitle });
+  return `${base}?${search.toString()}`;
 };
 
 export const getFilterRoute = (
@@ -8,32 +10,39 @@ export const getFilterRoute = (
   id: number,
   name?: string,
 ): string => {
-  const base = `/(tabs)/read/filter?type=${type}&id=${id}`;
-  return name ? `${base}&name=${encodeURIComponent(name)}` : base;
+  const params = new URLSearchParams({ type, id: id.toString() });
+  if (name) params.append('name', name);
+  return `/(tabs)/read/filter?${params.toString()}`;
 };
 
 export const getFilterModalRoute = (categoryId: number): string =>
   `/(tabs)/read/filterModal?categoryId=${categoryId}`;
 
-export const AUTH_ROUTE = '/auth';
-export const READ_TAB_ROUTE = '/(tabs)/read';
-export const PRACTICE_TAB_ROUTE = '/(tabs)/practice';
-export const LISTEN_TAB_ROUTE = '/(tabs)/listen';
-export const ACCOUNT_ROUTE = '/(tabs)/read/account';
-export const ACCOUNT_LEARNING_METHOD_ROUTE =
-  '/(tabs)/read/account/learningMethod';
-export const ACCOUNT_CLASSICAL_TEXTS_ROUTE =
-  '/(tabs)/read/account/classicalTexts';
-export const ACCOUNT_ISLAMIC_CALENDAR_ROUTE =
-  '/(tabs)/read/account/islamicCalendar';
-export const ACCOUNT_FONT_SELECTOR_ROUTE =
-  '/(tabs)/read/account/font-selector';
+export const ROUTE_PATHS = {
+  AUTH: '/auth',
+  TABS: '/(tabs)',
+  READ_TAB: '/(tabs)/read',
+  PRACTICE_TAB: '/(tabs)/practice',
+  LISTEN_TAB: '/(tabs)/listen',
+  ACCOUNT: '/(tabs)/read/account',
+  ACCOUNT_LEARNING_METHOD: '/(tabs)/read/account/learningMethod',
+  ACCOUNT_CLASSICAL_TEXTS: '/(tabs)/read/account/classicalTexts',
+  ACCOUNT_ISLAMIC_CALENDAR: '/(tabs)/read/account/islamicCalendar',
+  ACCOUNT_FONT_SELECTOR: '/(tabs)/read/account/font-selector',
+  INSIGHTS: '/insights',
+  PRACTICE_AUDIO: '/practice/audio',
+  PRACTICE_REVIEW: '/practice/review',
+} as const;
 
-export const PRACTICE_AUDIO_ROUTE = '/practice/audio';
-export const PRACTICE_REVIEW_ROUTE = '/practice/review';
+export type StaticRoutePath = (typeof ROUTE_PATHS)[keyof typeof ROUTE_PATHS];
+
+export const getInsightsInfoRoute = (type: string): string =>
+  `${ROUTE_PATHS.INSIGHTS}/info/${type}`;
 
 export const getPracticeAudioRoute = (fromRemember?: boolean): string =>
-  fromRemember ? `${PRACTICE_AUDIO_ROUTE}?fromRemember=true` : PRACTICE_AUDIO_ROUTE;
+  fromRemember
+    ? `${ROUTE_PATHS.PRACTICE_AUDIO}?fromRemember=true`
+    : ROUTE_PATHS.PRACTICE_AUDIO;
 
 export const getPracticeReviewRoute = (
   params?: Partial<{
@@ -51,5 +60,7 @@ export const getPracticeReviewRoute = (
   if (params?.fromVocabulary) search.append('fromVocabulary', params.fromVocabulary);
   if (params?.fromRemember) search.append('fromRemember', params.fromRemember);
   const query = search.toString();
-  return query ? `${PRACTICE_REVIEW_ROUTE}?${query}` : PRACTICE_REVIEW_ROUTE;
+  return query
+    ? `${ROUTE_PATHS.PRACTICE_REVIEW}?${query}`
+    : ROUTE_PATHS.PRACTICE_REVIEW;
 };

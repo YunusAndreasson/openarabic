@@ -9,6 +9,7 @@ import SectionTitle from '@/components/SectionTitle';
 import { ThemedView } from '@/components/ThemedView';
 import { EfficiencyChart, MasteryChart, RetrievabilityChart } from '@/components/vocabulary/charts';
 import { LAYOUT } from '@/constants/layout';
+import { getInsightsInfoRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
@@ -28,7 +29,7 @@ export default function InsightsScreen(): JSX.Element {
 
   const handleInfoPress = useCallback(
     (type: string) => {
-      router.push(`/insights/info/${type}`);
+      router.push(getInsightsInfoRoute(type));
     },
     [router]
   );
