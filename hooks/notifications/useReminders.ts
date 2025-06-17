@@ -6,8 +6,6 @@ import { setReminderTime } from '@/store/settingsSlice';
 import type { ReminderTime } from '@/types/notifications.types';
 import { handleError } from '@/utils/errorHandling';
 
-// import { analytics } from '@/services/analytics';
-// Temporary mock analytics until service is fixed
 const analytics = {
   track: async (
     _event: string,

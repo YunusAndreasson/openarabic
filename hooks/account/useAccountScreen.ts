@@ -12,8 +12,6 @@ import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
 
-// import { analytics } from '@/services/analytics';
-// Temporary mock analytics until service is fixed
 const analytics = {
   trackSignOut: async () => {},
   reset: async () => {},

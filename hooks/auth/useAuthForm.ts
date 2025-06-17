@@ -6,8 +6,6 @@ import { Alert } from 'react-native';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
-// import { analytics } from '@/services/analytics';
-// Temporary mock analytics until service is fixed
 const analytics = {
   identify: async (
     _userId: string,
