@@ -17,11 +17,19 @@ module.exports = {
     createAnimatedComponent: component => component,
     Easing,
   },
-  useSharedValue: () => ({ value: 0 }),
-  useAnimatedStyle: () => ({}),
+  useSharedValue: (initialValue = 0) => ({ value: initialValue }),
+  useAnimatedStyle: styleCallback => ({}),
   withTiming: value => value,
   withSpring: value => value,
-  runOnJS: () => {},
+  interpolate: (value, inputRange, outputRange, extrapolate) => {
+    // Simple linear interpolation for testing
+    if (Array.isArray(inputRange) && Array.isArray(outputRange)) {
+      return outputRange[0];
+    }
+    return value;
+  },
+  runOnUI: callback => callback,
+  runOnJS: callback => callback,
   FadeIn: { duration: () => ({ delay: () => ({}) }) },
   FadeOut: { duration: () => ({ delay: () => ({}) }) },
   SlideInRight: { duration: () => ({ delay: () => ({}) }) },

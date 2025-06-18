@@ -42,6 +42,19 @@ jest.mock('expo-haptics', () => ({
 
 // Mock react-native-reanimated
 jest.mock('react-native-reanimated', () => ({
+  useSharedValue: (initialValue = 0) => ({ value: initialValue }),
+  useAnimatedStyle: _styleCallback => ({}),
+  withTiming: value => value,
+  withSpring: value => value,
+  interpolate: (value, inputRange, outputRange, _extrapolate) => {
+    // Simple linear interpolation for testing
+    if (Array.isArray(inputRange) && Array.isArray(outputRange)) {
+      return outputRange[0];
+    }
+    return value;
+  },
+  runOnUI: callback => callback,
+  runOnJS: callback => callback,
   FadeIn: {
     duration: () => ({
       delay: () => ({}),
@@ -92,6 +105,12 @@ jest.mock('react-native', () => {
       get: jest.fn().mockReturnValue({ width: 375, height: 812 }),
     },
     useColorScheme: jest.fn(),
+    useWindowDimensions: jest.fn(() => ({
+      width: 375,
+      height: 812,
+      scale: 2,
+      fontScale: 1,
+    })),
     NativeModules: {},
     Platform: {
       OS: 'ios',
@@ -110,6 +129,7 @@ jest.mock('react-native', () => {
     },
     View: 'View',
     Text: 'Text',
+    Pressable: 'Pressable',
     TouchableOpacity: 'TouchableOpacity',
     TouchableWithoutFeedback: 'TouchableWithoutFeedback',
     ScrollView: 'ScrollView',
