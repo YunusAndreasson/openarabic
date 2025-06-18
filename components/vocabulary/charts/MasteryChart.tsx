@@ -1,15 +1,6 @@
-import {
-  Path,
-  Circle,
-  Group,
-  Rect,
-  LinearGradient,
-  vec,
-  Mask,
-} from '@shopify/react-native-skia';
+import { Path, Circle, Group, Rect, LinearGradient, vec, Mask } from '@shopify/react-native-skia';
 import { memo } from 'react';
 import { View } from 'react-native';
-
 
 import {
   BaseChart,
@@ -20,7 +11,11 @@ import {
 } from '@/components/vocabulary/shared';
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import { CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/components/vocabulary/shared/chartMessages';
-import { useGraphWidth, GRAPH_HEIGHT_LARGE, CHART_VISUAL } from '@/components/vocabulary/shared/constants';
+import {
+  useGraphWidth,
+  GRAPH_HEIGHT_LARGE,
+  CHART_VISUAL,
+} from '@/components/vocabulary/shared/constants';
 import { createAreaFillPath } from '@/components/vocabulary/shared/utils';
 import { useColors } from '@/hooks/theme/useColors';
 import { useMasteryChart } from '@/hooks/vocabulary/useMasteryChart';
@@ -40,7 +35,6 @@ export const MasteryChart = memo(
 
     // Add top padding to prevent dots from being cut off
     const TOP_PADDING = CHART_VISUAL.CHART_TOP_PADDING; // Optimized space for data points
-
 
     const {
       masteryPath,
@@ -65,10 +59,7 @@ export const MasteryChart = memo(
       >
         <View style={{ position: 'relative' }}>
           <View style={{ marginLeft: Y_AXIS_WIDTH }}>
-            <ChartCanvas
-              dataPoints={dataPoints}
-              enableTooltips={true}
-            >
+            <ChartCanvas dataPoints={dataPoints} enableTooltips={true}>
               {/* Subtle grid lines for better visual structure */}
               <ChartGrid
                 gridLines={4}
@@ -80,13 +71,7 @@ export const MasteryChart = memo(
               {/* Area fill under the mastery line with gradient - rendered first as base */}
               <Group>
                 {masteryPath && points.length > 0 && (
-                  <Path
-                    path={createAreaFillPath(
-                      masteryPath,
-                      graphWidth,
-                      GRAPH_HEIGHT_LARGE
-                    )}
-                  >
+                  <Path path={createAreaFillPath(masteryPath, graphWidth, GRAPH_HEIGHT_LARGE)}>
                     <LinearGradient
                       colors={chartColors.getAreaFillGradient('mastery')}
                       end={vec(0, GRAPH_HEIGHT_LARGE)}
@@ -104,11 +89,7 @@ export const MasteryChart = memo(
                     mask={
                       <Path
                         color={colors.white}
-                        path={createAreaFillPath(
-                          masteryPath,
-                          graphWidth,
-                          GRAPH_HEIGHT_LARGE
-                        )}
+                        path={createAreaFillPath(masteryPath, graphWidth, GRAPH_HEIGHT_LARGE)}
                       />
                     }
                   >
@@ -150,7 +131,7 @@ export const MasteryChart = memo(
                       r={CHART_VISUAL.DATA_POINT_SIZE}
                     />
                     <Circle
-                      color={chartColors.ui.background}
+                      color={chartColors.withOpacity(chartColors.ui.accent, 0.25)}
                       cx={point.x}
                       cy={point.y}
                       r={CHART_VISUAL.DATA_POINT_INNER_SIZE}

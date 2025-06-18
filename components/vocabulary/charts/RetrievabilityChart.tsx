@@ -1,15 +1,6 @@
-import {
-  Path,
-  Circle,
-  Group,
-  Rect,
-  LinearGradient,
-  vec,
-  Mask,
-} from '@shopify/react-native-skia';
+import { Path, Circle, Group, Rect, LinearGradient, vec, Mask } from '@shopify/react-native-skia';
 import { memo, useMemo } from 'react';
 import { View } from 'react-native';
-
 
 import {
   BaseChart,
@@ -20,7 +11,11 @@ import {
   type DataPoint,
 } from '@/components/vocabulary/shared';
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
-import { generateChartSubtitle, CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/components/vocabulary/shared/chartMessages';
+import {
+  generateChartSubtitle,
+  CHART_LABELS,
+  EMPTY_STATE_MESSAGES,
+} from '@/components/vocabulary/shared/chartMessages';
 import {
   useGraphWidth,
   GRAPH_HEIGHT_LARGE,
@@ -52,7 +47,6 @@ export const RetrievabilityChart = memo(
     const colors = useColors();
     const graphWidth = useGraphWidth();
     const { retrievabilityData, chartData } = useRetrievabilityChart(studyWords);
-
 
     // Generate subtitle using standardized messaging system
     const subtitle = useMemo(() => {
@@ -97,10 +91,7 @@ export const RetrievabilityChart = memo(
       >
         <View style={{ position: 'relative' }}>
           <View style={{ marginLeft: Y_AXIS_WIDTH }}>
-            <ChartCanvas
-              dataPoints={dataPoints}
-              enableTooltips={true}
-            >
+            <ChartCanvas dataPoints={dataPoints} enableTooltips={true}>
               {/* Subtle grid lines for better visual structure */}
               <ChartGrid width={graphWidth} height={GRAPH_HEIGHT_LARGE} gridLines={4} />
 
@@ -182,7 +173,7 @@ export const RetrievabilityChart = memo(
                         cx={point.x}
                         cy={point.y}
                         r={CHART_VISUAL.DATA_POINT_INNER_SIZE}
-                        color={chartColors.ui.background}
+                        color={chartColors.withOpacity(chartColors.ui.accent, 0.25)}
                       />
                     </Group>
                   );

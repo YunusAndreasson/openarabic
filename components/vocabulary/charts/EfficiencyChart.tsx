@@ -11,7 +11,6 @@ import {
 import { memo, useMemo } from 'react';
 import { View } from 'react-native';
 
-
 import {
   BaseChart,
   ChartCanvas,
@@ -21,8 +20,17 @@ import {
   type DataPoint,
 } from '@/components/vocabulary/shared';
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
-import { generateChartSubtitle, CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/components/vocabulary/shared/chartMessages';
-import { useGraphWidth, GRAPH_HEIGHT_LARGE, DAYS_7, CHART_VISUAL } from '@/components/vocabulary/shared/constants';
+import {
+  generateChartSubtitle,
+  CHART_LABELS,
+  EMPTY_STATE_MESSAGES,
+} from '@/components/vocabulary/shared/chartMessages';
+import {
+  useGraphWidth,
+  GRAPH_HEIGHT_LARGE,
+  DAYS_7,
+  CHART_VISUAL,
+} from '@/components/vocabulary/shared/constants';
 import {
   generateDateRange,
   isSameDay,
@@ -202,9 +210,9 @@ export const EfficiencyChart = memo(
             y: point.y,
             value: `${Math.round(point.efficiency)}%`,
             label: data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          data: data,
-        } as DataPoint<EfficiencyRecord>;
-      })
+            data: data,
+          } as DataPoint<EfficiencyRecord>;
+        })
         .filter((point): point is DataPoint<EfficiencyRecord> => point !== null);
     }, [chartData.dataPoints, efficiencyData]);
 
@@ -220,10 +228,7 @@ export const EfficiencyChart = memo(
       >
         <View style={{ position: 'relative' }}>
           <View style={{ marginLeft: Y_AXIS_WIDTH }}>
-            <ChartCanvas
-              dataPoints={dataPoints}
-              enableTooltips={true}
-            >
+            <ChartCanvas dataPoints={dataPoints} enableTooltips={true}>
               {/* Subtle grid lines for better visual structure */}
               <ChartGrid gridLines={4} height={GRAPH_HEIGHT_LARGE} width={graphWidth} />
 
@@ -302,7 +307,7 @@ export const EfficiencyChart = memo(
                         r={CHART_VISUAL.DATA_POINT_SIZE}
                       />
                       <Circle
-                        color={chartColors.ui.background}
+                        color={chartColors.withOpacity(chartColors.ui.accent, 0.25)}
                         cx={point.x}
                         cy={point.y}
                         r={CHART_VISUAL.DATA_POINT_INNER_SIZE}
