@@ -27,7 +27,7 @@ export const listenAudioService = {
         id: `word-${index}-ar`,
         rootId: word.root.id,
         audioUrl: arabicAudio,
-        title: word.root.letters || 'Arabic', // Use Arabic word as title
+        title: word.root.letters || STRINGS.ARABIC_TITLE_FALLBACK, // Use Arabic word as title
       });
 
       // Add English track
@@ -35,7 +35,7 @@ export const listenAudioService = {
         id: `word-${index}-en`,
         rootId: word.root.id,
         audioUrl: englishAudio,
-        title: word.root.meaning || 'English', // Use English meaning as title
+        title: word.root.meaning || STRINGS.ENGLISH_TITLE_FALLBACK, // Use English meaning as title
       });
     });
 

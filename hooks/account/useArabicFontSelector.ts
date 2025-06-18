@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setArabicFont, setArabicFontSize, type ArabicFontName } from '@/store/settingsSlice';
 
@@ -14,31 +15,31 @@ export interface ArabicFontOption {
 export const ARABIC_FONT_OPTIONS: ArabicFontOption[] = [
   {
     name: 'Madina',
-    displayName: 'Madina',
+    displayName: STRINGS.FONT_MADINA,
     description: 'Modern & clean',
     previewText: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
   },
   {
     name: 'Amiri',
-    displayName: 'Amiri',
+    displayName: STRINGS.FONT_AMIRI,
     description: 'Traditional',
     previewText: 'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ',
   },
   {
     name: 'Scheherazade',
-    displayName: 'Scheherazade',
+    displayName: STRINGS.FONT_SCHEHERAZADE,
     description: 'Flowing',
     previewText: 'وَمَا أَرْسَلْنَاكَ إِلَّا رَحْمَةً لِّلْعَالَمِينَ',
   },
   {
     name: 'Nastaliq',
-    displayName: 'Nastaliq',
+    displayName: STRINGS.FONT_NASTALIQ,
     description: 'Calligraphic',
     previewText: 'إِنَّ مَعَ الْعُسْرِ يُسْرًا',
   },
   {
     name: 'NotoSans',
-    displayName: 'Noto Sans',
+    displayName: STRINGS.FONT_NOTO_SANS,
     description: 'Simple',
     previewText: 'اقْرَأْ بِاسْمِ رَبِّكَ الَّذِي خَلَقَ',
   },

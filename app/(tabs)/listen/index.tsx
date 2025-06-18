@@ -317,11 +317,7 @@ export default function ListenScreen(): JSX.Element {
             ListFooterComponent={
               hasArticles ? (
                 <View style={styles.footerNote}>
-                  <ThemedText
-                    style={styles.footerNoteText}
-                    type="caption"
-                    variant="secondary"
-                  >
+                  <ThemedText style={styles.footerNoteText} type="caption" variant="secondary">
                     {STRINGS.LONG_PRESS_HINT}
                   </ThemedText>
                 </View>
@@ -360,11 +356,7 @@ export default function ListenScreen(): JSX.Element {
             ListFooterComponent={
               hasArticles ? (
                 <View style={styles.footerNote}>
-                  <ThemedText
-                    style={styles.footerNoteText}
-                    type="caption"
-                    variant="secondary"
-                  >
+                  <ThemedText style={styles.footerNoteText} type="caption" variant="secondary">
                     {STRINGS.LONG_PRESS_HINT}
                   </ThemedText>
                 </View>
@@ -386,7 +378,6 @@ export default function ListenScreen(): JSX.Element {
           primaryLabel={STRINGS.PLAY_ALL}
           primaryVariant="filled"
           showTimerButton={false}
-          primaryAccessibilityLabel={STRINGS.PLAY_ALL_TEXTS_A11Y_LABEL}
           onPrimaryPress={() => handlePlayAll(setIsPlayAllLoading)}
         />
       )}

@@ -26,8 +26,6 @@ export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressabl
 
   /** Content position within container */
   contentPosition?: ImageContentPosition;
-  /** Alt text for accessibility */
-  alt?: string;
 
   /** Callback when image loads successfully */
   onLoad?: () => void;

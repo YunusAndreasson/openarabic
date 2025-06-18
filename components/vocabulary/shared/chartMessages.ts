@@ -43,17 +43,17 @@ export const getPerformanceLevel = (value: number): 'excellent' | 'fair' | 'good
 export const PERFORMANCE_DESCRIPTORS = {
   excellent: {
     short: 'Excellent',
-    medium: 'Performing excellently',
-    long: 'Outstanding performance',
+    medium: STRINGS.PERFORMING_EXCELLENTLY,
+    long: STRINGS.OUTSTANDING_PERFORMANCE,
   },
   good: {
     short: 'Good',
-    medium: 'Performing well',
+    medium: STRINGS.PERFORMING_WELL,
     long: 'Good performance',
   },
   fair: {
     short: 'Fair',
-    medium: 'Room for improvement',
+    medium: STRINGS.ROOM_FOR_IMPROVEMENT,
     long: 'Fair performance, focus on practice',
   },
   poor: {
@@ -67,15 +67,15 @@ export const PERFORMANCE_DESCRIPTORS = {
 export const TREND_MESSAGES = {
   improving: {
     suffix: '↗ improving',
-    description: 'trending upward',
+    description: STRINGS.TRENDING_UPWARD,
   },
   declining: {
     suffix: '↘ declining',
-    description: 'trending downward',
+    description: STRINGS.TRENDING_DOWNWARD,
   },
   stable: {
     suffix: '→ stable',
-    description: 'steady performance',
+    description: STRINGS.STEADY_PERFORMANCE,
   },
 } as const;
 
@@ -109,7 +109,7 @@ export const generateChartSubtitle = {
     const avgPerformance = getPerformanceLevel(weeklyAverage);
 
     if (performance === avgPerformance) {
-      return `${PERFORMANCE_DESCRIPTORS[performance].medium} - consistent pace`;
+      return `${PERFORMANCE_DESCRIPTORS[performance].medium} - ${STRINGS.CONSISTENT_PRACTICE}`;
     }
 
     const comparison =
@@ -126,7 +126,7 @@ export const generateChartSubtitle = {
     const criticalPercentage = (criticalWords / totalWords) * 100;
 
     if (criticalWords === 0) {
-      return `${PERFORMANCE_DESCRIPTORS[performance].medium} - all words retained well`;
+      return `${PERFORMANCE_DESCRIPTORS[performance].medium} - ${STRINGS.ALL_WORDS_RETAINED_WELL}`;
     }
 
     if (criticalPercentage > 30) {

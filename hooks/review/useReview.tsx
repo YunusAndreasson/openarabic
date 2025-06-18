@@ -7,12 +7,10 @@ import { useAnimatedStyle } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
 
 import { TIMING_CONFIG, DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
-import {
-  FSRS_QUERY_KEYS,
-  DEFAULT_SESSION_COOLDOWN_HOURS,
-} from '@/constants/fsrs';
+import { FSRS_QUERY_KEYS, DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
+import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -315,7 +313,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     const track: EnhancedAudioTrack = {
       id: `review-${Date.now()}`,
       audioUrl: url,
-      title: 'Review Audio',
+      title: STRINGS.REVIEW_AUDIO,
       duration: 0,
     };
 
@@ -331,7 +329,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     const feedbackTrack: EnhancedAudioTrack = {
       id: `feedback-${Date.now()}`,
       audioUrl: url,
-      title: 'English Feedback',
+      title: STRINGS.ENGLISH_FEEDBACK,
       duration: 0,
     };
 

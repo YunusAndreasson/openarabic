@@ -17,18 +17,17 @@ export type BottomControlsProps = {
   primaryVariant?: 'filled' | 'outlined';
   primaryDisabled?: boolean;
   primaryLoading?: boolean;
-  primaryAccessibilityLabel?: string;
+
   primaryDisablePressAnimation?: boolean;
   secondaryLabel?: string;
   onSecondaryPress?: () => void;
   secondaryVariant?: 'filled' | 'outlined';
   secondaryDisabled?: boolean;
-  secondaryAccessibilityLabel?: string;
+
   // Timer button props
   showTimerButton?: boolean;
   onTimerPress?: () => void;
   isTimerActive?: boolean;
-  timerAccessibilityLabel?: string;
 };
 
 const BottomControls = memo<BottomControlsProps>(

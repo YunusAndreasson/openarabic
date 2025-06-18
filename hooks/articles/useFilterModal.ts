@@ -2,6 +2,7 @@ import type { Ionicons } from '@expo/vector-icons';
 import { useState, useCallback, useMemo } from 'react';
 import type { ComponentProps } from 'react';
 
+import { STRINGS } from '@/constants/strings';
 import {
   setSortField,
   toggleAuthor,
@@ -20,13 +21,13 @@ export const DIFFICULTY_OPTIONS = [
   { key: 'beginner', label: 'Beginner', range: [1, 2] as [number, number] },
   { key: 'intermediate', label: 'Intermediate', range: [3, 3] as [number, number] },
   { key: 'advanced', label: 'Advanced', range: [4, 5] as [number, number] },
-  { key: 'all', label: 'All difficulties', range: [1, 5] as [number, number] },
+  { key: 'all', label: STRINGS.ALL_DIFFICULTIES, range: [1, 5] as [number, number] },
 ];
 
 export const DATE_RANGE_OPTIONS = [
-  { key: 'week', label: 'Past week' },
-  { key: 'month', label: 'Past month' },
-  { key: 'all', label: 'All time' },
+  { key: 'week', label: STRINGS.PAST_WEEK },
+  { key: 'month', label: STRINGS.PAST_MONTH },
+  { key: 'all', label: STRINGS.ALL_TIME },
 ] as const;
 
 export const AUTHOR_CHUNK_SIZE = 6;
@@ -36,10 +37,10 @@ interface SortOptionWithIcon extends BaseSortOption<FilterState['sort']['field']
 }
 
 export const SORT_OPTIONS: readonly SortOptionWithIcon[] = [
-  { key: 'title', label: 'Title', icon: 'text-outline' },
-  { key: 'author', label: 'Author', icon: 'person-outline' },
-  { key: 'date', label: 'Date added', icon: 'calendar-outline' },
-  { key: 'difficulty', label: 'Difficulty', icon: 'trending-up-outline' },
+  { key: 'title', label: STRINGS.TITLE_FILTER, icon: 'text-outline' },
+  { key: 'author', label: STRINGS.AUTHOR_FILTER, icon: 'person-outline' },
+  { key: 'date', label: STRINGS.DATE_ADDED, icon: 'calendar-outline' },
+  { key: 'difficulty', label: STRINGS.DIFFICULTY, icon: 'trending-up-outline' },
 ] as const;
 
 type ExpandedSections = {
@@ -141,7 +142,7 @@ export function useFilterModal(availableAuthors: Author[]): UseFilterModalResult
   const selectedAuthorsCount = filters.authorIds.length;
   const selectedAuthorsText = useMemo(() => {
     if (selectedAuthorsCount === 0) {
-      return 'All authors';
+      return STRINGS.ALL_AUTHORS;
     }
     if (selectedAuthorsCount === 1) {
       const selectedAuthor = availableAuthors.find(a => a.id === filters.authorIds[0]);
