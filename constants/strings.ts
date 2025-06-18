@@ -33,8 +33,7 @@ export const STRINGS = {
   UNSURE: 'Unsure',
   KNOWN: 'Known',
   NO_TRANSLATION_AVAILABLE: 'No translation available',
-  READY_FOR_NEW_WORDS: 'READY FOR NEW WORDS',
-  NOT_READY_FOR_NEW_WORDS: 'NOT READY FOR NEW WORDS',
+
   REPEAT: 'Repeat',
   DONE: 'Done',
   EDIT: 'Edit',

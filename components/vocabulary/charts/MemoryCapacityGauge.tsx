@@ -8,7 +8,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { BaseChart } from '@/components/vocabulary/shared';
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import { INSIGHTS_BUTTON_PRESS_SCALE } from '@/constants/animation';
-import { CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -32,7 +31,6 @@ const INDICATOR_SIZE = 12;
 const INDICATOR_GLOW_SIZE = 24;
 
 const noop = () => {};
-
 
 export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords = [] }) => {
   const colors = useColors();
@@ -69,7 +67,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
 
   return (
     <BaseChart
-      contentHeight={GAUGE_HEIGHT + 140}
+      contentHeight={GAUGE_HEIGHT + 100}
       emptyStateText={STRINGS.ADD_WORDS_TO_SEE_CAPACITY}
       hasData={studyWords.length > 0}
       hideTitle={true}
@@ -212,7 +210,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
         <View style={styles.bottomSection}>
           <View
             style={[
-              styles.statusBadge,
+              styles.actionCard,
               {
                 backgroundColor: colors.elevation3,
               },
@@ -220,25 +218,15 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
           >
             <ThemedText
               style={[
-                styles.statusLabel,
+                styles.actionText,
                 {
-                  color:
-                    memoryMetrics.capacityScore >= CAPACITY_THRESHOLDS.MODERATE
-                      ? chartColors.performance.excellent
-                      : chartColors.performance.moderate,
+                  color: getCapacityColor(memoryMetrics.capacityScore),
                 },
               ]}
-              type="caption"
             >
-              {memoryMetrics.capacityScore >= CAPACITY_THRESHOLDS.MODERATE
-                ? STRINGS.READY_FOR_NEW_WORDS
-                : STRINGS.NOT_READY_FOR_NEW_WORDS}
+              {getReadinessMessage(memoryMetrics.capacityScore)}
             </ThemedText>
           </View>
-
-          <ThemedText style={styles.actionText}>
-            {getReadinessMessage(memoryMetrics.capacityScore)}
-          </ThemedText>
         </View>
       </Animated.View>
     </BaseChart>
@@ -253,11 +241,11 @@ const styles = StyleSheet.create({
     width: GAUGE_WIDTH,
   },
   capacityText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE + LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY / 2,
+    fontSize: 42,
     fontWeight: '900',
     includeFontPadding: false,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT * 5,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE + LAYOUT.SPACING.LARGE + LAYOUT.SPACING.TINY / 2,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT,
+    lineHeight: 44,
     textAlign: 'center',
   },
   centerSection: {
@@ -282,26 +270,23 @@ const styles = StyleSheet.create({
   },
   bottomSection: {
     alignItems: 'center',
-    marginTop: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.SMALL,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
-  statusBadge: {
+  actionCard: {
     alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-  },
-  statusLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    fontWeight: '800',
-    letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.METADATA.letterSpacing * 4,
-    opacity: LAYOUT.OPACITY.FULL,
-    textAlign: 'center',
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    minHeight: 44,
   },
   actionText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    fontWeight: '700',
+    fontWeight: '600',
+    includeFontPadding: false,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.NORMAL,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.2,
     textAlign: 'center',
   },
   scoreContainer: {
@@ -314,20 +299,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: LAYOUT.SPACING.MEDIUM,
   },
-  readinessText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '500',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    textAlign: 'center',
-  },
-  tapHint: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    fontWeight: '500',
-    includeFontPadding: false,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.METADATA.letterSpacing,
-    opacity: LAYOUT.OPACITY.PRESSED,
-    textAlign: 'center',
-  },
+
   trendIndicator: {
     borderRadius: LAYOUT.SPACING.TINY - 1,
     height: LAYOUT.SPACING.TINY + LAYOUT.SPACING.TINY / 2,
