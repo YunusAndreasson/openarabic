@@ -48,6 +48,7 @@ const FilteredArticleView: FC<FilteredArticleViewProps> = ({
   loading = false,
 }) => {
   const renderItemCallback = useCallback(
+    // eslint-disable-next-line react/no-unused-prop-types
     ({ item }: { item: Article }) => <ListArticleItem article={item} onPress={onArticlePress} />,
     [onArticlePress]
   );

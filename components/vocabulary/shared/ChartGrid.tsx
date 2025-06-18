@@ -8,7 +8,6 @@ import { withOpacity } from '@/utils/colorUtils';
 interface ChartGridProps {
   width: number;
   height: number;
-  gridLines?: number; // Number of horizontal grid lines
   topPadding?: number;
   xLabelPositions?: number[]; // X positions for vertical grid lines (daily positions)
   yMax?: number; // Maximum value for y-axis (default 100 for percentages)
@@ -65,9 +64,9 @@ export const ChartGrid = memo(
         ))}
 
         {/* Vertical grid lines for daily reference */}
-        {verticalLines.map((x, index) => (
+        {verticalLines.map(x => (
           <Line
-            key={`vertical-grid-line-${index}`}
+            key={`vertical-grid-line-${x}`}
             color={gridColor}
             p1={{ x, y: topPadding }}
             p2={{ x, y: height }}

@@ -1,3 +1,4 @@
+/* eslint-disable react/no-array-index-key */
 import { memo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -64,7 +65,7 @@ const ChartSkeleton = memo(({ contentHeight }: { contentHeight: number }) => {
         {/* Mock chart lines */}
         {[...Array(4)].map((_, index) => (
           <Animated.View
-            key={index}
+            key={`skeleton-line-${index}`}
             style={[
               styles.skeletonLine,
               {
@@ -81,7 +82,7 @@ const ChartSkeleton = memo(({ contentHeight }: { contentHeight: number }) => {
         <View style={styles.skeletonPoints}>
           {[...Array(7)].map((_, index) => (
             <Animated.View
-              key={index}
+              key={`skeleton-point-${index}`}
               style={[
                 styles.skeletonPoint,
                 {
