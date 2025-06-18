@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 jest.mock('@/utils/splashPolyfill');
 jest.mock('expo', () => ({ requireOptionalNativeModule: () => undefined }));
 jest.mock('../../store/store', () => ({
@@ -34,7 +34,6 @@ jest.mock('../../hooks/app/useAppPreloader', () => ({
 
 jest.mock('../../hooks/app/useArticlesAndDueWordsLoaded', () => ({
   useReadTabDataLoaded: () => true,
-  useArticlesAndDueWordsLoaded: () => true, // Keep for backward compatibility
 }));
 
 jest.mock('../../hooks/theme/useColors', () => ({

@@ -144,12 +144,7 @@ function ArticleCardComponent({
   return (
     <BaseCard style={style} onPress={onPress} testID={testID}>
       <View style={[styles.imageContainer, { height: imageHeight }]}>
-        <EnhancedImage
-          alt={`Image for ${title}`}
-          contentFit="cover"
-          style={styles.image}
-          source={imageUrl}
-        />
+        <EnhancedImage contentFit="cover" style={styles.image} source={imageUrl} />
         <LinearGradient
           colors={gradientColors}
           start={{ x: 0, y: 0.1 }}

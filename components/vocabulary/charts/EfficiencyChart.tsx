@@ -243,7 +243,7 @@ export const EfficiencyChart = memo(
                     )}
                   >
                     <LinearGradient
-                      colors={chartColors.getAreaFillGradient('efficiency')}
+                      colors={chartColors.getAreaFillGradient()}
                       end={vec(0, GRAPH_HEIGHT_LARGE)}
                       positions={[0, 0.3, 0.7, 1]}
                       start={vec(0, 0)}

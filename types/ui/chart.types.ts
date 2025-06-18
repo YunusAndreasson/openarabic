@@ -45,13 +45,12 @@ export interface ChartColors {
     dataLine: string;
     shadow: string;
     tooltip: string;
+    threshold: string;
   };
   /** Opacity helper values */
   opacity: ChartOpacity;
   /** Helper to apply opacity to a color */
   withOpacity: (color: string, opacity: number) => string;
-  /** Get an array of gradient colors for an area fill */
-  getAreaFillGradient: (
-    type: 'efficiency' | 'mastery' | 'retrievability'
-  ) => string[];
+  /** Get unified gradient colors for area fills */
+  getAreaFillGradient: () => string[];
 }

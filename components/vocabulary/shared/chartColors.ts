@@ -3,13 +3,13 @@ import type { ChartColors } from '@/types/ui/chart.types';
 import { withOpacity } from '@/utils/colorUtils';
 
 /**
- * Data Visualization Color System for Vocabulary Analytics
+ * Unified Chart Color System for Vocabulary Analytics
  *
- * This system applies color theory principles for optimal data visualization:
- * - High contrast against backgrounds for accessibility
- * - Complementary color relationships for visual separation
- * - Proper saturation levels for data prominence
- * - Semantic color mapping that works across themes
+ * This system provides visual cohesion across all charts:
+ * - Single sage-green color family for all chart types
+ * - Professional appearance like top analytics dashboards
+ * - Reduced cognitive load - no color meaning to decode
+ * - Perfect brand consistency with your sage-green theme
  */
 
 // Refined opacity levels for data visualization
@@ -23,8 +23,8 @@ export const CHART_OPACITY = {
 } as const;
 
 /**
- * Hook to get theme-aware chart colors optimized for data visualization
- * Uses color theory principles for maximum clarity and visual hierarchy
+ * Hook to get theme-aware chart colors with unified sage-green system
+ * All charts use the tint color directly for maximum simplicity
  */
 export const useChartColors = (): ChartColors => {
   const colors = useColors();
@@ -41,12 +41,13 @@ export const useChartColors = (): ChartColors => {
     // Chart UI elements - optimized for data visualization contrast
     ui: {
       background: colors.background,
-      grid: withOpacity(colors.textTertiary, CHART_OPACITY.MINIMAL), // Subtle grid
+      grid: colors.chartGrid, // Consistent subtle grid lines
       border: withOpacity(colors.border, CHART_OPACITY.HIGH),
-      accent: colors.tint, // Bright primary for main data lines
-      dataLine: colors.info, // Blue for neutral data representation
+      accent: colors.tint, // Bright primary for interactive elements
+      dataLine: colors.tint, // All data lines use tint color
       shadow: withOpacity(colors.shadow, CHART_OPACITY.LOW),
       tooltip: withOpacity(colors.card, 0.98),
+      threshold: colors.chartThreshold, // Reference lines for targets
     },
 
     // Opacity utilities
@@ -55,33 +56,14 @@ export const useChartColors = (): ChartColors => {
     // Helper functions
     withOpacity: (color: string, opacity: number) => withOpacity(color, opacity),
 
-    // Get polished area fill gradients for data visualization
-    getAreaFillGradient: (type: 'efficiency' | 'mastery' | 'retrievability' = 'efficiency') => {
-      const baseColor = colors.info;
-
-      switch (type) {
-        case 'efficiency':
-          return [
-            withOpacity(baseColor, 0.7), // Strong at top
-            withOpacity(baseColor, 0.4), // Medium in middle
-            withOpacity(baseColor, 0.15), // Subtle at middle-bottom
-            withOpacity(baseColor, 0.05), // Very subtle at bottom
-          ];
-        case 'mastery':
-          return [
-            withOpacity(colors.success, 0.6), // Success color for mastery
-            withOpacity(colors.success, 0.35),
-            withOpacity(colors.success, 0.12),
-            withOpacity(colors.success, 0.03),
-          ];
-        case 'retrievability':
-          return [
-            withOpacity(colors.info, 0.65), // Info color for memory
-            withOpacity(colors.info, 0.4),
-            withOpacity(colors.info, 0.15),
-            withOpacity(colors.info, 0.04),
-          ];
-      }
+    // Get unified gradient for all chart types
+    getAreaFillGradient: () => {
+      return [
+        withOpacity(colors.tint, 0.7), // Strong at top
+        withOpacity(colors.tint, 0.4), // Medium in middle
+        withOpacity(colors.tint, 0.15), // Subtle at middle-bottom
+        withOpacity(colors.tint, 0.05), // Very subtle at bottom
+      ];
     },
   };
 };

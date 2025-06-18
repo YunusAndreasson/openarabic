@@ -38,8 +38,7 @@ export const ChartAxes = memo(
     const isDarkMode = useIsDarkMode();
     const colors = useColors();
     const textColor = useMemo(
-      () =>
-        isDarkMode ? withOpacity(colors.white, 0.7) : withOpacity(colors.black, 0.7),
+      () => (isDarkMode ? withOpacity(colors.white, 0.7) : withOpacity(colors.black, 0.7)),
       [isDarkMode, colors.white, colors.black]
     );
 

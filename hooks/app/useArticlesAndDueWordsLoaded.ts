@@ -64,11 +64,3 @@ export function useReadTabDataLoaded(): boolean {
     user?.id,
   ]);
 }
-
-/**
- * @deprecated Use useReadTabDataLoaded instead
- * Legacy hook name for backward compatibility
- */
-export function useArticlesAndDueWordsLoaded(): boolean {
-  return useReadTabDataLoaded();
-}

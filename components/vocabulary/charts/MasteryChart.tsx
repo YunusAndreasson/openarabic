@@ -73,7 +73,7 @@ export const MasteryChart = memo(
                 {masteryPath && points.length > 0 && (
                   <Path path={createAreaFillPath(masteryPath, graphWidth, GRAPH_HEIGHT_LARGE)}>
                     <LinearGradient
-                      colors={chartColors.getAreaFillGradient('mastery')}
+                      colors={chartColors.getAreaFillGradient()}
                       end={vec(0, GRAPH_HEIGHT_LARGE)}
                       positions={[0, 0.25, 0.65, 1]}
                       start={vec(0, TOP_PADDING)}
@@ -149,13 +149,13 @@ export const MasteryChart = memo(
                       color={chartColors.withOpacity(chartColors.performance.excellent, 0.15)}
                       cx={milestone.x}
                       cy={milestone.y}
-                      r={CHART_VISUAL.MILESTONE_SIZE}
+                      r={CHART_VISUAL.DATA_POINT_SIZE}
                     />
                     <Circle
                       color={chartColors.withOpacity(chartColors.performance.excellent, 0.8)}
                       cx={milestone.x}
                       cy={milestone.y}
-                      r={CHART_VISUAL.MILESTONE_INNER_SIZE}
+                      r={CHART_VISUAL.DATA_POINT_INNER_SIZE}
                     />
                   </Group>
                 ))}

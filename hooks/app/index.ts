@@ -1,2 +1,2 @@
 export * from './useAppPreloader';
-export { useReadTabDataLoaded, useArticlesAndDueWordsLoaded } from './useArticlesAndDueWordsLoaded';
+export { useReadTabDataLoaded } from './useArticlesAndDueWordsLoaded';

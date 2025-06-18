@@ -61,5 +61,9 @@ export interface ThemeColors {
   interactiveSecondary: string;
   completionSuccess: string;
 
+  // Chart UI colors - simplified (main chart colors use tint directly)
+  chartGrid: string;
+  chartThreshold: string;
+
   [key: string]: string;
 }

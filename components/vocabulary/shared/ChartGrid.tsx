@@ -10,6 +10,8 @@ interface ChartGridProps {
   height: number;
   gridLines?: number; // Number of horizontal grid lines
   topPadding?: number;
+  xLabelPositions?: number[]; // X positions for vertical grid lines (daily positions)
+  yMax?: number; // Maximum value for y-axis (default 100 for percentages)
 }
 
 /**
@@ -17,36 +19,83 @@ interface ChartGridProps {
  * without overwhelming the data visualization
  */
 export const ChartGrid = memo(
-  ({ width, height, gridLines = 4, topPadding = 0 }: ChartGridProps) => {
+  ({ width, height, topPadding = 0, xLabelPositions = [], yMax = 100 }: ChartGridProps) => {
     const isDarkMode = useIsDarkMode();
     const colors = useColors();
 
+    // Beautiful, subtle grid lines - perfect opacity for readability without distraction
     const gridColor = useMemo(
-      () => withOpacity(isDarkMode ? colors.white : colors.black, 0.06),
+      () => withOpacity(isDarkMode ? colors.white : colors.black, 0.12),
       [isDarkMode, colors.white, colors.black]
     );
 
-    const lines = useMemo(() => {
-      const gridSpacing = (height - topPadding) / (gridLines + 1);
-      const result: number[] = [];
-      for (let i = 1; i <= gridLines; i++) {
-        result.push(topPadding + i * gridSpacing);
-      }
-      return result;
-    }, [height, topPadding, gridLines]);
+    // Slightly more prominent border lines for clean chart definition
+    const borderColor = useMemo(
+      () => withOpacity(isDarkMode ? colors.white : colors.black, 0.2),
+      [isDarkMode, colors.white, colors.black]
+    );
+
+    // Horizontal lines at exact percentages (25%, 50%, 75%, 100%) for perfect value reading
+    const horizontalLines = useMemo(() => {
+      const chartHeight = height - topPadding;
+      const percentages = [25, 50, 75, 100];
+      return percentages.map(percentage => {
+        const yPosition = topPadding + chartHeight - (percentage / yMax) * chartHeight;
+        return { y: yPosition, percentage };
+      });
+    }, [height, topPadding, yMax]);
+
+    // Vertical lines at daily positions for temporal reference
+    const verticalLines = useMemo(() => {
+      return xLabelPositions.filter(x => x !== undefined);
+    }, [xLabelPositions]);
 
     return (
       <Group>
-        {lines.map(y => (
+        {/* Horizontal grid lines at exact percentages */}
+        {horizontalLines.map(line => (
           <Line
-            key={`grid-line-${y}`}
+            key={`grid-line-${line.percentage}%`}
             color={gridColor}
-            p1={{ x: 0, y }}
-            p2={{ x: width, y }}
-            strokeWidth={0.5}
+            p1={{ x: 0, y: line.y }}
+            p2={{ x: width, y: line.y }}
+            strokeWidth={1}
             style="stroke"
           />
         ))}
+
+        {/* Vertical grid lines for daily reference */}
+        {verticalLines.map((x, index) => (
+          <Line
+            key={`vertical-grid-line-${index}`}
+            color={gridColor}
+            p1={{ x, y: topPadding }}
+            p2={{ x, y: height }}
+            strokeWidth={0.75}
+            style="stroke"
+          />
+        ))}
+
+        {/* Perfect chart borders for professional definition */}
+        {/* Bottom border (x-axis) - clean baseline */}
+        <Line
+          key="x-axis-border"
+          color={borderColor}
+          p1={{ x: 0, y: height }}
+          p2={{ x: width, y: height }}
+          strokeWidth={1.25}
+          style="stroke"
+        />
+
+        {/* Left border (y-axis) - clean left edge */}
+        <Line
+          key="y-axis-border"
+          color={borderColor}
+          p1={{ x: 0, y: topPadding }}
+          p2={{ x: 0, y: height }}
+          strokeWidth={1.25}
+          style="stroke"
+        />
       </Group>
     );
   }

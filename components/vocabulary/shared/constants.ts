@@ -20,10 +20,7 @@ export const GRAPH_HEIGHT_LARGE = 176; // Optimized height for better proportion
 export const CHART_VISUAL = {
   DATA_POINT_SIZE: 3.5, // Primary data point radius
   DATA_POINT_INNER_SIZE: 2, // Inner highlight radius
-  MILESTONE_SIZE: 4, // Milestone indicator radius
-  MILESTONE_INNER_SIZE: 2.5, // Milestone inner radius
   LINE_WIDTH: 2.5, // Chart line stroke width
-  GRID_OPACITY: 0.06, // Subtle grid line opacity
   CHART_TOP_PADDING: 8, // Top padding for data points (aligned to 8px grid)
 } as const;
 

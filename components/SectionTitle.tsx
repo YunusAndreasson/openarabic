@@ -2,9 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { memo, useMemo, type FC } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { selectionFeedback } from '@/utils/haptics';
 
 import { ThemedText } from './ThemedText';
 
@@ -16,6 +18,8 @@ interface SectionTitleProps {
   isFirstSection?: boolean;
 }
 
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
+
 const SectionTitle: FC<SectionTitleProps> = ({
   title,
   subtitle,
@@ -24,6 +28,7 @@ const SectionTitle: FC<SectionTitleProps> = ({
   isFirstSection = false,
 }) => {
   const colors = useColors();
+  const scale = useSharedValue(1);
 
   const titleStyle = useMemo(
     () => ({
@@ -41,8 +46,34 @@ const SectionTitle: FC<SectionTitleProps> = ({
       lineHeight:
         LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
       marginTop: LAYOUT.SPACING.TINY,
+      opacity: LAYOUT.OPACITY.HIGH,
     }),
     []
+  );
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.9, { damping: 15, stiffness: 300 });
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+  };
+
+  const handlePress = () => {
+    selectionFeedback();
+    onInfoPress?.();
+  };
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const infoButtonStyle = useMemo(
+    () => ({
+      backgroundColor: colors.tintBackground,
+      borderColor: colors.borderOverlay,
+    }),
+    [colors]
   );
 
   return (
@@ -58,9 +89,11 @@ const SectionTitle: FC<SectionTitleProps> = ({
         )}
       </View>
       {onInfoPress && (
-        <TouchableOpacity
-          style={styles.infoIcon}
-          onPress={onInfoPress}
+        <AnimatedTouchableOpacity
+          style={[styles.infoIcon, infoButtonStyle, animatedStyle]}
+          onPress={handlePress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
           activeOpacity={LAYOUT.OPACITY.PRESSED}
           hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
         >
@@ -69,7 +102,7 @@ const SectionTitle: FC<SectionTitleProps> = ({
             size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
             color={colors.tint}
           />
-        </TouchableOpacity>
+        </AnimatedTouchableOpacity>
       )}
     </View>
   );
@@ -98,11 +131,12 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.MEDIUM,
   },
   firstSection: {
-    marginTop: LAYOUT.SPACING.XLARGE,
+    marginTop: LAYOUT.SPACING.LARGE,
   },
   infoIcon: {
     alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     height: LAYOUT.BUTTON.ICON_SIZE.SMALL + LAYOUT.SPACING.SMALL * 2,
     justifyContent: 'center',
     padding: LAYOUT.SPACING.SMALL,

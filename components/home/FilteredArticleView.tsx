@@ -1,4 +1,3 @@
-/* eslint-disable react/no-unused-prop-types */
 import { FlashList } from '@shopify/flash-list';
 import { useMemo, useCallback, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -65,13 +64,9 @@ const FilteredArticleView: FC<FilteredArticleViewProps> = ({
 
   const renderSeparator = useCallback(SeparatorComponent, []);
 
-  const overrideItemLayout = useCallback(
-    (layout: { span?: number; size?: number }) => {
-      layout.size = ITEM_HEIGHT;
-    },
-    []
-  );
-
+  const overrideItemLayout = useCallback((layout: { span?: number; size?: number }) => {
+    layout.size = ITEM_HEIGHT;
+  }, []);
 
   if (!loading && articles.length === 0) {
     return (

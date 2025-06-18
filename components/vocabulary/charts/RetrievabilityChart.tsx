@@ -1,29 +1,13 @@
-import { Path, Circle, Group, Rect, LinearGradient, vec, Mask } from '@shopify/react-native-skia';
 import { memo, useMemo } from 'react';
-import { View } from 'react-native';
 
-import {
-  BaseChart,
-  ChartCanvas,
-  ChartGrid,
-  ChartAxes,
-  Y_AXIS_WIDTH,
-  type DataPoint,
-} from '@/components/vocabulary/shared';
-import { useChartColors } from '@/components/vocabulary/shared/chartColors';
+import { VocabularyChart, type DataPoint } from '@/components/vocabulary/shared';
 import {
   generateChartSubtitle,
   CHART_LABELS,
   EMPTY_STATE_MESSAGES,
 } from '@/components/vocabulary/shared/chartMessages';
-import {
-  useGraphWidth,
-  GRAPH_HEIGHT_LARGE,
-  CHART_VISUAL,
-} from '@/components/vocabulary/shared/constants';
-import { createAreaFillPath } from '@/components/vocabulary/shared/utils';
+import { useGraphWidth } from '@/components/vocabulary/shared/constants';
 import { STRINGS } from '@/constants/strings';
-import { useColors } from '@/hooks/theme/useColors';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -41,10 +25,8 @@ interface RetrievabilityRecord {
   urgentWords: number;
 }
 
-export const RetrievabilityChart = memo(
+export const RetrievabilityChart = memo<RetrievabilityChartProps>(
   ({ studyWords = [], onInfoPress, hideTitle = false }: RetrievabilityChartProps) => {
-    const chartColors = useChartColors();
-    const colors = useColors();
     const graphWidth = useGraphWidth();
     const { retrievabilityData, chartData } = useRetrievabilityChart(studyWords);
 
@@ -57,7 +39,6 @@ export const RetrievabilityChart = memo(
         return STRINGS.STUDY_WORDS_TO_TRACK_MEMORY_RETENTION;
       }
 
-      // Use standardized subtitle generator
       return generateChartSubtitle.retrievability(currentRetrievability, criticalWords, totalWords);
     }, [chartData.insights, studyWords.length]);
 
@@ -79,127 +60,29 @@ export const RetrievabilityChart = memo(
         .filter((point): point is DataPoint<RetrievabilityRecord> => point !== null);
     }, [chartData.dataPoints, retrievabilityData]);
 
+    // 🚀 Unified chart with perfect grid system and danger zones:
     return (
-      <BaseChart
+      <VocabularyChart
+        path={chartData.retrievabilityPath}
+        dataPoints={chartData.dataPoints}
+        performanceZones={chartData.dangerZones} // Danger zones for retrievability
+        tooltipDataPoints={dataPoints}
+        xLabels={retrievabilityData
+          .filter(data => data && data.wordCount > 0)
+          .map(data => data.date.toLocaleDateString('en-US', { weekday: 'short' }))}
+        xLabelPositions={chartData.dataPoints.map(point => point.x)}
+        yMax={100}
+        topPadding={0}
+        graphWidth={graphWidth}
         title={CHART_LABELS.RETENTION}
         subtitle={subtitle}
         onInfoPress={onInfoPress}
         hideTitle={hideTitle}
         hasData={chartData.hasData}
-        contentHeight={GRAPH_HEIGHT_LARGE + 32}
         emptyStateText={EMPTY_STATE_MESSAGES.retrievability}
-      >
-        <View style={{ position: 'relative' }}>
-          <View style={{ marginLeft: Y_AXIS_WIDTH }}>
-            <ChartCanvas dataPoints={dataPoints} enableTooltips={true}>
-              {/* Subtle grid lines for better visual structure */}
-              <ChartGrid width={graphWidth} height={GRAPH_HEIGHT_LARGE} gridLines={4} />
-
-              {/* Area fill under the retrievability line - rendered first as base */}
-              <Group>
-                {chartData.retrievabilityPath && (
-                  <Path
-                    path={createAreaFillPath(
-                      chartData.retrievabilityPath,
-                      graphWidth,
-                      GRAPH_HEIGHT_LARGE
-                    )}
-                  >
-                    <LinearGradient
-                      start={vec(0, 0)}
-                      end={vec(0, GRAPH_HEIGHT_LARGE)}
-                      colors={chartColors.getAreaFillGradient('retrievability')}
-                      positions={[0, 0.3, 0.7, 1]}
-                    />
-                  </Path>
-                )}
-              </Group>
-
-              {/* Performance zones background - masked to only show below the data line */}
-              <Group>
-                {chartData.retrievabilityPath && (
-                  <Mask
-                    mask={
-                      <Path
-                        path={createAreaFillPath(
-                          chartData.retrievabilityPath,
-                          graphWidth,
-                          GRAPH_HEIGHT_LARGE
-                        )}
-                        color={colors.white}
-                      />
-                    }
-                  >
-                    {chartData.dangerZones.map(zone => (
-                      <Rect
-                        key={`performance-zone-${zone.color}-${zone.y}`}
-                        x={0}
-                        y={zone.y}
-                        width={graphWidth}
-                        height={zone.height}
-                        color={chartColors.withOpacity(zone.color, 0.25)}
-                      />
-                    ))}
-                  </Mask>
-                )}
-              </Group>
-
-              {/* Main retrievability line with brand accent color */}
-              <Group>
-                <Path
-                  path={chartData.retrievabilityPath}
-                  style="stroke"
-                  strokeWidth={CHART_VISUAL.LINE_WIDTH}
-                  strokeCap="round"
-                  strokeJoin="round"
-                  color={chartColors.ui.accent}
-                />
-
-                {/* Data points with enhanced styling */}
-                {chartData.dataPoints.map((point, index) => {
-                  const data = retrievabilityData[index];
-                  if (!data || data.wordCount === 0) return null;
-
-                  return (
-                    <Group key={`retrievability-point-${data.date.toISOString()}`}>
-                      {/* Enhanced data point with border */}
-                      <Circle
-                        cx={point.x}
-                        cy={point.y}
-                        r={CHART_VISUAL.DATA_POINT_SIZE}
-                        color={chartColors.ui.accent}
-                      />
-                      <Circle
-                        cx={point.x}
-                        cy={point.y}
-                        r={CHART_VISUAL.DATA_POINT_INNER_SIZE}
-                        color={chartColors.withOpacity(chartColors.ui.accent, 0.25)}
-                      />
-                    </Group>
-                  );
-                })}
-              </Group>
-            </ChartCanvas>
-          </View>
-
-          {/* Enhanced axis labels with proper padding and y-axis values */}
-          <ChartAxes
-            width={graphWidth}
-            height={GRAPH_HEIGHT_LARGE}
-            xLabels={retrievabilityData
-              .filter(data => data && data.wordCount > 0)
-              .map(data => data.date.toLocaleDateString('en-US', { weekday: 'short' }))}
-            xLabelPositions={chartData.dataPoints.map(point => point.x)}
-            yMax={100}
-            showYAxis={true}
-            topPadding={0}
-          />
-        </View>
-      </BaseChart>
+      />
     );
   }
 );
 
 RetrievabilityChart.displayName = 'RetrievabilityChart';
-
-// Styles removed - now using ChartAxes component

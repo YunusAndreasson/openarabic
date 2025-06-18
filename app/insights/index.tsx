@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import type { JSX } from 'react';
 import { useCallback, useMemo } from 'react';
 import { StyleSheet, ScrollView, View } from 'react-native';
+import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import SectionTitle from '@/components/SectionTitle';
@@ -12,6 +13,7 @@ import { LAYOUT } from '@/constants/layout';
 import { getInsightsInfoRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 
@@ -21,22 +23,18 @@ export default function InsightsScreen(): JSX.Element {
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const isDarkMode = useIsDarkMode();
+  const colors = useColors();
 
   // Use the FSRS queries hook for data fetching
   const { allWords: studyWords, error } = useFSRSQueries({
     userId: user?.id,
   });
 
-  const handleInfoPress = useCallback(
-    (type: string) => {
-      router.push(getInsightsInfoRoute(type));
-    },
-    [router]
-  );
+  const handleInfoPress = useCallback((type: string) => {
+    router.push(getInsightsInfoRoute(type));
+  }, []);
 
-  const handleMasteryInfoPress = useCallback(() => handleInfoPress('mastery'), [
-    handleInfoPress,
-  ]);
+  const handleMasteryInfoPress = useCallback(() => handleInfoPress('mastery'), [handleInfoPress]);
 
   const handleEfficiencyInfoPress = useCallback(
     () => handleInfoPress('efficiency'),
@@ -58,9 +56,12 @@ export default function InsightsScreen(): JSX.Element {
     return (
       <ThemedView style={styles.container}>
         <StatusBar style={isDarkMode ? 'light' : 'dark'} />
-        <View style={styles.errorContainer}>
+        <Animated.View
+          entering={FadeIn.duration(400)}
+          style={[styles.errorContainer, { backgroundColor: colors.elevation1 }]}
+        >
           <SectionTitle title={STRINGS.INSIGHTS_UNAVAILABLE} />
-        </View>
+        </Animated.View>
       </ThemedView>
     );
   }
@@ -73,52 +74,70 @@ export default function InsightsScreen(): JSX.Element {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingBottom: insets.bottom + LAYOUT.SPACING.XLARGE,
+            paddingBottom: insets.bottom + LAYOUT.SPACING.XXLARGE,
           },
         ]}
         showsVerticalScrollIndicator={false}
+        overScrollMode="never"
+        bounces={true}
       >
         {/* Word Mastery Chart */}
-        <View style={styles.chartSection}>
+        <Animated.View
+          entering={FadeInDown.delay(100).duration(600).springify()}
+          style={[styles.chartCard, { backgroundColor: colors.elevation1 }]}
+        >
           <SectionTitle
             title={INFO_TITLES.mastery}
             subtitle={STRINGS.MEMORY_STRENGTH_ACROSS_VOCABULARY}
             onInfoPress={handleMasteryInfoPress}
+            isFirstSection={true}
           />
-          <MasteryChart
-            studyWords={validStudyWords}
-            onInfoPress={handleMasteryInfoPress}
-            hideTitle={true}
-          />
-        </View>
+          <View style={styles.chartWrapper}>
+            <MasteryChart
+              studyWords={validStudyWords}
+              onInfoPress={handleMasteryInfoPress}
+              hideTitle={true}
+            />
+          </View>
+        </Animated.View>
 
         {/* Learning Progress Chart */}
-        <View style={styles.chartSection}>
+        <Animated.View
+          entering={FadeInDown.delay(250).duration(600).springify()}
+          style={[styles.chartCard, { backgroundColor: colors.elevation1 }]}
+        >
           <SectionTitle
             title={INFO_TITLES.efficiency}
             subtitle={STRINGS.VOCABULARY_ACQUISITION_VELOCITY}
             onInfoPress={handleEfficiencyInfoPress}
           />
-          <EfficiencyChart
-            studyWords={validStudyWords}
-            onInfoPress={handleEfficiencyInfoPress}
-            hideTitle={true}
-          />
-        </View>
+          <View style={styles.chartWrapper}>
+            <EfficiencyChart
+              studyWords={validStudyWords}
+              onInfoPress={handleEfficiencyInfoPress}
+              hideTitle={true}
+            />
+          </View>
+        </Animated.View>
 
         {/* Review Timing Chart */}
-        <View style={styles.chartSection}>
+        <Animated.View
+          entering={FadeInDown.delay(400).duration(600).springify()}
+          style={[styles.chartCard, { backgroundColor: colors.elevation1 }]}
+        >
           <SectionTitle
             title={INFO_TITLES.retrievability}
             subtitle={STRINGS.MEMORY_RETENTION_OPTIMAL_TIMING}
             onInfoPress={handleRetrievabilityInfoPress}
           />
-          <RetrievabilityChart
-            studyWords={validStudyWords}
-            onInfoPress={handleRetrievabilityInfoPress}
-            hideTitle={true}
-          />
-        </View>
+          <View style={styles.chartWrapper}>
+            <RetrievabilityChart
+              studyWords={validStudyWords}
+              onInfoPress={handleRetrievabilityInfoPress}
+              hideTitle={true}
+            />
+          </View>
+        </Animated.View>
       </ScrollView>
     </ThemedView>
   );
@@ -130,15 +149,25 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
   },
-  chartSection: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+  chartCard: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    marginBottom: LAYOUT.SPACING.LARGE,
+    padding: LAYOUT.SPACING.LARGE,
+    ...LAYOUT.ELEVATION.SMALL,
+  },
+  chartWrapper: {
+    marginTop: LAYOUT.SPACING.TINY,
   },
   errorContainer: {
     alignItems: 'center',
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     flex: 1,
     justifyContent: 'center',
+    margin: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.XLARGE,
+    paddingVertical: LAYOUT.SPACING.XXLARGE,
+    ...LAYOUT.ELEVATION.SMALL,
   },
 });

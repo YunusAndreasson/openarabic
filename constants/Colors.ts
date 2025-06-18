@@ -28,6 +28,17 @@ const basePalette = {
     primaryDark: '#7FA08A', // Balanced sage tint - dark mode
   },
 
+  // Educational Chart Colors - Unified sage-green system for visual cohesion
+  charts: {
+    // Supporting chart elements only - main colors use tint directly
+    ui: {
+      grid: '#E8F1EC', // Subtle grid lines (light mode)
+      gridDark: '#2A352D', // Subtle grid lines (dark mode)
+      threshold: '#9AB5A4', // Reference lines for targets
+      thresholdDark: '#748A7C', // Reference lines for dark mode
+    },
+  },
+
   // Semantic warm tones
   semantic: {
     error: '#C74A3A', // Warm terracotta red
@@ -213,6 +224,10 @@ const lightColors: ThemeColors = {
   interactiveSecondary: basePalette.forest.light,
   completionSuccess: basePalette.semantic.success,
 
+  // Chart UI colors - simplified
+  chartGrid: basePalette.charts.ui.grid,
+  chartThreshold: basePalette.charts.ui.threshold,
+
   // Utility colors - enhanced contrast
   textOverlay: applyOpacity(basePalette.tint.primary, opacity.subtle),
   textShadowDark: applyOpacity(basePalette.forest.dark, opacity.shadow),
@@ -289,6 +304,10 @@ const darkColors: ThemeColors = {
   progressBackground: applyOpacity(basePalette.tint.primaryDark, opacity.disabled),
   interactiveSecondary: textHierarchy.dark.metadata,
   completionSuccess: basePalette.semantic.successDark,
+
+  // Chart UI colors - simplified
+  chartGrid: basePalette.charts.ui.gridDark,
+  chartThreshold: basePalette.charts.ui.thresholdDark,
 
   // Utility colors
   textOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.light),
