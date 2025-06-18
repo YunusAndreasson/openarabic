@@ -146,159 +146,157 @@ const elevation = {
  */
 
 const lightColors: ThemeColors = {
-    // Core brand colors - improved contrast
-    primary: basePalette.forest.dark,
-    background: basePalette.sage.lighter, // Changed from lightest for better contrast
-    text: basePalette.forest.darkest,
-    secondaryText: basePalette.forest.medium,
-    textTertiary: basePalette.forest.light,
-    border: basePalette.sage.light, // Use palette reference instead of hardcoded
-    card: basePalette.pure.white,
-    cardBorder: basePalette.sage.light, // Use palette reference for consistency
+  // Core brand colors - improved contrast
+  primary: basePalette.forest.dark,
+  background: basePalette.sage.lighter, // Changed from lightest for better contrast
+  text: basePalette.forest.darkest,
+  secondaryText: basePalette.forest.medium,
+  textTertiary: basePalette.forest.light,
+  border: basePalette.sage.light, // Use palette reference instead of hardcoded
+  card: basePalette.pure.white,
+  cardBorder: basePalette.sage.light, // Use palette reference for consistency
 
-    // Semantic colors
-    error: basePalette.semantic.error,
-    success: basePalette.semantic.success,
-    warning: basePalette.semantic.warning,
-    info: basePalette.forest.light,
+  // Semantic colors
+  error: basePalette.semantic.error,
+  success: basePalette.semantic.success,
+  warning: basePalette.semantic.warning,
+  info: basePalette.forest.light,
 
-    // Text hierarchy - enhanced for better readability
-    englishText: basePalette.forest.medium,
-    arabicText: basePalette.forest.darkest,
-    authorText: basePalette.forest.light,
-    headingText: basePalette.forest.darkest,
-    subtitleText: textHierarchy.light.subtitle,
-    metadataText: textHierarchy.light.metadata,
-    captionText: textHierarchy.light.caption,
+  // Text hierarchy - enhanced for better readability
+  englishText: basePalette.forest.medium,
+  arabicText: basePalette.forest.darkest,
+  authorText: basePalette.forest.light,
+  headingText: basePalette.forest.darkest,
+  subtitleText: textHierarchy.light.subtitle,
+  metadataText: textHierarchy.light.metadata,
+  captionText: textHierarchy.light.caption,
 
-    // Interactive elements
-    tint: basePalette.tint.primary,
-    tintBackground: applyOpacity(basePalette.tint.primary, opacity.medium), // Common tint + 0.08 pattern
-    tabIconDefault: basePalette.forest.lighter,
-    tabIconSelected: basePalette.tint.primary,
-    icon: basePalette.forest.light,
-    disabled: basePalette.forest.lighter,
+  // Interactive elements
+  tint: basePalette.tint.primary,
+  tintBackground: applyOpacity(basePalette.tint.primary, opacity.medium), // Common tint + 0.08 pattern
+  tabIconDefault: basePalette.forest.lighter,
+  tabIconSelected: basePalette.tint.primary,
+  icon: basePalette.forest.light,
+  disabled: basePalette.forest.lighter,
 
-    // Overlays - adjusted for new background
-    transparent: basePalette.pure.transparent,
-    overlay: applyOpacity(basePalette.sage.lighter, opacity.modal),
-    modalOverlay: applyOpacity(basePalette.sage.lighter, opacity.full),
-    borderOverlay: applyOpacity(basePalette.tint.primary, opacity.light),
-    buttonOverlay: applyOpacity(basePalette.tint.primary, opacity.medium),
-    backdropOverlay: applyOpacity(basePalette.forest.dark, opacity.backdrop),
+  // Overlays - adjusted for new background
+  transparent: basePalette.pure.transparent,
+  overlay: applyOpacity(basePalette.sage.lighter, opacity.modal),
+  modalOverlay: applyOpacity(basePalette.sage.lighter, opacity.full),
+  borderOverlay: applyOpacity(basePalette.tint.primary, opacity.light),
+  buttonOverlay: applyOpacity(basePalette.tint.primary, opacity.medium),
+  backdropOverlay: applyOpacity(basePalette.forest.dark, opacity.backdrop),
 
-    // Elevation system - enhanced contrast
-    shadow: basePalette.forest.dark,
-    elevation0: elevation.light.level0,
-    elevation1: elevation.light.level1,
-    elevation2: elevation.light.level2,
-    elevation3: elevation.light.level3,
+  // Elevation system - enhanced contrast
+  shadow: basePalette.forest.dark,
+  elevation0: elevation.light.level0,
+  elevation1: elevation.light.level1,
+  elevation2: elevation.light.level2,
+  elevation3: elevation.light.level3,
 
-    // Reading experience - improved visibility
-    wordTooltipBg: basePalette.pure.white,
-    wordTooltipText: basePalette.forest.darkest,
-    wordTooltipBorder: basePalette.sage.light,
-    wordTooltipShadow: applyOpacity(basePalette.forest.dark, opacity.active),
-    wordSelectionUnderline: applyOpacity(basePalette.tint.primary, opacity.selection),
-    wordDueUnderline: applyOpacity(basePalette.semantic.warning, opacity.due),
+  // Reading experience - improved visibility
+  wordTooltipBg: basePalette.pure.white,
+  wordTooltipText: basePalette.forest.darkest,
+  wordTooltipBorder: basePalette.sage.light,
+  wordTooltipShadow: applyOpacity(basePalette.forest.dark, opacity.active),
+  wordSelectionUnderline: applyOpacity(basePalette.tint.primary, opacity.selection),
+  wordDueUnderline: applyOpacity(basePalette.semantic.warning, opacity.due),
 
-    // Navigation - adjusted for new background
-    navigationRipple: applyOpacity(basePalette.tint.primary, opacity.strong),
-    headerOverlay: applyOpacity(basePalette.sage.lighter, opacity.header),
-    tabBarOverlay: applyOpacity(basePalette.sage.lighter, opacity.modal),
+  // Navigation - adjusted for new background
+  navigationRipple: applyOpacity(basePalette.tint.primary, opacity.strong),
+  headerOverlay: applyOpacity(basePalette.sage.lighter, opacity.header),
+  tabBarOverlay: applyOpacity(basePalette.sage.lighter, opacity.modal),
 
-    // UI semantics
-    progressIndicator: basePalette.tint.primary,
-    progressBackground: applyOpacity(basePalette.tint.primary, opacity.progress),
-    interactiveSecondary: basePalette.forest.light,
-    completionSuccess: basePalette.semantic.success,
+  // UI semantics
+  progressIndicator: basePalette.tint.primary,
+  progressBackground: applyOpacity(basePalette.tint.primary, opacity.progress),
+  interactiveSecondary: basePalette.forest.light,
+  completionSuccess: basePalette.semantic.success,
 
-    // Utility colors - enhanced contrast
-    imagePlaceholder: basePalette.sage.light,
-    textOverlay: applyOpacity(basePalette.tint.primary, opacity.subtle),
-    textShadowDark: applyOpacity(basePalette.forest.dark, opacity.shadow),
-    textShadowLight: applyOpacity(basePalette.pure.white, opacity.shadow),
-    modalIndicator: basePalette.forest.lighter,
-    white: basePalette.pure.white,
-    black: basePalette.pure.black,
+  // Utility colors - enhanced contrast
+  textOverlay: applyOpacity(basePalette.tint.primary, opacity.subtle),
+  textShadowDark: applyOpacity(basePalette.forest.dark, opacity.shadow),
+  textShadowLight: applyOpacity(basePalette.pure.white, opacity.shadow),
+  modalIndicator: basePalette.forest.lighter,
+  white: basePalette.pure.white,
+  black: basePalette.pure.black,
 } as const;
 
 const darkColors: ThemeColors = {
-    // Core brand colors
-    primary: basePalette.pure.white,
-    background: basePalette.sage.darkest,
-    text: basePalette.pure.white,
-    secondaryText: textHierarchy.dark.subtitle,
-    textTertiary: textHierarchy.dark.metadata,
-    border: basePalette.sage.medium,
-    card: basePalette.sage.dark,
-    cardBorder: basePalette.sage.medium,
+  // Core brand colors
+  primary: basePalette.pure.white,
+  background: basePalette.sage.darkest,
+  text: basePalette.pure.white,
+  secondaryText: textHierarchy.dark.subtitle,
+  textTertiary: textHierarchy.dark.metadata,
+  border: basePalette.sage.medium,
+  card: basePalette.sage.dark,
+  cardBorder: basePalette.sage.medium,
 
-    // Semantic colors - dark variants
-    error: basePalette.semantic.errorDark,
-    success: basePalette.semantic.successDark,
-    warning: basePalette.semantic.warningDark,
-    info: basePalette.forest.lighter,
+  // Semantic colors - dark variants
+  error: basePalette.semantic.errorDark,
+  success: basePalette.semantic.successDark,
+  warning: basePalette.semantic.warningDark,
+  info: basePalette.forest.lighter,
 
-    // Text hierarchy - dark mode optimized
-    englishText: textHierarchy.dark.subtitle,
-    arabicText: basePalette.pure.white,
-    authorText: textHierarchy.dark.metadata,
-    headingText: basePalette.pure.white,
-    subtitleText: textHierarchy.dark.subtitle,
-    metadataText: textHierarchy.dark.metadata,
-    captionText: textHierarchy.dark.caption,
+  // Text hierarchy - dark mode optimized
+  englishText: textHierarchy.dark.subtitle,
+  arabicText: basePalette.pure.white,
+  authorText: textHierarchy.dark.metadata,
+  headingText: basePalette.pure.white,
+  subtitleText: textHierarchy.dark.subtitle,
+  metadataText: textHierarchy.dark.metadata,
+  captionText: textHierarchy.dark.caption,
 
-    // Interactive elements
-    tint: basePalette.tint.primaryDark,
-    tintBackground: applyOpacity(basePalette.tint.primaryDark, opacity.medium), // Common tint + 0.08 pattern
-    tabIconDefault: basePalette.forest.light,
-    tabIconSelected: basePalette.tint.primaryDark,
-    icon: textHierarchy.dark.metadata,
-    disabled: basePalette.sage.medium,
+  // Interactive elements
+  tint: basePalette.tint.primaryDark,
+  tintBackground: applyOpacity(basePalette.tint.primaryDark, opacity.medium), // Common tint + 0.08 pattern
+  tabIconDefault: basePalette.forest.light,
+  tabIconSelected: basePalette.tint.primaryDark,
+  icon: textHierarchy.dark.metadata,
+  disabled: basePalette.sage.medium,
 
-    // Overlays - dark mode with standardized opacity
-    transparent: basePalette.pure.transparent,
-    overlay: applyOpacity(basePalette.sage.darkest, opacity.modal),
-    modalOverlay: applyOpacity(basePalette.sage.darkest, opacity.full),
-    borderOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.medium),
-    buttonOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.strong),
-    backdropOverlay: applyOpacity(basePalette.sage.darkest, opacity.darkBackdrop),
+  // Overlays - dark mode with standardized opacity
+  transparent: basePalette.pure.transparent,
+  overlay: applyOpacity(basePalette.sage.darkest, opacity.modal),
+  modalOverlay: applyOpacity(basePalette.sage.darkest, opacity.full),
+  borderOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.medium),
+  buttonOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.strong),
+  backdropOverlay: applyOpacity(basePalette.sage.darkest, opacity.darkBackdrop),
 
-    // Elevation system
-    shadow: basePalette.pure.black,
-    elevation0: elevation.dark.level0,
-    elevation1: elevation.dark.level1,
-    elevation2: elevation.dark.level2,
-    elevation3: elevation.dark.level3,
+  // Elevation system
+  shadow: basePalette.pure.black,
+  elevation0: elevation.dark.level0,
+  elevation1: elevation.dark.level1,
+  elevation2: elevation.dark.level2,
+  elevation3: elevation.dark.level3,
 
-    // Reading experience - dark mode with standardized values
-    wordTooltipBg: basePalette.sage.medium,
-    wordTooltipText: basePalette.pure.white,
-    wordTooltipBorder: elevation.dark.level3,
-    wordTooltipShadow: applyOpacity(basePalette.pure.black, opacity.due),
-    wordSelectionUnderline: applyOpacity(basePalette.tint.primaryDark, opacity.tooltip),
-    wordDueUnderline: applyOpacity(basePalette.semantic.warningDark, opacity.overlay),
+  // Reading experience - dark mode with standardized values
+  wordTooltipBg: basePalette.sage.medium,
+  wordTooltipText: basePalette.pure.white,
+  wordTooltipBorder: elevation.dark.level3,
+  wordTooltipShadow: applyOpacity(basePalette.pure.black, opacity.due),
+  wordSelectionUnderline: applyOpacity(basePalette.tint.primaryDark, opacity.tooltip),
+  wordDueUnderline: applyOpacity(basePalette.semantic.warningDark, opacity.overlay),
 
-    // Navigation
-    navigationRipple: applyOpacity(basePalette.tint.primaryDark, opacity.active),
-    headerOverlay: applyOpacity(basePalette.sage.darkest, opacity.header),
-    tabBarOverlay: applyOpacity(basePalette.sage.darkest, opacity.modal),
+  // Navigation
+  navigationRipple: applyOpacity(basePalette.tint.primaryDark, opacity.active),
+  headerOverlay: applyOpacity(basePalette.sage.darkest, opacity.header),
+  tabBarOverlay: applyOpacity(basePalette.sage.darkest, opacity.modal),
 
-    // UI semantics
-    progressIndicator: basePalette.tint.primaryDark,
-    progressBackground: applyOpacity(basePalette.tint.primaryDark, opacity.disabled),
-    interactiveSecondary: textHierarchy.dark.metadata,
-    completionSuccess: basePalette.semantic.successDark,
+  // UI semantics
+  progressIndicator: basePalette.tint.primaryDark,
+  progressBackground: applyOpacity(basePalette.tint.primaryDark, opacity.disabled),
+  interactiveSecondary: textHierarchy.dark.metadata,
+  completionSuccess: basePalette.semantic.successDark,
 
-    // Utility colors
-    imagePlaceholder: basePalette.sage.medium,
-    textOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.light),
-    textShadowDark: applyOpacity(basePalette.pure.black, opacity.shadow),
-    textShadowLight: applyOpacity(basePalette.pure.white, opacity.shadow),
-    modalIndicator: basePalette.forest.light,
-    white: basePalette.pure.white,
-    black: basePalette.pure.black,
+  // Utility colors
+  textOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.light),
+  textShadowDark: applyOpacity(basePalette.pure.black, opacity.shadow),
+  textShadowLight: applyOpacity(basePalette.pure.white, opacity.shadow),
+  modalIndicator: basePalette.forest.light,
+  white: basePalette.pure.white,
+  black: basePalette.pure.black,
 } as const;
 
 export const Colors = { light: lightColors, dark: darkColors } as const;

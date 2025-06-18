@@ -12,8 +12,6 @@ export interface ImageConfig {
   transition?: ImageTransition | number;
   /** Caching policy for the image */
   cachePolicy?: 'disk' | 'memory-disk' | 'memory' | 'none';
-  /** Blur radius for smooth transitions */
-  blurRadius?: number;
 }
 
 /**
@@ -46,17 +44,11 @@ export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressabl
   /** Caching policy */
   cachePolicy?: ImageConfig['cachePolicy'];
 
-  /** Blur radius for progressive loading */
-  blurRadius?: number;
-
   /** Whether the image is allowed to be downscaled when rendered */
   allowDownscaling?: boolean;
 
   /** Loading priority */
   priority?: 'high' | 'low' | 'normal';
-
-  /** Placeholder image using blurhash or thumbhash */
-  placeholder?: { blurhash?: string; thumbhash?: string };
 
   /** Whether animated images should automatically play */
   autoplay?: boolean;

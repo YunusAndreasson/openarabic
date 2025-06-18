@@ -33,11 +33,4 @@ export interface Article extends Tables<'articles'> {
   author: Author;
   /** URL to the audio recording for the article */
   audio_url: string;
-  /** Image placeholders for optimized loading */
-  placeholder?: {
-    /** BlurHash encoding for progressive image loading */
-    blurhash?: string;
-    /** ThumbHash encoding for progressive image loading */
-    thumbhash?: string;
-  };
 }

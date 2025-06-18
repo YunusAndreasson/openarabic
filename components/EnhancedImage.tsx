@@ -15,7 +15,6 @@ function EnhancedImageInternal({
   transition = 300,
   skipTransition = false,
   cachePolicy = 'disk',
-  placeholder,
   allowDownscaling = true,
   priority = 'normal',
   autoplay = true,
@@ -40,7 +39,6 @@ function EnhancedImageInternal({
         cachePolicy={cachePolicy}
         contentFit={contentFit}
         contentPosition={contentPosition}
-        {...(placeholder ? { placeholder } : {})}
         priority={priority}
         source={source}
         style={styles.image}

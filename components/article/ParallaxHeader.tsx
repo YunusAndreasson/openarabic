@@ -61,7 +61,7 @@ const ParallaxHeader = memo<ParallaxHeaderProps>(({ article, colors }) => {
           contentFit="cover"
           contentPosition="center"
           priority="high"
-          placeholder={article.placeholder}
+          cachePolicy="disk"
         />
 
         {/* Enhanced image gradient for summary overlay */}

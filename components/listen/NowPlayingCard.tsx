@@ -105,7 +105,6 @@ const NowPlayingCard = ({
         <Animated.View style={[styles.backgroundImage, backgroundImageStyle]}>
           <EnhancedImage
             contentFit="cover"
-            placeholder={article.placeholder}
             source={String(article.image_url)}
             style={styles.backgroundImageInner}
           />
@@ -126,7 +125,6 @@ const NowPlayingCard = ({
         <View style={styles.imageContainer}>
           <EnhancedImage
             contentFit="cover"
-            placeholder={article.placeholder}
             source={String(article.image_url)}
             style={styles.articleImage}
           />

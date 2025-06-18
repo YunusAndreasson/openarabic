@@ -1,11 +1,9 @@
-import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, memo, type FC } from 'react';
+import { memo, type FC, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import ArticleCard from '@/components/ArticleCard';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { articlesService } from '@/services/articles';
 import type { Article } from '@/types/articles.types';
 
 interface FeaturedSectionProps {
@@ -17,25 +15,11 @@ interface FeaturedSectionProps {
  * A section displaying the featured article
  */
 const FeaturedSection: FC<FeaturedSectionProps> = ({ article, onPress }) => {
-  // Use queryClient for prefetching on press
-  const queryClient = useQueryClient();
+  // No need for prefetching here - it's done during app preload
 
-  // Handle the press with prefetching
   const handlePress = useCallback(() => {
-    if (!article) return;
-
-    // Prefetch article data on press for immediate loading
-    queryClient.prefetchQuery({
-      queryKey: ['article', article.id],
-      queryFn: () => articlesService.getArticleById(article.id),
-      staleTime: 0, // No caching
-      gcTime: 0, // No cache retention
-      retry: 3,
-    });
-
-    // Call the original onPress handler
     onPress(article);
-  }, [article, onPress, queryClient]);
+  }, [article, onPress]);
 
   // Skip rendering if no article
   if (!article) return null;

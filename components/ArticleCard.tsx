@@ -3,7 +3,6 @@ import type { JSX } from 'react';
 import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { DEFAULT_IMAGES } from '@/constants/images';
 import {
   LAYOUT,
   TYPOGRAPHY_HIERARCHY,
@@ -149,9 +148,6 @@ function ArticleCardComponent({
           alt={`Image for ${title}`}
           contentFit="cover"
           style={styles.image}
-          placeholder={{
-            thumbhash: DEFAULT_IMAGES.ARTICLE_PLACEHOLDER_THUMBHASH,
-          }}
           source={imageUrl}
         />
         <LinearGradient

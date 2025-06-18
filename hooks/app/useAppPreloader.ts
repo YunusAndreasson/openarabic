@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/react-native';
 import { useQueryClient } from '@tanstack/react-query';
-import { useState, useCallback, useRef, useMemo } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { CACHE_TIMES } from '@/constants/queryConfig';
@@ -61,323 +61,143 @@ export const useAppPreloader = (): AppPreloaderResult => {
           }),
       ];
 
-      const [categories] = await Promise.all(criticalPromises);
+      const [_categories, _articles] = await Promise.all(criticalPromises);
+      setPreloadProgress(25);
 
-      // Prefetch full authors list for search/filter screens
-      queryClient
-        .prefetchQuery({
-          queryKey: ['authors'],
-          queryFn: () => authorsService.getAuthors(),
-          ...CACHE_TIMES.STATIC,
-          retry: 2,
-        })
-        .catch(() => {});
-
-      setPreloadProgress(30);
-
-      // Preload articles and authors per category for instant modal loading
-      if (categories && Array.isArray(categories) && categories.length > 0) {
-        const categoryPreloadPromises = categories.map(category => {
-          const articlesPromise = queryClient
-            .prefetchQuery({
-              queryKey: ['filtered-articles', 'category', category.id],
-              queryFn: () =>
-                articlesService.getArticles({
-                  categoryId: category.id,
-                  limit: 15,
-                  sortBy: 'created_at',
-                  sortOrder: 'desc',
-                }),
-              ...CACHE_TIMES.ARTICLES,
-              retry: 2,
-            })
-            .catch(() => {});
-
-          const authorsPromise = queryClient
-            .prefetchQuery({
-              queryKey: ['category-authors', category.id],
-              queryFn: () => authorsService.getAuthorsByCategory(category.id),
-              ...CACHE_TIMES.STATIC,
-              retry: 2,
-            })
-            .catch(() => {});
-
-          return Promise.allSettled([articlesPromise, authorsPromise]);
-        });
-
-        await Promise.allSettled(categoryPreloadPromises);
-        setPreloadProgress(50);
-
-        Sentry.addBreadcrumb({
-          category: 'preloader',
-          message: `Preloaded articles for ${categories.length} categories`,
-          level: 'info',
-        });
+      // Preload user's FSRS data if available
+      if (user?.id) {
+        try {
+          await queryClient.fetchQuery({
+            queryKey: FSRS_QUERY_KEYS.due(user.id),
+            queryFn: () =>
+              studyWordsFSRSService.getFSRSWords(user.id, {
+                onlyDue: true,
+                limit: 100,
+              }),
+            ...CACHE_TIMES.CRITICAL,
+            retry: 2,
+          });
+        } catch {
+          // Ignore errors - will fall back to random selection
+        }
       }
 
-      // Load remaining articles in background
-      queryClient.prefetchQuery({
-        queryKey: ['articles'],
-        queryFn: () => articlesService.getArticles(),
-        ...CACHE_TIMES.ARTICLES,
-        retry: 2,
-      });
+      setPreloadProgress(40);
 
-      setPreloadProgress(60);
-    } catch (error) {
-      Sentry.captureException(error, {
-        tags: { location: 'preloader_critical' },
-      });
-      throw error;
-    }
-  }, [queryClient]);
-
-  // Load user-specific data
-  const preloadUserData = useCallback(async () => {
-    if (!user?.id || preloadLockRef.current) return;
-
-    try {
-      setPreloadProgress(70);
-
-      const userPromises = [
-        // Load user's reading list
-        queryClient.fetchQuery({
-          queryKey: ['readingList', user.id],
-          queryFn: () => readingListService.getReadingList(user.id),
-          ...CACHE_TIMES.MEDIUM,
-          retry: 3,
-        }),
-        // Load due words (critical for vocabulary features)
-        queryClient.fetchQuery({
-          queryKey: FSRS_QUERY_KEYS.due(user.id),
-          queryFn: () =>
-            studyWordsFSRSService.getFSRSWords(user.id, {
-              onlyDue: true,
-              limit: 100, // Increased limit for better initial coverage
-            }),
-          ...CACHE_TIMES.CRITICAL,
-          retry: 3,
-        }),
-      ];
-
-      await Promise.all(userPromises);
-      setPreloadProgress(90);
-
-      // Load remaining vocabulary data in background
-      queryClient.prefetchQuery({
-        queryKey: FSRS_QUERY_KEYS.all(user.id),
-        queryFn: () =>
-          studyWordsFSRSService.getFSRSWords(user.id, {
-            forStats: true, // Load minimal data for stats
-            limit: 100,
+      // Load user-specific background data asynchronously
+      if (user?.id) {
+        const backgroundPromises = [
+          queryClient.prefetchQuery({
+            queryKey: ['authors'],
+            queryFn: () => authorsService.getAuthors(),
+            ...CACHE_TIMES.STATIC,
+            retry: 2,
           }),
-        ...CACHE_TIMES.MEDIUM,
-        retry: 2,
-      });
+          queryClient.prefetchQuery({
+            queryKey: ['readingList', user.id],
+            queryFn: () => readingListService.getReadingList(user.id),
+            ...CACHE_TIMES.MEDIUM,
+            retry: 2,
+          }),
+        ];
 
+        // Don't await - let these load in background
+        Promise.allSettled(backgroundPromises).catch(() => {});
+      }
+
+      setPreloadProgress(80);
+      setIsLoaded(true);
       setPreloadProgress(100);
+
+      Sentry.addBreadcrumb({
+        category: 'preloader',
+        message: 'App preload complete',
+        level: 'info',
+      });
     } catch (error) {
       Sentry.captureException(error, {
-        tags: { location: 'preloader_user' },
+        tags: { location: 'preloader' },
+        extra: { userId: user?.id },
       });
-      throw error;
-    }
-  }, [queryClient, user?.id]);
 
-  // Main preloading function with progressive loading
+      setIsLoaded(true);
+      setPreloadProgress(100);
+    }
+  }, [queryClient, user]);
+
   const preloadAppData = useCallback(async () => {
-    if (isAuthLoading || isPreloading || preloadLockRef.current) {
-      return;
-    }
+    if (isPreloading || preloadLockRef.current) return;
+    if (isAuthLoading) return;
 
-    preloadLockRef.current = true;
     setIsPreloading(true);
-    setIsLoaded(false);
-    setPreloadProgress(0);
-
-    const startTime = Date.now();
+    preloadLockRef.current = true;
 
     try {
-      Sentry.addBreadcrumb({
-        category: 'preloader',
-        message: 'Starting progressive app data preload',
-        level: 'info',
-      });
-
-      // Phase 1: Load critical data (categories, initial articles)
       await preloadCriticalData();
-
-      // Phase 2: Load user-specific data if authenticated
-      if (user?.id) {
-        await preloadUserData();
-      } else {
-        setPreloadProgress(100);
-      }
-
-      const loadTime = Date.now() - startTime;
-      setIsLoaded(true);
-
-      Sentry.addBreadcrumb({
-        category: 'preloader',
-        message: `Progressive preload completed in ${loadTime}ms`,
-        level: 'info',
-      });
-
-      // Background prefetch of additional data
-      if (user?.id) {
-        // Prefetch articles with word stats for due words analysis
-        // Articles never change, so this data is also immutable
-        queryClient.prefetchQuery({
-          queryKey: ['articles', 'with-word-stats'],
-          queryFn: () => articlesService.getArticlesWithWordStats(),
-          ...CACHE_TIMES.ARTICLES,
-          retry: 1,
-        });
-      }
-    } catch (error) {
-      const errorTime = Date.now() - startTime;
-
-      if (error instanceof Error) {
-        Sentry.captureException(error, {
-          tags: {
-            location: 'app_preloader',
-            loadTime: errorTime.toString(),
-          },
-        });
-        handleError(error);
-      } else {
-        const wrappedError = new Error(String(error));
-        Sentry.captureException(wrappedError, {
-          tags: {
-            location: 'app_preloader',
-            loadTime: errorTime.toString(),
-          },
-        });
-        handleError(wrappedError);
-      }
-
-      // Set partial load state - app can still function with critical data
-      const hasCategories = queryClient.getQueryData(['categories']);
-      const hasArticles = queryClient.getQueryData(['articles']);
-
-      if (hasCategories && hasArticles) {
-        setIsLoaded(true);
-        setPreloadProgress(100);
-      } else {
-        setIsLoaded(false);
-        setPreloadProgress(0);
-      }
-
-      Sentry.addBreadcrumb({
-        category: 'preloader',
-        message: `Error after ${errorTime}ms, partial load: ${hasCategories && hasArticles}`,
-        level: 'error',
-      });
     } finally {
       setIsPreloading(false);
       preloadLockRef.current = false;
     }
-  }, [queryClient, user, isPreloading, isAuthLoading]);
+  }, [isPreloading, isAuthLoading, preloadCriticalData]);
 
-  // Optimized function to prefetch a specific article
   const prefetchArticle = useCallback(
     async (articleId: number) => {
-      if (!articleId || articleId <= 0) return false;
-
       try {
-        // First try to get card data (lighter payload)
-        const cardPromise = queryClient.prefetchQuery({
-          queryKey: ['article', 'card', articleId],
-          queryFn: () => articlesService.getArticleCard(articleId),
-          ...CACHE_TIMES.ARTICLES, // Articles never change
-        });
-
-        // Then prefetch full article data in background
-        const fullPromise = queryClient.prefetchQuery({
+        await queryClient.prefetchQuery({
           queryKey: ['article', articleId],
           queryFn: () => articlesService.getArticleById(articleId),
-          ...CACHE_TIMES.ARTICLES, // Articles never change
+          ...CACHE_TIMES.ARTICLES,
+          retry: 2,
         });
-
-        // Prefetch reading list status if user is authenticated
-        const readingListPromise = user?.id
-          ? queryClient.prefetchQuery({
-              queryKey: ['isInReadingList', user.id, articleId],
-              queryFn: () => readingListService.isInReadingList(user.id, articleId),
-              ...CACHE_TIMES.SHORT,
-            })
-          : Promise.resolve();
-
-        // Wait for card data, let others load in background
-        await cardPromise;
-
-        // Don't await these - let them load in background
-        fullPromise.catch(() => {}); // Ignore errors for background loading
-        readingListPromise.catch(() => {});
-
         return true;
       } catch {
         return false;
       }
     },
-    [queryClient, user?.id]
+    [queryClient]
   );
 
-  // Optimized vocabulary data prefetching
   const prefetchVocabularyData = useCallback(async () => {
     if (!user?.id) return false;
 
     try {
-      const results = await Promise.allSettled([
-        queryClient.prefetchQuery({
-          queryKey: FSRS_QUERY_KEYS.due(user.id),
-          queryFn: () =>
-            studyWordsFSRSService.getFSRSWords(user.id, {
-              onlyDue: true,
-              limit: 100,
-            }),
-          ...CACHE_TIMES.CRITICAL,
-          retry: 2,
-        }),
+      await Promise.allSettled([
         queryClient.prefetchQuery({
           queryKey: FSRS_QUERY_KEYS.all(user.id),
           queryFn: () =>
             studyWordsFSRSService.getFSRSWords(user.id, {
               forStats: true,
+              limit: 1000,
+            }),
+          ...CACHE_TIMES.MEDIUM,
+          retry: 2,
+        }),
+        queryClient.prefetchQuery({
+          queryKey: FSRS_QUERY_KEYS.due(user.id),
+          queryFn: () =>
+            studyWordsFSRSService.getFSRSWords(user.id, {
+              onlyDue: true,
               limit: 100,
             }),
           ...CACHE_TIMES.MEDIUM,
           retry: 2,
         }),
       ]);
-
-      return results.some(result => result.status === 'fulfilled');
-    } catch {
+      return true;
+    } catch (error) {
+      handleError(error as Error, { showToast: false });
       return false;
     }
   }, [queryClient, user?.id]);
 
-  // Memoize the return object to prevent unnecessary re-renders
-  const returnValue = useMemo(
-    () => ({
-      isPreloading,
-      isLoaded,
-      preloadAppData,
-      prefetchArticle,
-      prefetchVocabularyData,
-      preloadProgress,
-    }),
-    [
-      isPreloading,
-      isLoaded,
-      preloadAppData,
-      prefetchArticle,
-      prefetchVocabularyData,
-      preloadProgress,
-    ]
-  );
-
-  return returnValue;
+  return {
+    isPreloading,
+    isLoaded,
+    preloadAppData,
+    prefetchArticle,
+    prefetchVocabularyData,
+    preloadProgress,
+  };
 };
 
 export default useAppPreloader;

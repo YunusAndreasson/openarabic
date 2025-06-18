@@ -261,12 +261,14 @@ function AppContent() {
             name="(tabs)"
             options={{
               headerShown: false,
+              animation: 'fade',
             }}
           />
           <Stack.Screen
             name="auth"
             options={{
               headerShown: false,
+              animation: 'fade',
             }}
           />
           <Stack.Screen
@@ -308,8 +310,7 @@ const styles = StyleSheet.create({
 });
 
 const ErrorFallback = memo(function ErrorFallback({ error }: FallbackProps) {
-  const errorMessage =
-    error instanceof Error ? error.toString() : STRINGS.UNKNOWN_ERROR_OCCURRED;
+  const errorMessage = error instanceof Error ? error.toString() : STRINGS.UNKNOWN_ERROR_OCCURRED;
   return (
     <View style={styles.errorContainer}>
       <ThemedText

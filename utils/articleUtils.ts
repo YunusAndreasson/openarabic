@@ -119,4 +119,3 @@ export function getArticlesByDifficultWords(
     .map(item => item.article)
     .slice(0, limit);
 }
-
