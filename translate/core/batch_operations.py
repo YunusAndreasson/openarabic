@@ -28,6 +28,26 @@ logger = logging.getLogger(__name__)
 from translate.core.models import WordTranslationOptions
 
 
+def _build_word_prompt(
+    tashkeel: str,
+    translation: str,
+    arabic_words: List[str],
+    semantic_context: str,
+    tashkeel_notes: str,
+    translation_notes: str,
+) -> str:
+    """Generate the prompt payload for word translations."""
+    return (
+        "Set 1:\n"
+        f"Arabic words to translate:\n{' '.join(arabic_words)}\n"
+        f"Full context (with tashkeel): {tashkeel}\n"
+        f"Translation: {translation}"
+        f"{semantic_context}"
+        f"{tashkeel_notes}"
+        f"{translation_notes}"
+    )
+
+
 def batch_translate_full_sentences(
     sentences: List[str], contexts: List[Optional[str]]
 ) -> List[Dict[str, Any]]:
@@ -284,14 +304,13 @@ def batch_translate_words(
                         f"- {u.get('text', '')}: {u.get('reason', '')}"
                         for u in translation_uncertainties
                     )
-                formatted_input = (
-                    f"Set 1:\n"
-                    f"Arabic words to translate:\n{' '.join(arabic_words)}\n"
-                    f"Full context (with tashkeel): {tashkeel}\n"
-                    f"Translation: {translation}"
-                    f"{semantic_context}"
-                    f"{tashkeel_notes}"
-                    f"{translation_notes}"
+                formatted_input = _build_word_prompt(
+                    tashkeel,
+                    translation,
+                    arabic_words,
+                    semantic_context,
+                    tashkeel_notes,
+                    translation_notes,
                 )
                 messages = [
                     {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
@@ -462,3 +481,11 @@ def batch_refine_translations(
 
         traceback.print_exc()
         return {"refinements": []}
+
+
+__all__ = [
+    "batch_translate_full_sentences",
+    "batch_add_tashkeel",
+    "batch_translate_words",
+    "batch_refine_translations",
+]

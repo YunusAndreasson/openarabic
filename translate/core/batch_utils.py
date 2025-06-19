@@ -21,6 +21,10 @@ def create_batches(
     """Create batches of sentences with their contexts"""
     batches = []
 
+    def gather_context(indices: List[int]) -> List[Optional[str]]:
+        """Get optimized context for each index."""
+        return [get_optimized_context(sentences, idx) for idx in indices]
+
     # Iterate through the sentences starting from the start_index
     num_remaining = len(sentences) - start_index
     for i in range(0, num_remaining, batch_size):
@@ -40,9 +44,7 @@ def create_batches(
             )
         )
         # Context uses global indices relative to the full 'sentences' list
-        batch_contexts = [
-            get_optimized_context(sentences, idx) for idx in batch_indices
-        ]
+        batch_contexts = gather_context(batch_indices)
 
         batches.append(
             {
@@ -296,3 +298,13 @@ def process_batch(
         tashkeel,
         word_options,
     )
+
+
+__all__ = [
+    "create_batches",
+    "process_batch",
+    "run_full_translation",
+    "apply_tashkeel",
+    "translate_words",
+    "refine_translations",
+]

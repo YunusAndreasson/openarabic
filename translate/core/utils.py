@@ -97,6 +97,52 @@ def init_openai_client():
 client = init_openai_client()
 
 
+def _create_completion(
+    messages: List[Dict[str, str]],
+    temperature: float,
+    model: str,
+    function_schema: Optional[Dict[str, Any]] = None,
+    function_name: Optional[str] = None,
+) -> Any:
+    """Helper to create the chat completion request."""
+    if function_schema:
+        return client.chat.completions.create(
+            model=model,
+            messages=messages,
+            temperature=temperature,
+            functions=[function_schema],
+            function_call={"name": function_name} if function_name else "auto",
+        )
+    return client.chat.completions.create(
+        model=model,
+        messages=messages,
+        temperature=temperature,
+        response_format={"type": "json_object"},
+    )
+
+
+def _decode_response(response: Any, function_schema: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """Extract JSON data from the OpenAI API response."""
+    if function_schema and hasattr(response.choices[0].message, "function_call"):
+        function_call = response.choices[0].message.function_call
+        if function_call and function_call.arguments:
+            try:
+                return json.loads(function_call.arguments)
+            except json.JSONDecodeError:
+                return {
+                    "error": f"Failed to parse function arguments: {function_call.arguments[:100]}..."
+                }
+        return {"error": "Function call response was empty"}
+
+    content = response.choices[0].message.content
+    if not content:
+        return {"error": "Empty response from API"}
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError:
+        return {"error": f"Failed to parse JSON: {content[:100]}..."}
+
+
 def call_openai_api(
     messages: List[Dict[str, str]],
     function_schema: Optional[Dict[str, Any]] = None,
@@ -105,58 +151,24 @@ def call_openai_api(
     max_retries: int = 3,
     model: str = MODEL_OTHER,  # Default to MODEL_OTHER
 ) -> Dict[str, Any]:
-    """Make OpenAI API call with function calling, retry logic and error handling"""
+    """Call the OpenAI API with retries and standardized decoding."""
     retry_count = 0
     backoff_time = 1
 
     while retry_count < max_retries:
         try:
-            # Configure API call based on whether we're using function calling
-            if function_schema:
-                response = client.chat.completions.create(
-                    model=model,
-                    messages=messages,
-                    temperature=temperature,
-                    functions=[function_schema],
-                    function_call={"name": function_name} if function_name else "auto",
-                )
-            else:
-                # Fall back to regular JSON response if no function schema provided
-                response = client.chat.completions.create(
-                    model=model,
-                    messages=messages,
-                    temperature=temperature,
-                    response_format={"type": "json_object"},
-                )
+            response = _create_completion(
+                messages,
+                temperature,
+                model,
+                function_schema=function_schema,
+                function_name=function_name,
+            )
 
             if hasattr(response, "usage") and response.usage:
                 token_tracker.update(response.usage.model_dump())
 
-            # Handle function calling response
-            if function_schema and hasattr(
-                response.choices[0].message, "function_call"
-            ):
-                function_call = response.choices[0].message.function_call
-                if function_call and function_call.arguments:
-                    try:
-                        return json.loads(function_call.arguments)
-                    except json.JSONDecodeError:
-                        return {
-                            "error": f"Failed to parse function arguments: {function_call.arguments[:100]}..."
-                        }
-                else:
-                    return {"error": "Function call response was empty"}
-
-            # Handle regular content response
-            content = response.choices[0].message.content
-            if not content:
-                return {"error": "Empty response from API"}
-
-            # Parse JSON response
-            try:
-                return json.loads(content)
-            except json.JSONDecodeError:
-                return {"error": f"Failed to parse JSON: {content[:100]}..."}
+            return _decode_response(response, function_schema)
 
         except Exception as e:
             logging.error(
@@ -168,8 +180,10 @@ def call_openai_api(
                     "error": f"API call failed after {max_retries} attempts. Error: {str(e)}"
                 }
 
-            # Exponential backoff
             time.sleep(backoff_time)
             backoff_time *= 2
 
     return {"error": "Maximum retries exceeded"}
+
+
+__all__ = ["token_tracker", "call_openai_api", "load_api_keys"]

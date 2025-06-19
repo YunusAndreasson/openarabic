@@ -53,20 +53,20 @@ def run_translation(input_file: str, output_file: str, batch_size: int) -> None:
         sys.exit(1)
 
 
+def run_pipeline(input_file: str, output_file: str, batch_size: int) -> None:
+    """Execute the entire translation pipeline."""
+    run_split_file(input_file)
+    confirm_step("Ready to proceed with translation")
+    run_translation(input_file, output_file, batch_size)
+
+
 def main():
     # Step 0: Use default parameters
     input_file = DEFAULT_INPUT_FILE
     output_file = DEFAULT_OUTPUT_FILE
     batch_size = DEFAULT_BATCH_SIZE
 
-    # Step 1: Split file
-    run_split_file(input_file)
-
-    # Step 2: Review the split file
-    confirm_step("Ready to proceed with translation")
-
-    # Step 3: Translate file
-    run_translation(input_file, output_file, batch_size)
+    run_pipeline(input_file, output_file, batch_size)
 
     # Step 3.5: Optionally run insert.py
     if confirm_step("Translation done. Would you like to continue and run insert.py?"):
@@ -80,6 +80,14 @@ def main():
 
     # Normal successful completion
     sys.exit(0)
+
+
+__all__ = [
+    "run_pipeline",
+    "run_split_file",
+    "run_translation",
+    "confirm_step",
+]
 
 
 if __name__ == "__main__":
