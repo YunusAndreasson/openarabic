@@ -123,3 +123,19 @@ export async function hasPermissions(): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Updates the app icon badge count on the phone's home screen
+ * @param count - Number to display on the badge (0 removes the badge)
+ */
+export async function updateAppIconBadge(count: number): Promise<void> {
+  try {
+    await Notifications.setBadgeCountAsync(Math.max(0, count));
+  } catch (error) {
+    handleError(error as Error, {
+      showToast: false,
+      captureSentry: false,
+      analyticsEventName: 'App_Icon_Badge_Update_Error',
+    });
+  }
+}

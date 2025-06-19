@@ -13,6 +13,9 @@ import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
+import { updateAppIconBadge } from '@/services/notificationService';
+import { useAppSelector } from '@/store/hooks';
 
 const TAB_SCREENS = [
   {
@@ -71,10 +74,35 @@ const headerProfileComponent = () => <HeaderProfile />;
 const listenHeaderRightComponent = () => <EditModeButton />;
 
 export default function TabLayout(): JSX.Element {
-  const { session, isLoading } = useAuth();
+  const { session, isLoading, user } = useAuth();
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
+  // Get user preference for app icon badge
+  const appIconBadgeEnabled = useAppSelector(state => state.settings.appIconBadgeEnabled);
+
+  // Get due words count for badge
+  const { dueWords } = useFSRSQueries({
+    userId: user?.id,
+  });
+
+  const dueWordsCount = dueWords?.length ?? 0;
+
+  // Update app icon badge whenever due words count changes (only if enabled)
+  useEffect(() => {
+    if (appIconBadgeEnabled) {
+      updateAppIconBadge(dueWordsCount);
+    } else {
+      updateAppIconBadge(0); // Clear badge if disabled
+    }
+  }, [dueWordsCount, appIconBadgeEnabled]);
+
+  // Clear badge when user signs out
+  useEffect(() => {
+    if (!session?.user) {
+      updateAppIconBadge(0);
+    }
+  }, [session?.user]);
 
   useEffect(() => {
     if (!isLoading && !session?.user) {
@@ -143,6 +171,22 @@ export default function TabLayout(): JSX.Element {
                 }}
               />
             ),
+            // Add badge to Practice tab (always show in-app badge)
+            ...(screen.name === 'practice' &&
+              dueWordsCount > 0 && {
+                tabBarBadge: dueWordsCount > 99 ? '99+' : dueWordsCount.toString(),
+                tabBarBadgeStyle: {
+                  backgroundColor: colors.error,
+                  color: colors.white,
+                  fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+                  fontWeight: '600',
+                  minWidth: 20,
+                  height: 20,
+                  borderRadius: 10,
+                  marginLeft: -8,
+                  marginTop: -2,
+                },
+              }),
             ...(screen.name === 'read' && {
               headerRight: headerProfileComponent,
             }),

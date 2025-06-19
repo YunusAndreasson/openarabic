@@ -10,6 +10,8 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useReminders } from '@/hooks/notifications/useReminders';
 import pkg from '@/package.json';
 import { supabase } from '@/services/supabase';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { setAppIconBadgeEnabled } from '@/store/settingsSlice';
 import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
@@ -20,6 +22,7 @@ const analytics = {
 };
 
 export const useAccountScreen = () => {
+  const dispatch = useAppDispatch();
   const { reminderTime, updateReminderTime, formatReminderTime } = useReminders();
   const { clearCache, getCacheSize } = useAudioCache();
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -28,6 +31,9 @@ export const useAccountScreen = () => {
   const [isClearingCache, setIsClearingCache] = useState(false);
   const { user } = useAuth();
   const isMounted = useRef(true);
+
+  // Get user preferences
+  const appIconBadgeEnabled = useAppSelector(state => state.settings.appIconBadgeEnabled);
 
   // Load cache size on component mount
   useEffect(() => {
@@ -70,13 +76,11 @@ export const useAccountScreen = () => {
           return;
         }
 
-          Alert.alert(
-            title,
-            `${description} ${formatBytes(size)} of cached data. ${
-              type === 'audio'
-                ? STRINGS.AUDIO_REDOWNLOAD_REQUIRED
-                : STRINGS.DATA_RELOAD_REQUIRED
-            }`,
+        Alert.alert(
+          title,
+          `${description} ${formatBytes(size)} of cached data. ${
+            type === 'audio' ? STRINGS.AUDIO_REDOWNLOAD_REQUIRED : STRINGS.DATA_RELOAD_REQUIRED
+          }`,
           [
             {
               text: STRINGS.CANCEL,
@@ -150,10 +154,10 @@ export const useAccountScreen = () => {
             try {
               await analytics.trackSignOut();
               const { error } = await supabase.auth.signOut();
-                if (error) {
-                  Alert.alert(STRINGS.ERROR, error.message);
-                  return;
-                }
+              if (error) {
+                Alert.alert(STRINGS.ERROR, error.message);
+                return;
+              }
               await analytics.reset();
               router.replace(ROUTE_PATHS.AUTH);
             } catch (error) {
@@ -172,10 +176,7 @@ export const useAccountScreen = () => {
   const handleReminderToggle = useCallback(
     async (enabled: boolean) => {
       if (enabled && !notificationPermissions) {
-        Alert.alert(
-          STRINGS.ENABLE_NOTIFICATIONS,
-          STRINGS.TURN_ON_NOTIFICATIONS,
-          [
+        Alert.alert(STRINGS.ENABLE_NOTIFICATIONS, STRINGS.TURN_ON_NOTIFICATIONS, [
           { text: STRINGS.CANCEL, style: 'cancel' },
           {
             text: STRINGS.SETTINGS,
@@ -290,6 +291,14 @@ Please describe your issue below:
     router.push(ROUTE_PATHS.ACCOUNT_FONT_SELECTOR);
   }, []);
 
+  // Handle app icon badge toggle
+  const handleAppIconBadgeToggle = useCallback(
+    (enabled: boolean) => {
+      dispatch(setAppIconBadgeEnabled(enabled));
+    },
+    [dispatch]
+  );
+
   const appVersion = pkg.version;
   const currentYear = new Date().getFullYear();
 
@@ -314,6 +323,8 @@ Please describe your issue below:
       handleClearCache,
       isClearingCache,
       cacheSize,
+      appIconBadgeEnabled,
+      handleAppIconBadgeToggle,
     }),
     [
       reminderTime,
@@ -335,6 +346,8 @@ Please describe your issue below:
       handleClearCache,
       isClearingCache,
       cacheSize,
+      appIconBadgeEnabled,
+      handleAppIconBadgeToggle,
     ]
   );
 

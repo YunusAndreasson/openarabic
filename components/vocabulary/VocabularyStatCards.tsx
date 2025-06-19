@@ -35,6 +35,8 @@ interface WordCategoryConfig {
   bgColor: string;
   category: StatCategory;
   description: string;
+  disabled?: boolean;
+  disabledMessage?: string;
 }
 
 export const VocabularyStatCards = memo(
@@ -95,10 +97,7 @@ export const VocabularyStatCards = memo(
             counts.learningWords += 1;
           }
 
-          if (
-            stability >= MASTERED_STABILITY_THRESHOLD &&
-            difficulty <= MASTERED_DIFFICULTY_MAX
-          ) {
+          if (stability >= MASTERED_STABILITY_THRESHOLD && difficulty <= MASTERED_DIFFICULTY_MAX) {
             counts.masteredWords += 1;
           }
 
@@ -121,9 +120,11 @@ export const VocabularyStatCards = memo(
     const totalWords = validatedInput.studyWords.length;
     const categories: WordCategoryConfig[] = useMemo(() => {
       const cards = [];
+      const hasDueWords = wordCategories.dueWords > 0;
+      const hasChallengingWords = wordCategories.strugglingWords > 0;
 
       // Always show due words if available
-      if (wordCategories.dueWords > 0) {
+      if (hasDueWords) {
         cards.push({
           value: wordCategories.dueWords,
           label: STRINGS.DUE_NOW,
@@ -143,6 +144,8 @@ export const VocabularyStatCards = memo(
           bgColor: colors.elevation1,
           category: 'needsAttention' as StatCategory,
           description: STRINGS.DRILL_DOWN_ON_CHALLENGING_WORDS,
+          disabled: hasDueWords,
+          disabledMessage: 'Complete due words first',
         });
       }
 
@@ -155,6 +158,10 @@ export const VocabularyStatCards = memo(
           bgColor: colors.elevation1,
           category: 'total' as StatCategory,
           description: STRINGS.ADDITIONAL_PRACTICE,
+          disabled: hasDueWords || hasChallengingWords,
+          disabledMessage: hasDueWords
+            ? 'Complete due words first'
+            : 'Complete challenging words first',
         });
       }
 
@@ -169,21 +176,28 @@ export const VocabularyStatCards = memo(
         {categories.map(config => (
           <TouchableOpacity
             key={config.category}
-            activeOpacity={0.7}
-            onPress={onStartReview}
-            onPressIn={handlePressIn}
-            onPressOut={handlePressOut}
+            activeOpacity={config.disabled ? 1 : 0.7}
+            onPress={config.disabled ? undefined : onStartReview}
+            onPressIn={config.disabled ? undefined : handlePressIn}
+            onPressOut={config.disabled ? undefined : handlePressOut}
             testID={`start-review-${config.category}`}
+            style={config.disabled && styles.disabledCard}
           >
             <Animated.View
               style={[
                 styles.categoryCard,
                 { backgroundColor: config.bgColor },
-                animatedStyle as ViewStyle,
+                !config.disabled && (animatedStyle as ViewStyle),
+                config.disabled && { opacity: 0.5 },
               ]}
             >
               {/* Number Badge */}
-              <View style={[styles.numberBadge, { backgroundColor: config.iconColor }]}>
+              <View
+                style={[
+                  styles.numberBadge,
+                  { backgroundColor: config.disabled ? colors.secondaryText : config.iconColor },
+                ]}
+              >
                 <ThemedText style={[styles.numberText, { color: colors.white }]}>
                   {config.value}
                 </ThemedText>
@@ -192,8 +206,12 @@ export const VocabularyStatCards = memo(
               {/* Content */}
               <View style={styles.categoryContent}>
                 <ThemedText style={styles.categoryLabel}>{config.label}</ThemedText>
-                <ThemedText style={styles.categoryDescription} type="caption" variant="secondary">
-                  {config.description}
+                <ThemedText
+                  style={styles.categoryDescription}
+                  type="caption"
+                  variant={config.disabled ? 'secondary' : undefined}
+                >
+                  {config.disabled ? config.disabledMessage : config.description}
                 </ThemedText>
               </View>
             </Animated.View>
@@ -241,5 +259,8 @@ const styles = StyleSheet.create({
   categoryDescription: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
+  },
+  disabledCard: {
+    // Empty style object for disabled state
   },
 });
