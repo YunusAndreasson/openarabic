@@ -32,6 +32,33 @@ logging.basicConfig(
 )
 
 
+def build_split_messages(text: str) -> list[dict]:
+    """Create the chat messages payload for splitting."""
+    return [
+        {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
+        {"role": "user", "content": SENTENCE_SPLITTING_USER_PROMPT + text},
+    ]
+
+
+def parse_split_response(response: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalize the split API response."""
+    if "error" in response:
+        logger.error(f"Failed to analyze text: {response['error']}")
+        return {
+            "units": [],
+            "title": "Error",
+            "summary": response["error"],
+            "difficulty_level": 1,
+        }
+
+    return {
+        "units": response.get("units", []),
+        "title": response.get("title", "Untitled Text"),
+        "summary": response.get("summary", "No summary available"),
+        "difficulty_level": response.get("difficulty_level", 3),
+    }
+
+
 def split_text_into_sentences(text: str) -> Dict[str, Any]:
     """Use GPT-4.1 to intelligently split text into learner-friendly units and analyze content"""
     if not text or len(text.strip()) == 0:
@@ -42,39 +69,16 @@ def split_text_into_sentences(text: str) -> Dict[str, Any]:
             "difficulty_level": 1,
         }
 
-    messages = [
-        {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
-        {
-            "role": "user",
-            "content": (SENTENCE_SPLITTING_USER_PROMPT + text),
-        },
-    ]
+    messages = build_split_messages(text)
 
     response = call_openai_api(
         messages,
         function_schema=SPLIT_TEXT_FUNCTION,
         function_name="split_text_into_sentences",
-        model=MODEL_ANALYSIS,  # Use the analysis model
+        model=MODEL_ANALYSIS,
     )
 
-    if "error" in response:
-        logging.error(f"Failed to analyze text: {response['error']}")
-        return {
-            "units": [],
-            "title": "Error",
-            "summary": response["error"],
-            "difficulty_level": 1,
-        }
-
-    # Ensure we have all the required fields
-    result = {
-        "units": response.get("units", []),
-        "title": response.get("title", "Untitled Text"),
-        "summary": response.get("summary", "No summary available"),
-        "difficulty_level": response.get("difficulty_level", 3),
-    }
-
-    return result
+    return parse_split_response(response)
 
 
 def split_file(input_file: str, output_file: str):
@@ -98,6 +102,14 @@ def split_file(input_file: str, output_file: str):
     except Exception as e:
         logging.error(f"Text splitting failed: {str(e)}")
         raise
+
+
+__all__ = [
+    "split_text_into_sentences",
+    "split_file",
+    "build_split_messages",
+    "parse_split_response",
+]
 
 
 def main():

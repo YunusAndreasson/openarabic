@@ -28,13 +28,6 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-def to_dict(obj):
-    if isinstance(obj, list):
-        return [to_dict(item) for item in obj]
-    elif hasattr(obj, "__dict__"):
-        return {k: to_dict(v) for k, v in obj.__dict__.items()}
-    return obj
-
 
 def load_split_data(input_file: str) -> dict | None:
     """Load the split JSON created by split_file.py."""
@@ -93,13 +86,26 @@ def validate_results(results: list, all_units: list) -> tuple[int, int]:
             failed += 1
     return failed, issues
 
-def to_dict(obj):
+
+def save_translation_output(output_file: str, metadata: TextMetadata, results: list) -> None:
+    """Persist the translation results to disk."""
+    write_json_file(
+        output_file,
+        {
+            "metadata": serialize(metadata),
+            "translations": [serialize(r) for r in results],
+        },
+    )
+
+def serialize(obj):
+    """Recursively convert Pydantic models and lists into dictionaries."""
     if isinstance(obj, list):
-        return [to_dict(item) for item in obj]
-    elif hasattr(obj, "__dict__"):
-        return {k: to_dict(v) for k, v in obj.__dict__.items()}
-    else:
-        return obj
+        return [serialize(item) for item in obj]
+    if hasattr(obj, "model_dump"):
+        return obj.model_dump()
+    if hasattr(obj, "__dict__"):
+        return {k: serialize(v) for k, v in obj.__dict__.items()}
+    return obj
 
 
 def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATCH_SIZE):
@@ -135,17 +141,10 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
             )
         return None
 
-    # Write final output with metadata
     try:
-        write_json_file(
-            output_file,
-            {
-                "metadata": to_dict(metadata),
-                "translations": [to_dict(r) for r in results],
-            },
-        )
-        return True  # Return success indicator
-    except Exception as e:
+        save_translation_output(output_file, metadata, results)
+        return True
+    except Exception:
         return None
 
 
@@ -191,6 +190,15 @@ def main():
         logger.info(f"❌ Error: {str(e)}")
         sys.exit(1)
 
+
+__all__ = [
+    "translate_file",
+    "load_split_data",
+    "create_metadata",
+    "process_batches",
+    "validate_results",
+    "save_translation_output",
+]
 
 if __name__ == "__main__":
     main()
