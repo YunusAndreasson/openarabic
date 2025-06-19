@@ -5,26 +5,6 @@ from typing import List, Optional
 CONTEXT_WINDOW_SIZE = 2  # Number of sentences before and after to include as context
 
 
-def is_valid_pos(pos: str, valid_pos_list: List[str]) -> bool:
-    """Validate if a part of speech is valid according to our word type mapping system."""
-    if not pos:
-        return False
-
-    pos = pos.lower().strip()
-
-    # Check if it's one of our exact valid POS categories
-    if pos in valid_pos_list:
-        return True
-
-    # If there are parentheses, the model might have included additional information
-    # Strip this out to check the base POS (e.g., "verb (past)" -> "verb")
-    if "(" in pos:
-        base_pos = pos.split("(")[0].strip()
-        if base_pos in valid_pos_list:
-            return False  # We explicitly don't want modifiers in parentheses
-
-    return False
-
 
 def get_sentence_context(sentences: List[str], index: int) -> str:
     """Get context from surrounding sentences for better translation quality"""

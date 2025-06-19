@@ -90,10 +90,6 @@ def split_file(input_file: str, output_file: str):
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(split_result, f, ensure_ascii=False, indent=2)
 
-        # Calculate timing
-        end_time = time.time()
-        total_time = end_time - start_time
-
         return split_result
 
     except Exception as e:

@@ -625,7 +625,6 @@ def generate_sentence_audio(
     text: str,
     filename: str,
     tashkeel_text: str = None,
-    is_last_sentence: bool = False,
     previous_text: str = None,
     next_text: str = None,
 ):

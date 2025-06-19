@@ -319,7 +319,6 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> Dict:
                 text=translation["original"],
                 filename=audio_filename,
                 tashkeel_text=translation.get("tashkeel"),
-                is_last_sentence=(idx == len(translations) - 1),
                 previous_text=previous_text,
                 next_text=next_text,
             )
@@ -470,8 +469,9 @@ def save_timing_report(
                 )
 
             # Write data row with all the detailed statistics
+            title_escaped = title.replace('"', '""')
             f.write(
-                f'{article_id},"{title.replace('"', '""')}",{now},'
+                f"{article_id},\"{title_escaped}\",{now},"
                 f"{timing_stats['total_sentences']},"
                 f"{timing_stats['sentences_with_audio']},"
                 f"{timing_stats['sentences_with_timings']},"
