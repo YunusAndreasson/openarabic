@@ -39,7 +39,7 @@ def process_json_file(file_path: str, category_id: int, author_id: int) -> None:
     content_hash = generate_content_hash(data)
 
     # Check if article already exists
-    existing_article_id, existing_audio_url = check_article_exists(content_hash)
+    existing_article_id, _ = check_article_exists(content_hash)
 
     if existing_article_id:
         # Move files to archive even for existing articles
@@ -113,7 +113,6 @@ def main():
         logger.info("❌ No article output.json files found in the articles directory")
         sys.exit(1)
 
-    success_count = 0
     error_count = 0
 
     # Fetch category and author IDs once to avoid redundant lookups
@@ -123,7 +122,6 @@ def main():
     for json_path in json_files:
         try:
             process_json_file(json_path, category_id, author_id)
-            success_count += 1
         except Exception as e:
             error_count += 1
             logger.info(f"❌ Error processing {json_path}: {str(e)}")

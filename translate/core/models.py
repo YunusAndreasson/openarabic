@@ -49,18 +49,6 @@ class TextMetadata(BaseModel):
     total_units: int
 
 
-class TranslationResult(BaseModel):
-    """Complete translation result including metadata and all sentences"""
-
-    metadata: TextMetadata
-    translations: List[SentenceTranslation]
-
-
-class BatchRequest(BaseModel):
-    """Batch translation request format"""
-
-    sentences: List[str]
-    contexts: List[Optional[str]]
 
 
 class TranslationValidationError(Exception):
