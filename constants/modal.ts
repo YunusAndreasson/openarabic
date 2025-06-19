@@ -24,7 +24,7 @@ import { LAYOUT } from './layout';
 
 /**
  * Universal navigation options for all screens and modals
- * Defaults to modal presentation since this is primarily a modal system
+ * Defaults to modal presentation with enhanced backdrop for better focus
  */
 export function createNavigationOptions(
   colors: {
@@ -53,10 +53,13 @@ export function createNavigationOptions(
     return baseOptions;
   }
 
-  // Default is modal presentation
+  // Default is modal presentation with enhanced backdrop opacity
   return {
     presentation: 'modal',
     gestureEnabled: true,
+    contentStyle: {
+      backgroundColor: colors.background,
+    },
     ...baseOptions,
   };
 }
