@@ -1,5 +1,5 @@
 import { FlashList } from '@shopify/flash-list';
-import { useMemo, useCallback, type FC } from 'react';
+import { useMemo, useCallback, memo, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import EmptyState from '@/components/EmptyState';
@@ -12,9 +12,35 @@ import type { Article } from '@/types/articles.types';
 
 import ListArticleItem from './ListArticleItem';
 
+// Extract constants outside component to prevent recreation
 const NOOP_ARTICLE_PRESS = () => {};
-const ITEM_HEIGHT = 100; // Adjust this based on your actual card height
+const ITEM_HEIGHT = 100;
+const DRAW_DISTANCE_MULTIPLIER = 5;
+
+// Static separator component
 const SeparatorComponent = () => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />;
+
+// Static styles to prevent recreation
+const STATIC_STYLES = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  listContent: {
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingTop: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  },
+  footerSpacer: {
+    height: LAYOUT.SPACING.LARGE,
+  },
+});
 
 interface FilteredArticleViewProps {
   /**
@@ -39,95 +65,133 @@ interface FilteredArticleViewProps {
 }
 
 /**
- * A specialized component for displaying filtered articles in modal contexts
+ * Custom comparison function for React.memo optimization
  */
-const FilteredArticleView: FC<FilteredArticleViewProps> = ({
+const FilteredArticleViewComparison = (
+  prevProps: FilteredArticleViewProps,
+  nextProps: FilteredArticleViewProps
+): boolean => {
+  // Quick path comparisons first (most likely to change)
+  if (prevProps.articles !== nextProps.articles) return false;
+  if (prevProps.loading !== nextProps.loading) return false;
+  if (prevProps.onArticlePress !== nextProps.onArticlePress) return false;
+
+  // Array length checks before deep comparison
+  if (prevProps.articles?.length !== nextProps.articles?.length) return false;
+
+  // Optional props comparison
+  if (prevProps.totalCount !== nextProps.totalCount) return false;
+
+  return true;
+};
+
+/**
+ * Internal component implementation
+ */
+const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
   articles,
   onArticlePress = NOOP_ARTICLE_PRESS,
   totalCount,
   loading = false,
 }) => {
+  const colors = useColors();
+
+  // Memoize expensive computations
+  const articlesLength = useMemo(() => articles.length, [articles.length]);
+  const hasArticles = useMemo(() => articlesLength > 0, [articlesLength]);
+  const shouldShowEmpty = useMemo(() => !loading && !hasArticles, [loading, hasArticles]);
+
+  // Memoize list components
+  const ListFooterComponent = useMemo(() => {
+    return <View style={STATIC_STYLES.footerSpacer} />;
+  }, []);
+
+  const ListHeaderComponent = useMemo(() => {
+    return <FilterSummary filteredCount={articlesLength} totalCount={totalCount} />;
+  }, [articlesLength, totalCount]);
+
+  // Memoize render callbacks
   const renderItemCallback = useCallback(
-    // eslint-disable-next-line react/no-unused-prop-types
     ({ item }: { item: Article }) => <ListArticleItem article={item} onPress={onArticlePress} />,
     [onArticlePress]
   );
 
-  const colors = useColors();
+  const renderSeparator = useCallback(() => SeparatorComponent(), []);
 
-  const ListFooterComponent = useMemo(() => {
-    return <View style={{ height: LAYOUT.SPACING.LARGE }} />;
-  }, []);
-
-  const ListHeaderComponent = useMemo(() => {
-    return <FilterSummary filteredCount={articles.length} totalCount={totalCount} />;
-  }, [articles.length, totalCount]);
-
-  const renderSeparator = useCallback(SeparatorComponent, []);
+  const keyExtractor = useCallback((item: Article) => item.id.toString(), []);
 
   const overrideItemLayout = useCallback((layout: { span?: number; size?: number }) => {
     layout.size = ITEM_HEIGHT;
   }, []);
 
-  if (!loading && articles.length === 0) {
+  // Memoize FlashList props to prevent unnecessary re-renders
+  const flashListProps = useMemo(
+    () => ({
+      contentContainerStyle: STATIC_STYLES.listContent,
+      data: articles,
+      drawDistance: ITEM_HEIGHT * DRAW_DISTANCE_MULTIPLIER,
+      estimatedItemSize: ITEM_HEIGHT,
+      keyExtractor,
+      ListFooterComponent,
+      ListHeaderComponent,
+      ItemSeparatorComponent: renderSeparator,
+      renderItem: renderItemCallback,
+      showsVerticalScrollIndicator: true,
+      overrideItemLayout,
+    }),
+    [
+      articles,
+      keyExtractor,
+      ListFooterComponent,
+      ListHeaderComponent,
+      renderSeparator,
+      renderItemCallback,
+      overrideItemLayout,
+    ]
+  );
+
+  // Memoize empty state props
+  const emptyStateProps = useMemo(
+    () => ({
+      colors,
+      description: STRINGS.TRY_ADJUSTING_FILTERS,
+      icon: 'search-outline' as const,
+      title: STRINGS.NO_ARTICLES_FOUND,
+      hideArticlesButton: true,
+      containerStyle: STATIC_STYLES.emptyContainer,
+    }),
+    [colors]
+  );
+
+  // Memoize ThemedView props
+  const themedViewProps = useMemo(
+    () => ({
+      includeBottomInset: false,
+      safeAreaEdges: ['left', 'right'] as ('left' | 'right' | 'bottom' | 'top')[],
+      style: STATIC_STYLES.container,
+    }),
+    []
+  );
+
+  if (shouldShowEmpty) {
     return (
-      <ThemedView
-        includeBottomInset={false}
-        safeAreaEdges={['left', 'right']}
-        style={styles.container}
-      >
-        <EmptyState
-          colors={colors}
-          description={STRINGS.TRY_ADJUSTING_FILTERS}
-          icon="search-outline"
-          title={STRINGS.NO_ARTICLES_FOUND}
-          hideArticlesButton={true}
-          containerStyle={styles.emptyContainer}
-        />
+      <ThemedView {...themedViewProps}>
+        <EmptyState {...emptyStateProps} />
       </ThemedView>
     );
   }
 
   return (
-    <ThemedView
-      includeBottomInset={false}
-      safeAreaEdges={['left', 'right']}
-      style={styles.container}
-    >
-      <FlashList
-        contentContainerStyle={styles.listContent}
-        data={articles}
-        drawDistance={ITEM_HEIGHT * 5}
-        estimatedItemSize={ITEM_HEIGHT}
-        keyExtractor={item => item.id.toString()}
-        ListFooterComponent={ListFooterComponent}
-        ListHeaderComponent={ListHeaderComponent}
-        ItemSeparatorComponent={renderSeparator}
-        renderItem={renderItemCallback}
-        showsVerticalScrollIndicator={true}
-        overrideItemLayout={overrideItemLayout}
-      />
+    <ThemedView {...themedViewProps}>
+      <FlashList {...flashListProps} />
     </ThemedView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  listContent: {
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingTop: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
-});
+/**
+ * A specialized component for displaying filtered articles in modal contexts
+ */
+const FilteredArticleView = memo(FilteredArticleViewInternal, FilteredArticleViewComparison);
 
 export default FilteredArticleView;
 

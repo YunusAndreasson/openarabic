@@ -13,9 +13,7 @@ jest.mock('@react-navigation/elements', () => {
   const React = require('react');
   const { Text } = require('react-native');
   return {
-    PlatformPressable: ({ onPress, children }: any) => (
-      <Text onPress={onPress}>{children}</Text>
-    ),
+    PlatformPressable: ({ onPress, children }: any) => <Text onPress={onPress}>{children}</Text>,
   };
 });
 
@@ -40,7 +38,6 @@ jest.mock('@/components/ThemedButton', () => {
 jest.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => ({ session: { user: {} }, isLoading: false }),
 }));
-
 
 jest.mock('@/hooks/theme/useColors', () => ({
   useColors: () => ({
@@ -132,7 +129,11 @@ jest.mock('expo-router', () => {
 
   Tabs.Screen = () => null;
 
-  return { Tabs, router: { replace: routerReplaceMock, push: routerPushMock }, __mocks: { routerReplaceMock, routerPushMock } };
+  return {
+    Tabs,
+    router: { replace: routerReplaceMock, push: routerPushMock },
+    __mocks: { routerReplaceMock, routerPushMock },
+  };
 });
 
 jest.mock('expo-blur', () => {
@@ -236,15 +237,18 @@ describe('Auth flow', () => {
   });
 
   it('allows registration', async () => {
-    signUpMock.mockResolvedValueOnce({ data: { user: { id: '1', email: 'test@example.com' } }, error: null });
+    signUpMock.mockResolvedValueOnce({
+      data: { user: { id: '1', email: 'test@example.com' } },
+      error: null,
+    });
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-    const { getByPlaceholderText, getByText } = render(<Auth />);
+    const { getByTestId } = render(<Auth />);
 
-    fireEvent.changeText(getByPlaceholderText('Your email'), 'test@example.com');
-    fireEvent.changeText(getByPlaceholderText('Your password'), 'Password1');
+    fireEvent.changeText(getByTestId('email-input'), 'test@example.com');
+    fireEvent.changeText(getByTestId('password-input'), 'Password1');
 
     await act(async () => {
-      fireEvent.press(getByText('Create Account'));
+      fireEvent.press(getByTestId('create-account-button'));
     });
 
     expect(signUpMock).toHaveBeenCalledWith({ email: 'test@example.com', password: 'Password1' });
@@ -254,13 +258,13 @@ describe('Auth flow', () => {
   it('shows alert on failed registration', async () => {
     signUpMock.mockResolvedValueOnce({ data: null, error: { message: 'Bad' } });
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-    const { getByPlaceholderText, getByText } = render(<Auth />);
+    const { getByTestId } = render(<Auth />);
 
-    fireEvent.changeText(getByPlaceholderText('Your email'), 'test@example.com');
-    fireEvent.changeText(getByPlaceholderText('Your password'), 'Password1');
+    fireEvent.changeText(getByTestId('email-input'), 'test@example.com');
+    fireEvent.changeText(getByTestId('password-input'), 'Password1');
 
     await act(async () => {
-      fireEvent.press(getByText('Create Account'));
+      fireEvent.press(getByTestId('create-account-button'));
     });
 
     expect(Alert.alert).toHaveBeenCalled();
@@ -269,13 +273,13 @@ describe('Auth flow', () => {
   });
 
   it('shows error for weak password', async () => {
-    const { getByPlaceholderText, getByText } = render(<Auth />);
+    const { getByTestId, getByText } = render(<Auth />);
 
-    fireEvent.changeText(getByPlaceholderText('Your email'), 'test@example.com');
-    fireEvent.changeText(getByPlaceholderText('Your password'), 'weak');
+    fireEvent.changeText(getByTestId('email-input'), 'test@example.com');
+    fireEvent.changeText(getByTestId('password-input'), 'weak');
 
     await act(async () => {
-      fireEvent.press(getByText('Create Account'));
+      fireEvent.press(getByTestId('create-account-button'));
     });
 
     expect(signUpMock).not.toHaveBeenCalled();
@@ -285,15 +289,15 @@ describe('Auth flow', () => {
   it('shows alert on failed login', async () => {
     signInMock.mockResolvedValueOnce({ data: null, error: { message: 'Invalid credentials' } });
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-    const { getByPlaceholderText, getByText } = render(<Auth />);
+    const { getByTestId } = render(<Auth />);
 
-    fireEvent.press(getByText('Have an account? Sign in'));
+    fireEvent.press(getByTestId('toggle-mode-button'));
 
-    fireEvent.changeText(getByPlaceholderText('Your email'), 'test@example.com');
-    fireEvent.changeText(getByPlaceholderText('Your password'), 'Password1');
+    fireEvent.changeText(getByTestId('email-input'), 'test@example.com');
+    fireEvent.changeText(getByTestId('password-input'), 'Password1');
 
     await act(async () => {
-      fireEvent.press(getByText('Sign In'));
+      fireEvent.press(getByTestId('sign-in-button'));
     });
 
     expect(signInMock).toHaveBeenCalledWith({ email: 'test@example.com', password: 'Password1' });
@@ -302,16 +306,19 @@ describe('Auth flow', () => {
   });
 
   it('logs in and navigates to start page', async () => {
-    signInMock.mockResolvedValueOnce({ data: { user: { id: '1', email: 'test@example.com' } }, error: null });
-    const { getByPlaceholderText, getByText } = render(<Auth />);
+    signInMock.mockResolvedValueOnce({
+      data: { user: { id: '1', email: 'test@example.com' } },
+      error: null,
+    });
+    const { getByTestId } = render(<Auth />);
 
-    fireEvent.press(getByText('Have an account? Sign in'));
+    fireEvent.press(getByTestId('toggle-mode-button'));
 
-    fireEvent.changeText(getByPlaceholderText('Your email'), 'test@example.com');
-    fireEvent.changeText(getByPlaceholderText('Your password'), 'Password1');
+    fireEvent.changeText(getByTestId('email-input'), 'test@example.com');
+    fireEvent.changeText(getByTestId('password-input'), 'Password1');
 
     await act(async () => {
-      fireEvent.press(getByText('Sign In'));
+      fireEvent.press(getByTestId('sign-in-button'));
     });
 
     expect(signInMock).toHaveBeenCalled();
@@ -341,4 +348,3 @@ describe('App navigation', () => {
     expect(routerReplaceMock).toHaveBeenCalledWith('/auth');
   });
 });
-

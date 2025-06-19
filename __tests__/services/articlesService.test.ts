@@ -126,10 +126,13 @@ describe('articlesService', () => {
       fromMock.mockReturnValue(builder);
 
       await expect(articlesService.getArticles({ authorId: 5 })).rejects.toThrow(err);
-      expect(handleError).toHaveBeenCalledWith(err, expect.objectContaining({
-        toastMessage: 'Failed to load articles',
-        analyticsProperties: expect.objectContaining({ authorId: 5 }),
-      }));
+      expect(handleError).toHaveBeenCalledWith(
+        err,
+        expect.objectContaining({
+          toastMessage: "Couldn't load articles. Try again",
+          analyticsProperties: expect.objectContaining({ authorId: 5 }),
+        })
+      );
     });
   });
 
@@ -176,7 +179,9 @@ describe('articlesService', () => {
       fromMock.mockReturnValue(builder);
 
       await expect(articlesService.getArticlesWithWordStats()).rejects.toThrow(err);
-      expect(handleError).toHaveBeenCalledWith(err, { toastMessage: 'Failed to load articles' });
+      expect(handleError).toHaveBeenCalledWith(err, {
+        toastMessage: "Couldn't load articles. Try again",
+      });
     });
   });
 
@@ -203,10 +208,13 @@ describe('articlesService', () => {
       fromMock.mockReturnValue(builder);
 
       await expect(articlesService.getArticleById(3)).rejects.toThrow(err);
-      expect(handleError).toHaveBeenCalledWith(err, expect.objectContaining({
-        toastMessage: 'Failed to load article',
-        analyticsProperties: { id: 3 },
-      }));
+      expect(handleError).toHaveBeenCalledWith(
+        err,
+        expect.objectContaining({
+          toastMessage: "Couldn't load article. Try again",
+          analyticsProperties: { id: 3 },
+        })
+      );
     });
   });
 
@@ -233,10 +241,13 @@ describe('articlesService', () => {
       fromMock.mockReturnValue(builder);
 
       await expect(articlesService.getArticleCard(4)).rejects.toThrow(err);
-      expect(handleError).toHaveBeenCalledWith(err, expect.objectContaining({
-        toastMessage: 'Failed to load article',
-        analyticsProperties: { id: 4 },
-      }));
+      expect(handleError).toHaveBeenCalledWith(
+        err,
+        expect.objectContaining({
+          toastMessage: "Couldn't load article. Try again",
+          analyticsProperties: { id: 4 },
+        })
+      );
     });
   });
 });

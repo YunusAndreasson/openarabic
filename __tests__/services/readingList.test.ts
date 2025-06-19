@@ -177,7 +177,7 @@ describe('readingListService', () => {
 
       expect(handleError).toHaveBeenCalledWith(
         error,
-        expect.objectContaining({ toastMessage: 'Failed to remove from reading list' })
+        expect.objectContaining({ toastMessage: "Couldn't remove article. Try again" })
       );
     });
   });

@@ -36,11 +36,14 @@ const ErrorMessage = memo(
     }, [router, screenName]);
 
     return (
-      <View style={styles.messageContainer}>
-        <ThemedText style={[styles.message, { color: colors.error }]}>{customMessage}</ThemedText>
+      <View style={styles.messageContainer} testID="error-message">
+        <ThemedText style={[styles.message, { color: colors.error }]} testID="error-message-text">
+          {customMessage}
+        </ThemedText>
         <ThemedButton
           style={styles.retryButton}
           title={STRINGS.REFRESH}
+          testID="error-retry-button"
           onPress={handleRetry}
         />
       </View>

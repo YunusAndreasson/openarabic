@@ -73,10 +73,13 @@ describe('useSleepTimer', () => {
       result.current.actions.startTimer(0);
     });
 
-    expect(handleError).toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({
-      toastMessage: 'Failed to start sleep timer',
-      analyticsEventName: 'Sleep_Timer_Start_Error',
-    }));
+    expect(handleError).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        toastMessage: "Couldn't start timer. Try again",
+        analyticsEventName: 'Sleep_Timer_Start_Error',
+      })
+    );
   });
 
   it('clears timer on unmount', () => {

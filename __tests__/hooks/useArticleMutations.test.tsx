@@ -65,61 +65,48 @@ const createWrapper = () => {
 
 describe('useArticleMutations', () => {
   it('adds article to reading list when not already added', async () => {
-    const { result } = renderHook(
-      () => useArticleMutations('user-1', jest.fn()),
-      { wrapper: createWrapper() }
-    );
+    const { result } = renderHook(() => useArticleMutations('user-1', jest.fn()), {
+      wrapper: createWrapper(),
+    });
 
     await act(async () => {
       await result.current.handleToggleReadingList(42, false);
     });
 
-    expect(readingListService.addToReadingList).toHaveBeenCalledWith(
-      'user-1',
-      42
-    );
+    expect(readingListService.addToReadingList).toHaveBeenCalledWith('user-1', 42);
   });
 
   it('removes article from reading list when already added', async () => {
-    const { result } = renderHook(
-      () => useArticleMutations('user-1', jest.fn()),
-      { wrapper: createWrapper() }
-    );
+    const { result } = renderHook(() => useArticleMutations('user-1', jest.fn()), {
+      wrapper: createWrapper(),
+    });
 
     await act(async () => {
       await result.current.handleToggleReadingList(99, true);
     });
 
-    expect(readingListService.removeFromReadingList).toHaveBeenCalledWith(
-      'user-1',
-      99
-    );
+    expect(readingListService.removeFromReadingList).toHaveBeenCalledWith('user-1', 99);
   });
 
   it('toggles word study state using session user id', async () => {
-    const { result } = renderHook(
-      () => useArticleMutations('user-1', jest.fn()),
-      { wrapper: createWrapper() }
-    );
+    const { result } = renderHook(() => useArticleMutations('user-1', jest.fn()), {
+      wrapper: createWrapper(),
+    });
 
     await act(async () => {
       await result.current.handleWordPress(5);
     });
 
     const { studyWordsFSRSService } = require('@/services/studyWordsFSRS');
-    expect(studyWordsFSRSService.toggleFSRSStudyRoot).toHaveBeenCalledWith(
-      'user-1',
-      5
-    );
+    expect(studyWordsFSRSService.toggleFSRSStudyRoot).toHaveBeenCalledWith('user-1', 5);
   });
 
   it('refreshes session if missing when toggling word', async () => {
     supabase.auth.getSession.mockResolvedValueOnce({ data: { session: null } });
 
-    const { result } = renderHook(
-      () => useArticleMutations('user-1', jest.fn()),
-      { wrapper: createWrapper() }
-    );
+    const { result } = renderHook(() => useArticleMutations('user-1', jest.fn()), {
+      wrapper: createWrapper(),
+    });
 
     await act(async () => {
       await result.current.handleWordPress(7);
@@ -127,32 +114,27 @@ describe('useArticleMutations', () => {
 
     expect(supabase.auth.refreshSession).toHaveBeenCalled();
     const { studyWordsFSRSService } = require('@/services/studyWordsFSRS');
-    expect(studyWordsFSRSService.toggleFSRSStudyRoot).toHaveBeenCalledWith(
-      'user-1',
-      7
-    );
+    expect(studyWordsFSRSService.toggleFSRSStudyRoot).toHaveBeenCalledWith('user-1', 7);
   });
 
   it('shows sign in message when refresh fails on root press', async () => {
     supabase.auth.getSession.mockResolvedValueOnce({ data: { session: null } });
-    supabase.auth.refreshSession.mockResolvedValueOnce({ data: { session: null }, error: new Error('No session') });
+    supabase.auth.refreshSession.mockResolvedValueOnce({
+      data: { session: null },
+      error: new Error('No session'),
+    });
 
     const { router } = require('expo-router');
 
-    const { result } = renderHook(
-      () => useArticleMutations('user-1', jest.fn()),
-      { wrapper: createWrapper() }
-    );
+    const { result } = renderHook(() => useArticleMutations('user-1', jest.fn()), {
+      wrapper: createWrapper(),
+    });
 
     await act(async () => {
       await result.current.handleRootPress(3);
     });
 
-    expect(mockShowToast).toHaveBeenCalledWith(
-      'Please sign in to add roots to your study list',
-      undefined,
-      'info'
-    );
+    expect(mockShowToast).toHaveBeenCalledWith('Sign in to add roots', undefined, 'info');
     expect(router.replace).toHaveBeenCalledWith('/auth');
     const { studyWordsFSRSService } = require('@/services/studyWordsFSRS');
     expect(studyWordsFSRSService.toggleFSRSStudyRoot).not.toHaveBeenCalled();
@@ -164,10 +146,9 @@ describe('useArticleMutations', () => {
       supabase.auth.getSession.mockRejectedValueOnce(err);
       const { handleError } = require('@/utils/errorHandling');
 
-      const { result } = renderHook(
-        () => useArticleMutations('user-1', jest.fn()),
-        { wrapper: createWrapper() }
-      );
+      const { result } = renderHook(() => useArticleMutations('user-1', jest.fn()), {
+        wrapper: createWrapper(),
+      });
 
       await act(async () => {
         await result.current.handleToggleReadingList(10, false);

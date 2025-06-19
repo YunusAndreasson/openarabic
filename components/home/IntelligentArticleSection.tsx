@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import { useMemo, memo, useRef } from 'react';
+import { useMemo, memo, useRef, useCallback } from 'react';
 
 import FeaturedSection from '@/components/home/FeaturedSection';
 import { STRINGS } from '@/constants/strings';
@@ -7,13 +7,94 @@ import { useIntelligentArticleSelection } from '@/hooks/articles/useIntelligentA
 import { useAuth } from '@/hooks/auth/useAuth';
 import type { Article } from '@/types/articles.types';
 
+// Extract constants outside component to prevent recreation
+const EMPTY_ARTICLE_RESULT = {
+  article: null,
+  reason: STRINGS.LOADING_ARTICLES,
+  type: 'random' as const,
+  dueWordRootIds: new Set<number>(),
+};
+
+// Cache for article filtering to prevent repeated calculations
+const articleFilterCache = new Map<string, Article[]>();
+const CACHE_MAX_SIZE = 50;
+
 interface IntelligentArticleSectionProps {
   articlesData: Article[];
   refreshKey: number;
   onArticlePress: (article: Article) => void;
 }
 
-const IntelligentArticleSection = memo(function IntelligentArticleSection({
+interface CachedSelection {
+  article: Article | null;
+  refreshKey: number;
+}
+
+interface CurrentArticleResult {
+  article: Article | null;
+  reason: string;
+  type: 'due-words' | 'difficult-words' | 'beginner' | 'random';
+  dueWordRootIds: Set<number>;
+}
+
+/**
+ * Custom comparison function for React.memo optimization
+ */
+const IntelligentArticleSectionComparison = (
+  prevProps: IntelligentArticleSectionProps,
+  nextProps: IntelligentArticleSectionProps
+): boolean => {
+  // Quick path comparisons first (most likely to change)
+  if (prevProps.refreshKey !== nextProps.refreshKey) return false;
+  if (prevProps.onArticlePress !== nextProps.onArticlePress) return false;
+
+  // Array reference and length checks
+  if (prevProps.articlesData !== nextProps.articlesData) return false;
+  if (prevProps.articlesData?.length !== nextProps.articlesData?.length) return false;
+
+  return true;
+};
+
+/**
+ * Helper function to create a cache key for article filtering
+ */
+const createCacheKey = (
+  articlesLength: number,
+  refreshKey: number,
+  userId: string | undefined
+): string => {
+  return `${articlesLength}_${refreshKey}_${userId || 'anonymous'}`;
+};
+
+/**
+ * Helper function to get available articles excluding a specific one
+ */
+const getAvailableArticles = (articlesData: Article[], excludeId: number): Article[] => {
+  const cacheKey = `exclude_${excludeId}_${articlesData.length}`;
+
+  if (articleFilterCache.has(cacheKey)) {
+    const cached = articleFilterCache.get(cacheKey);
+    if (cached) return cached;
+  }
+
+  const filtered = articlesData.filter(article => article.id !== excludeId);
+
+  // Manage cache size
+  if (articleFilterCache.size >= CACHE_MAX_SIZE) {
+    const firstKey = articleFilterCache.keys().next().value;
+    if (firstKey !== undefined) {
+      articleFilterCache.delete(firstKey);
+    }
+  }
+
+  articleFilterCache.set(cacheKey, filtered);
+  return filtered;
+};
+
+/**
+ * Internal component implementation
+ */
+const IntelligentArticleSectionInternal = memo(function IntelligentArticleSectionInternal({
   articlesData,
   refreshKey,
   onArticlePress,
@@ -22,17 +103,30 @@ const IntelligentArticleSection = memo(function IntelligentArticleSection({
   const intelligentArticle = useIntelligentArticleSelection(user, articlesData);
 
   // Cache the initial selection to prevent flashing
-  const initialSelectionRef = useRef<{ article: Article | null; refreshKey: number } | null>(null);
+  const initialSelectionRef = useRef<CachedSelection | null>(null);
 
-  // Use stable selection logic
-  const currentArticle = useMemo(() => {
-    if (!articlesData.length) {
-      return {
-        article: null,
-        reason: STRINGS.LOADING_ARTICLES,
-        type: 'random' as const,
-        dueWordRootIds: new Set<number>(),
-      };
+  // Memoize expensive computations
+  const articlesLength = useMemo(() => articlesData.length, [articlesData.length]);
+  const hasArticles = useMemo(() => articlesLength > 0, [articlesLength]);
+  const userId = useMemo(() => user?.id, [user?.id]);
+
+  // Memoize the cache key for better performance
+  const cacheKey = useMemo(
+    () => createCacheKey(articlesLength, refreshKey, userId || 'anonymous'),
+    [articlesLength, refreshKey, userId]
+  );
+
+  // Memoize random selection function
+  const selectRandomArticle = useCallback((articles: Article[]): Article | null => {
+    if (articles.length === 0) return null;
+    const randomIndex = Math.floor(Math.random() * articles.length);
+    return articles[randomIndex] ?? null;
+  }, []);
+
+  // Enhanced stable selection logic with comprehensive memoization
+  const currentArticle: CurrentArticleResult = useMemo(() => {
+    if (!hasArticles) {
+      return EMPTY_ARTICLE_RESULT;
     }
 
     // For initial load (refreshKey === 0), cache and reuse the first intelligent selection
@@ -59,11 +153,10 @@ const IntelligentArticleSection = memo(function IntelligentArticleSection({
     // For refresh (refreshKey > 0), pick a different article
     if (refreshKey > 0 && intelligentArticle.article) {
       const previousArticle = initialSelectionRef.current?.article || intelligentArticle.article;
-      const availableArticles = articlesData.filter(article => article.id !== previousArticle.id);
+      const availableArticles = getAvailableArticles(articlesData, previousArticle.id);
 
       if (availableArticles.length > 0) {
-        const randomIndex = Math.floor(Math.random() * availableArticles.length);
-        const newArticle = availableArticles[randomIndex] ?? null;
+        const newArticle = selectRandomArticle(availableArticles);
 
         if (newArticle) {
           // Update cache for future refreshes
@@ -83,13 +176,42 @@ const IntelligentArticleSection = memo(function IntelligentArticleSection({
 
     // Fallback to intelligent selection
     return intelligentArticle;
-  }, [refreshKey, intelligentArticle, articlesData.length]);
+  }, [
+    hasArticles,
+    refreshKey,
+    intelligentArticle,
+    articlesData,
+    selectRandomArticle,
+    cacheKey, // Include cache key in dependencies to ensure proper invalidation
+  ]);
 
-  if (!currentArticle.article) {
+  // Memoize the selected article for FeaturedSection
+  const selectedArticle = useMemo(() => currentArticle.article, [currentArticle.article]);
+
+  // Memoize the onPress callback to prevent unnecessary re-renders
+  const memoizedOnPress = useCallback(
+    (article: Article) => {
+      onArticlePress(article);
+    },
+    [onArticlePress]
+  );
+
+  // Memoize FeaturedSection props
+  const featuredSectionProps = useMemo(() => {
+    if (!selectedArticle) return null;
+    return {
+      article: selectedArticle,
+      onPress: memoizedOnPress,
+    };
+  }, [selectedArticle, memoizedOnPress]);
+
+  // Early return if no article selected
+  if (!featuredSectionProps) {
     return null;
   }
 
-  return <FeaturedSection article={currentArticle.article} onPress={onArticlePress} />;
-});
+  return <FeaturedSection {...featuredSectionProps} />;
+},
+IntelligentArticleSectionComparison);
 
-export default IntelligentArticleSection;
+export default IntelligentArticleSectionInternal;

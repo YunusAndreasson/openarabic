@@ -1,5 +1,5 @@
 import { FlashList } from '@shopify/flash-list';
-import { useMemo, useCallback, useState, memo, type JSX, type ReactElement, Fragment } from 'react';
+import { useMemo, useCallback, useState, memo, type ReactElement, Fragment } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -221,111 +221,121 @@ interface ArticleContentProps {
   colors: ThemeColors;
 }
 
+// Extract constants outside component for better performance
 const SENTENCE_ITEM_HEIGHT = 70;
+const SCROLL_THROTTLE = 16;
+const DRAW_DISTANCE_MULTIPLIER = 12;
+
 const getItemType = () => 'sentence';
 
-export const ArticleContent = ({
-  id,
-  article,
-  sortedSentences,
-  renderSentenceItem,
-  handleScroll,
-  colors,
-}: ArticleContentProps): JSX.Element => {
-  const insets = useSafeAreaInsets();
+// Optimize main component with memo and custom comparison
+export const ArticleContent = memo<ArticleContentProps>(
+  ({ id, article, sortedSentences, renderSentenceItem, handleScroll, colors }) => {
+    const insets = useSafeAreaInsets();
+    const { user } = useAuth();
 
-  const { user } = useAuth();
-  const articleId = parseInt(id ?? '', 10);
+    // Memoize article ID calculation
+    const articleId = useMemo(() => parseInt(id ?? '', 10), [id]);
 
-  // Get reading list data for the button
-  const { isInReadingList, refetchReadingListStatus, isLoadingReadingList } = useArticleData(
-    articleId,
-    user?.id
-  );
-
-  const { handleToggleReadingList } = useArticleMutations(user?.id, refetchReadingListStatus);
-
-  // Handle scroll events
-  const handleAnimatedScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      handleScroll(event);
-    },
-    [handleScroll]
-  );
-
-  // Memoize the header component for better performance
-  const headerComponent = useMemo(
-    () => (
-      <Fragment>
-        <ParallaxHeader article={article} colors={colors} />
-        <ArticleSummary summary={String(article.summary)} />
-        {user && (
-          <AudioControlsButton
-            articleId={articleId}
-            isInReadingList={isInReadingList}
-            isLoading={isLoadingReadingList}
-            onToggleReadingList={handleToggleReadingList}
-          />
-        )}
-      </Fragment>
-    ),
-    [
-      article,
-      colors,
-      user,
+    // Get reading list data for the button
+    const { isInReadingList, refetchReadingListStatus, isLoadingReadingList } = useArticleData(
       articleId,
-      isInReadingList,
-      isLoadingReadingList,
-      handleToggleReadingList,
-    ]
-  );
+      user?.id
+    );
 
-  const getItemTypeCallback = useCallback(getItemType, []);
+    const { handleToggleReadingList } = useArticleMutations(user?.id, refetchReadingListStatus);
 
-  const overrideItemLayout = useCallback(
-    (layout: { span?: number; size?: number }) => {
+    // Handle scroll events
+    const handleAnimatedScroll = useCallback(
+      (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        handleScroll(event);
+      },
+      [handleScroll]
+    );
+
+    // Memoize the header component for better performance
+    const headerComponent = useMemo(
+      () => (
+        <Fragment>
+          <ParallaxHeader article={article} colors={colors} />
+          <ArticleSummary summary={String(article.summary)} />
+          {user && (
+            <AudioControlsButton
+              articleId={articleId}
+              isInReadingList={isInReadingList}
+              isLoading={isLoadingReadingList}
+              onToggleReadingList={handleToggleReadingList}
+            />
+          )}
+        </Fragment>
+      ),
+      [
+        article,
+        colors,
+        user,
+        articleId,
+        isInReadingList,
+        isLoadingReadingList,
+        handleToggleReadingList,
+      ]
+    );
+
+    const getItemTypeCallback = useCallback(getItemType, []);
+
+    const overrideItemLayout = useCallback((layout: { span?: number; size?: number }) => {
       layout.size = SENTENCE_ITEM_HEIGHT;
-    },
-    []
-  );
+    }, []);
 
-  return (
-    <View style={styles.flexOne}>
-      {sortedSentences && sortedSentences.length > 0 ? (
-        <View
-          style={[styles.listContainer, styles.content, { backgroundColor: colors.background }]}
-        >
-          <FlashList
-            key={`article-${id}`}
-            alwaysBounceVertical={false} // Only bounce when content allows it
-            bounces={true} // Re-enable bounce for parallax pull-down effect
-            data={sortedSentences}
-            drawDistance={SENTENCE_ITEM_HEIGHT * 12} // Increased for better performance
-            estimatedFirstItemOffset={0}
-            estimatedItemSize={SENTENCE_ITEM_HEIGHT}
-            extraData={''}
-            getItemType={getItemTypeCallback} // Add item type for better optimization
-            initialScrollIndex={0}
-            keyExtractor={item => item.id.toString()}
-            ListHeaderComponent={headerComponent}
-            overScrollMode="auto" // Allow controlled overscroll for parallax
-            persistentScrollbar={true}
-            removeClippedSubviews={true} // Improve performance
-            renderItem={renderSentenceItem}
-            scrollEventThrottle={16} // Standard throttle for natural scrolling feel
-            showsVerticalScrollIndicator={true}
-            contentContainerStyle={{
-              paddingTop: 0, // Remove padding since ParallaxHeader handles its own layout
-              // Slight bottom padding adjustment for better closure
-              paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + insets.bottom + LAYOUT.SPACING.MEDIUM,
-            }}
-            overrideItemLayout={overrideItemLayout}
-            onScroll={handleAnimatedScroll}
-          />
-        </View>
-      ) : null}
-    </View>
-  );
-};
+    return (
+      <View style={styles.flexOne}>
+        {sortedSentences && sortedSentences.length > 0 ? (
+          <View
+            style={[styles.listContainer, styles.content, { backgroundColor: colors.background }]}
+          >
+            <FlashList
+              key={`article-${id}`}
+              alwaysBounceVertical={false}
+              bounces={true}
+              data={sortedSentences}
+              drawDistance={SENTENCE_ITEM_HEIGHT * DRAW_DISTANCE_MULTIPLIER}
+              estimatedFirstItemOffset={0}
+              estimatedItemSize={SENTENCE_ITEM_HEIGHT}
+              extraData={''}
+              getItemType={getItemTypeCallback} // Add item type for better optimization
+              initialScrollIndex={0}
+              keyExtractor={item => item.id.toString()}
+              ListHeaderComponent={headerComponent}
+              overScrollMode="auto" // Allow controlled overscroll for parallax
+              persistentScrollbar={true}
+              removeClippedSubviews={true} // Improve performance
+              renderItem={renderSentenceItem}
+              scrollEventThrottle={SCROLL_THROTTLE}
+              showsVerticalScrollIndicator={true}
+              contentContainerStyle={{
+                paddingTop: 0, // Remove padding since ParallaxHeader handles its own layout
+                // Slight bottom padding adjustment for better closure
+                paddingBottom:
+                  LAYOUT.CONTENT_SPACING.BOTTOM + insets.bottom + LAYOUT.SPACING.MEDIUM,
+              }}
+              overrideItemLayout={overrideItemLayout}
+              onScroll={handleAnimatedScroll}
+            />
+          </View>
+        ) : null}
+      </View>
+    );
+  },
+  // Custom comparison function for performance-critical props
+  (prevProps, nextProps) => {
+    return (
+      prevProps.id === nextProps.id &&
+      prevProps.article === nextProps.article &&
+      prevProps.sortedSentences === nextProps.sortedSentences &&
+      prevProps.renderSentenceItem === nextProps.renderSentenceItem &&
+      prevProps.handleScroll === nextProps.handleScroll &&
+      prevProps.colors === nextProps.colors
+    );
+  }
+);
 
 ArticleContent.displayName = 'ArticleContent';

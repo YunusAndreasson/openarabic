@@ -51,7 +51,7 @@ describe('authorsService', () => {
 
       await expect(authorsService.getAuthors()).rejects.toThrow(error);
       expect(handleError).toHaveBeenCalledWith(error, {
-        toastMessage: 'Failed to load authors',
+        toastMessage: "Couldn't load authors. Try again",
       });
     });
   });
@@ -93,7 +93,7 @@ describe('authorsService', () => {
       await expect(authorsService.getAuthorsByCategory(4)).rejects.toThrow(error);
 
       expect(handleError).toHaveBeenCalledWith(error, {
-        toastMessage: 'Failed to load authors',
+        toastMessage: "Couldn't load authors. Try again",
       });
     });
   });

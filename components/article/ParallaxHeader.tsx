@@ -7,19 +7,75 @@ import type { Article } from '@/types/articles.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { withOpacity } from '@/utils/colorUtils';
 
-// Increased header height to accommodate overlapping summary
+// Extract constants outside component to prevent recreation
 const HEADER_IMAGE_HEIGHT = 280;
+const GRADIENT_HEIGHT_PERCENTAGE = '60%';
+
+// Static styles to prevent recreation
+const STATIC_STYLES = StyleSheet.create({
+  container: {
+    // Remove position relative to avoid z-index issues
+  },
+  imageSection: {
+    width: '100%',
+    height: HEADER_IMAGE_HEIGHT,
+    position: 'relative',
+    overflow: 'hidden', // Ensure image doesn't bleed outside container
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  imageGradientOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: GRADIENT_HEIGHT_PERCENTAGE,
+  },
+  backgroundGradientOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+});
 
 interface ParallaxHeaderProps {
   article: Article;
   colors: ThemeColors;
 }
 
-const ParallaxHeader = memo<ParallaxHeaderProps>(({ article, colors }) => {
-  // Image source - safely handle potential undefined
-  const imageSource = String(article.image_url);
+/**
+ * Custom comparison function for React.memo optimization
+ */
+const ParallaxHeaderComparison = (
+  prevProps: ParallaxHeaderProps,
+  nextProps: ParallaxHeaderProps
+): boolean => {
+  // Quick path comparisons first (most likely to change)
+  if (prevProps.article !== nextProps.article) return false;
+  if (prevProps.colors !== nextProps.colors) return false;
 
-  // Enhanced gradient for better summary integration
+  // Article properties comparison
+  if (prevProps.article.image_url !== nextProps.article.image_url) return false;
+
+  // Colors comparison (most critical for gradient calculations)
+  if (prevProps.colors.black !== nextProps.colors.black) return false;
+  if (prevProps.colors.background !== nextProps.colors.background) return false;
+
+  return true;
+};
+
+/**
+ * Optimized ParallaxHeader component with performance enhancements
+ */
+const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors }) => {
+  // Memoize image source - safely handle potential undefined
+  const imageSource = useMemo(() => String(article.image_url || ''), [article.image_url]);
+
+  // Enhanced gradient for better summary integration with memoization
   const imageGradientColors = useMemo(() => {
     return [
       'transparent',
@@ -32,7 +88,7 @@ const ParallaxHeader = memo<ParallaxHeaderProps>(({ article, colors }) => {
     ] as const;
   }, [colors.black]);
 
-  // Background gradient colors for smooth transition to content
+  // Background gradient colors for smooth transition to content with memoization
   const backgroundGradientColors = useMemo(() => {
     const bgColor = colors.background;
     const overlayColor = colors.black;
@@ -51,70 +107,43 @@ const ParallaxHeader = memo<ParallaxHeaderProps>(({ article, colors }) => {
     ] as const;
   }, [colors.background, colors.black]);
 
+  // Memoize EnhancedImage props to prevent unnecessary re-renders
+  const imageProps = useMemo(
+    () => ({
+      source: imageSource,
+      style: STATIC_STYLES.image,
+      contentFit: 'cover' as const,
+      contentPosition: 'center' as const,
+      priority: 'high' as const,
+      cachePolicy: 'disk' as const,
+    }),
+    [imageSource]
+  );
+
   return (
-    <View style={styles.container}>
+    <View style={STATIC_STYLES.container}>
       {/* Background Image Section */}
-      <View style={styles.imageSection}>
-        <EnhancedImage
-          source={imageSource}
-          style={styles.image}
-          contentFit="cover"
-          contentPosition="center"
-          priority="high"
-          cachePolicy="disk"
-        />
+      <View style={STATIC_STYLES.imageSection}>
+        <EnhancedImage {...imageProps} />
 
         {/* Enhanced image gradient for summary overlay */}
         <LinearGradient
           colors={imageGradientColors}
-          style={styles.imageGradientOverlay}
+          style={STATIC_STYLES.imageGradientOverlay}
           pointerEvents="none"
         />
 
         {/* Background transition gradient */}
         <LinearGradient
           colors={backgroundGradientColors}
-          style={styles.backgroundGradientOverlay}
+          style={STATIC_STYLES.backgroundGradientOverlay}
           pointerEvents="none"
         />
       </View>
     </View>
   );
-});
+}, ParallaxHeaderComparison);
 
-const styles = StyleSheet.create({
-  container: {
-    // Remove position relative to avoid z-index issues
-  },
-  // Image section - Extended height for overlapping summary
-  imageSection: {
-    width: '100%',
-    height: HEADER_IMAGE_HEIGHT,
-    position: 'relative',
-    overflow: 'hidden', // Ensure image doesn't bleed outside container
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  // Enhanced gradient overlay for summary integration
-  imageGradientOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '60%', // Increased from 40% to 60% for better summary integration
-  },
-  // Background gradient for smooth transition to content
-  backgroundGradientOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-});
+ParallaxHeaderInternal.displayName = 'ParallaxHeader';
 
-ParallaxHeader.displayName = 'ParallaxHeader';
-
-export default ParallaxHeader;
+export default ParallaxHeaderInternal;

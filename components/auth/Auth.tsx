@@ -113,6 +113,7 @@ function Auth(): JSX.Element {
             textAlignVertical="center"
             textContentType="emailAddress"
             value={email}
+            testID="email-input"
             onBlur={handleEmailBlur}
             onChangeText={handleEmailChange}
           />
@@ -132,6 +133,7 @@ function Auth(): JSX.Element {
             textAlignVertical="center"
             textContentType={isRegistering ? 'newPassword' : 'password'}
             value={password}
+            testID="password-input"
             hint={
               isRegistering
                 ? STRINGS.PASSWORD_REQUIREMENTS_HINT.replace(
@@ -151,11 +153,17 @@ function Auth(): JSX.Element {
           loading={loading}
           style={styles.button}
           title={isRegistering ? STRINGS.CREATE_ACCOUNT : STRINGS.SIGN_IN}
+          testID={isRegistering ? 'create-account-button' : 'sign-in-button'}
           onPress={isRegistering ? signUpWithEmail : signInWithEmail}
         />
       </View>
 
-      <TouchableOpacity activeOpacity={0.7} style={styles.toggleContainer} onPress={toggleMode}>
+      <TouchableOpacity
+        activeOpacity={0.7}
+        style={styles.toggleContainer}
+        testID="toggle-mode-button"
+        onPress={toggleMode}
+      >
         <ThemedText align="center" type="body" variant="secondary">
           {isRegistering ? STRINGS.HAVE_ACCOUNT_SIGN_IN : STRINGS.NEED_ACCOUNT_CREATE_ONE}
         </ThemedText>

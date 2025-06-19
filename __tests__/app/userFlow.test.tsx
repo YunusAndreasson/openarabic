@@ -224,7 +224,7 @@ describe('UI flow', () => {
       );
     }
 
-    const { getByTestId, queryByText } = render(<ReviewStarter />);
+    const { getByTestId, queryByTestId } = render(<ReviewStarter />);
 
     await act(async () => {
       fireEvent.press(getByTestId('start-review-due'));
@@ -232,7 +232,7 @@ describe('UI flow', () => {
     });
 
     expect(router.push).not.toHaveBeenCalled();
-    expect(queryByText("Your progress isn't available right now.")).toBeTruthy();
+    expect(queryByTestId('error-message')).toBeTruthy();
   });
 
   it('completes review after swipe', () => {

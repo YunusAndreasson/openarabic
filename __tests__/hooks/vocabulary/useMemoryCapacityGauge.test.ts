@@ -1,5 +1,6 @@
 import { renderHook } from '@testing-library/react-native';
-import { useMemoryCapacityGauge, CAPACITY_THRESHOLDS } from '../../../hooks/vocabulary/useMemoryCapacityGauge';
+import { useMemoryCapacityGauge } from '../../../hooks/vocabulary/useMemoryCapacityGauge';
+import { CAPACITY_THRESHOLDS } from '../../../constants/fsrs';
 
 // Mock color hooks to return deterministic colors
 jest.mock('../../../hooks/theme/useColors', () => ({
@@ -31,9 +32,7 @@ describe('useMemoryCapacityGauge', () => {
   } as const;
 
   it('returns default metrics when no words provided', () => {
-    const { result } = renderHook(() =>
-      useMemoryCapacityGauge({ ...baseProps, studyWords: [] })
-    );
+    const { result } = renderHook(() => useMemoryCapacityGauge({ ...baseProps, studyWords: [] }));
 
     expect(result.current.memoryMetrics).toEqual({ capacityScore: 85, trend: 'stable' });
     expect(result.current.gaugePaths.filledSweep).toBeCloseTo(144.5);
@@ -69,11 +68,14 @@ describe('useMemoryCapacityGauge', () => {
   });
 
   it('maps score to colors and messages', () => {
-    const { result } = renderHook(() =>
-      useMemoryCapacityGauge({ ...baseProps, studyWords: [] })
-    );
+    const { result } = renderHook(() => useMemoryCapacityGauge({ ...baseProps, studyWords: [] }));
 
-    const { getCapacityColor, getReadinessMessage, getFilledGradientColors, getFilledGradientPositions } = result.current;
+    const {
+      getCapacityColor,
+      getReadinessMessage,
+      getFilledGradientColors,
+      getFilledGradientPositions,
+    } = result.current;
 
     expect(getCapacityColor(80)).toBe('#e');
     expect(getCapacityColor(60)).toBe('#g');
@@ -83,9 +85,9 @@ describe('useMemoryCapacityGauge', () => {
     expect(getCapacityColor(0)).toBe('#p');
 
     expect(getReadinessMessage(80)).toBe('Add new words');
-    expect(getReadinessMessage(60)).toBe('Add words moderately');
-    expect(getReadinessMessage(40)).toBe('Review before adding');
-    expect(getReadinessMessage(10)).toBe('Focus on reviews only');
+    expect(getReadinessMessage(60)).toBe('Add moderately');
+    expect(getReadinessMessage(40)).toBe('Review first');
+    expect(getReadinessMessage(10)).toBe('Focus on reviews');
 
     expect(getFilledGradientColors(20)).toEqual(['#p', '#m']);
     expect(getFilledGradientColors(50)).toEqual(['#p', '#m', '#g']);
