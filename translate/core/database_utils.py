@@ -266,11 +266,83 @@ def insert_sentence_words(
     if words_data:
         supabase.table("sentence_words").insert(words_data).execute()
 
+
     return {
         "total_words": total_words,
         "words_with_timing": words_with_timing,
         "match_stats": match_stats,
     }
+
+
+def get_adjacent_texts(
+    translations: List[Dict], idx: int
+) -> tuple[Optional[str], Optional[str]]:
+    """Return previous and next sentence text for context."""
+    prev_text = None
+    next_text = None
+    if idx > 0:
+        prev = translations[idx - 1]
+        prev_text = prev.get("tashkeel", prev.get("original"))
+    if idx < len(translations) - 1:
+        nxt = translations[idx + 1]
+        next_text = nxt.get("tashkeel", nxt.get("original"))
+    return prev_text, next_text
+
+
+def download_audio_for_concat(filename: str, dest_path: str) -> bool:
+    """Download an audio file from storage for concatenation."""
+    try:
+        response = supabase.storage.from_("audio").download(filename)
+        if response:
+            with open(dest_path, "wb") as f:
+                f.write(response)
+            return True
+    except Exception as e:
+        logger.info(f"Error downloading audio file: {str(e)}")
+    return False
+
+
+def cleanup_temp_files(files: List[str], temp_dir: str) -> None:
+    """Remove temporary files and directory if possible."""
+    for file in files:
+        try:
+            os.remove(file)
+        except Exception:
+            pass
+    try:
+        os.rmdir(temp_dir)
+    except Exception:
+        pass
+
+
+def concatenate_and_upload_audio(
+    files: List[str], temp_dir: str, article_id: int
+) -> None:
+    """Concatenate sentence audio files, upload, and clean up."""
+    final_audio_filename = generate_audio_filename()
+    final_audio_path = os.path.join(temp_dir, final_audio_filename)
+
+    if concatenate_audio_files(files, final_audio_path):
+        try:
+            with open(final_audio_path, "rb") as f:
+                supabase.storage.from_("audio").upload(
+                    final_audio_filename,
+                    f,
+                    file_options={"content-type": "audio/mpeg"},
+                )
+
+            article_audio_url = (
+                f"{os.environ.get('SUPABASE_URL')}/storage/v1/object/public/audio/{final_audio_filename}"
+            )
+            supabase.table("articles").update({"audio_url": article_audio_url}).eq(
+                "id", article_id
+            ).execute()
+
+            logger.info("Successfully created and uploaded concatenated article audio")
+        except Exception as e:
+            logger.info(f"Error uploading concatenated audio: {str(e)}")
+
+    cleanup_temp_files(files + [final_audio_path], temp_dir)
 
 
 def insert_article_sentences(article_id: int, translations: List[Dict]) -> Dict:
@@ -291,24 +363,7 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> Dict:
 
     try:
         for idx, translation in enumerate(translations):
-            # Get previous and next sentences for better continuity
-            # Use tashkeel version if available for better pronunciation
-            previous_text = None
-            next_text = None
-
-            if idx > 0:
-                prev_translation = translations[idx - 1]
-                # Prefer tashkeel version for better pronunciation
-                previous_text = prev_translation.get(
-                    "tashkeel", prev_translation["original"]
-                )
-
-            if idx < len(translations) - 1:
-                next_translation = translations[idx + 1]
-                # Prefer tashkeel version for better pronunciation
-                next_text = next_translation.get(
-                    "tashkeel", next_translation["original"]
-                )
+            previous_text, next_text = get_adjacent_texts(translations, idx)
 
             # Generate audio for this individual sentence with timestamps
             temp_audio_file = os.path.join(temp_dir, f"sentence_{idx}.mp3")
@@ -329,15 +384,8 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> Dict:
                 word_timings = audio_result.get("word_timings", [])
                 timing_stats["sentences_with_audio"] += 1
 
-                # Download the audio file for concatenation
-                try:
-                    response = supabase.storage.from_("audio").download(audio_filename)
-                    if response:
-                        with open(temp_audio_file, "wb") as f:
-                            f.write(response)
-                        sentence_audio_files.append(temp_audio_file)
-                except Exception as e:
-                    logger.info(f"Error downloading audio file: {str(e)}")
+                if download_audio_for_concat(audio_filename, temp_audio_file):
+                    sentence_audio_files.append(temp_audio_file)
 
                 if word_timings:
                     timing_stats["sentences_with_timings"] += 1
@@ -374,55 +422,13 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> Dict:
 
         # After processing all sentences, concatenate their audio files
         if sentence_audio_files:
-            final_audio_filename = generate_audio_filename()
-            final_audio_path = os.path.join(temp_dir, final_audio_filename)
-
-            if concatenate_audio_files(sentence_audio_files, final_audio_path):
-                # Upload the concatenated file
-                try:
-                    with open(final_audio_path, "rb") as f:
-                        supabase.storage.from_("audio").upload(
-                            final_audio_filename,
-                            f,
-                            file_options={"content-type": "audio/mpeg"},
-                        )
-
-                    # Update the article with the concatenated audio URL
-                    article_audio_url = f"{os.environ.get('SUPABASE_URL')}/storage/v1/object/public/audio/{final_audio_filename}"
-                    supabase.table("articles").update(
-                        {"audio_url": article_audio_url}
-                    ).eq("id", article_id).execute()
-
-                    logger.info(
-                        "Successfully created and uploaded concatenated article audio"
-                    )
-                except Exception as e:
-                    logger.info(f"Error uploading concatenated audio: {str(e)}")
-
-            # Clean up temporary files
-            for file in sentence_audio_files:
-                try:
-                    os.remove(file)
-                except:
-                    pass
-            try:
-                os.remove(final_audio_path)
-                os.rmdir(temp_dir)
-            except:
-                pass
+            concatenate_and_upload_audio(sentence_audio_files, temp_dir, article_id)
+        else:
+            cleanup_temp_files([], temp_dir)
 
     except Exception as e:
         logger.info(f"Error processing sentences: {str(e)}")
-        # Clean up on error
-        for file in sentence_audio_files:
-            try:
-                os.remove(file)
-            except:
-                pass
-        try:
-            os.rmdir(temp_dir)
-        except:
-            pass
+        cleanup_temp_files(sentence_audio_files, temp_dir)
         raise
 
     return timing_stats
