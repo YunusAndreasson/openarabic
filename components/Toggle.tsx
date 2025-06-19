@@ -91,31 +91,17 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
         height: HANDLE_SIZE,
         borderRadius: HANDLE_SIZE / 2,
         backgroundColor: value
-          ? colors.background
-          : isDarkMode
-          ? colors.textTertiary
-          : colors.white,
+          ? colors.elevation3 // Floating elevated surface when active
+          : colors.elevation2, // Raised surface when inactive
         ...shadowStyle,
       },
       styles.shadow,
     ],
-    [
-      HANDLE_SIZE,
-      value,
-      colors.background,
-      colors.white,
-      colors.textTertiary,
-      isDarkMode,
-      shadowStyle,
-    ]
+    [HANDLE_SIZE, value, colors.elevation2, colors.elevation3, shadowStyle]
   );
 
   return (
-    <TouchableOpacity
-      activeOpacity={1}
-      style={TOUCHABLE_WRAPPER_STYLE}
-      onPress={handlePress}
-    >
+    <TouchableOpacity activeOpacity={1} style={TOUCHABLE_WRAPPER_STYLE} onPress={handlePress}>
       <Animated.View style={[containerStyle, combinedContainerStyle]}>
         <View style={styles.toggleTrack}>
           <Animated.View style={[handleStyle, handleAnimatedStyle]} />
@@ -136,10 +122,11 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   shadow: {
-    elevation: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
-    shadowOpacity: 0.15, // LAYOUT.ELEVATION.SUBTLE equivalent
-    shadowRadius: 2, // LAYOUT.ELEVATION.SUBTLE equivalent
-    shadowOffset: { width: 0, height: 1 }, // LAYOUT.ELEVATION.SUBTLE equivalent
+    // Extract only shadow properties, excluding 'level' which is not valid for ViewStyle
+    ...(function () {
+      const { level, ...shadowProps } = LAYOUT.ELEVATION.SUBTLE;
+      return shadowProps;
+    })(),
   },
   toggleTrack: {
     alignItems: 'flex-start',
