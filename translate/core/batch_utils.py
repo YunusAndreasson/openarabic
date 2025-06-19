@@ -1,5 +1,5 @@
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 
 from translate.core.text_utils import get_optimized_context
 from translate.core.models import SentenceTranslation, WordTranslation
@@ -104,20 +104,18 @@ def translate_words(
     return word_results
 
 
-def refine_translations(
+def build_refinement_input(
     batch_sentences: List[str],
-    start_index: int,
     translation_results: List[Dict[str, Any]],
     tashkeel_results: List[Dict[str, Any]],
     word_options_results: List[Dict[str, Any]],
-) -> List[SentenceTranslation]:
-    """Refine translations using previous results and return final objects."""
-    batch_size = len(batch_sentences)
+) -> Tuple[List[Dict[str, Any]], List[List[Dict[str, Any]]]]:
+    """Prepare input payload for refinement step."""
     refinement_input = []
-    all_word_options_uncertainties = []
-    for i in range(batch_size):
-        word_opts_list = word_options_results[i].get("word_translations", [])
-        all_word_options_uncertainties.append(
+    all_word_uncertainties: List[List[Dict[str, Any]]] = []
+    for i, opts in enumerate(word_options_results):
+        word_opts_list = opts.get("word_translations", [])
+        all_word_uncertainties.append(
             [u for word_opts in word_opts_list for u in word_opts.get("uncertainties", [])]
         )
         refinement_input.append(
@@ -129,121 +127,144 @@ def refine_translations(
                 "previous_uncertainties": {
                     "translation": translation_results[i].get("uncertainties", []),
                     "tashkeel": tashkeel_results[i].get("uncertainties", []),
-                    "word": all_word_options_uncertainties[i],
+                    "word": all_word_uncertainties[-1],
                 },
             }
         )
+    return refinement_input, all_word_uncertainties
 
-    refinement_results = batch_refine_translations(refinement_input)
 
+def create_sentence_translation(
+    i: int,
+    start_index: int,
+    refinement: Dict[str, Any],
+    translation_result: Dict[str, Any],
+    tashkeel_result: Dict[str, Any],
+    word_options_result: Dict[str, Any],
+) -> SentenceTranslation:
+    refined_tashkeel = refinement.get(
+        "improved_tashkeel", tashkeel_result.get("tashkeel", "")
+    )
+    refined_translation = refinement.get(
+        "improved_translation", translation_result.get("translation", "")
+    )
+
+    notes = []
+    if translation_result.get("notes"):
+        notes.append(f"Initial Translation Notes: {translation_result['notes']}")
+    if refinement.get("changes_made"):
+        notes.append("Refinement Changes:")
+        notes.extend([f"- {change}" for change in refinement["changes_made"]])
+
+    resolved = refinement.get("resolved_uncertainties", [])
+    remaining = refinement.get("remaining_uncertainties", [])
+
+    if resolved or remaining:
+        notes.append("\nUncertainty Resolution:")
+        if resolved:
+            notes.append("- Resolved:")
+            for r in resolved:
+                notes.append(
+                    f"  * Step: {r.get('step', 'N/A')}, "
+                    f"Explanation: {r.get('explanation', 'No explanation')}"
+                )
+        if remaining:
+            notes.append("- Remaining:")
+            for r in remaining:
+                notes.append(
+                    f"  * Type: {r.get('type', 'N/A')}, "
+                    f"Desc: {r.get('description', 'Unknown issue')} "
+                    f"({r.get('reason_unresolved', 'No reason provided')})"
+                )
+
+    final_word_translations = []
+    refined_words_data = refinement.get("improved_word_translations", [])
+    if refined_words_data and isinstance(refined_words_data, list):
+        for word_data in refined_words_data:
+            if not isinstance(word_data, dict):
+                continue
+            final_word_translations.append(
+                WordTranslation(
+                    arabic=word_data.get("arabic", ""),
+                    english=word_data.get("english", ""),
+                    pos=word_data.get("pos"),
+                    essential=word_data.get("essential"),
+                    essential_translation=word_data.get("essential_translation", ""),
+                    notes=word_data.get("notes"),
+                )
+            )
+    else:
+        word_opts_list = word_options_result.get("word_translations", [])
+        for word_opts in word_opts_list:
+            final_word_translations.append(
+                WordTranslation(
+                    arabic=word_opts.get("arabic", ""),
+                    english=word_opts.get("english_options", ["[Fallback Error]"])[0],
+                    pos=word_opts.get("pos"),
+                    essential=word_opts.get("essential"),
+                    essential_translation=word_opts.get(
+                        "essential_translation_options", ["[Fallback Error]"]
+                    )[0],
+                    notes=word_opts.get("notes", "") + " (Refinement fallback)",
+                )
+            )
+
+    sentence_translation = SentenceTranslation(
+        index=start_index + i,
+        original=batch_sentences[i],
+        tashkeel=refined_tashkeel,
+        word_by_word=final_word_translations,
+        full_translation=refined_translation,
+        notes="\n".join(notes) if notes else None,
+        verification_status="Refined" if refinement.get("changes_made") else "Verified",
+        verification_issues=[
+            f"{u.get('type', 'N/A')}: {u.get('description', 'Unspecified issue')}"
+            for u in remaining
+        ]
+        if remaining
+        else None,
+    )
+
+    validation_issues = validate_final_translation(sentence_translation)
+    if validation_issues:
+        sentence_translation.verification_status = "Issues Found"
+        if sentence_translation.verification_issues:
+            sentence_translation.verification_issues.extend(validation_issues)
+        else:
+            sentence_translation.verification_issues = validation_issues
+
+    return sentence_translation
+
+
+def refine_translations(
+    batch_sentences: List[str],
+    start_index: int,
+    translation_results: List[Dict[str, Any]],
+    tashkeel_results: List[Dict[str, Any]],
+    word_options_results: List[Dict[str, Any]],
+) -> List[SentenceTranslation]:
+    """Refine translations using previous results and return final objects."""
+    inputs, _ = build_refinement_input(
+        batch_sentences, translation_results, tashkeel_results, word_options_results
+    )
+    refinement_results = batch_refine_translations(inputs)
     results: List[SentenceTranslation] = []
-    for i in range(batch_size):
-        index = start_index + i
+    for i in range(len(batch_sentences)):
         refinement = (
             refinement_results.get("refinements", [])[i]
             if i < len(refinement_results.get("refinements", []))
             else {}
         )
-
-        refined_tashkeel = refinement.get(
-            "improved_tashkeel", tashkeel_results[i].get("tashkeel", "")
-        )
-        refined_translation = refinement.get(
-            "improved_translation", translation_results[i].get("translation", "")
-        )
-
-        notes = []
-        if translation_results[i].get("notes"):
-            notes.append(
-                f"Initial Translation Notes: {translation_results[i]['notes']}"
+        results.append(
+            create_sentence_translation(
+                i,
+                start_index,
+                refinement,
+                translation_results[i],
+                tashkeel_results[i],
+                word_options_results[i],
             )
-        if refinement.get("changes_made"):
-            notes.append("Refinement Changes:")
-            notes.extend([f"- {change}" for change in refinement["changes_made"]])
-
-        resolved = refinement.get("resolved_uncertainties", [])
-        remaining = refinement.get("remaining_uncertainties", [])
-
-        if resolved or remaining:
-            notes.append("\nUncertainty Resolution:")
-            if resolved:
-                notes.append("- Resolved:")
-                for r in resolved:
-                    notes.append(
-                        f"  * Step: {r.get('step', 'N/A')}, "
-                        f"Explanation: {r.get('explanation', 'No explanation')}"
-                    )
-            if remaining:
-                notes.append("- Remaining:")
-                for r in remaining:
-                    notes.append(
-                        f"  * Type: {r.get('type', 'N/A')}, "
-                        f"Desc: {r.get('description', 'Unknown issue')} "
-                        f"({r.get('reason_unresolved', 'No reason provided')})"
-                    )
-
-        final_word_translations = []
-        refined_words_data = refinement.get("improved_word_translations", [])
-        if refined_words_data and isinstance(refined_words_data, list):
-            for word_data in refined_words_data:
-                if not isinstance(word_data, dict):
-                    continue
-                final_word_translations.append(
-                    WordTranslation(
-                        arabic=word_data.get("arabic", ""),
-                        english=word_data.get("english", ""),
-                        pos=word_data.get("pos"),
-                        essential=word_data.get("essential"),
-                        essential_translation=word_data.get(
-                            "essential_translation", ""
-                        ),
-                        notes=word_data.get("notes"),
-                    )
-                )
-        else:
-            word_opts_list = word_options_results[i].get("word_translations", [])
-            for word_opts in word_opts_list:
-                final_word_translations.append(
-                    WordTranslation(
-                        arabic=word_opts.get("arabic", ""),
-                        english=word_opts.get("english_options", ["[Fallback Error]"])[
-                            0
-                        ],
-                        pos=word_opts.get("pos"),
-                        essential=word_opts.get("essential"),
-                        essential_translation=word_opts.get(
-                            "essential_translation_options", ["[Fallback Error]"]
-                        )[0],
-                        notes=word_opts.get("notes", "") + " (Refinement fallback)",
-                    )
-                )
-
-        sentence_translation = SentenceTranslation(
-            index=index,
-            original=batch_sentences[i],
-            tashkeel=refined_tashkeel,
-            word_by_word=final_word_translations,
-            full_translation=refined_translation,
-            notes="\n".join(notes) if notes else None,
-            verification_status="Refined" if refinement.get("changes_made") else "Verified",
-            verification_issues=[
-                f"{u.get('type', 'N/A')}: {u.get('description', 'Unspecified issue')}"
-                for u in remaining
-            ]
-            if remaining
-            else None,
         )
-
-        validation_issues = validate_final_translation(sentence_translation)
-        if validation_issues:
-            sentence_translation.verification_status = "Issues Found"
-            if sentence_translation.verification_issues:
-                sentence_translation.verification_issues.extend(validation_issues)
-            else:
-                sentence_translation.verification_issues = validation_issues
-
-        results.append(sentence_translation)
-
     return results
 
 

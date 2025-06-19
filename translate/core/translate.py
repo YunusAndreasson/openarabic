@@ -12,6 +12,12 @@ from translate.core.models import (
 
 # Import batch utilities
 from translate.core.batch_utils import create_batches, process_batch
+from translate.core.file_utils import (
+    read_json_file,
+    write_json_file,
+    generate_split_filename,
+)
+from translate.core.config import MAX_BATCH_SIZE
 
 # Import shared utilities
 
@@ -22,9 +28,70 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-# Configuration constants
-MAX_BATCH_SIZE = 5  # Maximum number of sentences to process in one batch
+def to_dict(obj):
+    if isinstance(obj, list):
+        return [to_dict(item) for item in obj]
+    elif hasattr(obj, "__dict__"):
+        return {k: to_dict(v) for k, v in obj.__dict__.items()}
+    return obj
 
+
+def load_split_data(input_file: str) -> dict | None:
+    """Load the split JSON created by split_file.py."""
+    split_path = generate_split_filename(input_file)
+    if not os.path.exists(split_path):
+        return None
+    return read_json_file(split_path)
+
+
+def create_metadata(split_data: dict) -> TextMetadata:
+    """Build a TextMetadata object from raw split data."""
+    return TextMetadata(
+        title=split_data.get("title", "Untitled Text"),
+        summary=split_data.get("summary", "No summary available"),
+        difficulty_level=split_data.get("difficulty_level", 3),
+        total_units=split_data.get("total_units", len(split_data.get("units", []))),
+    )
+
+
+def process_batches(all_units: list, batch_size: int) -> tuple[list, list]:
+    """Process all batches and return results and errors."""
+    results: list = []
+    errors: list[str] = []
+    batches = create_batches(all_units, 0, batch_size)
+    with tqdm(total=len(all_units), desc="Translating", initial=0) as pbar:
+        for batch in batches:
+            try:
+                batch_results = process_batch(
+                    batch["sentences"],
+                    batch["start_index"],
+                    batch["contexts"],
+                    all_units,
+                    batch["indices"],
+                )
+                results.extend(batch_results)
+            except Exception as exc:
+                errors.append(f"Batch {len(errors) + 1}: {exc}")
+            finally:
+                pbar.update(len(batch["sentences"]))
+    return results, errors
+
+
+def validate_results(results: list, all_units: list) -> tuple[int, int]:
+    """Return counts of failed and issue translations."""
+    failed = 0
+    issues = 0
+    if len(results) != len(all_units):
+        return len(all_units), 0
+    for result in results:
+        if getattr(result, "verification_status", "") == "Failed":
+            failed += 1
+        elif getattr(result, "verification_status", "") == "Issues Found":
+            issues += 1
+        ft = getattr(result, "full_translation", "")
+        if any(m in ft for m in ["[ERROR]", "[BATCH PROCESSING ERROR]", "[Translation Error]", "[Format Error]"]):
+            failed += 1
+    return failed, issues
 
 def to_dict(obj):
     if isinstance(obj, list):
@@ -37,114 +104,46 @@ def to_dict(obj):
 
 def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATCH_SIZE):
     """Translate a pre-split file"""
-    # Check for split file
-    split_file = os.path.splitext(input_file)[0] + "_split.json"
-    if not os.path.exists(split_file):
+    split_data = load_split_data(input_file)
+    if not split_data:
         return None
-
-    # Load the split file
-    with open(split_file, encoding="utf-8") as f:
-        split_data = json.load(f)
 
     all_units = split_data.get("units", [])
     if not all_units:
         return None
 
     # Create metadata object
-    metadata = TextMetadata(
-        title=split_data.get("title", "Untitled Text"),
-        summary=split_data.get("summary", "No summary available"),
-        difficulty_level=split_data.get("difficulty_level", 3),
-        total_units=split_data.get("total_units", len(all_units)),
-    )
+    metadata = create_metadata(split_data)
 
-    # Initialize the results list
-    results = []
+    # Process batches
+    results, batch_errors = process_batches(all_units, batch_size)
 
-    # Create batches for all units
-    batches_to_process = create_batches(all_units, 0, batch_size)
-    if not batches_to_process:
-        return None
-
-    # Process each batch with progress bar
-    batch_errors = []
-    with tqdm(total=len(all_units), desc="Translating", initial=0) as pbar:
-        for batch in batches_to_process:
-            try:
-                # Process batch
-                batch_results = process_batch(
-                    batch["sentences"],
-                    batch["start_index"],
-                    batch["contexts"],
-                    all_units,
-                    batch["indices"],
-                )
-                results.extend(batch_results)
-                pbar.update(len(batch["sentences"]))
-
-            except Exception as e:
-                # Record batch error instead of adding error markers
-                batch_errors.append(f"Batch {len(batch_errors) + 1}: {str(e)}")
-                pbar.update(len(batch["sentences"]))
-
-    # If any batch failed, don't write incomplete data
+    # Validate results
     if batch_errors:
         logger.info(f"❌ Translation failed - {len(batch_errors)} batch(es) failed:")
         for error in batch_errors:
             logger.info(f"  - {error}")
         return None
 
-    # Verify we have all expected translations
-    if len(results) != len(all_units):
-        logger.info(
-            f"❌ Translation incomplete - expected {len(all_units)} translations, got {len(results)}"
-        )
-        return None
-
-    # Check for any failed translations in results
-    failed_count = 0
-    issue_count = 0
-    for i, result in enumerate(results):
-        if hasattr(result, "verification_status"):
-            if result.verification_status == "Failed":
-                failed_count += 1
-            elif result.verification_status == "Issues Found":
-                issue_count += 1
-
-        if hasattr(result, "full_translation") and result.full_translation:
-            if any(
-                error_marker in result.full_translation
-                for error_marker in [
-                    "[ERROR]",
-                    "[BATCH PROCESSING ERROR]",
-                    "[Translation Error]",
-                    "[Format Error]",
-                ]
-            ):
-                failed_count += 1
-
-    if failed_count > 0:
-        logger.info(f"❌ Translation contains {failed_count} failed sentence(s)")
-        return None
-
-    if issue_count > 0:
-        logger.info(
-            f"❌ Translation contains {issue_count} sentence(s) with validation issues"
-        )
+    failed_count, issue_count = validate_results(results, all_units)
+    if failed_count or issue_count:
+        if failed_count:
+            logger.info(f"❌ Translation contains {failed_count} failed sentence(s)")
+        if issue_count:
+            logger.info(
+                f"❌ Translation contains {issue_count} sentence(s) with validation issues"
+            )
         return None
 
     # Write final output with metadata
     try:
-        with open(output_file, "w", encoding="utf-8") as f:
-            json.dump(
-                {
-                    "metadata": to_dict(metadata),
-                    "translations": [to_dict(r) for r in results],
-                },
-                f,
-                ensure_ascii=False,
-                indent=2,
-            )
+        write_json_file(
+            output_file,
+            {
+                "metadata": to_dict(metadata),
+                "translations": [to_dict(r) for r in results],
+            },
+        )
         return True  # Return success indicator
     except Exception as e:
         return None
@@ -160,10 +159,8 @@ def main():
     input_file = sys.argv[1] if len(sys.argv) >= 2 else default_input
     output_file = sys.argv[2] if len(sys.argv) >= 3 else default_output
 
-    # Check if the split file exists
-    split_file = os.path.splitext(input_file)[0] + "_split.json"
-    if not os.path.exists(split_file):
-        logger.info(f"❌ Split file not found: {split_file}")
+    if not load_split_data(input_file):
+        logger.info(f"❌ Split file not found: {generate_split_filename(input_file)}")
         sys.exit(1)
 
     # Parse batch size parameter

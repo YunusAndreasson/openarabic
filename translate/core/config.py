@@ -5,3 +5,7 @@ MODEL_ANALYSIS = "gpt-4.1"  # For text splitting and analysis
 MODEL_TRANSLATION = "gpt-4.1"  # For English translation and word translation
 MODEL_OTHER = "gpt-4o"  # For tashkeel and support tasks
 MODEL_VERIFICATION = "o4-mini"  # For final verification/refinement
+
+# Default batch size when processing translations
+DEFAULT_BATCH_SIZE = 5
+MAX_BATCH_SIZE = 5

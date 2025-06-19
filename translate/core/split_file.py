@@ -10,6 +10,11 @@ from translate.core.utils import (
     call_openai_api,
     token_tracker,
 )
+from translate.core.file_utils import (
+    read_text_file,
+    write_json_file,
+    generate_split_filename,
+)
 
 logger = logging.getLogger(__name__)
 from translate.core.config import MODEL_ANALYSIS
@@ -78,8 +83,7 @@ def split_file(input_file: str, output_file: str):
 
     try:
         # Read input file
-        with open(input_file, encoding="utf-8") as f:
-            full_text = f.read()
+        full_text = read_text_file(input_file)
 
         split_result = split_text_into_sentences(full_text)
 
@@ -87,8 +91,7 @@ def split_file(input_file: str, output_file: str):
         split_result["total_units"] = len(split_result["units"])
 
         # Save to output file
-        with open(output_file, "w", encoding="utf-8") as f:
-            json.dump(split_result, f, ensure_ascii=False, indent=2)
+        write_json_file(output_file, split_result)
 
         return split_result
 
@@ -108,7 +111,7 @@ def main():
 
     # If only input is provided, auto-generate output filename with _split.json suffix
     if len(sys.argv) == 2:
-        output_file = os.path.splitext(input_file)[0] + "_split.json"
+        output_file = generate_split_filename(input_file)
     else:
         output_file = sys.argv[2] if len(sys.argv) >= 3 else default_output
 
