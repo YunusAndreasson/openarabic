@@ -1,8 +1,7 @@
+export { default as CompletionScreen } from './CompletionScreen';
 export { default as InstructionFooter } from './InstructionFooter';
 export { default as MeaningOverlay } from './MeaningOverlay';
-export { default as MeaningBottomSheet } from './MeaningBottomSheet';
 export { default as ReviewBottomActions } from './ReviewBottomActions';
-export { default as WordDisplay } from './WordDisplay';
 export { default as ReviewCard } from './ReviewCard';
 export { default as ReviewHeader } from './ReviewHeader';
-export { default as CompletionScreen } from './CompletionScreen';
+export { default as WordDisplay } from './WordDisplay';

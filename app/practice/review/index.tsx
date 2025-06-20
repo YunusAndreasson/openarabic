@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import type { JSX } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
@@ -10,7 +10,6 @@ import {
   ReviewHeader,
   CompletionScreen,
   MeaningOverlay,
-  MeaningBottomSheet,
   ReviewBottomActions,
 } from '@/components/review';
 import WordManagementModal from '@/components/vocabulary/WordManagementModal';
@@ -50,9 +49,6 @@ export default function ReviewScreen(): JSX.Element {
   const params = useLocalSearchParams();
   const fromRemember = params['fromRemember'] === 'true';
 
-  // State for the meaning bottom sheet
-  const [isMeaningSheetVisible, setIsMeaningSheetVisible] = useState(false);
-
   const {
     showMeaningOverlay,
     currentMeaning,
@@ -89,17 +85,6 @@ export default function ReviewScreen(): JSX.Element {
   const hasCurrentWord = Boolean(
     currentSentence.wordForm && !isComplete && !isTransitioningToCompletion
   );
-
-  // Handle showing meaning in bottom sheet
-  const handleShowMeaning = useCallback(() => {
-    selectionFeedback();
-    setIsMeaningSheetVisible(true);
-  }, []);
-
-  // Handle closing meaning bottom sheet
-  const handleCloseMeaningSheet = useCallback(() => {
-    setIsMeaningSheetVisible(false);
-  }, []);
 
   // Handle management icon press - use the existing handleLongPress logic
   const handleManageWord = useCallback(() => {
@@ -150,15 +135,8 @@ export default function ReviewScreen(): JSX.Element {
           />
         </View>
 
-        <ReviewBottomActions
-          onShowMeaning={handleShowMeaning}
-          onManageWord={handleManageWord}
-          hasCurrentWord={hasCurrentWord}
-        />
+        <ReviewBottomActions onManageWord={handleManageWord} hasCurrentWord={hasCurrentWord} />
       </View>
-
-      {/* Instructions Bottom Sheet */}
-      <MeaningBottomSheet visible={isMeaningSheetVisible} onClose={handleCloseMeaningSheet} />
 
       {/* Word Management Modal */}
       <WordManagementModal

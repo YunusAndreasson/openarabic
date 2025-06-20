@@ -58,12 +58,8 @@ export const STRINGS = {
   TITLE_FILTER: 'Title',
   AUTHOR_FILTER: 'Author',
 
-  // Practice instructions
+  // Practice state labels
   WORD_OPTIONS: 'Word options',
-  HOW_TO_PRACTICE: 'How to practice',
-  SWIPE_LEFT: "Swipe left if you don't know",
-  TAP_IF_VAGUE: 'Tap if you know it vaguely',
-  SWIPE_RIGHT: 'Swipe right if you know',
   UNKNOWN: 'Unknown',
   UNSURE: 'Unsure',
   KNOWN: 'Known',
@@ -357,6 +353,24 @@ export const STRINGS = {
   INVALID_FILTER_PARAMETERS: 'Invalid filter: type="{type}", id="{id}"',
   INVALID_FILTER_ID: 'Invalid ID: {id}',
   INVALID_FILTER_TYPE: 'Invalid type: "{type}"',
+
+  ERROR_EMPTY_USERNAME: 'Username cannot be empty',
+  ERROR_EMPTY_EMAIL: 'Email cannot be empty',
+  ERROR_EMPTY_PASSWORD: 'Password cannot be empty',
+
+  // Vocabulary screen messages
+  ERROR_PROCESSING_RESULT: 'Unable to process your result',
+  ERROR_LOADING_WORD: 'Unable to load next word',
+  ERROR_WORD_NOT_FOUND: 'Word could not be found',
+  ERROR_REVIEW_RESULTS: 'Unable to fetch review results',
+  ERROR_NO_DUE_WORDS: 'No due words to review',
+  INSTRUCTIONS_TAP_TO_SEE_MEANING: 'Tap to see meaning',
+  VOCABULARY_STATS_TITLE: 'Vocabulary Stats',
+
+  // Delete confirmation modals
+  CONFIRM_DELETE_WORD: 'Are you sure you want to delete this word?',
+  CONFIRM_DELETE_SELECTED: 'Delete selected words?',
+  DELETE_FOREVER_WARNING: 'This action cannot be undone.',
 } as const;
 
 export type StringKey = keyof typeof STRINGS;
