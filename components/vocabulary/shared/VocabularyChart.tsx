@@ -1,19 +1,15 @@
 import { Group } from '@shopify/react-native-skia';
-import { memo, useMemo } from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { memo, useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
 
-import {
-  BaseChart,
-  ChartCanvas,
-  ChartGrid,
-  ChartAxes,
-  Y_AXIS_WIDTH,
-  ChartDataPoint,
-  ChartAreaFill,
-  ChartMainLine,
-  ChartPerformanceZones,
-  type DataPoint,
-} from '@/components/vocabulary/shared';
+import { BaseChart } from '@/components/vocabulary/shared/BaseChart';
+import { ChartAreaFill } from '@/components/vocabulary/shared/ChartAreaFill';
+import { ChartAxes, Y_AXIS_WIDTH } from '@/components/vocabulary/shared/ChartAxes';
+import { ChartCanvas, type DataPoint } from '@/components/vocabulary/shared/ChartCanvas';
+import { ChartDataPoint } from '@/components/vocabulary/shared/ChartDataPoint';
+import { ChartGrid } from '@/components/vocabulary/shared/ChartGrid';
+import { ChartMainLine } from '@/components/vocabulary/shared/ChartMainLine';
+import { ChartPerformanceZones } from '@/components/vocabulary/shared/ChartPerformanceZones';
 import { GRAPH_HEIGHT_LARGE } from '@/components/vocabulary/shared/constants';
 
 // Extract constants outside component for better performance

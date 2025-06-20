@@ -4,7 +4,7 @@ import { StyleSheet, View, TouchableOpacity, type ViewStyle } from 'react-native
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { BaseChart } from '@/components/vocabulary/shared';
+import { BaseChart } from '@/components/vocabulary/shared/BaseChart';
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import { INSIGHTS_BUTTON_PRESS_SCALE } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';

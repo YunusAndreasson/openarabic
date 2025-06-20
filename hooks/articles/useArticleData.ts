@@ -19,7 +19,7 @@ interface ArticleDataResult {
   selectedWordIds: Set<number>;
   sortedSentences: Required<Article>['article_sentences'];
   sentenceWordsMap: Map<number, SentenceWord[]>;
-  refetchStudyWords: () => void;
+  refetchStudyWords: () => Promise<any>;
   isLoadingStudyWords: boolean;
 }
 

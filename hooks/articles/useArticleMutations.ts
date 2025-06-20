@@ -1,8 +1,4 @@
-import {
-  useMutation,
-  useQueryClient,
-  type UseMutationResult,
-} from '@tanstack/react-query';
+import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 
@@ -202,10 +198,7 @@ export const useArticleMutations = (
       },
       onSuccess: async (_: boolean, { userId }: { userId: string }) => {
         // Batch invalidate related queries
-        [
-          ...RELATED_QUERY_KEYS(userId),
-          ['fsrs-words', userId] as const,
-        ].forEach(queryKey => {
+        [...RELATED_QUERY_KEYS(userId), ['fsrs-words', userId] as const].forEach(queryKey => {
           queryClient.invalidateQueries({ queryKey });
         });
 
@@ -337,26 +330,12 @@ export const useArticleMutations = (
           }
 
           // Use the refreshed session
-          toggleRootMutation.mutate(
-            { userId: refreshData.session.user.id, rootId },
-            {
-              onError: () => {
-                showToast(STRINGS.ERROR_UPDATING_STUDY_LIST, undefined, 'error');
-              },
-            }
-          );
+          toggleRootMutation.mutate({ userId: refreshData.session.user.id, rootId });
           return;
         }
 
         // Always use the user ID from the session directly
-        toggleRootMutation.mutate(
-          { userId: session.user.id, rootId },
-          {
-            onError: () => {
-              showToast(STRINGS.ERROR_UPDATING_STUDY_LIST, undefined, 'error');
-            },
-          }
-        );
+        toggleRootMutation.mutate({ userId: session.user.id, rootId });
       } catch (error) {
         handleError(error as Error);
       }

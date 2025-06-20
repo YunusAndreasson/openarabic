@@ -1,5 +1,6 @@
-export { ArticleSentence } from './ArticleSentence';
 export { ArabicWord } from './ArabicWord';
 export { ArticleContent } from './ArticleContent';
-export { WordTooltip } from './WordTooltip';
+export { ArticleSentence } from './ArticleSentence';
 export { default as ParallaxHeader } from './ParallaxHeader';
+export { SentenceScrubber } from './SentenceScrubber';
+export { WordTooltip } from './WordTooltip';

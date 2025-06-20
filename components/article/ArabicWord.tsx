@@ -17,7 +17,6 @@ import { WORD_PRESS_SCALE, DEFAULT_ANIMATION_DURATION } from '@/constants/animat
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useArabicWord } from '@/hooks/vocabulary/useArabicWord';
 import type { TextWeight } from '@/types/ui/text.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
@@ -34,11 +33,6 @@ const getNextZIndex = () => {
   tooltipZIndexCounter = tooltipZIndexCounter >= MAX_Z_INDEX ? MIN_Z_INDEX : tooltipZIndexCounter;
   return tooltipZIndexCounter;
 };
-
-const OPACITY = {
-  TOOLTIP_DARK: 0.7,
-  TOOLTIP_LIGHT: 0.5,
-} as const;
 
 interface ArabicWordProps {
   word: SentenceWord;
@@ -62,7 +56,6 @@ function ArabicWordComponent({
   testID,
 }: ArabicWordProps) {
   const colors = useColors();
-  const isDarkMode = useIsDarkMode();
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [layout, setLayout] = useState<LayoutRectangle | null>(null);
   const [needsReverseAnimation, setNeedsReverseAnimation] = useState(false);
@@ -90,12 +83,6 @@ function ArabicWordComponent({
   // Use opacity animation for border
   const { setOpacity: setBorderOpacity } = useOpacityAnimation({
     initialOpacity: isSelected ? 1 : 0,
-    duration: DEFAULT_ANIMATION_DURATION,
-  });
-
-  // Use opacity animation for word fade
-  const { setOpacity: setWordOpacity } = useOpacityAnimation({
-    initialOpacity: 1,
     duration: DEFAULT_ANIMATION_DURATION,
   });
 
@@ -129,13 +116,6 @@ function ArabicWordComponent({
     setBorderOpacity(isSelected ? 1 : 0);
   }, [isSelected, setBorderOpacity]);
 
-  // Update word opacity based on tooltip visibility
-  useEffect(() => {
-    setWordOpacity(
-      tooltipVisible ? (isDarkMode ? OPACITY.TOOLTIP_DARK : OPACITY.TOOLTIP_LIGHT) : 1
-    );
-  }, [tooltipVisible, isDarkMode, setWordOpacity]);
-
   // Capture layout on mount and when window resizes
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
     setLayout(event.nativeEvent.layout);
@@ -144,18 +124,18 @@ function ArabicWordComponent({
   // Pre-calculate text size once when component mounts (will never change)
   const calculatedFontSize = useMemo(() => settings.fontScale * 24, [settings.fontScale]);
 
-  // More aggressively memoized text props (only depends on selection)
+  // More aggressively memoized text props (depends on selection and tooltip visibility)
   const textProps = useMemo(
     () => ({
       type: 'arabic' as const,
       variant: isSelected ? ('primary' as const) : undefined,
       skipDefaultColor: false,
-      colorName: 'arabicText' as const,
+      colorName: tooltipVisible ? ('tint' as const) : ('arabicText' as const),
       arabicFontSize: calculatedFontSize,
       weight: (isSelected ? 'semibold' : 'normal') as TextWeight,
       style: styles.textStyle as TextStyle,
     }),
-    [isSelected, calculatedFontSize]
+    [isSelected, calculatedFontSize, tooltipVisible]
   );
 
   // Handle tooltip close

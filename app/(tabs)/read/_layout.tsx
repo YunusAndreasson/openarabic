@@ -7,7 +7,7 @@ import { createNavigationOptions } from '@/constants/modal';
 import { getFilterModalRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
-import type { ArticleParams, FilterParams } from '@/types/navigation.types';
+import type { FilterParams } from '@/types/navigation.types';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 /**
@@ -60,12 +60,8 @@ export default function ReadLayout(): JSX.Element {
       />
       <Stack.Screen
         name="article"
-        options={({ route }) => {
-          const params = route.params as ArticleParams;
-
-          return createNavigationOptions(colors, {
-            title: params.headerTitle,
-          });
+        options={{
+          headerShown: false, // Full-screen modal with drag indicator only
         }}
       />
       <Stack.Screen

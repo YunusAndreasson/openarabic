@@ -1,5 +1,5 @@
 import { FlashList } from '@shopify/flash-list';
-import { useMemo, useCallback, useState, memo, type ReactElement, Fragment } from 'react';
+import React, { useMemo, useCallback, memo, type ReactElement, Fragment } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,21 +7,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import ParallaxHeader from '@/components/article/ParallaxHeader';
-import { useToast } from '@/components/providers/ToastProvider';
-import { AUDIO_STATES } from '@/constants/audio';
-import { LAYOUT } from '@/constants/layout';
+import { SentenceScrubber } from '@/components/article/SentenceScrubber';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useArticleData } from '@/hooks/articles/useArticleData';
-import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
-import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
-import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
-import { enhancedAudioService } from '@/services/enhancedAudioService';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
-import { handleError } from '@/utils/errorHandling';
-import { selectionFeedback } from '@/utils/haptics';
 
 const styles = StyleSheet.create({
   content: {
@@ -34,24 +26,19 @@ const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
   },
-  audioControlsContainer: {
-    flexDirection: 'row',
-    gap: LAYOUT.SPACING.SMALL,
+  titleContainer: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.SMALL,
-    paddingBottom: LAYOUT.SPACING.XLARGE,
+    marginTop: -LAYOUT.SPACING.XXXLARGE,
+    paddingBottom: LAYOUT.SPACING.TINY,
+    zIndex: 10,
   },
-  playNowButton: {
-    flex: 1,
-  },
-  listenLaterButton: {
-    flex: 1,
+  authorContainer: {
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
   summaryContainer: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    marginTop: -LAYOUT.SPACING.XXLARGE * 1.5,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-    zIndex: 10,
+    paddingBottom: LAYOUT.SPACING.XLARGE,
   },
   summaryCard: {
     ...LAYOUT.ELEVATION.SMALL,
@@ -67,121 +54,66 @@ const styles = StyleSheet.create({
   summaryText: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.7,
   },
+  audioControlsContainer: {
+    flexDirection: 'row',
+    gap: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: LAYOUT.SPACING.SMALL,
+    paddingBottom: LAYOUT.SPACING.XLARGE,
+  },
+  listenNowButton: {
+    flex: 1,
+  },
+  listenLaterButton: {
+    flex: 1,
+  },
 });
 
-interface AudioControlsButtonProps {
-  articleId: number;
-  article: Article;
-  isInReadingList: boolean;
-  isLoading: boolean;
-  onToggleReadingList: (articleId: number, isInReadingList: boolean) => void;
+// Note: Audio controls functionality is preserved in the audio player hooks
+// and can be re-enabled by adding UI components when needed
+
+interface ArticleTitleProps {
+  title: string;
+  author: { id: number; name: string };
 }
 
-const AudioControlsButton = memo<Omit<AudioControlsButtonProps, 'article'>>(
-  ({ articleId, isInReadingList, isLoading, onToggleReadingList }) => {
-    const { showToast } = useToast();
-    const audioPlayer = useAudioPlayer();
-    const { audioState } = audioPlayer;
-    const [isPlayNowLoading, setIsPlayNowLoading] = useState(false);
+const ArticleTitle = memo<ArticleTitleProps>(({ title, author }) => {
+  const colors = useColors();
 
-    const isCurrentlyPlaying = audioState === AUDIO_STATES.PLAYING;
-
-    // Combined loading state for optimal UX - instant local feedback + ongoing audio feedback
-    const isPlayButtonLoading = isPlayNowLoading || audioState === AUDIO_STATES.LOADING;
-
-    const handlePlayToggle = useCallback(async () => {
-      if (isCurrentlyPlaying) {
-        // Stop playback
-        selectionFeedback();
-        await audioPlayer.actions.stopPlayback();
-        return;
-      }
-
-      // Start playback (audio_url is always present)
-      try {
-        setIsPlayNowLoading(true);
-        selectionFeedback();
-
-        // Record start time for minimum loading duration
-        const loadingStartTime = Date.now();
-        const MIN_LOADING_DURATION = 300; // 300ms minimum
-
-        // Generate enhanced audio track for this article
-        const track = await enhancedAudioService.generateEnhancedAudioTrack(articleId);
-
-        if (!track) {
-          showToast(STRINGS.FAILED_TO_PREPARE_AUDIO, 3000, 'error');
-          // Ensure minimum loading time even for errors
-          const elapsed = Date.now() - loadingStartTime;
-          const remainingTime = Math.max(0, MIN_LOADING_DURATION - elapsed);
-          setTimeout(() => setIsPlayNowLoading(false), remainingTime);
-          return;
-        }
-
-        // Start playback with single track - let audio loading state provide feedback
-        const success = await audioPlayer.actions.startEnhancedPlayback([track], 0);
-
-        if (!success) {
-          showToast(STRINGS.FAILED_TO_START_PLAYBACK, 3000, 'error');
-        }
-
-        // Ensure minimum loading duration before clearing loading state
-        const elapsed = Date.now() - loadingStartTime;
-        const remainingTime = Math.max(0, MIN_LOADING_DURATION - elapsed);
-
-        setTimeout(() => {
-          setIsPlayNowLoading(false);
-        }, remainingTime);
-      } catch (error) {
-        handleError(error as Error, { showToast: false });
-        showToast(STRINGS.FAILED_TO_START_PLAYBACK, 3000, 'error');
-        // Ensure minimum loading time even for errors
-        setTimeout(() => setIsPlayNowLoading(false), 300);
-      }
-    }, [isCurrentlyPlaying, audioPlayer.actions, articleId, showToast]);
-
-    const handleListenLater = useCallback(() => {
-      selectionFeedback();
-      onToggleReadingList(articleId, isInReadingList);
-
-      // Show toast message
-      if (isInReadingList) {
-        showToast(STRINGS.REMOVED_FROM_LISTENING_LIST, 3000, 'success');
-      } else {
-        showToast(STRINGS.ADDED_TO_LISTENING_LIST, 3000, 'success');
-      }
-    }, [articleId, isInReadingList, onToggleReadingList, showToast]);
-
-    return (
-      <View style={styles.audioControlsContainer}>
-        {/* Play/Stop Button */}
-        <ThemedButton
-          variant="filled"
-          title={isCurrentlyPlaying ? STRINGS.STOP : STRINGS.PLAY_NOW}
-          size="medium"
-          loading={isPlayButtonLoading}
-          disabled={isPlayButtonLoading}
-          onPress={handlePlayToggle}
-          style={styles.playNowButton}
-          testID="play-now-button"
-        />
-
-        {/* Listen Later Button */}
-        <ThemedButton
-          variant={isInReadingList ? 'outlined' : 'outlined'}
-          title={isInReadingList ? STRINGS.REMOVE : STRINGS.LISTEN_LATER}
-          size="medium"
-          loading={isLoading}
-          disabled={isLoading}
-          onPress={handleListenLater}
-          style={styles.listenLaterButton}
-          testID="listen-later-button"
-        />
+  return (
+    <>
+      <View style={styles.titleContainer}>
+        <ThemedText
+          type="heading1"
+          style={{
+            fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
+            fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
+            color: colors.headingText,
+            lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
+            textAlign: 'left',
+          }}
+        >
+          {title}
+        </ThemedText>
       </View>
-    );
-  }
-);
-AudioControlsButton.displayName = 'AudioControlsButton';
+
+      <View style={styles.authorContainer}>
+        <ThemedText
+          type="caption"
+          style={{
+            fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+            fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
+            color: colors.authorText,
+            textAlign: 'left',
+          }}
+        >
+          by {author.name}
+        </ThemedText>
+      </View>
+    </>
+  );
+});
+ArticleTitle.displayName = 'ArticleTitle';
 
 interface ArticleSummaryProps {
   summary: string;
@@ -218,7 +150,22 @@ interface ArticleContentProps {
   sortedSentences: Tables<'article_sentences'>[];
   renderSentenceItem: ({ item }: { item: Tables<'article_sentences'> }) => ReactElement;
   handleScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  handleViewableItemsChanged: (info: { viewableItems: any[] }) => void;
   colors: ThemeColors;
+  currentSentenceIndex: number;
+  totalSentences: number;
+  onSentenceChange: (sentenceIndex: number) => void;
+  onScrubStart: () => void;
+  onScrubEnd: () => void;
+  scrollViewRef: React.RefObject<any>;
+  // Audio control props
+  isInReadingList: boolean;
+  isLoadingReadingList: boolean;
+  onPlayNow: () => void;
+  onToggleReadingList: () => void;
+  isPlayingAudio: boolean;
+  isLoadingAudio: boolean;
+  playButtonText: string;
 }
 
 // Extract constants outside component for better performance
@@ -230,20 +177,29 @@ const getItemType = () => 'sentence';
 
 // Optimize main component with memo and custom comparison
 export const ArticleContent = memo<ArticleContentProps>(
-  ({ id, article, sortedSentences, renderSentenceItem, handleScroll, colors }) => {
+  ({
+    id,
+    article,
+    sortedSentences,
+    renderSentenceItem,
+    handleScroll,
+    handleViewableItemsChanged,
+    colors,
+    currentSentenceIndex,
+    totalSentences,
+    onSentenceChange,
+    onScrubStart,
+    onScrubEnd,
+    scrollViewRef,
+    isInReadingList,
+    isLoadingReadingList,
+    onPlayNow,
+    onToggleReadingList,
+    isPlayingAudio,
+    isLoadingAudio,
+    playButtonText,
+  }) => {
     const insets = useSafeAreaInsets();
-    const { user } = useAuth();
-
-    // Memoize article ID calculation
-    const articleId = useMemo(() => parseInt(id ?? '', 10), [id]);
-
-    // Get reading list data for the button
-    const { isInReadingList, refetchReadingListStatus, isLoadingReadingList } = useArticleData(
-      articleId,
-      user?.id
-    );
-
-    const { handleToggleReadingList } = useArticleMutations(user?.id, refetchReadingListStatus);
 
     // Handle scroll events
     const handleAnimatedScroll = useCallback(
@@ -258,25 +214,36 @@ export const ArticleContent = memo<ArticleContentProps>(
       () => (
         <Fragment>
           <ParallaxHeader article={article} colors={colors} />
+          <ArticleTitle title={article.title} author={article.author} />
           <ArticleSummary summary={String(article.summary)} />
-          {user && (
-            <AudioControlsButton
-              articleId={articleId}
-              isInReadingList={isInReadingList}
-              isLoading={isLoadingReadingList}
-              onToggleReadingList={handleToggleReadingList}
+          <View style={styles.audioControlsContainer}>
+            <ThemedButton
+              title={playButtonText}
+              onPress={onPlayNow}
+              loading={isLoadingAudio}
+              style={styles.listenNowButton}
+              variant={isPlayingAudio ? 'outlined' : 'filled'}
             />
-          )}
+            <ThemedButton
+              title={isInReadingList ? STRINGS.REMOVE : STRINGS.LISTEN_LATER}
+              onPress={onToggleReadingList}
+              loading={isLoadingReadingList}
+              style={styles.listenLaterButton}
+              variant="outlined"
+            />
+          </View>
         </Fragment>
       ),
       [
         article,
         colors,
-        user,
-        articleId,
         isInReadingList,
         isLoadingReadingList,
-        handleToggleReadingList,
+        onPlayNow,
+        onToggleReadingList,
+        isPlayingAudio,
+        isLoadingAudio,
+        playButtonText,
       ]
     );
 
@@ -293,6 +260,7 @@ export const ArticleContent = memo<ArticleContentProps>(
             style={[styles.listContainer, styles.content, { backgroundColor: colors.background }]}
           >
             <FlashList
+              ref={scrollViewRef}
               key={`article-${id}`}
               alwaysBounceVertical={false}
               bounces={true}
@@ -306,11 +274,11 @@ export const ArticleContent = memo<ArticleContentProps>(
               keyExtractor={item => item.id.toString()}
               ListHeaderComponent={headerComponent}
               overScrollMode="auto" // Allow controlled overscroll for parallax
-              persistentScrollbar={true}
+              persistentScrollbar={false} // Remove native scrollbar - using custom scrubber
               removeClippedSubviews={true} // Improve performance
               renderItem={renderSentenceItem}
               scrollEventThrottle={SCROLL_THROTTLE}
-              showsVerticalScrollIndicator={true}
+              showsVerticalScrollIndicator={false} // Hide native scroll indicator
               contentContainerStyle={{
                 paddingTop: 0, // Remove padding since ParallaxHeader handles its own layout
                 // Slight bottom padding adjustment for better closure
@@ -319,6 +287,20 @@ export const ArticleContent = memo<ArticleContentProps>(
               }}
               overrideItemLayout={overrideItemLayout}
               onScroll={handleAnimatedScroll}
+              onViewableItemsChanged={handleViewableItemsChanged}
+              viewabilityConfig={{
+                itemVisiblePercentThreshold: 50, // Consider item visible when 50% is visible
+                minimumViewTime: 100, // Minimum time item must be visible before triggering
+              }}
+            />
+
+            {/* Custom sentence scrubber */}
+            <SentenceScrubber
+              currentSentence={currentSentenceIndex}
+              totalSentences={totalSentences}
+              onSentenceChange={onSentenceChange}
+              onScrubStart={onScrubStart}
+              onScrubEnd={onScrubEnd}
             />
           </View>
         ) : null}
@@ -333,7 +315,17 @@ export const ArticleContent = memo<ArticleContentProps>(
       prevProps.sortedSentences === nextProps.sortedSentences &&
       prevProps.renderSentenceItem === nextProps.renderSentenceItem &&
       prevProps.handleScroll === nextProps.handleScroll &&
-      prevProps.colors === nextProps.colors
+      prevProps.handleViewableItemsChanged === nextProps.handleViewableItemsChanged &&
+      prevProps.colors === nextProps.colors &&
+      prevProps.currentSentenceIndex === nextProps.currentSentenceIndex &&
+      prevProps.totalSentences === nextProps.totalSentences &&
+      prevProps.isInReadingList === nextProps.isInReadingList &&
+      prevProps.isLoadingReadingList === nextProps.isLoadingReadingList &&
+      prevProps.onPlayNow === nextProps.onPlayNow &&
+      prevProps.onToggleReadingList === nextProps.onToggleReadingList &&
+      prevProps.isPlayingAudio === nextProps.isPlayingAudio &&
+      prevProps.isLoadingAudio === nextProps.isLoadingAudio &&
+      prevProps.playButtonText === nextProps.playButtonText
     );
   }
 );

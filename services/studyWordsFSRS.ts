@@ -1,5 +1,4 @@
 import type { Rating } from 'ts-fsrs';
-import { createEmptyCard } from 'ts-fsrs';
 
 import type { TablesInsert, TablesUpdate } from '@/types/database.types';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -302,26 +301,29 @@ export const studyWordsFSRSService = {
       return false;
     }
 
-    // Create a new FSRS card for the root
+    // Create a new FSRS card for the root with proper initial values
     const now = new Date();
-    const emptyCard = createEmptyCard(now);
+
+    // Use FSRS default values that comply with database constraints
+    const INITIAL_FSRS_DIFFICULTY = 1; // Must be between 1 and 10
+    const INITIAL_STABILITY = 0.4; // Default FSRS initial stability
 
     // Create entry matching the actual database schema columns
     const newEntry: TablesInsert<'study_words'> = {
       user_id: userId,
       root_id: rootId,
       created_at: now.toISOString(),
-      difficulty: emptyCard.difficulty / 10.0, // Normalize difficulty to 0-1 scale for backward compatibility
+      difficulty: INITIAL_FSRS_DIFFICULTY / 10.0, // Normalize difficulty to 0-1 scale for backward compatibility
       success_streak: 0,
       fsrs_due: now.toISOString(),
-      fsrs_stability: emptyCard.stability,
-      fsrs_difficulty: emptyCard.difficulty,
-      fsrs_elapsed_days: emptyCard.elapsed_days,
-      fsrs_scheduled_days: emptyCard.scheduled_days,
-      fsrs_learning_steps: emptyCard.learning_steps,
-      fsrs_reps: emptyCard.reps,
-      fsrs_lapses: emptyCard.lapses,
-      fsrs_state: emptyCard.state,
+      fsrs_stability: INITIAL_STABILITY,
+      fsrs_difficulty: INITIAL_FSRS_DIFFICULTY,
+      fsrs_elapsed_days: 0,
+      fsrs_scheduled_days: 0,
+      fsrs_learning_steps: 0,
+      fsrs_reps: 0,
+      fsrs_lapses: 0,
+      fsrs_state: 0, // New state
       fsrs_last_review: null,
     };
 

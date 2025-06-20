@@ -1,6 +1,6 @@
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useMemo, useCallback, useEffect } from 'react';
+import { useMemo, useCallback, useEffect, useState } from 'react';
 import type { JSX } from 'react';
 import { View, AppState, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -9,18 +9,23 @@ import { ThemedView } from '@/components/ThemedView';
 import { ArticleSentence } from '@/components/article';
 import { ArabicWord } from '@/components/article/ArabicWord';
 import { ArticleContent } from '@/components/article/ArticleContent';
-import { ToastProvider } from '@/components/providers/ToastProvider';
+import { ToastProvider, useToast } from '@/components/providers/ToastProvider';
 import { TIMING_CONFIG } from '@/constants/animation';
+import { AUDIO_STATES } from '@/constants/audio';
 import { LAYOUT } from '@/constants/layout';
-import { getPracticeReviewRoute } from '@/constants/routes';
+import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useArticleData } from '@/hooks/articles/useArticleData';
+import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/articles/useArticleRenderers';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
+import { useSentenceScrubber } from '@/hooks/articles/useSentenceScrubber';
+import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useHeaderVisibility } from '@/hooks/ui/useHeaderVisibility';
+import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { useAppSelectorMemo } from '@/store/hooks';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
@@ -28,13 +33,37 @@ import { selectionFeedback } from '@/utils/haptics';
 
 const FLEX_ONE_STYLE = { flex: 1 } as const;
 
-export default function ArticleScreen(): JSX.Element {
-  const { id } = useLocalSearchParams<{ id: string }>();
+// Modal drag indicator component
+const ModalDragIndicator = () => {
+  const colors = useColors();
 
+  return (
+    <View
+      style={{
+        paddingTop: LAYOUT.SPACING.SMALL, // Fixed small spacing instead of safe area dependent
+        paddingBottom: LAYOUT.SPACING.TINY,
+        alignItems: 'center',
+      }}
+    >
+      <View
+        style={{
+          width: 32,
+          height: 4,
+          backgroundColor: colors.modalIndicator,
+          borderRadius: LAYOUT.BORDER_RADIUS.PILL,
+          opacity: LAYOUT.OPACITY.MEDIUM,
+        }}
+      />
+    </View>
+  );
+};
+
+// Inner component with toast context access
+const ArticleScreenContent = ({ id }: { id: string }) => {
+  const { showToast } = useToast();
   const colors = useColors();
   const { user } = useAuth();
   const fontScale = useAppSelectorMemo(state => state.settings.fontScale);
-  const isDarkMode = useIsDarkMode();
 
   const { handleScroll } = useHeaderVisibility();
 
@@ -58,9 +87,116 @@ export default function ArticleScreen(): JSX.Element {
     sortedSentences,
     sentenceWordsMap,
     refetchStudyWords,
+    isInReadingList,
+    isLoadingReadingList,
+    refetchReadingListStatus,
   } = useArticleData(articleId, user?.id);
 
+  // Audio player functionality
+  const audioPlayer = useAudioPlayer();
+  const { audioState } = audioPlayer;
+  const [isPlayNowLoading, setIsPlayNowLoading] = useState(false);
+  const [isOptimisticallyPlaying, setIsOptimisticallyPlaying] = useState(false);
+
+  // Article mutations for reading list and word management
+  const { handleToggleReadingList, handleRootPress } = useArticleMutations(
+    user?.id,
+    refetchReadingListStatus,
+    refetchStudyWords
+  );
+
   const { dueWordRootIds = new Set<number>() } = useArticlesByDueWords(user?.id, 0);
+
+  // Audio control handlers
+  const handlePlayNow = useCallback(async () => {
+    if (!article?.audio_url || !articleId) return;
+
+    // Check if currently playing this article - if so, stop it
+    if (isOptimisticallyPlaying || audioState === AUDIO_STATES.PLAYING) {
+      selectionFeedback();
+      setIsOptimisticallyPlaying(false);
+      await audioPlayer.actions.stopPlayback();
+      return;
+    }
+
+    try {
+      // Optimistic UI update - immediately show as playing for smooth transition
+      setIsOptimisticallyPlaying(true);
+      selectionFeedback();
+
+      // Start loading state after optimistic update
+      setIsPlayNowLoading(true);
+
+      // Generate enhanced audio track for this article
+      const track = await enhancedAudioService.generateEnhancedAudioTrack(articleId);
+      if (track) {
+        const success = await audioPlayer.actions.startEnhancedPlayback([track], 0);
+        if (!success) {
+          console.error('Failed to start enhanced playback');
+          // Revert optimistic state on failure
+          setIsOptimisticallyPlaying(false);
+        }
+      } else {
+        console.error('Failed to generate audio track');
+        // Revert optimistic state on failure
+        setIsOptimisticallyPlaying(false);
+      }
+    } catch (error) {
+      console.error('Failed to start article playback:', error);
+      // Revert optimistic state on error
+      setIsOptimisticallyPlaying(false);
+    } finally {
+      setIsPlayNowLoading(false);
+    }
+  }, [article?.audio_url, articleId, audioPlayer.actions, isOptimisticallyPlaying, audioState]);
+
+  const handleToggleReadingListWithFeedback = useCallback(async () => {
+    if (!articleId) return;
+
+    selectionFeedback();
+
+    // Store previous state for toast message
+    const wasInReadingList = isInReadingList;
+
+    await handleToggleReadingList(articleId, isInReadingList);
+
+    // Show appropriate toast message
+    const toastMessage = wasInReadingList
+      ? STRINGS.REMOVED_FROM_LISTENING_LIST
+      : STRINGS.ADDED_TO_LISTENING_LIST;
+    showToast(toastMessage);
+  }, [articleId, isInReadingList, handleToggleReadingList, showToast]);
+
+  // Reset optimistic state when audio actually stops
+  useEffect(() => {
+    if (audioState !== AUDIO_STATES.PLAYING && isOptimisticallyPlaying) {
+      setIsOptimisticallyPlaying(false);
+    }
+  }, [audioState, isOptimisticallyPlaying]);
+
+  // Check if currently playing this article's audio (including optimistic state)
+  const isPlayingThisArticle = useMemo(() => {
+    return isOptimisticallyPlaying || (audioState === AUDIO_STATES.PLAYING && !!article?.audio_url);
+  }, [isOptimisticallyPlaying, audioState, article?.audio_url]);
+
+  // Button text and styling
+  const playButtonText = useMemo(() => {
+    return isPlayingThisArticle ? STRINGS.STOP : STRINGS.PLAY_NOW;
+  }, [isPlayingThisArticle]);
+
+  // Initialize sentence scrubber
+  const {
+    currentSentenceIndex,
+    scrollViewRef,
+    handleViewableItemsChanged,
+    handleSentenceChange,
+    handleScrubStart,
+    handleScrubEnd,
+  } = useSentenceScrubber({
+    sortedSentences: sortedSentences || [],
+    dueWordRootIds,
+    sentenceWordsMap,
+  });
 
   useEffect(() => {
     if (!user?.id) {
@@ -83,47 +219,22 @@ export default function ArticleScreen(): JSX.Element {
     }
   }, [article, sortedSentences, isLoadingArticle, fadeIn]);
 
-  // Simple root press handler for word interactions
-  const handleRootPress = useCallback(
-    (rootId: number) => {
-      router.push(
-        getPracticeReviewRoute({
-          rootId,
-          mode: 'random',
-          count: 1,
-          fromVocabulary: 'article',
-        })
-      );
-    },
-    [router]
-  );
-
-  const handleWordPress = useCallback(
+  const handleWordPressWithFeedback = useCallback(
     (word: SentenceWord) => {
-      if (word.root) {
-        handleRootPress(word.root.id);
+      if (word.root_id) {
+        // Always provide haptic feedback for word interactions
+        selectionFeedback();
+        handleRootPress(word.root_id);
       }
     },
     [handleRootPress]
-  );
-
-  const handleWordPressWithFeedback = useCallback(
-    (word: SentenceWord) => {
-      if (word.root) {
-        if (word.root_id && dueWordRootIds.has(word.root_id)) {
-          selectionFeedback();
-        }
-        handleRootPress(word.root.id);
-      }
-    },
-    [dueWordRootIds, handleRootPress]
   );
 
   const { getWordsForSentence } = useArticleRenderers(
     { fontScale },
     selectedWordIds,
     sentenceWordsMap,
-    handleWordPress,
+    handleWordPressWithFeedback,
     handleRootPress
   );
 
@@ -144,7 +255,7 @@ export default function ArticleScreen(): JSX.Element {
         />
       );
     },
-    [dueWordRootIds, handleRootPress, wordSettings, handleWordPressWithFeedback]
+    [dueWordRootIds, wordSettings, handleWordPressWithFeedback]
   );
 
   const sentenceSettings = useMemo(() => ({ showEnglish: true, fontScale }), [fontScale]);
@@ -185,24 +296,47 @@ export default function ArticleScreen(): JSX.Element {
   const contentStyle = useMemo(() => [FLEX_ONE_STYLE, animatedStyle as ViewStyle], [animatedStyle]);
 
   return (
-    <ToastProvider>
-      <ThemedView style={containerStyle} useSafeArea={false}>
-        <StatusBar animated={true} style={isDarkMode ? 'light' : 'dark'} translucent={true} />
+    <View style={containerStyle}>
+      {article && sortedSentences && sortedSentences.length > 0 ? (
+        <Animated.View style={contentStyle}>
+          <ArticleContent
+            article={article}
+            colors={colors}
+            handleScroll={handleScroll}
+            handleViewableItemsChanged={handleViewableItemsChanged}
+            id={id}
+            renderSentenceItem={renderSentenceItem}
+            sortedSentences={sortedSentences}
+            currentSentenceIndex={currentSentenceIndex}
+            totalSentences={sortedSentences.length}
+            scrollViewRef={scrollViewRef}
+            onSentenceChange={handleSentenceChange}
+            onScrubStart={handleScrubStart}
+            onScrubEnd={handleScrubEnd}
+            isInReadingList={isInReadingList}
+            isLoadingReadingList={isLoadingReadingList}
+            onPlayNow={handlePlayNow}
+            onToggleReadingList={handleToggleReadingListWithFeedback}
+            isPlayingAudio={isPlayingThisArticle}
+            isLoadingAudio={isPlayNowLoading}
+            playButtonText={playButtonText}
+          />
+        </Animated.View>
+      ) : null}
+    </View>
+  );
+};
 
-        <View style={containerStyle}>
-          {article && sortedSentences && sortedSentences.length > 0 ? (
-            <Animated.View style={contentStyle}>
-              <ArticleContent
-                article={article}
-                colors={colors}
-                handleScroll={handleScroll}
-                id={id}
-                renderSentenceItem={renderSentenceItem}
-                sortedSentences={sortedSentences}
-              />
-            </Animated.View>
-          ) : null}
-        </View>
+export default function ArticleScreen(): JSX.Element {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const isDarkMode = useIsDarkMode();
+
+  return (
+    <ToastProvider>
+      <ThemedView style={FLEX_ONE_STYLE} useSafeArea={false}>
+        <StatusBar animated={true} style={isDarkMode ? 'light' : 'dark'} translucent={true} />
+        <ModalDragIndicator />
+        <ArticleScreenContent id={id ?? ''} />
       </ThemedView>
     </ToastProvider>
   );
