@@ -29,14 +29,6 @@ export interface BaseButtonProps
   loading?: boolean;
   /** Size of the icon in pixels */
   iconSize?: number;
-  /** Optional style to apply to the content container */
-  contentContainerStyle?: ViewStyle;
-  /** Optional style to apply to the inner container */
-  innerContainerStyle?: ViewStyle;
-  /** Optional custom scale amount for the press animation (default is 0.95) */
-  scaleAmount?: number;
-  /** Additional content to render inside the button */
-  children?: React.ReactNode;
   /** Size variant of the button */
   size?: ButtonSize;
   /** Text weight for the button text */
@@ -51,8 +43,6 @@ export interface BaseButtonProps
 export interface IconButtonProps {
   /** Optional Ionicons icon name to display before the title */
   icon?: string;
-  /** Optional custom icon component (overrides icon prop if both are provided) */
-  iconComponent?: React.ReactNode;
 }
 
 /**

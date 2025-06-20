@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { memo, useMemo, useCallback, type JSX, type ReactNode } from 'react';
-import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
+import React, { memo, useMemo, useCallback, type JSX } from 'react';
+import type { GestureResponderEvent } from 'react-native';
 import { StyleSheet, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
@@ -8,12 +8,7 @@ import { DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import type {
-  ThemedButtonProps,
-  ButtonVariant,
-  ButtonSize,
-  ButtonTextWeight,
-} from '@/types/ui/button.types';
+import type { ThemedButtonProps, ButtonSize, ButtonTextWeight } from '@/types/ui/button.types';
 import { selectionFeedback } from '@/utils/haptics';
 
 import { ThemedText } from './ThemedText';
@@ -63,69 +58,15 @@ const getIconSize = (size: ButtonSize, customSize?: number) => {
   }
 };
 
-const IconContent = ({
-  loading,
-  iconComponent,
-  icon,
-  textColor,
-  iconSize,
-}: {
-  loading: boolean;
-  iconComponent?: ReactNode;
-  icon?: string;
-  textColor: string;
-  iconSize: number;
-}) => {
-  if (loading) return <ActivityIndicator color={textColor} size="small" />;
-  if (iconComponent) return iconComponent;
-  if (icon)
-    return (
-      <Ionicons color={textColor} name={icon as keyof typeof Ionicons.glyphMap} size={iconSize} />
-    );
-  return null;
-};
-
-// Style generator functions
-const getButtonStyle = (
-  variant: ButtonVariant,
-  size: ButtonSize,
-  disabled: boolean,
-  colors: ReturnType<typeof useColors>,
-  style?: Animated.AnimateStyle<StyleProp<ViewStyle>> | StyleProp<ViewStyle>
-) => [
-  styles.button,
-  variant === 'filled'
-    ? { backgroundColor: disabled ? colors.disabled : colors.tint }
-    : {
-        backgroundColor: colors.transparent,
-        borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-        borderColor: disabled ? colors.disabled : colors.tint,
-      },
-  size === 'small' && styles.buttonSmall,
-  size === 'large' && styles.buttonLarge,
-  style,
-];
-
-const getButtonTextStyle = (size: ButtonSize, textWeight: ButtonTextWeight) => [
-  styles.buttonText,
-  size === 'small' && styles.buttonTextSmall,
-  size === 'large' && styles.buttonTextLarge,
-  textWeight === 'normal' && styles.normalText,
-];
-
 function ThemedButtonComponent({
   variant = 'filled',
   title,
   icon,
-  iconComponent,
   loading = false,
   style,
   disabled = false,
-  children,
   iconSize: customIconSize = 24,
   onPress,
-  contentContainerStyle,
-  innerContainerStyle,
   size = 'medium',
   textWeight = 'bold',
   disablePressAnimation = false,
@@ -133,16 +74,10 @@ function ThemedButtonComponent({
 }: ThemedButtonProps): JSX.Element {
   const colors = useColors();
 
-  // Use the same animation config as BaseCard for consistency
-  const {
-    animatedStyle: rawAnimatedStyle,
-    handlePressIn,
-    handlePressOut,
-  } = usePressAnimation({
+  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     type: 'card',
     opacityAmount: LAYOUT.OPACITY.PRESSED,
   });
-  const animatedStyle = rawAnimatedStyle as Animated.AnimateStyle<ViewStyle>;
 
   const handlePress = useCallback(
     (event: GestureResponderEvent) => {
@@ -156,11 +91,36 @@ function ThemedButtonComponent({
 
   const textColor = variant === 'filled' ? colors.background : colors.tint;
   const iconSize = useMemo(() => getIconSize(size, customIconSize), [size, customIconSize]);
-  const hasIcon = loading || iconComponent || icon;
 
-  // Use extracted style functions
-  const buttonTextStyle = getButtonTextStyle(size, textWeight);
-  const buttonStyle = getButtonStyle(variant, size, disabled, colors, style);
+  // Button styles
+  const buttonStyle = [
+    styles.button,
+    variant === 'filled'
+      ? { backgroundColor: disabled ? colors.disabled : colors.tint }
+      : {
+          backgroundColor: colors.transparent,
+          borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+          borderColor: disabled ? colors.disabled : colors.tint,
+        },
+    size === 'small' && styles.buttonSmall,
+    size === 'large' && styles.buttonLarge,
+    style,
+  ];
+
+  const buttonTextStyle = [
+    styles.buttonText,
+    size === 'small' && styles.buttonTextSmall,
+    size === 'large' && styles.buttonTextLarge,
+    textWeight === 'normal' && styles.normalText,
+  ];
+
+  // Accessibility properties
+  const accessibilityLabel = props.accessibilityLabel || title;
+  const accessibilityState = {
+    disabled: disabled || loading,
+    busy: loading,
+    ...props.accessibilityState,
+  };
 
   return (
     <AnimatedTouchable
@@ -168,42 +128,44 @@ function ThemedButtonComponent({
       onPressIn={disablePressAnimation ? undefined : handlePressIn}
       onPressOut={disablePressAnimation ? undefined : handlePressOut}
       disabled={disabled || loading}
-      // Removed activeOpacity to allow custom animation to show
       onPress={handlePress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={accessibilityState}
+      accessibilityHint={loading ? 'Button is loading' : undefined}
       {...props}
     >
-      <View style={[styles.innerContainer, innerContainerStyle]}>
-        {loading ? (
-          // When loading, show only the ActivityIndicator centered with fade-in
-          <Animated.View entering={FadeIn.duration(DEFAULT_ANIMATION_DURATION)}>
-            <ActivityIndicator color={textColor} size="small" />
-          </Animated.View>
-        ) : (
-          <>
-            {hasIcon ? (
-              <View style={[styles.iconContainer, size === 'small' && styles.iconContainerSmall]}>
-                <IconContent
-                  icon={icon}
-                  iconComponent={iconComponent}
-                  iconSize={iconSize}
-                  loading={false}
-                  textColor={textColor}
-                />
-              </View>
-            ) : null}
-            <View style={[styles.contentContainer, contentContainerStyle]}>
-              <ThemedText
-                skipDefaultColor
-                colorName={disabled ? 'disabled' : variant === 'filled' ? 'background' : 'tint'}
-                style={buttonTextStyle}
-                type={getTextType(size, textWeight)}
-              >
-                {textWeight === 'normal' ? title : title?.toUpperCase()}
-              </ThemedText>
-              {children}
-            </View>
-          </>
+      <View style={styles.innerContainer}>
+        {icon && (
+          <View style={[styles.iconContainer, size === 'small' && styles.iconContainerSmall]}>
+            {loading ? (
+              <ActivityIndicator color={textColor} size="small" />
+            ) : (
+              <Ionicons
+                color={textColor}
+                name={icon as keyof typeof Ionicons.glyphMap}
+                size={iconSize}
+              />
+            )}
+          </View>
         )}
+
+        <View style={styles.contentContainer}>
+          {loading && !icon ? (
+            <Animated.View entering={FadeIn.duration(DEFAULT_ANIMATION_DURATION)}>
+              <ActivityIndicator color={textColor} size="small" />
+            </Animated.View>
+          ) : (
+            <ThemedText
+              skipDefaultColor
+              colorName={disabled ? 'disabled' : variant === 'filled' ? 'background' : 'tint'}
+              style={[buttonTextStyle, loading && !icon && { opacity: 0 }]}
+              type={getTextType(size, textWeight)}
+            >
+              {textWeight === 'normal' ? title : title?.toUpperCase()}
+            </ThemedText>
+          )}
+        </View>
       </View>
     </AnimatedTouchable>
   );
