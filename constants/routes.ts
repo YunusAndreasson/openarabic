@@ -5,11 +5,7 @@ export const getArticleRoute = (id: number, headerTitle?: string): string => {
   return `${base}?${search.toString()}`;
 };
 
-export const getFilterRoute = (
-  type: 'category' | 'author',
-  id: number,
-  name?: string,
-): string => {
+export const getFilterRoute = (type: 'category' | 'author', id: number, name?: string): string => {
   const params = new URLSearchParams({ type, id: id.toString() });
   if (name) params.append('name', name);
   return `/(tabs)/read/filter?${params.toString()}`;
@@ -39,11 +35,6 @@ export type StaticRoutePath = (typeof ROUTE_PATHS)[keyof typeof ROUTE_PATHS];
 export const getInsightsInfoRoute = (type: string): string =>
   `${ROUTE_PATHS.INSIGHTS}/info/${type}`;
 
-export const getPracticeAudioRoute = (fromRemember?: boolean): string =>
-  fromRemember
-    ? `${ROUTE_PATHS.PRACTICE_AUDIO}?fromRemember=true`
-    : ROUTE_PATHS.PRACTICE_AUDIO;
-
 export const getPracticeReviewRoute = (
   params?: Partial<{
     rootId: number;
@@ -51,7 +42,7 @@ export const getPracticeReviewRoute = (
     count: number;
     fromVocabulary: string;
     fromRemember: string;
-  }>,
+  }>
 ): string => {
   const search = new URLSearchParams();
   if (params?.rootId) search.append('rootId', String(params.rootId));
@@ -60,7 +51,5 @@ export const getPracticeReviewRoute = (
   if (params?.fromVocabulary) search.append('fromVocabulary', params.fromVocabulary);
   if (params?.fromRemember) search.append('fromRemember', params.fromRemember);
   const query = search.toString();
-  return query
-    ? `${ROUTE_PATHS.PRACTICE_REVIEW}?${query}`
-    : ROUTE_PATHS.PRACTICE_REVIEW;
+  return query ? `${ROUTE_PATHS.PRACTICE_REVIEW}?${query}` : ROUTE_PATHS.PRACTICE_REVIEW;
 };

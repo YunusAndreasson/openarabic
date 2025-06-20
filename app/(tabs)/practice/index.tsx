@@ -3,17 +3,16 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import { useState, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { StyleSheet, ScrollView, ActivityIndicator, View, InteractionManager } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
-import SessionTypeModal from '@/components/vocabulary/SessionTypeModal';
 import { VocabularyStatCards } from '@/components/vocabulary/VocabularyStatCards';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
-import { getPracticeAudioRoute, getPracticeReviewRoute } from '@/constants/routes';
+import { getPracticeReviewRoute } from '@/constants/routes';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
@@ -28,10 +27,6 @@ export default function VocabularyScreen(): JSX.Element {
   const { prefetchVocabularyData } = useAppPreloader();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
-
-  // Add state for refresh control and modal
-
-  const [modalVisible, setModalVisible] = useState(false);
 
   // Combine focus effects for better performance
   useFocusEffect(
@@ -69,26 +64,11 @@ export default function VocabularyScreen(): JSX.Element {
     return studyWords?.filter(word => word != null && word.root_id != null) ?? [];
   }, [studyWords]);
 
-  // Handle starting review for specific category - now shows modal
-  const handleStartCategoryReview = useCallback(() => {
+  // Handle starting review - now goes directly to visual practice
+  const handleStartReview = useCallback(() => {
     if (!user) return;
-    setModalVisible(true);
-  }, [user]);
-
-  // Handle modal actions
-  const handleModalClose = useCallback(() => {
-    setModalVisible(false);
-  }, []);
-
-  const handleStartAudio = useCallback(() => {
-    setModalVisible(false);
-    router.push(getPracticeAudioRoute(true));
-  }, [router]);
-
-  const handleStartVisual = useCallback(() => {
-    setModalVisible(false);
     router.push(getPracticeReviewRoute({ fromRemember: 'true' }));
-  }, [router]);
+  }, [user, router]);
 
   // Show error message if there was an error loading data
   if (error) {
@@ -137,18 +117,10 @@ export default function VocabularyScreen(): JSX.Element {
             learningWords={userStats?.learningWords ?? 0}
             masteredWords={userStats?.masteredWords ?? 0}
             studyWords={filteredStudyWords}
-            onStartReview={handleStartCategoryReview}
+            onStartReview={handleStartReview}
           />
         </View>
       </ScrollView>
-
-      {/* Session Type Modal */}
-      <SessionTypeModal
-        visible={modalVisible}
-        onClose={handleModalClose}
-        onStartAudio={handleStartAudio}
-        onStartVisual={handleStartVisual}
-      />
     </ThemedView>
   );
 }

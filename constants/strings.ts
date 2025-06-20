@@ -145,18 +145,13 @@ export const STRINGS = {
   SHOW_LESS_OFTEN: 'Show less',
   MARK_HARD: 'Mark hard',
 
-  // Practice session types
+  // Practice flow - simplified
   DUE_NOW: 'Due now',
   CHALLENGING: 'Challenging',
   ALL_WORDS: 'All words',
   REGULAR_PRACTICE_FOR_SCHEDULED_WORDS: 'Practice scheduled words to make room for new ones',
   DRILL_DOWN_ON_CHALLENGING_WORDS: 'Master difficult words before adding more',
   ADDITIONAL_PRACTICE: 'Extra practice for all your words',
-  CHOOSE_SESSION_TYPE: 'Choose session type',
-  VISUAL: 'Visual',
-  TAP_AND_SWIPE: 'Tap and swipe',
-  AUDIO: 'Audio',
-  LISTEN_WHILE_MULTITASKING: 'Listen while multitasking',
 
   // Insights & analytics
   INSIGHTS: 'Insights',
