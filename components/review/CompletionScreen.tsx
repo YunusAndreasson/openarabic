@@ -10,7 +10,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import {
   TIMING_CONFIG,
-  COMPLETION_ICON_SPRING,
   COMPLETION_METRIC_BASE_DELAY,
   COMPLETION_METRIC_STAGGER,
   COMPLETION_BUTTON_DELAY,
@@ -18,11 +17,9 @@ import {
   COMPLETION_TITLE_DELAY,
   COMPLETION_SUBTITLE_DELAY,
   QUICK_ANIMATION_DURATION,
-  DEFAULT_ANIMATION_DURATION,
 } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useEncouragingMetrics } from '@/hooks/review/useEncouragingMetrics';
 import { useColors } from '@/hooks/theme/useColors';
@@ -64,22 +61,6 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  // Animation values for enhanced feedback using hooks
-  const { animatedStyle: opacityStyle, startAnimation: startOpacityAnimation } =
-    useOpacityAnimation({
-      initialOpacity: 0,
-      duration: TIMING_CONFIG.GENTLE.duration,
-    });
-
-  const { animatedStyle: scaleStyle, startAnimation: startScaleAnimation } = useTransformAnimation({
-    type: 'scale',
-    initialValue: 0.8,
-    targetValue: 1,
-    useSpring: true,
-    damping: COMPLETION_ICON_SPRING.damping,
-    stiffness: COMPLETION_ICON_SPRING.stiffness,
-  });
-
   // Only invalidate queries for review flow
   useEffect(() => {
     if (!useThemedView && user?.id) {
@@ -95,38 +76,42 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
     }
   }, [user?.id, queryClient, useThemedView]);
 
-  // Enhanced icon animation with haptic feedback
+  // Trigger haptic feedback when component mounts
   useEffect(() => {
     const timer = setTimeout(() => {
-      startOpacityAnimation(undefined, successFeedback);
-      startScaleAnimation();
-    }, DEFAULT_ANIMATION_DURATION);
+      successFeedback();
+    }, QUICK_ANIMATION_DURATION + ICON_ENTRANCE_DURATION / 2);
 
     return () => clearTimeout(timer);
-  }, [startOpacityAnimation, startScaleAnimation]);
-
-  // Combine opacity and scale styles
-  const iconAnimatedStyle = [opacityStyle, scaleStyle];
+  }, []);
 
   const encouragingMetrics = useEncouragingMetrics(sessionMetrics, colors);
 
   const Content = (
     <View style={[styles.contentContainer, contentStyle]}>
       <Animated.View
-        entering={ZoomIn.delay(QUICK_ANIMATION_DURATION).duration(ICON_ENTRANCE_DURATION).springify()}
-        style={[styles.iconContainer, ...iconAnimatedStyle]}
+        entering={ZoomIn.delay(QUICK_ANIMATION_DURATION)
+          .duration(ICON_ENTRANCE_DURATION)
+          .springify()}
+        style={styles.iconContainer}
       >
         <Ionicons color={colors.completionSuccess} name={iconName} size={iconSize} />
       </Animated.View>
 
       <View style={styles.textContainer}>
-        <Animated.View entering={FadeInUp.delay(COMPLETION_TITLE_DELAY).duration(TIMING_CONFIG.GENTLE.duration)}>
+        <Animated.View
+          entering={FadeInUp.delay(COMPLETION_TITLE_DELAY).duration(TIMING_CONFIG.GENTLE.duration)}
+        >
           <ThemedText colorName="headingText" style={styles.titleText} type="heading2">
             {title}
           </ThemedText>
         </Animated.View>
 
-        <Animated.View entering={FadeInUp.delay(COMPLETION_SUBTITLE_DELAY).duration(TIMING_CONFIG.GENTLE.duration)}>
+        <Animated.View
+          entering={FadeInUp.delay(COMPLETION_SUBTITLE_DELAY).duration(
+            TIMING_CONFIG.GENTLE.duration
+          )}
+        >
           <ThemedText colorName="subtitleText" style={styles.subtitleText} type="heading3">
             {subtitle}
           </ThemedText>
@@ -138,7 +123,9 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
             {encouragingMetrics.map((metric, index) => (
               <Fragment key={metric.type + metric.text}>
                 <Animated.View
-                  entering={FadeInUp.delay(COMPLETION_METRIC_BASE_DELAY + index * COMPLETION_METRIC_STAGGER).duration(TIMING_CONFIG.GENTLE.duration)}
+                  entering={FadeInUp.delay(
+                    COMPLETION_METRIC_BASE_DELAY + index * COMPLETION_METRIC_STAGGER
+                  ).duration(TIMING_CONFIG.GENTLE.duration)}
                   style={styles.metricItem}
                 >
                   <View style={styles.metricContent}>
@@ -162,7 +149,7 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
 
       <Animated.View
         entering={FadeIn.delay(
-          encouragingMetrics ? COMPLETION_BUTTON_DELAY.WITH_METRICS : COMPLETION_BUTTON_DELAY.BASE,
+          encouragingMetrics ? COMPLETION_BUTTON_DELAY.WITH_METRICS : COMPLETION_BUTTON_DELAY.BASE
         ).duration(TIMING_CONFIG.GENTLE.duration)}
       >
         <ThemedButton

@@ -3,7 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { StyleSheet, ScrollView, ActivityIndicator, View, InteractionManager } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -18,6 +18,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useVocabularyChartData } from '@/hooks/vocabulary/useVocabularyChartData';
+import type { StatCategory } from '@/types/vocabulary.types';
 
 export default function VocabularyScreen(): JSX.Element {
   const { user } = useAuth();
@@ -47,7 +48,7 @@ export default function VocabularyScreen(): JSX.Element {
 
   // Use the FSRS queries hook for data fetching
   const {
-    allWords: studyWords,
+    allWords: studyWords, // We need all words for memory capacity gauge
     dueWords: dueWordsData,
     isLoading: isDataLoading,
     isFetching,
@@ -59,16 +60,32 @@ export default function VocabularyScreen(): JSX.Element {
   // Use the optimized vocabulary chart data hook that uses database views
   const { userStats, isLoadingUserStats } = useVocabularyChartData(user?.id);
 
-  // Memoize filtered study words to avoid filtering on every render
-  const filteredStudyWords = useMemo(() => {
-    return studyWords?.filter(word => word != null && word.root_id != null) ?? [];
-  }, [studyWords]);
+  // Handle starting review based on category type
+  const handleStartReview = useCallback(
+    (category: StatCategory) => {
+      if (!user) return;
 
-  // Handle starting review - now goes directly to visual practice
-  const handleStartReview = useCallback(() => {
-    if (!user) return;
-    router.push(getPracticeReviewRoute({ fromRemember: 'true' }));
-  }, [user, router]);
+      switch (category) {
+        case 'due':
+          // Practice only due words (no fromRemember parameter)
+          router.push(getPracticeReviewRoute());
+          break;
+        case 'needsAttention':
+          // Practice challenging/struggling words
+          router.push(getPracticeReviewRoute({ mode: 'spaced' }));
+          break;
+        case 'total':
+          // Practice all words (using fromRemember for all words)
+          router.push(getPracticeReviewRoute({ fromRemember: 'true' }));
+          break;
+        default:
+          // Default to due words
+          router.push(getPracticeReviewRoute());
+          break;
+      }
+    },
+    [user, router]
+  );
 
   // Show error message if there was an error loading data
   if (error) {
@@ -83,8 +100,12 @@ export default function VocabularyScreen(): JSX.Element {
   const isDataCached = !!(user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id)));
   const showLoadingIndicator = (isDataLoading || isFetching || isLoadingUserStats) && !isDataCached;
 
-  // Get stats - prioritize fresh data from useFSRSQueries over potentially stale database view
-  const dueWords = dueWordsData?.length ?? userStats?.dueWords ?? 0;
+  // Fix: Use the actual due words data count instead of database view
+  // This ensures consistency between display and practice session
+  const dueWordsCount = dueWordsData?.length ?? 0;
+
+  // Filter study words for memory capacity gauge (needs all words, not just due)
+  const filteredStudyWords = studyWords?.filter(word => word != null && word.root_id != null) ?? [];
 
   // Main content
   return (
@@ -113,10 +134,10 @@ export default function VocabularyScreen(): JSX.Element {
         {/* PRIMARY SECTION: Learning Overview */}
         <View style={{ marginTop: LAYOUT.SPACING.MEDIUM }}>
           <VocabularyStatCards
-            dueWords={dueWords}
+            dueWords={dueWordsCount}
             learningWords={userStats?.learningWords ?? 0}
             masteredWords={userStats?.masteredWords ?? 0}
-            studyWords={filteredStudyWords}
+            studyWords={filteredStudyWords} // Use all study words for memory capacity gauge
             onStartReview={handleStartReview}
           />
         </View>

@@ -24,7 +24,7 @@ interface VocabularyStatCardsProps {
   learningWords?: number;
   dueWords?: number;
   onStatPress?: (category: StatCategory) => void;
-  onStartReview?: () => void;
+  onStartReview?: (category: StatCategory) => void;
   studyWords?: StudyWord[];
 }
 
@@ -80,13 +80,14 @@ export const VocabularyStatCards = memo(
       const now = new Date();
 
       // Calculate categories based on FSRS data and learning state in one pass
-      const { dueWords, learningWords, masteredWords } = studyWords.reduce(
+      const { learningWords, masteredWords, calculatedDueWords } = studyWords.reduce(
         (counts, word) => {
           const stability = word.fsrs_stability || 0;
           const difficulty = word.fsrs_difficulty || 5;
 
-          if (word.fsrs_due && new Date(word.fsrs_due) <= now) {
-            counts.dueWords += 1;
+          // Only calculate due words from studyWords if dueWords prop is not provided
+          if (validatedInput.dueWords === 0 && word.fsrs_due && new Date(word.fsrs_due) <= now) {
+            counts.calculatedDueWords += 1;
           }
 
           if (
@@ -103,18 +104,19 @@ export const VocabularyStatCards = memo(
 
           return counts;
         },
-        { dueWords: 0, learningWords: 0, masteredWords: 0 }
+        { calculatedDueWords: 0, learningWords: 0, masteredWords: 0 }
       );
 
       const strugglingWords = getStrugglingWordsCount(studyWords);
 
       return {
-        dueWords,
+        // Prioritize dueWords prop over calculated value for consistency
+        dueWords: validatedInput.dueWords > 0 ? validatedInput.dueWords : calculatedDueWords,
         learningWords,
         strugglingWords,
         masteredWords,
       };
-    }, [validatedInput.studyWords]);
+    }, [validatedInput.studyWords, validatedInput.dueWords]);
 
     // Create focused practice session cards
     const totalWords = validatedInput.studyWords.length;
@@ -177,7 +179,7 @@ export const VocabularyStatCards = memo(
           <TouchableOpacity
             key={config.category}
             activeOpacity={config.disabled ? 1 : 0.7}
-            onPress={config.disabled ? undefined : onStartReview}
+            onPress={config.disabled ? undefined : () => onStartReview?.(config.category)}
             onPressIn={config.disabled ? undefined : handlePressIn}
             onPressOut={config.disabled ? undefined : handlePressOut}
             testID={`start-review-${config.category}`}

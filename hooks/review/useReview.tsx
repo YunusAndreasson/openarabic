@@ -42,6 +42,7 @@ interface ReviewStateRefs {
 
 interface UseReviewProps {
   fromRemember?: boolean;
+  mode?: string;
   onClose?: () => void;
 }
 
@@ -102,7 +103,7 @@ const TRANSITION_DELAYS = {
   },
 };
 
-export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseReviewReturn {
+export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}): UseReviewReturn {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -145,6 +146,9 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     progressUpdatedForCompletion: false,
   });
 
+  // Add navigation timer ref for cleanup
+  const navigationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Session metrics tracking
   const sessionMetricsRef = useRef<SessionMetrics>({
     wordsReviewed: 0,
@@ -157,6 +161,9 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     masteredWords: 0,
     startTime: Date.now(),
   });
+
+  // Add controller ref for proper cleanup
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const triggerCompletionTransition = useCallback(() => {
     if (stateRefs.current.completionTriggered) return;
@@ -185,6 +192,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
     userId: user?.id,
     onComplete: triggerCompletionTransition,
     useAllWords: fromRemember, // When fromRemember is true, use all words instead of just due words
+    mode, // Pass the mode for struggling words filtering
     sessionCooldownHours: fromRemember ? 0 : DEFAULT_SESSION_COOLDOWN_HOURS,
   });
 
@@ -353,7 +361,13 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       // Set updating flag immediately to prevent concurrent processing
       stateRefs.current.isUpdatingWord = true;
 
+      // Abort any previous operation
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
       const controller = new AbortController();
+      abortControllerRef.current = controller;
 
       // Update session metrics
       const metrics = sessionMetricsRef.current;
@@ -439,8 +453,6 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
           }
         }, TRANSITION_DELAYS.fadeAnimation);
       }, TRANSITION_DELAYS.initial);
-
-      return () => controller.abort();
     },
     [
       isTransitioningToCompletion,
@@ -559,6 +571,7 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
 
   const handleClose = useCallback(() => {
     const mounted = { current: true };
+
     // Stop any playing audio when closing
     audioPlayerRef.current.actions.stopPlayback().catch(() => {});
 
@@ -577,7 +590,12 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       }
     });
 
-    setTimeout(() => {
+    // Clear any existing navigation timer
+    if (navigationTimerRef.current) {
+      clearTimeout(navigationTimerRef.current);
+    }
+
+    navigationTimerRef.current = setTimeout(() => {
       if (mounted.current) {
         if (onClose) {
           onClose();
@@ -587,24 +605,30 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
           router.back();
         }
       }
-    }, 100);
-
-    return () => {
       mounted.current = false;
-    };
-  }, [invalidateQueries, user?.id, queryClient, onClose, router]);
+    }, 100);
+  }, [invalidateQueries, user?.id, queryClient, onClose, fromRemember, router]);
 
   // Cleanup effect
   useEffect(() => {
-    const controller = new AbortController();
-
     return () => {
-      controller.abort();
+      // Abort any ongoing knowledge response operations
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+
       stateRefs.current.completionTriggered = true;
       stateRefs.current.progressUpdatedForCompletion = false;
+
+      // Explicitly reset UI state on unmount
+      setIsTransitioningToCompletion(false);
+      setShowMeaningOverlay(false);
       fadeIn();
+
       audioPlayerRef.current.actions.stopPlayback().catch(() => {});
 
+      // Clean up all timers
       if (stateRefs.current.meaningTimeout) {
         clearTimeout(stateRefs.current.meaningTimeout);
         stateRefs.current.meaningTimeout = null;
@@ -613,6 +637,11 @@ export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseRe
       if (stateRefs.current.completionTransition) {
         clearTimeout(stateRefs.current.completionTransition);
         stateRefs.current.completionTransition = null;
+      }
+
+      if (navigationTimerRef.current) {
+        clearTimeout(navigationTimerRef.current);
+        navigationTimerRef.current = null;
       }
 
       stateRefs.current.isUpdatingWord = false;

@@ -9,6 +9,7 @@ import {
   MIN_WORD_SPACING,
   DEFAULT_SESSION_COOLDOWN_HOURS,
 } from '@/constants/fsrs';
+import { strugglingWordsService } from '@/services/strugglingWords';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { UseFSRSOptions, UseFSRSResult, FSRSStateTracking } from '@/types/fsrs.types';
 import type { WordConfidence } from '@/types/review.types';
@@ -45,6 +46,7 @@ export function useFSRS({
   userId,
   onComplete,
   useAllWords = false,
+  mode,
   sessionCooldownHours = DEFAULT_SESSION_COOLDOWN_HOURS,
 }: UseFSRSOptions): UseFSRSResult {
   const [wordQueue, setWordQueue] = useState<StudyWord[]>([]);
@@ -91,12 +93,21 @@ export function useFSRS({
     refetch,
   } = useQuery({
     queryKey: userId
-      ? useAllWords
+      ? mode === 'spaced'
+        ? ['struggling-words', userId, 50] // Use struggling words key for spaced mode
+        : useAllWords
         ? FSRS_QUERY_KEYS.all(userId)
         : FSRS_QUERY_KEYS.due(userId)
-      : ['fsrs-words', useAllWords ? 'all' : 'due'],
+      : ['fsrs-words', mode === 'spaced' ? 'struggling' : useAllWords ? 'all' : 'due'],
     queryFn: async () => {
       if (!userId) return [];
+
+      // Use struggling words service for spaced mode
+      if (mode === 'spaced') {
+        return strugglingWordsService.getStrugglingWords(userId, 50);
+      }
+
+      // Use regular FSRS service for other modes
       return studyWordsFSRSService.getFSRSWords(userId, {
         onlyDue: !useAllWords,
         forStats: false, // We need full data with root relationships
@@ -125,6 +136,16 @@ export function useFSRS({
 
     // Set initialized flag first to prevent multiple initializations
     stateTrackingRef.current.queueInitialized = true;
+
+    // Clear any existing timeouts before setting new ones
+    if (initTimeoutRef.current) {
+      clearTimeout(initTimeoutRef.current);
+      initTimeoutRef.current = null;
+    }
+    if (completionTimeoutRef.current) {
+      clearTimeout(completionTimeoutRef.current);
+      completionTimeoutRef.current = null;
+    }
 
     // Batch updates via setTimeout to separate render cycles
     initTimeoutRef.current = setTimeout(() => {
@@ -168,8 +189,14 @@ export function useFSRS({
     }, 0);
 
     return () => {
-      if (initTimeoutRef.current) clearTimeout(initTimeoutRef.current);
-      if (completionTimeoutRef.current) clearTimeout(completionTimeoutRef.current);
+      if (initTimeoutRef.current) {
+        clearTimeout(initTimeoutRef.current);
+        initTimeoutRef.current = null;
+      }
+      if (completionTimeoutRef.current) {
+        clearTimeout(completionTimeoutRef.current);
+        completionTimeoutRef.current = null;
+      }
     };
   }, [dueWords, isLoading, onComplete, getNextWordWithSpacing]);
 
@@ -342,7 +369,20 @@ export function useFSRS({
 
   // Clean up on unmount
   useEffect(() => {
-    return resetQueue;
+    return () => {
+      // Clean up all timers
+      if (initTimeoutRef.current) {
+        clearTimeout(initTimeoutRef.current);
+        initTimeoutRef.current = null;
+      }
+      if (completionTimeoutRef.current) {
+        clearTimeout(completionTimeoutRef.current);
+        completionTimeoutRef.current = null;
+      }
+
+      // Reset state
+      resetQueue();
+    };
   }, [resetQueue]);
 
   const invalidateQueries = useCallback(() => {

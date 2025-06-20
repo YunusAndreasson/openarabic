@@ -27,7 +27,6 @@ const baseStyles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     width: '100%',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: LAYOUT.SPACING.MEDIUM,
     paddingBottom: 0,
@@ -48,6 +47,7 @@ const baseStyles = StyleSheet.create({
 export default function ReviewScreen(): JSX.Element {
   const params = useLocalSearchParams();
   const fromRemember = params['fromRemember'] === 'true';
+  const mode = params['mode'] as string | undefined;
 
   const {
     showMeaningOverlay,
@@ -79,7 +79,7 @@ export default function ReviewScreen(): JSX.Element {
     handleSkipForToday,
     handleMarkAsEasy,
     handleMarkAsHard,
-  } = useReview({ fromRemember });
+  } = useReview({ fromRemember, mode });
 
   // Check if we have a current word to show the management icon
   const hasCurrentWord = Boolean(

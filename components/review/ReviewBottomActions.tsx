@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { memo, type FC } from 'react';
+import { memo, type FC, useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -15,17 +15,38 @@ const ReviewBottomActions: FC<ReviewBottomActionsProps> = memo(
   ({ onManageWord, hasCurrentWord }) => {
     const colors = useColors();
 
-    // Create subtle color versions for indicators
-    const errorTint = colors.error + '20'; // 12.5% opacity
-    const successTint = colors.success + '20'; // 12.5% opacity
-    const settingsTint = colors.captionText + '20'; // 12.5% opacity
+    // Performance: Memoize tint colors to prevent recalculation on every render
+    const tintColors = useMemo(
+      () => ({
+        error: colors.error + '20', // 12.5% opacity
+        success: colors.success + '20', // 12.5% opacity
+        settings: colors.captionText + '20', // 12.5% opacity
+      }),
+      [colors.error, colors.success, colors.captionText]
+    );
+
+    // Memoized icon components for better performance
+    const LeftIcon = useMemo(
+      () => <Ionicons name="chevron-back" size={18} color={colors.error} />,
+      [colors.error]
+    );
+
+    const RightIcon = useMemo(
+      () => <Ionicons name="chevron-forward" size={18} color={colors.success} />,
+      [colors.success]
+    );
+
+    const SettingsIcon = useMemo(
+      () => <Ionicons name="settings-outline" size={18} color={colors.captionText} />,
+      [colors.captionText]
+    );
 
     return (
       <View style={styles.container}>
         {/* Left indicator - Don't know */}
         <View style={styles.indicatorContainer}>
-          <View style={[styles.swipeIndicator, { backgroundColor: errorTint }]}>
-            <Ionicons name="chevron-back" size={18} color={colors.error} />
+          <View style={[styles.swipeIndicator, { backgroundColor: tintColors.error }]}>
+            {LeftIcon}
           </View>
           <ThemedText style={[styles.indicatorText, { color: colors.error }]}>
             Don&apos;t know
@@ -37,7 +58,7 @@ const ReviewBottomActions: FC<ReviewBottomActionsProps> = memo(
           <TouchableOpacity
             style={[
               styles.swipeIndicator,
-              { backgroundColor: settingsTint },
+              { backgroundColor: tintColors.settings },
               !hasCurrentWord && { opacity: LAYOUT.OPACITY.SUBTLE },
             ]}
             onPress={onManageWord}
@@ -45,15 +66,15 @@ const ReviewBottomActions: FC<ReviewBottomActionsProps> = memo(
             hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
             testID="manage-word-button"
           >
-            <Ionicons name="settings-outline" size={18} color={colors.captionText} />
+            {SettingsIcon}
           </TouchableOpacity>
           <View style={styles.emptyTextSpace} />
         </View>
 
         {/* Right indicator - Know */}
         <View style={styles.indicatorContainer}>
-          <View style={[styles.swipeIndicator, { backgroundColor: successTint }]}>
-            <Ionicons name="chevron-forward" size={18} color={colors.success} />
+          <View style={[styles.swipeIndicator, { backgroundColor: tintColors.success }]}>
+            {RightIcon}
           </View>
           <ThemedText style={[styles.indicatorText, { color: colors.success }]}>Know</ThemedText>
         </View>
@@ -72,7 +93,6 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingBottom: LAYOUT.SPACING.LARGE,
-    marginTop: 'auto',
     height: 80,
   },
   indicatorContainer: {

@@ -2,11 +2,16 @@ import { useCallback, memo, useEffect, useRef, useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 import type { ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { runOnJS, useSharedValue } from 'react-native-reanimated';
+import Animated, {
+  runOnJS,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  cancelAnimation,
+} from 'react-native-reanimated';
 
 import { TIMING_CONFIG } from '@/constants/animation';
 import { WORD_AREA_MIN_HEIGHT, useScreenWidth } from '@/constants/layout';
-import { useTransformAnimation } from '@/hooks/animations';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 import WordDisplay from './WordDisplay';
@@ -14,7 +19,7 @@ import WordDisplay from './WordDisplay';
 // Animation config constants
 const SWIPE_THRESHOLD_RATIO = 0.04;
 
-// Styles moved outside component
+// Styles moved outside component for better performance
 const styles = StyleSheet.create({
   swipeContainer: {
     alignItems: 'center',
@@ -57,83 +62,87 @@ const ReviewCard = memo(function ReviewCard({
   testID,
 }: ReviewCardProps) {
   // Animation values
-  const {
-    value: translateX,
-    animatedStyle: swipeContainerStyle,
-    startAnimation: startAnimationToZero,
-  } = useTransformAnimation({
-    type: 'translateX',
-    duration: TIMING_CONFIG.FAST.duration,
-  });
+  const translateX = useSharedValue(0);
   const isAnimatingRef = useSharedValue(false);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const screenWidth = useScreenWidth();
-  const SWIPE_THRESHOLD = screenWidth * SWIPE_THRESHOLD_RATIO;
 
-  // Reset position function with callback
+  // Memoize screen width and threshold
+  const screenWidth = useScreenWidth();
+  const SWIPE_THRESHOLD = useMemo(() => screenWidth * SWIPE_THRESHOLD_RATIO, [screenWidth]);
+
+  // Animated style for swipe container
+  const swipeContainerStyle = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      transform: [{ translateX: translateX.value }],
+    };
+  }, []);
+
+  // Simple reset function that works from JS thread
   const resetPosition = useCallback(() => {
-    startAnimationToZero(() => {
+    isAnimatingRef.value = true;
+    translateX.value = withTiming(0, TIMING_CONFIG.FAST, () => {
       isAnimatingRef.value = false;
     });
-  }, [startAnimationToZero, isAnimatingRef]);
+  }, [translateX, isAnimatingRef]);
 
-  // Handle swipe completion
+  // Simplified swipe completion handling
   const handleSwipeComplete = useCallback(
     (isRight: boolean) => {
-      isAnimatingRef.value = true;
-      // First trigger the swipe action (which will start fading out)
-      runOnJS(isRight ? onSwipeRight : onSwipeLeft)();
-      // Then reset position after a short delay
+      // Trigger the swipe action
+      if (isRight) {
+        onSwipeRight();
+      } else {
+        onSwipeLeft();
+      }
+
+      // Reset position after a brief delay
       if (resetTimerRef.current) {
         clearTimeout(resetTimerRef.current);
       }
       resetTimerRef.current = setTimeout(() => {
-        if (isAnimatingRef.value) {
-          // Only reset if still animating
-          runOnJS(resetPosition)();
-        }
+        resetPosition();
       }, 50);
     },
-    [isAnimatingRef, onSwipeLeft, onSwipeRight, resetPosition]
+    [onSwipeLeft, onSwipeRight, resetPosition]
   );
 
-  // Create pan gesture - memoized
+  // Pan gesture
   const panGesture = useMemo(
     () =>
       Gesture.Pan()
-        .enabled(!isUpdating && !isTransitioning && !isAnimatingRef.value)
+        .enabled(!isUpdating && !isTransitioning)
         .minDistance(0.1)
         .activeOffsetX([-1, 1])
         .onUpdate(event => {
+          'worklet';
           if (!isUpdating && !isTransitioning && !isAnimatingRef.value) {
             translateX.value = event.translationX;
           }
         })
         .onEnd(event => {
+          'worklet';
           if (!isAnimatingRef.value && Math.abs(event.translationX) > SWIPE_THRESHOLD) {
             const isRight = event.translationX > 0;
             runOnJS(handleSwipeComplete)(isRight);
           } else {
-            runOnJS(resetPosition)();
+            // Simple reset on UI thread
+            isAnimatingRef.value = true;
+            translateX.value = withTiming(0, TIMING_CONFIG.FAST, () => {
+              isAnimatingRef.value = false;
+            });
           }
         }),
-    [
-      isUpdating,
-      isTransitioning,
-      isAnimatingRef,
-      translateX,
-      handleSwipeComplete,
-      resetPosition,
-      screenWidth,
-    ]
+    [isUpdating, isTransitioning, isAnimatingRef, translateX, handleSwipeComplete, SWIPE_THRESHOLD]
   );
 
-  // Create tap gesture - memoized
+  // Tap gesture
   const tapGesture = useMemo(
     () =>
       Gesture.Tap()
-        .enabled(!isUpdating && !isTransitioning && !isAnimatingRef.value)
+        .enabled(!isUpdating && !isTransitioning)
         .onEnd(() => {
+          'worklet';
           if (!isUpdating && !isTransitioning && !isAnimatingRef.value) {
             runOnJS(onTap)();
           }
@@ -141,20 +150,22 @@ const ReviewCard = memo(function ReviewCard({
     [isUpdating, isTransitioning, isAnimatingRef, onTap]
   );
 
-  // Combine gestures - memoized
+  // Combined gestures
   const combinedGestures = useMemo(
     () => Gesture.Exclusive(panGesture, tapGesture),
     [panGesture, tapGesture]
   );
 
+  // Cleanup
   useEffect(() => {
     return () => {
       if (resetTimerRef.current) {
         clearTimeout(resetTimerRef.current);
         resetTimerRef.current = null;
       }
+      cancelAnimation(translateX);
     };
-  }, []);
+  }, [translateX]);
 
   return (
     <GestureDetector gesture={combinedGestures}>
