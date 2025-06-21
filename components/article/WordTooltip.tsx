@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useCallback, memo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { WordTooltipProps } from '@/types/ui/modal.types';
@@ -221,7 +221,8 @@ const WordTooltipComparison = (
 export const WordTooltip = memo(
   ({ visible, text = '', layout, onClose, zIndex }: WordTooltipProps) => {
     const colors = useColors();
-    const { width: screenWidth } = useWindowDimensions();
+    // For mobile-only apps, use constant screen width
+    const screenWidth = SCREEN_WIDTH;
 
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 

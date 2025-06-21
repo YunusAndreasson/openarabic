@@ -3,12 +3,7 @@ import type { JSX } from 'react';
 import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import {
-  LAYOUT,
-  TYPOGRAPHY_HIERARCHY,
-  getEnhancedOpacity,
-  useScreenWidth,
-} from '@/constants/layout';
+import { getEnhancedOpacity, LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { ArticleCardProps as BaseArticleCardProps } from '@/types/ui/card.types';
@@ -164,7 +159,8 @@ function ArticleCardComponent({
 }: ArticleCardProps): JSX.Element {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
-  const screenWidth = useScreenWidth();
+  // For mobile-only apps, use constant screen width
+  const screenWidth = SCREEN_WIDTH;
 
   // Memoize image height calculation with optimized dependencies
   const imageHeight = useMemo(

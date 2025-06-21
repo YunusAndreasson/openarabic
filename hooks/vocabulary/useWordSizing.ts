@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { useScreenWidth } from '@/constants/layout';
+import { SCREEN_WIDTH } from '@/constants/layout';
 
 interface WordSizingOptions {
   minFontSize?: number;
@@ -28,7 +28,6 @@ export const useWordSizing = (
     minFontSize = WORD_SIZING.DEFAULT_MIN_FONT_SIZE,
     maxFontSize = WORD_SIZING.DEFAULT_MAX_FONT_SIZE,
   } = options;
-  const screenWidth = useScreenWidth();
 
   return useMemo(() => {
     if (!word) return maxFontSize;
@@ -39,7 +38,7 @@ export const useWordSizing = (
     }
 
     // For very long words, calculate a reduced size
-    const availableWidth = screenWidth * WORD_SIZING.SCREEN_WIDTH_FACTOR;
+    const availableWidth = SCREEN_WIDTH * WORD_SIZING.SCREEN_WIDTH_FACTOR;
     const estimatedCharWidth = maxFontSize * WORD_SIZING.CHAR_WIDTH_FACTOR;
 
     // Calculate font size based on available width and word length
@@ -50,7 +49,7 @@ export const useWordSizing = (
 
     // Ensure font size is not smaller than minimum
     return Math.max(minFontSize, calculatedSize);
-  }, [word, minFontSize, maxFontSize, screenWidth]);
+  }, [word, minFontSize, maxFontSize]);
 };
 
 export default useWordSizing;

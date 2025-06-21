@@ -1,32 +1,31 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
+import type {
+  BaseAnimationBuilder,
+  SharedValue,
+  WithSpringConfig,
+  WithTimingConfig,
+} from 'react-native-reanimated';
 import {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
+  cancelAnimation,
   runOnJS,
+  SlideInLeft,
+  SlideInRight,
+  SlideOutLeft,
+  SlideOutRight,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSpring,
+  withTiming,
   ZoomIn,
   ZoomOut,
-  SlideInRight,
-  SlideInLeft,
-  SlideOutRight,
-  SlideOutLeft,
-  withDelay,
-  cancelAnimation,
 } from 'react-native-reanimated';
-import type {
-  WithTimingConfig,
-  WithSpringConfig,
-  BaseAnimationBuilder,
- SharedValue } from 'react-native-reanimated';
 
 import { TIMING_CONFIG } from '@/constants/animation';
-import { useScreenWidth } from '@/constants/layout';
+import { SCREEN_WIDTH } from '@/constants/layout';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import { handleError } from '@/utils/errorHandling';
-
-
 
 export type TransformType = 'rotate' | 'scale' | 'slide' | 'translateX' | 'translateY';
 export type SlideDirection = 'left' | 'right';
@@ -163,12 +162,11 @@ export const useTransformAnimation = (
     stiffness,
   } = options;
 
-  const screenWidth = useScreenWidth();
+  const screenWidth = SCREEN_WIDTH;
 
   // For slide animations, calculate the start position based on direction
   const startPosition = useMemo(
-    () =>
-      type === 'slide' ? (direction === 'right' ? screenWidth : -screenWidth) : initialValue,
+    () => (type === 'slide' ? (direction === 'right' ? screenWidth : -screenWidth) : initialValue),
     [type, direction, initialValue, screenWidth]
   );
 
@@ -361,6 +359,16 @@ export const useTransformAnimation = (
       exiting,
       transformType: type,
     }),
-    [value, animatedStyle, startAnimation, reverseAnimation, setValue, reset, entering, exiting, type]
+    [
+      value,
+      animatedStyle,
+      startAnimation,
+      reverseAnimation,
+      setValue,
+      reset,
+      entering,
+      exiting,
+      type,
+    ]
   );
 };

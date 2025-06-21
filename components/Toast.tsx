@@ -1,16 +1,16 @@
-import { useEffect, useMemo, memo, useRef } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { memo, useEffect, useMemo, useRef } from 'react';
+import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   DEFAULT_ANIMATION_DURATION,
   TOAST_INITIAL_TRANSLATE_Y,
-  TOAST_SPRING,
-  TOAST_SCALE_SPRING,
   TOAST_SCALE_CONFIG,
+  TOAST_SCALE_SPRING,
+  TOAST_SPRING,
 } from '@/constants/animation';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
@@ -69,8 +69,10 @@ export const Toast = memo(
     // Memoize animation config to prevent unnecessary re-creation
     const animationConfig = useMemo(
       () => ({
-        initialScale: TOAST_SCALE_CONFIG[type === 'important' ? 'IMPORTANT' : 'DEFAULT'].initialScale,
-        targetOvershoot: TOAST_SCALE_CONFIG[type === 'important' ? 'IMPORTANT' : 'DEFAULT'].overshoot,
+        initialScale:
+          TOAST_SCALE_CONFIG[type === 'important' ? 'IMPORTANT' : 'DEFAULT'].initialScale,
+        targetOvershoot:
+          TOAST_SCALE_CONFIG[type === 'important' ? 'IMPORTANT' : 'DEFAULT'].overshoot,
         springConfig: TOAST_SCALE_SPRING[type === 'important' ? 'IMPORTANT' : 'DEFAULT'],
       }),
       [type]
@@ -191,7 +193,8 @@ export const Toast = memo(
       return isDarkMode ? colors.text : colors.white;
     }, [type, isDarkMode, colors.text, colors.white]);
 
-    const { width: screenWidth } = useWindowDimensions();
+    // For mobile-only apps, use constant screen width
+    const screenWidth = SCREEN_WIDTH;
     const maxToastWidth = screenWidth * MAX_TOAST_WIDTH_RATIO;
 
     // Position higher on screen for better visibility

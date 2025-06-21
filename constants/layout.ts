@@ -1,9 +1,12 @@
 import type { TextStyle } from 'react-native';
-import { Platform, useWindowDimensions } from 'react-native';
+import { Dimensions, Platform } from 'react-native';
 
 const IS_IOS = Platform.OS === 'ios';
 
-export const useScreenWidth = (): number => useWindowDimensions().width;
+// For mobile-only apps, screen width doesn't change during runtime
+// Use static width instead of dynamic useWindowDimensions
+const SCREEN_DIMENSIONS = Dimensions.get('window');
+export const SCREEN_WIDTH = SCREEN_DIMENSIONS.width;
 
 export const FONTS = {
   ENGLISH: 'Figtree',
@@ -48,11 +51,7 @@ const createShadow = (elevation: number, opacity: number, radius: number) => ({
   }),
 });
 
-const createElevation = (
-  level: number,
-  opacity: number,
-  radius: number,
-) => ({
+const createElevation = (level: number, opacity: number, radius: number) => ({
   level,
   ...createShadow(level, opacity, radius),
 });

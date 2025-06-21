@@ -83,9 +83,13 @@ jest.mock('@/components/review/WordDisplay', () => {
   };
 });
 
-jest.mock('@/constants/layout', () => ({
+jest.mock('../../constants/layout', () => ({
   WORD_AREA_MIN_HEIGHT: 200,
-  useScreenWidth: jest.fn(() => 375),
+  SCREEN_WIDTH: 375,
+  LAYOUT: {
+    SPACING: { SMALL: 8 },
+    BORDER_RADIUS: { MEDIUM: 12 },
+  },
 }));
 
 jest.mock('@/constants/animation', () => ({

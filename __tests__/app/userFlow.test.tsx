@@ -93,7 +93,7 @@ jest.mock('../../hooks/theme/useThemeDetection', () => ({
 
 jest.mock('../../constants/layout', () => {
   const actual = jest.requireActual('../../constants/layout');
-  return { ...actual, useScreenWidth: () => 360 };
+  return { ...actual, SCREEN_WIDTH: 360 };
 });
 
 jest.mock('../../hooks/auth/useAuth', () => ({

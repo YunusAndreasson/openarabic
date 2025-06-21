@@ -1,19 +1,16 @@
-import { LAYOUT, useScreenWidth } from '@/constants/layout';
+import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 
 // Graph dimensions - optimized for perfect alignment and space usage
-export const useGraphWidth = (): number => {
-  const screenWidth = useScreenWidth();
-  // Add extra padding for x-axis labels: labels are 32px wide and centered on data points,
-  // so the rightmost label extends 16px beyond the last data point
-  const X_AXIS_LABEL_PADDING = 16;
-  return (
-    screenWidth -
-    LAYOUT.SCREEN_EDGE_PADDING * 2 -
-    LAYOUT.CARD.PADDING.MEDIUM * 2 -
-    32 -
-    X_AXIS_LABEL_PADDING
-  );
-};
+// For mobile-only apps, this can be a constant since screen doesn't rotate
+const X_AXIS_LABEL_PADDING = 16;
+export const GRAPH_WIDTH =
+  SCREEN_WIDTH -
+  LAYOUT.SCREEN_EDGE_PADDING * 2 -
+  LAYOUT.CARD.PADDING.MEDIUM * 2 -
+  32 -
+  X_AXIS_LABEL_PADDING;
+
+export const useGraphWidth = (): number => GRAPH_WIDTH;
 export const GRAPH_HEIGHT_LARGE = 176; // Optimized height for better proportions (8px alignment grid)
 
 // Chart visual constants for perfect alignment

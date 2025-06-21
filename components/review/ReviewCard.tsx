@@ -11,7 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { TIMING_CONFIG } from '@/constants/animation';
-import { WORD_AREA_MIN_HEIGHT, useScreenWidth } from '@/constants/layout';
+import { SCREEN_WIDTH, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 import WordDisplay from './WordDisplay';
@@ -86,7 +86,7 @@ const ReviewCardInternal = ({
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ===== MEMOIZED VALUES (PREVENT EXPENSIVE RECALCULATIONS) =====
-  const screenWidth = useScreenWidth();
+  const screenWidth = SCREEN_WIDTH;
   const swipeThreshold = useMemo(() => calculateSwipeThreshold(screenWidth), [screenWidth]);
 
   // ===== ADVANCED STYLE MEMOIZATION =====
