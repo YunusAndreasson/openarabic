@@ -41,8 +41,8 @@ const basePalette = {
 
   // Semantic warm tones
   semantic: {
-    error: '#C74A3A', // Warm terracotta red
-    errorDark: '#DD6B5A', // Warmer terracotta for dark mode
+    error: '#D32F2F', // Pure warm red (more traffic light red, less purple)
+    errorDark: '#EF5350', // Lighter warm red for dark mode
     success: '#4C7F5A', // Deep forest success
     successDark: '#72A47F', // Lighter forest for dark mode
     warning: '#C9B938', // Rich goldenrod

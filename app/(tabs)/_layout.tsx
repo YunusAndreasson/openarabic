@@ -13,7 +13,7 @@ import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
+import { useFSRSQueries, usePracticeBadge } from '@/hooks/vocabulary';
 import { updateAppIconBadge } from '@/services/notificationService';
 import { useAppSelector } from '@/store/hooks';
 
@@ -81,10 +81,13 @@ export default function TabLayout(): JSX.Element {
   // Get user preference for app icon badge
   const appIconBadgeEnabled = useAppSelector(state => state.settings.appIconBadgeEnabled);
 
-  // Get due words count for badge
+  // Get due words count for app icon badge (still using red due words for OS-level badge)
   const { dueWords } = useFSRSQueries({
     userId: user?.id,
   });
+
+  // Get smart badge data for Practice tab (3-phase system)
+  const practiceBadge = usePracticeBadge({ userId: user?.id });
 
   const dueWordsCount = dueWords?.length ?? 0;
 
@@ -113,6 +116,47 @@ export default function TabLayout(): JSX.Element {
   if (!session?.user) {
     return <Fragment />;
   }
+
+  // Helper function to get badge configuration based on 3-phase system
+  const getPracticeBadgeConfig = () => {
+    if (practiceBadge.phase === 'none') {
+      return null;
+    }
+
+    if (practiceBadge.phase === 'red' && practiceBadge.count) {
+      return {
+        badge: practiceBadge.count > 99 ? '99+' : practiceBadge.count.toString(),
+        badgeStyle: {
+          backgroundColor: colors.error, // RED for urgent preservation
+          color: colors.background, // Adaptive contrast like ThemedButton
+        },
+      };
+    }
+
+    if (practiceBadge.phase === 'yellow' && practiceBadge.count) {
+      return {
+        badge: practiceBadge.count > 99 ? '99+' : practiceBadge.count.toString(),
+        badgeStyle: {
+          backgroundColor: colors.warning, // YELLOW for effortful retrieval
+          color: colors.background, // Adaptive contrast like ThemedButton
+        },
+      };
+    }
+
+    if (practiceBadge.phase === 'green' && practiceBadge.showDot) {
+      return {
+        badge: '•', // Simple dot for optional mixed practice
+        badgeStyle: {
+          backgroundColor: colors.success, // GREEN for interleaved review
+          color: colors.background, // Adaptive contrast like ThemedButton
+        },
+      };
+    }
+
+    return null;
+  };
+
+  const badgeConfig = getPracticeBadgeConfig();
 
   return (
     <Tabs
@@ -171,13 +215,12 @@ export default function TabLayout(): JSX.Element {
                 }}
               />
             ),
-            // Add badge to Practice tab (always show in-app badge)
+            // Smart badge for Practice tab (3-phase FSRS system)
             ...(screen.name === 'practice' &&
-              dueWordsCount > 0 && {
-                tabBarBadge: dueWordsCount > 99 ? '99+' : dueWordsCount.toString(),
+              badgeConfig && {
+                tabBarBadge: badgeConfig.badge,
                 tabBarBadgeStyle: {
-                  backgroundColor: colors.error,
-                  color: colors.white,
+                  ...badgeConfig.badgeStyle,
                   fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
                   fontWeight: '600',
                   // Use responsive dimensions based on spacing scale

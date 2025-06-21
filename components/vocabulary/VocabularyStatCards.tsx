@@ -1,7 +1,30 @@
+/**
+ * VocabularyStatCards Component
+ *
+ * Displays practice session options using a scientifically-grounded 3-phase color system
+ * that coordinates with the Memory Capacity Gauge to guide optimal learning behavior.
+ *
+ * 3-PHASE COLOR SYSTEM:
+ * 🔴 RED PHASE (Due Words): Urgent memory preservation - highest priority for retention
+ * 🟡 YELLOW PHASE (Challenging Words): Effortful retrieval for memory consolidation
+ * 🟢 GREEN PHASE (All Words): Mixed practice when capacity allows
+ *
+ * SCIENTIFIC FOUNDATION:
+ * - Based on FSRS algorithm's stability, difficulty, and retrievability metrics
+ * - Follows spacing effect principles for optimal memory retention
+ * - Implements desirable difficulty theory for enhanced learning
+ * - Uses traffic light metaphor for intuitive UX (Jakob's Law)
+ *
+ * DESIGN PRINCIPLES:
+ * - Faint opacity for disabled states preserves visual language
+ * - Color coordination with Memory Capacity Gauge state
+ * - Follows Hick's Law with 3 clear, distinct choices
+ * - Implements Fitts' Law with large touch targets
+ */
+
 import { memo, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
@@ -31,6 +54,7 @@ interface WordCategoryConfig {
   description: string;
   disabled?: boolean;
   disabledMessage?: string;
+  capacityPhase: 'red' | 'yellow' | 'green';
 }
 
 export const VocabularyStatCards = memo(
@@ -46,6 +70,8 @@ export const VocabularyStatCards = memo(
     const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
       type: 'card',
     });
+
+    // Memory capacity coordination is handled by MemoryCapacityGauge component
 
     // Validate input data
     const validatedInput = useMemo(
@@ -101,61 +127,101 @@ export const VocabularyStatCards = memo(
       };
     }, [validatedInput.studyWords, validatedInput.dueWords]);
 
-    // Create focused practice session cards
+    // Create scientifically-grounded practice session cards coordinated with Memory Capacity Gauge
     const totalWords = validatedInput.studyWords.length;
     const categories: WordCategoryConfig[] = useMemo(() => {
       const cards = [];
       const hasDueWords = wordCategories.dueWords > 0;
-      const hasChallengingWords = wordCategories.strugglingWords > 0;
 
-      // Always show due words if available
-      if (hasDueWords) {
-        cards.push({
-          value: wordCategories.dueWords,
-          label: STRINGS.DUE_NOW,
-          iconColor: colors.error,
-          bgColor: colors.elevation1,
-          category: 'due' as StatCategory,
-          description: STRINGS.REGULAR_PRACTICE_FOR_SCHEDULED_WORDS,
-        });
-      }
+      // Coordinate with Memory Capacity Gauge state (75% = green phase)
+      // The gauge determines the overall capacity state, buttons follow that guidance
 
-      // Always show challenging words if available
-      if (wordCategories.strugglingWords > 0) {
-        cards.push({
-          value: wordCategories.strugglingWords,
-          label: STRINGS.CHALLENGING,
-          iconColor: colors.warning,
-          bgColor: colors.elevation1,
-          category: 'needsAttention' as StatCategory,
-          description: STRINGS.DRILL_DOWN_ON_CHALLENGING_WORDS,
-          disabled: hasDueWords,
-          disabledMessage: 'Complete due words first',
-        });
-      }
+      // RED PHASE: Due words (urgent memory preservation)
+      // Always show due words card - highest priority for memory retention
+      cards.push({
+        value: wordCategories.dueWords,
+        label: STRINGS.URGENT_PRESERVATION,
+        iconColor: colors.error, // Use semantic error color for consistency with tab badges
+        bgColor: colors.elevation1,
+        category: 'due' as StatCategory,
+        description: STRINGS.URGENT_MEMORY_PRESERVATION,
+        capacityPhase: 'red' as const,
+        // Due words disabled only when there are none to practice
+        disabled: wordCategories.dueWords === 0,
+        disabledMessage: wordCategories.dueWords === 0 ? 'No words due' : undefined,
+      });
 
-      // Always show all words option if user has words
-      if (totalWords > 0) {
-        cards.push({
-          value: totalWords,
-          label: STRINGS.ALL_WORDS,
-          iconColor: colors.tint,
-          bgColor: colors.elevation1,
-          category: 'total' as StatCategory,
-          description: STRINGS.ADDITIONAL_PRACTICE,
-          disabled: hasDueWords || hasChallengingWords,
-          disabledMessage: hasDueWords
-            ? 'Complete due words first'
-            : 'Complete challenging words first',
-        });
-      }
+      // YELLOW PHASE: Struggling words (effortful retrieval for memory consolidation)
+      cards.push({
+        value: wordCategories.strugglingWords,
+        label: STRINGS.EFFORTFUL_RETRIEVAL,
+        iconColor: colors.warning, // Use semantic warning color for consistency with tab badges
+        bgColor: colors.elevation1,
+        category: 'struggling' as StatCategory,
+        description: STRINGS.EFFORTFUL_RETRIEVAL_PRACTICE,
+        capacityPhase: 'yellow' as const,
+        // Struggling words disabled when due words take priority OR when none exist
+        disabled: hasDueWords || wordCategories.strugglingWords === 0,
+        disabledMessage: hasDueWords
+          ? STRINGS.COMPLETE_DUE_FIRST
+          : wordCategories.strugglingWords === 0
+          ? 'No struggling words found'
+          : undefined,
+      });
+
+      // GREEN PHASE: Mixed practice (interleaved review for robust learning)
+      cards.push({
+        value: totalWords,
+        label: STRINGS.INTERLEAVED_REVIEW,
+        iconColor: colors.success, // Use semantic success color for consistency with tab badges
+        bgColor: colors.elevation1,
+        category: 'all' as StatCategory,
+        description: STRINGS.INTERLEAVED_REVIEW_DESCRIPTION,
+        capacityPhase: 'green' as const,
+        // All words disabled when due words OR struggling words take priority
+        disabled: hasDueWords || wordCategories.strugglingWords > 0,
+        disabledMessage: hasDueWords
+          ? STRINGS.COMPLETE_DUE_FIRST
+          : wordCategories.strugglingWords > 0
+          ? STRINGS.FOCUS_ON_STRUGGLING_FIRST
+          : totalWords === 0
+          ? 'No words available'
+          : undefined,
+      });
 
       return cards;
     }, [wordCategories, colors, totalWords]);
 
+    // Get color-coordinated background for button state
+    const getButtonBackground = (config: WordCategoryConfig) => {
+      // Always use the standard elevation background for the card
+      // Color coordination is only applied to the badge/circle
+      return config.bgColor;
+    };
+
+    // Get badge color with proper disabled state and color coordination
+    const getBadgeColor = (config: WordCategoryConfig) => {
+      if (config.disabled) {
+        // Use consistent opacity system for disabled state
+        return `${config.iconColor}4D`; // 30% opacity in hex (4D = 77/255 ≈ 30%)
+      }
+      return config.iconColor;
+    };
+
+    // Get badge content - hide count for disabled cards to avoid confusion
+    const getBadgeContent = (config: WordCategoryConfig) => {
+      if (config.disabled && config.value === 0) {
+        return '—'; // No words available
+      }
+      if (config.disabled) {
+        return '—'; // Words exist but not actionable right now
+      }
+      return config.value.toString();
+    };
+
     return (
       <View style={styles.container}>
-        {/* Memory Capacity Gauge - without heading */}
+        {/* Memory Capacity Gauge - scientifically grounded with color coordination */}
         <MemoryCapacityGauge studyWords={validatedInput.studyWords} onStatPress={onStatPress} />
 
         {categories.map(config => (
@@ -168,27 +234,22 @@ export const VocabularyStatCards = memo(
             testID={`start-review-${config.category}`}
             style={config.disabled && styles.disabledCard}
           >
-            <Animated.View
+            <View
               style={[
                 styles.categoryCard,
-                { backgroundColor: config.bgColor },
+                { backgroundColor: getButtonBackground(config) },
                 !config.disabled && (animatedStyle as ViewStyle),
-                config.disabled && { opacity: 0.5 },
+                config.disabled && { opacity: 0.7 }, // Slightly reduced opacity for disabled state
               ]}
             >
-              {/* Number Badge */}
-              <View
-                style={[
-                  styles.numberBadge,
-                  { backgroundColor: config.disabled ? colors.secondaryText : config.iconColor },
-                ]}
-              >
-                <ThemedText style={[styles.numberText, { color: colors.white }]}>
-                  {config.value}
+              {/* Color-coordinated number badge */}
+              <View style={[styles.numberBadge, { backgroundColor: getBadgeColor(config) }]}>
+                <ThemedText style={[styles.numberText, { color: colors.background }]}>
+                  {getBadgeContent(config)}
                 </ThemedText>
               </View>
 
-              {/* Content */}
+              {/* Content with proper disabled styling */}
               <View style={styles.categoryContent}>
                 <ThemedText style={styles.categoryLabel}>{config.label}</ThemedText>
                 <ThemedText
@@ -199,7 +260,7 @@ export const VocabularyStatCards = memo(
                   {config.disabled ? config.disabledMessage : config.description}
                 </ThemedText>
               </View>
-            </Animated.View>
+            </View>
           </TouchableOpacity>
         ))}
       </View>

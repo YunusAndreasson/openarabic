@@ -82,15 +82,6 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
         activeOpacity={0.7}
       >
         <Animated.View style={animatedPressStyle as ViewStyle}>
-          {/* Subtle title for context */}
-          {studyWords.length > 0 && (
-            <View style={styles.titleContainer}>
-              <ThemedText style={styles.gaugeTitle} type="caption" variant="secondary">
-                Learning Capacity
-              </ThemedText>
-            </View>
-          )}
-
           <View style={styles.gaugeContainer}>
             <Canvas style={styles.canvas}>
               <Group>
@@ -140,8 +131,8 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
                   style="stroke"
                 >
                   <LinearGradient
-                    colors={getFilledGradientColors(memoryMetrics.capacityScore)}
-                    positions={getFilledGradientPositions(memoryMetrics.capacityScore)}
+                    colors={getFilledGradientColors()}
+                    positions={getFilledGradientPositions()}
                     start={vec(GAUGE_WIDTH * 0.05, GAUGE_HEIGHT / 2)}
                     end={vec(
                       GAUGE_WIDTH * 0.05 + (GAUGE_WIDTH * 0.9 * gaugePaths.filledSweep) / 170,
@@ -232,7 +223,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
                   },
                 ]}
               >
-                {getReadinessMessage(memoryMetrics.capacityScore)}
+                {getReadinessMessage()}
               </ThemedText>
             </View>
           </View>
@@ -306,18 +297,5 @@ const styles = StyleSheet.create({
     marginLeft: LAYOUT.SPACING.TINY + LAYOUT.SPACING.TINY / 2,
     opacity: LAYOUT.OPACITY.HOVER,
     width: LAYOUT.SPACING.TINY + LAYOUT.SPACING.TINY / 2,
-  },
-  titleContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: LAYOUT.SPACING.MEDIUM,
-  },
-  gaugeTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    fontWeight: '600',
-    includeFontPadding: false,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.NORMAL,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.2,
-    textAlign: 'center',
   },
 });

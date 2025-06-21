@@ -1,10 +1,11 @@
 export * from './useArabicWord';
 export * from './useFSRS';
 export * from './useFSRSQueries';
+export * from './usePracticeBadge';
 
-export * from './useVocabularyChartData';
-export * from './useWordSizing';
+export * from './useEfficiencyChart';
 export * from './useMasteryChart';
 export * from './useMemoryCapacityGauge';
-export * from './useEfficiencyChart';
 export * from './useRetrievabilityChart';
+export * from './useVocabularyChartData';
+export * from './useWordSizing';

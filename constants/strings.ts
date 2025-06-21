@@ -100,9 +100,9 @@ export const STRINGS = {
   PROGRESS_NOT_AVAILABLE: "Progress isn't available right now",
   ERROR_LOADING_DATA: "Couldn't load data",
 
-  // Success messages
+  // Success messages - encouraging and celebration-focused
   SESSION_COMPLETE: 'Session complete!',
-  ALL_WORDS_PRACTICED: 'All words practiced',
+  ALL_WORDS_PRACTICED: 'Great work on your practice session',
   ADDED_TO_LISTENING_LIST: 'Saved to playlist',
   REMOVED_FROM_LISTENING_LIST: 'Removed from playlist',
   ACCOUNT_CREATED: 'Account created',
@@ -141,13 +141,16 @@ export const STRINGS = {
   SHOW_LESS_OFTEN: 'Show less',
   MARK_HARD: 'Mark hard',
 
-  // Practice flow - simplified
-  DUE_NOW: 'Due now',
-  CHALLENGING: 'Challenging',
-  ALL_WORDS: 'All words',
-  REGULAR_PRACTICE_FOR_SCHEDULED_WORDS: 'Practice scheduled words to make room for new ones',
-  DRILL_DOWN_ON_CHALLENGING_WORDS: 'Master difficult words before adding more',
-  ADDITIONAL_PRACTICE: 'Extra practice for all your words',
+  // Practice session labels - concise and scientifically grounded
+  // 3-Phase FSRS Practice System - scientifically grounded labels
+  URGENT_PRESERVATION: 'Urgent preservation', // RED PHASE: Prevent memory decay
+  EFFORTFUL_RETRIEVAL: 'Effortful retrieval', // YELLOW PHASE: Strengthen weak memories
+  INTERLEAVED_REVIEW: 'Interleaved review', // GREEN PHASE: Mixed practice for robust learning
+
+  // Practice button descriptions - streamlined and action-oriented
+  URGENT_MEMORY_PRESERVATION: 'Prevent memory decay', // Concise, scientific
+  EFFORTFUL_RETRIEVAL_PRACTICE: 'Strengthen weak memories', // Research-aligned terminology
+  INTERLEAVED_REVIEW_DESCRIPTION: 'Reinforce all vocabulary', // Emphasizes cognitive benefit
 
   // Insights & analytics
   INSIGHTS: 'Insights',
@@ -369,10 +372,14 @@ export const STRINGS = {
   CONFIRM_DELETE_SELECTED: 'Delete selected words?',
   DELETE_FOREVER_WARNING: 'This action cannot be undone.',
 
-  // Vocabulary readiness - simplified 3-phase system
-  READY_TO_ADD: 'Ready to add words',
-  ADD_WITH_CAUTION: 'Practice more first',
-  DONT_ADD_WORDS: 'Practice current words first',
+  // Vocabulary readiness - simplified 3-phase system aligned with copy guidelines
+  READY_TO_ADD: 'Ready for new words',
+  PRACTICE_MORE_FIRST: 'Practice first',
+  FOCUS_ON_CURRENT: 'Focus on current words',
+
+  // Practice button disabled messages - concise guidance
+  COMPLETE_DUE_FIRST: 'Complete due words first',
+  FOCUS_ON_STRUGGLING_FIRST: 'Focus on struggling words first',
 } as const;
 
 export type StringKey = keyof typeof STRINGS;

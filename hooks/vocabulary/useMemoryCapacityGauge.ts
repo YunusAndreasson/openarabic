@@ -1,3 +1,22 @@
+/**
+ * Memory Capacity Gauge Hook
+ *
+ * Calculates learning capacity metrics using FSRS algorithm data to determine
+ * optimal timing for adding new vocabulary words. Based on cognitive science
+ * research on memory load and spaced repetition effectiveness.
+ *
+ * CAPACITY THRESHOLDS (scientifically grounded):
+ * - 70%+ (GREEN): Ready to add words - memory load is manageable
+ * - 40-70% (YELLOW): Add with caution - approaching cognitive limits
+ * - <40% (RED): Practice current words first - memory overload risk
+ *
+ * SCIENTIFIC BASIS:
+ * - Prevents cognitive interference from too many concurrent items
+ * - Maintains optimal challenge level (desirable difficulty)
+ * - Follows spacing effect principles for maximum retention
+ * - Aligns with working memory capacity research (Miller's Law)
+ */
+
 import { Skia } from '@shopify/react-native-skia';
 import { useMemo } from 'react';
 
@@ -6,6 +25,7 @@ import { CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { isStrugglingWord } from '@/utils/wordClassification';
 
 export interface MemoryCapacityMetrics {
   capacityScore: number;
@@ -74,20 +94,54 @@ export function useMemoryCapacityGauge({
 
     const capacityScore = Math.round(stabilityFactor + repsFactor + difficultyFactor);
 
-    const recentWords = validWords.filter(word => {
-      if (!word.created_at) return false;
-      const wordDate = new Date(word.created_at);
-      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      return wordDate >= weekAgo;
+    // Trend calculation aligned with 3-phase system
+    // Only show "improving" in green phase when memory is actually in good state
+    const hasUrgentWords = studyWords.some(word => {
+      const now = new Date().toISOString();
+      const isDue = (word.fsrs_due ?? '9999-12-31') <= now;
+      const hasBeenReviewed = word.fsrs_last_review != null && (word.fsrs_reps ?? 0) > 0;
+      const isStruggling = hasBeenReviewed && isStrugglingWord(word);
+      return isDue || isStruggling;
     });
 
-    const trend = recentWords.length > 0 && averageReps > 2 ? 'improving' : 'stable';
+    const trend = !hasUrgentWords && averageReps > 2 ? 'improving' : 'stable';
 
     return {
       capacityScore: Math.max(15, Math.min(100, capacityScore)),
       trend,
     };
   }, [studyWords]);
+
+  // Calculate word states for proper phase determination
+  const wordStates = useMemo(() => {
+    const now = new Date().toISOString();
+
+    const dueWords = studyWords.filter(word => (word.fsrs_due ?? '9999-12-31') <= now).length;
+
+    const strugglingWords = studyWords.filter(word => {
+      const hasBeenReviewed = word.fsrs_last_review != null && (word.fsrs_reps ?? 0) > 0;
+      return hasBeenReviewed && isStrugglingWord(word);
+    }).length;
+
+    return { dueWords, strugglingWords };
+  }, [studyWords]);
+
+  // Helper function for visual score calculation (used by both gauge and indicator)
+  const getVisualScore = useMemo(() => {
+    let visualScore = memoryMetrics.capacityScore;
+
+    // RED PHASE: Due words present - cap visual at 40% (red territory)
+    if (wordStates.dueWords > 0) {
+      visualScore = Math.min(visualScore, CAPACITY_THRESHOLDS.CAUTION);
+    }
+    // YELLOW PHASE: Struggling words present - cap visual at 70% (yellow territory)
+    else if (wordStates.strugglingWords > 0) {
+      visualScore = Math.min(visualScore, CAPACITY_THRESHOLDS.READY);
+    }
+    // GREEN PHASE: Use actual score (can go up to 100%)
+
+    return visualScore;
+  }, [memoryMetrics.capacityScore, wordStates.dueWords, wordStates.strugglingWords]);
 
   const gaugePaths = useMemo<GaugePaths>(() => {
     const centerX = width / 2;
@@ -107,7 +161,7 @@ export function useMemoryCapacityGauge({
       totalSweep
     );
 
-    const filledSweep = (memoryMetrics.capacityScore / 100) * totalSweep;
+    const filledSweep = (getVisualScore / 100) * totalSweep;
     const filledPath = Skia.Path.Make();
     filledPath.addArc(
       {
@@ -121,9 +175,9 @@ export function useMemoryCapacityGauge({
     );
 
     return { fullPath, filledPath, filledSweep };
-  }, [memoryMetrics.capacityScore, width, height, radius]);
+  }, [getVisualScore, width, height, radius]);
 
-  const getFilledGradientColors = (score: number): string[] => {
+  const getFilledGradientColors = (): string[] => {
     const baseColors = [
       chartColors.performance.poor ?? colors.error,
       chartColors.performance.moderate ?? colors.warning,
@@ -131,30 +185,30 @@ export function useMemoryCapacityGauge({
       chartColors.performance.excellent ?? colors.success,
     ];
 
-    if (score <= 30) {
+    if (getVisualScore <= 30) {
       return [baseColors[0] as string, baseColors[1] as string];
     }
-    if (score <= 70) {
+    if (getVisualScore <= 70) {
       return [baseColors[0] as string, baseColors[1] as string, baseColors[2] as string];
     }
     return baseColors;
   };
 
-  const getFilledGradientPositions = (score: number): number[] => {
-    if (score <= 30) {
+  const getFilledGradientPositions = (): number[] => {
+    if (getVisualScore <= 30) {
       return [0, 1];
     }
-    if (score <= 70) {
-      return [0, 30 / score, 1];
+    if (getVisualScore <= 70) {
+      return [0, 30 / getVisualScore, 1];
     }
-    return [0, 30 / score, 70 / score, 1];
+    return [0, 30 / getVisualScore, 70 / getVisualScore, 1];
   };
 
   const indicatorPosition = useMemo<IndicatorPosition>(() => {
     const centerX = width / 2;
     const centerY = height - 15;
 
-    const angle = 185 - (memoryMetrics.capacityScore / 100) * 170;
+    const angle = 185 - (getVisualScore / 100) * 170;
     const angleRad = (angle * Math.PI) / 180;
 
     const indicatorRadius = radius - strokeWidth / 2;
@@ -162,20 +216,35 @@ export function useMemoryCapacityGauge({
     const y = centerY + Math.sin(angleRad) * indicatorRadius;
 
     return { x, y, angle };
-  }, [memoryMetrics.capacityScore, width, height, radius, strokeWidth]);
+  }, [getVisualScore, width, height, radius, strokeWidth]);
 
+  // FIXED: Updated to consider word states, not just raw capacity score
   const getCapacityColor = (score: number) => {
-    if (score >= CAPACITY_THRESHOLDS.READY) return chartColors.performance.excellent; // Green
-    if (score >= CAPACITY_THRESHOLDS.CAUTION) return chartColors.performance.moderate; // Yellow/Orange
-    return chartColors.performance.poor; // Red
+    // RED PHASE: Due words always take priority (urgent memory preservation)
+    if (wordStates.dueWords > 0) return chartColors.performance.poor;
+
+    // YELLOW PHASE: Challenging words present (needs attention before adding new words)
+    if (wordStates.strugglingWords > 0) return chartColors.performance.moderate;
+
+    // GREEN PHASE: No urgent items, capacity available
+    // Only check raw score when no due or challenging words exist
+    if (score >= CAPACITY_THRESHOLDS.READY) return chartColors.performance.excellent;
+    if (score >= CAPACITY_THRESHOLDS.CAUTION) return chartColors.performance.moderate;
+    return chartColors.performance.poor;
   };
 
-  const getReadinessMessage = (score: number) => {
-    if (score >= CAPACITY_THRESHOLDS.READY) return STRINGS.READY_TO_ADD;
-    if (score >= CAPACITY_THRESHOLDS.CAUTION) return STRINGS.ADD_WITH_CAUTION;
-    return STRINGS.DONT_ADD_WORDS;
+  // FIXED: Updated to consider word states, not just raw capacity score
+  const getReadinessMessage = (): string => {
+    if (wordStates.dueWords > 0) {
+      return STRINGS.FOCUS_ON_CURRENT; // Red phase - focus on current words
+    }
+    if (wordStates.strugglingWords > 0) {
+      return STRINGS.PRACTICE_MORE_FIRST; // Yellow phase - practice more first
+    }
+    return STRINGS.READY_TO_ADD; // Green phase - ready for new words
   };
 
+  // FIXED: Updated to use the corrected color logic
   const getActionCardBackground = (score: number) => {
     const baseColor = getCapacityColor(score);
     return chartColors.withOpacity(baseColor, 0.1); // Light tint of the capacity color

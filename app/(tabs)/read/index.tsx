@@ -1,9 +1,9 @@
 import { useHeaderHeight } from '@react-navigation/elements';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import type { JSX } from 'react';
-import { useState, useCallback, useMemo } from 'react';
-import { StyleSheet, View, InteractionManager } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { InteractionManager, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import ErrorState from '@/components/ErrorState';
@@ -14,10 +14,7 @@ import IntelligentArticleSection from '@/components/home/IntelligentArticleSecti
 import WelcomeMessage from '@/components/home/WelcomeMessage';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
-import {
-  getArticleRoute,
-  getFilterRoute,
-} from '@/constants/routes';
+import { getArticleRoute, getFilterRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -125,9 +122,7 @@ export default function ArticlesScreen(): JSX.Element {
       // Force new article selection
       setRefreshKey(prev => prev + 1);
     } catch (error) {
-      handleError(
-        error instanceof Error ? error : new Error(STRINGS.REFRESH_FAILED)
-      );
+      handleError(error instanceof Error ? error : new Error(STRINGS.REFRESH_FAILED));
     } finally {
       setIsRefreshing(false);
     }
