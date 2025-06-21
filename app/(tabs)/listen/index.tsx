@@ -181,11 +181,14 @@ export default function ListenScreen(): JSX.Element {
     }
   }, [enhancedTracksError, showToast]);
 
-  // Check if we have any texts to show controls for
-  const hasArticles = sortedReadingList.length > 0;
+  // Check if we have any texts to show controls for (memoized to prevent glitches)
+  const hasArticles = useMemo(() => sortedReadingList.length > 0, [sortedReadingList.length]);
 
-  // Check if we have any articles with audio available
-  const hasAudioArticles = sortedEnhancedTracks.length > 0;
+  // Check if we have any articles with audio available (memoized to prevent glitches)
+  const hasAudioArticles = useMemo(
+    () => sortedEnhancedTracks.length > 0,
+    [sortedEnhancedTracks.length]
+  );
 
   // Check if player should be visible (when playing or stopped with content)
   const shouldShowPlayer = useMemo(() => {
@@ -194,6 +197,24 @@ export default function ListenScreen(): JSX.Element {
       !!currentArticle
     );
   }, [audioState, currentArticle]);
+
+  // Memoize button visibility condition to prevent rapid appearance/disappearance during loading
+  const shouldShowBottomControls = useMemo(() => {
+    // Only show controls when we have stable data (not during initial loading)
+    return (
+      hasArticles &&
+      hasAudioArticles &&
+      !shouldShowPlayer &&
+      !isStartingPlayback &&
+      !shouldShowInitialLoading
+    );
+  }, [
+    hasArticles,
+    hasAudioArticles,
+    shouldShowPlayer,
+    isStartingPlayback,
+    shouldShowInitialLoading,
+  ]);
 
   // Since data is preloaded, only show empty state when we definitively have no articles
   // and we've waited long enough to prevent flashing
@@ -382,7 +403,7 @@ export default function ListenScreen(): JSX.Element {
         )}
       </ThemedView>
       {/* Only show bottom controls when there are texts with audio to play but no active player */}
-      {hasArticles && hasAudioArticles && !shouldShowPlayer && !isStartingPlayback && (
+      {shouldShowBottomControls && (
         <BottomControls
           primaryDisabled={isPlayAllLoading}
           primaryLoading={isPlayAllLoading}
