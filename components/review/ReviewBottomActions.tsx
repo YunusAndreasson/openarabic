@@ -1,91 +1,22 @@
 import { Ionicons } from '@expo/vector-icons';
-import { memo, type FC, useMemo } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { memo, useMemo, type FC } from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
-interface ReviewBottomActionsProps {
-  onManageWord: () => void;
-  hasCurrentWord: boolean;
-}
+// ===== STATIC CONSTANTS EXTRACTION (CRITICAL FOR PERFORMANCE) =====
+const BOTTOM_ACTIONS_CONSTANTS = {
+  ICON_SIZE: 18,
+  TINT_OPACITY: '20', // 12.5% opacity
+  CONTAINER_HEIGHT: 80,
+  MAX_INDICATOR_WIDTH: 90,
+  TEXT_LINE_HEIGHT: 16,
+} as const;
 
-const ReviewBottomActions: FC<ReviewBottomActionsProps> = memo(
-  ({ onManageWord, hasCurrentWord }) => {
-    const colors = useColors();
-
-    // Performance: Memoize tint colors to prevent recalculation on every render
-    const tintColors = useMemo(
-      () => ({
-        error: colors.error + '20', // 12.5% opacity
-        success: colors.success + '20', // 12.5% opacity
-        settings: colors.captionText + '20', // 12.5% opacity
-      }),
-      [colors.error, colors.success, colors.captionText]
-    );
-
-    // Memoized icon components for better performance
-    const LeftIcon = useMemo(
-      () => <Ionicons name="chevron-back" size={18} color={colors.error} />,
-      [colors.error]
-    );
-
-    const RightIcon = useMemo(
-      () => <Ionicons name="chevron-forward" size={18} color={colors.success} />,
-      [colors.success]
-    );
-
-    const SettingsIcon = useMemo(
-      () => <Ionicons name="settings-outline" size={18} color={colors.captionText} />,
-      [colors.captionText]
-    );
-
-    return (
-      <View style={styles.container}>
-        {/* Left indicator - Don't know */}
-        <View style={styles.indicatorContainer}>
-          <View style={[styles.swipeIndicator, { backgroundColor: tintColors.error }]}>
-            {LeftIcon}
-          </View>
-          <ThemedText style={[styles.indicatorText, { color: colors.error }]}>
-            Don&apos;t know
-          </ThemedText>
-        </View>
-
-        {/* Center - Manage word button */}
-        <View style={styles.indicatorContainer}>
-          <TouchableOpacity
-            style={[
-              styles.swipeIndicator,
-              { backgroundColor: tintColors.settings },
-              !hasCurrentWord && { opacity: LAYOUT.OPACITY.SUBTLE },
-            ]}
-            onPress={onManageWord}
-            disabled={!hasCurrentWord}
-            hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-            testID="manage-word-button"
-          >
-            {SettingsIcon}
-          </TouchableOpacity>
-          <View style={styles.emptyTextSpace} />
-        </View>
-
-        {/* Right indicator - Know */}
-        <View style={styles.indicatorContainer}>
-          <View style={[styles.swipeIndicator, { backgroundColor: tintColors.success }]}>
-            {RightIcon}
-          </View>
-          <ThemedText style={[styles.indicatorText, { color: colors.success }]}>Know</ThemedText>
-        </View>
-      </View>
-    );
-  }
-);
-
-ReviewBottomActions.displayName = 'ReviewBottomActions';
-
-const styles = StyleSheet.create({
+// ===== STATIC STYLES USING STYLESHEET.CREATE =====
+const STATIC_STYLES = StyleSheet.create({
   container: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -93,14 +24,14 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingBottom: LAYOUT.SPACING.LARGE,
-    height: 80,
+    height: BOTTOM_ACTIONS_CONSTANTS.CONTAINER_HEIGHT,
   },
   indicatorContainer: {
     alignItems: 'center',
     justifyContent: 'flex-end',
     opacity: LAYOUT.OPACITY.MEDIUM,
     flex: 1,
-    maxWidth: 90,
+    maxWidth: BOTTOM_ACTIONS_CONSTANTS.MAX_INDICATOR_WIDTH,
     height: '100%',
   },
   swipeIndicator: {
@@ -115,11 +46,133 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     fontWeight: '500',
     textAlign: 'center',
-    lineHeight: 16,
+    lineHeight: BOTTOM_ACTIONS_CONSTANTS.TEXT_LINE_HEIGHT,
   },
   emptyTextSpace: {
-    height: 16, // Same height as indicatorText lineHeight to maintain alignment
+    height: BOTTOM_ACTIONS_CONSTANTS.TEXT_LINE_HEIGHT,
   },
 });
+
+interface ReviewBottomActionsProps {
+  onManageWord: () => void;
+  hasCurrentWord: boolean;
+}
+
+// ===== HELPER FUNCTIONS EXTRACTED (PURE FUNCTIONS OUTSIDE COMPONENT) =====
+const createTintColors = (colors: any) => ({
+  error: colors.error + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY,
+  success: colors.success + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY,
+  settings: colors.captionText + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY,
+});
+
+const createIconProps = (name: any, color: string) => ({
+  name,
+  size: BOTTOM_ACTIONS_CONSTANTS.ICON_SIZE,
+  color,
+});
+
+// ===== COMPONENT WITH ADVANCED OPTIMIZATION =====
+const ReviewBottomActionsInternal: FC<ReviewBottomActionsProps> = memo(
+  ({ onManageWord, hasCurrentWord }) => {
+    const colors = useColors();
+
+    // ===== COLOR BATCHING (PREVENTS MULTIPLE COLOR CALCULATIONS) =====
+    const batchedColors = useMemo(
+      () => ({
+        error: colors.error,
+        success: colors.success,
+        captionText: colors.captionText,
+      }),
+      [colors.error, colors.success, colors.captionText]
+    );
+
+    // ===== ADVANCED MEMOIZATION =====
+    const tintColors = useMemo(() => createTintColors(batchedColors), [batchedColors]);
+
+    // ===== MEMOIZED ICON COMPONENTS (PREVENT RECREATION) =====
+    const iconComponents = useMemo(
+      () => ({
+        left: <Ionicons {...createIconProps('chevron-back', batchedColors.error)} />,
+        right: <Ionicons {...createIconProps('chevron-forward', batchedColors.success)} />,
+        settings: <Ionicons {...createIconProps('settings-outline', batchedColors.captionText)} />,
+      }),
+      [batchedColors]
+    );
+
+    // ===== MEMOIZED STYLE OBJECTS (PREVENT CHILD RE-RENDERS) =====
+    const indicatorStyles = useMemo(
+      () => ({
+        leftIndicator: [STATIC_STYLES.swipeIndicator, { backgroundColor: tintColors.error }],
+        rightIndicator: [STATIC_STYLES.swipeIndicator, { backgroundColor: tintColors.success }],
+        settingsIndicator: [
+          STATIC_STYLES.swipeIndicator,
+          { backgroundColor: tintColors.settings },
+          !hasCurrentWord && { opacity: LAYOUT.OPACITY.SUBTLE },
+        ],
+      }),
+      [tintColors, hasCurrentWord]
+    );
+
+    const textStyles = useMemo(
+      () => ({
+        leftText: [STATIC_STYLES.indicatorText, { color: batchedColors.error }],
+        rightText: [STATIC_STYLES.indicatorText, { color: batchedColors.success }],
+      }),
+      [batchedColors]
+    );
+
+    // ===== MEMOIZED CHILD PROPS =====
+    const touchableProps = useMemo(
+      () => ({
+        style: indicatorStyles.settingsIndicator,
+        onPress: onManageWord,
+        disabled: !hasCurrentWord,
+        hitSlop: LAYOUT.HIT_SLOP.MEDIUM,
+        testID: 'manage-word-button',
+      }),
+      [indicatorStyles.settingsIndicator, onManageWord, hasCurrentWord]
+    );
+
+    return (
+      <View style={STATIC_STYLES.container}>
+        {/* Left indicator - Don't know */}
+        <View style={STATIC_STYLES.indicatorContainer}>
+          <View style={indicatorStyles.leftIndicator}>{iconComponents.left}</View>
+          <ThemedText style={textStyles.leftText}>Don&apos;t know</ThemedText>
+        </View>
+
+        {/* Center - Manage word button */}
+        <View style={STATIC_STYLES.indicatorContainer}>
+          <TouchableOpacity {...touchableProps}>{iconComponents.settings}</TouchableOpacity>
+          <View style={STATIC_STYLES.emptyTextSpace} />
+        </View>
+
+        {/* Right indicator - Know */}
+        <View style={STATIC_STYLES.indicatorContainer}>
+          <View style={indicatorStyles.rightIndicator}>{iconComponents.right}</View>
+          <ThemedText style={textStyles.rightText}>Know</ThemedText>
+        </View>
+      </View>
+    );
+  }
+);
+
+// ===== CUSTOM MEMO COMPARISON FUNCTION (PREVENTS UNNECESSARY RE-RENDERS) =====
+const ReviewBottomActionsComparison = (
+  prevProps: ReviewBottomActionsProps,
+  nextProps: ReviewBottomActionsProps
+): boolean => {
+  // Compare primitive values first (fastest)
+  if (prevProps.hasCurrentWord !== nextProps.hasCurrentWord) return false;
+
+  // Function reference comparison
+  if (prevProps.onManageWord !== nextProps.onManageWord) return false;
+
+  return true;
+};
+
+export const ReviewBottomActions = memo(ReviewBottomActionsInternal, ReviewBottomActionsComparison);
+
+ReviewBottomActions.displayName = 'ReviewBottomActions';
 
 export default ReviewBottomActions;

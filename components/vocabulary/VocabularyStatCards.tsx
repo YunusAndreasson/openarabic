@@ -1,21 +1,15 @@
 import { memo, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import {
-  LEARNING_STABILITY_UPPER_BOUND,
-  LEARNING_DIFFICULTY_MIN,
-  MASTERED_STABILITY_THRESHOLD,
-  MASTERED_DIFFICULTY_MAX,
-} from '@/constants/fsrs';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
-import { getStrugglingWordsCount } from '@/utils/wordClassification';
+import type { StatCategory, StudyWord } from '@/types/vocabulary.types';
+import { isStrugglingWord } from '@/utils/wordClassification';
 
 import { MemoryCapacityGauge } from './charts/MemoryCapacityGauge';
 
@@ -66,48 +60,37 @@ export const VocabularyStatCards = memo(
 
     // Calculate word categories
     const wordCategories = useMemo(() => {
-      const studyWords = validatedInput.studyWords;
+      const { studyWords, dueWords: _dueWords } = validatedInput;
 
-      if (!studyWords.length) {
-        return {
-          dueWords: 0,
-          learningWords: 0,
-          strugglingWords: 0,
-          masteredWords: 0,
-        };
-      }
+      // Calculate due words from study words if not provided
+      const now = new Date().toISOString();
+      const calculatedDueWords = studyWords.filter(
+        word => (word.fsrs_due ?? '9999-12-31') <= now
+      ).length;
 
-      const now = new Date();
+      // FIXED: Use server-side logic for learning words (matching session logic)
+      // Server: 'fsrs_state.in.(0,1,3),and(fsrs_state.eq.2,fsrs_stability.lt.5)'
+      const learningWords = studyWords.filter(word => {
+        const state = word.fsrs_state;
+        const stability = word.fsrs_stability ?? 0;
+        return state === 0 || state === 1 || state === 3 || (state === 2 && stability < 5);
+      }).length;
 
-      // Calculate categories based on FSRS data and learning state in one pass
-      const { learningWords, masteredWords, calculatedDueWords } = studyWords.reduce(
-        (counts, word) => {
-          const stability = word.fsrs_stability || 0;
-          const difficulty = word.fsrs_difficulty || 5;
+      // FIXED: Use server-side logic for mastered words (matching session logic)
+      // Server: 'fsrs_state.eq.2,fsrs_stability.gte.5'
+      const masteredWords = studyWords.filter(word => {
+        const state = word.fsrs_state;
+        const stability = word.fsrs_stability ?? 0;
+        return state === 2 && stability >= 5;
+      }).length;
 
-          // Only calculate due words from studyWords if dueWords prop is not provided
-          if (validatedInput.dueWords === 0 && word.fsrs_due && new Date(word.fsrs_due) <= now) {
-            counts.calculatedDueWords += 1;
-          }
-
-          if (
-            stability > 0 &&
-            stability < LEARNING_STABILITY_UPPER_BOUND &&
-            difficulty > LEARNING_DIFFICULTY_MIN
-          ) {
-            counts.learningWords += 1;
-          }
-
-          if (stability >= MASTERED_STABILITY_THRESHOLD && difficulty <= MASTERED_DIFFICULTY_MAX) {
-            counts.masteredWords += 1;
-          }
-
-          return counts;
-        },
-        { calculatedDueWords: 0, learningWords: 0, masteredWords: 0 }
-      );
-
-      const strugglingWords = getStrugglingWordsCount(studyWords);
+      // FIXED: Only count struggling words that have been reviewed (matching session logic)
+      // This ensures the display count matches what users will actually practice
+      const strugglingWords = studyWords.filter(word => {
+        // Must have been reviewed at least once (matching session's reviewedOnly: true)
+        const hasBeenReviewed = word.fsrs_last_review != null && (word.fsrs_reps ?? 0) > 0;
+        return hasBeenReviewed && isStrugglingWord(word);
+      }).length;
 
       return {
         // Prioritize dueWords prop over calculated value for consistency

@@ -1,16 +1,16 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useCallback } from 'react';
 import type { JSX } from 'react';
+import { useCallback } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedView } from '@/components/ThemedView';
 import {
-  ReviewCard,
-  ReviewHeader,
   CompletionScreen,
   MeaningOverlay,
   ReviewBottomActions,
+  ReviewCard,
+  ReviewHeader,
 } from '@/components/review';
 import WordManagementModal from '@/components/vocabulary/WordManagementModal';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
@@ -64,7 +64,6 @@ export default function ReviewScreen(): JSX.Element {
     isStruggling,
     handleSwipeLeft,
     handleSwipeRight,
-    handleTap,
     handleLongPress,
     handleClose,
     isUpdating,
@@ -124,7 +123,6 @@ export default function ReviewScreen(): JSX.Element {
             word={currentSentence.wordForm}
             onSwipeLeft={handleSwipeLeft}
             onSwipeRight={handleSwipeRight}
-            onTap={handleTap}
           />
           <MeaningOverlay
             isStruggling={isStruggling}

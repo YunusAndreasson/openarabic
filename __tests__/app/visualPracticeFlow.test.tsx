@@ -1,5 +1,5 @@
+import { act, fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import { render, fireEvent, act } from '@testing-library/react-native';
 import { Text, TouchableOpacity } from 'react-native';
 
 import { useReview } from '../../hooks/review';
@@ -111,7 +111,6 @@ jest.mock('../../hooks/review', () => {
         isStruggling: false,
         handleSwipeLeft,
         handleSwipeRight,
-        handleTap: jest.fn(),
         handleLongPress: jest.fn(),
         handleClose,
         animatedStyle: {},

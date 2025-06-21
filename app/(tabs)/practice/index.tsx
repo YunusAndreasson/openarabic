@@ -3,8 +3,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback } from 'react';
-import { StyleSheet, ScrollView, ActivityIndicator, View, InteractionManager } from 'react-native';
+import { useCallback, useMemo } from 'react';
+import { ActivityIndicator, InteractionManager, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
@@ -58,7 +58,7 @@ export default function VocabularyScreen(): JSX.Element {
   });
 
   // Use the optimized vocabulary chart data hook that uses database views
-  const { userStats, isLoadingUserStats } = useVocabularyChartData(user?.id);
+  const { userStats: _userStats, isLoadingUserStats } = useVocabularyChartData(user?.id);
 
   // Handle starting review based on category type
   const handleStartReview = useCallback(
@@ -87,6 +87,36 @@ export default function VocabularyScreen(): JSX.Element {
     [user, router]
   );
 
+  // Fix: Use the actual due words data count instead of database view
+  // This ensures consistency between display and practice session
+  const dueWordsCount = dueWordsData?.length ?? 0;
+
+  // Filter study words for memory capacity gauge (needs all words, not just due)
+  const filteredStudyWords = studyWords?.filter(word => word != null && word.root_id != null) ?? [];
+
+  // FIXED: Calculate learning and mastered words from actual data instead of database view
+  // This ensures consistency between display and session logic for all word types
+  const calculatedStats = useMemo(() => {
+    if (!filteredStudyWords.length) {
+      return { learningWords: 0, masteredWords: 0 };
+    }
+
+    // Use same logic as VocabularyStatCards and server-side filters
+    const learningWords = filteredStudyWords.filter(word => {
+      const state = word.fsrs_state;
+      const stability = word.fsrs_stability ?? 0;
+      return state === 0 || state === 1 || state === 3 || (state === 2 && stability < 5);
+    }).length;
+
+    const masteredWords = filteredStudyWords.filter(word => {
+      const state = word.fsrs_state;
+      const stability = word.fsrs_stability ?? 0;
+      return state === 2 && stability >= 5;
+    }).length;
+
+    return { learningWords, masteredWords };
+  }, [filteredStudyWords]);
+
   // Show error message if there was an error loading data
   if (error) {
     return (
@@ -99,13 +129,6 @@ export default function VocabularyScreen(): JSX.Element {
   // Check if data is cached and show loading indicator
   const isDataCached = !!(user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id)));
   const showLoadingIndicator = (isDataLoading || isFetching || isLoadingUserStats) && !isDataCached;
-
-  // Fix: Use the actual due words data count instead of database view
-  // This ensures consistency between display and practice session
-  const dueWordsCount = dueWordsData?.length ?? 0;
-
-  // Filter study words for memory capacity gauge (needs all words, not just due)
-  const filteredStudyWords = studyWords?.filter(word => word != null && word.root_id != null) ?? [];
 
   // Main content
   return (
@@ -135,8 +158,8 @@ export default function VocabularyScreen(): JSX.Element {
         <View style={{ marginTop: LAYOUT.SPACING.MEDIUM }}>
           <VocabularyStatCards
             dueWords={dueWordsCount}
-            learningWords={userStats?.learningWords ?? 0}
-            masteredWords={userStats?.masteredWords ?? 0}
+            learningWords={calculatedStats.learningWords}
+            masteredWords={calculatedStats.masteredWords}
             studyWords={filteredStudyWords} // Use all study words for memory capacity gauge
             onStartReview={handleStartReview}
           />

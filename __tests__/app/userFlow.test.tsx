@@ -1,13 +1,13 @@
-import React from 'react';
-import { render, fireEvent, act } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
+import React from 'react';
 
+import { TouchableOpacity } from 'react-native';
 import ArticleCard from '../../components/ArticleCard';
 import { ArabicWord } from '../../components/article/ArabicWord';
-import { VocabularyStatCards } from '../../components/vocabulary/VocabularyStatCards';
 import CompletionScreen from '../../components/review/CompletionScreen';
 import ErrorMessage from '../../components/vocabulary/ErrorMessage';
-import { TouchableOpacity } from 'react-native';
+import { VocabularyStatCards } from '../../components/vocabulary/VocabularyStatCards';
 import { useReview } from '../../hooks/review';
 
 jest.mock('expo-router', () => {
@@ -125,7 +125,6 @@ jest.mock('../../hooks/review', () => {
       isStruggling: false,
       handleSwipeLeft,
       handleSwipeRight: jest.fn(),
-      handleTap: jest.fn(),
       handleLongPress: jest.fn(),
       handleClose: jest.fn(),
       animatedStyle: {},

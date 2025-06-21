@@ -1,13 +1,13 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import { InteractionManager } from 'react-native';
-import { useAnimatedStyle } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
+import { useAnimatedStyle } from 'react-native-reanimated';
 
-import { TIMING_CONFIG, DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
-import { FSRS_QUERY_KEYS, DEFAULT_SESSION_COOLDOWN_HOURS } from '@/constants/fsrs';
+import { DEFAULT_ANIMATION_DURATION, TIMING_CONFIG } from '@/constants/animation';
+import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -63,7 +63,6 @@ interface UseReviewReturn {
   isStruggling: boolean;
   handleSwipeLeft: () => void;
   handleSwipeRight: () => void;
-  handleTap: () => void;
   handleLongPress: () => void;
   handleClose: () => void;
   animatedStyle: AnimatedStyleProp<ViewStyle>;
@@ -558,11 +557,6 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     handleKnowledgeResponse('known');
   }, [handleKnowledgeResponse]);
 
-  const handleTap = useCallback(() => {
-    // Removed haptic feedback for tap (vague)
-    handleKnowledgeResponse('vague');
-  }, [handleKnowledgeResponse]);
-
   const handleLongPress = useCallback(() => {
     if (isComplete || stateRefs.current.isUpdatingWord || !currentWord) return;
 
@@ -675,7 +669,6 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     isStruggling,
     handleSwipeLeft,
     handleSwipeRight,
-    handleTap,
     handleLongPress,
     handleClose,
     animatedStyle,
