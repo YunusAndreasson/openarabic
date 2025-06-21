@@ -47,8 +47,8 @@ const styles = StyleSheet.create({
   },
 });
 
-// Define a constant for item height calculation
-const ITEM_HEIGHT = 120;
+// Use responsive height calculation instead of hardcoded value
+const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.NOW_PLAYING;
 
 // Memory-optimized component for reading list items
 const ListenListItem = memo(
@@ -206,8 +206,8 @@ export default function ListenScreen(): JSX.Element {
     const safeAreaBottom = Math.max(insets.bottom, LAYOUT.SPACING.SMALL);
 
     if (shouldShowPlayer) {
-      // Account for NowPlayingCard height (120) + its bottom spacing + safe area
-      return baseTabBarHeight + 120 + LAYOUT.SPACING.LARGE + safeAreaBottom;
+      // Account for NowPlayingCard height + its bottom spacing + safe area
+      return baseTabBarHeight + ITEM_HEIGHT + LAYOUT.SPACING.LARGE + safeAreaBottom;
     } else if (hasArticles && hasAudioArticles) {
       // Account for BottomControls height + safe area
       return baseTabBarHeight + LAYOUT.SPACING.XLARGE + safeAreaBottom;

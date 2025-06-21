@@ -1,5 +1,5 @@
 import { memo, useCallback } from 'react';
-import { StyleSheet, View, Pressable } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -39,7 +39,7 @@ const FilterButton = memo(({ onPress }: FilterButtonProps) => {
         onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+        hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
       >
         <ThemedText type="label" weight="medium" colorName="tint" style={styles.filterText}>
           {STRINGS.FILTER}
@@ -92,18 +92,18 @@ const styles = StyleSheet.create({
   },
   badge: {
     position: 'absolute',
-    top: LAYOUT.SPACING.TINY - 2,
-    right: LAYOUT.SPACING.TINY - 2,
-    minWidth: 16,
-    height: 16,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    top: LAYOUT.SPACING.TINY / 2, // Use half spacing instead of hardcoded offset
+    right: LAYOUT.SPACING.TINY / 2, // Use half spacing instead of hardcoded offset
+    minWidth: LAYOUT.SPACING.LARGE, // 16px responsive
+    minHeight: LAYOUT.SPACING.LARGE, // 16px responsive
+    borderRadius: LAYOUT.SPACING.SMALL, // 8px for rounded appearance
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: LAYOUT.SPACING.TINY,
   },
   badgeText: {
-    fontSize: 10,
-    lineHeight: 12,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY, // Use scale instead of hardcoded
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // Use scale instead of hardcoded
   },
 });
 

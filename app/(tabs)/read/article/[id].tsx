@@ -1,8 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useMemo, useCallback, useEffect, useState } from 'react';
 import type { JSX } from 'react';
-import { View, AppState, type ViewStyle } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { AppState, View, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedView } from '@/components/ThemedView';
@@ -47,8 +47,8 @@ const ModalDragIndicator = () => {
     >
       <View
         style={{
-          width: 32,
-          height: 4,
+          width: LAYOUT.SPACING.XXXLARGE, // 32px - responsive spacing
+          height: LAYOUT.SPACING.TINY, // 4px - responsive spacing
           backgroundColor: colors.modalIndicator,
           borderRadius: LAYOUT.BORDER_RADIUS.PILL,
           opacity: LAYOUT.OPACITY.MEDIUM,

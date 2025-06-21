@@ -1,5 +1,5 @@
 import { FlashList } from '@shopify/flash-list';
-import { useMemo, useCallback, memo, type FC } from 'react';
+import { memo, useCallback, useMemo, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import EmptyState from '@/components/EmptyState';
@@ -14,7 +14,8 @@ import ListArticleItem from './ListArticleItem';
 
 // Extract constants outside component to prevent recreation
 const NOOP_ARTICLE_PRESS = () => {};
-const ITEM_HEIGHT = 100;
+// Use responsive height for filtered article items
+const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM;
 const DRAW_DISTANCE_MULTIPLIER = 5;
 
 // Static separator component

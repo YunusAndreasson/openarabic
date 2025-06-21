@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, type FC, type ComponentProps } from 'react';
+import { useCallback, type ComponentProps, type FC } from 'react';
 import { StyleSheet, TouchableOpacity, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -33,7 +33,7 @@ const DeleteButton: FC<
       disabled={disabled}
       activeOpacity={LAYOUT.OPACITY.HOVER}
       style={styles.touchable}
-      hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+      hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
     >
       <Animated.View
         style={[

@@ -1,18 +1,18 @@
 import { useHeaderHeight } from '@react-navigation/elements';
-import type { ListRenderItem, ContentStyle } from '@shopify/flash-list';
+import type { ContentStyle, ListRenderItem } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import {
+  forwardRef,
+  memo,
   useCallback,
+  useImperativeHandle,
   useMemo,
   useRef,
-  forwardRef,
-  useImperativeHandle,
-  memo,
   useTransition,
   type ComponentType,
   type ReactElement,
 } from 'react';
-import { StyleSheet, RefreshControl, type StyleProp, type ViewStyle, View } from 'react-native';
+import { RefreshControl, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import ArticleCard from '@/components/ArticleCard';
@@ -21,7 +21,8 @@ import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 
-const ITEM_HEIGHT = 360;
+// Use responsive height calculation based on content and spacing
+const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM + LAYOUT.SPACING.XXXLARGE * 8; // Base + content space
 const DRAW_DISTANCE = ITEM_HEIGHT * 5;
 const ESTIMATED_LIST_SIZE = { height: ITEM_HEIGHT * 10, width: 0 };
 const articleKeyExtractor = (item: Article) => `article-${item.id}`;

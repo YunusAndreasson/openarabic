@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, type FC, type ComponentProps } from 'react';
+import { useCallback, type ComponentProps, type FC } from 'react';
 import type { ViewStyle } from 'react-native';
-import { StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ICON_BUTTON_PRESS_SCALE } from '@/constants/animation';
@@ -54,7 +54,7 @@ const PlayButton: FC<PlayButtonProps> = ({
       disabled={disabled || isLoading}
       activeOpacity={0.7}
       style={styles.touchable}
-      hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+      hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
     >
       <Animated.View
         style={[

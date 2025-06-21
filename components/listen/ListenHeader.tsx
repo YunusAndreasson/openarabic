@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { FC } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ProgressBar } from '@/components/ProgressBar';
 import { PROGRESS_BAR_ANIMATION_DURATION } from '@/constants/animation';
@@ -50,7 +50,7 @@ const ListenHeader: FC<ListenHeaderProps> = ({
         <TouchableOpacity
           style={[styles.manageButton, { backgroundColor: colors.elevation1 }]}
           onPress={handleManagePress}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          hitSlop={LAYOUT.HIT_SLOP.SMALL}
           testID="manage-word-button"
         >
           <Ionicons name="ellipsis-horizontal" size={16} color={colors.secondaryText} />

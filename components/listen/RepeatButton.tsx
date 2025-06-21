@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo, useEffect, useCallback, type FC, type ComponentProps } from 'react';
+import { useCallback, useEffect, useMemo, type ComponentProps, type FC } from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -13,10 +13,7 @@ import type { BaseIconButtonProps } from '@/types/ui/button.types';
 import { selectionFeedback } from '@/utils/haptics';
 
 interface RepeatButtonProps
-  extends Omit<
-    BaseIconButtonProps<ComponentProps<typeof Ionicons>['name']>,
-    'icon' | 'onPress'
-  > {
+  extends Omit<BaseIconButtonProps<ComponentProps<typeof Ionicons>['name']>, 'icon' | 'onPress'> {
   enabled: boolean;
   onToggle: () => void;
 }
@@ -60,7 +57,7 @@ const RepeatButton: FC<RepeatButtonProps> = ({ enabled, onToggle, ...rest }) => 
     <TouchableOpacity
       style={[styles.container, containerStyle]}
       onPress={handlePress}
-      hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+      hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
       {...rest}
     >
       <Animated.View style={[styles.iconContainer, iconRotationStyle]}>

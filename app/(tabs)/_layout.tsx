@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { Tabs, router } from 'expo-router';
-import { memo, useEffect, Fragment } from 'react';
 import type { JSX } from 'react';
+import { Fragment, memo, useEffect } from 'react';
 import { Platform, StyleSheet } from 'react-native';
 
 import HeaderProfile from '@/components/HeaderProfile';
@@ -180,11 +180,11 @@ export default function TabLayout(): JSX.Element {
                   color: colors.white,
                   fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
                   fontWeight: '600',
-                  minWidth: 20,
-                  height: 20,
-                  borderRadius: 10,
-                  marginLeft: -8,
-                  marginTop: -2,
+                  // Use responsive dimensions based on spacing scale
+                  minWidth: LAYOUT.SPACING.XLARGE, // 20px
+                  minHeight: LAYOUT.SPACING.XLARGE, // 20px
+                  borderRadius: LAYOUT.SPACING.MEDIUM, // 12px for rounded appearance
+                  // Remove negative margins for safer positioning across devices
                 },
               }),
             ...(screen.name === 'read' && {

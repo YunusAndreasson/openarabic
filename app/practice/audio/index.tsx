@@ -1,15 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
-import { useLocalSearchParams, router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, View, type ViewStyle, InteractionManager } from 'react-native';
+import { InteractionManager, StyleSheet, View, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { ListenHeader, CompletionScreen } from '@/components/listen';
+import { CompletionScreen, ListenHeader } from '@/components/listen';
 import RepeatButton from '@/components/listen/RepeatButton';
 import { WordDisplay } from '@/components/review';
 import { DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
@@ -30,8 +30,7 @@ import { handleError } from '@/utils/errorHandling';
 const fontConfig = {
   minFontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.6,
   maxFontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 3.3,
-  minScreenWidth: 320,
-  maxScreenWidth: 500,
+  // Removed hardcoded screen constraints for better responsiveness across all device sizes
 };
 
 export default function ListenScreen(): JSX.Element {
@@ -154,9 +153,7 @@ export default function ListenScreen(): JSX.Element {
               size={18}
               style={styles.noteIcon}
             />
-            <ThemedText style={styles.noteText}>
-              {STRINGS.WORKS_WITH_SCREEN_OFF}
-            </ThemedText>
+            <ThemedText style={styles.noteText}>{STRINGS.WORKS_WITH_SCREEN_OFF}</ThemedText>
           </View>
         </View>
       </View>
@@ -206,16 +203,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     minHeight: WORD_AREA_MIN_HEIGHT,
-    position: 'relative',
     width: '100%',
   },
   wordContainer: {
     alignItems: 'center',
-    bottom: 0,
     justifyContent: 'center',
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0,
+    flex: 1, // Use flex instead of absolute positioning for better responsive behavior
   },
 });

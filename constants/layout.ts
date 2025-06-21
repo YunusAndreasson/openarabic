@@ -31,9 +31,9 @@ const SPACING_SCALE = {
 
 // Touch target system based on accessibility guidelines
 const TOUCH_TARGETS = {
-  SMALL: 32,
-  MEDIUM: 44,
-  LARGE: 48, // iOS/Android minimum recommended
+  SMALL: BASE_UNIT * 8, // 32 - responsive to base unit
+  MEDIUM: BASE_UNIT * 11, // 44 - responsive to base unit
+  LARGE: BASE_UNIT * 12, // 48 - iOS/Android minimum recommended, responsive
   ICON_PADDING: BASE_UNIT * 3, // 12
 } as const;
 
@@ -145,17 +145,18 @@ export const TYPOGRAPHY_HIERARCHY = {
   },
 } as const;
 
-export const WORD_AREA_MIN_HEIGHT = 364;
+// Dynamic word area height based on screen proportions and touch targets
+export const WORD_AREA_MIN_HEIGHT = TOUCH_TARGETS.LARGE * 7.5; // ~360px, responsive to touch targets
 
 // Export touch targets for backward compatibility and external use
 export const MIN_TOUCH_TARGET = TOUCH_TARGETS;
 
 export const LAYOUT = {
-  SCREEN_EDGE_PADDING: 12,
+  SCREEN_EDGE_PADDING: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
 
   CONTENT_SPACING: {
-    TOP: 16,
-    BOTTOM: 12,
+    TOP: SPACING_SCALE.LARGE, // 16 - responsive to spacing scale
+    BOTTOM: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
   },
 
   SPACING: SPACING_SCALE,
@@ -176,12 +177,12 @@ export const LAYOUT = {
   },
 
   BOTTOM_BAR: {
-    HEIGHT: IS_IOS ? 65 : 45,
+    HEIGHT: IS_IOS ? SPACING_SCALE.LARGE * 4 + BASE_UNIT : SPACING_SCALE.LARGE * 2.8, // iOS: 64, Android: ~45
   },
 
   BORDER_RADIUS: {
-    MEDIUM: 12,
-    PILL: 9999,
+    MEDIUM: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
+    PILL: 9999, // Keep as is for perfect circles
   },
 
   CARD: {
@@ -190,14 +191,20 @@ export const LAYOUT = {
       MEDIUM: SPACING_SCALE.MEDIUM,
       LARGE: SPACING_SCALE.LARGE,
     },
+    HEIGHT: {
+      // Dynamic heights based on content and accessibility
+      LIST_ITEM: TOUCH_TARGETS.LARGE + SPACING_SCALE.LARGE * 2, // 48 + 32 = 80
+      AUDIO_ITEM: TOUCH_TARGETS.LARGE + SPACING_SCALE.XLARGE * 2, // 48 + 40 = 88
+      NOW_PLAYING: TOUCH_TARGETS.LARGE * 2 + SPACING_SCALE.LARGE, // 96 + 16 = 112
+    },
   },
 
   INPUT: {
-    HEIGHT: 52,
-    BORDER_RADIUS: 8,
+    HEIGHT: TOUCH_TARGETS.LARGE + BASE_UNIT, // 52 - responsive to touch targets + padding
+    BORDER_RADIUS: SPACING_SCALE.SMALL, // 8 - responsive to spacing scale
     BORDER_WIDTH: {
-      DEFAULT: 1.5,
-      FOCUSED: 2,
+      DEFAULT: BASE_UNIT * 0.375, // 1.5 - responsive to base unit
+      FOCUSED: BASE_UNIT * 0.5, // 2 - responsive to base unit
     },
   },
 
@@ -208,21 +215,21 @@ export const LAYOUT = {
       LARGE: TOUCH_TARGETS.LARGE,
     },
     ICON_SIZE: {
-      SMALL: 16,
-      MEDIUM: 20,
-      LARGE: 24,
+      SMALL: SPACING_SCALE.LARGE, // 16 - responsive to spacing scale
+      MEDIUM: SPACING_SCALE.XLARGE, // 20 - responsive to spacing scale
+      LARGE: SPACING_SCALE.XXLARGE, // 24 - responsive to spacing scale
     },
   },
 
   TYPOGRAPHY: {
     SCALE: {
-      TINY: 11,
-      SMALL: 13,
-      MEDIUM: 15,
-      LARGE: 17,
-      XLARGE: 20,
-      XXLARGE: 22,
-      HUGE: 28,
+      TINY: BASE_UNIT * 2.75, // 11 - responsive to base unit
+      SMALL: BASE_UNIT * 3.25, // 13 - responsive to base unit
+      MEDIUM: BASE_UNIT * 3.75, // 15 - responsive to base unit
+      LARGE: BASE_UNIT * 4.25, // 17 - responsive to base unit
+      XLARGE: SPACING_SCALE.XLARGE, // 20 - responsive to spacing scale
+      XXLARGE: BASE_UNIT * 5.5, // 22 - responsive to base unit
+      HUGE: BASE_UNIT * 7, // 28 - responsive to base unit
     },
     LINE_HEIGHT: TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS,
   },
@@ -246,12 +253,18 @@ export const LAYOUT = {
 
   ANIMATION: {
     DURATION: {
-      FAST: 200,
-      SLOW: 500,
+      FAST: BASE_UNIT * 50, // 200ms - responsive to base unit
+      SLOW: BASE_UNIT * 125, // 500ms - responsive to base unit
     },
   },
 
   HIT_SLOP: {
+    SMALL: {
+      top: SPACING_SCALE.SMALL,
+      bottom: SPACING_SCALE.SMALL,
+      left: SPACING_SCALE.SMALL,
+      right: SPACING_SCALE.SMALL,
+    },
     MEDIUM: {
       top: SPACING_SCALE.MEDIUM,
       bottom: SPACING_SCALE.MEDIUM,
@@ -275,9 +288,9 @@ export const LAYOUT = {
   BORDER: {
     WIDTH: {
       NONE: 0,
-      THIN: 0.5,
-      NORMAL: 1,
-      THICK: 2,
+      THIN: BASE_UNIT * 0.125, // 0.5 - responsive to base unit
+      NORMAL: BASE_UNIT * 0.25, // 1 - responsive to base unit
+      THICK: BASE_UNIT * 0.5, // 2 - responsive to base unit
     },
     STYLE: {
       SOLID: 'solid',
@@ -288,24 +301,24 @@ export const LAYOUT = {
 
   HEADER: {
     HEIGHT: {
-      EXPANDED: 380,
+      EXPANDED: TOUCH_TARGETS.LARGE * 8, // ~380 - responsive to touch targets
       COLLAPSED: 0,
     },
-    NAV_HEIGHT: IS_IOS ? 44 : 56,
-    NAV_HEADER_HEIGHT: IS_IOS ? 100 : 80,
+    NAV_HEIGHT: IS_IOS ? TOUCH_TARGETS.MEDIUM : TOUCH_TARGETS.LARGE + SPACING_SCALE.SMALL,
+    NAV_HEADER_HEIGHT: IS_IOS ? TOUCH_TARGETS.LARGE * 2 + BASE_UNIT : SPACING_SCALE.XLARGE * 4,
 
     TITLE: {
       MAIN: {
-        fontSize: 28,
+        fontSize: BASE_UNIT * 7, // 28 - responsive to base unit
         fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
-        marginLeft: -4,
+        marginLeft: -BASE_UNIT, // -4 - responsive negative margin
       },
       SECONDARY: {
-        fontSize: 20,
+        fontSize: SPACING_SCALE.XLARGE, // 20 - responsive to spacing scale
         fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
       },
       COMPACT: {
-        fontSize: 17,
+        fontSize: BASE_UNIT * 4.25, // 17 - responsive to base unit
         fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
       },
     },
@@ -345,7 +358,7 @@ export const getEnhancedOpacity = (
   }
 
   if (isInteractive) {
-    adjustedOpacity += 0.05;
+    adjustedOpacity += TYPOGRAPHY_HIERARCHY.ACCESSIBILITY.DYNAMIC_OPACITY.LIGHT_THEME_BOOST; // 0.05 - use existing constant
   }
 
   return Math.min(1.0, Math.max(0.0, adjustedOpacity));

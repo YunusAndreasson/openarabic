@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { memo, useMemo, type FC } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -95,7 +95,7 @@ const SectionTitle: FC<SectionTitleProps> = ({
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           activeOpacity={LAYOUT.OPACITY.PRESSED}
-          hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+          hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
         >
           <Ionicons
             name="information-outline"
