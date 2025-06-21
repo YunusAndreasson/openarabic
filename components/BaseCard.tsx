@@ -1,5 +1,5 @@
 import { memo, useMemo, type FC } from 'react';
-import { StyleSheet, Pressable, View, Platform } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
@@ -44,7 +44,6 @@ const BaseCard: FC<BaseCardProps> = memo(
         shadowStyles,
         shadowSize !== 'none' && {
           shadowColor: colors.shadow,
-          shadowOffset: { width: 0, height: 1 },
         },
         style,
       ],

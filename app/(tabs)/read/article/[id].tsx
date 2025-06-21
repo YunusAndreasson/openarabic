@@ -29,6 +29,7 @@ import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { useAppSelectorMemo } from '@/store/hooks';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
+import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
 
 const FLEX_ONE_STYLE = { flex: 1 } as const;
@@ -132,17 +133,32 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
       if (track) {
         const success = await audioPlayer.actions.startEnhancedPlayback([track], 0);
         if (!success) {
-          console.error('Failed to start enhanced playback');
+          handleError(new Error('Failed to start enhanced playback'), {
+            showToast: false,
+            captureSentry: true,
+            analyticsEventName: 'Audio Playback Start Failed',
+            analyticsProperties: { articleId, feature: 'audio_playback' },
+          });
           // Revert optimistic state on failure
           setIsOptimisticallyPlaying(false);
         }
       } else {
-        console.error('Failed to generate audio track');
+        handleError(new Error('Failed to generate audio track'), {
+          showToast: false,
+          captureSentry: true,
+          analyticsEventName: 'Audio Track Generation Failed',
+          analyticsProperties: { articleId, feature: 'audio_generation' },
+        });
         // Revert optimistic state on failure
         setIsOptimisticallyPlaying(false);
       }
     } catch (error) {
-      console.error('Failed to start article playback:', error);
+      handleError(error instanceof Error ? error : new Error(String(error)), {
+        showToast: false,
+        captureSentry: true,
+        analyticsEventName: 'Article Playback Start Error',
+        analyticsProperties: { articleId, feature: 'audio_playback_start' },
+      });
       // Revert optimistic state on error
       setIsOptimisticallyPlaying(false);
     } finally {

@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState, memo, useCallback } from 'react';
-import { StyleSheet, View, Modal, TouchableWithoutFeedback, TouchableOpacity } from 'react-native';
+import React, { memo, useCallback, useState } from 'react';
+import { Modal, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
@@ -212,10 +212,6 @@ const styles = StyleSheet.create({
   },
   modal: {
     ...LAYOUT.ELEVATION.LARGE,
-    shadowOffset: {
-      width: 0,
-      height: -8,
-    },
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     maxHeight: '65%',
     overflow: 'hidden',

@@ -29,12 +29,6 @@ interface ToastProps {
 const DEFAULT_DURATION = 3500;
 const MAX_TOAST_WIDTH_RATIO = 0.9;
 
-// Enhanced shadow styles for more prominence
-const SHADOW_STYLES = {
-  ...LAYOUT.ELEVATION.LARGE,
-  shadowOffset: { width: 0, height: 6 },
-};
-
 const styles = StyleSheet.create({
   toast: {
     alignSelf: 'center',
@@ -43,7 +37,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingHorizontal: LAYOUT.SPACING.LARGE, // More generous padding
     paddingVertical: LAYOUT.SPACING.MEDIUM, // Taller for more presence
-    ...SHADOW_STYLES,
+    ...LAYOUT.ELEVATION.LARGE,
   },
   toastContainer: {
     alignItems: 'center',

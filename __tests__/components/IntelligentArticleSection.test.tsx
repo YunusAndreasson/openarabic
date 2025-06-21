@@ -1,6 +1,5 @@
-import { Text } from 'react-native';
-import { render, act } from '@testing-library/react-native';
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { act, render } from '@testing-library/react-native';
 
 import IntelligentArticleSection from '../../components/home/IntelligentArticleSection';
 

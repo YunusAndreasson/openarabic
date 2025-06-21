@@ -1,6 +1,6 @@
 import { FlashList } from '@shopify/flash-list';
-import React, { useMemo, useCallback, memo, type ReactElement, Fragment } from 'react';
-import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import React, { Fragment, memo, useCallback, useMemo, type ReactElement } from 'react';
+import type { NativeScrollEvent, NativeSyntheticEvent, ViewToken } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -150,7 +150,7 @@ interface ArticleContentProps {
   sortedSentences: Tables<'article_sentences'>[];
   renderSentenceItem: ({ item }: { item: Tables<'article_sentences'> }) => ReactElement;
   handleScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
-  handleViewableItemsChanged: (info: { viewableItems: any[] }) => void;
+  handleViewableItemsChanged: (info: { viewableItems: ViewToken[] }) => void;
   colors: ThemeColors;
   currentSentenceIndex: number;
   totalSentences: number;

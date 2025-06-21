@@ -1,6 +1,6 @@
-import { createTestWord, createWordSet, testPatterns } from '../helpers/fsrsTestHelpers';
 import { calculateWordPriority } from '../../utils/fsrsSpacing';
 import { PriorityQueue } from '../../utils/priorityQueue';
+import { createTestWord, createWordSet, testPatterns } from '../helpers/fsrsTestHelpers';
 
 // We need to test the priority calculation logic directly
 // Since it's internal to useFSRS, we'll test it through the queue ordering behavior

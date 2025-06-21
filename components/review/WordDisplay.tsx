@@ -10,6 +10,13 @@ import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { WordDisplayProps } from '@/types/ui/review.types';
 
+// ===== INTERFACES =====
+interface BatchedWordDisplayColors {
+  arabicText: string;
+  shadow: string;
+  englishText: string;
+}
+
 // ===== STATIC CONSTANTS EXTRACTION (CRITICAL FOR PERFORMANCE) =====
 const WORD_DISPLAY_CONSTANTS = {
   DEFAULT_FONT_SIZE: 24,
@@ -74,7 +81,7 @@ const createTextStyleBase = (fontSize: number) =>
   });
 
 // ===== CACHE MANAGEMENT FOR PERFORMANCE =====
-const clearOldestCacheEntry = (cache: Map<string, any>): void => {
+const clearOldestCacheEntry = (cache: Map<string, TextStyle>): void => {
   const firstKey = cache.keys().next().value;
   if (firstKey !== undefined) {
     cache.delete(firstKey);
@@ -82,10 +89,10 @@ const clearOldestCacheEntry = (cache: Map<string, any>): void => {
 };
 
 // Module-level cache for expensive style calculations
-const styleCache = new Map<string, any>();
+const styleCache = new Map<string, TextStyle>();
 const CACHE_MAX_SIZE = 20; // Limit cache size
 
-const getCachedTextStyle = (fontSize: number, colors: any): TextStyle => {
+const getCachedTextStyle = (fontSize: number, colors: BatchedWordDisplayColors): TextStyle => {
   const cacheKey = `${fontSize}-${colors.arabicText}-${colors.shadow}`;
 
   const cached = styleCache.get(cacheKey);

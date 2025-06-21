@@ -1,10 +1,11 @@
 import React, { useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import type { LayoutChangeEvent } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
   runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
 
@@ -76,7 +77,7 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
 
     // Memoized track layout handler
     const onLayout = useCallback(
-      (event: any) => {
+      (event: LayoutChangeEvent) => {
         const width = event.nativeEvent.layout.width;
         if (width > 0 && width !== trackWidth.value) {
           trackWidth.value = width;
@@ -214,14 +215,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tooltipBubble: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.TINY,
     borderRadius: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    ...LAYOUT.ELEVATION.SMALL,
   },
   tooltipText: {
     fontSize: 12,
@@ -246,10 +243,6 @@ const styles = StyleSheet.create({
     width: HANDLE_SIZE,
     height: HANDLE_SIZE,
     borderRadius: HANDLE_SIZE / 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3,
-    elevation: 4,
+    ...LAYOUT.ELEVATION.SMALL,
   },
 });

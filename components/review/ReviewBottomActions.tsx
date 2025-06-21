@@ -1,10 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
-import { memo, useMemo, type FC } from 'react';
+import type { ComponentProps, FC } from 'react';
+import { memo, useMemo } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+
+// ===== INTERFACES =====
+interface BatchedBottomActionColors {
+  error: string;
+  success: string;
+  captionText: string;
+}
 
 // ===== STATIC CONSTANTS EXTRACTION (CRITICAL FOR PERFORMANCE) =====
 const BOTTOM_ACTIONS_CONSTANTS = {
@@ -59,13 +67,13 @@ interface ReviewBottomActionsProps {
 }
 
 // ===== HELPER FUNCTIONS EXTRACTED (PURE FUNCTIONS OUTSIDE COMPONENT) =====
-const createTintColors = (colors: any) => ({
+const createTintColors = (colors: BatchedBottomActionColors) => ({
   error: colors.error + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY,
   success: colors.success + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY,
   settings: colors.captionText + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY,
 });
 
-const createIconProps = (name: any, color: string) => ({
+const createIconProps = (name: ComponentProps<typeof Ionicons>['name'], color: string) => ({
   name,
   size: BOTTOM_ACTIONS_CONSTANTS.ICON_SIZE,
   color,

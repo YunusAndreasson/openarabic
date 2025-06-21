@@ -77,7 +77,6 @@ const listenHeaderRightComponent = () => <EditModeButton />;
 export default function TabLayout(): JSX.Element {
   const { session, isLoading, user } = useAuth();
   const colors = useColors();
-  const isDarkMode = useIsDarkMode();
 
   // Get user preference for app icon badge
   const appIconBadgeEnabled = useAppSelector(state => state.settings.appIconBadgeEnabled);
@@ -183,7 +182,7 @@ export default function TabLayout(): JSX.Element {
           android: {
             borderTopWidth: StyleSheet.hairlineWidth,
             borderTopColor: colors.border,
-            elevation: 8,
+            ...LAYOUT.ELEVATION.SMALL,
           },
         }),
         tabBarLabelStyle: {
@@ -209,10 +208,7 @@ export default function TabLayout(): JSX.Element {
                 size={size}
                 color={color}
                 style={{
-                  opacity: focused ? 1 : 0.7,
-                  textShadowColor: isDarkMode ? colors.textShadowLight : colors.textShadowDark,
-                  textShadowOffset: { width: 0, height: 0.5 },
-                  textShadowRadius: 1,
+                  opacity: focused ? 1 : LAYOUT.OPACITY.HIGH,
                 }}
               />
             ),
