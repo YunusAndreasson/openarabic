@@ -208,10 +208,7 @@ export const STRINGS = {
 
   // Learning capacity & guidance - more actionable
   ADD_WORDS_TO_SEE_CAPACITY: 'Practice first to add more words',
-  ADD_NEW_WORDS: 'Ready for new words',
-  ADD_WORDS_MODERATELY: 'Practice needed before new words',
-  REVIEW_BEFORE_ADDING: 'Complete practice to unlock new words',
-  FOCUS_ON_REVIEWS_ONLY: 'Focus on current words first',
+
   STUDY_WORDS_TO_SEE_PROGRESS: 'Practice words to track progress',
   REVIEW_WORDS_TO_BUILD_MEMORY_STRENGTH: 'Practice to strengthen memory',
   PRACTICE_TO_SEE_LEARNING_SPEED: 'Practice to see learning speed',
@@ -371,6 +368,11 @@ export const STRINGS = {
   CONFIRM_DELETE_WORD: 'Are you sure you want to delete this word?',
   CONFIRM_DELETE_SELECTED: 'Delete selected words?',
   DELETE_FOREVER_WARNING: 'This action cannot be undone.',
+
+  // Vocabulary readiness - simplified 3-phase system
+  READY_TO_ADD: 'Ready to add words',
+  ADD_WITH_CAUTION: 'Practice more first',
+  DONT_ADD_WORDS: 'Practice current words first',
 } as const;
 
 export type StringKey = keyof typeof STRINGS;

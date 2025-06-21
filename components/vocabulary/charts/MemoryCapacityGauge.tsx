@@ -1,6 +1,6 @@
-import { Canvas, Path, Circle, Group, LinearGradient, vec } from '@shopify/react-native-skia';
+import { Canvas, Circle, Group, LinearGradient, Path, vec } from '@shopify/react-native-skia';
 import { memo } from 'react';
-import { StyleSheet, View, TouchableOpacity, type ViewStyle } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -14,7 +14,7 @@ import { useNavigationWithDebounce } from '@/hooks';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useMemoryCapacityGauge } from '@/hooks/vocabulary';
-import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
+import type { StatCategory, StudyWord } from '@/types/vocabulary.types';
 
 interface MemoryCapacityGaugeProps {
   studyWords: StudyWord[];
@@ -51,6 +51,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
     indicatorPosition,
     getCapacityColor,
     getReadinessMessage,
+    getActionCardBackground,
   } = useMemoryCapacityGauge({
     studyWords,
     width: GAUGE_WIDTH,
@@ -219,7 +220,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
               style={[
                 styles.actionCard,
                 {
-                  backgroundColor: colors.elevation3,
+                  backgroundColor: getActionCardBackground(memoryMetrics.capacityScore),
                 },
               ]}
             >

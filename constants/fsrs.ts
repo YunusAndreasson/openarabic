@@ -77,9 +77,9 @@ export const MASTERY_TREND_THRESHOLD = 3;
 export const MASTERY_MILESTONES = [7, 14, 21, 30] as const;
 
 export const CAPACITY_THRESHOLDS = {
-  OPTIMAL: 75,
-  MODERATE: 50,
-  CRITICAL: 25,
+  READY: 70, // Green zone - ready to add words
+  CAUTION: 40, // Yellow zone - add with caution
+  // Below 40 is red zone - don't add
 } as const;
 
 // Performance thresholds used across charts

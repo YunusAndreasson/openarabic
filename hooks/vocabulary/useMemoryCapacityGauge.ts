@@ -32,7 +32,6 @@ export interface UseMemoryCapacityGaugeProps {
   strokeWidth: number;
 }
 
-
 export function useMemoryCapacityGauge({
   studyWords,
   width,
@@ -166,17 +165,20 @@ export function useMemoryCapacityGauge({
   }, [memoryMetrics.capacityScore, width, height, radius, strokeWidth]);
 
   const getCapacityColor = (score: number) => {
-    if (score >= CAPACITY_THRESHOLDS.OPTIMAL) return chartColors.performance.excellent;
-    if (score >= CAPACITY_THRESHOLDS.MODERATE) return chartColors.performance.good;
-    if (score >= CAPACITY_THRESHOLDS.CRITICAL) return chartColors.performance.moderate;
-    return chartColors.performance.poor;
+    if (score >= CAPACITY_THRESHOLDS.READY) return chartColors.performance.excellent; // Green
+    if (score >= CAPACITY_THRESHOLDS.CAUTION) return chartColors.performance.moderate; // Yellow/Orange
+    return chartColors.performance.poor; // Red
   };
 
   const getReadinessMessage = (score: number) => {
-    if (score >= CAPACITY_THRESHOLDS.OPTIMAL) return STRINGS.ADD_NEW_WORDS;
-    if (score >= CAPACITY_THRESHOLDS.MODERATE) return STRINGS.ADD_WORDS_MODERATELY;
-    if (score >= CAPACITY_THRESHOLDS.CRITICAL) return STRINGS.REVIEW_BEFORE_ADDING;
-    return STRINGS.FOCUS_ON_REVIEWS_ONLY;
+    if (score >= CAPACITY_THRESHOLDS.READY) return STRINGS.READY_TO_ADD;
+    if (score >= CAPACITY_THRESHOLDS.CAUTION) return STRINGS.ADD_WITH_CAUTION;
+    return STRINGS.DONT_ADD_WORDS;
+  };
+
+  const getActionCardBackground = (score: number) => {
+    const baseColor = getCapacityColor(score);
+    return chartColors.withOpacity(baseColor, 0.1); // Light tint of the capacity color
   };
 
   return {
@@ -187,6 +189,7 @@ export function useMemoryCapacityGauge({
     indicatorPosition,
     getCapacityColor,
     getReadinessMessage,
+    getActionCardBackground,
   };
 }
 
