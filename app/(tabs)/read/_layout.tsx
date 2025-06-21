@@ -1,6 +1,6 @@
 import { Stack, router } from 'expo-router';
-import { useCallback } from 'react';
 import type { JSX } from 'react';
+import { useCallback } from 'react';
 
 import FilterButton from '@/components/FilterButton';
 import { createNavigationOptions } from '@/constants/modal';
@@ -62,6 +62,8 @@ export default function ReadLayout(): JSX.Element {
         name="article"
         options={{
           headerShown: false, // Full-screen modal with drag indicator only
+          presentation: 'modal',
+          gestureEnabled: true,
         }}
       />
       <Stack.Screen
