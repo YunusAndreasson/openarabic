@@ -13,7 +13,8 @@ import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import { useFSRSQueries, usePracticeBadge } from '@/hooks/vocabulary';
+import { useFSRSQueries } from '@/hooks/vocabulary';
+import { usePracticeBadge } from '@/hooks/vocabulary/usePracticeBadge';
 import { updateAppIconBadge } from '@/services/notificationService';
 import { useAppSelector } from '@/store/hooks';
 

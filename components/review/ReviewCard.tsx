@@ -14,7 +14,7 @@ import { TIMING_CONFIG } from '@/constants/animation';
 import { SCREEN_WIDTH, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
-import { WordDisplay } from './WordDisplay';
+import WordDisplayComponent from './WordDisplay';
 
 // ===== STATIC CONSTANTS EXTRACTION (CRITICAL FOR PERFORMANCE) =====
 const REVIEW_CARD_CONSTANTS = {
@@ -203,7 +203,7 @@ const ReviewCardInternal = ({
     <GestureDetector gesture={panGesture}>
       <Animated.View style={[STATIC_STYLES.swipeContainer, swipeContainerStyle]} testID={testID}>
         <Animated.View style={wordContainerStyle}>
-          <WordDisplay {...wordDisplayProps} />
+          <WordDisplayComponent {...wordDisplayProps} />
         </Animated.View>
       </Animated.View>
     </GestureDetector>
