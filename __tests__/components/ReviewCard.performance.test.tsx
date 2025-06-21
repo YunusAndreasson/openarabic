@@ -6,6 +6,7 @@ import { measureRenders } from 'reassure';
 jest.mock('react-native-reanimated', () => {
   const mockReact = require('react');
   return {
+    __esModule: true,
     default: {
       View: mockReact.forwardRef(({ style, children, ...props }: any, ref: any) =>
         mockReact.createElement(
@@ -19,36 +20,31 @@ jest.mock('react-native-reanimated', () => {
           children
         )
       ),
-      useSharedValue: jest.fn(() => ({ value: 0 })),
-      useAnimatedStyle: jest.fn(() => ({})),
-      withTiming: jest.fn(),
-      cancelAnimation: jest.fn(),
-      runOnJS: jest.fn(fn => fn),
     },
+    useSharedValue: jest.fn(() => ({ value: 0 })),
+    useAnimatedStyle: jest.fn(() => ({})),
+    withTiming: jest.fn(),
+    cancelAnimation: jest.fn(),
+    runOnJS: jest.fn(fn => fn),
   };
 });
 
 jest.mock('react-native-gesture-handler', () => {
   const mockReact = require('react');
+
+  const createGesture = () => ({
+    enabled: jest.fn(() => createGesture()),
+    minDistance: jest.fn(() => createGesture()),
+    activeOffsetX: jest.fn(() => createGesture()),
+    onUpdate: jest.fn(() => createGesture()),
+    onEnd: jest.fn(() => createGesture()),
+  });
+
   return {
     Gesture: {
-      Pan: jest.fn(() => ({
-        enabled: jest.fn(() => ({
-          minDistance: jest.fn(() => ({
-            activeOffsetX: jest.fn(() => ({
-              onUpdate: jest.fn(() => ({
-                onEnd: jest.fn(() => ({})),
-              })),
-            })),
-          })),
-        })),
-      })),
-      Tap: jest.fn(() => ({
-        enabled: jest.fn(() => ({
-          onEnd: jest.fn(() => ({})),
-        })),
-      })),
-      Exclusive: jest.fn(() => ({})),
+      Pan: () => createGesture(),
+      Tap: () => createGesture(),
+      Exclusive: () => createGesture(),
     },
     GestureDetector: mockReact.forwardRef(({ children, ...props }: any, ref: any) =>
       mockReact.createElement(
