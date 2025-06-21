@@ -87,8 +87,9 @@ const CACHE_MAX_SIZE = 15; // LRU management
 const getCachedTextStyle = (textColor: string, fontSize: number) => {
   const cacheKey = `${textColor}-${fontSize}`;
 
-  if (textStyleCache.has(cacheKey)) {
-    return textStyleCache.get(cacheKey)!;
+  const cached = textStyleCache.get(cacheKey);
+  if (cached) {
+    return cached;
   }
 
   const result = {

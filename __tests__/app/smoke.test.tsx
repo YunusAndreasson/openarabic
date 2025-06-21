@@ -1,6 +1,18 @@
 import React, { type ReactNode } from 'react';
 jest.mock('@/utils/splashPolyfill');
 jest.mock('expo', () => ({ requireOptionalNativeModule: () => undefined }));
+
+// Mock React Native Dimensions for layout constants
+jest.mock('react-native', () => ({
+  Dimensions: {
+    get: () => ({ width: 375, height: 812, scale: 2, fontScale: 1 }),
+  },
+  Platform: {
+    OS: 'ios',
+    select: (obj: any) => obj.ios || obj.default,
+  },
+}));
+
 jest.mock('../../store/store', () => ({
   store: {
     dispatch: jest.fn(),

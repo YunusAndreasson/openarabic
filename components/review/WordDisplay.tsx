@@ -88,8 +88,9 @@ const CACHE_MAX_SIZE = 20; // Limit cache size
 const getCachedTextStyle = (fontSize: number, colors: any): TextStyle => {
   const cacheKey = `${fontSize}-${colors.arabicText}-${colors.shadow}`;
 
-  if (styleCache.has(cacheKey)) {
-    return styleCache.get(cacheKey)!;
+  const cached = styleCache.get(cacheKey);
+  if (cached) {
+    return cached;
   }
 
   const baseStyle = createTextStyleBase(fontSize);

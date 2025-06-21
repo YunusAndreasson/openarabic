@@ -6,7 +6,7 @@ const IS_IOS = Platform.OS === 'ios';
 // For mobile-only apps, screen width doesn't change during runtime
 // Use static width instead of dynamic useWindowDimensions
 const SCREEN_DIMENSIONS = Dimensions.get('window');
-export const SCREEN_WIDTH = SCREEN_DIMENSIONS.width;
+export const SCREEN_WIDTH = SCREEN_DIMENSIONS?.width ?? 375; // Default fallback for test environments
 
 export const FONTS = {
   ENGLISH: 'Figtree',

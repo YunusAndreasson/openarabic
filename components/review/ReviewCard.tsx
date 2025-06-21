@@ -14,7 +14,7 @@ import { TIMING_CONFIG } from '@/constants/animation';
 import { SCREEN_WIDTH, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
-import WordDisplay from './WordDisplay';
+import { WordDisplay } from './WordDisplay';
 
 // ===== STATIC CONSTANTS EXTRACTION (CRITICAL FOR PERFORMANCE) =====
 const REVIEW_CARD_CONSTANTS = {

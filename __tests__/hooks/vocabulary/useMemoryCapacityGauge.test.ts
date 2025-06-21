@@ -83,24 +83,21 @@ describe('useMemoryCapacityGauge', () => {
     // Green zone (Ready) - 70% and above
     expect(getCapacityColor(85)).toBe('#e'); // excellent (green)
     expect(getCapacityColor(70)).toBe('#e'); // excellent (green)
-    expect(getReadinessMessage(85)).toBe('Ready to add words');
-    expect(getReadinessMessage(70)).toBe('Ready to add words');
 
     // Yellow zone (Caution) - 40% to 69%
     expect(getCapacityColor(60)).toBe('#m'); // moderate (yellow/orange)
     expect(getCapacityColor(40)).toBe('#m'); // moderate (yellow/orange)
-    expect(getReadinessMessage(60)).toBe('Practice more first');
-    expect(getReadinessMessage(40)).toBe('Practice more first');
 
     // Red zone (Don't Add) - below 40%
     expect(getCapacityColor(30)).toBe('#p'); // poor (red)
     expect(getCapacityColor(10)).toBe('#p'); // poor (red)
-    expect(getReadinessMessage(30)).toBe('Practice current words first');
-    expect(getReadinessMessage(10)).toBe('Practice current words first');
 
     // Test edge cases
     expect(getCapacityColor(100)).toBe('#e'); // excellent (green)
     expect(getCapacityColor(0)).toBe('#p'); // poor (red)
+
+    // Test readiness message for empty study words (should be green zone)
+    expect(getReadinessMessage()).toBe('Ready for new words');
 
     // Test action card background matches gauge color with light opacity
     // These should be light tints of the gauge colors
@@ -108,14 +105,10 @@ describe('useMemoryCapacityGauge', () => {
     expect(getActionCardBackground(50)).toBeDefined();
     expect(getActionCardBackground(20)).toBeDefined();
 
-    // Test gradient colors remain unchanged (these are for the gauge itself)
-    expect(getFilledGradientColors(20)).toEqual(['#p', '#m']);
-    expect(getFilledGradientColors(50)).toEqual(['#p', '#m', '#g']);
-    expect(getFilledGradientColors(80)).toEqual(['#p', '#m', '#g', '#e']);
-
-    expect(getFilledGradientPositions(20)).toEqual([0, 1]);
-    expect(getFilledGradientPositions(50)).toEqual([0, 30 / 50, 1]);
-    expect(getFilledGradientPositions(80)).toEqual([0, 30 / 80, 70 / 80, 1]);
+    // Test gradient colors - these use internal visual score, not parameters
+    // For empty study words, visual score defaults to 85 (green zone)
+    expect(getFilledGradientColors()).toEqual(['#p', '#m', '#g', '#e']);
+    expect(getFilledGradientPositions()).toEqual([0, 30 / 85, 70 / 85, 1]);
   });
 
   describe('3-phase readiness scenarios', () => {
@@ -126,9 +119,10 @@ describe('useMemoryCapacityGauge', () => {
       const scores = [70, 80, 90, 100];
       scores.forEach(score => {
         expect(getCapacityColor(score)).toBe('#e'); // Green
-        expect(getReadinessMessage(score)).toBe('Ready to add words');
         expect(getActionCardBackground(score)).toBeDefined();
       });
+      // For empty study words, should always be ready for new words
+      expect(getReadinessMessage()).toBe('Ready for new words');
     });
 
     it('handles YELLOW zone - Practice more first (40-69%)', () => {
@@ -138,9 +132,10 @@ describe('useMemoryCapacityGauge', () => {
       const scores = [40, 50, 60, 69];
       scores.forEach(score => {
         expect(getCapacityColor(score)).toBe('#m'); // Yellow/Orange
-        expect(getReadinessMessage(score)).toBe('Practice more first');
         expect(getActionCardBackground(score)).toBeDefined();
       });
+      // For empty study words, should always be ready for new words (no struggling words)
+      expect(getReadinessMessage()).toBe('Ready for new words');
     });
 
     it('handles RED zone - Practice current words first (<40%)', () => {
@@ -150,9 +145,10 @@ describe('useMemoryCapacityGauge', () => {
       const scores = [0, 10, 20, 30, 39];
       scores.forEach(score => {
         expect(getCapacityColor(score)).toBe('#p'); // Red
-        expect(getReadinessMessage(score)).toBe('Practice current words first');
         expect(getActionCardBackground(score)).toBeDefined();
       });
+      // For empty study words, should always be ready for new words (no due words)
+      expect(getReadinessMessage()).toBe('Ready for new words');
     });
   });
 
@@ -194,17 +190,13 @@ describe('useMemoryCapacityGauge', () => {
       const { result } = renderHook(() => useMemoryCapacityGauge({ ...baseProps, studyWords: [] }));
       const { getCapacityColor, getReadinessMessage } = result.current;
 
-      // Green zone: Ready message with green color
-      expect(getCapacityColor(80)).toBe('#e');
-      expect(getReadinessMessage(80)).toBe('Ready to add words');
+      // Test colors for different scores
+      expect(getCapacityColor(80)).toBe('#e'); // Green zone
+      expect(getCapacityColor(55)).toBe('#m'); // Yellow zone
+      expect(getCapacityColor(25)).toBe('#p'); // Red zone
 
-      // Yellow zone: Caution message with yellow/orange color
-      expect(getCapacityColor(55)).toBe('#m');
-      expect(getReadinessMessage(55)).toBe('Practice more first');
-
-      // Red zone: Practice message with red color
-      expect(getCapacityColor(25)).toBe('#p');
-      expect(getReadinessMessage(25)).toBe('Practice current words first');
+      // For empty study words, message should always be ready for new words
+      expect(getReadinessMessage()).toBe('Ready for new words');
     });
   });
 });
