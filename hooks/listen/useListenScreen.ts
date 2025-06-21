@@ -14,7 +14,6 @@ import { removeFromCustomOrder } from '@/store/listenSlice';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
 
-
 export const useListenScreen = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -145,10 +144,21 @@ export const useListenScreen = () => {
 
   const handlePlayAll = useCallback(
     async (setLoading?: (loading: boolean) => void) => {
-      clearLoadingTimeouts();
-      if (isStartingPlayback) return;
+      // Clear timeouts directly without relying on callback
+      loadingTimeoutsRef.current.forEach(timeout => clearTimeout(timeout));
+      loadingTimeoutsRef.current = [];
 
-      if (isCurrentlyPlaying && playbackMode === 'all') {
+      // Get current values directly instead of relying on captured values
+      const currentAudioState = enhancedAudioPlayer.audioState;
+      const currentPlaybackMode = playbackMode;
+      const currentTracks = sortedEnhancedTracks;
+
+      const isCurrentlyStarting = currentAudioState === AUDIO_STATES.LOADING;
+      const isCurrentlyPlayingNow = currentAudioState === AUDIO_STATES.PLAYING;
+
+      if (isCurrentlyStarting) return;
+
+      if (isCurrentlyPlayingNow && currentPlaybackMode === 'all') {
         try {
           selectionFeedback();
           await actions.stopPlayback();
@@ -156,9 +166,10 @@ export const useListenScreen = () => {
         } catch {
           setPlaybackMode('none');
         }
-      } else if (sortedEnhancedTracks.length) {
+      } else if (currentTracks.length) {
         try {
           selectionFeedback();
+          setPlaybackMode('all');
 
           // Set loading state with minimum duration
           if (setLoading) {
@@ -166,9 +177,8 @@ export const useListenScreen = () => {
             const loadingStartTime = Date.now();
             const MIN_LOADING_DURATION = 300; // 300ms minimum
 
-            setPlaybackMode('all');
             actions
-              .startEnhancedPlayback(sortedEnhancedTracks, 0)
+              .startEnhancedPlayback(currentTracks, 0)
               .then(success => {
                 if (!success) {
                   setPlaybackMode('none');
@@ -190,18 +200,10 @@ export const useListenScreen = () => {
               });
           } else {
             // Fallback for when no loading setter is provided
-            setPlaybackMode('all');
-            actions
-              .startEnhancedPlayback(sortedEnhancedTracks, 0)
-              .then(success => {
-                if (!success) {
-                  setPlaybackMode('none');
-                }
-              })
-              .catch(err => {
-                setPlaybackMode('none');
-                handleError(err as Error);
-              });
+            const success = await actions.startEnhancedPlayback(currentTracks, 0);
+            if (!success) {
+              setPlaybackMode('none');
+            }
           }
         } catch (error) {
           setPlaybackMode('none');
@@ -213,14 +215,7 @@ export const useListenScreen = () => {
         }
       }
     },
-    [
-      isStartingPlayback,
-      isCurrentlyPlaying,
-      playbackMode,
-      sortedEnhancedTracks,
-      actions.startEnhancedPlayback,
-      actions.stopPlayback,
-    ]
+    [playbackMode, sortedEnhancedTracks, actions.startEnhancedPlayback, actions.stopPlayback]
   );
 
   const handleSleepTimerSet = useCallback(

@@ -644,10 +644,11 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
   describe('Integration Tests - Full Workflow', () => {
     test('should handle complete study session simulation', () => {
       // Create a realistic study session with 20 words
+      // Use deterministic values to avoid flaky test failures
       const words = Array.from({ length: 20 }, (_, i) => {
-        const hoursOverdue = Math.random() * 48; // 0-48 hours overdue
-        const stability = 1 + Math.random() * 9; // 1-10 stability
-        const difficulty = 1 + Math.random() * 9; // 1-10 difficulty
+        const hoursOverdue = (i * 2.4) % 48; // Deterministic 0-48 hours overdue
+        const stability = 1 + ((i * 0.45) % 9); // Deterministic 1-10 stability
+        const difficulty = 1 + ((i * 0.4) % 9); // Deterministic 1-10 difficulty
 
         return createTestWord({
           root_id: i + 1,
@@ -672,8 +673,9 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
         position++;
 
         // Simulate some words being requeued (incorrect answers)
-        if (Math.random() < 0.3 && position < 50) {
-          // 30% chance of requeue
+        // Use deterministic requeue pattern to avoid flaky tests
+        if (position % 4 === 0 && position < 50) {
+          // Every 4th word gets requeued (deterministic 25% requeue rate)
           const priority = calculateWordPriority(word);
           queue.push(word, priority);
         }

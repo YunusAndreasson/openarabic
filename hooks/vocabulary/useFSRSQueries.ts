@@ -119,13 +119,15 @@ export function useFSRSQueries({
   };
 
   return {
-    allWords: allWordsQuery.data,
-    dueWords: dueWordsQuery.data,
-    statsWords: statsQuery.data,
-    filteredWords: filteredWordsQuery.data,
-    isLoading: allWordsQuery.isLoading || dueWordsQuery.isLoading || statsQuery.isLoading,
-    isFetching: allWordsQuery.isFetching || dueWordsQuery.isFetching || statsQuery.isFetching,
-    error: allWordsQuery.error || dueWordsQuery.error || statsQuery.error,
+    allWords: allWordsQuery?.data,
+    dueWords: dueWordsQuery?.data,
+    statsWords: statsQuery?.data,
+    filteredWords: filteredWordsQuery?.data,
+    isLoading:
+      allWordsQuery?.isLoading || dueWordsQuery?.isLoading || statsQuery?.isLoading || false,
+    isFetching:
+      allWordsQuery?.isFetching || dueWordsQuery?.isFetching || statsQuery?.isFetching || false,
+    error: allWordsQuery?.error || dueWordsQuery?.error || statsQuery?.error,
     invalidateAllQueries,
   };
 }

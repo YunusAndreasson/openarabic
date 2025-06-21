@@ -174,6 +174,11 @@ jest.mock('../../components/HeaderProfile', () => {
 
 jest.mock('../../components/listen/EditModeButton', () => () => null);
 
+// Mock notification service to prevent expo-notifications import error
+jest.mock('../../services/notificationService', () => ({
+  updateAppIconBadge: jest.fn(),
+}));
+
 jest.mock('../../app/(tabs)/read/account/index.tsx', () => {
   const React = require('react');
   const { TouchableOpacity, Text } = require('react-native');

@@ -9,7 +9,7 @@ jest.mock('@/hooks/articles/useIntelligentArticleSelection', () => ({
   useIntelligentArticleSelection: (...args: any[]) => mockUseIntelligentArticleSelection(...args),
 }));
 
-const mockUseAuth = jest.fn();
+const mockUseAuth = jest.fn().mockReturnValue({ user: null });
 jest.mock('@/hooks/auth/useAuth', () => ({
   useAuth: () => mockUseAuth(),
 }));
@@ -30,6 +30,7 @@ let mockRandom: any;
 describe('IntelligentArticleSection', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUseAuth.mockReturnValue({ user: null }); // Restore default after clearAllMocks
     mockRandom = jest.spyOn(Math, 'random').mockReturnValue(0.5);
   });
 

@@ -138,6 +138,11 @@ jest.mock('../../hooks/theme/useThemeDetection', () => ({
 jest.mock('../../components/HeaderProfile', () => () => null);
 jest.mock('../../components/listen/EditModeButton', () => () => null);
 
+// Mock notification service to prevent expo-notifications import error
+jest.mock('../../services/notificationService', () => ({
+  updateAppIconBadge: jest.fn(),
+}));
+
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },

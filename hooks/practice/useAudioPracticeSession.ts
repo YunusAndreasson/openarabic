@@ -175,9 +175,7 @@ export function useAudioPracticeSession(): UseAudioPracticeSessionReturn {
         }
       } catch (error) {
         handleError(
-          error instanceof Error
-            ? error
-            : new Error(STRINGS.FAILED_TO_LOAD_VOCABULARY_TRACKS)
+          error instanceof Error ? error : new Error(STRINGS.FAILED_TO_LOAD_VOCABULARY_TRACKS)
         );
       }
     };
@@ -221,18 +219,11 @@ export function useAudioPracticeSession(): UseAudioPracticeSessionReturn {
 
   useEffect(() => {
     return () => {
-      actionsRef.current.stopPlayback().catch(() => {});
+      actionsRef.current?.stopPlayback?.()?.catch(() => {});
 
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
       }
-
-      abortControllerRef.current?.abort();
-      abortControllerRef.current = null;
-
-      maxProgressRef.current = 0;
-      playbackCompletedRef.current = false;
     };
   }, []);
 

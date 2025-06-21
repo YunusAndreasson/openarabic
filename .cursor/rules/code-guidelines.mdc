@@ -24,13 +24,34 @@ You are a senior React Native developer tasked with writing performant, reliable
 - Do not use legacy features or code
 - Only use modern React functional components
 
+## Pre-Implementation Investigation
+Before making changes, always:
+1. Search for existing similar implementations in the codebase
+2. Check for related components, hooks, or utilities
+3. Review relevant tests to understand expected behavior
+4. Look for established patterns in the same domain (e.g., other chart components, modal screens)
+5. Verify TypeScript types and interfaces are already defined
+
 ## Important Files & Constants
-- Database structure: [database.types.ts](mdc:types/database.types.ts)  
-- Colors & theming: [Colors.ts](mdc:constants/Colors.ts) 
-- Layout constraints: [layout.ts](mdc:constants/layout.ts)
-- Typography system: Use `TYPOGRAPHY_HIERARCHY` from layout.ts
-- Shadow system: Use `LAYOUT.SHADOW` constants for consistent elevation
-- Spacing system: Use `LAYOUT.SPACING` scale (TINY=4px, SMALL=8px, MEDIUM=12px, etc.)
+- **Database structure**: [database.types.ts](mdc:types/database.types.ts) - All Supabase table types and database schemas
+- **Colors & theming**: [Colors.ts](mdc:constants/Colors.ts) - Complete theme system with light/dark modes, semantic colors, elevation system, and opacity constants
+- **Layout system**: [layout.ts](mdc:constants/layout.ts) - Typography hierarchy, spacing scale, shadow system, touch targets, and responsive utilities
+- **String constants**: [strings.ts](mdc:constants/strings.ts) - All user-facing text, labels, messages, and localized content
+- **FSRS configuration**: [fsrs.ts](mdc:constants/fsrs.ts) - Spaced repetition system constants, query keys, thresholds, and algorithm parameters
+- **Navigation routes**: [routes.ts](mdc:constants/routes.ts) - Route path constants and helper functions for type-safe navigation
+- **Animation presets**: [animation.ts](mdc:constants/animation.ts) - Timing configurations, spring presets, and animation constants for consistent motion design
+- **Modal configuration**: [modal.ts](mdc:constants/modal.ts) - Navigation options and modal presentation helpers
+- **Arabic text analysis**: [arabicWordComponents.ts](mdc:constants/arabicWordComponents.ts) - Comprehensive Arabic language component rules for word analysis
+
+### Essential Constants Usage:
+- **Typography**: Use `TYPOGRAPHY_HIERARCHY` from layout.ts for consistent text styling
+- **Shadow system**: Use `LAYOUT.SHADOW.SUBTLE/SMALL/MEDIUM/LARGE` constants for consistent elevation
+- **Spacing system**: Use `LAYOUT.SPACING` scale (TINY=4px, SMALL=8px, MEDIUM=12px, etc.)
+- **Colors**: Use semantic color names from Colors.ts (avoid hardcoded hex values)
+- **Strings**: Use `STRINGS.*` constants for all user-facing text (no hardcoded strings)
+- **Animations**: Use `TIMING_CONFIG` and `SPRING_CONFIG` presets from animation.ts
+- **Routes**: Use `ROUTE_PATHS` constants and helper functions from routes.ts
+- **FSRS keys**: Use `FSRS_QUERY_KEYS` for all vocabulary-related query cache management
 
 ## MCP Servers
 - Supabase is available here [mcp.json](mdc:.cursor/mcp.json)
@@ -68,9 +89,10 @@ You are a senior React Native developer tasked with writing performant, reliable
 ## Navigation Patterns
 - Use Expo Router with modal presentation for overlays
 - Modal screens hide tab headers completely
-- Use correct route paths: `/(tabs)/read/article/[id]` not `/article/[id]`
+- **CRITICAL**: Always use correct route paths: `/(tabs)/read/article/[id]` not `/article/[id]`
 - Navigation hierarchy: Read → Account (renamed from Settings)
 - Practice tab (renamed from Vocabulary) for spaced repetition
+- Avoid navigation parameter bleed between screens
 
 ## Best Practices
 
@@ -82,37 +104,49 @@ You are a senior React Native developer tasked with writing performant, reliable
 - Follow existing patterns for state management with Redux
 - Use consistent naming: PascalCase for components, camelCase for functions
 
+### Performance Optimization Patterns
+When optimizing components (especially those >50ms render time):
+- Extract static constants outside component scope
+- Use `React.memo` with custom comparison functions when appropriate
+- Memoize expensive calculations with `useMemo`
+- Cache style objects to prevent recreation
+- Batch style updates and color calculations
+- Use `useCallback` for event handlers passed to children
+- Consider component splitting for better granular updates
+
 ### Styling & Design
 - Use `StyleSheet.create()` for static styles, inline for dynamic
 - Follow design system from Colors.ts and layout.ts
-- Use standardized shadow system: `LAYOUT.SHADOW.SUBTLE/SMALL/MEDIUM/LARGE`
-- Use spacing scale: `LAYOUT.SPACING.TINY/SMALL/MEDIUM/LARGE/XLARGE`
+- **REQUIRED**: Use standardized shadow system: `LAYOUT.SHADOW.SUBTLE/SMALL/MEDIUM/LARGE`
+- **REQUIRED**: Use spacing scale: `LAYOUT.SPACING.TINY/SMALL/MEDIUM/LARGE/XLARGE`
 - Typography: Use `TYPOGRAPHY_HIERARCHY` constants for consistent text styling
 - Touch targets: Minimum 48dp for accessibility (use `TOUCH_TARGETS` constants)
+- Prefer filled icons over outlined for visual harmony
 
-### Performance
-- Use `@shopify/flash-list` for large lists instead of FlatList
-- Only suggest performance optimizations with measurable impact
-- Memoize expensive calculations and components appropriately
-- Use React Query for data fetching with proper cache invalidation
+### Data Management
+- Structure Supabase queries in `services/` with typed responses
+- Use database.types.ts for all database operations
+- **CRITICAL**: Follow FSRS query key patterns for vocabulary data (keys starting with 'fsrs-words')
+- Use consistent cache invalidation strategies
+- Update legacy query keys to match FSRS patterns
+
+### Audio & Media
+- Use expo-audio for all audio playbook
+- Handle background audio with proper session configuration
+- Implement proper cleanup for audio resources
+- Use enhanced audio service for playlist management
+
+### Haptic Feedback
+- **IMPORTANT**: Avoid double haptic feedback from multiple components
+- Use appropriate feedback types: `selectionFeedback` for most interactions
+- Import from `utils/haptics.ts`
+- Check if parent/child components both trigger haptics
 
 ### Error Handling
 - Use `handleError()` utility from `utils/errorHandling.ts`
 - Structure: try/catch in services, Sentry for logging
 - Analytics tracking is currently mocked (service disabled)
 - Provide user feedback via toast messages
-
-### Data Management
-- Structure Supabase queries in `services/` with typed responses
-- Use database.types.ts for all database operations
-- Follow FSRS query key patterns for vocabulary data
-- Use consistent cache invalidation strategies
-
-### Audio & Media
-- Use expo-audio for all audio playback
-- Handle background audio with proper session configuration
-- Implement proper cleanup for audio resources
-- Use enhanced audio service for playlist management
 
 ## Critical Implementation Notes
 
@@ -132,34 +166,49 @@ You are a senior React Native developer tasked with writing performant, reliable
 - Use proper query invalidation for FSRS vocabulary data
 - Clear persisted cache when needed via utility functions
 
-### Haptic Feedback
-- Avoid double haptic feedback from multiple components
-- Use appropriate feedback types: `selectionFeedback` for most interactions
-- Import from `utils/haptics.ts`
-
-## Constraints
-- Don't be overly strict about linting issues
-- Focus on mobile UX patterns, not responsive web design
-- App is portrait-only mobile application
-- No tablet support (iOS supportsTablet: false)
-
-## Version Management
-- Use semantic versioning with build numbers
-- Format: `major.minor.patch+buildNumber` (e.g., "1446.12.20+20")
-- Build numbers increment for each release
-
-## Testing
+## Testing Requirements
 - Use Jest with React Native Testing Library
 - Test timeout: 10 seconds for async operations
-- Coverage reports available via `yarn test:coverage`
+- Coverage reports available via `yarn test:coverage` 
 - Mock external services appropriately
+- Write tests for new hooks and complex components
 
 ## Development Workflow
+
+### During Development
 - Use `yarn validate` for type checking, linting, and dependency analysis
 - Use `yarn ci` for full validation with test coverage
 - Knip for unused code detection
 - Patch-package for dependency modifications
 
+### End of Longer Sessions (REQUIRED)
+Always run these commands before completing longer development sessions:
+1. `yarn test` - Ensure all tests pass
+2. `yarn validate` - Check types, linting, and dependencies
+3. Review and clean up any temporary files created during development
+4. Verify no console errors or warnings remain
+
+### Cleanup Checklist
+- Remove any temporary/debug files created during development
+- Update relevant tests if behavior changed
+- Check for unused imports or variables
+- Verify consistent code formatting
+
+## Constraints
+- Don't be overly strict about linting issues unless they affect functionality
+- Focus on mobile UX patterns, not responsive web design
+- App is portrait-only mobile application
+- No tablet support (iOS supportsTablet: false)
+- Prefer simple implementations over complex engineering
+- Maintain existing architecture patterns
+
+## Version Management
+- Use semantic versioning with build numbers
+- Format: `major.minor.patch-buildNumber` (e.g., "1.2.3-18") using dash separator
+- Build numbers increment for each release
+
 ## Design Guidelines
 - Follow UX principles from [design.mdc](mdc:.cursor/rules/design.mdc)
 - Follow copy and messaging guidelines from [copy.mdc](mdc:.cursor/rules/copy.mdc)
+- Use green tint for UI elevations (avoid pure white)
+- Maintain visual hierarchy with proper typography scales

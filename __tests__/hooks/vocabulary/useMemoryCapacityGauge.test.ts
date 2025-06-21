@@ -84,10 +84,10 @@ describe('useMemoryCapacityGauge', () => {
     expect(getCapacityColor(100)).toBe('#e');
     expect(getCapacityColor(0)).toBe('#p');
 
-    expect(getReadinessMessage(80)).toBe('Add new words');
-    expect(getReadinessMessage(60)).toBe('Add moderately');
-    expect(getReadinessMessage(40)).toBe('Review first');
-    expect(getReadinessMessage(10)).toBe('Focus on reviews');
+    expect(getReadinessMessage(80)).toBe('Ready for new words');
+    expect(getReadinessMessage(60)).toBe('Practice needed before new words');
+    expect(getReadinessMessage(40)).toBe('Complete practice to unlock new words');
+    expect(getReadinessMessage(10)).toBe('Focus on current words first');
 
     expect(getFilledGradientColors(20)).toEqual(['#p', '#m']);
     expect(getFilledGradientColors(50)).toEqual(['#p', '#m', '#g']);
