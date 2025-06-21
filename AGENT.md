@@ -30,6 +30,55 @@ This repo contains a React Native (Expo) app built with TypeScript. Core busines
 
 Use this file as a quick reference when working on tasks in this repository.
 
+## AI Agent Optimizations
+
+### Quick Commands for AI Agents
+
+```bash
+# Pre-development validation
+yarn ai:check
+
+# Fast incremental validation
+yarn ai:validate:fast
+
+# Parallel development workflow
+yarn ai:parallel
+
+# Specific linting for components/hooks
+yarn ai:lint:component
+yarn ai:lint:hooks
+
+# Debug failing tests
+yarn ai:debug
+```
+
+### AI Development Workflow
+
+1. **Before starting**: Run `yarn ai:check` to ensure clean state
+2. **During development**: Use templates from `.vscode/snippets.code-snippets`
+3. **Performance focus**: Apply React.memo, useMemo, useCallback from start
+4. **Error handling**: Always use `handleError()` utility for async operations
+5. **Constants**: Never hardcode - use values from `constants/` directory
+6. **Types**: Import from `types/` directory, use `import type` for type-only imports
+7. **Testing**: Create comprehensive tests with each component/hook
+8. **Validation**: Run `yarn ai:validate:fast` before submitting
+
+### AI-Specific Documentation
+
+- **Comprehensive Guide**: `docs/ai-agent-guide.md` - Templates, patterns, decision trees
+- **Code Snippets**: `.vscode/snippets.code-snippets` - Ready-to-use templates
+- **Performance Patterns**: `.cursor/rules/performance-optimization.mdc`
+- **Linting Rules**: Enhanced ESLint config with AI-optimized patterns
+
+### Success Metrics for AI Agents
+
+- ✅ Zero TypeScript/ESLint errors
+- ✅ All tests pass with coverage
+- ✅ Performance optimizations applied (React.memo, memoization)
+- ✅ Constants used (no hardcoded values)
+- ✅ Proper error handling with handleError()
+- ✅ Type safety (no `any` types)
+
 # React Native App Code Guidelines
 
 You are a senior React Native developer tasked with writing performant, reliable and production ready code for a language learning app.

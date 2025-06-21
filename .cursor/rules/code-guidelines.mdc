@@ -96,13 +96,60 @@ Before making changes, always:
 
 ## Best Practices
 
-### Code Quality
-- Use types from `/types` directory for consistency
-- Never use `any` type - always use proper TypeScript types
-- Leverage Expo features when they provide value
-- Keep components focused on presentation, hooks on logic
-- Follow existing patterns for state management with Redux
-- Use consistent naming: PascalCase for components, camelCase for functions
+### Code Quality & Linting Rules
+
+#### TypeScript Configuration (Strict Mode)
+Our `tsconfig.json` enforces strict TypeScript rules:
+- **REQUIRED**: `strict: true` - All strict type checking options enabled
+- **REQUIRED**: `noImplicitAny: true` - No implicit any types allowed
+- **REQUIRED**: `strictNullChecks: true` - Handle null/undefined explicitly
+- **REQUIRED**: `strictFunctionTypes: true` - Strict function type checking
+- **REQUIRED**: `noImplicitReturns: true` - All code paths must return a value
+- **REQUIRED**: `noUnusedLocals: true` - No unused local variables
+- **REQUIRED**: `noUnusedParameters: true` - No unused function parameters
+- **REQUIRED**: `exactOptionalPropertyTypes: true` - Exact optional property types
+
+#### ESLint Rules (Flat Config)
+Our ESLint configuration enforces these patterns:
+- **Import/Export Rules**:
+  - Use `import type` for type-only imports: `import type { User } from './types'`
+  - Remove unused imports automatically
+  - Enforce import order: external → internal → relative
+- **Variable Rules**:
+  - No unused variables (prefix with `_` if intentionally unused: `_unusedParam`)
+  - Use `const` for immutable values, `let` for mutable
+- **React Rules**:
+  - Follow React Hooks rules strictly
+  - Always provide `key` prop for list items
+  - Use functional components only (no class components)
+- **Security Rules**:
+  - No `dangerouslySetInnerHTML` without explicit opt-in
+  - Validate all external data before use
+
+#### Code Quality Patterns
+- **REQUIRED**: Use types from `/types` directory for consistency
+- **REQUIRED**: Never use `any` type - always use proper TypeScript types
+- **REQUIRED**: Handle null/undefined cases explicitly due to `strictNullChecks`
+- **PATTERN**: Use optional chaining and nullish coalescing: `user?.profile?.name ?? 'Unknown'`
+- **PATTERN**: Leverage Expo features when they provide value
+- **PATTERN**: Keep components focused on presentation, hooks on logic
+- **PATTERN**: Follow existing patterns for state management with Redux
+- **PATTERN**: Use consistent naming: PascalCase for components, camelCase for functions
+
+#### Prettier Configuration
+Code formatting is automatically handled by Prettier:
+- **Semi-colons**: Always required
+- **Quotes**: Single quotes for strings, double for JSX attributes
+- **Trailing commas**: Always add for multi-line structures
+- **Tab width**: 2 spaces
+- **Print width**: 80 characters (break long lines)
+
+#### Knip Configuration
+Unused code detection via Knip:
+- **Entry points**: All app routes, components, hooks, services
+- **Exclude**: Test files, type definitions, constants
+- **Workspaces**: Supports monorepo structure
+- Run `yarn knip` to detect unused exports and dependencies
 
 ### Performance Optimization Patterns
 When optimizing components (especially those >50ms render time):

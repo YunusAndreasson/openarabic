@@ -2,7 +2,9 @@
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit",
+    "source.removeUnusedImports": "explicit"
   },
   "[javascript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -15,5 +17,74 @@
   },
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "typescript.preferences.includePackageJsonAutoImports": "auto",
+  "typescript.suggest.autoImports": true,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "typescript.inlayHints.parameterNames.enabled": "all",
+  "typescript.inlayHints.variableTypes.enabled": true,
+  "typescript.inlayHints.functionLikeReturnTypes.enabled": true,
+  "eslint.format.enable": true,
+  "eslint.lintTask.enable": true,
+  "eslint.run": "onSave",
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+  "files.associations": {
+    "*.mdc": "markdown"
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/coverage": true,
+    "**/.expo": true,
+    "**/.jest-cache": true,
+    "**/build": true,
+    "**/dist": true
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/coverage/**": true,
+    "**/.expo/**": true,
+    "**/.jest-cache/**": true
+  },
+  "emmet.includeLanguages": {
+    "typescript": "typescriptreact",
+    "javascript": "javascriptreact"
+  },
+  "react-native-tools.showUserTips": false,
+  "react-native-tools.logLevel": "None",
+  "jest.autoRun": "off",
+  "jest.showCoverageOnLoad": false,
+  "ai.codeCompletion.enabled": true,
+  "ai.suggestions.enabled": true,
+  "workbench.colorCustomizations": {
+    "activityBar.background": "#1e3a8a",
+    "statusBar.background": "#1e3a8a",
+    "statusBar.foreground": "#ffffff"
+  },
+  "editor.rulers": [80, 120],
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "*.ts": "${capture}.test.ts, ${capture}.spec.ts, ${capture}.d.ts",
+    "*.tsx": "${capture}.test.tsx, ${capture}.spec.tsx",
+    "*.js": "${capture}.test.js, ${capture}.spec.js",
+    "*.jsx": "${capture}.test.jsx, ${capture}.spec.jsx",
+    "package.json": "yarn.lock, package-lock.json, .yarnrc.yml",
+    "tsconfig.json": "tsconfig.*.json",
+    "jest.config.js": "jest.setup.js, jest.polyfills.js"
+  },
+  "ai.autocomplete.enable": true,
+  "ai.autocomplete.delay": 100,
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.profiles.linux": {
+    "bash": {
+      "path": "/bin/bash",
+      "args": ["-l"]
+    }
   }
 }

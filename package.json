@@ -23,7 +23,17 @@
     "release": "gh workflow run release.yml",
     "dev": "yarn start",
     "build:check": "yarn validate && yarn test",
-    "reassure": "reassure"
+    "reassure": "reassure",
+    "ai:check": "echo '🤖 AI Agent Pre-Check' && yarn validate && yarn test --passWithNoTests",
+    "ai:test:specific": "jest --testNamePattern",
+    "ai:lint:component": "eslint components/",
+    "ai:lint:hooks": "eslint hooks/",
+    "ai:typecheck:fast": "tsc --noEmit --incremental",
+    "ai:validate:fast": "yarn ai:typecheck:fast && yarn lint:fix",
+    "ai:performance": "yarn reassure --baseline && yarn reassure",
+    "ai:clean": "rm -rf node_modules/.cache .jest-cache coverage && yarn install",
+    "ai:parallel": "concurrently \"yarn typecheck\" \"yarn lint:fix\" \"yarn test --passWithNoTests\"",
+    "ai:debug": "yarn test --verbose --no-coverage"
   },
   "dependencies": {
     "@babel/runtime": "^7.27.6",
@@ -91,6 +101,7 @@
     "@typescript-eslint/parser": "^8.34.1",
     "babel-plugin-module-resolver": "^5.0.2",
     "babel-preset-expo": "^13.2.1",
+    "concurrently": "^9.1.2",
     "eslint": "9.29.0",
     "eslint-config-expo": "~9.2.0",
     "eslint-plugin-import": "^2.31.0",

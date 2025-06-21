@@ -2,9 +2,13 @@ module.exports = {
   preset: 'jest-expo',
 
   // Performance optimizations for AI agent workflows
-  maxWorkers: '50%', // Use half available cores for faster parallel execution
+  maxWorkers: process.env.CI ? '100%' : '50%', // Full cores in CI, half locally
   cache: true, // Enable caching for faster subsequent runs
   cacheDirectory: '<rootDir>/.jest-cache',
+
+  // AI agent optimization flags
+  detectOpenHandles: false, // Faster for AI agents
+  forceExit: true, // Clean exit for automated workflows
 
   // Transform patterns optimized for common React Native + Expo patterns
   transformIgnorePatterns: [
