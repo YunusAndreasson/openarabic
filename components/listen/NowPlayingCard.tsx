@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { memo } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { memo, useMemo } from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ProgressBar } from '@/components/ProgressBar';
@@ -50,6 +51,7 @@ const NowPlayingCard = ({
 }: NowPlayingCardProps) => {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
+  const insets = useSafeAreaInsets();
 
   const {
     cardAnimatedStyle,
@@ -68,12 +70,28 @@ const NowPlayingCard = ({
     isTimerActive,
   });
 
+  // Create dynamic container style with safe area insets
+  const containerStyle = useMemo(
+    () => [
+      styles.container,
+      {
+        bottom:
+          LAYOUT.BOTTOM_BAR.HEIGHT +
+          LAYOUT.SPACING.MEDIUM +
+          Math.max(insets.bottom, LAYOUT.SPACING.SMALL),
+      },
+      dynamicStyles.container,
+      cardAnimatedStyle,
+    ],
+    [insets.bottom, dynamicStyles.container, cardAnimatedStyle]
+  );
+
   if (!isVisible) return null;
 
   // Show loading state if visible but no article data yet
   if (!article) {
     return (
-      <Animated.View style={[styles.container, dynamicStyles.container, cardAnimatedStyle]}>
+      <Animated.View style={containerStyle}>
         <View style={styles.content}>
           <View style={styles.imageContainer}>
             <View style={[styles.articleImage, { backgroundColor: colors.elevation2 }]} />
@@ -99,7 +117,7 @@ const NowPlayingCard = ({
   }
 
   return (
-    <Animated.View style={[styles.container, dynamicStyles.container, cardAnimatedStyle]}>
+    <Animated.View style={containerStyle}>
       {/* Background Image with Blur and Overlay */}
       <View style={styles.backgroundContainer}>
         <Animated.View style={[styles.backgroundImage, backgroundImageStyle]}>
@@ -228,7 +246,6 @@ const styles = StyleSheet.create({
   container: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
-    bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
     height: CARD_HEIGHT,
     left: LAYOUT.SCREEN_EDGE_PADDING,
     overflow: 'hidden',

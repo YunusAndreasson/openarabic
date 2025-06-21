@@ -1,8 +1,8 @@
 import { useHeaderHeight } from '@react-navigation/elements';
 import { FlashList } from '@shopify/flash-list';
 import type { JSX } from 'react';
-import { useState, useMemo, useCallback, memo, useEffect } from 'react';
-import { StyleSheet, View, ActivityIndicator } from 'react-native';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -200,18 +200,30 @@ export default function ListenScreen(): JSX.Element {
   const shouldShowEmpty =
     !hasArticles && canShowEmpty && !isReadingListLoading && !isReadingListFetching;
 
+  // Calculate safe bottom spacing for different UI states
+  const safeBottomSpacing = useMemo(() => {
+    const baseTabBarHeight = LAYOUT.BOTTOM_BAR.HEIGHT;
+    const safeAreaBottom = Math.max(insets.bottom, LAYOUT.SPACING.SMALL);
+
+    if (shouldShowPlayer) {
+      // Account for NowPlayingCard height (120) + its bottom spacing + safe area
+      return baseTabBarHeight + 120 + LAYOUT.SPACING.LARGE + safeAreaBottom;
+    } else if (hasArticles && hasAudioArticles) {
+      // Account for BottomControls height + safe area
+      return baseTabBarHeight + LAYOUT.SPACING.XLARGE + safeAreaBottom;
+    } else {
+      // Just safe area spacing
+      return safeAreaBottom;
+    }
+  }, [insets.bottom, shouldShowPlayer, hasArticles, hasAudioArticles]);
+
   const listContainerStyle = useMemo(
     () => ({
       paddingTop: headerHeight + LAYOUT.SPACING.MEDIUM,
-      paddingBottom: hasArticles
-        ? insets.bottom +
-          LAYOUT.BOTTOM_BAR.HEIGHT +
-          LAYOUT.SPACING.TINY +
-          (shouldShowPlayer ? 120 + LAYOUT.SPACING.TINY : LAYOUT.SPACING.TINY)
-        : insets.bottom + LAYOUT.SPACING.TINY,
+      paddingBottom: safeBottomSpacing,
       paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     }),
-    [headerHeight, insets.bottom, hasArticles, shouldShowPlayer]
+    [headerHeight, safeBottomSpacing]
   );
 
   // Render item for both FlashList and DraggableFlatList

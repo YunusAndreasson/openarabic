@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { memo, useMemo } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
@@ -85,7 +85,7 @@ const BottomControls = memo<BottomControlsProps>(
         <View
           style={[
             styles.container,
-            { paddingBottom: Math.max(insets.bottom, LAYOUT.SPACING.SMALL) },
+            { paddingBottom: Math.max(insets.bottom + LAYOUT.SPACING.SMALL, LAYOUT.SPACING.LARGE) },
           ]}
         >
           {/* Timer button - positioned in top-right corner */}
