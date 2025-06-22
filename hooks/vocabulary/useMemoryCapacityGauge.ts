@@ -185,6 +185,17 @@ export function useMemoryCapacityGauge({
       chartColors.performance.excellent ?? colors.success,
     ];
 
+    // RED PHASE: Due words present - subtle red gradient for visual interest
+    if (wordStates.dueWords > 0) {
+      return [baseColors[0] as string, baseColors[1] as string];
+    }
+
+    // YELLOW PHASE: Struggling words present - red to orange gradient
+    if (wordStates.strugglingWords > 0) {
+      return [baseColors[0] as string, baseColors[1] as string];
+    }
+
+    // GREEN PHASE: No urgent words - use appropriate range based on actual score
     if (getVisualScore <= 30) {
       return [baseColors[0] as string, baseColors[1] as string];
     }
@@ -195,6 +206,17 @@ export function useMemoryCapacityGauge({
   };
 
   const getFilledGradientPositions = (): number[] => {
+    // RED PHASE: Due words present - gradient from pure red to slight orange for visual interest
+    if (wordStates.dueWords > 0) {
+      return [0, 1];
+    }
+
+    // YELLOW PHASE: Struggling words present - red to orange gradient
+    if (wordStates.strugglingWords > 0) {
+      return [0, 1];
+    }
+
+    // GREEN PHASE: Use normal gradient positions based on visual score
     if (getVisualScore <= 30) {
       return [0, 1];
     }
@@ -250,6 +272,11 @@ export function useMemoryCapacityGauge({
     return chartColors.withOpacity(baseColor, 0.1); // Light tint of the capacity color
   };
 
+  // Get the score that should be displayed in the center (matches visual gauge)
+  const getDisplayScore = (): number => {
+    return getVisualScore;
+  };
+
   return {
     memoryMetrics,
     gaugePaths,
@@ -259,6 +286,7 @@ export function useMemoryCapacityGauge({
     getCapacityColor,
     getReadinessMessage,
     getActionCardBackground,
+    getDisplayScore,
   };
 }
 

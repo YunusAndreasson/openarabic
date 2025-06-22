@@ -41,12 +41,12 @@ const basePalette = {
 
   // Semantic warm tones
   semantic: {
-    error: '#D32F2F', // Pure warm red (more traffic light red, less purple)
-    errorDark: '#EF5350', // Lighter warm red for dark mode
+    error: '#B85454', // Muted sage-toned red - matches sage green saturation/lightness
+    errorDark: '#D17676', // Lighter muted red for dark mode
     success: '#4C7F5A', // Deep forest success
     successDark: '#72A47F', // Lighter forest for dark mode
-    warning: '#C9B938', // Rich goldenrod
-    warningDark: '#E0CC78', // Enriched gold for dark
+    warning: '#B8954B', // Muted sage-toned gold - matches sage green tone
+    warningDark: '#D1B56F', // Lighter muted gold for dark mode
   },
 
   // Green-tinted pure values (never pure white/black)

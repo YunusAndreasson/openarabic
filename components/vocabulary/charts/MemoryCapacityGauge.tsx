@@ -52,6 +52,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
     getCapacityColor,
     getReadinessMessage,
     getActionCardBackground,
+    getDisplayScore,
   } = useMemoryCapacityGauge({
     studyWords,
     width: GAUGE_WIDTH,
@@ -64,6 +65,9 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
   const handleInsightsPress = () => {
     navigateTo(ROUTE_PATHS.INSIGHTS);
   };
+
+  // Get the score that should be displayed (matches visual gauge)
+  const displayScore = getDisplayScore();
 
   return (
     <BaseChart
@@ -143,10 +147,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
 
                 {/* Enhanced capacity indicator with glow effect */}
                 <Circle
-                  color={chartColors.withOpacity(
-                    getCapacityColor(memoryMetrics.capacityScore),
-                    0.15
-                  )}
+                  color={chartColors.withOpacity(getCapacityColor(displayScore), 0.15)}
                   cx={indicatorPosition.x}
                   cy={indicatorPosition.y}
                   r={INDICATOR_GLOW_SIZE}
@@ -162,7 +163,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
                 />
 
                 <Circle
-                  color={getCapacityColor(memoryMetrics.capacityScore)}
+                  color={getCapacityColor(displayScore)}
                   cx={indicatorPosition.x}
                   cy={indicatorPosition.y}
                   r={INDICATOR_SIZE}
@@ -184,12 +185,9 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
             <View style={styles.centerSection}>
               <View style={styles.scoreContainer}>
                 <ThemedText
-                  style={[
-                    styles.capacityText,
-                    { color: getCapacityColor(memoryMetrics.capacityScore) },
-                  ]}
+                  style={[styles.capacityText, { color: getCapacityColor(displayScore) }]}
                 >
-                  {memoryMetrics.capacityScore}%
+                  {displayScore}%
                 </ThemedText>
                 {memoryMetrics.trend === 'improving' && (
                   <View style={styles.statusContainer}>
@@ -211,7 +209,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
               style={[
                 styles.actionCard,
                 {
-                  backgroundColor: getActionCardBackground(memoryMetrics.capacityScore),
+                  backgroundColor: getActionCardBackground(displayScore),
                 },
               ]}
             >
@@ -219,7 +217,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
                 style={[
                   styles.actionText,
                   {
-                    color: getCapacityColor(memoryMetrics.capacityScore),
+                    color: getCapacityColor(displayScore),
                   },
                 ]}
               >
