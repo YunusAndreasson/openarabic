@@ -1,19 +1,19 @@
 import {
+  Fragment,
   memo,
   useCallback,
   useEffect,
-  useState,
   useMemo,
-  type RefObject,
+  useState,
   type ComponentRef,
-  Fragment,
+  type RefObject,
 } from 'react';
-import type { LayoutRectangle, LayoutChangeEvent, ViewStyle, TextStyle } from 'react-native';
+import type { LayoutChangeEvent, LayoutRectangle, TextStyle, ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import { WORD_PRESS_SCALE, DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
+import { DEFAULT_ANIMATION_DURATION, WORD_PRESS_SCALE } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
@@ -206,6 +206,8 @@ function ArabicWordComponent({
         <WordTooltip
           layout={absoluteLayout}
           text={word.english}
+          arabicWord={word.word_form}
+          wordId={word.id}
           visible={tooltipVisible}
           zIndex={tooltipZIndex}
           onClose={handleTooltipClose}

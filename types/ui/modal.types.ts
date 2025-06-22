@@ -6,6 +6,10 @@ export interface WordTooltipProps {
   visible: boolean;
   /** The text to display in the tooltip */
   text?: string;
+  /** The Arabic word to analyze and display with color-coding */
+  arabicWord?: string;
+  /** The database ID of the word for debugging and reference */
+  wordId?: number;
   /** Layout information for positioning the tooltip */
   layout: {
     x: number;

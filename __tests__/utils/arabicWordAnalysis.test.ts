@@ -1,63 +1,70 @@
-import { analyzeArabicWord, formatWordAnalysis, hasAnalyzableComponents } from '../../utils/arabicWordAnalysis';
+import { analyzeArabicWord, formatWordAnalysis } from '../../utils/arabicWordAnalysis';
 
-describe('analyzeArabicWord', () => {
-  it('detects prefix and common word components', () => {
-    const analysis = analyzeArabicWord('والبيت', 'and the house');
-    expect(analysis.hasComponents).toBe(true);
-    expect(analysis.components).toHaveLength(2);
-    expect(analysis.components[0].arabicMatch === 'و' || analysis.components[0].arabicMatch === 'البيت').toBe(true);
-    expect(analysis.remainingArabic).toBe('');
-    expect(analysis.remainingEnglish).toBe('');
+describe('arabicWordAnalysis', () => {
+  // Test case for the user's initial report (ID 10214)
+  it('should colorize "it" for "وَكِتَابَتِهِ"', () => {
+    const analysis = analyzeArabicWord('وَكِتَابَتِهِ', 'and recording it');
+    expect(analysis.suffix?.arabicMatch).toBe('ه');
+    expect(analysis.suffix?.matchedInEnglish).toBe(true);
+    expect(analysis.suffix?.englishMatches).toContain('it');
   });
 
-  it('handles words without components', () => {
+  // Test case for the user's second report (ID 10308)
+  it('should colorize both prefix and suffix for "مِنْهُمْ"', () => {
+    const analysis = analyzeArabicWord('مِنْهُمْ', 'from them');
+    const formatted = formatWordAnalysis(analysis);
+
+    // 1. Check that both prefix and suffix are found
+    expect(analysis.prefix?.arabicMatch).toBe('من');
+    expect(analysis.suffix?.arabicMatch).toBe('هم');
+    expect(analysis.hasComponents).toBe(true);
+
+    // 2. Check that the reconstructed word has two colored parts
+    const coloredSegments = formatted.reconstructedArabic?.segments.filter(
+      s => s.colorName !== 'text'
+    );
+    expect(coloredSegments).toHaveLength(2);
+
+    // 3. Check that the colored parts are correct
+    const coloredTexts = coloredSegments?.map(s => s.text);
+    expect(coloredTexts).toContain('مِن'); // Simplified: prefix mapping
+    expect(coloredTexts).toContain('هُمْ'); // Suffix with diacritics
+  });
+
+  // General test for prefix + suffix
+  it('should colorize both prefix and suffix for "وبيتها"', () => {
+    const analysis = analyzeArabicWord('وبيتها', 'and her house');
+
+    // Check that both prefix and suffix are found
+    expect(analysis.prefix?.arabicMatch).toBe('و');
+    expect(analysis.suffix?.arabicMatch).toBe('ها');
+    expect(analysis.hasComponents).toBe(true);
+
+    const formatted = formatWordAnalysis(analysis);
+    const coloredSegments = formatted.reconstructedArabic?.segments.filter(
+      s => s.colorName !== 'text'
+    );
+    expect(coloredSegments).toHaveLength(2);
+  });
+
+  // Test normalization
+  it('should properly normalize Arabic text with diacritics', () => {
+    const analysis = analyzeArabicWord('وَكِتَابَتِهِ', 'and recording it');
+    expect(analysis.hasComponents).toBe(true);
+
+    // Should preserve original text with diacritics in reconstruction
+    const formatted = formatWordAnalysis(analysis);
+    expect(formatted.reconstructedArabic?.totalText).toBe('وَكِتَابَتِهِ');
+  });
+
+  // Test that words without components are handled correctly
+  it('should handle words without recognizable components', () => {
     const analysis = analyzeArabicWord('كتاب', 'book');
     expect(analysis.hasComponents).toBe(false);
-    expect(analysis.components).toHaveLength(0);
-    expect(analysis.remainingArabic).toBe('كتاب');
-    expect(analysis.remainingEnglish).toBe('book');
-  });
+    expect(analysis.prefix).toBeUndefined();
+    expect(analysis.suffix).toBeUndefined();
 
-  it('handles mixed-language input', () => {
-    const analysis = analyzeArabicWord('الbook', 'the book');
-    expect(analysis.hasComponents).toBe(true);
-    expect(analysis.components[0].arabicMatch).toBe('ال');
-    expect(analysis.remainingArabic).toBe('book');
-    expect(analysis.remainingEnglish).toBe('book');
-  });
-});
-
-describe('formatWordAnalysis', () => {
-  it('formats analysis with components', () => {
-    const analysis = analyzeArabicWord('والبيت', 'and the house');
-    const result = formatWordAnalysis(analysis);
-    expect(result.title).toBe('والبيت');
-    expect(result.sections[0]).toEqual({ type: 'original', content: 'and the house' });
-    expect(result.sections.length).toBe(3);
-    expect(result.reconstructedArabic).toBeDefined();
-    expect(result.reconstructedArabic?.segments.length).toBeGreaterThan(1);
-  });
-
-  it('formats analysis without components', () => {
-    const analysis = analyzeArabicWord('كتاب', 'book');
-    const result = formatWordAnalysis(analysis);
-    expect(result.title).toBe('كتاب');
-    expect(result.sections).toEqual([{ type: 'original', content: 'book' }]);
-    expect(result.reconstructedArabic).toBeUndefined();
-  });
-});
-
-describe('hasAnalyzableComponents', () => {
-  it('detects analyzable prefixes and suffixes', () => {
-    expect(hasAnalyzableComponents('التلميذة')).toBe(true);
-  });
-
-  it('returns false when no patterns found', () => {
-    expect(hasAnalyzableComponents('كتاب')).toBe(false);
-    expect(hasAnalyzableComponents('house')).toBe(false);
-  });
-
-  it('detects mixed-language words starting with prefixes', () => {
-    expect(hasAnalyzableComponents('الbook')).toBe(true);
+    const formatted = formatWordAnalysis(analysis);
+    expect(formatted.reconstructedArabic).toBeUndefined();
   });
 });

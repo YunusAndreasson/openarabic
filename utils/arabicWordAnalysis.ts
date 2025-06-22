@@ -1,8 +1,9 @@
 import {
-  ALL_WORD_COMPONENTS,
+  ARABIC_PREFIXES,
+  ARABIC_SUFFIXES,
   COMPONENT_TYPE_CONFIG,
   type WordComponent,
-} from '@/constants/arabicWordComponents';
+} from '../constants/arabicWordComponents';
 
 export interface AnalyzedComponent {
   component: WordComponent;
@@ -16,335 +17,257 @@ export interface WordAnalysis {
     arabic: string;
     english: string;
   };
-  components: AnalyzedComponent[];
+  prefix?: AnalyzedComponent;
+  suffix?: AnalyzedComponent;
   hasComponents: boolean;
   remainingArabic: string;
   remainingEnglish: string;
 }
 
 /**
- * Normalizes Arabic text by removing diacritics and extra spaces
+ * Normalizes Arabic text by removing diacritics
  */
-function normalizeArabicText(text: string): string {
-  return text
-    .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '') // Remove diacritics
-    .replace(/\s+/g, ' ')
-    .trim();
+function normalizeArabic(text: string): string {
+  return text.replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u06EE-\u06EF\u06FA-\u06FF]/g, '').trim();
 }
 
 /**
  * Normalizes English text for comparison
  */
-function normalizeEnglishText(text: string): string {
+function normalizeEnglish(text: string): string {
   return text
     .toLowerCase()
-    .replace(/[^\w\s]/g, ' ') // Replace punctuation with spaces
-    .replace(/\s+/g, ' ')
+    .replace(/[^\w\s]/g, '')
     .trim();
 }
 
 /**
- * Checks if English translation contains any of the expected patterns
+ * Checks if English contains any patterns
  */
-function checkEnglishMatch(englishText: string, patterns: string[]): string[] {
-  const normalizedEnglish = normalizeEnglishText(englishText);
-  const words = normalizedEnglish.split(/\s+/);
-  const matches: string[] = [];
-
-  for (const pattern of patterns) {
-    const normalizedPattern = normalizeEnglishText(pattern);
-
-    // Check for exact word match
-    if (words.includes(normalizedPattern)) {
-      matches.push(pattern);
-      continue;
-    }
-
-    // Check for partial matches in compound translations
-    if (normalizedEnglish.includes(normalizedPattern)) {
-      matches.push(pattern);
-    }
-  }
-
-  return matches;
+function hasEnglishMatch(english: string, patterns: string[]): string[] {
+  const normalized = normalizeEnglish(english);
+  const words = normalized.split(/\s+/);
+  return patterns.filter(p => words.includes(normalizeEnglish(p)));
 }
 
 /**
- * Removes matched Arabic component from the word
+ * Finds longest prefix
  */
-function removeArabicComponent(arabic: string, component: WordComponent, _match: string): string {
-  if (component.type === 'prefix') {
-    return arabic.replace(new RegExp(component.arabic), '');
-  } else if (component.type === 'suffix') {
-    return arabic.replace(new RegExp(component.arabic), '');
-  } else {
-    // For common words, if it's an exact match, return empty string
-    if (new RegExp(`^${component.arabic}$`).test(arabic)) {
-      return '';
-    }
-    return arabic;
-  }
-}
+function findPrefix(arabic: string, english: string): AnalyzedComponent | undefined {
+  let best: AnalyzedComponent | undefined;
 
-/**
- * Removes matched English components from the translation
- */
-function removeEnglishComponents(english: string, matches: string[]): string {
-  let remaining = normalizeEnglishText(english);
-
-  for (const match of matches) {
-    const normalizedMatch = normalizeEnglishText(match);
-    // Remove the matched word/phrase
-    remaining = remaining.replace(new RegExp(`\\b${normalizedMatch}\\b`, 'g'), ' ');
-  }
-
-  return remaining.replace(/\s+/g, ' ').trim();
-}
-
-/**
- * Analyzes an Arabic word and its English translation to identify components
- */
-export function analyzeArabicWord(arabic: string, english: string): WordAnalysis {
-  const normalizedArabic = normalizeArabicText(arabic);
-  const normalizedEnglish = normalizeEnglishText(english);
-
-  const components: AnalyzedComponent[] = [];
-  let remainingArabic = normalizedArabic;
-  let remainingEnglish = normalizedEnglish;
-
-  // Sort components by priority and process them
-  for (const component of ALL_WORD_COMPONENTS) {
-    const arabicRegex = new RegExp(component.arabic);
-    const arabicMatch = remainingArabic.match(arabicRegex);
-
-    if (arabicMatch) {
-      const matchedText = arabicMatch[0];
-      const englishMatches = checkEnglishMatch(english, component.english);
-      const matchedInEnglish = englishMatches.length > 0;
-
-      // Only include the component if we find some evidence in the English
-      // or if it's a very common structural component
-      if (matchedInEnglish || component.priority >= 95) {
-        components.push({
-          component,
-          arabicMatch: matchedText,
-          englishMatches,
-          matchedInEnglish,
-        });
-
-        // Remove the matched component from remaining text
-        remainingArabic = removeArabicComponent(remainingArabic, component, matchedText);
-        if (matchedInEnglish) {
-          remainingEnglish = removeEnglishComponents(remainingEnglish, englishMatches);
-        }
+  for (const prefix of ARABIC_PREFIXES) {
+    const pattern = prefix.arabic.replace(/^\^/, '');
+    if (arabic.startsWith(pattern)) {
+      const matches = hasEnglishMatch(english, prefix.english);
+      if (matches.length > 0 && (!best || pattern.length > best.arabicMatch.length)) {
+        best = {
+          component: prefix,
+          arabicMatch: pattern,
+          englishMatches: matches,
+          matchedInEnglish: true,
+        };
       }
     }
   }
 
+  return best;
+}
+
+/**
+ * Finds longest suffix
+ */
+function findSuffix(arabic: string, english: string): AnalyzedComponent | undefined {
+  let best: AnalyzedComponent | undefined;
+
+  for (const suffix of ARABIC_SUFFIXES) {
+    const pattern = suffix.arabic.replace(/\$$/, '');
+    if (arabic.endsWith(pattern)) {
+      const matches = hasEnglishMatch(english, suffix.english);
+      if (matches.length > 0 && (!best || pattern.length > best.arabicMatch.length)) {
+        best = {
+          component: suffix,
+          arabicMatch: pattern,
+          englishMatches: matches,
+          matchedInEnglish: true,
+        };
+      }
+    }
+  }
+
+  return best;
+}
+
+/**
+ * Analyzes Arabic word for prefix/suffix
+ */
+export function analyzeArabicWord(arabic: string, english: string): WordAnalysis {
+  const normalized = normalizeArabic(arabic);
+  const prefix = findPrefix(normalized, english);
+  const suffix = findSuffix(normalized, english);
+
+  // Simple overlap handling - if they overlap, keep the longer one
+  if (prefix && suffix) {
+    const prefixEnd = prefix.arabicMatch.length;
+    const suffixStart = normalized.length - suffix.arabicMatch.length;
+    if (prefixEnd > suffixStart) {
+      if (prefix.arabicMatch.length >= suffix.arabicMatch.length) {
+        return {
+          original: { arabic, english },
+          prefix,
+          suffix: undefined,
+          hasComponents: true,
+          remainingArabic: normalized.substring(prefix.arabicMatch.length),
+          remainingEnglish: normalizeEnglish(english),
+        };
+      } else {
+        return {
+          original: { arabic, english },
+          prefix: undefined,
+          suffix,
+          hasComponents: true,
+          remainingArabic: normalized.substring(0, suffixStart),
+          remainingEnglish: normalizeEnglish(english),
+        };
+      }
+    }
+  }
+
+  let remaining = normalized;
+  if (prefix) remaining = remaining.substring(prefix.arabicMatch.length);
+  if (suffix) remaining = remaining.substring(0, remaining.length - suffix.arabicMatch.length);
+
   return {
-    original: {
-      arabic,
-      english,
-    },
-    components,
-    hasComponents: components.length > 0,
-    remainingArabic: remainingArabic.trim(),
-    remainingEnglish: remainingEnglish.trim(),
+    original: { arabic, english },
+    prefix,
+    suffix,
+    hasComponents: !!(prefix || suffix),
+    remainingArabic: remaining.trim(),
+    remainingEnglish: normalizeEnglish(english),
   };
 }
 
 /**
- * Reconstructs Arabic word components in proper RTL order
+ * Simple reconstruction for coloring
  */
-function reconstructArabicRTL(analysis: WordAnalysis): {
-  segments: { text: string; colorName: string; type: string }[];
-  totalText: string;
-} {
+function reconstructWithColors(analysis: WordAnalysis) {
   const segments: { text: string; colorName: string; type: string }[] = [];
-  let reconstructedWord = analysis.original.arabic;
+  const { arabic } = analysis.original;
 
-  // Sort components by position in the original word for proper RTL reconstruction
-  const sortedComponents = [...analysis.components].sort((a, b) => {
-    const indexA = analysis.original.arabic.indexOf(a.arabicMatch);
-    const indexB = analysis.original.arabic.indexOf(b.arabicMatch);
-    return indexA - indexB;
-  });
+  let processed = 0;
 
-  // Track what's been processed
-  let processedIndices = new Set<number>();
-
-  for (const analyzedComponent of sortedComponents) {
-    const startIndex = analysis.original.arabic.indexOf(analyzedComponent.arabicMatch);
-    const endIndex = startIndex + analyzedComponent.arabicMatch.length;
-
-    // Skip if this part was already processed (overlapping components)
-    let overlap = false;
-    for (let i = startIndex; i < endIndex; i++) {
-      if (processedIndices.has(i)) {
-        overlap = true;
-        break;
+  // Add prefix
+  if (analysis.prefix) {
+    const prefixLen = analysis.prefix.arabicMatch.length;
+    // Map back to original with diacritics
+    let originalEnd = 0;
+    let count = 0;
+    for (let i = 0; i < arabic.length && count < prefixLen; i++) {
+      const char = arabic[i];
+      if (char && !/[\u064B-\u065F\u0670\u06D6-\u06ED\u06EE-\u06EF\u06FA-\u06FF]/.test(char)) {
+        count++;
       }
+      originalEnd = i + 1;
     }
 
-    if (!overlap) {
-      const config = COMPONENT_TYPE_CONFIG[analyzedComponent.component.type];
-      segments.push({
-        text: analyzedComponent.arabicMatch,
-        colorName: config.colorName,
-        type: analyzedComponent.component.type,
-      });
-
-      // Mark indices as processed
-      for (let i = startIndex; i < endIndex; i++) {
-        processedIndices.add(i);
-      }
-    }
-  }
-
-  // Add remaining parts (root) if any
-  if (analysis.remainingArabic && analysis.remainingArabic.trim().length > 0) {
     segments.push({
-      text: analysis.remainingArabic.trim(),
-      colorName: 'text', // Main text color for root
-      type: 'root',
+      text: arabic.substring(0, originalEnd),
+      colorName: COMPONENT_TYPE_CONFIG.prefix.colorName,
+      type: 'prefix',
     });
+    processed = originalEnd;
   }
 
-  // If no segments were created, use the whole word as root
-  if (segments.length === 0) {
+  // Add suffix
+  if (analysis.suffix) {
+    const suffixLen = analysis.suffix.arabicMatch.length;
+    // Map back from end
+    let originalStart = arabic.length;
+    let count = 0;
+    for (let i = arabic.length - 1; i >= 0 && count < suffixLen; i--) {
+      const char = arabic[i];
+      if (char && !/[\u064B-\u065F\u0670\u06D6-\u06ED\u06EE-\u06EF\u06FA-\u06FF]/.test(char)) {
+        count++;
+      }
+      originalStart = i;
+    }
+
+    // Add middle if needed
+    if (originalStart > processed) {
+      segments.push({
+        text: arabic.substring(processed, originalStart),
+        colorName: 'text',
+        type: 'root',
+      });
+    }
+
     segments.push({
-      text: analysis.original.arabic,
+      text: arabic.substring(originalStart),
+      colorName: COMPONENT_TYPE_CONFIG.suffix.colorName,
+      type: 'suffix',
+    });
+  } else if (processed < arabic.length) {
+    // Add remaining as root
+    segments.push({
+      text: arabic.substring(processed),
       colorName: 'text',
       type: 'root',
     });
   }
 
-  return {
-    segments,
-    totalText: reconstructedWord,
-  };
-}
-
-/**
- * Formats the analysis for display in the tooltip with color-coded RTL support
- */
-export function formatWordAnalysis(analysis: WordAnalysis): {
-  title: string;
-  reconstructedArabic?: {
-    segments: { text: string; colorName: string; type: string }[];
-    totalText: string;
-  };
-  sections: {
-    type: 'original' | 'components' | 'root';
-    content: string;
-    arabicPart?: string;
-    englishPart?: string;
-    colorName?: string;
-    icon?: string;
-  }[];
-} {
-  const sections: {
-    type: 'original' | 'components' | 'root';
-    content: string;
-    arabicPart?: string;
-    englishPart?: string;
-    colorName?: string;
-    icon?: string;
-  }[] = [];
-
-  // Always show the original translation first
-  sections.push({
-    type: 'original',
-    content: analysis.original.english,
-  });
-
-  let reconstructedArabic;
-
-  // If we found components, show them with clear Arabic-to-English mapping
-  if (analysis.hasComponents) {
-    // Generate properly reconstructed RTL Arabic word with colors
-    reconstructedArabic = reconstructArabicRTL(analysis);
-
-    // Create sections for each component with matching colors
-    for (const analyzedComponent of analysis.components) {
-      const config = COMPONENT_TYPE_CONFIG[analyzedComponent.component.type];
-      const englishPart =
-        analyzedComponent.englishMatches.length > 0
-          ? analyzedComponent.englishMatches.join('/')
-          : analyzedComponent.component.description;
-      const arabicPart = analyzedComponent.arabicMatch;
-
-      sections.push({
-        type: 'components',
-        content: `${arabicPart} ${config.icon} ${englishPart}`,
-        arabicPart,
-        englishPart,
-        colorName: config.colorName,
-        icon: config.icon,
-      });
-    }
-
-    // If there's remaining content after removing components, show it as the root
-    if (
-      analysis.remainingEnglish &&
-      analysis.remainingEnglish !== analysis.original.english.toLowerCase()
-    ) {
-      // Try to extract the remaining Arabic part
-      let remainingArabicDisplay = analysis.remainingArabic;
-
-      // If we have a good remaining Arabic part, show the mapping
-      if (remainingArabicDisplay && remainingArabicDisplay.length > 0) {
-        sections.push({
-          type: 'root',
-          content: `${remainingArabicDisplay} → ${analysis.remainingEnglish}`,
-          arabicPart: remainingArabicDisplay,
-          englishPart: analysis.remainingEnglish,
-          colorName: 'text', // Use main text color for root
-          icon: '→',
-        });
-      } else {
-        // Fallback to just showing the English part
-        sections.push({
-          type: 'root',
-          content: `● ${analysis.remainingEnglish}`,
-          englishPart: analysis.remainingEnglish,
-          colorName: 'text', // Use main text color for root
-          icon: '●',
-        });
-      }
-    }
+  // If no segments, add whole word
+  if (segments.length === 0) {
+    segments.push({ text: arabic, colorName: 'text', type: 'root' });
   }
 
-  return {
-    title: analysis.original.arabic,
-    reconstructedArabic,
-    sections,
-  };
+  return { segments, totalText: arabic };
 }
 
 /**
- * Quick check if a word likely has analyzable components
+ * Formats analysis for tooltip
  */
-export function hasAnalyzableComponents(arabic: string): boolean {
-  const normalized = normalizeArabicText(arabic);
+export function formatWordAnalysis(analysis: WordAnalysis) {
+  const title = `${analysis.original.arabic} → ${analysis.original.english}`;
+  const reconstructedArabic = analysis.hasComponents ? reconstructWithColors(analysis) : undefined;
 
-  // Check for common prefixes and suffixes
-  const quickPatterns = [
-    /^ال/, // definite article
-    /^و/, // and
-    /^ف/, // so
-    /^ب/, // with/by
-    /^ل/, // to/for
-    /ي$/, // my
-    /ك$/, // your
-    /ه$/, // his
-    /ها$/, // her
-    /نا$/, // our
-    /كم$/, // your (plural)
-    /هم$/, // their (masc)
-    /هن$/, // their (fem)
-    /ة$/, // feminine marker
-  ];
+  const sections: {
+    type: 'original' | 'components' | 'root';
+    content?: string;
+    arabicPart?: string;
+    englishPart?: string;
+    colorName?: string;
+    icon?: string;
+  }[] = [{ type: 'original', content: analysis.original.english }];
 
-  return quickPatterns.some(pattern => pattern.test(normalized));
+  if (analysis.prefix) {
+    sections.push({
+      type: 'components',
+      arabicPart: analysis.prefix.arabicMatch,
+      englishPart: analysis.prefix.englishMatches.join(' / '),
+      colorName: COMPONENT_TYPE_CONFIG.prefix.colorName,
+      icon: COMPONENT_TYPE_CONFIG.prefix.icon,
+    });
+  }
+
+  if (analysis.suffix) {
+    sections.push({
+      type: 'components',
+      arabicPart: analysis.suffix.arabicMatch,
+      englishPart: analysis.suffix.englishMatches.join(' / '),
+      colorName: COMPONENT_TYPE_CONFIG.suffix.colorName,
+      icon: COMPONENT_TYPE_CONFIG.suffix.icon,
+    });
+  }
+
+  if (analysis.remainingArabic && analysis.remainingEnglish) {
+    sections.push({
+      type: 'root',
+      arabicPart: analysis.remainingArabic,
+      englishPart: analysis.remainingEnglish,
+      colorName: 'text',
+      icon: '→',
+    });
+  }
+
+  return { title, reconstructedArabic, sections };
 }
