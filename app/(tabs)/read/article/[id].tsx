@@ -1,7 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import type { JSX } from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AppState, View, type LayoutRectangle } from 'react-native';
 
 import { ThemedView } from '@/components/ThemedView';
@@ -67,7 +67,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
   const { handleScroll } = useHeaderVisibility();
 
   // Add fade-in animation for smooth content appearance
-  const { fadeIn, animatedStyle } = useOpacityAnimation({
+  const { fadeIn } = useOpacityAnimation({
     initialOpacity: 0,
     duration: TIMING_CONFIG.GENTLE.duration,
     autoStart: false,
@@ -261,18 +261,30 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     setActiveTooltip(null);
   }, []);
 
+  // Create a wrapper for the word press handler that matches useArticleRenderers signature
+  const handleWordPressForRenderer = useCallback(
+    (word: SentenceWord) => {
+      handleWordPress(word);
+    },
+    [handleWordPress]
+  );
+
   const { getWordsForSentence } = useArticleRenderers(
     { fontScale },
     selectedWordIds,
-    sentenceWordsMap
+    sentenceWordsMap,
+    handleWordPressForRenderer,
+    handleRootPress
   );
 
   const renderSentenceItem = useCallback(
+    // eslint-disable-next-line react/no-unused-prop-types
     ({ item }: { item: Tables<'article_sentences'> }) => {
       const words = getWordsForSentence(item.id);
 
       if (!words || words.length === 0) {
-        return null; // Don't render sentence if no words found
+        // Return an empty view instead of null to satisfy the ReactElement requirement
+        return <React.Fragment />;
       }
 
       return (

@@ -45,7 +45,9 @@ function renderWordWithProps(
 ) {
   const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
   if (!wordRefs[index]) {
-    wordRefs[index] = createRef<ComponentRef<typeof TouchableOpacity>>();
+    wordRefs[index] = createRef<ComponentRef<typeof TouchableOpacity>>() as RefObject<
+      ComponentRef<typeof TouchableOpacity>
+    >;
   }
   const isDueWord = word.root_id ? dueWordRootIds.has(word.root_id) : false;
   return renderWord ? (
@@ -87,7 +89,9 @@ function ArticleSentenceComponent({
   } = useOpacityAnimation({ initialOpacity: 0 });
 
   useEffect(() => {
-    wordRefs.current = words.map(() => createRef<ComponentRef<typeof TouchableOpacity>>());
+    wordRefs.current = words.map(() =>
+      createRef<ComponentRef<typeof TouchableOpacity>>()
+    ) as RefObject<ComponentRef<typeof TouchableOpacity>>[];
   }, [words]);
 
   useEffect(() => {
@@ -108,17 +112,20 @@ function ArticleSentenceComponent({
     [colors.englishText, settings.fontScale]
   );
 
-  const backgroundStyle = useMemo(
-    () =>
-      [
-        styles.sentenceBackground,
-        {
-          backgroundColor: colors.tint ? `${colors.tint}40` : colors.transparent,
-        },
-        animatedHighlightStyle,
-      ] as AnimatedStyleProp<ViewStyle>,
-    [colors.tint, colors.transparent, animatedHighlightStyle]
-  );
+  const backgroundStyle = useMemo(() => {
+    const baseStyle = {
+      position: 'absolute' as const,
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+      backgroundColor: colors.tint ? `${colors.tint}40` : colors.transparent,
+    };
+
+    // Combine with animated style properties
+    return Object.assign(baseStyle, animatedHighlightStyle) as AnimatedStyleProp<ViewStyle>;
+  }, [colors.tint, colors.transparent, animatedHighlightStyle]);
 
   const renderedWords = useMemo(() => {
     return words.map((word, index) =>
@@ -156,10 +163,6 @@ const styles = StyleSheet.create({
     fontFamily: 'System',
     paddingBottom: LAYOUT.SPACING.TINY,
     paddingTop: LAYOUT.SPACING.SMALL,
-  },
-  sentenceBackground: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   wordsContainer: {
     alignItems: 'center',
