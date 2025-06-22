@@ -239,12 +239,6 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
 
   const handleWordPress = useCallback(
     (word: SentenceWord, layout?: LayoutRectangle) => {
-      // Handle word selection (existing logic)
-      if (word.root_id) {
-        selectionFeedback();
-        handleRootPress(word.root_id);
-      }
-
       // Handle tooltip visibility only if layout is provided
       if (layout && layout.width > 0) {
         if (activeTooltip?.word.id === word.id) {
@@ -254,8 +248,16 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
         }
       }
     },
-    [handleRootPress, activeTooltip]
+    [activeTooltip]
   );
+
+  // Separate handler for study list toggle from tooltip
+  const handleStudyListToggle = useCallback(() => {
+    if (activeTooltip?.word.root_id) {
+      selectionFeedback();
+      handleRootPress(activeTooltip.word.root_id);
+    }
+  }, [activeTooltip, handleRootPress]);
 
   const handleCloseTooltip = useCallback(() => {
     setActiveTooltip(null);
@@ -335,6 +337,11 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
         arabicWord={activeTooltip?.word.word_form}
         layout={activeTooltip?.layout ?? null}
         onClose={handleCloseTooltip}
+        isInStudyList={
+          activeTooltip?.word.root_id ? selectedWordIds.has(activeTooltip.word.root_id) : false
+        }
+        onStudyListToggle={handleStudyListToggle}
+        wordRootId={activeTooltip?.word.root_id}
       />
     </ThemedView>
   );

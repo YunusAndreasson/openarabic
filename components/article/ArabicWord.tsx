@@ -8,18 +8,16 @@ import {
   type RefObject,
 } from 'react';
 import type { LayoutChangeEvent, LayoutRectangle, TextStyle, ViewStyle } from 'react-native';
-import { StyleSheet, TouchableOpacity } from 'react-native';
-import Animated from 'react-native-reanimated';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { DEFAULT_ANIMATION_DURATION, WORD_PRESS_SCALE } from '@/constants/animation';
+import { DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
-import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
+import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useArabicWord } from '@/hooks/vocabulary/useArabicWord';
 import type { TextWeight } from '@/types/ui/text.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
-import { selectionFeedback } from '@/utils/haptics';
 
 interface ArabicWordProps {
   word: SentenceWord;
@@ -46,25 +44,12 @@ function ArabicWordComponent({
 }: ArabicWordProps) {
   const colors = useColors();
   const [absoluteLayout, setAbsoluteLayout] = useState<LayoutRectangle | null>(null);
-  const [needsReverseAnimation, setNeedsReverseAnimation] = useState(false);
 
-  // Use our new hook
-  const { isSelected, setForceSelected, handleSelectionChange } = useArabicWord({
+  // Use our new hook for word selection state
+  const { isSelected } = useArabicWord({
     word,
     position,
     onPress,
-  });
-
-  // Use transform animation for press feedback
-  const {
-    animatedStyle: pressStyle,
-    startAnimation: startPressAnimation,
-    reverseAnimation: reversePressAnimation,
-  } = useTransformAnimation({
-    type: 'scale',
-    initialValue: 1,
-    targetValue: WORD_PRESS_SCALE,
-    duration: DEFAULT_ANIMATION_DURATION,
   });
 
   // Use opacity animation for border
@@ -72,18 +57,6 @@ function ArabicWordComponent({
     initialOpacity: isSelected ? 1 : 0,
     duration: DEFAULT_ANIMATION_DURATION,
   });
-
-  // Handle the animation reversal after a brief delay
-  useEffect(() => {
-    if (!needsReverseAnimation) return;
-
-    const timer = setTimeout(() => {
-      reversePressAnimation();
-      setNeedsReverseAnimation(false);
-    }, DEFAULT_ANIMATION_DURATION);
-
-    return () => clearTimeout(timer);
-  }, [needsReverseAnimation, reversePressAnimation]);
 
   // Update border opacity when selection changes
   useEffect(() => {
@@ -149,23 +122,7 @@ function ArabicWordComponent({
     }
   }, [absoluteLayout, onTooltipOpen, wordRef]);
 
-  // Add to study list on long press with animated feedback
-  const handleLongPress = useCallback(() => {
-    // Provide haptic feedback
-    selectionFeedback();
-
-    // Execute the animation and selection separately
-    startPressAnimation();
-
-    // Schedule the reverse animation using state
-    setNeedsReverseAnimation(true);
-
-    // Set optimistic update to show selection immediately (this toggles selection)
-    setForceSelected(!isSelected);
-
-    // Then handle selection using the hook's handler
-    handleSelectionChange();
-  }, [handleSelectionChange, startPressAnimation, isSelected, setForceSelected]);
+  // Removed long press functionality - words are now added to study list via tooltip bookmark icon
 
   const getSelectedStyle = useCallback(
     (): ViewStyle => ({
@@ -185,16 +142,14 @@ function ArabicWordComponent({
     <TouchableOpacity
       ref={wordRef}
       activeOpacity={0.7}
-      delayLongPress={250}
       style={containerStyle}
       testID={testID}
       onLayout={handleLayout}
-      onLongPress={handleLongPress}
       onPress={handlePress}
     >
-      <Animated.View style={[styles.wordView, pressStyle]}>
+      <View style={styles.wordView}>
         <ThemedText {...textProps}>{word.word_form}</ThemedText>
-      </Animated.View>
+      </View>
     </TouchableOpacity>
   );
 }

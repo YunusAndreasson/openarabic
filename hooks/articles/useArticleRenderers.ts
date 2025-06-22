@@ -18,53 +18,20 @@ interface ArticleSettings {
  * @param selectedWordIds - Set of selected word IDs (can be number or string)
  * @param sentenceWordsMap - Map of sentence IDs to words
  * @param handleWordPress - Function to handle word press
- * @param handleRootPress - Function to handle root press
+ * @param handleRootPress - Function to handle root press (unused but kept for compatibility)
  * @returns Object with rendering functions
  */
 export const useArticleRenderers = (
-  settings: ArticleSettings,
-  selectedWordIds: Set<number> | undefined,
+  _settings: ArticleSettings,
+  _selectedWordIds: Set<number> | undefined,
   sentenceWordsMap: SentenceWordsMap,
-  handleWordPress: (word: SentenceWord) => void,
-  handleRootPress?: (rootId: number) => void
+  _handleWordPress: (word: SentenceWord) => void,
+  _handleRootPress?: (rootId: number) => void
 ): {
-  prepareWord: (word: SentenceWord) => {
-    word: SentenceWord;
-    isSelected: boolean;
-    key: number | string;
-    onPress: (word: SentenceWord) => void;
-    scale: number;
-    baseSize: number;
-    onLongPress?: () => void;
-  };
   handleArticlePress: (articleOrId: Article | number, isRelatedArticle?: boolean) => void;
   getWordsForSentence: (sentenceId: number) => SentenceWord[];
 } => {
   const router = useRouter();
-  const { fontScale } = settings;
-
-  // Prepare word for rendering
-  const prepareWord = useCallback(
-    (word: SentenceWord) => {
-      // Check if the word's root is selected
-      const isSelected = word.root_id !== undefined && selectedWordIds?.has(word.root_id) === true;
-
-      // Memoize the long press handler if it exists
-      const onLongPress =
-        word.root_id && handleRootPress ? () => handleRootPress(word.root_id) : undefined;
-
-      return {
-        word,
-        isSelected,
-        key: word.id,
-        scale: fontScale,
-        baseSize: 16,
-        onPress: () => handleWordPress(word),
-        onLongPress,
-      };
-    },
-    [selectedWordIds, handleWordPress, handleRootPress, fontScale]
-  );
 
   /**
    * Navigate to an article with debounce protection and smooth transition
@@ -109,11 +76,10 @@ export const useArticleRenderers = (
   // Return memoized object to prevent unnecessary re-renders
   return useMemo(
     () => ({
-      prepareWord,
       handleArticlePress,
       getWordsForSentence,
     }),
-    [prepareWord, handleArticlePress, getWordsForSentence]
+    [handleArticlePress, getWordsForSentence]
   );
 };
 

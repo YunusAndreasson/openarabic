@@ -55,16 +55,17 @@ jest.mock('../../components/article/ArabicWord', () => {
   return {
     __esModule: true,
     ArabicWord: ({ onPress, testID, word }: any) => (
-      <TouchableOpacity testID={testID} onLongPress={() => onPress(word)} />
+      <TouchableOpacity testID={testID} onPress={() => onPress(word)} />
     ),
   };
 });
 
 jest.mock('../../components/review/CompletionScreen', () => {
   const React = require('react');
+  const { View } = require('react-native');
   return {
     __esModule: true,
-    default: ({ testID = 'completion-screen' }: { testID?: string }) => <div testID={testID} />,
+    default: ({ testID = 'completion-screen' }: { testID?: string }) => <View testID={testID} />,
   };
 });
 
@@ -161,6 +162,7 @@ describe('UI flow', () => {
       <ArticleCard
         author="A"
         category="cat"
+        categoryForDisplay="Category"
         imageUrl="img"
         summary="s"
         title="t"
@@ -173,14 +175,21 @@ describe('UI flow', () => {
     expect(onPress).toHaveBeenCalled();
   });
 
-  it('adds word to study words', () => {
+  it('opens word tooltip on press', () => {
     const onPress = jest.fn();
+    const onTooltipOpen = jest.fn();
     const word = { id: 1, word_form: 'w', english: 'w', root_id: 1 } as any;
     const { getByTestId } = render(
-      <ArabicWord word={word} settings={{ fontScale: 1 }} onPress={onPress} testID="word-1" />
+      <ArabicWord
+        word={word}
+        settings={{ fontScale: 1 }}
+        onPress={onPress}
+        onTooltipOpen={onTooltipOpen}
+        testID="word-1"
+      />
     );
 
-    fireEvent(getByTestId('word-1'), 'longPress');
+    fireEvent.press(getByTestId('word-1'));
     expect(onPress).toHaveBeenCalledWith(word);
   });
 

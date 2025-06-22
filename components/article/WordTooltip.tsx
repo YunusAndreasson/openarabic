@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -188,7 +189,9 @@ const WordTooltipComparison = (
     prevProps.visible !== nextProps.visible ||
     prevProps.text !== nextProps.text ||
     prevProps.arabicWord !== nextProps.arabicWord ||
-    prevProps.zIndex !== nextProps.zIndex
+    prevProps.zIndex !== nextProps.zIndex ||
+    prevProps.isInStudyList !== nextProps.isInStudyList ||
+    prevProps.wordRootId !== nextProps.wordRootId
   ) {
     return false;
   }
@@ -226,7 +229,17 @@ const WordTooltipComparison = (
  * Ensures the arrow tip is precisely centered over the word regardless of screen position
  */
 export const WordTooltip = memo(
-  ({ visible, text = '', arabicWord, layout, onClose, zIndex }: WordTooltipProps) => {
+  ({
+    visible,
+    text = '',
+    arabicWord,
+    layout,
+    onClose,
+    zIndex,
+    isInStudyList = false,
+    onStudyListToggle,
+    wordRootId,
+  }: WordTooltipProps) => {
     const colors = useColors();
     // For mobile-only apps, use constant screen width
     const screenWidth = SCREEN_WIDTH;
@@ -277,6 +290,13 @@ export const WordTooltip = memo(
     const handleClose = useCallback(() => {
       onClose();
     }, [onClose]);
+
+    // Handle study list toggle with haptic feedback
+    const handleStudyListPress = useCallback(() => {
+      if (onStudyListToggle && wordRootId) {
+        onStudyListToggle();
+      }
+    }, [onStudyListToggle, wordRootId]);
 
     // Render color-coded Arabic text using SINGLE Text component for proper Arabic joining
     const renderColorCodedArabic = useCallback(() => {
@@ -539,15 +559,53 @@ export const WordTooltip = memo(
       );
     }, [arabicAnalysis, text, tooltipColors]);
 
+    // Render the study list indicator
+    const renderStudyIndicator = useCallback(() => {
+      // Only show if we have study functionality
+      if (!onStudyListToggle || !wordRootId) return null;
+
+      const iconName = isInStudyList ? 'bookmark' : 'bookmark-outline';
+      const indicatorColor = isInStudyList ? tooltipColors.primary : tooltipColors.secondaryText;
+
+      return (
+        <TouchableOpacity
+          onPress={handleStudyListPress}
+          style={{
+            position: 'absolute',
+            top: TOOLTIP_CONSTANTS.SPACING / 2,
+            right: TOOLTIP_CONSTANTS.SPACING / 2,
+            padding: LAYOUT.SPACING.TINY / 2,
+            borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM / 2,
+          }}
+          hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+          activeOpacity={0.7}
+        >
+          <Ionicons name={iconName} size={14} color={indicatorColor} />
+        </TouchableOpacity>
+      );
+    }, [onStudyListToggle, wordRootId, isInStudyList, handleStudyListPress, tooltipColors]);
+
     // Memoize the tooltip content to reduce re-renders
     const tooltipContent = useMemo(() => {
       const arabicContent = renderColorCodedArabic();
       const englishContent = renderColorCodedEnglish();
+      const studyIndicator = renderStudyIndicator();
+
+      // Calculate if we need padding for the study indicator
+      const hasStudyIndicator = !!studyIndicator;
+      const contentStyle = {
+        alignItems: 'center' as const,
+        justifyContent: 'center' as const,
+        position: 'relative' as const,
+        // Add right padding when we have a study indicator to prevent overlap
+        ...(hasStudyIndicator && { paddingRight: 24 }),
+      };
 
       // If we have Arabic analysis, show both Arabic and English with color coordination
       if (arabicContent && arabicAnalysis?.sections && arabicAnalysis.sections.length > 0) {
         return (
-          <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+          <View style={contentStyle}>
+            {studyIndicator}
             {arabicContent}
             {englishContent}
           </View>
@@ -556,9 +614,12 @@ export const WordTooltip = memo(
 
       // Otherwise just show English (existing behavior) - still centered
       return (
-        <View style={{ alignItems: 'center', justifyContent: 'center' }}>{englishContent}</View>
+        <View style={contentStyle}>
+          {studyIndicator}
+          {englishContent}
+        </View>
       );
-    }, [renderColorCodedArabic, renderColorCodedEnglish, arabicAnalysis, tooltipColors]);
+    }, [renderColorCodedArabic, renderColorCodedEnglish, renderStudyIndicator, arabicAnalysis]);
 
     // Update tooltip positioning to account for potentially taller content
     const tooltipPositioning = useMemo(() => {
