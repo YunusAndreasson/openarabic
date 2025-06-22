@@ -1,30 +1,16 @@
 import { useLocalSearchParams } from 'expo-router';
-import {
-  createRef,
-  useEffect,
-  useRef,
-  useMemo,
-  type ComponentRef,
-  type ReactNode,
-  type RefObject,
-} from 'react';
-import {
-  StyleSheet,
-  View,
-  type TouchableOpacity,
-  type ViewStyle,
-  type StyleProp,
-} from 'react-native';
-import Animated from 'react-native-reanimated';
+import type { ComponentRef, ReactNode, RefObject } from 'react';
+import { createRef, useEffect, useMemo, useRef } from 'react';
+import type { LayoutRectangle, StyleProp, TouchableOpacity, ViewStyle } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import Animated, { type AnimatedStyleProp } from 'react-native-reanimated';
 
-import { LAYOUT, FONTS } from '@/constants/layout';
+import { ArabicWord } from '@/components/article/ArabicWord';
+import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
-
-import { ArabicWord } from './ArabicWord';
 
 const EMPTY_DUE_WORDS_SET = new Set<number>();
 
@@ -37,7 +23,7 @@ interface ArticleSentenceProps {
   };
   words: SentenceWord[];
   renderWord?: (word: SentenceWord) => ReactNode;
-  onWordPress?: (word: SentenceWord) => void;
+  onWordPress?: (word: SentenceWord, layout?: LayoutRectangle) => void;
   settings: {
     showEnglish: boolean;
     fontScale: number;
@@ -53,15 +39,13 @@ function renderWordWithProps(
   wordRefs: RefObject<ComponentRef<typeof TouchableOpacity>>[],
   dueWordRootIds: Set<number>,
   renderWord: ((word: SentenceWord) => ReactNode) | undefined,
-  onWordPress: ((word: SentenceWord) => void) | undefined,
+  onWordPress: ((word: SentenceWord, layout?: LayoutRectangle) => void) | undefined,
   settings: { fontScale: number },
   sentenceId: string | number
 ) {
   const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
   if (!wordRefs[index]) {
-    wordRefs[index] = createRef<ComponentRef<typeof TouchableOpacity>>() as RefObject<
-      ComponentRef<typeof TouchableOpacity>
-    >;
+    wordRefs[index] = createRef<ComponentRef<typeof TouchableOpacity>>();
   }
   const isDueWord = word.root_id ? dueWordRootIds.has(word.root_id) : false;
   return renderWord ? (
@@ -70,7 +54,8 @@ function renderWordWithProps(
     <ArabicWord
       key={`word-${wordId}-${word.position || sentenceId}`}
       word={word}
-      onPress={word => onWordPress?.(word)}
+      onPress={w => onWordPress?.(w)}
+      onTooltipOpen={layout => onWordPress?.(word, layout)}
       settings={{ fontScale: settings.fontScale }}
       wordRef={wordRefs[index]}
       position={index}
@@ -94,9 +79,6 @@ function ArticleSentenceComponent({
   const { highlightSentence } = useLocalSearchParams<{ highlightSentence?: string }>();
   const isHighlighted = sentence.id != null && highlightSentence === sentence.id.toString();
 
-  // Store refs to each word for highlighting and playback control
-  // Use ComponentRef to correctly type React Native component instances
-  // Each ref may hold a TouchableOpacity instance or null
   const wordRefs = useRef<RefObject<ComponentRef<typeof TouchableOpacity>>[]>([]);
   const {
     animatedStyle: animatedHighlightStyle,
@@ -105,13 +87,7 @@ function ArticleSentenceComponent({
   } = useOpacityAnimation({ initialOpacity: 0 });
 
   useEffect(() => {
-    // Recreate refs when the word list changes
-    wordRefs.current = words.map(
-      () =>
-        createRef<ComponentRef<typeof TouchableOpacity>>() as RefObject<
-          ComponentRef<typeof TouchableOpacity>
-        >
-    );
+    wordRefs.current = words.map(() => createRef<ComponentRef<typeof TouchableOpacity>>());
   }, [words]);
 
   useEffect(() => {
@@ -177,7 +153,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   englishText: {
-    fontFamily: FONTS.ENGLISH,
+    fontFamily: 'System',
     paddingBottom: LAYOUT.SPACING.TINY,
     paddingTop: LAYOUT.SPACING.SMALL,
   },

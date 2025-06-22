@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -15,7 +15,6 @@ const TOOLTIP_CONSTANTS = {
   SPACING: LAYOUT.SPACING.SMALL,
   ARROW_SIZE: LAYOUT.SPACING.TINY,
   TOOLTIP_MARGIN: LAYOUT.SPACING.TINY / 5,
-  TOOLTIP_HEIGHT: LAYOUT.SPACING.LARGE * 2.2,
   SCREEN_MARGIN: LAYOUT.SPACING.MEDIUM,
   CHAR_WIDTH: LAYOUT.SPACING.TINY * 1.6,
   PADDING_MULTIPLIER: 1.5,
@@ -32,7 +31,6 @@ const ANIMATION_CONFIG = {
 const positioningCache = new Map<
   string,
   {
-    wordCenterX: number;
     tooltipTop: number;
     tooltipWidth: number;
     tooltipLeftOffset: number;
@@ -83,9 +81,10 @@ const STATIC_STYLES = StyleSheet.create({
 const createPositioningCacheKey = (
   layout: NonNullable<WordTooltipProps['layout']>,
   textLength: number,
-  screenWidth: number
+  screenWidth: number,
+  hasArabicText: boolean = false
 ): string =>
-  `${layout.x}-${layout.y}-${layout.width}-${layout.height}-${textLength}-${screenWidth}`;
+  `${layout.x}-${layout.y}-${layout.width}-${layout.height}-${textLength}-${screenWidth}-${hasArabicText}`;
 
 /**
  * Helper function to calculate tooltip positioning with caching
@@ -93,28 +92,33 @@ const createPositioningCacheKey = (
 const calculateTooltipPositioning = (
   layout: NonNullable<WordTooltipProps['layout']>,
   text: string,
-  screenWidth: number
+  screenWidth: number,
+  hasArabicText: boolean = false
 ) => {
-  const cacheKey = createPositioningCacheKey(layout, text.length, screenWidth);
+  const cacheKey = createPositioningCacheKey(layout, text.length, screenWidth, hasArabicText);
 
   if (positioningCache.has(cacheKey)) {
     const cached = positioningCache.get(cacheKey);
     if (cached) return cached;
   }
 
-  const {
-    SPACING,
-    ARROW_SIZE,
-    TOOLTIP_MARGIN,
-    TOOLTIP_HEIGHT,
-    SCREEN_MARGIN,
-    CHAR_WIDTH,
-    PADDING_MULTIPLIER,
-  } = TOOLTIP_CONSTANTS;
+  const { SPACING, ARROW_SIZE, TOOLTIP_MARGIN, SCREEN_MARGIN, CHAR_WIDTH, PADDING_MULTIPLIER } =
+    TOOLTIP_CONSTANTS;
+
+  // Calculate dynamic tooltip height based on content
+  const baseHeight = LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4; // Line height for text
+  const arabicHeight = hasArabicText ? baseHeight + SPACING / 2 : 0; // Additional height for Arabic text
+  const englishHeight = baseHeight;
+  const paddingHeight = SPACING * 2; // Top and bottom padding
+  const dynamicTooltipHeight = arabicHeight + englishHeight + paddingHeight;
 
   const wordCenterX = layout.x + layout.width / 2;
-  const tooltipTop = layout.y - TOOLTIP_MARGIN - ARROW_SIZE - TOOLTIP_HEIGHT;
 
+  // Simple positioning: tooltip appears directly above the word
+  // Since we're using absolute coordinates from measureInWindow, this should work correctly
+  const tooltipTop = layout.y - dynamicTooltipHeight - ARROW_SIZE - TOOLTIP_MARGIN;
+
+  // Calculate tooltip width
   let tooltipWidth = Math.max(
     text.length * CHAR_WIDTH + SPACING * PADDING_MULTIPLIER * 2,
     layout.width + SPACING * 2,
@@ -135,6 +139,7 @@ const calculateTooltipPositioning = (
   tooltipWidth = Math.min(tooltipWidth, screenWidth * 0.8);
   tooltipWidth = Math.max(tooltipWidth, minWidthForLongestWord);
 
+  // Horizontal positioning with edge constraints
   const idealTooltipLeft = wordCenterX - tooltipWidth / 2;
   const idealTooltipRight = wordCenterX + tooltipWidth / 2;
 
@@ -149,10 +154,10 @@ const calculateTooltipPositioning = (
     tooltipLeftOffset = screenWidth - SCREEN_MARGIN - tooltipWidth;
   }
 
+  // Arrow offset is relative to tooltip position
   const arrowOffset = wordCenterX - tooltipLeftOffset;
 
   const result = {
-    wordCenterX,
     tooltipTop,
     tooltipWidth,
     tooltipLeftOffset,
@@ -183,7 +188,6 @@ const WordTooltipComparison = (
     prevProps.visible !== nextProps.visible ||
     prevProps.text !== nextProps.text ||
     prevProps.arabicWord !== nextProps.arabicWord ||
-    prevProps.wordId !== nextProps.wordId ||
     prevProps.zIndex !== nextProps.zIndex
   ) {
     return false;
@@ -222,7 +226,7 @@ const WordTooltipComparison = (
  * Ensures the arrow tip is precisely centered over the word regardless of screen position
  */
 export const WordTooltip = memo(
-  ({ visible, text = '', arabicWord, wordId, layout, onClose, zIndex }: WordTooltipProps) => {
+  ({ visible, text = '', arabicWord, layout, onClose, zIndex }: WordTooltipProps) => {
     const colors = useColors();
     // For mobile-only apps, use constant screen width
     const screenWidth = SCREEN_WIDTH;
@@ -540,43 +544,21 @@ export const WordTooltip = memo(
       const arabicContent = renderColorCodedArabic();
       const englishContent = renderColorCodedEnglish();
 
-      // Debug section with word ID
-      const debugContent = wordId ? (
-        <ThemedText
-          skipDefaultColor
-          style={[
-            STATIC_STYLES.tooltipText,
-            {
-              color: tooltipColors.textColor,
-              fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-              opacity: 0.7,
-              marginTop: LAYOUT.SPACING.TINY,
-            },
-          ]}
-        >
-          ID: {wordId}
-        </ThemedText>
-      ) : null;
-
       // If we have Arabic analysis, show both Arabic and English with color coordination
       if (arabicContent && arabicAnalysis?.sections && arabicAnalysis.sections.length > 0) {
         return (
           <View style={{ alignItems: 'center', justifyContent: 'center' }}>
             {arabicContent}
             {englishContent}
-            {debugContent}
           </View>
         );
       }
 
       // Otherwise just show English (existing behavior) - still centered
       return (
-        <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-          {englishContent}
-          {debugContent}
-        </View>
+        <View style={{ alignItems: 'center', justifyContent: 'center' }}>{englishContent}</View>
       );
-    }, [renderColorCodedArabic, renderColorCodedEnglish, arabicAnalysis, wordId, tooltipColors]);
+    }, [renderColorCodedArabic, renderColorCodedEnglish, arabicAnalysis, tooltipColors]);
 
     // Update tooltip positioning to account for potentially taller content
     const tooltipPositioning = useMemo(() => {
@@ -592,7 +574,7 @@ export const WordTooltip = memo(
 
       // Use longer text length if we have Arabic analysis to ensure proper width
       const displayText = arabicAnalysis ? `${arabicWord} ${text}` : text || '';
-      return calculateTooltipPositioning(layout, displayText, screenWidth);
+      return calculateTooltipPositioning(layout, displayText, screenWidth, !!arabicAnalysis);
     }, [layout, text, arabicWord, arabicAnalysis, screenWidth]);
 
     // Memoize container style
@@ -602,6 +584,7 @@ export const WordTooltip = memo(
         ...STATIC_STYLES.tooltipContainer,
         top: tooltipPositioning.tooltipTop,
         zIndex: zIndex ?? TOOLTIP_CONSTANTS.Z_INDEX,
+        elevation: 10, // Android elevation for proper layering
       }),
       [tooltipPositioning.tooltipTop, zIndex]
     );
@@ -616,6 +599,8 @@ export const WordTooltip = memo(
         borderColor: tooltipColors.borderColor,
         shadowColor: tooltipColors.shadowColor,
         padding: TOOLTIP_CONSTANTS.SPACING,
+        zIndex: TOOLTIP_CONSTANTS.Z_INDEX + 1, // Ensure tooltip is above the container
+        elevation: 15, // Higher elevation for Android
       }),
       [
         tooltipPositioning.tooltipLeftOffset,
@@ -671,12 +656,30 @@ export const WordTooltip = memo(
     if (!visible || !layout) return null;
 
     return (
-      <Animated.View pointerEvents="auto" style={[containerStyle, opacityStyle as ViewStyle]}>
-        <TouchableOpacity style={tooltipStyle} onPress={handleClose} activeOpacity={0.9}>
-          {tooltipContent}
-          <View style={arrowStyle} />
-        </TouchableOpacity>
-      </Animated.View>
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            zIndex: TOOLTIP_CONSTANTS.Z_INDEX + 2,
+            elevation: 20,
+          },
+        ]}
+        pointerEvents="box-none"
+      >
+        <Pressable
+          style={[StyleSheet.absoluteFill, { zIndex: TOOLTIP_CONSTANTS.Z_INDEX }]}
+          onPress={handleClose}
+        />
+        <Animated.View
+          style={[containerStyle, opacityStyle as ViewStyle]}
+          onStartShouldSetResponder={() => true}
+        >
+          <TouchableOpacity style={tooltipStyle} onPress={handleClose} activeOpacity={0.9}>
+            {tooltipContent}
+            <View style={arrowStyle} />
+          </TouchableOpacity>
+        </Animated.View>
+      </View>
     );
   },
   WordTooltipComparison

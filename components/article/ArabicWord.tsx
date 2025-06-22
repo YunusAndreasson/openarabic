@@ -1,5 +1,4 @@
 import {
-  Fragment,
   memo,
   useCallback,
   useEffect,
@@ -22,21 +21,10 @@ import type { TextWeight } from '@/types/ui/text.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { selectionFeedback } from '@/utils/haptics';
 
-import { WordTooltip } from './WordTooltip';
-
-// Global counter for tooltip zIndex values with circular increment
-const MIN_Z_INDEX = LAYOUT.Z_INDEX.TOOLTIP;
-const MAX_Z_INDEX = 10000;
-let tooltipZIndexCounter = MIN_Z_INDEX;
-
-const getNextZIndex = () => {
-  tooltipZIndexCounter = tooltipZIndexCounter >= MAX_Z_INDEX ? MIN_Z_INDEX : tooltipZIndexCounter;
-  return tooltipZIndexCounter;
-};
-
 interface ArabicWordProps {
   word: SentenceWord;
   onPress: (word: SentenceWord) => void;
+  onTooltipOpen: (layout: LayoutRectangle) => void;
   position?: number;
   settings: {
     fontScale: number;
@@ -49,6 +37,7 @@ interface ArabicWordProps {
 function ArabicWordComponent({
   word,
   onPress,
+  onTooltipOpen,
   position,
   settings,
   wordRef,
@@ -56,10 +45,8 @@ function ArabicWordComponent({
   testID,
 }: ArabicWordProps) {
   const colors = useColors();
-  const [tooltipVisible, setTooltipVisible] = useState(false);
-  const [layout, setLayout] = useState<LayoutRectangle | null>(null);
+  const [absoluteLayout, setAbsoluteLayout] = useState<LayoutRectangle | null>(null);
   const [needsReverseAnimation, setNeedsReverseAnimation] = useState(false);
-  const [tooltipZIndex, setTooltipZIndex] = useState<number>(0);
 
   // Use our new hook
   const { isSelected, setForceSelected, handleSelectionChange } = useArabicWord({
@@ -98,28 +85,33 @@ function ArabicWordComponent({
     return () => clearTimeout(timer);
   }, [needsReverseAnimation, reversePressAnimation]);
 
-  // Calculate absolute position considering page scroll - memoized for performance
-  const absoluteLayout = useMemo(
-    () =>
-      layout
-        ? {
-            ...layout,
-            x: layout.x,
-            y: layout.y,
-          }
-        : null,
-    [layout]
-  );
-
   // Update border opacity when selection changes
   useEffect(() => {
     setBorderOpacity(isSelected ? 1 : 0);
   }, [isSelected, setBorderOpacity]);
 
-  // Capture layout on mount and when window resizes
-  const handleLayout = useCallback((event: LayoutChangeEvent) => {
-    setLayout(event.nativeEvent.layout);
-  }, []);
+  // Capture layout and measure absolute position
+  const handleLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      const layoutRect = event.nativeEvent.layout;
+
+      // Immediately set the relative layout as fallback
+      setAbsoluteLayout(layoutRect);
+
+      // Then try to get absolute coordinates asynchronously
+      if (wordRef?.current) {
+        // Small delay to ensure the layout is fully rendered
+        setTimeout(() => {
+          wordRef.current?.measureInWindow((x, y, width, height) => {
+            if (x !== undefined && y !== undefined && width > 0 && height > 0) {
+              setAbsoluteLayout({ x, y, width, height });
+            }
+          });
+        }, 0);
+      }
+    },
+    [wordRef]
+  );
 
   // Pre-calculate text size once when component mounts (will never change)
   const calculatedFontSize = useMemo(() => settings.fontScale * 24, [settings.fontScale]);
@@ -130,29 +122,32 @@ function ArabicWordComponent({
       type: 'arabic' as const,
       variant: isSelected ? ('primary' as const) : undefined,
       skipDefaultColor: false,
-      colorName: tooltipVisible ? ('tint' as const) : ('arabicText' as const),
+      colorName: 'arabicText' as const,
       arabicFontSize: calculatedFontSize,
       weight: (isSelected ? 'semibold' : 'normal') as TextWeight,
       style: styles.textStyle as TextStyle,
     }),
-    [isSelected, calculatedFontSize, tooltipVisible]
+    [isSelected, calculatedFontSize]
   );
-
-  // Handle tooltip close
-  const handleTooltipClose = useCallback(() => {
-    setTooltipVisible(false);
-  }, []);
 
   // Show tooltip on quick press with fade animation (manual trigger)
   const handlePress = useCallback(() => {
-    if (!layout) return;
-
-    // Set new zIndex using optimized counter
-    setTooltipZIndex(getNextZIndex());
-
-    // Show tooltip immediately with animation handled in WordTooltip
-    setTooltipVisible(true);
-  }, [layout]);
+    // Ensure we have fresh absolute coordinates
+    if (wordRef?.current) {
+      wordRef.current.measureInWindow((x, y, width, height) => {
+        if (x !== undefined && y !== undefined && width > 0 && height > 0) {
+          const freshLayout = { x, y, width, height };
+          setAbsoluteLayout(freshLayout);
+          onTooltipOpen(freshLayout);
+        } else if (absoluteLayout) {
+          // Fallback to existing layout
+          onTooltipOpen(absoluteLayout);
+        }
+      });
+    } else if (absoluteLayout) {
+      onTooltipOpen(absoluteLayout);
+    }
+  }, [absoluteLayout, onTooltipOpen, wordRef]);
 
   // Add to study list on long press with animated feedback
   const handleLongPress = useCallback(() => {
@@ -187,33 +182,20 @@ function ArabicWordComponent({
   );
 
   return (
-    <Fragment>
-      <TouchableOpacity
-        ref={wordRef}
-        activeOpacity={0.7}
-        delayLongPress={250}
-        style={containerStyle}
-        testID={testID}
-        onLayout={handleLayout}
-        onLongPress={handleLongPress}
-        onPress={handlePress}
-      >
-        <Animated.View style={[styles.wordView, pressStyle]}>
-          <ThemedText {...textProps}>{word.word_form}</ThemedText>
-        </Animated.View>
-      </TouchableOpacity>
-      {tooltipVisible && absoluteLayout ? (
-        <WordTooltip
-          layout={absoluteLayout}
-          text={word.english}
-          arabicWord={word.word_form}
-          wordId={word.id}
-          visible={tooltipVisible}
-          zIndex={tooltipZIndex}
-          onClose={handleTooltipClose}
-        />
-      ) : null}
-    </Fragment>
+    <TouchableOpacity
+      ref={wordRef}
+      activeOpacity={0.7}
+      delayLongPress={250}
+      style={containerStyle}
+      testID={testID}
+      onLayout={handleLayout}
+      onLongPress={handleLongPress}
+      onPress={handlePress}
+    >
+      <Animated.View style={[styles.wordView, pressStyle]}>
+        <ThemedText {...textProps}>{word.word_form}</ThemedText>
+      </Animated.View>
+    </TouchableOpacity>
   );
 }
 

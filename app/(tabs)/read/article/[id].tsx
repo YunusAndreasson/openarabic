@@ -2,12 +2,10 @@ import { useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AppState, View, type ViewStyle } from 'react-native';
-import Animated from 'react-native-reanimated';
+import { AppState, View, type LayoutRectangle } from 'react-native';
 
 import { ThemedView } from '@/components/ThemedView';
-import { ArticleSentence } from '@/components/article';
-import { ArabicWord } from '@/components/article/ArabicWord';
+import { ArticleSentence, WordTooltip } from '@/components/article';
 import { ArticleContent } from '@/components/article/ArticleContent';
 import { ToastProvider, useToast } from '@/components/providers/ToastProvider';
 import { TIMING_CONFIG } from '@/constants/animation';
@@ -98,6 +96,10 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
   const { audioState } = audioPlayer;
   const [isPlayNowLoading, setIsPlayNowLoading] = useState(false);
   const [isOptimisticallyPlaying, setIsOptimisticallyPlaying] = useState(false);
+  const [activeTooltip, setActiveTooltip] = useState<{
+    word: SentenceWord;
+    layout: LayoutRectangle;
+  } | null>(null);
 
   // Article mutations for reading list and word management
   const { handleToggleReadingList, handleRootPress } = useArticleMutations(
@@ -235,111 +237,94 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     }
   }, [article, sortedSentences, isLoadingArticle, fadeIn]);
 
-  const handleWordPressWithFeedback = useCallback(
-    (word: SentenceWord) => {
+  const handleWordPress = useCallback(
+    (word: SentenceWord, layout?: LayoutRectangle) => {
+      // Handle word selection (existing logic)
       if (word.root_id) {
-        // Always provide haptic feedback for word interactions
         selectionFeedback();
         handleRootPress(word.root_id);
       }
+
+      // Handle tooltip visibility only if layout is provided
+      if (layout && layout.width > 0) {
+        if (activeTooltip?.word.id === word.id) {
+          setActiveTooltip(null);
+        } else {
+          setActiveTooltip({ word, layout });
+        }
+      }
     },
-    [handleRootPress]
+    [handleRootPress, activeTooltip]
   );
+
+  const handleCloseTooltip = useCallback(() => {
+    setActiveTooltip(null);
+  }, []);
 
   const { getWordsForSentence } = useArticleRenderers(
     { fontScale },
     selectedWordIds,
-    sentenceWordsMap,
-    handleWordPressWithFeedback,
-    handleRootPress
-  );
-
-  const wordSettings = useMemo(() => ({ fontScale }), [fontScale]);
-
-  const renderWord = useCallback(
-    (word: SentenceWord) => {
-      // Check if this word is due for review
-      const isDueWord = word.root_id ? dueWordRootIds.has(word.root_id) : false;
-
-      return (
-        <ArabicWord
-          key={word.id}
-          isDueWord={isDueWord}
-          word={word}
-          settings={wordSettings}
-          onPress={handleWordPressWithFeedback}
-        />
-      );
-    },
-    [dueWordRootIds, wordSettings, handleWordPressWithFeedback]
-  );
-
-  const sentenceSettings = useMemo(() => ({ showEnglish: true, fontScale }), [fontScale]);
-
-  const sentenceContainerStyle = useMemo(
-    () => ({
-      backgroundColor: colors.transparent,
-      paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    }),
-    [colors.transparent]
+    sentenceWordsMap
   );
 
   const renderSentenceItem = useCallback(
-    (props: { item: Tables<'article_sentences'> }) => {
-      const words = getWordsForSentence(props.item.id);
+    ({ item }: { item: Tables<'article_sentences'> }) => {
+      const words = getWordsForSentence(item.id);
+
+      if (!words || words.length === 0) {
+        return null; // Don't render sentence if no words found
+      }
 
       return (
         <ArticleSentence
-          key={props.item.id}
-          colors={colors}
-          containerStyle={sentenceContainerStyle}
-          renderWord={renderWord}
-          settings={sentenceSettings}
+          key={item.id}
+          sentence={item}
           words={words}
-          sentence={{
-            id: props.item.id,
-            english: props.item.english,
-            arabic: props.item.arabic,
-            audio_url: props.item.audio_url,
-          }}
+          settings={{ showEnglish: true, fontScale }}
+          colors={colors}
+          dueWordRootIds={dueWordRootIds}
+          onWordPress={handleWordPress}
         />
       );
     },
-    [getWordsForSentence, renderWord, colors, sentenceSettings, sentenceContainerStyle]
+    [getWordsForSentence, fontScale, colors, dueWordRootIds, handleWordPress]
   );
 
-  const containerStyle = FLEX_ONE_STYLE;
-  const contentStyle = useMemo(() => [FLEX_ONE_STYLE, animatedStyle as ViewStyle], [animatedStyle]);
-
   return (
-    <View style={containerStyle}>
-      {article && sortedSentences && sortedSentences.length > 0 ? (
-        <Animated.View style={contentStyle}>
-          <ArticleContent
-            article={article}
-            colors={colors}
-            handleScroll={handleScroll}
-            handleViewableItemsChanged={handleViewableItemsChanged}
-            id={id}
-            renderSentenceItem={renderSentenceItem}
-            sortedSentences={sortedSentences}
-            currentSentenceIndex={currentSentenceIndex}
-            totalSentences={sortedSentences.length}
-            scrollViewRef={scrollViewRef}
-            onSentenceChange={handleSentenceChange}
-            onScrubStart={handleScrubStart}
-            onScrubEnd={handleScrubEnd}
-            isInReadingList={isInReadingList}
-            isLoadingReadingList={isLoadingReadingList}
-            onPlayNow={handlePlayNow}
-            onToggleReadingList={handleToggleReadingListWithFeedback}
-            isPlayingAudio={isPlayingThisArticle}
-            isLoadingAudio={isPlayNowLoading}
-            playButtonText={playButtonText}
-          />
-        </Animated.View>
+    <ThemedView style={FLEX_ONE_STYLE}>
+      <StatusBar style={useIsDarkMode() ? 'light' : 'dark'} />
+      {article && sortedSentences ? (
+        <ArticleContent
+          id={id}
+          article={article}
+          sortedSentences={sortedSentences}
+          renderSentenceItem={renderSentenceItem}
+          handleScroll={handleScroll}
+          handleViewableItemsChanged={handleViewableItemsChanged}
+          colors={colors}
+          currentSentenceIndex={currentSentenceIndex}
+          totalSentences={sortedSentences.length}
+          onSentenceChange={handleSentenceChange}
+          onScrubStart={handleScrubStart}
+          onScrubEnd={handleScrubEnd}
+          scrollViewRef={scrollViewRef}
+          isInReadingList={isInReadingList}
+          isLoadingReadingList={isLoadingReadingList}
+          onPlayNow={handlePlayNow}
+          onToggleReadingList={handleToggleReadingListWithFeedback}
+          isPlayingAudio={isPlayingThisArticle}
+          isLoadingAudio={isPlayNowLoading}
+          playButtonText={playButtonText}
+        />
       ) : null}
-    </View>
+      <WordTooltip
+        visible={!!activeTooltip}
+        text={activeTooltip?.word.english}
+        arabicWord={activeTooltip?.word.word_form}
+        layout={activeTooltip?.layout ?? null}
+        onClose={handleCloseTooltip}
+      />
+    </ThemedView>
   );
 };
 
