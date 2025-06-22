@@ -3,7 +3,20 @@
  *
  * This file defines comprehensive rules for analyzing Arabic words and their English translations
  * to help users understand word structure and component meanings.
+ *
+ * Note: All Arabic patterns are normalized (diacritics removed) during analysis,
+ * so patterns should not include diacritical marks.
  */
+
+/**
+ * Component types enum for type safety
+ */
+export enum ComponentType {
+  PREFIX = 'prefix',
+  INFIX = 'infix',
+  SUFFIX = 'suffix',
+  DIACRITIC = 'diacritic',
+}
 
 export interface WordComponent {
   /** Arabic text pattern (regex) */
@@ -11,94 +24,217 @@ export interface WordComponent {
   /** English translation patterns that should contain this component */
   english: string[];
   /** Type of component */
-  type: 'prefix' | 'suffix';
+  type: ComponentType;
 }
 
 /**
- * Arabic prefixes with their English equivalents
+ * =================================================================================
+ * SINGLE SOURCE OF TRUTH FOR PREFIXES
+ *
+ * All prefixes are defined here. The final exported list is generated from these
+ * base components to ensure consistency and prevent duplication.
+ * =================================================================================
  */
-export const ARABIC_PREFIXES: WordComponent[] = [
-  // Definite article
+
+// 1. Base components for programmatic generation
+const BASE_CONJUNCTIONS = [
+  { arabic: 'و', english: ['and', 'also', 'plus', 'along with', 'while'] },
+  { arabic: 'ف', english: ['so', 'then', 'thus', 'therefore', 'consequently'] },
+];
+
+const BASE_PREPOSITIONS = [
+  { arabic: 'ب', english: ['with', 'by', 'in', 'via', 'through', 'using', 'according to'] },
+  { arabic: 'ل', english: ['to', 'for', 'toward', 'because of', 'in order to', 'of'] },
+  { arabic: 'ك', english: ['like', 'as', 'such as', 'similar to'] },
+  { arabic: 'في', english: ['in', 'at', 'inside', 'within'] },
+  { arabic: 'من', english: ['from', 'of', 'than', 'out of'] },
+  { arabic: 'على', english: ['on', 'upon', 'over', 'above', 'against'] },
+  { arabic: 'عن', english: ['about', 'from', 'concerning', 'regarding'] },
+  { arabic: 'إلى', english: ['to', 'towards', 'into', 'until'] },
+];
+
+const DEFINITE_ARTICLE = { arabic: 'ال', english: ['the'] };
+
+// 2. Other standalone prefixes not used in combinations
+const OTHER_PREFIXES = [
+  // Future tense markers
+  { arabic: 'س', english: ['will', 'shall'] },
+  { arabic: 'سوف', english: ['will', 'shall'] },
+  // Negation particles
+  { arabic: 'لا', english: ['not', 'no', "don't", "doesn't", "didn't"] },
+  { arabic: 'لن', english: ['will not', 'shall not', 'never', "won't"] },
+  { arabic: 'بل', english: ['but', 'rather', 'instead'] },
+  // Verbal subject markers (present tense)
+  { arabic: 'ي', english: ['he', 'it', 'was'] }, // Fixed: removed diacritic
+  { arabic: 'ت', english: ['you', 'she'] },
+  { arabic: 'أ', english: ['I'] },
+  { arabic: 'ن', english: ['we'] },
+  // Aspect particles & common compounds
+  { arabic: 'قد', english: ['already', 'indeed'] },
+  { arabic: 'إن', english: ['indeed', 'verily', 'if'] },
+  { arabic: 'ما', english: ['what', 'that which'] },
+  { arabic: 'أن', english: ['that', 'to'] },
+  { arabic: 'إذا', english: ['if', 'when'] },
+];
+
+/**
+ * =================================================================================
+ * PROGRAMMATIC PREFIX GENERATION
+ * =================================================================================
+ */
+
+/**
+ * Generates English combinations from multiple arrays.
+ */
+function combineEnglish(...arrays: string[][]): string[] {
+  if (arrays.length === 0 || !arrays[0]) {
+    return [];
+  }
+  let result = arrays[0];
+  for (let i = 1; i < arrays.length; i++) {
+    const currentArray = arrays[i];
+    if (!currentArray) continue;
+    result = result.flatMap(a => currentArray.map(b => `${a} ${b}`));
+  }
+  return result;
+}
+
+/**
+ * Generates valid Arabic prefix combinations programmatically.
+ */
+function generatePrefixCombinations(): WordComponent[] {
+  const combinations: WordComponent[] = [];
+  const allPrepositions = [...BASE_PREPOSITIONS, { arabic: 'في', english: ['in'] }];
+
+  // Conjunction + Preposition
+  for (const conj of BASE_CONJUNCTIONS) {
+    for (const prep of allPrepositions) {
+      combinations.push({
+        arabic: `^${conj.arabic}${prep.arabic}`,
+        english: combineEnglish([conj.english[0] ?? ''], prep.english),
+        type: ComponentType.PREFIX,
+      });
+    }
+  }
+
+  // Conjunction + Preposition + Definite Article
+  for (const conj of BASE_CONJUNCTIONS) {
+    for (const prep of allPrepositions) {
+      combinations.push({
+        arabic: `^${conj.arabic}${prep.arabic}${DEFINITE_ARTICLE.arabic}`,
+        english: combineEnglish([conj.english[0] ?? ''], prep.english, DEFINITE_ARTICLE.english),
+        type: ComponentType.PREFIX,
+      });
+    }
+  }
+
+  // Conjunction + Definite Article
+  for (const conj of BASE_CONJUNCTIONS) {
+    combinations.push({
+      arabic: `^${conj.arabic}${DEFINITE_ARTICLE.arabic}`,
+      english: combineEnglish([conj.english[0] ?? ''], DEFINITE_ARTICLE.english),
+      type: ComponentType.PREFIX,
+    });
+  }
+
+  return combinations;
+}
+
+/**
+ * Create the final list of all prefixes for export.
+ */
+function createFinalPrefixList(): WordComponent[] {
+  // 1. Start with generated combinations
+  const combinations = generatePrefixCombinations();
+
+  // 2. Add all base prefixes as individual, anchored patterns
+  const individualBasePrefixes = [
+    ...BASE_CONJUNCTIONS,
+    ...BASE_PREPOSITIONS,
+    ...OTHER_PREFIXES,
+  ].map(p => ({
+    ...p,
+    arabic: `^${p.arabic}`, // Ensure it's anchored at the start
+    type: ComponentType.PREFIX,
+  }));
+
+  // 3. Add the flexible, un-anchored definite article for cases like 'وبال'
+  const flexibleDefiniteArticle: WordComponent = {
+    ...DEFINITE_ARTICLE,
+    type: ComponentType.PREFIX,
+  };
+
+  return [
+    ...combinations,
+    ...individualBasePrefixes,
+    flexibleDefiniteArticle,
+    // Add flexible 'في' for rare cases like 'والفيالبيت'
+    { arabic: 'في', english: ['in'], type: ComponentType.PREFIX },
+  ].sort((a, b) => b.arabic.length - a.arabic.length); // Sort longest first
+}
+
+/**
+ * Complete Arabic prefixes, programmatically generated and sorted for optimal matching.
+ */
+export const ARABIC_PREFIXES: WordComponent[] = createFinalPrefixList();
+
+/**
+ * Arabic infixes with their English equivalents
+ * These are morphological elements that appear within the root structure
+ */
+export const ARABIC_INFIXES: WordComponent[] = [
+  // Form VIII reflexive/reciprocal infix ت
   {
-    arabic: '^ال',
-    english: ['the'],
-    type: 'prefix',
+    arabic: 'ت',
+    english: ['self', 'each other', 'mutually', 'reciprocally', 'together'],
+    type: ComponentType.INFIX,
   },
-  // Flexible definite article (can appear after other prefixes)
+
+  // Form VII passive/reflexive infix ن
   {
-    arabic: 'ال',
-    english: ['the'],
-    type: 'prefix',
+    arabic: 'ن',
+    english: ['self', 'itself', 'automatically', 'spontaneously'],
+    type: ComponentType.INFIX,
   },
-  // Prepositions
+
+  // Form X seeking/requesting infix ست
   {
-    arabic: '^ب',
-    english: ['with', 'by', 'in'],
-    type: 'prefix',
+    arabic: 'ست',
+    english: ['seek', 'request', 'ask for', 'try to', 'attempt to'],
+    type: ComponentType.INFIX,
   },
+
+  // Form IV causative infix أ (when internal)
   {
-    arabic: '^ل',
-    english: ['to', 'for'],
-    type: 'prefix',
+    arabic: 'أ',
+    english: ['make', 'cause', 'let', 'allow', 'enable'],
+    type: ComponentType.INFIX,
   },
+
+  // Intensive/repetitive infix patterns
   {
-    arabic: '^ك',
-    english: ['like', 'as'],
-    type: 'prefix',
-  },
-  {
-    arabic: '^في',
-    english: ['in', 'at'],
-    type: 'prefix',
-  },
-  // Flexible في (can appear after other prefixes)
-  {
-    arabic: 'في',
-    english: ['in', 'at'],
-    type: 'prefix',
+    arabic: 'رر',
+    english: ['repeatedly', 'again and again', 'continuously'],
+    type: ComponentType.INFIX,
   },
   {
-    arabic: '^من',
-    english: ['from', 'of'],
-    type: 'prefix',
+    arabic: 'لل',
+    english: ['repeatedly', 'continuously', 'persistently'],
+    type: ComponentType.INFIX,
   },
+
+  // Diminutive infix patterns (common in classical Arabic)
   {
-    arabic: '^إلى',
-    english: ['to', 'towards'],
-    type: 'prefix',
+    arabic: 'ي',
+    english: ['little', 'small', 'dear', 'beloved'],
+    type: ComponentType.INFIX,
   },
+
+  // Comparative/superlative infix أ (when internal, different from causative)
   {
-    arabic: '^على',
-    english: ['on', 'upon'],
-    type: 'prefix',
-  },
-  {
-    arabic: '^عن',
-    english: ['about', 'from', 'concerning'],
-    type: 'prefix',
-  },
-  // Conjunctions
-  {
-    arabic: '^و',
-    english: ['and'],
-    type: 'prefix',
-  },
-  {
-    arabic: '^ف',
-    english: ['so', 'then'],
-    type: 'prefix',
-  },
-  // Future tense marker
-  {
-    arabic: '^س',
-    english: ['will'],
-    type: 'prefix',
-  },
-  // Negation with preposition
-  {
-    arabic: '^بل',
-    english: ['but', 'rather'],
-    type: 'prefix',
+    arabic: 'أع',
+    english: ['more', 'most', 'greater', 'superior'],
+    type: ComponentType.INFIX,
   },
 ];
 
@@ -106,78 +242,145 @@ export const ARABIC_PREFIXES: WordComponent[] = [
  * Arabic suffixes with their English equivalents
  */
 export const ARABIC_SUFFIXES: WordComponent[] = [
-  // Pronouns - possessive
+  // Pronouns - possessive (normalized, no diacritics)
   {
     arabic: 'ي$',
-    english: ['my', 'mine'],
-    type: 'suffix',
+    english: ['my', 'mine', 'of me'],
+    type: ComponentType.SUFFIX,
   },
   {
     arabic: 'ك$',
-    english: ['your', 'yours'],
-    type: 'suffix',
-  },
-  {
-    arabic: 'كِ$',
-    english: ['your', 'yours'],
-    type: 'suffix',
+    english: ['your', 'yours', 'of you'],
+    type: ComponentType.SUFFIX,
   },
   {
     arabic: 'ه$',
-    english: ['his', 'its', 'it'],
-    type: 'suffix',
+    english: ['his', 'its', 'it', 'of him', 'him', 'himself', 'he'],
+    type: ComponentType.SUFFIX,
   },
   {
     arabic: 'ها$',
-    english: ['her', 'hers', 'its', 'them', 'it'],
-    type: 'suffix',
+    english: ['her', 'hers', 'its', 'it', 'of her'],
+    type: ComponentType.SUFFIX,
   },
   {
     arabic: 'نا$',
-    english: ['our', 'ours'],
-    type: 'suffix',
+    english: ['our', 'ours', 'of us', 'us'],
+    type: ComponentType.SUFFIX,
   },
   {
     arabic: 'كم$',
-    english: ['your', 'yours'],
-    type: 'suffix',
+    english: ['your', 'yours', 'you all', 'you'],
+    type: ComponentType.SUFFIX,
   },
   {
     arabic: 'هم$',
     english: ['their', 'theirs', 'them'],
-    type: 'suffix',
+    type: ComponentType.SUFFIX,
   },
   {
     arabic: 'هن$',
-    english: ['their', 'theirs'],
-    type: 'suffix',
+    english: ['their', 'theirs', 'them'],
+    type: ComponentType.SUFFIX,
   },
-  // Dual and plural markers
+
+  // Perfect tense subject endings
+  {
+    arabic: 'ت$',
+    english: ['I', 'you'],
+    type: ComponentType.SUFFIX,
+  },
+
+  // Common plural verbal/pronoun endings
+  {
+    arabic: 'وا$',
+    english: ['they', 'them', 'they did'],
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'تم$',
+    english: ['you', 'you all', 'you did'],
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'كن$',
+    english: ['you', 'you all', 'you were'],
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'تن$',
+    english: ['you', 'you all'],
+    type: ComponentType.SUFFIX,
+  },
+
+  // Dual & plural markers - only include plausible word equivalents
   {
     arabic: 'ان$',
     english: ['two', 'both'],
-    type: 'suffix',
+    type: ComponentType.SUFFIX,
   },
   {
     arabic: 'ين$',
     english: ['two', 'both'],
-    type: 'suffix',
+    type: ComponentType.SUFFIX,
   },
   {
     arabic: 'ون$',
     english: ['they', 'those who'],
-    type: 'suffix',
+    type: ComponentType.SUFFIX,
   },
   {
     arabic: 'ات$',
-    english: ['feminine plural', 'times'],
-    type: 'suffix',
+    english: ['times', 'instances'],
+    type: ComponentType.SUFFIX,
   },
-  // Case endings (simplified)
+];
+
+/**
+ * Arabic diacritics with their English equivalents
+ * These are vowel markings and grammatical indicators
+ */
+export const ARABIC_DIACRITICS: WordComponent[] = [
+  // Fatha (ــَ) - short "a" vowel, often indicates accusative case or adverbial usage
   {
-    arabic: 'ة$',
-    english: ['feminine marker'],
-    type: 'suffix',
+    arabic: 'َ$', // Fatha at end of word
+    english: ['he', 'a', 'an', 'as'],
+    type: ComponentType.DIACRITIC,
+  },
+
+  // Kasra (ــِ) - short "i" vowel, often indicates genitive case
+  {
+    arabic: 'ِ$', // Kasra at end of word
+    english: ['in', 'of', 'with'],
+    type: ComponentType.DIACRITIC,
+  },
+
+  // Damma (ــُ) - short "u" vowel, often indicates nominative case
+  {
+    arabic: 'ُ$', // Damma at end of word
+    english: ['he', 'it', 'they'],
+    type: ComponentType.DIACRITIC,
+  },
+
+  // Tanween Fath (ــًا) - nunation with fatha, indicates indefinite accusative
+  {
+    arabic: 'ًا$',
+    english: ['an', 'as', 'a'],
+    type: ComponentType.DIACRITIC,
+  },
+
+  // Tanween Kasr (ــٍ) - nunation with kasra, indicates indefinite genitive
+  {
+    arabic: 'ٍ$',
+    english: ['of', 'in'],
+    type: ComponentType.DIACRITIC,
+  },
+
+  // Tanween Damm (ــٌ) - nunation with damma, indicates indefinite nominative
+  {
+    arabic: 'ٌ$',
+    english: ['a', 'an'],
+    type: ComponentType.DIACRITIC,
   },
 ];
 
@@ -186,14 +389,24 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
  * Uses official app colors for consistency
  */
 export const COMPONENT_TYPE_CONFIG = {
-  prefix: {
+  [ComponentType.PREFIX]: {
     label: 'Prefix',
     colorName: 'tint' as const, // Primary tint color (sage green)
     icon: '→',
   },
-  suffix: {
+  [ComponentType.INFIX]: {
+    label: 'Infix',
+    colorName: 'primary' as const, // Primary color for distinction from prefix/suffix
+    icon: '↔',
+  },
+  [ComponentType.SUFFIX]: {
     label: 'Suffix',
     colorName: 'warning' as const, // Warning color for better contrast in both light and dark modes
     icon: '←',
+  },
+  [ComponentType.DIACRITIC]: {
+    label: 'Diacritic',
+    colorName: 'secondaryText' as const, // Medium sage color for subtle but visible marking
+    icon: '◌',
   },
 } as const;

@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -20,7 +20,6 @@ const TOOLTIP_CONSTANTS = {
   CHAR_WIDTH: LAYOUT.SPACING.TINY * 1.6,
   PADDING_MULTIPLIER: 1.5,
   Z_INDEX: 999999,
-  AUTO_CLOSE_DURATION: LAYOUT.ANIMATION.DURATION.SLOW * 3,
 } as const;
 
 // Static animation config to prevent recreation
@@ -452,14 +451,17 @@ export const WordTooltip = memo(
         // Build the parts array from the non-overlapping matches
         let currentIndex = 0;
 
-        // Helper function to get color by matching Arabic component order
+        // Helper function to get color by matching Arabic component exactly
         const getEnglishMatchColor = (matchText: string): string => {
-          // Find which Arabic component this English text corresponds to
+          // Find which Arabic component this English text corresponds to by exact match
           const matchingSection = arabicAnalysis.sections.find(
             section =>
               section.type === 'components' &&
               section.englishPart &&
-              section.englishPart.toLowerCase().includes(matchText.toLowerCase())
+              section.englishPart
+                .toLowerCase()
+                .split(' / ')
+                .some(part => part.trim().toLowerCase() === matchText.toLowerCase())
           );
 
           if (matchingSection && matchingSection.colorName) {
@@ -653,9 +655,7 @@ export const WordTooltip = memo(
 
       if (visible) {
         fadeIn();
-
-        // Auto-close tooltip after a delay
-        timerRef.current = setTimeout(handleClose, TOOLTIP_CONSTANTS.AUTO_CLOSE_DURATION);
+        // Removed auto-close timer - tooltip now stays visible until user taps
       } else {
         handleClose();
       }
@@ -671,11 +671,11 @@ export const WordTooltip = memo(
     if (!visible || !layout) return null;
 
     return (
-      <Animated.View pointerEvents="none" style={[containerStyle, opacityStyle as ViewStyle]}>
-        <View style={tooltipStyle}>
+      <Animated.View pointerEvents="auto" style={[containerStyle, opacityStyle as ViewStyle]}>
+        <TouchableOpacity style={tooltipStyle} onPress={handleClose} activeOpacity={0.9}>
           {tooltipContent}
           <View style={arrowStyle} />
-        </View>
+        </TouchableOpacity>
       </Animated.View>
     );
   },
