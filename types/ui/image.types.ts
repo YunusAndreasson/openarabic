@@ -1,6 +1,6 @@
-import type { ImageContentPosition, ImageTransition } from 'expo-image';
+import type { ImageContentPosition } from 'expo-image';
 
-import type { BaseStyleProps, BaseOptionalPressableProps } from './base.types';
+import type { BaseOptionalPressableProps, BaseStyleProps } from './base.types';
 
 /**
  * Image configuration options
@@ -8,8 +8,6 @@ import type { BaseStyleProps, BaseOptionalPressableProps } from './base.types';
 export interface ImageConfig {
   /** How the image should fit within its container */
   contentFit?: 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
-  /** Transition duration in milliseconds */
-  transition?: ImageTransition | number;
   /** Caching policy for the image */
   cachePolicy?: 'disk' | 'memory-disk' | 'memory' | 'none';
 }
@@ -32,12 +30,6 @@ export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressabl
 
   /** Callback when image fails to load */
   onError?: () => void;
-
-  /** Image transition duration in ms or transition object */
-  transition?: ImageTransition | number;
-
-  /** Skip transition effect entirely */
-  skipTransition?: boolean;
 
   /** Caching policy */
   cachePolicy?: ImageConfig['cachePolicy'];
