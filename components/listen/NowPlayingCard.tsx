@@ -186,6 +186,15 @@ const NowPlayingCard = ({
 
         {/* Controls */}
         <View style={styles.controls}>
+          {/* Expansion Indicator */}
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={[styles.expandButton, dynamicStyles.timerButton]}
+            onPress={onPress}
+          >
+            <Ionicons color={colors.text} name="expand-outline" size={20} />
+          </TouchableOpacity>
+
           {/* Stop Button */}
           <Animated.View style={buttonAnimatedStyle}>
             <TouchableOpacity
@@ -328,6 +337,14 @@ const styles = StyleSheet.create({
     height: MIN_TOUCH_TARGET.SMALL + LAYOUT.SPACING.TINY,
     justifyContent: 'center',
     width: MIN_TOUCH_TARGET.SMALL + LAYOUT.SPACING.TINY,
+  },
+
+  expandButton: {
+    alignItems: 'center',
+    borderRadius: 18,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
   },
 
   title: {

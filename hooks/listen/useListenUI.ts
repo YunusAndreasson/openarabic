@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { InteractionManager } from 'react-native';
 
 import type { AudioState } from '@/constants/audio';
@@ -11,7 +11,6 @@ import { setCustomOrder } from '@/store/listenSlice';
 import type { Article } from '@/types/articles.types';
 import type { ReadingListItem } from '@/types/readingList.types';
 import { selectionFeedback } from '@/utils/haptics';
-
 
 interface ListenUIParams {
   sortedReadingList: ReadingListItem[];
@@ -102,10 +101,9 @@ export const useListenUI = ({
   );
 
   const handleNowPlayingPress = useCallback(() => {
-    if (currentArticle?.id && currentArticle.title) {
-      router.push(getArticleRoute(currentArticle.id, currentArticle.title));
-    }
-  }, [currentArticle]);
+    // Navigate to the now playing modal instead of the article
+    router.push('/(tabs)/listen/now-playing');
+  }, []);
 
   const handleDragEnd = useCallback(
     ({ data }: { data: ReadingListItem[] }) => {
