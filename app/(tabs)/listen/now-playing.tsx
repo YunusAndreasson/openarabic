@@ -1,8 +1,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useMemo } from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   interpolate,
@@ -12,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import AudioProgressIndicator from '@/components/AudioProgressIndicator';
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import { TIMING_CONFIG } from '@/constants/animation';
@@ -22,24 +23,100 @@ import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
 import { useCurrentSentence } from '@/hooks/audio/useCurrentSentence';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { withOpacity } from '@/utils/colorUtils';
-import { selectionFeedback } from '@/utils/haptics';
 
 export default function NowPlayingModal() {
-  const colors = useColors();
-  const isDarkMode = useIsDarkMode();
-  const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const isDarkMode = !colors['surface'];
 
-  const audioPlayer = useAudioPlayer();
-  const { position, metadata, audioState } = audioPlayer;
+  // Get router params for article ID fallback and audio state
+  const params = useLocalSearchParams<{
+    articleId?: string;
+    playingArticleId?: string;
+    position?: string;
+    duration?: string;
+    audioState?: string;
+  }>();
+
+  // Use audio data from params (from currently playing audio) or fallback to useAudioPlayer
+  const audioPlayerData = useAudioPlayer();
+
+  // Track progress with our own timer when audio is playing
+  const [simulatedPosition, setSimulatedPosition] = useState<number>(0);
+
+  useEffect(() => {
+    // Use either live audio player state OR navigation params to determine if playing
+    const isPlaying = audioPlayerData.audioState === 'playing' || params.audioState === 'playing';
+
+    if (isPlaying) {
+      // Get starting position from params if available
+      const startPosition = params.position
+        ? parseFloat(params.position) / 1000 // Convert ms to seconds
+        : audioPlayerData.position || 0;
+
+      // Set initial position
+      setSimulatedPosition(startPosition);
+
+      const interval = setInterval(() => {
+        setSimulatedPosition(prev => prev + 0.1); // Add 100ms (0.1 seconds) each tick
+      }, 100); // Update every 100ms
+
+      return () => clearInterval(interval);
+    }
+
+    // Return empty cleanup function when not playing
+    return () => {};
+  }, [audioPlayerData.audioState, params.audioState]); // Check both audio states
+
+  const position = useMemo(() => {
+    // Use simulated position when available and positive
+    if (simulatedPosition > 0) {
+      return simulatedPosition;
+    }
+    // Fallback to audio player data
+    if (audioPlayerData.position !== undefined) {
+      return audioPlayerData.position;
+    }
+    // Fallback to params (passed from currently playing audio)
+    if (params.position) {
+      const parsed = parseFloat(params.position) / 1000; // Convert back to seconds
+      if (!isNaN(parsed)) return parsed;
+    }
+    return 0;
+  }, [simulatedPosition, audioPlayerData.position, params.position]);
+
+  const duration = useMemo(() => {
+    // Fallback to audio player data
+    if (audioPlayerData.duration !== undefined && audioPlayerData.duration > 0) {
+      return audioPlayerData.duration;
+    }
+    // Fallback to params (passed from currently playing audio)
+    if (params.duration) {
+      const parsed = parseFloat(params.duration) / 1000; // Convert back to seconds
+      if (!isNaN(parsed)) return parsed;
+    }
+    return 0;
+  }, [params.duration, audioPlayerData.duration]);
+
+  const metadata = audioPlayerData.metadata;
 
   const articleId = useMemo(() => {
-    if (!metadata.articleId) return undefined;
-    const parsed = parseInt(metadata.articleId, 10);
-    return isNaN(parsed) ? undefined : parsed;
-  }, [metadata.articleId]);
+    // First try to get from audio player metadata (currently playing)
+    if (metadata.articleId) {
+      const parsed = parseInt(metadata.articleId, 10);
+      if (!isNaN(parsed)) return parsed;
+    }
+
+    // Fallback to router params (when modal opened from UI)
+    if (params.articleId) {
+      const parsed = parseInt(params.articleId, 10);
+      if (!isNaN(parsed)) return parsed;
+    }
+
+    return undefined;
+  }, [metadata.articleId, params.articleId]);
 
   const { article, sortedSentences, sentenceWordsMap } = useArticleData(articleId, user?.id);
 
@@ -48,34 +125,6 @@ export default function NowPlayingModal() {
     sentences: sortedSentences,
     sentenceWordsMap,
   });
-
-  // Debug logging
-  useEffect(() => {
-    console.log('🎵 Now Playing Modal Debug:', {
-      articleId,
-      hasArticle: !!article,
-      articleTitle: article?.title,
-      position,
-      audioState,
-      sentencesCount: sortedSentences.length,
-      sentenceWordsMapSize: sentenceWordsMap.size,
-      currentSentence: currentSentence
-        ? {
-            id: currentSentence.id,
-            english: currentSentence.english.substring(0, 50) + '...',
-            arabic: currentSentence.arabic.substring(0, 20) + '...',
-          }
-        : null,
-    });
-  }, [
-    articleId,
-    article,
-    position,
-    audioState,
-    sortedSentences.length,
-    sentenceWordsMap.size,
-    currentSentence,
-  ]);
 
   // Audio-reactive gradient animation
   const gradientProgress = useSharedValue(0);
@@ -104,24 +153,25 @@ export default function NowPlayingModal() {
     }
   }, [currentSentence, sentenceOpacity]);
 
-  const gradientAnimatedStyle = useAnimatedStyle(() => {
-    const rotation = interpolate(gradientProgress.value, [0, 1], [0, 45]);
+  // Calculate progress percentage for the progress bar
+  const progressPercentage = useMemo(() => {
+    if (!duration || duration <= 0) return 0;
+    const progress = Math.max(0, Math.min(100, ((position || 0) / duration) * 100));
+    return progress;
+  }, [position, duration]);
 
-    const scale = interpolate(gradientProgress.value, [0, 0.5, 1], [1, 1.05, 1]);
+  const gradientAnimatedStyle = useAnimatedStyle(() => {
+    // Remove rotation to fix tilted overlay, keep subtle scale animation
+    const scale = interpolate(gradientProgress.value, [0, 0.5, 1], [1, 1.02, 1]);
 
     return {
-      transform: [{ rotate: `${rotation}deg` }, { scale }],
+      transform: [{ scale }],
     };
   });
 
   const sentenceAnimatedStyle = useAnimatedStyle(() => ({
     opacity: sentenceOpacity.value,
   }));
-
-  const handleClose = useCallback(() => {
-    selectionFeedback();
-    router.back();
-  }, []);
 
   const gradientColors = useMemo(() => {
     const baseColor = isDarkMode ? colors.background : colors.elevation1;
@@ -138,11 +188,7 @@ export default function NowPlayingModal() {
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <StatusBar style={isDarkMode ? 'light' : 'dark'} />
         <View style={[styles.header, { paddingTop: insets.top + LAYOUT.SPACING.MEDIUM }]}>
-          <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-            <ThemedText type="body" style={styles.closeText}>
-              {STRINGS.CLOSE}
-            </ThemedText>
-          </TouchableOpacity>
+          <View style={styles.modalHandle} />
         </View>
         <View style={styles.centerContent}>
           <ThemedText type="body" variant="secondary">
@@ -178,11 +224,8 @@ export default function NowPlayingModal() {
 
       {/* Header with Title and Author */}
       <View style={[styles.header, { paddingTop: insets.top + LAYOUT.SPACING.MEDIUM }]}>
-        <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-          <ThemedText type="body" style={styles.closeText}>
-            {STRINGS.CLOSE}
-          </ThemedText>
-        </TouchableOpacity>
+        {/* Modal Handle */}
+        <View style={styles.modalHandle} />
 
         <View style={styles.headerInfo}>
           <ThemedText type="heading3" style={styles.title} numberOfLines={2}>
@@ -198,38 +241,38 @@ export default function NowPlayingModal() {
       <View style={styles.centerContent}>
         {currentSentence ? (
           <Animated.View style={[styles.sentenceContainer, sentenceAnimatedStyle]}>
-            <ThemedText type="heading1" style={styles.englishText} numberOfLines={4}>
+            <ThemedText type="heading1" style={styles.englishText}>
               {currentSentence.english}
             </ThemedText>
-
-            <View style={styles.arabicContainer}>
-              <ThemedText
-                type="body"
-                variant="secondary"
-                style={styles.arabicText}
-                numberOfLines={3}
-              >
-                {currentSentence.arabic}
-              </ThemedText>
-            </View>
           </Animated.View>
         ) : (
           <Animated.View style={[styles.sentenceContainer, sentenceAnimatedStyle]}>
-            <ThemedText type="heading1" style={styles.englishText} numberOfLines={4}>
-              {STRINGS.LOADING}
-            </ThemedText>
-            <ThemedText type="body" variant="secondary" style={styles.arabicText}>
-              Position: {position.toFixed(1)}s
-            </ThemedText>
-            <ThemedText type="body" variant="secondary" style={styles.arabicText}>
-              Sentences: {sortedSentences.length} | Audio: {audioState}
+            <ThemedText type="heading1" style={styles.englishText}>
+              {sortedSentences.length > 0
+                ? STRINGS.LOADING
+                : 'Start playing an article to see synchronized text'}
             </ThemedText>
           </Animated.View>
         )}
       </View>
 
-      {/* Bottom Safe Area */}
-      <View style={{ height: insets.bottom }} />
+      {/* Audio Progress at Bottom - positioned absolutely */}
+      <View
+        style={[
+          styles.bottomProgress,
+          { bottom: insets.bottom + LAYOUT.SPACING.XXXLARGE + LAYOUT.SPACING.MEDIUM },
+        ]}
+      >
+        <AudioProgressIndicator
+          position={position || 0}
+          duration={duration || 0}
+          progressPercentage={progressPercentage}
+          progressBarHeight={4}
+          progressBackgroundColor="rgba(255,255,255,0.3)"
+          progressFillColor="white"
+          useWhiteText={true}
+        />
+      </View>
     </View>
   );
 }
@@ -257,26 +300,22 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     zIndex: 10,
   },
 
-  closeButton: {
-    padding: LAYOUT.SPACING.SMALL,
-  },
-
-  closeText: {
-    color: 'white',
-    fontWeight: '600',
+  modalHandle: {
+    width: 36,
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 2,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
 
   headerInfo: {
-    flex: 1,
-    alignItems: 'flex-end',
-    marginLeft: LAYOUT.SPACING.LARGE,
+    alignItems: 'center',
+    width: '100%',
   },
 
   title: {
@@ -319,20 +358,14 @@ const styles = StyleSheet.create({
     textShadowRadius: 3,
   },
 
-  arabicContainer: {
-    marginTop: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.2)',
-  },
-
-  arabicText: {
-    color: 'rgba(255,255,255,0.8)',
-    textAlign: 'center',
-    fontSize: 18,
-    lineHeight: 28,
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+  bottomProgress: {
+    position: 'absolute',
+    left: LAYOUT.SPACING.LARGE,
+    right: LAYOUT.SPACING.LARGE,
+    height: 70, // Proper height for progress section
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)', // Semi-transparent dark background
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
 });

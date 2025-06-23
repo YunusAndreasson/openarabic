@@ -5,15 +5,14 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import AudioProgressIndicator from '@/components/AudioProgressIndicator';
 import { EnhancedImage } from '@/components/EnhancedImage';
-import { ProgressBar } from '@/components/ProgressBar';
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { NOW_PLAYING_CARD_HEIGHT } from '@/constants/animation';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useNowPlayingCard } from '@/hooks/listen/useNowPlayingCard';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { Article } from '@/types/articles.types';
 import { withOpacity } from '@/utils/colorUtils';
 
@@ -51,7 +50,6 @@ const NowPlayingCard = ({
   isTimerActive = false,
 }: NowPlayingCardProps) => {
   const colors = useColors();
-  const isDarkMode = useIsDarkMode();
   const insets = useSafeAreaInsets();
 
   const {
@@ -62,11 +60,8 @@ const NowPlayingCard = ({
     handleStopPressOut,
     handleStopPress,
     dynamicStyles,
-    timeCalculations,
   } = useNowPlayingCard({
     isVisible,
-    progress,
-    duration,
     onStop,
     isTimerActive,
   });
@@ -163,70 +158,55 @@ const NowPlayingCard = ({
           </View>
 
           {/* Progress Section */}
-          <View style={styles.progressSection}>
-            <View style={styles.progressInfo}>
-              <ThemedText style={styles.timeText} type="caption" variant="secondary">
-                {timeCalculations.currentTime}
-              </ThemedText>
-              <ThemedText style={styles.timeText} type="caption" variant="secondary">
-                {timeCalculations.totalTime}
-              </ThemedText>
-            </View>
-
-            <ProgressBar
-              animationTriggered={timeCalculations.progressPercentage > 0}
-              backgroundColor={isDarkMode ? colors.elevation3 : colors.elevation2}
-              fillColor={colors.tint}
-              height={3}
-              progress={timeCalculations.progressPercentage}
-              style={styles.progressBar}
-            />
-          </View>
+          <AudioProgressIndicator
+            position={(progress || 0) / 1000} // Convert ms to seconds
+            duration={(duration || 0) / 1000} // Convert ms to seconds
+            progressPercentage={
+              duration > 0 ? Math.max(0, Math.min(100, ((progress || 0) / duration) * 100)) : 0
+            }
+            progressBarHeight={3}
+            style={styles.progressSection}
+          />
         </View>
 
         {/* Controls */}
         <View style={styles.controls}>
-          {/* Expansion Indicator */}
-          <TouchableOpacity
-            activeOpacity={0.8}
-            style={[styles.expandButton, dynamicStyles.timerButton]}
-            onPress={onPress}
-          >
+          {/* Top Row - Expand Button */}
+          <TouchableOpacity activeOpacity={0.8} style={styles.expandButton} onPress={onPress}>
             <Ionicons color={colors.text} name="expand-outline" size={20} />
           </TouchableOpacity>
 
-          {/* Stop Button */}
-          <Animated.View style={buttonAnimatedStyle}>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPressIn={handleStopPressIn}
-              onPressOut={handleStopPressOut}
-              style={[styles.stopButton, dynamicStyles.stopButton]}
-              onPress={handleStopPress}
-              testID="stop-playback-button"
-            >
-              <Ionicons
-                color={colors.background}
-                name="stop"
-                size={LAYOUT.BUTTON.ICON_SIZE.LARGE}
-              />
-            </TouchableOpacity>
-          </Animated.View>
+          {/* Bottom Row - Action Buttons */}
+          <View style={styles.actionButtons}>
+            {/* Stop Button */}
+            <Animated.View style={buttonAnimatedStyle}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPressIn={handleStopPressIn}
+                onPressOut={handleStopPressOut}
+                style={[styles.stopButton, dynamicStyles.stopButton]}
+                onPress={handleStopPress}
+                testID="stop-playback-button"
+              >
+                <Ionicons color={colors.background} name="stop" size={24} />
+              </TouchableOpacity>
+            </Animated.View>
 
-          {/* Timer Button */}
-          {showTimerButton && (
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={[styles.timerButton, dynamicStyles.timerButton]}
-              onPress={onTimerPress}
-            >
-              <Ionicons
-                color={isTimerActive ? colors.warning : colors.text}
-                name={isTimerActive ? 'timer' : 'timer-outline'}
-                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              />
-            </TouchableOpacity>
-          )}
+            {/* Timer Button */}
+            {showTimerButton && (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                style={[styles.timerButton, dynamicStyles.timerButton]}
+                onPress={onTimerPress}
+              >
+                <Ionicons
+                  color={isTimerActive ? colors.warning : colors.text}
+                  name={isTimerActive ? 'timer' : 'timer-outline'}
+                  size={20}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </TouchableOpacity>
     </Animated.View>
@@ -280,6 +260,12 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.SMALL,
   },
 
+  actionButtons: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: LAYOUT.SPACING.SMALL,
+  },
+
   gradientOverlay: {
     ...StyleSheet.absoluteFillObject,
   },
@@ -294,17 +280,6 @@ const styles = StyleSheet.create({
 
   primaryInfo: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-
-  progressBar: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    height: LAYOUT.PROGRESS_BAR.HEIGHT,
-  },
-
-  progressInfo: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
   },
 
   progressSection: {
@@ -322,13 +297,6 @@ const styles = StyleSheet.create({
   textContent: {
     flex: 1,
     marginRight: LAYOUT.SPACING.MEDIUM,
-  },
-
-  timeText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    fontWeight: '700',
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.ULTRA_WIDE,
-    opacity: 0.9,
   },
 
   timerButton: {

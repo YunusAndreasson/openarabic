@@ -1,65 +1,48 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
+import type { AnimatedStyle } from 'react-native-reanimated';
 import {
+  Extrapolation,
+  cancelAnimation,
+  interpolate,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   withTiming,
-  interpolate,
-  Extrapolation,
-  cancelAnimation,
 } from 'react-native-reanimated';
-import type { AnimatedStyle } from 'react-native-reanimated';
 
 import {
   NOW_PLAYING_CARD_HEIGHT,
   NOW_PLAYING_CARD_SPRING,
+  NOW_PLAYING_DISMISS_SCALE,
   NOW_PLAYING_ENTRANCE_SCALE,
   NOW_PLAYING_EXIT_SPRING,
-  NOW_PLAYING_START_SCALE,
-  NOW_PLAYING_DISMISS_SCALE,
   NOW_PLAYING_HIDDEN_OFFSET,
+  NOW_PLAYING_START_SCALE,
   NOW_PLAYING_STOP_PRESS_SCALE,
-  TIMING_CONFIG,
   QUICK_ANIMATION_DURATION,
+  TIMING_CONFIG,
 } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
-
 interface UseNowPlayingCardProps {
   isVisible: boolean;
-  progress: number;
-  duration: number;
   onStop?: () => void;
   isTimerActive?: boolean;
 }
 
-// Simplified time formatter used in progress calculations
-const formatTime = (seconds: number): string => {
-  if (!seconds || !isFinite(seconds) || isNaN(seconds) || seconds < 0) {
-    return '0:00';
-  }
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-};
-
 export const useNowPlayingCard = ({
   isVisible,
-  progress,
-  duration,
   onStop,
   isTimerActive = false,
 }: UseNowPlayingCardProps) => {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
-  const translateY = useSharedValue(
-    NOW_PLAYING_CARD_HEIGHT + NOW_PLAYING_HIDDEN_OFFSET,
-  );
+  const translateY = useSharedValue(NOW_PLAYING_CARD_HEIGHT + NOW_PLAYING_HIDDEN_OFFSET);
   const opacity = useSharedValue(0);
   const scale = useSharedValue(NOW_PLAYING_START_SCALE);
   const {
@@ -81,9 +64,9 @@ export const useNowPlayingCard = ({
         () => {
           translateY.value = withSpring(
             NOW_PLAYING_CARD_HEIGHT + NOW_PLAYING_HIDDEN_OFFSET,
-            NOW_PLAYING_EXIT_SPRING,
+            NOW_PLAYING_EXIT_SPRING
           );
-        },
+        }
       );
       opacity.value = withTiming(0, { duration: TIMING_CONFIG.GENTLE.duration });
     }
@@ -141,23 +124,6 @@ export const useNowPlayingCard = ({
     [colors, isDarkMode, isTimerActive]
   );
 
-  const timeCalculations = useMemo(() => {
-    const safeProgress = progress && isFinite(progress) ? progress : 0;
-    const safeDuration = duration && isFinite(duration) ? duration : 0;
-
-    const currentSeconds = safeProgress / 1000;
-    const totalSeconds = safeDuration / 1000;
-
-    const percentage = safeDuration > 0 ? (safeProgress / safeDuration) * 100 : 0;
-    const clampedPercentage = Math.max(0, Math.min(100, percentage));
-
-    return {
-      currentTime: formatTime(currentSeconds),
-      totalTime: formatTime(totalSeconds),
-      progressPercentage: clampedPercentage,
-    };
-  }, [progress, duration]);
-
   return {
     cardAnimatedStyle,
     backgroundImageStyle,
@@ -166,7 +132,6 @@ export const useNowPlayingCard = ({
     handleStopPressOut,
     handleStopPress,
     dynamicStyles,
-    timeCalculations,
   } as const;
 };
 

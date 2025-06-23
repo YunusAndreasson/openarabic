@@ -41,9 +41,19 @@ export const useCurrentSentence = ({
       currentWord: null,
     };
 
-    // Early return if no sentences or invalid position
-    if (!sentences.length || position < 0) {
+    // Early return if no sentences
+    if (!sentences.length) {
       return defaultState;
+    }
+
+    // If position is 0 or negative, return first sentence as fallback
+    if (position <= 0) {
+      return {
+        currentSentence: sentences[0] || null,
+        currentSentenceIndex: sentences[0] ? 0 : -1,
+        sentenceProgress: 0,
+        currentWord: null,
+      };
     }
 
     // Calculate cumulative timing for each sentence
@@ -110,6 +120,17 @@ export const useCurrentSentence = ({
           currentWord: null,
         };
       }
+
+      // If we have sentences but no timing matches, return first sentence as fallback
+      if (sentences.length > 0) {
+        return {
+          currentSentence: sentences[0] || null,
+          currentSentenceIndex: sentences[0] ? 0 : -1,
+          sentenceProgress: 0,
+          currentWord: null,
+        };
+      }
+
       return defaultState;
     }
 

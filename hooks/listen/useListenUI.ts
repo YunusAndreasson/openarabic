@@ -17,6 +17,8 @@ interface ListenUIParams {
   metadata: { articleId: string | null; articleTitle: string | null };
   audioState: AudioState;
   isStartingPlayback: boolean;
+  position?: number;
+  duration?: number;
 }
 
 export const useListenUI = ({
@@ -24,6 +26,8 @@ export const useListenUI = ({
   metadata,
   audioState,
   isStartingPlayback,
+  position,
+  duration,
 }: ListenUIParams) => {
   const { prefetchArticle } = useAppPreloader();
   const dispatch = useAppDispatch();
@@ -101,9 +105,33 @@ export const useListenUI = ({
   );
 
   const handleNowPlayingPress = useCallback(() => {
-    // Navigate to the now playing modal instead of the article
-    router.push('/(tabs)/listen/now-playing');
-  }, []);
+    // Navigate to the now playing modal with current article ID and audio state
+    const articleId = currentArticle?.id;
+    const params: Record<string, string> = {};
+
+    if (articleId) {
+      params['articleId'] = String(articleId);
+    }
+
+    // Pass current audio state data
+    if (metadata.articleId) {
+      params['playingArticleId'] = metadata.articleId;
+    }
+
+    // Convert to milliseconds for consistency
+    if (typeof position === 'number' && isFinite(position)) {
+      params['position'] = String(position * 1000);
+    }
+
+    if (typeof duration === 'number' && isFinite(duration)) {
+      params['duration'] = String(duration * 1000);
+    }
+
+    params['audioState'] = audioState || 'idle';
+
+    const queryString = new URLSearchParams(params).toString();
+    router.push(`/(tabs)/listen/now-playing${queryString ? `?${queryString}` : ''}`);
+  }, [currentArticle?.id, metadata.articleId, position, duration, audioState, router]);
 
   const handleDragEnd = useCallback(
     ({ data }: { data: ReadingListItem[] }) => {
