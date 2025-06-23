@@ -33,7 +33,7 @@ export default function NowPlayingModal() {
   const { user } = useAuth();
 
   const audioPlayer = useAudioPlayer();
-  const { position, metadata } = audioPlayer;
+  const { position, metadata, audioState } = audioPlayer;
 
   const articleId = useMemo(() => {
     if (!metadata.articleId) return undefined;
@@ -48,6 +48,34 @@ export default function NowPlayingModal() {
     sentences: sortedSentences,
     sentenceWordsMap,
   });
+
+  // Debug logging
+  useEffect(() => {
+    console.log('🎵 Now Playing Modal Debug:', {
+      articleId,
+      hasArticle: !!article,
+      articleTitle: article?.title,
+      position,
+      audioState,
+      sentencesCount: sortedSentences.length,
+      sentenceWordsMapSize: sentenceWordsMap.size,
+      currentSentence: currentSentence
+        ? {
+            id: currentSentence.id,
+            english: currentSentence.english.substring(0, 50) + '...',
+            arabic: currentSentence.arabic.substring(0, 20) + '...',
+          }
+        : null,
+    });
+  }, [
+    articleId,
+    article,
+    position,
+    audioState,
+    sortedSentences.length,
+    sentenceWordsMap.size,
+    currentSentence,
+  ]);
 
   // Audio-reactive gradient animation
   const gradientProgress = useSharedValue(0);
@@ -104,7 +132,8 @@ export default function NowPlayingModal() {
     ] as const;
   }, [colors.background, colors.elevation1, isDarkMode]);
 
-  if (!article || !currentSentence) {
+  // Show error only if no article at all - allow missing current sentence
+  if (!article) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <StatusBar style={isDarkMode ? 'light' : 'dark'} />
@@ -117,7 +146,7 @@ export default function NowPlayingModal() {
         </View>
         <View style={styles.centerContent}>
           <ThemedText type="body" variant="secondary">
-            {STRINGS.SOMETHING_WENT_WRONG}
+            {STRINGS.LOADING}
           </ThemedText>
         </View>
       </View>
@@ -167,17 +196,36 @@ export default function NowPlayingModal() {
 
       {/* Current Sentence Display */}
       <View style={styles.centerContent}>
-        <Animated.View style={[styles.sentenceContainer, sentenceAnimatedStyle]}>
-          <ThemedText type="heading1" style={styles.englishText} numberOfLines={4}>
-            {currentSentence.english}
-          </ThemedText>
-
-          <View style={styles.arabicContainer}>
-            <ThemedText type="body" variant="secondary" style={styles.arabicText} numberOfLines={3}>
-              {currentSentence.arabic}
+        {currentSentence ? (
+          <Animated.View style={[styles.sentenceContainer, sentenceAnimatedStyle]}>
+            <ThemedText type="heading1" style={styles.englishText} numberOfLines={4}>
+              {currentSentence.english}
             </ThemedText>
-          </View>
-        </Animated.View>
+
+            <View style={styles.arabicContainer}>
+              <ThemedText
+                type="body"
+                variant="secondary"
+                style={styles.arabicText}
+                numberOfLines={3}
+              >
+                {currentSentence.arabic}
+              </ThemedText>
+            </View>
+          </Animated.View>
+        ) : (
+          <Animated.View style={[styles.sentenceContainer, sentenceAnimatedStyle]}>
+            <ThemedText type="heading1" style={styles.englishText} numberOfLines={4}>
+              {STRINGS.LOADING}
+            </ThemedText>
+            <ThemedText type="body" variant="secondary" style={styles.arabicText}>
+              Position: {position.toFixed(1)}s
+            </ThemedText>
+            <ThemedText type="body" variant="secondary" style={styles.arabicText}>
+              Sentences: {sortedSentences.length} | Audio: {audioState}
+            </ThemedText>
+          </Animated.View>
+        )}
       </View>
 
       {/* Bottom Safe Area */}
