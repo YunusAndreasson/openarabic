@@ -1,11 +1,15 @@
-import { Ionicons } from '@expo/vector-icons';
-import React, { memo, useCallback, useState } from 'react';
-import { Modal, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import {
+  BottomSheetBackdrop,
+  type BottomSheetBackdropProps,
+  BottomSheetModal,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import { SLEEP_TIMER_MINUTES } from '@/constants/audio';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -18,6 +22,8 @@ export interface SleepTimerProps {
   isActive?: boolean;
 }
 
+const timerOptions = [5, 10, 15, 30, 45, 60]; // minutes
+const DEFAULT_SELECTED_MINUTES = 15; // Pre-select 15 minutes
 
 // Simplified time formatter
 const formatTime = (seconds: number): string => {
@@ -29,14 +35,12 @@ const formatTime = (seconds: number): string => {
 };
 
 function handleSetTimer(
-  selectedMinutes: number | null,
+  selectedMinutes: number,
   onTimerSet: (minutes: number) => void,
   onClose: () => void
 ) {
-  if (selectedMinutes) {
-    onTimerSet(selectedMinutes);
-    onClose();
-  }
+  onTimerSet(selectedMinutes);
+  onClose();
 }
 
 function handleCancelTimer(onTimerCancel: () => void, onClose: () => void) {
@@ -57,7 +61,29 @@ const SleepTimerComponent = ({
   isActive = false,
 }: SleepTimerProps) => {
   const colors = useColors();
-  const [selectedMinutes, setSelectedMinutes] = useState<number | null>(null);
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+
+  // Pre-select 15 minutes as default
+  const [selectedMinutes, setSelectedMinutes] = useState<number>(DEFAULT_SELECTED_MINUTES);
+
+  // Configure snap points - dynamic based on active state
+  const snapPoints = useMemo(() => {
+    // Base height for header + content + padding
+    const baseHeight = 120;
+    const gridHeight = isActive ? 100 : 180; // Less height when showing active timer
+    const buttonHeight = 60;
+    const totalHeight = baseHeight + gridHeight + buttonHeight;
+    return [Math.min(totalHeight, 450)];
+  }, [isActive]);
+
+  // Handle visibility changes
+  useEffect(() => {
+    if (isVisible) {
+      bottomSheetRef.current?.present();
+    } else {
+      bottomSheetRef.current?.dismiss();
+    }
+  }, [isVisible]);
 
   const handleSetTimerCallback = useCallback(() => {
     handleSetTimer(selectedMinutes, onTimerSet, onClose);
@@ -72,105 +98,108 @@ const SleepTimerComponent = ({
     [setSelectedMinutes]
   );
 
+  // Use built-in backdrop component
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} onPress={onClose} />
+    ),
+    [onClose]
+  );
+
+  // Memoize dynamic styles to prevent recalculation
+  const dynamicStyles = useMemo(
+    () => ({
+      background: [styles.background, { backgroundColor: colors.elevation1 }],
+      indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
+      header: [styles.header, { borderBottomColor: colors.borderOverlay }],
+    }),
+    [colors.elevation1, colors.modalIndicator, colors.borderOverlay]
+  );
+
   return (
-    <Modal
-      statusBarTranslucent
-      transparent
-      animationType="slide"
-      visible={isVisible}
-      onRequestClose={onClose}
+    <BottomSheetModal
+      ref={bottomSheetRef}
+      index={0}
+      snapPoints={snapPoints}
+      enablePanDownToClose
+      enableOverDrag={false}
+      enableDynamicSizing={false}
+      activeOffsetY={[-10, 10]}
+      onDismiss={onClose}
+      backgroundStyle={dynamicStyles.background}
+      handleIndicatorStyle={dynamicStyles.indicator}
+      backdropComponent={renderBackdrop}
     >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={[styles.backdrop, { backgroundColor: colors.backdropOverlay }]}>
-          <View style={styles.modalContainer}>
-            <View
-              style={[
-                styles.modal,
-                {
-                  backgroundColor: colors.elevation0,
-                  shadowColor: colors.shadow,
-                },
-              ]}
-            >
-              {/* Header */}
-              <View style={[styles.header, { borderBottomColor: colors.borderOverlay }]}>
-                <View style={styles.headerContent}>
-                  <ThemedText style={styles.title} type="heading2" weight="bold">
-                    {STRINGS.SLEEP_TIMER_TITLE}
-                  </ThemedText>
-                  <ThemedText style={styles.subtitle} type="body" variant="secondary">
-                    {isActive && remainingTime > 0
-                      ? STRINGS.SLEEP_TIMER_AUTOMATIC
-                      : STRINGS.SLEEP_TIMER_CHOOSE_WHEN}
-                  </ThemedText>
-                </View>
-                <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                  <Ionicons
-                    name="close"
-                    size={LAYOUT.BUTTON.ICON_SIZE.LARGE}
-                    color={colors.text}
-                  />
-                </TouchableOpacity>
-              </View>
-
-              {/* Content */}
-              <View style={styles.content}>
-                {isActive && remainingTime > 0 ? (
-                  <View style={styles.activeTimerContainer}>
-                    <View style={styles.timeDisplay}>
-                      <ThemedText colorName="tint" style={styles.timeText} type="heading1">
-                        {formatTime(remainingTime)}
-                      </ThemedText>
-                    </View>
-                    <ThemedText style={styles.activeDescription} type="body" variant="secondary">
-                      {STRINGS.REMAINING}
-                    </ThemedText>
-                    <ThemedButton
-                      style={[styles.fullWidthButton, { borderColor: colors.borderOverlay }]}
-                      title={STRINGS.CANCEL_TIMER}
-                      variant="outlined"
-                      onPress={handleCancelTimerCallback}
-                    />
-                  </View>
-                ) : (
-                  <>
-                    <View style={styles.optionsGrid}>
-                      {SLEEP_TIMER_MINUTES.map(minutes => (
-                        <ThemedButton
-                          key={minutes}
-                          title={STRINGS.MINUTES.replace('{minutes}', minutes.toString())}
-                          variant={selectedMinutes === minutes ? 'filled' : 'outlined'}
-                          style={[
-                            styles.optionButton,
-                            selectedMinutes === minutes
-                              ? {
-                                  backgroundColor: colors.tint,
-                                  borderColor: colors.tint,
-                                }
-                              : {
-                                  borderColor: colors.borderOverlay,
-                                  backgroundColor: colors.elevation1,
-                                },
-                          ]}
-                          onPress={handleOptionSelectCallback(minutes)}
-                        />
-                      ))}
-                    </View>
-
-                    <ThemedButton
-                      style={styles.fullWidthButton}
-                      title={STRINGS.START_TIMER}
-                      variant="filled"
-                      onPress={handleSetTimerCallback}
-                    />
-                  </>
-                )}
-              </View>
-            </View>
+      <BottomSheetView style={styles.container}>
+        {/* Header */}
+        <View style={dynamicStyles.header}>
+          <View style={styles.headerContent}>
+            <ThemedText style={styles.title} type="heading2" weight="bold">
+              {STRINGS.SLEEP_TIMER_TITLE}
+            </ThemedText>
+            <ThemedText style={styles.subtitle} type="body" variant="secondary">
+              {isActive && remainingTime > 0
+                ? STRINGS.SLEEP_TIMER_AUTOMATIC
+                : STRINGS.SLEEP_TIMER_CHOOSE_WHEN}
+            </ThemedText>
           </View>
         </View>
-      </TouchableWithoutFeedback>
-    </Modal>
+
+        {/* Content */}
+        <View style={styles.content}>
+          {isActive && remainingTime > 0 ? (
+            <View style={styles.activeTimerContainer}>
+              <View style={styles.timeDisplay}>
+                <ThemedText colorName="tint" style={styles.timeText} type="heading1">
+                  {formatTime(remainingTime)}
+                </ThemedText>
+              </View>
+              <ThemedText style={styles.activeDescription} type="body" variant="secondary">
+                {STRINGS.REMAINING}
+              </ThemedText>
+              <ThemedButton
+                style={[styles.fullWidthButton, { borderColor: colors.borderOverlay }]}
+                title={STRINGS.CANCEL_TIMER}
+                variant="outlined"
+                onPress={handleCancelTimerCallback}
+              />
+            </View>
+          ) : (
+            <>
+              <View style={styles.optionsGrid}>
+                {timerOptions.map(minutes => (
+                  <ThemedButton
+                    key={minutes}
+                    title={STRINGS.MINUTES.replace('{minutes}', minutes.toString())}
+                    variant={selectedMinutes === minutes ? 'filled' : 'outlined'}
+                    style={[
+                      styles.optionButton,
+                      selectedMinutes === minutes
+                        ? {
+                            backgroundColor: colors.tint,
+                            borderColor: colors.tint,
+                          }
+                        : {
+                            borderColor: colors.borderOverlay,
+                            backgroundColor: colors.elevation2,
+                          },
+                    ]}
+                    onPress={handleOptionSelectCallback(minutes)}
+                  />
+                ))}
+              </View>
+
+              <ThemedButton
+                style={styles.fullWidthButton}
+                title={STRINGS.START_TIMER}
+                variant="filled"
+                onPress={handleSetTimerCallback}
+              />
+            </>
+          )}
+        </View>
+      </BottomSheetView>
+    </BottomSheetModal>
   );
 };
 
@@ -184,25 +213,20 @@ const arePropsEqual = (prevProps: SleepTimerProps, nextProps: SleepTimerProps): 
 };
 
 const styles = StyleSheet.create({
-  activeDescription: {
-    marginBottom: LAYOUT.SPACING.SMALL,
+  background: {
+    ...LAYOUT.ELEVATION.LARGE,
+    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
-  activeTimerContainer: {
-    alignItems: 'center',
+
+  indicator: {
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
-  backdrop: {
+
+  container: {
     flex: 1,
-    justifyContent: 'flex-end',
   },
-  closeButton: {
-    padding: LAYOUT.SPACING.SMALL,
-  },
-  content: {
-    padding: LAYOUT.SPACING.LARGE,
-  },
-  fullWidthButton: {
-    width: '100%',
-  },
+
   header: {
     alignItems: 'flex-start',
     borderBottomWidth: 1,
@@ -211,41 +235,34 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.LARGE,
     paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
+
   headerContent: {
     flex: 1,
   },
-  modal: {
-    ...LAYOUT.ELEVATION.LARGE,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    maxHeight: '65%',
-    overflow: 'hidden',
+
+  title: {
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.2,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
-  optionButton: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM + 2,
-    paddingVertical: LAYOUT.SPACING.MEDIUM + 2,
-    width: `${LAYOUT.WIDTH_RATIOS.THIRD * 100 - 3}%`,
-  },
-  optionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: LAYOUT.SPACING.SMALL + 2,
-    justifyContent: 'space-between',
-    marginBottom: LAYOUT.SPACING.XLARGE,
-  },
+
   subtitle: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
   },
+
+  content: {
+    padding: LAYOUT.SPACING.LARGE,
+  },
+
+  activeTimerContainer: {
+    alignItems: 'center',
+  },
+
   timeDisplay: {
     alignItems: 'center',
     marginBottom: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.SMALL,
   },
+
   timeText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.8,
     fontVariant: ['tabular-nums'],
@@ -254,9 +271,27 @@ const styles = StyleSheet.create({
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 2.2,
     textAlign: 'center',
   },
-  title: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.2,
+
+  activeDescription: {
     marginBottom: LAYOUT.SPACING.SMALL,
+  },
+
+  optionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: LAYOUT.SPACING.SMALL + 2,
+    justifyContent: 'space-between',
+    marginBottom: LAYOUT.SPACING.XLARGE,
+  },
+
+  optionButton: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM + 2,
+    paddingVertical: LAYOUT.SPACING.MEDIUM + 2,
+    width: `${LAYOUT.WIDTH_RATIOS.THIRD * 100 - 3}%`,
+  },
+
+  fullWidthButton: {
+    width: '100%',
   },
 });
 

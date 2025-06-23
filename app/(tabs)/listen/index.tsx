@@ -404,8 +404,13 @@ export default function ListenScreen(): JSX.Element {
           />
         )}
       </ThemedView>
-      {/* Only show bottom controls when there are texts with audio to play but no active player */}
-      {shouldShowBottomControls && (
+      {/* Bottom controls - always rendered to prevent flashing, visibility controlled by opacity */}
+      <View
+        style={{
+          opacity: shouldShowBottomControls ? 1 : 0,
+          pointerEvents: shouldShowBottomControls ? 'auto' : 'none',
+        }}
+      >
         <BottomControls
           primaryDisabled={isPlayAllLoading}
           primaryLoading={isPlayAllLoading}
@@ -415,7 +420,7 @@ export default function ListenScreen(): JSX.Element {
           showTimerButton={false}
           onPrimaryPress={() => handlePlayAll(setIsPlayAllLoading)}
         />
-      )}
+      </View>
       {/* Now Playing Card - shows when starting playback or playing */}
       <NowPlayingCard
         article={currentArticle}

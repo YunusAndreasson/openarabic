@@ -7,7 +7,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { BaseChart } from '@/components/vocabulary/shared/BaseChart';
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import { INSIGHTS_BUTTON_PRESS_SCALE } from '@/constants/animation';
-import { LAYOUT, TYPOGRAPHY_HIERARCHY, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useNavigationWithDebounce } from '@/hooks';
@@ -71,7 +71,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
 
   return (
     <BaseChart
-      contentHeight={GAUGE_HEIGHT + 100}
+      contentHeight={GAUGE_HEIGHT + 68}
       emptyStateText={STRINGS.ADD_WORDS_TO_SEE_CAPACITY}
       hasData={studyWords.length > 0}
       hideTitle={true}
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
   },
   bottomSection: {
     alignItems: 'center',
-    marginTop: LAYOUT.SPACING.SMALL,
+    marginTop: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   actionCard: {
