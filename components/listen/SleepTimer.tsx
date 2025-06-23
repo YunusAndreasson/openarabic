@@ -34,24 +34,6 @@ const formatTime = (seconds: number): string => {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
-function handleSetTimer(
-  selectedMinutes: number,
-  onTimerSet: (minutes: number) => void,
-  onClose: () => void
-) {
-  onTimerSet(selectedMinutes);
-  onClose();
-}
-
-function handleCancelTimer(onTimerCancel: () => void, onClose: () => void) {
-  onTimerCancel();
-  onClose();
-}
-
-function handleOptionSelect(minutes: number, setSelectedMinutes: (m: number) => void) {
-  setSelectedMinutes(minutes);
-}
-
 const SleepTimerComponent = ({
   isVisible,
   onClose,
@@ -85,17 +67,19 @@ const SleepTimerComponent = ({
     }
   }, [isVisible]);
 
-  const handleSetTimerCallback = useCallback(() => {
-    handleSetTimer(selectedMinutes, onTimerSet, onClose);
+  const handleSetTimer = useCallback(() => {
+    onTimerSet(selectedMinutes);
+    onClose();
   }, [selectedMinutes, onTimerSet, onClose]);
 
-  const handleCancelTimerCallback = useCallback(() => {
-    handleCancelTimer(onTimerCancel, onClose);
+  const handleCancelTimer = useCallback(() => {
+    onTimerCancel();
+    onClose();
   }, [onTimerCancel, onClose]);
 
-  const handleOptionSelectCallback = useCallback(
-    (minutes: number) => () => handleOptionSelect(minutes, setSelectedMinutes),
-    [setSelectedMinutes]
+  const handleOptionSelect = useCallback(
+    (minutes: number) => () => setSelectedMinutes(minutes),
+    []
   );
 
   // Use built-in backdrop component
@@ -109,9 +93,9 @@ const SleepTimerComponent = ({
   // Memoize dynamic styles to prevent recalculation
   const dynamicStyles = useMemo(
     () => ({
-      background: [styles.background, { backgroundColor: colors.elevation1 }],
-      indicator: [styles.indicator, { backgroundColor: colors.modalIndicator }],
-      header: [styles.header, { borderBottomColor: colors.borderOverlay }],
+      background: { backgroundColor: colors.elevation1 },
+      indicator: { backgroundColor: colors.modalIndicator },
+      header: { borderBottomColor: colors.borderOverlay },
     }),
     [colors.elevation1, colors.modalIndicator, colors.borderOverlay]
   );
@@ -126,13 +110,13 @@ const SleepTimerComponent = ({
       enableDynamicSizing={false}
       activeOffsetY={[-10, 10]}
       onDismiss={onClose}
-      backgroundStyle={dynamicStyles.background}
-      handleIndicatorStyle={dynamicStyles.indicator}
+      backgroundStyle={[styles.background, dynamicStyles.background]}
+      handleIndicatorStyle={[styles.indicator, dynamicStyles.indicator]}
       backdropComponent={renderBackdrop}
     >
       <BottomSheetView style={styles.container}>
         {/* Header */}
-        <View style={dynamicStyles.header}>
+        <View style={[styles.header, dynamicStyles.header]}>
           <View style={styles.headerContent}>
             <ThemedText style={styles.title} type="heading2" weight="bold">
               {STRINGS.SLEEP_TIMER_TITLE}
@@ -161,7 +145,7 @@ const SleepTimerComponent = ({
                 style={[styles.fullWidthButton, { borderColor: colors.borderOverlay }]}
                 title={STRINGS.CANCEL_TIMER}
                 variant="outlined"
-                onPress={handleCancelTimerCallback}
+                onPress={handleCancelTimer}
               />
             </View>
           ) : (
@@ -184,7 +168,7 @@ const SleepTimerComponent = ({
                             backgroundColor: colors.elevation2,
                           },
                     ]}
-                    onPress={handleOptionSelectCallback(minutes)}
+                    onPress={handleOptionSelect(minutes)}
                   />
                 ))}
               </View>
@@ -193,7 +177,7 @@ const SleepTimerComponent = ({
                 style={styles.fullWidthButton}
                 title={STRINGS.START_TIMER}
                 variant="filled"
-                onPress={handleSetTimerCallback}
+                onPress={handleSetTimer}
               />
             </>
           )}
