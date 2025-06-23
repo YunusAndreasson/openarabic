@@ -10,22 +10,18 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import {
-  TIMING_CONFIG,
-  REVIEW_CARD_MIN_DISTANCE,
-  REVIEW_CARD_RESET_DELAY,
-  REVIEW_CARD_SWIPE_THRESHOLD_RATIO,
-} from '@/constants/animation';
-import { SCREEN_WIDTH, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
+import { TIMING_CONFIG } from '@/constants/animation';
+import { LAYOUT, SCREEN_WIDTH, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 import WordDisplayComponent from './WordDisplay';
 
 // ===== STATIC CONSTANTS EXTRACTION (CRITICAL FOR PERFORMANCE) =====
 const REVIEW_CARD_CONSTANTS = {
-  SWIPE_THRESHOLD_RATIO: REVIEW_CARD_SWIPE_THRESHOLD_RATIO,
-  RESET_DELAY: REVIEW_CARD_RESET_DELAY,
-  MIN_DISTANCE: REVIEW_CARD_MIN_DISTANCE,
+  SWIPE_THRESHOLD_RATIO: 0.04,
+  RESET_DELAY: 50,
+  MIN_DISTANCE: 0.1,
+  MAX_TRANSLATION_RATIO: LAYOUT.OPACITY.HOVER,
 };
 
 // Static gesture detection thresholds
@@ -146,7 +142,7 @@ const ReviewCardInternal = ({
           'worklet';
           if (!isAnimatingRef.value && event.translationX !== undefined) {
             // Clamp translation to prevent extreme values that could cause crashes
-            const maxTranslation = screenWidth * 0.8; // Max 80% of screen width
+            const maxTranslation = screenWidth * REVIEW_CARD_CONSTANTS.MAX_TRANSLATION_RATIO;
             const clampedTranslation = Math.max(
               -maxTranslation,
               Math.min(maxTranslation, event.translationX)

@@ -83,7 +83,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
         onPress={handleInsightsPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        activeOpacity={0.7}
+        activeOpacity={LAYOUT.OPACITY.HIGH}
       >
         <Animated.View style={animatedPressStyle as ViewStyle}>
           <View style={styles.gaugeContainer}>

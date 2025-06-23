@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import { useState, useCallback, useEffect, memo } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
@@ -7,7 +7,7 @@ import { ThemedInput } from '@/components/ThemedInput';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useAuthForm, PASSWORD_REQUIREMENTS } from '@/hooks/auth/useAuthForm';
+import { PASSWORD_REQUIREMENTS, useAuthForm } from '@/hooks/auth/useAuthForm';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 
@@ -159,7 +159,7 @@ function Auth(): JSX.Element {
       </View>
 
       <TouchableOpacity
-        activeOpacity={0.7}
+        activeOpacity={LAYOUT.OPACITY.HIGH}
         style={styles.toggleContainer}
         testID="toggle-mode-button"
         onPress={toggleMode}

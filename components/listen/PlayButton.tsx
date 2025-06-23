@@ -48,12 +48,12 @@ const PlayButton: FC<PlayButtonProps> = ({
 
   return (
     <TouchableOpacity
+      activeOpacity={LAYOUT.OPACITY.HIGH}
+      style={[styles.button, { backgroundColor: colors.tint }]}
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       disabled={disabled || isLoading}
-      activeOpacity={0.7}
-      style={styles.touchable}
       hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
     >
       <Animated.View
@@ -82,10 +82,6 @@ const PlayButton: FC<PlayButtonProps> = ({
 };
 
 const styles = StyleSheet.create({
-  touchable: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   button: {
     ...LAYOUT.ELEVATION.SUBTLE,
     alignItems: 'center',

@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
   },
   footerNoteText: {
     textAlign: 'center',
-    opacity: 0.3,
+    opacity: LAYOUT.OPACITY.SUBTLE,
   },
 });
 

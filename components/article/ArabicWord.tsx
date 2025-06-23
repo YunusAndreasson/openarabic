@@ -87,7 +87,10 @@ function ArabicWordComponent({
   );
 
   // Pre-calculate text size once when component mounts (will never change)
-  const calculatedFontSize = useMemo(() => settings.fontScale * 24, [settings.fontScale]);
+  const calculatedFontSize = useMemo(
+    () => settings.fontScale * LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    [settings.fontScale]
+  );
 
   // More aggressively memoized text props (depends on selection and tooltip visibility)
   const textProps = useMemo(
@@ -141,7 +144,7 @@ function ArabicWordComponent({
   return (
     <TouchableOpacity
       ref={wordRef}
-      activeOpacity={0.7}
+      activeOpacity={LAYOUT.OPACITY.HIGH}
       style={containerStyle}
       testID={testID}
       onLayout={handleLayout}
@@ -157,8 +160,8 @@ function ArabicWordComponent({
 const styles = StyleSheet.create({
   textStyle: {
     textAlign: 'center',
-    paddingBottom: LAYOUT.SPACING.MICRO * 2,
-    marginBottom: -LAYOUT.BORDER.WIDTH.NORMAL,
+    paddingBottom: LAYOUT.SPACING.MICRO,
+    marginBottom: -LAYOUT.SPACING.MICRO,
   },
   wordContainer: {
     alignItems: 'center',

@@ -578,8 +578,8 @@ export const WordTooltip = memo(
             padding: LAYOUT.SPACING.TINY / 2,
             borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM / 2,
           }}
-          hitSlop={LAYOUT.HIT_SLOP.SMALL}
-          activeOpacity={0.7}
+          hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+          activeOpacity={LAYOUT.OPACITY.HIGH}
         >
           <Ionicons name={iconName} size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={indicatorColor} />
         </TouchableOpacity>
@@ -736,7 +736,11 @@ export const WordTooltip = memo(
           style={[containerStyle, opacityStyle as ViewStyle]}
           onStartShouldSetResponder={() => true}
         >
-          <TouchableOpacity style={tooltipStyle} onPress={handleClose} activeOpacity={0.9}>
+          <TouchableOpacity
+            style={tooltipStyle}
+            onPress={handleClose}
+            activeOpacity={LAYOUT.OPACITY.SUBTLE}
+          >
             {tooltipContent}
             <View style={arrowStyle} />
           </TouchableOpacity>

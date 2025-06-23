@@ -32,7 +32,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerContainer: {
-    marginTop: LAYOUT.SPACING.SMALL,
+    marginTop: LAYOUT.SPACING.MEDIUM,
+    gap: LAYOUT.SPACING.SMALL,
   },
   listContentContainer: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,

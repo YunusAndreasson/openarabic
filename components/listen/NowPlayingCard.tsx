@@ -134,7 +134,11 @@ const NowPlayingCard = ({
       </View>
 
       {/* Main Content */}
-      <TouchableOpacity activeOpacity={0.8} style={styles.content} onPress={onPress}>
+      <TouchableOpacity
+        activeOpacity={LAYOUT.OPACITY.HOVER}
+        style={styles.content}
+        onPress={onPress}
+      >
         {/* Article Image */}
         <View style={styles.imageContainer}>
           <EnhancedImage
@@ -164,7 +168,7 @@ const NowPlayingCard = ({
             progressPercentage={
               duration > 0 ? Math.max(0, Math.min(100, ((progress || 0) / duration) * 100)) : 0
             }
-            progressBarHeight={3}
+            progressBarHeight={LAYOUT.SPACING.TINY} // Use design system constant instead of hardcoded 3
             style={styles.progressSection}
           />
         </View>
@@ -172,8 +176,16 @@ const NowPlayingCard = ({
         {/* Controls */}
         <View style={styles.controls}>
           {/* Top Row - Expand Button */}
-          <TouchableOpacity activeOpacity={0.8} style={styles.expandButton} onPress={onPress}>
-            <Ionicons color={colors.text} name="expand-outline" size={20} />
+          <TouchableOpacity
+            activeOpacity={LAYOUT.OPACITY.HOVER}
+            style={styles.expandButton}
+            onPress={onPress}
+          >
+            <Ionicons
+              color={colors.text}
+              name="expand-outline"
+              size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+            />
           </TouchableOpacity>
 
           {/* Bottom Row - Action Buttons */}
@@ -181,28 +193,32 @@ const NowPlayingCard = ({
             {/* Stop Button */}
             <Animated.View style={buttonAnimatedStyle}>
               <TouchableOpacity
-                activeOpacity={0.8}
+                activeOpacity={LAYOUT.OPACITY.HOVER}
                 onPressIn={handleStopPressIn}
                 onPressOut={handleStopPressOut}
                 style={[styles.stopButton, dynamicStyles.stopButton]}
                 onPress={handleStopPress}
                 testID="stop-playback-button"
               >
-                <Ionicons color={colors.background} name="stop" size={24} />
+                <Ionicons
+                  color={colors.background}
+                  name="stop"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </TouchableOpacity>
             </Animated.View>
 
             {/* Timer Button */}
             {showTimerButton && (
               <TouchableOpacity
-                activeOpacity={0.8}
+                activeOpacity={LAYOUT.OPACITY.HOVER}
                 style={[styles.timerButton, dynamicStyles.timerButton]}
                 onPress={onTimerPress}
               >
                 <Ionicons
                   color={isTimerActive ? colors.warning : colors.text}
                   name={isTimerActive ? 'timer' : 'timer-outline'}
-                  size={20}
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
                 />
               </TouchableOpacity>
             )}
