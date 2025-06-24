@@ -46,10 +46,10 @@ const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
       },
     ],
     tips: [
-      'Steep climbs show breakthrough learning – celebrate these moments',
-      'Plateaus are natural consolidation periods – stay consistent',
-      'Focus on understanding words in context, not isolated memorization',
-      'Strong words are permanent additions to your language ability',
+      STRINGS.INFO_TIP_CLIMBS,
+      STRINGS.INFO_TIP_PLATEAUS,
+      STRINGS.INFO_TIP_CONTEXT,
+      STRINGS.INFO_TIP_STRONG_WORDS,
     ],
   },
   retrievability: {
@@ -75,10 +75,10 @@ const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
       },
     ],
     tips: [
-      'Review just before forgetting for strongest memory formation',
-      'Green zones (85%+) indicate good time for adding new words',
-      'Yellow/red zones need immediate review to prevent memory loss',
-      'Consistent practice prevents steep drops in retention',
+      STRINGS.INFO_TIP_REVIEW_BEFORE_FORGETTING,
+      STRINGS.INFO_TIP_GREEN_ZONES,
+      STRINGS.INFO_TIP_YELLOW_RED_ZONES,
+      STRINGS.INFO_TIP_CONSISTENT_PRACTICE,
     ],
   },
   efficiency: {
@@ -105,10 +105,10 @@ const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
       },
     ],
     tips: [
-      'Study when mentally fresh for better memory encoding',
-      'Connect new words to existing knowledge for stronger networks',
-      'Focus on understanding context, not just memorizing definitions',
-      'Consistent daily practice beats intensive cramming sessions',
+      STRINGS.INFO_TIP_STUDY_FRESH,
+      STRINGS.INFO_TIP_CONNECT_WORDS,
+      STRINGS.INFO_TIP_FOCUS_CONTEXT,
+      STRINGS.INFO_TIP_DAILY_PRACTICE,
     ],
   },
 };
@@ -157,7 +157,11 @@ export default function InfoModalScreen(): JSX.Element {
             <View style={styles.sectionHeader}>
               {section.icon && (
                 <View style={[styles.iconContainer, { backgroundColor: colors.elevation2 }]}>
-                  <Ionicons name={section.icon} size={24} color={colors.tint} />
+                  <Ionicons
+                    name={section.icon}
+                    size={LAYOUT.BUTTON.ICON_SIZE.LARGE}
+                    color={colors.tint}
+                  />
                 </View>
               )}
               <ThemedText style={styles.sectionTitle} type="heading3" weight="bold">
@@ -237,7 +241,7 @@ const styles = StyleSheet.create({
   sectionContent: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE + LAYOUT.SPACING.TINY,
-    letterSpacing: 0.1,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.SLIGHT_POSITIVE,
   },
   sectionDivider: {
     height: LAYOUT.BORDER.WIDTH.NORMAL,

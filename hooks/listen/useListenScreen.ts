@@ -291,7 +291,7 @@ export const useListenScreen = () => {
             }
           } else {
             setPlaybackMode('none');
-            handleError(new Error('Audio not available for this article'), {
+            handleError(new Error(STRINGS.AUDIO_NOT_AVAILABLE_FOR_ARTICLE), {
               toastMessage: STRINGS.AUDIO_NOT_AVAILABLE_FOR_ARTICLE,
               showToast: true,
             });

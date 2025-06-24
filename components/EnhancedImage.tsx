@@ -79,8 +79,14 @@ const styles = StyleSheet.create({
   },
 });
 
+interface TransitionConfig {
+  duration: number;
+  effect: typeof TRANSITION_EFFECT;
+  timing: typeof TRANSITION_TIMING;
+}
+
 // Cache for transition objects to prevent recreation
-const transitionCache = new Map<string, any>();
+const transitionCache = new Map<string, TransitionConfig>();
 
 // Helper function to create transition cache key
 const createTransitionCacheKey = (

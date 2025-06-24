@@ -3,6 +3,8 @@ export interface PriorityItem<T> {
   priority: number;
 }
 
+import { STRINGS } from '@/constants/strings';
+
 export class PriorityQueue<T> {
   private heap: T[] = [];
   private priorities: number[] = [];
@@ -139,7 +141,7 @@ export class PriorityQueue<T> {
   // New method: efficiently convert array to heap
   heapify(items: T[], priorities: number[]) {
     if (items.length !== priorities.length) {
-      throw new Error('Items and priorities arrays must have the same length');
+      throw new Error(STRINGS.ERROR_PRIORITY_QUEUE_LENGTH_MISMATCH);
     }
 
     this.heap = [...items];

@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     zIndex: LAYOUT.Z_INDEX.BASE,
     ...Platform.select({
       android: {
-        minHeight: 1,
+        minHeight: LAYOUT.BORDER.WIDTH.NORMAL,
       },
     }),
   },

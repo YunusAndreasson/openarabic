@@ -4,6 +4,7 @@ import type { ComponentProps } from 'react';
 
 import type { SessionMetrics } from '@/types/review.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
+import { STRINGS } from '@/constants/strings';
 
 export interface EncouragingMetric {
   text: string;
@@ -35,21 +36,21 @@ export const useEncouragingMetrics = (
     // Accuracy achievement
     if (accuracyRate >= 80) {
       encouragingFacts.push({
-        text: `${accuracyRate}% accuracy - excellent recall`,
+        text: STRINGS.ACCURACY_EXCELLENT_TEMPLATE.replace('{percent}', String(accuracyRate)),
         icon: 'checkmark-circle',
         color: colors.completionSuccess,
         type: 'accuracy',
       });
     } else if (accuracyRate >= 60) {
       encouragingFacts.push({
-        text: `${accuracyRate}% accuracy - solid progress`,
+        text: STRINGS.ACCURACY_SOLID_TEMPLATE.replace('{percent}', String(accuracyRate)),
         icon: 'trending-up',
         color: colors.progressIndicator,
         type: 'accuracy',
       });
     } else if (metrics.wordsKnown > 0) {
       encouragingFacts.push({
-        text: `${metrics.wordsKnown} words strong this session`,
+        text: STRINGS.WORDS_STRONG_SESSION_TEMPLATE.replace('{count}', String(metrics.wordsKnown)),
         icon: 'checkmark-circle',
         color: colors.completionSuccess,
         type: 'mastery',
@@ -59,14 +60,14 @@ export const useEncouragingMetrics = (
     // Streak achievements
     if (metrics.longestStreak >= 5) {
       encouragingFacts.push({
-        text: `${metrics.longestStreak}-word streak - excellent focus`,
+        text: STRINGS.STREAK_EXCELLENT_TEMPLATE.replace('{count}', String(metrics.longestStreak)),
         icon: 'flame',
         color: colors.warning,
         type: 'streak',
       });
     } else if (metrics.longestStreak >= 3) {
       encouragingFacts.push({
-        text: `${metrics.longestStreak}-word streak achieved`,
+        text: STRINGS.STREAK_ACHIEVED_TEMPLATE.replace('{count}', String(metrics.longestStreak)),
         icon: 'flash',
         color: colors.warning,
         type: 'streak',
@@ -76,7 +77,7 @@ export const useEncouragingMetrics = (
     // Mastery progress
     if (metrics.masteredWords > 0) {
       encouragingFacts.push({
-        text: `${metrics.masteredWords} words reached strong level`,
+        text: STRINGS.MASTERED_WORDS_TEMPLATE.replace('{count}', String(metrics.masteredWords)),
         icon: 'star',
         color: colors.completionSuccess,
         type: 'mastery',
@@ -87,7 +88,7 @@ export const useEncouragingMetrics = (
     if (metrics.averageStabilityIncrease > 0) {
       const avgIncrease = Math.round(metrics.averageStabilityIncrease);
       encouragingFacts.push({
-        text: `+${avgIncrease} days average memory strength boost`,
+        text: STRINGS.MEMORY_STRENGTH_BOOST_TEMPLATE.replace('{days}', String(avgIncrease)),
         icon: 'bar-chart',
         color: colors.progressIndicator,
         type: 'efficiency',
@@ -98,7 +99,7 @@ export const useEncouragingMetrics = (
     if (sessionDuration > 0 && metrics.wordsReviewed >= 10) {
       const wordsPerMinute = Math.round(metrics.wordsReviewed / sessionDuration);
       encouragingFacts.push({
-        text: `${wordsPerMinute} words/min - efficient learning`,
+        text: STRINGS.WORDS_PER_MIN_TEMPLATE.replace('{rate}', String(wordsPerMinute)),
         icon: 'speedometer',
         color: colors.info,
         type: 'efficiency',
@@ -108,14 +109,14 @@ export const useEncouragingMetrics = (
     // Effort recognition
     if (metrics.wordsReviewed >= 20) {
       encouragingFacts.push({
-        text: `${metrics.wordsReviewed} words reviewed - dedication pays off`,
+        text: STRINGS.WORDS_REVIEWED_DEDICATION_TEMPLATE.replace('{count}', String(metrics.wordsReviewed)),
         icon: 'trophy',
         color: colors.warning,
         type: 'effort',
       });
     } else if (metrics.wordsReviewed >= 10) {
       encouragingFacts.push({
-        text: `${metrics.wordsReviewed} words reviewed - great effort`,
+        text: STRINGS.WORDS_REVIEWED_GREAT_TEMPLATE.replace('{count}', String(metrics.wordsReviewed)),
         icon: 'thumbs-up',
         color: colors.completionSuccess,
         type: 'effort',

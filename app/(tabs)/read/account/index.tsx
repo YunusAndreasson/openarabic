@@ -97,7 +97,11 @@ const AccountScreen: FC = () => {
             <View style={styles.settingRow}>
               <View style={styles.settingLabelContainer}>
                 <View style={styles.cardIconContainer}>
-                  <Ionicons color={colors.text} name="notifications" size={22} />
+                  <Ionicons
+                    color={colors.text}
+                    name="notifications"
+                    size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                  />
                 </View>
                 <View style={styles.settingLabelTextContainer}>
                   <ThemedText type="body">{STRINGS.STUDY_REMINDERS}</ThemedText>
@@ -117,7 +121,11 @@ const AccountScreen: FC = () => {
                   <View style={styles.settingRow}>
                     <View style={styles.settingLabelContainer}>
                       <View style={styles.cardIconContainer}>
-                        <Ionicons color={colors.text} name="time" size={22} />
+                        <Ionicons
+                          color={colors.text}
+                          name="time"
+                          size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                        />
                       </View>
                       <View style={styles.settingLabelTextContainer}>
                         <ThemedText type="body">{STRINGS.TIME}</ThemedText>
@@ -136,7 +144,11 @@ const AccountScreen: FC = () => {
             <View style={styles.settingRow}>
               <View style={styles.settingLabelContainer}>
                 <View style={styles.cardIconContainer}>
-                  <Ionicons color={colors.text} name="moon" size={22} />
+                  <Ionicons
+                    color={colors.text}
+                    name="moon"
+                    size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                  />
                 </View>
                 <View style={styles.settingLabelTextContainer}>
                   <ThemedText type="body">{STRINGS.DARK_MODE}</ThemedText>
@@ -150,7 +162,11 @@ const AccountScreen: FC = () => {
             <View style={styles.settingRow}>
               <View style={styles.settingLabelContainer}>
                 <View style={styles.cardIconContainer}>
-                  <Ionicons color={colors.text} name="phone-portrait" size={22} />
+                  <Ionicons
+                    color={colors.text}
+                    name="phone-portrait"
+                    size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                  />
                 </View>
                 <View style={styles.settingLabelTextContainer}>
                   <ThemedText type="body">{STRINGS.APP_ICON_BADGE}</ThemedText>
@@ -170,7 +186,11 @@ const AccountScreen: FC = () => {
               <View style={styles.cardContent}>
                 <View style={styles.cardLeft}>
                   <View style={styles.cardIconContainer}>
-                    <Ionicons color={colors.text} name="text" size={22} />
+                    <Ionicons
+                      color={colors.text}
+                      name="text"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
                   </View>
                   <ThemedText style={styles.cardText} type="body" weight="medium">
                     {STRINGS.ARABIC_FONT}
@@ -179,7 +199,7 @@ const AccountScreen: FC = () => {
                 <Ionicons
                   color={colors.textTertiary}
                   name="chevron-forward"
-                  size={20}
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
                   style={styles.cardChevron}
                 />
               </View>
@@ -196,7 +216,11 @@ const AccountScreen: FC = () => {
               <View style={styles.cardContent}>
                 <View style={styles.cardLeft}>
                   <View style={styles.cardIconContainer}>
-                    <Ionicons color={colors.text} name="mail" size={22} />
+                    <Ionicons
+                      color={colors.text}
+                      name="mail"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
                   </View>
                   <ThemedText style={styles.cardText} type="body" weight="medium">
                     {STRINGS.CONTACT_SUPPORT}
@@ -205,7 +229,7 @@ const AccountScreen: FC = () => {
                 <Ionicons
                   color={colors.textTertiary}
                   name="open"
-                  size={20}
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
                   style={styles.cardChevron}
                 />
               </View>
@@ -229,7 +253,11 @@ const AccountScreen: FC = () => {
               <View style={styles.cardContent}>
                 <View style={styles.cardLeft}>
                   <View style={styles.cardIconContainer}>
-                    <Ionicons color={colors.text} name="school" size={22} />
+                    <Ionicons
+                      color={colors.text}
+                      name="school"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
                   </View>
                   <ThemedText style={styles.cardText} type="body" weight="medium">
                     {STRINGS.LANGUAGE_LEARNING_SCIENCE}
@@ -238,7 +266,7 @@ const AccountScreen: FC = () => {
                 <Ionicons
                   color={colors.textTertiary}
                   name="chevron-forward"
-                  size={20}
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
                   style={styles.cardChevron}
                 />
               </View>
@@ -255,7 +283,11 @@ const AccountScreen: FC = () => {
               <View style={styles.cardContent}>
                 <View style={styles.cardLeft}>
                   <View style={styles.cardIconContainer}>
-                    <Ionicons color={colors.text} name="library" size={22} />
+                    <Ionicons
+                      color={colors.text}
+                      name="library"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
                   </View>
                   <ThemedText style={styles.cardText} type="body" weight="medium">
                     {STRINGS.WHY_CLASSICAL_TEXTS}
@@ -264,7 +296,7 @@ const AccountScreen: FC = () => {
                 <Ionicons
                   color={colors.textTertiary}
                   name="chevron-forward"
-                  size={20}
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
                   style={styles.cardChevron}
                 />
               </View>
@@ -288,7 +320,11 @@ const AccountScreen: FC = () => {
               <View style={styles.cardContent}>
                 <View style={styles.cardLeft}>
                   <View style={styles.cardIconContainer}>
-                    <Ionicons color={colors.text} name="archive" size={22} />
+                    <Ionicons
+                      color={colors.text}
+                      name="archive"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
                   </View>
                   <View style={styles.cacheTextContainer}>
                     <ThemedText type="body" weight="medium">
@@ -322,7 +358,11 @@ const AccountScreen: FC = () => {
               <View style={styles.cardContent}>
                 <View style={styles.cardLeft}>
                   <View style={styles.cardIconContainer}>
-                    <Ionicons color={colors.text} name="log-out" size={22} />
+                    <Ionicons
+                      color={colors.text}
+                      name="log-out"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
                   </View>
                   <View style={styles.signOutTextContainer}>
                     <ThemedText type="body" weight="medium">
@@ -340,7 +380,7 @@ const AccountScreen: FC = () => {
                 <Ionicons
                   color={colors.textTertiary}
                   name="chevron-forward"
-                  size={20}
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
                   style={styles.cardChevron}
                 />
               </View>
@@ -364,7 +404,11 @@ const AccountScreen: FC = () => {
               <View style={styles.cardContent}>
                 <View style={styles.cardLeft}>
                   <View style={styles.cardIconContainer}>
-                    <Ionicons color={colors.text} name="logo-twitter" size={22} />
+                    <Ionicons
+                      color={colors.text}
+                      name="logo-twitter"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
                   </View>
                   <ThemedText style={styles.cardText} type="body" weight="medium">
                     {STRINGS.TWITTER}
@@ -373,7 +417,7 @@ const AccountScreen: FC = () => {
                 <Ionicons
                   color={colors.textTertiary}
                   name="open"
-                  size={20}
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
                   style={styles.cardChevron}
                 />
               </View>
@@ -390,7 +434,11 @@ const AccountScreen: FC = () => {
               <View style={styles.cardContent}>
                 <View style={styles.cardLeft}>
                   <View style={styles.cardIconContainer}>
-                    <Ionicons color={colors.text} name="logo-facebook" size={22} />
+                    <Ionicons
+                      color={colors.text}
+                      name="logo-facebook"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
                   </View>
                   <ThemedText style={styles.cardText} type="body" weight="medium">
                     {STRINGS.FACEBOOK}
@@ -399,7 +447,7 @@ const AccountScreen: FC = () => {
                 <Ionicons
                   color={colors.textTertiary}
                   name="open"
-                  size={20}
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
                   style={styles.cardChevron}
                 />
               </View>
@@ -416,7 +464,11 @@ const AccountScreen: FC = () => {
               <View style={styles.cardContent}>
                 <View style={styles.cardLeft}>
                   <View style={styles.cardIconContainer}>
-                    <Ionicons color={colors.text} name="logo-instagram" size={22} />
+                    <Ionicons
+                      color={colors.text}
+                      name="logo-instagram"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
                   </View>
                   <ThemedText style={styles.cardText} type="body" weight="medium">
                     {STRINGS.INSTAGRAM}
@@ -425,7 +477,7 @@ const AccountScreen: FC = () => {
                 <Ionicons
                   color={colors.textTertiary}
                   name="open"
-                  size={20}
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
                   style={styles.cardChevron}
                 />
               </View>
@@ -437,10 +489,10 @@ const AccountScreen: FC = () => {
         <View style={styles.appFooterWrapper}>
           <View style={styles.appFooterContent}>
             <ThemedText colorName="tabIconDefault" style={styles.versionText} type="caption">
-              Version {Constants.expoConfig?.version || appVersion || '0.0.0'}
+              {STRINGS.APP_VERSION_LABEL} {Constants.expoConfig?.version || appVersion || '0.0.0'}
             </ThemedText>
             <ThemedText colorName="tabIconDefault" style={styles.copyrightText} type="caption">
-              © {currentYear} {pkg.name}
+              {STRINGS.COPYRIGHT_SYMBOL} {currentYear} {pkg.name}
             </ThemedText>
           </View>
         </View>
@@ -551,7 +603,7 @@ const styles = StyleSheet.create({
 
   copyrightText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    letterSpacing: 0.3,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
     opacity: LAYOUT.OPACITY.MEDIUM,
   },
 
@@ -583,7 +635,7 @@ const styles = StyleSheet.create({
   },
 
   versionText: {
-    letterSpacing: 0.4,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.EXTRA_WIDE,
     opacity: LAYOUT.OPACITY.HIGH,
   },
 
@@ -598,7 +650,7 @@ const styles = StyleSheet.create({
 
   clearButton: {
     alignSelf: 'flex-end',
-    minWidth: 50,
+    minWidth: MIN_TOUCH_TARGET.LARGE + LAYOUT.SPACING.MICRO * 2,
     paddingHorizontal: LAYOUT.SPACING.TINY,
   },
 });

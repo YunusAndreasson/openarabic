@@ -1,10 +1,11 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, type TextStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
+import { CACHE_SIZE } from '@/constants/performance';
 import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
@@ -73,7 +74,7 @@ const calculateFontSize = (isWarning: boolean, isVague: boolean, isStruggling: b
 };
 
 // ===== CACHE MANAGEMENT FOR PERFORMANCE =====
-const clearOldestCacheEntry = (cache: Map<string, any>): void => {
+const clearOldestCacheEntry = (cache: Map<string, TextStyle>): void => {
   const firstKey = cache.keys().next().value;
   if (firstKey !== undefined) {
     cache.delete(firstKey);
@@ -81,10 +82,10 @@ const clearOldestCacheEntry = (cache: Map<string, any>): void => {
 };
 
 // Module-level cache for style calculations
-const textStyleCache = new Map<string, any>();
-const CACHE_MAX_SIZE = 15; // LRU management
+const textStyleCache = new Map<string, TextStyle>();
+const CACHE_MAX_SIZE = CACHE_SIZE.SMALL; // LRU management
 
-const getCachedTextStyle = (textColor: string, fontSize: number) => {
+const getCachedTextStyle = (textColor: string, fontSize: number): TextStyle => {
   const cacheKey = `${textColor}-${fontSize}`;
 
   const cached = textStyleCache.get(cacheKey);

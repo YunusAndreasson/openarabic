@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, type QueryObserverResult } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
@@ -19,7 +19,7 @@ interface ArticleDataResult {
   selectedWordIds: Set<number>;
   sortedSentences: Required<Article>['article_sentences'];
   sentenceWordsMap: Map<number, SentenceWord[]>;
-  refetchStudyWords: () => Promise<any>;
+  refetchStudyWords: () => Promise<QueryObserverResult<StudyWord[], Error>>;
   isLoadingStudyWords: boolean;
 }
 

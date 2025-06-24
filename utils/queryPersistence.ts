@@ -4,6 +4,7 @@ import type { Query } from '@tanstack/react-query';
 
 import { handleError } from './errorHandling';
 import { getSafeStorage, isAsyncStorageAvailable } from './safeAsyncStorage';
+import { STRINGS } from '@/constants/strings';
 
 // Constants for better performance and maintainability
 const CACHE_KEY = 'REACT_QUERY_OFFLINE_CACHE';
@@ -75,7 +76,7 @@ export const PERSISTENCE_OPTIONS = {
  */
 export const clearPersistedCache = async (): Promise<void> => {
   if (!isAsyncStorageAvailable()) {
-    handleError(new Error('AsyncStorage unavailable, cannot clear cache'), {
+    handleError(new Error(STRINGS.ERROR_ASYNC_STORAGE_CANNOT_CLEAR), {
       showToast: false,
     });
     return;
@@ -92,7 +93,7 @@ export const clearPersistedCache = async (): Promise<void> => {
  */
 export const getPersistedCacheSize = async (): Promise<number> => {
   if (!isAsyncStorageAvailable()) {
-    handleError(new Error('AsyncStorage unavailable, cannot read cache'), {
+    handleError(new Error(STRINGS.ERROR_ASYNC_STORAGE_CANNOT_READ), {
       showToast: false,
     });
     return 0;

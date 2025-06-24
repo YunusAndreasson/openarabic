@@ -4,7 +4,7 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ProgressBar } from '@/components/ProgressBar';
 import { PROGRESS_BAR_ANIMATION_DURATION } from '@/constants/animation';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectionFeedback } from '@/utils/haptics';
 
@@ -53,7 +53,11 @@ const ListenHeader: FC<ListenHeaderProps> = ({
           hitSlop={LAYOUT.HIT_SLOP.SMALL}
           testID="manage-word-button"
         >
-          <Ionicons name="ellipsis-horizontal" size={16} color={colors.secondaryText} />
+          <Ionicons
+            name="ellipsis-horizontal"
+            size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+            color={colors.secondaryText}
+          />
         </TouchableOpacity>
       )}
     </View>
@@ -76,9 +80,9 @@ const styles = StyleSheet.create({
     marginVertical: LAYOUT.SPACING.MEDIUM,
   },
   manageButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: MIN_TOUCH_TARGET.SMALL,
+    height: MIN_TOUCH_TARGET.SMALL,
+    borderRadius: MIN_TOUCH_TARGET.SMALL / 2,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: LAYOUT.SPACING.SMALL,

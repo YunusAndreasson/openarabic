@@ -39,8 +39,7 @@ const ClassicalTextsScreen: FC = () => {
         {/* Introduction */}
         <View style={styles.section}>
           <ThemedText style={styles.bodyText} type="body">
-            Classical Islamic texts with translations provide optimal conditions for Arabic
-            acquisition through comprehensible input.
+            {STRINGS.CLASSICAL_TEXTS_INTRO}
           </ThemedText>
         </View>
 
@@ -53,45 +52,61 @@ const ClassicalTextsScreen: FC = () => {
           <View style={styles.benefitsList}>
             <View style={styles.benefitItem}>
               <View style={[styles.benefitIcon, { backgroundColor: colors.elevation2 }]}>
-                <Ionicons color={colors.tint} name="library-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="library-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.benefitContent}>
                 <ThemedText style={styles.benefitText} type="body">
                   <ThemedText weight="bold">{STRINGS.COMPLETE_LINGUISTIC_SYSTEM}</ThemedText>
-                  {'\n'}All Arabic grammatical structures in authentic contexts
+                  {'\n'}{STRINGS.COMPLETE_ARABIC_SYSTEM}
                 </ThemedText>
               </View>
             </View>
             <View style={styles.benefitItem}>
               <View style={[styles.benefitIcon, { backgroundColor: colors.elevation2 }]}>
-                <Ionicons color={colors.tint} name="book-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="book-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.benefitContent}>
                 <ThemedText style={styles.benefitText} type="body">
                   <ThemedText weight="bold">{STRINGS.RICH_VOCABULARY_INPUT}</ThemedText>
-                  {'\n'}Thousands of words in meaningful, comprehensible contexts
+                  {'\n'}{STRINGS.RICH_VOCABULARY_INPUT_DESC}
                 </ThemedText>
               </View>
             </View>
             <View style={styles.benefitItem}>
               <View style={[styles.benefitIcon, { backgroundColor: colors.elevation2 }]}>
-                <Ionicons color={colors.tint} name="language-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="language-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.benefitContent}>
                 <ThemedText style={styles.benefitText} type="body">
                   <ThemedText weight="bold">{STRINGS.AUTHENTIC_LANGUAGE_PATTERNS}</ThemedText>
-                  {'\n'}Arabic as actually written and used by native speakers
+                  {'\n'}{STRINGS.AUTHENTIC_LANGUAGE_PATTERNS_DESC}
                 </ThemedText>
               </View>
             </View>
             <View style={styles.benefitItem}>
               <View style={[styles.benefitIcon, { backgroundColor: colors.elevation2 }]}>
-                <Ionicons color={colors.tint} name="bulb-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="bulb-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.benefitContent}>
                 <ThemedText style={styles.benefitText} type="body">
                   <ThemedText weight="bold">{STRINGS.CULTURAL_AND_CONCEPTUAL_FRAMEWORK}</ThemedText>
-                  {'\n'}Understanding of Arabic thought patterns and expression
+                  {'\n'}{STRINGS.CULTURAL_AND_CONCEPTUAL_FRAMEWORK_DESC}
                 </ThemedText>
               </View>
             </View>
@@ -107,30 +122,36 @@ const ClassicalTextsScreen: FC = () => {
           <View style={styles.concernsList}>
             <View style={styles.concernItem}>
               <View style={[styles.concernIcon, { backgroundColor: colors.elevation2 }]}>
-                <Ionicons color={colors.tint} name="shield-checkmark-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="shield-checkmark-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.concernContent}>
                 <ThemedText style={styles.concernTitle} type="body" weight="bold">
                   {STRINGS.TOO_DIFFICULT_WITHOUT_GRAMMAR}
                 </ThemedText>
                 <ThemedText style={styles.concernText} type="body" variant="secondary">
-                  Translations provide comprehensible input while exposing you to authentic
-                  structures. Krashens research shows grammar is acquired, not learned.
+                  {STRINGS.TRANSLATIONS_PROVIDE_COMPREHENSION}
                 </ThemedText>
               </View>
             </View>
 
             <View style={styles.concernItem}>
               <View style={[styles.concernIcon, { backgroundColor: colors.elevation2 }]}>
-                <Ionicons color={colors.tint} name="heart-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="heart-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.concernContent}>
                 <ThemedText style={styles.concernTitle} type="body" weight="bold">
                   {STRINGS.CONTENT_TOO_ADVANCED}
                 </ThemedText>
                 <ThemedText style={styles.concernText} type="body" variant="secondary">
-                  Personal interest lowers the affective filter and improves acquisition. Familiar
-                  concepts create optimal i+1 conditions.
+                  {STRINGS.PERSONAL_INTEREST_LOWERS_AFFECTIVE_FILTER}
                 </ThemedText>
               </View>
             </View>
@@ -146,30 +167,36 @@ const ClassicalTextsScreen: FC = () => {
           <View style={styles.comparisonList}>
             <View style={styles.comparisonItem}>
               <View style={[styles.comparisonIcon, { backgroundColor: colors.elevation1 }]}>
-                <Ionicons color={colors.tint} name="library-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="library-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.comparisonContent}>
                 <ThemedText style={styles.comparisonTitle} type="body" weight="bold">
                   {STRINGS.CLASSICAL_ARABIC}
                 </ThemedText>
                 <ThemedText style={styles.comparisonText} type="body" variant="secondary">
-                  Foundation of all Arabic varieties. Enables reading Quran, hadith, literature,
-                  formal writing, and news.
+                  {STRINGS.CLASSICAL_ARABIC_DESC}
                 </ThemedText>
               </View>
             </View>
 
             <View style={styles.comparisonItem}>
               <View style={[styles.comparisonIcon, { backgroundColor: colors.elevation1 }]}>
-                <Ionicons color={colors.tint} name="chatbubble-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="chatbubble-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.comparisonContent}>
                 <ThemedText style={styles.comparisonTitle} type="body" weight="bold">
                   {STRINGS.MODERN_STANDARD_ARABIC}
                 </ThemedText>
                 <ThemedText style={styles.comparisonText} type="body" variant="secondary">
-                  Simplified classical Arabic for contemporary media and formal contexts. Easy
-                  transition from classical foundation.
+                  {STRINGS.MODERN_STANDARD_ARABIC_DESC}
                 </ThemedText>
               </View>
             </View>
@@ -182,14 +209,10 @@ const ClassicalTextsScreen: FC = () => {
             {STRINGS.THE_ACQUISITION_PROCESS}
           </ThemedText>
           <ThemedText style={styles.bodyText} type="body">
-            Consistent exposure to comprehensible input builds linguistic competence over time. Each
-            reading session contributes to your developing Arabic system through unconscious
-            acquisition.
+            {STRINGS.PROCESS_EXPOSURE_BUILDS_COMPETENCE}
           </ThemedText>
           <ThemedText style={styles.bodyText} type="body">
-            This approach has successfully taught Arabic for centuries. Modern SLA research
-            validates combining authentic texts with translation support for optimal comprehensible
-            input.
+            {STRINGS.APPROACH_VALIDATED_BY_RESEARCH}
           </ThemedText>
         </View>
 
@@ -202,45 +225,54 @@ const ClassicalTextsScreen: FC = () => {
           <View style={styles.referencesList}>
             <View style={styles.referenceItem}>
               <View style={[styles.referenceIcon, { backgroundColor: colors.elevation1 }]}>
-                <Ionicons color={colors.tint} name="document-text-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="document-text-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.referenceContent}>
                 <ThemedText style={styles.referenceTitle} type="body" weight="bold">
                   {STRINGS.INPUT_HYPOTHESIS}
                 </ThemedText>
                 <ThemedText style={styles.referenceText} type="body" variant="secondary">
-                  Krashen, S. (1985). The Input Hypothesis: Issues and Implications. Demonstrates
-                  that comprehensible input is the primary driver of language acquisition.
+                  {STRINGS.RESEARCH_REF_KRASHEN_1985}
                 </ThemedText>
               </View>
             </View>
 
             <View style={styles.referenceItem}>
               <View style={[styles.referenceIcon, { backgroundColor: colors.elevation1 }]}>
-                <Ionicons color={colors.tint} name="document-text-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="document-text-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.referenceContent}>
                 <ThemedText style={styles.referenceTitle} type="body" weight="bold">
                   {STRINGS.AFFECTIVE_FILTER_HYPOTHESIS}
                 </ThemedText>
                 <ThemedText style={styles.referenceText} type="body" variant="secondary">
-                  Krashen, S. (1982). Principles and Practice in Second Language Acquisition. Shows
-                  how motivation and low anxiety enable optimal language acquisition.
+                  {STRINGS.RESEARCH_REF_AFFECTIVE_FILTER_HYPOTHESIS}
                 </ThemedText>
               </View>
             </View>
 
             <View style={styles.referenceItem}>
               <View style={[styles.referenceIcon, { backgroundColor: colors.elevation1 }]}>
-                <Ionicons color={colors.tint} name="document-text-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="document-text-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.referenceContent}>
                 <ThemedText style={styles.referenceTitle} type="body" weight="bold">
                   {STRINGS.NATURAL_APPROACH}
                 </ThemedText>
                 <ThemedText style={styles.referenceText} type="body" variant="secondary">
-                  Krashen, S. & Terrell, T. (1983). The Natural Approach. Demonstrates effective
-                  language teaching through comprehensible input and meaningful content.
+                  {STRINGS.RESEARCH_REF_KRASHEN_TERRELL_1983}
                 </ThemedText>
               </View>
             </View>
@@ -296,7 +328,7 @@ const styles = StyleSheet.create({
     height: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
-    marginTop: 2,
+    marginTop: LAYOUT.SPACING.MICRO * 2,
     width: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
   },
   concernContent: {
@@ -325,7 +357,7 @@ const styles = StyleSheet.create({
     height: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
-    marginTop: 2,
+    marginTop: LAYOUT.SPACING.MICRO * 2,
     width: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
   },
   benefitContent: {
@@ -351,7 +383,7 @@ const styles = StyleSheet.create({
     height: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
-    marginTop: 2,
+    marginTop: LAYOUT.SPACING.MICRO * 2,
     width: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
   },
   comparisonContent: {
@@ -380,7 +412,7 @@ const styles = StyleSheet.create({
     height: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
-    marginTop: 2,
+    marginTop: LAYOUT.SPACING.MICRO * 2,
     width: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
   },
   referenceContent: {

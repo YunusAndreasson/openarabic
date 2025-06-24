@@ -87,11 +87,26 @@ export const TOGGLE_PRESS_SCALE = 0.95;
 /** Scale value used when pressing individual Arabic words */
 export const WORD_PRESS_SCALE = 0.95;
 
+/** Scale value applied when dragging cards */
+export const CARD_DRAG_SCALE = 1.05;
+
+/** Ratio of screen width required to trigger a review card swipe */
+export const REVIEW_CARD_SWIPE_THRESHOLD_RATIO = 0.04;
+
+/** Delay before resetting card position after swipe */
+export const REVIEW_CARD_RESET_DELAY = 50;
+
+/** Minimum gesture distance before activating swipe */
+export const REVIEW_CARD_MIN_DISTANCE = 0.1;
+
 /** Threshold for skipping progress animations if change is tiny */
 export const PROGRESS_SKIP_THRESHOLD = 50;
 
 /** Maximum progress value representing 100% */
 export const PROGRESS_MAX_VALUE = 10000;
+
+/** Minimum progress value before triggering animations */
+export const REVIEW_MIN_PROGRESS_VALUE = 1;
 
 /** Default animation duration for UI feedback */
 export const DEFAULT_ANIMATION_DURATION = 200;
@@ -113,6 +128,15 @@ export const TOAST_SPRING = {
 
 /** Threshold to hide the header when scrolling */
 export const HEADER_SCROLL_THRESHOLD = 50;
+
+/** Multiplier applied to list item height for overscroll draw distance */
+export const LIST_DRAW_DISTANCE_MULTIPLIER = 5;
+
+/** Larger multiplier used for sentence lists */
+export const SENTENCE_DRAW_DISTANCE_MULTIPLIER = 12;
+
+/** Default scroll event throttle for smooth animations */
+export const SCROLL_EVENT_THROTTLE = 16;
 
 /** Scale value used when dismissing the Now Playing card */
 export const NOW_PLAYING_DISMISS_SCALE = 0.92;
@@ -187,6 +211,9 @@ export const TOAST_SCALE_CONFIG = {
   IMPORTANT: { initialScale: 0.2, overshoot: 1.15 },
   DEFAULT: { initialScale: 0.3, overshoot: 1.1 },
 } as const;
+
+/** Default toast visibility duration */
+export const DEFAULT_TOAST_DURATION = 4000;
 
 /** Duration for icon entrance animations */
 export const ICON_ENTRANCE_DURATION = 400;

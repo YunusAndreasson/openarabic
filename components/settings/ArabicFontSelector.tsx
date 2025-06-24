@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     writingDirection: 'rtl',
     marginBottom: LAYOUT.SPACING.SMALL,
-    minHeight: 80,
+    minHeight: LAYOUT.CARD.HEIGHT.LIST_ITEM,
     textAlignVertical: 'center',
     // Dynamic line height will be calculated by getArabicTextStyle
   },

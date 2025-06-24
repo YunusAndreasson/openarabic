@@ -6,6 +6,7 @@ import EmptyState from '@/components/EmptyState';
 import FilterSummary from '@/components/FilterSummary';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
+import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
@@ -16,7 +17,7 @@ import ListArticleItem from './ListArticleItem';
 const NOOP_ARTICLE_PRESS = () => {};
 // Use responsive height for filtered article items
 const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM;
-const DRAW_DISTANCE_MULTIPLIER = 5;
+const DRAW_DISTANCE_MULTIPLIER = LIST_DRAW_DISTANCE_MULTIPLIER;
 
 // Static separator component
 const SeparatorComponent = () => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />;

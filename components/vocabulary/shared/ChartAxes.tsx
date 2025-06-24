@@ -2,13 +2,13 @@ import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { withOpacity } from '@/utils/colorUtils';
 
 // Export the y-axis width for use in other components - optimized for perfect alignment
-export const Y_AXIS_WIDTH = 36; // Balanced for alignment with card padding
+export const Y_AXIS_WIDTH = LAYOUT.CHART.Y_AXIS_WIDTH; // Consistent chart spacing
 
 interface AxisLabelsProps {
   width: number;
@@ -63,7 +63,8 @@ export const ChartAxes = memo(
           styles.axesContainer,
           {
             width: width + (showYAxis ? Y_AXIS_WIDTH : 0),
-            height: height + 32, // Optimized space for x-axis labels (2px gap + 24px label height + 6px bottom margin)
+            height:
+              height + LAYOUT.SPACING.XXXLARGE, // Optimized space for x-axis labels
           },
         ]}
       >
@@ -76,7 +77,13 @@ export const ChartAxes = memo(
                 style={[
                   styles.yLabel,
                   {
-                    top: Math.max(0, Math.min(label.y - 8, height - 16)), // Center the label with bounds check
+                    top: Math.max(
+                      0,
+                      Math.min(
+                        label.y - LAYOUT.SPACING.SMALL,
+                        height - LAYOUT.SPACING.LARGE
+                      )
+                    ), // Center the label with bounds check
                     width: Y_AXIS_WIDTH,
                   },
                 ]}
@@ -116,7 +123,7 @@ export const ChartAxes = memo(
             if (position === undefined) return null;
 
             // Calculate label left position - consistently center all labels on their data points
-            const labelWidth = 32;
+            const labelWidth = MIN_TOUCH_TARGET.SMALL;
             const labelLeft = position - labelWidth / 2; // Always center on data point for even alignment
 
             return (
@@ -161,21 +168,21 @@ const styles = StyleSheet.create({
     top: 0,
   },
   xAxisContainer: {
-    height: 24, // Reduced container height for better proportions
+    height: LAYOUT.SPACING.XXLARGE, // Reduced container height for better proportions
     marginBottom: LAYOUT.SPACING.MEDIUM,
     position: 'absolute',
   },
   xLabel: {
     alignItems: 'center',
-    height: 18, // Reduced label height for tighter spacing
+    height: LAYOUT.SPACING.MEDIUM * 1.5, // Reduced label height for tighter spacing
     justifyContent: 'center', // Center labels within container
     position: 'absolute',
   },
   xLabelText: {
-    fontSize: 11,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     fontWeight: '500',
     includeFontPadding: false,
-    lineHeight: 16,
+    lineHeight: LAYOUT.SPACING.LARGE,
     textAlign: 'center',
   },
   yAxisContainer: {
@@ -185,9 +192,9 @@ const styles = StyleSheet.create({
   },
   yLabel: {
     alignItems: 'flex-end',
-    height: 16,
+    height: LAYOUT.SPACING.LARGE,
     justifyContent: 'center',
-    paddingRight: 6, // Reduced to match x-axis bottom margin for perfect alignment
+    paddingRight: LAYOUT.SPACING.TINY * 1.5, // Reduced to match x-axis bottom margin for perfect alignment
     position: 'absolute',
   },
   yLabelText: {

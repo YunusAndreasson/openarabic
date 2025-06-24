@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    letterSpacing: 0.2,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
     opacity: LAYOUT.OPACITY.HIGH,
     textAlign: 'center',

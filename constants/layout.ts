@@ -82,9 +82,16 @@ export const TYPOGRAPHY_HIERARCHY = {
   },
 
   LETTER_SPACING: {
+    EXTRA_TIGHT: -0.5,
     TIGHT: -0.3,
+    NARROW: -0.2,
+    SLIGHT_NEGATIVE: -0.1,
     NORMAL: 0,
+    SLIGHT_POSITIVE: 0.1,
+    WIDE: 0.2,
     RELAXED: 0.3,
+    EXTRA_WIDE: 0.4,
+    ULTRA_WIDE: 0.5,
   },
 
   LINE_HEIGHT_MULTIPLIERS: {
@@ -218,6 +225,7 @@ export const LAYOUT = {
       SMALL: SPACING_SCALE.LARGE, // 16 - responsive to spacing scale
       MEDIUM: SPACING_SCALE.XLARGE, // 20 - responsive to spacing scale
       LARGE: SPACING_SCALE.XXLARGE, // 24 - responsive to spacing scale
+      XLARGE: BASE_UNIT * 7, // 28 - responsive to base unit
     },
   },
 
@@ -249,6 +257,35 @@ export const LAYOUT = {
   WIDTH_RATIOS: {
     ALMOST_HALF: 0.48,
     THIRD: 0.3333,
+  },
+
+  CHART: {
+    Y_AXIS_WIDTH: BASE_UNIT * 9, // 36 - consistent chart alignment
+  },
+
+  /** Standard height for thin progress bars */
+  PROGRESS_BAR: {
+    HEIGHT: BASE_UNIT * 0.75, // 3 - responsive to base unit
+  },
+
+  /** Common sizes for bottom sheet UI elements */
+  BOTTOM_SHEET: {
+    INDICATOR: {
+      WIDTH: BASE_UNIT * 9, // 36 - responsive to base unit
+      HEIGHT: BASE_UNIT, // 4 - responsive to base unit
+    },
+  },
+
+  /** Height for individual sentence items */
+  SENTENCE_ITEM: {
+    HEIGHT: BASE_UNIT * 17.5, // 70 - responsive to base unit
+  },
+
+  CALENDAR: {
+    EVENT_RIGHT_SECTION: {
+      MAX_WIDTH: 150,
+      MIN_WIDTH: 130,
+    },
   },
 
   ANIMATION: {
@@ -321,6 +358,16 @@ export const LAYOUT = {
         fontSize: BASE_UNIT * 4.25, // 17 - responsive to base unit
         fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
       },
+    },
+  },
+
+  REVIEW: {
+    BOTTOM_ACTIONS_HEIGHT: CARD.HEIGHT.LIST_ITEM,
+    INDICATOR_MAX_WIDTH: BASE_UNIT * 22.5, // 90 - responsive to base unit
+    COMPLETION: {
+      ICON_DEFAULT_SIZE: BASE_UNIT * 25, // 100 - responsive to base unit
+      ICON_CONTAINER_HEIGHT: BASE_UNIT * 30, // 120 - responsive to base unit
+      CONTENT_MAX_WIDTH: BASE_UNIT * 87.5, // 350 - responsive to base unit
     },
   },
 };

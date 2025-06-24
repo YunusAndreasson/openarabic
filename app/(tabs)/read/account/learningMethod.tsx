@@ -39,9 +39,7 @@ const LearningMethodScreen: FC = () => {
         {/* Introduction */}
         <View style={styles.section}>
           <ThemedText style={styles.bodyText} type="body">
-            Language acquisition occurs through understanding meaningful messages, not grammar
-            instruction. According to Krashens Input Hypothesis, the brain naturally identifies
-            patterns through exposure to comprehensible input.
+            {STRINGS.LEARNING_METHOD_INTRO}
           </ThemedText>
         </View>
 
@@ -54,60 +52,72 @@ const LearningMethodScreen: FC = () => {
           <View style={styles.stepsList}>
             <View style={styles.stepItem}>
               <View style={[styles.stepIcon, { backgroundColor: colors.elevation2 }]}>
-                <Ionicons color={colors.tint} name="eye-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="eye-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.stepContent}>
                 <ThemedText style={styles.stepTitle} type="body" weight="bold">
                   {STRINGS.COMPREHENSIBLE_INPUT}
                 </ThemedText>
                 <ThemedText style={styles.stepText} type="body" variant="secondary">
-                  Translations provide meaning context while exposing you to Arabic structures just
-                  beyond your current level.
+                  {STRINGS.TRANSLATIONS_EXPOSE_STRUCTURES}
                 </ThemedText>
               </View>
             </View>
 
             <View style={styles.stepItem}>
               <View style={[styles.stepIcon, { backgroundColor: colors.elevation2 }]}>
-                <Ionicons color={colors.tint} name="bulb-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="bulb-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.stepContent}>
                 <ThemedText style={styles.stepTitle} type="body" weight="bold">
                   {STRINGS.UNCONSCIOUS_PATTERN_RECOGNITION}
                 </ThemedText>
                 <ThemedText style={styles.stepText} type="body" variant="secondary">
-                  The brain automatically identifies recurring structures without conscious analysis
-                  or grammar study.
+                  {STRINGS.BRAIN_AUTOMATICALLY_IDENTIFIES}
                 </ThemedText>
               </View>
             </View>
 
             <View style={styles.stepItem}>
               <View style={[styles.stepIcon, { backgroundColor: colors.elevation2 }]}>
-                <Ionicons color={colors.tint} name="refresh-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="refresh-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.stepContent}>
                 <ThemedText style={styles.stepTitle} type="body" weight="bold">
                   {STRINGS.NATURAL_ORDER_ACQUISITION}
                 </ThemedText>
                 <ThemedText style={styles.stepText} type="body" variant="secondary">
-                  Language structures are acquired in a predictable sequence through repeated
-                  meaningful exposure.
+                  {STRINGS.STRUCTURES_ACQUIRED_PREDICTABLE}
                 </ThemedText>
               </View>
             </View>
 
             <View style={styles.stepItem}>
               <View style={[styles.stepIcon, { backgroundColor: colors.elevation2 }]}>
-                <Ionicons color={colors.tint} name="checkmark-circle-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="checkmark-circle-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.stepContent}>
                 <ThemedText style={styles.stepTitle} type="body" weight="bold">
                   {STRINGS.INTERNALIZED_COMPETENCE}
                 </ThemedText>
                 <ThemedText style={styles.stepText} type="body" variant="secondary">
-                  Arabic structures become part of your acquired language system, enabling fluent
-                  use.
+                  {STRINGS.INTERNALIZED_COMPETENCE_DESC}
                 </ThemedText>
               </View>
             </View>
@@ -123,45 +133,54 @@ const LearningMethodScreen: FC = () => {
           <View style={styles.reasonsList}>
             <View style={styles.reasonItem}>
               <View style={[styles.reasonIcon, { backgroundColor: colors.elevation2 }]}>
-                <Ionicons color={colors.tint} name="heart-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="heart-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.reasonContent}>
                 <ThemedText style={styles.reasonTitle} type="body" weight="bold">
                   {STRINGS.LOW_AFFECTIVE_FILTER}
                 </ThemedText>
                 <ThemedText style={styles.reasonText} type="body" variant="secondary">
-                  Personal interest in content reduces anxiety and increases motivation, enabling
-                  optimal acquisition.
+                  {STRINGS.PERSONAL_INTEREST_REDUCES_ANXIETY}
                 </ThemedText>
               </View>
             </View>
 
             <View style={styles.reasonItem}>
               <View style={[styles.reasonIcon, { backgroundColor: colors.elevation2 }]}>
-                <Ionicons color={colors.tint} name="library-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="library-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.reasonContent}>
                 <ThemedText style={styles.reasonTitle} type="body" weight="bold">
                   {STRINGS.RICH_LINGUISTIC_INPUT_TITLE}
                 </ThemedText>
                 <ThemedText style={styles.reasonText} type="body" variant="secondary">
-                  Complete Arabic grammatical system and extensive vocabulary in authentic,
-                  meaningful contexts.
+                  {STRINGS.COMPLETE_ARABIC_SYSTEM}
                 </ThemedText>
               </View>
             </View>
 
             <View style={styles.reasonItem}>
               <View style={[styles.reasonIcon, { backgroundColor: colors.elevation2 }]}>
-                <Ionicons color={colors.tint} name="trending-up-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="trending-up-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.reasonContent}>
                 <ThemedText style={styles.reasonTitle} type="body" weight="bold">
                   {STRINGS.OPTIMAL_COMPREHENSIBILITY}
                 </ThemedText>
                 <ThemedText style={styles.reasonText} type="body" variant="secondary">
-                  Familiar concepts in Arabic with translation support create ideal i+1 conditions
-                  for acquisition.
+                  {STRINGS.FAMILIAR_CONCEPTS_CREATE_I_PLUS_ONE}
                 </ThemedText>
               </View>
             </View>
@@ -174,9 +193,7 @@ const LearningMethodScreen: FC = () => {
             {STRINGS.RESEARCH_FOUNDATION}
           </ThemedText>
           <ThemedText style={styles.bodyText} type="body">
-            Krashens Input Hypothesis demonstrates that comprehensible input is the primary
-            mechanism for language acquisition. Research shows optimal learning occurs when learners
-            understand 90-95% of content.
+            {STRINGS.KRASHEN_INPUT_HYPOTHESIS}
           </ThemedText>
         </View>
 
@@ -189,34 +206,46 @@ const LearningMethodScreen: FC = () => {
           <View style={styles.benefitsList}>
             <View style={styles.benefitItem}>
               <View style={[styles.benefitIcon, { backgroundColor: colors.elevation2 }]}>
-                <Ionicons color={colors.tint} name="bulb-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="bulb-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.benefitContent}>
                 <ThemedText style={styles.benefitText} type="body">
                   <ThemedText weight="bold">{STRINGS.ACQUISITION_NOT_LEARNING}</ThemedText>
-                  {'\n'}Language develops through understanding, not memorization
+                  {'\n'}{STRINGS.LANGUAGE_DEVELOPS_THROUGH_UNDERSTANDING}
                 </ThemedText>
               </View>
             </View>
             <View style={styles.benefitItem}>
               <View style={[styles.benefitIcon, { backgroundColor: colors.elevation2 }]}>
-                <Ionicons color={colors.tint} name="eye-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="eye-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.benefitContent}>
                 <ThemedText style={styles.benefitText} type="body">
                   <ThemedText weight="bold">{STRINGS.FOCUS_ON_MEANING}</ThemedText>
-                  {'\n'}Understanding messages drives language development
+                  {'\n'}{STRINGS.UNDERSTANDING_MESSAGES_DRIVES_DEVELOPMENT}
                 </ThemedText>
               </View>
             </View>
             <View style={styles.benefitItem}>
               <View style={[styles.benefitIcon, { backgroundColor: colors.elevation2 }]}>
-                <Ionicons color={colors.tint} name="leaf-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="leaf-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.benefitContent}>
                 <ThemedText style={styles.benefitText} type="body">
                   <ThemedText weight="bold">{STRINGS.NATURAL_PROCESS}</ThemedText>
-                  {'\n'}Acquisition occurs automatically with sufficient comprehensible input
+                  {'\n'}{STRINGS.ACQUISITION_OCCURS_AUTOMATICALLY}
                 </ThemedText>
               </View>
             </View>
@@ -232,42 +261,54 @@ const LearningMethodScreen: FC = () => {
           <View style={styles.referencesList}>
             <View style={styles.referenceItem}>
               <View style={[styles.referenceIcon, { backgroundColor: colors.elevation1 }]}>
-                <Ionicons color={colors.tint} name="document-text-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="document-text-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.referenceContent}>
                 <ThemedText style={styles.referenceTitle} type="body" weight="bold">
-                  Krashen, S. (1985)
+                  {STRINGS.REFERENCE_KRASHEN_1985}
                 </ThemedText>
                 <ThemedText style={styles.referenceText} type="body" variant="secondary">
-                  The Input Hypothesis: Issues and Implications. Longman.
+                  {STRINGS.RESEARCH_REF_KRASHEN_1985}
                 </ThemedText>
               </View>
             </View>
 
             <View style={styles.referenceItem}>
               <View style={[styles.referenceIcon, { backgroundColor: colors.elevation1 }]}>
-                <Ionicons color={colors.tint} name="document-text-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="document-text-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.referenceContent}>
                 <ThemedText style={styles.referenceTitle} type="body" weight="bold">
-                  Krashen, S. & Terrell, T. (1983)
+                  {STRINGS.REFERENCE_KRASHEN_TERRELL_1983}
                 </ThemedText>
                 <ThemedText style={styles.referenceText} type="body" variant="secondary">
-                  The Natural Approach: Language Acquisition in the Classroom. Prentice Hall.
+                  {STRINGS.RESEARCH_REF_KRASHEN_TERRELL_1983}
                 </ThemedText>
               </View>
             </View>
 
             <View style={styles.referenceItem}>
               <View style={[styles.referenceIcon, { backgroundColor: colors.elevation1 }]}>
-                <Ionicons color={colors.tint} name="document-text-outline" size={20} />
+                <Ionicons
+                  color={colors.tint}
+                  name="document-text-outline"
+                  size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                />
               </View>
               <View style={styles.referenceContent}>
                 <ThemedText style={styles.referenceTitle} type="body" weight="bold">
-                  Lightbown, P. & Spada, N. (2013)
+                  {STRINGS.REFERENCE_LIGHTBOWN_SPADA_2013}
                 </ThemedText>
                 <ThemedText style={styles.referenceText} type="body" variant="secondary">
-                  How Languages are Learned (4th ed.). Oxford University Press.
+                  {STRINGS.RESEARCH_REF_LIGHTBOWN_SPADA_2013}
                 </ThemedText>
               </View>
             </View>
@@ -323,7 +364,7 @@ const styles = StyleSheet.create({
     height: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
-    marginTop: 2,
+    marginTop: LAYOUT.SPACING.MICRO * 2,
     width: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
   },
   stepContent: {
@@ -352,7 +393,7 @@ const styles = StyleSheet.create({
     height: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
-    marginTop: 2,
+    marginTop: LAYOUT.SPACING.MICRO * 2,
     width: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
   },
   reasonContent: {
@@ -381,7 +422,7 @@ const styles = StyleSheet.create({
     height: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
-    marginTop: 2,
+    marginTop: LAYOUT.SPACING.MICRO * 2,
     width: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
   },
   benefitContent: {
@@ -407,7 +448,7 @@ const styles = StyleSheet.create({
     height: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
-    marginTop: 2,
+    marginTop: LAYOUT.SPACING.MICRO * 2,
     width: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
   },
   referenceContent: {

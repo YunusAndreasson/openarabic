@@ -240,24 +240,16 @@ export const useAccountScreen = () => {
 
       if (!isAvailable) {
         // Fallback to mailto link if mail composer is not available
-        Linking.openURL('mailto:yunus@edenmind.com');
+        Linking.openURL(`mailto:${STRINGS.SUPPORT_EMAIL}`);
         return;
       }
 
       // Compose email with pre-filled information
       const result = await MailComposer.composeAsync({
-        recipients: ['yunus@edenmind.com'],
-        subject: 'Open Arabic App Support',
-        body: `Hi there,
-
-I need help with the Open Arabic app.
-
-App Version: ${pkg.version}
-User Email: ${user?.email || 'Not signed in'}
-
-Please describe your issue below:
-
-`,
+        recipients: [STRINGS.SUPPORT_EMAIL],
+        subject: STRINGS.SUPPORT_EMAIL_SUBJECT,
+        body: STRINGS.SUPPORT_EMAIL_BODY_TEMPLATE.replace('{version}', pkg.version)
+          .replace('{email}', user?.email || STRINGS.NO_EMAIL),
         isHtml: false,
       });
 
@@ -271,7 +263,7 @@ Please describe your issue below:
         showToast: false,
         analyticsEventName: 'Mail_Composer_Error',
       });
-      Linking.openURL('mailto:yunus@edenmind.com');
+      Linking.openURL(`mailto:${STRINGS.SUPPORT_EMAIL}`);
     }
   }, [user?.email]);
 

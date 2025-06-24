@@ -40,7 +40,7 @@ const InputIcon = ({
   <Ionicons
     color={error ? colors.tabIconSelected : isFocused ? colors.tint : colors.icon}
     name={name}
-    size={20}
+    size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
     style={styles.leftIcon}
   />
 );
@@ -62,7 +62,7 @@ const RightInputIcon = ({
     <Ionicons
       color={error ? colors.tabIconSelected : isFocused ? colors.tint : colors.icon}
       name={name}
-      size={20}
+      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
     />
   </TouchableOpacity>
 );

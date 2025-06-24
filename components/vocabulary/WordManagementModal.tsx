@@ -14,7 +14,7 @@ import {
   STRICT_MASTERED_STABILITY_THRESHOLD,
   MASTERED_DIFFICULTY_MAX,
 } from '@/constants/fsrs';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { BaseModalProps } from '@/types/ui/modal.types';
@@ -196,7 +196,11 @@ const WordManagementModal = memo(
                     },
                   ]}
                 >
-                  <Ionicons name={action.icon} size={24} color={action.color} />
+                  <Ionicons
+                    name={action.icon}
+                    size={LAYOUT.BUTTON.ICON_SIZE.LARGE}
+                    color={action.color}
+                  />
                 </View>
                 <View style={styles.actionContent}>
                   <ThemedText
@@ -307,8 +311,8 @@ const styles = StyleSheet.create({
     borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   indicator: {
-    width: 36,
-    height: 4,
+    width: LAYOUT.BOTTOM_SHEET.INDICATOR.WIDTH,
+    height: LAYOUT.BOTTOM_SHEET.INDICATOR.HEIGHT,
   },
   content: {
     paddingBottom: LAYOUT.SPACING.LARGE,
@@ -329,12 +333,12 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    minHeight: 64,
+    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE + LAYOUT.SPACING.LARGE,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: MIN_TOUCH_TARGET.SMALL + LAYOUT.SPACING.SMALL,
+    height: MIN_TOUCH_TARGET.SMALL + LAYOUT.SPACING.SMALL,
+    borderRadius: (MIN_TOUCH_TARGET.SMALL + LAYOUT.SPACING.SMALL) / 2,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,

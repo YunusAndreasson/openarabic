@@ -9,6 +9,7 @@ import { ThemedText } from '@/components/ThemedText';
 import ParallaxHeader from '@/components/article/ParallaxHeader';
 import { SentenceScrubber } from '@/components/article/SentenceScrubber';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { SENTENCE_DRAW_DISTANCE_MULTIPLIER, SCROLL_EVENT_THROTTLE } from '@/constants/animation';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
@@ -107,7 +108,7 @@ const ArticleTitle = memo<ArticleTitleProps>(({ title, author }) => {
             textAlign: 'left',
           }}
         >
-          by {author.name}
+          {STRINGS.BY} {author.name}
         </ThemedText>
       </View>
     </>
@@ -157,7 +158,7 @@ interface ArticleContentProps {
   onSentenceChange: (sentenceIndex: number) => void;
   onScrubStart: () => void;
   onScrubEnd: () => void;
-  scrollViewRef: React.RefObject<any>;
+  scrollViewRef: React.RefObject<FlashList<Tables<'article_sentences'>>>;
   // Audio control props
   isInReadingList: boolean;
   isLoadingReadingList: boolean;
@@ -169,9 +170,9 @@ interface ArticleContentProps {
 }
 
 // Extract constants outside component for better performance
-const SENTENCE_ITEM_HEIGHT = 70;
-const SCROLL_THROTTLE = 16;
-const DRAW_DISTANCE_MULTIPLIER = 12;
+const SENTENCE_ITEM_HEIGHT = LAYOUT.SENTENCE_ITEM.HEIGHT;
+const SCROLL_THROTTLE = SCROLL_EVENT_THROTTLE;
+const DRAW_DISTANCE_MULTIPLIER = SENTENCE_DRAW_DISTANCE_MULTIPLIER;
 
 const getItemType = () => 'sentence';
 

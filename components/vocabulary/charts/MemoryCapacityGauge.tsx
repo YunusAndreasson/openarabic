@@ -7,7 +7,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { BaseChart } from '@/components/vocabulary/shared/BaseChart';
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import { INSIGHTS_BUTTON_PRESS_SCALE } from '@/constants/animation';
-import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useNavigationWithDebounce } from '@/hooks';
@@ -239,22 +239,22 @@ const styles = StyleSheet.create({
     width: GAUGE_WIDTH,
   },
   capacityText: {
-    fontSize: 42,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.5,
     fontWeight: '900',
     includeFontPadding: false,
     letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT,
-    lineHeight: 44,
+    lineHeight: MIN_TOUCH_TARGET.MEDIUM,
     textAlign: 'center',
   },
   centerSection: {
     alignItems: 'center',
-    bottom: 45,
+    bottom: MIN_TOUCH_TARGET.MEDIUM + LAYOUT.SPACING.MICRO,
     justifyContent: 'center',
     position: 'absolute',
   },
   gaugeContainer: {
     alignItems: 'center',
-    height: GAUGE_HEIGHT + 40,
+    height: GAUGE_HEIGHT + LAYOUT.SPACING.XXXLARGE + LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     position: 'relative',
   },
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
-    minHeight: 44,
+    minHeight: MIN_TOUCH_TARGET.MEDIUM,
   },
   actionText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,

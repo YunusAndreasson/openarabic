@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { LAYOUT, FONTS } from '@/constants/layout';
+import { LAYOUT, FONTS, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { createNavigationOptions } from '@/constants/modal';
 import { STRINGS } from '@/constants/strings';
 import { useIslamicCalendarEvents, formatDaysUntil } from '@/hooks';
@@ -189,7 +189,11 @@ export default function IslamicCalendarScreen(): JSX.Element {
 
                     <View style={styles.eventDates}>
                       <View style={styles.dateRow}>
-                        <Ionicons color={colors.interactiveSecondary} name="calendar" size={12} />
+                        <Ionicons
+                          color={colors.interactiveSecondary}
+                          name="calendar"
+                          size={LAYOUT.SPACING.MEDIUM}
+                        />
                         <ThemedText
                           skipDefaultColor
                           style={[styles.dateText, { color: colors.interactiveSecondary }]}
@@ -202,7 +206,7 @@ export default function IslamicCalendarScreen(): JSX.Element {
                         <Ionicons
                           color={colors.interactiveSecondary}
                           name="calendar-outline"
-                          size={12}
+                          size={LAYOUT.SPACING.MEDIUM}
                         />
                         <ThemedText style={styles.dateText} type="caption" variant="secondary">
                           {event.gregorianDate.toLocaleDateString('en-US', {
@@ -224,7 +228,7 @@ export default function IslamicCalendarScreen(): JSX.Element {
             <Ionicons
               color={colors.interactiveSecondary}
               name="information-circle-outline"
-              size={16}
+              size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
             />
             <ThemedText style={styles.noteText} type="caption" variant="secondary">
               {STRINGS.DATE_VARIANCE_NOTE}
@@ -245,7 +249,7 @@ const styles = StyleSheet.create({
   },
   currentDateText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '700',
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
   },
   dateInfo: {
     gap: LAYOUT.SPACING.TINY,
@@ -257,18 +261,18 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    letterSpacing: 0.1,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.SLIGHT_POSITIVE,
   },
   daysUntil: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '700',
-    letterSpacing: 0.2,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
   },
   eventArabicName: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '600',
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
     includeFontPadding: false,
-    letterSpacing: 0.2,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.6,
     paddingVertical: LAYOUT.SPACING.TINY,
     textAlign: 'right',
@@ -292,16 +296,16 @@ const styles = StyleSheet.create({
   eventRightSection: {
     alignItems: 'flex-end',
     justifyContent: 'center',
-    maxWidth: 150,
-    minWidth: 130,
+    maxWidth: LAYOUT.CALENDAR.EVENT_RIGHT_SECTION.MAX_WIDTH,
+    minWidth: LAYOUT.CALENDAR.EVENT_RIGHT_SECTION.MIN_WIDTH,
     paddingLeft: LAYOUT.SPACING.TINY,
     paddingVertical: LAYOUT.SPACING.TINY / 2,
   },
   eventTitle: {
     flex: 1,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '700',
-    letterSpacing: -0.2,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.NARROW,
   },
   eventTitleContainer: {
     flex: 1,
@@ -323,8 +327,8 @@ const styles = StyleSheet.create({
   },
   hijriDateText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600',
-    letterSpacing: -0.1,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.SLIGHT_NEGATIVE,
   },
   noteContent: {
     alignItems: 'flex-start',
@@ -340,7 +344,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    height: 2,
+    height: LAYOUT.SPACING.MICRO * 2,
     overflow: 'hidden',
   },
   progressContainer: {
@@ -361,7 +365,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     marginHorizontal: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.TINY,
     opacity: 0.2,
-    width: 1,
+    width: LAYOUT.SPACING.MICRO,
   },
   statItem: {
     alignItems: 'center',
@@ -369,15 +373,15 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    fontWeight: '500',
-    letterSpacing: 0.2,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
     textAlign: 'center',
     textTransform: 'lowercase',
   },
   statNumber: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '700',
-    letterSpacing: -0.3,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT,
   },
   statsSection: {
     alignItems: 'center',

@@ -32,7 +32,7 @@ export const MasteryChart = memo<MasteryChartProps>(
     } = useMasteryChart(studyWords);
 
     // Prepare tooltip data points for interactivity
-    const tooltipDataPoints: DataPoint<any>[] = useMemo(() => {
+    const tooltipDataPoints: DataPoint<Record<string, unknown>>[] = useMemo(() => {
       return dataPoints || [];
     }, [dataPoints]);
 

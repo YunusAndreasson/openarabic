@@ -18,9 +18,9 @@ import type { SortOption as BaseSortOption } from '@/types/ui/sorting.types';
 import { selectionFeedback } from '@/utils/haptics';
 
 export const DIFFICULTY_OPTIONS = [
-  { key: 'beginner', label: 'Beginner', range: [1, 2] as [number, number] },
-  { key: 'intermediate', label: 'Intermediate', range: [3, 3] as [number, number] },
-  { key: 'advanced', label: 'Advanced', range: [4, 5] as [number, number] },
+  { key: 'beginner', label: STRINGS.BEGINNER, range: [1, 2] as [number, number] },
+  { key: 'intermediate', label: STRINGS.INTERMEDIATE, range: [3, 3] as [number, number] },
+  { key: 'advanced', label: STRINGS.ADVANCED, range: [4, 5] as [number, number] },
   { key: 'all', label: STRINGS.ALL_DIFFICULTIES, range: [1, 5] as [number, number] },
 ];
 

@@ -50,11 +50,11 @@ const getIconSize = (size: ButtonSize, customSize?: number) => {
   if (customSize) return customSize;
   switch (size) {
     case 'small':
-      return 18;
+      return LAYOUT.BUTTON.ICON_SIZE.SMALL + 2; // closest predefined size
     case 'large':
-      return 28;
+      return LAYOUT.BUTTON.ICON_SIZE.XLARGE;
     default:
-      return 24;
+      return LAYOUT.BUTTON.ICON_SIZE.LARGE;
   }
 };
 
@@ -65,7 +65,7 @@ function ThemedButtonComponent({
   loading = false,
   style,
   disabled = false,
-  iconSize: customIconSize = 24,
+  iconSize: customIconSize = LAYOUT.BUTTON.ICON_SIZE.LARGE,
   onPress,
   size = 'medium',
   textWeight = 'bold',
