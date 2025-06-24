@@ -33,7 +33,6 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     marginTop: LAYOUT.SPACING.MEDIUM,
-    gap: LAYOUT.SPACING.SMALL,
   },
   listContentContainer: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
