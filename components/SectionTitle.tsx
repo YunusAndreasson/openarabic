@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   },
   infoIcon: {
     alignItems: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderRadius: (LAYOUT.BUTTON.ICON_SIZE.SMALL + LAYOUT.SPACING.SMALL * 2) / 2,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     height: LAYOUT.BUTTON.ICON_SIZE.SMALL + LAYOUT.SPACING.SMALL * 2,
     justifyContent: 'center',

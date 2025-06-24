@@ -63,8 +63,7 @@ export const ChartAxes = memo(
           styles.axesContainer,
           {
             width: width + (showYAxis ? Y_AXIS_WIDTH : 0),
-            height:
-              height + LAYOUT.SPACING.XXXLARGE, // Optimized space for x-axis labels
+            height: height + LAYOUT.SPACING.XXXLARGE, // Optimized space for x-axis labels
           },
         ]}
       >
@@ -79,10 +78,7 @@ export const ChartAxes = memo(
                   {
                     top: Math.max(
                       0,
-                      Math.min(
-                        label.y - LAYOUT.SPACING.SMALL,
-                        height - LAYOUT.SPACING.LARGE
-                      )
+                      Math.min(label.y - LAYOUT.SPACING.SMALL, height - LAYOUT.SPACING.LARGE)
                     ), // Center the label with bounds check
                     width: Y_AXIS_WIDTH,
                   },
@@ -194,7 +190,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     height: LAYOUT.SPACING.LARGE,
     justifyContent: 'center',
-    paddingRight: LAYOUT.SPACING.TINY * 1.5, // Reduced to match x-axis bottom margin for perfect alignment
+    paddingRight: LAYOUT.SPACING.TINY, // Minimal padding for tight layout
     position: 'absolute',
   },
   yLabelText: {

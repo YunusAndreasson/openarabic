@@ -260,7 +260,7 @@ export const LAYOUT = {
   },
 
   CHART: {
-    Y_AXIS_WIDTH: BASE_UNIT * 9, // 36 - consistent chart alignment
+    Y_AXIS_WIDTH: BASE_UNIT * 6, // 24 - optimized for percentage labels
   },
 
   /** Standard height for thin progress bars */

@@ -2,8 +2,8 @@ import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import type { JSX } from 'react';
 import { useCallback, useMemo } from 'react';
-import { StyleSheet, ScrollView, View } from 'react-native';
-import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import SectionTitle from '@/components/SectionTitle';
@@ -154,7 +154,9 @@ const styles = StyleSheet.create({
   chartCard: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     marginBottom: LAYOUT.SPACING.LARGE,
-    padding: LAYOUT.SPACING.LARGE,
+    paddingTop: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.SPACING.MEDIUM, // Reduced bottom padding for better balance
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM, // Reduced horizontal padding for charts
     ...LAYOUT.ELEVATION.SMALL,
   },
   chartWrapper: {

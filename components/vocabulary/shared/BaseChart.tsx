@@ -215,7 +215,9 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   content: {
-    padding: LAYOUT.SPACING.MEDIUM - LAYOUT.SPACING.TINY / 2, // 10.5px → use 10px
+    paddingTop: LAYOUT.SPACING.MEDIUM - LAYOUT.SPACING.TINY / 2, // Top padding for content
+    paddingBottom: LAYOUT.SPACING.TINY, // Minimal bottom padding for tight layout
+    paddingHorizontal: LAYOUT.SPACING.TINY, // Minimal horizontal padding for charts
   },
   emptyContainer: {
     alignItems: 'center',

@@ -2,12 +2,12 @@ import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 
 // Graph dimensions - optimized for perfect alignment and space usage
 // For mobile-only apps, this can be a constant since screen doesn't rotate
-const X_AXIS_LABEL_PADDING = 16;
+const X_AXIS_LABEL_PADDING = 6; // Reduced for tighter layout
 export const GRAPH_WIDTH =
   SCREEN_WIDTH -
   LAYOUT.SCREEN_EDGE_PADDING * 2 -
   LAYOUT.CARD.PADDING.MEDIUM * 2 -
-  32 -
+  24 - // Reduced from 32 for more graph space
   X_AXIS_LABEL_PADDING;
 
 export const useGraphWidth = (): number => GRAPH_WIDTH;
