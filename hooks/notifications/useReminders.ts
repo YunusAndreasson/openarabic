@@ -5,6 +5,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setReminderTime } from '@/store/settingsSlice';
 import type { ReminderTime } from '@/types/notifications.types';
 import { handleError } from '@/utils/errorHandling';
+import { STRINGS } from '@/constants/strings';
 
 const analytics = {
   track: async (
@@ -58,7 +59,7 @@ export function useReminders(): UseRemindersResult {
   };
 
   const formatReminderTime = (hour: number, minute: number): string => {
-    const period = hour >= 12 ? 'PM' : 'AM';
+    const period = hour >= 12 ? STRINGS.PM : STRINGS.AM;
     const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
     const displayMinute = minute.toString().padStart(2, '0');
     return `${displayHour}:${displayMinute} ${period}`;

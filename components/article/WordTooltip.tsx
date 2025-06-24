@@ -6,6 +6,7 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { CACHE_SIZE } from '@/constants/performance';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { WordTooltipProps } from '@/types/ui/modal.types';
@@ -38,7 +39,7 @@ const positioningCache = new Map<
     arrowOffset: number;
   }
 >();
-const CACHE_MAX_SIZE = 50;
+const CACHE_MAX_SIZE = CACHE_SIZE.LARGE;
 
 // Static styles to prevent recreation
 const STATIC_STYLES = StyleSheet.create({
@@ -577,10 +578,10 @@ export const WordTooltip = memo(
             padding: LAYOUT.SPACING.TINY / 2,
             borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM / 2,
           }}
-          hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
+          hitSlop={LAYOUT.HIT_SLOP.SMALL}
           activeOpacity={0.7}
         >
-          <Ionicons name={iconName} size={14} color={indicatorColor} />
+          <Ionicons name={iconName} size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={indicatorColor} />
         </TouchableOpacity>
       );
     }, [onStudyListToggle, wordRootId, isInStudyList, handleStudyListPress, tooltipColors]);
@@ -598,7 +599,7 @@ export const WordTooltip = memo(
         justifyContent: 'center' as const,
         position: 'relative' as const,
         // Add right padding when we have a study indicator to prevent overlap
-        ...(hasStudyIndicator && { paddingRight: 24 }),
+        ...(hasStudyIndicator && { paddingRight: LAYOUT.SPACING.XXLARGE }),
       };
 
       // If we have Arabic analysis, show both Arabic and English with color coordination

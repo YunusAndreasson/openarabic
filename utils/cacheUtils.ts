@@ -1,12 +1,14 @@
 /**
  * Format bytes to human readable string
  */
+import { STRINGS } from '@/constants/strings';
+
 export function formatBytes(bytes: number, decimals: number = 2): string {
-  if (bytes === 0) return '0 Bytes';
+  if (bytes === 0) return `0 ${STRINGS.BYTE_UNITS[0]}`;
 
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const sizes = STRINGS.BYTE_UNITS;
 
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 

@@ -318,7 +318,7 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
         // Verify the selected track has a valid audio URL
         const selectedTrack = processedTracks[validStartIndex];
         if (!selectedTrack?.audioUrl) {
-          throw new Error('Selected track has no audio URL');
+          throw new Error(STRINGS.ERROR_SELECTED_TRACK_NO_URL);
         }
 
         dispatch({
@@ -358,13 +358,13 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
         const validStartIndex = Math.max(0, Math.min(startIndex, tracks.length - 1));
         const trackToPlay = tracks[validStartIndex];
         if (!trackToPlay) {
-          throw new Error('Selected track not found');
+          throw new Error(STRINGS.ERROR_SELECTED_TRACK_NOT_FOUND);
         }
 
         // Load only the first track to start playback quickly
         const [firstProcessed] = await loadQueue(trackToPlay, 0);
         if (!firstProcessed) {
-          throw new Error('Failed to process first track');
+          throw new Error(STRINGS.ERROR_FAILED_PROCESS_FIRST_TRACK);
         }
 
         // Prefetch remaining tracks after playback starts

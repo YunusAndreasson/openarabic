@@ -150,7 +150,7 @@ export default function ListenScreen(): JSX.Element {
             <Ionicons
               color={colors.tint}
               name="information-circle-outline"
-              size={18}
+              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
               style={styles.noteIcon}
             />
             <ThemedText style={styles.noteText}>{STRINGS.WORKS_WITH_SCREEN_OFF}</ThemedText>

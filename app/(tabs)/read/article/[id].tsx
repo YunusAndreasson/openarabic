@@ -135,7 +135,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
       if (track) {
         const success = await audioPlayer.actions.startEnhancedPlayback([track], 0);
         if (!success) {
-          handleError(new Error('Failed to start enhanced playback'), {
+          handleError(new Error(STRINGS.FAILED_TO_START_AUDIO_PLAYBACK), {
             showToast: false,
             captureSentry: true,
             analyticsEventName: 'Audio Playback Start Failed',
@@ -145,7 +145,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
           setIsOptimisticallyPlaying(false);
         }
       } else {
-        handleError(new Error('Failed to generate audio track'), {
+        handleError(new Error(STRINGS.FAILED_TO_GENERATE_AUDIO_TRACK), {
           showToast: false,
           captureSentry: true,
           analyticsEventName: 'Audio Track Generation Failed',

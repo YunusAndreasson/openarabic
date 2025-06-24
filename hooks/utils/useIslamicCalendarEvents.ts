@@ -1,6 +1,8 @@
 import moment from 'moment-hijri';
 import { useMemo } from 'react';
 
+import { STRINGS } from '@/constants/strings';
+
 import { HIJRI_MONTHS } from '@/constants/hijri';
 
 interface IslamicEvent {
@@ -107,18 +109,35 @@ function calculateUpcomingEvents(): EventWithDate[] {
 }
 
 export const formatDaysUntil = (days: number): string => {
-  if (days === 0) return 'Today';
-  if (days === 1) return 'Tomorrow';
+  if (days === 0) return STRINGS.TODAY;
+  if (days === 1) return STRINGS.TOMORROW;
   if (days < 0) {
     const daysPast = Math.abs(days);
-    if (daysPast === 1) return 'Yesterday';
-    if (daysPast <= 7) return `${daysPast} days ago`;
-    return 'Past';
+    if (daysPast === 1) return STRINGS.YESTERDAY;
+    if (daysPast <= 7) {
+      return STRINGS.DAYS_AGO_TEMPLATE.replace('{days}', daysPast.toString());
+    }
+    return STRINGS.PAST;
   }
-  if (days <= 7) return `In ${days} days`;
-  if (days <= 30) return `In ${Math.ceil(days / 7)} weeks`;
-  if (days <= 365) return `In ${Math.ceil(days / 30)} months`;
-  return `In ${Math.ceil(days / 365)} years`;
+  if (days <= 7) {
+    return STRINGS.IN_DAYS_TEMPLATE.replace('{days}', days.toString());
+  }
+  if (days <= 30) {
+    return STRINGS.IN_WEEKS_TEMPLATE.replace(
+      '{weeks}',
+      Math.ceil(days / 7).toString(),
+    );
+  }
+  if (days <= 365) {
+    return STRINGS.IN_MONTHS_TEMPLATE.replace(
+      '{months}',
+      Math.ceil(days / 30).toString(),
+    );
+  }
+  return STRINGS.IN_YEARS_TEMPLATE.replace(
+    '{years}',
+    Math.ceil(days / 365).toString(),
+  );
 };
 
 export function useIslamicCalendarEvents() {

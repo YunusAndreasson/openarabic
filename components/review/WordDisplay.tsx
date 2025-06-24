@@ -6,6 +6,7 @@ import Animated from 'react-native-reanimated';
 import { ThemedText } from '@/components/ThemedText';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
+import { CACHE_SIZE } from '@/constants/performance';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { WordDisplayProps } from '@/types/ui/review.types';
@@ -19,7 +20,7 @@ interface BatchedWordDisplayColors {
 
 // ===== STATIC CONSTANTS EXTRACTION (CRITICAL FOR PERFORMANCE) =====
 const WORD_DISPLAY_CONSTANTS = {
-  DEFAULT_FONT_SIZE: 24,
+  DEFAULT_FONT_SIZE: LAYOUT.SPACING.XXLARGE,
   PADDING_TOP_RATIO: 0.15,
   PADDING_BOTTOM_RATIO: 0.05,
   TEXT_HEIGHT_MULTIPLIER: 9,
@@ -90,7 +91,7 @@ const clearOldestCacheEntry = (cache: Map<string, TextStyle>): void => {
 
 // Module-level cache for expensive style calculations
 const styleCache = new Map<string, TextStyle>();
-const CACHE_MAX_SIZE = 20; // Limit cache size
+const CACHE_MAX_SIZE = CACHE_SIZE.MEDIUM; // Limit cache size
 
 const getCachedTextStyle = (fontSize: number, colors: BatchedWordDisplayColors): TextStyle => {
   const cacheKey = `${fontSize}-${colors.arabicText}-${colors.shadow}`;

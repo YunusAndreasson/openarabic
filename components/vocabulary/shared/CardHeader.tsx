@@ -24,7 +24,7 @@ export const CardHeader = memo(({ title, subtitle, onInfoPress }: CardHeaderProp
       </View>
       <TouchableIcon
         icon="information-outline"
-        size={18}
+        size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
         style={styles.infoIcon}
         touchSize="small"
         onPress={onInfoPress}

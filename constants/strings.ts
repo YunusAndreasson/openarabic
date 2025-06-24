@@ -125,6 +125,10 @@ export const STRINGS = {
   PASSWORD_REQUIREMENTS_HINT:
     'At least {minLength} characters with uppercase, lowercase, and number',
   ARE_YOU_SURE_SIGN_OUT: 'Sign out?',
+  ENTER_VALID_EMAIL: 'Enter a valid email',
+  ENTER_PASSWORD: 'Enter your password',
+  PASSWORD_ADD_CHARACTER_TYPES: 'Add uppercase, lowercase and number',
+  PASSWORD_USE_AT_LEAST_TEMPLATE: 'Use at least {minLength} characters',
 
   // Word management actions - shortened
   SKIP_TODAY: 'Skip today',
@@ -168,6 +172,10 @@ export const STRINGS = {
   ACCOUNT: 'Account',
   SETTINGS: 'Settings',
   CONTACT_SUPPORT: 'Contact support',
+  SUPPORT_EMAIL: 'yunus@edenmind.com',
+  SUPPORT_EMAIL_SUBJECT: 'Open Arabic App Support',
+  SUPPORT_EMAIL_BODY_TEMPLATE:
+    'Hi there,\n\nI need help with the Open Arabic app.\n\nApp Version: {version}\nUser Email: {email}\n\nPlease describe your issue below:\n',
   LANGUAGE_LEARNING_SCIENCE: 'Learning science',
   WHY_CLASSICAL_TEXTS: 'Why classical texts',
   CLASSICAL_TEXTS: 'Classical texts',
@@ -175,7 +183,14 @@ export const STRINGS = {
   TWITTER: 'Twitter',
   FACEBOOK: 'Facebook',
   INSTAGRAM: 'Instagram',
+  APP_VERSION_LABEL: 'Version',
+  COPYRIGHT_SYMBOL: '\u00A9',
   NO_EMAIL: 'No email',
+  BYTE_UNITS: ['Bytes', 'KB', 'MB', 'GB'] as const,
+  ERROR_ASYNC_STORAGE_UNAVAILABLE: 'AsyncStorage unavailable, persistence disabled',
+  ERROR_ASYNC_STORAGE_CANNOT_CLEAR: 'AsyncStorage unavailable, cannot clear cache',
+  ERROR_ASYNC_STORAGE_CANNOT_READ: 'AsyncStorage unavailable, cannot read cache',
+  ERROR_PRIORITY_QUEUE_LENGTH_MISMATCH: 'Items and priorities arrays must have the same length',
 
   // Cache management - clearer and more actionable
   AUDIO_CACHE: 'Audio cache',
@@ -202,6 +217,16 @@ export const STRINGS = {
   ISLAMIC_CALENDAR: 'Islamic calendar',
   DATE_RANGE: 'Date range',
   TODAY: 'Today',
+  TOMORROW: 'Tomorrow',
+  YESTERDAY: 'Yesterday',
+  AM: 'AM',
+  PM: 'PM',
+  PAST: 'Past',
+  DAYS_AGO_TEMPLATE: '{days} days ago',
+  IN_DAYS_TEMPLATE: 'In {days} days',
+  IN_WEEKS_TEMPLATE: 'In {weeks} weeks',
+  IN_MONTHS_TEMPLATE: 'In {months} months',
+  IN_YEARS_TEMPLATE: 'In {years} years',
   ALL_TIME: 'All time',
   PAST_WEEK: 'Past week',
   PAST_MONTH: 'Past month',
@@ -229,10 +254,18 @@ export const STRINGS = {
   FONT_SCHEHERAZADE: 'Scheherazade',
   FONT_NASTALIQ: 'Nastaliq',
   FONT_NOTO_SANS: 'Noto Sans',
+  FONT_MADINA_DESCRIPTION: 'Modern & clean',
+  FONT_AMIRI_DESCRIPTION: 'Traditional',
+  FONT_SCHEHERAZADE_DESCRIPTION: 'Flowing',
+  FONT_NASTALIQ_DESCRIPTION: 'Calligraphic',
+  FONT_NOTO_SANS_DESCRIPTION: 'Simple',
 
   // Filter options
   ALL_DIFFICULTIES: 'All difficulties',
   ALL_AUTHORS: 'All authors',
+  BEGINNER: 'Beginner',
+  INTERMEDIATE: 'Intermediate',
+  ADVANCED: 'Advanced',
 
   // Audio fallbacks
   ARABIC_TITLE_FALLBACK: 'Arabic',
@@ -255,6 +288,7 @@ export const STRINGS = {
   ARTICLES_LABEL_SINGULAR: 'article',
   ARTICLES_LABEL_PLURAL: 'articles',
   WORD_OF_LABEL: 'of',
+  BY: 'by',
   RECOMMENDED: 'Recommended',
   ACTIVE: 'active',
 
@@ -380,6 +414,107 @@ export const STRINGS = {
   // Practice button disabled messages - concise guidance
   COMPLETE_DUE_FIRST: 'Complete due words first',
   FOCUS_ON_STRUGGLING_FIRST: 'Focus on struggling words first',
+
+  // Learning method content
+  LEARNING_METHOD_INTRO:
+    'Language acquisition occurs through understanding meaningful messages, not grammar instruction. According to Krashens Input Hypothesis, the brain naturally identifies patterns through exposure to comprehensible input.',
+  TRANSLATIONS_EXPOSE_STRUCTURES:
+    'Translations provide meaning context while exposing you to Arabic structures just beyond your current level.',
+  BRAIN_AUTOMATICALLY_IDENTIFIES:
+    'The brain automatically identifies recurring structures without conscious analysis or grammar study.',
+  STRUCTURES_ACQUIRED_PREDICTABLE:
+    'Language structures are acquired in a predictable sequence through repeated meaningful exposure.',
+  INTERNALIZED_COMPETENCE_DESC:
+    'Arabic structures become part of your acquired language system, enabling fluent use.',
+  PERSONAL_INTEREST_REDUCES_ANXIETY:
+    'Personal interest in content reduces anxiety and increases motivation, enabling optimal acquisition.',
+  COMPLETE_ARABIC_SYSTEM:
+    'Complete Arabic grammatical system and extensive vocabulary in authentic, meaningful contexts.',
+  FAMILIAR_CONCEPTS_CREATE_I_PLUS_ONE:
+    'Familiar concepts in Arabic with translation support create ideal i+1 conditions for acquisition.',
+  KRASHEN_INPUT_HYPOTHESIS:
+    "Krashens Input Hypothesis demonstrates that comprehensible input is the primary mechanism for language acquisition. Research shows optimal learning occurs when learners understand 90-95% of content.",
+  LANGUAGE_DEVELOPS_THROUGH_UNDERSTANDING:
+    'Language develops through understanding, not memorization',
+  UNDERSTANDING_MESSAGES_DRIVES_DEVELOPMENT:
+    'Understanding messages drives language development',
+  ACQUISITION_OCCURS_AUTOMATICALLY:
+    'Acquisition occurs automatically with sufficient comprehensible input',
+  RESEARCH_REF_KRASHEN_1985:
+    'The Input Hypothesis: Issues and Implications. Demonstrates that comprehensible input is the primary driver of language acquisition.',
+  RESEARCH_REF_KRASHEN_TERRELL_1983:
+    'The Natural Approach. Demonstrates effective language teaching through comprehensible input and meaningful content.',
+  RESEARCH_REF_LIGHTBOWN_SPADA_2013:
+    'How Languages are Learned. Highlights key findings on effective acquisition techniques.',
+  RESEARCH_REF_AFFECTIVE_FILTER_HYPOTHESIS:
+    'Principles and Practice in Second Language Acquisition. Shows how motivation and low anxiety enable optimal language acquisition.',
+  REFERENCE_KRASHEN_1985: 'Krashen, S. (1985)',
+  REFERENCE_KRASHEN_TERRELL_1983: 'Krashen, S. & Terrell, T. (1983)',
+  REFERENCE_KRASHEN_1982: 'Krashen, S. (1982)',
+  REFERENCE_LIGHTBOWN_SPADA_2013: 'Lightbown, P. & Spada, N. (2013)',
+
+  // Classical texts content
+  CLASSICAL_TEXTS_INTRO:
+    'Classical Islamic texts with translations provide optimal conditions for Arabic acquisition through comprehensible input.',
+  TRANSLATIONS_PROVIDE_COMPREHENSION:
+    'Translations provide comprehensible input while exposing you to authentic structures. Krashens research shows grammar is acquired, not learned.',
+  RICH_VOCABULARY_INPUT_DESC: 'Thousands of words in meaningful, comprehensible contexts',
+  AUTHENTIC_LANGUAGE_PATTERNS_DESC: 'Arabic as actually written and used by native speakers',
+  PERSONAL_INTEREST_LOWERS_AFFECTIVE_FILTER:
+    'Personal interest lowers the affective filter and improves acquisition. Familiar concepts create optimal i+1 conditions.',
+  CULTURAL_AND_CONCEPTUAL_FRAMEWORK_DESC:
+    'Understanding of Arabic thought patterns and expression',
+  CLASSICAL_ARABIC_DESC:
+    'Foundation of all Arabic varieties. Enables reading Quran, hadith, literature, formal writing, and news.',
+  MODERN_STANDARD_ARABIC_DESC:
+    'Simplified classical Arabic for contemporary media and formal contexts. Easy transition from classical foundation.',
+  PROCESS_EXPOSURE_BUILDS_COMPETENCE:
+    'Consistent exposure to comprehensible input builds linguistic competence over time. Each reading session contributes to your developing Arabic system through unconscious acquisition.',
+  APPROACH_VALIDATED_BY_RESEARCH:
+    'This approach has successfully taught Arabic for centuries. Modern SLA research validates combining authentic texts with translation support for optimal comprehensible input.',
+
+  // Info modal tips
+  INFO_TIP_CLIMBS:
+    'Steep climbs show breakthrough learning – celebrate these moments',
+  INFO_TIP_PLATEAUS:
+    'Plateaus are natural consolidation periods – stay consistent',
+  INFO_TIP_CONTEXT:
+    'Focus on understanding words in context, not isolated memorization',
+  INFO_TIP_STRONG_WORDS:
+    'Strong words are permanent additions to your language ability',
+  INFO_TIP_REVIEW_BEFORE_FORGETTING:
+    'Review just before forgetting for strongest memory formation',
+  INFO_TIP_GREEN_ZONES:
+    'Green zones (85%+) indicate good time for adding new words',
+  INFO_TIP_YELLOW_RED_ZONES:
+    'Yellow/red zones need immediate review to prevent memory loss',
+  INFO_TIP_CONSISTENT_PRACTICE:
+    'Consistent practice prevents steep drops in retention',
+  INFO_TIP_STUDY_FRESH:
+    'Study when mentally fresh for better memory encoding',
+  INFO_TIP_CONNECT_WORDS:
+    'Connect new words to existing knowledge for stronger networks',
+  INFO_TIP_FOCUS_CONTEXT:
+    'Focus on understanding context, not just memorizing definitions',
+  INFO_TIP_DAILY_PRACTICE:
+    'Consistent daily practice beats intensive cramming sessions',
+
+  // Audio player errors
+  ERROR_SELECTED_TRACK_NO_URL: 'Selected track has no audio URL',
+  ERROR_SELECTED_TRACK_NOT_FOUND: 'Selected track not found',
+  ERROR_FAILED_PROCESS_FIRST_TRACK: 'Failed to process first track',
+
+  // Encouraging metrics templates
+  ACCURACY_EXCELLENT_TEMPLATE: '{percent}% accuracy - excellent recall',
+  ACCURACY_SOLID_TEMPLATE: '{percent}% accuracy - solid progress',
+  WORDS_STRONG_SESSION_TEMPLATE: '{count} words strong this session',
+  STREAK_EXCELLENT_TEMPLATE: '{count}-word streak - excellent focus',
+  STREAK_ACHIEVED_TEMPLATE: '{count}-word streak achieved',
+  MASTERED_WORDS_TEMPLATE: '{count} words reached strong level',
+  MEMORY_STRENGTH_BOOST_TEMPLATE: '+{days} days average memory strength boost',
+  WORDS_PER_MIN_TEMPLATE: '{rate} words/min - efficient learning',
+  WORDS_REVIEWED_DEDICATION_TEMPLATE: '{count} words reviewed - dedication pays off',
+  WORDS_REVIEWED_GREAT_TEMPLATE: '{count} words reviewed - great effort',
 } as const;
 
 export type StringKey = keyof typeof STRINGS;

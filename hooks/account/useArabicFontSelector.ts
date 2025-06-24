@@ -16,31 +16,31 @@ export const ARABIC_FONT_OPTIONS: ArabicFontOption[] = [
   {
     name: 'Madina',
     displayName: STRINGS.FONT_MADINA,
-    description: 'Modern & clean',
+    description: STRINGS.FONT_MADINA_DESCRIPTION,
     previewText: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
   },
   {
     name: 'Amiri',
     displayName: STRINGS.FONT_AMIRI,
-    description: 'Traditional',
+    description: STRINGS.FONT_AMIRI_DESCRIPTION,
     previewText: 'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ',
   },
   {
     name: 'Scheherazade',
     displayName: STRINGS.FONT_SCHEHERAZADE,
-    description: 'Flowing',
+    description: STRINGS.FONT_SCHEHERAZADE_DESCRIPTION,
     previewText: 'وَمَا أَرْسَلْنَاكَ إِلَّا رَحْمَةً لِّلْعَالَمِينَ',
   },
   {
     name: 'Nastaliq',
     displayName: STRINGS.FONT_NASTALIQ,
-    description: 'Calligraphic',
+    description: STRINGS.FONT_NASTALIQ_DESCRIPTION,
     previewText: 'إِنَّ مَعَ الْعُسْرِ يُسْرًا',
   },
   {
     name: 'NotoSans',
     displayName: STRINGS.FONT_NOTO_SANS,
-    description: 'Simple',
+    description: STRINGS.FONT_NOTO_SANS_DESCRIPTION,
     previewText: 'اقْرَأْ بِاسْمِ رَبِّكَ الَّذِي خَلَقَ',
   },
 ];

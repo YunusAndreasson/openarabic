@@ -5,6 +5,7 @@ import { Modal, StyleSheet, TouchableOpacity, TouchableWithoutFeedback, View } f
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { SLEEP_TIMER_MINUTES } from '@/constants/audio';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -17,7 +18,6 @@ export interface SleepTimerProps {
   isActive?: boolean;
 }
 
-const timerOptions = [5, 10, 15, 30, 45, 60]; // minutes
 
 // Simplified time formatter
 const formatTime = (seconds: number): string => {
@@ -105,7 +105,11 @@ const SleepTimerComponent = ({
                   </ThemedText>
                 </View>
                 <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-                  <Ionicons name="close" size={24} color={colors.text} />
+                  <Ionicons
+                    name="close"
+                    size={LAYOUT.BUTTON.ICON_SIZE.LARGE}
+                    color={colors.text}
+                  />
                 </TouchableOpacity>
               </View>
 
@@ -131,7 +135,7 @@ const SleepTimerComponent = ({
                 ) : (
                   <>
                     <View style={styles.optionsGrid}>
-                      {timerOptions.map(minutes => (
+                      {SLEEP_TIMER_MINUTES.map(minutes => (
                         <ThemedButton
                           key={minutes}
                           title={STRINGS.MINUTES.replace('{minutes}', minutes.toString())}
@@ -246,7 +250,7 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.8,
     fontVariant: ['tabular-nums'],
     fontWeight: '300',
-    letterSpacing: -0.5,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.EXTRA_TIGHT,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 2.2,
     textAlign: 'center',
   },

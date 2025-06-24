@@ -72,7 +72,11 @@ const InstructionFooter: FC<InstructionFooterProps> = ({ style }) => {
       <Animated.View style={containerStyle}>
         <View style={styles.instructionItem}>
           <View style={iconStyle}>
-            <Ionicons color={colors.interactiveSecondary} name="arrow-back" size={18} />
+            <Ionicons
+              color={colors.interactiveSecondary}
+              name="arrow-back"
+              size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+            />
           </View>
           <ThemedText style={textStyle} variant="subtle">
             {STRINGS.UNKNOWN}
@@ -81,7 +85,11 @@ const InstructionFooter: FC<InstructionFooterProps> = ({ style }) => {
 
         <View style={[styles.instructionItem, styles.instructionItemCenter]}>
           <View style={iconStyle}>
-            <Ionicons color={colors.interactiveSecondary} name="finger-print" size={18} />
+            <Ionicons
+              color={colors.interactiveSecondary}
+              name="finger-print"
+              size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+            />
           </View>
           <ThemedText style={textStyle} variant="subtle">
             {STRINGS.UNSURE}
@@ -93,7 +101,11 @@ const InstructionFooter: FC<InstructionFooterProps> = ({ style }) => {
             {STRINGS.KNOWN}
           </ThemedText>
           <View style={iconStyle}>
-            <Ionicons color={colors.interactiveSecondary} name="arrow-forward" size={18} />
+            <Ionicons
+              color={colors.interactiveSecondary}
+              name="arrow-forward"
+              size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+            />
           </View>
         </View>
       </Animated.View>
@@ -112,7 +124,7 @@ const styles = StyleSheet.create({
     paddingBottom: Platform.OS === 'ios' ? LAYOUT.SPACING.LARGE : LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     marginTop: 'auto',
-    height: 80,
+    height: LAYOUT.CARD.HEIGHT.LIST_ITEM,
   } as ViewStyle,
   instructionIcon: {
     width: ICON_SIZE,
@@ -127,7 +139,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
     gap: LAYOUT.SPACING.SMALL,
-    height: 40,
+    height: MIN_TOUCH_TARGET.SMALL + LAYOUT.SPACING.TINY,
     flex: 1,
   } as ViewStyle,
   instructionItemCenter: {

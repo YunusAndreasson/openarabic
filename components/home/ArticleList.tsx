@@ -17,13 +17,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import ArticleCard from '@/components/ArticleCard';
 import { LAYOUT } from '@/constants/layout';
+import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 
 // Use responsive height calculation based on content and spacing
 const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM + LAYOUT.SPACING.XXXLARGE * 8; // Base + content space
-const DRAW_DISTANCE = ITEM_HEIGHT * 5;
+const DRAW_DISTANCE = ITEM_HEIGHT * LIST_DRAW_DISTANCE_MULTIPLIER;
 const ESTIMATED_LIST_SIZE = { height: ITEM_HEIGHT * 10, width: 0 };
 const articleKeyExtractor = (item: Article) => `article-${item.id}`;
 const SeparatorComponent = () => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />;

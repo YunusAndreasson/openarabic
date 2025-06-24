@@ -4,7 +4,7 @@ import { memo, useMemo } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 // ===== INTERFACES =====
@@ -16,11 +16,11 @@ interface BatchedBottomActionColors {
 
 // ===== STATIC CONSTANTS EXTRACTION (CRITICAL FOR PERFORMANCE) =====
 const BOTTOM_ACTIONS_CONSTANTS = {
-  ICON_SIZE: 18,
+  ICON_SIZE: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
   TINT_OPACITY: '20', // 12.5% opacity
-  CONTAINER_HEIGHT: 80,
-  MAX_INDICATOR_WIDTH: 90,
-  TEXT_LINE_HEIGHT: 16,
+  CONTAINER_HEIGHT: LAYOUT.REVIEW.BOTTOM_ACTIONS_HEIGHT,
+  MAX_INDICATOR_WIDTH: LAYOUT.REVIEW.INDICATOR_MAX_WIDTH,
+  TEXT_LINE_HEIGHT: LAYOUT.SPACING.LARGE,
 } as const;
 
 // ===== STATIC STYLES USING STYLESHEET.CREATE =====
@@ -43,16 +43,16 @@ const STATIC_STYLES = StyleSheet.create({
     height: '100%',
   },
   swipeIndicator: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: LAYOUT.TOUCH_TARGET.SMALL,
+    height: LAYOUT.TOUCH_TARGET.SMALL,
+    borderRadius: LAYOUT.TOUCH_TARGET.SMALL / 2,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: LAYOUT.SPACING.TINY,
   },
   indicatorText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    fontWeight: '500',
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
     textAlign: 'center',
     lineHeight: BOTTOM_ACTIONS_CONSTANTS.TEXT_LINE_HEIGHT,
   },

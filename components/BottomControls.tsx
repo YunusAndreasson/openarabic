@@ -106,7 +106,7 @@ const BottomControls = memo<BottomControlsProps>(
                 <Ionicons
                   color={isTimerActive ? colors.background : colors.secondaryText}
                   name={isTimerActive ? 'timer' : 'timer-outline'}
-                  size={16}
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
                 />
                 {isTimerActive && (
                   <ThemedText
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
   },
   timerLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    letterSpacing: 0.2,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
     marginLeft: LAYOUT.SPACING.TINY,
   },
   wrapper: {

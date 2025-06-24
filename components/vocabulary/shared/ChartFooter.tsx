@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { LegendItemProps } from '@/types/ui/chart.types';
 
@@ -67,23 +67,23 @@ const styles = StyleSheet.create({
   legendArea: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     flexShrink: 0,
-    height: 6,
+    height: LAYOUT.SPACING.TINY * 1.5,
     marginRight: LAYOUT.SPACING.SMALL,
-    width: 12,
+    width: LAYOUT.SPACING.MEDIUM,
   },
   legendBar: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     flexShrink: 0,
-    height: 6,
+    height: LAYOUT.SPACING.TINY * 1.5,
     marginRight: LAYOUT.SPACING.SMALL,
-    width: 12,
+    width: LAYOUT.SPACING.MEDIUM,
   },
   legendDot: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     flexShrink: 0,
-    height: 6,
+    height: LAYOUT.SPACING.TINY * 1.5,
     marginRight: LAYOUT.SPACING.SMALL,
-    width: 6,
+    width: LAYOUT.SPACING.TINY * 1.5,
   },
   legendItem: {
     alignItems: 'center',
@@ -95,9 +95,9 @@ const styles = StyleSheet.create({
   legendLine: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     flexShrink: 0,
-    height: 2,
+    height: LAYOUT.BORDER.WIDTH.FOCUSED,
     marginRight: LAYOUT.SPACING.SMALL,
-    width: 12,
+    width: LAYOUT.SPACING.MEDIUM,
   },
   legendText: {
     flexShrink: 1,
@@ -111,8 +111,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: LAYOUT.SPACING.MEDIUM,
-    minHeight: 40,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
+    minHeight: MIN_TOUCH_TARGET.MEDIUM - LAYOUT.SPACING.TINY,
+    paddingTop: LAYOUT.SPACING.MICRO * 2,
   },
   progressLegend: {
     alignItems: 'flex-start',

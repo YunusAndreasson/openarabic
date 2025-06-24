@@ -42,7 +42,7 @@ const WelcomeMessage: FC = () => {
         <Ionicons
           color={colors.textTertiary}
           name="chevron-forward-outline"
-          size={16}
+          size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
           style={styles.chevronIcon}
         />
       </TouchableOpacity>

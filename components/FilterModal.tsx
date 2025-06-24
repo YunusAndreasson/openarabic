@@ -6,7 +6,7 @@ import BaseCard from '@/components/BaseCard';
 import Pill from '@/components/Pill';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import {
   useFilterModal,
@@ -125,7 +125,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                 >
                   <Ionicons
                     name={option.icon}
-                    size={20}
+                    size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     color={isSelected ? colors.tint : colors.secondaryText}
                   />
                   <ThemedText
@@ -172,7 +172,11 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
             onPress={handleToggleAuthors}
           >
             <View style={styles.filterRowLeft}>
-              <Ionicons name="person-outline" size={20} color={colors.secondaryText} />
+              <Ionicons
+                name="person-outline"
+                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                color={colors.secondaryText}
+              />
               <ThemedText type="body" weight="medium">
                 {STRINGS.AUTHORS}
               </ThemedText>
@@ -183,7 +187,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
               </ThemedText>
               <Ionicons
                 name={expandedSections.authors ? 'chevron-up' : 'chevron-down'}
-                size={16}
+                size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
                 color={colors.secondaryText}
               />
             </View>
@@ -217,7 +221,11 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
             onPress={handleToggleDifficulty}
           >
             <View style={styles.filterRowLeft}>
-              <Ionicons name="trending-up-outline" size={20} color={colors.secondaryText} />
+              <Ionicons
+                name="trending-up-outline"
+                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                color={colors.secondaryText}
+              />
               <ThemedText type="body" weight="medium">
                 {STRINGS.DIFFICULTY}
               </ThemedText>
@@ -228,7 +236,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
               </ThemedText>
               <Ionicons
                 name={expandedSections.difficulty ? 'chevron-up' : 'chevron-down'}
-                size={16}
+                size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
                 color={colors.secondaryText}
               />
             </View>
@@ -261,7 +269,11 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
             onPress={handleToggleDateRange}
           >
             <View style={styles.filterRowLeft}>
-              <Ionicons name="calendar-outline" size={20} color={colors.secondaryText} />
+              <Ionicons
+                name="calendar-outline"
+                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                color={colors.secondaryText}
+              />
               <ThemedText type="body" weight="medium">
                 {STRINGS.DATE_RANGE}
               </ThemedText>
@@ -272,7 +284,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
               </ThemedText>
               <Ionicons
                 name={expandedSections.dateRange ? 'chevron-up' : 'chevron-down'}
-                size={16}
+                size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
                 color={colors.secondaryText}
               />
             </View>
@@ -325,7 +337,7 @@ const styles = StyleSheet.create({
   clearButton: {
     paddingHorizontal: LAYOUT.SPACING.SMALL,
     paddingVertical: LAYOUT.SPACING.SMALL,
-    minHeight: 48,
+    minHeight: MIN_TOUCH_TARGET.LARGE,
   },
   sortGrid: {
     flexDirection: 'row',
@@ -342,7 +354,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'transparent',
     minWidth: '47%',
-    minHeight: 48,
+    minHeight: MIN_TOUCH_TARGET.LARGE,
   },
   sortDirection: {
     marginLeft: 'auto',
@@ -353,7 +365,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    minHeight: 48,
+    minHeight: MIN_TOUCH_TARGET.LARGE,
   },
   lastFilterRow: {
     borderBottomWidth: 0,

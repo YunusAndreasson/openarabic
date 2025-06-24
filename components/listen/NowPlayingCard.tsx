@@ -8,7 +8,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ProgressBar } from '@/components/ProgressBar';
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { NOW_PLAYING_CARD_HEIGHT } from '@/constants/animation';
 import { STRINGS } from '@/constants/strings';
 import { useNowPlayingCard } from '@/hooks/listen/useNowPlayingCard';
 import { useColors } from '@/hooks/theme/useColors';
@@ -16,8 +17,8 @@ import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { Article } from '@/types/articles.types';
 import { withOpacity } from '@/utils/colorUtils';
 
-const CARD_HEIGHT = 120;
-const IMAGE_SIZE = 80;
+const CARD_HEIGHT = NOW_PLAYING_CARD_HEIGHT;
+const IMAGE_SIZE = LAYOUT.CARD.HEIGHT.LIST_ITEM;
 
 interface NowPlayingCardProps {
   /** Whether the card should be visible */
@@ -195,7 +196,11 @@ const NowPlayingCard = ({
               onPress={handleStopPress}
               testID="stop-playback-button"
             >
-              <Ionicons color={colors.background} name="stop" size={24} />
+              <Ionicons
+                color={colors.background}
+                name="stop"
+                size={LAYOUT.BUTTON.ICON_SIZE.LARGE}
+              />
             </TouchableOpacity>
           </Animated.View>
 
@@ -209,7 +214,7 @@ const NowPlayingCard = ({
               <Ionicons
                 color={isTimerActive ? colors.warning : colors.text}
                 name={isTimerActive ? 'timer' : 'timer-outline'}
-                size={20}
+                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
               />
             </TouchableOpacity>
           )}
@@ -284,7 +289,7 @@ const styles = StyleSheet.create({
 
   progressBar: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    height: 3,
+    height: LAYOUT.PROGRESS_BAR.HEIGHT,
   },
 
   progressInfo: {
@@ -313,22 +318,22 @@ const styles = StyleSheet.create({
   timeText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     fontWeight: '700',
-    letterSpacing: 0.5,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.ULTRA_WIDE,
     opacity: 0.9,
   },
 
   timerButton: {
     alignItems: 'center',
-    borderRadius: 18,
-    height: 36,
+    borderRadius: (MIN_TOUCH_TARGET.SMALL + LAYOUT.SPACING.TINY) / 2,
+    height: MIN_TOUCH_TARGET.SMALL + LAYOUT.SPACING.TINY,
     justifyContent: 'center',
-    width: 36,
+    width: MIN_TOUCH_TARGET.SMALL + LAYOUT.SPACING.TINY,
   },
 
   title: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '600',
-    letterSpacing: -0.2,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.NARROW,
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
 });

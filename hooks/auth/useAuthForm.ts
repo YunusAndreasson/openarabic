@@ -69,7 +69,7 @@ export function useAuthForm(): UseAuthFormReturn {
   const validateEmail = useCallback((value: string) => {
     if (!value) return false;
     if (!EMAIL_REGEX.test(value)) {
-      if (isMountedRef.current) setEmailError('Enter a valid email');
+      if (isMountedRef.current) setEmailError(STRINGS.ENTER_VALID_EMAIL);
       return false;
     }
     if (isMountedRef.current) setEmailError('');
@@ -78,12 +78,17 @@ export function useAuthForm(): UseAuthFormReturn {
 
   const validatePassword = useCallback((value: string) => {
     if (!value) {
-      if (isMountedRef.current) setPasswordError('Enter your password');
+      if (isMountedRef.current) setPasswordError(STRINGS.ENTER_PASSWORD);
       return false;
     }
     if (value.length < PASSWORD_REQUIREMENTS.minLength) {
       if (isMountedRef.current)
-        setPasswordError(`Use at least ${PASSWORD_REQUIREMENTS.minLength} characters`);
+        setPasswordError(
+          STRINGS.PASSWORD_USE_AT_LEAST_TEMPLATE.replace(
+            '{minLength}',
+            PASSWORD_REQUIREMENTS.minLength.toString()
+          )
+        );
       return false;
     }
     if (
@@ -91,7 +96,7 @@ export function useAuthForm(): UseAuthFormReturn {
       !PASSWORD_REQUIREMENTS.hasLowerCase.test(value) ||
       !PASSWORD_REQUIREMENTS.hasNumber.test(value)
     ) {
-      if (isMountedRef.current) setPasswordError('Add uppercase, lowercase and number');
+      if (isMountedRef.current) setPasswordError(STRINGS.PASSWORD_ADD_CHARACTER_TYPES);
       return false;
     }
     if (isMountedRef.current) setPasswordError('');

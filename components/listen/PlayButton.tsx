@@ -71,7 +71,7 @@ const PlayButton: FC<PlayButtonProps> = ({
         ) : (
           <Ionicons
             name={getIconName(isPlaying)}
-            size={18}
+            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
             color={resolvedIconColor}
             style={styles.icon}
           />
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     width: MIN_TOUCH_TARGET.MEDIUM,
   },
   icon: {
-    marginLeft: 1, // Slight optical adjustment for play icon
+    marginLeft: LAYOUT.SPACING.MICRO, // Slight optical adjustment for play icon
   },
 });
 

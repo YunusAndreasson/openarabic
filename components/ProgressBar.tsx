@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { cancelAnimation } from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
+import { PROGRESS_BAR_ANIMATION_DURATION } from '@/constants/animation';
 import { useProgressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ProgressBarProps } from '@/types/ui/loader.types';
@@ -29,7 +30,7 @@ function ProgressBarComponent({
   backgroundColor,
   fillColor,
   animationTriggered = false,
-  animationDuration = 2000,
+  animationDuration = PROGRESS_BAR_ANIMATION_DURATION,
 }: ProgressBarProps) {
   const colors = useColors();
   // CRITICAL: Intercept the incoming value and convert to integer immediately

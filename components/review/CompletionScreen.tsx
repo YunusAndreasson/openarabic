@@ -18,7 +18,7 @@ import {
   COMPLETION_SUBTITLE_DELAY,
   QUICK_ANIMATION_DURATION,
 } from '@/constants/animation';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useEncouragingMetrics } from '@/hooks/review/useEncouragingMetrics';
@@ -50,7 +50,7 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
   buttonText = STRINGS.CONTINUE,
   buttonVariant = 'outlined',
   iconName = 'checkmark-circle',
-  iconSize = 100,
+  iconSize = LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE,
   useThemedView = false,
   contentStyle = EMPTY_OBJECT,
   buttonStyle = EMPTY_OBJECT,
@@ -132,7 +132,11 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
                     <View
                       style={[styles.metricIconContainer, { backgroundColor: `${metric.color}20` }]}
                     >
-                      <Ionicons color={metric.color} name={metric.icon} size={22} />
+                      <Ionicons
+                        color={metric.color}
+                        name={metric.icon}
+                        size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                      />
                     </View>
                     <View style={styles.metricTextContainer}>
                       <ThemedText style={styles.metricText} type="body" variant="primary">
@@ -195,17 +199,17 @@ const styles = StyleSheet.create({
   contentContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    maxWidth: 350,
+    maxWidth: LAYOUT.REVIEW.COMPLETION.CONTENT_MAX_WIDTH,
     width: '100%',
   },
   doneButton: {
     marginTop: LAYOUT.SPACING.MEDIUM,
-    minWidth: 150,
+    minWidth: LAYOUT.CALENDAR.EVENT_RIGHT_SECTION.MAX_WIDTH,
     paddingVertical: LAYOUT.SPACING.SMALL,
   },
   iconContainer: {
     alignItems: 'center',
-    height: 120,
+    height: LAYOUT.REVIEW.COMPLETION.ICON_CONTAINER_HEIGHT,
     justifyContent: 'center',
     marginBottom: LAYOUT.SPACING.XLARGE,
   },
@@ -216,10 +220,10 @@ const styles = StyleSheet.create({
   metricIconContainer: {
     alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    height: 36,
+    height: LAYOUT.BUTTON.ICON_SIZE.XLARGE + LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
-    width: 36,
+    width: LAYOUT.BUTTON.ICON_SIZE.XLARGE + LAYOUT.SPACING.SMALL,
   },
   metricItem: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
@@ -227,9 +231,9 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
   metricText: {
-    fontSize: 16,
-    fontWeight: '600',
-    lineHeight: 24,
+    fontSize: LAYOUT.SPACING.LARGE,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+    lineHeight: LAYOUT.SPACING.XXLARGE,
     textAlign: 'left',
   },
   metricTextContainer: {

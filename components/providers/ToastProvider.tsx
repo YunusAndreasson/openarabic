@@ -10,6 +10,7 @@ import {
 } from 'react';
 
 import { Toast } from '@/components/Toast';
+import { DEFAULT_TOAST_DURATION } from '@/constants/animation';
 import type { ToastType } from '@/types/ui/toast.types';
 import { setGlobalToastHandler } from '@/utils/errorHandling';
 
@@ -45,13 +46,14 @@ export const ToastProvider: FC<{ children: ReactNode }> = ({ children }) => {
     });
   }, []);
 
-  const showImportantToast = useCallback((message: string, duration: number = 4000) => {
-    setToastState({
-      visible: true,
-      message,
-      duration,
-      type: 'important',
-    });
+  const showImportantToast = useCallback(
+    (message: string, duration: number = DEFAULT_TOAST_DURATION) => {
+      setToastState({
+        visible: true,
+        message,
+        duration,
+        type: 'important',
+      });
   }, []);
 
   const handleClose = useCallback(() => {

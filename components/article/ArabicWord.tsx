@@ -157,8 +157,8 @@ function ArabicWordComponent({
 const styles = StyleSheet.create({
   textStyle: {
     textAlign: 'center',
-    paddingBottom: 2,
-    marginBottom: -1,
+    paddingBottom: LAYOUT.SPACING.MICRO * 2,
+    marginBottom: -LAYOUT.BORDER.WIDTH.NORMAL,
   },
   wordContainer: {
     alignItems: 'center',

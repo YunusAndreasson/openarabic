@@ -15,7 +15,7 @@ interface UseSentenceScrubberProps {
 interface UseSentenceScrubberReturn {
   currentSentenceIndex: number;
   dueWordSentences: Set<number>;
-  scrollViewRef: MutableRefObject<FlashList<any> | null>;
+  scrollViewRef: MutableRefObject<FlashList<Tables<'article_sentences'>> | null>;
   handleViewableItemsChanged: (info: { viewableItems: ViewToken[] }) => void;
   handleSentenceChange: (sentenceIndex: number) => void;
   handleScrubStart: () => void;
@@ -27,7 +27,9 @@ export function useSentenceScrubber({
   dueWordRootIds,
   sentenceWordsMap,
 }: UseSentenceScrubberProps): UseSentenceScrubberReturn {
-  const scrollViewRef = useRef<FlashList<any> | null>(null);
+  const scrollViewRef = useRef<FlashList<Tables<'article_sentences'>> | null>(
+    null
+  );
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
   const isUserScrubbing = useRef(false);
 

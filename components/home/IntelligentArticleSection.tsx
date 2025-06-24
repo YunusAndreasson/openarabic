@@ -3,6 +3,7 @@ import { useMemo, memo, useRef, useCallback } from 'react';
 
 import FeaturedSection from '@/components/home/FeaturedSection';
 import { STRINGS } from '@/constants/strings';
+import { CACHE_SIZE } from '@/constants/performance';
 import { useIntelligentArticleSelection } from '@/hooks/articles/useIntelligentArticleSelection';
 import { useAuth } from '@/hooks/auth/useAuth';
 import type { Article } from '@/types/articles.types';
@@ -17,7 +18,7 @@ const EMPTY_ARTICLE_RESULT = {
 
 // Cache for article filtering to prevent repeated calculations
 const articleFilterCache = new Map<string, Article[]>();
-const CACHE_MAX_SIZE = 50;
+const CACHE_MAX_SIZE = CACHE_SIZE.LARGE;
 
 interface IntelligentArticleSectionProps {
   articlesData: Article[];

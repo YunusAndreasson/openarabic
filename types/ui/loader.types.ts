@@ -36,7 +36,7 @@ export interface ProgressBarProps extends BaseAnimatedStyleProps {
   animationTriggered?: boolean;
   /**
    * Duration of the animation in milliseconds
-   * @default 2000
+   * @default PROGRESS_BAR_ANIMATION_DURATION
    */
   animationDuration?: number;
 }

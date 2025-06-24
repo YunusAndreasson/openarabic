@@ -30,7 +30,7 @@ interface PerformanceZone {
   height: number;
 }
 
-interface VocabularyChartProps<T = any> {
+interface VocabularyChartProps<T> {
   // Chart data
   path: string;
   dataPoints: ChartPoint[];

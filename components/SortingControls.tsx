@@ -7,7 +7,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { SortDirection, SortOption } from '@/types/ui/sorting.types';
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.SMALL,
     paddingVertical: LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    minHeight: 42,
+    minHeight: MIN_TOUCH_TARGET.MEDIUM,
     justifyContent: 'center',
     alignItems: 'center',
     // Subtle default state
@@ -188,13 +188,13 @@ const styles = StyleSheet.create({
   },
   sortPillLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    letterSpacing: 0.2,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     textAlign: 'center', // Subtle letter spacing for elegance
   },
   sortDirectionLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    letterSpacing: 0.2,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     textAlign: 'center', // Subtle letter spacing for elegance
   },

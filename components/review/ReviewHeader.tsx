@@ -3,12 +3,15 @@ import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ProgressBar } from '@/components/ProgressBar';
-import { PROGRESS_BAR_ANIMATION_DURATION } from '@/constants/animation';
+import {
+  PROGRESS_BAR_ANIMATION_DURATION,
+  REVIEW_MIN_PROGRESS_VALUE,
+} from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 
 // ===== STATIC CONSTANTS EXTRACTION (CRITICAL FOR PERFORMANCE) =====
 const REVIEW_HEADER_CONSTANTS = {
-  MIN_PROGRESS_VALUE: 1,
+  MIN_PROGRESS_VALUE: REVIEW_MIN_PROGRESS_VALUE,
 } as const;
 
 // ===== STATIC STYLES USING STYLESHEET.CREATE =====

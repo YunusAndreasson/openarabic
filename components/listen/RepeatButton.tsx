@@ -64,7 +64,7 @@ const RepeatButton: FC<RepeatButtonProps> = ({ enabled, onToggle, ...rest }) => 
         <Ionicons
           color={enabled ? colors.tint : colors.interactiveSecondary}
           name="repeat"
-          size={20}
+          size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
         />
       </Animated.View>
 
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     minHeight: MIN_TOUCH_TARGET.MEDIUM,
-    minWidth: 100,
+    minWidth: MIN_TOUCH_TARGET.LARGE * 2 + LAYOUT.SPACING.TINY,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.SMALL,
   },
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '500',
-    letterSpacing: 0.2,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     includeFontPadding: false,
     textAlignVertical: 'center',
