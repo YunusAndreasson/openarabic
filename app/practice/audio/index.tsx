@@ -109,7 +109,7 @@ export default function ListenScreen(): JSX.Element {
     return (
       <CompletionScreen
         useThemedView
-        buttonStyle={{ minWidth: 180 }}
+        buttonStyle={{ minWidth: LAYOUT.TOUCH_TARGET.LARGE * 4 }} // Responsive min width
         buttonText={STRINGS.CONTINUE}
         buttonVariant="outlined"
         iconName="checkmark-circle-outline"

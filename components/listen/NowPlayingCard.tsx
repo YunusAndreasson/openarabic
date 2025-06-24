@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
 
   expandButton: {
     alignItems: 'center',
-    borderRadius: 18,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM + LAYOUT.SPACING.TINY, // Responsive border radius
     height: 36,
     justifyContent: 'center',
     width: 36,

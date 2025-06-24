@@ -1,18 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
 import BottomSheet, {
-  BottomSheetView,
   BottomSheetBackdrop,
+  BottomSheetView,
   type BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import {
+  MASTERED_DIFFICULTY_MAX,
+  STRICT_MASTERED_STABILITY_THRESHOLD,
   STRUGGLING_DIFFICULTY_THRESHOLD,
   STRUGGLING_LAPSES_THRESHOLD,
-  STRICT_MASTERED_STABILITY_THRESHOLD,
-  MASTERED_DIFFICULTY_MAX,
 } from '@/constants/fsrs';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.TINY,
   },
   actionDescription: {
-    lineHeight: 16,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
   },
 });
 

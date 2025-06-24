@@ -5,7 +5,7 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedInput } from '@/components/ThemedInput';
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { PASSWORD_REQUIREMENTS, useAuthForm } from '@/hooks/auth/useAuthForm';
 import { supabase } from '@/services/supabase';
@@ -187,11 +187,11 @@ const styles = StyleSheet.create({
   },
   inputsButtonGroup: {
     marginBottom: LAYOUT.SPACING.XLARGE,
-    maxWidth: 400,
+    maxWidth: SCREEN_WIDTH * 0.9, // Responsive max width (90% of screen)
     width: '100%',
   },
   toggleContainer: {
-    maxWidth: 400,
+    maxWidth: SCREEN_WIDTH * 0.9, // Responsive max width (90% of screen)
     width: '100%',
   },
 });

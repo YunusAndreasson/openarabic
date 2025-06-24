@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   skeletonChart: {
-    height: 120,
+    height: LAYOUT.TOUCH_TARGET.LARGE * 2.5, // Responsive chart height
     position: 'relative',
   },
   skeletonLine: {

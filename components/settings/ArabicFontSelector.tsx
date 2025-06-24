@@ -1,6 +1,6 @@
 import Slider from '@react-native-community/slider';
 import { memo, useCallback, type FC } from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   },
 
   fontDescription: {
-    lineHeight: 14,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
     textAlign: 'center',
     opacity: 0.8,
   },

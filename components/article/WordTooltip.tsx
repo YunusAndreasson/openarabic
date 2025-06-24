@@ -628,7 +628,7 @@ export const WordTooltip = memo(
         return {
           wordCenterX: 0,
           tooltipTop: 0,
-          tooltipWidth: 100,
+          tooltipWidth: SCREEN_WIDTH * 0.25, // Responsive default width (25% of screen)
           tooltipLeftOffset: 0,
           arrowOffset: 0,
         };
@@ -647,7 +647,7 @@ export const WordTooltip = memo(
         ...STATIC_STYLES.tooltipContainer,
         top: tooltipPositioning.tooltipTop,
         zIndex: zIndex ?? TOOLTIP_CONSTANTS.Z_INDEX,
-        elevation: 10, // Android elevation for proper layering
+        ...LAYOUT.ELEVATION.MEDIUM, // Use design system elevation
       }),
       [tooltipPositioning.tooltipTop, zIndex]
     );
@@ -663,7 +663,7 @@ export const WordTooltip = memo(
         shadowColor: tooltipColors.shadowColor,
         padding: TOOLTIP_CONSTANTS.SPACING,
         zIndex: TOOLTIP_CONSTANTS.Z_INDEX + 1, // Ensure tooltip is above the container
-        elevation: 15, // Higher elevation for Android
+        ...LAYOUT.ELEVATION.LARGE, // Use design system elevation
       }),
       [
         tooltipPositioning.tooltipLeftOffset,
@@ -724,7 +724,7 @@ export const WordTooltip = memo(
           StyleSheet.absoluteFill,
           {
             zIndex: TOOLTIP_CONSTANTS.Z_INDEX + 2,
-            elevation: 20,
+            ...LAYOUT.ELEVATION.LARGE,
           },
         ]}
         pointerEvents="box-none"

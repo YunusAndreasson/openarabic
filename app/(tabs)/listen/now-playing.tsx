@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
     color: 'white',
     textAlign: 'center',
     fontWeight: '600',
-    lineHeight: 36,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.3, // Responsive line height
     textShadowColor: 'rgba(0,0,0,0.4)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,

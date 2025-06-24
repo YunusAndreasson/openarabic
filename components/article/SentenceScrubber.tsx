@@ -205,13 +205,13 @@ const styles = StyleSheet.create({
     bottom: LAYOUT.SPACING.XLARGE,
     left: LAYOUT.SPACING.XLARGE,
     right: LAYOUT.SPACING.XLARGE,
-    height: 60,
-    zIndex: 1000,
+    height: LAYOUT.TOUCH_TARGET.LARGE + LAYOUT.SPACING.MEDIUM, // Responsive height
+    zIndex: LAYOUT.Z_INDEX.OVERLAY,
   },
   tooltip: {
     position: 'absolute',
-    bottom: 30,
-    width: 80,
+    bottom: LAYOUT.SPACING.XLARGE - LAYOUT.SPACING.SMALL, // Responsive positioning
+    width: LAYOUT.TOUCH_TARGET.LARGE + LAYOUT.SPACING.XXXLARGE, // Responsive width
     alignItems: 'center',
   },
   tooltipBubble: {
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     ...LAYOUT.ELEVATION.SMALL,
   },
   tooltipText: {
-    fontSize: 12,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '600',
   },
   trackContainer: {
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 40,
+    height: LAYOUT.TOUCH_TARGET.SMALL + LAYOUT.SPACING.SMALL, // Responsive height
     justifyContent: 'center',
   },
   track: {

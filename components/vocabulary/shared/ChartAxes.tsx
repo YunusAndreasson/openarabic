@@ -194,10 +194,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   yLabelText: {
-    fontSize: 10,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     fontWeight: '500',
     includeFontPadding: false,
-    lineHeight: 14,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
     textAlign: 'right',
   },
 });

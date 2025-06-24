@@ -1,12 +1,12 @@
 import BottomSheet, {
-  BottomSheetView,
   BottomSheetBackdrop,
+  BottomSheetView,
   type BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet';
 import type { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { memo, useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { StyleSheet, View, Platform } from 'react-native';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -178,10 +178,7 @@ export const TimePicker = memo(
 
           {/* Actions */}
           <View style={styles.actions}>
-            <ThemedButton
-              title={STRINGS.SET_TIME}
-              onPress={handleConfirm}
-            />
+            <ThemedButton title={STRINGS.SET_TIME} onPress={handleConfirm} />
           </View>
         </BottomSheetView>
       </BottomSheet>
@@ -213,7 +210,7 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.LARGE,
   },
   picker: {
-    height: 200,
+    height: LAYOUT.TOUCH_TARGET.LARGE * 4 + LAYOUT.SPACING.LARGE, // Responsive height
     width: '100%',
   },
   pickerContainer: {
@@ -229,7 +226,7 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
   timeText: {
-    fontSize: 48,
-    lineHeight: 56,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.7, // Responsive large font size
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 2, // Responsive line height
   },
 });
