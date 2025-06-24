@@ -2,9 +2,9 @@ import type { Ionicons } from '@expo/vector-icons';
 import { useMemo } from 'react';
 import type { ComponentProps } from 'react';
 
+import { STRINGS } from '@/constants/strings';
 import type { SessionMetrics } from '@/types/review.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
-import { STRINGS } from '@/constants/strings';
 
 export interface EncouragingMetric {
   text: string;

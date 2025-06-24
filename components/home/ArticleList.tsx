@@ -16,8 +16,8 @@ import { RefreshControl, StyleSheet, View, type StyleProp, type ViewStyle } from
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import ArticleCard from '@/components/ArticleCard';
-import { LAYOUT } from '@/constants/layout';
 import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
+import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';

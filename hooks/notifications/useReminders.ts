@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react';
 
+import { STRINGS } from '@/constants/strings';
 import { scheduleReminder, hasPermissions } from '@/services/notificationService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setReminderTime } from '@/store/settingsSlice';
 import type { ReminderTime } from '@/types/notifications.types';
 import { handleError } from '@/utils/errorHandling';
-import { STRINGS } from '@/constants/strings';
 
 const analytics = {
   track: async (

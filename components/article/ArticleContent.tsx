@@ -1,15 +1,15 @@
+import { Ionicons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
 import React, { Fragment, memo, useCallback, useMemo, type ReactElement } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent, ViewToken } from 'react-native';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import ParallaxHeader from '@/components/article/ParallaxHeader';
 import { SentenceScrubber } from '@/components/article/SentenceScrubber';
+import { SCROLL_EVENT_THROTTLE, SENTENCE_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
-import { SENTENCE_DRAW_DISTANCE_MULTIPLIER, SCROLL_EVENT_THROTTLE } from '@/constants/animation';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
@@ -32,6 +32,17 @@ const styles = StyleSheet.create({
     marginTop: -LAYOUT.SPACING.XXXLARGE,
     paddingBottom: LAYOUT.SPACING.TINY,
     zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  titleText: {
+    flex: 1,
+    marginRight: LAYOUT.SPACING.MEDIUM,
+  },
+  bookmarkButton: {
+    padding: LAYOUT.SPACING.TINY,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   authorContainer: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
@@ -55,30 +66,16 @@ const styles = StyleSheet.create({
   summaryText: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.7,
   },
-  audioControlsContainer: {
-    flexDirection: 'row',
-    gap: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.SMALL,
-    paddingBottom: LAYOUT.SPACING.XLARGE,
-  },
-  listenNowButton: {
-    flex: 1,
-  },
-  listenLaterButton: {
-    flex: 1,
-  },
 });
-
-// Note: Audio controls functionality is preserved in the audio player hooks
-// and can be re-enabled by adding UI components when needed
 
 interface ArticleTitleProps {
   title: string;
   author: { id: number; name: string };
+  isBookmarked: boolean;
+  onBookmarkPress: () => void;
 }
 
-const ArticleTitle = memo<ArticleTitleProps>(({ title, author }) => {
+const ArticleTitle = memo<ArticleTitleProps>(({ title, author, isBookmarked, onBookmarkPress }) => {
   const colors = useColors();
 
   return (
@@ -86,16 +83,39 @@ const ArticleTitle = memo<ArticleTitleProps>(({ title, author }) => {
       <View style={styles.titleContainer}>
         <ThemedText
           type="heading1"
-          style={{
-            fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-            fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
-            color: colors.headingText,
-            lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
-            textAlign: 'left',
-          }}
+          style={[
+            styles.titleText,
+            {
+              fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
+              fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
+              color: colors.headingText,
+              lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
+              textAlign: 'left',
+            },
+          ]}
         >
           {title}
         </ThemedText>
+
+        <Pressable
+          style={[
+            styles.bookmarkButton,
+            {
+              backgroundColor: colors.elevation1,
+            },
+          ]}
+          onPress={onBookmarkPress}
+          android_ripple={{
+            color: colors.tint,
+            radius: LAYOUT.SPACING.LARGE,
+          }}
+        >
+          <Ionicons
+            name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
+            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+            color={isBookmarked ? colors.tint : colors.secondaryText}
+          />
+        </Pressable>
       </View>
 
       <View style={styles.authorContainer}>
@@ -159,14 +179,9 @@ interface ArticleContentProps {
   onScrubStart: () => void;
   onScrubEnd: () => void;
   scrollViewRef: React.RefObject<FlashList<Tables<'article_sentences'>>>;
-  // Audio control props
+  // Bookmark functionality
   isInReadingList: boolean;
-  isLoadingReadingList: boolean;
-  onPlayNow: () => void;
   onToggleReadingList: () => void;
-  isPlayingAudio: boolean;
-  isLoadingAudio: boolean;
-  playButtonText: string;
 }
 
 // Extract constants outside component for better performance
@@ -193,12 +208,7 @@ export const ArticleContent = memo<ArticleContentProps>(
     onScrubEnd,
     scrollViewRef,
     isInReadingList,
-    isLoadingReadingList,
-    onPlayNow,
     onToggleReadingList,
-    isPlayingAudio,
-    isLoadingAudio,
-    playButtonText,
   }) => {
     const insets = useSafeAreaInsets();
 
@@ -215,37 +225,16 @@ export const ArticleContent = memo<ArticleContentProps>(
       () => (
         <Fragment>
           <ParallaxHeader article={article} colors={colors} />
-          <ArticleTitle title={article.title} author={article.author} />
+          <ArticleTitle
+            title={article.title}
+            author={article.author}
+            isBookmarked={isInReadingList}
+            onBookmarkPress={onToggleReadingList}
+          />
           <ArticleSummary summary={String(article.summary)} />
-          <View style={styles.audioControlsContainer}>
-            <ThemedButton
-              title={playButtonText}
-              onPress={onPlayNow}
-              loading={isLoadingAudio}
-              style={styles.listenNowButton}
-              variant={isPlayingAudio ? 'outlined' : 'filled'}
-            />
-            <ThemedButton
-              title={isInReadingList ? STRINGS.REMOVE : STRINGS.LISTEN_LATER}
-              onPress={onToggleReadingList}
-              loading={isLoadingReadingList}
-              style={styles.listenLaterButton}
-              variant="outlined"
-            />
-          </View>
         </Fragment>
       ),
-      [
-        article,
-        colors,
-        isInReadingList,
-        isLoadingReadingList,
-        onPlayNow,
-        onToggleReadingList,
-        isPlayingAudio,
-        isLoadingAudio,
-        playButtonText,
-      ]
+      [article, colors, isInReadingList, onToggleReadingList]
     );
 
     const getItemTypeCallback = useCallback(getItemType, []);
@@ -321,12 +310,7 @@ export const ArticleContent = memo<ArticleContentProps>(
       prevProps.currentSentenceIndex === nextProps.currentSentenceIndex &&
       prevProps.totalSentences === nextProps.totalSentences &&
       prevProps.isInReadingList === nextProps.isInReadingList &&
-      prevProps.isLoadingReadingList === nextProps.isLoadingReadingList &&
-      prevProps.onPlayNow === nextProps.onPlayNow &&
-      prevProps.onToggleReadingList === nextProps.onToggleReadingList &&
-      prevProps.isPlayingAudio === nextProps.isPlayingAudio &&
-      prevProps.isLoadingAudio === nextProps.isLoadingAudio &&
-      prevProps.playButtonText === nextProps.playButtonText
+      prevProps.onToggleReadingList === nextProps.onToggleReadingList
     );
   }
 );

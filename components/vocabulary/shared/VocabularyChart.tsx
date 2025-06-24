@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
  * - Static style objects
  * - Optimized Skia rendering
  */
-export const VocabularyChart = memo<VocabularyChartProps>(
+export const VocabularyChart = memo<VocabularyChartProps<any>>(
   ({
     path,
     dataPoints,
@@ -161,7 +161,7 @@ export const VocabularyChart = memo<VocabularyChartProps>(
 
     // Memoize data point rendering for better performance
     const dataPointElements = useMemo(() => {
-      return dataPoints.map(point => (
+      return dataPoints.map((point: ChartPoint) => (
         <ChartDataPoint
           key={`data-point-${point.date.toISOString()}`}
           x={point.x}
@@ -173,7 +173,7 @@ export const VocabularyChart = memo<VocabularyChartProps>(
 
     // Memoize milestone rendering
     const milestoneElements = useMemo(() => {
-      return milestones.map((milestone, index) => {
+      return milestones.map((milestone: ChartPoint, index: number) => {
         const keyIdentifier = 'rate' in milestone ? milestone.rate : index;
         return (
           <ChartDataPoint

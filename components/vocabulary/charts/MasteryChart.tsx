@@ -1,8 +1,8 @@
 import { memo, useMemo } from 'react';
 
-import { VocabularyChart, type DataPoint } from '@/components/vocabulary/shared';
+import { VocabularyChart } from '@/components/vocabulary/shared';
 import { CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/components/vocabulary/shared/chartMessages';
-import { useGraphWidth, CHART_VISUAL } from '@/components/vocabulary/shared/constants';
+import { CHART_VISUAL, useGraphWidth } from '@/components/vocabulary/shared/constants';
 import { useMasteryChart } from '@/hooks/vocabulary/useMasteryChart';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -32,7 +32,7 @@ export const MasteryChart = memo<MasteryChartProps>(
     } = useMasteryChart(studyWords);
 
     // Prepare tooltip data points for interactivity
-    const tooltipDataPoints: DataPoint<Record<string, unknown>>[] = useMemo(() => {
+    const tooltipDataPoints = useMemo(() => {
       return dataPoints || [];
     }, [dataPoints]);
 

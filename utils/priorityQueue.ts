@@ -1,9 +1,9 @@
+import { STRINGS } from '@/constants/strings';
+
 export interface PriorityItem<T> {
   item: T;
   priority: number;
 }
-
-import { STRINGS } from '@/constants/strings';
 
 export class PriorityQueue<T> {
   private heap: T[] = [];

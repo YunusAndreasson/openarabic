@@ -2,8 +2,8 @@ import type { JSX } from 'react';
 import { useMemo, memo, useRef, useCallback } from 'react';
 
 import FeaturedSection from '@/components/home/FeaturedSection';
-import { STRINGS } from '@/constants/strings';
 import { CACHE_SIZE } from '@/constants/performance';
+import { STRINGS } from '@/constants/strings';
 import { useIntelligentArticleSelection } from '@/hooks/articles/useIntelligentArticleSelection';
 import { useAuth } from '@/hooks/auth/useAuth';
 import type { Article } from '@/types/articles.types';

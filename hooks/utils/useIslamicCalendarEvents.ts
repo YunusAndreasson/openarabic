@@ -1,9 +1,9 @@
 import moment from 'moment-hijri';
 import { useMemo } from 'react';
 
+import { HIJRI_MONTHS } from '@/constants/hijri';
 import { STRINGS } from '@/constants/strings';
 
-import { HIJRI_MONTHS } from '@/constants/hijri';
 
 interface IslamicEvent {
   name: string;

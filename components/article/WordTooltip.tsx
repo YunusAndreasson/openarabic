@@ -70,9 +70,16 @@ const STATIC_STYLES = StyleSheet.create({
   },
   tooltipText: {
     flexShrink: 1,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     fontWeight: '500',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4,
+    textAlign: 'center',
+  },
+  tooltipTextArabic: {
+    flexShrink: 1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+    fontWeight: '500',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.4,
     textAlign: 'center',
   },
 });
@@ -107,9 +114,9 @@ const calculateTooltipPositioning = (
   const { SPACING, ARROW_SIZE, TOOLTIP_MARGIN, SCREEN_MARGIN, CHAR_WIDTH, PADDING_MULTIPLIER } =
     TOOLTIP_CONSTANTS;
 
-  // Calculate dynamic tooltip height based on content
-  const baseHeight = LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4; // Line height for text
-  const arabicHeight = hasArabicText ? baseHeight + SPACING / 2 : 0; // Additional height for Arabic text
+  // Calculate consistent tooltip height - always reserve space for both Arabic and English
+  const baseHeight = LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4; // Line height for text
+  const arabicHeight = baseHeight + SPACING / 2; // Always reserve space for Arabic text
   const englishHeight = baseHeight;
   const paddingHeight = SPACING * 2; // Top and bottom padding
   const dynamicTooltipHeight = arabicHeight + englishHeight + paddingHeight;
@@ -309,7 +316,7 @@ export const WordTooltip = memo(
               type="arabic"
               skipDefaultColor
               style={[
-                STATIC_STYLES.tooltipText,
+                STATIC_STYLES.tooltipTextArabic,
                 { color: tooltipColors.textColor, marginBottom: TOOLTIP_CONSTANTS.SPACING / 2 },
               ]}
             >
@@ -330,7 +337,7 @@ export const WordTooltip = memo(
               type="arabic"
               skipDefaultColor
               style={[
-                STATIC_STYLES.tooltipText,
+                STATIC_STYLES.tooltipTextArabic,
                 { color: tooltipColors.textColor, marginBottom: TOOLTIP_CONSTANTS.SPACING / 2 },
               ]}
             >
@@ -348,7 +355,7 @@ export const WordTooltip = memo(
             type="arabic"
             skipDefaultColor
             style={[
-              STATIC_STYLES.tooltipText,
+              STATIC_STYLES.tooltipTextArabic,
               { color: tooltipColors.textColor, marginBottom: TOOLTIP_CONSTANTS.SPACING / 2 },
             ]}
           >
@@ -378,7 +385,7 @@ export const WordTooltip = memo(
                   key={segmentKey}
                   type="arabic"
                   skipDefaultColor
-                  style={{ color: segmentColor }}
+                  style={[STATIC_STYLES.tooltipTextArabic, { color: segmentColor }]}
                 >
                   {segment.text}
                 </ThemedText>
@@ -586,7 +593,7 @@ export const WordTooltip = memo(
       );
     }, [onStudyListToggle, wordRootId, isInStudyList, handleStudyListPress, tooltipColors]);
 
-    // Memoize the tooltip content to reduce re-renders
+    // Memoize the tooltip content to reduce re-renders - unified formatting approach
     const tooltipContent = useMemo(() => {
       const arabicContent = renderColorCodedArabic();
       const englishContent = renderColorCodedEnglish();
@@ -594,35 +601,28 @@ export const WordTooltip = memo(
 
       // Calculate if we need padding for the study indicator
       const hasStudyIndicator = !!studyIndicator;
+      const baseHeight = LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4;
       const contentStyle = {
         alignItems: 'center' as const,
         justifyContent: 'center' as const,
         position: 'relative' as const,
+        // Ensure consistent minimum height for all tooltips
+        minHeight: baseHeight * 2 + TOOLTIP_CONSTANTS.SPACING / 2,
         // Add right padding when we have a study indicator to prevent overlap
         ...(hasStudyIndicator && { paddingRight: LAYOUT.SPACING.XXLARGE }),
       };
 
-      // If we have Arabic analysis, show both Arabic and English with color coordination
-      if (arabicContent && arabicAnalysis?.sections && arabicAnalysis.sections.length > 0) {
-        return (
-          <View style={contentStyle}>
-            {studyIndicator}
-            {arabicContent}
-            {englishContent}
-          </View>
-        );
-      }
-
-      // Otherwise just show English (existing behavior) - still centered
+      // Use unified formatting approach for all cases
       return (
         <View style={contentStyle}>
           {studyIndicator}
+          {arabicContent}
           {englishContent}
         </View>
       );
-    }, [renderColorCodedArabic, renderColorCodedEnglish, renderStudyIndicator, arabicAnalysis]);
+    }, [renderColorCodedArabic, renderColorCodedEnglish, renderStudyIndicator]);
 
-    // Update tooltip positioning to account for potentially taller content
+    // Update tooltip positioning with consistent sizing for all tooltips
     const tooltipPositioning = useMemo(() => {
       if (!layout) {
         return {
@@ -634,10 +634,11 @@ export const WordTooltip = memo(
         };
       }
 
-      // Use longer text length if we have Arabic analysis to ensure proper width
-      const displayText = arabicAnalysis ? `${arabicWord} ${text}` : text || '';
-      return calculateTooltipPositioning(layout, displayText, screenWidth, !!arabicAnalysis);
-    }, [layout, text, arabicWord, arabicAnalysis, screenWidth]);
+      // Always use combined text length to ensure consistent sizing
+      const displayText = arabicWord ? `${arabicWord} ${text}` : text || '';
+      // Always pass true for consistent height calculation
+      return calculateTooltipPositioning(layout, displayText, screenWidth, true);
+    }, [layout, text, arabicWord, screenWidth]);
 
     // Memoize container style
     const containerStyle = useMemo(

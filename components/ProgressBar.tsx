@@ -3,8 +3,8 @@ import type { ViewStyle, StyleProp } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated, { cancelAnimation } from 'react-native-reanimated';
 
-import { LAYOUT } from '@/constants/layout';
 import { PROGRESS_BAR_ANIMATION_DURATION } from '@/constants/animation';
+import { LAYOUT } from '@/constants/layout';
 import { useProgressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ProgressBarProps } from '@/types/ui/loader.types';

@@ -2,9 +2,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import type { Query } from '@tanstack/react-query';
 
+import { STRINGS } from '@/constants/strings';
+
 import { handleError } from './errorHandling';
 import { getSafeStorage, isAsyncStorageAvailable } from './safeAsyncStorage';
-import { STRINGS } from '@/constants/strings';
 
 // Constants for better performance and maintainability
 const CACHE_KEY = 'REACT_QUERY_OFFLINE_CACHE';
