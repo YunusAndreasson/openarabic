@@ -40,9 +40,18 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: LAYOUT.SPACING.MEDIUM,
   },
-  bookmarkButton: {
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.TINY,
+  },
+  actionButton: {
     padding: LAYOUT.SPACING.TINY,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    minWidth: LAYOUT.TOUCH_TARGET.LARGE,
+    minHeight: LAYOUT.TOUCH_TARGET.LARGE,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   authorContainer: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
@@ -71,69 +80,99 @@ const styles = StyleSheet.create({
 interface ArticleTitleProps {
   title: string;
   author: { id: number; name: string };
+  // Reading list (playlist/listening) functionality
+  isInReadingList: boolean;
+  onToggleReadingList: () => void;
+  // Bookmark functionality
   isBookmarked: boolean;
-  onBookmarkPress: () => void;
+  onToggleBookmark: () => void;
 }
 
-const ArticleTitle = memo<ArticleTitleProps>(({ title, author, isBookmarked, onBookmarkPress }) => {
-  const colors = useColors();
+const ArticleTitle = memo<ArticleTitleProps>(
+  ({ title, author, isInReadingList, onToggleReadingList, isBookmarked, onToggleBookmark }) => {
+    const colors = useColors();
 
-  return (
-    <>
-      <View style={styles.titleContainer}>
-        <ThemedText
-          type="heading1"
-          style={[
-            styles.titleText,
-            {
-              fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-              fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
-              color: colors.headingText,
-              lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
+    return (
+      <>
+        <View style={styles.titleContainer}>
+          <ThemedText
+            type="heading1"
+            style={[
+              styles.titleText,
+              {
+                fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
+                fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
+                color: colors.headingText,
+                lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
+                textAlign: 'left',
+              },
+            ]}
+          >
+            {title}
+          </ThemedText>
+
+          <View style={styles.actionButtonsContainer}>
+            {/* Listening list button (headphone icon) */}
+            <Pressable
+              style={[
+                styles.actionButton,
+                {
+                  backgroundColor: colors.elevation1,
+                },
+              ]}
+              onPress={onToggleReadingList}
+              android_ripple={{
+                color: colors.tint,
+                radius: LAYOUT.SPACING.LARGE,
+              }}
+            >
+              <Ionicons
+                name={isInReadingList ? 'headset' : 'headset-outline'}
+                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                color={isInReadingList ? colors.tint : colors.secondaryText}
+              />
+            </Pressable>
+
+            {/* Bookmark button */}
+            <Pressable
+              style={[
+                styles.actionButton,
+                {
+                  backgroundColor: colors.elevation1,
+                },
+              ]}
+              onPress={onToggleBookmark}
+              android_ripple={{
+                color: colors.tint,
+                radius: LAYOUT.SPACING.LARGE,
+              }}
+            >
+              <Ionicons
+                name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
+                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                color={isBookmarked ? colors.tint : colors.secondaryText}
+              />
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={styles.authorContainer}>
+          <ThemedText
+            type="caption"
+            style={{
+              fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+              fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
+              color: colors.authorText,
               textAlign: 'left',
-            },
-          ]}
-        >
-          {title}
-        </ThemedText>
-
-        <Pressable
-          style={[
-            styles.bookmarkButton,
-            {
-              backgroundColor: colors.elevation1,
-            },
-          ]}
-          onPress={onBookmarkPress}
-          android_ripple={{
-            color: colors.tint,
-            radius: LAYOUT.SPACING.LARGE,
-          }}
-        >
-          <Ionicons
-            name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
-            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-            color={isBookmarked ? colors.tint : colors.secondaryText}
-          />
-        </Pressable>
-      </View>
-
-      <View style={styles.authorContainer}>
-        <ThemedText
-          type="caption"
-          style={{
-            fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-            fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
-            color: colors.authorText,
-            textAlign: 'left',
-          }}
-        >
-          {STRINGS.BY} {author.name}
-        </ThemedText>
-      </View>
-    </>
-  );
-});
+            }}
+          >
+            {STRINGS.BY} {author.name}
+          </ThemedText>
+        </View>
+      </>
+    );
+  }
+);
 ArticleTitle.displayName = 'ArticleTitle';
 
 interface ArticleSummaryProps {
@@ -179,9 +218,12 @@ interface ArticleContentProps {
   onScrubStart: () => void;
   onScrubEnd: () => void;
   scrollViewRef: React.RefObject<FlashList<Tables<'article_sentences'>>>;
-  // Bookmark functionality
+  // Reading list (playlist/listening) functionality
   isInReadingList: boolean;
   onToggleReadingList: () => void;
+  // Bookmark functionality
+  isBookmarked: boolean;
+  onToggleBookmark: () => void;
 }
 
 // Extract constants outside component for better performance
@@ -209,6 +251,8 @@ export const ArticleContent = memo<ArticleContentProps>(
     scrollViewRef,
     isInReadingList,
     onToggleReadingList,
+    isBookmarked,
+    onToggleBookmark,
   }) => {
     const insets = useSafeAreaInsets();
 
@@ -228,13 +272,15 @@ export const ArticleContent = memo<ArticleContentProps>(
           <ArticleTitle
             title={article.title}
             author={article.author}
-            isBookmarked={isInReadingList}
-            onBookmarkPress={onToggleReadingList}
+            isInReadingList={isInReadingList}
+            onToggleReadingList={onToggleReadingList}
+            isBookmarked={isBookmarked}
+            onToggleBookmark={onToggleBookmark}
           />
           <ArticleSummary summary={String(article.summary)} />
         </Fragment>
       ),
-      [article, colors, isInReadingList, onToggleReadingList]
+      [article, colors, isInReadingList, onToggleReadingList, isBookmarked, onToggleBookmark]
     );
 
     const getItemTypeCallback = useCallback(getItemType, []);
@@ -310,7 +356,9 @@ export const ArticleContent = memo<ArticleContentProps>(
       prevProps.currentSentenceIndex === nextProps.currentSentenceIndex &&
       prevProps.totalSentences === nextProps.totalSentences &&
       prevProps.isInReadingList === nextProps.isInReadingList &&
-      prevProps.onToggleReadingList === nextProps.onToggleReadingList
+      prevProps.onToggleReadingList === nextProps.onToggleReadingList &&
+      prevProps.isBookmarked === nextProps.isBookmarked &&
+      prevProps.onToggleBookmark === nextProps.onToggleBookmark
     );
   }
 );

@@ -219,6 +219,49 @@ export type Database = {
           }
         ];
       };
+      bookmarks: {
+        Row: {
+          added_at: string | null;
+          article_id: number | null;
+          id: number;
+          user_id: string | null;
+        };
+        Insert: {
+          added_at?: string | null;
+          article_id?: number | null;
+          id?: number;
+          user_id?: string | null;
+        };
+        Update: {
+          added_at?: string | null;
+          article_id?: number | null;
+          id?: number;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'bookmarks_article_id_fkey';
+            columns: ['article_id'];
+            isOneToOne: false;
+            referencedRelation: 'articles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bookmarks_article_id_fkey';
+            columns: ['article_id'];
+            isOneToOne: false;
+            referencedRelation: 'articles_list_view';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bookmarks_article_id_fkey';
+            columns: ['article_id'];
+            isOneToOne: false;
+            referencedRelation: 'articles_word_stats';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
       reviews: {
         Row: {
           grade: number;

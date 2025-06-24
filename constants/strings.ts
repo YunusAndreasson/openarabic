@@ -96,6 +96,9 @@ export const STRINGS = {
   NO_ARTICLES_SAVED: 'No saved articles',
   LISTENING_PLAYLIST_EMPTY: 'Your playlist is empty',
   BOOKMARK_ARTICLES_HINT: 'Save articles from Read to build your playlist',
+  NO_BOOKMARKS_SAVED: 'No bookmarks yet',
+  BOOKMARK_ARTICLES_TO_READ_HINT: 'Bookmark articles to read them later',
+  BOOKMARKS: 'Bookmarks',
   LONG_PRESS_HINT: 'Long press to read article',
   PROGRESS_NOT_AVAILABLE: "Progress isn't available right now",
   ERROR_LOADING_DATA: "Couldn't load data",
@@ -105,6 +108,8 @@ export const STRINGS = {
   ALL_WORDS_PRACTICED: 'Great work on your practice session',
   ADDED_TO_LISTENING_LIST: 'Saved to playlist',
   REMOVED_FROM_LISTENING_LIST: 'Removed from playlist',
+  ADDED_TO_BOOKMARKS: 'Bookmarked for reading',
+  REMOVED_FROM_BOOKMARKS: 'Removed from bookmarks',
   ACCOUNT_CREATED: 'Account created',
   CHECK_EMAIL_CONFIRMATION: 'Check your email for confirmation',
   SUCCESS: 'Success',
@@ -354,6 +359,12 @@ export const STRINGS = {
   FAILED_TO_REMOVE_FROM_READING_LIST: "Couldn't remove article. " + tryAgain,
   FAILED_TO_CHECK_READING_LIST_STATUS: "Couldn't check save status",
 
+  // Bookmark errors
+  FAILED_TO_LOAD_BOOKMARKS: "Couldn't load bookmarks. " + tryAgain,
+  FAILED_TO_ADD_BOOKMARK: "Couldn't add bookmark. " + tryAgain,
+  FAILED_TO_REMOVE_BOOKMARK: "Couldn't remove bookmark. " + tryAgain,
+  FAILED_TO_CHECK_BOOKMARK_STATUS: "Couldn't check bookmark status",
+
   // Word management errors
   FAILED_TO_REMOVE_WORD_FROM_STUDY: "Couldn't remove word. " + tryAgain,
   FAILED_TO_RESET_WORD_PROGRESS: "Couldn't reset progress. " + tryAgain,
@@ -433,11 +444,10 @@ export const STRINGS = {
   FAMILIAR_CONCEPTS_CREATE_I_PLUS_ONE:
     'Familiar concepts in Arabic with translation support create ideal i+1 conditions for acquisition.',
   KRASHEN_INPUT_HYPOTHESIS:
-    "Krashens Input Hypothesis demonstrates that comprehensible input is the primary mechanism for language acquisition. Research shows optimal learning occurs when learners understand 90-95% of content.",
+    'Krashens Input Hypothesis demonstrates that comprehensible input is the primary mechanism for language acquisition. Research shows optimal learning occurs when learners understand 90-95% of content.',
   LANGUAGE_DEVELOPS_THROUGH_UNDERSTANDING:
     'Language develops through understanding, not memorization',
-  UNDERSTANDING_MESSAGES_DRIVES_DEVELOPMENT:
-    'Understanding messages drives language development',
+  UNDERSTANDING_MESSAGES_DRIVES_DEVELOPMENT: 'Understanding messages drives language development',
   ACQUISITION_OCCURS_AUTOMATICALLY:
     'Acquisition occurs automatically with sufficient comprehensible input',
   RESEARCH_REF_KRASHEN_1985:
@@ -462,8 +472,7 @@ export const STRINGS = {
   AUTHENTIC_LANGUAGE_PATTERNS_DESC: 'Arabic as actually written and used by native speakers',
   PERSONAL_INTEREST_LOWERS_AFFECTIVE_FILTER:
     'Personal interest lowers the affective filter and improves acquisition. Familiar concepts create optimal i+1 conditions.',
-  CULTURAL_AND_CONCEPTUAL_FRAMEWORK_DESC:
-    'Understanding of Arabic thought patterns and expression',
+  CULTURAL_AND_CONCEPTUAL_FRAMEWORK_DESC: 'Understanding of Arabic thought patterns and expression',
   CLASSICAL_ARABIC_DESC:
     'Foundation of all Arabic varieties. Enables reading Quran, hadith, literature, formal writing, and news.',
   MODERN_STANDARD_ARABIC_DESC:
@@ -474,30 +483,18 @@ export const STRINGS = {
     'This approach has successfully taught Arabic for centuries. Modern SLA research validates combining authentic texts with translation support for optimal comprehensible input.',
 
   // Info modal tips
-  INFO_TIP_CLIMBS:
-    'Steep climbs show breakthrough learning – celebrate these moments',
-  INFO_TIP_PLATEAUS:
-    'Plateaus are natural consolidation periods – stay consistent',
-  INFO_TIP_CONTEXT:
-    'Focus on understanding words in context, not isolated memorization',
-  INFO_TIP_STRONG_WORDS:
-    'Strong words are permanent additions to your language ability',
-  INFO_TIP_REVIEW_BEFORE_FORGETTING:
-    'Review just before forgetting for strongest memory formation',
-  INFO_TIP_GREEN_ZONES:
-    'Green zones (85%+) indicate good time for adding new words',
-  INFO_TIP_YELLOW_RED_ZONES:
-    'Yellow/red zones need immediate review to prevent memory loss',
-  INFO_TIP_CONSISTENT_PRACTICE:
-    'Consistent practice prevents steep drops in retention',
-  INFO_TIP_STUDY_FRESH:
-    'Study when mentally fresh for better memory encoding',
-  INFO_TIP_CONNECT_WORDS:
-    'Connect new words to existing knowledge for stronger networks',
-  INFO_TIP_FOCUS_CONTEXT:
-    'Focus on understanding context, not just memorizing definitions',
-  INFO_TIP_DAILY_PRACTICE:
-    'Consistent daily practice beats intensive cramming sessions',
+  INFO_TIP_CLIMBS: 'Steep climbs show breakthrough learning – celebrate these moments',
+  INFO_TIP_PLATEAUS: 'Plateaus are natural consolidation periods – stay consistent',
+  INFO_TIP_CONTEXT: 'Focus on understanding words in context, not isolated memorization',
+  INFO_TIP_STRONG_WORDS: 'Strong words are permanent additions to your language ability',
+  INFO_TIP_REVIEW_BEFORE_FORGETTING: 'Review just before forgetting for strongest memory formation',
+  INFO_TIP_GREEN_ZONES: 'Green zones (85%+) indicate good time for adding new words',
+  INFO_TIP_YELLOW_RED_ZONES: 'Yellow/red zones need immediate review to prevent memory loss',
+  INFO_TIP_CONSISTENT_PRACTICE: 'Consistent practice prevents steep drops in retention',
+  INFO_TIP_STUDY_FRESH: 'Study when mentally fresh for better memory encoding',
+  INFO_TIP_CONNECT_WORDS: 'Connect new words to existing knowledge for stronger networks',
+  INFO_TIP_FOCUS_CONTEXT: 'Focus on understanding context, not just memorizing definitions',
+  INFO_TIP_DAILY_PRACTICE: 'Consistent daily practice beats intensive cramming sessions',
 
   // Audio player errors
   ERROR_SELECTED_TRACK_NO_URL: 'Selected track has no audio URL',

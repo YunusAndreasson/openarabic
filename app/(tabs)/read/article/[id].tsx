@@ -16,6 +16,7 @@ import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/articles/useArticleRenderers';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
+import { useBookmarks } from '@/hooks/articles/useBookmarks';
 import { useSentenceScrubber } from '@/hooks/articles/useSentenceScrubber';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
@@ -59,6 +60,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
   const colors = useColors();
   const { user } = useAuth();
   const fontScale = useAppSelectorMemo(state => state.settings.fontScale);
+  const { toggleBookmark, useIsBookmarked } = useBookmarks();
 
   const { handleScroll } = useHeaderVisibility();
 
@@ -85,6 +87,9 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     isInReadingList,
     refetchReadingListStatus,
   } = useArticleData(articleId, user?.id);
+
+  // Check if article is bookmarked
+  const { data: isBookmarked = false } = useIsBookmarked(articleId);
 
   const [activeTooltip, setActiveTooltip] = useState<{
     word: SentenceWord;
@@ -118,6 +123,16 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
       : STRINGS.ADDED_TO_LISTENING_LIST;
     showToast(toastMessage);
   }, [articleId, isInReadingList, handleToggleReadingList, showToast]);
+
+  const handleToggleBookmarkWithFeedback = useCallback(async () => {
+    if (!articleId) return;
+
+    try {
+      await toggleBookmark(articleId, isBookmarked);
+    } catch {
+      // Error handling is done in the toggleBookmark function with toast
+    }
+  }, [articleId, isBookmarked, toggleBookmark]);
 
   // Initialize sentence scrubber
   const {
@@ -241,6 +256,8 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
           scrollViewRef={scrollViewRef as React.RefObject<any>}
           isInReadingList={isInReadingList}
           onToggleReadingList={handleToggleReadingListWithFeedback}
+          isBookmarked={isBookmarked}
+          onToggleBookmark={handleToggleBookmarkWithFeedback}
         />
       ) : null}
       <WordTooltip

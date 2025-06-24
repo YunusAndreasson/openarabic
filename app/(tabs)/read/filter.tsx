@@ -11,7 +11,9 @@ import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { articlesService } from '@/services/articles';
+import { bookmarkService } from '@/services/bookmarks';
 import type { Article } from '@/types/articles.types';
 
 export default function FilterScreen(): JSX.Element {
@@ -19,11 +21,15 @@ export default function FilterScreen(): JSX.Element {
   const type = params['type'] as string | undefined;
   const id = params['id'] as string | undefined;
   const numericId = Number(id);
+  const { user } = useAuth();
 
   const { prefetchArticle } = useAppPreloader();
 
   // Check if parameters are invalid
-  const hasInvalidParams = type !== 'category' || !id || Number.isNaN(numericId) || numericId <= 0;
+  const hasInvalidParams =
+    (type === 'category' && (!id || Number.isNaN(numericId) || numericId <= 0)) ||
+    (type === 'bookmark' && !user?.id) ||
+    !['category', 'bookmark'].includes(type || '');
 
   // Handle navigation leak in useEffect to avoid setState during render
   useEffect(() => {
@@ -32,7 +38,12 @@ export default function FilterScreen(): JSX.Element {
     }
   }, [hasInvalidParams, type, numericId]);
 
-  const cacheKey = useMemo(() => ['filtered-articles', type, numericId], [type, numericId]);
+  const cacheKey = useMemo(() => {
+    if (type === 'bookmark') {
+      return ['bookmarked-articles', user?.id];
+    }
+    return ['filtered-articles', type, numericId];
+  }, [type, numericId, user?.id]);
 
   const {
     data: articles = [],
@@ -42,6 +53,13 @@ export default function FilterScreen(): JSX.Element {
   } = useQuery({
     queryKey: cacheKey,
     queryFn: async () => {
+      if (type === 'bookmark') {
+        if (!user?.id) {
+          throw new Error(STRINGS.FAILED_TO_LOAD_BOOKMARKS);
+        }
+        return await bookmarkService.getBookmarkedArticles(user.id);
+      }
+
       if (Number.isNaN(numericId) || numericId <= 0) {
         throw new Error(STRINGS.INVALID_FILTER_ID.replace('{id}', String(id)));
       }
@@ -63,7 +81,7 @@ export default function FilterScreen(): JSX.Element {
 
   const handleRetry = useCallback(() => {
     router.back();
-  }, [router]);
+  }, []);
 
   const handleArticlePress = useCallback(
     (article: Article) => {
@@ -72,22 +90,22 @@ export default function FilterScreen(): JSX.Element {
       });
       router.push(getArticleRoute(article.id, article.title));
     },
-    [prefetchArticle, router]
+    [prefetchArticle]
   );
 
   // Create header component with featured article
-  const CategoryHeaderComponent = useMemo(() => {
-    if (!articles.length) return null;
+  const HeaderComponent = useMemo(() => {
+    if (!articles.length || type === 'bookmark') return null;
 
     return (
       <GenericFeaturedSection
         articlesData={articles}
         refreshKey={0}
-        scope={`category-${numericId}`}
+        scope={type === 'bookmark' ? 'bookmarks' : `category-${numericId}`}
         onArticlePress={handleArticlePress}
       />
     );
-  }, [articles, numericId, handleArticlePress]);
+  }, [articles, type, numericId, handleArticlePress]);
 
   // Show error for invalid parameters first
   if (hasInvalidParams) {
@@ -122,7 +140,7 @@ export default function FilterScreen(): JSX.Element {
       onArticlePress={handleArticlePress}
       totalCount={articles.length}
       loading={isLoading}
-      HeaderComponent={CategoryHeaderComponent}
+      HeaderComponent={HeaderComponent}
     />
   );
 }

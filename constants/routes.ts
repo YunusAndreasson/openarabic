@@ -5,7 +5,11 @@ export const getArticleRoute = (id: number, headerTitle?: string): string => {
   return `${base}?${search.toString()}`;
 };
 
-export const getFilterRoute = (type: 'category' | 'author', id: number, name?: string): string => {
+export const getFilterRoute = (
+  type: 'category' | 'author' | 'bookmark',
+  id: number | string,
+  name?: string
+): string => {
   const params = new URLSearchParams({ type, id: id.toString() });
   if (name) params.append('name', name);
   return `/(tabs)/read/filter?${params.toString()}`;
