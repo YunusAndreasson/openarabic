@@ -59,7 +59,6 @@ jest.mock('@/hooks/animations', () => ({
 }));
 
 describe('VocabularyStatCards - Basic Functionality', () => {
-  const mockOnStatPress = jest.fn();
   const mockOnStartReview = jest.fn();
 
   // Helper function to create test study words
@@ -91,7 +90,7 @@ describe('VocabularyStatCards - Basic Functionality', () => {
       const { UNSAFE_root } = render(
         <VocabularyStatCards
           studyWords={words}
-          onStatPress={mockOnStatPress}
+          
           onStartReview={mockOnStartReview}
         />
       );
@@ -105,7 +104,7 @@ describe('VocabularyStatCards - Basic Functionality', () => {
       const { UNSAFE_root } = render(
         <VocabularyStatCards
           studyWords={words}
-          onStatPress={mockOnStatPress}
+          
           onStartReview={mockOnStartReview}
         />
       );
@@ -118,7 +117,7 @@ describe('VocabularyStatCards - Basic Functionality', () => {
       const { UNSAFE_root } = render(
         <VocabularyStatCards
           studyWords={[]}
-          onStatPress={mockOnStatPress}
+          
           onStartReview={mockOnStartReview}
         />
       );
@@ -131,7 +130,7 @@ describe('VocabularyStatCards - Basic Functionality', () => {
       const { UNSAFE_root } = render(
         <VocabularyStatCards
           studyWords={undefined as any}
-          onStatPress={mockOnStatPress}
+          
           onStartReview={mockOnStartReview}
         />
       );
@@ -149,7 +148,7 @@ describe('VocabularyStatCards - Basic Functionality', () => {
         <VocabularyStatCards
           studyWords={words}
           dueWords={1}
-          onStatPress={mockOnStatPress}
+          
           onStartReview={mockOnStartReview}
         />
       );
@@ -173,7 +172,7 @@ describe('VocabularyStatCards - Basic Functionality', () => {
         <VocabularyStatCards
           studyWords={words}
           dueWords={0}
-          onStatPress={mockOnStatPress}
+          
           onStartReview={mockOnStartReview}
         />
       );
@@ -192,7 +191,7 @@ describe('VocabularyStatCards - Basic Functionality', () => {
         <VocabularyStatCards
           studyWords={words}
           dueWords={0}
-          onStatPress={mockOnStatPress}
+          
           onStartReview={mockOnStartReview}
         />
       );
@@ -208,7 +207,7 @@ describe('VocabularyStatCards - Basic Functionality', () => {
         <VocabularyStatCards
           studyWords={words}
           dueWords={0}
-          onStatPress={mockOnStatPress}
+          
           onStartReview={mockOnStartReview}
         />
       );

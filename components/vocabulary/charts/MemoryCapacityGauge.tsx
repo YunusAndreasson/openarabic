@@ -14,11 +14,10 @@ import { useNavigationWithDebounce } from '@/hooks';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useMemoryCapacityGauge } from '@/hooks/vocabulary';
-import type { StatCategory, StudyWord } from '@/types/vocabulary.types';
+import type { StudyWord } from '@/types/vocabulary.types';
 
 interface MemoryCapacityGaugeProps {
   studyWords: StudyWord[];
-  onStatPress?: (category: StatCategory) => void;
 }
 
 // Enhanced gauge configuration for better visual appeal
@@ -28,8 +27,6 @@ const GAUGE_RADIUS = 140;
 const GAUGE_STROKE_WIDTH = 20;
 const INDICATOR_SIZE = 12;
 const INDICATOR_GLOW_SIZE = 24;
-
-const noop = () => {};
 
 export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords = [] }) => {
   const colors = useColors();
@@ -71,13 +68,10 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
 
   return (
     <BaseChart
-      contentHeight={GAUGE_HEIGHT + 68}
+      contentHeight={GAUGE_HEIGHT + 76}
       emptyStateText={STRINGS.ADD_WORDS_TO_SEE_CAPACITY}
       hasData={studyWords.length > 0}
       hideTitle={true}
-      subtitle=""
-      title=""
-      onInfoPress={noop}
     >
       <TouchableOpacity
         onPress={handleInsightsPress}
@@ -254,13 +248,13 @@ const styles = StyleSheet.create({
   },
   gaugeContainer: {
     alignItems: 'center',
-    height: GAUGE_HEIGHT + LAYOUT.SPACING.XXXLARGE + LAYOUT.SPACING.SMALL,
+    height: GAUGE_HEIGHT + LAYOUT.SPACING.LARGE,
     justifyContent: 'center',
     position: 'relative',
   },
   bottomSection: {
     alignItems: 'center',
-    marginTop: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   actionCard: {

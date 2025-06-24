@@ -40,7 +40,6 @@ interface VocabularyStatCardsProps {
   masteredWords?: number;
   learningWords?: number;
   dueWords?: number;
-  onStatPress?: (category: StatCategory) => void;
   onStartReview?: (category: StatCategory) => void;
   studyWords?: StudyWord[];
 }
@@ -62,7 +61,6 @@ export const VocabularyStatCards = memo(
     masteredWords = 0,
     learningWords = 0,
     dueWords = 0,
-    onStatPress,
     onStartReview,
     studyWords = [],
   }: VocabularyStatCardsProps) => {
@@ -222,7 +220,7 @@ export const VocabularyStatCards = memo(
     return (
       <View style={styles.container}>
         {/* Memory Capacity Gauge - scientifically grounded with color coordination */}
-        <MemoryCapacityGauge studyWords={validatedInput.studyWords} onStatPress={onStatPress} />
+        <MemoryCapacityGauge studyWords={validatedInput.studyWords} />
 
         {categories.map(config => (
           <TouchableOpacity

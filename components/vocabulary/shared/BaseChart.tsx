@@ -21,10 +21,10 @@ import { CardHeader } from './CardHeader';
 import { ChartFooter } from './ChartFooter';
 
 interface BaseChartProps {
-  // Header props
-  title: string;
-  subtitle: string;
-  onInfoPress: () => void;
+  // Header props (optional when hideTitle is true)
+  title?: string;
+  subtitle?: string;
+  onInfoPress?: () => void;
   hideTitle?: boolean;
 
   // Content props
@@ -118,9 +118,9 @@ ChartSkeleton.displayName = 'ChartSkeleton';
  */
 export const BaseChart = memo(
   ({
-    title,
-    subtitle,
-    onInfoPress,
+    title = '',
+    subtitle = '',
+    onInfoPress = () => {},
     hideTitle = false,
     children,
     hasData,
