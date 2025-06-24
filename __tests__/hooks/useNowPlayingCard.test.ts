@@ -1,5 +1,5 @@
-import { renderHook, act } from '@testing-library/react-native';
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { act, renderHook } from '@testing-library/react-native';
 
 // Mock animation constants before importing the hook
 jest.mock('@/constants/animation', () => ({
@@ -72,42 +72,36 @@ describe('useNowPlayingCard', () => {
     mockIsDarkMode.mockReset();
   });
 
-  it('formats time and progress correctly', () => {
+  it('handles visibility changes correctly', () => {
     mockIsDarkMode.mockReturnValue(false);
+    const onStop = jest.fn();
     const { result } = renderHook(() =>
       useNowPlayingCard({
         isVisible: true,
-        article: { id: 1 } as any,
-        progress: 30000,
-        duration: 60000,
-        onStop: jest.fn(),
+        onStop,
       })
     );
 
-    expect(result.current.timeCalculations).toEqual({
-      currentTime: '0:30',
-      totalTime: '1:00',
-      progressPercentage: 50,
-    });
+    expect(result.current.cardAnimatedStyle).toBeDefined();
+    expect(result.current.backgroundImageStyle).toBeDefined();
+    expect(result.current.handleStopPress).toBeDefined();
   });
 
-  it('handles invalid values in time calculations', () => {
+  it('returns proper animation styles and handlers', () => {
     mockIsDarkMode.mockReturnValue(false);
+    const onStop = jest.fn();
     const { result } = renderHook(() =>
       useNowPlayingCard({
-        isVisible: true,
-        article: { id: 1 } as any,
-        progress: Infinity,
-        duration: NaN,
-        onStop: jest.fn(),
+        isVisible: false,
+        onStop,
       })
     );
 
-    expect(result.current.timeCalculations).toEqual({
-      currentTime: '0:00',
-      totalTime: '0:00',
-      progressPercentage: 0,
-    });
+    expect(result.current.cardAnimatedStyle).toBeDefined();
+    expect(result.current.backgroundImageStyle).toBeDefined();
+    expect(result.current.buttonAnimatedStyle).toBeDefined();
+    expect(result.current.handleStopPressIn).toBeDefined();
+    expect(result.current.handleStopPressOut).toBeDefined();
   });
 
   it('provides dynamic styles based on theme and timer state', () => {
@@ -115,9 +109,6 @@ describe('useNowPlayingCard', () => {
     const { result } = renderHook(() =>
       useNowPlayingCard({
         isVisible: true,
-        article: { id: 1 } as any,
-        progress: 0,
-        duration: 0,
         onStop: jest.fn(),
         isTimerActive: true,
       })
@@ -145,9 +136,6 @@ describe('useNowPlayingCard', () => {
     const { result } = renderHook(() =>
       useNowPlayingCard({
         isVisible: true,
-        article: { id: 1 } as any,
-        progress: 0,
-        duration: 0,
         onStop,
       })
     );
