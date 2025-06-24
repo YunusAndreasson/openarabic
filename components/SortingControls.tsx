@@ -1,13 +1,8 @@
 import type { JSX } from 'react';
-import { memo, useState, useEffect, useCallback, useMemo } from 'react';
-import {
-  StyleSheet,
-  View,
-  type StyleProp,
-  type ViewStyle,
-} from 'react-native';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { SortDirection, SortOption } from '@/types/ui/sorting.types';
@@ -59,10 +54,7 @@ function SortingControls<T extends string>({
     [currentSort, internalDirection, onSortChange]
   );
 
-  const getSortHandler = useCallback(
-    (key: T) => () => handleSortChange(key),
-    [handleSortChange]
-  );
+  const getSortHandler = useCallback((key: T) => () => handleSortChange(key), [handleSortChange]);
 
   const sortHandlers = useMemo(() => {
     const handlers: Record<T, () => void> = {} as Record<T, () => void>;

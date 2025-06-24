@@ -9,7 +9,7 @@ import AudioProgressIndicator from '@/components/AudioProgressIndicator';
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import { NOW_PLAYING_CARD_HEIGHT } from '@/constants/animation';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useNowPlayingCard } from '@/hooks/listen/useNowPlayingCard';
 import { useColors } from '@/hooks/theme/useColors';

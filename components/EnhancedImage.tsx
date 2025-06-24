@@ -55,12 +55,6 @@ const styles = StyleSheet.create({
   },
 });
 
-interface TransitionConfig {
-  duration: number;
-  effect: typeof TRANSITION_EFFECT;
-  timing: typeof TRANSITION_TIMING;
-}
-
 /**
  * High-performance image component optimized for loading and caching
  *

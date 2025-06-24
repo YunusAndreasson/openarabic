@@ -311,6 +311,9 @@ export const LAYOUT = {
   },
 
   TOUCH_TARGET: {
+    SMALL: TOUCH_TARGETS.SMALL,
+    MEDIUM: TOUCH_TARGETS.MEDIUM,
+    LARGE: TOUCH_TARGETS.LARGE,
     MIN_CONTAINER: {
       WIDTH: TOUCH_TARGETS.LARGE,
       HEIGHT: TOUCH_TARGETS.LARGE,
@@ -328,6 +331,7 @@ export const LAYOUT = {
       THIN: BASE_UNIT * 0.125, // 0.5 - responsive to base unit
       NORMAL: BASE_UNIT * 0.25, // 1 - responsive to base unit
       THICK: BASE_UNIT * 0.5, // 2 - responsive to base unit
+      FOCUSED: BASE_UNIT * 0.5, // 2 - responsive to base unit
     },
     STYLE: {
       SOLID: 'solid',
@@ -362,7 +366,7 @@ export const LAYOUT = {
   },
 
   REVIEW: {
-    BOTTOM_ACTIONS_HEIGHT: CARD.HEIGHT.LIST_ITEM,
+    BOTTOM_ACTIONS_HEIGHT: TOUCH_TARGETS.LARGE + SPACING_SCALE.LARGE * 2, // Same as CARD.HEIGHT.LIST_ITEM
     INDICATOR_MAX_WIDTH: BASE_UNIT * 22.5, // 90 - responsive to base unit
     COMPLETION: {
       ICON_DEFAULT_SIZE: BASE_UNIT * 25, // 100 - responsive to base unit

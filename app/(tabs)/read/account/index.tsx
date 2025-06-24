@@ -1,7 +1,7 @@
 // External Libraries
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
-import { Fragment, memo, type FC, useCallback } from 'react';
+import { Fragment, memo, useCallback, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -12,7 +12,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { TimePicker } from '@/components/TimePicker';
 import { Toggle } from '@/components/Toggle';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useAccountScreen } from '@/hooks/account';
 import { useColors } from '@/hooks/theme/useColors';
@@ -144,11 +144,7 @@ const AccountScreen: FC = () => {
             <View style={styles.settingRow}>
               <View style={styles.settingLabelContainer}>
                 <View style={styles.cardIconContainer}>
-                  <Ionicons
-                    color={colors.text}
-                    name="moon"
-                    size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                  />
+                  <Ionicons color={colors.text} name="moon" size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM} />
                 </View>
                 <View style={styles.settingLabelTextContainer}>
                   <ThemedText type="body">{STRINGS.DARK_MODE}</ThemedText>
