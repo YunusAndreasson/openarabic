@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { useLocalSearchParams, router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useMemo, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { InteractionManager } from 'react-native';
 
 import ErrorState from '@/components/ErrorState';
 import FilteredArticleView from '@/components/home/FilteredArticleView';
+import GenericFeaturedSection from '@/components/home/GenericFeaturedSection';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
@@ -22,8 +23,7 @@ export default function FilterScreen(): JSX.Element {
   const { prefetchArticle } = useAppPreloader();
 
   // Check if parameters are invalid
-  const hasInvalidParams =
-    type !== 'category' || !id || Number.isNaN(numericId) || numericId <= 0;
+  const hasInvalidParams = type !== 'category' || !id || Number.isNaN(numericId) || numericId <= 0;
 
   // Handle navigation leak in useEffect to avoid setState during render
   useEffect(() => {
@@ -43,15 +43,11 @@ export default function FilterScreen(): JSX.Element {
     queryKey: cacheKey,
     queryFn: async () => {
       if (Number.isNaN(numericId) || numericId <= 0) {
-        throw new Error(
-          STRINGS.INVALID_FILTER_ID.replace('{id}', String(id))
-        );
+        throw new Error(STRINGS.INVALID_FILTER_ID.replace('{id}', String(id)));
       }
 
       if (type !== 'category') {
-        throw new Error(
-          STRINGS.INVALID_FILTER_TYPE.replace('{type}', String(type))
-        );
+        throw new Error(STRINGS.INVALID_FILTER_TYPE.replace('{type}', String(type)));
       }
 
       return await articlesService.getArticles({ categoryId: numericId });
@@ -79,6 +75,20 @@ export default function FilterScreen(): JSX.Element {
     [prefetchArticle, router]
   );
 
+  // Create header component with featured article
+  const CategoryHeaderComponent = useMemo(() => {
+    if (!articles.length) return null;
+
+    return (
+      <GenericFeaturedSection
+        articlesData={articles}
+        refreshKey={0}
+        scope={`category-${numericId}`}
+        onArticlePress={handleArticlePress}
+      />
+    );
+  }, [articles, numericId, handleArticlePress]);
+
   // Show error for invalid parameters first
   if (hasInvalidParams) {
     // If it looks like an article navigation leak, show loading while redirecting
@@ -88,7 +98,10 @@ export default function FilterScreen(): JSX.Element {
 
     return (
       <ErrorState
-        message={STRINGS.INVALID_FILTER_PARAMETERS.replace('{type}', String(type)).replace('{id}', String(id))}
+        message={STRINGS.INVALID_FILTER_PARAMETERS.replace('{type}', String(type)).replace(
+          '{id}',
+          String(id)
+        )}
         onRetry={handleRetry}
       />
     );
@@ -109,6 +122,7 @@ export default function FilterScreen(): JSX.Element {
       onArticlePress={handleArticlePress}
       totalCount={articles.length}
       loading={isLoading}
+      HeaderComponent={CategoryHeaderComponent}
     />
   );
 }

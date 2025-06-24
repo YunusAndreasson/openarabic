@@ -1,5 +1,5 @@
 import { FlashList } from '@shopify/flash-list';
-import { memo, useCallback, useMemo, type FC } from 'react';
+import React, { memo, useCallback, useMemo, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import EmptyState from '@/components/EmptyState';
@@ -64,6 +64,11 @@ interface FilteredArticleViewProps {
    * Loading state when fetching articles
    */
   loading?: boolean;
+
+  /**
+   * Optional header component to display above the filter summary
+   */
+  HeaderComponent?: React.ComponentType | React.ReactElement | null;
 }
 
 /**
@@ -77,6 +82,7 @@ const FilteredArticleViewComparison = (
   if (prevProps.articles !== nextProps.articles) return false;
   if (prevProps.loading !== nextProps.loading) return false;
   if (prevProps.onArticlePress !== nextProps.onArticlePress) return false;
+  if (prevProps.HeaderComponent !== nextProps.HeaderComponent) return false;
 
   // Array length checks before deep comparison
   if (prevProps.articles?.length !== nextProps.articles?.length) return false;
@@ -95,6 +101,7 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
   onArticlePress = NOOP_ARTICLE_PRESS,
   totalCount,
   loading = false,
+  HeaderComponent = null,
 }) => {
   const colors = useColors();
 
@@ -109,8 +116,18 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
   }, []);
 
   const ListHeaderComponent = useMemo(() => {
-    return <FilterSummary filteredCount={articlesLength} totalCount={totalCount} />;
-  }, [articlesLength, totalCount]);
+    return (
+      <>
+        {HeaderComponent && (
+          <>
+            {typeof HeaderComponent === 'function' ? <HeaderComponent /> : HeaderComponent}
+            <View style={{ height: LAYOUT.SPACING.MEDIUM }} />
+          </>
+        )}
+        <FilterSummary filteredCount={articlesLength} totalCount={totalCount} />
+      </>
+    );
+  }, [HeaderComponent, articlesLength, totalCount]);
 
   // Memoize render callbacks
   const renderItemCallback = useCallback(
