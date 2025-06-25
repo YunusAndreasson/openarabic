@@ -163,6 +163,7 @@ const styles = StyleSheet.create({
     fontFamily: 'System',
     paddingBottom: LAYOUT.SPACING.TINY,
     paddingTop: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   wordsContainer: {
     alignItems: 'center',
