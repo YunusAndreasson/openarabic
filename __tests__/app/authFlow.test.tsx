@@ -1,8 +1,9 @@
-import { render, fireEvent, act } from '@testing-library/react-native';
-import { Alert } from 'react-native';
-import Auth from '../../components/auth';
-import TabLayout from '../../app/(tabs)/_layout';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, fireEvent, render } from '@testing-library/react-native';
+import React from 'react';
+import { Alert } from 'react-native';
+import TabLayout from '../../app/(tabs)/_layout';
+import Auth from '../../components/auth';
 import TestStoreProvider from '../helpers/testStore';
 
 jest.mock('@expo/vector-icons', () => ({
@@ -172,7 +173,7 @@ jest.mock('../../components/HeaderProfile', () => {
   );
 });
 
-jest.mock('../../components/listen/EditModeButton', () => () => null);
+jest.mock('../../components/ui/EditModeButton', () => () => null);
 
 // Mock notification service to prevent expo-notifications import error
 jest.mock('../../services/notificationService', () => ({

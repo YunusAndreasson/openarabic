@@ -1,6 +1,5 @@
+import { fireEvent, render } from '@testing-library/react-native';
 import * as React from 'react';
-import { Text } from 'react-native';
-import { render, fireEvent } from '@testing-library/react-native';
 jest.mock('@react-navigation/native', () => {
   const React = require('react');
   return {
@@ -136,7 +135,7 @@ jest.mock('../../hooks/theme/useThemeDetection', () => ({
 }));
 
 jest.mock('../../components/HeaderProfile', () => () => null);
-jest.mock('../../components/listen/EditModeButton', () => () => null);
+jest.mock('../../components/ui/EditModeButton', () => () => null);
 
 // Mock notification service to prevent expo-notifications import error
 jest.mock('../../services/notificationService', () => ({

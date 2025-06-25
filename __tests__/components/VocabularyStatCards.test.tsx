@@ -88,11 +88,7 @@ describe('VocabularyStatCards - Basic Functionality', () => {
       const words = [createStudyWord()];
 
       const { UNSAFE_root } = render(
-        <VocabularyStatCards
-          studyWords={words}
-          
-          onStartReview={mockOnStartReview}
-        />
+        <VocabularyStatCards studyWords={words} onStartReview={mockOnStartReview} />
       );
 
       expect(UNSAFE_root).toBeTruthy();
@@ -102,11 +98,7 @@ describe('VocabularyStatCards - Basic Functionality', () => {
       const words = [createStudyWord()];
 
       const { UNSAFE_root } = render(
-        <VocabularyStatCards
-          studyWords={words}
-          
-          onStartReview={mockOnStartReview}
-        />
+        <VocabularyStatCards studyWords={words} onStartReview={mockOnStartReview} />
       );
 
       // Should render with memory capacity integration
@@ -115,11 +107,7 @@ describe('VocabularyStatCards - Basic Functionality', () => {
 
     it('handles empty study words gracefully', () => {
       const { UNSAFE_root } = render(
-        <VocabularyStatCards
-          studyWords={[]}
-          
-          onStartReview={mockOnStartReview}
-        />
+        <VocabularyStatCards studyWords={[]} onStartReview={mockOnStartReview} />
       );
 
       // Should render without crashing
@@ -128,11 +116,7 @@ describe('VocabularyStatCards - Basic Functionality', () => {
 
     it('handles invalid study words data gracefully', () => {
       const { UNSAFE_root } = render(
-        <VocabularyStatCards
-          studyWords={undefined as any}
-          
-          onStartReview={mockOnStartReview}
-        />
+        <VocabularyStatCards studyWords={undefined as any} onStartReview={mockOnStartReview} />
       );
 
       // Should render without crashing
@@ -145,12 +129,7 @@ describe('VocabularyStatCards - Basic Functionality', () => {
       const words = [createStudyWord()];
 
       const { queryByTestId } = render(
-        <VocabularyStatCards
-          studyWords={words}
-          dueWords={1}
-          
-          onStartReview={mockOnStartReview}
-        />
+        <VocabularyStatCards studyWords={words} dueWords={1} onStartReview={mockOnStartReview} />
       );
 
       // Should have at least the total words button
@@ -169,12 +148,7 @@ describe('VocabularyStatCards - Basic Functionality', () => {
       ];
 
       const { queryByTestId } = render(
-        <VocabularyStatCards
-          studyWords={words}
-          dueWords={0}
-          
-          onStartReview={mockOnStartReview}
-        />
+        <VocabularyStatCards studyWords={words} dueWords={0} onStartReview={mockOnStartReview} />
       );
 
       // Should show at least total words button
@@ -188,12 +162,7 @@ describe('VocabularyStatCards - Basic Functionality', () => {
       const words = [createStudyWord(), createStudyWord({ root_id: 2 })];
 
       const { getAllByText } = render(
-        <VocabularyStatCards
-          studyWords={words}
-          dueWords={0}
-          
-          onStartReview={mockOnStartReview}
-        />
+        <VocabularyStatCards studyWords={words} dueWords={0} onStartReview={mockOnStartReview} />
       );
 
       // Should show the word count (might appear multiple times)
@@ -204,16 +173,11 @@ describe('VocabularyStatCards - Basic Functionality', () => {
       const words = [createStudyWord()];
 
       const { getByText } = render(
-        <VocabularyStatCards
-          studyWords={words}
-          dueWords={0}
-          
-          onStartReview={mockOnStartReview}
-        />
+        <VocabularyStatCards studyWords={words} dueWords={0} onStartReview={mockOnStartReview} />
       );
 
       // Should show all words label
-      expect(getByText('Interleaved review')).toBeTruthy();
+      expect(getByText('Building learning capacity')).toBeTruthy();
     });
   });
 });
