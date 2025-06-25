@@ -16,7 +16,7 @@ import Pill from './Pill';
 import { ThemedText } from './ThemedText';
 
 // Extract constants outside component for better performance
-const GOLDEN_RATIO_ADJUSTED = 1.5;
+const GOLDEN_RATIO = 1.618; // True golden ratio for optimal image-to-content proportions
 const GRADIENT_START_POINT = { x: 0, y: 0.1 };
 const GRADIENT_END_POINT = { x: 0, y: 1.0 };
 const TRANSPARENT_COLOR = 'transparent';
@@ -164,7 +164,7 @@ function ArticleCardComponent({
 
   // Memoize image height calculation with optimized dependencies
   const imageHeight = useMemo(
-    () => Math.round((screenWidth - LAYOUT.SCREEN_EDGE_PADDING * 2) / GOLDEN_RATIO_ADJUSTED),
+    () => Math.round((screenWidth - LAYOUT.SCREEN_EDGE_PADDING * 2) / GOLDEN_RATIO),
     [screenWidth]
   );
 
