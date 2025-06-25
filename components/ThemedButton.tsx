@@ -1,14 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { memo, useMemo, useCallback, type JSX } from 'react';
+import React, { memo, useCallback, useMemo, type JSX } from 'react';
 import type { GestureResponderEvent } from 'react-native';
-import { StyleSheet, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import type { ThemedButtonProps, ButtonSize, ButtonTextWeight } from '@/types/ui/button.types';
+import type { ButtonSize, ButtonTextWeight, ThemedButtonProps } from '@/types/ui/button.types';
 import { selectionFeedback } from '@/utils/haptics';
 
 import { ThemedText } from './ThemedText';
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.SMALL,
   },
   buttonText: {
-    fontWeight: '800',
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.HEAVY,
     letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED * 5,
     textAlign: 'center',
   },

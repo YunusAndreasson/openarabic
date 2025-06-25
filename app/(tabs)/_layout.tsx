@@ -164,8 +164,8 @@ export default function TabLayout(): JSX.Element {
         headerShown: true,
         headerTitleAlign: 'left',
         headerTitleStyle: {
-          fontSize: LAYOUT.HEADER.TITLE.MAIN.fontSize,
-          fontWeight: LAYOUT.HEADER.TITLE.MAIN.fontWeight,
+          fontSize: LAYOUT.HEADER.TITLE.SECONDARY.fontSize,
+          fontWeight: LAYOUT.HEADER.TITLE.SECONDARY.fontWeight,
         },
         headerTransparent: true,
         headerBackground: headerBackground,

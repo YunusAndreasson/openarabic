@@ -42,7 +42,8 @@ export function createNavigationOptions(
       backgroundColor: colors.background,
     },
     headerTitleStyle: {
-      fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+      fontSize: LAYOUT.HEADER.TITLE.SECONDARY.fontSize,
+      fontWeight: LAYOUT.HEADER.TITLE.SECONDARY.fontWeight,
     },
     headerTintColor: colors.headingText,
 

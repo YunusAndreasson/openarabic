@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import TouchableIcon from '@/components/TouchableIcon';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 
 interface CardHeaderProps {
   title: string;
@@ -15,7 +15,7 @@ export const CardHeader = memo(({ title, subtitle, onInfoPress }: CardHeaderProp
   return (
     <View style={styles.cardHeader}>
       <View style={styles.titleGroup}>
-        <ThemedText style={styles.cardTitle} type="heading3" weight="bold">
+        <ThemedText style={styles.cardTitle} type="heading2" weight="bold">
           {title}
         </ThemedText>
         <ThemedText style={styles.cardSubtitle} type="caption" variant="secondary">
@@ -48,7 +48,9 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.MEDIUM,
   },
   cardTitle: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.2,
+    lineHeight:
+      LAYOUT.TYPOGRAPHY.SCALE.XXLARGE *
+      TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.SECTION_HEADER.lineHeightMultiplier,
     marginBottom: 0,
   },
   infoIcon: {

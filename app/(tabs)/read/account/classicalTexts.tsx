@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -61,7 +61,8 @@ const ClassicalTextsScreen: FC = () => {
               <View style={styles.benefitContent}>
                 <ThemedText style={styles.benefitText} type="body">
                   <ThemedText weight="bold">{STRINGS.COMPLETE_LINGUISTIC_SYSTEM}</ThemedText>
-                  {'\n'}{STRINGS.COMPLETE_ARABIC_SYSTEM}
+                  {'\n'}
+                  {STRINGS.COMPLETE_ARABIC_SYSTEM}
                 </ThemedText>
               </View>
             </View>
@@ -76,7 +77,8 @@ const ClassicalTextsScreen: FC = () => {
               <View style={styles.benefitContent}>
                 <ThemedText style={styles.benefitText} type="body">
                   <ThemedText weight="bold">{STRINGS.RICH_VOCABULARY_INPUT}</ThemedText>
-                  {'\n'}{STRINGS.RICH_VOCABULARY_INPUT_DESC}
+                  {'\n'}
+                  {STRINGS.RICH_VOCABULARY_INPUT_DESC}
                 </ThemedText>
               </View>
             </View>
@@ -91,7 +93,8 @@ const ClassicalTextsScreen: FC = () => {
               <View style={styles.benefitContent}>
                 <ThemedText style={styles.benefitText} type="body">
                   <ThemedText weight="bold">{STRINGS.AUTHENTIC_LANGUAGE_PATTERNS}</ThemedText>
-                  {'\n'}{STRINGS.AUTHENTIC_LANGUAGE_PATTERNS_DESC}
+                  {'\n'}
+                  {STRINGS.AUTHENTIC_LANGUAGE_PATTERNS_DESC}
                 </ThemedText>
               </View>
             </View>
@@ -106,7 +109,8 @@ const ClassicalTextsScreen: FC = () => {
               <View style={styles.benefitContent}>
                 <ThemedText style={styles.benefitText} type="body">
                   <ThemedText weight="bold">{STRINGS.CULTURAL_AND_CONCEPTUAL_FRAMEWORK}</ThemedText>
-                  {'\n'}{STRINGS.CULTURAL_AND_CONCEPTUAL_FRAMEWORK_DESC}
+                  {'\n'}
+                  {STRINGS.CULTURAL_AND_CONCEPTUAL_FRAMEWORK_DESC}
                 </ThemedText>
               </View>
             </View>
@@ -304,13 +308,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   sectionTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.1,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.TIGHT,
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   bodyText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.05,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.7,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
 
@@ -335,12 +340,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   concernTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
     marginBottom: LAYOUT.SPACING.TINY,
   },
   concernText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
   },
 
   // Benefits List
@@ -366,7 +372,7 @@ const styles = StyleSheet.create({
   benefitText: {
     flex: 1,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
   },
 
   // Comparison List
@@ -390,12 +396,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   comparisonTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
     marginBottom: LAYOUT.SPACING.TINY,
   },
   comparisonText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
   },
 
   // References List
@@ -419,12 +426,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   referenceTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
     marginBottom: LAYOUT.SPACING.TINY,
   },
   referenceText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
   },
 });
 
