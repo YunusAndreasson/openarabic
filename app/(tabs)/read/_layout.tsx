@@ -16,6 +16,10 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 function getFilterTitle(params: FilterParams): string {
   const { type, name } = params;
 
+  if (type === 'bookmark') {
+    return STRINGS.BOOKMARKS;
+  }
+
   if (type === 'category' && name) {
     return capitalizeFirstLetter(decodeURIComponent(name));
   }
