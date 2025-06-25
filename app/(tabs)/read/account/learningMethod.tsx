@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -215,7 +215,8 @@ const LearningMethodScreen: FC = () => {
               <View style={styles.benefitContent}>
                 <ThemedText style={styles.benefitText} type="body">
                   <ThemedText weight="bold">{STRINGS.ACQUISITION_NOT_LEARNING}</ThemedText>
-                  {'\n'}{STRINGS.LANGUAGE_DEVELOPS_THROUGH_UNDERSTANDING}
+                  {'\n'}
+                  {STRINGS.LANGUAGE_DEVELOPS_THROUGH_UNDERSTANDING}
                 </ThemedText>
               </View>
             </View>
@@ -230,7 +231,8 @@ const LearningMethodScreen: FC = () => {
               <View style={styles.benefitContent}>
                 <ThemedText style={styles.benefitText} type="body">
                   <ThemedText weight="bold">{STRINGS.FOCUS_ON_MEANING}</ThemedText>
-                  {'\n'}{STRINGS.UNDERSTANDING_MESSAGES_DRIVES_DEVELOPMENT}
+                  {'\n'}
+                  {STRINGS.UNDERSTANDING_MESSAGES_DRIVES_DEVELOPMENT}
                 </ThemedText>
               </View>
             </View>
@@ -245,7 +247,8 @@ const LearningMethodScreen: FC = () => {
               <View style={styles.benefitContent}>
                 <ThemedText style={styles.benefitText} type="body">
                   <ThemedText weight="bold">{STRINGS.NATURAL_PROCESS}</ThemedText>
-                  {'\n'}{STRINGS.ACQUISITION_OCCURS_AUTOMATICALLY}
+                  {'\n'}
+                  {STRINGS.ACQUISITION_OCCURS_AUTOMATICALLY}
                 </ThemedText>
               </View>
             </View>
@@ -340,13 +343,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   sectionTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.1,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.TIGHT,
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   bodyText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.05,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.7,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
 
@@ -364,19 +368,20 @@ const styles = StyleSheet.create({
     height: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.MICRO * 2,
+    marginTop: LAYOUT.SPACING.HALF_TINY,
     width: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
   },
   stepContent: {
     flex: 1,
   },
   stepTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
     marginBottom: LAYOUT.SPACING.TINY,
   },
   stepText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
   },
 
   // Reasons List
@@ -393,19 +398,20 @@ const styles = StyleSheet.create({
     height: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.MICRO * 2,
+    marginTop: LAYOUT.SPACING.HALF_TINY,
     width: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
   },
   reasonContent: {
     flex: 1,
   },
   reasonTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
     marginBottom: LAYOUT.SPACING.TINY,
   },
   reasonText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
   },
 
   // Benefits List
@@ -422,7 +428,7 @@ const styles = StyleSheet.create({
     height: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.MICRO * 2,
+    marginTop: LAYOUT.SPACING.HALF_TINY,
     width: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
   },
   benefitContent: {
@@ -431,7 +437,7 @@ const styles = StyleSheet.create({
   benefitText: {
     flex: 1,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
   },
 
   // References List
@@ -448,7 +454,7 @@ const styles = StyleSheet.create({
     height: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.MICRO * 2,
+    marginTop: LAYOUT.SPACING.HALF_TINY,
     width: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
   },
   referenceContent: {
@@ -459,8 +465,8 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.TINY,
   },
   referenceText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.1,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.6,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.LOOSE,
   },
 });
 

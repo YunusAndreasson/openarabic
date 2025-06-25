@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
   timeText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.7, // Responsive large font size
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 2, // Responsive line height
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE + LAYOUT.SPACING.LARGE, // 28 + 16 = 44px - consistent large display
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE + LAYOUT.SPACING.XXXLARGE, // 28 + 32 = 60px - proportional line height
   },
 });

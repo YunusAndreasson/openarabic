@@ -188,16 +188,16 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.HEAVY,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED * 5,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.EXTRA_WIDE,
     textAlign: 'center',
   },
   buttonTextLarge: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED * 7,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.EXTRA_WIDE,
   },
   buttonTextSmall: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED * 3,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
   },
   contentContainer: {
     alignItems: 'center',
@@ -219,8 +219,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   normalText: {
-    fontWeight: '400',
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED + 0.2,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.REGULAR,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
     textTransform: 'none',
   },
 });

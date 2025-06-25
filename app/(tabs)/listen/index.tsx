@@ -339,7 +339,7 @@ export default function ListenScreen(): JSX.Element {
                   colors={colors}
                   description={STRINGS.LISTENING_PLAYLIST_EMPTY}
                   icon="headset-outline"
-                  iconSize={72}
+                  iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
                   submessage={STRINGS.BOOKMARK_ARTICLES_HINT}
                   title={STRINGS.NO_ARTICLES_SAVED}
                   containerStyle={{
@@ -377,7 +377,7 @@ export default function ListenScreen(): JSX.Element {
                   colors={colors}
                   description={STRINGS.LISTENING_PLAYLIST_EMPTY}
                   icon="headset-outline"
-                  iconSize={72}
+                  iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
                   submessage={STRINGS.BOOKMARK_ARTICLES_HINT}
                   title={STRINGS.NO_ARTICLES_SAVED}
                   containerStyle={{

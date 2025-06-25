@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
     height: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.MICRO * 2,
+    marginTop: LAYOUT.SPACING.HALF_TINY,
     width: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
   },
   concernContent: {
@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
     height: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.MICRO * 2,
+    marginTop: LAYOUT.SPACING.HALF_TINY,
     width: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
   },
   benefitContent: {
@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
     height: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.MICRO * 2,
+    marginTop: LAYOUT.SPACING.HALF_TINY,
     width: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
   },
   comparisonContent: {
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
     height: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.MICRO * 2,
+    marginTop: LAYOUT.SPACING.HALF_TINY,
     width: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
   },
   referenceContent: {

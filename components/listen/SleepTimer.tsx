@@ -248,11 +248,11 @@ const styles = StyleSheet.create({
   },
 
   timeText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.8,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE + LAYOUT.SPACING.MEDIUM, // 28 + 12 = 40px - consistent display size
     fontVariant: ['tabular-nums'],
-    fontWeight: '300',
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.REGULAR,
     letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.EXTRA_TIGHT,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 2.2,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE + LAYOUT.SPACING.XXXLARGE, // 28 + 32 = 60px - proportional
     textAlign: 'center',
   },
 

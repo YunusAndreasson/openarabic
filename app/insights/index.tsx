@@ -57,7 +57,7 @@ export default function InsightsScreen(): JSX.Element {
       <ThemedView style={styles.container}>
         <StatusBar style={isDarkMode ? 'light' : 'dark'} />
         <Animated.View
-          entering={FadeIn.duration(400)}
+          entering={FadeIn.duration(LAYOUT.ANIMATION.DURATION.SLOW)}
           style={[styles.errorContainer, { backgroundColor: colors.elevation1 }]}
         >
           <SectionTitle title={STRINGS.INSIGHTS_UNAVAILABLE} />
@@ -83,7 +83,9 @@ export default function InsightsScreen(): JSX.Element {
       >
         {/* Word Mastery Chart */}
         <Animated.View
-          entering={FadeInDown.delay(100).duration(600).springify()}
+          entering={FadeInDown.delay(LAYOUT.ANIMATION.DURATION.FAST / 2)
+            .duration(LAYOUT.ANIMATION.DURATION.SLOW * 2)
+            .springify()}
           style={[styles.chartCard, { backgroundColor: colors.elevation1 }]}
         >
           <SectionTitle
@@ -103,7 +105,9 @@ export default function InsightsScreen(): JSX.Element {
 
         {/* Learning Progress Chart */}
         <Animated.View
-          entering={FadeInDown.delay(250).duration(600).springify()}
+          entering={FadeInDown.delay(LAYOUT.ANIMATION.DURATION.FAST)
+            .duration(LAYOUT.ANIMATION.DURATION.SLOW * 2)
+            .springify()}
           style={[styles.chartCard, { backgroundColor: colors.elevation1 }]}
         >
           <SectionTitle
@@ -122,7 +126,9 @@ export default function InsightsScreen(): JSX.Element {
 
         {/* Review Timing Chart */}
         <Animated.View
-          entering={FadeInDown.delay(400).duration(600).springify()}
+          entering={FadeInDown.delay(LAYOUT.ANIMATION.DURATION.SLOW)
+            .duration(LAYOUT.ANIMATION.DURATION.SLOW * 2)
+            .springify()}
           style={[styles.chartCard, { backgroundColor: colors.elevation1 }]}
         >
           <SectionTitle

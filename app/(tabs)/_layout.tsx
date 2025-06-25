@@ -7,7 +7,7 @@ import { Platform, StyleSheet } from 'react-native';
 
 import HeaderProfile from '@/components/HeaderProfile';
 import EditModeButton from '@/components/ui/EditModeButton';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -187,7 +187,10 @@ export default function TabLayout(): JSX.Element {
         }),
         tabBarLabelStyle: {
           fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-          fontWeight: Platform.OS === 'ios' ? '500' : '400',
+          fontWeight:
+            Platform.OS === 'ios'
+              ? TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM
+              : TYPOGRAPHY_HIERARCHY.WEIGHTS.REGULAR,
         },
 
         // Performance optimizations
@@ -219,7 +222,7 @@ export default function TabLayout(): JSX.Element {
                 tabBarBadgeStyle: {
                   ...badgeConfig.badgeStyle,
                   fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-                  fontWeight: '600',
+                  fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
                   // Use responsive dimensions based on spacing scale
                   minWidth: LAYOUT.SPACING.XLARGE, // 20px
                   minHeight: LAYOUT.SPACING.XLARGE, // 20px

@@ -48,7 +48,10 @@ const ChartSkeleton = memo(({ contentHeight }: { contentHeight: number }) => {
   const shimmerValue = useSharedValue(0);
 
   shimmerValue.value = withRepeat(
-    withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+    withTiming(1, {
+      duration: LAYOUT.ANIMATION.DURATION.SLOW * 3,
+      easing: Easing.inOut(Easing.ease),
+    }),
     -1,
     true
   );
@@ -210,12 +213,12 @@ BaseChart.displayName = 'BaseChart';
 const styles = StyleSheet.create({
   chartSection: {
     // Optimized spacing for perfect visual balance
-    marginVertical: LAYOUT.SPACING.TINY + LAYOUT.SPACING.TINY / 2, // 6px
-    paddingVertical: LAYOUT.SPACING.TINY / 2, // 2px
+    marginVertical: LAYOUT.SPACING.SMALL - LAYOUT.SPACING.HALF_TINY, // 6px
+    paddingVertical: LAYOUT.SPACING.HALF_TINY, // 2px
     position: 'relative',
   },
   content: {
-    paddingTop: LAYOUT.SPACING.MEDIUM - LAYOUT.SPACING.TINY / 2, // Top padding for content
+    paddingTop: LAYOUT.SPACING.MEDIUM - LAYOUT.SPACING.HALF_TINY, // Top padding for content
     paddingBottom: LAYOUT.SPACING.TINY, // Minimal bottom padding for tight layout
     paddingHorizontal: LAYOUT.SPACING.TINY, // Minimal horizontal padding for charts
   },
@@ -238,7 +241,7 @@ const styles = StyleSheet.create({
     paddingTop: LAYOUT.SPACING.TINY,
   },
   headerSection: {
-    marginBottom: LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY / 2, // 14px
+    marginBottom: LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.HALF_TINY, // 14px
   },
   skeletonContainer: {
     paddingHorizontal: LAYOUT.SPACING.SMALL,

@@ -103,7 +103,9 @@ function SortingControls<T extends string>({
                         styles.sortDirectionLabel,
                         isSelected && styles.selectedDirectionLabel,
                         {
-                          fontSize: isSelected ? 11 : 10,
+                          fontSize: isSelected
+                            ? LAYOUT.TYPOGRAPHY.SCALE.TINY
+                            : LAYOUT.TYPOGRAPHY.SCALE.TINY - 1,
                         },
                       ]}
                     >
@@ -185,10 +187,10 @@ const styles = StyleSheet.create({
     textAlign: 'center', // Subtle letter spacing for elegance
   },
   sortDirectionLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    textAlign: 'center', // Subtle letter spacing for elegance
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
+    textAlign: 'center',
   },
   selectedDirectionLabel: {
     fontWeight: '600',

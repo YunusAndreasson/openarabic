@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     marginTop: -LAYOUT.SPACING.XXXLARGE,
     paddingBottom: LAYOUT.SPACING.TINY,
-    zIndex: 10,
+    zIndex: LAYOUT.Z_INDEX.OVERLAY,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

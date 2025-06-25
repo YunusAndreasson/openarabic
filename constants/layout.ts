@@ -19,6 +19,7 @@ const BASE_UNIT = 4;
 // Systematic spacing scale based on base unit
 const SPACING_SCALE = {
   MICRO: BASE_UNIT * 0.25, // 1
+  HALF_TINY: BASE_UNIT * 0.5, // 2 - for fractional needs
   TINY: BASE_UNIT, // 4
   SMALL: BASE_UNIT * 2, // 8
   MEDIUM: BASE_UNIT * 3, // 12

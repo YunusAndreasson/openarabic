@@ -206,8 +206,8 @@ const styles = StyleSheet.create({
     width: GAUGE_WIDTH,
   },
   capacityText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.5,
-    fontWeight: '900',
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE + LAYOUT.SPACING.MEDIUM, // 28 + 12 = 40px - consistent large display
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.HEAVY,
     includeFontPadding: false,
     letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT,
     lineHeight: MIN_TOUCH_TARGET.MEDIUM,

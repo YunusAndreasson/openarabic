@@ -1,7 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AUDIO_STATES } from '@/constants/audio';
+import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
@@ -13,6 +14,8 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { removeFromCustomOrder } from '@/store/listenSlice';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
+
+const MIN_LOADING_DURATION = LAYOUT.ANIMATION.DURATION.FAST + 100; // 300ms minimum
 
 export const useListenScreen = () => {
   const { user } = useAuth();
@@ -175,7 +178,6 @@ export const useListenScreen = () => {
           if (setLoading) {
             setLoading(true);
             const loadingStartTime = Date.now();
-            const MIN_LOADING_DURATION = 300; // 300ms minimum
 
             actions
               .startEnhancedPlayback(currentTracks, 0)
@@ -209,7 +211,7 @@ export const useListenScreen = () => {
           setPlaybackMode('none');
           handleError(error as Error);
           if (setLoading) {
-            const timeout = setTimeout(() => setLoading(false), 300);
+            const timeout = setTimeout(() => setLoading(false), MIN_LOADING_DURATION);
             loadingTimeoutsRef.current.push(timeout);
           }
         }

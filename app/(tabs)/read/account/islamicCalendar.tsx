@@ -1,17 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack } from 'expo-router';
-import React from 'react';
 import type { JSX } from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import React from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { LAYOUT, FONTS, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { FONTS, LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { createNavigationOptions } from '@/constants/modal';
 import { STRINGS } from '@/constants/strings';
-import { useIslamicCalendarEvents, formatDaysUntil } from '@/hooks';
+import { formatDaysUntil, useIslamicCalendarEvents } from '@/hooks';
 import { useColors } from '@/hooks/theme/useColors';
 
 export default function IslamicCalendarScreen(): JSX.Element {
@@ -23,11 +23,11 @@ export default function IslamicCalendarScreen(): JSX.Element {
 
   return (
     <>
-        <Stack.Screen
-          options={createNavigationOptions(colors, {
-            title: STRINGS.CALENDAR,
-            isRegularScreen: true,
-          })}
+      <Stack.Screen
+        options={createNavigationOptions(colors, {
+          title: STRINGS.CALENDAR,
+          isRegularScreen: true,
+        })}
       />
 
       <ThemedView
@@ -389,6 +389,6 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.LARGE,
   },
   timingRow: {
-    gap: LAYOUT.SPACING.TINY / 2,
+    gap: LAYOUT.SPACING.HALF_TINY,
   },
 });

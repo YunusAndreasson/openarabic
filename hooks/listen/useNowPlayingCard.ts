@@ -107,7 +107,7 @@ export const useNowPlayingCard = ({
         backgroundColor: colors.elevation2,
         borderColor: isDarkMode ? colors.border : colors.cardBorder,
         shadowColor: colors.shadow,
-        shadowOffset: { width: 0, height: -2 },
+        shadowOffset: { width: 0, height: -LAYOUT.SPACING.HALF_TINY },
         shadowOpacity: isDarkMode ? 0.3 : 0.1,
       },
       stopButton: {

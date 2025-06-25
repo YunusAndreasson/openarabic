@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   DEFAULT_ANIMATION_DURATION,
+  DEFAULT_TOAST_DURATION,
   TOAST_INITIAL_TRANSLATE_Y,
   TOAST_SCALE_CONFIG,
   TOAST_SCALE_SPRING,
@@ -26,7 +27,7 @@ interface ToastProps {
   type?: ToastType;
 }
 
-const DEFAULT_DURATION = 3500;
+const DEFAULT_DURATION = DEFAULT_TOAST_DURATION;
 const MAX_TOAST_WIDTH_RATIO = 0.9;
 
 const styles = StyleSheet.create({

@@ -16,7 +16,7 @@ import AudioProgressIndicator from '@/components/AudioProgressIndicator';
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import { TIMING_CONFIG } from '@/constants/animation';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
@@ -267,7 +267,7 @@ export default function NowPlayingModal() {
           position={position || 0}
           duration={duration || 0}
           progressPercentage={progressPercentage}
-          progressBarHeight={4}
+          progressBarHeight={LAYOUT.SPACING.TINY}
           progressBackgroundColor="rgba(255,255,255,0.3)"
           progressFillColor="white"
           useWhiteText={true}
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    zIndex: 10,
+    zIndex: LAYOUT.Z_INDEX.OVERLAY,
   },
 
   modalHandle: {
@@ -321,10 +321,10 @@ const styles = StyleSheet.create({
   title: {
     color: 'white',
     textAlign: 'right',
-    fontWeight: '700',
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
     textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowOffset: { width: 0, height: LAYOUT.SPACING.MICRO },
+    textShadowRadius: LAYOUT.SPACING.HALF_TINY,
   },
 
   author: {
@@ -332,8 +332,8 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginTop: LAYOUT.SPACING.TINY,
     textShadowColor: 'rgba(0,0,0,0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 1,
+    textShadowOffset: { width: 0, height: LAYOUT.SPACING.MICRO },
+    textShadowRadius: LAYOUT.SPACING.MICRO,
   },
 
   centerContent: {
@@ -351,11 +351,11 @@ const styles = StyleSheet.create({
   englishText: {
     color: 'white',
     textAlign: 'center',
-    fontWeight: '600',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.3, // Responsive line height
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE + LAYOUT.SPACING.SMALL, // 28 + 8 = 36px - consistent line height
     textShadowColor: 'rgba(0,0,0,0.4)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    textShadowOffset: { width: 0, height: LAYOUT.SPACING.MICRO },
+    textShadowRadius: LAYOUT.SPACING.TINY,
   },
 
   bottomProgress: {

@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ProgressBar } from '@/components/ProgressBar';
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
@@ -33,7 +33,7 @@ const AudioProgressIndicator = ({
   position,
   duration,
   progressPercentage,
-  progressBarHeight = 3,
+  progressBarHeight = LAYOUT.SPACING.TINY,
   progressBackgroundColor,
   progressFillColor,
   textColor,
@@ -108,8 +108,8 @@ const styles = StyleSheet.create({
 
   timeText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
     opacity: 0.9,
   },
 

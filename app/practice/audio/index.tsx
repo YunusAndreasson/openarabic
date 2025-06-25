@@ -113,7 +113,7 @@ export default function ListenScreen(): JSX.Element {
         buttonText={STRINGS.CONTINUE}
         buttonVariant="outlined"
         iconName="checkmark-circle-outline"
-        iconSize={120}
+        iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
         subtitle={STRINGS.ALL_WORDS_PRACTICED}
         title={STRINGS.SESSION_COMPLETE}
         onClose={handleClose}

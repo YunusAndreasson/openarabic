@@ -138,7 +138,7 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
       () => ({
         opacity: showTooltip.value,
         transform: [
-          { translateX: handlePosition.value - 40 }, // Center tooltip
+          { translateX: handlePosition.value - LAYOUT.SPACING.XXXLARGE }, // Center tooltip
           { scale: withSpring(showTooltip.value > 0 ? 1 : 0.8, TOOLTIP_SPRING_CONFIG) },
         ],
       }),

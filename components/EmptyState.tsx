@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { memo, type ReactNode, type ComponentType, type ComponentProps } from 'react';
+import { memo, type ComponentProps, type ComponentType, type ReactNode } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
@@ -27,7 +27,7 @@ interface EmptyStateProps {
   hideArticlesButton?: boolean;
 }
 
-const DEFAULT_ICON_SIZE = 64;
+const DEFAULT_ICON_SIZE = LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE;
 
 function handleBrowseArticles() {
   router.push(ROUTE_PATHS.TABS);
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.SMALL,
   },
   title: {
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT + 0.2,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.NORMAL,
   },
 });
 
