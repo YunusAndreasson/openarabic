@@ -1,6 +1,6 @@
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 
-// Graph dimensions - optimized for perfect alignment and space usage
+// Graph dimensions - optimized for perfect alignment and space usage with golden ratio
 // For mobile-only apps, this can be a constant since screen doesn't rotate
 const X_AXIS_LABEL_PADDING = 6; // Reduced for tighter layout
 export const GRAPH_WIDTH =
@@ -10,8 +10,9 @@ export const GRAPH_WIDTH =
   24 - // Reduced from 32 for more graph space
   X_AXIS_LABEL_PADDING;
 
-export const useGraphWidth = (): number => GRAPH_WIDTH;
-export const GRAPH_HEIGHT_LARGE = 176; // Optimized height for better proportions (8px alignment grid)
+// Golden ratio for optimal chart proportions
+const GOLDEN_RATIO = 1.618;
+export const GRAPH_HEIGHT_LARGE = Math.round(GRAPH_WIDTH / GOLDEN_RATIO); // Dynamic height following golden ratio
 
 // Chart visual constants for perfect alignment
 export const CHART_VISUAL = {
@@ -40,3 +41,5 @@ export const CHART_LAYOUT = {
   // Chart spacing within cards
   ELEMENT_SPACING: LAYOUT.SPACING.LARGE, // 16px between major elements
 } as const;
+
+export const useGraphWidth = (): number => GRAPH_WIDTH;

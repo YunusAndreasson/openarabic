@@ -3,12 +3,14 @@ import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
+import { SCREEN_WIDTH } from '@/constants/layout';
 import type { Article } from '@/types/articles.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { withOpacity } from '@/utils/colorUtils';
 
 // Extract constants outside component to prevent recreation
-const HEADER_IMAGE_HEIGHT = 280;
+const GOLDEN_RATIO = 1.618; // True golden ratio for optimal header proportions
+const HEADER_IMAGE_HEIGHT = Math.round(SCREEN_WIDTH / GOLDEN_RATIO); // Dynamic height based on golden ratio
 const GRADIENT_HEIGHT_PERCENTAGE = '60%';
 
 // Static styles to prevent recreation

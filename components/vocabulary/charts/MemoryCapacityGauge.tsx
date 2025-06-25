@@ -18,10 +18,11 @@ interface MemoryCapacityGaugeProps {
   studyWords: StudyWord[];
 }
 
-// Enhanced gauge configuration for better visual appeal
+// Enhanced gauge configuration for better visual appeal using golden ratio
+const GOLDEN_RATIO = 1.618; // True golden ratio for optimal gauge proportions
 const GAUGE_WIDTH = 320;
-const GAUGE_HEIGHT = 180;
-const GAUGE_RADIUS = 140;
+const GAUGE_HEIGHT = Math.round(GAUGE_WIDTH / GOLDEN_RATIO); // ~198, following golden ratio
+const GAUGE_RADIUS = Math.round(GAUGE_HEIGHT * 0.7); // Proportional radius based on height
 const GAUGE_STROKE_WIDTH = 20;
 const INDICATOR_SIZE = 12;
 const INDICATOR_GLOW_SIZE = 24;
