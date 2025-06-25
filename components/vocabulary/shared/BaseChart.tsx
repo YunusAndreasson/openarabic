@@ -12,7 +12,7 @@ import Animated, {
 
 import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { LegendItemProps } from '@/types/ui/chart.types';
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   skeletonChart: {
-    height: LAYOUT.TOUCH_TARGET.LARGE * 2.5, // Responsive chart height
+    height: MIN_TOUCH_TARGET.LARGE * 2.5, // Responsive chart height
     position: 'relative',
   },
   skeletonLine: {

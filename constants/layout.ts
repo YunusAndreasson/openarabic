@@ -158,6 +158,12 @@ export const WORD_AREA_MIN_HEIGHT = TOUCH_TARGETS.LARGE * 7.5; // ~360px, respon
 // Export touch targets for backward compatibility and external use
 export const MIN_TOUCH_TARGET = TOUCH_TARGETS;
 
+// Utility function for enhancing touch padding (moved out of constants)
+export const enhanceTouchPadding = (currentSize: number): number => {
+  const needed = TOUCH_TARGETS.MEDIUM - currentSize;
+  return needed > 0 ? Math.ceil(needed / 2) : 0;
+};
+
 export const LAYOUT = {
   SCREEN_EDGE_PADDING: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
 
@@ -194,9 +200,9 @@ export const LAYOUT = {
 
   CARD: {
     PADDING: {
-      SMALL: SPACING_SCALE.SMALL,
-      MEDIUM: SPACING_SCALE.MEDIUM,
-      LARGE: SPACING_SCALE.LARGE,
+      SMALL: SPACING_SCALE.SMALL, // 8 - responsive to spacing scale
+      MEDIUM: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
+      LARGE: SPACING_SCALE.LARGE, // 16 - responsive to spacing scale
     },
     HEIGHT: {
       // Dynamic heights based on content and accessibility
@@ -210,21 +216,21 @@ export const LAYOUT = {
     HEIGHT: TOUCH_TARGETS.LARGE + BASE_UNIT, // 52 - responsive to touch targets + padding
     BORDER_RADIUS: SPACING_SCALE.SMALL, // 8 - responsive to spacing scale
     BORDER_WIDTH: {
-      DEFAULT: BASE_UNIT * 0.375, // 1.5 - responsive to base unit
+      DEFAULT: Math.round(BASE_UNIT * 0.375), // 1.5 rounded to 2 - prevents sub-pixel rendering
       FOCUSED: BASE_UNIT * 0.5, // 2 - responsive to base unit
     },
   },
 
   BUTTON: {
     HEIGHT: {
-      SMALL: TOUCH_TARGETS.SMALL,
-      MEDIUM: TOUCH_TARGETS.MEDIUM,
-      LARGE: TOUCH_TARGETS.LARGE,
+      SMALL: TOUCH_TARGETS.SMALL, // 32 - responsive to touch targets
+      MEDIUM: TOUCH_TARGETS.MEDIUM, // 44 - responsive to touch targets
+      LARGE: TOUCH_TARGETS.LARGE, // 48 - responsive to touch targets
     },
     ICON_SIZE: {
       SMALL: SPACING_SCALE.LARGE, // 16 - responsive to spacing scale
-      MEDIUM: SPACING_SCALE.XLARGE, // 20 - responsive to spacing scale
-      LARGE: SPACING_SCALE.XXLARGE, // 24 - responsive to spacing scale
+      MEDIUM: BASE_UNIT * 5, // 20 - responsive to base unit
+      LARGE: SPACING_SCALE.XLARGE, // 24 - responsive to spacing scale
       XLARGE: BASE_UNIT * 7, // 28 - responsive to base unit
     },
   },
@@ -235,7 +241,7 @@ export const LAYOUT = {
       SMALL: BASE_UNIT * 3.25, // 13 - responsive to base unit
       MEDIUM: BASE_UNIT * 3.75, // 15 - responsive to base unit
       LARGE: BASE_UNIT * 4.25, // 17 - responsive to base unit
-      XLARGE: SPACING_SCALE.XLARGE, // 20 - responsive to spacing scale
+      XLARGE: BASE_UNIT * 5, // 20 - responsive to base unit (fixed inconsistency)
       XXLARGE: BASE_UNIT * 5.5, // 22 - responsive to base unit
       HUGE: BASE_UNIT * 7, // 28 - responsive to base unit
     },
@@ -265,7 +271,7 @@ export const LAYOUT = {
 
   /** Standard height for thin progress bars */
   PROGRESS_BAR: {
-    HEIGHT: BASE_UNIT * 0.75, // 3 - responsive to base unit
+    HEIGHT: BASE_UNIT, // 4 - responsive to base unit (changed from 0.75 to avoid fractional pixels)
   },
 
   /** Common sizes for bottom sheet UI elements */
@@ -283,8 +289,8 @@ export const LAYOUT = {
 
   CALENDAR: {
     EVENT_RIGHT_SECTION: {
-      MAX_WIDTH: 150,
-      MIN_WIDTH: 130,
+      MAX_WIDTH: BASE_UNIT * 37.5, // 150 - responsive to base unit
+      MIN_WIDTH: BASE_UNIT * 32.5, // 130 - responsive to base unit
     },
   },
 
@@ -297,38 +303,23 @@ export const LAYOUT = {
 
   HIT_SLOP: {
     SMALL: {
-      top: SPACING_SCALE.SMALL,
-      bottom: SPACING_SCALE.SMALL,
-      left: SPACING_SCALE.SMALL,
-      right: SPACING_SCALE.SMALL,
+      top: SPACING_SCALE.SMALL, // 8 - responsive to spacing scale
+      bottom: SPACING_SCALE.SMALL, // 8 - responsive to spacing scale
+      left: SPACING_SCALE.SMALL, // 8 - responsive to spacing scale
+      right: SPACING_SCALE.SMALL, // 8 - responsive to spacing scale
     },
     MEDIUM: {
-      top: SPACING_SCALE.MEDIUM,
-      bottom: SPACING_SCALE.MEDIUM,
-      left: SPACING_SCALE.MEDIUM,
-      right: SPACING_SCALE.MEDIUM,
-    },
-  },
-
-  TOUCH_TARGET: {
-    SMALL: TOUCH_TARGETS.SMALL,
-    MEDIUM: TOUCH_TARGETS.MEDIUM,
-    LARGE: TOUCH_TARGETS.LARGE,
-    MIN_CONTAINER: {
-      WIDTH: TOUCH_TARGETS.LARGE,
-      HEIGHT: TOUCH_TARGETS.LARGE,
-    },
-
-    ENHANCE_PADDING: (currentSize: number) => {
-      const needed = TOUCH_TARGETS.MEDIUM - currentSize;
-      return needed > 0 ? Math.ceil(needed / 2) : 0;
+      top: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
+      bottom: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
+      left: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
+      right: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
     },
   },
 
   BORDER: {
     WIDTH: {
       NONE: 0,
-      THIN: BASE_UNIT * 0.125, // 0.5 - responsive to base unit
+      THIN: Math.round(BASE_UNIT * 0.125), // 0.5 rounded to 1 - prevents sub-pixel rendering
       NORMAL: BASE_UNIT * 0.25, // 1 - responsive to base unit
       THICK: BASE_UNIT * 0.5, // 2 - responsive to base unit
       FOCUSED: BASE_UNIT * 0.5, // 2 - responsive to base unit
@@ -345,8 +336,8 @@ export const LAYOUT = {
       EXPANDED: TOUCH_TARGETS.LARGE * 8, // ~380 - responsive to touch targets
       COLLAPSED: 0,
     },
-    NAV_HEIGHT: IS_IOS ? TOUCH_TARGETS.MEDIUM : TOUCH_TARGETS.LARGE + SPACING_SCALE.SMALL,
-    NAV_HEADER_HEIGHT: IS_IOS ? TOUCH_TARGETS.LARGE * 2 + BASE_UNIT : SPACING_SCALE.XLARGE * 4,
+    NAV_HEIGHT: IS_IOS ? TOUCH_TARGETS.MEDIUM : TOUCH_TARGETS.LARGE + SPACING_SCALE.SMALL, // Platform-specific responsive heights
+    NAV_HEADER_HEIGHT: IS_IOS ? TOUCH_TARGETS.LARGE * 2 + BASE_UNIT : SPACING_SCALE.XLARGE * 4, // Platform-specific responsive heights
 
     TITLE: {
       MAIN: {
@@ -355,7 +346,7 @@ export const LAYOUT = {
         marginLeft: -BASE_UNIT, // -4 - responsive negative margin
       },
       SECONDARY: {
-        fontSize: SPACING_SCALE.XLARGE, // 20 - responsive to spacing scale
+        fontSize: BASE_UNIT * 5, // 20 - responsive to base unit (consistent with XLARGE)
         fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
       },
       COMPACT: {

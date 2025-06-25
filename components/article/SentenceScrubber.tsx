@@ -9,7 +9,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 interface SentenceScrubberProps {
@@ -205,13 +205,13 @@ const styles = StyleSheet.create({
     bottom: LAYOUT.SPACING.XLARGE,
     left: LAYOUT.SPACING.XLARGE,
     right: LAYOUT.SPACING.XLARGE,
-    height: LAYOUT.TOUCH_TARGET.LARGE + LAYOUT.SPACING.MEDIUM, // Responsive height
+    height: MIN_TOUCH_TARGET.LARGE + LAYOUT.SPACING.MEDIUM, // Responsive height
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
   },
   tooltip: {
     position: 'absolute',
     bottom: LAYOUT.SPACING.XLARGE - LAYOUT.SPACING.SMALL, // Responsive positioning
-    width: LAYOUT.TOUCH_TARGET.LARGE + LAYOUT.SPACING.XXXLARGE, // Responsive width
+    width: MIN_TOUCH_TARGET.LARGE + LAYOUT.SPACING.XXXLARGE, // Responsive width
     alignItems: 'center',
   },
   tooltipBubble: {
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: LAYOUT.TOUCH_TARGET.SMALL + LAYOUT.SPACING.SMALL, // Responsive height
+    height: MIN_TOUCH_TARGET.SMALL + LAYOUT.SPACING.SMALL, // Responsive height
     justifyContent: 'center',
   },
   track: {

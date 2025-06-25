@@ -4,7 +4,7 @@ import { memo, useMemo } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 // ===== INTERFACES =====
@@ -43,9 +43,9 @@ const STATIC_STYLES = StyleSheet.create({
     height: '100%',
   },
   swipeIndicator: {
-    width: LAYOUT.TOUCH_TARGET.SMALL,
-    height: LAYOUT.TOUCH_TARGET.SMALL,
-    borderRadius: LAYOUT.TOUCH_TARGET.SMALL / 2,
+    width: MIN_TOUCH_TARGET.SMALL,
+    height: MIN_TOUCH_TARGET.SMALL,
+    borderRadius: MIN_TOUCH_TARGET.SMALL / 2,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: LAYOUT.SPACING.TINY,

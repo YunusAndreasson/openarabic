@@ -13,7 +13,7 @@ import { CompletionScreen, ListenHeader } from '@/components/listen';
 import RepeatButton from '@/components/listen/RepeatButton';
 import { WordDisplay } from '@/components/review';
 import { DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
-import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations';
@@ -109,7 +109,7 @@ export default function ListenScreen(): JSX.Element {
     return (
       <CompletionScreen
         useThemedView
-        buttonStyle={{ minWidth: LAYOUT.TOUCH_TARGET.LARGE * 4 }} // Responsive min width
+        buttonStyle={{ minWidth: MIN_TOUCH_TARGET.LARGE * 4 }} // Responsive min width
         buttonText={STRINGS.CONTINUE}
         buttonVariant="outlined"
         iconName="checkmark-circle-outline"

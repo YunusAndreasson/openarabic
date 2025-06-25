@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ProgressBar } from '@/components/ProgressBar';
 import { PROGRESS_BAR_ANIMATION_DURATION, REVIEW_MIN_PROGRESS_VALUE } from '@/constants/animation';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 
 // ===== STATIC CONSTANTS EXTRACTION (CRITICAL FOR PERFORMANCE) =====
@@ -34,8 +34,8 @@ const STATIC_STYLES = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: LAYOUT.TOUCH_TARGET.MEDIUM,
-    minHeight: LAYOUT.TOUCH_TARGET.MEDIUM,
+    minWidth: MIN_TOUCH_TARGET.MEDIUM,
+    minHeight: MIN_TOUCH_TARGET.MEDIUM,
   },
 });
 

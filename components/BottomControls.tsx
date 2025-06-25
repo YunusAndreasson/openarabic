@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   },
   gradient: {
     bottom: -LAYOUT.BOTTOM_BAR.HEIGHT,
-    height: LAYOUT.TOUCH_TARGET.LARGE * 2.5, // Responsive controls height
+    height: MIN_TOUCH_TARGET.LARGE * 2.5, // Responsive controls height
     left: 0,
     position: 'absolute',
     right: 0,

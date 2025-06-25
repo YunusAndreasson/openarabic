@@ -9,7 +9,7 @@ import { ThemedText } from '@/components/ThemedText';
 import ParallaxHeader from '@/components/article/ParallaxHeader';
 import { SentenceScrubber } from '@/components/article/SentenceScrubber';
 import { SCROLL_EVENT_THROTTLE, SENTENCE_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
-import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
@@ -48,8 +48,8 @@ const styles = StyleSheet.create({
   actionButton: {
     padding: LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    minWidth: LAYOUT.TOUCH_TARGET.LARGE,
-    minHeight: LAYOUT.TOUCH_TARGET.LARGE,
+    minWidth: MIN_TOUCH_TARGET.LARGE,
+    minHeight: MIN_TOUCH_TARGET.LARGE,
     alignItems: 'center',
     justifyContent: 'center',
   },

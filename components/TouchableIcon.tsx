@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { memo, useCallback, type FC, type ComponentProps } from 'react';
+import { memo, useCallback, type ComponentProps, type FC } from 'react';
 import type { ViewStyle } from 'react-native';
-import { TouchableOpacity, StyleSheet } from 'react-native';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, enhanceTouchPadding } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { BaseIconButtonProps } from '@/types/ui/button.types';
@@ -60,7 +60,7 @@ const TouchableIcon: FC<TouchableIconProps> = memo(
     const touchTargetSize = getTouchTargetSize(touchSize);
 
     const defaultHitSlop = (() => {
-      const padding = LAYOUT.TOUCH_TARGET.ENHANCE_PADDING(size);
+      const padding = enhanceTouchPadding(size);
       return {
         top: padding,
         right: padding,
