@@ -23,7 +23,7 @@ const initialState: SettingsState = {
     minute: 0,
     enabled: false,
   },
-  arabicFont: 'Madina', // Default font
+  arabicFont: 'NotoSans', // Default font
   arabicFontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE, // Default to 17px
   appIconBadgeEnabled: true, // Default to enabled
 };

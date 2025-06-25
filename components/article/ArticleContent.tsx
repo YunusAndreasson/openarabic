@@ -68,10 +68,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     opacity: LAYOUT.OPACITY.HOVER,
   },
-  summaryLabel: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-    opacity: LAYOUT.OPACITY.HOVER,
-  },
   summaryText: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.7,
   },
@@ -203,9 +199,6 @@ const ArticleSummary = memo<ArticleSummaryProps>(({ summary }) => {
           },
         ]}
       >
-        <ThemedText type="label" variant="secondary" style={styles.summaryLabel}>
-          {STRINGS.SUMMARY}
-        </ThemedText>
         <ThemedText type="body" style={styles.summaryText}>
           {summary}
         </ThemedText>

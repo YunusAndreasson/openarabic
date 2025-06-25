@@ -21,7 +21,7 @@ import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 
 import interFont from '@/assets/fonts/Inter.ttf';
-import madinaFont from '@/assets/fonts/Madina.otf';
+import notoSansFont from '@/assets/fonts/NotoSans.ttf';
 import { ThemedText } from '@/components/ThemedText';
 import { AuthProvider, ToastProvider } from '@/components/providers';
 import { Theme } from '@/constants/Colors';
@@ -117,7 +117,7 @@ function AppContent() {
   useSystemUITheme();
 
   const [fontsLoaded] = useFonts({
-    Madina: madinaFont,
+    NotoSans: notoSansFont,
     Inter: interFont,
   });
 

@@ -10,7 +10,7 @@ export const SCREEN_WIDTH = SCREEN_DIMENSIONS?.width ?? 375; // Default fallback
 
 export const FONTS = {
   ENGLISH: 'Inter',
-  ARABIC: 'Madina',
+  ARABIC: 'NotoSans',
 } as const;
 
 // Base scale for systematic sizing
@@ -24,10 +24,9 @@ const SPACING_SCALE = {
   SMALL: BASE_UNIT * 2, // 8
   MEDIUM: BASE_UNIT * 3, // 12
   LARGE: BASE_UNIT * 4, // 16
-  XLARGE: BASE_UNIT * 5, // 20
-  XXLARGE: BASE_UNIT * 6, // 24
-  XXXLARGE: BASE_UNIT * 8, // 32
-  SECTION_INTERNAL: BASE_UNIT * 2, // 8
+  XLARGE: BASE_UNIT * 6, // 24
+  XXLARGE: BASE_UNIT * 8, // 32
+  XXXLARGE: BASE_UNIT * 12, // 48
 } as const;
 
 // Touch target system based on accessibility guidelines

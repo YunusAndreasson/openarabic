@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: LAYOUT.SPACING.SECTION_INTERNAL,
+    marginBottom: LAYOUT.SPACING.SMALL,
     marginTop: LAYOUT.SPACING.MEDIUM,
   },
   firstSection: {

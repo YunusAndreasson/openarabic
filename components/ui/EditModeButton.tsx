@@ -64,7 +64,7 @@ const EditModeButton: FC<EditModeButtonProps> = ({ type, onEditModeChange, style
     >
       <ThemedText
         type="body"
-        weight="medium"
+        weight="semibold"
         style={[
           styles.buttonText,
           {
