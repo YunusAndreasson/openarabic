@@ -7,12 +7,12 @@ import { ThemedText } from '@/components/ThemedText';
 import DeleteButton from '@/components/listen/DeleteButton';
 import DragHandle, { type DragHandleProps } from '@/components/listen/DragHandle';
 import PlayButton from '@/components/listen/PlayButton';
-import { WORD_PRESS_SCALE, ARTICLE_CARD_SPRING, CARD_DRAG_SCALE } from '@/constants/animation';
+import { ARTICLE_CARD_SPRING, CARD_DRAG_SCALE, WORD_PRESS_SCALE } from '@/constants/animation';
 import {
-  LAYOUT,
-  TYPOGRAPHY_HIERARCHY,
   getEnhancedOpacity,
+  LAYOUT,
   MIN_TOUCH_TARGET,
+  TYPOGRAPHY_HIERARCHY,
 } from '@/constants/layout';
 import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';

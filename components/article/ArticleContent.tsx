@@ -38,15 +38,15 @@ const styles = StyleSheet.create({
   },
   titleText: {
     flex: 1,
-    marginRight: LAYOUT.SPACING.MEDIUM,
+    marginRight: LAYOUT.SPACING.SMALL,
   },
   actionButtonsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: LAYOUT.SPACING.TINY,
+    gap: LAYOUT.SPACING.SMALL,
   },
   actionButton: {
-    padding: LAYOUT.SPACING.TINY,
+    padding: LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     minWidth: LAYOUT.TOUCH_TARGET.LARGE,
     minHeight: LAYOUT.TOUCH_TARGET.LARGE,
@@ -92,22 +92,32 @@ const ArticleTitle = memo<ArticleTitleProps>(
   ({ title, author, isInReadingList, onToggleReadingList, isBookmarked, onToggleBookmark }) => {
     const colors = useColors();
 
+    // Memoize dynamic styles for better performance
+    const titleStyle = useMemo(
+      () => ({
+        fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
+        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
+        color: colors.headingText,
+        lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
+        textAlign: 'left' as const,
+      }),
+      [colors.headingText]
+    );
+
+    const authorStyle = useMemo(
+      () => ({
+        fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
+        color: colors.authorText,
+        textAlign: 'left' as const,
+      }),
+      [colors.authorText]
+    );
+
     return (
       <>
         <View style={styles.titleContainer}>
-          <ThemedText
-            type="heading1"
-            style={[
-              styles.titleText,
-              {
-                fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-                fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
-                color: colors.headingText,
-                lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
-                textAlign: 'left',
-              },
-            ]}
-          >
+          <ThemedText type="heading1" style={[styles.titleText, titleStyle]}>
             {title}
           </ThemedText>
 
@@ -125,6 +135,11 @@ const ArticleTitle = memo<ArticleTitleProps>(
                 color: colors.tint,
                 radius: LAYOUT.SPACING.LARGE,
               }}
+              accessibilityRole="button"
+              accessibilityLabel={
+                isInReadingList ? 'Remove from listening list' : 'Add to listening list'
+              }
+              accessibilityHint="Toggle article in audio listening playlist"
             >
               <Ionicons
                 name={isInReadingList ? 'headset' : 'headset-outline'}
@@ -146,6 +161,9 @@ const ArticleTitle = memo<ArticleTitleProps>(
                 color: colors.tint,
                 radius: LAYOUT.SPACING.LARGE,
               }}
+              accessibilityRole="button"
+              accessibilityLabel={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
+              accessibilityHint="Toggle article bookmark for reading later"
             >
               <Ionicons
                 name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
@@ -157,15 +175,7 @@ const ArticleTitle = memo<ArticleTitleProps>(
         </View>
 
         <View style={styles.authorContainer}>
-          <ThemedText
-            type="caption"
-            style={{
-              fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-              fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
-              color: colors.authorText,
-              textAlign: 'left',
-            }}
-          >
+          <ThemedText type="caption" style={authorStyle}>
             {STRINGS.BY} {author.name}
           </ThemedText>
         </View>

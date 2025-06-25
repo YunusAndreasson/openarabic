@@ -108,18 +108,18 @@ const styles = StyleSheet.create({
 
 // Memoized static typography styles
 const createTitleStyle = (isDarkMode: boolean) => ({
-  fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-  fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+  fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
+  fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
   letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
-  lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
+  lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
   opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY, isDarkMode),
 });
 
 const createAuthorStyle = (isDarkMode: boolean) => ({
-  fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+  fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
   fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
   letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.AUTHOR_BYLINE.letterSpacing,
-  lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
+  lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
   opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.ACCENT, isDarkMode),
 });
 
@@ -249,7 +249,7 @@ function ArticleCardComponent({
             colorName="headingText"
             numberOfLines={MAX_TITLE_LINES}
             style={titleStyle}
-            type="heading3"
+            type="heading2"
           >
             {title}
           </ThemedText>
