@@ -1,8 +1,9 @@
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   interpolate,
@@ -24,12 +25,19 @@ import { useCurrentSentence } from '@/hooks/audio/useCurrentSentence';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { withOpacity } from '@/utils/colorUtils';
+import { selectionFeedback } from '@/utils/haptics';
 
 export default function NowPlayingModal() {
   const { user } = useAuth();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const isDarkMode = !colors['surface'];
+
+  // Handle close with haptic feedback
+  const handleClose = useCallback(() => {
+    selectionFeedback();
+    router.dismiss();
+  }, []);
 
   // Get router params for article ID fallback and audio state
   const params = useLocalSearchParams<{
@@ -224,8 +232,21 @@ export default function NowPlayingModal() {
 
       {/* Header with Title and Author */}
       <View style={[styles.header, { paddingTop: insets.top + LAYOUT.SPACING.MEDIUM }]}>
-        {/* Modal Handle */}
-        <View style={styles.modalHandle} />
+        {/* Modal Handle and Close Button */}
+        <View style={styles.headerTop}>
+          <View style={styles.modalHandle} />
+          <Pressable
+            style={styles.closeButton}
+            onPress={handleClose}
+            hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+          >
+            <Ionicons
+              name="close"
+              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+              color="rgba(255, 255, 255, 0.9)"
+            />
+          </Pressable>
+        </View>
 
         <View style={styles.headerInfo}>
           <ThemedText type="heading3" style={styles.title} numberOfLines={2}>
@@ -305,12 +326,29 @@ const styles = StyleSheet.create({
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
   },
 
+  headerTop: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    position: 'relative',
+  },
+
   modalHandle: {
     width: 36,
     height: 4,
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
     borderRadius: 2,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+
+  closeButton: {
+    position: 'absolute',
+    right: 0,
+    top: -LAYOUT.SPACING.SMALL,
+    padding: LAYOUT.SPACING.SMALL,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
   },
 
   headerInfo: {

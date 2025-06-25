@@ -110,6 +110,7 @@ export default function ReviewScreen(): JSX.Element {
           animationKey={progressAnimationKey}
           maxProgress={maxProgress}
           progress={progress}
+          onClose={handleClose}
         />
 
         <View style={baseStyles.wordArea}>

@@ -3,6 +3,7 @@ import type { JSX } from 'react';
 import { useCallback } from 'react';
 
 import FilterButton from '@/components/FilterButton';
+import DoneButton from '@/components/ui/DoneButton';
 import EditModeButton from '@/components/ui/EditModeButton';
 import { createNavigationOptions } from '@/constants/modal';
 import { getFilterModalRoute } from '@/constants/routes';
@@ -32,10 +33,9 @@ function getFilterTitle(params: FilterParams): string {
   return STRINGS.FILTER;
 }
 
-const FilterHeaderLeft = ({ isBookmark }: { isBookmark: boolean }) => {
-  if (!isBookmark) return null;
-
-  return <EditModeButton type="bookmarks" />;
+const FilterHeaderLeft = ({ isBookmark: _isBookmark }: { isBookmark: boolean }) => {
+  // Always show Done button on the left for all filter screens
+  return <DoneButton />;
 };
 
 const FilterHeaderRight = ({
@@ -50,8 +50,8 @@ const FilterHeaderRight = ({
   }, [categoryId]);
 
   if (isBookmark) {
-    // For bookmarks, show filter button on the right (edit button is on left)
-    return <FilterButton onPress={handleFilterPress} />;
+    // For bookmarks, show Edit button on the right (no Filter button)
+    return <EditModeButton type="bookmarks" />;
   }
 
   // For categories, show filter button on the right

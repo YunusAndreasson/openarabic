@@ -1,13 +1,12 @@
+import { Ionicons } from '@expo/vector-icons';
 import type { FC } from 'react';
 import { memo, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ProgressBar } from '@/components/ProgressBar';
-import {
-  PROGRESS_BAR_ANIMATION_DURATION,
-  REVIEW_MIN_PROGRESS_VALUE,
-} from '@/constants/animation';
+import { PROGRESS_BAR_ANIMATION_DURATION, REVIEW_MIN_PROGRESS_VALUE } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
+import { useColors } from '@/hooks/theme/useColors';
 
 // ===== STATIC CONSTANTS EXTRACTION (CRITICAL FOR PERFORMANCE) =====
 const REVIEW_HEADER_CONSTANTS = {
@@ -28,6 +27,15 @@ const STATIC_STYLES = StyleSheet.create({
   progressContainer: {
     flex: 1,
     marginVertical: LAYOUT.SPACING.MEDIUM,
+    marginRight: LAYOUT.SPACING.MEDIUM,
+  },
+  closeButton: {
+    padding: LAYOUT.SPACING.SMALL,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: LAYOUT.TOUCH_TARGET.MEDIUM,
+    minHeight: LAYOUT.TOUCH_TARGET.MEDIUM,
   },
 });
 
@@ -35,6 +43,7 @@ interface ReviewHeaderProps {
   progress: number;
   maxProgress: number;
   animationKey: number;
+  onClose?: () => void;
 }
 
 // ===== HELPER FUNCTIONS EXTRACTED (PURE FUNCTIONS OUTSIDE COMPONENT) =====
@@ -45,7 +54,14 @@ const shouldTriggerAnimation = (animationKey: number): boolean =>
   animationKey > REVIEW_HEADER_CONSTANTS.MIN_PROGRESS_VALUE;
 
 // ===== COMPONENT WITH ADVANCED OPTIMIZATION =====
-const ReviewHeaderInternal: FC<ReviewHeaderProps> = ({ progress, maxProgress, animationKey }) => {
+const ReviewHeaderInternal: FC<ReviewHeaderProps> = ({
+  progress,
+  maxProgress,
+  animationKey,
+  onClose,
+}) => {
+  const colors = useColors();
+
   // ===== MEMOIZED VALUES (PREVENT EXPENSIVE RECALCULATIONS) =====
   const displayProgress = useMemo(
     () => calculateDisplayProgress(progress, maxProgress),
@@ -64,11 +80,31 @@ const ReviewHeaderInternal: FC<ReviewHeaderProps> = ({ progress, maxProgress, an
     [animationTriggered, displayProgress]
   );
 
+  const closeButtonStyle = useMemo(
+    () => [STATIC_STYLES.closeButton, { backgroundColor: colors.elevation1 }],
+    [colors.elevation1]
+  );
+
   return (
     <View style={STATIC_STYLES.header}>
       <View style={STATIC_STYLES.progressContainer}>
         <ProgressBar key={animationKey} {...progressBarProps} />
       </View>
+      {onClose && (
+        <Pressable
+          style={closeButtonStyle}
+          onPress={onClose}
+          hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+          accessibilityRole="button"
+          accessibilityLabel="Close practice session"
+        >
+          <Ionicons
+            name="close"
+            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+            color={colors.secondaryText}
+          />
+        </Pressable>
+      )}
     </View>
   );
 };
@@ -82,6 +118,7 @@ const ReviewHeaderComparison = (
   if (prevProps.progress !== nextProps.progress) return false;
   if (prevProps.maxProgress !== nextProps.maxProgress) return false;
   if (prevProps.animationKey !== nextProps.animationKey) return false;
+  if (prevProps.onClose !== nextProps.onClose) return false;
 
   return true;
 };
