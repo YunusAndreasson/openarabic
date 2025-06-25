@@ -1,12 +1,13 @@
 // External Libraries
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
-import { Fragment, memo, useCallback, type FC } from 'react';
+import React, { Fragment, memo, useCallback, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BaseCard from '@/components/BaseCard';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { THEME_OPTIONS, ThemePicker } from '@/components/ThemePicker';
+import ThemeSelector from '@/components/ThemeSelector';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -17,6 +18,7 @@ import { STRINGS } from '@/constants/strings';
 import { useAccountScreen } from '@/hooks/account';
 import { useColors } from '@/hooks/theme/useColors';
 import pkg from '@/package.json';
+import { useAppSelectorMemo } from '@/store/hooks';
 import { formatBytes } from '@/utils/cacheUtils';
 
 // Memoized components
@@ -29,6 +31,9 @@ Divider.displayName = 'Divider';
 const AccountScreen: FC = () => {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const currentTheme = useAppSelectorMemo(state => state.theme.theme);
+  const [showThemePicker, setShowThemePicker] = React.useState(false);
+
   const {
     reminderTime,
     formatReminderTime,
@@ -52,6 +57,19 @@ const AccountScreen: FC = () => {
     appIconBadgeEnabled,
     handleAppIconBadgeToggle,
   } = useAccountScreen();
+
+  // Theme picker handlers
+  const handleThemePickerOpen = useCallback(() => {
+    setShowThemePicker(true);
+  }, []);
+
+  const handleThemePickerClose = useCallback(() => {
+    setShowThemePicker(false);
+  }, []);
+
+  // Get current theme display text
+  const currentThemeOption = THEME_OPTIONS.find(option => option.id === currentTheme);
+  const currentThemeText = currentThemeOption?.title || 'Birches in Spring';
 
   const openTwitter = useCallback(() => {
     handleSocialLink('https://twitter.com/OpenArabicIo');
@@ -144,13 +162,17 @@ const AccountScreen: FC = () => {
             <View style={styles.settingRow}>
               <View style={styles.settingLabelContainer}>
                 <View style={styles.cardIconContainer}>
-                  <Ionicons color={colors.text} name="moon" size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM} />
+                  <Ionicons
+                    color={colors.text}
+                    name="color-palette"
+                    size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                  />
                 </View>
                 <View style={styles.settingLabelTextContainer}>
-                  <ThemedText type="body">{STRINGS.DARK_MODE}</ThemedText>
+                  <ThemedText type="body">Theme</ThemedText>
                 </View>
               </View>
-              <ThemeToggle />
+              <ThemeSelector currentThemeText={currentThemeText} onPress={handleThemePickerOpen} />
             </View>
 
             <Divider />
@@ -502,6 +524,9 @@ const AccountScreen: FC = () => {
         onClose={handleTimePickerClose}
         onTimeSet={handleTimeSet}
       />
+
+      {/* Theme Picker Modal */}
+      <ThemePicker isVisible={showThemePicker} onClose={handleThemePickerClose} />
     </ThemedView>
   );
 };

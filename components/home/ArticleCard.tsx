@@ -22,7 +22,6 @@ interface ArticleCardProps {
   title: string;
   author: string;
   onPress?: () => void;
-  onLongPress?: () => void;
   editMode?: boolean;
   onDelete?: () => void;
   dragHandleProps?: DragHandleProps;
@@ -36,7 +35,6 @@ export const ArticleCard: FC<ArticleCardProps> = ({
   title,
   author,
   onPress,
-  onLongPress,
   editMode = false,
   onDelete,
   dragHandleProps,
@@ -92,7 +90,6 @@ export const ArticleCard: FC<ArticleCardProps> = ({
           shadowSize="small"
           style={styles.card}
           {...(editMode ? {} : onPress ? { onPress } : {})}
-          {...(editMode ? {} : onLongPress ? { onLongPress } : {})}
         >
           <View style={styles.cardContent}>
             <View style={styles.textContent}>

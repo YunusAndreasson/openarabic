@@ -196,7 +196,7 @@ export default function NowPlayingModal() {
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <StatusBar style={isDarkMode ? 'light' : 'dark'} />
         <View style={[styles.header, { paddingTop: insets.top + LAYOUT.SPACING.MEDIUM }]}>
-          <View style={styles.modalHandle} />
+          {/* Loading state - no header content needed */}
         </View>
         <View style={styles.centerContent}>
           <ThemedText type="body" variant="secondary">
@@ -232,9 +232,8 @@ export default function NowPlayingModal() {
 
       {/* Header with Title and Author */}
       <View style={[styles.header, { paddingTop: insets.top + LAYOUT.SPACING.MEDIUM }]}>
-        {/* Modal Handle and Close Button */}
+        {/* Close Button Only - no modal handle for cleaner standard modal pattern */}
         <View style={styles.headerTop}>
-          <View style={styles.modalHandle} />
           <Pressable
             style={styles.closeButton}
             onPress={handleClose}
@@ -243,7 +242,7 @@ export default function NowPlayingModal() {
             <Ionicons
               name="close"
               size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              color="rgba(255, 255, 255, 0.9)"
+              color="rgba(255, 255, 255, 0.5)"
             />
           </Pressable>
         </View>
@@ -330,22 +329,11 @@ const styles = StyleSheet.create({
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     marginBottom: LAYOUT.SPACING.MEDIUM,
-    position: 'relative',
-  },
-
-  modalHandle: {
-    width: 36,
-    height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 2,
   },
 
   closeButton: {
-    position: 'absolute',
-    right: 0,
-    top: -LAYOUT.SPACING.SMALL,
     padding: LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     backgroundColor: 'rgba(0, 0, 0, 0.2)',

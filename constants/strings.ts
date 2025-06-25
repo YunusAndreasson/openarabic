@@ -297,16 +297,10 @@ export const STRINGS = {
   RECOMMENDED: 'Recommended',
   ACTIVE: 'active',
 
-  // Learning science content
-  WHAT_YOU_GET: 'What you get',
-  COMMON_CONCERNS: 'Common concerns',
+  // Learning science content - Remove redundant section titles (benefits, concerns, research are obvious from content)
   CLASSICAL_VS_MODERN_ARABIC: 'Classical vs modern Arabic',
   THE_ACQUISITION_PROCESS: 'The acquisition process',
   WHY_CLASSICAL_ISLAMIC_TEXTS: 'Why classical Islamic texts',
-  RESEARCH_FOUNDATION: 'Research foundation',
-  WHAT_THIS_MEANS: 'What this means',
-  SCIENTIFIC_FOUNDATION: 'Scientific foundation',
-  RESEARCH_SUPPORT: 'Research support',
   CLASSICAL_ARABIC: 'Classical Arabic',
   MODERN_STANDARD_ARABIC: 'Modern Standard Arabic',
   INPUT_HYPOTHESIS: 'Input hypothesis',
@@ -405,13 +399,12 @@ export const STRINGS = {
   ERROR_EMPTY_PASSWORD: 'Password cannot be empty',
 
   // Vocabulary screen messages
-  ERROR_PROCESSING_RESULT: 'Unable to process your result',
-  ERROR_LOADING_WORD: 'Unable to load next word',
-  ERROR_WORD_NOT_FOUND: 'Word could not be found',
-  ERROR_REVIEW_RESULTS: 'Unable to fetch review results',
+  ERROR_PROCESSING_RESULT: "Couldn't process result. " + tryAgain,
+  ERROR_LOADING_WORD: "Couldn't load word. " + tryAgain,
+  ERROR_WORD_NOT_FOUND: "Couldn't find word. " + tryAgain,
+  ERROR_REVIEW_RESULTS: "Couldn't load results. " + tryAgain,
   ERROR_NO_DUE_WORDS: 'No due words to review',
   INSTRUCTIONS_TAP_TO_SEE_MEANING: 'Tap to see meaning',
-  VOCABULARY_STATS_TITLE: 'Vocabulary Stats',
 
   // Delete confirmation modals
   CONFIRM_DELETE_WORD: 'Are you sure you want to delete this word?',
@@ -513,6 +506,15 @@ export const STRINGS = {
   WORDS_PER_MIN_TEMPLATE: '{rate} words/min - efficient learning',
   WORDS_REVIEWED_DEDICATION_TEMPLATE: '{count} words reviewed - dedication pays off',
   WORDS_REVIEWED_GREAT_TEMPLATE: '{count} words reviewed - great effort',
+
+  // Memory Capacity Labels - Simple capacity indicators
+  MEMORY_CAPACITY_LOW: 'Memory Capacity Low',
+  MEMORY_CAPACITY_MEDIUM: 'Memory Capacity Medium',
+  MEMORY_CAPACITY_HIGH: 'Memory Capacity High',
+
+  // Insights screen explanation
+  INSIGHTS_EXPLANATION:
+    'These charts show detailed stats about your memory capacity and learning progress. Use them to understand how your vocabulary retention works and track improvement over time.',
 } as const;
 
 export type StringKey = keyof typeof STRINGS;

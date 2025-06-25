@@ -7,6 +7,7 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import SectionTitle from '@/components/SectionTitle';
+import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { EfficiencyChart, MasteryChart, RetrievabilityChart } from '@/components/vocabulary/charts';
 import { LAYOUT } from '@/constants/layout';
@@ -81,6 +82,16 @@ export default function InsightsScreen(): JSX.Element {
         overScrollMode="never"
         bounces={true}
       >
+        {/* Introductory context */}
+        <Animated.View
+          entering={FadeInDown.delay(0).duration(LAYOUT.ANIMATION.DURATION.SLOW).springify()}
+          style={styles.introSection}
+        >
+          <ThemedText style={styles.introText} type="caption" variant="secondary">
+            {STRINGS.INSIGHTS_EXPLANATION}
+          </ThemedText>
+        </Animated.View>
+
         {/* Word Mastery Chart */}
         <Animated.View
           entering={FadeInDown.delay(LAYOUT.ANIMATION.DURATION.FAST / 2)
@@ -177,5 +188,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingVertical: LAYOUT.SPACING.XXLARGE,
     ...LAYOUT.ELEVATION.SMALL,
+  },
+  introSection: {
+    marginBottom: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+  },
+  introText: {
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.5, // Better readability
   },
 });

@@ -255,15 +255,15 @@ export function useMemoryCapacityGauge({
     return chartColors.performance.poor;
   };
 
-  // FIXED: Updated to consider word states, not just raw capacity score
+  // FIXED: Updated to use simple capacity labels instead of action messages
   const getReadinessMessage = (): string => {
     if (wordStates.dueWords > 0) {
-      return STRINGS.FOCUS_ON_CURRENT; // Red phase - focus on current words
+      return STRINGS.MEMORY_CAPACITY_LOW; // Red phase - low capacity
     }
     if (wordStates.strugglingWords > 0) {
-      return STRINGS.PRACTICE_MORE_FIRST; // Yellow phase - practice more first
+      return STRINGS.MEMORY_CAPACITY_MEDIUM; // Yellow phase - medium capacity
     }
-    return STRINGS.READY_TO_ADD; // Green phase - ready for new words
+    return STRINGS.MEMORY_CAPACITY_HIGH; // Green phase - high capacity
   };
 
   // FIXED: Updated to use the corrected color logic

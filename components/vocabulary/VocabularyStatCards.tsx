@@ -278,12 +278,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
-    borderRadius: LAYOUT.SPACING.XLARGE,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM, // Match BaseCard border radius
   },
   numberBadge: {
     width: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
     height: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.SPACING.XLARGE,
+    borderRadius: (MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL) / 2, // Perfect circle
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,

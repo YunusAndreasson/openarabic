@@ -9,7 +9,6 @@ import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layo
 import { STRINGS } from '@/constants/strings';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { selectionFeedback } from '@/utils/haptics';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -33,7 +32,6 @@ const DoneButton: FC<DoneButtonProps> = ({ onPress, style }) => {
   });
 
   const handlePress = useCallback(() => {
-    selectionFeedback();
     if (onPress) {
       onPress();
     } else {

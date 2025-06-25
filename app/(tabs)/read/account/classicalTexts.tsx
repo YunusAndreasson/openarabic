@@ -43,12 +43,8 @@ const ClassicalTextsScreen: FC = () => {
           </ThemedText>
         </View>
 
-        {/* Benefits */}
+        {/* Benefits - Remove redundant "What You Get" title */}
         <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
-            {STRINGS.WHAT_YOU_GET}
-          </ThemedText>
-
           <View style={styles.benefitsList}>
             <View style={styles.benefitItem}>
               <View style={[styles.benefitIcon, { backgroundColor: colors.elevation2 }]}>
@@ -119,10 +115,6 @@ const ClassicalTextsScreen: FC = () => {
 
         {/* Addressing Concerns */}
         <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
-            {STRINGS.COMMON_CONCERNS}
-          </ThemedText>
-
           <View style={styles.concernsList}>
             <View style={styles.concernItem}>
               <View style={[styles.concernIcon, { backgroundColor: colors.elevation2 }]}>
@@ -220,12 +212,8 @@ const ClassicalTextsScreen: FC = () => {
           </ThemedText>
         </View>
 
-        {/* Scientific References */}
+        {/* Scientific References - Remove redundant title */}
         <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
-            {STRINGS.RESEARCH_SUPPORT}
-          </ThemedText>
-
           <View style={styles.referencesList}>
             <View style={styles.referenceItem}>
               <View style={[styles.referenceIcon, { backgroundColor: colors.elevation1 }]}>

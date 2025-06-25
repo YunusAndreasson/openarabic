@@ -1,10 +1,9 @@
-import { useState, useEffect, memo, useCallback } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { MIN_TOUCH_TARGET, LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { selectionFeedback } from '@/utils/haptics';
 
 interface ChartTooltip {
   x: number;
@@ -59,7 +58,6 @@ interface DataPointOverlayProps {
 
 export const DataPointOverlay = memo<DataPointOverlayProps>(({ x, y, value, label, onPress }) => {
   const handlePress = useCallback(() => {
-    selectionFeedback();
     onPress(x, y, value, label);
   }, [x, y, value, label, onPress]);
 

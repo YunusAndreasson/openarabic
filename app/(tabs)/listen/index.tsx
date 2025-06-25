@@ -36,15 +36,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-  footerNote: {
-    alignItems: 'center',
-    paddingTop: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  footerNoteText: {
-    textAlign: 'center',
-    opacity: LAYOUT.OPACITY.SUBTLE,
-  },
 });
 
 // Use responsive height calculation instead of hardcoded value
@@ -56,7 +47,6 @@ const ListenListItem = memo(
     item,
     isActive,
     editMode,
-    onPress,
     onDelete,
     onPlayPress,
     drag,
@@ -67,7 +57,6 @@ const ListenListItem = memo(
     item: ReadingListItem;
     isActive: boolean;
     editMode: boolean;
-    onPress: (id: number) => void;
     onDelete: (id: number) => void;
     onPlayPress: (id: number) => void;
     drag?: () => void;
@@ -83,8 +72,6 @@ const ListenListItem = memo(
         isBeingDragged={_isBeingDragged}
         // Primary action: tap to play audio (when available) or open article (when no audio)
         onPress={!editMode ? () => onPlayPress(item.article_id) : undefined}
-        // Secondary action: long press to open article (when not in edit mode)
-        onLongPress={!editMode ? () => onPress(item.article_id) : undefined}
         onDelete={() => onDelete(item.article_id)}
         // Show play button as visual indicator when audio is available, but hide when any audio is playing
         onPlayPress={
@@ -158,21 +145,15 @@ export default function ListenScreen(): JSX.Element {
     [metadata.articleId, metadata.articleTitle]
   );
 
-  const {
-    canShowEmpty,
-    flashListExtraData,
-    currentArticle,
-    handleArticlePress,
-    handleNowPlayingPress,
-    handleDragEnd,
-  } = useListenUI({
-    sortedReadingList,
-    metadata: listenMetadata,
-    audioState,
-    isStartingPlayback,
-    position,
-    duration,
-  });
+  const { canShowEmpty, flashListExtraData, currentArticle, handleNowPlayingPress, handleDragEnd } =
+    useListenUI({
+      sortedReadingList,
+      metadata: listenMetadata,
+      audioState,
+      isStartingPlayback,
+      position,
+      duration,
+    });
 
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
@@ -268,7 +249,6 @@ export default function ListenScreen(): JSX.Element {
             isActive={isActive}
             editMode={editMode}
             item={item}
-            onPress={handleArticlePress}
             onDelete={handleDelete}
             onPlayPress={handleArticlePlay}
             drag={drag}
@@ -284,7 +264,6 @@ export default function ListenScreen(): JSX.Element {
             isActive={isActive}
             editMode={editMode}
             item={item}
-            onPress={handleArticlePress}
             onDelete={handleDelete}
             onPlayPress={handleArticlePlay}
             isStartingPlayback={isStartingPlayback}
@@ -293,15 +272,7 @@ export default function ListenScreen(): JSX.Element {
         );
       }
     },
-    [
-      audioState,
-      metadata.articleId,
-      editMode,
-      handleArticlePress,
-      handleDelete,
-      handleArticlePlay,
-      isStartingPlayback,
-    ]
+    [audioState, metadata.articleId, editMode, handleDelete, handleArticlePlay, isStartingPlayback]
   );
 
   // Show loading screen only during initial uncached load
@@ -349,15 +320,6 @@ export default function ListenScreen(): JSX.Element {
                 />
               ) : null
             }
-            ListFooterComponent={
-              hasArticles ? (
-                <View style={styles.footerNote}>
-                  <ThemedText style={styles.footerNoteText} type="caption" variant="secondary">
-                    {STRINGS.LONG_PRESS_HINT}
-                  </ThemedText>
-                </View>
-              ) : null
-            }
           />
         ) : (
           // Use FlashList in normal mode
@@ -388,15 +350,6 @@ export default function ListenScreen(): JSX.Element {
               ) : null
             }
             ListHeaderComponent={null}
-            ListFooterComponent={
-              hasArticles ? (
-                <View style={styles.footerNote}>
-                  <ThemedText style={styles.footerNoteText} type="caption" variant="secondary">
-                    {STRINGS.LONG_PRESS_HINT}
-                  </ThemedText>
-                </View>
-              ) : null
-            }
             overrideItemLayout={layout => {
               layout.size = ITEM_HEIGHT;
             }}

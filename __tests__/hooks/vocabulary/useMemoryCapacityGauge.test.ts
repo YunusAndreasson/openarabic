@@ -97,7 +97,7 @@ describe('useMemoryCapacityGauge', () => {
     expect(getCapacityColor(0)).toBe('#p'); // poor (red)
 
     // Test readiness message for empty study words (should be green zone)
-    expect(getReadinessMessage()).toBe('Ready for new words');
+    expect(getReadinessMessage()).toBe('Memory Capacity High');
 
     // Test action card background matches gauge color with light opacity
     // These should be light tints of the gauge colors
@@ -122,7 +122,7 @@ describe('useMemoryCapacityGauge', () => {
         expect(getActionCardBackground(score)).toBeDefined();
       });
       // For empty study words, should always be ready for new words
-      expect(getReadinessMessage()).toBe('Ready for new words');
+      expect(getReadinessMessage()).toBe('Memory Capacity High');
     });
 
     it('handles YELLOW zone - Practice more first (40-69%)', () => {
@@ -135,7 +135,7 @@ describe('useMemoryCapacityGauge', () => {
         expect(getActionCardBackground(score)).toBeDefined();
       });
       // For empty study words, should always be ready for new words (no struggling words)
-      expect(getReadinessMessage()).toBe('Ready for new words');
+      expect(getReadinessMessage()).toBe('Memory Capacity High');
     });
 
     it('handles RED zone - Practice current words first (<40%)', () => {
@@ -148,7 +148,7 @@ describe('useMemoryCapacityGauge', () => {
         expect(getActionCardBackground(score)).toBeDefined();
       });
       // For empty study words, should always be ready for new words (no due words)
-      expect(getReadinessMessage()).toBe('Ready for new words');
+      expect(getReadinessMessage()).toBe('Memory Capacity High');
     });
   });
 
@@ -196,7 +196,7 @@ describe('useMemoryCapacityGauge', () => {
       expect(getCapacityColor(25)).toBe('#p'); // Red zone
 
       // For empty study words, message should always be ready for new words
-      expect(getReadinessMessage()).toBe('Ready for new words');
+      expect(getReadinessMessage()).toBe('Memory Capacity High');
     });
   });
 });

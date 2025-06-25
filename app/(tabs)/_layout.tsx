@@ -222,12 +222,16 @@ export default function TabLayout(): JSX.Element {
                 tabBarBadgeStyle: {
                   ...badgeConfig.badgeStyle,
                   fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-                  fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-                  // Use responsive dimensions based on spacing scale
-                  minWidth: LAYOUT.SPACING.XLARGE, // 20px
-                  minHeight: LAYOUT.SPACING.XLARGE, // 20px
-                  borderRadius: LAYOUT.SPACING.MEDIUM, // 12px for rounded appearance
-                  // Remove negative margins for safer positioning across devices
+                  fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD, // Bolder for better readability
+                  // Standard mobile badge size - ensure perfect circle
+                  minWidth: 16, // Use exact pixel value to avoid fractional calculations
+                  minHeight: 16, // Use exact pixel value to avoid fractional calculations
+                  borderRadius: 8, // Exactly half of 16 for perfect circle
+                  textAlign: 'center',
+                  lineHeight: 16, // Match height for vertical centering
+                  // Standard badge positioning (top-right, slightly overlapping icon)
+                  top: -LAYOUT.SPACING.TINY, // Move up slightly
+                  right: -LAYOUT.SPACING.TINY, // Move right slightly
                 },
               }),
             ...(screen.name === 'read' && {

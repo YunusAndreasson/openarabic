@@ -70,7 +70,7 @@ const compactCardStyles = StyleSheet.create({
   },
   countBadge: {
     alignItems: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.BUTTON.ICON_SIZE.LARGE / 2,
     height: LAYOUT.BUTTON.ICON_SIZE.LARGE,
     justifyContent: 'center',
     marginLeft: LAYOUT.SPACING.SMALL,

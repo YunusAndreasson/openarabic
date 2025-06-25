@@ -101,7 +101,7 @@ const ReviewHeaderInternal: FC<ReviewHeaderProps> = ({
           <Ionicons
             name="close"
             size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-            color={colors.secondaryText}
+            color={colors.textTertiary}
           />
         </Pressable>
       )}

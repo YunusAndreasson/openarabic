@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import type { JSX } from 'react';
 
+import DoneButton from '@/components/ui/DoneButton';
 import { createNavigationOptions } from '@/constants/modal';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
@@ -14,19 +15,21 @@ export default function AccountLayout(): JSX.Element {
         name="index"
         options={createNavigationOptions(colors, {
           title: STRINGS.ACCOUNT,
-          isRegularScreen: true,
+          headerLeft: () => <DoneButton />,
         })}
       />
       <Stack.Screen
         name="classicalTexts"
         options={createNavigationOptions(colors, {
           title: STRINGS.CLASSICAL_TEXTS,
+          headerLeft: () => <DoneButton />,
         })}
       />
       <Stack.Screen
         name="learningMethod"
         options={createNavigationOptions(colors, {
           title: STRINGS.LEARNING_METHOD,
+          headerLeft: () => <DoneButton />,
         })}
       />
       <Stack.Screen
@@ -40,6 +43,7 @@ export default function AccountLayout(): JSX.Element {
         name="font-selector"
         options={createNavigationOptions(colors, {
           title: STRINGS.ARABIC_FONT,
+          headerLeft: () => <DoneButton />,
         })}
       />
     </Stack>

@@ -59,7 +59,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
 
   return (
     <BaseChart
-      contentHeight={GAUGE_HEIGHT + 120}
+      contentHeight={GAUGE_HEIGHT + 80} // Reduced from 120 to 80 for less whitespace
       emptyStateText={STRINGS.ADD_WORDS_TO_SEE_CAPACITY}
       hasData={studyWords.length > 0}
       hideTitle={true}
@@ -221,16 +221,16 @@ const styles = StyleSheet.create({
   },
   gaugeContainer: {
     alignItems: 'center',
-    height: GAUGE_HEIGHT + LAYOUT.SPACING.XLARGE,
+    height: GAUGE_HEIGHT + LAYOUT.SPACING.MEDIUM, // Reduced from XLARGE to MEDIUM
     justifyContent: 'center',
     position: 'relative',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.TINY, // Reduced from MEDIUM to TINY
   },
   bottomSection: {
     alignItems: 'center',
-    marginTop: LAYOUT.SPACING.XLARGE,
+    marginTop: LAYOUT.SPACING.SMALL, // Reduced from XLARGE to SMALL to connect label to graph
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.SMALL, // Reduced from MEDIUM to SMALL
   },
   actionCard: {
     alignItems: 'center',

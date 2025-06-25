@@ -1,7 +1,8 @@
 import { Stack } from 'expo-router';
-import { useCallback } from 'react';
 import type { JSX } from 'react';
+import { useCallback } from 'react';
 
+import DoneButton from '@/components/ui/DoneButton';
 import { createNavigationOptions } from '@/constants/modal';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
@@ -23,6 +24,7 @@ export default function InsightsLayout(): JSX.Element {
 
       return createNavigationOptions(colors, {
         title,
+        headerLeft: () => <DoneButton />,
         // Removed isRegularScreen: true to use modal presentation by default
       });
     },
@@ -35,13 +37,10 @@ export default function InsightsLayout(): JSX.Element {
         name="index"
         options={createNavigationOptions(colors, {
           title: STRINGS.INSIGHTS,
-          isRegularScreen: true,
+          headerLeft: () => <DoneButton />,
         })}
       />
-      <Stack.Screen
-        name="info/[type]"
-        options={getInfoOptions}
-      />
+      <Stack.Screen name="info/[type]" options={getInfoOptions} />
     </Stack>
   );
 }

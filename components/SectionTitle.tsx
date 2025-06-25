@@ -6,7 +6,6 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-na
 
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { selectionFeedback } from '@/utils/haptics';
 
 import { ThemedText } from './ThemedText';
 
@@ -60,7 +59,6 @@ const SectionTitle: FC<SectionTitleProps> = ({
   };
 
   const handlePress = () => {
-    selectionFeedback();
     onInfoPress?.();
   };
 

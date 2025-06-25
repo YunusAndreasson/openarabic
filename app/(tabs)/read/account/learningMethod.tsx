@@ -187,22 +187,15 @@ const LearningMethodScreen: FC = () => {
           </View>
         </View>
 
-        {/* Research */}
+        {/* Research - Remove redundant title */}
         <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
-            {STRINGS.RESEARCH_FOUNDATION}
-          </ThemedText>
           <ThemedText style={styles.bodyText} type="body">
             {STRINGS.KRASHEN_INPUT_HYPOTHESIS}
           </ThemedText>
         </View>
 
-        {/* Practical Implications */}
+        {/* Practical Implications - Remove redundant title */}
         <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
-            {STRINGS.WHAT_THIS_MEANS}
-          </ThemedText>
-
           <View style={styles.benefitsList}>
             <View style={styles.benefitItem}>
               <View style={[styles.benefitIcon, { backgroundColor: colors.elevation2 }]}>
@@ -255,12 +248,8 @@ const LearningMethodScreen: FC = () => {
           </View>
         </View>
 
-        {/* Scientific References */}
+        {/* Scientific References - Remove redundant title */}
         <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle} type="heading2" weight="bold">
-            {STRINGS.SCIENTIFIC_FOUNDATION}
-          </ThemedText>
-
           <View style={styles.referencesList}>
             <View style={styles.referenceItem}>
               <View style={[styles.referenceIcon, { backgroundColor: colors.elevation1 }]}>
