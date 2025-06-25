@@ -6,7 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { type AnimatedStyleProp } from 'react-native-reanimated';
 
 import { ArabicWord } from '@/components/article/ArabicWord';
-import { LAYOUT } from '@/constants/layout';
+import { FONTS, LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ThemeColors } from '@/types/ui/theme.types';
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   englishText: {
-    fontFamily: 'System',
+    fontFamily: FONTS.ENGLISH,
     paddingBottom: LAYOUT.SPACING.TINY,
     paddingTop: LAYOUT.SPACING.SMALL,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,

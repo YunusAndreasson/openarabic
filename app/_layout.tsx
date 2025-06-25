@@ -12,15 +12,15 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { useFonts } from 'expo-font';
 import { Stack, useNavigationContainerRef, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState, useRef, useMemo, memo } from 'react';
-import 'react-native-reanimated';
-import { AppState, View, StyleSheet, Platform } from 'react-native';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { AppState, Platform, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 
-import figtreeFont from '@/assets/fonts/Figtree.ttf';
+import interFont from '@/assets/fonts/Inter.ttf';
 import madinaFont from '@/assets/fonts/Madina.otf';
 import { ThemedText } from '@/components/ThemedText';
 import { AuthProvider, ToastProvider } from '@/components/providers';
@@ -37,7 +37,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
 import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import type { RootState } from '@/store/store';
-import { store, persistor } from '@/store/store';
+import { persistor, store } from '@/store/store';
 import { setTheme } from '@/store/themeSlice';
 import { handleError } from '@/utils/errorHandling';
 import { PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
@@ -118,7 +118,7 @@ function AppContent() {
 
   const [fontsLoaded] = useFonts({
     Madina: madinaFont,
-    Figtree: figtreeFont,
+    Inter: interFont,
   });
 
   const { preloadAppData, isLoaded } = useAppPreloader();

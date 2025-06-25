@@ -9,7 +9,7 @@ const SCREEN_DIMENSIONS = Dimensions.get('window');
 export const SCREEN_WIDTH = SCREEN_DIMENSIONS?.width ?? 375; // Default fallback for test environments
 
 export const FONTS = {
-  ENGLISH: 'Figtree',
+  ENGLISH: 'Inter',
   ARABIC: 'Madina',
 } as const;
 
