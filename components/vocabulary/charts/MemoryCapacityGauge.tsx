@@ -32,7 +32,6 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
   const { navigateTo } = useNavigationWithDebounce();
 
   const {
-    memoryMetrics,
     gaugePaths,
     getFilledGradientColors,
     getFilledGradientPositions,
@@ -59,7 +58,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
 
   return (
     <BaseChart
-      contentHeight={GAUGE_HEIGHT + 76}
+      contentHeight={GAUGE_HEIGHT + 120}
       emptyStateText={STRINGS.ADD_WORDS_TO_SEE_CAPACITY}
       hasData={studyWords.length > 0}
       hideTitle={true}
@@ -165,21 +164,9 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(({ studyWords 
 
           {/* Center section with percentage */}
           <View style={styles.centerSection}>
-            <View style={styles.scoreContainer}>
-              <ThemedText style={[styles.capacityText, { color: getCapacityColor(displayScore) }]}>
-                {displayScore}%
-              </ThemedText>
-              {memoryMetrics.trend === 'improving' && (
-                <View style={styles.statusContainer}>
-                  <View
-                    style={[
-                      styles.trendIndicator,
-                      { backgroundColor: chartColors.performance.excellent },
-                    ]}
-                  />
-                </View>
-              )}
-            </View>
+            <ThemedText style={[styles.capacityText, { color: getCapacityColor(displayScore) }]}>
+              {displayScore}%
+            </ThemedText>
           </View>
         </View>
 
@@ -227,20 +214,22 @@ const styles = StyleSheet.create({
   },
   centerSection: {
     alignItems: 'center',
-    bottom: MIN_TOUCH_TARGET.MEDIUM + LAYOUT.SPACING.MICRO,
+    bottom: MIN_TOUCH_TARGET.LARGE + LAYOUT.SPACING.TINY,
     justifyContent: 'center',
     position: 'absolute',
   },
   gaugeContainer: {
     alignItems: 'center',
-    height: GAUGE_HEIGHT + LAYOUT.SPACING.LARGE,
+    height: GAUGE_HEIGHT + LAYOUT.SPACING.XLARGE,
     justifyContent: 'center',
     position: 'relative',
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   bottomSection: {
     alignItems: 'center',
-    marginTop: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.XLARGE,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
   actionCard: {
     alignItems: 'center',
@@ -258,23 +247,7 @@ const styles = StyleSheet.create({
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.2,
     textAlign: 'center',
   },
-  scoreContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statusContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: LAYOUT.SPACING.MEDIUM,
-  },
-  trendIndicator: {
-    borderRadius: LAYOUT.SPACING.TINY - 1,
-    height: LAYOUT.SPACING.TINY + LAYOUT.SPACING.TINY / 2,
-    marginLeft: LAYOUT.SPACING.TINY + LAYOUT.SPACING.TINY / 2,
-    opacity: LAYOUT.OPACITY.HOVER,
-    width: LAYOUT.SPACING.TINY + LAYOUT.SPACING.TINY / 2,
-  },
+
   infoIconContainer: {
     position: 'absolute',
     top: LAYOUT.SPACING.SMALL,

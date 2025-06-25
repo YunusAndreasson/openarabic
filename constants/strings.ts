@@ -152,14 +152,14 @@ export const STRINGS = {
 
   // Practice session labels - concise and scientifically grounded
   // 3-Phase FSRS Practice System - scientifically grounded labels
-  URGENT_PRESERVATION: 'Urgent preservation', // RED PHASE: Prevent memory decay
-  EFFORTFUL_RETRIEVAL: 'Effortful retrieval', // YELLOW PHASE: Strengthen weak memories
-  INTERLEAVED_REVIEW: 'Interleaved review', // GREEN PHASE: Mixed practice for robust learning
+  URGENT_PRESERVATION: 'Memory preservation needed', // RED PHASE: Prevent memory decay
+  EFFORTFUL_RETRIEVAL: 'Strengthening weak memories', // YELLOW PHASE: Strengthen weak memories
+  INTERLEAVED_REVIEW: 'Building learning capacity', // GREEN PHASE: Mixed practice for robust learning
 
   // Practice button descriptions - streamlined and action-oriented
-  URGENT_MEMORY_PRESERVATION: 'Prevent memory decay', // Concise, scientific
-  EFFORTFUL_RETRIEVAL_PRACTICE: 'Strengthen weak memories', // Research-aligned terminology
-  INTERLEAVED_REVIEW_DESCRIPTION: 'Reinforce all vocabulary', // Emphasizes cognitive benefit
+  URGENT_MEMORY_PRESERVATION: 'Words need review to prevent forgetting', // Concise, scientific
+  EFFORTFUL_RETRIEVAL_PRACTICE: 'Practice challenging words to strengthen memory', // Research-aligned terminology
+  INTERLEAVED_REVIEW_DESCRIPTION: 'Review all words to increase capacity for new learning', // Emphasizes cognitive benefit
 
   // Insights & analytics
   INSIGHTS: 'Insights',
@@ -419,9 +419,9 @@ export const STRINGS = {
   DELETE_FOREVER_WARNING: 'This action cannot be undone.',
 
   // Vocabulary readiness - simplified 3-phase system aligned with copy guidelines
-  READY_TO_ADD: 'Ready for new words',
-  PRACTICE_MORE_FIRST: 'Practice first',
-  FOCUS_ON_CURRENT: 'Focus on current words',
+  READY_TO_ADD: 'Add new words',
+  PRACTICE_MORE_FIRST: 'Build capacity',
+  FOCUS_ON_CURRENT: 'Preserve memory',
 
   // Practice button disabled messages - concise guidance
   COMPLETE_DUE_FIRST: 'Complete due words first',
