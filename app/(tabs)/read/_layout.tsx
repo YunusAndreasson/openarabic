@@ -3,6 +3,7 @@ import type { JSX } from 'react';
 import { useCallback } from 'react';
 
 import FilterButton from '@/components/FilterButton';
+import EditModeButton from '@/components/ui/EditModeButton';
 import { createNavigationOptions } from '@/constants/modal';
 import { getFilterModalRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -31,12 +32,30 @@ function getFilterTitle(params: FilterParams): string {
   return STRINGS.FILTER;
 }
 
-const FilterHeaderRight = ({ categoryId }: { categoryId: number }) => {
-  const handlePress = useCallback(() => {
+const FilterHeaderLeft = ({ isBookmark }: { isBookmark: boolean }) => {
+  if (!isBookmark) return null;
+
+  return <EditModeButton type="bookmarks" />;
+};
+
+const FilterHeaderRight = ({
+  categoryId,
+  isBookmark,
+}: {
+  categoryId: number;
+  isBookmark: boolean;
+}) => {
+  const handleFilterPress = useCallback(() => {
     router.push(getFilterModalRoute(categoryId));
   }, [categoryId]);
 
-  return <FilterButton onPress={handlePress} />;
+  if (isBookmark) {
+    // For bookmarks, show filter button on the right (edit button is on left)
+    return <FilterButton onPress={handleFilterPress} />;
+  }
+
+  // For categories, show filter button on the right
+  return <FilterButton onPress={handleFilterPress} />;
 };
 
 export default function ReadLayout(): JSX.Element {
@@ -75,10 +94,14 @@ export default function ReadLayout(): JSX.Element {
         options={({ route }) => {
           const params = route.params as FilterParams;
           const categoryId = parseInt(params.id ?? '', 10);
+          const isBookmark = params.type === 'bookmark';
 
           return createNavigationOptions(colors, {
             title: getFilterTitle(params),
-            headerRight: () => <FilterHeaderRight categoryId={categoryId} />,
+            headerLeft: () => <FilterHeaderLeft isBookmark={isBookmark} />,
+            headerRight: () => (
+              <FilterHeaderRight categoryId={categoryId} isBookmark={isBookmark} />
+            ),
           });
         }}
       />

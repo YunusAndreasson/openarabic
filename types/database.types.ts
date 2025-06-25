@@ -224,18 +224,21 @@ export type Database = {
           added_at: string | null;
           article_id: number | null;
           id: number;
+          order_index: number | null;
           user_id: string | null;
         };
         Insert: {
           added_at?: string | null;
           article_id?: number | null;
           id?: number;
+          order_index?: number | null;
           user_id?: string | null;
         };
         Update: {
           added_at?: string | null;
           article_id?: number | null;
           id?: number;
+          order_index?: number | null;
           user_id?: string | null;
         };
         Relationships: [

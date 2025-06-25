@@ -6,7 +6,8 @@ import type { AudioState } from '@/constants/audio';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { useEditMode } from '@/hooks/ui/useEditMode';
+import { useAppDispatch } from '@/store/hooks';
 import { setCustomOrder } from '@/store/listenSlice';
 import type { Article } from '@/types/articles.types';
 import type { ReadingListItem } from '@/types/readingList.types';
@@ -31,7 +32,7 @@ export const useListenUI = ({
 }: ListenUIParams) => {
   const { prefetchArticle } = useAppPreloader();
   const dispatch = useAppDispatch();
-  const editMode = useAppSelector(state => state.listen.editMode);
+  const { editMode } = useEditMode('listen');
 
   const [canShowEmpty, setCanShowEmpty] = useState(false);
   const showEmptyRef = useRef<number | null>(null);

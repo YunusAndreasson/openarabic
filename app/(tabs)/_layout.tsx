@@ -6,7 +6,7 @@ import { Fragment, memo, useEffect } from 'react';
 import { Platform, StyleSheet } from 'react-native';
 
 import HeaderProfile from '@/components/HeaderProfile';
-import EditModeButton from '@/components/listen/EditModeButton';
+import EditModeButton from '@/components/ui/EditModeButton';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -72,7 +72,7 @@ TabBarBackground.displayName = 'TabBarBackground';
 const headerBackground = () => <HeaderBackground />;
 const tabBarBackground = () => <TabBarBackground />;
 const headerProfileComponent = () => <HeaderProfile />;
-const listenHeaderRightComponent = () => <EditModeButton />;
+const listenHeaderRightComponent = () => <EditModeButton type="listen" />;
 
 export default function TabLayout(): JSX.Element {
   const { session, isLoading, user } = useAuth();

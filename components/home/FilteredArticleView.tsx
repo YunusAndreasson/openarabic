@@ -1,6 +1,8 @@
 import { FlashList } from '@shopify/flash-list';
 import React, { memo, useCallback, useMemo, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
+import type { RenderItemParams } from 'react-native-draggable-flatlist';
+import DraggableFlatList from 'react-native-draggable-flatlist';
 
 import EmptyState from '@/components/EmptyState';
 import FilterSummary from '@/components/FilterSummary';
@@ -15,6 +17,8 @@ import ListArticleItem from './ListArticleItem';
 
 // Extract constants outside component to prevent recreation
 const NOOP_ARTICLE_PRESS = () => {};
+const NOOP_DELETE = () => {};
+const NOOP_DRAG_END = () => {};
 // Use responsive height for filtered article items
 const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM;
 const DRAW_DISTANCE_MULTIPLIER = LIST_DRAW_DISTANCE_MULTIPLIER;
@@ -56,6 +60,21 @@ interface FilteredArticleViewProps {
   onArticlePress?: (article: Article) => void;
 
   /**
+   * Optional callback when an article is deleted (for edit mode)
+   */
+  onArticleDelete?: (articleId: number) => void;
+
+  /**
+   * Optional callback when articles are reordered (for edit mode)
+   */
+  onArticleReorder?: (orderedArticleIds: number[]) => void;
+
+  /**
+   * Whether edit mode is enabled
+   */
+  editMode?: boolean;
+
+  /**
    * Total count of articles before filtering (optional)
    */
   totalCount?: number;
@@ -81,7 +100,10 @@ const FilteredArticleViewComparison = (
   // Quick path comparisons first (most likely to change)
   if (prevProps.articles !== nextProps.articles) return false;
   if (prevProps.loading !== nextProps.loading) return false;
+  if (prevProps.editMode !== nextProps.editMode) return false; // CRITICAL: Check editMode!
   if (prevProps.onArticlePress !== nextProps.onArticlePress) return false;
+  if (prevProps.onArticleDelete !== nextProps.onArticleDelete) return false;
+  if (prevProps.onArticleReorder !== nextProps.onArticleReorder) return false;
   if (prevProps.HeaderComponent !== nextProps.HeaderComponent) return false;
 
   // Array length checks before deep comparison
@@ -99,6 +121,9 @@ const FilteredArticleViewComparison = (
 const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
   articles,
   onArticlePress = NOOP_ARTICLE_PRESS,
+  onArticleDelete = NOOP_DELETE,
+  onArticleReorder = NOOP_DRAG_END,
+  editMode = false,
   totalCount,
   loading = false,
   HeaderComponent = null,
@@ -109,6 +134,15 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
   const articlesLength = useMemo(() => articles.length, [articles.length]);
   const hasArticles = useMemo(() => articlesLength > 0, [articlesLength]);
   const shouldShowEmpty = useMemo(() => !loading && !hasArticles, [loading, hasArticles]);
+
+  // Handle drag end for reordering
+  const handleDragEnd = useCallback(
+    ({ data }: { data: Article[] }) => {
+      const orderedIds = data.map(article => article.id);
+      onArticleReorder(orderedIds);
+    },
+    [onArticleReorder]
+  );
 
   // Memoize list components
   const ListFooterComponent = useMemo(() => {
@@ -129,10 +163,46 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
     );
   }, [HeaderComponent, articlesLength, totalCount]);
 
-  // Memoize render callbacks
-  const renderItemCallback = useCallback(
-    ({ item }: { item: Article }) => <ListArticleItem article={item} onPress={onArticlePress} />,
-    [onArticlePress]
+  // Render item for both FlashList and DraggableFlatList
+  const renderItem: (
+    params: { item: Article; index?: number } | RenderItemParams<Article>
+  ) => React.JSX.Element = useCallback(
+    params => {
+      const { item } = params;
+
+      if (editMode && 'drag' in params) {
+        // DraggableFlatList render
+        const { drag, isActive: isDragging } = params;
+        return (
+          <ListArticleItem
+            article={item}
+            editMode={editMode}
+            onPress={!editMode ? onArticlePress : undefined}
+            onDelete={() => onArticleDelete(item.id)}
+            dragHandleProps={
+              drag
+                ? {
+                    onLongPress: drag,
+                    delayLongPress: 100,
+                  }
+                : undefined
+            }
+            isBeingDragged={isDragging}
+          />
+        );
+      } else {
+        // FlashList render
+        return (
+          <ListArticleItem
+            article={item}
+            editMode={editMode}
+            onPress={!editMode ? onArticlePress : undefined}
+            onDelete={editMode ? () => onArticleDelete(item.id) : undefined}
+          />
+        );
+      }
+    },
+    [editMode, onArticlePress, onArticleDelete]
   );
 
   const renderSeparator = useCallback(() => SeparatorComponent(), []);
@@ -142,32 +212,6 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
   const overrideItemLayout = useCallback((layout: { span?: number; size?: number }) => {
     layout.size = ITEM_HEIGHT;
   }, []);
-
-  // Memoize FlashList props to prevent unnecessary re-renders
-  const flashListProps = useMemo(
-    () => ({
-      contentContainerStyle: STATIC_STYLES.listContent,
-      data: articles,
-      drawDistance: ITEM_HEIGHT * DRAW_DISTANCE_MULTIPLIER,
-      estimatedItemSize: ITEM_HEIGHT,
-      keyExtractor,
-      ListFooterComponent,
-      ListHeaderComponent,
-      ItemSeparatorComponent: renderSeparator,
-      renderItem: renderItemCallback,
-      showsVerticalScrollIndicator: true,
-      overrideItemLayout,
-    }),
-    [
-      articles,
-      keyExtractor,
-      ListFooterComponent,
-      ListHeaderComponent,
-      renderSeparator,
-      renderItemCallback,
-      overrideItemLayout,
-    ]
-  );
 
   // Memoize empty state props
   const emptyStateProps = useMemo(
@@ -202,7 +246,36 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
 
   return (
     <ThemedView {...themedViewProps}>
-      <FlashList {...flashListProps} />
+      {editMode ? (
+        // Use DraggableFlatList in edit mode
+        <DraggableFlatList<Article>
+          data={articles}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          onDragEnd={handleDragEnd}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={STATIC_STYLES.listContent}
+          ItemSeparatorComponent={renderSeparator}
+          ListHeaderComponent={ListHeaderComponent}
+          ListFooterComponent={ListFooterComponent}
+        />
+      ) : (
+        // Use FlashList in normal mode
+        <FlashList<Article>
+          data={articles}
+          drawDistance={ITEM_HEIGHT * DRAW_DISTANCE_MULTIPLIER}
+          estimatedItemSize={ITEM_HEIGHT}
+          keyExtractor={keyExtractor}
+          removeClippedSubviews={true}
+          showsVerticalScrollIndicator={true}
+          contentContainerStyle={STATIC_STYLES.listContent}
+          ItemSeparatorComponent={renderSeparator}
+          ListHeaderComponent={ListHeaderComponent}
+          ListFooterComponent={ListFooterComponent}
+          renderItem={renderItem}
+          overrideItemLayout={overrideItemLayout}
+        />
+      )}
     </ThemedView>
   );
 };

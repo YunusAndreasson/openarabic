@@ -8,20 +8,32 @@ import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layo
 import { STRINGS } from '@/constants/strings';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
-import { toggleEditMode } from '@/store/listenSlice';
+import { useEditMode } from '@/hooks/ui/useEditMode';
+import type { EditModeType } from '@/store/editModeSlice';
 import { selectionFeedback } from '@/utils/haptics';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 interface EditModeButtonProps {
+  /**
+   * The type of edit mode this button controls
+   */
+  type: EditModeType;
+
+  /**
+   * Optional callback when edit mode changes
+   */
   onEditModeChange?: (editMode: boolean) => void;
+
+  /**
+   * Optional custom styling
+   */
+  style?: ViewStyle;
 }
 
-const EditModeButton: FC<EditModeButtonProps> = ({ onEditModeChange }) => {
+const EditModeButton: FC<EditModeButtonProps> = ({ type, onEditModeChange, style }) => {
   const colors = useColors();
-  const dispatch = useAppDispatch();
-  const editMode = useAppSelectorMemo(state => state.listen.editMode);
+  const { editMode, toggle } = useEditMode(type);
 
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     includeOpacity: true,
@@ -29,9 +41,11 @@ const EditModeButton: FC<EditModeButtonProps> = ({ onEditModeChange }) => {
 
   const handlePress = useCallback(() => {
     selectionFeedback();
-    dispatch(toggleEditMode());
+    toggle();
     onEditModeChange?.(!editMode);
-  }, [dispatch, editMode, onEditModeChange]);
+  }, [toggle, editMode, onEditModeChange]);
+
+  const buttonText = editMode ? STRINGS.DONE : STRINGS.EDIT;
 
   return (
     <AnimatedTouchable
@@ -41,6 +55,7 @@ const EditModeButton: FC<EditModeButtonProps> = ({ onEditModeChange }) => {
           backgroundColor: colors.transparent,
         },
         animatedStyle as ViewStyle,
+        style,
       ]}
       onPress={handlePress}
       onPressIn={handlePressIn}
@@ -56,8 +71,9 @@ const EditModeButton: FC<EditModeButtonProps> = ({ onEditModeChange }) => {
             color: colors.tint, // Always use tint color for action-oriented button
           },
         ]}
+        numberOfLines={1}
       >
-        {editMode ? STRINGS.DONE : STRINGS.EDIT}
+        {buttonText}
       </ThemedText>
     </AnimatedTouchable>
   );
@@ -69,6 +85,7 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     justifyContent: 'center',
     minHeight: MIN_TOUCH_TARGET.MEDIUM,
+    minWidth: 70,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.SMALL,
   },

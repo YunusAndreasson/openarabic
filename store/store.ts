@@ -1,10 +1,11 @@
-import { configureStore, combineReducers } from '@reduxjs/toolkit';
-import { persistStore, persistReducer } from 'redux-persist';
+import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import type { PersistedState } from 'redux-persist';
+import { persistReducer, persistStore } from 'redux-persist';
 import type { PersistConfig } from 'redux-persist/es/types';
 
 import { getSafeStorage } from '@/utils/safeAsyncStorage';
 
+import editModeReducer from './editModeSlice';
 import filtersReducer from './filtersSlice';
 import listenReducer from './listenSlice';
 import readingListReducer from './readingListSlice';
@@ -18,6 +19,7 @@ const rootReducer = combineReducers({
   readingList: readingListReducer,
   filters: filtersReducer,
   listen: listenReducer,
+  editMode: editModeReducer,
 });
 
 // Migration function for settings

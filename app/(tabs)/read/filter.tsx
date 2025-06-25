@@ -7,11 +7,13 @@ import { InteractionManager } from 'react-native';
 import ErrorState from '@/components/ErrorState';
 import FilteredArticleView from '@/components/home/FilteredArticleView';
 import GenericFeaturedSection from '@/components/home/GenericFeaturedSection';
+import { useToast } from '@/components/providers/ToastProvider';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useEditMode } from '@/hooks/ui/useEditMode';
 import { articlesService } from '@/services/articles';
 import { bookmarkService } from '@/services/bookmarks';
 import type { Article } from '@/types/articles.types';
@@ -22,8 +24,10 @@ export default function FilterScreen(): JSX.Element {
   const id = params['id'] as string | undefined;
   const numericId = Number(id);
   const { user } = useAuth();
+  const { showToast } = useToast();
 
   const { prefetchArticle } = useAppPreloader();
+  const { editMode } = useEditMode('bookmarks');
 
   // Check if parameters are invalid
   const hasInvalidParams =
@@ -93,6 +97,39 @@ export default function FilterScreen(): JSX.Element {
     [prefetchArticle]
   );
 
+  // Handle bookmark deletion
+  const handleArticleDelete = useCallback(
+    async (articleId: number) => {
+      if (type !== 'bookmark' || !user?.id) return;
+
+      try {
+        await bookmarkService.removeBookmark(user.id, articleId);
+        showToast(STRINGS.REMOVED_FROM_BOOKMARKS, 2000, 'success');
+        refetch(); // Refresh the list
+      } catch (error) {
+        // Error is already handled by the service
+        console.error('Failed to remove bookmark:', error);
+      }
+    },
+    [type, user?.id, refetch, showToast]
+  );
+
+  // Handle bookmark reordering
+  const handleArticleReorder = useCallback(
+    async (orderedArticleIds: number[]) => {
+      if (type !== 'bookmark' || !user?.id) return;
+
+      try {
+        await bookmarkService.reorderBookmarks(user.id, orderedArticleIds);
+        refetch(); // Refresh to show new order
+      } catch (error) {
+        // Error is already handled by the service
+        console.error('Failed to reorder bookmarks:', error);
+      }
+    },
+    [type, user?.id, refetch]
+  );
+
   // Create header component with featured article
   const HeaderComponent = useMemo(() => {
     if (!articles.length || type === 'bookmark') return null;
@@ -138,6 +175,9 @@ export default function FilterScreen(): JSX.Element {
     <FilteredArticleView
       articles={filteredAndSortedArticles}
       onArticlePress={handleArticlePress}
+      onArticleDelete={type === 'bookmark' ? handleArticleDelete : undefined}
+      onArticleReorder={type === 'bookmark' ? handleArticleReorder : undefined}
+      editMode={type === 'bookmark' ? editMode : false}
       totalCount={articles.length}
       loading={isLoading}
       HeaderComponent={HeaderComponent}

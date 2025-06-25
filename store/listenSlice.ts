@@ -2,12 +2,10 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 
 export interface ListenState {
-  editMode: boolean;
   customOrder: number[]; // Array of article IDs in user-defined order
 }
 
 const initialState: ListenState = {
-  editMode: false,
   customOrder: [],
 };
 
@@ -22,13 +20,9 @@ const listenSlice = createSlice({
       const articleId = action.payload;
       state.customOrder = state.customOrder.filter(id => id !== articleId);
     },
-    toggleEditMode: state => {
-      state.editMode = !state.editMode;
-    },
   },
 });
 
-export const { setCustomOrder, removeFromCustomOrder, toggleEditMode } =
-  listenSlice.actions;
+export const { setCustomOrder, removeFromCustomOrder } = listenSlice.actions;
 
 export default listenSlice.reducer;

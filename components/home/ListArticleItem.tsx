@@ -7,14 +7,40 @@ import { ArticleCard } from './ArticleCard';
 
 interface ListArticleItemProps {
   article: Article;
-  onPress: (article: Article) => void;
+  onPress?: (article: Article) => void;
+  editMode?: boolean;
+  onDelete?: () => void;
+  dragHandleProps?: {
+    onLongPress: () => void;
+    delayLongPress: number;
+  };
+  isBeingDragged?: boolean;
 }
 
-const ListArticleItem = memo(({ article, onPress }: ListArticleItemProps): JSX.Element => {
-  const handlePress = useCallback(() => onPress(article), [onPress, article]);
+const ListArticleItem = memo(
+  ({
+    article,
+    onPress,
+    editMode = false,
+    onDelete,
+    dragHandleProps,
+    isBeingDragged = false,
+  }: ListArticleItemProps): JSX.Element => {
+    const handlePress = useCallback(() => onPress?.(article), [onPress, article]);
 
-  return <ArticleCard author={article.author.name} title={article.title} onPress={handlePress} />;
-});
+    return (
+      <ArticleCard
+        author={article.author.name}
+        title={article.title}
+        onPress={!editMode ? handlePress : undefined}
+        editMode={editMode}
+        onDelete={onDelete}
+        dragHandleProps={dragHandleProps}
+        isBeingDragged={isBeingDragged}
+      />
+    );
+  }
+);
 
 ListArticleItem.displayName = 'ListArticleItem';
 

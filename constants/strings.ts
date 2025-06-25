@@ -364,6 +364,7 @@ export const STRINGS = {
   FAILED_TO_ADD_BOOKMARK: "Couldn't add bookmark. " + tryAgain,
   FAILED_TO_REMOVE_BOOKMARK: "Couldn't remove bookmark. " + tryAgain,
   FAILED_TO_CHECK_BOOKMARK_STATUS: "Couldn't check bookmark status",
+  FAILED_TO_REORDER_BOOKMARKS: "Couldn't reorder bookmarks. " + tryAgain,
 
   // Word management errors
   FAILED_TO_REMOVE_WORD_FROM_STUDY: "Couldn't remove word. " + tryAgain,

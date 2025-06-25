@@ -102,6 +102,7 @@ export const bookmarkService = {
       .select(
         `
         article_id,
+        order_index,
         articles!inner (
           id,
           title,
@@ -119,6 +120,7 @@ export const bookmarkService = {
       `
       )
       .eq('user_id', userId)
+      .order('order_index', { ascending: true, nullsFirst: false })
       .order('added_at', { ascending: false });
 
     if (error) throw error;
@@ -146,5 +148,38 @@ export const bookmarkService = {
     }
 
     return count ?? 0;
+  },
+
+  /**
+   * Reorders bookmarks based on new article order
+   */
+  async reorderBookmarks(userId: string, orderedArticleIds: number[]): Promise<void> {
+    await checkAuthentication(userId);
+
+    // Use a transaction-like approach by updating each bookmark individually
+    // This is safer with RLS policies and more explicit
+    const promises = orderedArticleIds.map(async (articleId, index) => {
+      const { error } = await supabase
+        .from('bookmarks')
+        .update({ order_index: index + 1 }) // Start from 1 instead of 0
+        .eq('user_id', userId)
+        .eq('article_id', articleId);
+
+      if (error) {
+        throw error;
+      }
+    });
+
+    try {
+      await Promise.all(promises);
+    } catch (error) {
+      await handleError(error as Error, {
+        toastMessage: STRINGS.FAILED_TO_REORDER_BOOKMARKS,
+        analyticsEventName: 'Bookmarks_Reorder_Error',
+        sentrySeverity: 'error' as const,
+        analyticsProperties: { userId, itemCount: orderedArticleIds.length },
+      });
+      throw error;
+    }
   },
 };
