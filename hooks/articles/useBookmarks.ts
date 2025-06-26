@@ -1,8 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
-import { useToast } from '@/components/providers/ToastProvider';
-import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { bookmarkService } from '@/services/bookmarks';
 import { selectionFeedback } from '@/utils/haptics';
@@ -13,7 +11,6 @@ import { selectionFeedback } from '@/utils/haptics';
 export const useBookmarks = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { showToast } = useToast();
 
   // Get bookmark count
   const {
@@ -37,7 +34,6 @@ export const useBookmarks = () => {
       queryClient.invalidateQueries({ queryKey: ['bookmarked-articles', user?.id] });
 
       selectionFeedback();
-      showToast(STRINGS.ADDED_TO_BOOKMARKS, undefined, 'success');
     },
   });
 
@@ -51,7 +47,6 @@ export const useBookmarks = () => {
       queryClient.invalidateQueries({ queryKey: ['bookmarked-articles', user?.id] });
 
       selectionFeedback();
-      showToast(STRINGS.REMOVED_FROM_BOOKMARKS, undefined, 'success');
     },
   });
 

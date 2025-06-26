@@ -32,44 +32,32 @@ const styles = StyleSheet.create({
     marginTop: -LAYOUT.SPACING.XXXLARGE,
     paddingBottom: LAYOUT.SPACING.TINY,
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
   },
   titleText: {
-    flex: 1,
-    marginRight: LAYOUT.SPACING.SMALL,
-  },
-  actionButtonsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.SMALL,
-  },
-  actionButton: {
-    padding: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    minWidth: MIN_TOUCH_TARGET.LARGE,
-    minHeight: MIN_TOUCH_TARGET.LARGE,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: '100%', // Full width for title without button interference
   },
   authorContainer: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
-  summaryContainer: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingBottom: LAYOUT.SPACING.XLARGE,
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING, // Match summary box alignment
+    paddingTop: LAYOUT.SPACING.SMALL,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    gap: LAYOUT.SPACING.MEDIUM, // Space between buttons
   },
-  summaryCard: {
-    ...LAYOUT.ELEVATION.SMALL,
+  actionButton: {
+    flex: 1, // Equal width buttons for perfect balance
+    flexDirection: 'row', // Horizontal layout for icon + text
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    padding: LAYOUT.SPACING.LARGE,
     borderWidth: 1,
-    opacity: LAYOUT.OPACITY.HOVER,
-  },
-  summaryText: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.7,
+    minHeight: MIN_TOUCH_TARGET.MEDIUM, // Ensure good touch target
   },
   modalDragIndicator: {
     position: 'absolute',
@@ -86,15 +74,21 @@ const styles = StyleSheet.create({
     height: LAYOUT.SPACING.TINY, // 4px height
     borderRadius: LAYOUT.BORDER_RADIUS.PILL,
   },
+  actionButtonIcon: {
+    marginRight: LAYOUT.SPACING.TINY, // Small gap between icon and text
+  },
+  actionButtonText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
+  },
 });
 
 interface ArticleTitleProps {
   title: string;
   author: { id: number; name: string };
-  // Reading list (playlist/listening) functionality
+  // Action button props
   isInReadingList: boolean;
   onToggleReadingList: () => void;
-  // Bookmark functionality
   isBookmarked: boolean;
   onToggleBookmark: () => void;
 }
@@ -127,100 +121,109 @@ const ArticleTitle = memo<ArticleTitleProps>(
 
     return (
       <>
+        {/* Title gets full width without button interference */}
         <View style={styles.titleContainer}>
           <ThemedText type="heading1" style={[styles.titleText, titleStyle]}>
             {title}
           </ThemedText>
-
-          <View style={styles.actionButtonsContainer}>
-            {/* Listening list button (headphone icon) */}
-            <Pressable
-              style={[
-                styles.actionButton,
-                {
-                  backgroundColor: colors.elevation1,
-                },
-              ]}
-              onPress={onToggleReadingList}
-              android_ripple={{
-                color: colors.tint,
-                radius: LAYOUT.SPACING.LARGE,
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={
-                isInReadingList ? 'Remove from listening list' : 'Add to listening list'
-              }
-              accessibilityHint="Toggle article in audio listening playlist"
-            >
-              <Ionicons
-                name={isInReadingList ? 'headset' : 'headset-outline'}
-                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                color={isInReadingList ? colors.tint : colors.secondaryText}
-              />
-            </Pressable>
-
-            {/* Bookmark button */}
-            <Pressable
-              style={[
-                styles.actionButton,
-                {
-                  backgroundColor: colors.elevation1,
-                },
-              ]}
-              onPress={onToggleBookmark}
-              android_ripple={{
-                color: colors.tint,
-                radius: LAYOUT.SPACING.LARGE,
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
-              accessibilityHint="Toggle article bookmark for reading later"
-            >
-              <Ionicons
-                name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
-                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                color={isBookmarked ? colors.tint : colors.secondaryText}
-              />
-            </Pressable>
-          </View>
         </View>
 
+        {/* Author information */}
         <View style={styles.authorContainer}>
           <ThemedText type="caption" style={authorStyle}>
             {STRINGS.BY} {author.name}
           </ThemedText>
+        </View>
+
+        {/* Action buttons below author */}
+        <View style={styles.actionButtonsContainer}>
+          {/* Listening list action */}
+          <Pressable
+            style={[
+              styles.actionButton,
+              {
+                backgroundColor: isInReadingList ? colors.tintBackground : colors.elevation1,
+                borderColor: isInReadingList ? colors.tint : colors.border,
+              },
+            ]}
+            onPress={onToggleReadingList}
+            android_ripple={{
+              color: colors.tint,
+              radius: LAYOUT.SPACING.XLARGE,
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isInReadingList ? 'Remove from listening list' : 'Add to listening list'
+            }
+            accessibilityHint="Toggle article in audio listening playlist"
+          >
+            <Ionicons
+              name={isInReadingList ? 'headset' : 'headset-outline'}
+              size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+              color={isInReadingList ? colors.tint : colors.secondaryText}
+              style={styles.actionButtonIcon}
+            />
+            <ThemedText
+              type="caption"
+              style={[
+                styles.actionButtonText,
+                {
+                  color: isInReadingList ? colors.tint : colors.secondaryText,
+                  fontWeight: isInReadingList
+                    ? TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD
+                    : TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
+                },
+              ]}
+            >
+              {isInReadingList ? 'In Playlist' : 'Add to Playlist'}
+            </ThemedText>
+          </Pressable>
+
+          {/* Bookmark action */}
+          <Pressable
+            style={[
+              styles.actionButton,
+              {
+                backgroundColor: isBookmarked ? colors.tintBackground : colors.elevation1,
+                borderColor: isBookmarked ? colors.tint : colors.border,
+              },
+            ]}
+            onPress={onToggleBookmark}
+            android_ripple={{
+              color: colors.tint,
+              radius: LAYOUT.SPACING.XLARGE,
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
+            accessibilityHint="Toggle article bookmark for reading later"
+          >
+            <Ionicons
+              name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
+              size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+              color={isBookmarked ? colors.tint : colors.secondaryText}
+              style={styles.actionButtonIcon}
+            />
+            <ThemedText
+              type="caption"
+              style={[
+                styles.actionButtonText,
+                {
+                  color: isBookmarked ? colors.tint : colors.secondaryText,
+                  fontWeight: isBookmarked
+                    ? TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD
+                    : TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
+                },
+              ]}
+            >
+              {isBookmarked ? 'Bookmarked' : 'Bookmark'}
+            </ThemedText>
+          </Pressable>
         </View>
       </>
     );
   }
 );
 ArticleTitle.displayName = 'ArticleTitle';
-
-interface ArticleSummaryProps {
-  summary: string;
-}
-
-const ArticleSummary = memo<ArticleSummaryProps>(({ summary }) => {
-  const colors = useColors();
-
-  return (
-    <View style={styles.summaryContainer}>
-      <View
-        style={[
-          styles.summaryCard,
-          {
-            backgroundColor: colors.elevation1, // Use elevation1 for card surface hierarchy
-            borderColor: colors.border,
-          },
-        ]}
-      >
-        <ThemedText type="body" style={styles.summaryText}>
-          {summary}
-        </ThemedText>
-      </View>
-    </View>
-  );
-});
 
 // Modal drag indicator component positioned over parallax header
 const ModalDragIndicator = memo(() => {
@@ -315,7 +318,6 @@ export const ArticleContent = memo<ArticleContentProps>(
             isBookmarked={isBookmarked}
             onToggleBookmark={onToggleBookmark}
           />
-          <ArticleSummary summary={String(article.summary)} />
         </Fragment>
       ),
       [article, colors, isInReadingList, onToggleReadingList, isBookmarked, onToggleBookmark]

@@ -7,9 +7,8 @@ import { AppState, type LayoutRectangle } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleSentence, WordTooltip } from '@/components/article';
 import { ArticleContent } from '@/components/article/ArticleContent';
-import { ToastProvider, useToast } from '@/components/providers/ToastProvider';
+import { ToastProvider } from '@/components/providers/ToastProvider';
 import { TIMING_CONFIG } from '@/constants/animation';
-import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
@@ -30,7 +29,6 @@ const FLEX_ONE_STYLE = { flex: 1 } as const;
 
 // Inner component with toast context access
 const ArticleScreenContent = ({ id }: { id: string }) => {
-  const { showToast } = useToast();
   const colors = useColors();
   const { user } = useAuth();
   const fontScale = useAppSelectorMemo(state => state.settings.fontScale);
@@ -85,26 +83,17 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     if (!articleId) return;
 
     selectionFeedback();
-
-    // Store previous state for toast message
-    const wasInReadingList = isInReadingList;
-
     await handleToggleReadingList(articleId, isInReadingList);
-
-    // Show appropriate toast message
-    const toastMessage = wasInReadingList
-      ? STRINGS.REMOVED_FROM_LISTENING_LIST
-      : STRINGS.ADDED_TO_LISTENING_LIST;
-    showToast(toastMessage);
-  }, [articleId, isInReadingList, handleToggleReadingList, showToast]);
+  }, [articleId, isInReadingList, handleToggleReadingList]);
 
   const handleToggleBookmarkWithFeedback = useCallback(async () => {
     if (!articleId) return;
 
+    selectionFeedback();
     try {
       await toggleBookmark(articleId, isBookmarked);
     } catch {
-      // Error handling is done in the toggleBookmark function with toast
+      // Error handling is done in the toggleBookmark function
     }
   }, [articleId, isBookmarked, toggleBookmark]);
 
