@@ -2,14 +2,13 @@ import { useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import type { JSX } from 'react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AppState, View, type LayoutRectangle } from 'react-native';
+import { AppState, type LayoutRectangle } from 'react-native';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleSentence, WordTooltip } from '@/components/article';
 import { ArticleContent } from '@/components/article/ArticleContent';
 import { ToastProvider, useToast } from '@/components/providers/ToastProvider';
 import { TIMING_CONFIG } from '@/constants/animation';
-import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useArticleData } from '@/hooks/articles/useArticleData';
@@ -28,31 +27,6 @@ import type { SentenceWord } from '@/types/vocabulary.types';
 import { selectionFeedback } from '@/utils/haptics';
 
 const FLEX_ONE_STYLE = { flex: 1 } as const;
-
-// Modal drag indicator component
-const ModalDragIndicator = () => {
-  const colors = useColors();
-
-  return (
-    <View
-      style={{
-        paddingTop: LAYOUT.SPACING.SMALL, // Fixed small spacing instead of safe area dependent
-        paddingBottom: LAYOUT.SPACING.TINY,
-        alignItems: 'center',
-      }}
-    >
-      <View
-        style={{
-          width: LAYOUT.SPACING.XXXLARGE, // 32px - responsive spacing
-          height: LAYOUT.SPACING.TINY, // 4px - responsive spacing
-          backgroundColor: colors.modalIndicator,
-          borderRadius: LAYOUT.BORDER_RADIUS.PILL,
-          opacity: LAYOUT.OPACITY.MEDIUM,
-        }}
-      />
-    </View>
-  );
-};
 
 // Inner component with toast context access
 const ArticleScreenContent = ({ id }: { id: string }) => {
@@ -284,7 +258,6 @@ export default function ArticleScreen(): JSX.Element {
     <ToastProvider>
       <ThemedView style={FLEX_ONE_STYLE} useSafeArea={false}>
         <StatusBar animated={true} style={isDarkMode ? 'light' : 'dark'} translucent={true} />
-        <ModalDragIndicator />
         <ArticleScreenContent id={id ?? ''} />
       </ThemedView>
     </ToastProvider>

@@ -71,6 +71,21 @@ const styles = StyleSheet.create({
   summaryText: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.7,
   },
+  modalDragIndicator: {
+    position: 'absolute',
+    top: LAYOUT.SPACING.SMALL, // Position from top of parallax header
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 10, // Ensure it's above the image content
+    paddingTop: LAYOUT.SPACING.SMALL,
+    paddingBottom: LAYOUT.SPACING.TINY,
+  },
+  dragIndicatorBar: {
+    width: LAYOUT.SPACING.XXXLARGE, // 48px for better visibility
+    height: LAYOUT.SPACING.TINY, // 4px height
+    borderRadius: LAYOUT.BORDER_RADIUS.PILL,
+  },
 });
 
 interface ArticleTitleProps {
@@ -207,6 +222,26 @@ const ArticleSummary = memo<ArticleSummaryProps>(({ summary }) => {
   );
 });
 
+// Modal drag indicator component positioned over parallax header
+const ModalDragIndicator = memo(() => {
+  const colors = useColors();
+
+  return (
+    <View style={styles.modalDragIndicator}>
+      <View
+        style={[
+          styles.dragIndicatorBar,
+          {
+            backgroundColor: colors.modalIndicator,
+            opacity: LAYOUT.OPACITY.SUBTLE, // More transparent for elegant overlay
+          },
+        ]}
+      />
+    </View>
+  );
+});
+ModalDragIndicator.displayName = 'ModalDragIndicator';
+
 interface ArticleContentProps {
   id: string;
   article: Article;
@@ -332,6 +367,9 @@ export const ArticleContent = memo<ArticleContentProps>(
                 minimumViewTime: 100, // Minimum time item must be visible before triggering
               }}
             />
+
+            {/* Modal drag indicator positioned over parallax header */}
+            <ModalDragIndicator />
 
             {/* Custom sentence scrubber */}
             <SentenceScrubber

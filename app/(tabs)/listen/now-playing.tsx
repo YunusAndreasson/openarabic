@@ -1,9 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   interpolate,
@@ -17,7 +16,7 @@ import AudioProgressIndicator from '@/components/AudioProgressIndicator';
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import { TIMING_CONFIG } from '@/constants/animation';
-import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
@@ -25,19 +24,28 @@ import { useCurrentSentence } from '@/hooks/audio/useCurrentSentence';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { withOpacity } from '@/utils/colorUtils';
-import { selectionFeedback } from '@/utils/haptics';
+
+// Modal drag indicator component positioned over background image
+const ModalDragIndicator = () => {
+  return (
+    <View style={styles.modalDragIndicator}>
+      <View
+        style={[
+          styles.dragIndicatorBar,
+          {
+            backgroundColor: 'rgba(255, 255, 255, 0.7)', // White with transparency for better visibility on images
+          },
+        ]}
+      />
+    </View>
+  );
+};
 
 export default function NowPlayingModal() {
   const { user } = useAuth();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const isDarkMode = !colors['surface'];
-
-  // Handle close with haptic feedback
-  const handleClose = useCallback(() => {
-    selectionFeedback();
-    router.dismiss();
-  }, []);
 
   // Get router params for article ID fallback and audio state
   const params = useLocalSearchParams<{
@@ -230,23 +238,11 @@ export default function NowPlayingModal() {
         </Animated.View>
       </View>
 
+      {/* Modal drag indicator positioned over background image */}
+      <ModalDragIndicator />
+
       {/* Header with Title and Author */}
       <View style={[styles.header, { paddingTop: insets.top + LAYOUT.SPACING.MEDIUM }]}>
-        {/* Close Button Only - no modal handle for cleaner standard modal pattern */}
-        <View style={styles.headerTop}>
-          <Pressable
-            style={styles.closeButton}
-            onPress={handleClose}
-            hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-          >
-            <Ionicons
-              name="close"
-              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              color="rgba(255, 255, 255, 0.5)"
-            />
-          </Pressable>
-        </View>
-
         <View style={styles.headerInfo}>
           <ThemedText type="heading3" style={styles.title} numberOfLines={2}>
             {article.title}
@@ -325,24 +321,6 @@ const styles = StyleSheet.create({
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
   },
 
-  headerTop: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-
-  closeButton: {
-    padding: LAYOUT.SPACING.SMALL,
-    borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2, // Circular
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
-    width: MIN_TOUCH_TARGET.MEDIUM,
-    height: MIN_TOUCH_TARGET.MEDIUM,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
   headerInfo: {
     alignItems: 'center',
     width: '100%',
@@ -397,5 +375,22 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     backgroundColor: 'rgba(0, 0, 0, 0.4)', // Semi-transparent dark background
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+  },
+
+  modalDragIndicator: {
+    position: 'absolute',
+    top: LAYOUT.SPACING.SMALL, // Position from top edge
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: LAYOUT.Z_INDEX.OVERLAY, // Ensure it's above the background content
+    paddingTop: LAYOUT.SPACING.SMALL,
+    paddingBottom: LAYOUT.SPACING.TINY,
+  },
+
+  dragIndicatorBar: {
+    width: LAYOUT.SPACING.XXXLARGE, // 48px for better visibility
+    height: LAYOUT.SPACING.TINY, // 4px height
+    borderRadius: LAYOUT.BORDER_RADIUS.PILL,
   },
 });
