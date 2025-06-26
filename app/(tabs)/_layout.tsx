@@ -7,14 +7,12 @@ import { Platform, StyleSheet } from 'react-native';
 
 import HeaderProfile from '@/components/HeaderProfile';
 import EditModeButton from '@/components/ui/EditModeButton';
-import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-import { useAuth } from '@/hooks/auth/useAuth';
-import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import { useAuth } from '@/hooks/auth';
+import { useColors, useIsDarkMode } from '@/hooks/theme';
 import { useFSRSQueries } from '@/hooks/vocabulary';
-import { usePracticeBadge } from '@/hooks/vocabulary/usePracticeBadge';
 import { updateAppIconBadge } from '@/services/notificationService';
 import { useAppSelector } from '@/store/hooks';
 
@@ -34,8 +32,8 @@ const TAB_SCREENS = [
   {
     name: 'practice',
     title: STRINGS.PRACTICE,
-    iconOutline: 'trending-up-outline',
-    iconFilled: 'trending-up',
+    iconOutline: 'school-outline',
+    iconFilled: 'school',
   },
 ] as const;
 
@@ -86,9 +84,6 @@ export default function TabLayout(): JSX.Element {
     userId: user?.id,
   });
 
-  // Get smart badge data for Practice tab (3-phase system)
-  const practiceBadge = usePracticeBadge({ userId: user?.id });
-
   const dueWordsCount = dueWords?.length ?? 0;
 
   // Update app icon badge whenever due words count changes (only if enabled)
@@ -117,47 +112,6 @@ export default function TabLayout(): JSX.Element {
     return <Fragment />;
   }
 
-  // Helper function to get badge configuration based on 3-phase system
-  const getPracticeBadgeConfig = () => {
-    if (practiceBadge.phase === 'none') {
-      return null;
-    }
-
-    if (practiceBadge.phase === 'red' && practiceBadge.count) {
-      return {
-        badge: practiceBadge.count > 99 ? '99+' : practiceBadge.count.toString(),
-        badgeStyle: {
-          backgroundColor: colors.error, // RED for urgent preservation
-          color: colors.background, // Adaptive contrast like ThemedButton
-        },
-      };
-    }
-
-    if (practiceBadge.phase === 'yellow' && practiceBadge.count) {
-      return {
-        badge: practiceBadge.count > 99 ? '99+' : practiceBadge.count.toString(),
-        badgeStyle: {
-          backgroundColor: colors.warning, // YELLOW for effortful retrieval
-          color: colors.background, // Adaptive contrast like ThemedButton
-        },
-      };
-    }
-
-    if (practiceBadge.phase === 'green' && practiceBadge.showDot) {
-      return {
-        badge: '•', // Simple dot for optional mixed practice
-        badgeStyle: {
-          backgroundColor: colors.success, // GREEN for interleaved review
-          color: colors.background, // Adaptive contrast like ThemedButton
-        },
-      };
-    }
-
-    return null;
-  };
-
-  const badgeConfig = getPracticeBadgeConfig();
-
   return (
     <Tabs
       screenOptions={{
@@ -174,24 +128,23 @@ export default function TabLayout(): JSX.Element {
         tabBarBackground: tabBarBackground,
         tabBarActiveTintColor: colors.tint,
         tabBarInactiveTintColor: colors.tabIconDefault,
+        tabBarShowLabel: false, // Clean icon-only design with 3 tabs and clear nav titles
+        tabBarIconStyle: {
+          marginTop: 8, // Standard centering for icons when labels are hidden
+        },
         tabBarStyle: Platform.select({
           ios: {
             position: 'absolute',
             borderTopWidth: 0,
+            height: LAYOUT.BOTTOM_BAR.HEIGHT, // Standard iOS: 83px
           },
           android: {
             borderTopWidth: StyleSheet.hairlineWidth,
             borderTopColor: colors.border,
+            height: LAYOUT.BOTTOM_BAR.HEIGHT, // Standard Android: 65px
             ...LAYOUT.ELEVATION.SMALL,
           },
         }),
-        tabBarLabelStyle: {
-          fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-          fontWeight:
-            Platform.OS === 'ios'
-              ? TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM
-              : TYPOGRAPHY_HIERARCHY.WEIGHTS.REGULAR,
-        },
 
         // Performance optimizations
         freezeOnBlur: true,
@@ -205,35 +158,17 @@ export default function TabLayout(): JSX.Element {
           name={screen.name}
           options={{
             title: screen.title,
-            tabBarIcon: ({ focused, color, size }) => (
+            tabBarIcon: ({ focused, color }) => (
               <Ionicons
                 name={focused ? screen.iconFilled : screen.iconOutline}
-                size={size}
+                size={LAYOUT.BUTTON.ICON_SIZE.XLARGE}
                 color={color}
                 style={{
                   opacity: focused ? 1 : LAYOUT.OPACITY.HIGH,
                 }}
               />
             ),
-            // Smart badge for Practice tab (3-phase FSRS system)
-            ...(screen.name === 'practice' &&
-              badgeConfig && {
-                tabBarBadge: badgeConfig.badge,
-                tabBarBadgeStyle: {
-                  ...badgeConfig.badgeStyle,
-                  fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-                  fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD, // Bolder for better readability
-                  // Standard mobile badge size - ensure perfect circle
-                  minWidth: 16, // Use exact pixel value to avoid fractional calculations
-                  minHeight: 16, // Use exact pixel value to avoid fractional calculations
-                  borderRadius: 8, // Exactly half of 16 for perfect circle
-                  textAlign: 'center',
-                  lineHeight: 16, // Match height for vertical centering
-                  // Standard badge positioning (top-right, slightly overlapping icon)
-                  top: -LAYOUT.SPACING.TINY, // Move up slightly
-                  right: -LAYOUT.SPACING.TINY, // Move right slightly
-                },
-              }),
+            // Header customizations for specific screens
             ...(screen.name === 'read' && {
               headerRight: headerProfileComponent,
             }),

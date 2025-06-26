@@ -9,7 +9,7 @@ import AudioProgressIndicator from '@/components/AudioProgressIndicator';
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import { NOW_PLAYING_CARD_HEIGHT } from '@/constants/animation';
-import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useNowPlayingCard } from '@/hooks/listen/useNowPlayingCard';
 import { useColors } from '@/hooks/theme/useColors';
@@ -17,7 +17,7 @@ import type { Article } from '@/types/articles.types';
 import { withOpacity } from '@/utils/colorUtils';
 
 const CARD_HEIGHT = NOW_PLAYING_CARD_HEIGHT;
-const IMAGE_SIZE = LAYOUT.CARD.HEIGHT.LIST_ITEM;
+const IMAGE_SIZE = LAYOUT.CARD.HEIGHT.LIST_ITEM * 0.8; // 64px - proportional to list item height
 
 interface NowPlayingCardProps {
   /** Whether the card should be visible */
@@ -92,20 +92,13 @@ const NowPlayingCard = ({
           <View style={styles.imageContainer}>
             <View style={[styles.articleImage, { backgroundColor: colors.elevation2 }]} />
           </View>
-          <View style={styles.textContent}>
-            <View style={styles.primaryInfo}>
-              <ThemedText numberOfLines={1} style={styles.title} type="body">
-                {STRINGS.LOADING}
-              </ThemedText>
-              <ThemedText
-                numberOfLines={1}
-                style={styles.author}
-                type="caption"
-                variant="secondary"
-              >
-                {STRINGS.PREPARING_AUDIO}
-              </ThemedText>
-            </View>
+          <View style={styles.textContainer}>
+            <ThemedText numberOfLines={1} style={styles.title} type="body">
+              {STRINGS.LOADING}
+            </ThemedText>
+            <ThemedText numberOfLines={1} style={styles.author} type="caption" variant="secondary">
+              {STRINGS.PREPARING_AUDIO}
+            </ThemedText>
           </View>
         </View>
       </Animated.View>
@@ -134,62 +127,64 @@ const NowPlayingCard = ({
       </View>
 
       {/* Main Content */}
-      <TouchableOpacity
-        activeOpacity={LAYOUT.OPACITY.HOVER}
-        style={styles.content}
-        onPress={onPress}
-      >
-        {/* Article Image */}
-        <View style={styles.imageContainer}>
-          <EnhancedImage
-            contentFit="cover"
-            source={String(article.image_url)}
-            style={styles.articleImage}
-          />
-        </View>
+      <View style={styles.mainContainer}>
+        {/* Expand Indicator - Centered at top */}
+        <TouchableOpacity
+          activeOpacity={LAYOUT.OPACITY.HOVER}
+          style={styles.expandIndicator}
+          onPress={onPress}
+        >
+          <Ionicons color={colors.text} name="chevron-up" size={LAYOUT.BUTTON.ICON_SIZE.SMALL} />
+        </TouchableOpacity>
 
-        {/* Text Content */}
-        <View style={styles.textContent}>
-          {/* Primary Info */}
-          <View style={styles.primaryInfo}>
-            <ThemedText numberOfLines={1} style={styles.title} type="body">
-              {article.title}
-            </ThemedText>
-
-            <ThemedText numberOfLines={1} style={styles.author} type="caption" variant="secondary">
-              {String(article.author?.name ?? '')}
-            </ThemedText>
+        {/* Content Row */}
+        <TouchableOpacity
+          activeOpacity={LAYOUT.OPACITY.HOVER}
+          style={styles.content}
+          onPress={onPress}
+        >
+          {/* Article Image */}
+          <View style={styles.imageContainer}>
+            <EnhancedImage
+              contentFit="cover"
+              source={String(article.image_url)}
+              style={styles.articleImage}
+            />
           </View>
 
-          {/* Progress Section */}
-          <AudioProgressIndicator
-            position={(progress || 0) / 1000} // Convert ms to seconds
-            duration={(duration || 0) / 1000} // Convert ms to seconds
-            progressPercentage={
-              duration > 0 ? Math.max(0, Math.min(100, ((progress || 0) / duration) * 100)) : 0
-            }
-            progressBarHeight={LAYOUT.SPACING.TINY} // Use design system constant instead of hardcoded 3
-            style={styles.progressSection}
-          />
-        </View>
+          {/* Text and Progress Container */}
+          <View style={styles.textContainer}>
+            {/* Title and Author */}
+            <View style={styles.textContent}>
+              <ThemedText numberOfLines={1} style={styles.title} type="body">
+                {article.title}
+              </ThemedText>
+              <ThemedText
+                numberOfLines={1}
+                style={styles.author}
+                type="caption"
+                variant="secondary"
+              >
+                {String(article.author?.name ?? '')}
+              </ThemedText>
+            </View>
 
-        {/* Controls */}
-        <View style={styles.controls}>
-          {/* Top Row - Expand Button */}
-          <TouchableOpacity
-            activeOpacity={LAYOUT.OPACITY.HOVER}
-            style={styles.expandButton}
-            onPress={onPress}
-          >
-            <Ionicons
-              color={colors.text}
-              name="expand-outline"
-              size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-            />
-          </TouchableOpacity>
+            {/* Progress Bar */}
+            <View style={styles.progressContainer}>
+              <AudioProgressIndicator
+                position={(progress || 0) / 1000}
+                duration={(duration || 0) / 1000}
+                progressPercentage={
+                  duration > 0 ? Math.max(0, Math.min(100, ((progress || 0) / duration) * 100)) : 0
+                }
+                progressBarHeight={2}
+                style={styles.progressBar}
+              />
+            </View>
+          </View>
 
-          {/* Bottom Row - Action Buttons */}
-          <View style={styles.actionButtons}>
+          {/* Right Side Controls */}
+          <View style={styles.rightControls}>
             {/* Stop Button */}
             <Animated.View style={buttonAnimatedStyle}>
               <TouchableOpacity
@@ -223,8 +218,8 @@ const NowPlayingCard = ({
               </TouchableOpacity>
             )}
           </View>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </View>
     </Animated.View>
   );
 };
@@ -237,7 +232,8 @@ const styles = StyleSheet.create({
 
   author: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    opacity: 0.9,
+    opacity: 0.8,
+    marginTop: 2,
   },
 
   backgroundContainer: {
@@ -268,18 +264,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     flexDirection: 'row',
-    padding: LAYOUT.SPACING.MEDIUM,
-  },
-
-  controls: {
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.SMALL,
-  },
-
-  actionButtons: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.CARD.PADDING.MEDIUM,
+    paddingVertical: LAYOUT.CARD.PADDING.SMALL,
+    gap: LAYOUT.SPACING.MEDIUM,
   },
 
   gradientOverlay: {
@@ -289,53 +276,67 @@ const styles = StyleSheet.create({
   imageContainer: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     height: IMAGE_SIZE,
-    marginRight: LAYOUT.SPACING.MEDIUM,
     overflow: 'hidden',
     width: IMAGE_SIZE,
   },
 
-  primaryInfo: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-
-  progressSection: {
-    gap: LAYOUT.SPACING.TINY,
-  },
-
-  stopButton: {
-    alignItems: 'center',
-    borderRadius: LAYOUT.BUTTON.HEIGHT.LARGE / 2,
-    height: LAYOUT.BUTTON.HEIGHT.LARGE,
+  textContainer: {
+    flex: 1,
     justifyContent: 'center',
-    width: LAYOUT.BUTTON.HEIGHT.LARGE,
   },
 
   textContent: {
-    flex: 1,
-    marginRight: LAYOUT.SPACING.MEDIUM,
-  },
-
-  timerButton: {
-    alignItems: 'center',
-    borderRadius: (MIN_TOUCH_TARGET.SMALL + LAYOUT.SPACING.TINY) / 2,
-    height: MIN_TOUCH_TARGET.SMALL + LAYOUT.SPACING.TINY,
-    justifyContent: 'center',
-    width: MIN_TOUCH_TARGET.SMALL + LAYOUT.SPACING.TINY,
-  },
-
-  expandButton: {
-    alignItems: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM + LAYOUT.SPACING.TINY, // Responsive border radius
-    height: 36,
-    justifyContent: 'center',
-    width: 36,
+    marginBottom: LAYOUT.SPACING.MICRO,
   },
 
   title: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '600',
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
     letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.NARROW,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+
+  stopButton: {
+    alignItems: 'center',
+    borderRadius: LAYOUT.BUTTON.HEIGHT.MEDIUM / 2,
+    height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
+    justifyContent: 'center',
+    width: LAYOUT.BUTTON.HEIGHT.MEDIUM,
+  },
+
+  timerButton: {
+    alignItems: 'center',
+    borderRadius: LAYOUT.BUTTON.HEIGHT.SMALL / 2,
+    height: LAYOUT.BUTTON.HEIGHT.SMALL,
+    justifyContent: 'center',
+    width: LAYOUT.BUTTON.HEIGHT.SMALL,
+  },
+
+  progressContainer: {
+    marginTop: LAYOUT.SPACING.TINY,
+  },
+
+  progressBar: {
+    height: 2,
+  },
+
+  mainContainer: {
+    flex: 1,
+    paddingTop: LAYOUT.SPACING.TINY,
+    paddingBottom: LAYOUT.SPACING.TINY,
+  },
+
+  expandIndicator: {
+    alignItems: 'center',
+    height: LAYOUT.SPACING.XLARGE,
+    justifyContent: 'center',
+    width: '100%',
+  },
+
+  rightControls: {
+    alignItems: 'center',
+    flexDirection: 'column',
+    gap: LAYOUT.SPACING.TINY,
+    justifyContent: 'center',
   },
 });
 
