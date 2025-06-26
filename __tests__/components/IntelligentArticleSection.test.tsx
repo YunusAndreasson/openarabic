@@ -5,6 +5,26 @@ import React from 'react';
 import IntelligentArticleSection from '../../components/home/IntelligentArticleSection';
 import type { Article } from '../../types/articles.types';
 
+// Mock the HorizontalFeaturedSection since that's what IntelligentArticleSection uses
+jest.mock('@/components/home/HorizontalFeaturedSection', () => {
+  const { Text } = require('react-native');
+  return function MockHorizontalFeaturedSection({
+    scope,
+    articlesData,
+    refreshKey,
+  }: {
+    scope: string;
+    articlesData: Article[];
+    refreshKey: number;
+  }) {
+    return (
+      <Text testID="horizontal-featured-section">
+        {`scope:${scope},articles:${articlesData.length},refresh:${refreshKey}`}
+      </Text>
+    );
+  };
+});
+
 // Mock the GenericFeaturedSection since IntelligentArticleSection is just a wrapper
 jest.mock('@/components/home/GenericFeaturedSection', () => {
   const { Text } = require('react-native');
@@ -30,7 +50,7 @@ const createArticle = (id: number, title: string): Article => ({ id, title } as 
 const onArticlePress = jest.fn();
 
 describe('IntelligentArticleSection', () => {
-  it('renders GenericFeaturedSection with correct props', () => {
+  it('renders HorizontalFeaturedSection with correct props', () => {
     const articles = [createArticle(1, 'Test Article')];
     const refreshKey = 5;
 
@@ -42,7 +62,7 @@ describe('IntelligentArticleSection', () => {
       />
     );
 
-    const mockComponent = getByTestId('generic-featured-section');
+    const mockComponent = getByTestId('horizontal-featured-section');
     expect(mockComponent.props.children).toBe('scope:global,articles:1,refresh:5');
   });
 
@@ -51,7 +71,7 @@ describe('IntelligentArticleSection', () => {
       <IntelligentArticleSection articlesData={[]} refreshKey={0} onArticlePress={onArticlePress} />
     );
 
-    const mockComponent = getByTestId('generic-featured-section');
+    const mockComponent = getByTestId('horizontal-featured-section');
     expect(mockComponent.props.children).toBe('scope:global,articles:0,refresh:0');
   });
 
@@ -65,7 +85,7 @@ describe('IntelligentArticleSection', () => {
       />
     );
 
-    expect(getByTestId('generic-featured-section').props.children).toBe(
+    expect(getByTestId('horizontal-featured-section').props.children).toBe(
       'scope:global,articles:1,refresh:0'
     );
 
@@ -78,7 +98,7 @@ describe('IntelligentArticleSection', () => {
       />
     );
 
-    expect(getByTestId('generic-featured-section').props.children).toBe(
+    expect(getByTestId('horizontal-featured-section').props.children).toBe(
       'scope:global,articles:2,refresh:1'
     );
   });

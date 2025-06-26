@@ -19,7 +19,7 @@ export const useBookmarks = () => {
     error: countError,
   } = useQuery({
     queryKey: ['bookmark-count', user?.id],
-    queryFn: () => bookmarkService.getBookmarkCount(user!.id),
+    queryFn: () => bookmarkService.getBookmarkCount(user?.id as string),
     enabled: !!user?.id,
     refetchOnWindowFocus: false,
   });
@@ -27,7 +27,7 @@ export const useBookmarks = () => {
   // Add bookmark mutation
   const addBookmarkMutation = useMutation({
     mutationFn: ({ articleId }: { articleId: number }) =>
-      bookmarkService.addBookmark(user!.id, articleId),
+      bookmarkService.addBookmark(user?.id as string, articleId),
     onSuccess: () => {
       // Invalidate bookmark queries
       queryClient.invalidateQueries({ queryKey: ['bookmark-count', user?.id] });
@@ -40,7 +40,7 @@ export const useBookmarks = () => {
   // Remove bookmark mutation
   const removeBookmarkMutation = useMutation({
     mutationFn: ({ articleId }: { articleId: number }) =>
-      bookmarkService.removeBookmark(user!.id, articleId),
+      bookmarkService.removeBookmark(user?.id as string, articleId),
     onSuccess: () => {
       // Invalidate bookmark queries
       queryClient.invalidateQueries({ queryKey: ['bookmark-count', user?.id] });
@@ -54,7 +54,7 @@ export const useBookmarks = () => {
   const useIsBookmarked = (articleId: number | undefined) => {
     return useQuery({
       queryKey: ['is-bookmarked', user?.id, articleId],
-      queryFn: () => bookmarkService.isBookmarked(user!.id, articleId!),
+      queryFn: () => bookmarkService.isBookmarked(user?.id as string, articleId as number),
       enabled: !!user?.id && !!articleId,
       refetchOnWindowFocus: false,
     });

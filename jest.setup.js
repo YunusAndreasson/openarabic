@@ -1,4 +1,4 @@
-import { TextEncoder, TextDecoder } from 'util';
+import { TextDecoder, TextEncoder } from 'util';
 
 import { jest } from '@jest/globals';
 import { configure } from 'reassure';
@@ -78,6 +78,13 @@ jest.useFakeTimers({
   advanceTimers: true,
   doNotFake: ['nextTick', 'setImmediate'], // Keep these real for better async testing
 });
+
+// Mock expo-system-ui for system UI customization
+jest.mock('expo-system-ui', () => ({
+  setBackgroundColorAsync: jest.fn().mockResolvedValue(undefined),
+  setStatusBarStyle: jest.fn().mockResolvedValue(undefined),
+  getBackgroundColorAsync: jest.fn().mockResolvedValue('#000000'),
+}));
 
 // Enhanced expo-haptics mock with feedback validation
 jest.mock('expo-haptics', () => ({
