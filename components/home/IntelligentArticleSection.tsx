@@ -1,7 +1,7 @@
 import type { JSX } from 'react';
 import { memo } from 'react';
 
-import GenericFeaturedSection from '@/components/home/GenericFeaturedSection';
+import HorizontalFeaturedSection from '@/components/home/HorizontalFeaturedSection';
 import type { Article } from '@/types/articles.types';
 
 interface IntelligentArticleSectionProps {
@@ -37,7 +37,7 @@ const IntelligentArticleSectionInternal = memo(function IntelligentArticleSectio
   onArticlePress,
 }: IntelligentArticleSectionProps): JSX.Element | null {
   return (
-    <GenericFeaturedSection
+    <HorizontalFeaturedSection
       articlesData={articlesData}
       refreshKey={refreshKey}
       scope="global"

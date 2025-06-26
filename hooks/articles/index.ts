@@ -7,4 +7,5 @@ export { useFeaturedArticleSelection } from './useFeaturedArticleSelection';
 export { useFilteredArticles } from './useFilteredArticles';
 export { useFilterModal } from './useFilterModal';
 export { useIntelligentArticleSelection } from './useIntelligentArticleSelection';
+export { useMultipleFeaturedArticles } from './useMultipleFeaturedArticles';
 export { useSentenceScrubber } from './useSentenceScrubber';

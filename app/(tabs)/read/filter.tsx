@@ -6,7 +6,7 @@ import { InteractionManager } from 'react-native';
 
 import ErrorState from '@/components/ErrorState';
 import FilteredArticleView from '@/components/home/FilteredArticleView';
-import GenericFeaturedSection from '@/components/home/GenericFeaturedSection';
+import HorizontalFeaturedSection from '@/components/home/HorizontalFeaturedSection';
 import { useToast } from '@/components/providers/ToastProvider';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -135,7 +135,7 @@ export default function FilterScreen(): JSX.Element {
     if (!articles.length || type === 'bookmark') return null;
 
     return (
-      <GenericFeaturedSection
+      <HorizontalFeaturedSection
         articlesData={articles}
         refreshKey={0}
         scope={type === 'bookmark' ? 'bookmarks' : `category-${numericId}`}
