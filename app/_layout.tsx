@@ -20,8 +20,12 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 
+import amiriFont from '@/assets/fonts/Amiri.ttf';
 import interFont from '@/assets/fonts/Inter.ttf';
+import madinaFont from '@/assets/fonts/Madina.otf';
+import nastaliqFont from '@/assets/fonts/Nastaliq.ttf';
 import notoSansFont from '@/assets/fonts/NotoSans.ttf';
+import scheherazadeFont from '@/assets/fonts/Scheherazade.ttf';
 import { ThemedText } from '@/components/ThemedText';
 import { AuthProvider, ToastProvider } from '@/components/providers';
 import { Theme } from '@/constants/Colors';
@@ -119,6 +123,10 @@ function AppContent() {
   const [fontsLoaded] = useFonts({
     NotoSans: notoSansFont,
     Inter: interFont,
+    Amiri: amiriFont,
+    Madina: madinaFont,
+    Scheherazade: scheherazadeFont,
+    Nastaliq: nastaliqFont,
   });
 
   const { preloadAppData, isLoaded } = useAppPreloader();

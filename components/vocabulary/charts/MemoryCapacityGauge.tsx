@@ -251,8 +251,7 @@ const styles = StyleSheet.create({
 
   infoIconContainer: {
     position: 'absolute',
-    top: LAYOUT.SPACING.SMALL,
-    right: LAYOUT.SPACING.SMALL,
+    right: LAYOUT.SPACING.LARGE,
     zIndex: 1,
   },
   container: {

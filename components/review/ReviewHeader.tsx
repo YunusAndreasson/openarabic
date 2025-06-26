@@ -31,7 +31,7 @@ const STATIC_STYLES = StyleSheet.create({
   },
   closeButton: {
     padding: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2, // Circular
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: MIN_TOUCH_TARGET.MEDIUM,

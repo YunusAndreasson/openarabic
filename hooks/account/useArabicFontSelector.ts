@@ -14,6 +14,12 @@ export interface ArabicFontOption {
 
 export const ARABIC_FONT_OPTIONS: ArabicFontOption[] = [
   {
+    name: 'NotoSans',
+    displayName: STRINGS.FONT_NOTO_SANS,
+    description: STRINGS.FONT_NOTO_SANS_DESCRIPTION,
+    previewText: 'اقْرَأْ بِاسْمِ رَبِّكَ الَّذِي خَلَقَ',
+  },
+  {
     name: 'Madina',
     displayName: STRINGS.FONT_MADINA,
     description: STRINGS.FONT_MADINA_DESCRIPTION,
@@ -36,12 +42,6 @@ export const ARABIC_FONT_OPTIONS: ArabicFontOption[] = [
     displayName: STRINGS.FONT_NASTALIQ,
     description: STRINGS.FONT_NASTALIQ_DESCRIPTION,
     previewText: 'إِنَّ مَعَ الْعُسْرِ يُسْرًا',
-  },
-  {
-    name: 'NotoSans',
-    displayName: STRINGS.FONT_NOTO_SANS,
-    description: STRINGS.FONT_NOTO_SANS_DESCRIPTION,
-    previewText: 'اقْرَأْ بِاسْمِ رَبِّكَ الَّذِي خَلَقَ',
   },
 ];
 

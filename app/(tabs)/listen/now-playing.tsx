@@ -17,7 +17,7 @@ import AudioProgressIndicator from '@/components/AudioProgressIndicator';
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import { TIMING_CONFIG } from '@/constants/animation';
-import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
@@ -335,8 +335,12 @@ const styles = StyleSheet.create({
 
   closeButton: {
     padding: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2, // Circular
     backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    width: MIN_TOUCH_TARGET.MEDIUM,
+    height: MIN_TOUCH_TARGET.MEDIUM,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   headerInfo: {

@@ -131,8 +131,8 @@ const styles = StyleSheet.create({
   },
 
   sliderCard: {
-    padding: LAYOUT.SPACING.LARGE,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    padding: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
 
   slider: {
@@ -145,18 +145,18 @@ const styles = StyleSheet.create({
   },
 
   scrollContent: {
-    gap: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.LARGE,
+    gap: LAYOUT.SPACING.SMALL,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
 
   fontCard: {
-    padding: LAYOUT.SPACING.LARGE,
+    padding: LAYOUT.SPACING.MEDIUM,
     alignItems: 'center',
   },
 
   fontHeader: {
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.SMALL,
     gap: LAYOUT.SPACING.TINY,
   },
 
@@ -173,7 +173,6 @@ const styles = StyleSheet.create({
   previewText: {
     textAlign: 'center',
     writingDirection: 'rtl',
-    marginBottom: LAYOUT.SPACING.SMALL,
     minHeight: LAYOUT.CARD.HEIGHT.LIST_ITEM,
     textAlignVertical: 'center',
     // Dynamic line height will be calculated by getArabicTextStyle
