@@ -17,7 +17,6 @@ import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
-import { useVocabularyChartData } from '@/hooks/vocabulary/useVocabularyChartData';
 import type { StatCategory } from '@/types/vocabulary.types';
 
 export default function VocabularyScreen(): JSX.Element {
@@ -56,9 +55,6 @@ export default function VocabularyScreen(): JSX.Element {
   } = useFSRSQueries({
     userId: user?.id,
   });
-
-  // Use the optimized vocabulary chart data hook that uses database views
-  const { userStats: _userStats, isLoadingUserStats } = useVocabularyChartData(user?.id);
 
   // Handle starting review based on category type
   const handleStartReview = useCallback(
@@ -128,7 +124,7 @@ export default function VocabularyScreen(): JSX.Element {
 
   // Check if data is cached and show loading indicator
   const isDataCached = !!(user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id)));
-  const showLoadingIndicator = (isDataLoading || isFetching || isLoadingUserStats) && !isDataCached;
+  const showLoadingIndicator = (isDataLoading || isFetching) && !isDataCached;
 
   // Main content
   return (

@@ -131,7 +131,7 @@ export const useListenUI = ({
     params['audioState'] = audioState || 'idle';
 
     const queryString = new URLSearchParams(params).toString();
-    router.push(`/(tabs)/listen/now-playing${queryString ? `?${queryString}` : ''}`);
+    router.push(`/(tabs)/listen/NowPlaying${queryString ? `?${queryString}` : ''}`);
   }, [currentArticle?.id, metadata.articleId, position, duration, audioState, router]);
 
   const handleDragEnd = useCallback(

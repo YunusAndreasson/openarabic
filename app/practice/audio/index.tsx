@@ -1,14 +1,12 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import type { JSX } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { InteractionManager, StyleSheet, View, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 import { CompletionScreen, ListenHeader } from '@/components/listen';
 import RepeatButton from '@/components/listen/RepeatButton';
 import { WordDisplay } from '@/components/review';
@@ -20,6 +18,7 @@ import { useOpacityAnimation } from '@/hooks/animations';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useAudioPracticeSession } from '@/hooks/practice';
 import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useWordSizing } from '@/hooks/vocabulary/useWordSizing';
 import { handleError } from '@/utils/errorHandling';
 
@@ -38,11 +37,12 @@ export default function ListenScreen(): JSX.Element {
   const fromRemember = params['fromRemember'] === 'true';
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const colors = useColors();
   const insets = useSafeAreaInsets();
+  const colors = useColors();
+  const isDarkMode = useIsDarkMode();
 
   // State
-  const [isClosing, setIsClosing] = useState(false);
+  const [_isClosing, setIsClosing] = useState(false);
 
   const {
     currentArabicWord,
@@ -99,115 +99,90 @@ export default function ListenScreen(): JSX.Element {
     }
   }, [user?.id, queryClient, fromRemember, router, stopPlayback]);
 
-  // Calculate font size based on word length
+  // Word sizing configuration for responsive text
   const wordFontSize = useWordSizing(currentArabicWord, fontConfig);
 
-  // Audio sessions don't show word management - removed hasCurrentWord and handleManageWord
-
-  // Only show completion screen if we're not in the process of closing
-  if (isComplete && !isClosing) {
+  if (isComplete) {
     return (
       <CompletionScreen
-        useThemedView
-        buttonStyle={{ minWidth: MIN_TOUCH_TARGET.LARGE * 4 }} // Responsive min width
-        buttonText={STRINGS.CONTINUE}
-        buttonVariant="outlined"
-        iconName="checkmark-circle-outline"
-        iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
-        subtitle={STRINGS.ALL_WORDS_PRACTICED}
         title={STRINGS.SESSION_COMPLETE}
+        subtitle={STRINGS.ALL_WORDS_PRACTICED}
         onClose={handleClose}
       />
     );
   }
 
   return (
-    <ThemedView style={styles.container} useSafeArea={true}>
-      <View style={styles.contentContainer}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
+
+      <View
+        style={[
+          styles.contentContainer,
+          {
+            paddingTop: insets.top + LAYOUT.SPACING.MEDIUM,
+            paddingBottom: insets.bottom + LAYOUT.SPACING.MEDIUM,
+          },
+        ]}
+      >
         <ListenHeader
           animationKey={progressAnimationKey}
           maxProgress={maxProgress}
           progress={progress}
-          hasCurrentWord={false}
-          onManageWord={undefined}
           onClose={handleClose}
         />
 
         <View style={styles.wordArea}>
-          <Animated.View style={[styles.wordContainer, animatedStyle as ViewStyle]}>
+          <Animated.View style={[styles.wordContainer, animatedStyle]}>
             <WordDisplay
+              word={currentArabicWord}
               fontSize={wordFontSize}
               translation={translationToShow}
-              word={currentArabicWord}
             />
           </Animated.View>
         </View>
 
-        <View style={[styles.footer, { paddingBottom: insets.bottom + LAYOUT.SPACING.SMALL }]}>
+        <View style={styles.bottomControls}>
           <RepeatButton enabled={repeatEnabled} onToggle={handleRepeatToggle} />
-
-          <View style={styles.noteContainer}>
-            <Ionicons
-              color={colors.tint}
-              name="information-circle-outline"
-              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              style={styles.noteIcon}
-            />
-            <ThemedText style={styles.noteText}>{STRINGS.WORKS_WITH_SCREEN_OFF}</ThemedText>
-          </View>
         </View>
       </View>
-    </ThemedView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
     flex: 1,
-    justifyContent: 'center',
-  },
+  } as ViewStyle,
 
   contentContainer: {
-    alignItems: 'center',
     flex: 1,
-    justifyContent: 'space-between',
-    paddingBottom: 0,
+    width: '100%',
+    alignItems: 'center',
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    width: '100%',
-  },
-  footer: {
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.LARGE,
-    width: '100%',
-  },
-  noteContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    opacity: LAYOUT.OPACITY.HOVER,
-  },
-  noteIcon: {
-    fontWeight: '500',
-    marginRight: LAYOUT.SPACING.TINY,
-    opacity: LAYOUT.OPACITY.HOVER,
-  },
-  noteText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '500',
-    opacity: LAYOUT.OPACITY.HOVER,
-  },
+  } as ViewStyle,
+
   wordArea: {
+    flex: 1,
+    width: '100%',
+    position: 'relative',
+    justifyContent: 'center',
     alignItems: 'center',
+    minHeight: WORD_AREA_MIN_HEIGHT,
+    paddingTop: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.SPACING.LARGE,
+  } as ViewStyle,
+
+  wordContainer: {
     flex: 1,
     justifyContent: 'center',
-    minHeight: WORD_AREA_MIN_HEIGHT,
-    width: '100%',
-  },
-  wordContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1, // Use flex instead of absolute positioning for better responsive behavior
-  },
+    width: '100%',
+  } as ViewStyle,
+
+  bottomControls: {
+    alignItems: 'center',
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    minHeight: MIN_TOUCH_TARGET.LARGE,
+  } as ViewStyle,
 });

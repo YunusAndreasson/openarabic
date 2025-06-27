@@ -206,7 +206,7 @@ export default function NowPlayingModal() {
         <View style={[styles.header, { paddingTop: insets.top + LAYOUT.SPACING.MEDIUM }]}>
           {/* Loading state - no header content needed */}
         </View>
-        <View style={styles.centerContent}>
+        <View style={styles.sentenceSection}>
           <ThemedText type="body" variant="secondary">
             {STRINGS.LOADING}
           </ThemedText>
@@ -254,16 +254,16 @@ export default function NowPlayingModal() {
       </View>
 
       {/* Current Sentence Display */}
-      <View style={styles.centerContent}>
+      <View style={styles.sentenceSection}>
         {currentSentence ? (
           <Animated.View style={[styles.sentenceContainer, sentenceAnimatedStyle]}>
-            <ThemedText type="heading1" style={styles.englishText}>
+            <ThemedText type="body" style={styles.englishText}>
               {currentSentence.english}
             </ThemedText>
           </Animated.View>
         ) : (
           <Animated.View style={[styles.sentenceContainer, sentenceAnimatedStyle]}>
-            <ThemedText type="heading1" style={styles.englishText}>
+            <ThemedText type="body" style={styles.englishText}>
               {sortedSentences.length > 0
                 ? STRINGS.LOADING
                 : 'Start playing an article to see synchronized text'}
@@ -344,23 +344,24 @@ const styles = StyleSheet.create({
     textShadowRadius: LAYOUT.SPACING.MICRO,
   },
 
-  centerContent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  sentenceSection: {
+    paddingTop: LAYOUT.SPACING.XXXLARGE * 2, // Large gap below header
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING * 1.5,
+    alignItems: 'center',
   },
 
   sentenceContainer: {
     alignItems: 'center',
-    maxWidth: '100%',
+    justifyContent: 'center',
+    width: '100%',
   },
 
   englishText: {
     color: 'white',
     textAlign: 'center',
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE + LAYOUT.SPACING.SMALL, // 28 + 8 = 36px - consistent line height
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE, // Smaller text size
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4, // Appropriate line height for smaller text
     textShadowColor: 'rgba(0,0,0,0.4)',
     textShadowOffset: { width: 0, height: LAYOUT.SPACING.MICRO },
     textShadowRadius: LAYOUT.SPACING.TINY,

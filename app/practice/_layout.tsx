@@ -12,13 +12,17 @@ export default function PracticeLayout(): JSX.Element {
       <Stack.Screen
         name="review/index"
         options={createNavigationOptions(colors, {
-          headerShown: false,
+          headerShown: false, // Full-screen modal without header
+          presentation: 'fullScreenModal',
+          gestureEnabled: true,
         })}
       />
       <Stack.Screen
         name="audio/index"
         options={createNavigationOptions(colors, {
-          headerShown: false,
+          headerShown: false, // Full-screen modal without header
+          presentation: 'fullScreenModal',
+          gestureEnabled: true,
         })}
       />
     </Stack>

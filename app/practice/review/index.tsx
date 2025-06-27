@@ -1,10 +1,11 @@
 import { useLocalSearchParams } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import type { JSX } from 'react';
 import { useCallback } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ThemedView } from '@/components/ThemedView';
 import {
   CompletionScreen,
   MeaningOverlay,
@@ -15,21 +16,19 @@ import {
 import WordManagementModal from '@/components/vocabulary/WordManagementModal';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { useReview } from '@/hooks/review';
+import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { selectionFeedback } from '@/utils/haptics';
 
 const baseStyles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   } as ViewStyle,
 
   contentContainer: {
     flex: 1,
     width: '100%',
     alignItems: 'center',
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: 0,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   } as ViewStyle,
   wordArea: {
@@ -48,6 +47,9 @@ export default function ReviewScreen(): JSX.Element {
   const params = useLocalSearchParams();
   const fromRemember = params['fromRemember'] === 'true';
   const mode = params['mode'] as string | undefined;
+  const insets = useSafeAreaInsets();
+  const colors = useColors();
+  const isDarkMode = useIsDarkMode();
 
   const {
     showMeaningOverlay,
@@ -104,8 +106,18 @@ export default function ReviewScreen(): JSX.Element {
   }
 
   return (
-    <ThemedView style={baseStyles.container} useSafeArea={true}>
-      <View style={baseStyles.contentContainer}>
+    <View style={[baseStyles.container, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
+
+      <View
+        style={[
+          baseStyles.contentContainer,
+          {
+            paddingTop: insets.top + LAYOUT.SPACING.MEDIUM,
+            paddingBottom: insets.bottom + LAYOUT.SPACING.MEDIUM,
+          },
+        ]}
+      >
         <ReviewHeader
           animationKey={progressAnimationKey}
           maxProgress={maxProgress}
@@ -148,6 +160,6 @@ export default function ReviewScreen(): JSX.Element {
         onMarkAsEasy={handleMarkAsEasy}
         onMarkAsHard={handleMarkAsHard}
       />
-    </ThemedView>
+    </View>
   );
 }

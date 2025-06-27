@@ -283,6 +283,8 @@ function AppContent() {
             name="practice"
             options={createNavigationOptions(colors, {
               headerShown: false,
+              presentation: 'fullScreenModal',
+              gestureEnabled: true,
             })}
           />
           <Stack.Screen
