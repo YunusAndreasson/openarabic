@@ -1,19 +1,22 @@
 ---
-description: 
-globs: 
+description:
+globs:
 alwaysApply: true
 ---
+
 # React Native App Code Guidelines
 
 You are a senior React Native developer tasked with writing performant, reliable and production ready code for a language learning app.
 
 ## App Features
-- [app/(tabs)/read/index.tsx](mdc:<mdc:app/(tabs)/read/index.tsx>) Main screen with list of articles
-- [app/(tabs)/practice/index.tsx](mdc:<mdc:app/(tabs)/practice/index.tsx>) Entry screen for practicing words using Spaced Repetition
-- [app/(tabs)/listen/index.tsx](mdc:<mdc:app/(tabs)/listen/index.tsx>) Audio playback for bookmarked articles and listening practice
-- [app/(tabs)/read/account/](mdc:<mdc:app/(tabs)/read/account/>) Settings and account management
+
+- [app/(tabs)/read/index.tsx](<mdc:<mdc:app/(tabs)/read/index.tsx>>) Main screen with list of articles
+- [app/(tabs)/practice/index.tsx](<mdc:<mdc:app/(tabs)/practice/index.tsx>>) Entry screen for practicing words using Spaced Repetition
+- [app/(tabs)/listen/index.tsx](<mdc:<mdc:app/(tabs)/listen/index.tsx>>) Audio playback for saved articles and listening practice
+- [app/(tabs)/read/account/](<mdc:<mdc:app/(tabs)/read/account/>>) Settings and account management
 
 ## Core Principles
+
 - Always investigate issues before proposing fixes
 - Strive to reduce complexity (while maintaining reliability)
 - Focus on understanding root causes, not implementing workarounds
@@ -25,7 +28,9 @@ You are a senior React Native developer tasked with writing performant, reliable
 - Only use modern React functional components
 
 ## Pre-Implementation Investigation
+
 Before making changes, always:
+
 1. Search for existing similar implementations in the codebase
 2. Check for related components, hooks, or utilities
 3. Review relevant tests to understand expected behavior
@@ -33,6 +38,7 @@ Before making changes, always:
 5. Verify TypeScript types and interfaces are already defined
 
 ## Important Files & Constants
+
 - **Database structure**: [database.types.ts](mdc:types/database.types.ts) - All Supabase table types and database schemas
 - **Colors & theming**: [Colors.ts](mdc:constants/Colors.ts) - Complete theme system with light/dark modes, semantic colors, elevation system, and opacity constants
 - **Layout system**: [layout.ts](mdc:constants/layout.ts) - Typography hierarchy, spacing scale, shadow system, touch targets, and responsive utilities
@@ -44,6 +50,7 @@ Before making changes, always:
 - **Arabic text analysis**: [arabicWordComponents.ts](mdc:constants/arabicWordComponents.ts) - Comprehensive Arabic language component rules for word analysis
 
 ### Essential Constants Usage:
+
 - **Typography**: Use `TYPOGRAPHY_HIERARCHY` from layout.ts for consistent text styling
 - **Shadow system**: Use `LAYOUT.SHADOW.SUBTLE/SMALL/MEDIUM/LARGE` constants for consistent elevation
 - **Spacing system**: Use `LAYOUT.SPACING` scale (TINY=4px, SMALL=8px, MEDIUM=12px, etc.)
@@ -54,9 +61,11 @@ Before making changes, always:
 - **FSRS keys**: Use `FSRS_QUERY_KEYS` for all vocabulary-related query cache management
 
 ## MCP Servers
+
 - Supabase is available here [mcp.json](mdc:.cursor/mcp.json)
 
 ## Technical Stack
+
 - **React Native**: 0.79.3 with React 19.0.0
 - **Expo SDK**: 53 with New Architecture enabled
 - **Navigation**: Expo Router v5.1.0 with typed routes and modal presentation
@@ -74,6 +83,7 @@ Before making changes, always:
 - **Testing**: Jest v29.7.0 with React Native Testing Library
 
 ## Directory Structure
+
 - `app/(tabs)` - Main tab screen components
 - `app/auth` - Authentication screens
 - `app/practice` - Standalone practice screens (renamed from vocabulary)
@@ -87,6 +97,7 @@ Before making changes, always:
 - `utils/` - Helper functions and utilities
 
 ## Navigation Patterns
+
 - Use Expo Router with modal presentation for overlays
 - Modal screens hide tab headers completely
 - **CRITICAL**: Always use correct route paths: `/(tabs)/read/article/[id]` not `/article/[id]`
@@ -99,7 +110,9 @@ Before making changes, always:
 ### Code Quality & Linting Rules
 
 #### TypeScript Configuration (Strict Mode)
+
 Our `tsconfig.json` enforces strict TypeScript rules:
+
 - **REQUIRED**: `strict: true` - All strict type checking options enabled
 - **REQUIRED**: `noImplicitAny: true` - No implicit any types allowed
 - **REQUIRED**: `strictNullChecks: true` - Handle null/undefined explicitly
@@ -110,7 +123,9 @@ Our `tsconfig.json` enforces strict TypeScript rules:
 - **REQUIRED**: `exactOptionalPropertyTypes: true` - Exact optional property types
 
 #### ESLint Rules (Flat Config)
+
 Our ESLint configuration enforces these patterns:
+
 - **Import/Export Rules**:
   - Use `import type` for type-only imports: `import type { User } from './types'`
   - Remove unused imports automatically
@@ -127,6 +142,7 @@ Our ESLint configuration enforces these patterns:
   - Validate all external data before use
 
 #### Code Quality Patterns
+
 - **REQUIRED**: Use types from `/types` directory for consistency
 - **REQUIRED**: Never use `any` type - always use proper TypeScript types
 - **REQUIRED**: Handle null/undefined cases explicitly due to `strictNullChecks`
@@ -137,7 +153,9 @@ Our ESLint configuration enforces these patterns:
 - **PATTERN**: Use consistent naming: PascalCase for components, camelCase for functions
 
 #### Prettier Configuration
+
 Code formatting is automatically handled by Prettier:
+
 - **Semi-colons**: Always required
 - **Quotes**: Single quotes for strings, double for JSX attributes
 - **Trailing commas**: Always add for multi-line structures
@@ -145,14 +163,18 @@ Code formatting is automatically handled by Prettier:
 - **Print width**: 80 characters (break long lines)
 
 #### Knip Configuration
+
 Unused code detection via Knip:
+
 - **Entry points**: All app routes, components, hooks, services
 - **Exclude**: Test files, type definitions, constants
 - **Workspaces**: Supports monorepo structure
 - Run `yarn knip` to detect unused exports and dependencies
 
 ### Performance Optimization Patterns
+
 When optimizing components (especially those >50ms render time):
+
 - Extract static constants outside component scope
 - Use `React.memo` with custom comparison functions when appropriate
 - Memoize expensive calculations with `useMemo`
@@ -162,6 +184,7 @@ When optimizing components (especially those >50ms render time):
 - Consider component splitting for better granular updates
 
 ### Styling & Design
+
 - Use `StyleSheet.create()` for static styles, inline for dynamic
 - Follow design system from Colors.ts and layout.ts
 - **REQUIRED**: Use standardized shadow system: `LAYOUT.SHADOW.SUBTLE/SMALL/MEDIUM/LARGE`
@@ -171,6 +194,7 @@ When optimizing components (especially those >50ms render time):
 - Prefer filled icons over outlined for visual harmony
 
 ### Data Management
+
 - Structure Supabase queries in `services/` with typed responses
 - Use database.types.ts for all database operations
 - **CRITICAL**: Follow FSRS query key patterns for vocabulary data (keys starting with 'fsrs-words')
@@ -178,18 +202,21 @@ When optimizing components (especially those >50ms render time):
 - Update legacy query keys to match FSRS patterns
 
 ### Audio & Media
+
 - Use expo-audio for all audio playbook
 - Handle background audio with proper session configuration
 - Implement proper cleanup for audio resources
 - Use enhanced audio service for playlist management
 
 ### Haptic Feedback
+
 - **IMPORTANT**: Avoid double haptic feedback from multiple components
 - Use appropriate feedback types: `selectionFeedback` for most interactions
 - Import from `utils/haptics.ts`
 - Check if parent/child components both trigger haptics
 
 ### Error Handling
+
 - Use `handleError()` utility from `utils/errorHandling.ts`
 - Structure: try/catch in services, Sentry for logging
 - Analytics tracking is currently mocked (service disabled)
@@ -198,50 +225,59 @@ When optimizing components (especially those >50ms render time):
 ## Critical Implementation Notes
 
 ### Analytics Service
+
 - **IMPORTANT**: Analytics service is currently disabled/mocked
 - All analytics calls use temporary mock implementations
 - Do not implement new Mixpanel tracking until service is restored
 - Error handling includes analytics properties but they're not sent
 
 ### Navigation Issues
+
 - Always use full route paths with `/(tabs)` prefix
 - Modal screens should use Expo Router modal system, not React Native Modal
 - Avoid navigation parameter bleed between screens
 
 ### Memory Management
+
 - Clean up audio resources on component unmount
 - Use proper query invalidation for FSRS vocabulary data
 - Clear persisted cache when needed via utility functions
 
 ## Testing Requirements
+
 - Use Jest with React Native Testing Library
 - Test timeout: 10 seconds for async operations
-- Coverage reports available via `yarn test:coverage` 
+- Coverage reports available via `yarn test:coverage`
 - Mock external services appropriately
 - Write tests for new hooks and complex components
 
 ## Development Workflow
 
 ### During Development
+
 - Use `yarn validate` for type checking, linting, and dependency analysis
 - Use `yarn ci` for full validation with test coverage
 - Knip for unused code detection
 - Patch-package for dependency modifications
 
 ### End of Longer Sessions (REQUIRED)
+
 Always run these commands before completing longer development sessions:
+
 1. `yarn test` - Ensure all tests pass
 2. `yarn validate` - Check types, linting, and dependencies
 3. Review and clean up any temporary files created during development
 4. Verify no console errors or warnings remain
 
 ### Cleanup Checklist
+
 - Remove any temporary/debug files created during development
 - Update relevant tests if behavior changed
 - Check for unused imports or variables
 - Verify consistent code formatting
 
 ## Constraints
+
 - Don't be overly strict about linting issues unless they affect functionality
 - Focus on mobile UX patterns, not responsive web design
 - App is portrait-only mobile application
@@ -250,11 +286,13 @@ Always run these commands before completing longer development sessions:
 - Maintain existing architecture patterns
 
 ## Version Management
+
 - Use semantic versioning with build numbers
 - Format: `major.minor.patch-buildNumber` (e.g., "1.2.3-18") using dash separator
 - Build numbers increment for each release
 
 ## Design Guidelines
+
 - Follow UX principles from [design.mdc](mdc:.cursor/rules/design.mdc)
 - Follow copy and messaging guidelines from [copy.mdc](mdc:.cursor/rules/copy.mdc)
 - Use green tint for UI elevations (avoid pure white)

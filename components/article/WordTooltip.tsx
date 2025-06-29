@@ -1,10 +1,10 @@
-import { Ionicons } from '@expo/vector-icons';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
+import TouchableIcon from '@/components/TouchableIcon';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { CACHE_SIZE } from '@/constants/performance';
 import { useOpacityAnimation } from '@/hooks/animations';
@@ -14,7 +14,7 @@ import { analyzeArabicWord, formatWordAnalysis } from '@/utils/arabicWordAnalysi
 
 // Extract all constants outside component to prevent recreation
 const TOOLTIP_CONSTANTS = {
-  SPACING: LAYOUT.SPACING.SMALL,
+  SPACING: LAYOUT.SPACING.TINY, // Reduced from SMALL to TINY for less padding
   ARROW_SIZE: LAYOUT.SPACING.TINY,
   TOOLTIP_MARGIN: LAYOUT.SPACING.TINY / 5,
   SCREEN_MARGIN: LAYOUT.SPACING.MEDIUM,
@@ -79,8 +79,19 @@ const STATIC_STYLES = StyleSheet.create({
     flexShrink: 1,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     fontWeight: '500',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.4,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.6, // Increased line height for Arabic diacritics
     textAlign: 'center',
+    marginTop: LAYOUT.SPACING.TINY, // Extra top margin for Arabic text
+  },
+  englishRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: LAYOUT.SPACING.TINY,
+  },
+  englishContent: {
+    flexShrink: 1,
+    alignItems: 'center',
   },
 });
 
@@ -102,7 +113,8 @@ const calculateTooltipPositioning = (
   layout: NonNullable<WordTooltipProps['layout']>,
   text: string,
   screenWidth: number,
-  hasArabicText: boolean = false
+  hasArabicText: boolean = false,
+  hasBookmark: boolean = false
 ) => {
   const cacheKey = createPositioningCacheKey(layout, text.length, screenWidth, hasArabicText);
 
@@ -114,22 +126,28 @@ const calculateTooltipPositioning = (
   const { SPACING, ARROW_SIZE, TOOLTIP_MARGIN, SCREEN_MARGIN, CHAR_WIDTH, PADDING_MULTIPLIER } =
     TOOLTIP_CONSTANTS;
 
-  // Calculate consistent tooltip height - always reserve space for both Arabic and English
-  const baseHeight = LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4; // Line height for text
-  const arabicHeight = baseHeight + SPACING / 2; // Always reserve space for Arabic text
-  const englishHeight = baseHeight;
+  // Calculate consistent tooltip height - properly account for different text sizes
+  const englishHeight = LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4; // English line height
+  const arabicHeight = LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.6; // Arabic line height (increased for diacritics)
   const paddingHeight = SPACING * 2; // Top and bottom padding
-  const dynamicTooltipHeight = arabicHeight + englishHeight + paddingHeight;
+  const arabicTopMargin = LAYOUT.SPACING.TINY; // Extra margin for Arabic text
+  const dynamicTooltipHeight = arabicHeight + englishHeight + paddingHeight + arabicTopMargin;
 
   const wordCenterX = layout.x + layout.width / 2;
 
   // Simple positioning: tooltip appears directly above the word
-  // Since we're using absolute coordinates from measureInWindow, this should work correctly
-  const tooltipTop = layout.y - dynamicTooltipHeight - ARROW_SIZE - TOOLTIP_MARGIN;
+  // Add extra margin to prevent Arabic text clipping at top
+  const extraTopMargin = LAYOUT.SPACING.SMALL; // Additional space for Arabic diacritics
+  const tooltipTop = layout.y - dynamicTooltipHeight - ARROW_SIZE - TOOLTIP_MARGIN - extraTopMargin;
+
+  // Calculate bookmark space if present (icon + gap + touch padding)
+  const bookmarkSpace = hasBookmark
+    ? LAYOUT.BUTTON.ICON_SIZE.MEDIUM + SPACING * 2 + LAYOUT.SPACING.TINY
+    : 0;
 
   // Calculate tooltip width
   let tooltipWidth = Math.max(
-    text.length * CHAR_WIDTH + SPACING * PADDING_MULTIPLIER * 2,
+    text.length * CHAR_WIDTH + SPACING * PADDING_MULTIPLIER * 2 + bookmarkSpace,
     layout.width + SPACING * 2,
     LAYOUT.SPACING.XLARGE
   );
@@ -141,8 +159,9 @@ const calculateTooltipPositioning = (
     ''
   );
 
-  // Ensure minimum width can fit the longest word with generous padding
-  const minWidthForLongestWord = longestWord.length * CHAR_WIDTH * 1.5 + SPACING * 4;
+  // Ensure minimum width can fit the longest word with generous padding + bookmark space
+  const minWidthForLongestWord =
+    longestWord.length * CHAR_WIDTH * 1.5 + SPACING * 4 + bookmarkSpace;
 
   // Constrain to reasonable screen width but ensure longest word fits
   tooltipWidth = Math.min(tooltipWidth, screenWidth * 0.8);
@@ -567,60 +586,72 @@ export const WordTooltip = memo(
       );
     }, [arabicAnalysis, text, tooltipColors]);
 
-    // Render the study list indicator
+    // Render the study list indicator with proper integration
     const renderStudyIndicator = useCallback(() => {
       // Only show if we have study functionality
       if (!onStudyListToggle || !wordRootId) return null;
 
       const iconName = isInStudyList ? 'bookmark' : 'bookmark-outline';
-      const indicatorColor = isInStudyList ? tooltipColors.primary : tooltipColors.secondaryText;
+      const indicatorColor = isInStudyList ? tooltipColors.tint : tooltipColors.secondaryText;
 
       return (
-        <TouchableOpacity
+        <TouchableIcon
+          icon={iconName}
+          size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+          touchSize="small"
+          color={indicatorColor}
           onPress={handleStudyListPress}
           style={{
-            position: 'absolute',
-            top: TOOLTIP_CONSTANTS.SPACING / 2,
-            right: TOOLTIP_CONSTANTS.SPACING / 2,
-            padding: LAYOUT.SPACING.TINY / 2,
-            borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM / 2,
+            marginLeft: LAYOUT.SPACING.TINY,
           }}
-          hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
-          activeOpacity={LAYOUT.OPACITY.HIGH}
-        >
-          <Ionicons name={iconName} size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={indicatorColor} />
-        </TouchableOpacity>
+        />
       );
     }, [onStudyListToggle, wordRootId, isInStudyList, handleStudyListPress, tooltipColors]);
 
-    // Memoize the tooltip content to reduce re-renders - unified formatting approach
-    const tooltipContent = useMemo(() => {
-      const arabicContent = renderColorCodedArabic();
+    // Render English text with inline bookmark
+    const renderEnglishWithBookmark = useCallback(() => {
       const englishContent = renderColorCodedEnglish();
       const studyIndicator = renderStudyIndicator();
 
-      // Calculate if we need padding for the study indicator
-      const hasStudyIndicator = !!studyIndicator;
-      const baseHeight = LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4;
+      if (!studyIndicator) {
+        return englishContent;
+      }
+
+      return (
+        <View style={STATIC_STYLES.englishRow}>
+          <View style={STATIC_STYLES.englishContent}>{englishContent}</View>
+          {studyIndicator}
+        </View>
+      );
+    }, [renderColorCodedEnglish, renderStudyIndicator]);
+
+    // Memoize the tooltip content with improved layout
+    const tooltipContent = useMemo(() => {
+      const arabicContent = renderColorCodedArabic();
+      const englishWithBookmark = renderEnglishWithBookmark();
+
+      // Proper height calculation accounting for both text sizes
+      const englishHeight = LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4;
+      const arabicHeight = LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.6; // Increased for diacritics
+      const arabicTopMargin = LAYOUT.SPACING.TINY;
+
       const contentStyle = {
         alignItems: 'center' as const,
         justifyContent: 'center' as const,
         position: 'relative' as const,
-        // Ensure consistent minimum height for all tooltips
-        minHeight: baseHeight * 2 + TOOLTIP_CONSTANTS.SPACING / 2,
-        // Add right padding when we have a study indicator to prevent overlap
-        ...(hasStudyIndicator && { paddingRight: LAYOUT.SPACING.XXLARGE }),
+        // Proper minimum height for Arabic + English text with margins
+        minHeight: arabicHeight + englishHeight + arabicTopMargin + LAYOUT.SPACING.SMALL,
+        // Add adequate top padding to prevent Arabic text clipping
+        paddingTop: LAYOUT.SPACING.SMALL, // Increased from TINY to SMALL
       };
 
-      // Use unified formatting approach for all cases
       return (
         <View style={contentStyle}>
-          {studyIndicator}
           {arabicContent}
-          {englishContent}
+          {englishWithBookmark}
         </View>
       );
-    }, [renderColorCodedArabic, renderColorCodedEnglish, renderStudyIndicator]);
+    }, [renderColorCodedArabic, renderEnglishWithBookmark]);
 
     // Update tooltip positioning with consistent sizing for all tooltips
     const tooltipPositioning = useMemo(() => {
@@ -634,11 +665,14 @@ export const WordTooltip = memo(
         };
       }
 
+      // Check if we have a bookmark to account for its space
+      const hasBookmark = !!(onStudyListToggle && wordRootId);
+
       // Always use combined text length to ensure consistent sizing
       const displayText = arabicWord ? `${arabicWord} ${text}` : text || '';
-      // Always pass true for consistent height calculation
-      return calculateTooltipPositioning(layout, displayText, screenWidth, true);
-    }, [layout, text, arabicWord, screenWidth]);
+      // Pass hasBookmark to ensure proper width calculation
+      return calculateTooltipPositioning(layout, displayText, screenWidth, true, hasBookmark);
+    }, [layout, text, arabicWord, screenWidth, onStudyListToggle, wordRootId]);
 
     // Memoize container style
     const containerStyle = useMemo(

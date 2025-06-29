@@ -89,7 +89,8 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    // Removed marginBottom to match consistent spacing pattern used in Practice screen
+    // FilterSection provides its own marginTop for proper section spacing
   },
   scrollContainer: {
     paddingVertical: LAYOUT.SPACING.TINY,
