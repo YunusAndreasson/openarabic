@@ -6,7 +6,7 @@ export const getArticleRoute = (id: number, headerTitle?: string): string => {
 };
 
 export const getFilterRoute = (
-  type: 'category' | 'author' | 'bookmark',
+  type: 'category' | 'author',
   id: number | string,
   name?: string
 ): string => {

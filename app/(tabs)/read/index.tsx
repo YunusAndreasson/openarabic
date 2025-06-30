@@ -17,7 +17,6 @@ import { LAYOUT } from '@/constants/layout';
 import { getArticleRoute, getFilterRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
-import { useBookmarks } from '@/hooks/articles/useBookmarks';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { articlesService } from '@/services/articles';
@@ -38,15 +37,9 @@ const styles = StyleSheet.create({
   listContentContainer: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
-  bookmarksDivider: {
-    height: 1,
-    marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    opacity: 0.3,
-  },
 });
 
-export default function ArticlesScreen(): JSX.Element {
+export default function ReadScreen(): JSX.Element {
   const colors = useColors();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
@@ -54,7 +47,6 @@ export default function ArticlesScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { prefetchArticle } = useAppPreloader();
-  const { bookmarkCount } = useBookmarks();
 
   const { data: categoriesData = [], isLoading: isCategoriesLoading } = useQuery({
     queryKey: ['categories'],
@@ -121,9 +113,7 @@ export default function ArticlesScreen(): JSX.Element {
       if (user?.id) {
         refreshPromises.push(
           queryClient.refetchQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) }),
-          queryClient.refetchQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) }),
-          queryClient.refetchQueries({ queryKey: ['bookmark-count', user.id] }),
-          queryClient.refetchQueries({ queryKey: ['bookmarked-articles', user.id] })
+          queryClient.refetchQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) })
         );
       }
 
@@ -154,10 +144,6 @@ export default function ArticlesScreen(): JSX.Element {
     router.push(getFilterRoute('category', categoryId, categoryName));
   }, []);
 
-  const handleSelectBookmarks = useCallback(() => {
-    router.push(getFilterRoute('bookmark', 'bookmarks', STRINGS.BOOKMARKS));
-  }, []);
-
   // Simplified header component
   const ListHeaderComponent = useMemo(
     () => (
@@ -171,36 +157,9 @@ export default function ArticlesScreen(): JSX.Element {
         {categoriesWithArticles.length > 0 && (
           <FilterSection items={categoriesWithArticles} onSelect={handleSelectCategory} />
         )}
-
-        {/* Bookmarks section with subtle divider */}
-        {user?.id && bookmarkCount > 0 && (
-          <>
-            <View style={[styles.bookmarksDivider, { backgroundColor: colors.border }]} />
-            <FilterSection
-              items={[
-                {
-                  id: 0,
-                  name: STRINGS.BOOKMARKS,
-                  count: bookmarkCount,
-                },
-              ]}
-              onSelect={handleSelectBookmarks}
-            />
-          </>
-        )}
       </View>
     ),
-    [
-      articlesData,
-      refreshKey,
-      handleArticlePress,
-      categoriesWithArticles,
-      handleSelectCategory,
-      user?.id,
-      colors.border,
-      bookmarkCount,
-      handleSelectBookmarks,
-    ]
+    [articlesData, refreshKey, handleArticlePress, categoriesWithArticles, handleSelectCategory]
   );
 
   // Remove unnecessary memoization for stable component

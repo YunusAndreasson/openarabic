@@ -214,7 +214,7 @@ export default function ListenScreen(): JSX.Element {
                   description={STRINGS.LISTENING_PLAYLIST_EMPTY}
                   icon="headset-outline"
                   iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
-                  submessage={STRINGS.BOOKMARK_ARTICLES_HINT}
+                  submessage="Save articles from Read to build your playlist"
                   title={STRINGS.NO_ARTICLES_SAVED}
                   containerStyle={{
                     paddingTop: LAYOUT.SPACING.XLARGE,
@@ -242,7 +242,7 @@ export default function ListenScreen(): JSX.Element {
                   description={STRINGS.LISTENING_PLAYLIST_EMPTY}
                   icon="headset-outline"
                   iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
-                  submessage={STRINGS.BOOKMARK_ARTICLES_HINT}
+                  submessage="Save articles from Read to build your playlist"
                   title={STRINGS.NO_ARTICLES_SAVED}
                   containerStyle={{
                     paddingTop: LAYOUT.SPACING.XLARGE,

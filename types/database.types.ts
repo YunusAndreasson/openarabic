@@ -121,39 +121,7 @@ export type Database = {
         };
         Relationships: [];
       };
-      bookmark_categories: {
-        Row: {
-          color: string | null;
-          created_at: string | null;
-          icon: string | null;
-          id: number;
-          name: string;
-          position: number;
-          updated_at: string | null;
-          user_id: string;
-        };
-        Insert: {
-          color?: string | null;
-          created_at?: string | null;
-          icon?: string | null;
-          id?: number;
-          name: string;
-          position?: number;
-          updated_at?: string | null;
-          user_id: string;
-        };
-        Update: {
-          color?: string | null;
-          created_at?: string | null;
-          icon?: string | null;
-          id?: number;
-          name?: string;
-          position?: number;
-          updated_at?: string | null;
-          user_id?: string;
-        };
-        Relationships: [];
-      };
+
       categories: {
         Row: {
           id: number;
@@ -205,59 +173,6 @@ export type Database = {
           },
           {
             foreignKeyName: 'reading_list_article_id_fkey';
-            columns: ['article_id'];
-            isOneToOne: false;
-            referencedRelation: 'articles_word_stats';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'reading_list_category_id_fkey';
-            columns: ['category_id'];
-            isOneToOne: false;
-            referencedRelation: 'bookmark_categories';
-            referencedColumns: ['id'];
-          }
-        ];
-      };
-      bookmarks: {
-        Row: {
-          added_at: string | null;
-          article_id: number | null;
-          id: number;
-          order_index: number | null;
-          user_id: string | null;
-        };
-        Insert: {
-          added_at?: string | null;
-          article_id?: number | null;
-          id?: number;
-          order_index?: number | null;
-          user_id?: string | null;
-        };
-        Update: {
-          added_at?: string | null;
-          article_id?: number | null;
-          id?: number;
-          order_index?: number | null;
-          user_id?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'bookmarks_article_id_fkey';
-            columns: ['article_id'];
-            isOneToOne: false;
-            referencedRelation: 'articles';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'bookmarks_article_id_fkey';
-            columns: ['article_id'];
-            isOneToOne: false;
-            referencedRelation: 'articles_list_view';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'bookmarks_article_id_fkey';
             columns: ['article_id'];
             isOneToOne: false;
             referencedRelation: 'articles_word_stats';
@@ -593,21 +508,7 @@ export type Database = {
         Args: { table_name: string; column_name: string; column_type: string };
         Returns: undefined;
       };
-      get_bookmark_categories_with_counts: {
-        Args: { user_id_param: string };
-        Returns: {
-          id: number;
-          user_id: string;
-          name: string;
-          color: string;
-          icon: string;
-          position: number;
-          created_at: string;
-          updated_at: string;
-          article_count: number;
-          due_word_count: number;
-        }[];
-      };
+
       update_word_and_review: {
         Args: {
           p_user_id: string;

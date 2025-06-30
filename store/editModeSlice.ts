@@ -1,16 +1,14 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 
-export type EditModeType = 'listen' | 'bookmarks';
+export type EditModeType = 'listen';
 
 export interface EditModeState {
   listen: boolean;
-  bookmarks: boolean;
 }
 
 const initialState: EditModeState = {
   listen: false,
-  bookmarks: false,
 };
 
 const editModeSlice = createSlice({
@@ -31,7 +29,6 @@ const editModeSlice = createSlice({
     },
     resetAllEditModes: state => {
       state.listen = false;
-      state.bookmarks = false;
     },
   },
 });

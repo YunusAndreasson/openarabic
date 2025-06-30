@@ -4,7 +4,6 @@ import { useCallback } from 'react';
 
 import FilterButton from '@/components/FilterButton';
 import DoneButton from '@/components/ui/DoneButton';
-import EditModeButton from '@/components/ui/EditModeButton';
 import { createNavigationOptions } from '@/constants/modal';
 import { getFilterModalRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -18,10 +17,6 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 function getFilterTitle(params: FilterParams): string {
   const { type, name } = params;
 
-  if (type === 'bookmark') {
-    return STRINGS.BOOKMARKS;
-  }
-
   if (type === 'category' && name) {
     return capitalizeFirstLetter(decodeURIComponent(name));
   }
@@ -33,26 +28,15 @@ function getFilterTitle(params: FilterParams): string {
   return STRINGS.FILTER;
 }
 
-const FilterHeaderLeft = ({ isBookmark: _isBookmark }: { isBookmark: boolean }) => {
+const FilterHeaderLeft = () => {
   // Always show Done button on the left for all filter screens
   return <DoneButton />;
 };
 
-const FilterHeaderRight = ({
-  categoryId,
-  isBookmark,
-}: {
-  categoryId: number;
-  isBookmark: boolean;
-}) => {
+const FilterHeaderRight = ({ categoryId }: { categoryId: number }) => {
   const handleFilterPress = useCallback(() => {
     router.push(getFilterModalRoute(categoryId));
   }, [categoryId]);
-
-  if (isBookmark) {
-    // For bookmarks, show Edit button on the right (no Filter button)
-    return <EditModeButton type="bookmarks" />;
-  }
 
   // For categories, show filter button on the right
   return <FilterButton onPress={handleFilterPress} />;
@@ -94,14 +78,11 @@ export default function ReadLayout(): JSX.Element {
         options={({ route }) => {
           const params = route.params as FilterParams;
           const categoryId = parseInt(params.id ?? '', 10);
-          const isBookmark = params.type === 'bookmark';
 
           return createNavigationOptions(colors, {
             title: getFilterTitle(params),
-            headerLeft: () => <FilterHeaderLeft isBookmark={isBookmark} />,
-            headerRight: () => (
-              <FilterHeaderRight categoryId={categoryId} isBookmark={isBookmark} />
-            ),
+            headerLeft: () => <FilterHeaderLeft />,
+            headerRight: () => <FilterHeaderRight categoryId={categoryId} />,
           });
         }}
       />

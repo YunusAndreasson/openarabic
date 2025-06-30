@@ -7,15 +7,11 @@ import { InteractionManager } from 'react-native';
 import ErrorState from '@/components/ErrorState';
 import FilteredArticleView from '@/components/home/FilteredArticleView';
 import HorizontalFeaturedSection from '@/components/home/HorizontalFeaturedSection';
-import { useToast } from '@/components/providers/ToastProvider';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
-import { useAuth } from '@/hooks/auth/useAuth';
-import { useEditMode } from '@/hooks/ui/useEditMode';
 import { articlesService } from '@/services/articles';
-import { bookmarkService } from '@/services/bookmarks';
 import type { Article } from '@/types/articles.types';
 
 export default function FilterScreen(): JSX.Element {
@@ -23,17 +19,13 @@ export default function FilterScreen(): JSX.Element {
   const type = params['type'] as string | undefined;
   const id = params['id'] as string | undefined;
   const numericId = Number(id);
-  const { user } = useAuth();
-  const { showToast } = useToast();
 
   const { prefetchArticle } = useAppPreloader();
-  const { editMode } = useEditMode('bookmarks');
 
-  // Check if parameters are invalid
+  // Check if parameters are invalid (only category filtering is supported)
   const hasInvalidParams =
     (type === 'category' && (!id || Number.isNaN(numericId) || numericId <= 0)) ||
-    (type === 'bookmark' && !user?.id) ||
-    !['category', 'bookmark'].includes(type || '');
+    type !== 'category';
 
   // Handle navigation leak in useEffect to avoid setState during render
   useEffect(() => {
@@ -43,11 +35,8 @@ export default function FilterScreen(): JSX.Element {
   }, [hasInvalidParams, type, numericId]);
 
   const cacheKey = useMemo(() => {
-    if (type === 'bookmark') {
-      return ['bookmarked-articles', user?.id];
-    }
     return ['filtered-articles', type, numericId];
-  }, [type, numericId, user?.id]);
+  }, [type, numericId]);
 
   const {
     data: articles = [],
@@ -57,13 +46,6 @@ export default function FilterScreen(): JSX.Element {
   } = useQuery({
     queryKey: cacheKey,
     queryFn: async () => {
-      if (type === 'bookmark') {
-        if (!user?.id) {
-          throw new Error(STRINGS.FAILED_TO_LOAD_BOOKMARKS);
-        }
-        return await bookmarkService.getBookmarkedArticles(user.id);
-      }
-
       if (Number.isNaN(numericId) || numericId <= 0) {
         throw new Error(STRINGS.INVALID_FILTER_ID.replace('{id}', String(id)));
       }
@@ -97,52 +79,19 @@ export default function FilterScreen(): JSX.Element {
     [prefetchArticle]
   );
 
-  // Handle bookmark deletion
-  const handleArticleDelete = useCallback(
-    async (articleId: number) => {
-      if (type !== 'bookmark' || !user?.id) return;
-
-      try {
-        await bookmarkService.removeBookmark(user.id, articleId);
-        showToast(STRINGS.REMOVED_FROM_BOOKMARKS, 2000, 'success');
-        refetch(); // Refresh the list
-      } catch (error) {
-        // Error is already handled by the service
-        console.error('Failed to remove bookmark:', error);
-      }
-    },
-    [type, user?.id, refetch, showToast]
-  );
-
-  // Handle bookmark reordering
-  const handleArticleReorder = useCallback(
-    async (orderedArticleIds: number[]) => {
-      if (type !== 'bookmark' || !user?.id) return;
-
-      try {
-        await bookmarkService.reorderBookmarks(user.id, orderedArticleIds);
-        refetch(); // Refresh to show new order
-      } catch (error) {
-        // Error is already handled by the service
-        console.error('Failed to reorder bookmarks:', error);
-      }
-    },
-    [type, user?.id, refetch]
-  );
-
   // Create header component with featured article
   const HeaderComponent = useMemo(() => {
-    if (!articles.length || type === 'bookmark') return null;
+    if (!articles.length) return null;
 
     return (
       <HorizontalFeaturedSection
         articlesData={articles}
         refreshKey={0}
-        scope={type === 'bookmark' ? 'bookmarks' : `category-${numericId}`}
+        scope={`category-${numericId}`}
         onArticlePress={handleArticlePress}
       />
     );
-  }, [articles, type, numericId, handleArticlePress]);
+  }, [articles, numericId, handleArticlePress]);
 
   // Show error for invalid parameters first
   if (hasInvalidParams) {
@@ -175,9 +124,7 @@ export default function FilterScreen(): JSX.Element {
     <FilteredArticleView
       articles={filteredAndSortedArticles}
       onArticlePress={handleArticlePress}
-      onArticleDelete={type === 'bookmark' ? handleArticleDelete : undefined}
-      onArticleReorder={type === 'bookmark' ? handleArticleReorder : undefined}
-      editMode={type === 'bookmark' ? editMode : false}
+      editMode={false}
       totalCount={articles.length}
       loading={isLoading}
       HeaderComponent={HeaderComponent}

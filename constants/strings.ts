@@ -95,10 +95,7 @@ export const STRINGS = {
   NO_ARTICLES_FOUND: 'No articles found',
   NO_ARTICLES_SAVED: 'No saved articles',
   LISTENING_PLAYLIST_EMPTY: 'Your playlist is empty',
-  BOOKMARK_ARTICLES_HINT: 'Save articles from Read to build your playlist',
-  NO_BOOKMARKS_SAVED: 'No bookmarks yet',
-  BOOKMARK_ARTICLES_TO_READ_HINT: 'Bookmark articles to read them later',
-  BOOKMARKS: 'Bookmarks',
+
   LONG_PRESS_HINT: 'Long press to read article',
   PROGRESS_NOT_AVAILABLE: "Progress isn't available right now",
   ERROR_LOADING_DATA: "Couldn't load data",
@@ -108,8 +105,7 @@ export const STRINGS = {
   ALL_WORDS_PRACTICED: 'Great work on your practice session',
   ADDED_TO_LISTENING_LIST: 'Saved to playlist',
   REMOVED_FROM_LISTENING_LIST: 'Removed from playlist',
-  ADDED_TO_BOOKMARKS: 'Bookmarked for reading',
-  REMOVED_FROM_BOOKMARKS: 'Removed from bookmarks',
+
   ACCOUNT_CREATED: 'Account created',
   CHECK_EMAIL_CONFIRMATION: 'Check your email for confirmation',
   SUCCESS: 'Success',
@@ -351,13 +347,6 @@ export const STRINGS = {
   FAILED_TO_ADD_TO_READING_LIST: "Couldn't save article. " + tryAgain,
   FAILED_TO_REMOVE_FROM_READING_LIST: "Couldn't remove article. " + tryAgain,
   FAILED_TO_CHECK_READING_LIST_STATUS: "Couldn't check save status",
-
-  // Bookmark errors
-  FAILED_TO_LOAD_BOOKMARKS: "Couldn't load bookmarks. " + tryAgain,
-  FAILED_TO_ADD_BOOKMARK: "Couldn't add bookmark. " + tryAgain,
-  FAILED_TO_REMOVE_BOOKMARK: "Couldn't remove bookmark. " + tryAgain,
-  FAILED_TO_CHECK_BOOKMARK_STATUS: "Couldn't check bookmark status",
-  FAILED_TO_REORDER_BOOKMARKS: "Couldn't reorder bookmarks. " + tryAgain,
 
   // Word management errors
   FAILED_TO_REMOVE_WORD_FROM_STUDY: "Couldn't remove word. " + tryAgain,

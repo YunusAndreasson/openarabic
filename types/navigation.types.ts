@@ -13,7 +13,7 @@ export interface ReviewParams {
  * Type for filter parameters
  */
 export interface FilterParams {
-  type: 'author' | 'category' | 'bookmark';
+  type: 'author' | 'category';
   id: string;
   name?: string;
   headerTitle?: string;
