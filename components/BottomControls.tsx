@@ -1,10 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { memo, useMemo } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -49,19 +48,6 @@ const BottomControls = memo<BottomControlsProps>(
     const colors = useColors();
     const insets = useSafeAreaInsets();
 
-    // Optimize gradient colors calculation
-    const gradientColors = useMemo(
-      () =>
-        [
-          colors.transparent,
-          `${colors.background}40`,
-          `${colors.background}80`,
-          colors.background,
-          colors.background,
-        ] as const,
-      [colors]
-    );
-
     const hasSecondaryButton = Boolean(secondaryLabel && onSecondaryPress);
     const hasTimerButton = showTimerButton && onTimerPress;
 
@@ -74,94 +60,88 @@ const BottomControls = memo<BottomControlsProps>(
     );
 
     return (
-      <View style={styles.wrapper}>
-        {/* Optimized gradient with calculated colors */}
-        <LinearGradient
-          colors={gradientColors}
-          locations={[0, 0.3, 0.6, 0.8, 1]}
-          style={styles.gradient}
-        />
-
-        <View
-          style={[
-            styles.container,
-            { paddingBottom: Math.max(insets.bottom + LAYOUT.SPACING.SMALL, LAYOUT.SPACING.LARGE) },
-          ]}
-        >
-          {/* Timer button - positioned in top-right corner */}
-          {hasTimerButton && (
-            <View style={styles.timerContainer}>
-              <TouchableOpacity
-                activeOpacity={LAYOUT.OPACITY.PRESSED}
-                style={[
-                  styles.timerButton,
-                  dynamicStyles.timerButton,
-                  {
-                    backgroundColor: isTimerActive ? colors.tint : colors.elevation1,
-                    borderColor: isTimerActive ? colors.tint : colors.border,
-                  },
-                ]}
-                onPress={onTimerPress}
-              >
-                <Ionicons
-                  color={isTimerActive ? colors.background : colors.secondaryText}
-                  name={isTimerActive ? 'timer' : 'timer-outline'}
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                />
-                {isTimerActive && (
-                  <ThemedText
-                    skipDefaultColor
-                    type="caption"
-                    style={[
-                      styles.timerLabel,
-                      {
-                        color: colors.background,
-                        fontWeight: '600',
-                      },
-                    ]}
-                  >
-                    {STRINGS.TIMER}
-                  </ThemedText>
-                )}
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {/* Action buttons row */}
-          <View style={styles.buttonsRow}>
-            {hasSecondaryButton && (
-              <View style={styles.buttonContainer}>
-                <ThemedButton
-                  disabled={secondaryDisabled}
-                  title={secondaryLabel as string}
-                  variant={secondaryVariant}
+      <View
+        style={[
+          styles.container,
+          {
+            paddingBottom: insets.bottom || LAYOUT.SPACING.SMALL,
+            backgroundColor: colors.background,
+          },
+        ]}
+      >
+        {/* Timer button - positioned in top-right corner */}
+        {hasTimerButton && (
+          <View style={styles.timerContainer}>
+            <TouchableOpacity
+              activeOpacity={LAYOUT.OPACITY.PRESSED}
+              style={[
+                styles.timerButton,
+                dynamicStyles.timerButton,
+                {
+                  backgroundColor: isTimerActive ? colors.tint : colors.elevation1,
+                  borderColor: isTimerActive ? colors.tint : colors.border,
+                },
+              ]}
+              onPress={onTimerPress}
+            >
+              <Ionicons
+                color={isTimerActive ? colors.background : colors.secondaryText}
+                name={isTimerActive ? 'timer' : 'timer-outline'}
+                size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+              />
+              {isTimerActive && (
+                <ThemedText
+                  skipDefaultColor
+                  type="caption"
                   style={[
-                    styles.button,
-                    styles.secondaryButton,
-                    dynamicStyles.secondaryButton,
+                    styles.timerLabel,
                     {
-                      borderColor: colors.tint,
-                      backgroundColor: colors.elevation1, // Use elevation1 for card surface hierarchy
+                      color: colors.background,
+                      fontWeight: '600',
                     },
                   ]}
-                  onPress={onSecondaryPress}
-                />
-              </View>
-            )}
-            <View
-              style={hasSecondaryButton ? styles.buttonContainer : styles.fullWidthButtonContainer}
-            >
+                >
+                  {STRINGS.TIMER}
+                </ThemedText>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Action buttons row */}
+        <View style={styles.buttonsRow}>
+          {hasSecondaryButton && (
+            <View style={styles.buttonContainer}>
               <ThemedButton
-                disabled={primaryDisabled}
-                loading={primaryLoading}
-                disablePressAnimation={primaryDisablePressAnimation}
-                style={styles.button}
-                title={primaryLabel}
-                variant={primaryVariant}
-                onPress={onPrimaryPress}
-                testID="primary-action-button"
+                disabled={secondaryDisabled}
+                title={secondaryLabel as string}
+                variant={secondaryVariant}
+                style={[
+                  styles.button,
+                  styles.secondaryButton,
+                  dynamicStyles.secondaryButton,
+                  {
+                    borderColor: colors.tint,
+                    backgroundColor: colors.elevation1,
+                  },
+                ]}
+                onPress={onSecondaryPress}
               />
             </View>
+          )}
+          <View
+            style={hasSecondaryButton ? styles.buttonContainer : styles.fullWidthButtonContainer}
+          >
+            <ThemedButton
+              disabled={primaryDisabled}
+              loading={primaryLoading}
+              disablePressAnimation={primaryDisablePressAnimation}
+              style={styles.button}
+              title={primaryLabel}
+              variant={primaryVariant}
+              onPress={onPrimaryPress}
+              testID="primary-action-button"
+            />
           </View>
         </View>
       </View>
@@ -186,53 +166,31 @@ const styles = StyleSheet.create({
   },
   container: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.TINY,
-    position: 'relative',
+    paddingTop: LAYOUT.SPACING.MEDIUM,
   },
   fullWidthButtonContainer: {
     width: '100%',
   },
-  gradient: {
-    bottom: -LAYOUT.BOTTOM_BAR.HEIGHT,
-    height: MIN_TOUCH_TARGET.LARGE * 2.5, // Responsive controls height
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: -LAYOUT.SPACING.LARGE,
-  },
   secondaryButton: {
-    ...LAYOUT.ELEVATION.SUBTLE,
-    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+    backgroundColor: 'transparent',
   },
   timerButton: {
-    ...LAYOUT.ELEVATION.SUBTLE,
     alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
     flexDirection: 'row',
-    justifyContent: 'center',
-    minHeight: MIN_TOUCH_TARGET.MEDIUM, // Enhanced for better accessibility
-    minWidth: MIN_TOUCH_TARGET.LARGE,
     paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.SMALL, // Increased padding for easier touch
+    paddingVertical: LAYOUT.SPACING.TINY,
+    ...LAYOUT.ELEVATION.SUBTLE,
   },
   timerContainer: {
-    position: 'absolute',
-    right: LAYOUT.SCREEN_EDGE_PADDING,
-    top: -LAYOUT.SPACING.SMALL,
-    zIndex: 1,
+    alignItems: 'flex-end',
+    marginBottom: LAYOUT.SPACING.SMALL,
+    width: '100%',
   },
   timerLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
     marginLeft: LAYOUT.SPACING.TINY,
-  },
-  wrapper: {
-    bottom: LAYOUT.BOTTOM_BAR.HEIGHT - LAYOUT.SPACING.LARGE,
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    zIndex: LAYOUT.Z_INDEX.POPUP,
   },
 });
 

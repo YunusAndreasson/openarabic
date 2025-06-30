@@ -1,19 +1,16 @@
 import { useHeaderHeight } from '@react-navigation/elements';
 import { FlashList } from '@shopify/flash-list';
 import type { JSX } from 'react';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { StyleSheet, View } from 'react-native';
 import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BottomControls from '@/components/BottomControls';
 import EmptyState from '@/components/EmptyState';
-import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleCard } from '@/components/home/ArticleCard';
-import NowPlayingCard from '@/components/listen/NowPlayingCard';
-import SleepTimer from '@/components/listen/SleepTimer';
 import { useToast } from '@/components/providers/ToastProvider';
 import { AUDIO_STATES, type AudioState } from '@/constants/audio';
 import { LAYOUT } from '@/constants/layout';
@@ -22,7 +19,6 @@ import { useListenScreen, useListenUI } from '@/hooks/listen';
 import { useColors } from '@/hooks/theme/useColors';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import type { ReadingListItem } from '@/types/readingList.types';
-import { selectionFeedback } from '@/utils/haptics';
 
 const styles = StyleSheet.create({
   container: {
@@ -31,37 +27,28 @@ const styles = StyleSheet.create({
   flexOne: {
     flex: 1,
   },
-  loadingContainer: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-  },
 });
 
 // Use responsive height calculation instead of hardcoded value
-const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.NOW_PLAYING;
+const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.AUDIO_ITEM;
 
-// Memory-optimized component for reading list items
+// Optimized component - removed loading states and simplified props
 const ListenListItem = memo(
   ({
     item,
-    isActive,
     editMode,
     onDelete,
     onPlayPress,
     drag,
     _isBeingDragged,
-    isStartingPlayback,
     audioState,
   }: {
     item: ReadingListItem;
-    isActive: boolean;
     editMode: boolean;
     onDelete: (id: number) => void;
     onPlayPress: (id: number) => void;
     drag?: () => void;
     _isBeingDragged?: boolean;
-    isStartingPlayback?: boolean;
     audioState: AudioState;
   }) => {
     return (
@@ -79,7 +66,6 @@ const ListenListItem = memo(
             ? () => onPlayPress(item.article_id)
             : undefined
         }
-        isLoadingAudio={isStartingPlayback && isActive} // Show loading when this article is starting
         {...(drag
           ? {
               dragHandleProps: {
@@ -92,15 +78,11 @@ const ListenListItem = memo(
     );
   },
   (prevProps, nextProps) => {
-    // Optimize: Check most likely to change first, and use early return pattern
+    // Optimized comparison: only check props that actually change
     if (prevProps.editMode !== nextProps.editMode) return false;
-    if (prevProps.isActive !== nextProps.isActive) return false;
     if (prevProps._isBeingDragged !== nextProps._isBeingDragged) return false;
-    if (prevProps.isStartingPlayback !== nextProps.isStartingPlayback) return false;
     if (prevProps.audioState !== nextProps.audioState) return false;
-    // Check if audio availability changed
     if (!!prevProps.item.articles?.audio_url !== !!nextProps.item.articles?.audio_url) return false;
-    // Item ID should rarely change, so check last
     return prevProps.item.article_id === nextProps.item.article_id;
   }
 );
@@ -108,55 +90,42 @@ const ListenListItem = memo(
 ListenListItem.displayName = 'ListenListItem';
 
 export default function ListenScreen(): JSX.Element {
-  const colors = useColors();
+  const colors = useColors(); // Only used for EmptyState
   const { editMode } = useEditMode('listen');
   const { showToast } = useToast();
+  const hasNavigatedToModal = useRef(false);
 
-  const [showSleepTimer, setShowSleepTimer] = useState(false);
-  const [isPlayAllLoading, setIsPlayAllLoading] = useState(false);
-
+  // Simplified destructuring - only get what we actually use
   const {
     sortedReadingList,
-    sortedEnhancedTracks,
-    shouldShowInitialLoading,
-    isStartingPlayback,
-    setPlaybackMode,
-    duration,
-    position,
-    metadata,
     audioState,
-    actions,
     isReadingListLoading,
-    isReadingListFetching,
-    sleepTimer,
-    handleSleepTimerSet,
-    handleSleepTimerCancel,
     handlePlayAll,
     handleArticlePlay,
     handleDelete,
     enhancedTracksError,
   } = useListenScreen();
 
-  const listenMetadata = useMemo(
-    () => ({
-      articleId: metadata.articleId || null,
-      articleTitle: metadata.articleTitle || null,
-    }),
-    [metadata.articleId, metadata.articleTitle]
-  );
+  // Simplified UI hook call - removed unused parameters
+  const { canShowEmpty, handleNowPlayingPress, handleDragEnd } = useListenUI({
+    sortedReadingList,
+    editMode,
+  });
 
-  const { canShowEmpty, flashListExtraData, currentArticle, handleNowPlayingPress, handleDragEnd } =
-    useListenUI({
-      sortedReadingList,
-      metadata: listenMetadata,
-      audioState,
-      isStartingPlayback,
-      position,
-      duration,
-    });
-
-  const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
+  const insets = useSafeAreaInsets();
+
+  // Auto-navigate to modal when audio starts playing from other sources
+  useEffect(() => {
+    if (audioState === AUDIO_STATES.PLAYING && !hasNavigatedToModal.current) {
+      hasNavigatedToModal.current = true;
+      handleNowPlayingPress();
+    }
+
+    if (audioState === AUDIO_STATES.IDLE) {
+      hasNavigatedToModal.current = false;
+    }
+  }, [audioState, handleNowPlayingPress]);
 
   useEffect(() => {
     if (enhancedTracksError) {
@@ -164,128 +133,64 @@ export default function ListenScreen(): JSX.Element {
     }
   }, [enhancedTracksError, showToast]);
 
-  // Check if we have any texts to show controls for (memoized to prevent glitches)
-  const hasArticles = useMemo(() => sortedReadingList.length > 0, [sortedReadingList.length]);
+  // Optimized Play All handler - open modal immediately
+  const handlePlayAllWithModal = useCallback(async () => {
+    hasNavigatedToModal.current = true;
+    handleNowPlayingPress();
+    await handlePlayAll();
+  }, [handlePlayAll, handleNowPlayingPress]);
 
-  // Check if we have any articles with audio available (memoized to prevent glitches)
-  const hasAudioArticles = useMemo(
-    () => sortedEnhancedTracks.length > 0,
-    [sortedEnhancedTracks.length]
-  );
+  // Simplified state calculations
+  const hasArticles = sortedReadingList.length > 0;
+  const shouldShowEmpty = !hasArticles && canShowEmpty && !isReadingListLoading;
 
-  // Check if player should be visible (when playing or stopped with content)
-  const shouldShowPlayer = useMemo(() => {
-    return (
-      (audioState === AUDIO_STATES.PLAYING || audioState === AUDIO_STATES.STOPPED) &&
-      !!currentArticle
-    );
-  }, [audioState, currentArticle]);
-
-  // Memoize button visibility condition to prevent rapid appearance/disappearance during loading
-  const shouldShowBottomControls = useMemo(() => {
-    // Only show controls when we have stable data (not during initial loading)
-    return (
-      hasArticles &&
-      hasAudioArticles &&
-      !shouldShowPlayer &&
-      !isStartingPlayback &&
-      !shouldShowInitialLoading
-    );
-  }, [
-    hasArticles,
-    hasAudioArticles,
-    shouldShowPlayer,
-    isStartingPlayback,
-    shouldShowInitialLoading,
-  ]);
-
-  // Since data is preloaded, only show empty state when we definitively have no articles
-  // and we've waited long enough to prevent flashing
-  const shouldShowEmpty =
-    !hasArticles && canShowEmpty && !isReadingListLoading && !isReadingListFetching;
-
-  // Calculate safe bottom spacing for different UI states
-  const safeBottomSpacing = useMemo(() => {
-    const baseTabBarHeight = LAYOUT.BOTTOM_BAR.HEIGHT;
-    const safeAreaBottom = Math.max(insets.bottom, LAYOUT.SPACING.SMALL);
-
-    if (shouldShowPlayer) {
-      // Account for NowPlayingCard height + its bottom spacing + safe area
-      return baseTabBarHeight + ITEM_HEIGHT + LAYOUT.SPACING.LARGE + safeAreaBottom;
-    } else if (hasArticles && hasAudioArticles) {
-      // Account for BottomControls height + safe area
-      return baseTabBarHeight + LAYOUT.SPACING.XLARGE + safeAreaBottom;
-    } else {
-      // Just safe area spacing
-      return safeAreaBottom;
-    }
-  }, [insets.bottom, shouldShowPlayer, hasArticles, hasAudioArticles]);
-
+  // Proper spacing accounting for bottom controls and tab bar
   const listContainerStyle = useMemo(
     () => ({
       paddingTop: headerHeight + LAYOUT.SPACING.MEDIUM,
-      paddingBottom: safeBottomSpacing,
+      // Account for BottomControls height + tab bar + safe area when controls are visible
+      paddingBottom: hasArticles
+        ? LAYOUT.BOTTOM_BAR.HEIGHT +
+          LAYOUT.SPACING.XLARGE +
+          Math.max(insets.bottom, LAYOUT.SPACING.SMALL)
+        : LAYOUT.SPACING.MEDIUM,
       paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     }),
-    [headerHeight, safeBottomSpacing]
+    [headerHeight, hasArticles, insets.bottom]
   );
 
-  // Render item for both FlashList and DraggableFlatList
-  const renderItem: (
-    params: { item: ReadingListItem; index?: number } | RenderItemParams<ReadingListItem>
-  ) => JSX.Element = useCallback(
-    params => {
+  // Optimized render function - simplified logic
+  const renderItem = useCallback(
+    (params: { item: ReadingListItem; index?: number } | RenderItemParams<ReadingListItem>) => {
       const { item } = params;
-      const isActive =
-        audioState === AUDIO_STATES.PLAYING &&
-        !!metadata.articleId &&
-        parseInt(metadata.articleId ?? '', 10) === item.article_id;
 
       if (editMode && 'drag' in params) {
-        // DraggableFlatList render
         const { drag, isActive: isDragging } = params;
         return (
           <ListenListItem
-            isActive={isActive}
             editMode={editMode}
             item={item}
             onDelete={handleDelete}
             onPlayPress={handleArticlePlay}
             drag={drag}
             _isBeingDragged={isDragging}
-            isStartingPlayback={isStartingPlayback}
             audioState={audioState}
           />
         );
       } else {
-        // FlashList render
         return (
           <ListenListItem
-            isActive={isActive}
             editMode={editMode}
             item={item}
             onDelete={handleDelete}
             onPlayPress={handleArticlePlay}
-            isStartingPlayback={isStartingPlayback}
             audioState={audioState}
           />
         );
       }
     },
-    [audioState, metadata.articleId, editMode, handleDelete, handleArticlePlay, isStartingPlayback]
+    [audioState, editMode, handleDelete, handleArticlePlay]
   );
-
-  // Show loading screen only during initial uncached load
-  if (shouldShowInitialLoading) {
-    return (
-      <ThemedView style={styles.loadingContainer}>
-        <ActivityIndicator color={colors.tint} size="large" />
-        <ThemedText style={{ marginTop: LAYOUT.SPACING.MEDIUM }}>
-          {STRINGS.LOADING_PLAYLIST}
-        </ThemedText>
-      </ThemedView>
-    );
-  }
 
   return (
     <ThemedView
@@ -295,7 +200,6 @@ export default function ListenScreen(): JSX.Element {
     >
       <ThemedView includeBottomInset={false} style={styles.flexOne} useSafeArea={false}>
         {editMode ? (
-          // Use DraggableFlatList in edit mode
           <DraggableFlatList<ReadingListItem>
             data={sortedReadingList}
             keyExtractor={item => `${item.article_id}`}
@@ -322,12 +226,11 @@ export default function ListenScreen(): JSX.Element {
             }
           />
         ) : (
-          // Use FlashList in normal mode
           <FlashList<ReadingListItem>
             data={sortedReadingList}
             drawDistance={ITEM_HEIGHT * 5}
             estimatedItemSize={ITEM_HEIGHT}
-            extraData={flashListExtraData}
+            extraData={{ audioState, editMode }} // Simplified extraData
             keyExtractor={item => `${item.article_id}`}
             removeClippedSubviews={true}
             showsVerticalScrollIndicator={false}
@@ -357,60 +260,28 @@ export default function ListenScreen(): JSX.Element {
           />
         )}
       </ThemedView>
-      {/* Bottom controls - always rendered to prevent flashing, visibility controlled by opacity */}
+
+      {/* Bottom controls positioned above tab bar */}
       <View
         style={{
-          opacity: shouldShowBottomControls ? 1 : 0,
-          pointerEvents: shouldShowBottomControls ? 'auto' : 'none',
+          position: 'absolute',
+          bottom: LAYOUT.BOTTOM_BAR.HEIGHT, // Position above tab bar
+          left: 0,
+          right: 0,
+          opacity: hasArticles ? 1 : 0,
+          pointerEvents: hasArticles ? 'auto' : 'none',
         }}
       >
         <BottomControls
-          primaryDisabled={isPlayAllLoading}
-          primaryLoading={isPlayAllLoading}
+          primaryDisabled={false}
+          primaryLoading={false}
           primaryDisablePressAnimation={true}
           primaryLabel={STRINGS.PLAY_ALL}
           primaryVariant="filled"
           showTimerButton={false}
-          onPrimaryPress={() => handlePlayAll(setIsPlayAllLoading)}
+          onPrimaryPress={handlePlayAllWithModal}
         />
       </View>
-      {/* Now Playing Card - shows when starting playback or playing */}
-      <NowPlayingCard
-        article={currentArticle}
-        duration={isStartingPlayback ? 0 : duration * 1000}
-        isTimerActive={sleepTimer.state.isActive}
-        isVisible={
-          shouldShowPlayer ||
-          isStartingPlayback ||
-          (audioState === AUDIO_STATES.LOADING && !!metadata.articleId)
-        }
-        progress={isStartingPlayback ? 0 : position * 1000}
-        showTimerButton={true}
-        onPress={handleNowPlayingPress}
-        onStop={() => {
-          selectionFeedback();
-          if (isStartingPlayback) {
-            // If still starting, allow canceling
-            setPlaybackMode('none');
-          }
-          actions.stopPlayback();
-        }}
-        onTimerPress={() => {
-          selectionFeedback();
-          setShowSleepTimer(true);
-        }}
-      />
-      {/* Sleep Timer Modal - only show when there are texts and timer is active/visible */}
-      {hasArticles && (
-        <SleepTimer
-          isActive={sleepTimer.state.isActive}
-          isVisible={showSleepTimer}
-          remainingTime={sleepTimer.state.remainingTime}
-          onClose={() => setShowSleepTimer(false)}
-          onTimerCancel={handleSleepTimerCancel}
-          onTimerSet={handleSleepTimerSet}
-        />
-      )}
     </ThemedView>
   );
 }

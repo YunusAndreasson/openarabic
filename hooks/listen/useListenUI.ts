@@ -1,96 +1,31 @@
 import { router } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { InteractionManager } from 'react-native';
 
-import type { AudioState } from '@/constants/audio';
 import { getArticleRoute } from '@/constants/routes';
-import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
-import { useEditMode } from '@/hooks/ui/useEditMode';
 import { useAppDispatch } from '@/store/hooks';
 import { setCustomOrder } from '@/store/listenSlice';
-import type { Article } from '@/types/articles.types';
 import type { ReadingListItem } from '@/types/readingList.types';
 import { selectionFeedback } from '@/utils/haptics';
 
 interface ListenUIParams {
   sortedReadingList: ReadingListItem[];
-  metadata: { articleId: string | null; articleTitle: string | null };
-  audioState: AudioState;
-  isStartingPlayback: boolean;
-  position?: number;
-  duration?: number;
+  editMode: boolean;
 }
 
-export const useListenUI = ({
-  sortedReadingList,
-  metadata,
-  audioState,
-  isStartingPlayback,
-  position,
-  duration,
-}: ListenUIParams) => {
+export const useListenUI = ({ sortedReadingList, editMode }: ListenUIParams) => {
   const { prefetchArticle } = useAppPreloader();
   const dispatch = useAppDispatch();
-  const { editMode } = useEditMode('listen');
 
   const [canShowEmpty, setCanShowEmpty] = useState(false);
-  const showEmptyRef = useRef<number | null>(null);
 
   useEffect(() => {
-    showEmptyRef.current = requestAnimationFrame(() => {
+    const timeout = requestAnimationFrame(() => {
       setCanShowEmpty(true);
     });
-    return () => {
-      if (showEmptyRef.current !== null) {
-        cancelAnimationFrame(showEmptyRef.current);
-      }
-    };
+    return () => cancelAnimationFrame(timeout);
   }, []);
-
-  const metadataValues = useMemo(
-    () => ({
-      articleId: metadata.articleId,
-      articleTitle: metadata.articleTitle,
-    }),
-    [metadata.articleId, metadata.articleTitle]
-  );
-
-  const flashListExtraData = useMemo(
-    () => ({
-      metadataValues,
-      audioState,
-      editMode,
-    }),
-    [metadataValues, audioState, editMode]
-  );
-
-  const currentArticle = useMemo<Partial<Article> | Article | null>(() => {
-    if (isStartingPlayback && sortedReadingList.length > 0) {
-      return sortedReadingList[0]?.articles || null;
-    }
-
-    if (!metadata.articleId || !sortedReadingList.length) return null;
-
-    const articleIdNumber = parseInt(metadata.articleId ?? '', 10);
-    if (isNaN(articleIdNumber)) return null;
-
-    const currentItem = sortedReadingList.find(item => item.article_id === articleIdNumber);
-    const foundArticle = currentItem?.articles;
-
-    // If we have metadata but no article yet, create a minimal article object
-    if (!foundArticle && metadata.articleTitle) {
-      return {
-        id: articleIdNumber,
-        title: metadata.articleTitle,
-        author: { id: 0, name: STRINGS.LOADING },
-        image_url: '',
-        placeholder: '',
-      } as Partial<Article>; // Minimal article for display purposes
-    }
-
-    return foundArticle || null;
-  }, [isStartingPlayback, sortedReadingList, metadata.articleId, metadata.articleTitle]);
 
   const handleArticlePress = useCallback(
     (articleId: number) => {
@@ -106,38 +41,13 @@ export const useListenUI = ({
   );
 
   const handleNowPlayingPress = useCallback(() => {
-    // Navigate to the now playing modal with current article ID and audio state
-    const articleId = currentArticle?.id;
-    const params: Record<string, string> = {};
-
-    if (articleId) {
-      params['articleId'] = String(articleId);
-    }
-
-    // Pass current audio state data
-    if (metadata.articleId) {
-      params['playingArticleId'] = metadata.articleId;
-    }
-
-    // Convert to milliseconds for consistency
-    if (typeof position === 'number' && isFinite(position)) {
-      params['position'] = String(position * 1000);
-    }
-
-    if (typeof duration === 'number' && isFinite(duration)) {
-      params['duration'] = String(duration * 1000);
-    }
-
-    params['audioState'] = audioState || 'idle';
-
-    const queryString = new URLSearchParams(params).toString();
-    router.push(`/(tabs)/listen/NowPlaying${queryString ? `?${queryString}` : ''}`);
-  }, [currentArticle?.id, metadata.articleId, position, duration, audioState, router]);
+    // Navigate to the now playing modal - simplified without complex params
+    router.push('/(tabs)/listen/NowPlaying');
+  }, []);
 
   const handleDragEnd = useCallback(
     ({ data }: { data: ReadingListItem[] }) => {
       selectionFeedback();
-
       const newOrder = data.map(item => item.article_id);
       dispatch(setCustomOrder(newOrder));
     },
@@ -146,9 +56,6 @@ export const useListenUI = ({
 
   return {
     canShowEmpty,
-    metadataValues,
-    flashListExtraData,
-    currentArticle,
     handleArticlePress,
     handleNowPlayingPress,
     handleDragEnd,

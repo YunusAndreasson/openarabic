@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useCallback, type ComponentProps, type FC } from 'react';
 import type { ViewStyle } from 'react-native';
-import { ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ICON_BUTTON_PRESS_SCALE } from '@/constants/animation';
@@ -14,7 +14,6 @@ import { selectionFeedback } from '@/utils/haptics';
 interface PlayButtonProps
   extends Omit<BaseIconButtonProps<ComponentProps<typeof Ionicons>['name']>, 'icon'> {
   isPlaying?: boolean;
-  isLoading?: boolean;
   iconColor?: string;
 }
 
@@ -25,7 +24,6 @@ function getIconName(isPlaying: boolean) {
 const PlayButton: FC<PlayButtonProps> = ({
   onPress,
   isPlaying = false,
-  isLoading = false,
   disabled = false,
   iconColor,
 }) => {
@@ -35,15 +33,12 @@ const PlayButton: FC<PlayButtonProps> = ({
   });
 
   const handlePress = useCallback(() => {
-    if (disabled || isLoading) return;
-
+    if (disabled) return;
     selectionFeedback();
     onPress();
-  }, [disabled, isLoading, onPress]);
+  }, [disabled, onPress]);
 
-  // Use filled style like PLAY ALL button - always tint background with white icon
   const backgroundColor = colors.tint;
-  // Use iconColor prop if provided, otherwise use dark text/tint for contrast
   const resolvedIconColor = iconColor || colors.text;
 
   return (
@@ -53,7 +48,7 @@ const PlayButton: FC<PlayButtonProps> = ({
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      disabled={disabled || isLoading}
+      disabled={disabled}
       hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
     >
       <Animated.View
@@ -66,16 +61,12 @@ const PlayButton: FC<PlayButtonProps> = ({
           },
         ]}
       >
-        {isLoading ? (
-          <ActivityIndicator size="small" color={resolvedIconColor} />
-        ) : (
-          <Ionicons
-            name={getIconName(isPlaying)}
-            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-            color={resolvedIconColor}
-            style={styles.icon}
-          />
-        )}
+        <Ionicons
+          name={getIconName(isPlaying)}
+          size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+          color={resolvedIconColor}
+          style={styles.icon}
+        />
       </Animated.View>
     </TouchableOpacity>
   );
@@ -85,13 +76,13 @@ const styles = StyleSheet.create({
   button: {
     ...LAYOUT.ELEVATION.SUBTLE,
     alignItems: 'center',
-    borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2, // Circular
+    borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2,
     height: MIN_TOUCH_TARGET.MEDIUM,
     justifyContent: 'center',
     width: MIN_TOUCH_TARGET.MEDIUM,
   },
   icon: {
-    marginLeft: LAYOUT.SPACING.MICRO, // Slight optical adjustment for play icon
+    marginLeft: LAYOUT.SPACING.MICRO,
   },
 });
 

@@ -1,8 +1,9 @@
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated, {
   Easing,
   interpolate,
@@ -15,15 +16,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AudioProgressIndicator from '@/components/AudioProgressIndicator';
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import SleepTimer from '@/components/listen/SleepTimer';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
-import { STRINGS } from '@/constants/strings';
 import { useArticleData } from '@/hooks/articles/useArticleData';
-import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
 import { useCurrentSentence } from '@/hooks/audio/useCurrentSentence';
+import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
+import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { withOpacity } from '@/utils/colorUtils';
+import { selectionFeedback } from '@/utils/haptics';
 
 // Modal drag indicator component positioned over background image
 const ModalDragIndicator = () => {
@@ -47,30 +51,37 @@ export default function NowPlayingModal() {
   const insets = useSafeAreaInsets();
   const isDarkMode = !colors['surface'];
 
+  // State for sleep timer modal
+  const [showSleepTimer, setShowSleepTimer] = useState(false);
+
   // Get router params for article ID fallback and audio state
   const params = useLocalSearchParams<{
     articleId?: string;
-    playingArticleId?: string;
     position?: string;
     duration?: string;
     audioState?: string;
   }>();
 
-  // Use audio data from params (from currently playing audio) or fallback to useAudioPlayer
-  const audioPlayerData = useAudioPlayer();
+  // SIMPLIFIED: Use simple audio player
+  const audioPlayer = useSimpleAudioPlayer();
+
+  // Initialize sleep timer with stop callback
+  const sleepTimer = useSleepTimer(() => {
+    audioPlayer.stop();
+  });
 
   // Track progress with our own timer when audio is playing
   const [simulatedPosition, setSimulatedPosition] = useState<number>(0);
 
   useEffect(() => {
     // Use either live audio player state OR navigation params to determine if playing
-    const isPlaying = audioPlayerData.audioState === 'playing' || params.audioState === 'playing';
+    const isPlaying = audioPlayer.audioState === 'playing' || params.audioState === 'playing';
 
     if (isPlaying) {
       // Get starting position from params if available
       const startPosition = params.position
         ? parseFloat(params.position) / 1000 // Convert ms to seconds
-        : audioPlayerData.position || 0;
+        : audioPlayer.position || 0;
 
       // Set initial position
       setSimulatedPosition(startPosition);
@@ -84,7 +95,7 @@ export default function NowPlayingModal() {
 
     // Return empty cleanup function when not playing
     return () => {};
-  }, [audioPlayerData.audioState, params.audioState]); // Check both audio states
+  }, [audioPlayer.audioState, params.audioState, params.position, audioPlayer.position]);
 
   const position = useMemo(() => {
     // Use simulated position when available and positive
@@ -92,8 +103,8 @@ export default function NowPlayingModal() {
       return simulatedPosition;
     }
     // Fallback to audio player data
-    if (audioPlayerData.position !== undefined) {
-      return audioPlayerData.position;
+    if (audioPlayer.position !== undefined) {
+      return audioPlayer.position;
     }
     // Fallback to params (passed from currently playing audio)
     if (params.position) {
@@ -101,12 +112,12 @@ export default function NowPlayingModal() {
       if (!isNaN(parsed)) return parsed;
     }
     return 0;
-  }, [simulatedPosition, audioPlayerData.position, params.position]);
+  }, [simulatedPosition, audioPlayer.position, params.position]);
 
   const duration = useMemo(() => {
     // Fallback to audio player data
-    if (audioPlayerData.duration !== undefined && audioPlayerData.duration > 0) {
-      return audioPlayerData.duration;
+    if (audioPlayer.duration !== undefined && audioPlayer.duration > 0) {
+      return audioPlayer.duration;
     }
     // Fallback to params (passed from currently playing audio)
     if (params.duration) {
@@ -114,14 +125,12 @@ export default function NowPlayingModal() {
       if (!isNaN(parsed)) return parsed;
     }
     return 0;
-  }, [params.duration, audioPlayerData.duration]);
-
-  const metadata = audioPlayerData.metadata;
+  }, [params.duration, audioPlayer.duration]);
 
   const articleId = useMemo(() => {
     // First try to get from audio player metadata (currently playing)
-    if (metadata.articleId) {
-      const parsed = parseInt(metadata.articleId, 10);
+    if (audioPlayer.metadata.articleId) {
+      const parsed = parseInt(audioPlayer.metadata.articleId, 10);
       if (!isNaN(parsed)) return parsed;
     }
 
@@ -132,15 +141,22 @@ export default function NowPlayingModal() {
     }
 
     return undefined;
-  }, [metadata.articleId, params.articleId]);
+  }, [audioPlayer.metadata.articleId, params.articleId]);
 
   const { article, sortedSentences, sentenceWordsMap } = useArticleData(articleId, user?.id);
 
-  const { currentSentence, sentenceProgress } = useCurrentSentence({
+  const { currentSentence, currentSentenceIndex, sentenceProgress } = useCurrentSentence({
     position,
     sentences: sortedSentences,
     sentenceWordsMap,
   });
+
+  // Calculate bottom position with safe area (matching BottomControls pattern)
+  const bottomPosition = useMemo(() => {
+    // Same pattern as BottomControls: safe area + small spacing, minimum large spacing
+    const safeBottom = Math.max(insets.bottom + LAYOUT.SPACING.SMALL, LAYOUT.SPACING.LARGE);
+    return safeBottom;
+  }, [insets.bottom]);
 
   // Audio-reactive gradient animation
   const gradientProgress = useSharedValue(0);
@@ -152,7 +168,7 @@ export default function NowPlayingModal() {
       duration: TIMING_CONFIG.GENTLE.duration,
       easing: Easing.out(Easing.cubic),
     });
-  }, [sentenceProgress, gradientProgress]);
+  }, [sentenceProgress]);
 
   // Fade in/out sentence text
   useEffect(() => {
@@ -167,7 +183,7 @@ export default function NowPlayingModal() {
         easing: Easing.out(Easing.quad),
       });
     }
-  }, [currentSentence, sentenceOpacity]);
+  }, [currentSentence]);
 
   // Calculate progress percentage for the progress bar
   const progressPercentage = useMemo(() => {
@@ -198,6 +214,48 @@ export default function NowPlayingModal() {
     ] as const;
   }, [colors.background, colors.elevation1, isDarkMode]);
 
+  const handleStop = async () => {
+    try {
+      selectionFeedback();
+
+      // Stop audio with more robust approach
+      await audioPlayer.stop();
+
+      // Add small delay to ensure audio has stopped before dismissing modal
+      setTimeout(() => {
+        router.dismiss();
+      }, 100);
+    } catch (error) {
+      console.log('❌ [STOP BUTTON] Error during stop:', error);
+
+      // If stop fails, still close the modal after a short delay
+      setTimeout(() => {
+        router.dismiss();
+      }, 100);
+    }
+  };
+
+  const handleTimerPress = () => {
+    selectionFeedback();
+    setShowSleepTimer(true);
+  };
+
+  const handleSleepTimerSet = (minutes: number) => {
+    sleepTimer.actions.startTimer(minutes);
+  };
+
+  const handleSleepTimerCancel = () => {
+    sleepTimer.actions.cancelTimer();
+  };
+
+  // Calculate sentence progress for display
+  const sentenceProgressText = useMemo(() => {
+    if (sortedSentences.length === 0) return '';
+    const current = Math.max(0, currentSentenceIndex) + 1; // Convert to 1-based
+    const total = sortedSentences.length;
+    return `Sentence ${current} of ${total}`;
+  }, [currentSentenceIndex, sortedSentences.length]);
+
   // Show error only if no article at all - allow missing current sentence
   if (!article) {
     return (
@@ -208,7 +266,7 @@ export default function NowPlayingModal() {
         </View>
         <View style={styles.sentenceSection}>
           <ThemedText type="body" variant="secondary">
-            {STRINGS.LOADING}
+            Preparing audio...
           </ThemedText>
         </View>
       </View>
@@ -241,7 +299,7 @@ export default function NowPlayingModal() {
       {/* Modal drag indicator positioned over background image */}
       <ModalDragIndicator />
 
-      {/* Header with Title and Author */}
+      {/* Header with Title and Author - Centered */}
       <View style={[styles.header, { paddingTop: insets.top + LAYOUT.SPACING.MEDIUM }]}>
         <View style={styles.headerInfo}>
           <ThemedText type="heading3" style={styles.title} numberOfLines={2}>
@@ -253,8 +311,15 @@ export default function NowPlayingModal() {
         </View>
       </View>
 
-      {/* Current Sentence Display */}
+      {/* Current Sentence Display with Progress */}
       <View style={styles.sentenceSection}>
+        {/* Sentence Progress Indicator */}
+        {sentenceProgressText && (
+          <ThemedText type="caption" style={styles.progressText}>
+            {sentenceProgressText}
+          </ThemedText>
+        )}
+
         {currentSentence ? (
           <Animated.View style={[styles.sentenceContainer, sentenceAnimatedStyle]}>
             <ThemedText type="body" style={styles.englishText}>
@@ -265,30 +330,73 @@ export default function NowPlayingModal() {
           <Animated.View style={[styles.sentenceContainer, sentenceAnimatedStyle]}>
             <ThemedText type="body" style={styles.englishText}>
               {sortedSentences.length > 0
-                ? STRINGS.LOADING
+                ? 'Playing audio...'
                 : 'Start playing an article to see synchronized text'}
             </ThemedText>
           </Animated.View>
         )}
       </View>
 
-      {/* Audio Progress at Bottom - positioned absolutely */}
-      <View
-        style={[
-          styles.bottomProgress,
-          { bottom: insets.bottom + LAYOUT.SPACING.XXXLARGE + LAYOUT.SPACING.MEDIUM },
-        ]}
+      {/* Audio Controls and Progress at Bottom */}
+      <ThemedView
+        style={[styles.bottomControlsContainer, { bottom: bottomPosition }]}
+        safeAreaEdges={[]}
+        includeBottomInset={false}
       >
-        <AudioProgressIndicator
-          position={position || 0}
-          duration={duration || 0}
-          progressPercentage={progressPercentage}
-          progressBarHeight={LAYOUT.SPACING.TINY}
-          progressBackgroundColor="rgba(255,255,255,0.3)"
-          progressFillColor="white"
-          useWhiteText={true}
-        />
-      </View>
+        <View style={styles.bottomControls}>
+          {/* Audio Progress */}
+          <View style={styles.progressSection}>
+            <AudioProgressIndicator
+              position={position || 0}
+              duration={duration || 0}
+              progressPercentage={progressPercentage}
+              progressBarHeight={LAYOUT.SPACING.TINY}
+              progressBackgroundColor="rgba(255,255,255,0.3)"
+              progressFillColor="white"
+              useWhiteText={true}
+            />
+          </View>
+
+          {/* Control Buttons */}
+          <View style={styles.controlButtons}>
+            {/* Timer Button */}
+            <TouchableOpacity
+              activeOpacity={LAYOUT.OPACITY.HOVER}
+              style={[
+                styles.controlButton,
+                styles.timerButton,
+                sleepTimer.state.isActive && styles.timerButtonActive,
+              ]}
+              onPress={handleTimerPress}
+            >
+              <Ionicons
+                color={sleepTimer.state.isActive ? colors.background : 'white'}
+                name={sleepTimer.state.isActive ? 'timer' : 'timer-outline'}
+                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+              />
+            </TouchableOpacity>
+
+            {/* Stop Button */}
+            <TouchableOpacity
+              activeOpacity={LAYOUT.OPACITY.HOVER}
+              style={[styles.controlButton, styles.stopButton]}
+              onPress={handleStop}
+            >
+              <Ionicons color="white" name="stop" size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ThemedView>
+
+      {/* Sleep Timer Modal */}
+      <SleepTimer
+        isActive={sleepTimer.state.isActive}
+        isVisible={showSleepTimer}
+        remainingTime={sleepTimer.state.remainingTime}
+        onClose={() => setShowSleepTimer(false)}
+        onTimerCancel={handleSleepTimerCancel}
+        onTimerSet={handleSleepTimerSet}
+      />
     </View>
   );
 }
@@ -317,18 +425,19 @@ const styles = StyleSheet.create({
 
   header: {
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
   },
 
   headerInfo: {
     alignItems: 'center',
-    width: '100%',
+    maxWidth: '90%',
   },
 
   title: {
     color: 'white',
-    textAlign: 'right',
+    textAlign: 'center',
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
     textShadowColor: 'rgba(0,0,0,0.3)',
     textShadowOffset: { width: 0, height: LAYOUT.SPACING.MICRO },
@@ -337,17 +446,30 @@ const styles = StyleSheet.create({
 
   author: {
     color: 'rgba(255,255,255,0.9)',
-    textAlign: 'right',
+    textAlign: 'center',
     marginTop: LAYOUT.SPACING.TINY,
     textShadowColor: 'rgba(0,0,0,0.2)',
     textShadowOffset: { width: 0, height: LAYOUT.SPACING.MICRO },
     textShadowRadius: LAYOUT.SPACING.MICRO,
   },
 
+  progressText: {
+    color: 'rgba(255,255,255,0.8)',
+    textAlign: 'center',
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: LAYOUT.SPACING.MICRO },
+    textShadowRadius: LAYOUT.SPACING.HALF_TINY,
+  },
+
   sentenceSection: {
     paddingTop: LAYOUT.SPACING.XXXLARGE * 2, // Large gap below header
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING * 1.5,
     alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
   },
 
   sentenceContainer: {
@@ -367,15 +489,50 @@ const styles = StyleSheet.create({
     textShadowRadius: LAYOUT.SPACING.TINY,
   },
 
-  bottomProgress: {
+  bottomControlsContainer: {
     position: 'absolute',
     left: LAYOUT.SPACING.LARGE,
     right: LAYOUT.SPACING.LARGE,
-    height: 70, // Proper height for progress section
+    // bottom position now handled dynamically
+  },
+
+  bottomControls: {
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)', // Semi-transparent dark background
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    // Removed box styling - no background or border radius
+  },
+
+  progressSection: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+
+  controlButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: LAYOUT.SPACING.LARGE,
+  },
+
+  controlButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: LAYOUT.BUTTON.HEIGHT.LARGE / 2,
+  },
+
+  stopButton: {
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
+    width: LAYOUT.BUTTON.HEIGHT.MEDIUM,
+  },
+
+  timerButton: {
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
+    width: LAYOUT.BUTTON.HEIGHT.MEDIUM,
+  },
+
+  timerButtonActive: {
+    backgroundColor: 'rgba(255,193,7,0.9)', // Warning color with transparency
   },
 
   modalDragIndicator: {

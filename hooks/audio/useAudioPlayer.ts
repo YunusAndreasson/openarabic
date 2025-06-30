@@ -1,10 +1,6 @@
 // Audio player hook using expo-audio for Expo SDK 53
-import {
-  useAudioPlayer as useExpoAudioPlayer,
-  useAudioPlayerStatus,
-  setAudioModeAsync,
-} from 'expo-audio';
-import { useState, useEffect, useCallback, useMemo, useReducer } from 'react';
+import { createAudioPlayer, setAudioModeAsync, useAudioPlayerStatus } from 'expo-audio';
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 
 import { AUDIO_STATES, type AudioState } from '@/constants/audio';
 import { STRINGS } from '@/constants/strings';
@@ -12,28 +8,26 @@ import { audioCache } from '@/services/audioCache';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import { handleError } from '@/utils/errorHandling';
 
-/**
- * Enhanced audio player interface
- */
-export interface EnhancedPlayerAPI {
-  // Legacy compatibility properties (still used)
-  progress: number;
+// Enhanced player API interface
+interface EnhancedPlayerAPI {
+  // State
+  audioState: AudioState;
+  currentTrackIndex: number;
+  position: number;
+  duration: number;
+  isLoading: boolean;
   metadata: {
     articleId?: string;
     articleTitle?: string;
   };
-  audioState: AudioState;
-  currentTrackIndex: number;
+  progress: number;
+
+  // Actions
   actions: {
-    stopPlayback: () => Promise<void>;
     startEnhancedPlayback: (tracks: EnhancedAudioTrack[], startIndex?: number) => Promise<boolean>;
+    stopPlayback: () => Promise<void>;
     prefetchTracks: (tracks: EnhancedAudioTrack[]) => Promise<EnhancedAudioTrack[]>;
   };
-
-  // State properties (only the ones actually used)
-  isLoading: boolean;
-  position: number;
-  duration: number;
 }
 
 interface PlayerState {
@@ -70,6 +64,12 @@ function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
         currentTrack: action.queue[action.index] || null,
       };
     case 'SET_CURRENT_TRACK':
+      // Only log critical debugging cases
+      if (state.currentTrack && !action.track) {
+        console.log('🚨 [PLAYER REDUCER] currentTrack being set to NULL!');
+        console.log('🚨 [PLAYER REDUCER] Previous track:', state.currentTrack.title);
+        console.log('🚨 [PLAYER REDUCER] Call stack:', new Error().stack);
+      }
       return { ...state, currentTrack: action.track };
     case 'SET_INDEX':
       return {
@@ -82,6 +82,9 @@ function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
     case 'SET_AUTOPLAY':
       return { ...state, shouldAutoPlay: action.value };
     case 'RESET':
+      console.log('🔄 [PLAYER REDUCER] RESET action dispatched!');
+      console.log('🔄 [PLAYER REDUCER] Previous state had track:', !!state.currentTrack);
+      console.log('🔄 [PLAYER REDUCER] Call stack:', new Error().stack);
       return initialState;
     default:
       return state;
@@ -94,21 +97,160 @@ function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
 export function useAudioPlayer(): EnhancedPlayerAPI {
   // Main state management via reducer
   const [state, dispatch] = useReducer(playerReducer, initialState);
-  const { currentTrack, queue, currentIndex, isLoading, shouldAutoPlay } = state;
+  const { currentTrack, queue: _queue, currentIndex, isLoading, shouldAutoPlay } = state;
 
-  // Create audio player with current track source - following expo-audio docs pattern exactly
-  const audioSource = currentTrack ? { uri: currentTrack.audioUrl } : null;
-  const audioPlayer = useExpoAudioPlayer(audioSource);
+  // FIXED: Manual player management to prevent orphaned players
+  const audioPlayerRef = useRef<any>(null);
+  const currentSourceRef = useRef<string | null>(null);
 
-  // Use the proper expo-audio status hook
-  const status = useAudioPlayerStatus(audioPlayer);
+  // Manually create and manage audio player
+  const audioPlayer = useMemo(() => {
+    const audioSource = currentTrack ? { uri: currentTrack.audioUrl } : null;
+    const newSource = audioSource?.uri || null;
 
-  // Check for player errors
-  useEffect(() => {
-    if (currentTrack && !status?.isLoaded && status?.playbackState === 'unknown') {
-      // Player having trouble loading track
+    // If no source, return null (no player needed)
+    if (!audioSource) {
+      // Clean up existing player if we no longer need it
+      if (audioPlayerRef.current) {
+        try {
+          if (typeof audioPlayerRef.current.pause === 'function') {
+            audioPlayerRef.current.pause();
+          }
+          if (typeof audioPlayerRef.current.remove === 'function') {
+            audioPlayerRef.current.remove();
+          }
+        } catch (error) {
+          console.log('⚠️ [MANUAL PLAYER] Error cleaning up player:', error);
+        }
+        audioPlayerRef.current = null;
+        currentSourceRef.current = null;
+      }
+      return null;
     }
-  }, [status, currentTrack]);
+
+    // If source hasn't changed, return existing player
+    if (currentSourceRef.current === newSource && audioPlayerRef.current) {
+      return audioPlayerRef.current;
+    }
+
+    // Source changed - clean up old player and create new one
+    if (audioPlayerRef.current) {
+      try {
+        if (typeof audioPlayerRef.current.pause === 'function') {
+          audioPlayerRef.current.pause();
+        }
+        if (typeof audioPlayerRef.current.remove === 'function') {
+          audioPlayerRef.current.remove();
+        }
+      } catch (error) {
+        console.log('⚠️ [MANUAL PLAYER] Error cleaning up old player:', error);
+      }
+    }
+
+    // Create new player
+    try {
+      const newPlayer = createAudioPlayer(audioSource);
+      audioPlayerRef.current = newPlayer;
+      currentSourceRef.current = newSource;
+      return newPlayer;
+    } catch (error) {
+      console.log('❌ [MANUAL PLAYER] Error creating player:', error);
+      audioPlayerRef.current = null;
+      currentSourceRef.current = null;
+      return null;
+    }
+  }, [currentTrack?.audioUrl]);
+
+  // Clean up players on unmount
+  useEffect(() => {
+    return () => {
+      // Clean up main player
+      if (audioPlayerRef.current) {
+        try {
+          if (typeof audioPlayerRef.current.pause === 'function') {
+            audioPlayerRef.current.pause();
+          }
+          if (typeof audioPlayerRef.current.remove === 'function') {
+            audioPlayerRef.current.remove();
+          }
+        } catch (error) {
+          console.log('⚠️ [MANUAL PLAYER] Error cleaning up main player:', error);
+        }
+        audioPlayerRef.current = null;
+        currentSourceRef.current = null;
+      }
+
+      // Clean up dummy player
+      if (dummyPlayerRef.current && dummyPlayerRef.current.id !== 'fallback-dummy') {
+        try {
+          if (typeof dummyPlayerRef.current.remove === 'function') {
+            dummyPlayerRef.current.remove();
+          }
+        } catch (error) {
+          console.log('⚠️ [DUMMY PLAYER] Error cleaning up dummy player:', error);
+        }
+        dummyPlayerRef.current = null;
+      }
+    };
+  }, []);
+
+  // FIXED: Create a persistent dummy player that has proper event emitter structure
+  const dummyPlayerRef = useRef<any>(null);
+
+  // Create dummy player once and reuse it for the entire component lifecycle
+  if (!dummyPlayerRef.current) {
+    try {
+      // Create a minimal working player with proper event emitter
+      dummyPlayerRef.current = {
+        id: 'dummy-player-' + Date.now(),
+        currentTime: 0,
+        duration: 0,
+        isLoaded: false,
+        playing: false,
+        playbackState: 'unknown',
+        isBuffering: false,
+        muted: false,
+        volume: 1,
+        playbackRate: 1,
+        // Event emitter methods that useAudioPlayerStatus needs
+        addListener: () => ({ remove: () => {} }),
+        removeListener: () => {},
+        removeAllListeners: () => {},
+        emit: () => {},
+        // Required player methods
+        play: () => Promise.resolve(),
+        pause: () => Promise.resolve(),
+        remove: () => Promise.resolve(),
+        seekTo: () => Promise.resolve(),
+      };
+    } catch (error) {
+      console.log('❌ [DUMMY PLAYER] Failed to create dummy player:', error);
+      // Minimal fallback that might work
+      dummyPlayerRef.current = {
+        id: 'fallback-dummy',
+        addListener: () => ({ remove: () => {} }),
+      };
+    }
+  }
+
+  // Always provide a non-null player to the status hook
+  const playerForStatusHook = audioPlayer || dummyPlayerRef.current;
+  const rawStatus = useAudioPlayerStatus(playerForStatusHook);
+
+  // Create fallback status for when we don't have a real player
+  const fallbackStatus = useMemo(
+    () => ({
+      playing: false,
+      isLoaded: false,
+      currentTime: 0,
+      duration: 0,
+      playbackState: 'unknown' as const,
+    }),
+    []
+  );
+
+  // Use actual status only when we have a real player, otherwise use fallback
+  const status = audioPlayer ? rawStatus : fallbackStatus;
 
   // Get position and duration from status with NaN safety
   const position = useMemo(() => {
@@ -175,15 +317,16 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
     return newState;
   }, [isLoading, isPlaying, currentTrack, isPlayerLoaded]);
 
-  // Initialize audio session
+  // SIMPLIFIED: Audio session without background play to prevent native player issues
   const initAudioSession = useCallback(async () => {
     try {
       await setAudioModeAsync({
         playsInSilentMode: true,
-        shouldPlayInBackground: true,
+        shouldPlayInBackground: false, // DISABLED: Prevents native player lifecycle issues
         shouldRouteThroughEarpiece: false,
       });
     } catch (error) {
+      console.log('❌ [AUDIO SESSION] Error initializing:', error);
       handleError(error as Error, { toastMessage: STRINGS.FAILED_TO_INITIALIZE_AUDIO_SESSION });
     }
   }, []);
@@ -202,21 +345,21 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
     }
   }, [audioPlayer, isPlayerLoaded]);
 
-  // Handle auto-play when player and track are ready
+  // SIMPLIFIED: Auto-play logic with immediate execution
   useEffect(() => {
     if (shouldAutoPlay && audioPlayer && currentTrack && isPlayerLoaded) {
       // Clear the flag immediately to prevent multiple calls
       dispatch({ type: 'SET_AUTOPLAY', value: false });
 
-      // Add a small delay to ensure player is fully ready
+      // Immediate play without setTimeout to reduce timing complexity
       const playAudio = async () => {
         try {
           if (typeof audioPlayer.play === 'function') {
             await audioPlayer.play();
-            // Clear loading state once playback starts successfully
             dispatch({ type: 'SET_LOADING', isLoading: false });
           }
         } catch (error) {
+          console.log('❌ [AUTO-PLAY] Error starting playback:', error);
           dispatch({ type: 'SET_LOADING', isLoading: false });
           handleError(error as Error, {
             toastMessage: STRINGS.FAILED_TO_START_PLAYBACK,
@@ -225,36 +368,69 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
         }
       };
 
-      // Use a small delay to ensure the player is fully initialized
-      setTimeout(playAudio, 50);
+      playAudio();
     }
   }, [shouldAutoPlay, audioPlayer, currentTrack, isPlayerLoaded]);
 
   const stop = useCallback(async () => {
     try {
-      // Only attempt player operations if player is accessible
-      if (audioPlayer && isPlayerReady) {
-        // Try to pause and seek with defensive access
+      // Get all potential players - current and any previously active ones
+      const playersToStop = [audioPlayer, audioPlayerRef.current].filter(
+        (player, index, array) => player && array.indexOf(player) === index // Remove duplicates
+      );
+
+      // Stop ALL players to handle orphaned ones
+      for (let i = 0; i < playersToStop.length; i++) {
+        const player = playersToStop[i];
+        if (!player) continue;
+
         try {
-          if (typeof audioPlayer.pause === 'function') {
-            audioPlayer.pause();
+          // Method 1: Pause immediately
+          if (typeof player.pause === 'function') {
+            player.pause();
           }
-        } catch {
-          // Silently handle pause errors
+        } catch (error) {
+          console.log(`❌ [AUDIO STOP] Player ${i + 1} pause error:`, error);
         }
 
         try {
-          if (typeof audioPlayer.seekTo === 'function') {
-            await audioPlayer.seekTo(0);
+          // Method 2: Seek to beginning
+          if (typeof player.seekTo === 'function') {
+            await player.seekTo(0);
           }
-        } catch {
-          // Silently handle seek errors
+        } catch (error) {
+          console.log(`❌ [AUDIO STOP] Player ${i + 1} seekTo error:`, error);
+        }
+
+        try {
+          // Method 3: Remove to clean up (do this last)
+          if (typeof player.remove === 'function') {
+            player.remove();
+          }
+        } catch (error) {
+          console.log(`❌ [AUDIO STOP] Player ${i + 1} remove error:`, error);
         }
       }
 
-      // Clear the current track and queue after stopping the player
+      // Wait for all native operations to settle
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      // Clear all player references
+      audioPlayerRef.current = null;
+      currentSourceRef.current = null;
+
+      // Only AFTER stopping all players, reset React state
       dispatch({ type: 'RESET' });
+      dispatch({ type: 'SET_LOADING', isLoading: false });
+      dispatch({ type: 'SET_AUTOPLAY', value: false });
     } catch (error) {
+      console.log('❌ [AUDIO STOP] Error in stop sequence:', error);
+
+      // Always ensure state is reset even if operations fail
+      dispatch({ type: 'RESET' });
+      dispatch({ type: 'SET_LOADING', isLoading: false });
+      dispatch({ type: 'SET_AUTOPLAY', value: false });
+
       // Only show toast for unexpected errors, not native object disposal errors
       if (
         error instanceof Error &&
@@ -263,7 +439,7 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
         handleError(error, { toastMessage: STRINGS.FAILED_TO_STOP_AUDIO });
       }
     }
-  }, [audioPlayer, isPlayerReady]);
+  }, [audioPlayer, isPlayerReady, audioState, status]);
 
   const prefetchTracks = useCallback(
     async (tracks: EnhancedAudioTrack[]): Promise<EnhancedAudioTrack[]> => {
@@ -291,6 +467,8 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
         const tracks = Array.isArray(tracksInput) ? tracksInput : [tracksInput];
 
         if (tracks.length === 0) {
+          console.log('🚨 [LOAD QUEUE] RESET triggered - received empty tracks array!');
+          console.log('🚨 [LOAD QUEUE] Call stack:', new Error().stack);
           dispatch({ type: 'RESET' });
           dispatch({ type: 'SET_LOADING', isLoading: false });
           return [];
@@ -392,112 +570,6 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
     },
     [loadQueue, prefetchTracks]
   );
-
-  // Navigation methods (only next is used internally)
-  const next = useCallback(async () => {
-    if (currentIndex >= queue.length - 1) return;
-
-    try {
-      dispatch({ type: 'SET_LOADING', isLoading: true });
-      const nextIndex = currentIndex + 1;
-      const nextTrack = queue[nextIndex];
-
-      if (nextTrack) {
-        dispatch({ type: 'SET_INDEX', index: nextIndex });
-        dispatch({ type: 'SET_AUTOPLAY', value: true }); // Ensure next track auto-plays
-
-        // The useAudioPlayer hook will automatically recreate the player with the new source
-      }
-    } catch (error) {
-      handleError(error as Error, { toastMessage: STRINGS.FAILED_TO_SKIP_TO_NEXT_TRACK });
-    } finally {
-      dispatch({ type: 'SET_LOADING', isLoading: false });
-    }
-  }, [currentIndex, queue]);
-
-  // Track when tracks have been playing to prevent premature advancement
-  const [trackStartTimes, setTrackStartTimes] = useState<Map<number, number>>(new Map());
-
-  // Handle automatic track progression when audio finishes (using position-based detection)
-  useEffect(() => {
-    if (!isPlayerReady || !currentTrack || !status || !status.isLoaded) return;
-
-    const { duration, currentTime } = status;
-
-    // Only process tracks that have meaningful duration and have played
-    if (duration <= 0 || currentTime <= 0) return;
-
-    // Check if track has finished (reached within 100ms of the end)
-    const hasFinished = Math.abs(currentTime - duration) < 0.1;
-
-    if (hasFinished) {
-      // Ensure the track has been playing for at least its duration to prevent false positives
-      const trackStartTime = trackStartTimes.get(currentIndex);
-      const now = Date.now();
-      const hasPlayedLongEnough = trackStartTime && now - trackStartTime >= duration * 1000 * 0.8; // 80% of duration
-
-      if (!hasPlayedLongEnough) {
-        return;
-      }
-
-      // Remove this track from start times to prevent reprocessing
-      setTrackStartTimes(prev => {
-        const newMap = new Map(prev);
-        newMap.delete(currentIndex);
-        return newMap;
-      });
-
-      // Add a small delay to allow proper track transition
-      setTimeout(() => {
-        // Check if we can advance to next track
-        if (currentIndex < queue.length - 1) {
-          next();
-        } else {
-          // Clear current track to signal completion
-          dispatch({ type: 'SET_CURRENT_TRACK', track: null });
-          dispatch({ type: 'SET_INDEX', index: -1 });
-        }
-      }, 200); // Small delay to prevent rapid transitions
-    }
-  }, [
-    status?.duration,
-    status?.currentTime,
-    status?.isLoaded,
-    isPlayerReady,
-    currentTrack,
-    currentIndex,
-    queue.length,
-    next,
-    trackStartTimes,
-  ]);
-
-  // Track when tracks start playing
-  useEffect(() => {
-    if (isPlaying && currentTrack && currentIndex >= 0) {
-      setTrackStartTimes(prev => {
-        const newMap = new Map(prev);
-        if (!newMap.has(currentIndex)) {
-          newMap.set(currentIndex, Date.now());
-        }
-        return newMap;
-      });
-    }
-  }, [isPlaying, currentTrack, currentIndex]);
-
-  // Clear track start times when starting new queue
-  useEffect(() => {
-    if (currentIndex === 0 && queue.length > 0) {
-      setTrackStartTimes(new Map());
-    }
-  }, [currentIndex, queue.length]);
-
-  // Cleanup on unmount to release audio resources
-  useEffect(() => {
-    return () => {
-      stop();
-      setTrackStartTimes(new Map());
-    };
-  }, []);
 
   // Legacy actions for compatibility
   const actions = useMemo(

@@ -138,39 +138,6 @@ export const SENTENCE_DRAW_DISTANCE_MULTIPLIER = 12;
 /** Default scroll event throttle for smooth animations */
 export const SCROLL_EVENT_THROTTLE = 16;
 
-/** Scale value used when dismissing the Now Playing card */
-export const NOW_PLAYING_DISMISS_SCALE = 0.92;
-
-/** Shared height for the Now Playing card component */
-export const NOW_PLAYING_CARD_HEIGHT = 120;
-
-/** Offset used to position the Now Playing card off-screen */
-export const NOW_PLAYING_HIDDEN_OFFSET = 100;
-
-/** Initial scale for the Now Playing card when hidden */
-export const NOW_PLAYING_START_SCALE = 0.95;
-
-/** Spring configs for Now Playing card animations */
-export const NOW_PLAYING_CARD_SPRING = {
-  damping: 20,
-  stiffness: 90,
-  mass: 1,
-} as const;
-
-export const NOW_PLAYING_ENTRANCE_SCALE = {
-  damping: 25,
-  stiffness: 120,
-} as const;
-
-export const NOW_PLAYING_EXIT_SPRING = {
-  damping: 25,
-  stiffness: 150,
-  mass: 0.8,
-} as const;
-
-/** Scale amount for stop button press animation */
-export const NOW_PLAYING_STOP_PRESS_SCALE = 0.85;
-
 /** Spring config for completion screen icon */
 export const COMPLETION_ICON_SPRING = {
   damping: 12,

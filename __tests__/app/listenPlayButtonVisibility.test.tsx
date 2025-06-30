@@ -1,6 +1,7 @@
-import { render, fireEvent } from '@testing-library/react-native';
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { View, TouchableOpacity, Text } from 'react-native';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { render } from '@testing-library/react-native';
+import React from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 import { AUDIO_STATES } from '../../constants/audio';
 
@@ -23,7 +24,7 @@ const MockListenListItem = ({ audioState, onPlayPress, editMode }: any) => {
   );
 };
 
-// Mock the listen screen with multiple articles
+// Mock the listen screen with multiple articles - navigates to modal when playing
 const MockListenScreen = ({ audioState }: { audioState: string }) => {
   const mockArticles = [
     { id: 1, title: 'Article 1' },
@@ -44,11 +45,7 @@ const MockListenScreen = ({ audioState }: { audioState: string }) => {
           editMode={false}
         />
       ))}
-      {audioState === AUDIO_STATES.PLAYING && (
-        <View testID="now-playing-card">
-          <Text>Now Playing</Text>
-        </View>
-      )}
+      {/* App navigates to modal when audio starts playing - no in-screen card */}
     </View>
   );
 };
@@ -66,15 +63,12 @@ describe('Listen Screen Play Button Visibility', () => {
   });
 
   it('hides individual play buttons when audio is playing', () => {
-    const { queryAllByTestId, getByTestId } = render(
-      <MockListenScreen audioState={AUDIO_STATES.PLAYING} />
-    );
+    const { queryAllByTestId } = render(<MockListenScreen audioState={AUDIO_STATES.PLAYING} />);
 
     const playButtons = queryAllByTestId('individual-play-button');
     expect(playButtons).toHaveLength(0); // Should hide all individual play buttons
 
-    // Should show now playing card instead
-    expect(getByTestId('now-playing-card')).toBeTruthy();
+    // Note: App navigates to modal instead of showing in-screen card
   });
 
   it('shows individual play buttons when audio is stopped', () => {
@@ -93,44 +87,36 @@ describe('Listen Screen Play Button Visibility', () => {
 });
 
 describe('Play Button State Transitions', () => {
-  it('simulates the complete flow: idle -> playing -> stopped', () => {
+  it('simulates the flow: idle -> playing (navigates to modal) -> stopped', () => {
     const TestComponent = ({ audioState }: { audioState: string }) => (
       <MockListenScreen audioState={audioState} />
     );
 
-    const { rerender, getAllByTestId, queryAllByTestId, getByTestId } = render(
+    const { rerender, getAllByTestId, queryAllByTestId } = render(
       <TestComponent audioState={AUDIO_STATES.IDLE} />
     );
 
     // Initial state: should show play buttons
     expect(getAllByTestId('individual-play-button')).toHaveLength(3);
 
-    // Start playing: should hide play buttons and show now playing
+    // Start playing: should hide play buttons (app navigates to modal)
     rerender(<TestComponent audioState={AUDIO_STATES.PLAYING} />);
-
     expect(queryAllByTestId('individual-play-button')).toHaveLength(0);
-    expect(getByTestId('now-playing-card')).toBeTruthy();
 
     // Stop playing: should show play buttons again
     rerender(<TestComponent audioState={AUDIO_STATES.STOPPED} />);
-
     expect(getAllByTestId('individual-play-button')).toHaveLength(3);
   });
 });
 
-describe('Integration with Memory Requirements', () => {
-  it('validates the memory requirement: avoid conflicting playback controls', () => {
-    const { queryAllByTestId, getByTestId } = render(
-      <MockListenScreen audioState={AUDIO_STATES.PLAYING} />
-    );
+describe('Integration with Audio Control Requirements', () => {
+  it('validates that individual play buttons are hidden during playback to avoid conflicting controls', () => {
+    const { queryAllByTestId } = render(<MockListenScreen audioState={AUDIO_STATES.PLAYING} />);
 
-    // When playing, should not have both individual play buttons AND now playing controls
+    // When playing, should not have individual play buttons (avoids conflicting with modal controls)
     const individualPlayButtons = queryAllByTestId('individual-play-button');
-    const nowPlayingCard = getByTestId('now-playing-card');
+    expect(individualPlayButtons).toHaveLength(0); // No individual controls during playback
 
-    expect(individualPlayButtons).toHaveLength(0); // No individual controls
-    expect(nowPlayingCard).toBeTruthy(); // Only centralized control
-
-    // This validates the memory: "Avoid having conflicting playback controls in the interface"
+    // This validates clean control hierarchy: individual cards start playback, modal handles control during playback
   });
 });

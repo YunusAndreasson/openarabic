@@ -28,7 +28,6 @@ interface ArticleCardProps {
   isBeingDragged?: boolean;
   // Play button props
   onPlayPress?: () => void;
-  isLoadingAudio?: boolean;
 }
 
 export const ArticleCard: FC<ArticleCardProps> = ({
@@ -40,7 +39,6 @@ export const ArticleCard: FC<ArticleCardProps> = ({
   dragHandleProps,
   isBeingDragged = false,
   onPlayPress,
-  isLoadingAudio = false,
 }) => {
   const isDarkMode = useIsDarkMode();
   const colors = useColors();
@@ -115,12 +113,7 @@ export const ArticleCard: FC<ArticleCardProps> = ({
             {!editMode && (
               <View style={styles.playButtonContainer}>
                 {onPlayPress ? (
-                  <PlayButton
-                    onPress={onPlayPress}
-                    isPlaying={false}
-                    isLoading={isLoadingAudio}
-                    iconColor={playIconColor}
-                  />
+                  <PlayButton onPress={onPlayPress} isPlaying={false} iconColor={playIconColor} />
                 ) : (
                   <View style={styles.playButtonPlaceholder} />
                 )}
