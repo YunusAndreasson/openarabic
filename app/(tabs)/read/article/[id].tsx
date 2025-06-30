@@ -1,7 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import type { JSX } from 'react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, type LayoutRectangle } from 'react-native';
 
 import { ThemedView } from '@/components/ThemedView';
@@ -9,21 +9,25 @@ import { ArticleSentence, WordTooltip } from '@/components/article';
 import { ArticleContent } from '@/components/article/ArticleContent';
 import { ToastProvider } from '@/components/providers/ToastProvider';
 import { TIMING_CONFIG } from '@/constants/animation';
+import { AUDIO_STATES } from '@/constants/audio';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/articles/useArticleRenderers';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
-import { useBookmarks } from '@/hooks/articles/useBookmarks';
 import { useSentenceScrubber } from '@/hooks/articles/useSentenceScrubber';
+import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useHeaderVisibility } from '@/hooks/ui/useHeaderVisibility';
+import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { useAppSelectorMemo } from '@/store/hooks';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
+import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
+import { openNowPlayingModal } from '@/utils/navigationHelpers';
 
 const FLEX_ONE_STYLE = { flex: 1 } as const;
 
@@ -32,7 +36,11 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
   const colors = useColors();
   const { user } = useAuth();
   const fontScale = useAppSelectorMemo(state => state.settings.fontScale);
-  const { toggleBookmark, useIsBookmarked } = useBookmarks();
+  const hasNavigatedToModal = useRef(false);
+
+  // Audio player for single article playback
+  const audioPlayer = useSimpleAudioPlayer();
+  const { audioState } = audioPlayer;
 
   const { handleScroll } = useHeaderVisibility();
 
@@ -60,8 +68,14 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     refetchReadingListStatus,
   } = useArticleData(articleId, user?.id);
 
-  // Check if article is bookmarked
-  const { data: isBookmarked = false } = useIsBookmarked(articleId);
+  // Track if current article audio is playing
+  const isCurrentArticlePlaying = useMemo(() => {
+    if (audioState !== AUDIO_STATES.PLAYING) return false;
+    const currentArticleId = audioPlayer.metadata.articleId
+      ? parseInt(audioPlayer.metadata.articleId, 10)
+      : null;
+    return currentArticleId === articleId;
+  }, [audioState, audioPlayer.metadata.articleId, articleId]);
 
   const [activeTooltip, setActiveTooltip] = useState<{
     word: SentenceWord;
@@ -86,16 +100,42 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     await handleToggleReadingList(articleId, isInReadingList);
   }, [articleId, isInReadingList, handleToggleReadingList]);
 
-  const handleToggleBookmarkWithFeedback = useCallback(async () => {
+  // Auto-navigate to modal when audio starts playing
+  useEffect(() => {
+    if (audioState === AUDIO_STATES.PLAYING && !hasNavigatedToModal.current) {
+      hasNavigatedToModal.current = true;
+      openNowPlayingModal({ articleId: articleId?.toString() });
+    }
+
+    if (audioState === AUDIO_STATES.IDLE) {
+      hasNavigatedToModal.current = false;
+    }
+  }, [audioState, articleId]);
+
+  // Handle audio playback for single article
+  const handlePlayPress = useCallback(async () => {
     if (!articleId) return;
 
-    selectionFeedback();
     try {
-      await toggleBookmark(articleId, isBookmarked);
-    } catch {
-      // Error handling is done in the toggleBookmark function
+      selectionFeedback();
+
+      if (isCurrentArticlePlaying) {
+        // Stop current playback
+        await audioPlayer.stop();
+        return;
+      }
+
+      // Generate and play single track for this article
+      const track = await enhancedAudioService.generateEnhancedAudioTrack(articleId);
+      if (track) {
+        hasNavigatedToModal.current = true;
+        openNowPlayingModal({ articleId: articleId.toString() });
+        await audioPlayer.play(track);
+      }
+    } catch (error) {
+      handleError(error as Error);
     }
-  }, [articleId, isBookmarked, toggleBookmark]);
+  }, [articleId, isCurrentArticlePlaying, audioPlayer]);
 
   // Initialize sentence scrubber
   const {
@@ -219,8 +259,8 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
           scrollViewRef={scrollViewRef as React.RefObject<any>}
           isInReadingList={isInReadingList}
           onToggleReadingList={handleToggleReadingListWithFeedback}
-          isBookmarked={isBookmarked}
-          onToggleBookmark={handleToggleBookmarkWithFeedback}
+          onPlayPress={handlePlayPress}
+          isPlaying={isCurrentArticlePlaying}
         />
       ) : null}
       <WordTooltip

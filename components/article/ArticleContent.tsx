@@ -89,12 +89,13 @@ interface ArticleTitleProps {
   // Action button props
   isInReadingList: boolean;
   onToggleReadingList: () => void;
-  isBookmarked: boolean;
-  onToggleBookmark: () => void;
+  // Audio playback functionality
+  onPlayPress: () => void;
+  isPlaying: boolean;
 }
 
 const ArticleTitle = memo<ArticleTitleProps>(
-  ({ title, author, isInReadingList, onToggleReadingList, isBookmarked, onToggleBookmark }) => {
+  ({ title, author, isInReadingList, onToggleReadingList, onPlayPress, isPlaying }) => {
     const colors = useColors();
 
     // Memoize dynamic styles for better performance
@@ -179,28 +180,28 @@ const ArticleTitle = memo<ArticleTitleProps>(
             </ThemedText>
           </Pressable>
 
-          {/* Bookmark action */}
+          {/* Audio playback action */}
           <Pressable
             style={[
               styles.actionButton,
               {
-                backgroundColor: isBookmarked ? colors.tintBackground : colors.elevation1,
-                borderColor: isBookmarked ? colors.tint : colors.border,
+                backgroundColor: isPlaying ? colors.tintBackground : colors.elevation1,
+                borderColor: isPlaying ? colors.tint : colors.border,
               },
             ]}
-            onPress={onToggleBookmark}
+            onPress={onPlayPress}
             android_ripple={{
               color: colors.tint,
               radius: LAYOUT.SPACING.XLARGE,
             }}
             accessibilityRole="button"
-            accessibilityLabel={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
-            accessibilityHint="Toggle article bookmark for reading later"
+            accessibilityLabel={isPlaying ? 'Stop audio playback' : 'Start audio playback'}
+            accessibilityHint="Toggle article audio playback"
           >
             <Ionicons
-              name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
+              name={isPlaying ? 'pause' : 'play'}
               size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-              color={isBookmarked ? colors.tint : colors.secondaryText}
+              color={isPlaying ? colors.tint : colors.secondaryText}
               style={styles.actionButtonIcon}
             />
             <ThemedText
@@ -208,14 +209,14 @@ const ArticleTitle = memo<ArticleTitleProps>(
               style={[
                 styles.actionButtonText,
                 {
-                  color: isBookmarked ? colors.tint : colors.secondaryText,
-                  fontWeight: isBookmarked
+                  color: isPlaying ? colors.tint : colors.secondaryText,
+                  fontWeight: isPlaying
                     ? TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD
                     : TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
                 },
               ]}
             >
-              {isBookmarked ? 'Bookmarked' : 'Bookmark'}
+              {isPlaying ? 'Stop' : 'Play'}
             </ThemedText>
           </Pressable>
         </View>
@@ -262,9 +263,9 @@ interface ArticleContentProps {
   // Reading list (playlist/listening) functionality
   isInReadingList: boolean;
   onToggleReadingList: () => void;
-  // Bookmark functionality
-  isBookmarked: boolean;
-  onToggleBookmark: () => void;
+  // Audio playback functionality
+  onPlayPress: () => void;
+  isPlaying: boolean;
 }
 
 // Extract constants outside component for better performance
@@ -292,8 +293,8 @@ export const ArticleContent = memo<ArticleContentProps>(
     scrollViewRef,
     isInReadingList,
     onToggleReadingList,
-    isBookmarked,
-    onToggleBookmark,
+    onPlayPress,
+    isPlaying,
   }) => {
     const insets = useSafeAreaInsets();
 
@@ -315,12 +316,12 @@ export const ArticleContent = memo<ArticleContentProps>(
             author={article.author}
             isInReadingList={isInReadingList}
             onToggleReadingList={onToggleReadingList}
-            isBookmarked={isBookmarked}
-            onToggleBookmark={onToggleBookmark}
+            onPlayPress={onPlayPress}
+            isPlaying={isPlaying}
           />
         </Fragment>
       ),
-      [article, colors, isInReadingList, onToggleReadingList, isBookmarked, onToggleBookmark]
+      [article, colors, isInReadingList, onToggleReadingList, onPlayPress, isPlaying]
     );
 
     const getItemTypeCallback = useCallback(getItemType, []);
@@ -400,8 +401,8 @@ export const ArticleContent = memo<ArticleContentProps>(
       prevProps.totalSentences === nextProps.totalSentences &&
       prevProps.isInReadingList === nextProps.isInReadingList &&
       prevProps.onToggleReadingList === nextProps.onToggleReadingList &&
-      prevProps.isBookmarked === nextProps.isBookmarked &&
-      prevProps.onToggleBookmark === nextProps.onToggleBookmark
+      prevProps.onPlayPress === nextProps.onPlayPress &&
+      prevProps.isPlaying === nextProps.isPlaying
     );
   }
 );

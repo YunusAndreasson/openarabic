@@ -1,5 +1,6 @@
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, renderHook } from '@testing-library/react-native';
-import type { ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 
 import { useListenScreen } from '../../hooks/listen/useListenScreen';
 
@@ -59,20 +60,23 @@ jest.mock('../../hooks/auth/useAuth', () => ({
   useAuth: () => ({ user: { id: 'user-1' } }),
 }));
 
-jest.mock('../../hooks/audio/useAudioPlayer', () => {
+jest.mock('../../hooks/audio/useSimpleAudioPlayer', () => {
   const { AUDIO_STATES } = require('../../constants/audio');
-  const startEnhancedPlayback = jest.fn().mockResolvedValue(true);
-  const stopPlayback = jest.fn();
+  const mockPlay = jest.fn().mockResolvedValue(true);
+  const mockStop = jest.fn().mockResolvedValue(undefined);
   return {
     __esModule: true,
-    startEnhancedPlayback,
-    stopPlayback,
-    useAudioPlayer: () => ({
+    mockPlay,
+    mockStop,
+    useSimpleAudioPlayer: () => ({
       duration: 0,
       position: 0,
       metadata: { articleId: null, articleTitle: null },
       audioState: AUDIO_STATES.STOPPED,
-      actions: { startEnhancedPlayback, stopPlayback },
+      isLoading: false,
+      play: mockPlay,
+      pause: jest.fn(),
+      stop: mockStop,
     }),
   };
 });
@@ -102,7 +106,7 @@ jest.mock('../../store/hooks', () => ({
 const { startTimer, cancelTimer } = require('../../hooks/audio/useSleepTimer');
 
 // Extract mocked functions for assertions
-const { startEnhancedPlayback, stopPlayback } = require('../../hooks/audio/useAudioPlayer');
+const { mockPlay, mockStop } = require('../../hooks/audio/useSimpleAudioPlayer');
 
 // Additional mocked services and actions
 const { readingListService } = require('../../services/readingList');
@@ -205,9 +209,8 @@ describe('useListenScreen', () => {
       await result.current.handlePlayAll();
     });
 
-    expect(startEnhancedPlayback).toHaveBeenCalled();
-    expect(startEnhancedPlayback.mock.calls[0][0]).toEqual(sortedEnhanced);
-    expect(startEnhancedPlayback.mock.calls[0][1]).toBe(0);
+    expect(mockPlay).toHaveBeenCalled();
+    expect(mockPlay.mock.calls[0][0]).toEqual(sortedEnhanced[0]);
   });
 
   it('plays selected article from existing track', async () => {
@@ -219,7 +222,7 @@ describe('useListenScreen', () => {
       .mockReturnValue({ data: [], isLoading: false, isFetching: false });
 
     const { result } = renderHook(() => useListenScreen(), { wrapper: Wrapper });
-    const index = sortedEnhanced.findIndex(t => t.articleId === 2);
+    const trackToPlay = sortedEnhanced.find(t => t.articleId === 2);
 
     // First, verify the tracks are there
     expect(result.current.sortedEnhancedTracks).toHaveLength(2);
@@ -229,9 +232,8 @@ describe('useListenScreen', () => {
       await result.current.handleArticlePlay(2);
     });
 
-    expect(startEnhancedPlayback).toHaveBeenCalled();
-    expect(startEnhancedPlayback.mock.calls[0][0]).toEqual(sortedEnhanced);
-    expect(startEnhancedPlayback.mock.calls[0][1]).toBe(index);
+    expect(mockPlay).toHaveBeenCalled();
+    expect(mockPlay.mock.calls[0][0]).toEqual(trackToPlay);
   });
 
   it('generates track when missing and plays it', async () => {
@@ -256,7 +258,7 @@ describe('useListenScreen', () => {
     });
 
     expect(enhancedAudioService.generateEnhancedAudioTrack).toHaveBeenCalledWith(3);
-    expect(startEnhancedPlayback).toHaveBeenCalledWith([newTrack], 0);
+    expect(mockPlay).toHaveBeenCalledWith(newTrack);
   });
 
   it('deletes article and invalidates queries', async () => {
