@@ -57,10 +57,10 @@ const ListenListItem = memo(
         title={item.articles.title}
         editMode={editMode}
         isBeingDragged={_isBeingDragged}
-        // Primary action: tap to play audio (when available) or open article (when no audio)
+        // Primary action: tap to play audio
         onPress={!editMode ? () => onPlayPress(item.article_id) : undefined}
         onDelete={() => onDelete(item.article_id)}
-        // Show play button as visual indicator when audio is available, but hide when any audio is playing
+        // Show play button as visual indicator, but hide when any audio is playing
         onPlayPress={
           !editMode && audioState !== AUDIO_STATES.PLAYING
             ? () => onPlayPress(item.article_id)
@@ -82,7 +82,6 @@ const ListenListItem = memo(
     if (prevProps.editMode !== nextProps.editMode) return false;
     if (prevProps._isBeingDragged !== nextProps._isBeingDragged) return false;
     if (prevProps.audioState !== nextProps.audioState) return false;
-    if (!!prevProps.item.articles?.audio_url !== !!nextProps.item.articles?.audio_url) return false;
     return prevProps.item.article_id === nextProps.item.article_id;
   }
 );

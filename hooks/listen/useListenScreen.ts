@@ -2,7 +2,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AUDIO_STATES } from '@/constants/audio';
-import { STRINGS } from '@/constants/strings';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -236,7 +235,7 @@ export const useListenScreen = () => {
       const articleIndex = sortedEnhancedTracks.findIndex(track => track.articleId === articleId);
 
       if (articleIndex !== -1 && sortedEnhancedTracks.length) {
-        // Normal case: play the specific track from enhanced tracks
+        // Play the specific track from enhanced tracks
         const trackToPlay = sortedEnhancedTracks[articleIndex];
         if (!trackToPlay) {
           setPlaybackMode('none');
@@ -255,7 +254,7 @@ export const useListenScreen = () => {
           handleError(error as Error);
         }
       } else {
-        // Fallback: generate single track for this article
+        // Generate single track for this article on-demand
         try {
           selectionFeedback();
           setPlaybackMode('all');
@@ -268,10 +267,6 @@ export const useListenScreen = () => {
             }
           } else {
             setPlaybackMode('none');
-            handleError(new Error(STRINGS.AUDIO_NOT_AVAILABLE_FOR_ARTICLE), {
-              toastMessage: STRINGS.AUDIO_NOT_AVAILABLE_FOR_ARTICLE,
-              showToast: true,
-            });
           }
         } catch (error) {
           setPlaybackMode('none');

@@ -78,3 +78,14 @@ export type Route<T extends RoutePath> = {
 export interface ListenParams {
   fromRemember?: string;
 }
+
+/**
+ * Parameters that can be passed to the NowPlaying modal
+ */
+export interface NowPlayingModalParams {
+  articleId?: string;
+  position?: string;
+  duration?: string;
+  audioState?: string;
+  [key: string]: string | undefined;
+}

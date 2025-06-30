@@ -1,6 +1,7 @@
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { render } from '@testing-library/react-native';
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { View, TouchableOpacity, Text } from 'react-native';
+import React from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 import { AUDIO_STATES } from '../../constants/audio';
 
@@ -14,8 +15,8 @@ const TestArticleCard = ({
   editMode?: boolean;
   audioState?: string;
 }) => {
-  const hasAudio = !!onPlayPress;
-  const shouldShowPlayButton = hasAudio && !editMode && audioState !== AUDIO_STATES.PLAYING;
+  // Play button is shown when not in edit mode and not currently playing
+  const shouldShowPlayButton = !!onPlayPress && !editMode && audioState !== AUDIO_STATES.PLAYING;
 
   return (
     <View testID="article-card">
@@ -44,7 +45,7 @@ describe('ArticleCard Play Button Visibility Logic', () => {
   });
 
   describe('Basic Visibility Rules', () => {
-    it('shows play button when audio is available and not in edit mode', () => {
+    it('shows play button when not in edit mode', () => {
       const { getByTestId } = render(<TestArticleCard onPlayPress={jest.fn()} editMode={false} />);
 
       expect(getByTestId('play-button')).toBeTruthy();
@@ -56,7 +57,7 @@ describe('ArticleCard Play Button Visibility Logic', () => {
       expect(queryByTestId('play-button')).toBeNull();
     });
 
-    it('hides play button when no onPlayPress is provided (no audio)', () => {
+    it('hides play button when no onPlayPress is provided', () => {
       const { queryByTestId } = render(<TestArticleCard editMode={false} />);
 
       expect(queryByTestId('play-button')).toBeNull();
@@ -111,7 +112,7 @@ describe('ArticleCard Play Button Visibility Logic', () => {
 
   describe('Logic Validation', () => {
     const cases: Array<[boolean, boolean, string, boolean]> = [
-      // hasAudio, editMode, audioState, expectedVisible
+      // hasOnPlayPress, editMode, audioState, expectedVisible
       [true, false, AUDIO_STATES.IDLE, true],
       [true, false, AUDIO_STATES.LOADING, true],
       [true, false, AUDIO_STATES.PLAYING, false],
@@ -121,21 +122,24 @@ describe('ArticleCard Play Button Visibility Logic', () => {
       [false, false, AUDIO_STATES.IDLE, false],
     ];
 
-    test.each(cases)('hasAudio=%s editMode=%s state=%s → visible=%s', (hasAudio, editMode, audioState, expectedVisible) => {
-      const { queryByTestId } = render(
-        <TestArticleCard
-          onPlayPress={hasAudio ? jest.fn() : undefined}
-          editMode={editMode}
-          audioState={audioState}
-        />
-      );
+    test.each(cases)(
+      'hasOnPlayPress=%s editMode=%s state=%s → visible=%s',
+      (hasOnPlayPress, editMode, audioState, expectedVisible) => {
+        const { queryByTestId } = render(
+          <TestArticleCard
+            onPlayPress={hasOnPlayPress ? jest.fn() : undefined}
+            editMode={editMode}
+            audioState={audioState}
+          />
+        );
 
-      const playButton = queryByTestId('play-button');
-      if (expectedVisible) {
-        expect(playButton).toBeTruthy();
-      } else {
-        expect(playButton).toBeNull();
+        const playButton = queryByTestId('play-button');
+        if (expectedVisible) {
+          expect(playButton).toBeTruthy();
+        } else {
+          expect(playButton).toBeNull();
+        }
       }
-    });
+    );
   });
 });

@@ -7,8 +7,7 @@ import { AUDIO_STATES } from '../../constants/audio';
 
 // Mock the ListenListItem component to test play button visibility
 const MockListenListItem = ({ audioState, onPlayPress, editMode }: any) => {
-  const hasAudio = true;
-  const shouldShowPlayButton = hasAudio && !editMode && audioState !== AUDIO_STATES.PLAYING;
+  const shouldShowPlayButton = !editMode && audioState !== AUDIO_STATES.PLAYING;
 
   return (
     <View>

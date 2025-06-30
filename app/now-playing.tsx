@@ -62,10 +62,8 @@ export default function NowPlayingModal() {
     audioState?: string;
   }>();
 
-  // SIMPLIFIED: Use simple audio player
+  // Audio player and sleep timer
   const audioPlayer = useSimpleAudioPlayer();
-
-  // Initialize sleep timer with stop callback
   const sleepTimer = useSleepTimer(() => {
     audioPlayer.stop();
   });
@@ -74,74 +72,39 @@ export default function NowPlayingModal() {
   const [simulatedPosition, setSimulatedPosition] = useState<number>(0);
 
   useEffect(() => {
-    // Use either live audio player state OR navigation params to determine if playing
     const isPlaying = audioPlayer.audioState === 'playing' || params.audioState === 'playing';
 
     if (isPlaying) {
-      // Get starting position from params if available
       const startPosition = params.position
-        ? parseFloat(params.position) / 1000 // Convert ms to seconds
+        ? parseFloat(params.position) / 1000
         : audioPlayer.position || 0;
 
-      // Set initial position
       setSimulatedPosition(startPosition);
 
       const interval = setInterval(() => {
-        setSimulatedPosition(prev => prev + 0.1); // Add 100ms (0.1 seconds) each tick
-      }, 100); // Update every 100ms
+        setSimulatedPosition(prev => prev + 0.1);
+      }, 100);
 
       return () => clearInterval(interval);
     }
 
-    // Return empty cleanup function when not playing
     return () => {};
   }, [audioPlayer.audioState, params.audioState, params.position, audioPlayer.position]);
 
-  const position = useMemo(() => {
-    // Use simulated position when available and positive
-    if (simulatedPosition > 0) {
-      return simulatedPosition;
-    }
-    // Fallback to audio player data
-    if (audioPlayer.position !== undefined) {
-      return audioPlayer.position;
-    }
-    // Fallback to params (passed from currently playing audio)
-    if (params.position) {
-      const parsed = parseFloat(params.position) / 1000; // Convert back to seconds
-      if (!isNaN(parsed)) return parsed;
-    }
-    return 0;
-  }, [simulatedPosition, audioPlayer.position, params.position]);
+  // Simplified data calculations - audio is guaranteed to be available
+  const position =
+    simulatedPosition > 0
+      ? simulatedPosition
+      : audioPlayer.position || (params.position ? parseFloat(params.position) / 1000 : 0);
 
-  const duration = useMemo(() => {
-    // Fallback to audio player data
-    if (audioPlayer.duration !== undefined && audioPlayer.duration > 0) {
-      return audioPlayer.duration;
-    }
-    // Fallback to params (passed from currently playing audio)
-    if (params.duration) {
-      const parsed = parseFloat(params.duration) / 1000; // Convert back to seconds
-      if (!isNaN(parsed)) return parsed;
-    }
-    return 0;
-  }, [params.duration, audioPlayer.duration]);
+  const duration =
+    audioPlayer.duration || (params.duration ? parseFloat(params.duration) / 1000 : 0);
 
-  const articleId = useMemo(() => {
-    // First try to get from audio player metadata (currently playing)
-    if (audioPlayer.metadata.articleId) {
-      const parsed = parseInt(audioPlayer.metadata.articleId, 10);
-      if (!isNaN(parsed)) return parsed;
-    }
-
-    // Fallback to router params (when modal opened from UI)
-    if (params.articleId) {
-      const parsed = parseInt(params.articleId, 10);
-      if (!isNaN(parsed)) return parsed;
-    }
-
-    return undefined;
-  }, [audioPlayer.metadata.articleId, params.articleId]);
+  const articleId = audioPlayer.metadata.articleId
+    ? parseInt(audioPlayer.metadata.articleId, 10)
+    : params.articleId
+    ? parseInt(params.articleId, 10)
+    : 0;
 
   const { article, sortedSentences, sentenceWordsMap } = useArticleData(articleId, user?.id);
 
@@ -151,11 +114,9 @@ export default function NowPlayingModal() {
     sentenceWordsMap,
   });
 
-  // Calculate bottom position with safe area (matching BottomControls pattern)
+  // Calculate bottom position with safe area
   const bottomPosition = useMemo(() => {
-    // Same pattern as BottomControls: safe area + small spacing, minimum large spacing
-    const safeBottom = Math.max(insets.bottom + LAYOUT.SPACING.SMALL, LAYOUT.SPACING.LARGE);
-    return safeBottom;
+    return Math.max(insets.bottom + LAYOUT.SPACING.SMALL, LAYOUT.SPACING.LARGE);
   }, [insets.bottom]);
 
   // Audio-reactive gradient animation
@@ -172,33 +133,18 @@ export default function NowPlayingModal() {
 
   // Fade in/out sentence text
   useEffect(() => {
-    if (currentSentence) {
-      sentenceOpacity.value = withTiming(1, {
-        duration: TIMING_CONFIG.GENTLE.duration,
-        easing: Easing.out(Easing.quad),
-      });
-    } else {
-      sentenceOpacity.value = withTiming(0.3, {
-        duration: TIMING_CONFIG.GENTLE.duration,
-        easing: Easing.out(Easing.quad),
-      });
-    }
+    sentenceOpacity.value = withTiming(currentSentence ? 1 : 0.3, {
+      duration: TIMING_CONFIG.GENTLE.duration,
+      easing: Easing.out(Easing.quad),
+    });
   }, [currentSentence]);
 
-  // Calculate progress percentage for the progress bar
-  const progressPercentage = useMemo(() => {
-    if (!duration || duration <= 0) return 0;
-    const progress = Math.max(0, Math.min(100, ((position || 0) / duration) * 100));
-    return progress;
-  }, [position, duration]);
+  // Calculate progress percentage
+  const progressPercentage = duration > 0 ? Math.min(100, (position / duration) * 100) : 0;
 
   const gradientAnimatedStyle = useAnimatedStyle(() => {
-    // Remove rotation to fix tilted overlay, keep subtle scale animation
     const scale = interpolate(gradientProgress.value, [0, 0.5, 1], [1, 1.02, 1]);
-
-    return {
-      transform: [{ scale }],
-    };
+    return { transform: [{ scale }] };
   });
 
   const sentenceAnimatedStyle = useAnimatedStyle(() => ({
@@ -215,24 +161,9 @@ export default function NowPlayingModal() {
   }, [colors.background, colors.elevation1, isDarkMode]);
 
   const handleStop = async () => {
-    try {
-      selectionFeedback();
-
-      // Stop audio with more robust approach
-      await audioPlayer.stop();
-
-      // Add small delay to ensure audio has stopped before dismissing modal
-      setTimeout(() => {
-        router.dismiss();
-      }, 100);
-    } catch (error) {
-      console.log('❌ [STOP BUTTON] Error during stop:', error);
-
-      // If stop fails, still close the modal after a short delay
-      setTimeout(() => {
-        router.dismiss();
-      }, 100);
-    }
+    selectionFeedback();
+    await audioPlayer.stop();
+    router.dismiss();
   };
 
   const handleTimerPress = () => {
@@ -249,29 +180,10 @@ export default function NowPlayingModal() {
   };
 
   // Calculate sentence progress for display
-  const sentenceProgressText = useMemo(() => {
-    if (sortedSentences.length === 0) return '';
-    const current = Math.max(0, currentSentenceIndex) + 1; // Convert to 1-based
-    const total = sortedSentences.length;
-    return `Sentence ${current} of ${total}`;
-  }, [currentSentenceIndex, sortedSentences.length]);
-
-  // Show error only if no article at all - allow missing current sentence
-  if (!article) {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <StatusBar style={isDarkMode ? 'light' : 'dark'} />
-        <View style={[styles.header, { paddingTop: insets.top + LAYOUT.SPACING.MEDIUM }]}>
-          {/* Loading state - no header content needed */}
-        </View>
-        <View style={styles.sentenceSection}>
-          <ThemedText type="body" variant="secondary">
-            Preparing audio...
-          </ThemedText>
-        </View>
-      </View>
-    );
-  }
+  const sentenceProgressText =
+    sortedSentences.length > 0
+      ? `Sentence ${Math.max(0, currentSentenceIndex) + 1} of ${sortedSentences.length}`
+      : '';
 
   return (
     <View style={styles.container}>
@@ -280,7 +192,7 @@ export default function NowPlayingModal() {
       {/* Background Image */}
       <View style={styles.backgroundContainer}>
         <EnhancedImage
-          source={String(article.image_url)}
+          source={String(article?.image_url || '')}
           style={styles.backgroundImage}
           contentFit="cover"
         />
@@ -296,45 +208,34 @@ export default function NowPlayingModal() {
         </Animated.View>
       </View>
 
-      {/* Modal drag indicator positioned over background image */}
+      {/* Modal drag indicator */}
       <ModalDragIndicator />
 
-      {/* Header with Title and Author - Centered */}
+      {/* Header with Title and Author */}
       <View style={[styles.header, { paddingTop: insets.top + LAYOUT.SPACING.MEDIUM }]}>
         <View style={styles.headerInfo}>
           <ThemedText type="heading3" style={styles.title} numberOfLines={2}>
-            {article.title}
+            {article?.title || 'Loading...'}
           </ThemedText>
           <ThemedText type="body" variant="secondary" style={styles.author}>
-            {article.author?.name}
+            {article?.author?.name || ''}
           </ThemedText>
         </View>
       </View>
 
       {/* Current Sentence Display with Progress */}
       <View style={styles.sentenceSection}>
-        {/* Sentence Progress Indicator */}
         {sentenceProgressText && (
           <ThemedText type="caption" style={styles.progressText}>
             {sentenceProgressText}
           </ThemedText>
         )}
 
-        {currentSentence ? (
-          <Animated.View style={[styles.sentenceContainer, sentenceAnimatedStyle]}>
-            <ThemedText type="body" style={styles.englishText}>
-              {currentSentence.english}
-            </ThemedText>
-          </Animated.View>
-        ) : (
-          <Animated.View style={[styles.sentenceContainer, sentenceAnimatedStyle]}>
-            <ThemedText type="body" style={styles.englishText}>
-              {sortedSentences.length > 0
-                ? 'Playing audio...'
-                : 'Start playing an article to see synchronized text'}
-            </ThemedText>
-          </Animated.View>
-        )}
+        <Animated.View style={[styles.sentenceContainer, sentenceAnimatedStyle]}>
+          <ThemedText type="body" style={styles.englishText}>
+            {currentSentence?.english || 'Playing audio...'}
+          </ThemedText>
+        </Animated.View>
       </View>
 
       {/* Audio Controls and Progress at Bottom */}
@@ -347,8 +248,8 @@ export default function NowPlayingModal() {
           {/* Audio Progress */}
           <View style={styles.progressSection}>
             <AudioProgressIndicator
-              position={position || 0}
-              duration={duration || 0}
+              position={position}
+              duration={duration}
               progressPercentage={progressPercentage}
               progressBarHeight={LAYOUT.SPACING.TINY}
               progressBackgroundColor="rgba(255,255,255,0.3)"

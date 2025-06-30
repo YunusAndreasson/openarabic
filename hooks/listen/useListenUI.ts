@@ -3,11 +3,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { InteractionManager } from 'react-native';
 
 import { getArticleRoute } from '@/constants/routes';
-import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAppDispatch } from '@/store/hooks';
 import { setCustomOrder } from '@/store/listenSlice';
 import type { ReadingListItem } from '@/types/readingList.types';
 import { selectionFeedback } from '@/utils/haptics';
+import { openNowPlayingModal } from '@/utils/navigationHelpers';
+
+import { useAppPreloader } from '../app/useAppPreloader';
 
 interface ListenUIParams {
   sortedReadingList: ReadingListItem[];
@@ -41,8 +43,8 @@ export const useListenUI = ({ sortedReadingList, editMode }: ListenUIParams) => 
   );
 
   const handleNowPlayingPress = useCallback(() => {
-    // Navigate to the now playing modal - simplified without complex params
-    router.push('/(tabs)/listen/NowPlaying');
+    // Use the reusable hook to open the now playing modal
+    openNowPlayingModal();
   }, []);
 
   const handleDragEnd = useCallback(

@@ -293,6 +293,14 @@ function AppContent() {
               headerShown: false,
             })}
           />
+          <Stack.Screen
+            name="now-playing"
+            options={createNavigationOptions(colors, {
+              headerShown: false, // Full-screen modal without header
+              presentation: 'modal',
+              gestureEnabled: true,
+            })}
+          />
         </Stack>
         <StatusBar style={isDark ? 'light' : 'dark'} />
       </View>

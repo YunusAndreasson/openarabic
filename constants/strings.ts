@@ -340,12 +340,11 @@ export const STRINGS = {
   FAILED_TO_GENERATE_AUDIO_TRACK: "Couldn't generate track. " + tryAgain,
   FAILED_TO_GET_ENHANCED_AUDIO_TRACKS: "Couldn't get tracks. " + tryAgain,
   FAILED_TO_GENERATE_VOCABULARY_AUDIO_TRACKS: "Couldn't generate tracks. " + tryAgain,
-  FAILED_TO_LOAD_AUDIO_TRACKS: "Couldn't load tracks. " + tryAgain,
+  FAILED_TO_LOAD_AUDIO_TRACKS: 'Failed to load audio tracks',
   FAILED_TO_INITIALIZE_AUDIO_SESSION: "Couldn't start audio. " + tryAgain,
   FAILED_TO_STOP_AUDIO: "Couldn't stop audio. " + tryAgain,
   FAILED_TO_LOAD_AUDIO: "Couldn't load audio. " + tryAgain,
   FAILED_TO_SKIP_TO_NEXT_TRACK: "Couldn't skip track. " + tryAgain,
-  AUDIO_NOT_AVAILABLE_FOR_ARTICLE: 'Audio unavailable for this article',
 
   // Reading list errors
   FAILED_TO_LOAD_READING_LIST: "Couldn't load playlist. " + tryAgain,

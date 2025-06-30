@@ -1,5 +1,5 @@
+import { act, renderHook } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
-import { renderHook, act } from '@testing-library/react-native';
 
 import { useListenScreen } from '../../hooks/listen/useListenScreen';
 
@@ -33,8 +33,6 @@ const enhancedTracks = [
 ];
 
 const sortedEnhanced = [enhancedTracks[1], enhancedTracks[0]];
-
-import { AUDIO_STATES } from '../../constants/audio';
 
 const mockUseQuery = jest
   .fn()
