@@ -100,18 +100,6 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     await handleToggleReadingList(articleId, isInReadingList);
   }, [articleId, isInReadingList, handleToggleReadingList]);
 
-  // Auto-navigate to modal when audio starts playing
-  useEffect(() => {
-    if (audioState === AUDIO_STATES.PLAYING && !hasNavigatedToModal.current) {
-      hasNavigatedToModal.current = true;
-      openNowPlayingModal({ articleId: articleId?.toString() });
-    }
-
-    if (audioState === AUDIO_STATES.IDLE) {
-      hasNavigatedToModal.current = false;
-    }
-  }, [audioState, articleId]);
-
   // Handle audio playback for single article
   const handlePlayPress = useCallback(async () => {
     if (!articleId) return;
@@ -125,11 +113,13 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
         return;
       }
 
+      // Open Now Playing modal immediately for instant feedback
+      hasNavigatedToModal.current = true;
+      openNowPlayingModal({ articleId: articleId.toString() });
+
       // Generate and play single track for this article
       const track = await enhancedAudioService.generateEnhancedAudioTrack(articleId);
       if (track) {
-        hasNavigatedToModal.current = true;
-        openNowPlayingModal({ articleId: articleId.toString() });
         await audioPlayer.play(track);
       }
     } catch (error) {

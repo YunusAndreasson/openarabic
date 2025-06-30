@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Portal } from '@gorhom/portal';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -16,7 +17,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AudioProgressIndicator from '@/components/AudioProgressIndicator';
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 import SleepTimer from '@/components/listen/SleepTimer';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
@@ -185,6 +185,13 @@ export default function NowPlayingModal() {
       ? `Sentence ${Math.max(0, currentSentenceIndex) + 1} of ${sortedSentences.length}`
       : '';
 
+  // Stop audio when modal is dismissed (component unmounts)
+  useEffect(() => {
+    return () => {
+      audioPlayer.stop();
+    };
+  }, []);
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
@@ -239,10 +246,9 @@ export default function NowPlayingModal() {
       </View>
 
       {/* Audio Controls and Progress at Bottom */}
-      <ThemedView
+      <View
         style={[styles.bottomControlsContainer, { bottom: bottomPosition }]}
-        safeAreaEdges={[]}
-        includeBottomInset={false}
+        // No ThemedView here to avoid background color
       >
         <View style={styles.bottomControls}>
           {/* Audio Progress */}
@@ -287,17 +293,19 @@ export default function NowPlayingModal() {
             </TouchableOpacity>
           </View>
         </View>
-      </ThemedView>
+      </View>
 
       {/* Sleep Timer Modal */}
-      <SleepTimer
-        isActive={sleepTimer.state.isActive}
-        isVisible={showSleepTimer}
-        remainingTime={sleepTimer.state.remainingTime}
-        onClose={() => setShowSleepTimer(false)}
-        onTimerCancel={handleSleepTimerCancel}
-        onTimerSet={handleSleepTimerSet}
-      />
+      <Portal hostName="root">
+        <SleepTimer
+          isActive={sleepTimer.state.isActive}
+          isVisible={showSleepTimer}
+          remainingTime={sleepTimer.state.remainingTime}
+          onClose={() => setShowSleepTimer(false)}
+          onTimerCancel={handleSleepTimerCancel}
+          onTimerSet={handleSleepTimerSet}
+        />
+      </Portal>
     </View>
   );
 }
@@ -398,9 +406,9 @@ const styles = StyleSheet.create({
   },
 
   bottomControls: {
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    // Removed box styling - no background or border radius
+    // Remove box styling: no background, no border radius, just spacing
+    paddingHorizontal: 0,
+    paddingVertical: 0,
   },
 
   progressSection: {

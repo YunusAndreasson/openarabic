@@ -22,7 +22,7 @@ export interface ArticleSentence extends Tables<'article_sentences'> {
 
 /**
  * Extended article type with additional UI and relational data
- * Core type used across article listings, detail views, and bookmarks
+ * Core type used across article listings and detail views
  */
 export interface Article extends Tables<'articles'> {
   /** Sentences that make up this article, with word-level data */
