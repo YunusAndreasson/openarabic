@@ -100,15 +100,32 @@ export function useGlobalAudioState(): GlobalAudioState {
 
   // Format current article for mini-player
   const currentArticle = useMemo(() => {
-    if (!article || !currentArticleId || !article.image_url) return null;
+    // Return immediately if no articleId
+    if (!currentArticleId) return null;
 
-    return {
-      id: currentArticleId,
-      title: article.title,
-      author: article.author.name,
-      image_url: article.image_url,
-    };
-  }, [article, currentArticleId]);
+    // If we have full article data, use it
+    if (article && article.image_url) {
+      return {
+        id: currentArticleId,
+        title: article.title,
+        author: article.author.name,
+        image_url: article.image_url,
+      };
+    }
+
+    // INSTANT MINI-PLAYER: Use fallback data from audio metadata while article loads
+    // This eliminates the 500ms delay by showing mini-player immediately when audio starts
+    if (audioPlayer.metadata.articleTitle && isPlaying) {
+      return {
+        id: currentArticleId,
+        title: audioPlayer.metadata.articleTitle,
+        author: 'Loading...', // Temporary until article data loads
+        image_url: 'https://via.placeholder.com/400x300/5B7F68/FFFFFF?text=Audio', // Tint-colored placeholder
+      };
+    }
+
+    return null;
+  }, [article, currentArticleId, audioPlayer.metadata.articleTitle, isPlaying]);
 
   // Action handlers
   const handlePlayPause = useCallback(async () => {

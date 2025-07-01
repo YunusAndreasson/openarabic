@@ -209,7 +209,7 @@ export const LAYOUT = {
       // Dynamic heights based on content and accessibility
       LIST_ITEM: TOUCH_TARGETS.LARGE + SPACING_SCALE.LARGE * 2, // 48 + 32 = 80
       AUDIO_ITEM: TOUCH_TARGETS.LARGE + SPACING_SCALE.XLARGE * 2, // 48 + 40 = 88
-      MINI_PLAYER: TOUCH_TARGETS.LARGE + SPACING_SCALE.MEDIUM * 2, // 48 + 24 = 72
+      MINI_PLAYER: TOUCH_TARGETS.LARGE + SPACING_SCALE.LARGE * 1.5, // 48 + 24 = 72 (base height for calculations)
     },
     IMAGE: {
       MINI_PLAYER: TOUCH_TARGETS.LARGE - SPACING_SCALE.SMALL, // 48 - 8 = 40

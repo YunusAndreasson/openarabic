@@ -45,6 +45,12 @@ const HIT_SLOP = { top: 8, bottom: 8, left: 8, right: 8 };
 const ANIMATION_DURATION = 300;
 const EXIT_ANIMATION_DURATION = 200;
 
+// Enhanced button sizes following Fitts' Law
+const BUTTON_SIZES = {
+  STOP: MIN_TOUCH_TARGET.MEDIUM, // 44px - larger primary action
+  SECONDARY: MIN_TOUCH_TARGET.SMALL, // 32px - smaller secondary actions
+} as const;
+
 const MiniPlayerComponent = ({
   article,
   queuePosition,
@@ -69,9 +75,27 @@ const MiniPlayerComponent = ({
     [colors.background]
   );
 
-  // Memoized control button background colors
-  const controlButtonBg = React.useMemo(() => withOpacity(colors.card, 0.8), [colors.card]);
-  const timerActiveBg = React.useMemo(() => withOpacity(colors.warning, 0.9), [colors.warning]);
+  // Enhanced button colors following design system
+  const buttonColors = React.useMemo(
+    () => ({
+      // Stop button uses tint color for primary action emphasis
+      stop: {
+        background: colors.tint,
+        icon: colors.background, // High contrast white text on tint background
+      },
+      // Secondary buttons use elevated card background
+      secondary: {
+        background: colors.elevation2, // Elevated above card surface
+        icon: colors.text,
+      },
+      // Timer active state uses warning color
+      timerActive: {
+        background: colors.warning,
+        icon: colors.background, // High contrast white text on warning background
+      },
+    }),
+    [colors]
+  );
 
   // Optimized haptic feedback handlers using runOnJS
   const handlePlayPause = useCallback(() => {
@@ -161,38 +185,55 @@ const MiniPlayerComponent = ({
                 </View>
               </View>
 
-              {/* Compact Controls */}
-              <View style={styles.controls}>
+              {/* Enhanced Horizontal Controls Layout */}
+              <View style={styles.controlsContainer}>
+                {/* Primary Stop/Play Button - Left side, larger */}
                 <Pressable
-                  style={[styles.controlButton, { backgroundColor: controlButtonBg }]}
+                  style={[styles.primaryButton, { backgroundColor: buttonColors.stop.background }]}
                   onPress={handlePlayPause}
                   hitSlop={HIT_SLOP}
                 >
-                  <Ionicons name={isPlaying ? 'stop' : 'play'} size={18} color={colors.text} />
-                </Pressable>
-
-                <Pressable
-                  style={[
-                    styles.controlButton,
-                    { backgroundColor: isTimerActive ? timerActiveBg : controlButtonBg },
-                  ]}
-                  onPress={handleTimerPress}
-                  hitSlop={HIT_SLOP}
-                >
                   <Ionicons
-                    name="timer-outline"
-                    size={18}
-                    color={isTimerActive ? colors.background : colors.text}
+                    name={isPlaying ? 'stop' : 'play'}
+                    size={20}
+                    color={buttonColors.stop.icon}
                   />
                 </Pressable>
 
-                <Pressable
-                  style={[styles.controlButton, { backgroundColor: controlButtonBg }]}
-                  onPress={handleExpandPress}
-                  hitSlop={HIT_SLOP}
-                >
-                  <Ionicons name="chevron-up" size={18} color={colors.text} />
-                </Pressable>
+                {/* Secondary Controls - Right side, stacked vertically */}
+                <View style={styles.secondaryControlsStack}>
+                  <Pressable
+                    style={[
+                      styles.secondaryButton,
+                      {
+                        backgroundColor: isTimerActive
+                          ? buttonColors.timerActive.background
+                          : buttonColors.secondary.background,
+                      },
+                    ]}
+                    onPress={handleTimerPress}
+                    hitSlop={HIT_SLOP}
+                  >
+                    <Ionicons
+                      name="timer-outline"
+                      size={16}
+                      color={
+                        isTimerActive ? buttonColors.timerActive.icon : buttonColors.secondary.icon
+                      }
+                    />
+                  </Pressable>
+
+                  <Pressable
+                    style={[
+                      styles.secondaryButton,
+                      { backgroundColor: buttonColors.secondary.background },
+                    ]}
+                    onPress={handleExpandPress}
+                    hitSlop={HIT_SLOP}
+                  >
+                    <Ionicons name="chevron-up" size={16} color={buttonColors.secondary.icon} />
+                  </Pressable>
+                </View>
               </View>
             </View>
           </LinearGradient>
@@ -211,7 +252,7 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    height: LAYOUT.CARD.HEIGHT.MINI_PLAYER + LAYOUT.SPACING.MEDIUM, // Taller for 2-line title
+    height: LAYOUT.CARD.HEIGHT.MINI_PLAYER + LAYOUT.SPACING.LARGE, // Increased height: 72 + 16 = 88px (was 84px)
     overflow: 'hidden',
   },
 
@@ -232,13 +273,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: LAYOUT.SPACING.MEDIUM,
-    height: LAYOUT.CARD.HEIGHT.MINI_PLAYER + LAYOUT.SPACING.MEDIUM,
+    height: LAYOUT.CARD.HEIGHT.MINI_PLAYER + LAYOUT.SPACING.LARGE, // Match card height
   },
 
   textContainer: {
     flex: 1,
     justifyContent: 'center',
     minWidth: 0, // Critical for text truncation
+    marginRight: LAYOUT.SPACING.SMALL, // Breathing room from controls (8px)
   },
 
   titleText: {
@@ -260,17 +302,34 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.TINY,
   },
 
-  controls: {
-    flexDirection: 'row',
+  controlsContainer: {
+    flexDirection: 'row', // Horizontal layout: stop left, secondary controls right
     alignItems: 'center',
-    gap: LAYOUT.SPACING.HALF_TINY, // Tighter spacing
-    marginLeft: LAYOUT.SPACING.TINY, // Less margin
+    justifyContent: 'center',
+    gap: LAYOUT.SPACING.MEDIUM, // Balanced spacing between primary and secondary controls (12px)
   },
 
-  controlButton: {
-    width: MIN_TOUCH_TARGET.SMALL, // Smaller buttons
-    height: MIN_TOUCH_TARGET.SMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+  primaryButton: {
+    width: BUTTON_SIZES.STOP,
+    height: BUTTON_SIZES.STOP,
+    borderRadius: BUTTON_SIZES.STOP / 2, // Perfect circle
+    alignItems: 'center',
+    justifyContent: 'center',
+    // Subtle shadow for primary button depth
+    ...LAYOUT.ELEVATION.SMALL,
+  },
+
+  secondaryControlsStack: {
+    flexDirection: 'column', // Stack timer and expand vertically
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: LAYOUT.SPACING.SMALL, // Tight vertical spacing between secondary buttons (8px)
+  },
+
+  secondaryButton: {
+    width: BUTTON_SIZES.SECONDARY,
+    height: BUTTON_SIZES.SECONDARY,
+    borderRadius: BUTTON_SIZES.SECONDARY / 2, // Perfect circle
     alignItems: 'center',
     justifyContent: 'center',
   },
