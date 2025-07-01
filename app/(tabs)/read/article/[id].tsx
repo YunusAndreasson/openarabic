@@ -270,6 +270,8 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
             queuePosition={globalAudioState.queuePosition}
             isPlaying={globalAudioState.isPlaying}
             isTimerActive={globalAudioState.isTimerActive}
+            position={globalAudioState.position}
+            duration={globalAudioState.duration}
             onPlayPause={globalAudioState.onPlayPause}
             onTimerPress={globalAudioState.onTimerPress}
             onExpandPress={globalAudioState.onExpandPress}

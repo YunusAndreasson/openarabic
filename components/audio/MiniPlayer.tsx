@@ -6,6 +6,7 @@ import { ImageBackground, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown, runOnJS } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import AudioProgressIndicator from '@/components/AudioProgressIndicator';
 import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
@@ -30,6 +31,9 @@ export interface MiniPlayerProps {
   isPlaying: boolean;
   /** Sleep timer active state */
   isTimerActive: boolean;
+  /** Audio progress information */
+  position: number;
+  duration: number;
   /** Playback controls */
   onPlayPause: () => void;
   onTimerPress: () => void;
@@ -56,6 +60,8 @@ const MiniPlayerComponent = ({
   queuePosition,
   isPlaying,
   isTimerActive,
+  position,
+  duration,
   onPlayPause,
   onTimerPress,
   onExpandPress,
@@ -182,6 +188,22 @@ const MiniPlayerComponent = ({
                   >
                     {article.author} • {queuePosition.current}/{queuePosition.total}
                   </ThemedText>
+                </View>
+
+                {/* Progress Bar */}
+                <View style={styles.progressContainer}>
+                  <AudioProgressIndicator
+                    position={position}
+                    duration={duration}
+                    progressPercentage={
+                      duration > 0 ? Math.min(100, (position / duration) * 100) : 0
+                    }
+                    progressBarHeight={LAYOUT.SPACING.HALF_TINY} // 2px - thinner for mini-player
+                    progressBackgroundColor={withOpacity(colors.elevation3, 0.3)}
+                    progressFillColor={colors.tint}
+                    textColor={colors.captionText}
+                    style={styles.progressIndicator}
+                  />
                 </View>
               </View>
 
@@ -333,6 +355,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+
+  progressContainer: {
+    marginTop: LAYOUT.SPACING.HALF_TINY,
+    height: LAYOUT.SPACING.HALF_TINY,
+  },
+
+  progressIndicator: {
+    flex: 1,
+  },
 });
 
 // Add to layout constants for consistency
@@ -353,7 +384,9 @@ const MiniPlayer = memo(MiniPlayerComponent, (prevProps, nextProps) => {
     prevProps.queuePosition.current === nextProps.queuePosition.current &&
     prevProps.queuePosition.total === nextProps.queuePosition.total &&
     prevProps.isPlaying === nextProps.isPlaying &&
-    prevProps.isTimerActive === nextProps.isTimerActive
+    prevProps.isTimerActive === nextProps.isTimerActive &&
+    prevProps.position === nextProps.position &&
+    prevProps.duration === nextProps.duration
   );
 });
 

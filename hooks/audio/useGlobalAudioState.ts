@@ -28,6 +28,10 @@ export interface GlobalAudioState {
     total: number;
   };
 
+  // Audio progress
+  position: number;
+  duration: number;
+
   // Sleep timer state
   isTimerActive: boolean;
   showSleepTimerModal: boolean;
@@ -175,6 +179,8 @@ export function useGlobalAudioState(): GlobalAudioState {
     audioState,
     currentArticle,
     queuePosition,
+    position: audioPlayer.position,
+    duration: audioPlayer.duration,
     isTimerActive: sleepTimer.state.isActive,
     showSleepTimerModal,
     sleepTimerRemainingTime: sleepTimer.state.remainingTime,
