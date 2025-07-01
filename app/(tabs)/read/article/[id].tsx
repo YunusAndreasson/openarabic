@@ -7,6 +7,7 @@ import { AppState, type LayoutRectangle } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleSentence, WordTooltip } from '@/components/article';
 import { ArticleContent } from '@/components/article/ArticleContent';
+import { MiniPlayer } from '@/components/audio';
 import { ToastProvider } from '@/components/providers/ToastProvider';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { AUDIO_STATES } from '@/constants/audio';
@@ -16,6 +17,7 @@ import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/articles/useArticleRenderers';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { useSentenceScrubber } from '@/hooks/articles/useSentenceScrubber';
+import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
@@ -98,6 +100,8 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     await handleToggleReadingList(articleId, isInReadingList);
   }, [articleId, isInReadingList, handleToggleReadingList]);
 
+  const globalAudioState = useGlobalAudioState();
+
   // Handle audio playback for single article
   const handlePlayPress = useCallback(async () => {
     if (!articleId) return;
@@ -116,6 +120,10 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
       const track = await enhancedAudioService.generateEnhancedAudioTrack(articleId);
       if (track) {
         const success = await audioPlayer.play(track);
+        // Explicitly close sleep timer to ensure mini-player is shown
+        if (success) {
+          globalAudioState.onSleepTimerClose();
+        }
         // Removed automatic navigation - let mini-player handle expand action
         if (!success) {
           // Could add error handling here if needed
@@ -124,7 +132,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     } catch (error) {
       handleError(error as Error);
     }
-  }, [articleId, isCurrentArticlePlaying, audioPlayer]);
+  }, [articleId, isCurrentArticlePlaying, audioPlayer, globalAudioState]);
 
   // Initialize sentence scrubber
   const {
@@ -252,6 +260,23 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
           isPlaying={isCurrentArticlePlaying}
         />
       ) : null}
+
+      {/* Mini-player for article modal */}
+      {globalAudioState.currentArticle &&
+        globalAudioState.isPlaying &&
+        !globalAudioState.showSleepTimerModal && (
+          <MiniPlayer
+            article={globalAudioState.currentArticle}
+            queuePosition={globalAudioState.queuePosition}
+            isPlaying={globalAudioState.isPlaying}
+            isTimerActive={globalAudioState.isTimerActive}
+            onPlayPause={globalAudioState.onPlayPause}
+            onTimerPress={globalAudioState.onTimerPress}
+            onExpandPress={globalAudioState.onExpandPress}
+            onMiniPlayerPress={globalAudioState.onMiniPlayerPress}
+          />
+        )}
+
       <WordTooltip
         visible={!!activeTooltip}
         text={activeTooltip?.word.english}

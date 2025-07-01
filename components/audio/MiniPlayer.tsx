@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: LAYOUT.SCREEN_EDGE_PADDING,
     right: LAYOUT.SCREEN_EDGE_PADDING,
-    zIndex: LAYOUT.Z_INDEX.OVERLAY, // Use proper z-index from design system
+    zIndex: 9999, // High enough to overlay modal screens
   },
 
   card: {

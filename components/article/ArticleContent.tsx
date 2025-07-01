@@ -199,7 +199,7 @@ const ArticleTitle = memo<ArticleTitleProps>(
             accessibilityHint="Toggle article audio playback"
           >
             <Ionicons
-              name={isPlaying ? 'pause' : 'play'}
+              name={isPlaying ? 'stop' : 'play'}
               size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
               color={isPlaying ? colors.tint : colors.secondaryText}
               style={styles.actionButtonIcon}

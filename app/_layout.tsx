@@ -308,21 +308,22 @@ function AppContent() {
           />
         </Stack>
 
-        {/* Global Mini-Player - appears when audio is playing */}
-        {globalAudioState.currentArticle && globalAudioState.isPlaying && (
-          <MiniPlayer
-            article={globalAudioState.currentArticle}
-            queuePosition={globalAudioState.queuePosition}
-            isPlaying={globalAudioState.isPlaying}
-            isTimerActive={globalAudioState.isTimerActive}
-            onPlayPause={globalAudioState.onPlayPause}
-            onTimerPress={globalAudioState.onTimerPress}
-            onExpandPress={globalAudioState.onExpandPress}
-            onMiniPlayerPress={globalAudioState.onMiniPlayerPress}
-          />
-        )}
-
-        {/* Global Sleep Timer Modal - appears when timer button is pressed */}
+        {/* Mini-player always above tab bar, but below modals */}
+        {globalAudioState.currentArticle &&
+          globalAudioState.isPlaying &&
+          !globalAudioState.showSleepTimerModal && (
+            <MiniPlayer
+              article={globalAudioState.currentArticle}
+              queuePosition={globalAudioState.queuePosition}
+              isPlaying={globalAudioState.isPlaying}
+              isTimerActive={globalAudioState.isTimerActive}
+              onPlayPause={globalAudioState.onPlayPause}
+              onTimerPress={globalAudioState.onTimerPress}
+              onExpandPress={globalAudioState.onExpandPress}
+              onMiniPlayerPress={globalAudioState.onMiniPlayerPress}
+            />
+          )}
+        {/* SleepTimer rendered last to ensure it overlays everything */}
         <SleepTimer
           isVisible={globalAudioState.showSleepTimerModal}
           isActive={globalAudioState.isTimerActive}
