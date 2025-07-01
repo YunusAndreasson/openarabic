@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { memo, useCallback, type FC } from 'react';
-import { StyleSheet, View, ScrollView, Pressable } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import BaseCard from '@/components/BaseCard';
 import Pill from '@/components/Pill';
@@ -9,16 +9,15 @@ import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import {
-  useFilterModal,
-  DIFFICULTY_OPTIONS,
   DATE_RANGE_OPTIONS,
+  DIFFICULTY_OPTIONS,
   SORT_OPTIONS,
+  useFilterModal,
 } from '@/hooks/articles/useFilterModal';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Author } from '@/types/articles.types';
-import type { BaseModalProps } from '@/types/ui/modal.types';
 
-interface FilterModalProps extends BaseModalProps {
+interface FilterModalProps {
   availableAuthors: Author[];
 }
 
@@ -97,9 +96,35 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Active Filters Summary */}
+        {activeFiltersCount > 0 && (
+          <BaseCard shadowSize="small" style={styles.summaryCard}>
+            <View style={styles.summaryHeader}>
+              <View style={[styles.summaryBadge, { backgroundColor: colors.tint }]}>
+                <ThemedText type="caption" weight="bold" colorName="background">
+                  {activeFiltersCount}
+                </ThemedText>
+              </View>
+              <ThemedText type="body" weight="semibold" colorName="tint">
+                {activeFiltersCount === 1 ? 'Active Filter' : 'Active Filters'}
+              </ThemedText>
+              <Pressable onPress={handleClearAll} style={styles.clearAllButton}>
+                <ThemedText type="label" colorName="tint" weight="semibold">
+                  {STRINGS.RESET_FILTERS}
+                </ThemedText>
+              </Pressable>
+            </View>
+          </BaseCard>
+        )}
+
         {/* Sort Section */}
         <BaseCard shadowSize="small" style={styles.card}>
-          <View style={styles.cardHeader}>
+          <View style={[styles.sectionHeader, { borderBottomColor: colors.borderOverlay }]}>
+            <Ionicons
+              name="swap-vertical-outline"
+              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+              color={colors.tint}
+            />
             <ThemedText type="heading3" weight="bold">
               {STRINGS.SORT_BY}
             </ThemedText>
@@ -113,12 +138,10 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                   key={option.key}
                   style={[
                     styles.sortOption,
-                    isSelected && {
-                      backgroundColor: colors.elevation1,
-                      borderColor: colors.tint + '40',
-                      ...LAYOUT.ELEVATION.SUBTLE,
-                      shadowColor: colors.tint,
-                      borderWidth: 1,
+                    isSelected ? styles.sortOptionSelected : styles.sortOptionDefault,
+                    {
+                      backgroundColor: isSelected ? colors.tint : colors.elevation1,
+                      borderColor: isSelected ? colors.tint + '40' : 'transparent',
                     },
                   ]}
                   onPress={sortOptionHandlers[option.key]}
@@ -126,24 +149,24 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                   <Ionicons
                     name={option.icon}
                     size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    color={isSelected ? colors.tint : colors.secondaryText}
+                    color={isSelected ? colors.background : colors.tint}
                   />
                   <ThemedText
                     type="label"
                     weight={isSelected ? 'bold' : 'medium'}
-                    colorName={isSelected ? 'tint' : 'secondaryText'}
+                    colorName={isSelected ? 'background' : 'secondaryText'}
+                    style={styles.sortOptionText}
                   >
                     {option.label}
                   </ThemedText>
                   {isSelected && (
-                    <ThemedText
-                      type="caption"
-                      weight="semibold"
-                      colorName="tint"
-                      style={styles.sortDirection}
-                    >
-                      {sort.direction === 'desc' ? '↓' : '↑'}
-                    </ThemedText>
+                    <View style={styles.sortDirectionContainer}>
+                      <Ionicons
+                        name={sort.direction === 'desc' ? 'arrow-down' : 'arrow-up'}
+                        size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                        color={colors.background}
+                      />
+                    </View>
                   )}
                 </Pressable>
               );
@@ -153,160 +176,209 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
 
         {/* Filter Sections */}
         <BaseCard shadowSize="small" style={styles.card}>
-          <View style={styles.cardHeader}>
+          <View style={[styles.sectionHeader, { borderBottomColor: colors.borderOverlay }]}>
+            <Ionicons
+              name="filter-outline"
+              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+              color={colors.tint}
+            />
             <ThemedText type="heading3" weight="bold">
               {STRINGS.FILTERS}
             </ThemedText>
-            {activeFiltersCount > 0 && (
-              <Pressable onPress={handleClearAll} style={styles.clearButton}>
-                <ThemedText type="label" colorName="tint" weight="medium">
-                  {STRINGS.RESET_FILTERS}
-                </ThemedText>
-              </Pressable>
-            )}
           </View>
 
           {/* Authors Filter */}
-          <Pressable
-            style={[styles.filterRow, { borderBottomColor: colors.borderOverlay }]}
-            onPress={handleToggleAuthors}
-          >
-            <View style={styles.filterRowLeft}>
-              <Ionicons
-                name="person-outline"
-                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                color={colors.secondaryText}
-              />
-              <ThemedText type="body" weight="medium">
-                {STRINGS.AUTHORS}
-              </ThemedText>
-            </View>
-            <View style={styles.filterRowRight}>
-              <ThemedText type="label" colorName="secondaryText">
-                {selectedAuthorsText}
-              </ThemedText>
-              <Ionicons
-                name={expandedSections.authors ? 'chevron-up' : 'chevron-down'}
-                size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                color={colors.secondaryText}
-              />
-            </View>
-          </Pressable>
-
-          {expandedSections.authors && (
-            <View style={styles.expandedContent}>
-              <View style={styles.pillGrid}>
-                {authorChunks.map(chunk => (
-                  <View key={chunk[0]?.id || chunk.length} style={styles.authorChunk}>
-                    {chunk.map(author => (
-                      <Pill
-                        key={author.id}
-                        id={author.id}
-                        label={author.name}
-                        isSelected={filters.authorIds.includes(author.id)}
-                        onSelect={selectAuthor(author.id)}
-                        variant="filter"
-                        pillStyle={styles.filterPill}
-                      />
-                    ))}
+          <View style={styles.filterSection}>
+            <Pressable
+              style={[
+                styles.filterRow,
+                expandedSections.authors && [
+                  styles.filterRowExpanded,
+                  { backgroundColor: colors.elevation2 },
+                ],
+                { borderBottomColor: colors.borderOverlay },
+              ]}
+              onPress={handleToggleAuthors}
+            >
+              <View style={styles.filterRowContent}>
+                <View style={styles.filterRowLeft}>
+                  <View
+                    style={[styles.filterIconContainer, { backgroundColor: colors.elevation2 }]}
+                  >
+                    <Ionicons
+                      name="person"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                      color={colors.tint}
+                    />
                   </View>
-                ))}
+                  <View style={styles.filterTextContainer}>
+                    <ThemedText type="body" weight="semibold">
+                      {STRINGS.AUTHORS}
+                    </ThemedText>
+                    <ThemedText type="caption" colorName="secondaryText">
+                      {selectedAuthorsText}
+                    </ThemedText>
+                  </View>
+                </View>
+                <View style={styles.expandIndicator}>
+                  <Ionicons
+                    name={expandedSections.authors ? 'chevron-up' : 'chevron-down'}
+                    size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    color={colors.tint}
+                  />
+                </View>
               </View>
-            </View>
-          )}
+            </Pressable>
+
+            {expandedSections.authors && (
+              <View style={[styles.expandedContent, { backgroundColor: colors.elevation1 }]}>
+                <View style={styles.pillGrid}>
+                  {authorChunks.map(chunk => (
+                    <View key={chunk[0]?.id || chunk.length} style={styles.authorChunk}>
+                      {chunk.map(author => (
+                        <Pill
+                          key={author.id}
+                          id={author.id}
+                          label={author.name}
+                          isSelected={filters.authorIds.includes(author.id)}
+                          onSelect={selectAuthor(author.id)}
+                          variant="filter"
+                          pillStyle={styles.filterPill}
+                        />
+                      ))}
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+          </View>
 
           {/* Difficulty Filter */}
-          <Pressable
-            style={[styles.filterRow, { borderBottomColor: colors.borderOverlay }]}
-            onPress={handleToggleDifficulty}
-          >
-            <View style={styles.filterRowLeft}>
-              <Ionicons
-                name="trending-up-outline"
-                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                color={colors.secondaryText}
-              />
-              <ThemedText type="body" weight="medium">
-                {STRINGS.DIFFICULTY}
-              </ThemedText>
-            </View>
-            <View style={styles.filterRowRight}>
-              <ThemedText type="label" colorName="secondaryText">
-                {selectedDifficultyOption?.label}
-              </ThemedText>
-              <Ionicons
-                name={expandedSections.difficulty ? 'chevron-up' : 'chevron-down'}
-                size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                color={colors.secondaryText}
-              />
-            </View>
-          </Pressable>
-
-          {expandedSections.difficulty && (
-            <View style={styles.expandedContent}>
-              <View style={styles.pillGrid}>
-                {DIFFICULTY_OPTIONS.map(option => (
-                  <Pill
-                    key={option.key}
-                    id={option.key}
-                    label={option.label}
-                    isSelected={
-                      option.range[0] === filters.difficultyRange[0] &&
-                      option.range[1] === filters.difficultyRange[1]
-                    }
-                    onSelect={selectDifficulty(option.range)}
-                    variant="filter"
-                    pillStyle={styles.filterPill}
+          <View style={styles.filterSection}>
+            <Pressable
+              style={[
+                styles.filterRow,
+                expandedSections.difficulty && [
+                  styles.filterRowExpanded,
+                  { backgroundColor: colors.elevation2 },
+                ],
+                { borderBottomColor: colors.borderOverlay },
+              ]}
+              onPress={handleToggleDifficulty}
+            >
+              <View style={styles.filterRowContent}>
+                <View style={styles.filterRowLeft}>
+                  <View
+                    style={[styles.filterIconContainer, { backgroundColor: colors.elevation2 }]}
+                  >
+                    <Ionicons
+                      name="trending-up"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                      color={colors.tint}
+                    />
+                  </View>
+                  <View style={styles.filterTextContainer}>
+                    <ThemedText type="body" weight="semibold">
+                      {STRINGS.DIFFICULTY}
+                    </ThemedText>
+                    <ThemedText type="caption" colorName="secondaryText">
+                      {selectedDifficultyOption?.label}
+                    </ThemedText>
+                  </View>
+                </View>
+                <View style={styles.expandIndicator}>
+                  <Ionicons
+                    name={expandedSections.difficulty ? 'chevron-up' : 'chevron-down'}
+                    size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    color={colors.tint}
                   />
-                ))}
+                </View>
               </View>
-            </View>
-          )}
+            </Pressable>
+
+            {expandedSections.difficulty && (
+              <View style={[styles.expandedContent, { backgroundColor: colors.elevation1 }]}>
+                <View style={styles.pillGrid}>
+                  {DIFFICULTY_OPTIONS.map(option => (
+                    <Pill
+                      key={option.key}
+                      id={option.key}
+                      label={option.label}
+                      isSelected={
+                        option.range[0] === filters.difficultyRange[0] &&
+                        option.range[1] === filters.difficultyRange[1]
+                      }
+                      onSelect={selectDifficulty(option.range)}
+                      variant="filter"
+                      pillStyle={styles.filterPill}
+                    />
+                  ))}
+                </View>
+              </View>
+            )}
+          </View>
 
           {/* Date Range Filter */}
-          <Pressable
-            style={[styles.filterRow, styles.lastFilterRow]}
-            onPress={handleToggleDateRange}
-          >
-            <View style={styles.filterRowLeft}>
-              <Ionicons
-                name="calendar-outline"
-                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                color={colors.secondaryText}
-              />
-              <ThemedText type="body" weight="medium">
-                {STRINGS.DATE_RANGE}
-              </ThemedText>
-            </View>
-            <View style={styles.filterRowRight}>
-              <ThemedText type="label" colorName="secondaryText">
-                {selectedDateRangeOption?.label}
-              </ThemedText>
-              <Ionicons
-                name={expandedSections.dateRange ? 'chevron-up' : 'chevron-down'}
-                size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                color={colors.secondaryText}
-              />
-            </View>
-          </Pressable>
-
-          {expandedSections.dateRange && (
-            <View style={styles.expandedContent}>
-              <View style={styles.pillGrid}>
-                {DATE_RANGE_OPTIONS.map(option => (
-                  <Pill
-                    key={option.key}
-                    id={option.key}
-                    label={option.label}
-                    isSelected={filters.dateRange === option.key}
-                    onSelect={selectDateRange(option.key)}
-                    variant="filter"
-                    pillStyle={styles.filterPill}
+          <View style={styles.filterSection}>
+            <Pressable
+              style={[
+                styles.filterRow,
+                styles.lastFilterRow,
+                expandedSections.dateRange && [
+                  styles.filterRowExpanded,
+                  { backgroundColor: colors.elevation2 },
+                ],
+              ]}
+              onPress={handleToggleDateRange}
+            >
+              <View style={styles.filterRowContent}>
+                <View style={styles.filterRowLeft}>
+                  <View
+                    style={[styles.filterIconContainer, { backgroundColor: colors.elevation2 }]}
+                  >
+                    <Ionicons
+                      name="calendar"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                      color={colors.tint}
+                    />
+                  </View>
+                  <View style={styles.filterTextContainer}>
+                    <ThemedText type="body" weight="semibold">
+                      {STRINGS.DATE_RANGE}
+                    </ThemedText>
+                    <ThemedText type="caption" colorName="secondaryText">
+                      {selectedDateRangeOption?.label}
+                    </ThemedText>
+                  </View>
+                </View>
+                <View style={styles.expandIndicator}>
+                  <Ionicons
+                    name={expandedSections.dateRange ? 'chevron-up' : 'chevron-down'}
+                    size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    color={colors.tint}
                   />
-                ))}
+                </View>
               </View>
-            </View>
-          )}
+            </Pressable>
+
+            {expandedSections.dateRange && (
+              <View style={[styles.expandedContent, { backgroundColor: colors.elevation1 }]}>
+                <View style={styles.pillGrid}>
+                  {DATE_RANGE_OPTIONS.map(option => (
+                    <Pill
+                      key={option.key}
+                      id={option.key}
+                      label={option.label}
+                      isSelected={filters.dateRange === option.key}
+                      onSelect={selectDateRange(option.key)}
+                      variant="filter"
+                      pillStyle={styles.filterPill}
+                    />
+                  ))}
+                </View>
+              </View>
+            )}
+          </View>
         </BaseCard>
       </ScrollView>
     </ThemedView>
@@ -322,68 +394,133 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingBottom: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.SPACING.XLARGE,
   },
+
+  // Active Filters Summary
+  summaryCard: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    padding: LAYOUT.SPACING.LARGE,
+  },
+  summaryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.SMALL,
+  },
+  summaryBadge: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  clearAllButton: {
+    marginLeft: 'auto',
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    minHeight: MIN_TOUCH_TARGET.MEDIUM,
+    justifyContent: 'center',
+  },
+
+  // Section Cards
   card: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
     padding: LAYOUT.SPACING.LARGE,
   },
-  cardHeader: {
+  sectionHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    gap: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.SPACING.SMALL,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  clearButton: {
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    minHeight: MIN_TOUCH_TARGET.LARGE,
-  },
+
+  // Sort Section
   sortGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: LAYOUT.SPACING.SMALL,
+    gap: LAYOUT.SPACING.MEDIUM,
   },
   sortOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: LAYOUT.SPACING.TINY,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    gap: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: 1,
-    borderColor: 'transparent',
     minWidth: '47%',
     minHeight: MIN_TOUCH_TARGET.LARGE,
+    ...LAYOUT.ELEVATION.SUBTLE,
   },
-  sortDirection: {
-    marginLeft: 'auto',
+  sortOptionDefault: {
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  sortOptionSelected: {
+    borderWidth: 2,
+    ...LAYOUT.ELEVATION.SMALL,
+  },
+  sortOptionText: {
+    flex: 1,
+  },
+  sortDirectionContainer: {
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // Filter Sections
+  filterSection: {
+    marginBottom: LAYOUT.SPACING.TINY,
   },
   filterRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
     borderBottomWidth: StyleSheet.hairlineWidth,
     minHeight: MIN_TOUCH_TARGET.LARGE,
+  },
+  filterRowExpanded: {
+    // Background color applied via colors.elevation2 in component
   },
   lastFilterRow: {
     borderBottomWidth: 0,
   },
+  filterRowContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+  },
   filterRowLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: LAYOUT.SPACING.SMALL,
     flex: 1,
+    gap: LAYOUT.SPACING.MEDIUM,
   },
-  filterRowRight: {
-    flexDirection: 'row',
+  filterIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    justifyContent: 'center',
     alignItems: 'center',
+  },
+  filterTextContainer: {
+    flex: 1,
     gap: LAYOUT.SPACING.TINY,
   },
+  expandIndicator: {
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // Expanded Content
   expandedContent: {
-    paddingTop: LAYOUT.SPACING.SMALL,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   pillGrid: {
     flexDirection: 'row',
@@ -398,6 +535,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
 });
 

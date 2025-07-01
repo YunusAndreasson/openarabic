@@ -57,6 +57,7 @@ export default function ReadLayout(): JSX.Element {
         name="filterModal"
         options={createNavigationOptions(colors, {
           title: STRINGS.FILTERS,
+          headerLeft: () => <DoneButton />,
         })}
       />
       <Stack.Screen
