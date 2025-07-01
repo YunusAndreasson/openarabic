@@ -21,6 +21,7 @@ export { ThemeToggle } from './ThemeToggle';
 export { Toggle } from './Toggle';
 
 // Re-export from subdirectories (except article to avoid circular dependency)
+export * from './audio';
 export * from './review';
 export * from './vocabulary';
 

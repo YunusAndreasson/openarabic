@@ -1,7 +1,7 @@
 import { useHeaderHeight } from '@react-navigation/elements';
 import { FlashList } from '@shopify/flash-list';
 import type { JSX } from 'react';
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
@@ -15,7 +15,6 @@ import { useToast } from '@/components/providers/ToastProvider';
 import { AUDIO_STATES, type AudioState } from '@/constants/audio';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useListenScreen, useListenUI } from '@/hooks/listen';
 import { useColors } from '@/hooks/theme/useColors';
 import { useEditMode } from '@/hooks/ui/useEditMode';
@@ -91,10 +90,6 @@ export default function ListenScreen(): JSX.Element {
   const colors = useColors(); // Only used for EmptyState
   const { editMode } = useEditMode('listen');
   const { showToast } = useToast();
-  const hasNavigatedToModal = useRef(false);
-
-  // Add audioPlayer for modal guard
-  const audioPlayer = useSimpleAudioPlayer();
 
   // Simplified destructuring - only get what we actually use
   const {
@@ -108,7 +103,7 @@ export default function ListenScreen(): JSX.Element {
   } = useListenScreen();
 
   // Simplified UI hook call - removed unused parameters
-  const { canShowEmpty, handleNowPlayingPress, handleDragEnd } = useListenUI({
+  const { canShowEmpty, handleDragEnd } = useListenUI({
     sortedReadingList,
     editMode,
   });
@@ -116,36 +111,16 @@ export default function ListenScreen(): JSX.Element {
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
 
-  // Auto-navigate to modal when audio starts playing from other sources
-  useEffect(() => {
-    // Only open Now Playing modal if the playing article is in the reading list (Listen screen context)
-    const currentArticleId = audioPlayer?.metadata?.articleId
-      ? parseInt(audioPlayer.metadata.articleId, 10)
-      : null;
-    const isFromReadingList = sortedReadingList.some(item => item.article_id === currentArticleId);
-
-    if (audioState === AUDIO_STATES.PLAYING && !hasNavigatedToModal.current && isFromReadingList) {
-      hasNavigatedToModal.current = true;
-      handleNowPlayingPress();
-    }
-
-    if (audioState === AUDIO_STATES.IDLE) {
-      hasNavigatedToModal.current = false;
-    }
-  }, [audioState, handleNowPlayingPress, sortedReadingList, audioPlayer?.metadata?.articleId]);
-
   useEffect(() => {
     if (enhancedTracksError) {
       showToast(STRINGS.FAILED_TO_LOAD_AUDIO_TRACKS, 4000, 'error');
     }
   }, [enhancedTracksError, showToast]);
 
-  // Optimized Play All handler - open modal immediately
-  const handlePlayAllWithModal = useCallback(async () => {
-    hasNavigatedToModal.current = true;
-    handleNowPlayingPress();
+  // Optimized Play All handler - just start playback without forcing modal
+  const handlePlayAllWithoutModal = useCallback(async () => {
     await handlePlayAll();
-  }, [handlePlayAll, handleNowPlayingPress]);
+  }, [handlePlayAll]);
 
   // Simplified state calculations
   const hasArticles = sortedReadingList.length > 0;
@@ -286,7 +261,7 @@ export default function ListenScreen(): JSX.Element {
           primaryLabel={STRINGS.PLAY_ALL}
           primaryVariant="filled"
           showTimerButton={false}
-          onPrimaryPress={handlePlayAllWithModal}
+          onPrimaryPress={handlePlayAllWithoutModal}
         />
       </View>
     </ThemedView>

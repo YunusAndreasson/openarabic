@@ -27,6 +27,8 @@ import nastaliqFont from '@/assets/fonts/Nastaliq.ttf';
 import notoSansFont from '@/assets/fonts/NotoSans.ttf';
 import scheherazadeFont from '@/assets/fonts/Scheherazade.ttf';
 import { ThemedText } from '@/components/ThemedText';
+import { MiniPlayer } from '@/components/audio';
+import { SleepTimer } from '@/components/listen';
 import { AuthProvider, ToastProvider } from '@/components/providers';
 import { Theme } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
@@ -36,6 +38,7 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useReadTabDataLoaded } from '@/hooks/app/useArticlesAndDueWordsLoaded';
+import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
@@ -119,6 +122,9 @@ function AppContent() {
 
   // Centralized system UI theme management
   useSystemUITheme();
+
+  // Global audio state for mini-player
+  const globalAudioState = useGlobalAudioState();
 
   const [fontsLoaded] = useFonts({
     NotoSans: notoSansFont,
@@ -301,6 +307,31 @@ function AppContent() {
             })}
           />
         </Stack>
+
+        {/* Global Mini-Player - appears when audio is playing */}
+        {globalAudioState.currentArticle && globalAudioState.isPlaying && (
+          <MiniPlayer
+            article={globalAudioState.currentArticle}
+            queuePosition={globalAudioState.queuePosition}
+            isPlaying={globalAudioState.isPlaying}
+            isTimerActive={globalAudioState.isTimerActive}
+            onPlayPause={globalAudioState.onPlayPause}
+            onTimerPress={globalAudioState.onTimerPress}
+            onExpandPress={globalAudioState.onExpandPress}
+            onMiniPlayerPress={globalAudioState.onMiniPlayerPress}
+          />
+        )}
+
+        {/* Global Sleep Timer Modal - appears when timer button is pressed */}
+        <SleepTimer
+          isVisible={globalAudioState.showSleepTimerModal}
+          isActive={globalAudioState.isTimerActive}
+          remainingTime={globalAudioState.sleepTimerRemainingTime}
+          onClose={globalAudioState.onSleepTimerClose}
+          onTimerSet={globalAudioState.onSleepTimerSet}
+          onTimerCancel={globalAudioState.onSleepTimerCancel}
+        />
+
         <StatusBar style={isDark ? 'light' : 'dark'} />
       </View>
     </NavigationThemeProvider>

@@ -1,7 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import type { JSX } from 'react';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AppState, type LayoutRectangle } from 'react-native';
 
 import { ThemedView } from '@/components/ThemedView';
@@ -27,7 +27,6 @@ import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
-import { openNowPlayingModal } from '@/utils/navigationHelpers';
 
 const FLEX_ONE_STYLE = { flex: 1 } as const;
 
@@ -36,7 +35,6 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
   const colors = useColors();
   const { user } = useAuth();
   const fontScale = useAppSelectorMemo(state => state.settings.fontScale);
-  const hasNavigatedToModal = useRef(false);
 
   // Audio player for single article playback
   const audioPlayer = useSimpleAudioPlayer();
@@ -113,14 +111,15 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
         return;
       }
 
-      // Open Now Playing modal immediately for instant feedback
-      hasNavigatedToModal.current = true;
-      openNowPlayingModal({ articleId: articleId.toString() });
-
       // Generate and play single track for this article
+      // Mini-player will appear automatically when audio starts
       const track = await enhancedAudioService.generateEnhancedAudioTrack(articleId);
       if (track) {
-        await audioPlayer.play(track);
+        const success = await audioPlayer.play(track);
+        // Removed automatic navigation - let mini-player handle expand action
+        if (!success) {
+          // Could add error handling here if needed
+        }
       }
     } catch (error) {
       handleError(error as Error);

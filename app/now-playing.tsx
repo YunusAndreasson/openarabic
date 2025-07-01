@@ -1,27 +1,23 @@
-import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import AudioProgressIndicator from '@/components/AudioProgressIndicator';
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
-import SleepTimer from '@/components/listen/SleepTimer';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useCurrentSentence } from '@/hooks/audio/useCurrentSentence';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
-import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { withOpacity } from '@/utils/colorUtils';
-import { selectionFeedback } from '@/utils/haptics';
 
 // Modal drag indicator component positioned over background image
 const ModalDragIndicator = ({ colors }: { colors: ReturnType<typeof useColors> }) => {
@@ -53,11 +49,8 @@ export default function NowPlayingModal() {
     audioState?: string;
   }>();
 
-  // Audio player and sleep timer
+  // Audio player
   const audioPlayer = useSimpleAudioPlayer();
-  const sleepTimer = useSleepTimer(() => {
-    audioPlayer.stop();
-  });
 
   // Track progress with our own timer when audio is playing
   const [simulatedPosition, setSimulatedPosition] = useState<number>(0);
@@ -165,41 +158,11 @@ export default function NowPlayingModal() {
     [colors.white, colors.warning]
   );
 
-  const handleStop = async () => {
-    selectionFeedback();
-    await audioPlayer.stop();
-    router.dismiss();
-  };
-
   // Calculate sentence progress for display
   const sentenceProgressText =
     sortedSentences.length > 0
       ? `Sentence ${Math.max(0, currentSentenceIndex) + 1} of ${sortedSentences.length}`
       : '';
-
-  // Stop audio when modal is dismissed (component unmounts)
-  useEffect(() => {
-    return () => {
-      audioPlayer.stop();
-    };
-  }, []);
-
-  const [showSleepTimer, setShowSleepTimer] = useState(false);
-
-  const handleTimerPress = () => {
-    selectionFeedback();
-    setShowSleepTimer(true);
-  };
-
-  const handleSleepTimerSet = (minutes: number) => {
-    sleepTimer.actions.startTimer(minutes);
-    setShowSleepTimer(false);
-  };
-
-  const handleSleepTimerCancel = () => {
-    sleepTimer.actions.cancelTimer();
-    setShowSleepTimer(false);
-  };
 
   // Determine if we're actually loading (more reliable)
   const isActuallyLoading = useMemo(() => {
@@ -295,47 +258,8 @@ export default function NowPlayingModal() {
               useWhiteText={true}
             />
           </View>
-
-          {/* Control Buttons */}
-          <View style={styles.controlButtons}>
-            {/* Timer Button */}
-            <TouchableOpacity
-              activeOpacity={LAYOUT.OPACITY.HOVER}
-              style={[
-                styles.controlButton,
-                { backgroundColor: overlayColors.controlBackground },
-                sleepTimer.state.isActive && { backgroundColor: overlayColors.timerActive },
-              ]}
-              onPress={handleTimerPress}
-            >
-              <Ionicons
-                color={sleepTimer.state.isActive ? colors.background : colors.white}
-                name={sleepTimer.state.isActive ? 'timer' : 'timer-outline'}
-                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              />
-            </TouchableOpacity>
-
-            {/* Stop Button */}
-            <TouchableOpacity
-              activeOpacity={LAYOUT.OPACITY.HOVER}
-              style={[styles.controlButton, { backgroundColor: overlayColors.controlBackground }]}
-              onPress={handleStop}
-            >
-              <Ionicons color={colors.white} name="stop" size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM} />
-            </TouchableOpacity>
-          </View>
         </View>
       </View>
-
-      {/* Sleep Timer Modal - rendered as child like TimePicker in account screen */}
-      <SleepTimer
-        isActive={sleepTimer.state.isActive}
-        isVisible={showSleepTimer}
-        remainingTime={sleepTimer.state.remainingTime}
-        onClose={() => setShowSleepTimer(false)}
-        onTimerCancel={handleSleepTimerCancel}
-        onTimerSet={handleSleepTimerSet}
-      />
     </View>
   );
 }
@@ -433,21 +357,6 @@ const styles = StyleSheet.create({
 
   progressSection: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-
-  controlButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: LAYOUT.SPACING.LARGE,
-  },
-
-  controlButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: LAYOUT.BUTTON.HEIGHT.MEDIUM / 2,
-    height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
-    width: LAYOUT.BUTTON.HEIGHT.MEDIUM,
   },
 
   modalDragIndicator: {

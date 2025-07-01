@@ -194,6 +194,7 @@ export const LAYOUT = {
   },
 
   BORDER_RADIUS: {
+    SMALL: SPACING_SCALE.SMALL, // 8 - responsive to spacing scale
     MEDIUM: SPACING_SCALE.MEDIUM, // 12 - responsive to spacing scale
     PILL: 9999, // Keep as is for perfect circles
   },
@@ -208,6 +209,10 @@ export const LAYOUT = {
       // Dynamic heights based on content and accessibility
       LIST_ITEM: TOUCH_TARGETS.LARGE + SPACING_SCALE.LARGE * 2, // 48 + 32 = 80
       AUDIO_ITEM: TOUCH_TARGETS.LARGE + SPACING_SCALE.XLARGE * 2, // 48 + 40 = 88
+      MINI_PLAYER: TOUCH_TARGETS.LARGE + SPACING_SCALE.MEDIUM * 2, // 48 + 24 = 72
+    },
+    IMAGE: {
+      MINI_PLAYER: TOUCH_TARGETS.LARGE - SPACING_SCALE.SMALL, // 48 - 8 = 40
     },
   },
 

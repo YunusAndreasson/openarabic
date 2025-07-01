@@ -112,6 +112,7 @@ const SleepTimerComponent = ({
       backgroundStyle={[styles.background, dynamicStyles.background]}
       handleIndicatorStyle={[styles.indicator, dynamicStyles.indicator]}
       backdropComponent={renderBackdrop}
+      style={{ zIndex: LAYOUT.Z_INDEX.POPUP }}
     >
       <BottomSheetView style={styles.container}>
         {/* Header */}
