@@ -96,7 +96,6 @@ export const STRINGS = {
   NO_ARTICLES_SAVED: 'No saved articles',
   LISTENING_PLAYLIST_EMPTY: 'Your playlist is empty',
 
-  LONG_PRESS_HINT: 'Long press to read article',
   PROGRESS_NOT_AVAILABLE: "Progress isn't available right now",
   ERROR_LOADING_DATA: "Couldn't load data",
 

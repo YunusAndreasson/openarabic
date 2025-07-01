@@ -26,6 +26,16 @@ alwaysApply: false
 - Group information into chunks of no more than 5–9 items to align with users' working memory capacity.
 - Use clear categorization and hierarchy to aid information processing and recall.
 
+## Jakob's Law
+
+- Users spend most of their time on other apps; leverage familiar patterns and conventions they already know.
+- Follow established mobile UI patterns for navigation, gestures, and common interactions to reduce learning curve.
+
+## Norman's Law (Discoverability & Affordance)
+
+- Design should clearly communicate what actions are possible and how to perform them without explanation.
+- Visual cues, button styling, and interactive elements should immediately suggest their functionality and usage.
+
 # General Guidelines
 
 - Maintain consistency in design patterns and terminology throughout the interface based on [Colors.ts](mdc:constants/Colors.ts) and [layout.ts](mdc:constants/layout.ts).

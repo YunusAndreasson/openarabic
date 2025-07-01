@@ -58,10 +58,8 @@ const ListenListItem = memo(
         title={item.articles.title}
         editMode={editMode}
         isBeingDragged={_isBeingDragged}
-        // Primary action: tap to play audio
-        onPress={!editMode ? () => onPlayPress(item.article_id) : undefined}
         onDelete={() => onDelete(item.article_id)}
-        // Show play button as visual indicator, but hide when any audio is playing
+        // Only play button triggers playback, hide when any audio is playing
         onPlayPress={
           !editMode && audioState !== AUDIO_STATES.PLAYING
             ? () => onPlayPress(item.article_id)
