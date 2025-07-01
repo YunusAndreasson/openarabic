@@ -58,6 +58,7 @@ module.exports = {
     'react-redux': '<rootDir>/__mocks__/react-redux.js',
     'expo-image': '<rootDir>/__mocks__/expo-image.js',
     'expo-linear-gradient': '<rootDir>/__mocks__/expo-linear-gradient.js',
+    '@expo/vector-icons': '<rootDir>/__mocks__/@expo/vector-icons.js',
 
     // Path aliases for cleaner imports
     '^@/(.*)$': '<rootDir>/$1',
