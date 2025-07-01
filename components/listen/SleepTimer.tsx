@@ -1,7 +1,6 @@
-import {
+import BottomSheet, {
   BottomSheetBackdrop,
   type BottomSheetBackdropProps,
-  BottomSheetModal,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -43,7 +42,7 @@ const SleepTimerComponent = ({
   isActive = false,
 }: SleepTimerProps) => {
   const colors = useColors();
-  const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const bottomSheetRef = useRef<BottomSheet>(null);
 
   // Pre-select 15 minutes as default
   const [selectedMinutes, setSelectedMinutes] = useState<number>(DEFAULT_SELECTED_MINUTES);
@@ -58,12 +57,12 @@ const SleepTimerComponent = ({
     return [Math.min(totalHeight, 450)];
   }, [isActive]);
 
-  // Handle visibility changes
+  // Handle visibility changes - use expand/close like TimePicker
   useEffect(() => {
     if (isVisible) {
-      bottomSheetRef.current?.present();
+      bottomSheetRef.current?.expand();
     } else {
-      bottomSheetRef.current?.dismiss();
+      bottomSheetRef.current?.close();
     }
   }, [isVisible]);
 
@@ -101,15 +100,15 @@ const SleepTimerComponent = ({
   );
 
   return (
-    <BottomSheetModal
+    <BottomSheet
       ref={bottomSheetRef}
-      index={0}
+      index={isVisible ? 0 : -1}
       snapPoints={snapPoints}
       enablePanDownToClose
       enableOverDrag={false}
       enableDynamicSizing={false}
       activeOffsetY={[-10, 10]}
-      onDismiss={onClose}
+      onClose={onClose}
       backgroundStyle={[styles.background, dynamicStyles.background]}
       handleIndicatorStyle={[styles.indicator, dynamicStyles.indicator]}
       backdropComponent={renderBackdrop}
@@ -183,7 +182,7 @@ const SleepTimerComponent = ({
           )}
         </View>
       </BottomSheetView>
-    </BottomSheetModal>
+    </BottomSheet>
   );
 };
 

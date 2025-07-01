@@ -1,6 +1,5 @@
 import '@/utils/splashPolyfill';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import { PortalHost } from '@gorhom/portal';
 import NetInfo from '@react-native-community/netinfo';
 import {
   DarkTheme,
@@ -265,7 +264,6 @@ function AppContent() {
   return (
     <NavigationThemeProvider value={navigationTheme}>
       <View style={styles.container}>
-        <PortalHost name="root" />
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen
             name="(tabs)"
@@ -299,7 +297,6 @@ function AppContent() {
             name="now-playing"
             options={createNavigationOptions(colors, {
               headerShown: false, // Full-screen modal without header
-              presentation: 'modal',
               gestureEnabled: true,
             })}
           />
