@@ -152,9 +152,9 @@ export const STRINGS = {
   INTERLEAVED_REVIEW: 'Study all words', // GREEN PHASE: Clear action verb + object
 
   // Practice button descriptions - streamlined and action-oriented
-  URGENT_MEMORY_PRESERVATION: 'Keep what you learned fresh in memory', // User benefit focused
-  EFFORTFUL_RETRIEVAL_PRACTICE: 'Turn weak words into strong ones', // Transformation benefit
-  INTERLEAVED_REVIEW_DESCRIPTION: 'Build capacity for learning new words', // Growth benefit
+  URGENT_MEMORY_PRESERVATION: 'Restore memory capacity from fading words', // Clear capacity improvement
+  EFFORTFUL_RETRIEVAL_PRACTICE: 'Strengthen memory capacity from weak spots', // Clear capacity building
+  INTERLEAVED_REVIEW_DESCRIPTION: 'Maximize memory capacity for new words', // Clear capacity optimization
 
   // Insights & analytics
   INSIGHTS: 'Insights',
@@ -235,7 +235,7 @@ export const STRINGS = {
   DAY_OF_TEMPLATE: 'Day {day} of {duration}',
 
   // Learning capacity & guidance - more actionable
-  ADD_WORDS_TO_SEE_CAPACITY: 'Practice first to add more words',
+  ADD_WORDS_TO_SEE_CAPACITY: 'Add words from articles to start learning',
 
   STUDY_WORDS_TO_SEE_PROGRESS: 'Practice words to track progress',
   REVIEW_WORDS_TO_BUILD_MEMORY_STRENGTH: 'Practice to strengthen memory',
@@ -407,6 +407,8 @@ export const STRINGS = {
   COMPLETE_DUE_FIRST: 'Review due words first',
   FOCUS_ON_STRUGGLING_FIRST: 'Strengthen struggling words first',
   NO_PRACTICE_NEEDED: 'All caught up! Add new words to continue learning',
+  GET_STARTED_MESSAGE: 'Start by reading articles and adding words you want to learn',
+  PRACTICE_OPTIONS: 'Practice options',
 
   // Learning method content
   LEARNING_METHOD_INTRO:

@@ -32,6 +32,7 @@ import { STRINGS } from '@/constants/strings';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StatCategory, StudyWord } from '@/types/vocabulary.types';
+import { selectionFeedback } from '@/utils/haptics';
 import { isStrugglingWord } from '@/utils/wordClassification';
 
 import { MemoryCapacityGauge } from './charts/MemoryCapacityGauge';
@@ -163,7 +164,7 @@ export const VocabularyStatCards = memo(
         disabledMessage: hasDueWords
           ? STRINGS.COMPLETE_DUE_FIRST
           : wordCategories.strugglingWords === 0
-          ? 'No struggling words to practice'
+          ? 'Great! No struggling words to practice'
           : undefined,
       });
 
@@ -183,7 +184,7 @@ export const VocabularyStatCards = memo(
           : wordCategories.strugglingWords > 0
           ? STRINGS.FOCUS_ON_STRUGGLING_FIRST
           : totalWords === 0
-          ? 'Add words from articles to start practicing'
+          ? STRINGS.GET_STARTED_MESSAGE
           : undefined,
       });
 
@@ -221,7 +222,14 @@ export const VocabularyStatCards = memo(
           <TouchableOpacity
             key={config.category}
             activeOpacity={config.disabled ? 1 : 0.7}
-            onPress={config.disabled ? undefined : () => onStartReview?.(config.category)}
+            onPress={
+              config.disabled
+                ? undefined
+                : () => {
+                    selectionFeedback();
+                    onStartReview?.(config.category);
+                  }
+            }
             onPressIn={config.disabled ? undefined : handlePressIn}
             onPressOut={config.disabled ? undefined : handlePressOut}
             testID={`start-review-${config.category}`}
