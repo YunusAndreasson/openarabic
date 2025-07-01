@@ -6,7 +6,6 @@ import { InteractionManager } from 'react-native';
 
 import ErrorState from '@/components/ErrorState';
 import FilteredArticleView from '@/components/home/FilteredArticleView';
-import HorizontalFeaturedSection from '@/components/home/HorizontalFeaturedSection';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
@@ -79,19 +78,7 @@ export default function FilterScreen(): JSX.Element {
     [prefetchArticle]
   );
 
-  // Create header component with featured article
-  const HeaderComponent = useMemo(() => {
-    if (!articles.length) return null;
-
-    return (
-      <HorizontalFeaturedSection
-        articlesData={articles}
-        refreshKey={0}
-        scope={`category-${numericId}`}
-        onArticlePress={handleArticlePress}
-      />
-    );
-  }, [articles, numericId, handleArticlePress]);
+  // No header component needed - featured articles removed from category modal
 
   // Show error for invalid parameters first
   if (hasInvalidParams) {
@@ -127,7 +114,6 @@ export default function FilterScreen(): JSX.Element {
       editMode={false}
       totalCount={articles.length}
       loading={isLoading}
-      HeaderComponent={HeaderComponent}
     />
   );
 }
