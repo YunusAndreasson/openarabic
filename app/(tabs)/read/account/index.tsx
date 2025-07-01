@@ -45,8 +45,6 @@ const AccountScreen: FC = () => {
     handleSignOut,
     handleSupportContact,
     handleSocialLink,
-    handleLearningMethodPress,
-    handleClassicalTextsPress,
     handleFontSelectorPress,
     appVersion,
     currentYear,
@@ -101,7 +99,7 @@ const AccountScreen: FC = () => {
           styles.scrollContent,
           {
             paddingTop: LAYOUT.SPACING.XLARGE,
-            paddingBottom: insets.bottom + LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
+            paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE,
           },
         ]}
         scrollViewProps={{
@@ -255,158 +253,7 @@ const AccountScreen: FC = () => {
           </View>
         </BaseCard>
 
-        {/* Learning Resources - Educational content */}
-        <BaseCard
-          includePressAnimation={false}
-          shadowSize="small"
-          style={[styles.sectionContainer, styles.sectionSpacing]}
-        >
-          <View style={styles.linksContainer}>
-            <BaseCard
-              includePressAnimation={true}
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={handleLearningMethodPress}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.text}
-                      name="school"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.LANGUAGE_LEARNING_SCIENCE}
-                  </ThemedText>
-                </View>
-                <Ionicons
-                  color={colors.textTertiary}
-                  name="chevron-forward"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  style={styles.cardChevron}
-                />
-              </View>
-            </BaseCard>
-
-            <Divider />
-
-            <BaseCard
-              includePressAnimation={true}
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={handleClassicalTextsPress}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.text}
-                      name="library"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.WHY_CLASSICAL_TEXTS}
-                  </ThemedText>
-                </View>
-                <Ionicons
-                  color={colors.textTertiary}
-                  name="chevron-forward"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  style={styles.cardChevron}
-                />
-              </View>
-            </BaseCard>
-          </View>
-        </BaseCard>
-
-        {/* Account Management - Important but less frequent */}
-        <BaseCard
-          includePressAnimation={false}
-          shadowSize="small"
-          style={[styles.sectionContainer, styles.sectionSpacing]}
-        >
-          <View style={styles.linksContainer}>
-            <BaseCard
-              includePressAnimation={true}
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={handleClearCache}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.text}
-                      name="archive"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <View style={styles.cacheTextContainer}>
-                    <ThemedText type="body" weight="medium">
-                      {STRINGS.AUDIO_CACHE}
-                    </ThemedText>
-                    <ThemedText colorName="textTertiary" style={styles.cacheSubtext} type="caption">
-                      {formattedCacheSize}
-                    </ThemedText>
-                  </View>
-                </View>
-                <ThemedButton
-                  disabled={cacheSize === 0 || isClearingCache}
-                  loading={isClearingCache}
-                  size="small"
-                  style={styles.clearButton}
-                  title={STRINGS.CLEAR}
-                  variant="outlined"
-                  onPress={handleClearCache}
-                />
-              </View>
-            </BaseCard>
-
-            <Divider />
-
-            <BaseCard
-              includePressAnimation={true}
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={handleSignOut}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.text}
-                      name="log-out"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <View style={styles.signOutTextContainer}>
-                    <ThemedText type="body" weight="medium">
-                      {STRINGS.SIGN_OUT}
-                    </ThemedText>
-                    <ThemedText
-                      colorName="textTertiary"
-                      style={styles.userEmailText}
-                      type="caption"
-                    >
-                      {user?.email || STRINGS.NO_EMAIL}
-                    </ThemedText>
-                  </View>
-                </View>
-                <Ionicons
-                  color={colors.textTertiary}
-                  name="chevron-forward"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  style={styles.cardChevron}
-                />
-              </View>
-            </BaseCard>
-          </View>
-        </BaseCard>
-
-        {/* Social Media - Least frequently used */}
+        {/* Social Media - Community connections */}
         <BaseCard
           includePressAnimation={false}
           shadowSize="small"
@@ -503,6 +350,90 @@ const AccountScreen: FC = () => {
           </View>
         </BaseCard>
 
+        {/* Account Management - Important but less frequent */}
+        <BaseCard
+          includePressAnimation={false}
+          shadowSize="small"
+          style={[styles.sectionContainer, styles.sectionSpacing]}
+        >
+          <View style={styles.linksContainer}>
+            <BaseCard
+              includePressAnimation={true}
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={handleClearCache}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons
+                      color={colors.text}
+                      name="archive"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
+                  </View>
+                  <View style={styles.cacheTextContainer}>
+                    <ThemedText type="body" weight="medium">
+                      {STRINGS.AUDIO_CACHE}
+                    </ThemedText>
+                    <ThemedText colorName="textTertiary" style={styles.cacheSubtext} type="caption">
+                      {formattedCacheSize}
+                    </ThemedText>
+                  </View>
+                </View>
+                <ThemedButton
+                  disabled={cacheSize === 0 || isClearingCache}
+                  loading={isClearingCache}
+                  size="small"
+                  style={styles.clearButton}
+                  title={STRINGS.CLEAR}
+                  variant="outlined"
+                  onPress={handleClearCache}
+                />
+              </View>
+            </BaseCard>
+
+            <Divider />
+
+            <BaseCard
+              includePressAnimation={true}
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={handleSignOut}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons
+                      color={colors.text}
+                      name="log-out"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
+                  </View>
+                  <View style={styles.signOutTextContainer}>
+                    <ThemedText type="body" weight="medium">
+                      {STRINGS.SIGN_OUT}
+                    </ThemedText>
+                    <ThemedText
+                      colorName="textTertiary"
+                      style={styles.userEmailText}
+                      type="caption"
+                    >
+                      {user?.email || STRINGS.NO_EMAIL}
+                    </ThemedText>
+                  </View>
+                </View>
+                <Ionicons
+                  color={colors.textTertiary}
+                  name="chevron-forward"
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                  style={styles.cardChevron}
+                />
+              </View>
+            </BaseCard>
+          </View>
+        </BaseCard>
+
         {/* App Footer */}
         <View style={styles.appFooterWrapper}>
           <View style={styles.appFooterContent}>
@@ -588,7 +519,7 @@ const styles = StyleSheet.create({
   appFooterWrapper: {
     alignItems: 'center',
     marginBottom: LAYOUT.SPACING.LARGE,
-    marginTop: LAYOUT.SPACING.XLARGE,
+    marginTop: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   appFooterContent: {
