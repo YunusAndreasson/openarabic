@@ -146,7 +146,7 @@ export const VocabularyStatCards = memo(
         capacityPhase: 'red' as const,
         // Due words disabled only when there are none to practice
         disabled: wordCategories.dueWords === 0,
-        disabledMessage: wordCategories.dueWords === 0 ? 'No words due' : undefined,
+        disabledMessage: wordCategories.dueWords === 0 ? 'No words due for review' : undefined,
       });
 
       // YELLOW PHASE: Struggling words (effortful retrieval for memory consolidation)
@@ -163,7 +163,7 @@ export const VocabularyStatCards = memo(
         disabledMessage: hasDueWords
           ? STRINGS.COMPLETE_DUE_FIRST
           : wordCategories.strugglingWords === 0
-          ? 'No struggling words found'
+          ? 'No struggling words to practice'
           : undefined,
       });
 
@@ -176,14 +176,14 @@ export const VocabularyStatCards = memo(
         category: 'all' as StatCategory,
         description: STRINGS.INTERLEAVED_REVIEW_DESCRIPTION,
         capacityPhase: 'green' as const,
-        // All words disabled when due words OR struggling words take priority
-        disabled: hasDueWords || wordCategories.strugglingWords > 0,
+        // All words disabled when due words OR struggling words take priority, OR no words exist
+        disabled: hasDueWords || wordCategories.strugglingWords > 0 || totalWords === 0,
         disabledMessage: hasDueWords
           ? STRINGS.COMPLETE_DUE_FIRST
           : wordCategories.strugglingWords > 0
           ? STRINGS.FOCUS_ON_STRUGGLING_FIRST
           : totalWords === 0
-          ? 'No words available'
+          ? 'Add words from articles to start practicing'
           : undefined,
       });
 
@@ -206,14 +206,9 @@ export const VocabularyStatCards = memo(
       return config.iconColor;
     };
 
-    // Get badge content - hide count for disabled cards to avoid confusion
+    // Get badge content - show count to help user understand current state
     const getBadgeContent = (config: WordCategoryConfig) => {
-      if (config.disabled && config.value === 0) {
-        return '—'; // No words available
-      }
-      if (config.disabled) {
-        return '—'; // Words exist but not actionable right now
-      }
+      // Always show the actual count - helps user understand their progress
       return config.value.toString();
     };
 

@@ -147,14 +147,14 @@ export const STRINGS = {
 
   // Practice session labels - concise and scientifically grounded
   // 3-Phase FSRS Practice System - scientifically grounded labels
-  URGENT_PRESERVATION: 'Memory preservation needed', // RED PHASE: Prevent memory decay
-  EFFORTFUL_RETRIEVAL: 'Strengthening weak memories', // YELLOW PHASE: Strengthen weak memories
-  INTERLEAVED_REVIEW: 'Building learning capacity', // GREEN PHASE: Mixed practice for robust learning
+  URGENT_PRESERVATION: 'Review due words', // RED PHASE: Clear action verb + object
+  EFFORTFUL_RETRIEVAL: 'Practice struggling words', // YELLOW PHASE: Clear action verb + object
+  INTERLEAVED_REVIEW: 'Study all words', // GREEN PHASE: Clear action verb + object
 
   // Practice button descriptions - streamlined and action-oriented
-  URGENT_MEMORY_PRESERVATION: 'Words need review to prevent forgetting', // Concise, scientific
-  EFFORTFUL_RETRIEVAL_PRACTICE: 'Practice challenging words to strengthen memory', // Research-aligned terminology
-  INTERLEAVED_REVIEW_DESCRIPTION: 'Review all words to increase capacity for new learning', // Emphasizes cognitive benefit
+  URGENT_MEMORY_PRESERVATION: 'Keep what you learned fresh in memory', // User benefit focused
+  EFFORTFUL_RETRIEVAL_PRACTICE: 'Turn weak words into strong ones', // Transformation benefit
+  INTERLEAVED_REVIEW_DESCRIPTION: 'Build capacity for learning new words', // Growth benefit
 
   // Insights & analytics
   INSIGHTS: 'Insights',
@@ -404,8 +404,9 @@ export const STRINGS = {
   FOCUS_ON_CURRENT: 'Preserve memory',
 
   // Practice button disabled messages - concise guidance
-  COMPLETE_DUE_FIRST: 'Complete due words first',
-  FOCUS_ON_STRUGGLING_FIRST: 'Focus on struggling words first',
+  COMPLETE_DUE_FIRST: 'Review due words first',
+  FOCUS_ON_STRUGGLING_FIRST: 'Strengthen struggling words first',
+  NO_PRACTICE_NEEDED: 'All caught up! Add new words to continue learning',
 
   // Learning method content
   LEARNING_METHOD_INTRO:
@@ -495,9 +496,9 @@ export const STRINGS = {
   WORDS_REVIEWED_GREAT_TEMPLATE: '{count} words reviewed - great effort',
 
   // Memory Capacity Labels - Simple capacity indicators
-  MEMORY_CAPACITY_LOW: 'Memory Capacity Low',
-  MEMORY_CAPACITY_MEDIUM: 'Memory Capacity Medium',
-  MEMORY_CAPACITY_HIGH: 'Memory Capacity High',
+  MEMORY_CAPACITY_LOW: 'Low Memory Capacity',
+  MEMORY_CAPACITY_MEDIUM: 'Medium Memory Capacity',
+  MEMORY_CAPACITY_HIGH: 'High Memory Capacity',
 
   // Insights screen explanation
   INSIGHTS_EXPLANATION:

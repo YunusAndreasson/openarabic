@@ -177,7 +177,7 @@ describe('VocabularyStatCards - Basic Functionality', () => {
       );
 
       // Should show all words label
-      expect(getByText('Building learning capacity')).toBeTruthy();
+      expect(getByText('Study all words')).toBeTruthy();
     });
   });
 });
