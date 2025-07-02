@@ -45,6 +45,7 @@ export const STRINGS = {
   REFRESH: 'Refresh',
   DONE: 'Done',
   EDIT: 'Edit',
+  MANAGE: 'Manage',
   CLOSE: 'Close',
   BACK: 'Back',
   CANCEL: 'Cancel',
@@ -67,8 +68,8 @@ export const STRINGS = {
   BROWSE_ARTICLES: 'Browse',
   ARTICLES_SELECTED_FOR_YOU: 'Articles selected for you',
   SUMMARY: 'Summary',
-  READ: 'Read',
-  LISTEN: 'Listen',
+  READ: 'Library',
+  LISTEN: 'Playlist',
   PRACTICE: 'Practice',
 
   // Audio controls - shortened button text
@@ -156,6 +157,7 @@ export const STRINGS = {
 
   // Insights & analytics
   INSIGHTS: 'Insights',
+  MEMORY_CAPACITY: 'Memory Capacity',
   INSIGHTS_UNAVAILABLE: 'Insights unavailable',
   INFO: 'Info',
   KEY_INSIGHTS: 'Key insights',

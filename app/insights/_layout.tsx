@@ -36,7 +36,7 @@ export default function InsightsLayout(): JSX.Element {
       <Stack.Screen
         name="index"
         options={createNavigationOptions(colors, {
-          title: STRINGS.INSIGHTS,
+          title: STRINGS.MEMORY_CAPACITY,
           headerLeft: () => <DoneButton />,
         })}
       />

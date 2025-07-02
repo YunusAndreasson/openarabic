@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
 import React, { Fragment, memo, useCallback, useMemo, type ReactElement } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent, ViewToken } from 'react-native';
@@ -50,7 +49,6 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1, // Equal width buttons for perfect balance
-    flexDirection: 'row', // Horizontal layout for icon + text
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
@@ -73,9 +71,6 @@ const styles = StyleSheet.create({
     width: LAYOUT.SPACING.XXXLARGE, // 48px for better visibility
     height: LAYOUT.SPACING.TINY, // 4px height
     borderRadius: LAYOUT.BORDER_RADIUS.PILL,
-  },
-  actionButtonIcon: {
-    marginRight: LAYOUT.SPACING.TINY, // Small gap between icon and text
   },
   actionButtonText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
@@ -158,12 +153,6 @@ const ArticleTitle = memo<ArticleTitleProps>(
             }
             accessibilityHint="Toggle article in audio listening playlist"
           >
-            <Ionicons
-              name={isInReadingList ? 'headset' : 'headset-outline'}
-              size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-              color={isInReadingList ? colors.tint : colors.secondaryText}
-              style={styles.actionButtonIcon}
-            />
             <ThemedText
               type="caption"
               style={[
@@ -176,7 +165,7 @@ const ArticleTitle = memo<ArticleTitleProps>(
                 },
               ]}
             >
-              {isInReadingList ? 'In Playlist' : 'Add to Playlist'}
+              {isInReadingList ? 'IN PLAYLIST' : 'ADD TO PLAYLIST'}
             </ThemedText>
           </Pressable>
 
@@ -198,12 +187,6 @@ const ArticleTitle = memo<ArticleTitleProps>(
             accessibilityLabel={isPlaying ? 'Stop audio playback' : 'Start audio playback'}
             accessibilityHint="Toggle article audio playback"
           >
-            <Ionicons
-              name={isPlaying ? 'stop' : 'play'}
-              size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-              color={isPlaying ? colors.tint : colors.secondaryText}
-              style={styles.actionButtonIcon}
-            />
             <ThemedText
               type="caption"
               style={[
@@ -216,7 +199,7 @@ const ArticleTitle = memo<ArticleTitleProps>(
                 },
               ]}
             >
-              {isPlaying ? 'Stop' : 'Play'}
+              {isPlaying ? 'STOP' : 'PLAY'}
             </ThemedText>
           </Pressable>
         </View>

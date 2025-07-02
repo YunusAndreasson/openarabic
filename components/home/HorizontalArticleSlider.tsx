@@ -1,10 +1,11 @@
-import { memo, type FC } from 'react';
+import { memo, useCallback, useRef, type FC } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import ArticleCard from '@/components/ArticleCard';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
+import { lightFeedback } from '@/utils/haptics';
 
 interface HorizontalArticleSliderProps {
   articles: Article[];
@@ -39,12 +40,37 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
   onArticlePress,
 }) => {
   const colors = useColors();
-
-  // Skip rendering if no articles
-  if (!articles.length) return null;
+  const lastVisibleCardIndex = useRef<number>(-1);
 
   // Limit to 5 articles for the slider
   const displayArticles = articles.slice(0, 5);
+
+  /**
+   * Handle scroll events to detect when cards come into view
+   */
+  const handleScroll = useCallback(
+    (event: any) => {
+      const { contentOffset } = event.nativeEvent;
+      const scrollX = contentOffset.x;
+
+      // Calculate which card is currently most visible
+      const currentCardIndex = Math.round(scrollX / (CARD_WIDTH + CARD_SPACING));
+
+      // Ensure index is within bounds
+      const clampedIndex = Math.max(0, Math.min(currentCardIndex, displayArticles.length - 1));
+
+      // Trigger haptic feedback when a new card comes into view
+      if (clampedIndex !== lastVisibleCardIndex.current && lastVisibleCardIndex.current !== -1) {
+        lightFeedback();
+      }
+
+      lastVisibleCardIndex.current = clampedIndex;
+    },
+    [displayArticles.length]
+  );
+
+  // Skip rendering if no articles
+  if (!articles.length) return null;
 
   return (
     <View style={styles.container}>
@@ -58,6 +84,8 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
         decelerationRate="fast"
         bounces={false}
         overScrollMode="never"
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
       >
         {displayArticles.map((article, index) => (
           <View

@@ -3,7 +3,6 @@ export { useArticleMutations } from './useArticleMutations';
 export { useArticleRenderers } from './useArticleRenderers';
 export { useArticlesByDifficultWords } from './useArticlesByDifficultWords';
 export { useArticlesByDueWords } from './useArticlesByDueWords';
-export { useArticleSorting } from './useArticleSorting';
 export { useFeaturedArticleSelection } from './useFeaturedArticleSelection';
 export { useFilteredArticles } from './useFilteredArticles';
 export { useFilterModal } from './useFilterModal';

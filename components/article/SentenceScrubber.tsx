@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
 import { StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -11,6 +11,7 @@ import Animated, {
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { selectionFeedback } from '@/utils/haptics';
 
 interface SentenceScrubberProps {
   currentSentence: number;
@@ -20,9 +21,11 @@ interface SentenceScrubberProps {
   onScrubEnd: () => void;
 }
 
-// Constants for better performance
+// Constants for better performance - Updated for Jakob's Law compliance
 const HANDLE_SIZE = 20;
+const HANDLE_SIZE_ACTIVE = 28; // Larger during interaction (iOS pattern)
 const TRACK_HEIGHT = 4;
+const TRACK_HEIGHT_ACTIVE = 12; // Much thicker during interaction for better visibility
 const DEFAULT_TRACK_WIDTH = 300;
 const SPRING_CONFIG = { damping: 20, stiffness: 400 };
 const TOOLTIP_SPRING_CONFIG = { damping: 15, stiffness: 300 };
@@ -30,6 +33,7 @@ const TOOLTIP_SPRING_CONFIG = { damping: 15, stiffness: 300 };
 export const SentenceScrubber = React.memo<SentenceScrubberProps>(
   ({ currentSentence, totalSentences, onSentenceChange, onScrubStart, onScrubEnd }) => {
     const colors = useColors();
+    const lastSentenceRef = useRef(currentSentence);
 
     // Shared values for performance
     const trackWidth = useSharedValue(DEFAULT_TRACK_WIDTH);
@@ -42,15 +46,25 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
 
     const maxSentenceIndex = useMemo(() => totalSentences - 1, [totalSentences]);
 
-    // Note: Removed currentProgress derived value since we're using direct calculation in useEffect
+    // Haptic feedback on sentence change
+    const triggerHapticFeedback = useCallback(() => {
+      selectionFeedback();
+    }, []);
 
-    // Memoized callback wrapper with throttling protection
+    // Memoized callback wrapper with haptic feedback
     const safeSentenceChange = useCallback(
       (index: number) => {
         const safeIndex = Math.max(0, Math.min(Math.floor(index), maxSentenceIndex));
+
+        // Trigger haptic feedback when sentence actually changes
+        if (safeIndex !== lastSentenceRef.current) {
+          triggerHapticFeedback();
+          lastSentenceRef.current = safeIndex;
+        }
+
         onSentenceChange(safeIndex);
       },
-      [maxSentenceIndex, onSentenceChange]
+      [maxSentenceIndex, onSentenceChange, triggerHapticFeedback]
     );
 
     // Optimized position calculation
@@ -65,6 +79,9 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
         const progress = currentSentence / maxSentenceIndex;
         const newPosition = calculatePosition(progress, trackWidth.value);
         handlePosition.value = withSpring(newPosition, SPRING_CONFIG);
+
+        // Update ref when position changes externally (not from scrubbing)
+        lastSentenceRef.current = currentSentence;
       }
     }, [
       currentSentence,
@@ -126,31 +143,45 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
       [trackWidth, handlePosition, maxSentenceIndex, safeSentenceChange, onScrubStart, onScrubEnd]
     );
 
-    // Memoized animated styles for better performance
-    const handleStyle = useAnimatedStyle(
-      () => ({
-        transform: [{ translateX: handlePosition.value }],
-      }),
-      [handlePosition]
-    );
+    // Memoized animated styles for better performance - Updated for dynamic sizing
+    const handleStyle = useAnimatedStyle(() => {
+      const size = isDragging.value ? HANDLE_SIZE_ACTIVE : HANDLE_SIZE;
+      const offset = (size - HANDLE_SIZE) / 2; // Adjust position to keep centered
 
+      return {
+        transform: [{ translateX: handlePosition.value - offset }],
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        top: -(size - (isDragging.value ? TRACK_HEIGHT_ACTIVE : TRACK_HEIGHT)) / 2,
+      };
+    }, [handlePosition, isDragging]);
+
+    // Updated tooltip positioning - ABOVE the thumb (Jakob's Law)
     const tooltipStyle = useAnimatedStyle(
       () => ({
         opacity: showTooltip.value,
         transform: [
           { translateX: handlePosition.value - LAYOUT.SPACING.XXXLARGE }, // Center tooltip
+          { translateY: -25 }, // Position higher above the thumb for better visibility
           { scale: withSpring(showTooltip.value > 0 ? 1 : 0.8, TOOLTIP_SPRING_CONFIG) },
         ],
       }),
       [showTooltip, handlePosition]
     );
 
-    // Memoized styles for static elements
-    const trackStyle = useMemo(
-      () => [styles.track, { backgroundColor: colors.progressBackground }],
-      [colors.progressBackground]
-    );
+    // Dynamic track style for better visibility during interaction
+    const trackStyle = useAnimatedStyle(() => {
+      const height = isDragging.value ? TRACK_HEIGHT_ACTIVE : TRACK_HEIGHT;
+      return {
+        height,
+        borderRadius: height / 2,
+        backgroundColor: colors.progressBackground,
+        opacity: isDragging.value ? 1.0 : 0.4, // Fully visible during interaction
+      };
+    }, [isDragging, colors.progressBackground]);
 
+    // Memoized styles for static elements
     const tooltipBubbleStyle = useMemo(
       () => [styles.tooltipBubble, { backgroundColor: colors.wordTooltipBg }],
       [colors.wordTooltipBg]
@@ -173,7 +204,7 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
 
     return (
       <View style={styles.container}>
-        {/* Tooltip with memoized content */}
+        {/* Tooltip positioned ABOVE thumb (Jakob's Law) */}
         <Animated.View style={[styles.tooltip, tooltipStyle]}>
           <View style={tooltipBubbleStyle}>
             <Text style={tooltipTextStyle}>
@@ -182,13 +213,13 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
           </View>
         </Animated.View>
 
-        {/* Track with optimized gesture handling */}
+        {/* Track with dynamic sizing and visibility */}
         <GestureDetector gesture={panGesture}>
           <View style={styles.trackContainer}>
-            <View style={trackStyle} onLayout={onLayout}>
-              {/* Handle with memoized styles */}
+            <Animated.View style={trackStyle} onLayout={onLayout}>
+              {/* Handle with dynamic sizing */}
               <Animated.View style={[styles.handle, handleColorStyle, handleStyle]} />
-            </View>
+            </Animated.View>
           </View>
         </GestureDetector>
       </View>
@@ -205,13 +236,13 @@ const styles = StyleSheet.create({
     bottom: LAYOUT.SPACING.XLARGE,
     left: LAYOUT.SPACING.XLARGE,
     right: LAYOUT.SPACING.XLARGE,
-    height: MIN_TOUCH_TARGET.LARGE + LAYOUT.SPACING.MEDIUM, // Responsive height
+    height: MIN_TOUCH_TARGET.LARGE + LAYOUT.SPACING.MEDIUM,
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
   },
   tooltip: {
     position: 'absolute',
-    bottom: LAYOUT.SPACING.XLARGE - LAYOUT.SPACING.SMALL, // Responsive positioning
-    width: MIN_TOUCH_TARGET.LARGE + LAYOUT.SPACING.XXXLARGE, // Responsive width
+    bottom: LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.XLARGE, // Positioned higher above the track
+    width: MIN_TOUCH_TARGET.LARGE + LAYOUT.SPACING.XXXLARGE,
     alignItems: 'center',
   },
   tooltipBubble: {
@@ -229,20 +260,12 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: MIN_TOUCH_TARGET.SMALL + LAYOUT.SPACING.SMALL, // Responsive height
+    height: MIN_TOUCH_TARGET.SMALL + LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
-  },
-  track: {
-    height: TRACK_HEIGHT,
-    borderRadius: TRACK_HEIGHT / 2,
-    position: 'relative',
   },
   handle: {
     position: 'absolute',
-    top: -(HANDLE_SIZE - TRACK_HEIGHT) / 2,
-    width: HANDLE_SIZE,
-    height: HANDLE_SIZE,
-    borderRadius: HANDLE_SIZE / 2,
+    backgroundColor: 'transparent', // Will be set by animated style
     ...LAYOUT.ELEVATION.SMALL,
   },
 });

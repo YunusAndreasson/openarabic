@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import moment from 'moment-hijri';
-import { useMemo, useCallback, memo, type FC } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { memo, useCallback, useMemo, type FC } from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { HIJRI_MONTHS } from '@/constants/hijri';
@@ -60,7 +60,6 @@ const styles = StyleSheet.create({
   },
   container: {
     alignItems: 'center',
-    paddingBottom: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.XXLARGE,
   },
