@@ -1,4 +1,4 @@
-import { memo, type FC, useCallback } from 'react';
+import { memo, useCallback, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import ArticleCard from '@/components/ArticleCard';

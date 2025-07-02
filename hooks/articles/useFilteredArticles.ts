@@ -12,7 +12,7 @@ export const useFilteredArticles = (articles: Article[]) => {
 
   // Provide default values if the state hasn't been rehydrated yet
   const sort = filtersState?.sort || {
-    field: 'date' as const,
+    field: 'title' as const,
     direction: 'desc' as const,
   };
 

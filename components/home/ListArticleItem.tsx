@@ -32,6 +32,7 @@ const ListArticleItem = memo(
       <ArticleCard
         author={article.author.name}
         title={article.title}
+        difficultyLevel={article.difficulty_level}
         onPress={!editMode ? handlePress : undefined}
         editMode={editMode}
         onDelete={onDelete}

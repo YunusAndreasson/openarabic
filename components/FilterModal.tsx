@@ -11,7 +11,6 @@ import { STRINGS } from '@/constants/strings';
 import {
   DATE_RANGE_OPTIONS,
   DIFFICULTY_OPTIONS,
-  SORT_OPTIONS,
   useFilterModal,
 } from '@/hooks/articles/useFilterModal';
 import { useColors } from '@/hooks/theme/useColors';
@@ -21,25 +20,13 @@ interface FilterModalProps {
   availableAuthors: Author[];
 }
 
-function getSortOptionHandlers(
-  handleSortSelect: (key: (typeof SORT_OPTIONS)[number]['key']) => void
-) {
-  const keys = SORT_OPTIONS.map(option => option.key);
-  const handlers = Object.fromEntries(
-    keys.map(key => [key, () => handleSortSelect(key)])
-  ) as Record<(typeof SORT_OPTIONS)[number]['key'], () => void>;
-  return handlers;
-}
-
 const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
   const colors = useColors();
   const {
-    sort,
     filters,
     activeFiltersCount,
     expandedSections,
     toggleSection,
-    handleSortSelect,
     handleAuthorToggle,
     handleDifficultySelect,
     handleDateRangeSelect,
@@ -61,8 +48,6 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
   const handleToggleDateRange = useCallback(() => {
     toggleSection('dateRange');
   }, [toggleSection]);
-
-  const sortOptionHandlers = getSortOptionHandlers(handleSortSelect);
 
   const selectAuthor = useCallback(
     (authorId: number) => () => {
@@ -117,76 +102,8 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
           </BaseCard>
         )}
 
-        {/* Sort Section */}
-        <BaseCard shadowSize="small" style={styles.card}>
-          <View style={[styles.sectionHeader, { borderBottomColor: colors.borderOverlay }]}>
-            <Ionicons
-              name="swap-vertical-outline"
-              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              color={colors.tint}
-            />
-            <ThemedText type="heading3" weight="bold">
-              {STRINGS.SORT_BY}
-            </ThemedText>
-          </View>
-
-          <View style={styles.sortGrid}>
-            {SORT_OPTIONS.map(option => {
-              const isSelected = sort.field === option.key;
-              return (
-                <Pressable
-                  key={option.key}
-                  style={[
-                    styles.sortOption,
-                    isSelected ? styles.sortOptionSelected : styles.sortOptionDefault,
-                    {
-                      backgroundColor: isSelected ? colors.tint : colors.elevation1,
-                      borderColor: isSelected ? colors.tint + '40' : 'transparent',
-                    },
-                  ]}
-                  onPress={sortOptionHandlers[option.key]}
-                >
-                  <Ionicons
-                    name={option.icon}
-                    size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    color={isSelected ? colors.background : colors.tint}
-                  />
-                  <ThemedText
-                    type="label"
-                    weight={isSelected ? 'bold' : 'medium'}
-                    colorName={isSelected ? 'background' : 'secondaryText'}
-                    style={styles.sortOptionText}
-                  >
-                    {option.label}
-                  </ThemedText>
-                  {isSelected && (
-                    <View style={styles.sortDirectionContainer}>
-                      <Ionicons
-                        name={sort.direction === 'desc' ? 'arrow-down' : 'arrow-up'}
-                        size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                        color={colors.background}
-                      />
-                    </View>
-                  )}
-                </Pressable>
-              );
-            })}
-          </View>
-        </BaseCard>
-
         {/* Filter Sections */}
         <BaseCard shadowSize="small" style={styles.card}>
-          <View style={[styles.sectionHeader, { borderBottomColor: colors.borderOverlay }]}>
-            <Ionicons
-              name="filter-outline"
-              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              color={colors.tint}
-            />
-            <ThemedText type="heading3" weight="bold">
-              {STRINGS.FILTERS}
-            </ThemedText>
-          </View>
-
           {/* Authors Filter */}
           <View style={styles.filterSection}>
             <Pressable
@@ -427,49 +344,6 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
     padding: LAYOUT.SPACING.LARGE,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.SMALL,
-    marginBottom: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.SMALL,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-
-  // Sort Section
-  sortGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: LAYOUT.SPACING.MEDIUM,
-  },
-  sortOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    minWidth: '47%',
-    minHeight: MIN_TOUCH_TARGET.LARGE,
-    ...LAYOUT.ELEVATION.SUBTLE,
-  },
-  sortOptionDefault: {
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  sortOptionSelected: {
-    borderWidth: 2,
-    ...LAYOUT.ELEVATION.SMALL,
-  },
-  sortOptionText: {
-    flex: 1,
-  },
-  sortDirectionContainer: {
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 
   // Filter Sections

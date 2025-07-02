@@ -6,6 +6,7 @@ import DraggableFlatList from 'react-native-draggable-flatlist';
 
 import EmptyState from '@/components/EmptyState';
 import FilterSummary from '@/components/FilterSummary';
+import SortingHeader from '@/components/SortingHeader';
 import { ThemedView } from '@/components/ThemedView';
 import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
@@ -158,6 +159,7 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
             <View style={{ height: LAYOUT.SPACING.MEDIUM }} />
           </>
         )}
+        <SortingHeader />
         <FilterSummary filteredCount={articlesLength} totalCount={totalCount} />
       </>
     );

@@ -1,20 +1,16 @@
-import type { Ionicons } from '@expo/vector-icons';
-import { useState, useCallback, useMemo } from 'react';
-import type { ComponentProps } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { STRINGS } from '@/constants/strings';
 import {
-  setSortField,
-  toggleAuthor,
-  setDifficultyRange,
-  setDateRange,
   clearAllFilters,
   selectActiveFiltersCount,
+  setDateRange,
+  setDifficultyRange,
+  toggleAuthor,
   type FilterState,
 } from '@/store/filtersSlice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import type { Author } from '@/types/articles.types';
-import type { SortOption as BaseSortOption } from '@/types/ui/sorting.types';
 import { selectionFeedback } from '@/utils/haptics';
 
 export const DIFFICULTY_OPTIONS = [
@@ -32,17 +28,6 @@ export const DATE_RANGE_OPTIONS = [
 
 export const AUTHOR_CHUNK_SIZE = 6;
 
-interface SortOptionWithIcon extends BaseSortOption<FilterState['sort']['field']> {
-  icon: ComponentProps<typeof Ionicons>['name'];
-}
-
-export const SORT_OPTIONS: readonly SortOptionWithIcon[] = [
-  { key: 'title', label: STRINGS.TITLE_FILTER, icon: 'text-outline' },
-  { key: 'author', label: STRINGS.AUTHOR_FILTER, icon: 'person-outline' },
-  { key: 'date', label: STRINGS.DATE_ADDED, icon: 'calendar-outline' },
-  { key: 'difficulty', label: STRINGS.DIFFICULTY, icon: 'trending-up-outline' },
-] as const;
-
 type ExpandedSections = {
   authors: boolean;
   difficulty: boolean;
@@ -50,12 +35,10 @@ type ExpandedSections = {
 };
 
 export interface UseFilterModalResult {
-  sort: FilterState['sort'];
   filters: FilterState['filters'];
   activeFiltersCount: number;
   expandedSections: ExpandedSections;
   toggleSection: (section: keyof ExpandedSections) => void;
-  handleSortSelect: (sortField: FilterState['sort']['field']) => void;
   handleAuthorToggle: (authorId: number) => void;
   handleDifficultySelect: (range: [number, number]) => void;
   handleDateRangeSelect: (range: FilterState['filters']['dateRange']) => void;
@@ -72,11 +55,6 @@ export function useFilterModal(availableAuthors: Author[]): UseFilterModalResult
   const activeFiltersCount = useAppSelector(selectActiveFiltersCount);
 
   // Provide default values if the state hasn't been rehydrated yet
-  const sort = filtersState?.sort || {
-    field: 'date' as const,
-    direction: 'desc' as const,
-  };
-
   const filters = filtersState?.filters || {
     authorIds: [],
     difficultyRange: [1, 5] as [number, number],
@@ -93,14 +71,6 @@ export function useFilterModal(availableAuthors: Author[]): UseFilterModalResult
     selectionFeedback();
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
   }, []);
-
-  const handleSortSelect = useCallback(
-    (sortField: FilterState['sort']['field']) => {
-      selectionFeedback();
-      dispatch(setSortField(sortField));
-    },
-    [dispatch]
-  );
 
   const handleAuthorToggle = useCallback(
     (authorId: number) => {
@@ -164,12 +134,10 @@ export function useFilterModal(availableAuthors: Author[]): UseFilterModalResult
   );
 
   return {
-    sort,
     filters,
     activeFiltersCount,
     expandedSections,
     toggleSection,
-    handleSortSelect,
     handleAuthorToggle,
     handleDifficultySelect,
     handleDateRangeSelect,

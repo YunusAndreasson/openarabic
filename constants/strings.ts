@@ -52,8 +52,6 @@ export const STRINGS = {
   CONTINUE: 'Continue',
 
   // Sorting options
-  A_TO_Z: 'A-Z',
-  Z_TO_A: 'Z-A',
   DATE_ADDED: 'Date',
   TITLE_FILTER: 'Title',
   AUTHOR_FILTER: 'Author',

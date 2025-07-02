@@ -30,7 +30,7 @@ export { default as BottomControls } from './BottomControls';
 export { default as FilterSummary } from './FilterSummary';
 export { default as HeaderProfile } from './HeaderProfile';
 export { InfoIcon } from './InfoIcon';
-export { default as SortingControls } from './SortingControls';
+export { default as SortingHeader } from './SortingHeader';
 export { TimePicker } from './TimePicker';
 export { Toast } from './Toast';
 export { default as TouchableIcon } from './TouchableIcon';

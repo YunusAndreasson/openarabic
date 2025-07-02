@@ -21,6 +21,7 @@ import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 interface ArticleCardProps {
   title: string;
   author: string;
+  difficultyLevel?: number;
   onPress?: () => void;
   editMode?: boolean;
   onDelete?: () => void;
@@ -33,6 +34,7 @@ interface ArticleCardProps {
 export const ArticleCard: FC<ArticleCardProps> = ({
   title,
   author,
+  difficultyLevel,
   onPress,
   editMode = false,
   onDelete,
@@ -71,6 +73,13 @@ export const ArticleCard: FC<ArticleCardProps> = ({
     isDarkMode
   );
 
+  // Helper function to get difficulty text
+  const getDifficultyText = (level: number): string => {
+    if (level <= 2) return 'Beginner';
+    if (level === 3) return 'Intermediate';
+    return 'Advanced';
+  };
+
   return (
     <Animated.View style={[styles.cardContainer, animatedStyle]}>
       {/* Drag Handle - shows on left in edit mode */}
@@ -106,6 +115,7 @@ export const ArticleCard: FC<ArticleCardProps> = ({
                 type="label"
               >
                 {author}
+                {difficultyLevel && ` • ${getDifficultyText(difficultyLevel)}`}
               </ThemedText>
             </View>
 
