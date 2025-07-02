@@ -27,8 +27,8 @@ export const STRINGS = {
   SOMETHING_WENT_WRONG: 'Something went wrong',
   PLEASE_TRY_AGAIN: tryAgain,
   LOADING: 'Loading...',
-  LOADING_ARTICLES: 'Loading articles...',
-  LOADING_CHART: 'Loading chart...',
+  LOADING_ARTICLES: 'Loading articles',
+  LOADING_CHART: 'Loading chart',
   PREPARING_AUDIO: 'Preparing audio',
 
   // Welcome & onboarding
@@ -66,7 +66,7 @@ export const STRINGS = {
   NO_TRANSLATION_AVAILABLE: 'No translation available',
 
   // Article & content actions - shortened and action-oriented
-  BROWSE_ARTICLES: 'Browse',
+  BROWSE_ARTICLES: 'Browse articles',
   ARTICLES_SELECTED_FOR_YOU: 'Articles selected for you',
   SUMMARY: 'Summary',
   READ: 'Library',
@@ -92,9 +92,9 @@ export const STRINGS = {
 
   // Empty states & hints - more actionable
   TRY_ADJUSTING_FILTERS: 'Try different filters',
-  NO_ARTICLES_FOUND: 'No articles found',
+  NO_ARTICLES_FOUND: 'No matches found',
   NO_ARTICLES_SAVED: 'No saved articles',
-  LISTENING_PLAYLIST_EMPTY: 'Your playlist is empty',
+  LISTENING_PLAYLIST_EMPTY: 'Add articles to build your playlist',
 
   PROGRESS_NOT_AVAILABLE: "Progress isn't available right now",
   ERROR_LOADING_DATA: "Couldn't load data",
@@ -236,7 +236,7 @@ export const STRINGS = {
   DAY_OF_TEMPLATE: 'Day {day} of {duration}',
 
   // Learning capacity & guidance - more actionable
-  ADD_WORDS_TO_SEE_CAPACITY: 'Add words from articles to start learning',
+  ADD_WORDS_TO_SEE_CAPACITY: 'Browse articles in the Read tab to add words',
 
   STUDY_WORDS_TO_SEE_PROGRESS: 'Practice words to track progress',
   REVIEW_WORDS_TO_BUILD_MEMORY_STRENGTH: 'Practice to strengthen memory',
@@ -408,7 +408,7 @@ export const STRINGS = {
   COMPLETE_DUE_FIRST: 'Review due words first',
   FOCUS_ON_STRUGGLING_FIRST: 'Strengthen struggling words first',
   NO_PRACTICE_NEEDED: 'All caught up! Add new words to continue learning',
-  GET_STARTED_MESSAGE: 'Start by reading articles and adding words you want to learn',
+  GET_STARTED_MESSAGE: 'Browse articles in the Read tab to add words you want to learn',
   PRACTICE_OPTIONS: 'Practice options',
 
   // Learning method content
