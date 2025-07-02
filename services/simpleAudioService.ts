@@ -11,8 +11,8 @@ class SimpleAudioService {
   private currentPlayer: any = null;
   private currentTrack: EnhancedAudioTrack | null = null;
   private listeners: Set<(status: AudioStatus) => void> = new Set();
-  private statusPollingInterval: number | null = null;
-  private loadingTimeout: number | null = null;
+  private statusPollingInterval: ReturnType<typeof setInterval> | null = null;
+  private loadingTimeout: ReturnType<typeof setTimeout> | null = null;
   private audioSessionConfigured = false;
 
   // Current audio status
