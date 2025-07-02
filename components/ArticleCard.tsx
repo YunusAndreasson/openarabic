@@ -26,7 +26,7 @@ const MAX_AUTHOR_LINES = 1;
 const PILL_MAX_WIDTH = '70%';
 
 // Simplified interface specifically for ArticleCard (always article variant)
-type ArticleCardProps = Omit<BaseArticleCardProps, 'variant' | 'placeholder' | 'dueWordCount'> & {
+type ArticleCardProps = Omit<BaseArticleCardProps, 'variant'> & {
   author: string;
   category: string;
   categoryForDisplay: string;

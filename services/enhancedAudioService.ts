@@ -17,7 +17,7 @@ export const enhancedAudioService = {
    */
   async generateEnhancedAudioTrack(articleId: number): Promise<EnhancedAudioTrack | null> {
     try {
-      // Fetch article details
+      // Fetch article details - audio is guaranteed to be available
       const article = await articlesService.getArticleById(articleId);
 
       return {
@@ -41,7 +41,7 @@ export const enhancedAudioService = {
    */
   async getReadingListEnhancedTracks(userId: string): Promise<EnhancedAudioTrack[]> {
     try {
-      // Fetch user's reading list
+      // Fetch user's reading list - all articles guaranteed to have audio
       const readingList = await readingListService.getReadingList(userId);
 
       // Build tracks directly from the reading list items

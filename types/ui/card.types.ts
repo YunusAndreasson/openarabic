@@ -1,4 +1,4 @@
-import type { ViewStyle, StyleProp } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
 
 import type { Article } from '@/types/articles.types';
 
@@ -61,8 +61,6 @@ export interface ArticleCardProps extends BaseCardProps, BaseOptionalPressablePr
   author: string;
   /** Summary text to display in the card */
   summary: string;
-  /** Number of words due for review in this article */
-  dueWordCount?: number;
 }
 
 /**

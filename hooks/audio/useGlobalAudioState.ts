@@ -107,13 +107,13 @@ export function useGlobalAudioState(): GlobalAudioState {
     // Return immediately if no articleId
     if (!currentArticleId) return null;
 
-    // If we have full article data, use it
-    if (article && article.image_url) {
+    // If we have full article data, use it - images are guaranteed to be available
+    if (article) {
       return {
         id: currentArticleId,
         title: article.title,
         author: article.author.name,
-        image_url: article.image_url,
+        image_url: String(article.image_url),
       };
     }
 

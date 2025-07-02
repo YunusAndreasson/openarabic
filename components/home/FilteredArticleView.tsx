@@ -215,12 +215,12 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
     layout.size = ITEM_HEIGHT;
   }, []);
 
-  // Memoize empty state props
+  // Memoize empty state props - only shows when filters eliminate all results
   const emptyStateProps = useMemo(
     () => ({
       colors,
       description: STRINGS.TRY_ADJUSTING_FILTERS,
-      icon: 'search-outline' as const,
+      icon: 'funnel-outline' as const,
       title: STRINGS.NO_ARTICLES_FOUND,
       hideArticlesButton: true,
       containerStyle: STATIC_STYLES.emptyContainer,

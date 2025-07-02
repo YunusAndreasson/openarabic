@@ -6,7 +6,6 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { InteractionManager, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import ErrorState from '@/components/ErrorState';
 import { ThemedView } from '@/components/ThemedView';
 import ArticleList from '@/components/home/ArticleList';
 import FilterSection from '@/components/home/FilterSection';
@@ -73,10 +72,8 @@ export default function ReadScreen(): JSX.Element {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Simplified derivedData - we know there will be data
+  // Simplified derivedData - articles are guaranteed to exist
   const categoriesWithArticles = useMemo(() => {
-    if (!articlesData.length || !categoriesData.length) return [];
-
     const counts = articlesData.reduce<Record<number, number>>((acc, article) => {
       const id = article?.category?.id;
       if (id) {
@@ -144,7 +141,7 @@ export default function ReadScreen(): JSX.Element {
     router.push(getFilterRoute('category', categoryId, categoryName));
   }, []);
 
-  // Simplified header component
+  // Simplified header component - categories are guaranteed to have articles
   const ListHeaderComponent = useMemo(
     () => (
       <View style={styles.headerContainer}>
@@ -154,9 +151,7 @@ export default function ReadScreen(): JSX.Element {
           onArticlePress={handleArticlePress}
         />
 
-        {categoriesWithArticles.length > 0 && (
-          <FilterSection items={categoriesWithArticles} onSelect={handleSelectCategory} />
-        )}
+        <FilterSection items={categoriesWithArticles} onSelect={handleSelectCategory} />
       </View>
     ),
     [articlesData, refreshKey, handleArticlePress, categoriesWithArticles, handleSelectCategory]
@@ -175,17 +170,12 @@ export default function ReadScreen(): JSX.Element {
     [colors.background, headerHeight, insets.bottom]
   );
 
-  // Simplified loading and error handling
+  // Simplified loading and error handling - articles are guaranteed to exist
   const isLoading = isArticlesLoading || isCategoriesLoading;
 
-  // Show error state only for actual errors, not loading states, and not during refresh
-  if (
-    (isArticlesLoading && !articlesData.length) ||
-    (isCategoriesLoading && !categoriesData.length)
-  ) {
+  // Only show loading state, not error states for missing data
+  if (isLoading && !articlesData.length && !categoriesData.length) {
     // Show loading state - handled by ArticleList
-  } else if (!isLoading && !isRefreshing && !articlesData.length) {
-    return <ErrorState message={STRINGS.UNABLE_TO_LOAD_ARTICLES} onRetry={handleRefresh} />;
   }
 
   return (

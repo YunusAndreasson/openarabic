@@ -21,9 +21,7 @@ const FeaturedSection: FC<FeaturedSectionProps> = ({ article, onPress }) => {
     onPress(article);
   }, [article, onPress]);
 
-  // Skip rendering if no article
-  if (!article) return null;
-
+  // Articles are guaranteed to be available when this component is used
   return (
     <View style={styles.container}>
       <ArticleCard

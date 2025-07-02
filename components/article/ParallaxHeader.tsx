@@ -74,8 +74,8 @@ const ParallaxHeaderComparison = (
  * Optimized ParallaxHeader component with performance enhancements
  */
 const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors }) => {
-  // Memoize image source - safely handle potential undefined
-  const imageSource = useMemo(() => String(article.image_url || ''), [article.image_url]);
+  // Memoize image source - images are guaranteed to be available
+  const imageSource = useMemo(() => String(article.image_url), [article.image_url]);
 
   // Enhanced gradient for better summary integration with memoization
   const imageGradientColors = useMemo(() => {
