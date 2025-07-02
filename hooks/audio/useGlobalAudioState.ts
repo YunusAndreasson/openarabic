@@ -119,7 +119,7 @@ export function useGlobalAudioState(): GlobalAudioState {
 
     // INSTANT MINI-PLAYER: Use fallback data from audio metadata while article loads
     // This eliminates the 500ms delay by showing mini-player immediately when audio starts
-    if (audioPlayer.metadata.articleTitle && isPlaying) {
+    if (audioPlayer.metadata.articleTitle && (isPlaying || audioPlayer.isLoading)) {
       return {
         id: currentArticleId,
         title: audioPlayer.metadata.articleTitle,
@@ -129,7 +129,13 @@ export function useGlobalAudioState(): GlobalAudioState {
     }
 
     return null;
-  }, [article, currentArticleId, audioPlayer.metadata.articleTitle, isPlaying]);
+  }, [
+    article,
+    currentArticleId,
+    audioPlayer.metadata.articleTitle,
+    isPlaying,
+    audioPlayer.isLoading,
+  ]);
 
   // Action handlers
   const handlePlayPause = useCallback(async () => {

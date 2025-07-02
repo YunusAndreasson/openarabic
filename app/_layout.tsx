@@ -310,7 +310,7 @@ function AppContent() {
 
         {/* Mini-player always above tab bar, but below modals */}
         {globalAudioState.currentArticle &&
-          globalAudioState.isPlaying &&
+          (globalAudioState.isPlaying || globalAudioState.audioState === 'loading') &&
           !globalAudioState.showSleepTimerModal && (
             <MiniPlayer
               article={globalAudioState.currentArticle}

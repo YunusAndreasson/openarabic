@@ -198,10 +198,10 @@ const MiniPlayerComponent = ({
                     progressPercentage={
                       duration > 0 ? Math.min(100, (position / duration) * 100) : 0
                     }
-                    progressBarHeight={LAYOUT.SPACING.HALF_TINY} // 2px - thinner for mini-player
+                    progressBarHeight={LAYOUT.SPACING.TINY} // Increased from HALF_TINY (2px) to TINY (4px) for better visibility
                     progressBackgroundColor={withOpacity(colors.elevation3, 0.3)}
                     progressFillColor={colors.tint}
-                    textColor={colors.captionText}
+                    textColor={colors.secondaryText}
                     style={styles.progressIndicator}
                   />
                 </View>
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    height: LAYOUT.CARD.HEIGHT.MINI_PLAYER + LAYOUT.SPACING.LARGE, // Increased height: 72 + 16 = 88px (was 84px)
+    height: LAYOUT.CARD.HEIGHT.MINI_PLAYER + LAYOUT.SPACING.XXLARGE, // Increased from XLARGE (24px) to XXLARGE (32px) = 104px total for generous breathing room
     overflow: 'hidden',
   },
 
@@ -293,20 +293,23 @@ const styles = StyleSheet.create({
 
   cardContent: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: LAYOUT.SPACING.MEDIUM,
-    height: LAYOUT.CARD.HEIGHT.MINI_PLAYER + LAYOUT.SPACING.LARGE, // Match card height
+    alignItems: 'flex-start',
+    padding: LAYOUT.SPACING.MEDIUM, // Restored to MEDIUM (12px) for proper breathing room
+    paddingBottom: LAYOUT.SPACING.LARGE, // Add extra bottom padding for breathing room
+    paddingRight: LAYOUT.SPACING.LARGE, // Add extra right padding for button breathing room
+    flex: 1, // Use flex instead of fixed height to naturally fill card space
   },
 
   textContainer: {
     flex: 1,
-    justifyContent: 'center',
-    minWidth: 0, // Critical for text truncation
-    marginRight: LAYOUT.SPACING.SMALL, // Breathing room from controls (8px)
+    justifyContent: 'flex-start',
+    minWidth: 0,
+    marginRight: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.TINY,
   },
 
   titleText: {
-    marginBottom: LAYOUT.SPACING.HALF_TINY,
+    marginBottom: LAYOUT.SPACING.TINY,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
     letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.1, // Tighter line height for 2 lines
@@ -329,6 +332,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: LAYOUT.SPACING.MEDIUM, // Balanced spacing between primary and secondary controls (12px)
+    marginTop: LAYOUT.SPACING.MEDIUM, // Increased back to MEDIUM for better visual balance with new spacing
+    alignSelf: 'flex-start', // Align with text content rather than centering
   },
 
   primaryButton: {
@@ -345,7 +350,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column', // Stack timer and expand vertically
     alignItems: 'center',
     justifyContent: 'center',
-    gap: LAYOUT.SPACING.SMALL, // Tight vertical spacing between secondary buttons (8px)
+    gap: LAYOUT.SPACING.SMALL, // Reduced back to SMALL (8px) since we now have generous overall spacing
   },
 
   secondaryButton: {
@@ -357,12 +362,13 @@ const styles = StyleSheet.create({
   },
 
   progressContainer: {
-    marginTop: LAYOUT.SPACING.HALF_TINY,
-    height: LAYOUT.SPACING.HALF_TINY,
+    marginTop: LAYOUT.SPACING.MEDIUM, // Increased from SMALL to MEDIUM for better visual separation
+    marginBottom: LAYOUT.SPACING.TINY, // Add small bottom margin for breathing room
+    // Removed height constraint to allow time counters to show
   },
 
   progressIndicator: {
-    flex: 1,
+    minWidth: 120, // Ensure minimum width for time display
   },
 });
 
