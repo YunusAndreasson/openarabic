@@ -161,7 +161,7 @@ describe('Tab navigation', () => {
 
     expect(getByText('READ_MOCK')).toBeTruthy();
 
-    fireEvent.press(getByText('Listen'));
+    fireEvent.press(getByText('Playlist'));
     expect(getByText('LISTEN_MOCK')).toBeTruthy();
 
     fireEvent.press(getByText('Practice'));

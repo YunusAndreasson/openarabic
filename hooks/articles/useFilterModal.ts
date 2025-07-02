@@ -6,6 +6,7 @@ import {
   selectActiveFiltersCount,
   setDateRange,
   setDifficultyRange,
+  setSortField,
   toggleAuthor,
   type FilterState,
 } from '@/store/filtersSlice';
@@ -47,6 +48,8 @@ export interface UseFilterModalResult {
   selectedDifficultyOption: (typeof DIFFICULTY_OPTIONS)[number];
   selectedDateRangeOption: (typeof DATE_RANGE_OPTIONS)[number] | undefined;
   selectedAuthorsText: string;
+  sort: FilterState['sort'];
+  handleSortSelect: (field: FilterState['sort']['field']) => void;
 }
 
 export function useFilterModal(availableAuthors: Author[]): UseFilterModalResult {
@@ -133,6 +136,15 @@ export function useFilterModal(availableAuthors: Author[]): UseFilterModalResult
     option => option.key === filters.dateRange
   );
 
+  const sort = useAppSelector(state => state.filters.sort);
+
+  const handleSortSelect = useCallback(
+    (field: FilterState['sort']['field']) => {
+      dispatch(setSortField(field));
+    },
+    [dispatch]
+  );
+
   return {
     filters,
     activeFiltersCount,
@@ -146,6 +158,8 @@ export function useFilterModal(availableAuthors: Author[]): UseFilterModalResult
     selectedDateRangeOption,
     selectedAuthorsText,
     selectedDifficultyOption,
+    sort,
+    handleSortSelect,
   };
 }
 
