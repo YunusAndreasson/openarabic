@@ -82,7 +82,7 @@ export const useArticleData = (
     networkMode: 'always',
     retry: 3,
     refetchOnMount: true, // Previously 'always', now true to respect staleTime
-    refetchOnWindowFocus: true, // Also refetch when window gets focus
+    refetchOnWindowFocus: false, // Mobile-only: no window focus concept
     placeholderData: old => old,
   });
 

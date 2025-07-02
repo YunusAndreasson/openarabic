@@ -46,9 +46,8 @@ module.exports = {
 
   // Comprehensive module mapping for AI predictability
   moduleNameMapper: {
-    // Static file imports
-    '\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$':
-      '<rootDir>/__mocks__/fileMock.js',
+    // Static file imports (mobile-only optimized)
+    '\\.(jpg|jpeg|png|gif|otf|svg|ttf|mp4|wav|mp3|m4a|aac|oga)$': '<rootDir>/__mocks__/fileMock.js',
 
     // Core React Native mocks
     '@shopify/react-native-skia': '<rootDir>/__mocks__/react-native-skia.js',

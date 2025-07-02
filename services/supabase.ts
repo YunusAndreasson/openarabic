@@ -1,10 +1,10 @@
-import 'react-native-url-polyfill/auto';
 import * as Sentry from '@sentry/react-native';
-import type { User, Session } from '@supabase/supabase-js';
+import type { Session, User } from '@supabase/supabase-js';
 import { createClient } from '@supabase/supabase-js';
 import { AppState } from 'react-native';
+import 'react-native-url-polyfill/auto';
 
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from '@/constants/Supabase';
 import type { Database } from '@/types/database.types';
 import { handleError } from '@/utils/errorHandling';
 import { getSafeStorage, isAsyncStorageAvailable } from '@/utils/safeAsyncStorage';
@@ -18,8 +18,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
     storage: getSafeStorage(),
     autoRefreshToken: true,
     persistSession: isAsyncStorageAvailable(),
-    detectSessionInUrl: false,
-    flowType: 'implicit',
+    detectSessionInUrl: false, // Mobile-only: no URL session detection needed
+    flowType: 'implicit', // Mobile-only: implicit flow for native apps
     debug: false,
   },
 });
@@ -48,7 +48,6 @@ export function setupSupabaseAppStateListener(): () => void {
       });
 
       try {
-
         if (!isAuthInitialized) {
           await supabase.auth.initialize();
           isAuthInitialized = true;
@@ -85,7 +84,6 @@ export async function checkAuthentication(expectedUserId?: string): Promise<{
   user: User;
 }> {
   try {
-
     if (!isAuthInitialized) {
       await supabase.auth.initialize();
       isAuthInitialized = true;
@@ -101,7 +99,6 @@ export async function checkAuthentication(expectedUserId?: string): Promise<{
       throw error;
     }
 
-
     const hasValidSession =
       data.session &&
       data.session.user &&
@@ -113,7 +110,6 @@ export async function checkAuthentication(expectedUserId?: string): Promise<{
         user: data.session.user,
       };
     }
-
 
     const errorMessage =
       !data.session || !data.session.user ? 'User must be authenticated' : 'User ID mismatch';

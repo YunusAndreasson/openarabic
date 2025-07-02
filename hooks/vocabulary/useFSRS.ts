@@ -1,25 +1,25 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Card } from 'ts-fsrs';
-import { createEmptyCard, fsrs, Rating, State, generatorParameters } from 'ts-fsrs';
+import { createEmptyCard, fsrs, generatorParameters, Rating, State } from 'ts-fsrs';
 
 import {
-  OPTIMIZED_FSRS_CONFIG,
+  DEFAULT_SESSION_COOLDOWN_HOURS,
   FSRS_QUERY_KEYS,
   MIN_WORD_SPACING,
-  DEFAULT_SESSION_COOLDOWN_HOURS,
+  OPTIMIZED_FSRS_CONFIG,
 } from '@/constants/fsrs';
 import { strugglingWordsService } from '@/services/strugglingWords';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
-import type { UseFSRSOptions, UseFSRSResult, FSRSStateTracking } from '@/types/fsrs.types';
+import type { FSRSStateTracking, UseFSRSOptions, UseFSRSResult } from '@/types/fsrs.types';
 import type { WordConfidence } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import {
   calculateWordPriority,
+  createSpacingState,
   getNextWordWithSpacing as getNextFromSpacingQueue,
   updateSpacingCounters as updateSpacingState,
-  createSpacingState,
   type SpacingState,
 } from '@/utils/fsrsSpacing';
 import { PriorityQueue } from '@/utils/priorityQueue';
@@ -116,7 +116,7 @@ export function useFSRS({
     },
     enabled: !!userId,
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false, // Mobile-only: no window focus concept
     refetchOnReconnect: true,
   });
 

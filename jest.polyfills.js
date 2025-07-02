@@ -2,7 +2,7 @@
 // Optimized for AI coding agents
 
 // Text encoding polyfills for Node.js compatibility
-import { TextEncoder, TextDecoder } from 'util';
+import { TextDecoder, TextEncoder } from 'util';
 
 if (typeof global.TextEncoder === 'undefined') {
   global.TextEncoder = TextEncoder;
@@ -141,47 +141,8 @@ if (typeof global.AbortController === 'undefined') {
   };
 }
 
-// ResizeObserver polyfill for layout tests
-if (typeof global.ResizeObserver === 'undefined') {
-  global.ResizeObserver = class ResizeObserver {
-    constructor(callback) {
-      this.callback = callback;
-    }
-
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  };
-}
-
-// IntersectionObserver polyfill for visibility tests
-if (typeof global.IntersectionObserver === 'undefined') {
-  global.IntersectionObserver = class IntersectionObserver {
-    constructor(callback, options = {}) {
-      this.callback = callback;
-      this.options = options;
-    }
-
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  };
-}
-
-// MutationObserver polyfill for DOM change tests
-if (typeof global.MutationObserver === 'undefined') {
-  global.MutationObserver = class MutationObserver {
-    constructor(callback) {
-      this.callback = callback;
-    }
-
-    observe() {}
-    disconnect() {}
-    takeRecords() {
-      return [];
-    }
-  };
-}
+// Note: ResizeObserver, IntersectionObserver, and MutationObserver
+// are web-specific APIs not needed for mobile-only React Native apps
 
 // Console polyfills for consistent logging
 if (typeof global.console === 'undefined') {

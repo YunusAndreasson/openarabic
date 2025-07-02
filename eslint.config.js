@@ -171,7 +171,6 @@ module.exports = [
       'node_modules/',
       'dist/',
       '.expo/',
-      'web-build/',
       '*.d.ts',
       '.github',
       '*.config.js',
