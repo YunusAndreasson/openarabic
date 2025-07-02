@@ -167,7 +167,7 @@ const AccountScreen: FC = () => {
                   />
                 </View>
                 <View style={styles.settingLabelTextContainer}>
-                  <ThemedText type="body">Theme</ThemedText>
+                  <ThemedText type="body">{STRINGS.THEME}</ThemedText>
                 </View>
               </View>
               <ThemeSelector currentThemeText={currentThemeText} onPress={handleThemePickerOpen} />
@@ -519,8 +519,9 @@ const styles = StyleSheet.create({
   appFooterWrapper: {
     alignItems: 'center',
     marginBottom: LAYOUT.SPACING.LARGE,
-    marginTop: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.XLARGE,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: LAYOUT.SPACING.LARGE,
   },
   appFooterContent: {
     alignItems: 'center',

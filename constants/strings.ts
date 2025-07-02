@@ -17,6 +17,7 @@ export const STRINGS = {
   // Settings & preferences
   STUDY_REMINDERS: 'Study reminders',
   TIME: 'Time',
+  THEME: 'Theme',
   DARK_MODE: 'Dark mode',
   ARABIC_FONT: 'Arabic font',
 
