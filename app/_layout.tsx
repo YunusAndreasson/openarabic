@@ -314,7 +314,6 @@ function AppContent() {
           !globalAudioState.showSleepTimerModal && (
             <MiniPlayer
               article={globalAudioState.currentArticle}
-              queuePosition={globalAudioState.queuePosition}
               isPlaying={globalAudioState.isPlaying}
               isTimerActive={globalAudioState.isTimerActive}
               position={globalAudioState.position}

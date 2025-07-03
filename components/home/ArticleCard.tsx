@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import BaseCard from '@/components/BaseCard';
+import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import DeleteButton from '@/components/listen/DeleteButton';
 import DragHandle, { type DragHandleProps } from '@/components/listen/DragHandle';
@@ -19,6 +20,9 @@ import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
+// Playlist thumbnail size for elegant music app aesthetic
+const PLAYLIST_IMAGE_SIZE = 48;
+
 interface ArticleCardProps {
   title: string;
   author: string;
@@ -32,6 +36,8 @@ interface ArticleCardProps {
   onPlayPress?: () => void;
   // Chevron indicator for navigation
   showChevron?: boolean;
+  // Image for playlist-style display
+  imageUrl?: string;
 }
 
 export const ArticleCard: FC<ArticleCardProps> = ({
@@ -45,6 +51,7 @@ export const ArticleCard: FC<ArticleCardProps> = ({
   isBeingDragged = false,
   onPlayPress,
   showChevron = false,
+  imageUrl,
 }) => {
   const isDarkMode = useIsDarkMode();
   const colors = useColors();
@@ -103,6 +110,18 @@ export const ArticleCard: FC<ArticleCardProps> = ({
           {...(editMode ? {} : onPress ? { onPress } : {})}
         >
           <View style={styles.cardContent}>
+            {/* Article thumbnail - playlist style */}
+            {imageUrl && (
+              <View style={styles.imageContainer}>
+                <EnhancedImage
+                  source={imageUrl}
+                  style={styles.thumbnailImage}
+                  contentFit="cover"
+                  cachePolicy="disk"
+                />
+              </View>
+            )}
+
             <View style={styles.textContent}>
               <ThemedText
                 colorName="headingText"
@@ -214,5 +233,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingLeft: LAYOUT.SPACING.SMALL,
+  },
+  imageContainer: {
+    marginRight: LAYOUT.SPACING.MEDIUM,
+  },
+  thumbnailImage: {
+    height: PLAYLIST_IMAGE_SIZE,
+    width: PLAYLIST_IMAGE_SIZE,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
 });

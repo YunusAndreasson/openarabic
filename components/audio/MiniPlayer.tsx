@@ -1,17 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import type { JSX } from 'react';
 import React, { memo, useCallback } from 'react';
-import { ImageBackground, Pressable, StyleSheet, View } from 'react-native';
-import Animated, { FadeInUp, FadeOutDown, runOnJS } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import Animated, {
+  FadeInUp,
+  FadeOutDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
-import AudioProgressIndicator from '@/components/AudioProgressIndicator';
-import BaseCard from '@/components/BaseCard';
+import { EnhancedImage } from '@/components/EnhancedImage';
+import { ProgressBar } from '@/components/ProgressBar';
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { withOpacity } from '@/utils/colorUtils';
 import { selectionFeedback } from '@/utils/haptics';
 
 export interface MiniPlayerProps {
@@ -21,11 +24,6 @@ export interface MiniPlayerProps {
     title: string;
     author: string;
     image_url: string;
-  };
-  /** Queue position information */
-  queuePosition: {
-    current: number;
-    total: number;
   };
   /** Audio playback state */
   isPlaying: boolean;
@@ -42,22 +40,21 @@ export interface MiniPlayerProps {
   onMiniPlayerPress?: () => void;
 }
 
-// Extract static constants to prevent recreation
-const GRADIENT_START = { x: 0, y: 0 };
-const GRADIENT_END = { x: 1, y: 0 };
-const HIT_SLOP = { top: 8, bottom: 8, left: 8, right: 8 };
-const ANIMATION_DURATION = 300;
-const EXIT_ANIMATION_DURATION = 200;
+// Layout constants using proper LAYOUT system from layout.ts
+const MINI_PLAYER_HEIGHT = LAYOUT.CARD.HEIGHT.MINI_PLAYER; // 72px (48 + 24) - responsive to base unit
+const ARTWORK_SIZE = LAYOUT.CARD.IMAGE.MINI_PLAYER; // 40px (48 - 8) - responsive to base unit
+const PROGRESS_HEIGHT = LAYOUT.PROGRESS_BAR.HEIGHT; // 4px - responsive to base unit
+const BUTTON_SIZE = LAYOUT.BUTTON.HEIGHT.MEDIUM; // 44px - responsive to touch targets
 
-// Enhanced button sizes following Fitts' Law
-const BUTTON_SIZES = {
-  STOP: MIN_TOUCH_TARGET.MEDIUM, // 44px - larger primary action
-  SECONDARY: MIN_TOUCH_TARGET.SMALL, // 32px - smaller secondary actions
+// Animation constants
+const ANIMATION_CONFIG = {
+  duration: 250,
+  entering: 350,
+  exiting: 200,
 } as const;
 
 const MiniPlayerComponent = ({
   article,
-  queuePosition,
   isPlaying,
   isTimerActive,
   position,
@@ -68,199 +65,174 @@ const MiniPlayerComponent = ({
   onMiniPlayerPress,
 }: MiniPlayerProps): JSX.Element => {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
 
-  // Memoized gradient colors with proper opacity
-  const gradientColors = React.useMemo(
-    () =>
-      [
-        withOpacity(colors.background, 0.75),
-        withOpacity(colors.background, 0.65),
-        withOpacity(colors.background, 0.75),
-      ] as const,
-    [colors.background]
-  );
+  // Press animation
+  const pressScale = useSharedValue(1);
 
-  // Enhanced button colors following design system
-  const buttonColors = React.useMemo(
-    () => ({
-      // Stop button uses tint color for primary action emphasis
-      stop: {
-        background: colors.tint,
-        icon: colors.background, // High contrast white text on tint background
-      },
-      // Secondary buttons use elevated card background
-      secondary: {
-        background: colors.elevation2, // Elevated above card surface
-        icon: colors.text,
-      },
-      // Timer active state uses warning color
-      timerActive: {
-        background: colors.warning,
-        icon: colors.background, // High contrast white text on warning background
-      },
-    }),
-    [colors]
-  );
+  const pressAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pressScale.value }],
+  }));
 
-  // Optimized haptic feedback handlers using runOnJS
-  const handlePlayPause = useCallback(() => {
-    'worklet';
-    runOnJS(selectionFeedback)();
-    runOnJS(onPlayPause)();
-  }, [onPlayPause]);
-
-  const handleTimerPress = useCallback(() => {
-    'worklet';
-    runOnJS(selectionFeedback)();
-    runOnJS(onTimerPress)();
-  }, [onTimerPress]);
-
-  const handleExpandPress = useCallback(() => {
-    'worklet';
-    runOnJS(selectionFeedback)();
-    runOnJS(onExpandPress)();
-  }, [onExpandPress]);
-
+  // Handle mini-player press with scale animation
   const handleMiniPlayerPress = useCallback(() => {
-    'worklet';
-    if (onMiniPlayerPress) {
-      runOnJS(selectionFeedback)();
-      runOnJS(onMiniPlayerPress)();
-    }
-  }, [onMiniPlayerPress]);
+    selectionFeedback();
 
-  // Memoized dynamic styles
-  const dynamicStyles = React.useMemo(
-    () => ({
-      container: {
-        bottom: insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT - LAYOUT.SPACING.SMALL,
-      },
-      card: {
-        borderWidth: 1,
-        borderColor: withOpacity(colors.border, 0.6),
-      },
-    }),
-    [insets.bottom, colors.border]
+    // Quick scale animation
+    pressScale.value = withTiming(0.98, { duration: 100 }, () => {
+      pressScale.value = withTiming(1, { duration: 150 });
+    });
+
+    if (onMiniPlayerPress) {
+      onMiniPlayerPress();
+    } else {
+      onExpandPress();
+    }
+  }, [onMiniPlayerPress, onExpandPress, pressScale]);
+
+  // Handle play/pause with haptic feedback
+  const handlePlayPause = useCallback(
+    (event: any) => {
+      event.stopPropagation(); // Prevent card tap
+      selectionFeedback();
+      onPlayPause();
+    },
+    [onPlayPause]
   );
+
+  // Calculate progress percentage
+  const progressPercentage = React.useMemo(() => {
+    if (!duration || duration <= 0) return 0;
+    return Math.min(100, (position / duration) * 100);
+  }, [position, duration]);
+
+  // Format time display
+  const timeDisplay = React.useMemo(() => {
+    const formatTime = (seconds: number) => {
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    if (!duration) return '';
+    return `${formatTime(position)} / ${formatTime(duration)}`;
+  }, [position, duration]);
 
   return (
     <Animated.View
-      entering={FadeInUp.duration(ANIMATION_DURATION)}
-      exiting={FadeOutDown.duration(EXIT_ANIMATION_DURATION)}
-      style={[styles.container, dynamicStyles.container]}
+      entering={FadeInUp.duration(ANIMATION_CONFIG.entering)}
+      exiting={FadeOutDown.duration(ANIMATION_CONFIG.exiting)}
+      style={[styles.container, { bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY }]}
     >
-      <BaseCard
-        shadowSize="large"
-        style={[styles.card, dynamicStyles.card]}
-        onPress={handleMiniPlayerPress}
-      >
-        <ImageBackground
-          source={{ uri: article.image_url }}
-          style={styles.backgroundImage}
-          imageStyle={styles.backgroundImageStyle}
+      <Animated.View style={pressAnimatedStyle}>
+        <Pressable
+          onPress={handleMiniPlayerPress}
+          style={[
+            styles.card,
+            {
+              backgroundColor: colors.elevation2,
+              borderColor: colors.border,
+              ...LAYOUT.ELEVATION.MEDIUM,
+            },
+          ]}
         >
-          <LinearGradient
-            colors={gradientColors}
-            start={GRADIENT_START}
-            end={GRADIENT_END}
-            style={styles.gradientOverlay}
-          >
-            <View style={styles.cardContent}>
-              {/* Text Content - maximum space with 2-line title */}
-              <View style={styles.textContainer}>
+          {/* Main Content Row */}
+          <View style={styles.contentRow}>
+            {/* Artwork */}
+            <View style={styles.artworkContainer}>
+              <EnhancedImage
+                source={article.image_url}
+                style={styles.artwork}
+                contentFit="cover"
+                cachePolicy="disk"
+              />
+            </View>
+
+            {/* Text Content and Time Display Column */}
+            <View style={styles.textColumn}>
+              {/* Text Content */}
+              <View style={styles.textContent}>
                 <ThemedText
                   colorName="headingText"
-                  style={styles.titleText}
+                  style={styles.title}
                   type="heading3"
-                  numberOfLines={2}
+                  numberOfLines={1}
                   ellipsizeMode="tail"
                 >
                   {article.title}
                 </ThemedText>
+
                 <View style={styles.metaRow}>
                   <ThemedText
-                    colorName="authorText"
-                    style={styles.authorText}
-                    type="label"
+                    colorName="secondaryText"
+                    style={styles.artist}
+                    type="caption"
                     numberOfLines={1}
                     ellipsizeMode="tail"
                   >
-                    {article.author} • {queuePosition.current}/{queuePosition.total}
+                    {article.author}
                   </ThemedText>
                 </View>
-
-                {/* Progress Bar */}
-                <View style={styles.progressContainer}>
-                  <AudioProgressIndicator
-                    position={position}
-                    duration={duration}
-                    progressPercentage={
-                      duration > 0 ? Math.min(100, (position / duration) * 100) : 0
-                    }
-                    progressBarHeight={LAYOUT.SPACING.TINY} // Increased from HALF_TINY (2px) to TINY (4px) for better visibility
-                    progressBackgroundColor={withOpacity(colors.elevation3, 0.3)}
-                    progressFillColor={colors.tint}
-                    textColor={colors.secondaryText}
-                    style={styles.progressIndicator}
-                  />
-                </View>
               </View>
 
-              {/* Enhanced Horizontal Controls Layout */}
-              <View style={styles.controlsContainer}>
-                {/* Primary Stop/Play Button - Left side, larger */}
-                <Pressable
-                  style={[styles.primaryButton, { backgroundColor: buttonColors.stop.background }]}
-                  onPress={handlePlayPause}
-                  hitSlop={HIT_SLOP}
-                >
-                  <Ionicons
-                    name={isPlaying ? 'stop' : 'play'}
-                    size={20}
-                    color={buttonColors.stop.icon}
-                  />
-                </Pressable>
-
-                {/* Secondary Controls - Right side, stacked vertically */}
-                <View style={styles.secondaryControlsStack}>
-                  <Pressable
-                    style={[
-                      styles.secondaryButton,
-                      {
-                        backgroundColor: isTimerActive
-                          ? buttonColors.timerActive.background
-                          : buttonColors.secondary.background,
-                      },
-                    ]}
-                    onPress={handleTimerPress}
-                    hitSlop={HIT_SLOP}
-                  >
-                    <Ionicons
-                      name="timer-outline"
-                      size={16}
-                      color={
-                        isTimerActive ? buttonColors.timerActive.icon : buttonColors.secondary.icon
-                      }
-                    />
-                  </Pressable>
-
-                  <Pressable
-                    style={[
-                      styles.secondaryButton,
-                      { backgroundColor: buttonColors.secondary.background },
-                    ]}
-                    onPress={handleExpandPress}
-                    hitSlop={HIT_SLOP}
-                  >
-                    <Ionicons name="chevron-up" size={16} color={buttonColors.secondary.icon} />
-                  </Pressable>
-                </View>
-              </View>
+              {/* Time display - aligned with text content left margin */}
+              {timeDisplay && (
+                <ThemedText colorName="secondaryText" style={styles.timeDisplay} type="caption">
+                  {timeDisplay}
+                </ThemedText>
+              )}
             </View>
-          </LinearGradient>
-        </ImageBackground>
-      </BaseCard>
+
+            {/* Controls */}
+            <View style={styles.controlsContainer}>
+              {/* Timer button - always visible with state indication */}
+              <Pressable
+                onPress={event => {
+                  event.stopPropagation();
+                  selectionFeedback();
+                  onTimerPress();
+                }}
+                style={[
+                  styles.timerButton,
+                  {
+                    backgroundColor: isTimerActive ? colors.warning : colors.elevation3, // Subtle background when inactive
+                  },
+                ]}
+              >
+                <Ionicons
+                  name="timer"
+                  size={14} // Increased from 12px back to 14px for better visibility
+                  color={isTimerActive ? colors.background : colors.secondaryText}
+                />
+              </Pressable>
+
+              {/* Play/Pause button */}
+              <Pressable
+                onPress={handlePlayPause}
+                style={[styles.playButton, { backgroundColor: colors.tint }]}
+              >
+                <Ionicons
+                  name={isPlaying ? 'pause' : 'play'}
+                  size={18}
+                  color={colors.background}
+                  style={!isPlaying && styles.playIconOffset}
+                />
+              </Pressable>
+            </View>
+          </View>
+
+          {/* Progress Bar - at bottom like Apple Music */}
+          <View style={styles.progressContainer}>
+            <ProgressBar
+              progress={progressPercentage}
+              height={PROGRESS_HEIGHT}
+              backgroundColor={colors.elevation3}
+              fillColor={colors.tint}
+              style={styles.progressBar}
+              animationTriggered={progressPercentage > 0}
+            />
+          </View>
+        </Pressable>
+      </Animated.View>
     </Animated.View>
   );
 };
@@ -270,128 +242,129 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: LAYOUT.SCREEN_EDGE_PADDING,
     right: LAYOUT.SCREEN_EDGE_PADDING,
-    zIndex: 9999, // High enough to overlay modal screens
+    zIndex: LAYOUT.Z_INDEX.OVERLAY, // Proper z-index from layout system
   },
 
   card: {
-    height: LAYOUT.CARD.HEIGHT.MINI_PLAYER + LAYOUT.SPACING.XXLARGE, // Increased from XLARGE (24px) to XXLARGE (32px) = 104px total for generous breathing room
+    height: MINI_PLAYER_HEIGHT,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
   },
 
-  backgroundImage: {
-    width: '100%',
-    height: '100%',
-  },
-
-  backgroundImageStyle: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
-
-  gradientOverlay: {
-    flex: 1,
-  },
-
-  cardContent: {
+  contentRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    padding: LAYOUT.SPACING.MEDIUM, // Restored to MEDIUM (12px) for proper breathing room
-    paddingBottom: LAYOUT.SPACING.LARGE, // Add extra bottom padding for breathing room
-    paddingRight: LAYOUT.SPACING.LARGE, // Add extra right padding for button breathing room
-    flex: 1, // Use flex instead of fixed height to naturally fill card space
+    alignItems: 'center',
+    height: MINI_PLAYER_HEIGHT - PROGRESS_HEIGHT,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
   },
 
-  textContainer: {
-    flex: 1,
-    justifyContent: 'flex-start',
-    minWidth: 0,
+  artworkContainer: {
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    overflow: 'hidden',
     marginRight: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.TINY,
   },
 
-  titleText: {
-    marginBottom: LAYOUT.SPACING.TINY,
+  artwork: {
+    width: ARTWORK_SIZE,
+    height: ARTWORK_SIZE,
+  },
+
+  textColumn: {
+    flex: 1,
+    justifyContent: 'center',
+    minWidth: 0,
+    marginRight: LAYOUT.SPACING.SMALL,
+  },
+
+  textContent: {
+    justifyContent: 'center',
+    minWidth: 0,
+  },
+
+  title: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.1, // Tighter line height for 2 lines
-  },
-
-  authorText: {
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.AUTHOR_BYLINE.letterSpacing,
-    flex: 1, // Take available space
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.HALF_TINY,
   },
 
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.HALF_TINY,
+  },
+
+  artist: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL + LAYOUT.SPACING.HALF_TINY,
+  },
+
+  timeDisplay: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+    opacity: LAYOUT.OPACITY.HIGH,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY + LAYOUT.SPACING.HALF_TINY,
+    // Use monospace font to prevent jumping when numbers change
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    // Align with text content - no right alignment needed since it's in column
+    textAlign: 'left',
+    // Small top margin to separate from author
+    marginTop: LAYOUT.SPACING.HALF_TINY,
   },
 
   controlsContainer: {
-    flexDirection: 'row', // Horizontal layout: stop left, secondary controls right
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: LAYOUT.SPACING.MEDIUM, // Balanced spacing between primary and secondary controls (12px)
-    marginTop: LAYOUT.SPACING.MEDIUM, // Increased back to MEDIUM for better visual balance with new spacing
-    alignSelf: 'flex-start', // Align with text content rather than centering
+    gap: LAYOUT.SPACING.SMALL,
+    paddingLeft: LAYOUT.SPACING.SMALL,
   },
 
-  primaryButton: {
-    width: BUTTON_SIZES.STOP,
-    height: BUTTON_SIZES.STOP,
-    borderRadius: BUTTON_SIZES.STOP / 2, // Perfect circle
+  timerButton: {
+    // Larger size for better usability
+    width: LAYOUT.BUTTON.ICON_SIZE.XLARGE, // Back to 28px (was 24px)
+    height: LAYOUT.BUTTON.ICON_SIZE.XLARGE,
+    borderRadius: LAYOUT.BUTTON.ICON_SIZE.XLARGE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    // Subtle shadow for primary button depth
-    ...LAYOUT.ELEVATION.SMALL,
+    // Add subtle elevation when inactive for better visual hierarchy
+    ...LAYOUT.ELEVATION.SUBTLE,
   },
 
-  secondaryControlsStack: {
-    flexDirection: 'column', // Stack timer and expand vertically
+  playButton: {
+    width: BUTTON_SIZE,
+    height: BUTTON_SIZE,
+    borderRadius: BUTTON_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: LAYOUT.SPACING.SMALL, // Reduced back to SMALL (8px) since we now have generous overall spacing
+    ...LAYOUT.ELEVATION.SUBTLE,
   },
 
-  secondaryButton: {
-    width: BUTTON_SIZES.SECONDARY,
-    height: BUTTON_SIZES.SECONDARY,
-    borderRadius: BUTTON_SIZES.SECONDARY / 2, // Perfect circle
-    alignItems: 'center',
-    justifyContent: 'center',
+  playIconOffset: {
+    marginLeft: LAYOUT.SPACING.HALF_TINY,
   },
 
   progressContainer: {
-    marginTop: LAYOUT.SPACING.MEDIUM, // Increased from SMALL to MEDIUM for better visual separation
-    marginBottom: LAYOUT.SPACING.TINY, // Add small bottom margin for breathing room
-    // Removed height constraint to allow time counters to show
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: PROGRESS_HEIGHT,
   },
 
-  progressIndicator: {
-    minWidth: 120, // Ensure minimum width for time display
+  progressBar: {
+    borderRadius: 0,
   },
 });
 
-// Add to layout constants for consistency
-declare module '@/constants/layout' {
-  interface LayoutCardHeight {
-    MINI_PLAYER: number;
-  }
-
-  interface LayoutCardImage {
-    MINI_PLAYER: number;
-  }
-}
-
-// Optimized memo comparison
+// Optimized memo comparison - only check essential props
 const MiniPlayer = memo(MiniPlayerComponent, (prevProps, nextProps) => {
   return (
     prevProps.article.id === nextProps.article.id &&
-    prevProps.queuePosition.current === nextProps.queuePosition.current &&
-    prevProps.queuePosition.total === nextProps.queuePosition.total &&
     prevProps.isPlaying === nextProps.isPlaying &&
     prevProps.isTimerActive === nextProps.isTimerActive &&
-    prevProps.position === nextProps.position &&
+    Math.floor(prevProps.position) === Math.floor(nextProps.position) && // Only check seconds, not milliseconds
     prevProps.duration === nextProps.duration
   );
 });

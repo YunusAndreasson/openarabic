@@ -64,6 +64,8 @@ const ListenListItem = memo(
             ? () => onPlayPress(item.article_id)
             : undefined
         }
+        // Add article image for playlist-style appearance
+        imageUrl={String(item.articles.image_url)}
         {...(drag
           ? {
               dragHandleProps: {
@@ -243,11 +245,16 @@ export default function ListenScreen(): JSX.Element {
         )}
       </ThemedView>
 
-      {/* Bottom controls positioned above tab bar */}
+      {/* Bottom controls positioned above tab bar to match mini-player location */}
       <View
         style={{
           position: 'absolute',
-          bottom: LAYOUT.BOTTOM_BAR.HEIGHT, // Position above tab bar
+          // Compensate for BottomControls internal padding (MEDIUM=12px + SMALL=8px = 20px)
+          bottom:
+            LAYOUT.BOTTOM_BAR.HEIGHT +
+            LAYOUT.SPACING.TINY -
+            LAYOUT.SPACING.MEDIUM -
+            LAYOUT.SPACING.SMALL, // 4px - 12px - 8px = -16px above tab bar
           left: 0,
           right: 0,
           opacity: hasArticles ? 1 : 0,
