@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useEffect, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -29,6 +30,8 @@ interface ArticleCardProps {
   isBeingDragged?: boolean;
   // Play button props
   onPlayPress?: () => void;
+  // Chevron indicator for navigation
+  showChevron?: boolean;
 }
 
 export const ArticleCard: FC<ArticleCardProps> = ({
@@ -41,6 +44,7 @@ export const ArticleCard: FC<ArticleCardProps> = ({
   dragHandleProps,
   isBeingDragged = false,
   onPlayPress,
+  showChevron = false,
 }) => {
   const isDarkMode = useIsDarkMode();
   const colors = useColors();
@@ -119,11 +123,20 @@ export const ArticleCard: FC<ArticleCardProps> = ({
               </ThemedText>
             </View>
 
-            {/* Play Button - always reserve space when not in edit mode */}
+            {/* Right side content - play button, chevron, or placeholder */}
             {!editMode && (
               <View style={styles.playButtonContainer}>
                 {onPlayPress ? (
                   <PlayButton onPress={onPlayPress} isPlaying={false} iconColor={playIconColor} />
+                ) : showChevron ? (
+                  <View style={styles.chevronContainer}>
+                    <Ionicons
+                      name="chevron-forward"
+                      size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                      color={colors.textTertiary}
+                      style={styles.chevronIcon}
+                    />
+                  </View>
                 ) : (
                   <View style={styles.playButtonPlaceholder} />
                 )}
@@ -182,6 +195,15 @@ const styles = StyleSheet.create({
   playButtonPlaceholder: {
     height: MIN_TOUCH_TARGET.MEDIUM,
     width: MIN_TOUCH_TARGET.MEDIUM,
+  },
+  chevronContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: MIN_TOUCH_TARGET.MEDIUM,
+    width: MIN_TOUCH_TARGET.MEDIUM,
+  },
+  chevronIcon: {
+    opacity: LAYOUT.OPACITY.MEDIUM,
   },
   dragHandleContainer: {
     alignItems: 'center',
