@@ -1,14 +1,13 @@
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import type { JSX } from 'react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AppState, type LayoutRectangle } from 'react-native';
+import { AppState, type LayoutRectangle, View } from 'react-native';
 
-import { ThemedView } from '@/components/ThemedView';
 import { ArticleSentence, WordTooltip } from '@/components/article';
 import { ArticleContent } from '@/components/article/ArticleContent';
 import { MiniPlayer } from '@/components/audio';
-import { ToastProvider } from '@/components/providers/ToastProvider';
+import { ToastProvider, useToast } from '@/components/providers';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { AUDIO_STATES } from '@/constants/audio';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
@@ -37,6 +36,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
   const colors = useColors();
   const { user } = useAuth();
   const fontScale = useAppSelectorMemo(state => state.settings.fontScale);
+  const { showToast } = useToast();
 
   // Audio player for single article playback
   const audioPlayer = useSimpleAudioPlayer();
@@ -98,7 +98,15 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
 
     selectionFeedback();
     await handleToggleReadingList(articleId, isInReadingList);
-  }, [articleId, isInReadingList, handleToggleReadingList]);
+
+    // Show toast notification for user feedback
+    showToast(isInReadingList ? 'Removed from playlist' : 'Added to playlist', 3000, 'success');
+  }, [articleId, isInReadingList, handleToggleReadingList, showToast]);
+
+  const handleClose = useCallback(() => {
+    selectionFeedback();
+    router.back();
+  }, []);
 
   const globalAudioState = useGlobalAudioState();
 
@@ -237,8 +245,13 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
   );
 
   return (
-    <ThemedView style={FLEX_ONE_STYLE}>
-      <StatusBar style={useIsDarkMode() ? 'light' : 'dark'} />
+    <View style={FLEX_ONE_STYLE}>
+      <StatusBar
+        animated={true}
+        style={useIsDarkMode() ? 'light' : 'dark'}
+        translucent={true}
+        backgroundColor="transparent"
+      />
       {article && sortedSentences ? (
         <ArticleContent
           id={id}
@@ -258,6 +271,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
           onToggleReadingList={handleToggleReadingListWithFeedback}
           onPlayPress={handlePlayPress}
           isPlaying={isCurrentArticlePlaying}
+          onClose={handleClose}
         />
       ) : null}
 
@@ -290,20 +304,26 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
         onStudyListToggle={handleStudyListToggle}
         wordRootId={activeTooltip?.word.root_id}
       />
-    </ThemedView>
+    </View>
   );
 };
 
 export default function ArticleScreen(): JSX.Element {
   const { id } = useLocalSearchParams<{ id: string }>();
   const isDarkMode = useIsDarkMode();
+  const colors = useColors();
 
   return (
     <ToastProvider>
-      <ThemedView style={FLEX_ONE_STYLE} useSafeArea={false}>
-        <StatusBar animated={true} style={isDarkMode ? 'light' : 'dark'} translucent={true} />
+      <View style={[FLEX_ONE_STYLE, { backgroundColor: colors.background }]}>
+        <StatusBar
+          animated={true}
+          style={isDarkMode ? 'light' : 'dark'}
+          translucent={true}
+          backgroundColor="transparent"
+        />
         <ArticleScreenContent id={id ?? ''} />
-      </ThemedView>
+      </View>
     </ToastProvider>
   );
 }

@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
 import React, { Fragment, memo, useCallback, useMemo, type ReactElement } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent, ViewToken } from 'react-native';
@@ -27,7 +28,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   titleContainer: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
     marginTop: -LAYOUT.SPACING.XXXLARGE,
     paddingBottom: LAYOUT.SPACING.TINY,
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
@@ -36,198 +37,190 @@ const styles = StyleSheet.create({
     width: '100%', // Full width for title without button interference
   },
   authorContainer: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
     paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
-  actionButtonsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING, // Match summary box alignment
-    paddingTop: LAYOUT.SPACING.SMALL,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-    gap: LAYOUT.SPACING.MEDIUM, // Space between buttons
-  },
-  actionButton: {
-    flex: 1, // Equal width buttons for perfect balance
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: 1,
-    minHeight: MIN_TOUCH_TARGET.MEDIUM, // Ensure good touch target
-  },
-  modalDragIndicator: {
-    position: 'absolute',
-    top: LAYOUT.SPACING.SMALL, // Position from top of parallax header
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    zIndex: 10, // Ensure it's above the image content
-    paddingTop: LAYOUT.SPACING.SMALL,
-    paddingBottom: LAYOUT.SPACING.TINY,
-  },
-  dragIndicatorBar: {
-    width: LAYOUT.SPACING.XXXLARGE, // 48px for better visibility
-    height: LAYOUT.SPACING.TINY, // 4px height
-    borderRadius: LAYOUT.BORDER_RADIUS.PILL,
-  },
-  actionButtonText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
+  playIconOffset: {
+    marginLeft: LAYOUT.SPACING.TINY,
   },
 });
 
 interface ArticleTitleProps {
   title: string;
   author: { id: number; name: string };
-  // Action button props
-  isInReadingList: boolean;
-  onToggleReadingList: () => void;
-  // Audio playback functionality
-  onPlayPress: () => void;
-  isPlaying: boolean;
 }
 
-const ArticleTitle = memo<ArticleTitleProps>(
-  ({ title, author, isInReadingList, onToggleReadingList, onPlayPress, isPlaying }) => {
-    const colors = useColors();
-
-    // Memoize dynamic styles for better performance
-    const titleStyle = useMemo(
-      () => ({
-        fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
-        color: colors.headingText,
-        lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
-        textAlign: 'left' as const,
-      }),
-      [colors.headingText]
-    );
-
-    const authorStyle = useMemo(
-      () => ({
-        fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
-        color: colors.authorText,
-        textAlign: 'left' as const,
-      }),
-      [colors.authorText]
-    );
-
-    return (
-      <>
-        {/* Title gets full width without button interference */}
-        <View style={styles.titleContainer}>
-          <ThemedText type="heading1" style={[styles.titleText, titleStyle]}>
-            {title}
-          </ThemedText>
-        </View>
-
-        {/* Author information */}
-        <View style={styles.authorContainer}>
-          <ThemedText type="caption" style={authorStyle}>
-            {STRINGS.BY} {author.name}
-          </ThemedText>
-        </View>
-
-        {/* Action buttons below author */}
-        <View style={styles.actionButtonsContainer}>
-          {/* Listening list action */}
-          <Pressable
-            style={[
-              styles.actionButton,
-              {
-                backgroundColor: isInReadingList ? colors.tintBackground : colors.elevation1,
-                borderColor: isInReadingList ? colors.tint : colors.border,
-              },
-            ]}
-            onPress={onToggleReadingList}
-            android_ripple={{
-              color: colors.tint,
-              radius: LAYOUT.SPACING.XLARGE,
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={
-              isInReadingList ? 'Remove from listening list' : 'Add to listening list'
-            }
-            accessibilityHint="Toggle article in audio listening playlist"
-          >
-            <ThemedText
-              type="caption"
-              style={[
-                styles.actionButtonText,
-                {
-                  color: isInReadingList ? colors.tint : colors.secondaryText,
-                  fontWeight: isInReadingList
-                    ? TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD
-                    : TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
-                },
-              ]}
-            >
-              {isInReadingList ? 'IN PLAYLIST' : 'ADD TO PLAYLIST'}
-            </ThemedText>
-          </Pressable>
-
-          {/* Audio playback action */}
-          <Pressable
-            style={[
-              styles.actionButton,
-              {
-                backgroundColor: isPlaying ? colors.tintBackground : colors.elevation1,
-                borderColor: isPlaying ? colors.tint : colors.border,
-              },
-            ]}
-            onPress={onPlayPress}
-            android_ripple={{
-              color: colors.tint,
-              radius: LAYOUT.SPACING.XLARGE,
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={isPlaying ? 'Stop audio playback' : 'Start audio playback'}
-            accessibilityHint="Toggle article audio playback"
-          >
-            <ThemedText
-              type="caption"
-              style={[
-                styles.actionButtonText,
-                {
-                  color: isPlaying ? colors.tint : colors.secondaryText,
-                  fontWeight: isPlaying
-                    ? TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD
-                    : TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
-                },
-              ]}
-            >
-              {isPlaying ? 'STOP' : 'PLAY'}
-            </ThemedText>
-          </Pressable>
-        </View>
-      </>
-    );
-  }
-);
-ArticleTitle.displayName = 'ArticleTitle';
-
-// Modal drag indicator component positioned over parallax header
-const ModalDragIndicator = memo(() => {
+const ArticleTitle = memo<ArticleTitleProps>(({ title, author }) => {
   const colors = useColors();
 
+  // Memoize dynamic styles for better performance
+  const titleStyle = useMemo(
+    () => ({
+      fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
+      fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
+      color: colors.headingText,
+      lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
+      textAlign: 'left' as const,
+    }),
+    [colors.headingText]
+  );
+
+  const authorStyle = useMemo(
+    () => ({
+      fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+      fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
+      color: colors.authorText,
+      textAlign: 'left' as const,
+    }),
+    [colors.authorText]
+  );
+
   return (
-    <View style={styles.modalDragIndicator}>
-      <View
-        style={[
-          styles.dragIndicatorBar,
-          {
-            backgroundColor: colors.modalIndicator,
-            opacity: LAYOUT.OPACITY.SUBTLE, // More transparent for elegant overlay
-          },
-        ]}
-      />
-    </View>
+    <>
+      {/* Title gets full width without button interference */}
+      <View style={styles.titleContainer}>
+        <ThemedText type="heading1" style={[styles.titleText, titleStyle]}>
+          {title}
+        </ThemedText>
+      </View>
+
+      {/* Author information */}
+      <View style={styles.authorContainer}>
+        <ThemedText type="caption" style={authorStyle}>
+          {STRINGS.BY} {author.name}
+        </ThemedText>
+      </View>
+    </>
   );
 });
-ModalDragIndicator.displayName = 'ModalDragIndicator';
+
+ArticleTitle.displayName = 'ArticleTitle';
+
+// Floating action buttons component positioned over parallax header
+const FloatingActionButtons = memo<{
+  isInReadingList: boolean;
+  onToggleReadingList: () => void;
+  onPlayPress: () => void;
+  isPlaying: boolean;
+  onClose: () => void;
+}>(({ isInReadingList, onToggleReadingList, onPlayPress, isPlaying, onClose }) => {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+
+  const buttonStyle = useMemo(
+    () => ({
+      width: MIN_TOUCH_TARGET.MEDIUM,
+      height: MIN_TOUCH_TARGET.MEDIUM,
+      borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2,
+      backgroundColor: colors.elevation1,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
+      opacity: 0.7, // More subtle/transparent
+      ...LAYOUT.ELEVATION.SUBTLE,
+    }),
+    [colors.elevation1]
+  );
+
+  const activeButtonStyle = useMemo(
+    () => ({
+      ...buttonStyle,
+      backgroundColor: colors.elevation2,
+      opacity: 0.85,
+    }),
+    [buttonStyle, colors.elevation2]
+  );
+
+  // Memoize button positions with safe area insets
+  const closeButtonStyle = useMemo(
+    () => ({
+      position: 'absolute' as const,
+      top: insets.top + LAYOUT.SPACING.SMALL,
+      left: LAYOUT.SPACING.SMALL,
+      zIndex: LAYOUT.Z_INDEX.OVERLAY,
+    }),
+    [insets.top]
+  );
+
+  const actionButtonsStyle = useMemo(
+    () => ({
+      position: 'absolute' as const,
+      top: insets.top + LAYOUT.SPACING.SMALL,
+      right: LAYOUT.SPACING.SMALL,
+      zIndex: LAYOUT.Z_INDEX.OVERLAY,
+      flexDirection: 'row' as const,
+      gap: LAYOUT.SPACING.SMALL,
+    }),
+    [insets.top]
+  );
+
+  return (
+    <>
+      {/* Close button - top left */}
+      <View style={closeButtonStyle}>
+        <Pressable
+          style={buttonStyle}
+          onPress={onClose}
+          android_ripple={{
+            color: colors.tint,
+            radius: MIN_TOUCH_TARGET.MEDIUM / 2,
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Close article"
+        >
+          <Ionicons
+            name="close"
+            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+            color={colors.secondaryText}
+          />
+        </Pressable>
+      </View>
+
+      {/* Action buttons - top right */}
+      <View style={actionButtonsStyle}>
+        {/* Playlist button */}
+        <Pressable
+          style={isInReadingList ? activeButtonStyle : buttonStyle}
+          onPress={onToggleReadingList}
+          android_ripple={{
+            color: colors.tint,
+            radius: MIN_TOUCH_TARGET.MEDIUM / 2,
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={
+            isInReadingList ? 'Remove from listening list' : 'Add to listening list'
+          }
+        >
+          <Ionicons
+            name={isInReadingList ? 'bookmark' : 'bookmark-outline'}
+            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+            color={isInReadingList ? colors.tint : colors.secondaryText}
+          />
+        </Pressable>
+
+        {/* Play button */}
+        <Pressable
+          style={isPlaying ? activeButtonStyle : buttonStyle}
+          onPress={onPlayPress}
+          android_ripple={{
+            color: colors.tint,
+            radius: MIN_TOUCH_TARGET.MEDIUM / 2,
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={isPlaying ? 'Stop audio playback' : 'Start audio playback'}
+        >
+          <Ionicons
+            name={isPlaying ? 'stop' : 'play'}
+            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+            color={isPlaying ? colors.tint : colors.secondaryText}
+            style={!isPlaying && styles.playIconOffset}
+          />
+        </Pressable>
+      </View>
+    </>
+  );
+});
+
+FloatingActionButtons.displayName = 'FloatingActionButtons';
 
 interface ArticleContentProps {
   id: string;
@@ -249,6 +242,8 @@ interface ArticleContentProps {
   // Audio playback functionality
   onPlayPress: () => void;
   isPlaying: boolean;
+  // Close functionality
+  onClose: () => void;
 }
 
 // Extract constants outside component for better performance
@@ -278,6 +273,7 @@ export const ArticleContent = memo<ArticleContentProps>(
     onToggleReadingList,
     onPlayPress,
     isPlaying,
+    onClose,
   }) => {
     const insets = useSafeAreaInsets();
 
@@ -294,17 +290,10 @@ export const ArticleContent = memo<ArticleContentProps>(
       () => (
         <Fragment>
           <ParallaxHeader article={article} colors={colors} />
-          <ArticleTitle
-            title={article.title}
-            author={article.author}
-            isInReadingList={isInReadingList}
-            onToggleReadingList={onToggleReadingList}
-            onPlayPress={onPlayPress}
-            isPlaying={isPlaying}
-          />
+          <ArticleTitle title={article.title} author={article.author} />
         </Fragment>
       ),
-      [article, colors, isInReadingList, onToggleReadingList, onPlayPress, isPlaying]
+      [article, colors]
     );
 
     const getItemTypeCallback = useCallback(getItemType, []);
@@ -312,6 +301,15 @@ export const ArticleContent = memo<ArticleContentProps>(
     const overrideItemLayout = useCallback((layout: { span?: number; size?: number }) => {
       layout.size = SENTENCE_ITEM_HEIGHT;
     }, []);
+
+    // Memoize content container style with proper bottom padding
+    const contentContainerStyle = useMemo(
+      () => ({
+        paddingTop: 0, // Remove padding since ParallaxHeader handles its own layout
+        paddingBottom: insets.bottom + LAYOUT.SPACING.XXXLARGE, // Safe area + comfortable reading space
+      }),
+      [insets.bottom]
+    );
 
     return (
       <View style={styles.flexOne}>
@@ -339,12 +337,7 @@ export const ArticleContent = memo<ArticleContentProps>(
               renderItem={renderSentenceItem}
               scrollEventThrottle={SCROLL_THROTTLE}
               showsVerticalScrollIndicator={false} // Hide native scroll indicator
-              contentContainerStyle={{
-                paddingTop: 0, // Remove padding since ParallaxHeader handles its own layout
-                // Slight bottom padding adjustment for better closure
-                paddingBottom:
-                  LAYOUT.CONTENT_SPACING.BOTTOM + insets.bottom + LAYOUT.SPACING.MEDIUM,
-              }}
+              contentContainerStyle={contentContainerStyle}
               overrideItemLayout={overrideItemLayout}
               onScroll={handleAnimatedScroll}
               onViewableItemsChanged={handleViewableItemsChanged}
@@ -354,9 +347,6 @@ export const ArticleContent = memo<ArticleContentProps>(
               }}
             />
 
-            {/* Modal drag indicator positioned over parallax header */}
-            <ModalDragIndicator />
-
             {/* Custom sentence scrubber */}
             <SentenceScrubber
               currentSentence={currentSentenceIndex}
@@ -364,6 +354,15 @@ export const ArticleContent = memo<ArticleContentProps>(
               onSentenceChange={onSentenceChange}
               onScrubStart={onScrubStart}
               onScrubEnd={onScrubEnd}
+            />
+
+            {/* Floating action buttons */}
+            <FloatingActionButtons
+              isInReadingList={isInReadingList}
+              onToggleReadingList={onToggleReadingList}
+              onPlayPress={onPlayPress}
+              isPlaying={isPlaying}
+              onClose={onClose}
             />
           </View>
         ) : null}
@@ -385,7 +384,8 @@ export const ArticleContent = memo<ArticleContentProps>(
       prevProps.isInReadingList === nextProps.isInReadingList &&
       prevProps.onToggleReadingList === nextProps.onToggleReadingList &&
       prevProps.onPlayPress === nextProps.onPlayPress &&
-      prevProps.isPlaying === nextProps.isPlaying
+      prevProps.isPlaying === nextProps.isPlaying &&
+      prevProps.onClose === nextProps.onClose
     );
   }
 );

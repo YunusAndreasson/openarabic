@@ -176,10 +176,10 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
       return {
         height,
         borderRadius: height / 2,
-        backgroundColor: colors.progressBackground,
-        opacity: isDragging.value ? 1.0 : 0.4, // Fully visible during interaction
+        backgroundColor: colors.border, // Use consistent border color for grayish appearance
+        opacity: isDragging.value ? 0.6 : 0.3, // Lower opacity for subtler appearance
       };
-    }, [isDragging, colors.progressBackground]);
+    }, [isDragging, colors.border]);
 
     // Memoized styles for static elements
     const tooltipBubbleStyle = useMemo(

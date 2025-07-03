@@ -155,7 +155,7 @@ function ArticleSentenceComponent({
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: LAYOUT.SPACING.SMALL,
+    marginVertical: 0,
     overflow: 'visible',
     position: 'relative',
   },
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.ENGLISH,
     paddingBottom: LAYOUT.SPACING.TINY,
     paddingTop: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.TINY,
   },
   wordsContainer: {
     alignItems: 'center',
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.TINY,
     justifyContent: 'flex-start',
     minHeight: LAYOUT.SPACING.XLARGE * 1.5,
-    paddingRight: LAYOUT.SPACING.SMALL,
+    paddingRight: LAYOUT.SPACING.TINY,
     paddingVertical: LAYOUT.SPACING.TINY,
     width: '100%',
   },

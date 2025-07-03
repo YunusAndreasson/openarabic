@@ -69,8 +69,8 @@ export default function ReadLayout(): JSX.Element {
       <Stack.Screen
         name="article"
         options={{
-          headerShown: false, // Full-screen modal with drag indicator only
-          presentation: 'modal',
+          headerShown: false, // Full-screen modal without header
+          presentation: 'fullScreenModal',
           gestureEnabled: true,
         }}
       />

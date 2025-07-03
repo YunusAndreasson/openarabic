@@ -279,7 +279,7 @@ export const WordTooltip = memo(
     // Memoize colors to prevent unnecessary recalculations
     const tooltipColors = useMemo(
       () => ({
-        backgroundColor: colors.elevation3,
+        backgroundColor: colors.elevation1,
         textColor: colors.text,
         borderColor: colors.border,
         shadowColor: colors.shadow,
@@ -291,7 +291,7 @@ export const WordTooltip = memo(
         secondaryText: colors.secondaryText,
       }),
       [
-        colors.elevation3,
+        colors.elevation1,
         colors.text,
         colors.border,
         colors.shadow,

@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { SCREEN_WIDTH } from '@/constants/layout';
@@ -10,7 +11,7 @@ import { withOpacity } from '@/utils/colorUtils';
 
 // Extract constants outside component to prevent recreation
 const GOLDEN_RATIO = 1.618; // True golden ratio for optimal header proportions
-const HEADER_IMAGE_HEIGHT = Math.round(SCREEN_WIDTH / GOLDEN_RATIO); // Dynamic height based on golden ratio
+const BASE_HEADER_HEIGHT = Math.round(SCREEN_WIDTH / GOLDEN_RATIO); // Base height based on golden ratio
 const GRADIENT_HEIGHT_PERCENTAGE = '60%';
 
 // Static styles to prevent recreation
@@ -20,7 +21,6 @@ const STATIC_STYLES = StyleSheet.create({
   },
   imageSection: {
     width: '100%',
-    height: HEADER_IMAGE_HEIGHT,
     position: 'relative',
     overflow: 'hidden', // Ensure image doesn't bleed outside container
   },
@@ -74,6 +74,22 @@ const ParallaxHeaderComparison = (
  * Optimized ParallaxHeader component with performance enhancements
  */
 const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors }) => {
+  const insets = useSafeAreaInsets();
+
+  // Calculate dynamic height including safe area for proper image display
+  const headerHeight = useMemo(() => {
+    return BASE_HEADER_HEIGHT + insets.top;
+  }, [insets.top]);
+
+  // Memoize image section style with dynamic height
+  const imageSectionStyle = useMemo(
+    () => ({
+      ...STATIC_STYLES.imageSection,
+      height: headerHeight,
+    }),
+    [headerHeight]
+  );
+
   // Memoize image source - images are guaranteed to be available
   const imageSource = useMemo(() => String(article.image_url), [article.image_url]);
 
@@ -124,8 +140,8 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors }) =
 
   return (
     <View style={STATIC_STYLES.container}>
-      {/* Background Image Section */}
-      <View style={STATIC_STYLES.imageSection}>
+      {/* Background Image Section with safe area height */}
+      <View style={imageSectionStyle}>
         <EnhancedImage {...imageProps} />
 
         {/* Enhanced image gradient for summary overlay */}
