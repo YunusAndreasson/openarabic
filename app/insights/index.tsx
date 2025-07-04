@@ -1,7 +1,6 @@
-import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import type { JSX } from 'react';
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,7 +10,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { EfficiencyChart, MasteryChart, RetrievabilityChart } from '@/components/vocabulary/charts';
 import { LAYOUT } from '@/constants/layout';
-import { getInsightsInfoRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
@@ -30,22 +28,6 @@ export default function InsightsScreen(): JSX.Element {
   const { allWords: studyWords, error } = useFSRSQueries({
     userId: user?.id,
   });
-
-  const handleInfoPress = useCallback((type: string) => {
-    router.push(getInsightsInfoRoute(type));
-  }, []);
-
-  const handleMasteryInfoPress = useCallback(() => handleInfoPress('mastery'), [handleInfoPress]);
-
-  const handleEfficiencyInfoPress = useCallback(
-    () => handleInfoPress('efficiency'),
-    [handleInfoPress]
-  );
-
-  const handleRetrievabilityInfoPress = useCallback(
-    () => handleInfoPress('retrievability'),
-    [handleInfoPress]
-  );
 
   // Filter valid study words
   const validStudyWords = useMemo(
@@ -102,15 +84,10 @@ export default function InsightsScreen(): JSX.Element {
           <SectionTitle
             title={INFO_TITLES.mastery}
             subtitle={STRINGS.MEMORY_STRENGTH_ACROSS_VOCABULARY}
-            onInfoPress={handleMasteryInfoPress}
             isFirstSection={true}
           />
           <View style={styles.chartWrapper}>
-            <MasteryChart
-              studyWords={validStudyWords}
-              onInfoPress={handleMasteryInfoPress}
-              hideTitle={true}
-            />
+            <MasteryChart studyWords={validStudyWords} hideTitle={true} />
           </View>
         </Animated.View>
 
@@ -124,14 +101,9 @@ export default function InsightsScreen(): JSX.Element {
           <SectionTitle
             title={INFO_TITLES.efficiency}
             subtitle={STRINGS.VOCABULARY_ACQUISITION_VELOCITY}
-            onInfoPress={handleEfficiencyInfoPress}
           />
           <View style={styles.chartWrapper}>
-            <EfficiencyChart
-              studyWords={validStudyWords}
-              onInfoPress={handleEfficiencyInfoPress}
-              hideTitle={true}
-            />
+            <EfficiencyChart studyWords={validStudyWords} hideTitle={true} />
           </View>
         </Animated.View>
 
@@ -145,14 +117,9 @@ export default function InsightsScreen(): JSX.Element {
           <SectionTitle
             title={INFO_TITLES.retrievability}
             subtitle={STRINGS.MEMORY_RETENTION_OPTIMAL_TIMING}
-            onInfoPress={handleRetrievabilityInfoPress}
           />
           <View style={styles.chartWrapper}>
-            <RetrievabilityChart
-              studyWords={validStudyWords}
-              onInfoPress={handleRetrievabilityInfoPress}
-              hideTitle={true}
-            />
+            <RetrievabilityChart studyWords={validStudyWords} hideTitle={true} />
           </View>
         </Animated.View>
       </ScrollView>

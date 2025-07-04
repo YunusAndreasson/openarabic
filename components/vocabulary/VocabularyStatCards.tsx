@@ -22,12 +22,14 @@
  * - Implements Fitts' Law with large touch targets
  */
 
+import { useRouter } from 'expo-router';
 import { memo, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
@@ -66,9 +68,15 @@ export const VocabularyStatCards = memo(
     studyWords = [],
   }: VocabularyStatCardsProps) => {
     const colors = useColors();
+    const router = useRouter();
     const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
       type: 'card',
     });
+
+    // Handle navigation to insights modal
+    const handleInfoPress = () => {
+      router.push(ROUTE_PATHS.INSIGHTS);
+    };
 
     // Memory capacity coordination is handled by MemoryCapacityGauge component
 
@@ -216,7 +224,7 @@ export const VocabularyStatCards = memo(
     return (
       <View style={styles.container}>
         {/* Memory Capacity Gauge - scientifically grounded with color coordination */}
-        <MemoryCapacityGauge studyWords={validatedInput.studyWords} />
+        <MemoryCapacityGauge studyWords={validatedInput.studyWords} onInfoPress={handleInfoPress} />
 
         {categories.map(config => (
           <TouchableOpacity

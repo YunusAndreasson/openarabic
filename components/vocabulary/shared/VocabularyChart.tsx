@@ -50,7 +50,7 @@ interface VocabularyChartProps<T> {
   // BaseChart props
   title: string;
   subtitle: string;
-  onInfoPress: () => void;
+  onInfoPress?: () => void;
   hideTitle?: boolean;
   hasData: boolean;
   emptyStateText: string;

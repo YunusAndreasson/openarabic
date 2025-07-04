@@ -36,9 +36,6 @@ export const ROUTE_PATHS = {
 
 export type StaticRoutePath = (typeof ROUTE_PATHS)[keyof typeof ROUTE_PATHS];
 
-export const getInsightsInfoRoute = (type: string): string =>
-  `${ROUTE_PATHS.INSIGHTS}/info/${type}`;
-
 export const getPracticeReviewRoute = (
   params?: Partial<{
     rootId: number;

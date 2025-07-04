@@ -8,7 +8,7 @@ import type { StudyWord } from '@/types/vocabulary.types';
 
 interface MasteryChartProps {
   studyWords: StudyWord[];
-  onInfoPress: () => void;
+  onInfoPress?: () => void;
   hideTitle?: boolean;
 }
 

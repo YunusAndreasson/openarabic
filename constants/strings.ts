@@ -23,7 +23,7 @@ export const STRINGS = {
 
   // Content states
   LOADING_PLAYLIST: 'Loading playlist',
-  CONTENT_NOT_FOUND: 'Content not found',
+
   SOMETHING_WENT_WRONG: 'Something went wrong',
   PLEASE_TRY_AGAIN: tryAgain,
   LOADING: 'Loading...',
@@ -152,7 +152,7 @@ export const STRINGS = {
   INTERLEAVED_REVIEW: 'Study all words', // GREEN PHASE: Clear action verb + object
 
   // Practice button descriptions - streamlined and action-oriented
-  URGENT_MEMORY_PRESERVATION: 'Restore memory capacity from fading words', // Clear capacity improvement
+  URGENT_MEMORY_PRESERVATION: 'Restores memory capacity', // Clear capacity improvement
   EFFORTFUL_RETRIEVAL_PRACTICE: 'Strengthen memory capacity from weak spots', // Clear capacity building
   INTERLEAVED_REVIEW_DESCRIPTION: 'Maximize memory capacity for new words', // Clear capacity optimization
 
@@ -161,13 +161,13 @@ export const STRINGS = {
   MEMORY_CAPACITY: 'Memory Capacity',
   INSIGHTS_UNAVAILABLE: 'Insights unavailable',
   INFO: 'Info',
-  KEY_INSIGHTS: 'Key insights',
+
   WORD_MASTERY: 'Word mastery',
   LEARNING_PROGRESS: 'Learning progress',
   REVIEW_TIMING: 'Review timing',
-  MEMORY_STRENGTH_ACROSS_VOCABULARY: 'Memory strength across vocabulary',
-  VOCABULARY_ACQUISITION_VELOCITY: 'Vocabulary acquisition speed',
-  MEMORY_RETENTION_OPTIMAL_TIMING: 'Memory retention and optimal timing',
+  MEMORY_STRENGTH_ACROSS_VOCABULARY: 'Track how words move from new learning to permanent memory',
+  VOCABULARY_ACQUISITION_VELOCITY: 'Measure how quickly you master new vocabulary',
+  MEMORY_RETENTION_OPTIMAL_TIMING: 'See when words need review for maximum retention',
 
   // Account & settings
   ACCOUNT: 'Account',
@@ -462,20 +462,6 @@ export const STRINGS = {
     'Consistent exposure to comprehensible input builds linguistic competence over time. Each reading session contributes to your developing Arabic system through unconscious acquisition.',
   APPROACH_VALIDATED_BY_RESEARCH:
     'This approach has successfully taught Arabic for centuries. Modern SLA research validates combining authentic texts with translation support for optimal comprehensible input.',
-
-  // Info modal tips
-  INFO_TIP_CLIMBS: 'Steep climbs show breakthrough learning – celebrate these moments',
-  INFO_TIP_PLATEAUS: 'Plateaus are natural consolidation periods – stay consistent',
-  INFO_TIP_CONTEXT: 'Focus on understanding words in context, not isolated memorization',
-  INFO_TIP_STRONG_WORDS: 'Strong words are permanent additions to your language ability',
-  INFO_TIP_REVIEW_BEFORE_FORGETTING: 'Review just before forgetting for strongest memory formation',
-  INFO_TIP_GREEN_ZONES: 'Green zones (85%+) indicate good time for adding new words',
-  INFO_TIP_YELLOW_RED_ZONES: 'Yellow/red zones need immediate review to prevent memory loss',
-  INFO_TIP_CONSISTENT_PRACTICE: 'Consistent study prevents steep drops in retention',
-  INFO_TIP_STUDY_FRESH: 'Study when mentally fresh for better memory encoding',
-  INFO_TIP_CONNECT_WORDS: 'Connect new words to existing knowledge for stronger networks',
-  INFO_TIP_FOCUS_CONTEXT: 'Focus on understanding context, not just memorizing definitions',
-  INFO_TIP_DAILY_PRACTICE: 'Consistent daily study beats intensive cramming sessions',
 
   // Audio player errors
   ERROR_SELECTED_TRACK_NO_URL: 'Selected track has no audio URL',

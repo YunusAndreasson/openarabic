@@ -35,13 +35,6 @@ export interface ArticleParams {
 }
 
 /**
- * Type for insights info screen parameters
- */
-export interface InsightsInfoParams {
-  type: string;
-}
-
-/**
  * Type for route parameters
  */
 export type RouteParams = {
@@ -56,7 +49,6 @@ export type RouteParams = {
   '/(tabs)/listen': Record<string, never>;
   '/settings': Record<string, never>;
   '/insights': Record<string, never>;
-  '/insights/info/[type]': InsightsInfoParams;
 };
 
 /**

@@ -11,21 +11,21 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import BaseCard from '@/components/BaseCard';
+import { InfoIcon } from '@/components/InfoIcon';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { LegendItemProps } from '@/types/ui/chart.types';
 
-import { CardHeader } from './CardHeader';
 import { ChartFooter } from './ChartFooter';
 
 interface BaseChartProps {
   // Header props (optional when hideTitle is true)
   title?: string;
   subtitle?: string;
-  onInfoPress?: () => void;
   hideTitle?: boolean;
+  onInfoPress?: () => void;
 
   // Content props
   children: ReactNode;
@@ -123,8 +123,8 @@ export const BaseChart = memo(
   ({
     title = '',
     subtitle = '',
-    onInfoPress = () => {},
     hideTitle = false,
+    onInfoPress,
     children,
     hasData,
     isLoading = false,
@@ -143,11 +143,14 @@ export const BaseChart = memo(
         <BaseCard includePressAnimation={false} shadowSize="small">
           <View style={styles.content}>
             {!hideTitle && (
-              <CardHeader
-                subtitle={STRINGS.ERROR_LOADING_DATA}
-                title={title}
-                onInfoPress={onInfoPress}
-              />
+              <View style={styles.titleGroup}>
+                <ThemedText style={styles.cardTitle} type="heading2" weight="bold">
+                  {title}
+                </ThemedText>
+                <ThemedText style={styles.cardSubtitle} type="caption" variant="secondary">
+                  {STRINGS.ERROR_LOADING_DATA}
+                </ThemedText>
+              </View>
             )}
             <View style={[styles.emptyContainer, { backgroundColor: colors.elevation2 }]}>
               <ThemedText colorName="error" style={styles.emptyText}>
@@ -165,7 +168,14 @@ export const BaseChart = memo(
         <BaseCard includePressAnimation={false} shadowSize="small">
           <View style={styles.content}>
             {!hideTitle && (
-              <CardHeader subtitle={subtitle} title={title} onInfoPress={onInfoPress} />
+              <View style={styles.titleGroup}>
+                <ThemedText style={styles.cardTitle} type="heading2" weight="bold">
+                  {title}
+                </ThemedText>
+                <ThemedText style={styles.cardSubtitle} type="caption" variant="secondary">
+                  {subtitle}
+                </ThemedText>
+              </View>
             )}
             <View style={[styles.emptyContainer, { backgroundColor: colors.elevation2 }]}>
               <ThemedText colorName="secondaryText" style={styles.emptyText}>
@@ -184,7 +194,21 @@ export const BaseChart = memo(
           {/* Header Section */}
           {!hideTitle && (
             <View style={styles.headerSection}>
-              <CardHeader subtitle={subtitle} title={title} onInfoPress={onInfoPress} />
+              <View style={styles.titleGroup}>
+                <ThemedText style={styles.cardTitle} type="heading2" weight="bold">
+                  {title}
+                </ThemedText>
+                <ThemedText style={styles.cardSubtitle} type="caption" variant="secondary">
+                  {subtitle}
+                </ThemedText>
+              </View>
+            </View>
+          )}
+
+          {/* Standalone Info Icon when title is hidden */}
+          {hideTitle && onInfoPress && (
+            <View style={styles.standaloneInfoIcon}>
+              <InfoIcon onPress={onInfoPress} size="small" />
             </View>
           )}
 
@@ -241,6 +265,9 @@ const styles = StyleSheet.create({
     paddingTop: LAYOUT.SPACING.TINY,
   },
   headerSection: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.HALF_TINY, // 14px
   },
   skeletonContainer: {
@@ -276,5 +303,24 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     height: 12,
     width: 40,
+  },
+  titleGroup: {
+    flex: 1,
+  },
+  cardTitle: {
+    lineHeight:
+      LAYOUT.TYPOGRAPHY.SCALE.XXLARGE *
+      TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.SECTION_HEADER.lineHeightMultiplier,
+    marginBottom: 0,
+  },
+  cardSubtitle: {
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.MEDIUM,
+  },
+  standaloneInfoIcon: {
+    position: 'absolute',
+    right: LAYOUT.SPACING.MEDIUM,
+    top: LAYOUT.SPACING.MEDIUM,
   },
 });

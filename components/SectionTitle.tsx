@@ -1,34 +1,24 @@
-import { Ionicons } from '@expo/vector-icons';
 import { memo, useMemo, type FC } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { StyleSheet, View } from 'react-native';
 
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
-import { useColors } from '@/hooks/theme/useColors';
 
 import { ThemedText } from './ThemedText';
 
 interface SectionTitleProps {
   title: string;
   subtitle?: string;
-  onInfoPress?: () => void;
   containerStyle?: StyleProp<ViewStyle>;
   isFirstSection?: boolean;
 }
 
-const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
-
 const SectionTitle: FC<SectionTitleProps> = ({
   title,
   subtitle,
-  onInfoPress,
   containerStyle,
   isFirstSection = false,
 }) => {
-  const colors = useColors();
-  const scale = useSharedValue(1);
-
   const titleStyle = useMemo(
     () => ({
       marginBottom: 0,
@@ -43,35 +33,11 @@ const SectionTitle: FC<SectionTitleProps> = ({
   const subtitleStyle = useMemo(
     () => ({
       lineHeight:
-        LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
+        LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
       marginTop: LAYOUT.SPACING.TINY,
       opacity: LAYOUT.OPACITY.HIGH,
     }),
     []
-  );
-
-  const handlePressIn = () => {
-    scale.value = withSpring(0.9, { damping: 15, stiffness: 300 });
-  };
-
-  const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
-  };
-
-  const handlePress = () => {
-    onInfoPress?.();
-  };
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  const infoButtonStyle = useMemo(
-    () => ({
-      backgroundColor: colors.tintBackground,
-      borderColor: colors.borderOverlay,
-    }),
-    [colors]
   );
 
   return (
@@ -81,27 +47,11 @@ const SectionTitle: FC<SectionTitleProps> = ({
           {title}
         </ThemedText>
         {subtitle && (
-          <ThemedText colorName="subtitleText" style={subtitleStyle} type="caption">
+          <ThemedText colorName="subtitleText" style={subtitleStyle} type="body">
             {subtitle}
           </ThemedText>
         )}
       </View>
-      {onInfoPress && (
-        <AnimatedTouchableOpacity
-          style={[styles.infoIcon, infoButtonStyle, animatedStyle]}
-          onPress={handlePress}
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-          activeOpacity={LAYOUT.OPACITY.PRESSED}
-          hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-        >
-          <Ionicons
-            name="information-outline"
-            size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-            color={colors.tint}
-          />
-        </AnimatedTouchableOpacity>
-      )}
     </View>
   );
 };
@@ -112,7 +62,6 @@ const areEqual = (prevProps: SectionTitleProps, nextProps: SectionTitleProps) =>
   return (
     prevProps.title === nextProps.title &&
     prevProps.subtitle === nextProps.subtitle &&
-    prevProps.onInfoPress === nextProps.onInfoPress &&
     prevProps.isFirstSection === nextProps.isFirstSection &&
     prevProps.containerStyle === nextProps.containerStyle
   );
@@ -131,17 +80,7 @@ const styles = StyleSheet.create({
   firstSection: {
     marginTop: LAYOUT.SPACING.LARGE,
   },
-  infoIcon: {
-    alignItems: 'center',
-    borderRadius: (LAYOUT.BUTTON.ICON_SIZE.SMALL + LAYOUT.SPACING.SMALL * 2) / 2,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    height: LAYOUT.BUTTON.ICON_SIZE.SMALL + LAYOUT.SPACING.SMALL * 2,
-    justifyContent: 'center',
-    padding: LAYOUT.SPACING.SMALL,
-    width: LAYOUT.BUTTON.ICON_SIZE.SMALL + LAYOUT.SPACING.SMALL * 2,
-  },
   titleGroup: {
     flex: 1,
-    marginRight: LAYOUT.SPACING.SMALL,
   },
 });

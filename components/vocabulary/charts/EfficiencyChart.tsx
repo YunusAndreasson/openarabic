@@ -2,9 +2,9 @@ import { memo, useMemo } from 'react';
 
 import { VocabularyChart, type DataPoint } from '@/components/vocabulary/shared';
 import {
-  generateChartSubtitle,
   CHART_LABELS,
   EMPTY_STATE_MESSAGES,
+  generateChartSubtitle,
 } from '@/components/vocabulary/shared/chartMessages';
 import { useGraphWidth } from '@/components/vocabulary/shared/constants';
 import { STRINGS } from '@/constants/strings';
@@ -13,7 +13,7 @@ import type { StudyWord } from '@/types/vocabulary.types';
 
 interface EfficiencyChartProps {
   studyWords: StudyWord[];
-  onInfoPress: () => void;
+  onInfoPress?: () => void;
   hideTitle?: boolean;
 }
 
