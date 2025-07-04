@@ -1,6 +1,6 @@
 import * as MailComposer from 'expo-mail-composer';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Linking } from 'react-native';
 
 import { ROUTE_PATHS } from '@/constants/routes';
@@ -10,8 +10,6 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useReminders } from '@/hooks/notifications/useReminders';
 import pkg from '@/package.json';
 import { supabase } from '@/services/supabase';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { setAppIconBadgeEnabled } from '@/store/settingsSlice';
 import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
@@ -22,7 +20,6 @@ const analytics = {
 };
 
 export const useAccountScreen = () => {
-  const dispatch = useAppDispatch();
   const { reminderTime, updateReminderTime, formatReminderTime } = useReminders();
   const { clearCache, getCacheSize } = useAudioCache();
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -31,9 +28,6 @@ export const useAccountScreen = () => {
   const [isClearingCache, setIsClearingCache] = useState(false);
   const { user } = useAuth();
   const isMounted = useRef(true);
-
-  // Get user preferences
-  const appIconBadgeEnabled = useAppSelector(state => state.settings.appIconBadgeEnabled);
 
   // Load cache size on component mount
   useEffect(() => {
@@ -248,8 +242,10 @@ export const useAccountScreen = () => {
       const result = await MailComposer.composeAsync({
         recipients: [STRINGS.SUPPORT_EMAIL],
         subject: STRINGS.SUPPORT_EMAIL_SUBJECT,
-        body: STRINGS.SUPPORT_EMAIL_BODY_TEMPLATE.replace('{version}', pkg.version)
-          .replace('{email}', user?.email || STRINGS.NO_EMAIL),
+        body: STRINGS.SUPPORT_EMAIL_BODY_TEMPLATE.replace('{version}', pkg.version).replace(
+          '{email}',
+          user?.email || STRINGS.NO_EMAIL
+        ),
         isHtml: false,
       });
 
@@ -267,10 +263,6 @@ export const useAccountScreen = () => {
     }
   }, [user?.email]);
 
-  const handleSocialLink = useCallback((url: string) => {
-    Linking.openURL(url);
-  }, []);
-
   const handleLearningMethodPress = useCallback(() => {
     router.push(ROUTE_PATHS.ACCOUNT_LEARNING_METHOD);
   }, []);
@@ -282,14 +274,6 @@ export const useAccountScreen = () => {
   const handleFontSelectorPress = useCallback(() => {
     router.push(ROUTE_PATHS.ACCOUNT_FONT_SELECTOR);
   }, []);
-
-  // Handle app icon badge toggle
-  const handleAppIconBadgeToggle = useCallback(
-    (enabled: boolean) => {
-      dispatch(setAppIconBadgeEnabled(enabled));
-    },
-    [dispatch]
-  );
 
   const appVersion = pkg.version;
   const currentYear = new Date().getFullYear();
@@ -305,7 +289,6 @@ export const useAccountScreen = () => {
       handleReminderToggle,
       handleSignOut,
       handleSupportContact,
-      handleSocialLink,
       handleLearningMethodPress,
       handleClassicalTextsPress,
       handleFontSelectorPress,
@@ -315,8 +298,6 @@ export const useAccountScreen = () => {
       handleClearCache,
       isClearingCache,
       cacheSize,
-      appIconBadgeEnabled,
-      handleAppIconBadgeToggle,
     }),
     [
       reminderTime,
@@ -328,7 +309,6 @@ export const useAccountScreen = () => {
       handleReminderToggle,
       handleSignOut,
       handleSupportContact,
-      handleSocialLink,
       handleLearningMethodPress,
       handleClassicalTextsPress,
       handleFontSelectorPress,
@@ -338,8 +318,6 @@ export const useAccountScreen = () => {
       handleClearCache,
       isClearingCache,
       cacheSize,
-      appIconBadgeEnabled,
-      handleAppIconBadgeToggle,
     ]
   );
 

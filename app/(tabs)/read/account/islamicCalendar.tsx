@@ -8,8 +8,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { IslamicCalendarHeader } from '@/components/article';
 import { FONTS, LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
-import { createNavigationOptions } from '@/constants/modal';
 import { STRINGS } from '@/constants/strings';
 import { formatDaysUntil, useIslamicCalendarEvents } from '@/hooks';
 import { useColors } from '@/hooks/theme/useColors';
@@ -17,22 +17,21 @@ import { useColors } from '@/hooks/theme/useColors';
 export default function IslamicCalendarScreen(): JSX.Element {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { events, currentHijriDate } = useIslamicCalendarEvents();
+  const { events } = useIslamicCalendarEvents();
 
   const activeCount = events.filter(e => e.isActive).length;
 
   return (
     <>
       <Stack.Screen
-        options={createNavigationOptions(colors, {
-          title: STRINGS.CALENDAR,
-          isRegularScreen: true,
-        })}
+        options={{
+          headerShown: false, // Hide the header completely for seamless parallax
+        }}
       />
 
       <ThemedView
         includeBottomInset={false}
-        safeAreaEdges={['left', 'right']}
+        safeAreaEdges={[]} // Remove safe area edges to allow full-screen parallax
         style={styles.container}
       >
         <ScrollView
@@ -46,54 +45,8 @@ export default function IslamicCalendarScreen(): JSX.Element {
             },
           ]}
         >
-          {/* Current Date & Stats */}
-          <BaseCard
-            shadowSize="small"
-            style={[styles.headerCard, { backgroundColor: colors.elevation2 }]}
-          >
-            <View style={styles.headerContent}>
-              <View style={styles.currentDateSection}>
-                <View style={styles.dateInfo}>
-                  <ThemedText
-                    skipDefaultColor
-                    style={[styles.currentDateText, { color: colors.primary }]}
-                    type="bodyBold"
-                  >
-                    {STRINGS.TODAY}
-                  </ThemedText>
-                  <ThemedText
-                    skipDefaultColor
-                    style={[styles.hijriDateText, { color: colors.secondaryText }]}
-                    type="body"
-                    weight="medium"
-                  >
-                    {currentHijriDate}
-                  </ThemedText>
-                </View>
-              </View>
-
-              <View style={styles.statsSection}>
-                {activeCount > 0 && (
-                  <View style={styles.statItem}>
-                    <ThemedText
-                      skipDefaultColor
-                      style={[styles.statNumber, { color: colors.success }]}
-                      type="bodyBold"
-                    >
-                      {activeCount}
-                    </ThemedText>
-                    <ThemedText
-                      skipDefaultColor
-                      style={[styles.statLabel, { color: colors.textTertiary }]}
-                      type="caption"
-                    >
-                      {STRINGS.ACTIVE}
-                    </ThemedText>
-                  </View>
-                )}
-              </View>
-            </View>
-          </BaseCard>
+          {/* Parallax Header with integrated navigation */}
+          <IslamicCalendarHeader activeEventsCount={activeCount} />
 
           {/* Events List */}
           <View style={styles.eventsSection}>
@@ -244,16 +197,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  currentDateSection: {
-    flex: 1,
-  },
-  currentDateText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
-  },
-  dateInfo: {
-    gap: LAYOUT.SPACING.TINY,
-  },
   dateRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -315,20 +258,7 @@ const styles = StyleSheet.create({
   },
   eventsSection: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  headerCard: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  headerContent: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
-  },
-  hijriDateText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.SLIGHT_NEGATIVE,
+    marginTop: LAYOUT.SPACING.MEDIUM,
   },
   noteContent: {
     alignItems: 'flex-start',
@@ -356,7 +286,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingTop: 0, // Remove padding since parallax header handles its own layout
   },
   scrollView: {
     flex: 1,
@@ -367,28 +297,7 @@ const styles = StyleSheet.create({
     opacity: 0.2,
     width: LAYOUT.SPACING.MICRO,
   },
-  statItem: {
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.TINY,
-  },
-  statLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
-    textAlign: 'center',
-    textTransform: 'lowercase',
-  },
-  statNumber: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT,
-  },
-  statsSection: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: LAYOUT.SPACING.LARGE,
-  },
   timingRow: {
-    gap: LAYOUT.SPACING.HALF_TINY,
+    gap: LAYOUT.SPACING.TINY,
   },
 });

@@ -27,7 +27,7 @@ const WelcomeMessage: FC = () => {
 
   const handleCalendarPress = useCallback(() => {
     router.push(ROUTE_PATHS.ACCOUNT_ISLAMIC_CALENDAR);
-  }, [router]);
+  }, []);
 
   return (
     <View style={styles.container}>

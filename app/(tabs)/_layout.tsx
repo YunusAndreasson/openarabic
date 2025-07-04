@@ -12,9 +12,6 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth';
 import { useColors, useIsDarkMode } from '@/hooks/theme';
-import { useFSRSQueries } from '@/hooks/vocabulary';
-import { updateAppIconBadge } from '@/services/notificationService';
-import { useAppSelector } from '@/store/hooks';
 
 const TAB_SCREENS = [
   {
@@ -73,34 +70,8 @@ const headerProfileComponent = () => <HeaderProfile />;
 const listenHeaderRightComponent = () => <EditModeButton type="listen" />;
 
 export default function TabLayout(): JSX.Element {
-  const { session, isLoading, user } = useAuth();
+  const { session, isLoading } = useAuth();
   const colors = useColors();
-
-  // Get user preference for app icon badge
-  const appIconBadgeEnabled = useAppSelector(state => state.settings.appIconBadgeEnabled);
-
-  // Get due words count for app icon badge (still using red due words for OS-level badge)
-  const { dueWords } = useFSRSQueries({
-    userId: user?.id,
-  });
-
-  const dueWordsCount = dueWords?.length ?? 0;
-
-  // Update app icon badge whenever due words count changes (only if enabled)
-  useEffect(() => {
-    if (appIconBadgeEnabled) {
-      updateAppIconBadge(dueWordsCount);
-    } else {
-      updateAppIconBadge(0); // Clear badge if disabled
-    }
-  }, [dueWordsCount, appIconBadgeEnabled]);
-
-  // Clear badge when user signs out
-  useEffect(() => {
-    if (!session?.user) {
-      updateAppIconBadge(0);
-    }
-  }, [session?.user]);
 
   useEffect(() => {
     if (!isLoading && !session?.user) {

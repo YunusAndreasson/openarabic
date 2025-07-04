@@ -44,7 +44,6 @@ const AccountScreen: FC = () => {
     handleReminderToggle,
     handleSignOut,
     handleSupportContact,
-    handleSocialLink,
     handleFontSelectorPress,
     appVersion,
     currentYear,
@@ -52,8 +51,6 @@ const AccountScreen: FC = () => {
     handleClearCache,
     isClearingCache,
     cacheSize,
-    appIconBadgeEnabled,
-    handleAppIconBadgeToggle,
   } = useAccountScreen();
 
   // Theme picker handlers
@@ -68,18 +65,6 @@ const AccountScreen: FC = () => {
   // Get current theme display text
   const currentThemeOption = THEME_OPTIONS.find(option => option.id === currentTheme);
   const currentThemeText = currentThemeOption?.title || 'Birches in Spring';
-
-  const openTwitter = useCallback(() => {
-    handleSocialLink('https://twitter.com/OpenArabicIo');
-  }, [handleSocialLink]);
-
-  const openFacebook = useCallback(() => {
-    handleSocialLink('https://www.facebook.com/OpenArabic.io/');
-  }, [handleSocialLink]);
-
-  const openInstagram = useCallback(() => {
-    handleSocialLink('https://www.instagram.com/openarabic.io/');
-  }, [handleSocialLink]);
 
   // Format cache size for display
   const formattedCacheSize = cacheSize > 0 ? formatBytes(cacheSize) : STRINGS.NO_CACHED_FILES;
@@ -107,7 +92,7 @@ const AccountScreen: FC = () => {
           showsVerticalScrollIndicator: false,
         }}
       >
-        {/* Core Settings - Most frequently used */}
+        {/* App Preferences - Core settings users adjust frequently */}
         <BaseCard includePressAnimation={false} shadowSize="small" style={styles.sectionContainer}>
           <View style={styles.linksContainer}>
             <View style={styles.settingRow}>
@@ -175,24 +160,6 @@ const AccountScreen: FC = () => {
 
             <Divider />
 
-            <View style={styles.settingRow}>
-              <View style={styles.settingLabelContainer}>
-                <View style={styles.cardIconContainer}>
-                  <Ionicons
-                    color={colors.text}
-                    name="phone-portrait"
-                    size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                  />
-                </View>
-                <View style={styles.settingLabelTextContainer}>
-                  <ThemedText type="body">{STRINGS.APP_ICON_BADGE}</ThemedText>
-                </View>
-              </View>
-              <Toggle value={appIconBadgeEnabled} onValueChange={handleAppIconBadgeToggle} />
-            </View>
-
-            <Divider />
-
             <BaseCard
               includePressAnimation={true}
               shadowSize="none"
@@ -220,9 +187,16 @@ const AccountScreen: FC = () => {
                 />
               </View>
             </BaseCard>
+          </View>
+        </BaseCard>
 
-            <Divider />
-
+        {/* Help & Support - Assistance and contact */}
+        <BaseCard
+          includePressAnimation={false}
+          shadowSize="small"
+          style={[styles.sectionContainer, styles.sectionSpacing]}
+        >
+          <View style={styles.linksContainer}>
             <BaseCard
               includePressAnimation={true}
               shadowSize="none"
@@ -253,104 +227,7 @@ const AccountScreen: FC = () => {
           </View>
         </BaseCard>
 
-        {/* Social Media - Community connections */}
-        <BaseCard
-          includePressAnimation={false}
-          shadowSize="small"
-          style={[styles.sectionContainer, styles.sectionSpacing]}
-        >
-          <View style={styles.linksContainer}>
-            <BaseCard
-              includePressAnimation={true}
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={openTwitter}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.text}
-                      name="logo-twitter"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.TWITTER}
-                  </ThemedText>
-                </View>
-                <Ionicons
-                  color={colors.textTertiary}
-                  name="open"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  style={styles.cardChevron}
-                />
-              </View>
-            </BaseCard>
-
-            <Divider />
-
-            <BaseCard
-              includePressAnimation={true}
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={openFacebook}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.text}
-                      name="logo-facebook"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.FACEBOOK}
-                  </ThemedText>
-                </View>
-                <Ionicons
-                  color={colors.textTertiary}
-                  name="open"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  style={styles.cardChevron}
-                />
-              </View>
-            </BaseCard>
-
-            <Divider />
-
-            <BaseCard
-              includePressAnimation={true}
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={openInstagram}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.text}
-                      name="logo-instagram"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.INSTAGRAM}
-                  </ThemedText>
-                </View>
-                <Ionicons
-                  color={colors.textTertiary}
-                  name="open"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  style={styles.cardChevron}
-                />
-              </View>
-            </BaseCard>
-          </View>
-        </BaseCard>
-
-        {/* Account Management - Important but less frequent */}
+        {/* Account Management - Data and account actions */}
         <BaseCard
           includePressAnimation={false}
           shadowSize="small"

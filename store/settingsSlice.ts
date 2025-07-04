@@ -12,7 +12,6 @@ export interface SettingsState {
   reminderTime: ReminderTime;
   arabicFont: ArabicFontName;
   arabicFontSize: number;
-  appIconBadgeEnabled: boolean;
 }
 
 const initialState: SettingsState = {
@@ -25,7 +24,6 @@ const initialState: SettingsState = {
   },
   arabicFont: 'NotoSans', // Default font
   arabicFontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE, // Default to 17px
-  appIconBadgeEnabled: true, // Default to enabled
 };
 
 const settingsSlice = createSlice({
@@ -41,12 +39,8 @@ const settingsSlice = createSlice({
     setArabicFontSize: (state, action: PayloadAction<number>) => {
       state.arabicFontSize = action.payload;
     },
-    setAppIconBadgeEnabled: (state, action: PayloadAction<boolean>) => {
-      state.appIconBadgeEnabled = action.payload;
-    },
   },
 });
 
-export const { setReminderTime, setArabicFont, setArabicFontSize, setAppIconBadgeEnabled } =
-  settingsSlice.actions;
+export const { setReminderTime, setArabicFont, setArabicFontSize } = settingsSlice.actions;
 export default settingsSlice.reducer;

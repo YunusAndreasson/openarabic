@@ -71,7 +71,7 @@ export const STRINGS = {
   SUMMARY: 'Summary',
   READ: 'Library',
   LISTEN: 'Playlist',
-  PRACTICE: 'Practice',
+  PRACTICE: 'Study',
 
   // Audio controls - shortened button text
   REPEAT: 'Repeat',
@@ -101,7 +101,7 @@ export const STRINGS = {
 
   // Success messages - encouraging and celebration-focused
   SESSION_COMPLETE: 'Session complete!',
-  ALL_WORDS_PRACTICED: 'Great work on your practice session',
+  ALL_WORDS_PRACTICED: 'Great work on your study session',
   ADDED_TO_LISTENING_LIST: 'Saved to playlist',
   REMOVED_FROM_LISTENING_LIST: 'Removed from playlist',
 
@@ -109,7 +109,7 @@ export const STRINGS = {
   CHECK_EMAIL_CONFIRMATION: 'Check your email for confirmation',
   SUCCESS: 'Success',
   NEW_RECOMMENDATION_SELECTED: 'New recommendation selected',
-  SELECTED_TO_HELP_PRACTICE_DUE: 'Selected to help practice due words',
+  SELECTED_TO_HELP_PRACTICE_DUE: 'Selected to help study due words',
   CHOSEN_TO_REINFORCE_CHALLENGING: 'Chosen to reinforce challenging words',
   PERFECT_FOR_GETTING_STARTED: 'Perfect for getting started',
   RANDOMLY_SELECTED_FOR_DISCOVERY: 'Randomly selected for discovery',
@@ -139,7 +139,7 @@ export const STRINGS = {
   REMOVE_FROM_VOCABULARY_LIST: 'Remove from list',
   MAKE_EASIER: 'Make easier',
   REDUCE_DIFFICULTY_LEVEL: 'Reduce difficulty',
-  NEEDS_PRACTICE: 'Needs practice',
+  NEEDS_PRACTICE: 'Needs study',
   SHOW_MORE_OFTEN: 'Show more',
   MARK_EASY: 'Mark easy',
   SHOW_LESS_OFTEN: 'Show less',
@@ -181,9 +181,6 @@ export const STRINGS = {
   WHY_CLASSICAL_TEXTS: 'Why classical texts',
   CLASSICAL_TEXTS: 'Classical texts',
   LEARNING_METHOD: 'Learning method',
-  TWITTER: 'Twitter',
-  FACEBOOK: 'Facebook',
-  INSTAGRAM: 'Instagram',
   APP_VERSION_LABEL: 'Version',
   COPYRIGHT_SYMBOL: '\u00A9',
   NO_EMAIL: 'No email',
@@ -209,9 +206,8 @@ export const STRINGS = {
   ENABLE_NOTIFICATIONS: 'Enable notifications',
   TURN_ON_NOTIFICATIONS: 'Get daily study reminders',
   NOTIFICATIONS_DISABLED: 'Notifications disabled',
-  NOTIFICATION_REMINDER_TITLE: 'Time to practice Arabic!',
+  NOTIFICATION_REMINDER_TITLE: 'Time to study Arabic!',
   NOTIFICATION_REMINDER_BODY: 'Continue your Arabic learning journey',
-  APP_ICON_BADGE: 'App icon badge',
 
   // Calendar & dates
   CALENDAR: 'Calendar',
@@ -238,16 +234,16 @@ export const STRINGS = {
   // Learning capacity & guidance - more actionable
   ADD_WORDS_TO_SEE_CAPACITY: 'Browse articles in the Read tab to add words',
 
-  STUDY_WORDS_TO_SEE_PROGRESS: 'Practice words to track progress',
-  REVIEW_WORDS_TO_BUILD_MEMORY_STRENGTH: 'Practice to strengthen memory',
-  PRACTICE_TO_SEE_LEARNING_SPEED: 'Practice to see learning speed',
-  REVIEW_WORDS_TO_TRACK_RETENTION: 'Practice to improve retention',
-  REVIEW_WORDS_TO_TRACK_MEMORY_STRENGTH: 'Practice to build memory',
-  PRACTICE_TO_SEE_YOUR_LEARNING_SPEED: 'Practice to see your speed',
-  STUDY_WORDS_TO_MONITOR_RETENTION: 'Practice to monitor retention',
-  START_STUDYING_TO_SEE_PROGRESS: 'Start practicing to see progress',
-  PRACTICE_TO_TRACK_LEARNING_SPEED: 'Practice to track speed',
-  STUDY_WORDS_TO_TRACK_MEMORY_RETENTION: 'Practice to track retention',
+  STUDY_WORDS_TO_SEE_PROGRESS: 'Study words to track progress',
+  REVIEW_WORDS_TO_BUILD_MEMORY_STRENGTH: 'Study to strengthen memory',
+  PRACTICE_TO_SEE_LEARNING_SPEED: 'Study to see learning speed',
+  REVIEW_WORDS_TO_TRACK_RETENTION: 'Study to improve retention',
+  REVIEW_WORDS_TO_TRACK_MEMORY_STRENGTH: 'Study to build memory',
+  PRACTICE_TO_SEE_YOUR_LEARNING_SPEED: 'Study to see your speed',
+  STUDY_WORDS_TO_MONITOR_RETENTION: 'Study to monitor retention',
+  START_STUDYING_TO_SEE_PROGRESS: 'Start studying to see progress',
+  PRACTICE_TO_TRACK_LEARNING_SPEED: 'Study to track speed',
+  STUDY_WORDS_TO_TRACK_MEMORY_RETENTION: 'Study to track retention',
 
   // Font options
   FONT_MADINA: 'Madina',
@@ -409,7 +405,7 @@ export const STRINGS = {
   FOCUS_ON_STRUGGLING_FIRST: 'Strengthen struggling words first',
   NO_PRACTICE_NEEDED: 'All caught up! Add new words to continue learning',
   GET_STARTED_MESSAGE: 'Browse articles in the Read tab to add words you want to learn',
-  PRACTICE_OPTIONS: 'Practice options',
+  PRACTICE_OPTIONS: 'Study options',
 
   // Learning method content
   LEARNING_METHOD_INTRO:
@@ -475,11 +471,11 @@ export const STRINGS = {
   INFO_TIP_REVIEW_BEFORE_FORGETTING: 'Review just before forgetting for strongest memory formation',
   INFO_TIP_GREEN_ZONES: 'Green zones (85%+) indicate good time for adding new words',
   INFO_TIP_YELLOW_RED_ZONES: 'Yellow/red zones need immediate review to prevent memory loss',
-  INFO_TIP_CONSISTENT_PRACTICE: 'Consistent practice prevents steep drops in retention',
+  INFO_TIP_CONSISTENT_PRACTICE: 'Consistent study prevents steep drops in retention',
   INFO_TIP_STUDY_FRESH: 'Study when mentally fresh for better memory encoding',
   INFO_TIP_CONNECT_WORDS: 'Connect new words to existing knowledge for stronger networks',
   INFO_TIP_FOCUS_CONTEXT: 'Focus on understanding context, not just memorizing definitions',
-  INFO_TIP_DAILY_PRACTICE: 'Consistent daily practice beats intensive cramming sessions',
+  INFO_TIP_DAILY_PRACTICE: 'Consistent daily study beats intensive cramming sessions',
 
   // Audio player errors
   ERROR_SELECTED_TRACK_NO_URL: 'Selected track has no audio URL',
