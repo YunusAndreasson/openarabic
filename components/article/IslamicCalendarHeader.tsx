@@ -1,24 +1,21 @@
-import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
 import moment from 'moment-hijri';
 import React, { memo, useMemo } from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Image, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { HIJRI_MONTHS } from '@/constants/hijri';
-import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
-import { selectionFeedback } from '@/utils/haptics';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
 const GOLDEN_RATIO = 1.618;
 const HEADER_HEIGHT = 400;
 const ADJUSTED_HEADER_HEIGHT = HEADER_HEIGHT / GOLDEN_RATIO;
 
 const styles = StyleSheet.create({
-  // Wrapper that contains both the header and the close button
+  // Wrapper that contains the header
   wrapper: {
     position: 'relative',
     marginBottom: LAYOUT.SPACING.MEDIUM,
@@ -92,20 +89,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
-  // Close button positioned outside the rounded container
-  closeButton: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    zIndex: LAYOUT.Z_INDEX.OVERLAY,
-    width: MIN_TOUCH_TARGET.MEDIUM,
-    height: MIN_TOUCH_TARGET.MEDIUM,
-    borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    opacity: 0.5,
-    ...LAYOUT.ELEVATION.SUBTLE,
-  },
 });
 
 interface IslamicCalendarHeaderProps {
@@ -115,7 +98,7 @@ interface IslamicCalendarHeaderProps {
 export const IslamicCalendarHeader = memo<IslamicCalendarHeaderProps>(
   ({ activeEventsCount = 0 }) => {
     const colors = useColors();
-    const insets = useSafeAreaInsets();
+    const isDarkMode = useIsDarkMode();
 
     // Generate today's date information
     const dateInfo = useMemo(() => {
@@ -147,64 +130,25 @@ export const IslamicCalendarHeader = memo<IslamicCalendarHeaderProps>(
       []
     );
 
-    // Background gradient colors for smooth transition using theme colors
-    const backgroundGradientColors = useMemo(
-      () =>
-        [
-          'transparent',
-          'transparent',
-          'transparent',
-          `rgba(${colors.background === '#000000' ? '0, 0, 0' : '255, 255, 255'}, 0.1)`,
-          `rgba(${colors.background === '#000000' ? '0, 0, 0' : '255, 255, 255'}, 0.25)`,
-          `rgba(${colors.background === '#000000' ? '0, 0, 0' : '255, 255, 255'}, 0.4)`,
-          `rgba(${colors.background === '#000000' ? '0, 0, 0' : '255, 255, 255'}, 0.6)`,
-          `rgba(${colors.background === '#000000' ? '0, 0, 0' : '255, 255, 255'}, 0.8)`,
-          `rgba(${colors.background === '#000000' ? '0, 0, 0' : '255, 255, 255'}, 0.95)`,
-          colors.background,
-        ] as const,
-      [colors.background]
-    );
-
-    // Close button handler
-    const handleClose = useMemo(
-      () => () => {
-        selectionFeedback();
-        router.back();
-      },
-      []
-    );
-
-    // Memoize close button style with safe area insets - positioned at actual screen top
-    const closeButtonStyle = useMemo(
-      () => ({
-        ...styles.closeButton,
-        top: insets.top + LAYOUT.SPACING.TINY, // At the very top of safe area
-        left: LAYOUT.SPACING.TINY, // Close to left edge
-        backgroundColor: colors.elevation1,
-      }),
-      [insets.top, colors.elevation1]
-    );
+    // Background gradient colors for smooth transition using proper dark mode detection
+    const backgroundGradientColors = useMemo(() => {
+      const baseColor = isDarkMode ? '0, 0, 0' : '255, 255, 255';
+      return [
+        'transparent',
+        'transparent',
+        'transparent',
+        `rgba(${baseColor}, 0.1)`,
+        `rgba(${baseColor}, 0.25)`,
+        `rgba(${baseColor}, 0.4)`,
+        `rgba(${baseColor}, 0.6)`,
+        `rgba(${baseColor}, 0.8)`,
+        `rgba(${baseColor}, 0.95)`,
+        colors.background,
+      ] as const;
+    }, [isDarkMode, colors.background]);
 
     return (
       <View style={styles.wrapper}>
-        {/* Close Button - Positioned at actual screen top */}
-        <Pressable
-          style={closeButtonStyle}
-          onPress={handleClose}
-          android_ripple={{
-            color: colors.tint,
-            radius: MIN_TOUCH_TARGET.MEDIUM / 2,
-          }}
-          accessibilityRole="button"
-          accessibilityLabel="Close calendar"
-        >
-          <Ionicons
-            name="close"
-            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-            color={colors.secondaryText}
-          />
-        </Pressable>
-
         {/* Header Container */}
         <View style={styles.container}>
           {/* Background Image */}
