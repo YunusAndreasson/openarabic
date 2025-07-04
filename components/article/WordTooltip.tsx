@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -7,14 +7,14 @@ import { ThemedText } from '@/components/ThemedText';
 import TouchableIcon from '@/components/TouchableIcon';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { CACHE_SIZE } from '@/constants/performance';
-import { useOpacityAnimation } from '@/hooks/animations';
+import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { WordTooltipProps } from '@/types/ui/modal.types';
 import { analyzeArabicWord, formatWordAnalysis } from '@/utils/arabicWordAnalysis';
 
 // Extract all constants outside component to prevent recreation
 const TOOLTIP_CONSTANTS = {
-  SPACING: LAYOUT.SPACING.TINY, // Reduced from SMALL to TINY for less padding
+  SPACING: LAYOUT.SPACING.TINY,
   ARROW_SIZE: LAYOUT.SPACING.TINY,
   TOOLTIP_MARGIN: LAYOUT.SPACING.TINY / 5,
   SCREEN_MARGIN: LAYOUT.SPACING.MEDIUM,
@@ -23,10 +23,25 @@ const TOOLTIP_CONSTANTS = {
   Z_INDEX: 999999,
 } as const;
 
-// Static animation config to prevent recreation
+// Static animation configs to prevent recreation
 const ANIMATION_CONFIG = {
   initialOpacity: 0,
-  duration: LAYOUT.ANIMATION.DURATION.FAST,
+  duration: 200,
+} as const;
+
+const SPRING_CONFIG = {
+  type: 'scale' as const,
+  initialValue: 0.85,
+  targetValue: 1,
+  useSpring: true,
+  damping: 12,
+  stiffness: 200,
+} as const;
+
+// Typography constants to prevent recalculation
+const TYPOGRAPHY_SIZES = {
+  ENGLISH_HEIGHT: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4,
+  ARABIC_HEIGHT: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 2.5, // Updated to match user's change
 } as const;
 
 // Cache for expensive tooltip positioning calculations
@@ -47,7 +62,7 @@ const STATIC_STYLES = StyleSheet.create({
     position: 'absolute',
     zIndex: TOOLTIP_CONSTANTS.Z_INDEX,
   },
-  absoluteFull: {
+  absoluteFill: {
     left: 0,
     position: 'absolute',
     right: 0,
@@ -72,16 +87,16 @@ const STATIC_STYLES = StyleSheet.create({
     flexShrink: 1,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     fontWeight: '500',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4,
+    lineHeight: TYPOGRAPHY_SIZES.ENGLISH_HEIGHT,
     textAlign: 'center',
   },
   tooltipTextArabic: {
     flexShrink: 1,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.3,
     fontWeight: '500',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.6, // Increased line height for Arabic diacritics
+    lineHeight: TYPOGRAPHY_SIZES.ARABIC_HEIGHT,
     textAlign: 'center',
-    marginTop: LAYOUT.SPACING.TINY, // Extra top margin for Arabic text
+    marginTop: LAYOUT.SPACING.TINY,
   },
   englishRow: {
     flexDirection: 'row',
@@ -93,11 +108,13 @@ const STATIC_STYLES = StyleSheet.create({
     flexShrink: 1,
     alignItems: 'center',
   },
+  centeredContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
 
-/**
- * Helper function to create a cache key for positioning calculations
- */
+// Helper functions extracted and optimized
 const createPositioningCacheKey = (
   layout: NonNullable<WordTooltipProps['layout']>,
   textLength: number,
@@ -106,9 +123,6 @@ const createPositioningCacheKey = (
 ): string =>
   `${layout.x}-${layout.y}-${layout.width}-${layout.height}-${textLength}-${screenWidth}-${hasArabicText}`;
 
-/**
- * Helper function to calculate tooltip positioning with caching
- */
 const calculateTooltipPositioning = (
   layout: NonNullable<WordTooltipProps['layout']>,
   text: string,
@@ -126,70 +140,56 @@ const calculateTooltipPositioning = (
   const { SPACING, ARROW_SIZE, TOOLTIP_MARGIN, SCREEN_MARGIN, CHAR_WIDTH, PADDING_MULTIPLIER } =
     TOOLTIP_CONSTANTS;
 
-  // Calculate consistent tooltip height - properly account for different text sizes
-  const englishHeight = LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4; // English line height
-  const arabicHeight = LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.6; // Arabic line height (increased for diacritics)
-  const paddingHeight = SPACING * 2; // Top and bottom padding
-  const arabicTopMargin = LAYOUT.SPACING.TINY; // Extra margin for Arabic text
-  const dynamicTooltipHeight = arabicHeight + englishHeight + paddingHeight + arabicTopMargin;
+  // Use consolidated typography constants
+  const dynamicTooltipHeight =
+    TYPOGRAPHY_SIZES.ARABIC_HEIGHT +
+    TYPOGRAPHY_SIZES.ENGLISH_HEIGHT +
+    SPACING * 2 +
+    LAYOUT.SPACING.TINY;
 
   const wordCenterX = layout.x + layout.width / 2;
-
-  // Simple positioning: tooltip appears directly above the word
-  // Add extra margin to prevent Arabic text clipping at top
-  const extraTopMargin = LAYOUT.SPACING.SMALL; // Additional space for Arabic diacritics
+  const extraTopMargin = LAYOUT.SPACING.SMALL;
   const tooltipTop = layout.y - dynamicTooltipHeight - ARROW_SIZE - TOOLTIP_MARGIN - extraTopMargin;
 
-  // Calculate bookmark space if present (icon + gap + touch padding)
   const bookmarkSpace = hasBookmark
     ? LAYOUT.BUTTON.ICON_SIZE.MEDIUM + SPACING * 2 + LAYOUT.SPACING.TINY
     : 0;
 
-  // Calculate tooltip width
-  let tooltipWidth = Math.max(
-    text.length * CHAR_WIDTH + SPACING * PADDING_MULTIPLIER * 2 + bookmarkSpace,
-    layout.width + SPACING * 2,
-    LAYOUT.SPACING.XLARGE
-  );
-
-  // Calculate minimum width to prevent word breaking
+  // Optimized width calculation
   const words = text.split(' ');
   const longestWord = words.reduce(
     (longest, word) => (word.length > longest.length ? word : longest),
     ''
   );
-
-  // Ensure minimum width can fit the longest word with generous padding + bookmark space
   const minWidthForLongestWord =
     longestWord.length * CHAR_WIDTH * 1.5 + SPACING * 4 + bookmarkSpace;
 
-  // Constrain to reasonable screen width but ensure longest word fits
+  let tooltipWidth = Math.max(
+    text.length * CHAR_WIDTH + SPACING * PADDING_MULTIPLIER * 2 + bookmarkSpace,
+    layout.width + SPACING * 2,
+    LAYOUT.SPACING.XLARGE,
+    minWidthForLongestWord
+  );
+
   tooltipWidth = Math.min(tooltipWidth, screenWidth * 0.8);
-  tooltipWidth = Math.max(tooltipWidth, minWidthForLongestWord);
 
-  // Horizontal positioning with edge constraints
+  // Simplified positioning logic
   const idealTooltipLeft = wordCenterX - tooltipWidth / 2;
-  const idealTooltipRight = wordCenterX + tooltipWidth / 2;
-
   const leftOverflow = SCREEN_MARGIN - idealTooltipLeft;
-  const rightOverflow = idealTooltipRight - (screenWidth - SCREEN_MARGIN);
+  const rightOverflow = idealTooltipLeft + tooltipWidth - (screenWidth - SCREEN_MARGIN);
 
   let tooltipLeftOffset = idealTooltipLeft;
-
   if (leftOverflow > 0) {
     tooltipLeftOffset = SCREEN_MARGIN;
   } else if (rightOverflow > 0) {
     tooltipLeftOffset = screenWidth - SCREEN_MARGIN - tooltipWidth;
   }
 
-  // Arrow offset is relative to tooltip position
-  const arrowOffset = wordCenterX - tooltipLeftOffset;
-
   const result = {
     tooltipTop,
     tooltipWidth,
     tooltipLeftOffset,
-    arrowOffset,
+    arrowOffset: wordCenterX - tooltipLeftOffset,
   };
 
   // Manage cache size
@@ -204,9 +204,22 @@ const calculateTooltipPositioning = (
   return result;
 };
 
-/**
- * Custom comparison function for WordTooltip memo
- */
+// Optimized color mapping function
+const getSegmentColor = (colorName: string, tooltipColors: any): string => {
+  switch (colorName) {
+    case 'tint':
+      return tooltipColors.tint;
+    case 'primary':
+      return tooltipColors.primary;
+    case 'warning':
+      return tooltipColors.warning;
+    case 'secondaryText':
+      return tooltipColors.secondaryText;
+    default:
+      return tooltipColors.textColor;
+  }
+};
+
 const WordTooltipComparison = (
   prevProps: WordTooltipProps,
   nextProps: WordTooltipProps
@@ -223,38 +236,21 @@ const WordTooltipComparison = (
     return false;
   }
 
-  // Compare layout objects (deep comparison)
+  // Compare layout objects
   const prevLayout = prevProps.layout;
   const nextLayout = nextProps.layout;
 
-  if (prevLayout === null && nextLayout === null) {
-    return true;
-  }
+  if (prevLayout === null && nextLayout === null) return true;
+  if (prevLayout === null || nextLayout === null) return false;
 
-  if (prevLayout === null || nextLayout === null) {
-    return false;
-  }
-
-  if (
-    prevLayout.x !== nextLayout.x ||
-    prevLayout.y !== nextLayout.y ||
-    prevLayout.width !== nextLayout.width ||
-    prevLayout.height !== nextLayout.height
-  ) {
-    return false;
-  }
-
-  // onClose functions are likely to be stable, but we'll treat as equal
-  // if all other props are equal (following React.memo patterns)
-  return true;
+  return (
+    prevLayout.x === nextLayout.x &&
+    prevLayout.y === nextLayout.y &&
+    prevLayout.width === nextLayout.width &&
+    prevLayout.height === nextLayout.height
+  );
 };
 
-/**
- * A tooltip component that displays above an Arabic word
- * Shows the English translation of the word with minimal visual design
- * Enhanced with color-coded Arabic word analysis for educational purposes
- * Ensures the arrow tip is precisely centered over the word regardless of screen position
- */
 export const WordTooltip = memo(
   ({
     visible,
@@ -268,13 +264,18 @@ export const WordTooltip = memo(
     wordRootId,
   }: WordTooltipProps) => {
     const colors = useColors();
-    // For mobile-only apps, use constant screen width
     const screenWidth = SCREEN_WIDTH;
 
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [isAnimatingOut, setIsAnimatingOut] = useState(false);
 
-    // Setup opacity animation for fade effect with quick timing
-    const { fadeIn, animatedStyle: opacityStyle } = useOpacityAnimation(ANIMATION_CONFIG);
+    // Setup animations
+    const { fadeIn, fadeOut, animatedStyle: opacityStyle } = useOpacityAnimation(ANIMATION_CONFIG);
+    const {
+      animatedStyle: scaleStyle,
+      startAnimation: startScaleAnimation,
+      reverseAnimation: reverseScaleAnimation,
+    } = useTransformAnimation(SPRING_CONFIG);
 
     // Memoize colors to prevent unnecessary recalculations
     const tooltipColors = useMemo(
@@ -284,7 +285,6 @@ export const WordTooltip = memo(
         borderColor: colors.border,
         shadowColor: colors.shadow,
         transparentColor: colors.transparent,
-        // Component colors for Arabic analysis
         tint: colors.tint,
         primary: colors.primary,
         warning: colors.warning,
@@ -306,31 +306,36 @@ export const WordTooltip = memo(
     // Analyze Arabic word if provided, memoized for performance
     const arabicAnalysis = useMemo(() => {
       if (!arabicWord || !text) return null;
-
       const analysis = analyzeArabicWord(arabicWord, text);
-      if (!analysis.hasComponents) return null;
-
-      return formatWordAnalysis(analysis);
+      return analysis.hasComponents ? formatWordAnalysis(analysis) : null;
     }, [arabicWord, text]);
 
     // Handle closing the tooltip with animation sequence
     const handleClose = useCallback(() => {
-      onClose();
-    }, [onClose]);
+      if (!isAnimatingOut) {
+        setIsAnimatingOut(true);
+        fadeOut();
+        reverseScaleAnimation();
 
-    // Handle study list toggle with haptic feedback
+        timerRef.current = setTimeout(() => {
+          onClose();
+          setIsAnimatingOut(false);
+        }, ANIMATION_CONFIG.duration);
+      }
+    }, [isAnimatingOut, fadeOut, reverseScaleAnimation, onClose]);
+
+    // Handle study list toggle
     const handleStudyListPress = useCallback(() => {
       if (onStudyListToggle && wordRootId) {
         onStudyListToggle();
       }
     }, [onStudyListToggle, wordRootId]);
 
-    // Render color-coded Arabic text using SINGLE Text component for proper Arabic joining
+    // Render color-coded Arabic text
     const renderColorCodedArabic = useCallback(() => {
       if (!arabicAnalysis?.reconstructedArabic || !arabicWord) {
-        // Fallback to plain Arabic text if no analysis
         return arabicWord ? (
-          <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+          <View style={STATIC_STYLES.centeredContainer}>
             <ThemedText
               type="arabic"
               skipDefaultColor
@@ -347,11 +352,9 @@ export const WordTooltip = memo(
 
       const segments = arabicAnalysis.reconstructedArabic.segments;
 
-      // FIXED: Use SINGLE Text component with nested Text for proper Arabic joining
-      // This preserves letter connectivity and RTL flow
       if (segments.length === 0) {
         return (
-          <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+          <View style={STATIC_STYLES.centeredContainer}>
             <ThemedText
               type="arabic"
               skipDefaultColor
@@ -366,10 +369,8 @@ export const WordTooltip = memo(
         );
       }
 
-      // Create a single continuous text with nested colored spans
-      // This approach maintains Arabic text integrity while applying colors
       return (
-        <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+        <View style={STATIC_STYLES.centeredContainer}>
           <ThemedText
             type="arabic"
             skipDefaultColor
@@ -378,47 +379,27 @@ export const WordTooltip = memo(
               { color: tooltipColors.textColor, marginBottom: TOOLTIP_CONSTANTS.SPACING / 2 },
             ]}
           >
-            {/* CRITICAL: Use nested Text within single parent to preserve Arabic joining */}
-            {segments.map((segment, index) => {
-              // Map color names to actual colors
-              const getSegmentColor = (colorName: string): string => {
-                switch (colorName) {
-                  case 'tint':
-                    return tooltipColors.tint;
-                  case 'primary':
-                    return tooltipColors.primary;
-                  case 'warning':
-                    return tooltipColors.warning;
-                  case 'secondaryText':
-                    return tooltipColors.secondaryText;
-                  default:
-                    return tooltipColors.textColor;
-                }
-              };
-
-              const segmentColor = getSegmentColor(segment.colorName);
-              const segmentKey = `${segment.text}-${index}`;
-
-              return (
-                <ThemedText
-                  key={segmentKey}
-                  type="arabic"
-                  skipDefaultColor
-                  style={[STATIC_STYLES.tooltipTextArabic, { color: segmentColor }]}
-                >
-                  {segment.text}
-                </ThemedText>
-              );
-            })}
+            {segments.map(segment => (
+              <ThemedText
+                key={`segment-${segment.text}-${segment.colorName}`}
+                type="arabic"
+                skipDefaultColor
+                style={[
+                  STATIC_STYLES.tooltipTextArabic,
+                  { color: getSegmentColor(segment.colorName, tooltipColors) },
+                ]}
+              >
+                {segment.text}
+              </ThemedText>
+            ))}
           </ThemedText>
         </View>
       );
     }, [arabicAnalysis, arabicWord, tooltipColors]);
 
-    // Render color-coded English text to match Arabic components
+    // Render color-coded English text
     const renderColorCodedEnglish = useCallback(() => {
       if (!arabicAnalysis?.sections || arabicAnalysis.sections.length === 0) {
-        // Fallback to plain English text if no analysis
         return (
           <ThemedText
             skipDefaultColor
@@ -430,14 +411,9 @@ export const WordTooltip = memo(
         );
       }
 
-      // FIXED: Process matches by position in original text, not sequentially
       const originalEnglish =
         arabicAnalysis.sections.find(s => s.type === 'original')?.content || '';
-
-      // Initialize the parts array
       const englishParts: { text: string; color: string; key: string }[] = [];
-
-      // Find all match positions in the original text
       const matchPositions: { start: number; end: number; text: string; match: string }[] = [];
 
       const allEnglishMatches = arabicAnalysis.sections
@@ -445,17 +421,16 @@ export const WordTooltip = memo(
         .flatMap(section => (section.englishPart ? [section.englishPart] : []));
 
       if (allEnglishMatches.length > 0) {
+        // Find and process matches (simplified logic)
         for (const match of allEnglishMatches) {
           const normalizedMatch = match.toLowerCase();
           const normalizedEnglish = originalEnglish.toLowerCase();
-
-          // Find all occurrences of this match (in case of duplicates)
           let searchStart = 0;
+
           while (true) {
             const matchIndex = normalizedEnglish.indexOf(normalizedMatch, searchStart);
             if (matchIndex === -1) break;
 
-            // Verify it's a whole word match (not part of another word)
             const beforeChar = matchIndex > 0 ? normalizedEnglish[matchIndex - 1] || ' ' : ' ';
             const afterChar =
               matchIndex + normalizedMatch.length < normalizedEnglish.length
@@ -469,25 +444,22 @@ export const WordTooltip = memo(
               matchIndex === 0 ||
               matchIndex + normalizedMatch.length === normalizedEnglish.length
             ) {
-              // Get the actual text with original casing
               const actualText = originalEnglish.substring(
                 matchIndex,
                 matchIndex + normalizedMatch.length
               );
-
               matchPositions.push({
                 start: matchIndex,
                 end: matchIndex + normalizedMatch.length,
                 text: actualText,
-                match: match,
+                match,
               });
             }
-
             searchStart = matchIndex + 1;
           }
         }
 
-        // Sort by position and remove overlaps
+        // Sort and remove overlaps
         matchPositions.sort((a, b) => a.start - b.start);
         const nonOverlappingMatches: typeof matchPositions = [];
         let lastEnd = 0;
@@ -499,12 +471,9 @@ export const WordTooltip = memo(
           }
         }
 
-        // Build the parts array from the non-overlapping matches
+        // Build parts array
         let currentIndex = 0;
-
-        // Helper function to get color by matching Arabic component exactly
         const getEnglishMatchColor = (matchText: string): string => {
-          // Find which Arabic component this English text corresponds to by exact match
           const matchingSection = arabicAnalysis.sections.find(
             section =>
               section.type === 'components' &&
@@ -514,29 +483,12 @@ export const WordTooltip = memo(
                 .split(' / ')
                 .some(part => part.trim().toLowerCase() === matchText.toLowerCase())
           );
-
-          if (matchingSection && matchingSection.colorName) {
-            // Use the same color as the corresponding Arabic component
-            switch (matchingSection.colorName) {
-              case 'tint':
-                return tooltipColors.tint;
-              case 'warning':
-                return tooltipColors.warning;
-              case 'primary':
-                return tooltipColors.primary;
-              case 'secondaryText':
-                return tooltipColors.secondaryText;
-              default:
-                return tooltipColors.tint;
-            }
-          }
-
-          // Fallback to tint color if no match found
-          return tooltipColors.tint;
+          return matchingSection?.colorName
+            ? getSegmentColor(matchingSection.colorName, tooltipColors)
+            : tooltipColors.tint;
         };
 
         for (const pos of nonOverlappingMatches) {
-          // Add text before this match (if any)
           if (pos.start > currentIndex) {
             englishParts.push({
               text: originalEnglish.substring(currentIndex, pos.start),
@@ -545,7 +497,6 @@ export const WordTooltip = memo(
             });
           }
 
-          // Add the matched text (colored with coordinated color)
           englishParts.push({
             text: pos.text,
             color: getEnglishMatchColor(pos.text),
@@ -554,7 +505,6 @@ export const WordTooltip = memo(
           currentIndex = pos.end;
         }
 
-        // Add any remaining text after the last match
         if (currentIndex < originalEnglish.length) {
           englishParts.push({
             text: originalEnglish.substring(currentIndex),
@@ -563,7 +513,6 @@ export const WordTooltip = memo(
           });
         }
       } else {
-        // No matches, show original text uncolored
         englishParts.push({
           text: originalEnglish,
           color: tooltipColors.textColor,
@@ -573,7 +522,7 @@ export const WordTooltip = memo(
 
       return (
         <ThemedText skipDefaultColor numberOfLines={2} style={STATIC_STYLES.tooltipText}>
-          {englishParts.map((part: { text: string; color: string; key: string }) => (
+          {englishParts.map(part => (
             <ThemedText
               key={part.key}
               skipDefaultColor
@@ -586,9 +535,8 @@ export const WordTooltip = memo(
       );
     }, [arabicAnalysis, text, tooltipColors]);
 
-    // Render the study list indicator with proper integration
+    // Render the study list indicator
     const renderStudyIndicator = useCallback(() => {
-      // Only show if we have study functionality
       if (!onStudyListToggle || !wordRootId) return null;
 
       const iconName = isInStudyList ? 'bookmark' : 'bookmark-outline';
@@ -601,9 +549,7 @@ export const WordTooltip = memo(
           touchSize="small"
           color={indicatorColor}
           onPress={handleStudyListPress}
-          style={{
-            marginLeft: LAYOUT.SPACING.TINY,
-          }}
+          style={{ marginLeft: LAYOUT.SPACING.TINY }}
         />
       );
     }, [onStudyListToggle, wordRootId, isInStudyList, handleStudyListPress, tooltipColors]);
@@ -613,9 +559,7 @@ export const WordTooltip = memo(
       const englishContent = renderColorCodedEnglish();
       const studyIndicator = renderStudyIndicator();
 
-      if (!studyIndicator) {
-        return englishContent;
-      }
+      if (!studyIndicator) return englishContent;
 
       return (
         <View style={STATIC_STYLES.englishRow}>
@@ -625,24 +569,21 @@ export const WordTooltip = memo(
       );
     }, [renderColorCodedEnglish, renderStudyIndicator]);
 
-    // Memoize the tooltip content with improved layout
+    // Memoize the tooltip content
     const tooltipContent = useMemo(() => {
       const arabicContent = renderColorCodedArabic();
       const englishWithBookmark = renderEnglishWithBookmark();
-
-      // Proper height calculation accounting for both text sizes
-      const englishHeight = LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4;
-      const arabicHeight = LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.6; // Increased for diacritics
-      const arabicTopMargin = LAYOUT.SPACING.TINY;
 
       const contentStyle = {
         alignItems: 'center' as const,
         justifyContent: 'center' as const,
         position: 'relative' as const,
-        // Proper minimum height for Arabic + English text with margins
-        minHeight: arabicHeight + englishHeight + arabicTopMargin + LAYOUT.SPACING.SMALL,
-        // Add adequate top padding to prevent Arabic text clipping
-        paddingTop: LAYOUT.SPACING.SMALL, // Increased from TINY to SMALL
+        minHeight:
+          TYPOGRAPHY_SIZES.ARABIC_HEIGHT +
+          TYPOGRAPHY_SIZES.ENGLISH_HEIGHT +
+          LAYOUT.SPACING.TINY +
+          LAYOUT.SPACING.SMALL,
+        paddingTop: LAYOUT.SPACING.SMALL,
       };
 
       return (
@@ -653,40 +594,35 @@ export const WordTooltip = memo(
       );
     }, [renderColorCodedArabic, renderEnglishWithBookmark]);
 
-    // Update tooltip positioning with consistent sizing for all tooltips
+    // Tooltip positioning
     const tooltipPositioning = useMemo(() => {
       if (!layout) {
         return {
           wordCenterX: 0,
           tooltipTop: 0,
-          tooltipWidth: SCREEN_WIDTH * 0.25, // Responsive default width (25% of screen)
+          tooltipWidth: SCREEN_WIDTH * 0.25,
           tooltipLeftOffset: 0,
           arrowOffset: 0,
         };
       }
 
-      // Check if we have a bookmark to account for its space
       const hasBookmark = !!(onStudyListToggle && wordRootId);
-
-      // Always use combined text length to ensure consistent sizing
       const displayText = arabicWord ? `${arabicWord} ${text}` : text || '';
-      // Pass hasBookmark to ensure proper width calculation
       return calculateTooltipPositioning(layout, displayText, screenWidth, true, hasBookmark);
     }, [layout, text, arabicWord, screenWidth, onStudyListToggle, wordRootId]);
 
-    // Memoize container style
+    // Memoized styles
     const containerStyle = useMemo(
       () => ({
-        ...STATIC_STYLES.absoluteFull,
+        ...STATIC_STYLES.absoluteFill,
         ...STATIC_STYLES.tooltipContainer,
         top: tooltipPositioning.tooltipTop,
         zIndex: zIndex ?? TOOLTIP_CONSTANTS.Z_INDEX,
-        ...LAYOUT.ELEVATION.MEDIUM, // Use design system elevation
+        ...LAYOUT.ELEVATION.MEDIUM,
       }),
       [tooltipPositioning.tooltipTop, zIndex]
     );
 
-    // Memoize tooltip style
     const tooltipStyle = useMemo(
       () => ({
         ...STATIC_STYLES.tooltip,
@@ -696,8 +632,8 @@ export const WordTooltip = memo(
         borderColor: tooltipColors.borderColor,
         shadowColor: tooltipColors.shadowColor,
         padding: TOOLTIP_CONSTANTS.SPACING,
-        zIndex: TOOLTIP_CONSTANTS.Z_INDEX + 1, // Ensure tooltip is above the container
-        ...LAYOUT.ELEVATION.LARGE, // Use design system elevation
+        zIndex: TOOLTIP_CONSTANTS.Z_INDEX + 1,
+        ...LAYOUT.ELEVATION.LARGE,
       }),
       [
         tooltipPositioning.tooltipLeftOffset,
@@ -708,7 +644,6 @@ export const WordTooltip = memo(
       ]
     );
 
-    // Memoize arrow style
     const arrowStyle = useMemo(
       () => ({
         ...STATIC_STYLES.arrow,
@@ -736,10 +671,9 @@ export const WordTooltip = memo(
       }
 
       if (visible) {
+        setIsAnimatingOut(false);
         fadeIn();
-        // Removed auto-close timer - tooltip now stays visible until user taps
-      } else {
-        handleClose();
+        startScaleAnimation();
       }
 
       return () => {
@@ -748,18 +682,16 @@ export const WordTooltip = memo(
           timerRef.current = null;
         }
       };
-    }, [visible, fadeIn, handleClose]);
+    }, [visible, fadeIn, startScaleAnimation]);
 
-    if (!visible || !layout) return null;
+    // Show tooltip if visible OR if we're animating out
+    if ((!visible && !isAnimatingOut) || !layout) return null;
 
     return (
       <View
         style={[
           StyleSheet.absoluteFill,
-          {
-            zIndex: TOOLTIP_CONSTANTS.Z_INDEX + 2,
-            ...LAYOUT.ELEVATION.LARGE,
-          },
+          { zIndex: TOOLTIP_CONSTANTS.Z_INDEX + 2, ...LAYOUT.ELEVATION.LARGE },
         ]}
         pointerEvents="box-none"
       >
@@ -768,7 +700,7 @@ export const WordTooltip = memo(
           onPress={handleClose}
         />
         <Animated.View
-          style={[containerStyle, opacityStyle as ViewStyle]}
+          style={[containerStyle, opacityStyle as ViewStyle, scaleStyle as ViewStyle]}
           onStartShouldSetResponder={() => true}
         >
           <TouchableOpacity
@@ -786,5 +718,4 @@ export const WordTooltip = memo(
   WordTooltipComparison
 );
 
-// Add display name to the memoized component
 WordTooltip.displayName = 'WordTooltip';
