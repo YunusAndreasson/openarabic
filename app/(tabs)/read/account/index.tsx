@@ -8,7 +8,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BaseCard from '@/components/BaseCard';
 import { THEME_OPTIONS, ThemePicker } from '@/components/ThemePicker';
-import ThemeSelector from '@/components/ThemeSelector';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -147,21 +146,37 @@ const AccountScreen: FC = () => {
 
             <Divider />
 
-            <View style={styles.settingRow}>
-              <View style={styles.settingLabelContainer}>
-                <View style={styles.cardIconContainer}>
+            <BaseCard
+              includePressAnimation={true}
+              shadowSize="none"
+              style={styles.timePickerSettingRow}
+              onPress={handleThemePickerOpen}
+            >
+              <View style={styles.settingRow}>
+                <View style={styles.settingLabelContainer}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons
+                      color={colors.text}
+                      name="color-palette"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
+                  </View>
+                  <View style={styles.settingLabelTextContainer}>
+                    <ThemedText type="body">{STRINGS.THEME}</ThemedText>
+                  </View>
+                </View>
+                <View style={styles.settingValueContainer}>
+                  <ThemedText type="body" variant="secondary">
+                    {currentThemeText}
+                  </ThemedText>
                   <Ionicons
-                    color={colors.text}
-                    name="color-palette"
-                    size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    color={colors.textTertiary}
+                    name="chevron-forward"
+                    size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
                   />
                 </View>
-                <View style={styles.settingLabelTextContainer}>
-                  <ThemedText type="body">{STRINGS.THEME}</ThemedText>
-                </View>
               </View>
-              <ThemeSelector currentThemeText={currentThemeText} onPress={handleThemePickerOpen} />
-            </View>
+            </BaseCard>
 
             <Divider />
 
@@ -454,6 +469,11 @@ const styles = StyleSheet.create({
   },
   settingLabelTextContainer: {
     marginLeft: LAYOUT.SPACING.SMALL,
+  },
+  settingValueContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: LAYOUT.SPACING.TINY,
   },
   commonDivider: {
     height: LAYOUT.BORDER.WIDTH.THIN,

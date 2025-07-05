@@ -67,8 +67,8 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.8)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+    textShadowOffset: { width: 0, height: LAYOUT.SPACING.HALF_TINY },
+    textShadowRadius: LAYOUT.SPACING.TINY,
     marginBottom: LAYOUT.SPACING.TINY,
   },
   englishDate: {
@@ -76,8 +76,8 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.6)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowOffset: { width: 0, height: LAYOUT.SPACING.MICRO },
+    textShadowRadius: LAYOUT.SPACING.HALF_TINY,
     marginBottom: LAYOUT.SPACING.TINY,
   },
   activeCount: {
@@ -86,8 +86,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     opacity: LAYOUT.OPACITY.MEDIUM,
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowOffset: { width: 0, height: LAYOUT.SPACING.MICRO },
+    textShadowRadius: LAYOUT.SPACING.HALF_TINY,
   },
 });
 

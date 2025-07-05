@@ -326,8 +326,8 @@ const styles = StyleSheet.create({
   },
   summaryBadge: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    width: 24,
-    height: 24,
+    width: LAYOUT.BUTTON.ICON_SIZE.LARGE,
+    height: LAYOUT.BUTTON.ICON_SIZE.LARGE,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -373,8 +373,8 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.MEDIUM,
   },
   filterIconContainer: {
-    width: 32,
-    height: 32,
+    width: MIN_TOUCH_TARGET.SMALL,
+    height: MIN_TOUCH_TARGET.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     justifyContent: 'center',
     alignItems: 'center',
@@ -384,8 +384,8 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.TINY,
   },
   expandIndicator: {
-    width: 32,
-    height: 32,
+    width: MIN_TOUCH_TARGET.SMALL,
+    height: MIN_TOUCH_TARGET.SMALL,
     justifyContent: 'center',
     alignItems: 'center',
   },

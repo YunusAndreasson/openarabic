@@ -198,8 +198,8 @@ const styles = StyleSheet.create({
     // backgroundColor handled dynamically via colors.backdropOverlay
   },
   indicator: {
-    width: 32,
-    height: 4,
+    width: LAYOUT.BOTTOM_SHEET.INDICATOR.WIDTH,
+    height: LAYOUT.BOTTOM_SHEET.INDICATOR.HEIGHT,
   },
   container: {
     paddingBottom: LAYOUT.SPACING.LARGE,
