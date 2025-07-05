@@ -70,7 +70,12 @@ export const InfoIcon: FC<InfoIconProps> = ({ onPress, size = 'small', style }) 
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       activeOpacity={LAYOUT.OPACITY.PRESSED}
-      hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+      hitSlop={{
+        top: 20,
+        bottom: 20,
+        left: 20,
+        right: 20,
+      }}
     >
       <Ionicons name="information-outline" size={sizeConfig.iconSize} color={colors.tint} />
     </AnimatedTouchableOpacity>

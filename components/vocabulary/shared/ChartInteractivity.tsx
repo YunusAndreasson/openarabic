@@ -1,9 +1,10 @@
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { selectionFeedback } from '@/utils/haptics';
 
 interface ChartTooltip {
   x: number;
@@ -57,9 +58,21 @@ interface DataPointOverlayProps {
 }
 
 export const DataPointOverlay = memo<DataPointOverlayProps>(({ x, y, value, label, onPress }) => {
+  const [isPressed, setIsPressed] = useState(false);
+  const colors = useColors();
+
   const handlePress = useCallback(() => {
+    selectionFeedback(); // Tiny haptic feedback
     onPress(x, y, value, label);
   }, [x, y, value, label, onPress]);
+
+  const handlePressIn = useCallback(() => {
+    setIsPressed(true);
+  }, []);
+
+  const handlePressOut = useCallback(() => {
+    setIsPressed(false);
+  }, []);
 
   const touchTargetSize = MIN_TOUCH_TARGET.LARGE;
   const offset = touchTargetSize / 2;
@@ -73,16 +86,22 @@ export const DataPointOverlay = memo<DataPointOverlayProps>(({ x, y, value, labe
         width: touchTargetSize,
         height: touchTargetSize,
         borderRadius: touchTargetSize / 2,
-        backgroundColor: 'transparent',
+        // Jakob's Law: Provide visual feedback that matches user expectations from analytics apps
+        backgroundColor: isPressed ? colors.tint + '20' : 'transparent', // 20% opacity when pressed
+        borderWidth: isPressed ? 2 : 0,
+        borderColor: isPressed ? colors.tint : 'transparent',
       }}
       onPress={handlePress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      activeOpacity={0.7}
     />
   );
 });
 
 DataPointOverlay.displayName = 'DataPointOverlay';
 
-export const useChartTooltip = (autoHideDelay: number = 3000) => {
+export const useChartTooltip = () => {
   const [tooltip, setTooltip] = useState<ChartTooltip>({
     x: 0,
     y: 0,
@@ -91,15 +110,8 @@ export const useChartTooltip = (autoHideDelay: number = 3000) => {
     visible: false,
   });
 
-  useEffect(() => {
-    if (tooltip.visible) {
-      const timer = setTimeout(() => {
-        setTooltip(prev => ({ ...prev, visible: false }));
-      }, autoHideDelay);
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [tooltip.visible, autoHideDelay]);
+  // Jakob's Law: Analytics apps keep tooltips visible until user interaction changes
+  // Removed auto-hide behavior to match user expectations from Google Analytics, Mixpanel, etc.
 
   const showTooltip = useCallback(
     (x: number, y: number, value: string, label: string, yOffset: number = -40) => {

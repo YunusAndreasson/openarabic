@@ -12,9 +12,9 @@ import { PERFORMANCE_THRESHOLDS } from './constants';
 // Standardized terminology
 export const CHART_LABELS = {
   // Performance metrics - with clear time indicators for zero confusion
-  STRENGTH: 'recent strength', // Latest from 7-day progression
-  RETENTION: "today's retention", // Today's memory forecast
-  SPEED: 'recent learning speed', // Latest from 7-day efficiency data
+  STRENGTH: '📈 Memory Strength', // Past performance indicator
+  RETENTION: '🔮 Review Timing', // Future prediction indicator
+  SPEED: '⚡ Learning Progress', // Past performance indicator
 
   // Word categories
   MASTERED: 'mastered',
@@ -79,7 +79,7 @@ export const TREND_MESSAGES = {
   },
 } as const;
 
-// Chart-specific subtitle generators with consistent messaging
+// Chart-specific subtitle generators with consistent messaging and clear directional context
 export const generateChartSubtitle = {
   mastery: (
     currentRate: number,
@@ -94,10 +94,10 @@ export const generateChartSubtitle = {
     const baseMessage = PERFORMANCE_DESCRIPTORS[performance].medium;
 
     if (Math.abs(weeklyChange) >= 5) {
-      return `${baseMessage} - ${TREND_MESSAGES[trend].description}`;
+      return `${baseMessage} - ${TREND_MESSAGES[trend].description} (past 7 days)`;
     }
 
-    return baseMessage;
+    return `${baseMessage} (past 7 days)`;
   },
 
   efficiency: (currentEfficiency: number, weeklyAverage: number): string => {
@@ -109,12 +109,12 @@ export const generateChartSubtitle = {
     const avgPerformance = getPerformanceLevel(weeklyAverage);
 
     if (performance === avgPerformance) {
-      return `${PERFORMANCE_DESCRIPTORS[performance].medium} - ${STRINGS.CONSISTENT_PRACTICE}`;
+      return `${PERFORMANCE_DESCRIPTORS[performance].medium} - ${STRINGS.CONSISTENT_PRACTICE} (past 7 days)`;
     }
 
     const comparison =
       currentEfficiency > weeklyAverage ? 'faster than usual' : 'slower than usual';
-    return `${PERFORMANCE_DESCRIPTORS[performance].short} pace - ${comparison}`;
+    return `${PERFORMANCE_DESCRIPTORS[performance].short} pace - ${comparison} (past 7 days)`;
   },
 
   retrievability: (currentRetention: number, criticalWords: number, totalWords: number): string => {
@@ -126,21 +126,22 @@ export const generateChartSubtitle = {
     const criticalPercentage = (criticalWords / totalWords) * 100;
 
     if (criticalWords === 0) {
-      return `${PERFORMANCE_DESCRIPTORS[performance].medium} - ${STRINGS.ALL_WORDS_RETAINED_WELL}`;
+      return `${PERFORMANCE_DESCRIPTORS[performance].medium} - ${STRINGS.ALL_WORDS_RETAINED_WELL} (next 7 days)`;
     }
 
     if (criticalPercentage > 30) {
-      return `${Math.round(criticalPercentage)}% words need urgent review`;
+      return `${Math.round(criticalPercentage)}% words need urgent review (next 7 days)`;
     }
 
-    return `${PERFORMANCE_DESCRIPTORS[performance].medium} - ${criticalWords} words fading`;
+    return `${PERFORMANCE_DESCRIPTORS[performance].medium} - ${criticalWords} words fading (next 7 days)`;
   },
 } as const;
 
-// Standardized empty state messages
+// Jakob's Law: Users expect specific, actionable empty states like fitness apps (Strava, MyFitnessPal)
+// Updated from generic messages to specific action + benefit format
 export const EMPTY_STATE_MESSAGES = {
-  mastery: STRINGS.REVIEW_WORDS_TO_TRACK_MEMORY_STRENGTH,
-  efficiency: STRINGS.PRACTICE_TO_SEE_YOUR_LEARNING_SPEED,
-  retrievability: STRINGS.STUDY_WORDS_TO_MONITOR_RETENTION,
-  general: STRINGS.START_STUDYING_TO_SEE_PROGRESS,
+  mastery: 'Complete your first 5 reviews to see your memory strength trend',
+  efficiency: 'Practice 10 words to track your learning speed progress',
+  retrievability: 'Study 5 words to monitor which ones need review timing',
+  general: 'Add your first words to start tracking your progress',
 } as const;

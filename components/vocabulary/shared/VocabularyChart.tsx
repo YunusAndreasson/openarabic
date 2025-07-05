@@ -1,5 +1,5 @@
 import { Group } from '@shopify/react-native-skia';
-import React, { memo, useMemo } from 'react';
+import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { BaseChart } from '@/components/vocabulary/shared/BaseChart';
@@ -46,6 +46,7 @@ interface VocabularyChartProps<T> {
   yMax?: number;
   topPadding?: number;
   graphWidth: number;
+  todayIndex?: number; // Index of the label that represents "today"
 
   // BaseChart props
   title: string;
@@ -121,10 +122,10 @@ const styles = StyleSheet.create({
  * Unified vocabulary chart component that eliminates duplication
  * across MasteryChart, EfficiencyChart, and RetrievabilityChart
  *
- * Performance optimized with:
- * - React.memo with custom comparison
- * - Memoized expensive computations
+ * Simplified and optimized with:
+ * - React.memo with custom comparison function
  * - Static style objects
+ * - Direct prop passing without excessive memoization
  * - Optimized Skia rendering
  */
 export const VocabularyChart = memo<VocabularyChartProps<any>>(
@@ -139,6 +140,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
     yMax = DEFAULT_Y_MAX,
     topPadding = DEFAULT_TOP_PADDING,
     graphWidth,
+    todayIndex,
     title,
     subtitle,
     onInfoPress,
@@ -146,100 +148,10 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
     hasData,
     emptyStateText,
   }) => {
-    // Memoize content height calculation
-    const contentHeight = useMemo(() => GRAPH_HEIGHT_LARGE + CONTENT_HEIGHT_OFFSET, []);
-
-    // Memoize data existence checks for performance
-    const hasChartData = useMemo(() => path && dataPoints.length > 0, [path, dataPoints.length]);
-
-    const hasPerformanceZones = useMemo(
-      () => hasChartData && performanceZones.length > 0,
-      [hasChartData, performanceZones.length]
-    );
-
-    const hasMilestones = useMemo(() => milestones.length > 0, [milestones.length]);
-
-    // Memoize data point rendering for better performance
-    const dataPointElements = useMemo(() => {
-      return dataPoints.map((point: ChartPoint) => (
-        <ChartDataPoint
-          key={`data-point-${point.date.toISOString()}`}
-          x={point.x}
-          y={point.y}
-          uniqueKey={`data-point-${point.date.toISOString()}`}
-        />
-      ));
-    }, [dataPoints]);
-
-    // Memoize milestone rendering
-    const milestoneElements = useMemo(() => {
-      return milestones.map((milestone: ChartPoint, index: number) => {
-        const keyIdentifier = 'rate' in milestone ? milestone.rate : index;
-        return (
-          <ChartDataPoint
-            key={`milestone-${milestone.date.toISOString()}-${keyIdentifier}`}
-            x={milestone.x}
-            y={milestone.y}
-            uniqueKey={`milestone-${milestone.date.toISOString()}-${keyIdentifier}`}
-          />
-        );
-      });
-    }, [milestones]);
-
-    // Memoize ChartCanvas props to prevent unnecessary re-renders
-    const chartCanvasProps = useMemo(
-      () => ({
-        dataPoints: tooltipDataPoints,
-        enableTooltips: true,
-      }),
-      [tooltipDataPoints]
-    );
-
-    // Memoize ChartGrid props
-    const chartGridProps = useMemo(
-      () => ({
-        height: GRAPH_HEIGHT_LARGE,
-        topPadding,
-        width: graphWidth,
-        xLabelPositions,
-        yMax,
-      }),
-      [topPadding, graphWidth, xLabelPositions, yMax]
-    );
-
-    // Memoize ChartAxes props
-    const chartAxesProps = useMemo(
-      () => ({
-        height: GRAPH_HEIGHT_LARGE,
-        showYAxis: true,
-        topPadding,
-        width: graphWidth,
-        xLabelPositions,
-        yMax,
-        xLabels,
-      }),
-      [topPadding, graphWidth, xLabelPositions, yMax, xLabels]
-    );
-
-    // Memoize ChartAreaFill props
-    const chartAreaFillProps = useMemo(
-      () => ({
-        path,
-        graphWidth,
-        topPadding,
-      }),
-      [path, graphWidth, topPadding]
-    );
-
-    // Memoize ChartPerformanceZones props
-    const chartPerformanceZonesProps = useMemo(
-      () => ({
-        zones: performanceZones,
-        maskPath: path,
-        graphWidth,
-      }),
-      [performanceZones, path, graphWidth]
-    );
+    const contentHeight = GRAPH_HEIGHT_LARGE + CONTENT_HEIGHT_OFFSET;
+    const hasChartData = path && dataPoints.length > 0;
+    const hasPerformanceZones = hasChartData && performanceZones.length > 0;
+    const hasMilestones = milestones.length > 0;
 
     return (
       <BaseChart
@@ -253,21 +165,31 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
       >
         <View style={styles.container}>
           <View style={styles.chartContainer}>
-            <ChartCanvas {...chartCanvasProps}>
+            <ChartCanvas dataPoints={tooltipDataPoints}>
               {/* Grid lines */}
-              <ChartGrid {...chartGridProps} />
+              <ChartGrid
+                height={GRAPH_HEIGHT_LARGE}
+                topPadding={topPadding}
+                width={graphWidth}
+                xLabelPositions={xLabelPositions}
+                yMax={yMax}
+              />
 
               {/* Area fill under the line */}
               {hasChartData && (
                 <Group>
-                  <ChartAreaFill {...chartAreaFillProps} />
+                  <ChartAreaFill path={path} graphWidth={graphWidth} topPadding={topPadding} />
                 </Group>
               )}
 
               {/* Performance zones */}
               {hasPerformanceZones && (
                 <Group>
-                  <ChartPerformanceZones {...chartPerformanceZonesProps} />
+                  <ChartPerformanceZones
+                    zones={performanceZones}
+                    maskPath={path}
+                    graphWidth={graphWidth}
+                  />
                 </Group>
               )}
 
@@ -275,17 +197,47 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
               {hasChartData && (
                 <Group>
                   <ChartMainLine path={path} />
-                  {dataPointElements}
+                  {dataPoints.map((point: ChartPoint) => (
+                    <ChartDataPoint
+                      key={`data-point-${point.date.toISOString()}`}
+                      x={point.x}
+                      y={point.y}
+                      uniqueKey={`data-point-${point.date.toISOString()}`}
+                    />
+                  ))}
                 </Group>
               )}
 
               {/* Milestone indicators */}
-              {hasMilestones && <Group>{milestoneElements}</Group>}
+              {hasMilestones && (
+                <Group>
+                  {milestones.map((milestone: ChartPoint, index: number) => {
+                    const keyIdentifier = 'rate' in milestone ? milestone.rate : index;
+                    return (
+                      <ChartDataPoint
+                        key={`milestone-${milestone.date.toISOString()}-${keyIdentifier}`}
+                        x={milestone.x}
+                        y={milestone.y}
+                        uniqueKey={`milestone-${milestone.date.toISOString()}-${keyIdentifier}`}
+                      />
+                    );
+                  })}
+                </Group>
+              )}
             </ChartCanvas>
           </View>
 
           {/* Axes */}
-          <ChartAxes {...chartAxesProps} />
+          <ChartAxes
+            height={GRAPH_HEIGHT_LARGE}
+            showYAxis={true}
+            topPadding={topPadding}
+            width={graphWidth}
+            xLabelPositions={xLabelPositions}
+            yMax={yMax}
+            xLabels={xLabels}
+            todayIndex={todayIndex}
+          />
         </View>
       </BaseChart>
     );

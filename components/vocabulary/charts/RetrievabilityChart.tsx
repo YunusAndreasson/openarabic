@@ -6,7 +6,10 @@ import {
   EMPTY_STATE_MESSAGES,
   generateChartSubtitle,
 } from '@/components/vocabulary/shared/chartMessages';
-import { useGraphWidth } from '@/components/vocabulary/shared/constants';
+import {
+  calculateDataPointPositions,
+  useGraphWidth,
+} from '@/components/vocabulary/shared/constants';
 import { STRINGS } from '@/constants/strings';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -44,21 +47,21 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
 
     // Prepare data points for interactive tooltips
     const dataPoints: DataPoint<RetrievabilityRecord>[] = useMemo(() => {
-      return chartData.dataPoints
-        .map((point, index) => {
-          const data = retrievabilityData[index];
-          if (!data || data.wordCount === 0) return null;
-
-          return {
-            x: point.x,
-            y: point.y,
-            value: `${Math.round(point.retrievability)}%`,
-            label: data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            data: data,
-          } as DataPoint<RetrievabilityRecord>;
-        })
-        .filter((point): point is DataPoint<RetrievabilityRecord> => point !== null);
-    }, [chartData.dataPoints, retrievabilityData]);
+      // chartData.dataPoints only contains days with data, so we map directly
+      return chartData.dataPoints.map(point => ({
+        x: point.x,
+        y: point.y,
+        value: `${Math.round(point.retrievability)}%`,
+        label: point.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        data: {
+          date: point.date,
+          averageRetrievability: point.retrievability,
+          wordCount: 1, // Days with data always have wordCount > 0
+          criticalWords: 0, // Simplified for tooltip
+          urgentWords: 0, // Simplified for tooltip
+        },
+      }));
+    }, [chartData.dataPoints]);
 
     // 🚀 Unified chart with perfect grid system and danger zones:
     return (
@@ -67,13 +70,18 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
         dataPoints={chartData.dataPoints}
         performanceZones={chartData.dangerZones} // Danger zones for retrievability
         tooltipDataPoints={dataPoints}
-        xLabels={retrievabilityData
-          .filter(data => data && data.wordCount > 0)
-          .map(data => data.date.toLocaleDateString('en-US', { weekday: 'short' }))}
-        xLabelPositions={chartData.dataPoints.map(point => point.x)}
+        xLabels={retrievabilityData.map(data =>
+          data.date.toLocaleDateString('en-US', { weekday: 'short' })
+        )} // Show all 7 days including days with no data
+        xLabelPositions={retrievabilityData.map((_, index) => {
+          // Calculate positions for all 7 days for proper label alignment
+          const allDayPositions = calculateDataPointPositions(retrievabilityData.length);
+          return allDayPositions[index] || 0;
+        })}
         yMax={100}
         topPadding={0}
         graphWidth={graphWidth}
+        todayIndex={0} // Today is leftmost for future predictions
         title={CHART_LABELS.RETENTION}
         subtitle={subtitle}
         onInfoPress={onInfoPress}

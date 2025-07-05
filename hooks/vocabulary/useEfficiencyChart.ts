@@ -3,15 +3,16 @@ import { useMemo } from 'react';
 
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import {
-  useGraphWidth,
-  GRAPH_HEIGHT_LARGE,
+  calculateDataPointPositions,
   DAYS_7,
+  GRAPH_HEIGHT_LARGE,
+  useGraphWidth,
 } from '@/components/vocabulary/shared/constants';
 import {
-  generateDateRange,
-  isSameDay,
   calculateEfficiencyScore,
   createStandardizedPerformanceZones,
+  generateDateRange,
+  isSameDay,
 } from '@/components/vocabulary/shared/utils';
 import { TREND_CHANGE_THRESHOLD } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -96,14 +97,17 @@ export function useEfficiencyChart(studyWords: StudyWord[]): UseEfficiencyChartR
     }
 
     const maxEfficiency = Math.max(100, Math.max(...efficiencyData.map(d => d.averageEfficiency)));
-    const stepX = graphWidth / (efficiencyData.length - 1);
 
     // Create smooth curve using Skia Path
     const path = Skia.Path.Make();
     const points: { x: number; y: number; efficiency: number; date: Date }[] = [];
 
-    efficiencyData.forEach((data, index) => {
-      const x = index * stepX;
+    // Filter to only include days with actual data for rendering
+    const daysWithData = efficiencyData.filter(data => data.wordCount > 0);
+    const dataPointPositions = calculateDataPointPositions(daysWithData.length);
+
+    daysWithData.forEach((data, index) => {
+      const x = dataPointPositions[index] || 0;
       const y = GRAPH_HEIGHT_LARGE - (data.averageEfficiency / maxEfficiency) * GRAPH_HEIGHT_LARGE;
       points.push({ x, y, efficiency: data.averageEfficiency, date: data.date });
 

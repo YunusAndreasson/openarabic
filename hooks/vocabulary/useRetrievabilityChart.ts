@@ -3,9 +3,10 @@ import { useMemo } from 'react';
 
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import {
-  useGraphWidth,
-  GRAPH_HEIGHT_LARGE,
+  calculateDataPointPositions,
   DAYS_7,
+  GRAPH_HEIGHT_LARGE,
+  useGraphWidth,
 } from '@/components/vocabulary/shared/constants';
 import {
   calculateRetrievability,
@@ -13,8 +14,8 @@ import {
 } from '@/components/vocabulary/shared/utils';
 import {
   CRITICAL_RETRIEVABILITY_THRESHOLD,
-  URGENT_RETRIEVABILITY_THRESHOLD,
   TREND_CHANGE_THRESHOLD,
+  URGENT_RETRIEVABILITY_THRESHOLD,
 } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -46,9 +47,7 @@ export interface UseRetrievabilityChartResult {
 /**
  * Calculate retrievability forecast and chart metrics for vocabulary words.
  */
-export function useRetrievabilityChart(
-  studyWords: StudyWord[]
-): UseRetrievabilityChartResult {
+export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabilityChartResult {
   const chartColors = useChartColors();
   const graphWidth = useGraphWidth();
 
@@ -61,12 +60,17 @@ export function useRetrievabilityChart(
   );
 
   const retrievabilityData = useMemo<RetrievabilityForecast[]>(() => {
+    // Generate future dates starting from today for memory decay forecasting
     const today = new Date();
-    const dates = Array.from({ length: DAYS_7 }, (_, i) => {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
-      return d;
-    });
+    today.setHours(23, 59, 59, 999);
+
+    const dates: Date[] = [];
+    for (let i = 0; i < DAYS_7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i); // Future dates starting from today
+      date.setHours(23, 59, 59, 999);
+      dates.push(date);
+    }
 
     return dates.map(date => {
       let totalRetrievability = 0;
@@ -75,11 +79,7 @@ export function useRetrievabilityChart(
       let urgentWords = 0;
 
       validWords.forEach(word => {
-        const retrievability = calculateRetrievability(
-          word,
-          date,
-          word.lastReviewDate
-        );
+        const retrievability = calculateRetrievability(word, date, word.lastReviewDate);
         totalRetrievability += retrievability;
         wordCount++;
 
@@ -91,8 +91,7 @@ export function useRetrievabilityChart(
         }
       });
 
-      const averageRetrievability =
-        wordCount > 0 ? (totalRetrievability / wordCount) * 100 : 0;
+      const averageRetrievability = wordCount > 0 ? (totalRetrievability / wordCount) * 100 : 0;
       return { date, averageRetrievability, wordCount, criticalWords, urgentWords };
     });
   }, [validWords]);
@@ -123,13 +122,16 @@ export function useRetrievabilityChart(
       100,
       Math.max(...retrievabilityData.map(d => d.averageRetrievability))
     );
-    const stepX = graphWidth / (retrievabilityData.length - 1);
 
     const path = Skia.Path.Make();
     const points: { x: number; y: number; retrievability: number; date: Date }[] = [];
 
-    retrievabilityData.forEach((data, index) => {
-      const x = index * stepX;
+    // Filter to only include days with actual data for rendering
+    const daysWithData = retrievabilityData.filter(data => data.wordCount > 0);
+    const dataPointPositions = calculateDataPointPositions(daysWithData.length);
+
+    daysWithData.forEach((data, index) => {
+      const x = dataPointPositions[index] || 0;
       const y =
         GRAPH_HEIGHT_LARGE - (data.averageRetrievability / maxRetrievability) * GRAPH_HEIGHT_LARGE;
       points.push({ x, y, retrievability: data.averageRetrievability, date: data.date });
@@ -145,29 +147,28 @@ export function useRetrievabilityChart(
       }
     });
 
-    const performanceZones = createStandardizedPerformanceZones(
-      GRAPH_HEIGHT_LARGE,
-      0,
-      chartColors
-    );
+    const performanceZones = createStandardizedPerformanceZones(GRAPH_HEIGHT_LARGE, 0, chartColors);
 
-    const firstHalf = retrievabilityData.slice(0, 4);
-    const secondHalf = retrievabilityData.slice(4, 7);
+    // For future predictions, analyze the forecast trend
+    const todayData = retrievabilityData[0]; // Today (leftmost)
+    const futureData = retrievabilityData.slice(1); // Next 6 days
 
-    const currentRetrievability = retrievabilityData[0]?.averageRetrievability || 0;
-    const firstHalfAvg =
-      firstHalf.reduce((sum, day) => sum + day.averageRetrievability, 0) / firstHalf.length;
-    const secondHalfAvg =
-      secondHalf.reduce((sum, day) => sum + day.averageRetrievability, 0) / secondHalf.length;
+    const currentRetrievability = todayData?.averageRetrievability || 0;
+    const futureAvg =
+      futureData.length > 0
+        ? futureData.reduce((sum, day) => sum + day.averageRetrievability, 0) / futureData.length
+        : 0;
 
-    const change = firstHalfAvg - secondHalfAvg;
+    // Calculate trend based on future decay prediction
+    const change = futureAvg - currentRetrievability;
     const trend =
       change > TREND_CHANGE_THRESHOLD
-        ? 'improving'
+        ? 'improving' // Unlikely for memory decay, but possible with reviews
         : change < -TREND_CHANGE_THRESHOLD
-        ? 'declining'
+        ? 'declining' // Expected for memory decay
         : 'stable';
-    const criticalWords = retrievabilityData[0]?.criticalWords || 0;
+
+    const criticalWords = todayData?.criticalWords || 0;
 
     return {
       retrievabilityPath: path.toSVGString(),

@@ -6,7 +6,10 @@ import {
   EMPTY_STATE_MESSAGES,
   generateChartSubtitle,
 } from '@/components/vocabulary/shared/chartMessages';
-import { useGraphWidth } from '@/components/vocabulary/shared/constants';
+import {
+  calculateDataPointPositions,
+  useGraphWidth,
+} from '@/components/vocabulary/shared/constants';
 import { STRINGS } from '@/constants/strings';
 import { useEfficiencyChart, type EfficiencyRecord } from '@/hooks/vocabulary/useEfficiencyChart';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -36,21 +39,19 @@ export const EfficiencyChart = memo<EfficiencyChartProps>(
 
     // Prepare data points for interactive tooltips
     const dataPoints: DataPoint<EfficiencyRecord>[] = useMemo(() => {
-      return chartData.dataPoints
-        .map((point, index) => {
-          const data = efficiencyData[index];
-          if (!data || data.wordCount === 0) return null;
-
-          return {
-            x: point.x,
-            y: point.y,
-            value: `${Math.round(point.efficiency)}%`,
-            label: data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            data: data,
-          } as DataPoint<EfficiencyRecord>;
-        })
-        .filter((point): point is DataPoint<EfficiencyRecord> => point !== null);
-    }, [chartData.dataPoints, efficiencyData]);
+      // chartData.dataPoints only contains days with data, so we map directly
+      return chartData.dataPoints.map(point => ({
+        x: point.x,
+        y: point.y,
+        value: `${Math.round(point.efficiency)}%`,
+        label: point.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        data: {
+          date: point.date,
+          averageEfficiency: point.efficiency,
+          wordCount: 1, // Days with data always have wordCount > 0
+        },
+      }));
+    }, [chartData.dataPoints]);
 
     // 🚀 Unified chart with perfect grid system and performance zones:
     return (
@@ -59,10 +60,13 @@ export const EfficiencyChart = memo<EfficiencyChartProps>(
         dataPoints={chartData.dataPoints}
         performanceZones={chartData.performanceZones}
         tooltipDataPoints={dataPoints}
-        xLabels={efficiencyData
-          .filter(data => data && data.wordCount > 0)
-          .map(data => data.date.toLocaleDateString('en-US', { weekday: 'short' }))}
-        xLabelPositions={chartData.dataPoints.map(point => point.x)}
+        xLabels={efficiencyData.map(data =>
+          data.date.toLocaleDateString('en-US', { weekday: 'short' })
+        )}
+        xLabelPositions={efficiencyData.map((_, index) => {
+          const allDayPositions = calculateDataPointPositions(efficiencyData.length);
+          return allDayPositions[index] || 0;
+        })}
         yMax={100}
         topPadding={0}
         graphWidth={graphWidth}

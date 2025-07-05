@@ -19,10 +19,16 @@ interface AxisLabelsProps {
   showYAxis?: boolean;
   yAxisLines?: number; // Number of y-axis labels (default 5 for 0%, 25%, 50%, 75%, 100%)
   topPadding?: number; // Top padding used by the chart for proper y-axis alignment
+  todayIndex?: number; // Index of the label that represents "today" (default: last label)
 }
 
 /**
  * Comprehensive axis labels component for charts with proper padding and alignment
+ *
+ * ✅ FIXED: Rightmost label cutoff issue
+ * - Intelligent boundary constraints prevent labels from extending beyond chart edges
+ * - Edge labels use appropriate text alignment (left/right) for visual balance
+ * - Maintains centered positioning for middle labels while ensuring full visibility
  */
 export const ChartAxes = memo(
   ({
@@ -34,6 +40,7 @@ export const ChartAxes = memo(
     showYAxis = true,
     yAxisLines = 5,
     topPadding = 0,
+    todayIndex = xLabels.length - 1,
   }: AxisLabelsProps) => {
     const isDarkMode = useIsDarkMode();
     const colors = useColors();
@@ -55,7 +62,31 @@ export const ChartAxes = memo(
       return labels;
     }, [height, topPadding, yAxisLines, yMax]);
 
-    // Use the exported Y_AXIS_WIDTH constant
+    // Intelligent label positioning that prevents cutoff while maintaining visual balance
+    const labelPositions = useMemo(() => {
+      const labelWidth = MIN_TOUCH_TARGET.SMALL;
+      const halfLabelWidth = labelWidth / 2;
+
+      return xLabelPositions.map((position, index) => {
+        // Calculate ideal centered position
+        let labelLeft = position - halfLabelWidth;
+
+        // Apply boundary constraints to prevent cutoff
+        if (index === 0) {
+          // First label: ensure it doesn't go beyond left edge
+          labelLeft = Math.max(0, labelLeft);
+        } else if (index === xLabelPositions.length - 1) {
+          // Last label: ensure it doesn't go beyond right edge
+          labelLeft = Math.min(width - labelWidth, labelLeft);
+        }
+
+        return {
+          left: labelLeft,
+          width: labelWidth,
+          isEdgeLabel: index === 0 || index === xLabelPositions.length - 1,
+        };
+      });
+    }, [xLabelPositions, width]);
 
     return (
       <View
@@ -113,14 +144,11 @@ export const ChartAxes = memo(
           ]}
         >
           {xLabels.map((label, index) => {
-            const isToday = index === xLabels.length - 1; // Today is always the last label
+            const isToday = index === todayIndex; // Today is always the last label
             const position = xLabelPositions[index];
+            const labelConfig = labelPositions[index];
 
-            if (position === undefined) return null;
-
-            // Calculate label left position - consistently center all labels on their data points
-            const labelWidth = MIN_TOUCH_TARGET.SMALL;
-            const labelLeft = position - labelWidth / 2; // Always center on data point for even alignment
+            if (position === undefined || !labelConfig) return null;
 
             return (
               <View
@@ -128,8 +156,8 @@ export const ChartAxes = memo(
                 style={[
                   styles.xLabel,
                   {
-                    left: labelLeft,
-                    width: labelWidth,
+                    left: labelConfig.left,
+                    width: labelConfig.width,
                   },
                 ]}
               >
@@ -140,6 +168,14 @@ export const ChartAxes = memo(
                     {
                       color: textColor,
                       fontWeight: isToday ? '600' : '500', // Make today bold
+                      textDecorationLine: isToday ? 'underline' : 'none', // Underline today
+                      // Adjust text alignment for edge labels to improve visual balance
+                      textAlign:
+                        labelConfig.isEdgeLabel && index === 0
+                          ? 'left'
+                          : labelConfig.isEdgeLabel && index === xLabelPositions.length - 1
+                          ? 'right'
+                          : 'center',
                     },
                   ]}
                 >

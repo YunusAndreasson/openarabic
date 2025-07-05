@@ -5,14 +5,15 @@ import type { DataPoint } from '@/components/vocabulary/shared';
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import { generateChartSubtitle } from '@/components/vocabulary/shared/chartMessages';
 import {
-  GRAPH_HEIGHT_LARGE,
-  DAYS_7,
+  calculateDataPointPositions,
   CHART_VISUAL,
+  DAYS_7,
+  GRAPH_HEIGHT_LARGE,
   useGraphWidth,
 } from '@/components/vocabulary/shared/constants';
 import {
-  generateDateRange,
   createStandardizedPerformanceZones,
+  generateDateRange,
 } from '@/components/vocabulary/shared/utils';
 import { MASTERY_MILESTONES, MASTERY_TREND_THRESHOLD } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -77,9 +78,7 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
     () =>
       studyWords.map(word => ({
         createdAt: new Date(word.created_at),
-        lastReview: word.fsrs_last_review
-          ? new Date(word.fsrs_last_review)
-          : null,
+        lastReview: word.fsrs_last_review ? new Date(word.fsrs_last_review) : null,
         state: word.fsrs_state,
         stability: word.fsrs_stability ?? 0,
       })),
@@ -135,14 +134,16 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
     }
 
     const maxRate = Math.max(100, Math.max(...masteryData.map(d => d.masteryRate)));
-    const stepX = graphWidth / Math.max(1, masteryData.length - 1);
     const chartHeight = GRAPH_HEIGHT_LARGE - TOP_PADDING;
+
+    // Calculate positions with proper boundary padding to ensure data points are fully visible
+    const dataPointPositions = calculateDataPointPositions(masteryData.length);
 
     const path = Skia.Path.Make();
     const points: ChartPoint[] = [];
 
     masteryData.forEach((data, index) => {
-      const x = index * stepX;
+      const x = dataPointPositions[index] || 0;
       const y = TOP_PADDING + (chartHeight - (data.masteryRate / maxRate) * chartHeight);
       points.push({ x, y, rate: data.masteryRate, date: data.date });
 
@@ -160,18 +161,16 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
       }
     });
 
-    const milestones = MASTERY_MILESTONES
-      .map(target => {
-        const milestone = masteryData.find(d => d.masteryRate >= target);
-        if (milestone) {
-          const index = masteryData.indexOf(milestone);
-          const x = index * stepX;
-          const y = TOP_PADDING + (chartHeight - (milestone.masteryRate / maxRate) * chartHeight);
-          return { x, y, rate: target, achieved: true, date: milestone.date } as Milestone;
-        }
-        return { x: 0, y: 0, rate: target, achieved: false, date: new Date() } as Milestone;
-      })
-      .filter(m => m.achieved);
+    const milestones = MASTERY_MILESTONES.map(target => {
+      const milestone = masteryData.find(d => d.masteryRate >= target);
+      if (milestone) {
+        const index = masteryData.indexOf(milestone);
+        const x = dataPointPositions[index] || 0;
+        const y = TOP_PADDING + (chartHeight - (milestone.masteryRate / maxRate) * chartHeight);
+        return { x, y, rate: target, achieved: true, date: milestone.date } as Milestone;
+      }
+      return { x: 0, y: 0, rate: target, achieved: false, date: new Date() } as Milestone;
+    }).filter(m => m.achieved);
 
     const recent = masteryData.slice(-4);
     const older = masteryData.slice(-7, -4);

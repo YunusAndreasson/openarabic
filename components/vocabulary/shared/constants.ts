@@ -3,12 +3,41 @@ import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 // Graph dimensions - optimized for perfect alignment and space usage with golden ratio
 // For mobile-only apps, this can be a constant since screen doesn't rotate
 const X_AXIS_LABEL_PADDING = 6; // Reduced for tighter layout
+
 export const GRAPH_WIDTH =
   SCREEN_WIDTH -
   LAYOUT.SCREEN_EDGE_PADDING * 2 -
   LAYOUT.CARD.PADDING.MEDIUM * 2 -
   24 - // Reduced from 32 for more graph space
   X_AXIS_LABEL_PADDING;
+
+// Data point radius for boundary calculations
+const DATA_POINT_RADIUS = 3.5; // Must match CHART_VISUAL.DATA_POINT_SIZE
+export const DATA_POINT_PADDING = DATA_POINT_RADIUS * 2; // Full diameter padding for safe boundaries
+
+// Effective chart width accounting for data point boundaries
+export const EFFECTIVE_CHART_WIDTH = GRAPH_WIDTH - DATA_POINT_PADDING * 2;
+
+/**
+ * Calculate data point positions with proper boundary padding
+ * Ensures all data points are fully visible within the chart canvas
+ */
+export const calculateDataPointPositions = (dataCount: number): number[] => {
+  if (dataCount <= 1) {
+    return [GRAPH_WIDTH / 2]; // Center single point
+  }
+
+  const positions: number[] = [];
+  const stepX = EFFECTIVE_CHART_WIDTH / Math.max(1, dataCount - 1);
+
+  for (let i = 0; i < dataCount; i++) {
+    // Add padding to ensure data points don't get clipped at edges
+    const x = DATA_POINT_PADDING + i * stepX;
+    positions.push(x);
+  }
+
+  return positions;
+};
 
 // Golden ratio for optimal chart proportions
 const GOLDEN_RATIO = 1.618;
