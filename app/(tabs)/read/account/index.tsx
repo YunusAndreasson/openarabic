@@ -13,6 +13,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { TimePicker } from '@/components/TimePicker';
 import { Toggle } from '@/components/Toggle';
+import { AccountBadge } from '@/components/account';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useAccountScreen } from '@/hooks/account';
@@ -83,7 +84,7 @@ const AccountScreen: FC = () => {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: LAYOUT.SPACING.XLARGE,
+            paddingTop: LAYOUT.SPACING.XLARGE, // Restore normal top padding
             paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE,
           },
         ]}
@@ -92,6 +93,9 @@ const AccountScreen: FC = () => {
           showsVerticalScrollIndicator: false,
         }}
       >
+        {/* Account Badge - Premium header section */}
+        {user && <AccountBadge userEmail={user.email || 'user@example.com'} userId={user.id} />}
+
         {/* App Preferences - Core settings users adjust frequently */}
         <BaseCard includePressAnimation={false} shadowSize="small" style={styles.sectionContainer}>
           <View style={styles.linksContainer}>
@@ -282,18 +286,17 @@ const AccountScreen: FC = () => {
                 <View style={styles.cardLeft}>
                   <View style={styles.cardIconContainer}>
                     <Ionicons
-                      color={colors.text}
+                      color={colors.error}
                       name="log-out"
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
                   </View>
                   <View style={styles.signOutTextContainer}>
-                    <ThemedText type="body" weight="medium">
+                    <ThemedText type="body" weight="medium" style={{ color: colors.error }}>
                       {STRINGS.SIGN_OUT}
                     </ThemedText>
                     <ThemedText
-                      colorName="textTertiary"
-                      style={styles.userEmailText}
+                      style={[styles.userEmailText, { color: colors.error, opacity: 0.6 }]}
                       type="caption"
                     >
                       {user?.email || STRINGS.NO_EMAIL}
@@ -480,8 +483,9 @@ const styles = StyleSheet.create({
 
   clearButton: {
     alignSelf: 'flex-end',
-    minWidth: MIN_TOUCH_TARGET.LARGE + LAYOUT.SPACING.MICRO * 2,
-    paddingHorizontal: LAYOUT.SPACING.TINY,
+    maxWidth: MIN_TOUCH_TARGET.LARGE * 2,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.TINY,
   },
 });
 
