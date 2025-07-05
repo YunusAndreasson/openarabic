@@ -36,6 +36,15 @@ export function useArabicWordAnalysis(
     if (!enabled || !arabicWord || !englishTranslation) {
       return null;
     }
+
+    // CRITICAL RULE: Single English words should NEVER have grammar color-coding applied
+    // Check the English translation word count before doing any analysis
+    const wordCount = englishTranslation.trim().split(/\s+/).length;
+    if (wordCount === 1) {
+      // Return null analysis to prevent color-coding for single words
+      return null;
+    }
+
     return analyzeArabicWord(arabicWord, englishTranslation);
   }, [arabicWord, englishTranslation, enabled]);
 

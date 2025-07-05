@@ -201,6 +201,14 @@ When optimizing components (especially those >50ms render time):
 - Use consistent cache invalidation strategies
 - Update legacy query keys to match FSRS patterns
 
+### Arabic Word Analysis & Color-Coding
+
+- **CRITICAL RULE**: Single English words should NEVER have grammar color-coding applied
+- Color-coding is only educational when showing how multi-word phrases are constructed from Arabic components
+- Always check word count before applying color analysis: `text.trim().split(/\s+/).length === 1`
+- Single words should display in standard text color regardless of Arabic analysis results
+- This prevents misleading educational cues and maintains clarity for simple translations
+
 ### Audio & Media
 
 - Use expo-audio for all audio playbook

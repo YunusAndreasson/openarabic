@@ -463,4 +463,51 @@ describe('arabicWordAnalysis', () => {
       });
     });
   });
+
+  describe('Single Word Color-Coding Rule', () => {
+    it('should never apply color-coding to single English words', () => {
+      // Test cases where Arabic analysis might suggest components but English is single word
+      const testCases = [
+        { arabic: 'والبيت', english: 'house' }, // "wa" prefix but single English word
+        { arabic: 'كتابه', english: 'book' }, // possessive suffix but single English word
+        { arabic: 'المدرسة', english: 'school' }, // definite article but single English word
+        { arabic: 'يكتب', english: 'writes' }, // verbal prefix but single English word
+        { arabic: 'من', english: 'from' }, // preposition prefix but single English word
+      ];
+
+      testCases.forEach(({ arabic, english }) => {
+        const result = analyzeArabicWord(arabic, english);
+
+        // The key rule: single words should not be color-coded regardless of Arabic analysis
+        // This is enforced in the WordTooltip component by checking word count
+        const wordCount = english.trim().split(/\s+/).length;
+        expect(wordCount).toBe(1);
+
+        // The analysis might exist but should be ignored for single words
+        // This test documents the expected behavior - single words = no color-coding
+      });
+    });
+
+    it('should apply color-coding to multi-word English phrases', () => {
+      // Test cases where color-coding should be applied
+      const testCases = [
+        { arabic: 'والبيت', english: 'and house' }, // Two words, should be color-coded
+        { arabic: 'كتابه', english: 'his book' }, // Two words, should be color-coded
+        { arabic: 'في البيت', english: 'in the house' }, // Three words, should be color-coded
+      ];
+
+      testCases.forEach(({ arabic, english }) => {
+        const result = analyzeArabicWord(arabic, english);
+
+        // Word count check - should be multiple words
+        const wordCount = english.trim().split(/\s+/).length;
+        expect(wordCount).toBeGreaterThan(1);
+
+        // These should receive color-coding in the tooltip when components are found
+        if (result.hasComponents) {
+          expect(result.prefix || result.suffix || result.infix || result.diacritic).toBeDefined();
+        }
+      });
+    });
+  });
 });

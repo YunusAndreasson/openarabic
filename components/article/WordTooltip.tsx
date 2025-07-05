@@ -302,6 +302,20 @@ export const WordTooltip = memo(
 
     // Optimized English text rendering with stable dependencies
     const renderColorCodedEnglish = useMemo(() => {
+      // CRITICAL RULE: Single words should NEVER have grammar color-coding applied
+      // Check the actual tooltip text (not the analysis content) for word count
+      const wordCount = text.trim().split(/\s+/).length;
+      if (wordCount === 1) {
+        return (
+          <ThemedText
+            skipDefaultColor
+            style={[STATIC_STYLES.tooltipText, { color: colorValues.text }]}
+          >
+            {text}
+          </ThemedText>
+        );
+      }
+
       if (!formattedAnalysis?.sections?.length) {
         return (
           <ThemedText
@@ -315,6 +329,7 @@ export const WordTooltip = memo(
 
       const originalEnglish =
         formattedAnalysis.sections.find(s => s.type === 'original')?.content || text;
+
       const componentSections = formattedAnalysis.sections.filter(s => s.type === 'components');
 
       if (!componentSections.length) {
