@@ -18,7 +18,6 @@ import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { useReview } from '@/hooks/review';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import { selectionFeedback } from '@/utils/haptics';
 
 const baseStyles = StyleSheet.create({
   container: {
@@ -90,7 +89,6 @@ export default function ReviewScreen(): JSX.Element {
   // Handle management icon press - use the existing handleLongPress logic
   const handleManageWord = useCallback(() => {
     if (hasCurrentWord) {
-      selectionFeedback();
       handleLongPress();
     }
   }, [hasCurrentWord, handleLongPress]);

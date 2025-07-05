@@ -70,6 +70,7 @@ function ThemedButtonComponent({
   size = 'medium',
   textWeight = 'bold',
   disablePressAnimation = false,
+  hapticFeedback = true,
   ...props
 }: ThemedButtonProps): JSX.Element {
   const colors = useColors();
@@ -81,12 +82,14 @@ function ThemedButtonComponent({
 
   const handlePress = useCallback(
     (event: GestureResponderEvent) => {
-      selectionFeedback();
+      if (hapticFeedback) {
+        selectionFeedback();
+      }
       if (onPress && !disabled && !loading) {
         onPress(event);
       }
     },
-    [onPress, disabled, loading]
+    [onPress, disabled, loading, hapticFeedback]
   );
 
   const textColor = variant === 'filled' ? colors.background : colors.tint;

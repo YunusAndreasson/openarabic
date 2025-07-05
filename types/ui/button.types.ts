@@ -35,6 +35,8 @@ export interface BaseButtonProps
   textWeight?: ButtonTextWeight;
   /** Whether to disable the press animation */
   disablePressAnimation?: boolean;
+  /** Whether to enable haptic feedback on press */
+  hapticFeedback?: boolean;
 }
 
 /**

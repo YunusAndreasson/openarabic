@@ -15,6 +15,8 @@ interface PlayButtonProps
   extends Omit<BaseIconButtonProps<ComponentProps<typeof Ionicons>['name']>, 'icon'> {
   isPlaying?: boolean;
   iconColor?: string;
+  /** Whether to enable haptic feedback on press */
+  hapticFeedback?: boolean;
 }
 
 function getIconName(isPlaying: boolean) {
@@ -26,6 +28,7 @@ const PlayButton: FC<PlayButtonProps> = ({
   isPlaying = false,
   disabled = false,
   iconColor,
+  hapticFeedback = true,
 }) => {
   const colors = useColors();
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
@@ -34,9 +37,11 @@ const PlayButton: FC<PlayButtonProps> = ({
 
   const handlePress = useCallback(() => {
     if (disabled) return;
-    selectionFeedback();
+    if (hapticFeedback) {
+      selectionFeedback();
+    }
     onPress();
-  }, [disabled, onPress]);
+  }, [disabled, onPress, hapticFeedback]);
 
   const backgroundColor = colors.tint;
   const resolvedIconColor = iconColor || colors.text;

@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps, FC } from 'react';
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { selectionFeedback } from '@/utils/haptics';
 
 // ===== INTERFACES =====
 interface BatchedBottomActionColors {
@@ -129,16 +130,24 @@ const ReviewBottomActionsInternal: FC<ReviewBottomActionsProps> = memo(
       [batchedColors]
     );
 
+    // Handle press with haptic feedback
+    const handleManagePress = useCallback(() => {
+      if (hasCurrentWord) {
+        selectionFeedback();
+        onManageWord();
+      }
+    }, [hasCurrentWord, onManageWord]);
+
     // ===== MEMOIZED CHILD PROPS =====
     const touchableProps = useMemo(
       () => ({
         style: indicatorStyles.settingsIndicator,
-        onPress: onManageWord,
+        onPress: handleManagePress,
         disabled: !hasCurrentWord,
         hitSlop: LAYOUT.HIT_SLOP.MEDIUM,
         testID: 'manage-word-button',
       }),
-      [indicatorStyles.settingsIndicator, onManageWord, hasCurrentWord]
+      [indicatorStyles.settingsIndicator, handleManagePress, hasCurrentWord]
     );
 
     return (

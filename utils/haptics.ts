@@ -5,6 +5,27 @@ import * as Haptics from 'expo-haptics';
  * Based on semantic meaning rather than technical implementation
  */
 
+// Debounce mechanism to prevent double haptic feedback
+let isHapticBlocked = false;
+const HAPTIC_DEBOUNCE_MS = 50; // Minimum time between haptic feedback calls
+
+/**
+ * Internal function to check if haptic feedback should be triggered
+ * based on debounce timing
+ */
+const shouldTriggerHaptic = (): boolean => {
+  if (isHapticBlocked) {
+    return false;
+  }
+
+  isHapticBlocked = true;
+  setTimeout(() => {
+    isHapticBlocked = false;
+  }, HAPTIC_DEBOUNCE_MS);
+
+  return true;
+};
+
 /**
  * Selection feedback for subtle interactions like:
  * - Toggle switches
@@ -12,7 +33,9 @@ import * as Haptics from 'expo-haptics';
  * - Slider adjustments
  */
 export const selectionFeedback = (): void => {
-  Haptics.selectionAsync();
+  if (shouldTriggerHaptic()) {
+    Haptics.selectionAsync();
+  }
 };
 
 /**
@@ -22,7 +45,9 @@ export const selectionFeedback = (): void => {
  * - Navigation actions
  */
 export const lightFeedback = (): void => {
-  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  if (shouldTriggerHaptic()) {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }
 };
 
 /**
@@ -32,7 +57,9 @@ export const lightFeedback = (): void => {
  * - Content actions
  */
 export const mediumFeedback = (): void => {
-  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  if (shouldTriggerHaptic()) {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  }
 };
 
 /**
@@ -42,7 +69,9 @@ export const mediumFeedback = (): void => {
  * - Completion states
  */
 export const successFeedback = (): void => {
-  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  if (shouldTriggerHaptic()) {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }
 };
 
 /**
@@ -52,5 +81,40 @@ export const successFeedback = (): void => {
  * - Critical warnings
  */
 export const errorFeedback = (): void => {
-  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+  if (shouldTriggerHaptic()) {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+  }
+};
+
+/**
+ * Creates a haptic feedback function that can be disabled
+ * Used for UI components that should have optional haptic feedback
+ */
+export const createOptionalHapticFeedback = (
+  feedbackType: 'selection' | 'light' | 'medium' | 'success' | 'error' = 'selection'
+) => {
+  const feedbackMap = {
+    selection: selectionFeedback,
+    light: lightFeedback,
+    medium: mediumFeedback,
+    success: successFeedback,
+    error: errorFeedback,
+  };
+
+  return (enabled: boolean = true) => {
+    if (enabled) {
+      feedbackMap[feedbackType]();
+    }
+  };
+};
+
+/**
+ * Utility to disable haptic feedback for a specific duration
+ * Useful for preventing feedback during rapid interactions
+ */
+export const disableHapticFeedback = (durationMs: number = 100): void => {
+  isHapticBlocked = true;
+  setTimeout(() => {
+    isHapticBlocked = false;
+  }, durationMs);
 };
