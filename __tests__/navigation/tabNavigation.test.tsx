@@ -164,7 +164,7 @@ describe('Tab navigation', () => {
     fireEvent.press(getByText('Playlist'));
     expect(getByText('LISTEN_MOCK')).toBeTruthy();
 
-    fireEvent.press(getByText('Practice'));
+    fireEvent.press(getByText('Study'));
     expect(getByText('PRACTICE_MOCK')).toBeTruthy();
   });
 });

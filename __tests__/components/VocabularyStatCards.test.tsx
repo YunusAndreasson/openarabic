@@ -4,6 +4,15 @@ import React from 'react';
 import { VocabularyStatCards } from '../../components/vocabulary/VocabularyStatCards';
 import type { StudyWord } from '../../types/vocabulary.types';
 
+// Mock expo-router
+jest.mock('expo-router', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    back: jest.fn(),
+  }),
+}));
+
 // Mock dependencies
 jest.mock('@/hooks/theme/useColors', () => ({
   useColors: () => ({
