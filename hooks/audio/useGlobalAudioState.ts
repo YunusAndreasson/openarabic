@@ -2,12 +2,11 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { AUDIO_STATES } from '@/constants/audio';
 import { useArticleData } from '@/hooks/articles/useArticleData';
+import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
+import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useListenScreen } from '@/hooks/listen/useListenScreen';
 import { openNowPlayingModal } from '@/utils/navigationHelpers';
-
-import { useSimpleAudioPlayer } from './useSimpleAudioPlayer';
-import { useSleepTimer } from './useSleepTimer';
 
 export interface GlobalAudioState {
   // Audio state
@@ -50,13 +49,12 @@ export interface GlobalAudioState {
 }
 
 /**
- * Global hook for managing audio state across the entire app
- * Provides mini-player with all necessary data and controls
+ * Global audio state hook - provides unified audio state across the app
+ * Integrates with mini-player, sleep timer, and navigation
  */
 export function useGlobalAudioState(): GlobalAudioState {
   const { user } = useAuth();
   const audioPlayer = useSimpleAudioPlayer();
-  const { audioState } = audioPlayer;
 
   // Sleep timer modal state
   const [showSleepTimerModal, setShowSleepTimerModal] = useState(false);
@@ -69,18 +67,14 @@ export function useGlobalAudioState(): GlobalAudioState {
     audioPlayer.stop();
   });
 
-  // Extract current article ID and get article data
+  // Get current article ID from audio player
   const currentArticleId = useMemo(() => {
-    const articleIdString = audioPlayer.metadata.articleId;
+    const articleIdString = audioPlayer.currentTrack?.articleId?.toString();
     return articleIdString ? parseInt(articleIdString, 10) : null;
-  }, [audioPlayer.metadata.articleId]);
+  }, [audioPlayer.currentTrack?.articleId]);
 
-  const { article } = useArticleData(currentArticleId || undefined, user?.id);
-
-  // Determine if audio is currently playing
-  const isPlaying = useMemo(() => {
-    return audioState === AUDIO_STATES.PLAYING;
-  }, [audioState]);
+  // Get current article data
+  const { article: articleData } = useArticleData(currentArticleId || undefined, user?.id);
 
   // Calculate queue position
   const queuePosition = useMemo(() => {
@@ -108,21 +102,21 @@ export function useGlobalAudioState(): GlobalAudioState {
     if (!currentArticleId) return null;
 
     // If we have full article data, use it - images are guaranteed to be available
-    if (article) {
+    if (articleData) {
       return {
         id: currentArticleId,
-        title: article.title,
-        author: article.author.name,
-        image_url: String(article.image_url),
+        title: articleData.title,
+        author: articleData.author.name,
+        image_url: String(articleData.image_url),
       };
     }
 
     // INSTANT MINI-PLAYER: Use fallback data from audio metadata while article loads
     // This eliminates the 500ms delay by showing mini-player immediately when audio starts
-    if (audioPlayer.metadata.articleTitle && (isPlaying || audioPlayer.isLoading)) {
+    if (audioPlayer.currentTrack?.title && (audioPlayer.isPlaying || audioPlayer.isLoading)) {
       return {
         id: currentArticleId,
-        title: audioPlayer.metadata.articleTitle,
+        title: audioPlayer.currentTrack.title,
         author: 'Loading...', // Temporary until article data loads
         image_url: 'https://via.placeholder.com/400x300/5B7F68/FFFFFF?text=Audio', // Tint-colored placeholder
       };
@@ -130,22 +124,22 @@ export function useGlobalAudioState(): GlobalAudioState {
 
     return null;
   }, [
-    article,
+    articleData,
     currentArticleId,
-    audioPlayer.metadata.articleTitle,
-    isPlaying,
+    audioPlayer.currentTrack?.title,
+    audioPlayer.isPlaying,
     audioPlayer.isLoading,
   ]);
 
   // Action handlers
   const handlePlayPause = useCallback(async () => {
-    if (isPlaying) {
+    if (audioPlayer.isPlaying) {
       await audioPlayer.stop(); // Use stop instead of pause since there's no resume
     } else {
       // For now, just stop - resume functionality would need to be implemented
       await audioPlayer.stop();
     }
-  }, [isPlaying, audioPlayer]);
+  }, [audioPlayer.isPlaying, audioPlayer]);
 
   const handleTimerPress = useCallback(() => {
     setShowSleepTimerModal(true);
@@ -181,11 +175,15 @@ export function useGlobalAudioState(): GlobalAudioState {
   }, []);
 
   return {
-    isPlaying,
-    audioState,
+    isPlaying: audioPlayer.isPlaying,
+    audioState: audioPlayer.isPlaying
+      ? AUDIO_STATES.PLAYING
+      : audioPlayer.isLoading
+      ? AUDIO_STATES.LOADING
+      : AUDIO_STATES.IDLE,
     currentArticle,
     queuePosition,
-    position: audioPlayer.position,
+    position: audioPlayer.currentTime,
     duration: audioPlayer.duration,
     isTimerActive: sleepTimer.state.isActive,
     showSleepTimerModal,

@@ -23,7 +23,19 @@ export const useListenScreen = () => {
   const [playbackMode, setPlaybackMode] = useState<'all' | 'none'>('none');
 
   const audioPlayer = useSimpleAudioPlayer();
-  const { duration, position, metadata, audioState, isLoading } = audioPlayer;
+  const { duration, currentTime, currentTrack, isPlaying, isLoading } = audioPlayer;
+
+  // Legacy compatibility - map to old interface
+  const position = currentTime;
+  const metadata = {
+    articleId: currentTrack?.articleId?.toString() || null,
+    articleTitle: currentTrack?.title || null,
+  };
+  const audioState = isPlaying
+    ? AUDIO_STATES.PLAYING
+    : isLoading
+    ? AUDIO_STATES.LOADING
+    : AUDIO_STATES.IDLE;
 
   const isStartingPlayback = isLoading;
 
@@ -147,7 +159,7 @@ export const useListenScreen = () => {
     loadingTimeoutsRef.current = [];
 
     // Get current values directly instead of relying on captured values
-    const currentAudioState = audioPlayer.audioState;
+    const currentAudioState = audioState;
     const currentPlaybackMode = playbackMode;
     const currentTracks = sortedEnhancedTracks;
 

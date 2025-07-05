@@ -2,13 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { JSX } from 'react';
 import React, { memo, useCallback } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
-import Animated, {
-  FadeInUp,
-  FadeOutDown,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ProgressBar } from '@/components/ProgressBar';
@@ -46,9 +40,8 @@ const ARTWORK_SIZE = LAYOUT.CARD.IMAGE.MINI_PLAYER; // 40px (48 - 8) - responsiv
 const PROGRESS_HEIGHT = LAYOUT.PROGRESS_BAR.HEIGHT; // 4px - responsive to base unit
 const BUTTON_SIZE = LAYOUT.BUTTON.HEIGHT.MEDIUM; // 44px - responsive to touch targets
 
-// Animation constants
+// Simplified animation constants
 const ANIMATION_CONFIG = {
-  duration: 250,
   entering: 350,
   exiting: 200,
 } as const;
@@ -66,28 +59,16 @@ const MiniPlayerComponent = ({
 }: MiniPlayerProps): JSX.Element => {
   const colors = useColors();
 
-  // Press animation
-  const pressScale = useSharedValue(1);
-
-  const pressAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pressScale.value }],
-  }));
-
-  // Handle mini-player press with scale animation
+  // Simplified mini-player press handler without animations
   const handleMiniPlayerPress = useCallback(() => {
     selectionFeedback();
-
-    // Quick scale animation
-    pressScale.value = withTiming(0.98, { duration: 100 }, () => {
-      pressScale.value = withTiming(1, { duration: 150 });
-    });
 
     if (onMiniPlayerPress) {
       onMiniPlayerPress();
     } else {
       onExpandPress();
     }
-  }, [onMiniPlayerPress, onExpandPress, pressScale]);
+  }, [onMiniPlayerPress, onExpandPress]);
 
   // Handle play/pause with haptic feedback
   const handlePlayPause = useCallback(
@@ -99,21 +80,24 @@ const MiniPlayerComponent = ({
     [onPlayPause]
   );
 
-  // Calculate progress percentage
+  // Calculate progress percentage with safety checks
   const progressPercentage = React.useMemo(() => {
-    if (!duration || duration <= 0) return 0;
-    return Math.min(100, (position / duration) * 100);
+    if (!duration || duration <= 0 || !isFinite(duration)) return 0;
+    if (!position || position < 0 || !isFinite(position)) return 0;
+    const progress = Math.min(100, (position / duration) * 100);
+    return isFinite(progress) ? progress : 0;
   }, [position, duration]);
 
-  // Format time display
+  // Format time display with safety checks
   const timeDisplay = React.useMemo(() => {
     const formatTime = (seconds: number) => {
+      if (!isFinite(seconds) || seconds < 0) return '0:00';
       const mins = Math.floor(seconds / 60);
       const secs = Math.floor(seconds % 60);
       return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
-    if (!duration) return '';
+    if (!duration || !isFinite(duration)) return '';
     return `${formatTime(position)} / ${formatTime(duration)}`;
   }, [position, duration]);
 
@@ -123,116 +107,113 @@ const MiniPlayerComponent = ({
       exiting={FadeOutDown.duration(ANIMATION_CONFIG.exiting)}
       style={[styles.container, { bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY }]}
     >
-      <Animated.View style={pressAnimatedStyle}>
-        <Pressable
-          onPress={handleMiniPlayerPress}
-          style={[
-            styles.card,
-            {
-              backgroundColor: colors.elevation2,
-              borderColor: colors.border,
-              ...LAYOUT.ELEVATION.MEDIUM,
-            },
-          ]}
-        >
-          {/* Main Content Row */}
-          <View style={styles.contentRow}>
-            {/* Artwork */}
-            <View style={styles.artworkContainer}>
-              <EnhancedImage
-                source={article.image_url}
-                style={styles.artwork}
-                contentFit="cover"
-                cachePolicy="disk"
-              />
-            </View>
+      <Pressable
+        onPress={handleMiniPlayerPress}
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.elevation2,
+            borderColor: colors.border,
+            ...LAYOUT.ELEVATION.MEDIUM,
+          },
+        ]}
+      >
+        {/* Main Content Row */}
+        <View style={styles.contentRow}>
+          {/* Artwork */}
+          <View style={styles.artworkContainer}>
+            <EnhancedImage
+              source={article.image_url}
+              style={styles.artwork}
+              contentFit="cover"
+              cachePolicy="disk"
+            />
+          </View>
 
-            {/* Text Content and Time Display Column */}
-            <View style={styles.textColumn}>
-              {/* Text Content */}
-              <View style={styles.textContent}>
+          {/* Text Content and Time Display Column */}
+          <View style={styles.textColumn}>
+            {/* Text Content */}
+            <View style={styles.textContent}>
+              <ThemedText
+                colorName="headingText"
+                style={styles.title}
+                type="heading3"
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {article.title}
+              </ThemedText>
+
+              <View style={styles.metaRow}>
                 <ThemedText
-                  colorName="headingText"
-                  style={styles.title}
-                  type="heading3"
+                  colorName="secondaryText"
+                  style={styles.artist}
+                  type="caption"
                   numberOfLines={1}
                   ellipsizeMode="tail"
                 >
-                  {article.title}
+                  {article.author}
                 </ThemedText>
-
-                <View style={styles.metaRow}>
-                  <ThemedText
-                    colorName="secondaryText"
-                    style={styles.artist}
-                    type="caption"
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                  >
-                    {article.author}
-                  </ThemedText>
-                </View>
               </View>
-
-              {/* Time display - aligned with text content left margin */}
-              {timeDisplay && (
-                <ThemedText colorName="secondaryText" style={styles.timeDisplay} type="caption">
-                  {timeDisplay}
-                </ThemedText>
-              )}
             </View>
 
-            {/* Controls */}
-            <View style={styles.controlsContainer}>
-              {/* Timer button - always visible with state indication */}
-              <Pressable
-                onPress={event => {
-                  event.stopPropagation();
-                  selectionFeedback();
-                  onTimerPress();
-                }}
-                style={[
-                  styles.timerButton,
-                  {
-                    backgroundColor: isTimerActive ? colors.warning : colors.elevation3, // Subtle background when inactive
-                  },
-                ]}
-              >
-                <Ionicons
-                  name="timer"
-                  size={14} // Increased from 12px back to 14px for better visibility
-                  color={isTimerActive ? colors.background : colors.secondaryText}
-                />
-              </Pressable>
-
-              {/* Play/Pause button */}
-              <Pressable
-                onPress={handlePlayPause}
-                style={[styles.playButton, { backgroundColor: colors.tint }]}
-              >
-                <Ionicons
-                  name={isPlaying ? 'pause' : 'play'}
-                  size={18}
-                  color={colors.background}
-                  style={!isPlaying && styles.playIconOffset}
-                />
-              </Pressable>
-            </View>
+            {/* Time display - aligned with text content left margin */}
+            {timeDisplay && (
+              <ThemedText colorName="secondaryText" style={styles.timeDisplay} type="caption">
+                {timeDisplay}
+              </ThemedText>
+            )}
           </View>
 
-          {/* Progress Bar - at bottom like Apple Music */}
-          <View style={styles.progressContainer}>
-            <ProgressBar
-              progress={progressPercentage}
-              height={PROGRESS_HEIGHT}
-              backgroundColor={colors.elevation3}
-              fillColor={colors.tint}
-              style={styles.progressBar}
-              animationTriggered={progressPercentage > 0}
-            />
+          {/* Controls */}
+          <View style={styles.controlsContainer}>
+            {/* Timer button - always visible with state indication */}
+            <Pressable
+              onPress={event => {
+                event.stopPropagation();
+                selectionFeedback();
+                onTimerPress();
+              }}
+              style={[
+                styles.timerButton,
+                {
+                  backgroundColor: isTimerActive ? colors.warning : colors.elevation3, // Subtle background when inactive
+                },
+              ]}
+            >
+              <Ionicons
+                name="timer"
+                size={14} // Increased from 12px back to 14px for better visibility
+                color={isTimerActive ? colors.background : colors.secondaryText}
+              />
+            </Pressable>
+
+            {/* Play/Pause button */}
+            <Pressable
+              onPress={handlePlayPause}
+              style={[styles.playButton, { backgroundColor: colors.tint }]}
+            >
+              <Ionicons
+                name={isPlaying ? 'pause' : 'play'}
+                size={18}
+                color={colors.background}
+                style={!isPlaying && styles.playIconOffset}
+              />
+            </Pressable>
           </View>
-        </Pressable>
-      </Animated.View>
+        </View>
+
+        {/* Progress Bar - at bottom like Apple Music */}
+        <View style={styles.progressContainer}>
+          <ProgressBar
+            progress={progressPercentage}
+            height={PROGRESS_HEIGHT}
+            style={styles.progressBar}
+            fillColor={colors.tint}
+            backgroundColor={colors.elevation3}
+          />
+        </View>
+      </Pressable>
     </Animated.View>
   );
 };

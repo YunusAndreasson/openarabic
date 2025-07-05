@@ -9,7 +9,6 @@ import { ArticleContent } from '@/components/article/ArticleContent';
 import { MiniPlayer } from '@/components/audio';
 import { ToastProvider, useToast } from '@/components/providers';
 import { TIMING_CONFIG } from '@/constants/animation';
-import { AUDIO_STATES } from '@/constants/audio';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
@@ -40,7 +39,6 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
 
   // Audio player for single article playback
   const audioPlayer = useSimpleAudioPlayer();
-  const { audioState } = audioPlayer;
 
   const { handleScroll } = useHeaderVisibility();
 
@@ -68,14 +66,13 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     refetchReadingListStatus,
   } = useArticleData(articleId, user?.id);
 
-  // Track if current article audio is playing
+  // Check if current article is being played
   const isCurrentArticlePlaying = useMemo(() => {
-    if (audioState !== AUDIO_STATES.PLAYING) return false;
-    const currentArticleId = audioPlayer.metadata.articleId
-      ? parseInt(audioPlayer.metadata.articleId, 10)
+    const currentArticleId = audioPlayer.currentTrack?.articleId
+      ? parseInt(audioPlayer.currentTrack.articleId.toString(), 10)
       : null;
     return currentArticleId === articleId;
-  }, [audioState, audioPlayer.metadata.articleId, articleId]);
+  }, [audioPlayer.isPlaying, audioPlayer.currentTrack?.articleId, articleId]);
 
   const [activeTooltip, setActiveTooltip] = useState<{
     word: SentenceWord;

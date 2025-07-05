@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -52,43 +52,28 @@ export default function NowPlayingModal() {
   // Audio player
   const audioPlayer = useSimpleAudioPlayer();
 
-  // Track progress with our own timer when audio is playing
-  const [simulatedPosition, setSimulatedPosition] = useState<number>(0);
-
-  useEffect(() => {
-    const isPlaying = audioPlayer.audioState === 'playing' || params.audioState === 'playing';
-
-    if (isPlaying) {
-      const startPosition = params.position
-        ? parseFloat(params.position) / 1000
-        : audioPlayer.position || 0;
-
-      setSimulatedPosition(startPosition);
-
-      const interval = setInterval(() => {
-        setSimulatedPosition(prev => prev + 0.1);
-      }, 100);
-
-      return () => clearInterval(interval);
+  // Get current position from audio player or params
+  const position = useMemo(() => {
+    if (params.position) {
+      return parseFloat(params.position) / 1000; // Convert ms to seconds
     }
+    return audioPlayer.currentTime || 0;
+  }, [audioPlayer.currentTime, params.position]);
 
-    return () => {};
-  }, [audioPlayer.audioState, params.audioState, params.position, audioPlayer.position]);
+  // Get duration from audio player or params
+  const duration = useMemo(() => {
+    if (params.duration) {
+      return parseFloat(params.duration) / 1000; // Convert ms to seconds
+    }
+    return audioPlayer.duration || 0;
+  }, [audioPlayer.duration, params.duration]);
 
-  // Simplified data calculations - audio is guaranteed to be available
-  const position =
-    simulatedPosition > 0
-      ? simulatedPosition
-      : audioPlayer.position || (params.position ? parseFloat(params.position) / 1000 : 0);
-
-  const duration =
-    audioPlayer.duration || (params.duration ? parseFloat(params.duration) / 1000 : 0);
-
-  const articleId = audioPlayer.metadata.articleId
-    ? parseInt(audioPlayer.metadata.articleId, 10)
+  // Get article ID from audio player or params
+  const articleId = audioPlayer.currentTrack?.articleId
+    ? parseInt(audioPlayer.currentTrack.articleId.toString(), 10)
     : params.articleId
     ? parseInt(params.articleId, 10)
-    : 0;
+    : undefined;
 
   const { article, sortedSentences, sentenceWordsMap } = useArticleData(articleId, user?.id);
 
@@ -166,15 +151,15 @@ export default function NowPlayingModal() {
 
   // Determine if we're actually loading (more reliable)
   const isActuallyLoading = useMemo(() => {
-    const hasValidAudio = duration > 0 || position > 0 || audioPlayer.audioState === 'playing';
-    const hasValidMetadata = !!audioPlayer.metadata.articleId;
+    const hasValidAudio = duration > 0 || position > 0 || audioPlayer.isPlaying;
+    const hasValidMetadata = !!audioPlayer.currentTrack?.articleId;
     return audioPlayer.isLoading && !hasValidAudio && !hasValidMetadata;
   }, [
     audioPlayer.isLoading,
     duration,
     position,
-    audioPlayer.audioState,
-    audioPlayer.metadata.articleId,
+    audioPlayer.isPlaying,
+    audioPlayer.currentTrack?.articleId,
   ]);
 
   return (

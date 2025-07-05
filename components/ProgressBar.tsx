@@ -1,92 +1,46 @@
-import { useMemo, useEffect, useRef, memo } from 'react';
-import type { ViewStyle, StyleProp } from 'react-native';
+import { memo, useMemo } from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
-import Animated, { cancelAnimation } from 'react-native-reanimated';
 
-import { PROGRESS_BAR_ANIMATION_DURATION } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
-import { useProgressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ProgressBarProps } from '@/types/ui/loader.types';
 
-// Progress change required to trigger an animation (0-10000 scale)
-const PROGRESS_THRESHOLD = 100; // 1%
-
 /**
- * A customizable progress bar component that can be used to display the
- * progress of an action or process.
+ * A simple, crash-resistant progress bar component that displays progress
+ * without complex animations that could cause crashes.
  *
  * Features:
  * - Theme integration with light/dark mode
  * - Customizable colors and dimensions
- * - Smooth animation support
- * - Optional shadow effects based on platform
+ * - No animations to prevent crashes
+ * - Crash prevention for invalid values
  */
 function ProgressBarComponent({
-  progress: rawProgress, // Rename to emphasize we're not using it directly
+  progress: rawProgress,
   height = LAYOUT.SPACING.MEDIUM,
   style,
   fillStyle,
   backgroundColor,
   fillColor,
-  animationTriggered = false,
-  animationDuration = PROGRESS_BAR_ANIMATION_DURATION,
+  animationTriggered = false, // Ignored - no animations
+  animationDuration = 0, // Ignored - no animations
 }: ProgressBarProps) {
+  // Ignore animation parameters to prevent linter errors
+  void animationTriggered;
+  void animationDuration;
   const colors = useColors();
-  // CRITICAL: Intercept the incoming value and convert to integer immediately
-  // This prevents the native bridge from seeing floating point values at all
-  const intProgress = useMemo(() => {
-    // Handle invalid inputs
-    if (typeof rawProgress !== 'number' || isNaN(rawProgress)) {
+
+  // CRITICAL: Safe progress calculation without shared values
+  const safeProgress = useMemo(() => {
+    // Handle invalid inputs that could crash
+    if (typeof rawProgress !== 'number' || isNaN(rawProgress) || !isFinite(rawProgress)) {
       return 0;
     }
 
-    // Convert to integer (preserving 2 decimal places of precision)
-    // Clamping 0-100 range to 0-10000 integers
-    return Math.max(0, Math.min(10000, Math.round(rawProgress * 100)));
+    // Clamp to 0-100 range and ensure it's a safe number
+    return Math.max(0, Math.min(100, rawProgress));
   }, [rawProgress]);
-
-  // Store the previous progress value to avoid unnecessary animations
-  const prevProgressRef = useRef(intProgress);
-
-  // Use the standardized progress animation hook
-  const {
-    animatedStyle,
-    updateProgress,
-    progress: animatedProgress,
-  } = useProgressAnimation(intProgress, animationDuration);
-
-  // Effect to handle animation when triggered or when progress changes
-  useEffect(() => {
-    // Always ensure progress doesn't go backwards
-    const targetProgress = Math.max(intProgress, prevProgressRef.current);
-
-    const progressDelta = targetProgress - prevProgressRef.current;
-
-    // Determine if animation should be immediate or animated
-    const shouldAnimate =
-      animationTriggered &&
-      progressDelta >= PROGRESS_THRESHOLD &&
-      progressDelta > 0;
-
-    if (shouldAnimate) {
-      // Animate to the new target value
-      updateProgress(targetProgress);
-    } else {
-      // Direct update without animation - ensures we're always showing the correct value
-      // But never allow progress to decrease
-      cancelAnimation(animatedProgress);
-      animatedProgress.value = targetProgress;
-    }
-
-    // Update the previous progress ref for the next comparison
-    prevProgressRef.current = targetProgress;
-
-    // Clean up animation when component unmounts or key changes
-    return () => {
-      cancelAnimation(animatedProgress);
-    };
-  }, [intProgress, animationTriggered, animatedProgress, updateProgress]);
 
   // Determine background color based on theme if not provided
   const bgColor = useMemo(() => {
@@ -99,7 +53,7 @@ function ProgressBarComponent({
     return fillColor || colors.progressIndicator;
   }, [fillColor, colors.progressIndicator]);
 
-  // Memoize all styles at once to prevent unnecessary style object creation
+  // Simple, safe styles without animations
   const styles = useMemo(
     () => ({
       container: [
@@ -110,31 +64,24 @@ function ProgressBarComponent({
           borderRadius: height / 2,
         },
         style,
-      ],
-      fillContainer: [
-        defaultStyles.fillContainer,
-        {
-          borderRadius: height / 2,
-        },
-      ],
+      ] as StyleProp<ViewStyle>,
       fill: [
         defaultStyles.fill,
-        animatedStyle,
         {
           backgroundColor: progressFillColor,
           borderRadius: height / 2,
+          // CRITICAL: Use simple width percentage instead of animated values
+          width: `${safeProgress}%`,
         },
         fillStyle,
-      ],
+      ] as StyleProp<ViewStyle>,
     }),
-    [height, bgColor, style, animatedStyle, progressFillColor, fillStyle]
+    [height, bgColor, style, progressFillColor, fillStyle, safeProgress]
   );
 
   return (
-    <View style={styles.container as StyleProp<ViewStyle>}>
-      <View style={styles.fillContainer}>
-        <Animated.View style={styles.fill} />
-      </View>
+    <View style={styles.container}>
+      <View style={styles.fill} />
     </View>
   );
 }
@@ -146,11 +93,6 @@ const defaultStyles = StyleSheet.create({
   },
   fill: {
     height: '100%',
-  },
-  fillContainer: {
-    flexDirection: 'row',
-    height: '100%',
-    width: '100%',
   },
 });
 

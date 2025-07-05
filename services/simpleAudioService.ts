@@ -5,7 +5,6 @@ import { handleError } from '@/utils/errorHandling';
 
 /**
  * Simple audio service - single source of truth for native audio player
- * No complex state management, just direct player control
  */
 class SimpleAudioService {
   private currentPlayer: any = null;
@@ -34,10 +33,12 @@ class SimpleAudioService {
       await setAudioModeAsync({
         playsInSilentMode: true,
         allowsRecording: false,
+        shouldPlayInBackground: false,
+        shouldRouteThroughEarpiece: false,
       });
       this.audioSessionConfigured = true;
     } catch (error) {
-      console.log('⚠️ [SIMPLE AUDIO] Failed to configure audio session:', error);
+      console.log('⚠️ [AUDIO] Failed to configure audio session:', error);
     }
   }
 
@@ -54,22 +55,20 @@ class SimpleAudioService {
         await this.stopInternal();
       }
 
-      // Create new player if needed
-      if (!this.currentPlayer || this.currentTrack?.audioUrl !== track.audioUrl) {
-        this.currentPlayer = createAudioPlayer(track.audioUrl);
-        this.currentTrack = track;
-      }
+      // Create player
+      this.currentPlayer = createAudioPlayer(track.audioUrl);
+      this.currentTrack = track;
 
       // Update status to loading
-      this.updateStatus({ isLoading: true, isPlaying: false, currentTrack: track });
+      this.updateStatus({ isLoading: true, isPlaying: false, currentTrack: this.currentTrack });
 
       // Start playback
       await this.currentPlayer.play();
 
-      // Start polling for status updates since events aren't working reliably
+      // Start polling for status updates
       this.startStatusPolling();
 
-      // Set timeout to stop loading if audio doesn't start within 10 seconds
+      // Set loading timeout
       this.loadingTimeout = setTimeout(() => {
         if (this.status.isLoading) {
           this.updateStatus({ isLoading: false, isPlaying: false });
@@ -79,11 +78,90 @@ class SimpleAudioService {
 
       return true;
     } catch (error) {
-      console.log('❌ [SIMPLE AUDIO] Play failed:', error);
       this.updateStatus({ isLoading: false, isPlaying: false });
+
+      if (this.currentPlayer) {
+        try {
+          await this.stopInternal();
+        } catch {
+          // Ignore cleanup errors
+        }
+      }
+
       handleError(error as Error, { toastMessage: 'Failed to start audio playback' });
       return false;
     }
+  }
+
+  /**
+   * Stop playback
+   */
+  async stop(): Promise<void> {
+    try {
+      await this.stopInternal();
+      this.updateStatus({ isPlaying: false, isLoading: false, currentTrack: null });
+    } catch {
+      this.updateStatus({ isPlaying: false, isLoading: false, currentTrack: null });
+    }
+  }
+
+  /**
+   * Pause playback
+   */
+  async pause(): Promise<void> {
+    try {
+      if (this.currentPlayer && typeof this.currentPlayer.pause === 'function') {
+        await this.currentPlayer.pause();
+        this.updateStatus({ isPlaying: false });
+      }
+    } catch {
+      this.updateStatus({ isPlaying: false });
+    }
+  }
+
+  /**
+   * Resume playback
+   */
+  async resume(): Promise<void> {
+    try {
+      if (this.currentPlayer && typeof this.currentPlayer.play === 'function') {
+        await this.currentPlayer.play();
+        this.updateStatus({ isPlaying: true });
+      }
+    } catch {
+      this.updateStatus({ isPlaying: false });
+    }
+  }
+
+  /**
+   * Seek to position
+   */
+  async seekTo(position: number): Promise<void> {
+    try {
+      if (this.currentPlayer && typeof this.currentPlayer.seekTo === 'function') {
+        await this.currentPlayer.seekTo(position);
+        this.updateStatus({ currentTime: position });
+      }
+    } catch {
+      // Ignore seek errors
+    }
+  }
+
+  /**
+   * Get current status
+   */
+  getStatus(): AudioStatus {
+    return { ...this.status };
+  }
+
+  /**
+   * Subscribe to status updates
+   */
+  subscribe(listener: (status: AudioStatus) => void): () => void {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
   }
 
   /**
@@ -95,42 +173,40 @@ class SimpleAudioService {
       clearInterval(this.statusPollingInterval);
     }
 
-    // Poll every 100ms for status updates
+    // Reduce polling frequency to prevent issues
     this.statusPollingInterval = setInterval(() => {
       if (this.currentPlayer) {
         try {
-          // Get current status directly from player with extensive property checking
           const isPlaying = this.currentPlayer.playing || this.currentPlayer.isPlaying || false;
           const currentTime = this.currentPlayer.currentTime || this.currentPlayer.position || 0;
-          const duration = this.currentPlayer.duration || 0;
+          const duration = this.currentPlayer.duration || this.currentPlayer.durationMillis || 0;
 
-          // Determine if we have valid playback data
-          const hasValidData = duration > 0 || currentTime > 0 || isPlaying;
+          // Add safety checks for invalid values
+          const safeCurrentTime =
+            isNaN(currentTime) || !isFinite(currentTime) ? 0 : Math.max(0, currentTime);
+          const safeDuration = isNaN(duration) || !isFinite(duration) ? 0 : Math.max(0, duration);
 
-          // Update our status
-          this.updateStatus({
-            isPlaying,
-            isLoading: !hasValidData && this.status.isLoading, // Keep loading until we have valid data
-            currentTime,
-            duration,
-            currentTrack: this.currentTrack,
-          });
+          // Only update if values have changed significantly
+          const hasChanged =
+            Math.abs(this.status.currentTime - safeCurrentTime) > 0.5 ||
+            Math.abs(this.status.duration - safeDuration) > 0.5 ||
+            this.status.isPlaying !== isPlaying;
 
-          // Clear loading timeout if we have valid data
-          if (hasValidData && this.loadingTimeout) {
-            clearTimeout(this.loadingTimeout);
-            this.loadingTimeout = null;
+          if (hasChanged) {
+            this.updateStatus({
+              isPlaying,
+              currentTime: safeCurrentTime,
+              duration: safeDuration,
+              isLoading: false,
+            });
           }
-
-          // Stop polling if audio stopped
-          if (!isPlaying && this.status.isPlaying) {
-            this.stopStatusPolling();
-          }
-        } catch (error) {
-          console.log('⚠️ [SIMPLE AUDIO] Error polling status:', error);
+        } catch {
+          // Stop polling on error
+          this.stopStatusPolling();
+          this.updateStatus({ isPlaying: false, isLoading: false });
         }
       }
-    }, 100);
+    }, 1000);
   }
 
   /**
@@ -141,12 +217,6 @@ class SimpleAudioService {
       clearInterval(this.statusPollingInterval);
       this.statusPollingInterval = null;
     }
-  }
-
-  /**
-   * Clear loading timeout
-   */
-  private clearLoadingTimeout(): void {
     if (this.loadingTimeout) {
       clearTimeout(this.loadingTimeout);
       this.loadingTimeout = null;
@@ -154,79 +224,25 @@ class SimpleAudioService {
   }
 
   /**
-   * Pause current playback
-   */
-  async pause(): Promise<void> {
-    if (this.currentPlayer) {
-      try {
-        await this.currentPlayer.pause();
-        this.updateStatus({ isPlaying: false });
-      } catch (error) {
-        handleError(error as Error, { toastMessage: 'Failed to pause audio' });
-      }
-    }
-  }
-
-  /**
-   * Stop current playback completely
-   */
-  async stop(): Promise<void> {
-    this.stopStatusPolling();
-    this.clearLoadingTimeout();
-    await this.stopInternal();
-    this.updateStatus({
-      isPlaying: false,
-      isLoading: false,
-      currentTime: 0,
-      duration: 0,
-      currentTrack: null,
-    });
-  }
-
-  /**
    * Internal stop method
    */
   private async stopInternal(): Promise<void> {
+    this.stopStatusPolling();
+
     if (this.currentPlayer) {
       try {
-        // Multiple stop attempts for reliability
         if (typeof this.currentPlayer.pause === 'function') {
           await this.currentPlayer.pause();
-        }
-        if (typeof this.currentPlayer.seekTo === 'function') {
-          await this.currentPlayer.seekTo(0);
         }
         if (typeof this.currentPlayer.remove === 'function') {
           await this.currentPlayer.remove();
         }
-      } catch (error) {
-        console.log('⚠️ [SIMPLE AUDIO] Error cleaning up player:', error);
-      } finally {
-        this.currentPlayer = null;
-        this.currentTrack = null;
+      } catch {
+        // Ignore cleanup errors
       }
+      this.currentPlayer = null;
     }
-  }
-
-  /**
-   * Get current status
-   */
-  getStatus(): AudioStatus {
-    return this.status;
-  }
-
-  /**
-   * Subscribe to status updates
-   */
-  subscribe(listener: (status: AudioStatus) => void): () => void {
-    this.listeners.add(listener);
-    // Immediately call with current status
-    listener(this.status);
-
-    // Return unsubscribe function
-    return () => {
-      this.listeners.delete(listener);
-    };
+    this.currentTrack = null;
   }
 
   /**
@@ -239,25 +255,23 @@ class SimpleAudioService {
     this.listeners.forEach(listener => {
       try {
         listener(this.status);
-      } catch (error) {
-        console.log('⚠️ [SIMPLE AUDIO] Listener error:', error);
+      } catch {
+        // Remove problematic listeners
+        this.listeners.delete(listener);
       }
     });
   }
 
   /**
-   * Cleanup on app close
+   * Cleanup resources
    */
-  async cleanup(): Promise<void> {
-    this.stopStatusPolling();
-    this.clearLoadingTimeout();
+  async destroy(): Promise<void> {
     await this.stopInternal();
     this.listeners.clear();
   }
 }
 
-// Audio status interface
-interface AudioStatus {
+export interface AudioStatus {
   isPlaying: boolean;
   isLoading: boolean;
   currentTime: number;
@@ -267,4 +281,3 @@ interface AudioStatus {
 
 // Export singleton instance
 export const simpleAudioService = new SimpleAudioService();
-export type { AudioStatus };

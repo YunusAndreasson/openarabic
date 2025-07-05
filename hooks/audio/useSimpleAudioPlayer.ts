@@ -1,40 +1,67 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { AUDIO_STATES } from '@/constants/audio';
-import { simpleAudioService, type AudioStatus } from '@/services/simpleAudioService';
+import type { AudioStatus } from '@/services/simpleAudioService';
+import { simpleAudioService } from '@/services/simpleAudioService';
+import type { EnhancedAudioTrack } from '@/types/audio.types';
 
 /**
- * Simple audio hook - just listens to service status
- * No complex state management or reducers
+ * Hook for simple audio player functionality
  */
-export function useSimpleAudioPlayer() {
+export const useSimpleAudioPlayer = () => {
   const [status, setStatus] = useState<AudioStatus>(() => simpleAudioService.getStatus());
+  const isMountedRef = useRef(true);
 
+  // Subscribe to status updates
   useEffect(() => {
-    // Subscribe to status updates
-    const unsubscribe = simpleAudioService.subscribe(setStatus);
+    const unsubscribe = simpleAudioService.subscribe(newStatus => {
+      if (isMountedRef.current) {
+        setStatus(newStatus);
+      }
+    });
 
-    // Cleanup subscription on unmount
     return unsubscribe;
   }, []);
 
-  // Map service status to hook interface
+  // Track component mount status
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  // Play function
+  const play = useCallback(async (track: EnhancedAudioTrack): Promise<boolean> => {
+    if (!isMountedRef.current) return false;
+    return await simpleAudioService.play(track);
+  }, []);
+
+  // Pause function
+  const pause = useCallback(async (): Promise<void> => {
+    if (!isMountedRef.current) return;
+    await simpleAudioService.pause();
+  }, []);
+
+  // Stop function
+  const stop = useCallback(async (): Promise<void> => {
+    if (!isMountedRef.current) return;
+    await simpleAudioService.stop();
+  }, []);
+
   return {
-    audioState: status.isPlaying
-      ? AUDIO_STATES.PLAYING
-      : status.isLoading
-      ? AUDIO_STATES.LOADING
-      : AUDIO_STATES.IDLE,
-    isLoading: status.isLoading,
-    position: status.currentTime,
-    duration: status.duration,
-    metadata: {
-      articleId: status.currentTrack?.articleId?.toString(),
-      articleTitle: status.currentTrack?.title,
-    },
-    // Direct service methods
-    play: simpleAudioService.play.bind(simpleAudioService),
-    pause: simpleAudioService.pause.bind(simpleAudioService),
-    stop: simpleAudioService.stop.bind(simpleAudioService),
+    // Status with safe defaults
+    isPlaying: status?.isPlaying ?? false,
+    isLoading: status?.isLoading ?? false,
+    currentTime: status?.currentTime ?? 0,
+    duration: status?.duration ?? 0,
+    currentTrack: status?.currentTrack ?? null,
+
+    // Actions
+    play,
+    pause,
+    stop,
+
+    // Full status object for advanced use cases
+    status,
   };
-}
+};
