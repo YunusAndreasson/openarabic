@@ -1,6 +1,5 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { ViewStyle } from 'react-native';
-import { Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -9,8 +8,8 @@ import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { CACHE_SIZE } from '@/constants/performance';
 import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import { useArabicWordAnalysis } from '@/hooks/vocabulary';
 import type { WordTooltipProps } from '@/types/ui/modal.types';
-import { analyzeArabicWord, formatWordAnalysis } from '@/utils/arabicWordAnalysis';
 
 // Extract all constants outside component to prevent recreation
 const TOOLTIP_CONSTANTS = {
@@ -18,7 +17,7 @@ const TOOLTIP_CONSTANTS = {
   ARROW_SIZE: LAYOUT.SPACING.TINY,
   TOOLTIP_MARGIN: LAYOUT.SPACING.TINY / 5,
   SCREEN_MARGIN: LAYOUT.SPACING.MEDIUM,
-  CHAR_WIDTH: LAYOUT.SPACING.TINY * 1.6,
+  CHAR_WIDTH: LAYOUT.SPACING.SMALL,
   PADDING_MULTIPLIER: 1.5,
   Z_INDEX: 999999,
 } as const;
@@ -38,10 +37,9 @@ const SPRING_CONFIG = {
   stiffness: 200,
 } as const;
 
-// Typography constants to prevent recalculation
+// Typography constants - simplified for English-only display
 const TYPOGRAPHY_SIZES = {
   ENGLISH_HEIGHT: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4,
-  ARABIC_HEIGHT: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 2.5, // Updated to match user's change
 } as const;
 
 // Cache for expensive tooltip positioning calculations
@@ -56,17 +54,20 @@ const positioningCache = new Map<
 >();
 const CACHE_MAX_SIZE = CACHE_SIZE.LARGE;
 
-// Static styles to prevent recreation
+// Static styles to prevent recreation - simplified for English-only
 const STATIC_STYLES = StyleSheet.create({
   tooltipContainer: {
     position: 'absolute',
     zIndex: TOOLTIP_CONSTANTS.Z_INDEX,
   },
   absoluteFill: {
-    left: 0,
     position: 'absolute',
+    top: 0,
+    left: 0,
     right: 0,
+    bottom: 0,
     width: '100%',
+    height: '100%',
   },
   tooltip: {
     ...LAYOUT.ELEVATION.SUBTLE,
@@ -84,19 +85,9 @@ const STATIC_STYLES = StyleSheet.create({
     width: 0,
   },
   tooltipText: {
-    flexShrink: 1,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '500',
-    lineHeight: TYPOGRAPHY_SIZES.ENGLISH_HEIGHT,
     textAlign: 'center',
-  },
-  tooltipTextArabic: {
-    flexShrink: 1,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.3,
-    fontWeight: '500',
-    lineHeight: TYPOGRAPHY_SIZES.ARABIC_HEIGHT,
-    textAlign: 'center',
-    marginTop: LAYOUT.SPACING.TINY,
   },
   englishRow: {
     flexDirection: 'row',
@@ -105,7 +96,6 @@ const STATIC_STYLES = StyleSheet.create({
     gap: LAYOUT.SPACING.TINY,
   },
   englishContent: {
-    flexShrink: 1,
     alignItems: 'center',
   },
   centeredContainer: {
@@ -118,34 +108,27 @@ const STATIC_STYLES = StyleSheet.create({
 const createPositioningCacheKey = (
   layout: NonNullable<WordTooltipProps['layout']>,
   textLength: number,
-  screenWidth: number,
-  hasArabicText: boolean = false
+  screenWidth: number
 ): string =>
-  `${layout.x}-${layout.y}-${layout.width}-${layout.height}-${textLength}-${screenWidth}-${hasArabicText}`;
+  `${layout.x}-${layout.y}-${layout.width}-${layout.height}-${textLength}-${screenWidth}`;
 
 const calculateTooltipPositioning = (
   layout: NonNullable<WordTooltipProps['layout']>,
   text: string,
   screenWidth: number,
-  hasArabicText: boolean = false,
   hasBookmark: boolean = false
 ) => {
-  const cacheKey = createPositioningCacheKey(layout, text.length, screenWidth, hasArabicText);
+  const cacheKey = createPositioningCacheKey(layout, text.length, screenWidth);
 
   if (positioningCache.has(cacheKey)) {
     const cached = positioningCache.get(cacheKey);
     if (cached) return cached;
   }
 
-  const { SPACING, ARROW_SIZE, TOOLTIP_MARGIN, SCREEN_MARGIN, CHAR_WIDTH, PADDING_MULTIPLIER } =
-    TOOLTIP_CONSTANTS;
+  const { SPACING, ARROW_SIZE, TOOLTIP_MARGIN, SCREEN_MARGIN, CHAR_WIDTH } = TOOLTIP_CONSTANTS;
 
-  // Use consolidated typography constants
-  const dynamicTooltipHeight =
-    TYPOGRAPHY_SIZES.ARABIC_HEIGHT +
-    TYPOGRAPHY_SIZES.ENGLISH_HEIGHT +
-    SPACING * 2 +
-    LAYOUT.SPACING.TINY;
+  // Simplified height calculation for English-only display
+  const dynamicTooltipHeight = TYPOGRAPHY_SIZES.ENGLISH_HEIGHT + SPACING * 2;
 
   const wordCenterX = layout.x + layout.width / 2;
   const extraTopMargin = LAYOUT.SPACING.SMALL;
@@ -155,23 +138,27 @@ const calculateTooltipPositioning = (
     ? LAYOUT.BUTTON.ICON_SIZE.MEDIUM + SPACING * 2 + LAYOUT.SPACING.TINY
     : 0;
 
-  // Optimized width calculation
+  // Optimized width calculation - more generous to prevent text wrapping
   const words = text.split(' ');
   const longestWord = words.reduce(
     (longest, word) => (word.length > longest.length ? word : longest),
     ''
   );
-  const minWidthForLongestWord =
-    longestWord.length * CHAR_WIDTH * 1.5 + SPACING * 4 + bookmarkSpace;
+
+  // More generous width calculation to prevent wrapping
+  const estimatedTextWidth = text.length * CHAR_WIDTH * 1.2; // Increased multiplier
+  const minWidthForLongestWord = longestWord.length * CHAR_WIDTH * 2; // Increased multiplier
+  const generousPadding = SPACING * 4; // More padding
 
   let tooltipWidth = Math.max(
-    text.length * CHAR_WIDTH + SPACING * PADDING_MULTIPLIER * 2 + bookmarkSpace,
+    estimatedTextWidth + generousPadding + bookmarkSpace,
     layout.width + SPACING * 2,
     LAYOUT.SPACING.XLARGE,
-    minWidthForLongestWord
+    minWidthForLongestWord + generousPadding + bookmarkSpace
   );
 
-  tooltipWidth = Math.min(tooltipWidth, screenWidth * 0.8);
+  // Allow wider tooltips before hitting screen limit
+  tooltipWidth = Math.min(tooltipWidth, screenWidth * 0.9);
 
   // Simplified positioning logic
   const idealTooltipLeft = wordCenterX - tooltipWidth / 2;
@@ -179,69 +166,57 @@ const calculateTooltipPositioning = (
   const rightOverflow = idealTooltipLeft + tooltipWidth - (screenWidth - SCREEN_MARGIN);
 
   let tooltipLeftOffset = idealTooltipLeft;
+  let arrowOffset = tooltipWidth / 2;
+
   if (leftOverflow > 0) {
     tooltipLeftOffset = SCREEN_MARGIN;
+    arrowOffset = wordCenterX - SCREEN_MARGIN;
   } else if (rightOverflow > 0) {
     tooltipLeftOffset = screenWidth - SCREEN_MARGIN - tooltipWidth;
+    arrowOffset = wordCenterX - tooltipLeftOffset;
   }
 
   const result = {
     tooltipTop,
     tooltipWidth,
     tooltipLeftOffset,
-    arrowOffset: wordCenterX - tooltipLeftOffset,
+    arrowOffset: Math.max(
+      TOOLTIP_CONSTANTS.ARROW_SIZE,
+      Math.min(arrowOffset, tooltipWidth - TOOLTIP_CONSTANTS.ARROW_SIZE)
+    ),
   };
 
-  // Manage cache size
+  // Cache management
   if (positioningCache.size >= CACHE_MAX_SIZE) {
     const firstKey = positioningCache.keys().next().value;
-    if (firstKey !== undefined) {
-      positioningCache.delete(firstKey);
-    }
+    if (firstKey) positioningCache.delete(firstKey);
   }
-
   positioningCache.set(cacheKey, result);
+
   return result;
 };
 
-// Optimized color mapping function
-const getSegmentColor = (colorName: string, tooltipColors: any): string => {
-  switch (colorName) {
-    case 'tint':
-      return tooltipColors.tint;
-    case 'primary':
-      return tooltipColors.primary;
-    case 'warning':
-      return tooltipColors.warning;
-    case 'secondaryText':
-      return tooltipColors.secondaryText;
-    default:
-      return tooltipColors.textColor;
-  }
-};
-
+// Simplified comparison function
 const WordTooltipComparison = (
   prevProps: WordTooltipProps,
   nextProps: WordTooltipProps
 ): boolean => {
-  // Compare primitive values
   if (
     prevProps.visible !== nextProps.visible ||
     prevProps.text !== nextProps.text ||
     prevProps.arabicWord !== nextProps.arabicWord ||
-    prevProps.zIndex !== nextProps.zIndex ||
     prevProps.isInStudyList !== nextProps.isInStudyList ||
-    prevProps.wordRootId !== nextProps.wordRootId
+    prevProps.wordRootId !== nextProps.wordRootId ||
+    prevProps.zIndex !== nextProps.zIndex
   ) {
     return false;
   }
 
-  // Compare layout objects
   const prevLayout = prevProps.layout;
   const nextLayout = nextProps.layout;
 
-  if (prevLayout === null && nextLayout === null) return true;
-  if (prevLayout === null || nextLayout === null) return false;
+  if (!prevLayout && !nextLayout) return true;
+  if (!prevLayout || !nextLayout) return false;
 
   return (
     prevLayout.x === nextLayout.x &&
@@ -250,6 +225,28 @@ const WordTooltipComparison = (
     prevLayout.height === nextLayout.height
   );
 };
+
+// Color mapping function extracted outside component to prevent recreation
+const getColorFromMap = (colorName: string, colors: any): string => {
+  const colorMap = {
+    tint: colors.tint,
+    primary: colors.primary,
+    warning: colors.warning,
+    secondaryText: colors.secondaryText,
+  };
+  return colorMap[colorName as keyof typeof colorMap] || colors.text;
+};
+
+// Static content style to prevent recreation
+const CONTENT_STYLE = {
+  alignItems: 'center' as const,
+  justifyContent: 'center' as const,
+  minHeight: TYPOGRAPHY_SIZES.ENGLISH_HEIGHT + LAYOUT.SPACING.SMALL,
+  paddingVertical: LAYOUT.SPACING.SMALL,
+};
+
+// Static bookmark style to prevent recreation
+const BOOKMARK_STYLE = { marginLeft: LAYOUT.SPACING.TINY };
 
 export const WordTooltip = memo(
   ({
@@ -264,147 +261,52 @@ export const WordTooltip = memo(
     wordRootId,
   }: WordTooltipProps) => {
     const colors = useColors();
-    const screenWidth = SCREEN_WIDTH;
-
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const [isAnimatingOut, setIsAnimatingOut] = useState(false);
 
-    // Setup animations
-    const { fadeIn, fadeOut, animatedStyle: opacityStyle } = useOpacityAnimation(ANIMATION_CONFIG);
-    const {
-      animatedStyle: scaleStyle,
-      startAnimation: startScaleAnimation,
-      reverseAnimation: reverseScaleAnimation,
-    } = useTransformAnimation(SPRING_CONFIG);
+    // Simplified animations - remove unused state
+    const { fadeIn, animatedStyle: opacityStyle } = useOpacityAnimation(ANIMATION_CONFIG);
+    const { animatedStyle: scaleStyle, startAnimation: startScaleAnimation } =
+      useTransformAnimation(SPRING_CONFIG);
 
-    // Memoize colors to prevent unnecessary recalculations
-    const tooltipColors = useMemo(
+    // Use the Arabic word analysis hook for English color-coding
+    const { formattedAnalysis } = useArabicWordAnalysis(
+      arabicWord || '',
+      text,
+      !!(arabicWord && text)
+    );
+
+    // Stable handlers with minimal dependencies
+    const handleClose = useCallback(() => {
+      setTimeout(onClose, 50);
+    }, [onClose]);
+
+    const handleStudyListPress = useCallback(() => {
+      onStudyListToggle?.();
+    }, [onStudyListToggle]);
+
+    // Memoize color operations to prevent re-calculations
+    const colorValues = useMemo(
       () => ({
-        backgroundColor: colors.elevation1,
-        textColor: colors.text,
-        borderColor: colors.border,
-        shadowColor: colors.shadow,
-        transparentColor: colors.transparent,
+        text: colors.text,
         tint: colors.tint,
         primary: colors.primary,
         warning: colors.warning,
         secondaryText: colors.secondaryText,
+        elevation1: colors.elevation1,
+        border: colors.border,
+        shadow: colors.shadow,
+        transparent: colors.transparent,
       }),
-      [
-        colors.elevation1,
-        colors.text,
-        colors.border,
-        colors.shadow,
-        colors.transparent,
-        colors.tint,
-        colors.primary,
-        colors.warning,
-        colors.secondaryText,
-      ]
+      [colors]
     );
 
-    // Analyze Arabic word if provided, memoized for performance
-    const arabicAnalysis = useMemo(() => {
-      if (!arabicWord || !text) return null;
-      const analysis = analyzeArabicWord(arabicWord, text);
-      return analysis.hasComponents ? formatWordAnalysis(analysis) : null;
-    }, [arabicWord, text]);
-
-    // Handle closing the tooltip with animation sequence
-    const handleClose = useCallback(() => {
-      if (!isAnimatingOut) {
-        setIsAnimatingOut(true);
-        fadeOut();
-        reverseScaleAnimation();
-
-        timerRef.current = setTimeout(() => {
-          onClose();
-          setIsAnimatingOut(false);
-        }, ANIMATION_CONFIG.duration);
-      }
-    }, [isAnimatingOut, fadeOut, reverseScaleAnimation, onClose]);
-
-    // Handle study list toggle
-    const handleStudyListPress = useCallback(() => {
-      if (onStudyListToggle && wordRootId) {
-        onStudyListToggle();
-      }
-    }, [onStudyListToggle, wordRootId]);
-
-    // Render color-coded Arabic text
-    const renderColorCodedArabic = useCallback(() => {
-      if (!arabicAnalysis?.reconstructedArabic || !arabicWord) {
-        return arabicWord ? (
-          <View style={STATIC_STYLES.centeredContainer}>
-            <ThemedText
-              type="arabic"
-              skipDefaultColor
-              style={[
-                STATIC_STYLES.tooltipTextArabic,
-                { color: tooltipColors.textColor, marginBottom: TOOLTIP_CONSTANTS.SPACING / 2 },
-              ]}
-            >
-              {arabicWord}
-            </ThemedText>
-          </View>
-        ) : null;
-      }
-
-      const segments = arabicAnalysis.reconstructedArabic.segments;
-
-      if (segments.length === 0) {
-        return (
-          <View style={STATIC_STYLES.centeredContainer}>
-            <ThemedText
-              type="arabic"
-              skipDefaultColor
-              style={[
-                STATIC_STYLES.tooltipTextArabic,
-                { color: tooltipColors.textColor, marginBottom: TOOLTIP_CONSTANTS.SPACING / 2 },
-              ]}
-            >
-              {arabicWord}
-            </ThemedText>
-          </View>
-        );
-      }
-
-      return (
-        <View style={STATIC_STYLES.centeredContainer}>
-          <ThemedText
-            type="arabic"
-            skipDefaultColor
-            style={[
-              STATIC_STYLES.tooltipTextArabic,
-              { color: tooltipColors.textColor, marginBottom: TOOLTIP_CONSTANTS.SPACING / 2 },
-            ]}
-          >
-            {segments.map(segment => (
-              <ThemedText
-                key={`segment-${segment.text}-${segment.colorName}`}
-                type="arabic"
-                skipDefaultColor
-                style={[
-                  STATIC_STYLES.tooltipTextArabic,
-                  { color: getSegmentColor(segment.colorName, tooltipColors) },
-                ]}
-              >
-                {segment.text}
-              </ThemedText>
-            ))}
-          </ThemedText>
-        </View>
-      );
-    }, [arabicAnalysis, arabicWord, tooltipColors]);
-
-    // Render color-coded English text
-    const renderColorCodedEnglish = useCallback(() => {
-      if (!arabicAnalysis?.sections || arabicAnalysis.sections.length === 0) {
+    // Optimized English text rendering with stable dependencies
+    const renderColorCodedEnglish = useMemo(() => {
+      if (!formattedAnalysis?.sections?.length) {
         return (
           <ThemedText
             skipDefaultColor
-            numberOfLines={2}
-            style={[STATIC_STYLES.tooltipText, { color: tooltipColors.textColor }]}
+            style={[STATIC_STYLES.tooltipText, { color: colorValues.text }]}
           >
             {text}
           </ThemedText>
@@ -412,117 +314,90 @@ export const WordTooltip = memo(
       }
 
       const originalEnglish =
-        arabicAnalysis.sections.find(s => s.type === 'original')?.content || '';
-      const englishParts: { text: string; color: string; key: string }[] = [];
-      const matchPositions: { start: number; end: number; text: string; match: string }[] = [];
+        formattedAnalysis.sections.find(s => s.type === 'original')?.content || text;
+      const componentSections = formattedAnalysis.sections.filter(s => s.type === 'components');
 
-      const allEnglishMatches = arabicAnalysis.sections
-        .filter(s => s.type === 'components')
-        .flatMap(section => (section.englishPart ? [section.englishPart] : []));
+      if (!componentSections.length) {
+        return (
+          <ThemedText
+            skipDefaultColor
+            style={[STATIC_STYLES.tooltipText, { color: colorValues.text }]}
+          >
+            {originalEnglish}
+          </ThemedText>
+        );
+      }
 
-      if (allEnglishMatches.length > 0) {
-        // Find and process matches (simplified logic)
-        for (const match of allEnglishMatches) {
-          const normalizedMatch = match.toLowerCase();
-          const normalizedEnglish = originalEnglish.toLowerCase();
-          let searchStart = 0;
+      // Build match positions more efficiently
+      const matchPositions: { start: number; end: number; color: string }[] = [];
 
-          while (true) {
-            const matchIndex = normalizedEnglish.indexOf(normalizedMatch, searchStart);
-            if (matchIndex === -1) break;
+      for (const section of componentSections) {
+        if (!section.englishPart) continue;
 
-            const beforeChar = matchIndex > 0 ? normalizedEnglish[matchIndex - 1] || ' ' : ' ';
-            const afterChar =
-              matchIndex + normalizedMatch.length < normalizedEnglish.length
-                ? normalizedEnglish[matchIndex + normalizedMatch.length] || ' '
-                : ' ';
+        const match = section.englishPart.toLowerCase();
+        const searchText = originalEnglish.toLowerCase();
+        const matchIndex = searchText.indexOf(match);
 
-            const isWholeWord = /\s/.test(beforeChar) && /\s/.test(afterChar);
+        if (matchIndex !== -1) {
+          // Simple word boundary check with safe access
+          const prevChar = matchIndex > 0 ? searchText[matchIndex - 1] ?? ' ' : ' ';
+          const nextChar =
+            matchIndex + match.length < searchText.length
+              ? searchText[matchIndex + match.length] ?? ' '
+              : ' ';
 
-            if (
-              isWholeWord ||
-              matchIndex === 0 ||
-              matchIndex + normalizedMatch.length === normalizedEnglish.length
-            ) {
-              const actualText = originalEnglish.substring(
-                matchIndex,
-                matchIndex + normalizedMatch.length
-              );
-              matchPositions.push({
-                start: matchIndex,
-                end: matchIndex + normalizedMatch.length,
-                text: actualText,
-                match,
-              });
-            }
-            searchStart = matchIndex + 1;
-          }
-        }
+          const isValidMatch =
+            matchIndex === 0 ||
+            /\s/.test(prevChar) ||
+            matchIndex + match.length === searchText.length ||
+            /\s/.test(nextChar);
 
-        // Sort and remove overlaps
-        matchPositions.sort((a, b) => a.start - b.start);
-        const nonOverlappingMatches: typeof matchPositions = [];
-        let lastEnd = 0;
-
-        for (const pos of matchPositions) {
-          if (pos.start >= lastEnd) {
-            nonOverlappingMatches.push(pos);
-            lastEnd = pos.end;
-          }
-        }
-
-        // Build parts array
-        let currentIndex = 0;
-        const getEnglishMatchColor = (matchText: string): string => {
-          const matchingSection = arabicAnalysis.sections.find(
-            section =>
-              section.type === 'components' &&
-              section.englishPart &&
-              section.englishPart
-                .toLowerCase()
-                .split(' / ')
-                .some(part => part.trim().toLowerCase() === matchText.toLowerCase())
-          );
-          return matchingSection?.colorName
-            ? getSegmentColor(matchingSection.colorName, tooltipColors)
-            : tooltipColors.tint;
-        };
-
-        for (const pos of nonOverlappingMatches) {
-          if (pos.start > currentIndex) {
-            englishParts.push({
-              text: originalEnglish.substring(currentIndex, pos.start),
-              color: tooltipColors.textColor,
-              key: `before-${pos.start}`,
+          if (isValidMatch) {
+            matchPositions.push({
+              start: matchIndex,
+              end: matchIndex + match.length,
+              color: getColorFromMap(section.colorName || 'tint', colorValues),
             });
           }
-
-          englishParts.push({
-            text: pos.text,
-            color: getEnglishMatchColor(pos.text),
-            key: `match-${pos.start}`,
-          });
-          currentIndex = pos.end;
         }
+      }
 
-        if (currentIndex < originalEnglish.length) {
-          englishParts.push({
-            text: originalEnglish.substring(currentIndex),
-            color: tooltipColors.textColor,
-            key: 'remaining',
+      // Remove overlaps and sort
+      const sortedMatches = matchPositions
+        .sort((a, b) => a.start - b.start)
+        .filter((match, i, arr) => i === 0 || match.start >= (arr[i - 1]?.end ?? 0));
+
+      // Build text parts
+      const parts: { text: string; color: string; key: string }[] = [];
+      let currentIndex = 0;
+
+      for (const match of sortedMatches) {
+        if (match.start > currentIndex) {
+          parts.push({
+            text: originalEnglish.substring(currentIndex, match.start),
+            color: colorValues.text,
+            key: `text-${currentIndex}`,
           });
         }
-      } else {
-        englishParts.push({
-          text: originalEnglish,
-          color: tooltipColors.textColor,
-          key: 'original',
+        parts.push({
+          text: originalEnglish.substring(match.start, match.end),
+          color: match.color,
+          key: `match-${match.start}`,
+        });
+        currentIndex = match.end;
+      }
+
+      if (currentIndex < originalEnglish.length) {
+        parts.push({
+          text: originalEnglish.substring(currentIndex),
+          color: colorValues.text,
+          key: 'remaining',
         });
       }
 
       return (
-        <ThemedText skipDefaultColor numberOfLines={2} style={STATIC_STYLES.tooltipText}>
-          {englishParts.map(part => (
+        <ThemedText skipDefaultColor style={STATIC_STYLES.tooltipText}>
+          {parts.map(part => (
             <ThemedText
               key={part.key}
               skipDefaultColor
@@ -533,72 +408,42 @@ export const WordTooltip = memo(
           ))}
         </ThemedText>
       );
-    }, [arabicAnalysis, text, tooltipColors]);
+    }, [formattedAnalysis, text, colorValues]);
 
-    // Render the study list indicator
-    const renderStudyIndicator = useCallback(() => {
+    // Memoize bookmark icon properties separately
+    const bookmarkProps = useMemo(() => {
       if (!onStudyListToggle || !wordRootId) return null;
 
-      const iconName = isInStudyList ? 'bookmark' : 'bookmark-outline';
-      const indicatorColor = isInStudyList ? tooltipColors.tint : tooltipColors.secondaryText;
+      return {
+        iconColor: isInStudyList ? colorValues.tint : colorValues.secondaryText,
+      };
+    }, [onStudyListToggle, wordRootId, isInStudyList, colorValues.tint, colorValues.secondaryText]);
 
-      return (
-        <TouchableIcon
-          icon={iconName}
-          size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-          touchSize="small"
-          color={indicatorColor}
-          onPress={handleStudyListPress}
-          style={{ marginLeft: LAYOUT.SPACING.TINY }}
-        />
-      );
-    }, [onStudyListToggle, wordRootId, isInStudyList, handleStudyListPress, tooltipColors]);
-
-    // Render English text with inline bookmark
-    const renderEnglishWithBookmark = useCallback(() => {
-      const englishContent = renderColorCodedEnglish();
-      const studyIndicator = renderStudyIndicator();
-
-      if (!studyIndicator) return englishContent;
+    // Optimized content rendering with minimal dependencies
+    const tooltipContent = useMemo(() => {
+      if (!bookmarkProps) {
+        return renderColorCodedEnglish;
+      }
 
       return (
         <View style={STATIC_STYLES.englishRow}>
-          <View style={STATIC_STYLES.englishContent}>{englishContent}</View>
-          {studyIndicator}
+          <View style={STATIC_STYLES.englishContent}>{renderColorCodedEnglish}</View>
+          <TouchableIcon
+            icon={isInStudyList ? 'bookmark' : 'bookmark-outline'}
+            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+            touchSize="small"
+            color={bookmarkProps.iconColor}
+            onPress={handleStudyListPress}
+            style={BOOKMARK_STYLE}
+          />
         </View>
       );
-    }, [renderColorCodedEnglish, renderStudyIndicator]);
+    }, [renderColorCodedEnglish, bookmarkProps, handleStudyListPress]);
 
-    // Memoize the tooltip content
-    const tooltipContent = useMemo(() => {
-      const arabicContent = renderColorCodedArabic();
-      const englishWithBookmark = renderEnglishWithBookmark();
-
-      const contentStyle = {
-        alignItems: 'center' as const,
-        justifyContent: 'center' as const,
-        position: 'relative' as const,
-        minHeight:
-          TYPOGRAPHY_SIZES.ARABIC_HEIGHT +
-          TYPOGRAPHY_SIZES.ENGLISH_HEIGHT +
-          LAYOUT.SPACING.TINY +
-          LAYOUT.SPACING.SMALL,
-        paddingTop: LAYOUT.SPACING.SMALL,
-      };
-
-      return (
-        <View style={contentStyle}>
-          {arabicContent}
-          {englishWithBookmark}
-        </View>
-      );
-    }, [renderColorCodedArabic, renderEnglishWithBookmark]);
-
-    // Tooltip positioning
-    const tooltipPositioning = useMemo(() => {
+    // Optimized positioning calculation with better caching
+    const positioning = useMemo(() => {
       if (!layout) {
         return {
-          wordCenterX: 0,
           tooltipTop: 0,
           tooltipWidth: SCREEN_WIDTH * 0.25,
           tooltipLeftOffset: 0,
@@ -606,64 +451,65 @@ export const WordTooltip = memo(
         };
       }
 
-      const hasBookmark = !!(onStudyListToggle && wordRootId);
-      const displayText = arabicWord ? `${arabicWord} ${text}` : text || '';
-      return calculateTooltipPositioning(layout, displayText, screenWidth, true, hasBookmark);
-    }, [layout, text, arabicWord, screenWidth, onStudyListToggle, wordRootId]);
+      const hasBookmark = !!bookmarkProps;
+      return calculateTooltipPositioning(layout, text || '', SCREEN_WIDTH, hasBookmark);
+    }, [layout, text, bookmarkProps]);
 
-    // Memoized styles
+    // Separate style memoization for better granular control
     const containerStyle = useMemo(
       () => ({
         ...STATIC_STYLES.absoluteFill,
-        ...STATIC_STYLES.tooltipContainer,
-        top: tooltipPositioning.tooltipTop,
         zIndex: zIndex ?? TOOLTIP_CONSTANTS.Z_INDEX,
+      }),
+      [zIndex]
+    );
+
+    const tooltipContainerStyle = useMemo(
+      () => ({
+        ...STATIC_STYLES.tooltipContainer,
+        top: positioning.tooltipTop,
         ...LAYOUT.ELEVATION.MEDIUM,
       }),
-      [tooltipPositioning.tooltipTop, zIndex]
+      [positioning.tooltipTop]
     );
 
     const tooltipStyle = useMemo(
       () => ({
         ...STATIC_STYLES.tooltip,
-        left: tooltipPositioning.tooltipLeftOffset,
-        width: tooltipPositioning.tooltipWidth,
-        backgroundColor: tooltipColors.backgroundColor,
-        borderColor: tooltipColors.borderColor,
-        shadowColor: tooltipColors.shadowColor,
+        left: positioning.tooltipLeftOffset,
+        width: positioning.tooltipWidth,
+        backgroundColor: colorValues.elevation1,
+        borderColor: colorValues.border,
+        shadowColor: colorValues.shadow,
         padding: TOOLTIP_CONSTANTS.SPACING,
         zIndex: TOOLTIP_CONSTANTS.Z_INDEX + 1,
         ...LAYOUT.ELEVATION.LARGE,
       }),
       [
-        tooltipPositioning.tooltipLeftOffset,
-        tooltipPositioning.tooltipWidth,
-        tooltipColors.backgroundColor,
-        tooltipColors.borderColor,
-        tooltipColors.shadowColor,
+        positioning.tooltipLeftOffset,
+        positioning.tooltipWidth,
+        colorValues.elevation1,
+        colorValues.border,
+        colorValues.shadow,
       ]
     );
 
     const arrowStyle = useMemo(
       () => ({
         ...STATIC_STYLES.arrow,
-        left: tooltipPositioning.arrowOffset,
+        left: positioning.arrowOffset,
         borderTopWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
         borderLeftWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
         borderRightWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
-        borderTopColor: tooltipColors.backgroundColor,
+        borderTopColor: colorValues.elevation1,
         bottom: -TOOLTIP_CONSTANTS.ARROW_SIZE,
-        borderLeftColor: tooltipColors.transparentColor,
-        borderRightColor: tooltipColors.transparentColor,
+        borderLeftColor: colorValues.transparent,
+        borderRightColor: colorValues.transparent,
       }),
-      [
-        tooltipPositioning.arrowOffset,
-        tooltipColors.backgroundColor,
-        tooltipColors.transparentColor,
-      ]
+      [positioning.arrowOffset, colorValues.elevation1, colorValues.transparent]
     );
 
-    // Trigger animations based on visibility
+    // Simplified animation trigger
     useEffect(() => {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
@@ -671,7 +517,6 @@ export const WordTooltip = memo(
       }
 
       if (visible) {
-        setIsAnimatingOut(false);
         fadeIn();
         startScaleAnimation();
       }
@@ -684,34 +529,21 @@ export const WordTooltip = memo(
       };
     }, [visible, fadeIn, startScaleAnimation]);
 
-    // Show tooltip if visible OR if we're animating out
-    if ((!visible && !isAnimatingOut) || !layout) return null;
+    if (!visible || !layout) return null;
 
     return (
-      <View
-        style={[
-          StyleSheet.absoluteFill,
-          { zIndex: TOOLTIP_CONSTANTS.Z_INDEX + 2, ...LAYOUT.ELEVATION.LARGE },
-        ]}
-        pointerEvents="box-none"
-      >
+      <View style={containerStyle}>
         <Pressable
-          style={[StyleSheet.absoluteFill, { zIndex: TOOLTIP_CONSTANTS.Z_INDEX }]}
+          style={StyleSheet.absoluteFill}
           onPress={handleClose}
+          testID="word-tooltip-backdrop"
         />
-        <Animated.View
-          style={[containerStyle, opacityStyle as ViewStyle, scaleStyle as ViewStyle]}
-          onStartShouldSetResponder={() => true}
-        >
-          <TouchableOpacity
-            style={tooltipStyle}
-            onPress={handleClose}
-            activeOpacity={LAYOUT.OPACITY.SUBTLE}
-          >
-            {tooltipContent}
+        <View style={tooltipContainerStyle}>
+          <Animated.View style={[tooltipStyle, opacityStyle, scaleStyle]} testID="word-tooltip">
             <View style={arrowStyle} />
-          </TouchableOpacity>
-        </Animated.View>
+            <View style={CONTENT_STYLE}>{tooltipContent}</View>
+          </Animated.View>
+        </View>
       </View>
     );
   },

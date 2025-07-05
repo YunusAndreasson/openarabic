@@ -182,8 +182,10 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
       // Handle tooltip visibility only if layout is provided
       if (layout && layout.width > 0) {
         if (activeTooltip?.word.id === word.id) {
+          // If tapping the same word, close the tooltip
           setActiveTooltip(null);
         } else {
+          // If tapping a different word (or no tooltip is open), open the new tooltip
           setActiveTooltip({ word, layout });
         }
       }

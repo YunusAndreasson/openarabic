@@ -161,8 +161,7 @@ const styles = StyleSheet.create({
   },
   englishText: {
     fontFamily: FONTS.ENGLISH,
-    paddingBottom: LAYOUT.SPACING.TINY,
-    paddingTop: LAYOUT.SPACING.SMALL,
+    paddingTop: LAYOUT.SPACING.XXXLARGE,
     paddingHorizontal: LAYOUT.SPACING.TINY,
   },
   wordsContainer: {

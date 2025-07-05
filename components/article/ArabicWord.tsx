@@ -15,7 +15,7 @@ import { DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { useArabicWord } from '@/hooks/vocabulary/useArabicWord';
+import { useArabicWord, useArabicWordAnalysis } from '@/hooks/vocabulary';
 import type { TextWeight } from '@/types/ui/text.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 
@@ -45,12 +45,19 @@ function ArabicWordComponent({
   const colors = useColors();
   const [absoluteLayout, setAbsoluteLayout] = useState<LayoutRectangle | null>(null);
 
-  // Use our new hook for word selection state
+  // Use our existing hook for word selection state
   const { isSelected } = useArabicWord({
     word,
     position,
     onPress,
   });
+
+  // Use the new analysis hook for color-coding
+  const { hasComponents, coloredSegments } = useArabicWordAnalysis(
+    word.word_form,
+    word.english || '',
+    true // Always enabled for now
+  );
 
   // Use opacity animation for border
   const { setOpacity: setBorderOpacity } = useOpacityAnimation({
@@ -92,13 +99,11 @@ function ArabicWordComponent({
     [settings.fontScale]
   );
 
-  // More aggressively memoized text props (depends on selection and tooltip visibility)
-  const textProps = useMemo(
+  // Base text props for Arabic text
+  const baseTextProps = useMemo(
     () => ({
       type: 'arabic' as const,
-      variant: isSelected ? ('primary' as const) : undefined,
-      skipDefaultColor: false,
-      colorName: 'arabicText' as const,
+      skipDefaultColor: true, // We'll handle colors manually
       arabicFontSize: calculatedFontSize,
       weight: (isSelected ? 'semibold' : 'normal') as TextWeight,
       style: styles.textStyle as TextStyle,
@@ -125,8 +130,6 @@ function ArabicWordComponent({
     }
   }, [absoluteLayout, onTooltipOpen, wordRef]);
 
-  // Removed long press functionality - words are now added to study list via tooltip bookmark icon
-
   const getSelectedStyle = useCallback(
     (): ViewStyle => ({
       borderBottomWidth: 1,
@@ -141,6 +144,37 @@ function ArabicWordComponent({
     [isSelected, getSelectedStyle]
   );
 
+  // Render colored segments or single word
+  const renderWordContent = useMemo(() => {
+    if (!hasComponents || coloredSegments.length <= 1) {
+      // Single color word - use default Arabic text color
+      return (
+        <ThemedText
+          {...baseTextProps}
+          colorName="arabicText"
+          style={[baseTextProps.style, { color: colors.arabicText }]}
+        >
+          {word.word_form}
+        </ThemedText>
+      );
+    }
+
+    // Multi-colored segments - render each with its own color
+    return (
+      <ThemedText {...baseTextProps}>
+        {coloredSegments.map(segment => (
+          <ThemedText
+            key={`${segment.type}-${segment.text}-${segment.color}`}
+            {...baseTextProps}
+            style={[baseTextProps.style, { color: segment.color }]}
+          >
+            {segment.text}
+          </ThemedText>
+        ))}
+      </ThemedText>
+    );
+  }, [hasComponents, coloredSegments, baseTextProps, colors.arabicText, word.word_form]);
+
   return (
     <TouchableOpacity
       ref={wordRef}
@@ -150,9 +184,7 @@ function ArabicWordComponent({
       onLayout={handleLayout}
       onPress={handlePress}
     >
-      <View style={styles.wordView}>
-        <ThemedText {...textProps}>{word.word_form}</ThemedText>
-      </View>
+      <View style={styles.wordView}>{renderWordContent}</View>
     </TouchableOpacity>
   );
 }
@@ -176,6 +208,7 @@ export const ArabicWord = memo(ArabicWordComponent, (prevProps, nextProps) => {
   return (
     prevProps.word.id === nextProps.word.id &&
     prevProps.settings.fontScale === nextProps.settings.fontScale &&
-    prevProps.position === nextProps.position
+    prevProps.position === nextProps.position &&
+    prevProps.word.english === nextProps.word.english // Add this to detect translation changes
   );
 });

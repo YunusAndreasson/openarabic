@@ -1,4 +1,5 @@
 export * from './useArabicWord';
+export * from './useArabicWordAnalysis';
 export * from './useFSRS';
 export * from './useFSRSQueries';
 export * from './usePracticeBadge';
