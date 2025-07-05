@@ -46,6 +46,13 @@ export default function AccountLayout(): JSX.Element {
           headerLeft: () => <DoneButton />,
         })}
       />
+      <Stack.Screen
+        name="help"
+        options={createNavigationOptions(colors, {
+          title: STRINGS.HELP,
+          headerLeft: () => <DoneButton />,
+        })}
+      />
     </Stack>
   );
 }

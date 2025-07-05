@@ -172,6 +172,7 @@ export const STRINGS = {
   // Account & settings
   ACCOUNT: 'Account',
   SETTINGS: 'Settings',
+  HELP: 'Help',
   CONTACT_SUPPORT: 'Contact support',
   SUPPORT_EMAIL: 'yunus@edenmind.com',
   SUPPORT_EMAIL_SUBJECT: 'Open Arabic App Support',
@@ -488,6 +489,49 @@ export const STRINGS = {
   // Insights screen explanation
   INSIGHTS_EXPLANATION:
     'These charts show detailed stats about your memory capacity and learning progress. Use them to understand how your vocabulary retention works and track improvement over time.',
+
+  // Help content
+  HELP_GETTING_STARTED: 'Getting Started',
+  HELP_ACCOUNT_SETTINGS: 'Account & Settings',
+  HELP_AUDIO_PRACTICE: 'Audio & Practice',
+  HELP_TROUBLESHOOTING: 'Troubleshooting',
+
+  // FAQ Questions and Answers
+  FAQ_HOW_TO_ADD_WORDS_Q: 'How do I add words to study?',
+  FAQ_HOW_TO_ADD_WORDS_A:
+    'Browse articles in the Read tab and tap on any Arabic word to add it to your vocabulary list. The app uses spaced repetition to help you learn effectively.',
+
+  FAQ_HOW_SPACED_REPETITION_WORKS_Q: 'How does spaced repetition work?',
+  FAQ_HOW_SPACED_REPETITION_WORKS_A:
+    "The app shows you words just before you're likely to forget them. Words you find easy appear less often, while challenging words appear more frequently until you master them.",
+
+  FAQ_READ_VS_LISTEN_Q: "What's the difference between Read and Listen?",
+  FAQ_READ_VS_LISTEN_A:
+    'Read lets you browse articles and add vocabulary. Listen creates audio playlists from saved articles so you can practice while multitasking.',
+
+  FAQ_CHANGE_STUDY_REMINDERS_Q: 'How do I change my study reminders?',
+  FAQ_CHANGE_STUDY_REMINDERS_A:
+    "Go to Account settings, toggle study reminders on, then tap Time to set when you'd like to be reminded to practice.",
+
+  FAQ_CLEAR_AUDIO_CACHE_Q: 'How do I clear audio cache?',
+  FAQ_CLEAR_AUDIO_CACHE_A:
+    'In Account settings, find Audio cache and tap Clear. This frees up storage space and audio will re-download when needed.',
+
+  FAQ_CHANGE_THEMES_Q: 'How do I change themes?',
+  FAQ_CHANGE_THEMES_A:
+    'In Account settings, tap Theme to choose from different color schemes that match your preference and environment.',
+
+  FAQ_AUDIO_NOT_PLAYING_Q: "Why isn't audio playing?",
+  FAQ_AUDIO_NOT_PLAYING_A:
+    'Check your device volume and ensure you have a good internet connection. Audio files download automatically when you first play them.',
+
+  FAQ_SLEEP_TIMER_Q: 'How do sleep timers work?',
+  FAQ_SLEEP_TIMER_A:
+    'While listening, tap the timer button to set how long audio should play before automatically stopping. Perfect for bedtime listening.',
+
+  FAQ_PRACTICE_OFFLINE_Q: 'Can I practice without internet?',
+  FAQ_PRACTICE_OFFLINE_A:
+    "Yes! Once you've added words and they've synced, you can practice vocabulary anywhere. Audio requires internet for first-time downloads.",
 } as const;
 
 export type StringKey = keyof typeof STRINGS;

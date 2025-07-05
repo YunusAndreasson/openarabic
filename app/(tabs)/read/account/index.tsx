@@ -1,6 +1,7 @@
 // External Libraries
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
+import { router } from 'expo-router';
 import React, { Fragment, memo, useCallback, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -201,6 +202,36 @@ const AccountScreen: FC = () => {
           style={[styles.sectionContainer, styles.sectionSpacing]}
         >
           <View style={styles.linksContainer}>
+            <BaseCard
+              includePressAnimation={true}
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={() => router.push('/(tabs)/read/account/help')}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons
+                      color={colors.text}
+                      name="help-circle"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
+                  </View>
+                  <ThemedText style={styles.cardText} type="body" weight="medium">
+                    {STRINGS.HELP}
+                  </ThemedText>
+                </View>
+                <Ionicons
+                  color={colors.textTertiary}
+                  name="chevron-forward"
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                  style={styles.cardChevron}
+                />
+              </View>
+            </BaseCard>
+
+            <Divider />
+
             <BaseCard
               includePressAnimation={true}
               shadowSize="none"
