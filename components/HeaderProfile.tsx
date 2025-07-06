@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { memo, useCallback, useEffect, useState } from 'react';
@@ -6,6 +7,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
+import { useReadingStreak } from '@/hooks/articles/useReadingStreak';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { handleError } from '@/utils/errorHandling';
@@ -46,8 +48,19 @@ const HeaderProfile = memo(({ size = 28 }: HeaderProfileProps) => {
   const { user } = useAuth();
   const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(null);
 
-  const handlePress = useCallback(() => {
+  // Get reading streak data
+  const { streak: streakData } = useReadingStreak();
+  const currentStreak = streakData?.currentStreak ?? 0;
+  const hasStreak = currentStreak > 0;
+
+  const handleProfilePress = useCallback(() => {
     router.push(ROUTE_PATHS.ACCOUNT);
+  }, []);
+
+  // For streak counter, keep it simple - no navigation needed
+  const handleStreakPress = useCallback(() => {
+    // Just provide visual feedback that it's working
+    // Could show a toast with streak details in the future
   }, []);
 
   // Load saved profile photo
@@ -76,8 +89,24 @@ const HeaderProfile = memo(({ size = 28 }: HeaderProfileProps) => {
 
   return (
     <View style={styles.container}>
+      {/* Streak Counter */}
       <Pressable
-        onPress={handlePress}
+        onPress={handleStreakPress}
+        style={[styles.streakButton, { backgroundColor: colors.elevation1 }]}
+      >
+        <Ionicons name="flame" size={16} color={hasStreak ? colors.warning : colors.textTertiary} />
+        <ThemedText
+          type="caption"
+          weight="semibold"
+          style={[styles.streakText, { color: hasStreak ? colors.warning : colors.textTertiary }]}
+        >
+          {currentStreak}
+        </ThemedText>
+      </Pressable>
+
+      {/* Profile Button */}
+      <Pressable
+        onPress={handleProfilePress}
         style={[styles.profileButton, { backgroundColor: colors.elevation1 }]}
       >
         {profilePhotoUri ? (
@@ -117,15 +146,31 @@ HeaderProfile.displayName = 'HeaderProfile';
 
 const styles = StyleSheet.create({
   container: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: LAYOUT.SPACING.SMALL,
+  },
+  streakButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.TINY,
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    gap: LAYOUT.SPACING.TINY,
+    minWidth: MIN_TOUCH_TARGET.SMALL,
+    minHeight: MIN_TOUCH_TARGET.SMALL,
+  },
+  streakText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.2,
   },
   profileButton: {
     width: MIN_TOUCH_TARGET.MEDIUM,
     height: MIN_TOUCH_TARGET.MEDIUM,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: LAYOUT.SPACING.TINY,
     borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2,
     overflow: 'hidden',
   },
