@@ -444,7 +444,7 @@ export const WordTooltip = memo(
         <View style={STATIC_STYLES.englishRow}>
           <View style={STATIC_STYLES.englishContent}>{renderColorCodedEnglish}</View>
           <TouchableIcon
-            icon={isInStudyList ? 'bookmark' : 'bookmark-outline'}
+            icon={isInStudyList ? 'school' : 'school-outline'}
             size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
             touchSize="small"
             color={bookmarkProps.iconColor}
