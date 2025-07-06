@@ -1,9 +1,9 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
-import { createSlice, createSelector } from '@reduxjs/toolkit';
+import { createSelector, createSlice } from '@reduxjs/toolkit';
 
 export interface FilterState {
   sort: {
-    field: 'title' | 'author' | 'date' | 'difficulty';
+    field: 'author' | 'date' | 'difficulty' | 'progress';
     direction: 'asc' | 'desc';
   };
   filters: {
@@ -15,7 +15,7 @@ export interface FilterState {
 
 const initialState: FilterState = {
   sort: {
-    field: 'date',
+    field: 'progress',
     direction: 'desc',
   },
   filters: {
@@ -36,10 +36,14 @@ const filtersSlice = createSlice({
       } else {
         // Change field and use smart default direction based on field type
         state.sort.field = action.payload;
-        // Smart defaults: date/difficulty start with 'desc' (newest/hardest first)
-        // Title/author start with 'asc' (A-Z)
+        // Smart defaults: date/difficulty/progress start with 'desc' (newest/hardest/most progress first)
+        // Author starts with 'asc' (A-Z)
         state.sort.direction =
-          action.payload === 'date' || action.payload === 'difficulty' ? 'desc' : 'asc';
+          action.payload === 'date' ||
+          action.payload === 'difficulty' ||
+          action.payload === 'progress'
+            ? 'desc'
+            : 'asc';
       }
     },
 

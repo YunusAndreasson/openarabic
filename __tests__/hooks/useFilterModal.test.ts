@@ -1,16 +1,16 @@
-import { renderHook, act } from '@testing-library/react-native';
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { act, renderHook } from '@testing-library/react-native';
 
 import useFilterModal, {
-  DIFFICULTY_OPTIONS,
   DATE_RANGE_OPTIONS,
+  DIFFICULTY_OPTIONS,
 } from '@/hooks/articles/useFilterModal';
 import filtersReducer, {
+  clearAllFilters,
+  setDateRange,
+  setDifficultyRange,
   setSortField,
   toggleAuthor,
-  setDifficultyRange,
-  setDateRange,
-  clearAllFilters,
   type FilterState,
 } from '@/store/filtersSlice';
 
@@ -101,12 +101,8 @@ describe('useFilterModal', () => {
     });
     rerender();
 
-    expect(mockDispatch).toHaveBeenCalledWith(
-      setDifficultyRange(DIFFICULTY_OPTIONS[2].range)
-    );
-    expect(result.current.filters.difficultyRange).toEqual(
-      DIFFICULTY_OPTIONS[2].range
-    );
+    expect(mockDispatch).toHaveBeenCalledWith(setDifficultyRange(DIFFICULTY_OPTIONS[2].range));
+    expect(result.current.filters.difficultyRange).toEqual(DIFFICULTY_OPTIONS[2].range);
     expect(result.current.selectedDifficultyOption).toBe(DIFFICULTY_OPTIONS[2]);
 
     act(() => {
@@ -142,4 +138,3 @@ describe('useFilterModal', () => {
     expect(result.current.filters.dateRange).toBe('all');
   });
 });
-

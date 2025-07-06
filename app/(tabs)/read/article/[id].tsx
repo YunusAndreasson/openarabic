@@ -9,11 +9,13 @@ import { ArticleContent } from '@/components/article/ArticleContent';
 import { MiniPlayer } from '@/components/audio';
 import { ToastProvider, useToast } from '@/components/providers';
 import { TIMING_CONFIG } from '@/constants/animation';
+import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/articles/useArticleRenderers';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
+import { useReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useSentenceScrubber } from '@/hooks/articles/useSentenceScrubber';
 import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
@@ -153,6 +155,19 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     sentenceWordsMap,
   });
 
+  // Track reading progress
+  const {
+    progress: _progress,
+    updateProgress: _updateProgress,
+    lastSentenceRead,
+    isLoading: isProgressLoading,
+  } = useReadingProgress({
+    articleId: articleId ?? 0,
+    totalSentences: sortedSentences?.length ?? 0,
+    currentSentenceIndex,
+    isActive: !!article && !isLoadingArticle, // Only track when article is loaded and being read
+  });
+
   useEffect(() => {
     if (!user?.id) {
       return;
@@ -173,6 +188,53 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
       fadeIn();
     }
   }, [article, sortedSentences, isLoadingArticle, fadeIn]);
+
+  // Jump to last read sentence when article loads (if meaningful progress exists)
+  useEffect(() => {
+    if (
+      article &&
+      sortedSentences &&
+      sortedSentences.length > 0 &&
+      !isLoadingArticle &&
+      !isProgressLoading &&
+      lastSentenceRead > 0
+    ) {
+      // Only jump if there's meaningful progress (more than 10% or at least 3 sentences)
+      const meaningfulProgress =
+        lastSentenceRead >= 3 || lastSentenceRead / sortedSentences.length >= 0.1;
+
+      if (meaningfulProgress) {
+        console.log(
+          `🚀 Jumping to last read sentence: ${lastSentenceRead}/${sortedSentences.length}`
+        );
+
+        // Calculate progress percentage for toast message
+        const progressPercentage = Math.round((lastSentenceRead / sortedSentences.length) * 100);
+
+        // Small delay to ensure the list is fully rendered before jumping
+        setTimeout(() => {
+          handleSentenceChange(lastSentenceRead);
+
+          // Show user-friendly toast notification
+          showToast(
+            STRINGS.RESUMED_READING_TEMPLATE.replace(
+              '{percent}',
+              progressPercentage.toString()
+            ).replace('{sentence}', lastSentenceRead.toString()),
+            3000,
+            'success'
+          );
+        }, 500);
+      }
+    }
+  }, [
+    article,
+    sortedSentences,
+    isLoadingArticle,
+    isProgressLoading,
+    lastSentenceRead,
+    handleSentenceChange,
+  ]);
 
   const handleWordPress = useCallback(
     (word: SentenceWord, layout?: LayoutRectangle) => {

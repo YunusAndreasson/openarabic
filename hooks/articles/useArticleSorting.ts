@@ -6,9 +6,9 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import type { SortOption } from '@/types/ui/sorting.types';
 import { selectionFeedback } from '@/utils/haptics';
 
-// Article sort options - only Title, Author, Difficulty (Date removed)
+// Article sort options - Progress, Author, Difficulty (Title removed)
 export const ARTICLE_SORT_OPTIONS: readonly SortOption<FilterState['sort']['field']>[] = [
-  { key: 'title', label: STRINGS.TITLE_FILTER },
+  { key: 'progress', label: STRINGS.PROGRESS },
   { key: 'author', label: STRINGS.AUTHOR_FILTER },
   { key: 'difficulty', label: STRINGS.DIFFICULTY },
 ] as const;
@@ -28,7 +28,7 @@ export function useArticleSorting(): UseArticleSortingResult {
   const filtersState = useAppSelector(state => state.filters);
 
   // Provide default values if the state hasn't been rehydrated yet
-  const currentSort = filtersState?.sort?.field || 'title';
+  const currentSort = filtersState?.sort?.field || 'progress';
   const sortDirection = filtersState?.sort?.direction || 'desc';
 
   const onSortChange = useCallback(

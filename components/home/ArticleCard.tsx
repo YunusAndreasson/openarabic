@@ -1,10 +1,10 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useEffect, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import BaseCard from '@/components/BaseCard';
 import { EnhancedImage } from '@/components/EnhancedImage';
+import { ProgressCircle } from '@/components/ProgressCircle';
 import { ThemedText } from '@/components/ThemedText';
 import DeleteButton from '@/components/listen/DeleteButton';
 import DragHandle, { type DragHandleProps } from '@/components/listen/DragHandle';
@@ -34,10 +34,10 @@ interface ArticleCardProps {
   isBeingDragged?: boolean;
   // Play button props
   onPlayPress?: () => void;
-  // Chevron indicator for navigation
-  showChevron?: boolean;
   // Image for playlist-style display
   imageUrl?: string;
+  // Reading progress
+  progressPercentage?: number;
 }
 
 export const ArticleCard: FC<ArticleCardProps> = ({
@@ -50,8 +50,8 @@ export const ArticleCard: FC<ArticleCardProps> = ({
   dragHandleProps,
   isBeingDragged = false,
   onPlayPress,
-  showChevron = false,
   imageUrl,
+  progressPercentage,
 }) => {
   const isDarkMode = useIsDarkMode();
   const colors = useColors();
@@ -130,35 +130,33 @@ export const ArticleCard: FC<ArticleCardProps> = ({
               >
                 {title}
               </ThemedText>
-              <ThemedText
-                skipDefaultColor
-                colorName="authorText"
-                numberOfLines={1}
-                style={[styles.authorText, { opacity: authorOpacity }]}
-                type="label"
-              >
-                {author}
-                {difficultyLevel && ` • ${getDifficultyText(difficultyLevel)}`}
-              </ThemedText>
+              <View style={styles.authorRow}>
+                <ThemedText
+                  skipDefaultColor
+                  colorName="authorText"
+                  numberOfLines={1}
+                  style={[styles.authorText, { opacity: authorOpacity }]}
+                  type="label"
+                >
+                  {author}
+                  {difficultyLevel && ` • ${getDifficultyText(difficultyLevel)}`}
+                </ThemedText>
+                {progressPercentage !== undefined && progressPercentage > 0 && (
+                  <ProgressCircle
+                    percentage={progressPercentage}
+                    size={28}
+                    strokeWidth={4}
+                    showPercentage={false}
+                    style={styles.progressCircle}
+                  />
+                )}
+              </View>
             </View>
 
-            {/* Right side content - play button, chevron, or placeholder */}
-            {!editMode && (
+            {/* Right side content - play button only (no chevron) */}
+            {!editMode && onPlayPress && (
               <View style={styles.playButtonContainer}>
-                {onPlayPress ? (
-                  <PlayButton onPress={onPlayPress} isPlaying={false} iconColor={playIconColor} />
-                ) : showChevron ? (
-                  <View style={styles.chevronContainer}>
-                    <Ionicons
-                      name="chevron-forward"
-                      size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                      color={colors.textTertiary}
-                      style={styles.chevronIcon}
-                    />
-                  </View>
-                ) : (
-                  <View style={styles.playButtonPlaceholder} />
-                )}
+                <PlayButton onPress={onPlayPress} isPlaying={false} iconColor={playIconColor} />
               </View>
             )}
           </View>
@@ -207,22 +205,16 @@ const styles = StyleSheet.create({
   authorText: {
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
     letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.AUTHOR_BYLINE.letterSpacing,
+    flex: 1,
+  },
+  authorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.SMALL,
+    // Remove minHeight to allow natural centering
   },
   playButtonContainer: {
     marginLeft: LAYOUT.SPACING.SMALL,
-  },
-  playButtonPlaceholder: {
-    height: MIN_TOUCH_TARGET.MEDIUM,
-    width: MIN_TOUCH_TARGET.MEDIUM,
-  },
-  chevronContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: MIN_TOUCH_TARGET.MEDIUM,
-    width: MIN_TOUCH_TARGET.MEDIUM,
-  },
-  chevronIcon: {
-    opacity: LAYOUT.OPACITY.MEDIUM,
   },
   dragHandleContainer: {
     alignItems: 'center',
@@ -241,5 +233,11 @@ const styles = StyleSheet.create({
     height: PLAYLIST_IMAGE_SIZE,
     width: PLAYLIST_IMAGE_SIZE,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+  },
+  progressCircle: {
+    // Ensure perfect vertical centering with text
+    alignSelf: 'center',
+    // Add slight margin to improve visual balance
+    marginTop: 1,
   },
 });

@@ -15,7 +15,7 @@ interface ListArticleItemProps {
     delayLongPress: number;
   };
   isBeingDragged?: boolean;
-  showChevron?: boolean;
+  progressPercentage?: number;
 }
 
 const ListArticleItem = memo(
@@ -26,13 +26,9 @@ const ListArticleItem = memo(
     onDelete,
     dragHandleProps,
     isBeingDragged = false,
-    showChevron,
+    progressPercentage,
   }: ListArticleItemProps): JSX.Element => {
     const handlePress = useCallback(() => onPress?.(article), [onPress, article]);
-
-    // Show chevron when there's an onPress handler and not in edit mode
-    // If showChevron is explicitly passed, use that; otherwise auto-determine
-    const shouldShowChevron = showChevron ?? (!editMode && !!onPress);
 
     return (
       <ArticleCard
@@ -44,7 +40,7 @@ const ListArticleItem = memo(
         onDelete={onDelete}
         dragHandleProps={dragHandleProps}
         isBeingDragged={isBeingDragged}
-        showChevron={shouldShowChevron}
+        progressPercentage={progressPercentage}
       />
     );
   }

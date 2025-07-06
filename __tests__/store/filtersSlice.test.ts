@@ -1,11 +1,11 @@
 import reducer, {
+  clearAllFilters,
   type FilterState,
+  selectActiveFiltersCount,
+  setDateRange,
+  setDifficultyRange,
   setSortField,
   toggleAuthor,
-  setDifficultyRange,
-  setDateRange,
-  clearAllFilters,
-  selectActiveFiltersCount,
 } from '../../store/filtersSlice';
 
 describe('filtersSlice reducers', () => {
@@ -13,20 +13,20 @@ describe('filtersSlice reducers', () => {
 
   beforeEach(() => {
     initialState = {
-      sort: { field: 'date', direction: 'desc' },
+      sort: { field: 'progress', direction: 'desc' },
       filters: { authorIds: [], difficultyRange: [1, 5], dateRange: 'all' },
     };
   });
 
   it('toggles sort direction when same field is selected', () => {
-    const state = reducer(initialState, setSortField('date'));
-    expect(state.sort.field).toBe('date');
+    const state = reducer(initialState, setSortField('progress'));
+    expect(state.sort.field).toBe('progress');
     expect(state.sort.direction).toBe('asc');
   });
 
   it('sets sort field with correct default direction', () => {
-    const state = reducer(initialState, setSortField('title'));
-    expect(state.sort.field).toBe('title');
+    const state = reducer(initialState, setSortField('author'));
+    expect(state.sort.field).toBe('author');
     expect(state.sort.direction).toBe('asc');
 
     const next = reducer(initialState, setSortField('difficulty'));
@@ -80,7 +80,7 @@ describe('filtersSlice reducers', () => {
 
 describe('selectActiveFiltersCount', () => {
   const base: FilterState = {
-    sort: { field: 'date', direction: 'desc' },
+    sort: { field: 'progress', direction: 'desc' },
     filters: { authorIds: [], difficultyRange: [1, 5], dateRange: 'all' },
   };
 

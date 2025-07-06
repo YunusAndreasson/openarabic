@@ -11,6 +11,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
+import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 
@@ -131,6 +132,10 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
 }) => {
   const colors = useColors();
 
+  // Fetch bulk reading progress for all articles
+  const articleIds = useMemo(() => articles.map(article => article.id), [articles]);
+  const { data: progressMap = new Map() } = useSafeBulkReadingProgress(articleIds);
+
   // Memoize expensive computations
   const articlesLength = useMemo(() => articles.length, [articles.length]);
   const hasArticles = useMemo(() => articlesLength > 0, [articlesLength]);
@@ -171,6 +176,8 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
   ) => React.JSX.Element = useCallback(
     params => {
       const { item } = params;
+      const progress = progressMap.get(item.id);
+      const progressPercentage = progress?.progress_percentage ?? 0;
 
       if (editMode && 'drag' in params) {
         // DraggableFlatList render
@@ -190,6 +197,7 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
                 : undefined
             }
             isBeingDragged={isDragging}
+            progressPercentage={progressPercentage}
           />
         );
       } else {
@@ -199,12 +207,13 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
             article={item}
             editMode={editMode}
             onPress={!editMode ? onArticlePress : undefined}
-            onDelete={editMode ? () => onArticleDelete(item.id) : undefined}
+            onDelete={() => onArticleDelete(item.id)}
+            progressPercentage={progressPercentage}
           />
         );
       }
     },
-    [editMode, onArticlePress, onArticleDelete]
+    [editMode, onArticlePress, onArticleDelete, progressMap]
   );
 
   const renderSeparator = useCallback(() => SeparatorComponent(), []);

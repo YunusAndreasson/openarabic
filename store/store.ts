@@ -49,7 +49,7 @@ const migrations: { 0: (state: RootStateShape) => RootStateShape } = {
 
 // Configure redux-persist
 const persistConfig: PersistConfig<RootStateShape> = {
-  key: 'root',
+  key: 'root-v2', // Changed key to invalidate old persisted data for development
   storage: getSafeStorage(),
   version: 0,
   migrate: (state: PersistedState): Promise<PersistedState> => {

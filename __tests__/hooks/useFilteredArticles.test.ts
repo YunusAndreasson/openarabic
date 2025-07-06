@@ -1,7 +1,7 @@
-import { renderHook } from '@testing-library/react-native';
-import { describe, it, expect, beforeAll, afterAll, jest } from '@jest/globals';
 import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
 import type { FilterState } from '@/store/filtersSlice';
+import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
+import { renderHook } from '@testing-library/react-native';
 
 jest.mock('@/store/hooks', () => ({
   useAppSelector: jest.fn(),
@@ -19,14 +19,37 @@ type SimpleArticle = {
   created_at: string;
 };
 
-const days = (n: number) =>
-  new Date(baseDate.getTime() - n * 24 * 60 * 60 * 1000).toISOString();
+const days = (n: number) => new Date(baseDate.getTime() - n * 24 * 60 * 60 * 1000).toISOString();
 
 const articles: SimpleArticle[] = [
-  { id: 1, title: 'Alpha', author: { id: 1, name: 'Auth1' }, difficulty_level: 2, created_at: days(1) },
-  { id: 2, title: 'Beta', author: { id: 2, name: 'Auth2' }, difficulty_level: 4, created_at: days(10) },
-  { id: 3, title: 'Gamma', author: { id: 1, name: 'Auth1' }, difficulty_level: 1, created_at: days(20) },
-  { id: 4, title: 'Delta', author: { id: 2, name: 'Auth2' }, difficulty_level: 3, created_at: days(40) },
+  {
+    id: 1,
+    title: 'Alpha',
+    author: { id: 1, name: 'Auth1' },
+    difficulty_level: 2,
+    created_at: days(1),
+  },
+  {
+    id: 2,
+    title: 'Beta',
+    author: { id: 2, name: 'Auth2' },
+    difficulty_level: 4,
+    created_at: days(10),
+  },
+  {
+    id: 3,
+    title: 'Gamma',
+    author: { id: 1, name: 'Auth1' },
+    difficulty_level: 1,
+    created_at: days(20),
+  },
+  {
+    id: 4,
+    title: 'Delta',
+    author: { id: 2, name: 'Auth2' },
+    difficulty_level: 3,
+    created_at: days(40),
+  },
 ] as any;
 
 const sortFields: FilterState['sort']['field'][] = ['title', 'author', 'date', 'difficulty'];
@@ -34,7 +57,11 @@ const sortFields: FilterState['sort']['field'][] = ['title', 'author', 'date', '
 const cases = [
   {
     name: 'author filter',
-    filters: { authorIds: [1], difficultyRange: [1, 5] as [number, number], dateRange: 'all' as const },
+    filters: {
+      authorIds: [1],
+      difficultyRange: [1, 5] as [number, number],
+      dateRange: 'all' as const,
+    },
     expected: {
       title: [1, 3],
       author: [1, 3],
@@ -44,7 +71,11 @@ const cases = [
   },
   {
     name: 'difficulty filter',
-    filters: { authorIds: [], difficultyRange: [2, 3] as [number, number], dateRange: 'all' as const },
+    filters: {
+      authorIds: [],
+      difficultyRange: [2, 3] as [number, number],
+      dateRange: 'all' as const,
+    },
     expected: {
       title: [1, 4],
       author: [1, 4],
@@ -54,7 +85,11 @@ const cases = [
   },
   {
     name: 'month date filter',
-    filters: { authorIds: [], difficultyRange: [1, 5] as [number, number], dateRange: 'month' as const },
+    filters: {
+      authorIds: [],
+      difficultyRange: [1, 5] as [number, number],
+      dateRange: 'month' as const,
+    },
     expected: {
       title: [1, 2, 3],
       author: [1, 3, 2],
@@ -64,7 +99,11 @@ const cases = [
   },
   {
     name: 'week date filter',
-    filters: { authorIds: [], difficultyRange: [1, 5] as [number, number], dateRange: 'week' as const },
+    filters: {
+      authorIds: [],
+      difficultyRange: [1, 5] as [number, number],
+      dateRange: 'week' as const,
+    },
     expected: {
       title: [1],
       author: [1],

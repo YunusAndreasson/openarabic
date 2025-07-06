@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import type { FilterState } from '@/store/filtersSlice';
 import { useAppSelector } from '@/store/hooks';
 import type { Article } from '@/types/articles.types';
@@ -10,9 +11,13 @@ import type { Article } from '@/types/articles.types';
 export const useFilteredArticles = (articles: Article[]) => {
   const filtersState = useAppSelector(state => state.filters);
 
+  // Fetch bulk reading progress for all articles (safely handles missing AuthProvider)
+  const articleIds = useMemo(() => articles.map(article => article.id), [articles]);
+  const { data: progressMap = new Map() } = useSafeBulkReadingProgress(articleIds);
+
   // Provide default values if the state hasn't been rehydrated yet
   const sort = filtersState?.sort || {
-    field: 'title' as const,
+    field: 'progress' as const,
     direction: 'desc' as const,
   };
 
@@ -23,10 +28,14 @@ export const useFilteredArticles = (articles: Article[]) => {
   };
 
   const comparators: Record<FilterState['sort']['field'], (a: Article, b: Article) => number> = {
-    title: (a, b) => a.title.localeCompare(b.title),
     author: (a, b) => a.author.name.localeCompare(b.author.name),
     date: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
     difficulty: (a, b) => a.difficulty_level - b.difficulty_level,
+    progress: (a, b) => {
+      const progressA = progressMap.get(a.id)?.progress_percentage ?? 0;
+      const progressB = progressMap.get(b.id)?.progress_percentage ?? 0;
+      return progressA - progressB;
+    },
   };
 
   // Pre-calculate date filter if needed
@@ -78,7 +87,7 @@ export const useFilteredArticles = (articles: Article[]) => {
       const result = comparator ? comparator(a, b) : 0;
       return sort.direction === 'desc' ? -result : result;
     });
-  }, [articles, sort, filters, filterDate, filtersState]);
+  }, [articles, sort, filters, filterDate, filtersState, progressMap]);
 
   return filteredAndSortedArticles;
 };
