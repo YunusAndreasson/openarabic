@@ -11,3 +11,4 @@ export { useMultipleFeaturedArticles } from './useMultipleFeaturedArticles';
 export { useReadingProgress } from './useReadingProgress';
 export { useReadingStreak } from './useReadingStreak';
 export { useSentenceScrubber } from './useSentenceScrubber';
+export { useStreakHistory } from './useStreakHistory';

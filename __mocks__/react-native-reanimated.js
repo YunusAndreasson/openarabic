@@ -5,6 +5,7 @@ module.exports = {
     Text: 'Text',
     ScrollView: 'ScrollView',
     createAnimatedComponent: c => c,
+    addWhitelistedUIProps: () => {},
   },
   useSharedValue: v => ({ value: v }),
   useAnimatedStyle: () => ({}),

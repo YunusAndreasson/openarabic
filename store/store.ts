@@ -10,6 +10,7 @@ import filtersReducer from './filtersSlice';
 import listenReducer from './listenSlice';
 import readingListReducer from './readingListSlice';
 import settingsReducer from './settingsSlice';
+import streakReducer from './streakSlice';
 import themeReducer from './themeSlice';
 
 // Combine reducers (even if there's only one) so we can use a whitelist.
@@ -20,6 +21,7 @@ const rootReducer = combineReducers({
   filters: filtersReducer,
   listen: listenReducer,
   editMode: editModeReducer,
+  streak: streakReducer,
 });
 
 // Migration function for settings
@@ -66,7 +68,7 @@ const persistConfig: PersistConfig<RootStateShape> = {
     }
     return Promise.resolve(state);
   },
-  whitelist: ['theme', 'settings', 'readingList', 'filters', 'listen'],
+  whitelist: ['theme', 'settings', 'readingList', 'filters', 'listen', 'streak'],
 };
 
 const persistedReducer = persistReducer<RootStateShape>(persistConfig, rootReducer);

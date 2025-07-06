@@ -1,13 +1,13 @@
-import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
-import type { FilterState } from '@/store/filtersSlice';
-import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
+import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { renderHook } from '@testing-library/react-native';
+import { useFilteredArticles } from '../../hooks/articles/useFilteredArticles';
+import type { FilterState } from '../../store/filtersSlice';
 
-jest.mock('@/store/hooks', () => ({
+jest.mock('../../store/hooks', () => ({
   useAppSelector: jest.fn(),
 }));
 
-const { useAppSelector } = require('@/store/hooks');
+const { useAppSelector } = require('../../store/hooks');
 
 const baseDate = new Date('2024-01-10T00:00:00.000Z');
 
@@ -52,7 +52,7 @@ const articles: SimpleArticle[] = [
   },
 ] as any;
 
-const sortFields: FilterState['sort']['field'][] = ['title', 'author', 'date', 'difficulty'];
+const sortFields: FilterState['sort']['field'][] = ['author', 'date', 'difficulty', 'progress'];
 
 const cases = [
   {
@@ -63,10 +63,10 @@ const cases = [
       dateRange: 'all' as const,
     },
     expected: {
-      title: [1, 3],
       author: [1, 3],
       date: [3, 1],
       difficulty: [3, 1],
+      progress: [1, 3],
     },
   },
   {
@@ -77,10 +77,10 @@ const cases = [
       dateRange: 'all' as const,
     },
     expected: {
-      title: [1, 4],
       author: [1, 4],
       date: [4, 1],
       difficulty: [1, 4],
+      progress: [1, 4],
     },
   },
   {
@@ -91,10 +91,10 @@ const cases = [
       dateRange: 'month' as const,
     },
     expected: {
-      title: [1, 2, 3],
       author: [1, 3, 2],
       date: [3, 2, 1],
       difficulty: [3, 1, 2],
+      progress: [1, 2, 3],
     },
   },
   {
@@ -105,10 +105,10 @@ const cases = [
       dateRange: 'week' as const,
     },
     expected: {
-      title: [1],
       author: [1],
       date: [1],
       difficulty: [1],
+      progress: [1],
     },
   },
 ];

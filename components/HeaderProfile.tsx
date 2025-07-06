@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { memo, useCallback, useEffect, useState } from 'react';
+import React, { memo, useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -10,7 +10,10 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { useReadingStreak } from '@/hooks/articles/useReadingStreak';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
+import { useAppDispatch } from '@/store/hooks';
+import { openStreakBottomSheet } from '@/store/streakSlice';
 import { handleError } from '@/utils/errorHandling';
+import { selectionFeedback } from '@/utils/haptics';
 import { getSafeStorage } from '@/utils/safeAsyncStorage';
 
 // Helper functions from AccountBadge for consistency
@@ -45,6 +48,7 @@ interface HeaderProfileProps {
 
 const HeaderProfile = memo(({ size = 28 }: HeaderProfileProps) => {
   const colors = useColors();
+  const dispatch = useAppDispatch();
   const { user } = useAuth();
   const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(null);
 
@@ -53,15 +57,15 @@ const HeaderProfile = memo(({ size = 28 }: HeaderProfileProps) => {
   const currentStreak = streakData?.currentStreak ?? 0;
   const hasStreak = currentStreak > 0;
 
-  const handleProfilePress = useCallback(() => {
+  const handlePress = useCallback(() => {
+    selectionFeedback();
     router.push(ROUTE_PATHS.ACCOUNT);
   }, []);
 
-  // For streak counter, keep it simple - no navigation needed
   const handleStreakPress = useCallback(() => {
-    // Just provide visual feedback that it's working
-    // Could show a toast with streak details in the future
-  }, []);
+    selectionFeedback();
+    dispatch(openStreakBottomSheet());
+  }, [dispatch]);
 
   // Load saved profile photo
   useEffect(() => {
@@ -91,8 +95,9 @@ const HeaderProfile = memo(({ size = 28 }: HeaderProfileProps) => {
     <View style={styles.container}>
       {/* Streak Counter */}
       <Pressable
+        style={styles.streakContainer}
         onPress={handleStreakPress}
-        style={[styles.streakButton, { backgroundColor: colors.elevation1 }]}
+        hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
       >
         <Ionicons name="flame" size={16} color={hasStreak ? colors.warning : colors.textTertiary} />
         <ThemedText
@@ -106,7 +111,7 @@ const HeaderProfile = memo(({ size = 28 }: HeaderProfileProps) => {
 
       {/* Profile Button */}
       <Pressable
-        onPress={handleProfilePress}
+        onPress={handlePress}
         style={[styles.profileButton, { backgroundColor: colors.elevation1 }]}
       >
         {profilePhotoUri ? (
@@ -149,28 +154,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: LAYOUT.SPACING.SMALL,
+    gap: LAYOUT.SPACING.MEDIUM,
   },
-  streakButton: {
+  streakContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.TINY,
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
     gap: LAYOUT.SPACING.TINY,
-    minWidth: MIN_TOUCH_TARGET.SMALL,
-    minHeight: MIN_TOUCH_TARGET.SMALL,
+    paddingVertical: LAYOUT.SPACING.TINY,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
   },
   streakText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.2,
   },
   profileButton: {
     width: MIN_TOUCH_TARGET.MEDIUM,
     height: MIN_TOUCH_TARGET.MEDIUM,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: LAYOUT.SPACING.TINY,
     borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2,
     overflow: 'hidden',
   },

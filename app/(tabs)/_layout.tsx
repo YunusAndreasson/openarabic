@@ -2,16 +2,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { Tabs, router } from 'expo-router';
 import type { JSX } from 'react';
-import { Fragment, memo, useEffect } from 'react';
+import React, { Fragment, memo, useCallback, useEffect } from 'react';
 import { Platform, StyleSheet } from 'react-native';
 
 import HeaderProfile from '@/components/HeaderProfile';
+import { StreakHistoryBottomSheet } from '@/components/home/StreakHistoryBottomSheet';
 import EditModeButton from '@/components/ui/EditModeButton';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth';
 import { useColors, useIsDarkMode } from '@/hooks/theme';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { closeStreakBottomSheet } from '@/store/streakSlice';
 
 const TAB_SCREENS = [
   {
@@ -72,6 +75,8 @@ const listenHeaderRightComponent = () => <EditModeButton type="listen" />;
 export default function TabLayout(): JSX.Element {
   const { session, isLoading } = useAuth();
   const colors = useColors();
+  const dispatch = useAppDispatch();
+  const isStreakBottomSheetVisible = useAppSelector(state => state.streak.isBottomSheetVisible);
 
   useEffect(() => {
     if (!isLoading && !session?.user) {
@@ -79,76 +84,88 @@ export default function TabLayout(): JSX.Element {
     }
   }, [session, isLoading]);
 
+  const handleCloseStreakBottomSheet = useCallback(() => {
+    dispatch(closeStreakBottomSheet());
+  }, [dispatch]);
+
   if (!session?.user) {
     return <Fragment />;
   }
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: true,
-        headerTitleAlign: 'left',
-        headerTitleStyle: {
-          fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-          fontWeight: LAYOUT.HEADER.TITLE.SECONDARY.fontWeight,
-        },
-        headerTransparent: true,
-        headerBackground: headerBackground,
-
-        // Tab bar styling with blur
-        tabBarBackground: tabBarBackground,
-        tabBarActiveTintColor: colors.tint,
-        tabBarInactiveTintColor: colors.tabIconDefault,
-        tabBarShowLabel: false, // Clean icon-only design with 3 tabs and clear nav titles
-        tabBarIconStyle: {
-          marginTop: 8, // Standard centering for icons when labels are hidden
-        },
-        tabBarStyle: Platform.select({
-          ios: {
-            position: 'absolute',
-            borderTopWidth: 0,
-            height: LAYOUT.BOTTOM_BAR.HEIGHT, // Standard iOS: 83px
+    <>
+      <Tabs
+        screenOptions={{
+          headerShown: true,
+          headerTitleAlign: 'left',
+          headerTitleStyle: {
+            fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
+            fontWeight: LAYOUT.HEADER.TITLE.SECONDARY.fontWeight,
           },
-          android: {
-            borderTopWidth: StyleSheet.hairlineWidth,
-            borderTopColor: colors.border,
-            height: LAYOUT.BOTTOM_BAR.HEIGHT, // Standard Android: 65px
-            ...LAYOUT.ELEVATION.SMALL,
-          },
-        }),
+          headerTransparent: true,
+          headerBackground: headerBackground,
 
-        // Performance optimizations
-        freezeOnBlur: true,
-        animation: 'fade',
-        lazy: true,
-      }}
-    >
-      {TAB_SCREENS.map(screen => (
-        <Tabs.Screen
-          key={screen.name}
-          name={screen.name}
-          options={{
-            title: screen.title,
-            tabBarIcon: ({ focused, color }) => (
-              <Ionicons
-                name={focused ? screen.iconFilled : screen.iconOutline}
-                size={LAYOUT.BUTTON.ICON_SIZE.XLARGE}
-                color={color}
-                style={{
-                  opacity: focused ? 1 : LAYOUT.OPACITY.HIGH,
-                }}
-              />
-            ),
-            // Header customizations for specific screens
-            ...(screen.name === 'read' && {
-              headerRight: headerProfileComponent,
-            }),
-            ...(screen.name === 'listen' && {
-              headerRight: listenHeaderRightComponent,
-            }),
-          }}
-        />
-      ))}
-    </Tabs>
+          // Tab bar styling with blur
+          tabBarBackground: tabBarBackground,
+          tabBarActiveTintColor: colors.tint,
+          tabBarInactiveTintColor: colors.tabIconDefault,
+          tabBarShowLabel: false, // Clean icon-only design with 3 tabs and clear nav titles
+          tabBarIconStyle: {
+            marginTop: 8, // Standard centering for icons when labels are hidden
+          },
+          tabBarStyle: Platform.select({
+            ios: {
+              position: 'absolute',
+              borderTopWidth: 0,
+              height: LAYOUT.BOTTOM_BAR.HEIGHT, // Standard iOS: 83px
+            },
+            android: {
+              borderTopWidth: StyleSheet.hairlineWidth,
+              borderTopColor: colors.border,
+              height: LAYOUT.BOTTOM_BAR.HEIGHT, // Standard Android: 65px
+              ...LAYOUT.ELEVATION.SMALL,
+            },
+          }),
+
+          // Performance optimizations
+          freezeOnBlur: true,
+          animation: 'fade',
+          lazy: true,
+        }}
+      >
+        {TAB_SCREENS.map(screen => (
+          <Tabs.Screen
+            key={screen.name}
+            name={screen.name}
+            options={{
+              title: screen.title,
+              tabBarIcon: ({ focused, color }) => (
+                <Ionicons
+                  name={focused ? screen.iconFilled : screen.iconOutline}
+                  size={LAYOUT.BUTTON.ICON_SIZE.XLARGE}
+                  color={color}
+                  style={{
+                    opacity: focused ? 1 : LAYOUT.OPACITY.HIGH,
+                  }}
+                />
+              ),
+              // Header customizations for specific screens
+              ...(screen.name === 'read' && {
+                headerRight: headerProfileComponent,
+              }),
+              ...(screen.name === 'listen' && {
+                headerRight: listenHeaderRightComponent,
+              }),
+            }}
+          />
+        ))}
+      </Tabs>
+
+      {/* Global Streak History Bottom Sheet */}
+      <StreakHistoryBottomSheet
+        isVisible={isStreakBottomSheetVisible}
+        onClose={handleCloseStreakBottomSheet}
+      />
+    </>
   );
 }

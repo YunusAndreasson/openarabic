@@ -111,7 +111,11 @@ jest.mock('../../app/(tabs)/practice/index.tsx', () => {
 });
 
 jest.mock('../../hooks/auth/useAuth', () => ({
-  useAuth: () => ({ session: { user: {} }, isLoading: false }),
+  useAuth: () => ({
+    user: { id: 'test-user-id' },
+    session: { user: { id: 'test-user-id' } },
+    isLoading: false,
+  }),
 }));
 
 jest.mock('../../hooks/theme/useColors', () => ({
@@ -140,6 +144,34 @@ jest.mock('../../components/ui/EditModeButton', () => () => null);
 // Mock notification service to prevent expo-notifications import error
 jest.mock('../../services/notificationService', () => ({
   updateAppIconBadge: jest.fn(),
+}));
+
+// Mock reading streak service
+jest.mock('../../services/readingStreak', () => ({
+  ReadingStreakService: {
+    getStreakHistory: jest.fn().mockResolvedValue({
+      currentStreak: 0,
+      bestStreak: 0,
+      totalReadingDays: 0,
+      dailyActivity: [],
+    }),
+  },
+}));
+
+// Mock streak history hook
+jest.mock('../../hooks/articles/useStreakHistory', () => ({
+  useStreakHistory: () => ({
+    streakHistory: {
+      currentStreak: 0,
+      bestStreak: 0,
+      totalReadingDays: 0,
+      dailyActivity: [],
+    },
+    isLoading: false,
+    isError: false,
+    error: null,
+    refetch: jest.fn(),
+  }),
 }));
 
 const createWrapper = () => {

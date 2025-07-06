@@ -1,11 +1,9 @@
-import { ReadingStreakService, type DailyReadingActivity } from '@/services/readingStreak';
+import { ReadingStreakService, type DailyReadingActivity } from '../../services/readingStreak';
 
 describe('ReadingStreakService', () => {
   describe('calculateStreak', () => {
     const createActivity = (date: string, hasActivity: boolean = true): DailyReadingActivity => ({
       date,
-      articlesRead: hasActivity ? 1 : 0,
-      sentencesRead: hasActivity ? 10 : 0,
       hasActivity,
     });
 
@@ -22,7 +20,6 @@ describe('ReadingStreakService', () => {
         currentStreak: 0,
         longestStreak: 0,
         lastReadingDate: null,
-        streakStartDate: null,
         totalReadingDays: 0,
       });
     });
