@@ -75,7 +75,7 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
         <MetricCard
           icon="flame"
           value={metrics.currentStreak.toString()}
-          label={`Current ${formatDaysLabel(metrics.currentStreak)}`}
+          label="Current streak"
           color={currentStreakColor}
           isHighlight={isCurrentStreakHighlight}
         />
@@ -83,7 +83,7 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
         <MetricCard
           icon="trophy"
           value={metrics.longestStreak.toString()}
-          label={`Best ${formatDaysLabel(metrics.longestStreak)}`}
+          label="Best streak"
           color={colors.warning}
         />
 

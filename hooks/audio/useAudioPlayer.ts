@@ -64,13 +64,16 @@ function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
         currentTrack: action.queue[action.index] || null,
       };
     case 'SET_CURRENT_TRACK':
-      // Only log critical debugging cases
-      if (state.currentTrack && !action.track) {
-        console.log('🚨 [PLAYER REDUCER] currentTrack being set to NULL!');
-        console.log('🚨 [PLAYER REDUCER] Previous track:', state.currentTrack.title);
-        console.log('🚨 [PLAYER REDUCER] Call stack:', new Error().stack);
+      if (action.track === null) {
+        return {
+          ...state,
+          currentTrack: null,
+        };
       }
-      return { ...state, currentTrack: action.track };
+      return {
+        ...state,
+        currentTrack: action.track,
+      };
     case 'SET_INDEX':
       return {
         ...state,
@@ -82,9 +85,6 @@ function playerReducer(state: PlayerState, action: PlayerAction): PlayerState {
     case 'SET_AUTOPLAY':
       return { ...state, shouldAutoPlay: action.value };
     case 'RESET':
-      console.log('🔄 [PLAYER REDUCER] RESET action dispatched!');
-      console.log('🔄 [PLAYER REDUCER] Previous state had track:', !!state.currentTrack);
-      console.log('🔄 [PLAYER REDUCER] Call stack:', new Error().stack);
       return initialState;
     default:
       return state;

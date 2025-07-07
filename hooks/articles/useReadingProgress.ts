@@ -54,12 +54,8 @@ export function useReadingProgress({
           Math.min(result.last_sentence_read, maxValidSentence)
         );
 
-        // If we had to sanitize, log it and update the database
+        // If we had to sanitize, update the database with corrected value
         if (sanitizedLastSentence !== result.last_sentence_read) {
-          console.log(
-            `🔧 Sanitizing invalid progress: ${result.last_sentence_read} → ${sanitizedLastSentence} for article ${articleId} (${totalSentences} sentences)`
-          );
-
           // Update the database with the corrected value
           readingProgressService
             .updateProgress({
@@ -68,8 +64,8 @@ export function useReadingProgress({
               lastSentenceRead: sanitizedLastSentence,
               totalSentences,
             })
-            .catch(error => {
-              console.error('❌ Failed to sanitize progress in database:', error);
+            .catch(() => {
+              // Silent error - sanitization failed but we still use corrected value
             });
         }
 
@@ -98,10 +94,6 @@ export function useReadingProgress({
     mutationFn: async (lastSentenceRead: number) => {
       if (!user?.id) throw new Error('User not authenticated');
 
-      console.log(
-        `📖 Updating reading progress: Article ${articleId}, Sentence ${lastSentenceRead}/${totalSentences}`
-      );
-
       return readingProgressService.updateProgress({
         userId: user.id,
         articleId,
@@ -123,15 +115,8 @@ export function useReadingProgress({
           queryKey: ['reading-progress-bulk', user.id],
         });
       }
-
-      console.log(
-        `✅ Progress saved: ${lastSentenceRead}/${totalSentences} (${Math.round(
-          (lastSentenceRead * 100) / totalSentences
-        )}%)`
-      );
     },
     onError: error => {
-      console.error('❌ Failed to update reading progress:', error);
       handleError(error instanceof Error ? error : new Error('Failed to update reading progress'));
     },
   });
@@ -153,9 +138,6 @@ export function useReadingProgress({
       );
 
       if (validSentenceIndex > lastRecorded) {
-        console.log(
-          `📚 Progress detected: ${validSentenceIndex} > ${lastRecorded} for article ${articleId}`
-        );
         updateProgressMutation.mutate(validSentenceIndex);
       }
     },
@@ -195,10 +177,8 @@ export function useReadingProgress({
           Math.min(currentSentenceIndex, totalSentences - 1)
         );
 
-        if (validFinalSentenceIndex > lastRecorded) {
-          console.log(
-            `💾 Saving final progress on unmount: ${validFinalSentenceIndex}/${totalSentences}`
-          );
+        if (validFinalSentenceIndex > lastRecorded && user?.id) {
+          // Save final progress without logging
           readingProgressService
             .updateProgress({
               userId: user.id,
@@ -206,8 +186,8 @@ export function useReadingProgress({
               lastSentenceRead: validFinalSentenceIndex,
               totalSentences,
             })
-            .catch(error => {
-              console.error('❌ Failed to save final progress:', error);
+            .catch(() => {
+              // Silent error - final progress save failed
             });
         }
       }

@@ -167,7 +167,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     progress: _progress,
     updateProgress: _updateProgress,
     lastSentenceRead,
-    isLoading: isProgressLoading,
+    isLoading: _isProgressLoading,
   } = useReadingProgress({
     articleId: articleId ?? 0,
     totalSentences: sortedSentences?.length ?? 0,
@@ -196,53 +196,33 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     }
   }, [article, sortedSentences, isLoadingArticle, fadeIn]);
 
-  // Jump to last read sentence when article loads (if meaningful progress exists)
+  // Show toast when resuming reading progress
   useEffect(() => {
     if (
-      article &&
+      lastSentenceRead !== null &&
+      lastSentenceRead > 0 &&
       sortedSentences &&
-      sortedSentences.length > 0 &&
-      !isLoadingArticle &&
-      !isProgressLoading &&
-      lastSentenceRead > 0
+      sortedSentences.length > 0
     ) {
-      // Only jump if there's meaningful progress (more than 10% or at least 3 sentences)
-      const meaningfulProgress =
-        lastSentenceRead >= 3 || lastSentenceRead / sortedSentences.length >= 0.1;
+      const progressPercent = Math.round((lastSentenceRead / sortedSentences.length) * 100);
 
-      if (meaningfulProgress) {
-        console.log(
-          `🚀 Jumping to last read sentence: ${lastSentenceRead}/${sortedSentences.length}`
-        );
+      // Add haptic feedback when showing resume toast
+      selectionFeedback();
 
-        // Calculate progress percentage for toast message
-        const progressPercentage = Math.round((lastSentenceRead / sortedSentences.length) * 100);
+      // Show local toast near scrubber
+      setResumeToast({ visible: true, progress: progressPercent });
 
-        // Small delay to ensure the list is fully rendered before jumping
-        setTimeout(() => {
-          handleSentenceChange(lastSentenceRead);
+      // Auto-hide after 3 seconds
+      const timer = setTimeout(() => {
+        setResumeToast({ visible: false, progress: 0 });
+      }, 3000);
 
-          // Add haptic feedback for resume action
-          selectionFeedback();
-
-          // Show resume toast near scrubber
-          setResumeToast({ visible: true, progress: progressPercentage });
-
-          // Auto-hide after 3 seconds
-          setTimeout(() => {
-            setResumeToast(prev => ({ ...prev, visible: false }));
-          }, 3000);
-        }, 500);
-      }
+      return () => clearTimeout(timer);
     }
-  }, [
-    article,
-    sortedSentences,
-    isLoadingArticle,
-    isProgressLoading,
-    lastSentenceRead,
-    handleSentenceChange,
-  ]);
+
+    // Return undefined for other code paths
+    return undefined;
+  }, [lastSentenceRead, sortedSentences]);
 
   const handleWordPress = useCallback(
     (word: SentenceWord, layout?: LayoutRectangle) => {
