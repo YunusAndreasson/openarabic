@@ -33,6 +33,29 @@ import { selectionFeedback } from '@/utils/haptics';
 
 const FLEX_ONE_STYLE = { flex: 1 } as const;
 
+// Static resume toast styles
+const RESUME_TOAST_STYLES = {
+  container: {
+    position: 'absolute' as const,
+    bottom: LAYOUT.SPACING.XLARGE * 3,
+    left: LAYOUT.SPACING.XLARGE,
+    right: LAYOUT.SPACING.XLARGE,
+    alignItems: 'center' as const,
+    zIndex: LAYOUT.Z_INDEX.POPUP,
+  },
+  toast: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    ...LAYOUT.ELEVATION.SMALL,
+  },
+  text: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontWeight: '600' as const,
+    textAlign: 'center' as const,
+  },
+} as const;
+
 // Inner component with toast context access
 const ArticleScreenContent = ({ id }: { id: string }) => {
   const colors = useColors();
@@ -46,8 +69,8 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     progress: number;
   }>({ visible: false, progress: 0 });
 
-  // Audio player for single article playback
   const audioPlayer = useSimpleAudioPlayer();
+  const globalAudioState = useGlobalAudioState();
 
   const { handleScroll } = useHeaderVisibility();
 
@@ -75,13 +98,13 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     refetchReadingListStatus,
   } = useArticleData(articleId, user?.id);
 
-  // Check if current article is being played
+  // Simplified audio state check
   const isCurrentArticlePlaying = useMemo(() => {
     const currentArticleId = audioPlayer.currentTrack?.articleId
       ? parseInt(audioPlayer.currentTrack.articleId.toString(), 10)
       : null;
     return currentArticleId === articleId;
-  }, [audioPlayer.isPlaying, audioPlayer.currentTrack?.articleId, articleId]);
+  }, [audioPlayer.currentTrack?.articleId, articleId]);
 
   const [activeTooltip, setActiveTooltip] = useState<{
     word: SentenceWord;
@@ -104,8 +127,6 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
 
     selectionFeedback();
     await handleToggleReadingList(articleId, isInReadingList);
-
-    // Show toast notification for user feedback
     showToast(isInReadingList ? 'Removed from playlist' : 'Added to playlist', 3000, 'success');
   }, [articleId, isInReadingList, handleToggleReadingList, showToast]);
 
@@ -113,8 +134,6 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     selectionFeedback();
     router.back();
   }, []);
-
-  const globalAudioState = useGlobalAudioState();
 
   // Handle audio playback for single article
   const handlePlayPress = useCallback(async () => {
@@ -124,23 +143,15 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
       selectionFeedback();
 
       if (isCurrentArticlePlaying) {
-        // Stop current playback
         await audioPlayer.stop();
         return;
       }
 
-      // Generate and play single track for this article
-      // Mini-player will appear automatically when audio starts
       const track = await enhancedAudioService.generateEnhancedAudioTrack(articleId);
       if (track) {
         const success = await audioPlayer.play(track);
-        // Explicitly close sleep timer to ensure mini-player is shown
         if (success) {
           globalAudioState.onSleepTimerClose();
-        }
-        // Removed automatic navigation - let mini-player handle expand action
-        if (!success) {
-          // Could add error handling here if needed
         }
       }
     } catch (error) {
@@ -163,30 +174,23 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
   });
 
   // Track reading progress
-  const {
-    progress: _progress,
-    updateProgress: _updateProgress,
-    lastSentenceRead,
-    isLoading: _isProgressLoading,
-  } = useReadingProgress({
+  const { lastSentenceRead } = useReadingProgress({
     articleId: articleId ?? 0,
     totalSentences: sortedSentences?.length ?? 0,
     currentSentenceIndex,
-    isActive: !!article && !isLoadingArticle, // Only track when article is loaded and being read
+    isActive: !!article && !isLoadingArticle,
   });
 
   useEffect(() => {
-    if (!user?.id) {
-      return;
-    }
+    if (!user?.id) return;
+
     const subscription = AppState.addEventListener('change', nextAppState => {
       if (nextAppState === 'active') {
         void refetchStudyWords?.();
       }
     });
-    return () => {
-      subscription.remove();
-    };
+
+    return () => subscription.remove();
   }, [user?.id, refetchStudyWords]);
 
   // Trigger fade-in when article content is ready
@@ -206,13 +210,9 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     ) {
       const progressPercent = Math.round((lastSentenceRead / sortedSentences.length) * 100);
 
-      // Add haptic feedback when showing resume toast
       selectionFeedback();
-
-      // Show local toast near scrubber
       setResumeToast({ visible: true, progress: progressPercent });
 
-      // Auto-hide after 3 seconds
       const timer = setTimeout(() => {
         setResumeToast({ visible: false, progress: 0 });
       }, 3000);
@@ -220,19 +220,15 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
       return () => clearTimeout(timer);
     }
 
-    // Return undefined for other code paths
     return undefined;
   }, [lastSentenceRead, sortedSentences]);
 
   const handleWordPress = useCallback(
     (word: SentenceWord, layout?: LayoutRectangle) => {
-      // Handle tooltip visibility only if layout is provided
       if (layout && layout.width > 0) {
         if (activeTooltip?.word.id === word.id) {
-          // If tapping the same word, close the tooltip
           setActiveTooltip(null);
         } else {
-          // If tapping a different word (or no tooltip is open), open the new tooltip
           setActiveTooltip({ word, layout });
         }
       }
@@ -240,7 +236,6 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     [activeTooltip]
   );
 
-  // Separate handler for study list toggle from tooltip
   const handleStudyListToggle = useCallback(() => {
     if (activeTooltip?.word.root_id) {
       selectionFeedback();
@@ -252,7 +247,6 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     setActiveTooltip(null);
   }, []);
 
-  // Create a wrapper for the word press handler that matches useArticleRenderers signature
   const handleWordPressForRenderer = useCallback(
     (word: SentenceWord) => {
       handleWordPress(word);
@@ -269,12 +263,10 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
   );
 
   const renderSentenceItem = useCallback(
-    // eslint-disable-next-line react/no-unused-prop-types
     ({ item }: { item: Tables<'article_sentences'> }) => {
       const words = getWordsForSentence(item.id);
 
       if (!words || words.length === 0) {
-        // Return an empty view instead of null to satisfy the ReactElement requirement
         return <React.Fragment />;
       }
 
@@ -293,14 +285,24 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     [getWordsForSentence, fontScale, colors, dueWordRootIds, handleWordPress]
   );
 
+  const resumeToastStyle = useMemo(
+    () => ({
+      ...RESUME_TOAST_STYLES.toast,
+      backgroundColor: colors.success || colors.tint,
+    }),
+    [colors.success, colors.tint]
+  );
+
+  const resumeTextStyle = useMemo(
+    () => ({
+      ...RESUME_TOAST_STYLES.text,
+      color: colors.white,
+    }),
+    [colors.white]
+  );
+
   return (
     <View style={FLEX_ONE_STYLE}>
-      <StatusBar
-        animated={true}
-        style={useIsDarkMode() ? 'light' : 'dark'}
-        translucent={true}
-        backgroundColor="transparent"
-      />
       {article && sortedSentences ? (
         <ArticleContent
           id={id}
@@ -356,35 +358,9 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
 
       {/* Resume toast positioned near scrubber */}
       {resumeToast.visible && (
-        <View
-          style={{
-            position: 'absolute',
-            bottom: LAYOUT.SPACING.XLARGE * 3, // Position above scrubber
-            left: LAYOUT.SPACING.XLARGE,
-            right: LAYOUT.SPACING.XLARGE,
-            alignItems: 'center',
-            zIndex: LAYOUT.Z_INDEX.POPUP,
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: colors.success || colors.tint,
-              paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-              paddingVertical: LAYOUT.SPACING.SMALL,
-              borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-              ...LAYOUT.ELEVATION.SMALL,
-            }}
-          >
-            <ThemedText
-              style={{
-                color: colors.white,
-                fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-                fontWeight: '600',
-                textAlign: 'center',
-              }}
-            >
-              Resumed at {resumeToast.progress}%
-            </ThemedText>
+        <View style={RESUME_TOAST_STYLES.container}>
+          <View style={resumeToastStyle}>
+            <ThemedText style={resumeTextStyle}>Resumed at {resumeToast.progress}%</ThemedText>
           </View>
         </View>
       )}
