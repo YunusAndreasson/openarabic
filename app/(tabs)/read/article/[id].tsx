@@ -72,7 +72,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
   const audioPlayer = useSimpleAudioPlayer();
   const globalAudioState = useGlobalAudioState();
 
-  const { handleScroll } = useHeaderVisibility();
+  const { handleScroll: handleHeaderScroll } = useHeaderVisibility();
 
   // Add fade-in animation for smooth content appearance
   const { fadeIn } = useOpacityAnimation({
@@ -110,6 +110,18 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     word: SentenceWord;
     layout: LayoutRectangle;
   } | null>(null);
+
+  // Handle scroll to close tooltip and hide header
+  const handleScroll = useCallback(
+    (event: any) => {
+      handleHeaderScroll(event);
+      // Close tooltip when user scrolls
+      if (activeTooltip) {
+        setActiveTooltip(null);
+      }
+    },
+    [handleHeaderScroll, activeTooltip]
+  );
 
   // Article mutations for reading list and word management
   const { handleToggleReadingList, handleRootPress } = useArticleMutations(
@@ -227,8 +239,11 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     (word: SentenceWord, layout?: LayoutRectangle) => {
       if (layout && layout.width > 0) {
         if (activeTooltip?.word.id === word.id) {
+          // Close tooltip if same word is tapped again
           setActiveTooltip(null);
         } else {
+          // Always open new tooltip immediately for different words
+          // This will automatically close the previous tooltip due to state replacement
           setActiveTooltip({ word, layout });
         }
       }

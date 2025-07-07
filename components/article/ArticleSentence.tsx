@@ -56,7 +56,7 @@ function renderWordWithProps(
     <ArabicWord
       key={`word-${wordId}-${word.position || sentenceId}`}
       word={word}
-      onPress={w => onWordPress?.(w)}
+      onPress={() => {}} // Empty handler since we only use onTooltipOpen for tooltips
       onTooltipOpen={layout => onWordPress?.(word, layout)}
       settings={{ fontScale: settings.fontScale }}
       wordRef={wordRefs[index]}

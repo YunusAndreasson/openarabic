@@ -51,7 +51,6 @@ module.exports = {
 
     // Core React Native mocks
     '@shopify/react-native-skia': '<rootDir>/__mocks__/react-native-skia.js',
-    'react-native-reanimated': '<rootDir>/__mocks__/react-native-reanimated.js',
     'react-native-gesture-handler': '<rootDir>/__mocks__/react-native-gesture-handler.js',
     '@sentry/react-native': '<rootDir>/__mocks__/sentry-react-native.js',
     'react-redux': '<rootDir>/__mocks__/react-redux.js',

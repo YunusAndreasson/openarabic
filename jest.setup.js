@@ -210,6 +210,8 @@ jest.mock('react-native-reanimated', () => {
     },
 
     // Animated components
+    createAnimatedComponent: component =>
+      React.forwardRef((props, ref) => React.createElement(component, { ...props, ref })),
     default: {
       View: React.forwardRef((props, ref) => React.createElement('View', { ...props, ref })),
       Text: React.forwardRef((props, ref) => React.createElement('Text', { ...props, ref })),

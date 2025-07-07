@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -185,7 +185,7 @@ export const WordTooltip = memo(
     text = '',
     arabicWord,
     layout,
-    onClose,
+    onClose: _onClose,
     zIndex,
     isInStudyList = false,
     onStudyListToggle,
@@ -207,10 +207,6 @@ export const WordTooltip = memo(
     );
 
     // Stable handlers with minimal dependencies
-    const handleClose = useCallback(() => {
-      setTimeout(onClose, 50);
-    }, [onClose]);
-
     const handleStudyListPress = useCallback(() => {
       onStudyListToggle?.();
     }, [onStudyListToggle]);
@@ -443,12 +439,7 @@ export const WordTooltip = memo(
     if (!visible || !layout) return null;
 
     return (
-      <View style={containerStyle}>
-        <Pressable
-          style={StyleSheet.absoluteFill}
-          onPress={handleClose}
-          testID="word-tooltip-backdrop"
-        />
+      <View style={containerStyle} pointerEvents="box-none">
         <Animated.View style={[tooltipStyle, opacityStyle, scaleStyle]} testID="word-tooltip">
           <View style={arrowStyle} />
           <View style={CONTENT_STYLE}>{tooltipContent}</View>
