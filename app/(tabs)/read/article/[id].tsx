@@ -278,6 +278,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
   );
 
   const renderSentenceItem = useCallback(
+    // eslint-disable-next-line react/no-unused-prop-types
     ({ item }: { item: Tables<'article_sentences'> }) => {
       const words = getWordsForSentence(item.id);
 

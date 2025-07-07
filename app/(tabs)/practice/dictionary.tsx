@@ -49,6 +49,7 @@ export default function DictionaryScreen(): JSX.Element {
   const showNoResultsMessage = !hasWords && hasSearchQuery && (studyWords || []).length > 0;
 
   const renderItem = useCallback(
+    // eslint-disable-next-line react/no-unused-prop-types
     ({ item }: { item: StudyWord }) => (
       <DictionaryWordCard
         word={item}
