@@ -44,7 +44,46 @@ export function useReadingProgress({
     queryFn: async () => {
       if (!user?.id) return null;
       const result = await readingProgressService.getProgress(user.id, articleId);
-      // Update the ref when we load existing progress
+
+      // Sanitize loaded progress to ensure it's valid for current article
+      if (result && totalSentences > 0) {
+        // Ensure last_sentence_read is within valid bounds (0-based indexing)
+        const maxValidSentence = totalSentences - 1;
+        const sanitizedLastSentence = Math.max(
+          0,
+          Math.min(result.last_sentence_read, maxValidSentence)
+        );
+
+        // If we had to sanitize, log it and update the database
+        if (sanitizedLastSentence !== result.last_sentence_read) {
+          console.log(
+            `🔧 Sanitizing invalid progress: ${result.last_sentence_read} → ${sanitizedLastSentence} for article ${articleId} (${totalSentences} sentences)`
+          );
+
+          // Update the database with the corrected value
+          readingProgressService
+            .updateProgress({
+              userId: user.id,
+              articleId,
+              lastSentenceRead: sanitizedLastSentence,
+              totalSentences,
+            })
+            .catch(error => {
+              console.error('❌ Failed to sanitize progress in database:', error);
+            });
+        }
+
+        // Update the ref with sanitized value
+        lastSavedSentenceRef.current = sanitizedLastSentence;
+
+        // Return sanitized result
+        return {
+          ...result,
+          last_sentence_read: sanitizedLastSentence,
+        };
+      }
+
+      // Update the ref when we load existing progress (for unsanitized case)
       if (result) {
         lastSavedSentenceRef.current = result.last_sentence_read;
       }
@@ -104,8 +143,8 @@ export function useReadingProgress({
         return;
       }
 
-      // Ensure sentenceIndex is valid
-      const validSentenceIndex = Math.max(0, Math.min(sentenceIndex, totalSentences));
+      // Ensure sentenceIndex is valid (0-based indexing: 0 to totalSentences-1)
+      const validSentenceIndex = Math.max(0, Math.min(sentenceIndex, totalSentences - 1));
 
       // Update if we've made meaningful progress (at least 1 sentence forward)
       const lastRecorded = Math.max(
@@ -150,15 +189,21 @@ export function useReadingProgress({
           lastSavedSentenceRef.current,
           progress?.last_sentence_read ?? 0
         );
-        if (currentSentenceIndex > lastRecorded) {
+        // Ensure valid bounds before saving
+        const validFinalSentenceIndex = Math.max(
+          0,
+          Math.min(currentSentenceIndex, totalSentences - 1)
+        );
+
+        if (validFinalSentenceIndex > lastRecorded) {
           console.log(
-            `💾 Saving final progress on unmount: ${currentSentenceIndex}/${totalSentences}`
+            `💾 Saving final progress on unmount: ${validFinalSentenceIndex}/${totalSentences}`
           );
           readingProgressService
             .updateProgress({
               userId: user.id,
               articleId,
-              lastSentenceRead: currentSentenceIndex,
+              lastSentenceRead: validFinalSentenceIndex,
               totalSentences,
             })
             .catch(error => {

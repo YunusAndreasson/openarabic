@@ -4,12 +4,13 @@ import type { JSX } from 'react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AppState, type LayoutRectangle, View } from 'react-native';
 
+import { ThemedText } from '@/components/ThemedText';
 import { ArticleSentence, WordTooltip } from '@/components/article';
 import { ArticleContent } from '@/components/article/ArticleContent';
 import { MiniPlayer } from '@/components/audio';
 import { ToastProvider, useToast } from '@/components/providers';
 import { TIMING_CONFIG } from '@/constants/animation';
-import { STRINGS } from '@/constants/strings';
+import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
@@ -38,6 +39,12 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
   const { user } = useAuth();
   const fontScale = useAppSelectorMemo(state => state.settings.fontScale);
   const { showToast } = useToast();
+
+  // Local state for resume toast positioned near scrubber
+  const [resumeToast, setResumeToast] = useState<{
+    visible: boolean;
+    progress: number;
+  }>({ visible: false, progress: 0 });
 
   // Audio player for single article playback
   const audioPlayer = useSimpleAudioPlayer();
@@ -215,15 +222,16 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
         setTimeout(() => {
           handleSentenceChange(lastSentenceRead);
 
-          // Show user-friendly toast notification
-          showToast(
-            STRINGS.RESUMED_READING_TEMPLATE.replace(
-              '{percent}',
-              progressPercentage.toString()
-            ).replace('{sentence}', lastSentenceRead.toString()),
-            3000,
-            'success'
-          );
+          // Add haptic feedback for resume action
+          selectionFeedback();
+
+          // Show resume toast near scrubber
+          setResumeToast({ visible: true, progress: progressPercentage });
+
+          // Auto-hide after 3 seconds
+          setTimeout(() => {
+            setResumeToast(prev => ({ ...prev, visible: false }));
+          }, 3000);
         }, 500);
       }
     }
@@ -365,6 +373,41 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
         onStudyListToggle={handleStudyListToggle}
         wordRootId={activeTooltip?.word.root_id}
       />
+
+      {/* Resume toast positioned near scrubber */}
+      {resumeToast.visible && (
+        <View
+          style={{
+            position: 'absolute',
+            bottom: LAYOUT.SPACING.XLARGE * 3, // Position above scrubber
+            left: LAYOUT.SPACING.XLARGE,
+            right: LAYOUT.SPACING.XLARGE,
+            alignItems: 'center',
+            zIndex: LAYOUT.Z_INDEX.POPUP,
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: colors.success || colors.tint,
+              paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+              paddingVertical: LAYOUT.SPACING.SMALL,
+              borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+              ...LAYOUT.ELEVATION.SMALL,
+            }}
+          >
+            <ThemedText
+              style={{
+                color: colors.white,
+                fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+                fontWeight: '600',
+                textAlign: 'center',
+              }}
+            >
+              Resumed at {resumeToast.progress}%
+            </ThemedText>
+          </View>
+        </View>
+      )}
     </View>
   );
 };

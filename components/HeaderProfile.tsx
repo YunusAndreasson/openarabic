@@ -110,10 +110,7 @@ const HeaderProfile = memo(({ size = 28 }: HeaderProfileProps) => {
       </Pressable>
 
       {/* Profile Button */}
-      <Pressable
-        onPress={handlePress}
-        style={[styles.profileButton, { backgroundColor: colors.elevation1 }]}
-      >
+      <Pressable onPress={handlePress} style={styles.profileButton}>
         {profilePhotoUri ? (
           <Image
             source={{ uri: profilePhotoUri }}
@@ -163,18 +160,17 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.TINY,
     paddingHorizontal: LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    minHeight: MIN_TOUCH_TARGET.SMALL,
+    justifyContent: 'center',
   },
   streakText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
   },
   profileButton: {
-    width: MIN_TOUCH_TARGET.MEDIUM,
-    height: MIN_TOUCH_TARGET.MEDIUM,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: LAYOUT.SPACING.TINY,
-    borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2,
-    overflow: 'hidden',
+    padding: LAYOUT.SPACING.TINY,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   profilePhoto: {
     // Dynamic styles applied inline
@@ -182,6 +178,7 @@ const styles = StyleSheet.create({
   initialsContainer: {
     justifyContent: 'center',
     alignItems: 'center',
+    // No additional styling needed - tint background will be the only circle
   },
   initialsText: {
     // Dynamic styles applied inline

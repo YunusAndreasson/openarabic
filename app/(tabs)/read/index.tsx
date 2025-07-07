@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedView } from '@/components/ThemedView';
 import ArticleList from '@/components/home/ArticleList';
 import FilterSection from '@/components/home/FilterSection';
+import { HijriDateFooter } from '@/components/home/HijriDateFooter';
 import IntelligentArticleSection from '@/components/home/IntelligentArticleSection';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
@@ -158,7 +159,7 @@ export default function ReadScreen(): JSX.Element {
   );
 
   // Remove unnecessary memoization for stable component
-  const ListFooterComponent = null;
+  const ListFooterComponent = useMemo(() => <HijriDateFooter />, []);
 
   const contentContainerStyle = useMemo(
     () => ({

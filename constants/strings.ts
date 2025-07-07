@@ -57,7 +57,7 @@ export const STRINGS = {
   DATE_ADDED: 'Date',
   AUTHOR_FILTER: 'Author',
   PROGRESS: 'Progress',
-  RESUMED_READING_TEMPLATE: 'Resumed at {percent}% progress (sentence {sentence})',
+  RESUMED_READING_TEMPLATE: 'Resumed at {percent}%',
 
   // Practice state labels
   WORD_OPTIONS: 'Word options',
