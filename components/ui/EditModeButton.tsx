@@ -45,7 +45,13 @@ const EditModeButton: FC<EditModeButtonProps> = ({ type, onEditModeChange, style
     onEditModeChange?.(!editMode);
   }, [toggle, editMode, onEditModeChange]);
 
-  const buttonText = editMode ? STRINGS.DONE : type === 'listen' ? STRINGS.MANAGE : STRINGS.EDIT;
+  const buttonText = editMode
+    ? STRINGS.DONE
+    : type === 'listen'
+    ? STRINGS.MANAGE
+    : type === 'dictionary'
+    ? STRINGS.MANAGE
+    : STRINGS.EDIT;
 
   return (
     <AnimatedTouchable

@@ -7,6 +7,7 @@ import { Platform, StyleSheet } from 'react-native';
 
 import HeaderProfile from '@/components/HeaderProfile';
 import { StreakHistoryBottomSheet } from '@/components/home/StreakHistoryBottomSheet';
+import DictionaryButton from '@/components/ui/DictionaryButton';
 import EditModeButton from '@/components/ui/EditModeButton';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
@@ -71,6 +72,7 @@ const headerBackground = () => <HeaderBackground />;
 const tabBarBackground = () => <TabBarBackground />;
 const headerProfileComponent = () => <HeaderProfile />;
 const listenHeaderRightComponent = () => <EditModeButton type="listen" />;
+const practiceHeaderRightComponent = () => <DictionaryButton />;
 
 export default function TabLayout(): JSX.Element {
   const { session, isLoading } = useAuth();
@@ -155,6 +157,9 @@ export default function TabLayout(): JSX.Element {
               }),
               ...(screen.name === 'listen' && {
                 headerRight: listenHeaderRightComponent,
+              }),
+              ...(screen.name === 'practice' && {
+                headerRight: practiceHeaderRightComponent,
               }),
             }}
           />
