@@ -2,7 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import type { JSX } from 'react';
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import SectionTitle from '@/components/SectionTitle';
@@ -65,22 +65,14 @@ export default function InsightsScreen(): JSX.Element {
         bounces={true}
       >
         {/* Introductory context */}
-        <Animated.View
-          entering={FadeInDown.delay(0).duration(LAYOUT.ANIMATION.DURATION.SLOW).springify()}
-          style={styles.introSection}
-        >
+        <View style={styles.introSection}>
           <ThemedText style={styles.introText} type="caption" variant="secondary">
             {STRINGS.INSIGHTS_EXPLANATION}
           </ThemedText>
-        </Animated.View>
+        </View>
 
         {/* Word Mastery Chart */}
-        <Animated.View
-          entering={FadeInDown.delay(LAYOUT.ANIMATION.DURATION.FAST / 2)
-            .duration(LAYOUT.ANIMATION.DURATION.SLOW * 2)
-            .springify()}
-          style={[styles.chartCard, { backgroundColor: colors.elevation1 }]}
-        >
+        <View style={[styles.chartCard, { backgroundColor: colors.elevation1 }]}>
           <SectionTitle
             title={INFO_TITLES.mastery}
             subtitle={STRINGS.MEMORY_STRENGTH_ACROSS_VOCABULARY}
@@ -89,15 +81,10 @@ export default function InsightsScreen(): JSX.Element {
           <View style={styles.chartWrapper}>
             <MasteryChart studyWords={validStudyWords} hideTitle={true} />
           </View>
-        </Animated.View>
+        </View>
 
         {/* Learning Progress Chart */}
-        <Animated.View
-          entering={FadeInDown.delay(LAYOUT.ANIMATION.DURATION.FAST)
-            .duration(LAYOUT.ANIMATION.DURATION.SLOW * 2)
-            .springify()}
-          style={[styles.chartCard, { backgroundColor: colors.elevation1 }]}
-        >
+        <View style={[styles.chartCard, { backgroundColor: colors.elevation1 }]}>
           <SectionTitle
             title={INFO_TITLES.efficiency}
             subtitle={STRINGS.VOCABULARY_ACQUISITION_VELOCITY}
@@ -105,15 +92,10 @@ export default function InsightsScreen(): JSX.Element {
           <View style={styles.chartWrapper}>
             <EfficiencyChart studyWords={validStudyWords} hideTitle={true} />
           </View>
-        </Animated.View>
+        </View>
 
         {/* Review Timing Chart */}
-        <Animated.View
-          entering={FadeInDown.delay(LAYOUT.ANIMATION.DURATION.SLOW)
-            .duration(LAYOUT.ANIMATION.DURATION.SLOW * 2)
-            .springify()}
-          style={[styles.chartCard, { backgroundColor: colors.elevation1 }]}
-        >
+        <View style={[styles.chartCard, { backgroundColor: colors.elevation1 }]}>
           <SectionTitle
             title={INFO_TITLES.retrievability}
             subtitle={STRINGS.MEMORY_RETENTION_OPTIMAL_TIMING}
@@ -121,7 +103,7 @@ export default function InsightsScreen(): JSX.Element {
           <View style={styles.chartWrapper}>
             <RetrievabilityChart studyWords={validStudyWords} hideTitle={true} />
           </View>
-        </Animated.View>
+        </View>
       </ScrollView>
     </ThemedView>
   );

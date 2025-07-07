@@ -51,7 +51,7 @@ interface VocabularyChartProps<T> {
   // BaseChart props
   title: string;
   subtitle: string;
-  onInfoPress?: () => void;
+  onCardPress?: () => void;
   hideTitle?: boolean;
   hasData: boolean;
   emptyStateText: string;
@@ -73,7 +73,7 @@ const VocabularyChartComparison = <T,>(
     prevProps.yMax !== nextProps.yMax ||
     prevProps.topPadding !== nextProps.topPadding ||
     prevProps.graphWidth !== nextProps.graphWidth ||
-    prevProps.onInfoPress !== nextProps.onInfoPress
+    prevProps.onCardPress !== nextProps.onCardPress
   ) {
     return false;
   }
@@ -143,7 +143,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
     todayIndex,
     title,
     subtitle,
-    onInfoPress,
+    onCardPress,
     hideTitle = false,
     hasData,
     emptyStateText,
@@ -161,7 +161,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
         hideTitle={hideTitle}
         subtitle={subtitle}
         title={title}
-        onInfoPress={onInfoPress}
+        onCardPress={onCardPress}
       >
         <View style={styles.container}>
           <View style={styles.chartContainer}>

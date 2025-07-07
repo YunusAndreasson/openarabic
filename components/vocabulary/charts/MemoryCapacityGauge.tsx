@@ -56,7 +56,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
         emptyStateText={STRINGS.ADD_WORDS_TO_SEE_CAPACITY}
         hasData={studyWords.length > 0}
         hideTitle={true}
-        onInfoPress={onInfoPress}
+        onCardPress={onInfoPress}
       >
         <View style={styles.container}>
           <View style={styles.gaugeContainer}>

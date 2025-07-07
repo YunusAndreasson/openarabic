@@ -2,7 +2,6 @@ import { memo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import BaseCard from '@/components/BaseCard';
-import { InfoIcon } from '@/components/InfoIcon';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -12,7 +11,7 @@ interface BaseChartProps {
   title?: string;
   subtitle?: string;
   hideTitle?: boolean;
-  onInfoPress?: () => void;
+  onCardPress?: () => void;
 
   // Content props
   children: ReactNode;
@@ -32,7 +31,7 @@ export const BaseChart = memo(
     title = '',
     subtitle = '',
     hideTitle = false,
-    onInfoPress,
+    onCardPress,
     children,
     hasData,
     contentHeight = 176, // Optimized to match GRAPH_HEIGHT_LARGE
@@ -43,7 +42,7 @@ export const BaseChart = memo(
     // Empty state
     if (!hasData) {
       return (
-        <BaseCard includePressAnimation={false} shadowSize="small">
+        <BaseCard includePressAnimation={!!onCardPress} shadowSize="small" onPress={onCardPress}>
           <View style={styles.content}>
             {!hideTitle && (
               <View style={styles.titleGroup}>
@@ -67,7 +66,7 @@ export const BaseChart = memo(
 
     // Main chart with data
     return (
-      <BaseCard includePressAnimation={false} shadowSize="small">
+      <BaseCard includePressAnimation={!!onCardPress} shadowSize="small" onPress={onCardPress}>
         <View style={styles.content}>
           {/* Header Section */}
           {!hideTitle && (
@@ -80,13 +79,6 @@ export const BaseChart = memo(
                   {subtitle}
                 </ThemedText>
               </View>
-            </View>
-          )}
-
-          {/* Standalone Info Icon when title is hidden */}
-          {hideTitle && onInfoPress && (
-            <View style={styles.standaloneInfoIcon}>
-              <InfoIcon onPress={onInfoPress} size="small" />
             </View>
           )}
 
@@ -145,10 +137,5 @@ const styles = StyleSheet.create({
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
     marginBottom: LAYOUT.SPACING.MEDIUM,
     marginTop: LAYOUT.SPACING.MEDIUM,
-  },
-  standaloneInfoIcon: {
-    position: 'absolute',
-    right: LAYOUT.SPACING.MEDIUM,
-    top: LAYOUT.SPACING.MEDIUM,
   },
 });
