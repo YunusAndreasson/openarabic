@@ -115,19 +115,21 @@ const FloatingActionButtons = memo<{
       backgroundColor: colors.elevation1,
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
-      opacity: 0.7, // More subtle/transparent
+      // Reduce prominence in light mode where light colors are more visible
+      opacity: colors.headingText === colors.text ? 0.45 : 0.7, // More subtle in light mode
       ...LAYOUT.ELEVATION.SUBTLE,
     }),
-    [colors.elevation1]
+    [colors.elevation1, colors.headingText, colors.text]
   );
 
   const activeButtonStyle = useMemo(
     () => ({
       ...buttonStyle,
       backgroundColor: colors.elevation2,
-      opacity: 0.85,
+      // Slightly higher opacity for active state but still more subtle in light mode
+      opacity: colors.headingText === colors.text ? 0.6 : 0.85,
     }),
-    [buttonStyle, colors.elevation2]
+    [buttonStyle, colors.elevation2, colors.headingText, colors.text]
   );
 
   // Memoize button positions with safe area insets

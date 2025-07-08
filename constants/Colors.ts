@@ -51,7 +51,7 @@ const basePalette = {
 
   // Green-tinted pure values (never pure white/black)
   pure: {
-    white: '#F2F6F4', // Subtle green-tinted white
+    white: '#FEFEFE', // True white with subtle green tint (same as elevation3)
     black: '#0A0F0B', // Subtle green-tinted black
     transparent: 'transparent',
   },

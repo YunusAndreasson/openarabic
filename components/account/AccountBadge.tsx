@@ -178,7 +178,7 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId }) =
       profileCard: [
         styles.profileCard,
         {
-          backgroundColor: colors.elevation1,
+          backgroundColor: colors.card,
           ...LAYOUT.ELEVATION.SMALL,
         },
       ],
@@ -194,7 +194,7 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId }) =
       <View
         style={[
           styles.profileCard,
-          { backgroundColor: colors.elevation1, justifyContent: 'center', alignItems: 'center' },
+          { backgroundColor: colors.card, justifyContent: 'center', alignItems: 'center' },
         ]}
       >
         <ActivityIndicator size="large" color={colors.tint} />

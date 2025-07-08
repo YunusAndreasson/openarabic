@@ -65,7 +65,10 @@ const ParallaxHeaderComparison = (
 
   // Colors comparison (most critical for gradient calculations)
   if (prevProps.colors.black !== nextProps.colors.black) return false;
+  if (prevProps.colors.white !== nextProps.colors.white) return false;
   if (prevProps.colors.background !== nextProps.colors.background) return false;
+  if (prevProps.colors.headingText !== nextProps.colors.headingText) return false;
+  if (prevProps.colors.text !== nextProps.colors.text) return false;
 
   return true;
 };
@@ -93,23 +96,41 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors }) =
   // Memoize image source - images are guaranteed to be available
   const imageSource = useMemo(() => String(article.image_url), [article.image_url]);
 
-  // Enhanced gradient for better summary integration with memoization
+  // Enhanced gradient for better text visibility - different approach for light vs dark mode
   const imageGradientColors = useMemo(() => {
-    return [
-      'transparent',
-      'transparent',
-      withOpacity(colors.black, 0.03),
-      withOpacity(colors.black, 0.08),
-      withOpacity(colors.black, 0.15),
-      withOpacity(colors.black, 0.25),
-      withOpacity(colors.black, 0.4), // Stronger gradient for summary overlay
-    ] as const;
-  }, [colors.black]);
+    // In light mode, use a light overlay for text visibility
+    // In dark mode, use a dark overlay
+    if (colors.headingText === colors.text) {
+      // Light mode - use light overlay to provide contrast for dark text
+      return [
+        'transparent',
+        'transparent',
+        withOpacity(colors.white, 0.03),
+        withOpacity(colors.white, 0.08),
+        withOpacity(colors.white, 0.15),
+        withOpacity(colors.white, 0.25),
+        withOpacity(colors.white, 0.4), // Light overlay for dark text visibility
+      ] as const;
+    } else {
+      // Dark mode - use dark overlay
+      return [
+        'transparent',
+        'transparent',
+        withOpacity(colors.black, 0.03),
+        withOpacity(colors.black, 0.08),
+        withOpacity(colors.black, 0.15),
+        withOpacity(colors.black, 0.25),
+        withOpacity(colors.black, 0.4), // Dark overlay for light text visibility
+      ] as const;
+    }
+  }, [colors.black, colors.white, colors.headingText, colors.text]);
 
   // Background gradient colors for smooth transition to content with memoization
   const backgroundGradientColors = useMemo(() => {
     const bgColor = colors.background;
-    const overlayColor = colors.black;
+
+    // Use appropriate overlay color based on theme
+    const overlayColor = colors.headingText === colors.text ? colors.white : colors.black;
 
     return [
       'transparent',
@@ -123,7 +144,7 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors }) =
       withOpacity(overlayColor, 0.85),
       bgColor,
     ] as const;
-  }, [colors.background, colors.black]);
+  }, [colors.background, colors.black, colors.white, colors.headingText, colors.text]);
 
   // Memoize EnhancedImage props to prevent unnecessary re-renders
   const imageProps = useMemo(
