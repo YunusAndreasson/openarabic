@@ -27,8 +27,9 @@ const MetricCard = memo<MetricCardProps>(({ icon, value, label, color, isHighlig
       style={[
         styles.metricCard,
         {
-          backgroundColor: isHighlight ? colors.tintBackground : colors.elevation2,
-          borderColor: isHighlight ? colors.tint : colors.borderOverlay,
+          backgroundColor: colors.card, // Use consistent card background for all metric cards
+          borderColor: colors.borderOverlay, // Use subtle border for all cards
+          borderWidth: isHighlight ? 0 : LAYOUT.BORDER.WIDTH.THIN, // Remove border for highlighted card
         },
       ]}
     >
@@ -91,7 +92,7 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
           icon="calendar"
           value={metrics.totalReadingDays.toString()}
           label={`Total ${formatDaysLabel(metrics.totalReadingDays)}`}
-          color={colors.primary}
+          color={colors.tint}
         />
       </View>
     </View>
@@ -116,7 +117,6 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     ...LAYOUT.ELEVATION.SMALL,
   },
   iconContainer: {

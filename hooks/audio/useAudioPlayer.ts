@@ -424,8 +424,6 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
       dispatch({ type: 'SET_LOADING', isLoading: false });
       dispatch({ type: 'SET_AUTOPLAY', value: false });
     } catch (error) {
-      console.log('❌ [AUDIO STOP] Error in stop sequence:', error);
-
       // Always ensure state is reset even if operations fail
       dispatch({ type: 'RESET' });
       dispatch({ type: 'SET_LOADING', isLoading: false });

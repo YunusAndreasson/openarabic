@@ -20,14 +20,14 @@ import { useColors } from '@/hooks/theme/useColors';
 import { withOpacity } from '@/utils/colorUtils';
 
 // Modal drag indicator component positioned over background image
-const ModalDragIndicator = ({ colors }: { colors: ReturnType<typeof useColors> }) => {
+const ModalDragIndicator = () => {
   return (
     <View style={styles.modalDragIndicator}>
       <View
         style={[
           styles.dragIndicatorBar,
           {
-            backgroundColor: withOpacity(colors.white, 0.7), // Use theme-aware white with opacity
+            backgroundColor: withOpacity('#FFFFFF', 0.7), // Use true white for visibility on dark background
           },
         ]}
       />
@@ -39,7 +39,6 @@ export default function NowPlayingModal() {
   const { user } = useAuth();
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const isDarkMode = !colors['surface'];
 
   // Get router params for article ID fallback and audio state
   const params = useLocalSearchParams<{
@@ -122,15 +121,16 @@ export default function NowPlayingModal() {
   // Calculate progress percentage
   const progressPercentage = duration > 0 ? Math.min(100, (position / duration) * 100) : 0;
 
-  // Enhanced gradient system using design colors
+  // Enhanced gradient system using proper dark overlay for text contrast
   const gradientColors = useMemo(() => {
-    const baseColor = isDarkMode ? colors.background : colors.elevation1;
+    // Always use dark overlay for proper white text contrast regardless of theme
+    const darkOverlay = '#000000';
     return [
-      withOpacity(baseColor, 0.75),
-      withOpacity(baseColor, 0.85),
-      withOpacity(baseColor, 0.95),
+      withOpacity(darkOverlay, 0.3), // Lighter at top
+      withOpacity(darkOverlay, 0.5), // Medium in middle
+      withOpacity(darkOverlay, 0.7), // Darker at bottom for text readability
     ] as const;
-  }, [colors.background, colors.elevation1, isDarkMode]);
+  }, []);
 
   // Semantic overlay colors following design system
   const overlayColors = useMemo(
@@ -186,14 +186,14 @@ export default function NowPlayingModal() {
       </View>
 
       {/* Modal drag indicator */}
-      <ModalDragIndicator colors={colors} />
+      <ModalDragIndicator />
 
       {/* Header with Title and Author */}
       <View style={[styles.header, { paddingTop: insets.top + LAYOUT.SPACING.MEDIUM }]}>
         <View style={styles.headerInfo}>
           <ThemedText
             type="heading3"
-            style={[styles.title, { color: colors.white }]}
+            style={[styles.title, { color: '#FFFFFF' }]}
             numberOfLines={2}
           >
             {isActuallyLoading ? 'Preparing audio...' : article?.title || 'Loading article...'}
@@ -201,7 +201,7 @@ export default function NowPlayingModal() {
           <ThemedText
             type="body"
             variant="secondary"
-            style={[styles.author, { color: withOpacity(colors.white, 0.85) }]}
+            style={[styles.author, { color: withOpacity('#FFFFFF', 0.85) }]}
           >
             {article?.author?.name || ''}
           </ThemedText>
@@ -213,14 +213,14 @@ export default function NowPlayingModal() {
         {sentenceProgressText && (
           <ThemedText
             type="caption"
-            style={[styles.progressText, { color: withOpacity(colors.white, 0.75) }]}
+            style={[styles.progressText, { color: withOpacity('#FFFFFF', 0.75) }]}
           >
             {sentenceProgressText}
           </ThemedText>
         )}
 
         <Animated.View style={[styles.sentenceContainer, sentenceAnimation.animatedStyle]}>
-          <ThemedText type="body" style={[styles.englishText, { color: colors.white }]}>
+          <ThemedText type="body" style={[styles.englishText, { color: '#FFFFFF' }]}>
             {isActuallyLoading
               ? 'Preparing audio...'
               : currentSentence?.english || 'Listening to audio...'}
@@ -239,7 +239,7 @@ export default function NowPlayingModal() {
               progressPercentage={progressPercentage}
               progressBarHeight={LAYOUT.SPACING.TINY}
               progressBackgroundColor={overlayColors.progressBackground}
-              progressFillColor={colors.white}
+              progressFillColor={'#FFFFFF'}
               useWhiteText={true}
             />
           </View>
@@ -286,15 +286,17 @@ const styles = StyleSheet.create({
   title: {
     textAlign: 'center',
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
-    textShadowOffset: { width: 0, height: LAYOUT.SPACING.MICRO },
-    textShadowRadius: LAYOUT.SPACING.HALF_TINY,
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+    textShadowColor: 'rgba(0,0,0,0.8)',
   },
 
   author: {
     textAlign: 'center',
     marginTop: LAYOUT.SPACING.TINY,
-    textShadowOffset: { width: 0, height: LAYOUT.SPACING.MICRO },
-    textShadowRadius: LAYOUT.SPACING.MICRO,
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+    textShadowColor: 'rgba(0,0,0,0.6)',
   },
 
   progressText: {
@@ -302,8 +304,9 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
     marginBottom: LAYOUT.SPACING.MEDIUM,
-    textShadowOffset: { width: 0, height: LAYOUT.SPACING.MICRO },
-    textShadowRadius: LAYOUT.SPACING.HALF_TINY,
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+    textShadowColor: 'rgba(0,0,0,0.6)',
   },
 
   sentenceSection: {
@@ -325,8 +328,9 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
-    textShadowOffset: { width: 0, height: LAYOUT.SPACING.MICRO },
-    textShadowRadius: LAYOUT.SPACING.TINY,
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+    textShadowColor: 'rgba(0,0,0,0.7)',
   },
 
   bottomControlsContainer: {

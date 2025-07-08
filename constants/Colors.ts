@@ -55,6 +55,43 @@ const basePalette = {
     black: '#0A0F0B', // Subtle green-tinted black
     transparent: 'transparent',
   },
+
+  // Autumn sepia palette - warm, nostalgic tones inspired by fallen leaves
+  autumn: {
+    // Core sepia-brown family
+    darkest: '#2A1810', // Deep espresso text
+    dark: '#3D251A', // Rich coffee brown (primary)
+    medium: '#5C3A27', // Balanced chestnut
+    light: '#8B6342', // Warm caramel
+    lighter: '#B8926A', // Light amber
+
+    // Warm sepia backgrounds
+    paper: {
+      darkest: '#1F1611', // Deep sepia background
+      dark: '#2B1F18', // Rich parchment cards
+      mediumDark: '#332520', // Warm border tone
+      medium: '#3F2E26', // Medium sepia border
+      light: '#F5E6D3', // Soft parchment border
+      lighter: '#F7E9D8', // Warm cream background
+      lightest: '#FAF0E6', // Pristine parchment white
+    },
+
+    // Interactive autumn tints
+    accent: {
+      primary: '#A0662F', // Rich amber tint - sepia mode
+      primaryDark: '#C08552', // Lighter amber tint - future dark sepia mode
+    },
+
+    // Sepia semantic colors
+    semantic: {
+      error: '#C85A4A', // Warm muted red - matches sepia saturation
+      errorDark: '#E07A6B', // Lighter warm red for dark sepia mode
+      success: '#7A8B3A', // Muted olive success
+      successDark: '#9BAA5A', // Lighter olive for dark sepia mode
+      warning: '#D4941A', // Rich golden amber warning
+      warningDark: '#E8B347', // Lighter golden amber for dark sepia mode
+    },
+  },
 } as const;
 
 // Helper to apply opacity to a hex color
@@ -74,6 +111,11 @@ const textHierarchy = {
     subtitle: '#E6EAE7', // Light mode equivalent - Use for: section headers, card subtitles
     metadata: '#CAD3CC', // Light mode equivalent - Use for: timestamps, author names, secondary info
     caption: '#BDC6BF', // Light mode equivalent - Use for: help text, placeholders, tertiary info
+  },
+  sepia: {
+    subtitle: '#4A2F1F', // 25% blend for sepia hierarchy - Use for: section headers, card subtitles
+    metadata: '#6B4530', // 50% blend for sepia hierarchy - Use for: timestamps, author names, secondary info
+    caption: '#7A5138', // 75% blend for sepia hierarchy - Use for: help text, placeholders, tertiary info
   },
 } as const;
 
@@ -112,6 +154,12 @@ const elevation = {
     level1: basePalette.sage.dark, // Cards
     level2: basePalette.sage.mediumDark, // Raised elements
     level3: basePalette.sage.medium, // Floating elements - use consistent reference
+  },
+  sepia: {
+    level0: basePalette.autumn.paper.lighter, // Background - warm cream tone
+    level1: basePalette.autumn.paper.lightest, // Cards - pristine parchment
+    level2: '#FCFAF7', // Raised elements - warmer than level1
+    level3: '#FEFCF9', // Floating elements - warm sepia white (more sepia than pure white)
   },
 } as const;
 
@@ -318,11 +366,93 @@ const darkColors: ThemeColors = {
   black: basePalette.pure.black,
 } as const;
 
-export const Colors = { light: lightColors, dark: darkColors } as const;
+const sepiaColors: ThemeColors = {
+  // Core brand colors - warm sepia tones
+  primary: basePalette.autumn.dark,
+  background: basePalette.autumn.paper.lighter, // Warm cream background
+  text: basePalette.autumn.darkest,
+  secondaryText: basePalette.autumn.medium,
+  textTertiary: basePalette.autumn.light,
+  border: basePalette.autumn.paper.light,
+  card: '#FEFCF9', // Warm sepia white cards - matches elevation3 for consistency
+  cardBorder: basePalette.autumn.paper.light,
+
+  // Semantic colors - sepia variants
+  error: basePalette.autumn.semantic.error,
+  success: basePalette.autumn.semantic.success,
+  warning: basePalette.autumn.semantic.warning,
+  info: basePalette.autumn.light,
+
+  // Text hierarchy - sepia mode optimized for warmth
+  englishText: basePalette.autumn.medium,
+  arabicText: basePalette.autumn.darkest,
+  authorText: basePalette.autumn.light,
+  headingText: basePalette.autumn.darkest,
+  subtitleText: textHierarchy.sepia.subtitle,
+  metadataText: textHierarchy.sepia.metadata,
+  captionText: textHierarchy.sepia.caption,
+
+  // Interactive elements - warm amber tones
+  tint: basePalette.autumn.accent.primary,
+  tintBackground: applyOpacity(basePalette.autumn.accent.primary, opacity.medium),
+  tabIconDefault: basePalette.autumn.lighter,
+  tabIconSelected: basePalette.autumn.accent.primary,
+  icon: basePalette.autumn.light,
+  disabled: basePalette.autumn.lighter,
+
+  // Overlays - warm sepia overlays
+  transparent: basePalette.pure.transparent,
+  overlay: applyOpacity(basePalette.autumn.paper.lighter, opacity.modal),
+  modalOverlay: applyOpacity(basePalette.autumn.paper.lighter, opacity.full),
+  borderOverlay: applyOpacity(basePalette.autumn.accent.primary, opacity.light),
+  buttonOverlay: applyOpacity(basePalette.autumn.accent.primary, opacity.medium),
+  backdropOverlay: applyOpacity(basePalette.autumn.dark, opacity.backdrop),
+
+  // Elevation system - sepia elevations
+  shadow: basePalette.autumn.dark,
+  elevation0: elevation.sepia.level0,
+  elevation1: elevation.sepia.level1,
+  elevation2: elevation.sepia.level2,
+  elevation3: elevation.sepia.level3,
+
+  // Reading experience - optimized for warm, paper-like reading
+  wordTooltipBg: '#FEFCF9', // Warm sepia white for tooltips
+  wordTooltipText: basePalette.autumn.darkest,
+  wordTooltipBorder: basePalette.autumn.paper.light,
+  wordTooltipShadow: applyOpacity(basePalette.autumn.dark, opacity.active),
+  wordSelectionUnderline: applyOpacity(basePalette.autumn.accent.primary, opacity.selection),
+  wordDueUnderline: applyOpacity(basePalette.autumn.semantic.warning, opacity.due),
+
+  // Navigation - warm sepia navigation
+  navigationRipple: applyOpacity(basePalette.autumn.accent.primary, opacity.strong),
+  headerOverlay: applyOpacity(basePalette.autumn.paper.lighter, opacity.header),
+  tabBarOverlay: applyOpacity(basePalette.autumn.paper.lighter, opacity.modal),
+
+  // UI semantics - sepia UI elements
+  progressIndicator: basePalette.autumn.accent.primary,
+  progressBackground: applyOpacity(basePalette.autumn.accent.primary, opacity.progress),
+  interactiveSecondary: basePalette.autumn.light,
+  completionSuccess: basePalette.autumn.semantic.success,
+
+  // Chart UI colors - warm sepia charts
+  chartGrid: basePalette.autumn.paper.light,
+  chartThreshold: basePalette.autumn.lighter,
+
+  // Utility colors - sepia utilities
+  textOverlay: applyOpacity(basePalette.autumn.accent.primary, opacity.subtle),
+  textShadowDark: applyOpacity(basePalette.autumn.dark, opacity.shadow),
+  textShadowLight: applyOpacity('#FEFCF9', opacity.shadow), // Use sepia white for text shadows
+  modalIndicator: basePalette.autumn.lighter,
+  white: '#FEFCF9', // Use warm sepia white instead of pure white
+  black: basePalette.pure.black,
+} as const;
+
+export const Colors = { light: lightColors, dark: darkColors, sepia: sepiaColors } as const;
 
 export enum Theme {
   Light = 'light',
   Dark = 'dark',
+  Sepia = 'sepia',
 }
 
 export type ColorName = keyof typeof Colors.light;

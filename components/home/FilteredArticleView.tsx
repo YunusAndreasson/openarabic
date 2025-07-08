@@ -21,6 +21,7 @@ import ListArticleItem from './ListArticleItem';
 const NOOP_ARTICLE_PRESS = () => {};
 const NOOP_DELETE = () => {};
 const NOOP_DRAG_END = () => {};
+
 // Use responsive height for filtered article items
 const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM;
 const DRAW_DISTANCE_MULTIPLIER = LIST_DRAW_DISTANCE_MULTIPLIER;

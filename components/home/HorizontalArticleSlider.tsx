@@ -105,7 +105,7 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
               imageUrl={String(article.image_url)}
               style={[
                 styles.card,
-                { backgroundColor: colors.elevation1 },
+                { backgroundColor: colors.card }, // Use consistent card background
                 // Override with very subtle shadow for large featured cards
                 {
                   ...Platform.select({

@@ -35,9 +35,9 @@ const FontPreviewCard = memo(({ option, isSelected, fontSize, onSelect }: FontPr
       style={[
         styles.fontCard,
         {
-          backgroundColor: isSelected ? colors.elevation2 : colors.elevation1,
-          borderColor: isSelected ? colors.tint : colors.cardBorder,
-          borderWidth: isSelected ? 2 : 1,
+          backgroundColor: isSelected ? colors.tintBackground : colors.card,
+          borderColor: isSelected ? colors.tint : colors.borderOverlay,
+          borderWidth: LAYOUT.BORDER.WIDTH.THIN,
         },
       ]}
       onPress={handlePress}

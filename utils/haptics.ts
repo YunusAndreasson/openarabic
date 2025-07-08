@@ -85,36 +85,3 @@ export const errorFeedback = (): void => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
   }
 };
-
-/**
- * Creates a haptic feedback function that can be disabled
- * Used for UI components that should have optional haptic feedback
- */
-export const createOptionalHapticFeedback = (
-  feedbackType: 'selection' | 'light' | 'medium' | 'success' | 'error' = 'selection'
-) => {
-  const feedbackMap = {
-    selection: selectionFeedback,
-    light: lightFeedback,
-    medium: mediumFeedback,
-    success: successFeedback,
-    error: errorFeedback,
-  };
-
-  return (enabled: boolean = true) => {
-    if (enabled) {
-      feedbackMap[feedbackType]();
-    }
-  };
-};
-
-/**
- * Utility to disable haptic feedback for a specific duration
- * Useful for preventing feedback during rapid interactions
- */
-export const disableHapticFeedback = (durationMs: number = 100): void => {
-  isHapticBlocked = true;
-  setTimeout(() => {
-    isHapticBlocked = false;
-  }, durationMs);
-};

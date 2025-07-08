@@ -27,7 +27,7 @@ interface ThemeOption {
   icon: keyof typeof Ionicons.glyphMap;
 }
 
-const THEME_OPTIONS: ThemeOption[] = [
+export const THEME_OPTIONS: ThemeOption[] = [
   {
     id: Theme.Light,
     title: 'Birches in Spring',
@@ -40,10 +40,16 @@ const THEME_OPTIONS: ThemeOption[] = [
     subtitle: 'Gentle on the eyes with warm tones for comfortable evening study',
     icon: 'moon-outline',
   },
+  {
+    id: Theme.Sepia,
+    title: 'Autumn Leaves',
+    subtitle: 'Warm, nostalgic tones reminiscent of aged parchment for cozy reading',
+    icon: 'leaf-outline',
+  },
 ];
 
 // Use fixed pixel snap point like TimePicker instead of percentage
-const SNAP_POINTS = [360];
+const SNAP_POINTS = [440]; // Increased to accommodate three theme options
 
 export const ThemePicker: FC<ThemePickerProps> = memo(({ isVisible, onClose }) => {
   const colors = useColors();
@@ -235,6 +241,3 @@ const styles = StyleSheet.create({
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
   },
 });
-
-// Export the theme options for use in other components
-export { THEME_OPTIONS };

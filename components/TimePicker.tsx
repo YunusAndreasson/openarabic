@@ -126,6 +126,8 @@ export const TimePicker = memo(
           is24Hour={false}
           display="default"
           onChange={handleDateChange}
+          textColor={colors.text}
+          accentColor={colors.tint}
         />
       );
     }
@@ -173,6 +175,8 @@ export const TimePicker = memo(
               display="spinner"
               onChange={handleDateChange}
               style={styles.picker}
+              textColor={colors.text}
+              accentColor={colors.tint}
             />
           </View>
 
