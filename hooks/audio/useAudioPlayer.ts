@@ -119,8 +119,8 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
           if (typeof audioPlayerRef.current.remove === 'function') {
             audioPlayerRef.current.remove();
           }
-        } catch (error) {
-          console.log('⚠️ [MANUAL PLAYER] Error cleaning up player:', error);
+        } catch {
+          // Player cleanup error - handle silently
         }
         audioPlayerRef.current = null;
         currentSourceRef.current = null;
@@ -142,8 +142,8 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
         if (typeof audioPlayerRef.current.remove === 'function') {
           audioPlayerRef.current.remove();
         }
-      } catch (error) {
-        console.log('⚠️ [MANUAL PLAYER] Error cleaning up old player:', error);
+      } catch {
+        // Old player cleanup error - handle silently
       }
     }
 
@@ -153,8 +153,8 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
       audioPlayerRef.current = newPlayer;
       currentSourceRef.current = newSource;
       return newPlayer;
-    } catch (error) {
-      console.log('❌ [MANUAL PLAYER] Error creating player:', error);
+    } catch {
+      // Player creation error - handle silently
       audioPlayerRef.current = null;
       currentSourceRef.current = null;
       return null;
@@ -173,8 +173,8 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
           if (typeof audioPlayerRef.current.remove === 'function') {
             audioPlayerRef.current.remove();
           }
-        } catch (error) {
-          console.log('⚠️ [MANUAL PLAYER] Error cleaning up main player:', error);
+        } catch {
+          // Main player cleanup error - handle silently
         }
         audioPlayerRef.current = null;
         currentSourceRef.current = null;
@@ -186,8 +186,8 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
           if (typeof dummyPlayerRef.current.remove === 'function') {
             dummyPlayerRef.current.remove();
           }
-        } catch (error) {
-          console.log('⚠️ [DUMMY PLAYER] Error cleaning up dummy player:', error);
+        } catch {
+          // Dummy player cleanup error - handle silently
         }
         dummyPlayerRef.current = null;
       }
@@ -223,9 +223,8 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
         remove: () => Promise.resolve(),
         seekTo: () => Promise.resolve(),
       };
-    } catch (error) {
-      console.log('❌ [DUMMY PLAYER] Failed to create dummy player:', error);
-      // Minimal fallback that might work
+    } catch {
+      // Dummy player creation failed - use minimal fallback
       dummyPlayerRef.current = {
         id: 'fallback-dummy',
         addListener: () => ({ remove: () => {} }),
@@ -326,7 +325,6 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
         shouldRouteThroughEarpiece: false,
       });
     } catch (error) {
-      console.log('❌ [AUDIO SESSION] Error initializing:', error);
       handleError(error as Error, { toastMessage: STRINGS.FAILED_TO_INITIALIZE_AUDIO_SESSION });
     }
   }, []);
@@ -359,7 +357,6 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
             dispatch({ type: 'SET_LOADING', isLoading: false });
           }
         } catch (error) {
-          console.log('❌ [AUTO-PLAY] Error starting playback:', error);
           dispatch({ type: 'SET_LOADING', isLoading: false });
           handleError(error as Error, {
             toastMessage: STRINGS.FAILED_TO_START_PLAYBACK,
@@ -389,8 +386,8 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
           if (typeof player.pause === 'function') {
             player.pause();
           }
-        } catch (error) {
-          console.log(`❌ [AUDIO STOP] Player ${i + 1} pause error:`, error);
+        } catch {
+          // Player pause error - handle silently
         }
 
         try {
@@ -398,8 +395,8 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
           if (typeof player.seekTo === 'function') {
             await player.seekTo(0);
           }
-        } catch (error) {
-          console.log(`❌ [AUDIO STOP] Player ${i + 1} seekTo error:`, error);
+        } catch {
+          // Player seekTo error - handle silently
         }
 
         try {
@@ -407,8 +404,8 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
           if (typeof player.remove === 'function') {
             player.remove();
           }
-        } catch (error) {
-          console.log(`❌ [AUDIO STOP] Player ${i + 1} remove error:`, error);
+        } catch {
+          // Player remove error - handle silently
         }
       }
 
@@ -465,8 +462,6 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
         const tracks = Array.isArray(tracksInput) ? tracksInput : [tracksInput];
 
         if (tracks.length === 0) {
-          console.log('🚨 [LOAD QUEUE] RESET triggered - received empty tracks array!');
-          console.log('🚨 [LOAD QUEUE] Call stack:', new Error().stack);
           dispatch({ type: 'RESET' });
           dispatch({ type: 'SET_LOADING', isLoading: false });
           return [];

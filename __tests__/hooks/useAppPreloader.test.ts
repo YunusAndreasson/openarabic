@@ -1,7 +1,7 @@
-import { renderHook, act } from '@testing-library/react-native';
+import { act, renderHook } from '@testing-library/react-native';
 
-import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 
 const mockFetchQuery = jest.fn().mockResolvedValue([]);
 const mockPrefetchQuery = jest.fn().mockResolvedValue(undefined);

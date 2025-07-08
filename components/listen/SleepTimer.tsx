@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
   },
 
   indicator: {
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    // Dynamic styling applied via colors.modalIndicator in component
   },
 
   container: {

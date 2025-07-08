@@ -37,8 +37,8 @@ class SimpleAudioService {
         shouldRouteThroughEarpiece: false,
       });
       this.audioSessionConfigured = true;
-    } catch (error) {
-      console.log('⚠️ [AUDIO] Failed to configure audio session:', error);
+    } catch {
+      // Audio session configuration failed - handle silently
     }
   }
 

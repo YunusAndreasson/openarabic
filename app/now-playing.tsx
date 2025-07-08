@@ -21,13 +21,14 @@ import { withOpacity } from '@/utils/colorUtils';
 
 // Modal drag indicator component positioned over background image
 const ModalDragIndicator = () => {
+  const colors = useColors();
   return (
     <View style={styles.modalDragIndicator}>
       <View
         style={[
           styles.dragIndicatorBar,
           {
-            backgroundColor: withOpacity('#FFFFFF', 0.7), // Use true white for visibility on dark background
+            backgroundColor: withOpacity(colors.white, 0.7), // Use theme-aware white for visibility
           },
         ]}
       />
@@ -139,6 +140,9 @@ export default function NowPlayingModal() {
       progressBackground: withOpacity(colors.white, 0.15), // Using opacity.border for tracks
       dragIndicator: withOpacity(colors.white, 0.68), // Using opacity.backdrop for visibility
       timerActive: withOpacity(colors.warning, 0.92), // Using opacity.modal for strong states
+      textPrimary: colors.white, // Use theme-aware white for text
+      textSecondary: withOpacity(colors.white, 0.85), // Secondary text
+      textTertiary: withOpacity(colors.white, 0.75), // Tertiary text
     }),
     [colors.white, colors.warning]
   );
@@ -193,7 +197,7 @@ export default function NowPlayingModal() {
         <View style={styles.headerInfo}>
           <ThemedText
             type="heading3"
-            style={[styles.title, { color: '#FFFFFF' }]}
+            style={[styles.title, { color: overlayColors.textPrimary }]}
             numberOfLines={2}
           >
             {isActuallyLoading ? 'Preparing audio...' : article?.title || 'Loading article...'}
@@ -201,7 +205,7 @@ export default function NowPlayingModal() {
           <ThemedText
             type="body"
             variant="secondary"
-            style={[styles.author, { color: withOpacity('#FFFFFF', 0.85) }]}
+            style={[styles.author, { color: overlayColors.textSecondary }]}
           >
             {article?.author?.name || ''}
           </ThemedText>
@@ -213,14 +217,17 @@ export default function NowPlayingModal() {
         {sentenceProgressText && (
           <ThemedText
             type="caption"
-            style={[styles.progressText, { color: withOpacity('#FFFFFF', 0.75) }]}
+            style={[styles.progressText, { color: overlayColors.textTertiary }]}
           >
             {sentenceProgressText}
           </ThemedText>
         )}
 
         <Animated.View style={[styles.sentenceContainer, sentenceAnimation.animatedStyle]}>
-          <ThemedText type="body" style={[styles.englishText, { color: '#FFFFFF' }]}>
+          <ThemedText
+            type="body"
+            style={[styles.englishText, { color: overlayColors.textPrimary }]}
+          >
             {isActuallyLoading
               ? 'Preparing audio...'
               : currentSentence?.english || 'Listening to audio...'}
@@ -239,7 +246,7 @@ export default function NowPlayingModal() {
               progressPercentage={progressPercentage}
               progressBarHeight={LAYOUT.SPACING.TINY}
               progressBackgroundColor={overlayColors.progressBackground}
-              progressFillColor={'#FFFFFF'}
+              progressFillColor={overlayColors.textPrimary}
               useWhiteText={true}
             />
           </View>

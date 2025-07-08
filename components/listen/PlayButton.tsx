@@ -44,7 +44,9 @@ const PlayButton: FC<PlayButtonProps> = ({
   }, [disabled, onPress, hapticFeedback]);
 
   const backgroundColor = colors.tint;
-  const resolvedIconColor = iconColor || colors.text;
+  // Play icon should be dark in both light and dark modes for consistent design contrast
+  const resolvedIconColor =
+    iconColor || (colors.background === colors.elevation0 ? colors.text : colors.black);
 
   return (
     <TouchableOpacity

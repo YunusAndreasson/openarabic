@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    // Text shadow styling will be added dynamically using theme colors
     textShadowOffset: { width: 0, height: LAYOUT.SPACING.HALF_TINY },
     textShadowRadius: LAYOUT.SPACING.TINY,
     marginBottom: LAYOUT.SPACING.TINY,
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.6)',
+    // Text shadow styling will be added dynamically using theme colors
     textShadowOffset: { width: 0, height: LAYOUT.SPACING.MICRO },
     textShadowRadius: LAYOUT.SPACING.HALF_TINY,
     marginBottom: LAYOUT.SPACING.TINY,
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.REGULAR,
     textAlign: 'center',
     opacity: LAYOUT.OPACITY.MEDIUM,
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    // Text shadow styling will be added dynamically using theme colors
     textShadowOffset: { width: 0, height: LAYOUT.SPACING.MICRO },
     textShadowRadius: LAYOUT.SPACING.HALF_TINY,
   },
@@ -178,19 +178,34 @@ export const IslamicCalendarHeader = memo<IslamicCalendarHeaderProps>(
             <ThemedText
               type="arabic"
               skipDefaultColor
-              style={[styles.hijriDate, { color: colors.white }]}
+              style={[
+                styles.hijriDate,
+                { color: colors.white, textShadowColor: colors.textShadowDark },
+              ]}
             >
               {dateInfo.hijriDate}
             </ThemedText>
 
             {/* English Date - Secondary */}
-            <ThemedText skipDefaultColor style={[styles.englishDate, { color: colors.white }]}>
+            <ThemedText
+              skipDefaultColor
+              style={[
+                styles.englishDate,
+                { color: colors.white, textShadowColor: colors.textShadowDark },
+              ]}
+            >
               {dateInfo.englishDate}
             </ThemedText>
 
             {/* Active Events Count - Tertiary */}
             {activeEventsCount > 0 && (
-              <ThemedText skipDefaultColor style={[styles.activeCount, { color: colors.white }]}>
+              <ThemedText
+                skipDefaultColor
+                style={[
+                  styles.activeCount,
+                  { color: colors.white, textShadowColor: colors.textShadowDark },
+                ]}
+              >
                 {activeEventsCount === 1
                   ? `${activeEventsCount} active event today`
                   : `${activeEventsCount} active events today`}

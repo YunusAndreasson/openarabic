@@ -56,9 +56,9 @@ const AudioProgressIndicator = ({
   // Determine colors based on props and theme
   const timeTextColor = useMemo(() => {
     if (textColor) return textColor;
-    if (useWhiteText) return 'rgba(255,255,255,0.9)';
+    if (useWhiteText) return colors.white;
     return colors.secondaryText;
-  }, [textColor, useWhiteText, colors.secondaryText]);
+  }, [textColor, useWhiteText, colors.white, colors.secondaryText]);
 
   const barBackgroundColor = useMemo(() => {
     if (progressBackgroundColor) return progressBackgroundColor;
