@@ -41,7 +41,6 @@ const FeaturedSection: FC<FeaturedSectionProps> = ({ article, onPress }) => {
 const styles = StyleSheet.create({
   cardStyle: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    shadowOpacity: LAYOUT.OPACITY.SUBTLE,
   },
   container: {},
 });

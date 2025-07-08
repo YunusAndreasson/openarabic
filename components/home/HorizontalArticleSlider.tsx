@@ -1,5 +1,5 @@
 import { memo, useCallback, useRef, type FC } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 
 import ArticleCard from '@/components/ArticleCard';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
@@ -103,7 +103,24 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
               category={article.category.name}
               categoryForDisplay={article.category.name}
               imageUrl={String(article.image_url)}
-              style={[styles.card, { backgroundColor: colors.elevation1 }]}
+              style={[
+                styles.card,
+                { backgroundColor: colors.elevation1 },
+                // Override with very subtle shadow for large featured cards
+                {
+                  ...Platform.select({
+                    ios: {
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.12,
+                      shadowRadius: 3,
+                    },
+                    android: {
+                      elevation: 2,
+                    },
+                  }),
+                  shadowColor: colors.shadow,
+                },
+              ]}
               summary={String(article.summary)}
               title={article.title}
               onPress={() => onArticlePress(article)}
