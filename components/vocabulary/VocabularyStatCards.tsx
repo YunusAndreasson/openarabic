@@ -149,7 +149,7 @@ export const VocabularyStatCards = memo(
         value: wordCategories.dueWords,
         label: STRINGS.URGENT_PRESERVATION,
         iconColor: colors.error, // Use semantic error color for consistency with tab badges
-        bgColor: colors.elevation1,
+        bgColor: colors.card,
         category: 'due' as StatCategory,
         description: STRINGS.URGENT_MEMORY_PRESERVATION,
         capacityPhase: 'red' as const,
@@ -163,7 +163,7 @@ export const VocabularyStatCards = memo(
         value: wordCategories.strugglingWords,
         label: STRINGS.EFFORTFUL_RETRIEVAL,
         iconColor: colors.warning, // Use semantic warning color for consistency with tab badges
-        bgColor: colors.elevation1,
+        bgColor: colors.card,
         category: 'struggling' as StatCategory,
         description: STRINGS.EFFORTFUL_RETRIEVAL_PRACTICE,
         capacityPhase: 'yellow' as const,
@@ -181,7 +181,7 @@ export const VocabularyStatCards = memo(
         value: totalWords,
         label: STRINGS.INTERLEAVED_REVIEW,
         iconColor: colors.success, // Use semantic success color for consistency with tab badges
-        bgColor: colors.elevation1,
+        bgColor: colors.card,
         category: 'all' as StatCategory,
         description: STRINGS.INTERLEAVED_REVIEW_DESCRIPTION,
         capacityPhase: 'green' as const,

@@ -9,7 +9,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { selectionFeedback } from '@/utils/haptics';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -20,7 +19,6 @@ export default function DictionaryButton(): JSX.Element {
   });
 
   const handlePress = useCallback(() => {
-    selectionFeedback();
     router.push('/(tabs)/practice/dictionary');
   }, []);
 

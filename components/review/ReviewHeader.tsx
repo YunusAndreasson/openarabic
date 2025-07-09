@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { FC } from 'react';
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ProgressBar } from '@/components/ProgressBar';
 import { PROGRESS_BAR_ANIMATION_DURATION, REVIEW_MIN_PROGRESS_VALUE } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { selectionFeedback } from '@/utils/haptics';
 
 // ===== STATIC CONSTANTS EXTRACTION (CRITICAL FOR PERFORMANCE) =====
 const REVIEW_HEADER_CONSTANTS = {
@@ -70,6 +71,14 @@ const ReviewHeaderInternal: FC<ReviewHeaderProps> = ({
 
   const animationTriggered = useMemo(() => shouldTriggerAnimation(animationKey), [animationKey]);
 
+  // Handle close with haptic feedback
+  const handleClose = useCallback(() => {
+    if (onClose) {
+      selectionFeedback();
+      onClose();
+    }
+  }, [onClose]);
+
   // ===== MEMOIZED CHILD PROPS (PREVENT CHILD RE-RENDERS) =====
   const progressBarProps = useMemo(
     () => ({
@@ -93,7 +102,7 @@ const ReviewHeaderInternal: FC<ReviewHeaderProps> = ({
       {onClose && (
         <Pressable
           style={closeButtonStyle}
-          onPress={onClose}
+          onPress={handleClose}
           hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
           accessibilityRole="button"
           accessibilityLabel="Close practice session"

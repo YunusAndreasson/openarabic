@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { FC } from 'react';
+import { useCallback } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ProgressBar } from '@/components/ProgressBar';
@@ -21,11 +22,19 @@ const ListenHeader: FC<ListenHeaderProps> = ({
   progress,
   maxProgress,
   animationKey,
-  onClose: _onClose,
+  onClose,
   onManageWord,
   hasCurrentWord = false,
 }) => {
   const colors = useColors();
+
+  // Handle close with haptic feedback
+  const handleClose = useCallback(() => {
+    if (onClose) {
+      selectionFeedback();
+      onClose();
+    }
+  }, [onClose]);
 
   const handleManagePress = () => {
     if (onManageWord && hasCurrentWord) {
@@ -44,6 +53,23 @@ const ListenHeader: FC<ListenHeaderProps> = ({
           progress={Math.max(progress, maxProgress)}
         />
       </View>
+
+      {/* Close button */}
+      {onClose && (
+        <TouchableOpacity
+          style={[styles.closeButton, { backgroundColor: colors.elevation1 }]}
+          onPress={handleClose}
+          hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+          accessibilityRole="button"
+          accessibilityLabel="Close practice session"
+        >
+          <Ionicons
+            name="close"
+            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+            color={colors.textTertiary}
+          />
+        </TouchableOpacity>
+      )}
 
       {/* Word Management Icon */}
       {hasCurrentWord && (
@@ -78,6 +104,15 @@ const styles = StyleSheet.create({
   progressContainer: {
     flex: 1,
     marginVertical: LAYOUT.SPACING.MEDIUM,
+  },
+  closeButton: {
+    width: MIN_TOUCH_TARGET.MEDIUM,
+    height: MIN_TOUCH_TARGET.MEDIUM,
+    borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: LAYOUT.SPACING.SMALL,
+    opacity: 0.8,
   },
   manageButton: {
     width: MIN_TOUCH_TARGET.SMALL,
