@@ -10,12 +10,7 @@ import DeleteButton from '@/components/listen/DeleteButton';
 import DragHandle, { type DragHandleProps } from '@/components/listen/DragHandle';
 import PlayButton from '@/components/listen/PlayButton';
 import { ARTICLE_CARD_SPRING, CARD_DRAG_SCALE, WORD_PRESS_SCALE } from '@/constants/animation';
-import {
-  getEnhancedOpacity,
-  LAYOUT,
-  MIN_TOUCH_TARGET,
-  TYPOGRAPHY_HIERARCHY,
-} from '@/constants/layout';
+import { getEnhancedOpacity, LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
@@ -104,11 +99,7 @@ export const ArticleCard: FC<ArticleCardProps> = ({
       )}
 
       <View style={styles.cardWrapper}>
-        <BaseCard
-          shadowSize="small"
-          style={styles.card}
-          {...(editMode ? {} : onPress ? { onPress } : {})}
-        >
+        <BaseCard shadowSize="small" onPress={editMode ? undefined : onPress}>
           <View style={styles.cardContent}>
             {/* Article thumbnail - playlist style */}
             {imageUrl && (
@@ -127,6 +118,8 @@ export const ArticleCard: FC<ArticleCardProps> = ({
                 colorName="headingText"
                 style={[styles.titleText, { opacity: titleOpacity }]}
                 type="heading3"
+                numberOfLines={2}
+                ellipsizeMode="tail"
               >
                 {title}
               </ThemedText>
@@ -135,6 +128,7 @@ export const ArticleCard: FC<ArticleCardProps> = ({
                   skipDefaultColor
                   colorName="authorText"
                   numberOfLines={1}
+                  ellipsizeMode="tail"
                   style={[styles.authorText, { opacity: authorOpacity }]}
                   type="label"
                 >
@@ -142,13 +136,15 @@ export const ArticleCard: FC<ArticleCardProps> = ({
                   {difficultyLevel && ` • ${getDifficultyText(difficultyLevel)}`}
                 </ThemedText>
                 {progressPercentage !== undefined && progressPercentage > 0 && (
-                  <ProgressCircle
-                    percentage={progressPercentage}
-                    size={28}
-                    strokeWidth={4}
-                    showPercentage={false}
-                    style={styles.progressCircle}
-                  />
+                  <View style={styles.progressContainer}>
+                    <ProgressCircle
+                      percentage={progressPercentage}
+                      size={28}
+                      strokeWidth={4}
+                      showPercentage={false}
+                      style={styles.progressCircle}
+                    />
+                  </View>
                 )}
               </View>
             </View>
@@ -174,9 +170,6 @@ export const ArticleCard: FC<ArticleCardProps> = ({
 };
 
 const styles = StyleSheet.create({
-  card: {
-    minHeight: MIN_TOUCH_TARGET.LARGE,
-  },
   cardContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -187,12 +180,13 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     flexDirection: 'row',
-    minHeight: MIN_TOUCH_TARGET.LARGE,
+    minHeight: LAYOUT.CARD.HEIGHT.LIST_ITEM,
     padding: LAYOUT.SPACING.MEDIUM,
     alignItems: 'center',
   },
   textContent: {
     flex: 1,
+    justifyContent: 'center',
   },
   titleText: {
     marginBottom: LAYOUT.SPACING.TINY,
@@ -211,7 +205,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: LAYOUT.SPACING.SMALL,
-    // Remove minHeight to allow natural centering
   },
   playButtonContainer: {
     marginLeft: LAYOUT.SPACING.SMALL,
@@ -234,10 +227,12 @@ const styles = StyleSheet.create({
     width: PLAYLIST_IMAGE_SIZE,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
+  progressContainer: {
+    // Add touch-friendly padding around the progress circle
+    padding: LAYOUT.SPACING.TINY,
+  },
   progressCircle: {
-    // Ensure perfect vertical centering with text
+    // Ensure perfect vertical centering with text using flexbox
     alignSelf: 'center',
-    // Add slight margin to improve visual balance
-    marginTop: 1,
   },
 });

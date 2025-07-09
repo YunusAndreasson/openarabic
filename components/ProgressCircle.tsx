@@ -45,16 +45,15 @@ export function ProgressCircle({
       height: size,
       justifyContent: 'center',
       alignItems: 'center',
-      position: 'relative',
     },
     svg: {
-      position: 'absolute',
       transform: [{ rotate: '-90deg' }], // Rotate to start from top (12 o'clock)
     },
     percentageText: {
       fontSize: size * 0.25, // Scale text with circle size
       fontWeight: '600',
       textAlign: 'center',
+      position: 'absolute',
     },
   });
 
