@@ -45,147 +45,153 @@ export default function IslamicCalendarScreen(): JSX.Element {
             },
           ]}
         >
-          {/* Parallax Header with integrated navigation */}
+          {/* Parallax Header with integrated navigation - Full width */}
           <IslamicCalendarHeader activeEventsCount={activeCount} />
 
-          {/* Events List */}
-          <View style={styles.eventsSection}>
-            {events.map(event => {
-              const isUpcoming = event.daysFromNow > 0 && event.daysFromNow <= 7;
-              const isPast = event.daysFromNow < 0;
+          {/* Content container with proper padding for the rest */}
+          <View style={styles.contentContainer}>
+            {/* Events List */}
+            <View style={styles.eventsSection}>
+              {events.map(event => {
+                const isUpcoming = event.daysFromNow > 0 && event.daysFromNow <= 7;
+                const isPast = event.daysFromNow < 0;
 
-              return (
-                <BaseCard
-                  key={`${event.name}-${event.hijriDate}`}
-                  shadowSize="small"
-                  style={[
-                    styles.eventCard,
-                    { backgroundColor: colors.elevation1 },
-                    event.isActive && {
-                      borderLeftWidth: 3,
-                      borderLeftColor: colors.warning,
-                      backgroundColor: colors.elevation2,
-                    },
-                    isPast && { opacity: 0.7 },
-                  ]}
-                >
-                  <View style={styles.eventContent}>
-                    <View style={styles.eventHeader}>
-                      <View style={styles.eventTitleContainer}>
-                        <ThemedText style={styles.eventTitle} type="bodyBold">
-                          {event.name}
-                        </ThemedText>
-
-                        <View style={styles.timingRow}>
-                          <ThemedText
-                            skipDefaultColor
-                            type="caption"
-                            weight="medium"
-                            style={[
-                              styles.daysUntil,
-                              {
-                                color: event.isActive
-                                  ? colors.warning
-                                  : isUpcoming
-                                  ? colors.success
-                                  : isPast
-                                  ? colors.textTertiary
-                                  : colors.interactiveSecondary,
-                              },
-                            ]}
-                          >
-                            {event.isActive
-                              ? STRINGS.DAY_OF_TEMPLATE.replace(
-                                  '{day}',
-                                  Math.floor(
-                                    (event.progress ?? 0) * (event.duration ?? 1)
-                                  ).toString()
-                                ).replace('{duration}', String(event.duration))
-                              : formatDaysUntil(event.daysFromNow)}
+                return (
+                  <BaseCard
+                    key={`${event.name}-${event.hijriDate}`}
+                    shadowSize="small"
+                    style={[
+                      styles.eventCard,
+                      { backgroundColor: colors.elevation1 },
+                      event.isActive && {
+                        borderLeftWidth: 3,
+                        borderLeftColor: colors.warning,
+                        backgroundColor: colors.elevation2,
+                      },
+                      isPast && { opacity: 0.7 },
+                    ]}
+                  >
+                    <View style={styles.eventContent}>
+                      <View style={styles.eventHeader}>
+                        <View style={styles.eventTitleContainer}>
+                          <ThemedText style={styles.eventTitle} type="bodyBold">
+                            {event.name}
                           </ThemedText>
 
-                          {event.isActive && event.progress && (
-                            <View style={styles.progressContainer}>
-                              <View
-                                style={[styles.progressBar, { backgroundColor: colors.elevation2 }]}
-                              >
+                          <View style={styles.timingRow}>
+                            <ThemedText
+                              skipDefaultColor
+                              type="caption"
+                              weight="medium"
+                              style={[
+                                styles.daysUntil,
+                                {
+                                  color: event.isActive
+                                    ? colors.warning
+                                    : isUpcoming
+                                    ? colors.success
+                                    : isPast
+                                    ? colors.textTertiary
+                                    : colors.interactiveSecondary,
+                                },
+                              ]}
+                            >
+                              {event.isActive
+                                ? STRINGS.DAY_OF_TEMPLATE.replace(
+                                    '{day}',
+                                    Math.floor(
+                                      (event.progress ?? 0) * (event.duration ?? 1)
+                                    ).toString()
+                                  ).replace('{duration}', String(event.duration))
+                                : formatDaysUntil(event.daysFromNow)}
+                            </ThemedText>
+
+                            {event.isActive && event.progress && (
+                              <View style={styles.progressContainer}>
                                 <View
                                   style={[
-                                    styles.progressFill,
-                                    {
-                                      backgroundColor: colors.warning,
-                                      width: `${event.progress * 100}%`,
-                                    },
+                                    styles.progressBar,
+                                    { backgroundColor: colors.elevation2 },
                                   ]}
-                                />
+                                >
+                                  <View
+                                    style={[
+                                      styles.progressFill,
+                                      {
+                                        backgroundColor: colors.warning,
+                                        width: `${event.progress * 100}%`,
+                                      },
+                                    ]}
+                                  />
+                                </View>
                               </View>
-                            </View>
-                          )}
+                            )}
+                          </View>
+                        </View>
+
+                        <View style={[styles.separator, { backgroundColor: colors.border }]} />
+
+                        <View style={styles.eventRightSection}>
+                          <ThemedText
+                            skipDefaultColor
+                            type="body"
+                            style={[
+                              styles.eventArabicName,
+                              { fontFamily: FONTS.ARABIC, color: colors.arabicText },
+                            ]}
+                          >
+                            {event.arabicName}
+                          </ThemedText>
                         </View>
                       </View>
 
-                      <View style={[styles.separator, { backgroundColor: colors.border }]} />
-
-                      <View style={styles.eventRightSection}>
-                        <ThemedText
-                          skipDefaultColor
-                          type="body"
-                          style={[
-                            styles.eventArabicName,
-                            { fontFamily: FONTS.ARABIC, color: colors.arabicText },
-                          ]}
-                        >
-                          {event.arabicName}
-                        </ThemedText>
+                      <View style={styles.eventDates}>
+                        <View style={styles.dateRow}>
+                          <Ionicons
+                            color={colors.interactiveSecondary}
+                            name="calendar"
+                            size={LAYOUT.SPACING.MEDIUM}
+                          />
+                          <ThemedText
+                            skipDefaultColor
+                            style={[styles.dateText, { color: colors.interactiveSecondary }]}
+                            type="caption"
+                          >
+                            {event.hijriDate}
+                          </ThemedText>
+                        </View>
+                        <View style={styles.dateRow}>
+                          <Ionicons
+                            color={colors.interactiveSecondary}
+                            name="calendar-outline"
+                            size={LAYOUT.SPACING.MEDIUM}
+                          />
+                          <ThemedText style={styles.dateText} type="caption" variant="secondary">
+                            {event.gregorianDate.toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}
+                          </ThemedText>
+                        </View>
                       </View>
                     </View>
+                  </BaseCard>
+                );
+              })}
+            </View>
 
-                    <View style={styles.eventDates}>
-                      <View style={styles.dateRow}>
-                        <Ionicons
-                          color={colors.interactiveSecondary}
-                          name="calendar"
-                          size={LAYOUT.SPACING.MEDIUM}
-                        />
-                        <ThemedText
-                          skipDefaultColor
-                          style={[styles.dateText, { color: colors.interactiveSecondary }]}
-                          type="caption"
-                        >
-                          {event.hijriDate}
-                        </ThemedText>
-                      </View>
-                      <View style={styles.dateRow}>
-                        <Ionicons
-                          color={colors.interactiveSecondary}
-                          name="calendar-outline"
-                          size={LAYOUT.SPACING.MEDIUM}
-                        />
-                        <ThemedText style={styles.dateText} type="caption" variant="secondary">
-                          {event.gregorianDate.toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })}
-                        </ThemedText>
-                      </View>
-                    </View>
-                  </View>
-                </BaseCard>
-              );
-            })}
-          </View>
-
-          {/* Footer Note */}
-          <View style={styles.noteContent}>
-            <Ionicons
-              color={colors.interactiveSecondary}
-              name="information-circle-outline"
-              size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-            />
-            <ThemedText style={styles.noteText} type="caption" variant="secondary">
-              {STRINGS.DATE_VARIANCE_NOTE}
-            </ThemedText>
+            {/* Footer Note */}
+            <View style={styles.noteContent}>
+              <Ionicons
+                color={colors.interactiveSecondary}
+                name="information-circle-outline"
+                size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+              />
+              <ThemedText style={styles.noteText} type="caption" variant="secondary">
+                {STRINGS.DATE_VARIANCE_NOTE}
+              </ThemedText>
+            </View>
           </View>
         </ScrollView>
       </ThemedView>
@@ -196,6 +202,10 @@ export default function IslamicCalendarScreen(): JSX.Element {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  contentContainer: {
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: LAYOUT.SPACING.MEDIUM, // Add spacing after the full-width header
   },
   dateRow: {
     alignItems: 'center',
@@ -285,7 +295,6 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   scrollContent: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: 0, // Remove padding since parallax header handles its own layout
   },
   scrollView: {

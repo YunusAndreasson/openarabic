@@ -67,8 +67,6 @@ const ParallaxHeaderComparison = (
   if (prevProps.colors.black !== nextProps.colors.black) return false;
   if (prevProps.colors.white !== nextProps.colors.white) return false;
   if (prevProps.colors.background !== nextProps.colors.background) return false;
-  if (prevProps.colors.headingText !== nextProps.colors.headingText) return false;
-  if (prevProps.colors.text !== nextProps.colors.text) return false;
 
   return true;
 };
@@ -98,21 +96,12 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors }) =
 
   // Enhanced gradient for better text visibility - different approach for light vs dark mode
   const imageGradientColors = useMemo(() => {
-    // In light mode, use a light overlay for text visibility
-    // In dark mode, use a dark overlay
-    if (colors.headingText === colors.text) {
-      // Light mode - use light overlay to provide contrast for dark text
-      return [
-        'transparent',
-        'transparent',
-        withOpacity(colors.white, 0.03),
-        withOpacity(colors.white, 0.08),
-        withOpacity(colors.white, 0.15),
-        withOpacity(colors.white, 0.25),
-        withOpacity(colors.white, 0.4), // Light overlay for dark text visibility
-      ] as const;
-    } else {
-      // Dark mode - use dark overlay
+    // Detect dark mode by checking if background is dark (contains 'darkest' sage color)
+    // Dark mode uses dark sage background, light/sepia use light backgrounds
+    const isDarkMode = colors.background === '#0E1512'; // basePalette.sage.darkest
+
+    if (isDarkMode) {
+      // Dark mode - use dark overlay for light text visibility
       return [
         'transparent',
         'transparent',
@@ -122,15 +111,27 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors }) =
         withOpacity(colors.black, 0.25),
         withOpacity(colors.black, 0.4), // Dark overlay for light text visibility
       ] as const;
+    } else {
+      // Light/sepia mode - use light overlay to provide contrast for dark text
+      return [
+        'transparent',
+        'transparent',
+        withOpacity(colors.white, 0.03),
+        withOpacity(colors.white, 0.08),
+        withOpacity(colors.white, 0.15),
+        withOpacity(colors.white, 0.25),
+        withOpacity(colors.white, 0.4), // Light overlay for dark text visibility
+      ] as const;
     }
-  }, [colors.black, colors.white, colors.headingText, colors.text]);
+  }, [colors.black, colors.white, colors.background]);
 
   // Background gradient colors for smooth transition to content with memoization
   const backgroundGradientColors = useMemo(() => {
     const bgColor = colors.background;
+    const isDarkMode = colors.background === '#0E1512'; // basePalette.sage.darkest
 
     // Use appropriate overlay color based on theme
-    const overlayColor = colors.headingText === colors.text ? colors.white : colors.black;
+    const overlayColor = isDarkMode ? colors.black : colors.white;
 
     return [
       'transparent',
@@ -144,7 +145,7 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors }) =
       withOpacity(overlayColor, 0.85),
       bgColor,
     ] as const;
-  }, [colors.background, colors.black, colors.white, colors.headingText, colors.text]);
+  }, [colors.background, colors.black, colors.white]);
 
   // Memoize EnhancedImage props to prevent unnecessary re-renders
   const imageProps = useMemo(

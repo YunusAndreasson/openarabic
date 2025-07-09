@@ -1,4 +1,4 @@
-import { useCallback, useMemo, memo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Pressable, View, type TextStyle } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
@@ -40,8 +40,8 @@ const Pill = memo(
           backgroundColor: isSelected
             ? `${colors.tint}CC` // 80% opacity
             : isDarkMode
-              ? `${colors.elevation2}99` // 60% opacity
-              : `${colors.elevation1}B3`, // 70% opacity
+            ? `${colors.elevation2}99` // 60% opacity
+            : `${colors.elevation1}B3`, // 70% opacity
           borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
           paddingHorizontal: LAYOUT.SPACING.MEDIUM,
           paddingVertical: LAYOUT.SPACING.TINY,
@@ -56,10 +56,10 @@ const Pill = memo(
           pillBg !== undefined
             ? pillBg
             : isSelected
-              ? colors.tint
-              : isDarkMode
-                ? colors.elevation2
-                : colors.elevation1,
+            ? colors.tint
+            : isDarkMode
+            ? colors.elevation2
+            : colors.elevation1,
         borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
         paddingHorizontal: LAYOUT.SPACING.LARGE,
         paddingVertical: LAYOUT.SPACING.SMALL,

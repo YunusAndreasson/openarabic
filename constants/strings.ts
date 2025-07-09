@@ -173,7 +173,7 @@ export const STRINGS = {
   // Account & settings
   ACCOUNT: 'Account',
   SETTINGS: 'Settings',
-  HELP: 'Help',
+  HELP: 'Frequent Questions',
   CONTACT_SUPPORT: 'Contact support',
   SUPPORT_EMAIL: 'yunus@edenmind.com',
   SUPPORT_EMAIL_SUBJECT: 'Open Arabic App Support',

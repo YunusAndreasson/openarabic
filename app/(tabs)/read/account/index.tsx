@@ -233,7 +233,7 @@ const AccountScreen: FC = () => {
                     />
                   </View>
                   <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.HELP}
+                    Frequent Questions
                   </ThemedText>
                 </View>
                 <Ionicons
@@ -445,13 +445,13 @@ const styles = StyleSheet.create({
   appFooterWrapper: {
     alignItems: 'center',
     marginBottom: LAYOUT.SPACING.LARGE,
-    marginTop: LAYOUT.SPACING.XLARGE,
+    marginTop: LAYOUT.SPACING.SMALL,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.LARGE,
   },
   appFooterContent: {
     alignItems: 'center',
-    gap: LAYOUT.SPACING.SMALL,
+    gap: LAYOUT.SPACING.TINY,
   },
 
   // Setting Row Styles

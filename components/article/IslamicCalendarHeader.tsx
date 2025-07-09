@@ -8,7 +8,6 @@ import { HIJRI_MONTHS } from '@/constants/hijri';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
 const GOLDEN_RATIO = 1.618;
 const HEADER_HEIGHT = 400;
@@ -18,7 +17,6 @@ const styles = StyleSheet.create({
   // Wrapper that contains the header
   wrapper: {
     position: 'relative',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   container: {
     height: ADJUSTED_HEADER_HEIGHT,
@@ -44,7 +42,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: '75%', // Cover more of the image for better text readability
+    height: '85%', // Cover more of the image for excellent text readability
   },
   backgroundGradientOverlay: {
     position: 'absolute',
@@ -66,18 +64,18 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
     textAlign: 'center',
-    // Text shadow styling will be added dynamically using theme colors
-    textShadowOffset: { width: 0, height: LAYOUT.SPACING.HALF_TINY },
-    textShadowRadius: LAYOUT.SPACING.TINY,
+    // Strong text shadow for excellent readability
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
     marginBottom: LAYOUT.SPACING.TINY,
   },
   englishDate: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
     textAlign: 'center',
-    // Text shadow styling will be added dynamically using theme colors
-    textShadowOffset: { width: 0, height: LAYOUT.SPACING.MICRO },
-    textShadowRadius: LAYOUT.SPACING.HALF_TINY,
+    // Strong text shadow for excellent readability
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
     marginBottom: LAYOUT.SPACING.TINY,
   },
   activeCount: {
@@ -85,9 +83,9 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.REGULAR,
     textAlign: 'center',
     opacity: LAYOUT.OPACITY.MEDIUM,
-    // Text shadow styling will be added dynamically using theme colors
-    textShadowOffset: { width: 0, height: LAYOUT.SPACING.MICRO },
-    textShadowRadius: LAYOUT.SPACING.HALF_TINY,
+    // Strong text shadow for excellent readability
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
 });
 
@@ -98,7 +96,6 @@ interface IslamicCalendarHeaderProps {
 export const IslamicCalendarHeader = memo<IslamicCalendarHeaderProps>(
   ({ activeEventsCount = 0 }) => {
     const colors = useColors();
-    const isDarkMode = useIsDarkMode();
 
     // Generate today's date information
     const dateInfo = useMemo(() => {
@@ -116,36 +113,35 @@ export const IslamicCalendarHeader = memo<IslamicCalendarHeaderProps>(
     }, []);
 
     // Enhanced gradient for better text readability using theme colors
-    const imageGradientColors = useMemo(
-      () =>
-        [
-          'transparent',
-          'transparent',
-          'rgba(0, 0, 0, 0.15)',
-          'rgba(0, 0, 0, 0.3)',
-          'rgba(0, 0, 0, 0.5)',
-          'rgba(0, 0, 0, 0.7)',
-          'rgba(0, 0, 0, 0.85)',
-        ] as const,
-      []
-    );
+    const imageGradientColors = useMemo(() => {
+      // Use much stronger dark overlay for excellent text contrast in all themes
+      return [
+        'transparent',
+        'rgba(0, 0, 0, 0.1)',
+        'rgba(0, 0, 0, 0.3)',
+        'rgba(0, 0, 0, 0.5)',
+        'rgba(0, 0, 0, 0.7)',
+        'rgba(0, 0, 0, 0.85)',
+        'rgba(0, 0, 0, 0.95)',
+      ] as const;
+    }, []);
 
-    // Background gradient colors for smooth transition using proper dark mode detection
+    // Background gradient colors for smooth transition using proper theme detection
     const backgroundGradientColors = useMemo(() => {
-      const baseColor = isDarkMode ? '0, 0, 0' : '255, 255, 255';
+      // Use theme background color directly for better sepia mode support
       return [
         'transparent',
         'transparent',
         'transparent',
-        `rgba(${baseColor}, 0.1)`,
-        `rgba(${baseColor}, 0.25)`,
-        `rgba(${baseColor}, 0.4)`,
-        `rgba(${baseColor}, 0.6)`,
-        `rgba(${baseColor}, 0.8)`,
-        `rgba(${baseColor}, 0.95)`,
+        `${colors.background}15`, // 15% opacity
+        `${colors.background}40`, // 25% opacity
+        `${colors.background}66`, // 40% opacity
+        `${colors.background}99`, // 60% opacity
+        `${colors.background}CC`, // 80% opacity
+        `${colors.background}F2`, // 95% opacity
         colors.background,
       ] as const;
-    }, [isDarkMode, colors.background]);
+    }, [colors.background]);
 
     return (
       <View style={styles.wrapper}>
@@ -158,7 +154,7 @@ export const IslamicCalendarHeader = memo<IslamicCalendarHeaderProps>(
             {/* Image gradient overlay for text readability */}
             <LinearGradient
               colors={imageGradientColors}
-              locations={[0, 0.1, 0.3, 0.5, 0.65, 0.8, 1]}
+              locations={[0, 0.2, 0.4, 0.55, 0.7, 0.85, 1]}
               style={styles.imageGradientOverlay}
               pointerEvents="none"
             />
@@ -180,7 +176,7 @@ export const IslamicCalendarHeader = memo<IslamicCalendarHeaderProps>(
               skipDefaultColor
               style={[
                 styles.hijriDate,
-                { color: colors.white, textShadowColor: colors.textShadowDark },
+                { color: colors.white, textShadowColor: 'rgba(0, 0, 0, 0.9)' },
               ]}
             >
               {dateInfo.hijriDate}
@@ -191,7 +187,7 @@ export const IslamicCalendarHeader = memo<IslamicCalendarHeaderProps>(
               skipDefaultColor
               style={[
                 styles.englishDate,
-                { color: colors.white, textShadowColor: colors.textShadowDark },
+                { color: colors.white, textShadowColor: 'rgba(0, 0, 0, 0.9)' },
               ]}
             >
               {dateInfo.englishDate}
@@ -203,7 +199,7 @@ export const IslamicCalendarHeader = memo<IslamicCalendarHeaderProps>(
                 skipDefaultColor
                 style={[
                   styles.activeCount,
-                  { color: colors.white, textShadowColor: colors.textShadowDark },
+                  { color: colors.white, textShadowColor: 'rgba(0, 0, 0, 0.9)' },
                 ]}
               >
                 {activeEventsCount === 1

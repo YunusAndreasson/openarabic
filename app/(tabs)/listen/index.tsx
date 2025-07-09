@@ -58,7 +58,13 @@ const ListenListItem = memo(
         editMode={editMode}
         isBeingDragged={_isBeingDragged}
         onDelete={() => onDelete(item.article_id)}
-        // Only play button triggers playback, hide when any audio is playing
+        // Entire card triggers playback when not in edit mode and not playing
+        onPress={
+          !editMode && audioState !== AUDIO_STATES.PLAYING
+            ? () => onPlayPress(item.article_id)
+            : undefined
+        }
+        // Play button also triggers playback, hide when any audio is playing
         onPlayPress={
           !editMode && audioState !== AUDIO_STATES.PLAYING
             ? () => onPlayPress(item.article_id)
