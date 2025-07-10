@@ -56,6 +56,12 @@ const basePalette = {
     transparent: 'transparent',
   },
 
+  // Sepia-tinted pure values for autumn theme
+  sepiaPure: {
+    white: '#FEFCF9', // Warm sepia white (instead of pure white)
+    black: '#0F0B0A', // Subtle sepia-tinted black (warm brown-black)
+  },
+
   // Autumn sepia palette - warm, nostalgic tones inspired by fallen leaves
   autumn: {
     // Core sepia-brown family
@@ -159,7 +165,7 @@ const elevation = {
     level0: basePalette.autumn.paper.lighter, // Background - warm cream tone
     level1: basePalette.autumn.paper.lightest, // Cards - pristine parchment
     level2: '#FCFAF7', // Raised elements - warmer than level1
-    level3: '#FEFCF9', // Floating elements - warm sepia white (more sepia than pure white)
+    level3: basePalette.sepiaPure.white, // Floating elements - warm sepia white (more sepia than pure white)
   },
 } as const;
 
@@ -374,7 +380,7 @@ const sepiaColors: ThemeColors = {
   secondaryText: basePalette.autumn.medium,
   textTertiary: basePalette.autumn.light,
   border: basePalette.autumn.paper.light,
-  card: '#FEFCF9', // Warm sepia white cards - matches elevation3 for consistency
+  card: basePalette.sepiaPure.white, // Warm sepia white cards - matches elevation3 for consistency
   cardBorder: basePalette.autumn.paper.light,
 
   // Semantic colors - sepia variants
@@ -416,7 +422,7 @@ const sepiaColors: ThemeColors = {
   elevation3: elevation.sepia.level3,
 
   // Reading experience - optimized for warm, paper-like reading
-  wordTooltipBg: '#FEFCF9', // Warm sepia white for tooltips
+  wordTooltipBg: basePalette.sepiaPure.white, // Warm sepia white for tooltips
   wordTooltipText: basePalette.autumn.darkest,
   wordTooltipBorder: basePalette.autumn.paper.light,
   wordTooltipShadow: applyOpacity(basePalette.autumn.dark, opacity.active),
@@ -441,10 +447,10 @@ const sepiaColors: ThemeColors = {
   // Utility colors - sepia utilities
   textOverlay: applyOpacity(basePalette.autumn.accent.primary, opacity.subtle),
   textShadowDark: applyOpacity(basePalette.autumn.dark, opacity.shadow),
-  textShadowLight: applyOpacity('#FEFCF9', opacity.shadow), // Use sepia white for text shadows
+  textShadowLight: applyOpacity(basePalette.sepiaPure.white, opacity.shadow), // Use sepia white for text shadows
   modalIndicator: basePalette.autumn.lighter,
-  white: '#FEFCF9', // Use warm sepia white instead of pure white
-  black: basePalette.pure.black,
+  white: basePalette.sepiaPure.white, // Use warm sepia white instead of pure white
+  black: basePalette.sepiaPure.black, // Use warm sepia-tinted black
 } as const;
 
 export const Colors = { light: lightColors, dark: darkColors, sepia: sepiaColors } as const;
