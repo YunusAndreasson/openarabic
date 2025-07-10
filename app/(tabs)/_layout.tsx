@@ -7,8 +7,8 @@ import { Platform, StyleSheet } from 'react-native';
 
 import HeaderProfile from '@/components/HeaderProfile';
 import { StreakHistoryBottomSheet } from '@/components/home/StreakHistoryBottomSheet';
-import DictionaryButton from '@/components/ui/DictionaryButton';
-import EditModeButton from '@/components/ui/EditModeButton';
+import { PracticeDictionaryButton } from '@/components/ui/DictionaryButton';
+import { ListenEditModeButton } from '@/components/ui/EditModeButton';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -68,12 +68,6 @@ const TabBarBackground = memo(() => {
 });
 TabBarBackground.displayName = 'TabBarBackground';
 
-const headerBackground = () => <HeaderBackground />;
-const tabBarBackground = () => <TabBarBackground />;
-const headerProfileComponent = () => <HeaderProfile />;
-const listenHeaderRightComponent = () => <EditModeButton type="listen" />;
-const practiceHeaderRightComponent = () => <DictionaryButton />;
-
 export default function TabLayout(): JSX.Element {
   const { session, isLoading } = useAuth();
   const colors = useColors();
@@ -105,10 +99,10 @@ export default function TabLayout(): JSX.Element {
             fontWeight: LAYOUT.HEADER.TITLE.SECONDARY.fontWeight,
           },
           headerTransparent: true,
-          headerBackground: headerBackground,
+          headerBackground: () => <HeaderBackground />,
 
           // Tab bar styling with blur
-          tabBarBackground: tabBarBackground,
+          tabBarBackground: () => <TabBarBackground />,
           tabBarActiveTintColor: colors.tint,
           tabBarInactiveTintColor: colors.tabIconDefault,
           tabBarShowLabel: false, // Clean icon-only design with 3 tabs and clear nav titles
@@ -153,13 +147,13 @@ export default function TabLayout(): JSX.Element {
               ),
               // Header customizations for specific screens
               ...(screen.name === 'read' && {
-                headerRight: headerProfileComponent,
+                headerRight: () => <HeaderProfile />,
               }),
               ...(screen.name === 'listen' && {
-                headerRight: listenHeaderRightComponent,
+                headerRight: () => <ListenEditModeButton />,
               }),
               ...(screen.name === 'practice' && {
-                headerRight: practiceHeaderRightComponent,
+                headerRight: () => <PracticeDictionaryButton />,
               }),
             }}
           />

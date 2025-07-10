@@ -7,6 +7,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { usePressAnimation } from '@/hooks/animations';
+import { useListenScreen } from '@/hooks/listen/useListenScreen';
 import { useColors } from '@/hooks/theme/useColors';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import type { EditModeType } from '@/store/editModeSlice';
@@ -29,9 +30,25 @@ interface EditModeButtonProps {
    * Optional custom styling
    */
   style?: ViewStyle;
+
+  /**
+   * Hide the button when there are no items to manage
+   */
+  hideWhenEmpty?: boolean;
+
+  /**
+   * Number of items available to manage (used with hideWhenEmpty)
+   */
+  itemCount?: number;
 }
 
-const EditModeButton: FC<EditModeButtonProps> = ({ type, onEditModeChange, style }) => {
+const EditModeButton: FC<EditModeButtonProps> = ({
+  type,
+  onEditModeChange,
+  style,
+  hideWhenEmpty = false,
+  itemCount = 0,
+}) => {
   const colors = useColors();
   const { editMode, toggle } = useEditMode(type);
 
@@ -52,6 +69,11 @@ const EditModeButton: FC<EditModeButtonProps> = ({ type, onEditModeChange, style
     : type === 'dictionary'
     ? STRINGS.MANAGE
     : STRINGS.EDIT;
+
+  // Hide the button if hideWhenEmpty is true and there are no items
+  if (hideWhenEmpty && itemCount === 0) {
+    return null;
+  }
 
   return (
     <AnimatedTouchable
@@ -82,6 +104,27 @@ const EditModeButton: FC<EditModeButtonProps> = ({ type, onEditModeChange, style
         {buttonText}
       </ThemedText>
     </AnimatedTouchable>
+  );
+};
+
+/**
+ * Wrapper component specifically for the Listen tab that automatically
+ * hides the Edit/Manage button when there are no articles in the playlist
+ */
+export const ListenEditModeButton: FC<{
+  onEditModeChange?: (editMode: boolean) => void;
+  style?: ViewStyle;
+}> = ({ onEditModeChange, style }) => {
+  const { sortedReadingList } = useListenScreen();
+
+  return (
+    <EditModeButton
+      type="listen"
+      hideWhenEmpty={true}
+      itemCount={sortedReadingList.length}
+      onEditModeChange={onEditModeChange}
+      style={style}
+    />
   );
 };
 

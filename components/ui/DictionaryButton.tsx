@@ -8,11 +8,35 @@ import Animated from 'react-native-reanimated';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
+import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
+import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
+import type { StudyWord } from '@/types/vocabulary.types';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
-export default function DictionaryButton(): JSX.Element {
+interface DictionaryButtonProps {
+  /**
+   * Hide the button when there are no words to manage
+   */
+  hideWhenEmpty?: boolean;
+
+  /**
+   * Number of words available (used with hideWhenEmpty)
+   */
+  wordCount?: number;
+
+  /**
+   * Optional custom styling
+   */
+  style?: ViewStyle;
+}
+
+export default function DictionaryButton({
+  hideWhenEmpty = false,
+  wordCount = 0,
+  style,
+}: DictionaryButtonProps = {}): JSX.Element | null {
   const colors = useColors();
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     includeOpacity: true,
@@ -22,6 +46,10 @@ export default function DictionaryButton(): JSX.Element {
     router.push('/(tabs)/practice/dictionary');
   }, []);
 
+  if (hideWhenEmpty && wordCount === 0) {
+    return null;
+  }
+
   return (
     <AnimatedTouchable
       style={[
@@ -30,6 +58,7 @@ export default function DictionaryButton(): JSX.Element {
           backgroundColor: colors.transparent,
         },
         animatedStyle as ViewStyle,
+        style,
       ]}
       onPress={handlePress}
       onPressIn={handlePressIn}
@@ -68,3 +97,22 @@ const styles = StyleSheet.create({
     letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT,
   },
 });
+
+/**
+ * Wrapper component specifically for the Practice tab that automatically
+ * hides the Dictionary button when there are no study words
+ */
+export function PracticeDictionaryButton({
+  style,
+}: { style?: ViewStyle } = {}): JSX.Element | null {
+  const { user } = useAuth();
+  const { allWords } = useFSRSQueries({ userId: user?.id });
+
+  // Filter study words similar to practice screen logic
+  const filteredStudyWords =
+    allWords?.filter((word: StudyWord) => word != null && word.root_id != null) ?? [];
+
+  return (
+    <DictionaryButton hideWhenEmpty={true} wordCount={filteredStudyWords.length} style={style} />
+  );
+}

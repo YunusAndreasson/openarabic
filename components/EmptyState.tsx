@@ -30,7 +30,7 @@ interface EmptyStateProps {
 const DEFAULT_ICON_SIZE = LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE;
 
 function handleBrowseArticles() {
-  router.push(ROUTE_PATHS.TABS);
+  router.push(ROUTE_PATHS.READ_TAB);
 }
 
 /**

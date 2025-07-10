@@ -97,6 +97,14 @@ export const STRINGS = {
   NO_ARTICLES_SAVED: 'No saved articles',
   LISTENING_PLAYLIST_EMPTY: 'Add articles to build your playlist',
 
+  // Listen tab empty state - user-centric and playlist-focused
+  PLAYLIST_EMPTY_TITLE: 'Your playlist is empty',
+  PLAYLIST_EMPTY_DESCRIPTION: 'Save content from Library to start listening',
+
+  // Practice tab empty state - user-centric and study-focused
+  STUDY_LIST_EMPTY_TITLE: 'No words to study',
+  STUDY_LIST_EMPTY_DESCRIPTION: 'Add words from articles to start practicing',
+
   PROGRESS_NOT_AVAILABLE: "Progress isn't available right now",
   ERROR_LOADING_DATA: "Couldn't load data",
 

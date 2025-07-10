@@ -7,12 +7,14 @@ import { useCallback, useMemo } from 'react';
 import { ActivityIndicator, InteractionManager, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import EmptyState from '@/components/EmptyState';
 import { ThemedView } from '@/components/ThemedView';
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
 import { VocabularyStatCards } from '@/components/vocabulary/VocabularyStatCards';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { getPracticeReviewRoute } from '@/constants/routes';
+import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
@@ -113,6 +115,15 @@ export default function VocabularyScreen(): JSX.Element {
     return { learningWords, masteredWords };
   }, [filteredStudyWords]);
 
+  // Memoize EmptyState container style to prevent object recreation
+  const emptyStateContainerStyle = useMemo(
+    () => ({
+      paddingTop: LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.MEDIUM,
+      paddingBottom: LAYOUT.SPACING.LARGE,
+    }),
+    []
+  );
+
   // Show error message if there was an error loading data
   if (error) {
     return (
@@ -125,6 +136,9 @@ export default function VocabularyScreen(): JSX.Element {
   // Check if data is cached and show loading indicator
   const isDataCached = !!(user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id)));
   const showLoadingIndicator = (isDataLoading || isFetching) && !isDataCached;
+
+  // Check if we should show empty state (no study words available)
+  const shouldShowEmpty = !isDataLoading && !isFetching && filteredStudyWords.length === 0;
 
   // Main content
   return (
@@ -150,16 +164,30 @@ export default function VocabularyScreen(): JSX.Element {
           </ThemedView>
         )}
 
-        {/* PRIMARY SECTION: Learning Overview */}
-        <View style={{ marginTop: LAYOUT.SPACING.MEDIUM }}>
-          <VocabularyStatCards
-            dueWords={dueWordsCount}
-            learningWords={calculatedStats.learningWords}
-            masteredWords={calculatedStats.masteredWords}
-            studyWords={filteredStudyWords} // Use all study words for memory capacity gauge
-            onStartReview={handleStartReview}
+        {/* Empty state when no study words */}
+        {shouldShowEmpty && (
+          <EmptyState
+            colors={colors}
+            description={STRINGS.STUDY_LIST_EMPTY_DESCRIPTION}
+            icon="school-outline"
+            iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
+            title={STRINGS.STUDY_LIST_EMPTY_TITLE}
+            containerStyle={emptyStateContainerStyle}
           />
-        </View>
+        )}
+
+        {/* PRIMARY SECTION: Learning Overview */}
+        {!shouldShowEmpty && (
+          <View style={{ marginTop: LAYOUT.SPACING.MEDIUM }}>
+            <VocabularyStatCards
+              dueWords={dueWordsCount}
+              learningWords={calculatedStats.learningWords}
+              masteredWords={calculatedStats.masteredWords}
+              studyWords={filteredStudyWords} // Use all study words for memory capacity gauge
+              onStartReview={handleStartReview}
+            />
+          </View>
+        )}
       </ScrollView>
     </ThemedView>
   );

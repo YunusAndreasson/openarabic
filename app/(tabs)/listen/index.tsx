@@ -32,7 +32,10 @@ const styles = StyleSheet.create({
 // Use responsive height calculation instead of hardcoded value
 const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.AUDIO_ITEM;
 
-// Optimized component - removed loading states and simplified props
+// Memoized separator component for both DraggableFlatList and FlashList
+const ItemSeparator = () => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />;
+
+// Memoized list item with optimized comparison
 const ListenListItem = memo(
   ({
     item,
@@ -125,11 +128,6 @@ export default function ListenScreen(): JSX.Element {
     }
   }, [enhancedTracksError, showToast]);
 
-  // Optimized Play All handler - just start playback without forcing modal
-  const handlePlayAllWithoutModal = useCallback(async () => {
-    await handlePlayAll();
-  }, [handlePlayAll]);
-
   // Simplified state calculations
   const hasArticles = sortedReadingList.length > 0;
   const shouldShowEmpty = !hasArticles && canShowEmpty && !isReadingListLoading;
@@ -147,6 +145,43 @@ export default function ListenScreen(): JSX.Element {
       paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     }),
     [headerHeight, hasArticles, insets.bottom]
+  );
+
+  // Memoize bottom controls style to prevent recreating object on every render
+  const bottomControlsStyle = useMemo(
+    () => ({
+      position: 'absolute' as const,
+      // Compensate for BottomControls internal padding (MEDIUM=12px + SMALL=8px = 20px)
+      bottom:
+        LAYOUT.BOTTOM_BAR.HEIGHT +
+        LAYOUT.SPACING.TINY -
+        LAYOUT.SPACING.MEDIUM -
+        LAYOUT.SPACING.SMALL, // 4px - 12px - 8px = -16px above tab bar
+      left: 0,
+      right: 0,
+      opacity: hasArticles ? 1 : 0,
+      pointerEvents: hasArticles ? ('auto' as const) : ('none' as const),
+    }),
+    [hasArticles]
+  );
+
+  // Memoize shared components to prevent recreation
+  const EmptyStateComponent = useMemo(
+    () =>
+      shouldShowEmpty ? (
+        <EmptyState
+          colors={colors}
+          description={STRINGS.PLAYLIST_EMPTY_DESCRIPTION}
+          icon="headset-outline"
+          iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
+          title={STRINGS.PLAYLIST_EMPTY_TITLE}
+          containerStyle={{
+            paddingTop: LAYOUT.SPACING.XLARGE,
+            paddingBottom: LAYOUT.SPACING.LARGE,
+          }}
+        />
+      ) : null,
+    [shouldShowEmpty, colors]
   );
 
   // Optimized render function - simplified logic
@@ -197,23 +232,8 @@ export default function ListenScreen(): JSX.Element {
             onDragEnd={handleDragEnd}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={listContainerStyle}
-            ItemSeparatorComponent={() => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />}
-            ListEmptyComponent={
-              shouldShowEmpty ? (
-                <EmptyState
-                  colors={colors}
-                  description={STRINGS.LISTENING_PLAYLIST_EMPTY}
-                  icon="headset-outline"
-                  iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
-                  submessage="Save articles from Read to build your playlist"
-                  title={STRINGS.NO_ARTICLES_SAVED}
-                  containerStyle={{
-                    paddingTop: LAYOUT.SPACING.XLARGE,
-                    paddingBottom: LAYOUT.SPACING.LARGE,
-                  }}
-                />
-              ) : null
-            }
+            ItemSeparatorComponent={ItemSeparator}
+            ListEmptyComponent={EmptyStateComponent}
           />
         ) : (
           <FlashList<ReadingListItem>
@@ -225,23 +245,8 @@ export default function ListenScreen(): JSX.Element {
             removeClippedSubviews={true}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={listContainerStyle}
-            ItemSeparatorComponent={() => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />}
-            ListEmptyComponent={
-              shouldShowEmpty ? (
-                <EmptyState
-                  colors={colors}
-                  description={STRINGS.LISTENING_PLAYLIST_EMPTY}
-                  icon="headset-outline"
-                  iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
-                  submessage="Save articles from Read to build your playlist"
-                  title={STRINGS.NO_ARTICLES_SAVED}
-                  containerStyle={{
-                    paddingTop: LAYOUT.SPACING.XLARGE,
-                    paddingBottom: LAYOUT.SPACING.LARGE,
-                  }}
-                />
-              ) : null
-            }
+            ItemSeparatorComponent={ItemSeparator}
+            ListEmptyComponent={EmptyStateComponent}
             ListHeaderComponent={null}
             overrideItemLayout={layout => {
               layout.size = ITEM_HEIGHT;
@@ -252,21 +257,7 @@ export default function ListenScreen(): JSX.Element {
       </ThemedView>
 
       {/* Bottom controls positioned above tab bar to match mini-player location */}
-      <View
-        style={{
-          position: 'absolute',
-          // Compensate for BottomControls internal padding (MEDIUM=12px + SMALL=8px = 20px)
-          bottom:
-            LAYOUT.BOTTOM_BAR.HEIGHT +
-            LAYOUT.SPACING.TINY -
-            LAYOUT.SPACING.MEDIUM -
-            LAYOUT.SPACING.SMALL, // 4px - 12px - 8px = -16px above tab bar
-          left: 0,
-          right: 0,
-          opacity: hasArticles ? 1 : 0,
-          pointerEvents: hasArticles ? 'auto' : 'none',
-        }}
-      >
+      <View style={bottomControlsStyle}>
         <BottomControls
           primaryDisabled={false}
           primaryLoading={false}
@@ -274,7 +265,7 @@ export default function ListenScreen(): JSX.Element {
           primaryLabel={STRINGS.PLAY_ALL}
           primaryVariant="filled"
           showTimerButton={false}
-          onPrimaryPress={handlePlayAllWithoutModal}
+          onPrimaryPress={handlePlayAll}
         />
       </View>
     </ThemedView>
