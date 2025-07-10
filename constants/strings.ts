@@ -289,6 +289,7 @@ export const STRINGS = {
   WORD_OF_LABEL: 'of',
   BY: 'by',
   RECOMMENDED: 'Recommended',
+  CONTINUE_READING: 'Continue Reading',
   ACTIVE: 'active',
 
   // Learning science content - Remove redundant section titles (benefits, concerns, research are obvious from content)

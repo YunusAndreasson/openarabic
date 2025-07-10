@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
+import { useQuery } from '@tanstack/react-query';
 import React, { Fragment, memo, useCallback, useMemo, type ReactElement } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent, ViewToken } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -7,11 +8,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import ParallaxHeader from '@/components/article/ParallaxHeader';
+import { RelatedArticlesSection } from '@/components/article/RelatedArticlesSection';
 import { SentenceScrubber } from '@/components/article/SentenceScrubber';
 import { SCROLL_EVENT_THROTTLE, SENTENCE_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import { articlesService } from '@/services/articles';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
@@ -298,6 +301,20 @@ export const ArticleContent = memo<ArticleContentProps>(
       [article, colors]
     );
 
+    // Get all articles for recommendations - moved here to be part of main component
+    const { data: articlesData = [] } = useQuery({
+      queryKey: ['articles'],
+      queryFn: () => articlesService.getArticles(),
+      staleTime: 3600000, // 1 hour
+      gcTime: 7200000, // 2 hours
+    });
+
+    // Memoize the footer component for related articles
+    const footerComponent = useMemo(
+      () => <RelatedArticlesSection currentArticleId={article.id} articlesData={articlesData} />,
+      [article.id, articlesData]
+    );
+
     const getItemTypeCallback = useCallback(getItemType, []);
 
     const overrideItemLayout = useCallback((layout: { span?: number; size?: number }) => {
@@ -333,6 +350,7 @@ export const ArticleContent = memo<ArticleContentProps>(
               initialScrollIndex={0}
               keyExtractor={item => item.id.toString()}
               ListHeaderComponent={headerComponent}
+              ListFooterComponent={footerComponent}
               overScrollMode="auto" // Allow controlled overscroll for parallax
               persistentScrollbar={false} // Remove native scrollbar - using custom scrubber
               removeClippedSubviews={true} // Improve performance
