@@ -35,10 +35,7 @@ def get_or_generate_root_audio(
         english_translation: The English translation of the root word
     """
     cache_key_ar = get_cache_key(arabic_word)
-    cache_key_en = cache_key_ar.replace(
-        "ar_", "en_"
-    )  # Use a similar pattern for English
-    # Get the root directory (translate/) for all file storage
+    cache_key_en = cache_key_ar.replace("ar_", "en_")
     root_dir = os.path.abspath(
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
     )
@@ -47,16 +44,13 @@ def get_or_generate_root_audio(
     storage_url_ar = f"{SUPABASE_URL}/storage/v1/object/public/audio/{cache_key_ar}"
     storage_url_en = f"{SUPABASE_URL}/storage/v1/object/public/audio/{cache_key_en}"
 
-    # Initialize audio URLs to None to avoid "referenced before assignment" errors
     audio_url = None
     audio_url_en = None
 
-    # --- Arabic audio ---
     audio_url = get_cached_audio_url(cache_key_ar, arabic_word)
     if not audio_url:
         logger.info(f"Generating new audio for Arabic word: {arabic_word}")
         result = generate_arabic_word_audio(arabic_word, cache_key_ar)
-        logger.info(f"Result from generate_arabic_word_audio: {result}")
         audio_url = result.get("url") if result else None
         if audio_url:
             logger.info(f"Generated Arabic audio URL: {audio_url}")
@@ -68,9 +62,10 @@ def get_or_generate_root_audio(
                     shutil.copy2(temp_path, cache_path_ar)
                     os.remove(temp_path)
                 except Exception as e:
-                    logger.info(f"Error caching audio file for {arabic_word}: {e}")
+                    logger.info(
+                        f"Error caching audio file for {arabic_word}: {e}"
+                    )
 
-    # --- English audio ---
     # Validate that english_translation is actually English (not Arabic)
     if english_translation and is_arabic_text(english_translation):
         logger.info(
@@ -78,7 +73,6 @@ def get_or_generate_root_audio(
         )
         english_translation = None
 
-    # If no English translation provided, use default fallback
     english_word_to_use = (
         english_translation
         if english_translation
@@ -87,10 +81,8 @@ def get_or_generate_root_audio(
 
     audio_url_en = get_cached_audio_url(cache_key_en, english_word_to_use)
     if not audio_url_en:
-        # Pass the English translation to generate English audio
         logger.info(f"Generating new audio for English word: {english_word_to_use}")
         result_en = generate_english_word_audio(english_word_to_use, cache_key_en)
-        logger.info(f"Result from generate_english_word_audio: {result_en}")
         audio_url_en = result_en.get("url") if result_en else None
         if audio_url_en:
             logger.info(f"Generated English audio URL: {audio_url_en}")
@@ -106,7 +98,6 @@ def get_or_generate_root_audio(
                         f"Error caching English audio file for {english_word_to_use}: {e}"
                     )
 
-    # If we don't have audio URLs but files exist in storage, construct URLs
     if not audio_url and check_file_exists("audio", cache_key_ar):
         audio_url = storage_url_ar
         logger.info(f"Found audio in storage without URL: {audio_url}")
@@ -115,5 +106,4 @@ def get_or_generate_root_audio(
         audio_url_en = storage_url_en
         logger.info(f"Found EN audio in storage without URL: {audio_url_en}")
 
-    # Return both URLs even if one is None
     return {"audio_url": audio_url, "audio_url_en": audio_url_en}

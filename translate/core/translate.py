@@ -5,12 +5,9 @@ import sys
 
 from tqdm import tqdm
 
-# Import from models module
 from translate.core.models import (
     TextMetadata,
 )
-
-# Import batch utilities
 from translate.core.batch_utils import create_batches, process_batch
 from translate.core.file_utils import (
     read_json_file,
@@ -19,9 +16,6 @@ from translate.core.file_utils import (
 )
 from translate.core.config import MAX_BATCH_SIZE
 
-# Import shared utilities
-
-# Configure logging to show only errors
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
@@ -118,13 +112,9 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
     if not all_units:
         return None
 
-    # Create metadata object
     metadata = create_metadata(split_data)
-
-    # Process batches
     results, batch_errors = process_batches(all_units, batch_size)
 
-    # Validate results
     if batch_errors:
         logger.info(f"❌ Translation failed - {len(batch_errors)} batch(es) failed:")
         for error in batch_errors:
@@ -150,11 +140,8 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
 
 def main():
     """Main entry point"""
-    # Default files in article directory
     default_input = "article/input.txt"
     default_output = "article/output.json"
-
-    # Use command line arguments if provided, otherwise use defaults
     input_file = sys.argv[1] if len(sys.argv) >= 2 else default_input
     output_file = sys.argv[2] if len(sys.argv) >= 3 else default_output
 
@@ -162,7 +149,6 @@ def main():
         logger.info(f"❌ Split file not found: {generate_split_filename(input_file)}")
         sys.exit(1)
 
-    # Parse batch size parameter
     batch_size = MAX_BATCH_SIZE
     if len(sys.argv) >= 4:
         try:
@@ -175,7 +161,6 @@ def main():
             batch_size = MAX_BATCH_SIZE
 
     try:
-        # Run translation
         success = translate_file(input_file, output_file, batch_size)
 
         if not success:

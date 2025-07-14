@@ -14,7 +14,6 @@ from translate.core.config import (
 
 from openai import OpenAI
 
-# Flag to ensure we only load API keys once
 _keys_loaded = False
 
 
@@ -30,14 +29,12 @@ def load_api_keys() -> None:
         exec(f.read(), globals())
     _keys_loaded = True
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
 logger = logging.getLogger(__name__)
 
-# Configuration constants are now centralized in config.py
 
 
 class TokenUsageTracker:
@@ -57,13 +54,12 @@ class TokenUsageTracker:
         self.total_tokens += usage_data.get("total_tokens", 0)
         self.api_calls += 1
 
-        # GPT-4o pricing (as of March 2025)
         prompt_cost = (
             usage_data.get("prompt_tokens", 0) * 0.01 / 1000
-        )  # $0.01 per 1K tokens
+        )
         completion_cost = (
             usage_data.get("completion_tokens", 0) * 0.03 / 1000
-        )  # $0.03 per 1K tokens
+        )
         self.total_cost += prompt_cost + completion_cost
 
     def __str__(self) -> str:
@@ -77,11 +73,9 @@ class TokenUsageTracker:
         )
 
 
-# Initialize token tracker
 token_tracker = TokenUsageTracker()
 
 
-# Initialize OpenAI client
 def init_openai_client():
     """Initialize the OpenAI client with API key"""
     load_api_keys()
@@ -93,7 +87,6 @@ def init_openai_client():
     return OpenAI(api_key=api_key)
 
 
-# Create client instance
 client = init_openai_client()
 
 
@@ -149,7 +142,7 @@ def call_openai_api(
     function_name: Optional[str] = None,
     temperature: float = 0.3,
     max_retries: int = 3,
-    model: str = MODEL_OTHER,  # Default to MODEL_OTHER
+    model: str = MODEL_OTHER,
 ) -> Dict[str, Any]:
     """Call the OpenAI API with retries and standardized decoding."""
     retry_count = 0

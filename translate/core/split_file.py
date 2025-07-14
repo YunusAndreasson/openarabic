@@ -5,7 +5,6 @@ import logging
 import sys
 from typing import Dict, Any
 
-# Import from shared utilities
 from translate.core.utils import (
     call_openai_api,
     token_tracker,
@@ -19,14 +18,12 @@ from translate.core.file_utils import (
 logger = logging.getLogger(__name__)
 from translate.core.config import MODEL_ANALYSIS
 
-# Import schemas and prompt templates
 from translate.core.schemas import (
     SPLIT_TEXT_FUNCTION,
     GENERAL_SYSTEM_PROMPT,
     SENTENCE_SPLITTING_USER_PROMPT,
 )
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
@@ -86,15 +83,12 @@ def split_file(input_file: str, output_file: str):
     start_time = time.time()
 
     try:
-        # Read input file
         full_text = read_text_file(input_file)
 
         split_result = split_text_into_sentences(full_text)
 
-        # Add total units to metadata
         split_result["total_units"] = len(split_result["units"])
 
-        # Save to output file
         write_json_file(output_file, split_result)
 
         return split_result
@@ -114,14 +108,11 @@ __all__ = [
 
 def main():
     """Main entry point"""
-    # Default files in article directory
     default_input = "article/input.txt"
-    default_output = "article/input_split.json"  # Changed to match expected pattern
+    default_output = "article/input_split.json"
 
-    # Use command line arguments if provided, otherwise use defaults
     input_file = sys.argv[1] if len(sys.argv) >= 2 else default_input
-
-    # If only input is provided, auto-generate output filename with _split.json suffix
+    
     if len(sys.argv) == 2:
         output_file = generate_split_filename(input_file)
     else:
@@ -131,7 +122,7 @@ def main():
         split_file(input_file, output_file)
         sys.exit(0)
     except KeyboardInterrupt:
-        sys.exit(130)  # Standard exit code for SIGINT
+        sys.exit(130)
     except Exception as e:
         logger.info(f"❌ Fatal error during text splitting: {str(e)}")
         sys.exit(1)
