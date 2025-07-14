@@ -451,6 +451,9 @@ def generate_arabic_word_audio(word: str, filename: str) -> Optional[Dict]:
         except Exception as e:
             logger.info(f"Upload failed despite retries: {str(e)}")
             return None
+        finally:
+            if os.path.exists(temp_audio_path):
+                os.remove(temp_audio_path)
 
         # IMPORTANT: Explicitly create storage URL if upload succeeded
         if url:
@@ -522,6 +525,9 @@ def generate_english_word_audio(word: str, filename: str) -> Optional[Dict]:
         except Exception as e:
             logger.info(f"Upload failed despite retries (EN): {str(e)}")
             return None
+        finally:
+            if os.path.exists(temp_audio_path):
+                os.remove(temp_audio_path)
 
         # IMPORTANT: Explicitly create storage URL if upload succeeded
         if url:
@@ -670,7 +676,10 @@ def generate_sentence_audio(
             f.write(audio_data)
         from translate.core.storage_utils import upload_to_storage
 
-        url = upload_to_storage("audio", filename, open(temp_audio_path, "rb"))
+        with open(temp_audio_path, "rb") as f:
+            url = upload_to_storage("audio", filename, f)
+        if os.path.exists(temp_audio_path):
+            os.remove(temp_audio_path)
         # Extract word timings if available
         word_timings = []
         if alignment:

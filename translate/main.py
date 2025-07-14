@@ -55,9 +55,11 @@ def run_translation(input_file: str, output_file: str, batch_size: int) -> None:
 
 def run_pipeline(input_file: str, output_file: str, batch_size: int) -> None:
     """Execute the entire translation pipeline."""
-    run_split_file(input_file)
-    confirm_step("Ready to proceed with translation")
-    run_translation(input_file, output_file, batch_size)
+    split_file_path = run_split_file(input_file)
+    if not confirm_step("Ready to proceed with translation"):
+        logger.info("Translation aborted by user")
+        return
+    run_translation(split_file_path, output_file, batch_size)
 
 
 def main():
