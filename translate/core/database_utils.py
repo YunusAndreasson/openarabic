@@ -24,18 +24,13 @@ def extract_root_info(word: Dict) -> tuple[str, Optional[str], Optional[str]]:
     Returns:
         tuple: (arabic_root, meaning, english_translation)
     """
-    # If root is directly specified, use it
     if word.get("root"):
         return word["root"], word.get("notes"), word.get("english", "")
 
-    # Use essential letters and translation as the root when available
     letters = word.get("essential", word.get("arabic"))
-    # Get the direct English translation for audio generation
     english = word.get("english", "")
-    # Generate meaning field that contains context
     meaning = word.get("essential_translation") or f"Auto-generated root for: {english}"
-    # Ensure we use essential_translation as the english_translation parameter
-    # rather than the contextual english field
+
     english_translation = word.get("essential_translation", "")
     if not english_translation:
         english_translation = english
@@ -55,10 +50,8 @@ def get_or_create_root(
         meaning: The meaning description
         english_translation: The direct English translation for audio generation
     """
-    # Clean up letters (remove extra spaces)
     letters = " ".join(letters.split())
 
-    # Check if root exists, include audio_url and audio_url_en
     result = (
         supabase.table("roots")
         .select("id", "audio_url", "audio_url_en")
@@ -68,29 +61,22 @@ def get_or_create_root(
     if result.data:
         root = result.data[0]
         root_id = root["id"]
-        # Generate and update audio_url/audio_url_en if missing
         if not root.get("audio_url") or not root.get("audio_url_en"):
             try:
-                # Get or generate audio for the root word using cache
                 from translate.core.root_audio import get_or_generate_root_audio
 
-                # Prioritize using essential_translation (english_translation)
                 english_audio_text = english_translation
-
-                # Only fallback to meaning field if english_translation is not available
                 if not english_audio_text and meaning:
-                    # If meaning starts with "Auto-generated root for:", extract the English part
                     if "Auto-generated root for:" in meaning:
-                        english_audio_text = meaning.replace(
-                            "Auto-generated root for:", ""
-                        ).strip()
+                        english_audio_text = (
+                            meaning.replace("Auto-generated root for:", "").strip()
+                        )
                     else:
                         english_audio_text = meaning
 
                 audio_urls = get_or_generate_root_audio(letters, english_audio_text)
 
-                # Debug info for audio URL generation
-                logger.info(f"Audio URLs for existing root '{letters}': {audio_urls}")
+
 
                 update_data = {}
                 if audio_urls:
@@ -106,27 +92,19 @@ def get_or_create_root(
                     ).execute()
             except Exception as e:
                 logger.info(f"Error generating audio for root '{letters}': {e}")
-                import traceback
-
-                traceback.print_exc()  # Print full stack trace for debugging
         return root_id
 
-    # Create new root without audio_url first
     root_data = {"letters": letters, "meaning": meaning}
     result = supabase.table("roots").insert(root_data).execute()
     root_id = result.data[0]["id"]
     logger.info(f"Created new root with ID {root_id} for '{letters}'")
 
-    # Generate and update audio_url/audio_url_en for the new root
     try:
         from translate.core.root_audio import get_or_generate_root_audio
 
-        # Prioritize using essential_translation (english_translation)
         english_audio_text = english_translation
 
-        # Only fallback to meaning field if english_translation is not available
         if not english_audio_text and meaning:
-            # If meaning starts with "Auto-generated root for:", extract the English part
             if "Auto-generated root for:" in meaning:
                 english_audio_text = meaning.replace(
                     "Auto-generated root for:", ""
@@ -135,9 +113,6 @@ def get_or_create_root(
                 english_audio_text = meaning
 
         audio_urls = get_or_generate_root_audio(letters, english_audio_text)
-
-        # Debug info for audio URL generation
-        logger.info(f"Audio URLs for new root '{letters}': {audio_urls}")
 
         update_data = {}
         if audio_urls:
@@ -153,9 +128,6 @@ def get_or_create_root(
             logger.info(f"Warning: No audio URLs generated for root '{letters}'")
     except Exception as e:
         logger.info(f"Error generating audio for new root '{letters}': {e}")
-        import traceback
-
-        traceback.print_exc()  # Print full stack trace for debugging
 
     return root_id
 
@@ -169,23 +141,18 @@ def insert_sentence_words(
     """
     word_by_word = translation.get("word_by_word", [])
 
-    # Track timing match statistics
     match_stats = {"exact": 0, "position": 0, "fuzzy": 0, "none": 0}
     total_words = len(word_by_word)
     words_with_timing = 0
 
     words_data: List[Dict] = []
 
-    # Check if we have word timings and output a clear warning if we have fewer timings than words
     if word_timings:
         if len(word_timings) < len(word_by_word):
             logger.info(
                 f"Warning: Fewer word timings ({len(word_timings)}) than words in sentence ({len(word_by_word)})"
             )
-        # Sort word timings by start time to ensure proper sequencing
         sorted_timings = sorted(word_timings, key=lambda x: float(x["start_time"]))
-
-        # Use a simpler, more direct matching approach
         timing_position = 0
         last_end_time = 0.0
 
@@ -240,7 +207,6 @@ def insert_sentence_words(
 
             words_data.append(word_data)
     else:
-        # No timings provided
         for position, word in enumerate(word_by_word):
             root_letters, root_meaning, english_translation = extract_root_info(word)
             root_id = get_or_create_root(root_letters, root_meaning, english_translation)
@@ -262,7 +228,6 @@ def insert_sentence_words(
             words_data.append(word_data)
             match_stats["none"] += 1
 
-    # Bulk insert all collected word data
     if words_data:
         supabase.table("sentence_words").insert(words_data).execute()
 
@@ -356,7 +321,6 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> Dict:
         "words_with_timings": 0,
     }
 
-    # List to store temporary audio files for concatenation
     sentence_audio_files = []
     temp_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "temp_audio")
     os.makedirs(temp_dir, exist_ok=True)
@@ -365,11 +329,9 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> Dict:
         for idx, translation in enumerate(translations):
             previous_text, next_text = get_adjacent_texts(translations, idx)
 
-            # Generate audio for this individual sentence with timestamps
             temp_audio_file = os.path.join(temp_dir, f"sentence_{idx}.mp3")
             audio_filename = generate_audio_filename()
 
-            # Use enhanced audio generation with tashkeel, SSML, and sentence context
             audio_result = generate_sentence_audio(
                 text=translation["original"],
                 filename=audio_filename,
@@ -378,7 +340,6 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> Dict:
                 next_text=next_text,
             )
 
-            # Extract statistics from audio result
             if audio_result is not None:
                 storage_url = audio_result.get("url", None)
                 word_timings = audio_result.get("word_timings", [])
@@ -392,23 +353,20 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> Dict:
                 else:
                     timing_stats["sentences_without_timings"] += 1
 
-            # Clean the text before storing in database
             cleaned_arabic = clean_arabic_text(translation["original"])
 
-            # Insert sentence with audio URL
             sentence_data = {
                 "article_id": article_id,
                 "position": idx,
                 "arabic": cleaned_arabic,
                 "english": translation[
                     "full_translation"
-                ],  # Changed back to full_translation
+                ],
                 "audio_url": storage_url,
             }
             result = supabase.table("article_sentences").insert(sentence_data).execute()
             sentence_id = result.data[0]["id"]
 
-            # Insert words with their timing information
             if translation.get("word_by_word"):
                 word_stats = insert_sentence_words(
                     sentence_id, translation, word_timings
@@ -420,7 +378,6 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> Dict:
                     "Warning: No word-by-word translation found, skipping word insertion"
                 )
 
-        # After processing all sentences, concatenate their audio files
         if sentence_audio_files:
             concatenate_and_upload_audio(sentence_audio_files, temp_dir, article_id)
         else:
@@ -449,14 +406,12 @@ def save_timing_report(
     now = datetime.now(UTC).isoformat()
 
     try:
-        # Calculate quality rating
         words_with_timing_pct = 0
         if timing_stats["total_words"] > 0:
             words_with_timing_pct = (
                 timing_stats["words_with_timings"] / timing_stats["total_words"]
             ) * 100
 
-        # Quality rating
         if words_with_timing_pct >= 90:
             quality = "EXCELLENT"
         elif words_with_timing_pct >= 75:
@@ -466,15 +421,12 @@ def save_timing_report(
         else:
             quality = "POOR"
 
-        # Write to CSV
         with open(report_file, "a", encoding="utf-8", newline="") as f:
-            # Write header if file is new
             if not file_exists:
                 f.write(
                     "article_id,title,timestamp,total_sentences,sentences_with_audio,sentences_with_timings,sentences_with_partial_timings,sentences_without_timings,total_words,words_with_timing,timing_percentage,quality\n"
                 )
 
-            # Write data row with all the detailed statistics
             title_escaped = title.replace('"', '""')
             f.write(
                 f"{article_id},\"{title_escaped}\",{now},"
@@ -501,18 +453,14 @@ def archive_files(json_path: str, article_id: int) -> None:
     archive_dir = os.path.join(root_dir, "archive")
     os.makedirs(archive_dir, exist_ok=True)
 
-    # Get the article directory path
     article_dir = os.path.dirname(json_path)
 
-    # Define source and destination paths
     input_file = os.path.join(article_dir, "input.txt")
-    output_file = json_path  # This is output.json
+    output_file = json_path
 
-    # Define new paths in archive
     archived_input = os.path.join(archive_dir, f"{article_id}_input.txt")
     archived_output = os.path.join(archive_dir, f"{article_id}_output.json")
 
-    # Move files if they exist
     if os.path.exists(input_file):
         shutil.move(input_file, archived_input)
 
@@ -524,7 +472,6 @@ def validate_article_data(data: Dict) -> None:
     """
     Validate article data before processing. Raises ValueError with detailed message if validation fails.
     """
-    # 1. Check required metadata fields
     required_metadata = ["title", "summary", "difficulty_level"]
     missing_fields = [
         field for field in required_metadata if not data.get("metadata", {}).get(field)
@@ -534,7 +481,6 @@ def validate_article_data(data: Dict) -> None:
             f"Missing required metadata fields: {', '.join(missing_fields)}"
         )
 
-    # 2. Check translations array exists and is not empty
     if (
         not data.get("translations")
         or not isinstance(data["translations"], list)
@@ -542,20 +488,17 @@ def validate_article_data(data: Dict) -> None:
     ):
         raise ValueError("Article must contain at least one translation")
 
-    # 3. Validate each translation entry
     for idx, translation in enumerate(data["translations"]):
         if not translation.get("original"):
             raise ValueError(f"Missing Arabic text in translation at position {idx}")
         if not translation.get("full_translation"):
             raise ValueError(f"Missing English translation at position {idx}")
 
-        # Check for failed translations
         if translation.get("verification_status") == "Failed":
             raise ValueError(
                 f"Translation at position {idx} has failed verification status"
             )
 
-        # Check for error markers in translation text
         if "[BATCH PROCESSING ERROR]" in translation.get("full_translation", ""):
             raise ValueError(
                 f"Translation at position {idx} contains error marker - translation is incomplete"
@@ -566,7 +509,6 @@ def validate_article_data(data: Dict) -> None:
                 f"Translation at position {idx} contains error marker - translation is incomplete"
             )
 
-        # 4. Validate word-by-word translations if present
         if "word_by_word" in translation:
             if not isinstance(translation["word_by_word"], list):
                 raise ValueError(
@@ -583,7 +525,6 @@ def validate_article_data(data: Dict) -> None:
                         f"Missing English translation in word_by_word at translation {idx}, word {word_idx}"
                     )
 
-    # 5. Check difficulty level is within valid range
     difficulty = data["metadata"]["difficulty_level"]
     if not isinstance(difficulty, int) or difficulty < 1 or difficulty > 5:
         raise ValueError("Difficulty level must be an integer between 1 and 5")

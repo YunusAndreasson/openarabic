@@ -26,45 +26,36 @@ from translate.core.storage_utils import (
     upload_to_storage,
 )
 
-# Load environment variables once
 load_api_keys()
 
-# ElevenLabs configuration
 ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY")
 
 if not ELEVENLABS_API_KEY:
     raise EnvironmentError("Missing ELEVENLABS_API_KEY environment variable.")
 
-# Initialize client
 eleven_labs = ElevenLabs(api_key=ELEVENLABS_API_KEY)
 
-# Constants for voice IDs
-ARABIC_VOICE_ID = "nPczCjzI2devNBz1zQrb"  # Voice ID for Arabic sentences
+ARABIC_VOICE_ID = "nPczCjzI2devNBz1zQrb"
 ARABIC_WORD_VOICE_ID = (
-    "IES4nrmZdUBHByLBde0P"  # Special voice ID for single Arabic words
+    "IES4nrmZdUBHByLBde0P"
 )
 ENGLISH_WORD_VOICE_ID = "IKne3meq5aSn9XLyUdCD"
 
-# Default voice settings for consistent audio generation
 DEFAULT_VOICE_SETTINGS = VoiceSettings(
     use_speaker_boost=True,
 )
 
-# Get the root directory (translate/) for all file storage
 ROOT_DIR = os.path.abspath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 )
 
-# Add after other constants
 AUDIO_CACHE_DIR = os.path.join(ROOT_DIR, "audio_cache")
 os.makedirs(AUDIO_CACHE_DIR, exist_ok=True)
 
-# Ensure audio directory exists for temporary files
 AUDIO_TEMP_DIR = os.path.join(ROOT_DIR, "audio")
 os.makedirs(AUDIO_TEMP_DIR, exist_ok=True)
 
 
-# Add the retry function near the top of the file
 def retry_operation(max_attempts=3, delay=1, backoff=2):
     """Retry decorator for network operations."""
 
@@ -158,7 +149,6 @@ def validate_mp3(audio_data: bytes, is_cached_file: bool = False) -> bool:
 
 def get_cache_key(word: str) -> str:
     """Generate a unique cache key for an Arabic word."""
-    # Create a hash of the word to use as filename
     word_hash = hashlib.sha256(word.encode()).hexdigest()[:12]
     return f"ar_{word_hash}.mp3"
 
@@ -399,9 +389,6 @@ def concatenate_audio_files(audio_files: List[str], output_file: str) -> Optiona
 
     except Exception as e:
         logger.info(f"Error in audio concatenation: {str(e)}")
-        import traceback
-
-        traceback.print_exc()
         return None
 
 
@@ -465,10 +452,9 @@ def generate_arabic_word_audio(word: str, filename: str) -> Optional[Dict]:
         return None
 
     except Exception as e:
-        logger.info(f"Error generating/uploading Arabic word audio for '{word}': {str(e)}")
-        import traceback
-
-        traceback.print_exc()
+        logger.info(
+            f"Error generating/uploading Arabic word audio for '{word}': {str(e)}"
+        )
         if temp_audio_path and os.path.exists(temp_audio_path):
             os.remove(temp_audio_path)
         return None
@@ -539,10 +525,9 @@ def generate_english_word_audio(word: str, filename: str) -> Optional[Dict]:
         return None
 
     except Exception as e:
-        logger.info(f"Error generating/uploading English word audio for '{word}': {str(e)}")
-        import traceback
-
-        traceback.print_exc()
+        logger.info(
+            f"Error generating/uploading English word audio for '{word}': {str(e)}"
+        )
         if temp_audio_path and os.path.exists(temp_audio_path):
             os.remove(temp_audio_path)
         return None
