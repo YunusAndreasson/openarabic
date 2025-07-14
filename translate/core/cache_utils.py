@@ -9,6 +9,7 @@ from translate.core.audio_utils import AUDIO_CACHE_DIR
 def ensure_valid_cache_files() -> None:
     """Ensure all files in the cache directory have a .mp3 extension."""
     cache_dir = Path(AUDIO_CACHE_DIR)
+    cache_dir.mkdir(parents=True, exist_ok=True)
     fixed_count = 0
 
     for file_path in cache_dir.iterdir():
