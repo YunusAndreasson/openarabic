@@ -14,6 +14,7 @@ from translate.core.audio_utils import (
     generate_sentence_audio,
     concatenate_audio_files,
 )
+from translate.core.config import ROOT_DIR, ARCHIVE_DIR, SUPABASE_URL
 
 logger = logging.getLogger(__name__)
 
@@ -297,7 +298,7 @@ def concatenate_and_upload_audio(
                 )
 
             article_audio_url = (
-                f"{os.environ.get('SUPABASE_URL')}/storage/v1/object/public/audio/{final_audio_filename}"
+                f"{SUPABASE_URL}/storage/v1/object/public/audio/{final_audio_filename}"
             )
             supabase.table("articles").update({"audio_url": article_audio_url}).eq(
                 "id", article_id
@@ -396,8 +397,7 @@ def save_timing_report(
 ) -> None:
     """Save timing statistics to a CSV report file."""
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    root_dir = os.path.abspath(os.path.join(script_dir, ".."))
-    reports_dir = os.path.join(root_dir, "reports")
+    reports_dir = os.path.join(ROOT_DIR, "reports")
     os.makedirs(reports_dir, exist_ok=True)
 
     report_file = os.path.join(reports_dir, "timing_reports.csv")
@@ -448,9 +448,7 @@ def save_timing_report(
 
 def archive_files(json_path: str, article_id: int) -> None:
     """Move input and output files to archive directory with article ID as name."""
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    root_dir = os.path.abspath(os.path.join(script_dir, ".."))
-    archive_dir = os.path.join(root_dir, "archive")
+    archive_dir = ARCHIVE_DIR
     os.makedirs(archive_dir, exist_ok=True)
 
     article_dir = os.path.dirname(json_path)

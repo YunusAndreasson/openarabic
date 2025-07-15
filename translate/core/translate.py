@@ -14,7 +14,7 @@ from translate.core.file_utils import (
     write_json_file,
     generate_split_filename,
 )
-from translate.core.config import MAX_BATCH_SIZE
+from translate.core.config import MAX_BATCH_SIZE, DEFAULT_INPUT_FILE, DEFAULT_OUTPUT_FILE
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -140,10 +140,8 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
 
 def main():
     """Main entry point"""
-    default_input = "article/input.txt"
-    default_output = "article/output.json"
-    input_file = sys.argv[1] if len(sys.argv) >= 2 else default_input
-    output_file = sys.argv[2] if len(sys.argv) >= 3 else default_output
+    input_file = sys.argv[1] if len(sys.argv) >= 2 else DEFAULT_INPUT_FILE
+    output_file = sys.argv[2] if len(sys.argv) >= 3 else DEFAULT_OUTPUT_FILE
 
     if not load_split_data(input_file):
         logger.info(f"❌ Split file not found: {generate_split_filename(input_file)}")

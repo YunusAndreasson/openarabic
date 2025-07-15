@@ -16,7 +16,11 @@ from translate.core.file_utils import (
 )
 
 logger = logging.getLogger(__name__)
-from translate.core.config import MODEL_ANALYSIS
+from translate.core.config import (
+    MODEL_ANALYSIS,
+    DEFAULT_INPUT_FILE,
+    DEFAULT_SPLIT_OUTPUT_FILE,
+)
 
 from translate.core.schemas import (
     SPLIT_TEXT_FUNCTION,
@@ -108,15 +112,12 @@ __all__ = [
 
 def main():
     """Main entry point"""
-    default_input = "article/input.txt"
-    default_output = "article/input_split.json"
+    input_file = sys.argv[1] if len(sys.argv) >= 2 else DEFAULT_INPUT_FILE
 
-    input_file = sys.argv[1] if len(sys.argv) >= 2 else default_input
-    
     if len(sys.argv) == 2:
         output_file = generate_split_filename(input_file)
     else:
-        output_file = sys.argv[2] if len(sys.argv) >= 3 else default_output
+        output_file = sys.argv[2] if len(sys.argv) >= 3 else DEFAULT_SPLIT_OUTPUT_FILE
 
     try:
         split_file(input_file, output_file)

@@ -9,10 +9,8 @@ from translate.core.audio_utils import (
     generate_english_word_audio,
     get_cached_audio_url,
 )
-from translate.core.storage_utils import (
-    SUPABASE_URL,
-    check_file_exists,
-)
+from translate.core.storage_utils import check_file_exists
+from translate.core.config import SUPABASE_URL, AUDIO_CACHE_DIR, AUDIO_TEMP_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -36,11 +34,8 @@ def get_or_generate_root_audio(
     """
     cache_key_ar = get_cache_key(arabic_word)
     cache_key_en = cache_key_ar.replace("ar_", "en_")
-    root_dir = os.path.abspath(
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-    )
-    cache_path_ar = os.path.join(root_dir, "audio_cache", cache_key_ar)
-    cache_path_en = os.path.join(root_dir, "audio_cache", cache_key_en)
+    cache_path_ar = os.path.join(AUDIO_CACHE_DIR, cache_key_ar)
+    cache_path_en = os.path.join(AUDIO_CACHE_DIR, cache_key_en)
     storage_url_ar = f"{SUPABASE_URL}/storage/v1/object/public/audio/{cache_key_ar}"
     storage_url_en = f"{SUPABASE_URL}/storage/v1/object/public/audio/{cache_key_en}"
 
@@ -54,7 +49,7 @@ def get_or_generate_root_audio(
         audio_url = result.get("url") if result else None
         if audio_url:
             logger.info(f"Generated Arabic audio URL: {audio_url}")
-            temp_path = os.path.join(root_dir, "audio", cache_key_ar)
+            temp_path = os.path.join(AUDIO_TEMP_DIR, cache_key_ar)
             if os.path.exists(temp_path):
                 try:
                     import shutil
@@ -86,7 +81,7 @@ def get_or_generate_root_audio(
         audio_url_en = result_en.get("url") if result_en else None
         if audio_url_en:
             logger.info(f"Generated English audio URL: {audio_url_en}")
-            temp_path_en = os.path.join(root_dir, "audio", cache_key_en)
+            temp_path_en = os.path.join(AUDIO_TEMP_DIR, cache_key_en)
             if os.path.exists(temp_path_en):
                 try:
                     import shutil

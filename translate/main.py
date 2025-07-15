@@ -4,14 +4,11 @@ import sys
 import subprocess
 import logging
 
-# Set constants
-DEFAULT_INPUT_FILE = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "article", "input.txt"
+from translate.core.config import (
+    DEFAULT_BATCH_SIZE,
+    DEFAULT_INPUT_FILE,
+    DEFAULT_OUTPUT_FILE,
 )
-DEFAULT_OUTPUT_FILE = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "article", "output.json"
-)
-from translate.core.config import DEFAULT_BATCH_SIZE
 
 from translate.core.utils import load_api_keys
 from translate.core.split_file import split_file as split_text
