@@ -19,40 +19,27 @@ from translate.core.arabic_text import (
     preprocess_text_for_tts,
 )
 from translate.core.utils import load_api_keys
-from translate.core.storage_utils import (
-    supabase,
+from translate.core.storage_utils import supabase, check_file_exists, upload_to_storage
+from translate.core.config import (
+    ELEVENLABS_API_KEY,
     SUPABASE_URL,
-    check_file_exists,
-    upload_to_storage,
+    ARABIC_VOICE_ID,
+    ARABIC_WORD_VOICE_ID,
+    ENGLISH_WORD_VOICE_ID,
+    DEFAULT_VOICE_SETTINGS,
+    ROOT_DIR,
+    AUDIO_CACHE_DIR,
+    AUDIO_TEMP_DIR,
 )
 
 load_api_keys()
-
-ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY")
 
 if not ELEVENLABS_API_KEY:
     raise EnvironmentError("Missing ELEVENLABS_API_KEY environment variable.")
 
 eleven_labs = ElevenLabs(api_key=ELEVENLABS_API_KEY)
 
-ARABIC_VOICE_ID = "nPczCjzI2devNBz1zQrb"
-ARABIC_WORD_VOICE_ID = (
-    "IES4nrmZdUBHByLBde0P"
-)
-ENGLISH_WORD_VOICE_ID = "IKne3meq5aSn9XLyUdCD"
-
-DEFAULT_VOICE_SETTINGS = VoiceSettings(
-    use_speaker_boost=True,
-)
-
-ROOT_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-)
-
-AUDIO_CACHE_DIR = os.path.join(ROOT_DIR, "audio_cache")
 os.makedirs(AUDIO_CACHE_DIR, exist_ok=True)
-
-AUDIO_TEMP_DIR = os.path.join(ROOT_DIR, "audio")
 os.makedirs(AUDIO_TEMP_DIR, exist_ok=True)
 
 

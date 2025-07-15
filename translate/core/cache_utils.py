@@ -3,7 +3,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from translate.core.audio_utils import AUDIO_CACHE_DIR
+from translate.core.config import AUDIO_CACHE_DIR
 
 
 def ensure_valid_cache_files() -> None:
