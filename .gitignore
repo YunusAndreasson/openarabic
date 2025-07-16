@@ -56,3 +56,11 @@ translate/core/set_keys.py
 translate/core/temp_audio/# Reassure output directory
 .reassure
 .jest-cache/
+
+# Publish directory - generated files
+publish/output/
+publish/arabic_words.csv
+publish/socialpilot_*.csv
+publish/requirements.txt
+publish/*.ttf
+publish/*.otf
