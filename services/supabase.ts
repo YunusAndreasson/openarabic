@@ -34,24 +34,10 @@ let isAuthInitialized = false;
  */
 export function setupSupabaseAppStateListener(): () => void {
   const subscription = AppState.addEventListener('change', async state => {
-    Sentry.addBreadcrumb({
-      category: 'app_lifecycle',
-      message: `AppState changed to: ${state}`,
-      level: 'info',
-    });
-
-    if (state === 'active') {
-      Sentry.addBreadcrumb({
-        category: 'auth',
-        message: 'App active, initializing auth',
-        level: 'info',
-      });
-
+    if (state === 'active' && !isAuthInitialized) {
       try {
-        if (!isAuthInitialized) {
-          await supabase.auth.initialize();
-          isAuthInitialized = true;
-        }
+        await supabase.auth.initialize();
+        isAuthInitialized = true;
         supabase.auth.startAutoRefresh();
       } catch (err) {
         await handleError(err instanceof Error ? err : new Error(String(err)), {
@@ -63,14 +49,7 @@ export function setupSupabaseAppStateListener(): () => void {
     }
   });
 
-  return () => {
-    Sentry.addBreadcrumb({
-      category: 'app_lifecycle',
-      message: 'Removing app state listener',
-      level: 'info',
-    });
-    subscription.remove();
-  };
+  return () => subscription.remove();
 }
 
 /**

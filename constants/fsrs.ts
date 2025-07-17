@@ -7,7 +7,7 @@ export const DEFAULT_RELEARNING_STEPS: StepUnit[] = ['5m', '10m'];
 export const SESSION_CONFIG = {
   MAX_NEW_WORDS: 20,
   MAX_REVIEW_WORDS: 50,
-  MIN_SESSION_SIZE: 5,
+  MIN_SESSION_SIZE: 1, // was 5
 } as const;
 
 // Query keys for consistent cache management

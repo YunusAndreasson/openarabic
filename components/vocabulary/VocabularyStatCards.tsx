@@ -182,7 +182,7 @@ export const VocabularyStatCards = memo(
         label: STRINGS.INTERLEAVED_REVIEW,
         iconColor: colors.success, // Use semantic success color for consistency with tab badges
         bgColor: colors.card,
-        category: 'all' as StatCategory,
+        category: 'total' as StatCategory,
         description: STRINGS.INTERLEAVED_REVIEW_DESCRIPTION,
         capacityPhase: 'green' as const,
         // All words disabled when due words OR struggling words take priority, OR no words exist

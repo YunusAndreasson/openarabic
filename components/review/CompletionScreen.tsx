@@ -1,22 +1,22 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, Fragment, type FC, type ComponentProps } from 'react';
+import { Fragment, useEffect, type ComponentProps, type FC } from 'react';
 import type { ViewStyle } from 'react-native';
-import { View, StyleSheet, InteractionManager } from 'react-native';
+import { InteractionManager, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import {
-  TIMING_CONFIG,
+  COMPLETION_BUTTON_DELAY,
   COMPLETION_METRIC_BASE_DELAY,
   COMPLETION_METRIC_STAGGER,
-  COMPLETION_BUTTON_DELAY,
-  ICON_ENTRANCE_DURATION,
-  COMPLETION_TITLE_DELAY,
   COMPLETION_SUBTITLE_DELAY,
+  COMPLETION_TITLE_DELAY,
+  ICON_ENTRANCE_DURATION,
   QUICK_ANIMATION_DURATION,
+  TIMING_CONFIG,
 } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -89,6 +89,7 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
 
   const Content = (
     <View style={[styles.contentContainer, contentStyle]}>
+      {/* Success Icon - Primary visual element */}
       <Animated.View
         entering={ZoomIn.delay(QUICK_ANIMATION_DURATION)
           .duration(ICON_ENTRANCE_DURATION)
@@ -98,6 +99,7 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
         <Ionicons color={colors.completionSuccess} name={iconName} size={iconSize} />
       </Animated.View>
 
+      {/* Text Content - Secondary hierarchy */}
       <View style={styles.textContainer}>
         <Animated.View
           entering={FadeInUp.delay(COMPLETION_TITLE_DELAY).duration(TIMING_CONFIG.GENTLE.duration)}
@@ -117,7 +119,7 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
           </ThemedText>
         </Animated.View>
 
-        {/* Display encouraging metrics with enhanced styling */}
+        {/* Metrics Section - Tertiary hierarchy with proper grouping */}
         {encouragingMetrics && encouragingMetrics.length > 0 && (
           <View style={styles.metricsContainer}>
             {encouragingMetrics.map((metric, index) => (
@@ -151,6 +153,7 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
         )}
       </View>
 
+      {/* Action Button - Final hierarchy level */}
       <Animated.View
         entering={FadeIn.delay(
           encouragingMetrics ? COMPLETION_BUTTON_DELAY.WITH_METRICS : COMPLETION_BUTTON_DELAY.BASE
@@ -194,7 +197,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: LAYOUT.SPACING.LARGE,
+    padding: LAYOUT.SPACING.XLARGE, // Increased for better breathing room
   } as ViewStyle,
   contentContainer: {
     alignItems: 'center',
@@ -203,58 +206,65 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   doneButton: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    minWidth: LAYOUT.CALENDAR.EVENT_RIGHT_SECTION.MAX_WIDTH,
-    paddingVertical: LAYOUT.SPACING.SMALL,
+    marginTop: LAYOUT.SPACING.LARGE, // Increased spacing for better visual separation
+    minWidth: LAYOUT.BUTTON.HEIGHT.LARGE * 6, // Proper button sizing using button constants
+    paddingVertical: LAYOUT.SPACING.MEDIUM, // Consistent with button height system
   },
   iconContainer: {
     alignItems: 'center',
-    height: LAYOUT.REVIEW.COMPLETION.ICON_CONTAINER_HEIGHT,
+    height: LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE + LAYOUT.SPACING.LARGE, // Reduced height for better proportion
     justifyContent: 'center',
-    marginBottom: LAYOUT.SPACING.XLARGE,
+    marginBottom: LAYOUT.SPACING.XXXLARGE, // Increased for stronger visual separation
   },
   metricContent: {
     alignItems: 'center',
     flexDirection: 'row',
+    paddingVertical: LAYOUT.SPACING.SMALL, // Added padding for better touch targets
   },
   metricIconContainer: {
     alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    height: LAYOUT.BUTTON.ICON_SIZE.XLARGE + LAYOUT.SPACING.SMALL,
+    height: LAYOUT.BUTTON.ICON_SIZE.XLARGE + LAYOUT.SPACING.MEDIUM, // Increased for better proportion
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
-    width: LAYOUT.BUTTON.ICON_SIZE.XLARGE + LAYOUT.SPACING.SMALL,
+    width: LAYOUT.BUTTON.ICON_SIZE.XLARGE + LAYOUT.SPACING.MEDIUM, // Square container
   },
   metricItem: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
+    backgroundColor: 'rgba(0, 0, 0, 0.02)', // Subtle background for visual separation
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+    borderColor: 'rgba(0, 0, 0, 0.05)', // Subtle border for definition
   },
   metricText: {
-    fontSize: LAYOUT.SPACING.LARGE,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // Proper typography scale instead of spacing
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-    lineHeight: LAYOUT.SPACING.XXLARGE,
+    lineHeight:
+      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL, // Proper line height calculation
     textAlign: 'left',
   },
   metricTextContainer: {
     flex: 1,
+    justifyContent: 'center', // Center text vertically with icon
   },
   metricsContainer: {
-    gap: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.MEDIUM,
+    gap: LAYOUT.SPACING.MEDIUM, // Consistent gap using spacing scale
+    marginTop: LAYOUT.SPACING.LARGE, // Increased for better visual separation
     width: '100%',
   },
   subtitleText: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     textAlign: 'center',
+    marginBottom: LAYOUT.SPACING.TINY, // Small margin for text grouping
   },
   textContainer: {
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.XLARGE,
+    marginBottom: LAYOUT.SPACING.XXLARGE, // Increased for better visual separation
     width: '100%',
   },
   titleText: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.MEDIUM, // Consistent spacing scale
     textAlign: 'center',
   },
 });

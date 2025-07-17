@@ -1,7 +1,7 @@
 import {
+  DEFAULT_FSRS_DIFFICULTY,
   MIN_WORD_SPACING,
   SPACING_ITERATION_LIMIT,
-  DEFAULT_FSRS_DIFFICULTY,
 } from '@/constants/fsrs';
 
 import type { StudyWord } from '../types/vocabulary.types';

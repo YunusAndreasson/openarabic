@@ -120,7 +120,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
 
                 {/* Enhanced capacity indicator with glow effect */}
                 <Circle
-                  color={chartColors.withOpacity(getCapacityColor(displayScore), 0.15)}
+                  color={chartColors.withOpacity(getCapacityColor(), 0.15)}
                   cx={indicatorPosition.x}
                   cy={indicatorPosition.y}
                   r={INDICATOR_GLOW_SIZE}
@@ -136,7 +136,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
                 />
 
                 <Circle
-                  color={getCapacityColor(displayScore)}
+                  color={getCapacityColor()}
                   cx={indicatorPosition.x}
                   cy={indicatorPosition.y}
                   r={INDICATOR_SIZE}
@@ -156,7 +156,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
 
             {/* Center section with percentage */}
             <View style={styles.centerSection}>
-              <ThemedText style={[styles.capacityText, { color: getCapacityColor(displayScore) }]}>
+              <ThemedText style={[styles.capacityText, { color: getCapacityColor() }]}>
                 {displayScore}%
               </ThemedText>
             </View>
@@ -168,7 +168,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
               style={[
                 styles.actionCard,
                 {
-                  backgroundColor: getActionCardBackground(displayScore),
+                  backgroundColor: getActionCardBackground(),
                 },
               ]}
             >
@@ -176,7 +176,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
                 style={[
                   styles.actionText,
                   {
-                    color: getCapacityColor(displayScore),
+                    color: getCapacityColor(),
                   },
                 ]}
               >

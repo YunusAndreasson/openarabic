@@ -128,19 +128,21 @@ export function useMemoryCapacityGauge({
 
   // Helper function for visual score calculation (used by both gauge and indicator)
   const getVisualScore = useMemo(() => {
-    let visualScore = memoryMetrics.capacityScore;
-
-    // RED PHASE: Due words present - cap visual at 40% (red territory)
-    if (wordStates.dueWords > 0) {
-      visualScore = Math.min(visualScore, CAPACITY_THRESHOLDS.CAUTION);
+    // 3-PHASE SYSTEM: Use phase-based scoring for intuitive UX
+    // GREEN PHASE: No urgent words - show high capacity (70-100%)
+    if (wordStates.dueWords === 0 && wordStates.strugglingWords === 0) {
+      // Use actual capacity score but ensure it's in the green range
+      const baseScore = memoryMetrics.capacityScore;
+      return Math.max(CAPACITY_THRESHOLDS.READY, Math.min(100, baseScore));
     }
-    // YELLOW PHASE: Struggling words present - cap visual at 70% (yellow territory)
-    else if (wordStates.strugglingWords > 0) {
-      visualScore = Math.min(visualScore, CAPACITY_THRESHOLDS.READY);
-    }
-    // GREEN PHASE: Use actual score (can go up to 100%)
 
-    return visualScore;
+    // YELLOW PHASE: Struggling words present - show medium capacity (40-69%)
+    if (wordStates.dueWords === 0 && wordStates.strugglingWords > 0) {
+      return Math.max(CAPACITY_THRESHOLDS.CAUTION, Math.min(CAPACITY_THRESHOLDS.READY - 1, 60));
+    }
+
+    // RED PHASE: Due words present - show low capacity (15-39%)
+    return Math.max(15, Math.min(CAPACITY_THRESHOLDS.CAUTION - 1, 35));
   }, [memoryMetrics.capacityScore, wordStates.dueWords, wordStates.strugglingWords]);
 
   const gaugePaths = useMemo<GaugePaths>(() => {
@@ -241,34 +243,42 @@ export function useMemoryCapacityGauge({
   }, [getVisualScore, width, height, radius, strokeWidth]);
 
   // FIXED: Updated to consider word states, not just raw capacity score
-  const getCapacityColor = (score: number) => {
-    // RED PHASE: Due words always take priority (urgent memory preservation)
-    if (wordStates.dueWords > 0) return chartColors.performance.poor;
+  const getCapacityColor = () => {
+    // 3-PHASE SYSTEM: Color directly reflects the learning phase
+    // GREEN PHASE: No urgent words - ready to add new words
+    if (wordStates.dueWords === 0 && wordStates.strugglingWords === 0) {
+      return chartColors.performance.excellent; // Green - ready for new words
+    }
 
-    // YELLOW PHASE: Challenging words present (needs attention before adding new words)
-    if (wordStates.strugglingWords > 0) return chartColors.performance.moderate;
+    // YELLOW PHASE: Struggling words present - focus on consolidation
+    if (wordStates.dueWords === 0 && wordStates.strugglingWords > 0) {
+      return chartColors.performance.moderate; // Yellow/Orange - practice struggling words first
+    }
 
-    // GREEN PHASE: No urgent items, capacity available
-    // Only check raw score when no due or challenging words exist
-    if (score >= CAPACITY_THRESHOLDS.READY) return chartColors.performance.excellent;
-    if (score >= CAPACITY_THRESHOLDS.CAUTION) return chartColors.performance.moderate;
-    return chartColors.performance.poor;
+    // RED PHASE: Due words present - urgent review needed
+    return chartColors.performance.poor; // Red - review due words first
   };
 
   // FIXED: Updated to use simple capacity labels instead of action messages
   const getReadinessMessage = (): string => {
-    if (wordStates.dueWords > 0) {
-      return STRINGS.MEMORY_CAPACITY_LOW; // Red phase - low capacity
+    // 3-PHASE SYSTEM: Message directly reflects the learning phase
+    // GREEN PHASE: No urgent words - ready to add new words
+    if (wordStates.dueWords === 0 && wordStates.strugglingWords === 0) {
+      return STRINGS.MEMORY_CAPACITY_HIGH; // High capacity - ready for new words
     }
-    if (wordStates.strugglingWords > 0) {
-      return STRINGS.MEMORY_CAPACITY_MEDIUM; // Yellow phase - medium capacity
+
+    // YELLOW PHASE: Struggling words present - focus on consolidation
+    if (wordStates.dueWords === 0 && wordStates.strugglingWords > 0) {
+      return STRINGS.MEMORY_CAPACITY_MEDIUM; // Medium capacity - practice struggling words first
     }
-    return STRINGS.MEMORY_CAPACITY_HIGH; // Green phase - high capacity
+
+    // RED PHASE: Due words present - urgent review needed
+    return STRINGS.MEMORY_CAPACITY_LOW; // Low capacity - review due words first
   };
 
   // FIXED: Updated to use the corrected color logic
-  const getActionCardBackground = (score: number) => {
-    const baseColor = getCapacityColor(score);
+  const getActionCardBackground = () => {
+    const baseColor = getCapacityColor();
     return chartColors.withOpacity(baseColor, 0.1); // Light tint of the capacity color
   };
 

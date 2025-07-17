@@ -4,7 +4,7 @@ import type { TablesInsert, TablesUpdate } from '@/types/database.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 
-import { supabase, checkAuthentication } from './supabase';
+import { checkAuthentication, supabase } from './supabase';
 
 // Interface for FSRS-specific update fields
 interface FSRSWordUpdate {
@@ -58,8 +58,8 @@ export const studyWordsFSRSService = {
       // For stats, we only need core fields, not all the relationships
       selectQuery = query.select(
         `
-        fsrs_due, 
-        fsrs_stability, 
+        fsrs_due,
+        fsrs_stability,
         fsrs_difficulty,
         fsrs_elapsed_days,
         fsrs_scheduled_days,

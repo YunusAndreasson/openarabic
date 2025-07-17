@@ -147,7 +147,7 @@ export function useFSRS({
       completionTimeoutRef.current = null;
     }
 
-    // Batch updates via setTimeout to separate render cycles
+    // Initialize queue when due words are fetched
     initTimeoutRef.current = setTimeout(() => {
       if (dueWords.length > 0) {
         countersRef.current.totalWords = dueWords.length;
@@ -175,8 +175,10 @@ export function useFSRS({
         const ordered = queueRef.current.toArray();
         setWordQueue(ordered);
         const first = getNextWordWithSpacing();
+
         setCurrentWord(first || null);
       } else {
+        // DEBUG: Log why session is empty
         setIsComplete(true);
         if (onComplete && !stateTrackingRef.current.completionTriggered) {
           stateTrackingRef.current.completionTriggered = true;

@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/react-native';
 import { router } from 'expo-router';
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert } from 'react-native';
 
 import { ROUTE_PATHS } from '@/constants/routes';
@@ -8,11 +8,9 @@ import { STRINGS } from '@/constants/strings';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
+
 const analytics = {
-  identify: async (
-    _userId: string,
-    _properties?: Record<string, unknown>
-  ) => {},
+  identify: async (_userId: string, _properties?: Record<string, unknown>) => {},
   trackSignIn: async (_method?: string) => {},
   trackSignUp: async (_method?: string) => {},
 };
@@ -110,14 +108,8 @@ export function useAuthForm(): UseAuthFormReturn {
 
     if (!isMountedRef.current) return;
     setLoading(true);
-    Sentry.addBreadcrumb({
-      category: 'auth',
-      message: 'Starting sign in process',
-      level: 'info',
-    });
 
     try {
-      await supabase.auth.initialize();
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -131,23 +123,12 @@ export function useAuthForm(): UseAuthFormReturn {
         });
         Alert.alert(STRINGS.SIGN_IN_FAILED, error.message);
       } else {
-        supabase.auth.startAutoRefresh();
-        Sentry.addBreadcrumb({
-          category: 'auth',
-          message: 'Sign in successful',
-          level: 'info',
-        });
         await analytics.identify(data.user.id, {
           email: data.user.email,
           last_sign_in: new Date().toISOString(),
         });
         await analytics.trackSignIn('email');
         successFeedback();
-        Sentry.addBreadcrumb({
-          category: 'navigation',
-          message: 'Redirecting to main app after successful login',
-          level: 'info',
-        });
         router.replace(ROUTE_PATHS.READ_TAB);
       }
     } catch (err) {
@@ -174,7 +155,6 @@ export function useAuthForm(): UseAuthFormReturn {
     setLoading(true);
 
     try {
-      await supabase.auth.initialize();
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -183,7 +163,6 @@ export function useAuthForm(): UseAuthFormReturn {
         if (!isMountedRef.current) return;
         Alert.alert(STRINGS.ACCOUNT_CREATION_FAILED, error.message);
       } else {
-        supabase.auth.startAutoRefresh();
         if (data?.user) {
           await analytics.identify(data.user.id, {
             email: data.user.email,

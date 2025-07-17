@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
@@ -8,8 +8,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { PASSWORD_REQUIREMENTS, useAuthForm } from '@/hooks/auth/useAuthForm';
-import { supabase } from '@/services/supabase';
-import { handleError } from '@/utils/errorHandling';
 
 /**
  * Authentication component that handles both sign in and sign up
@@ -35,40 +33,6 @@ function Auth(): JSX.Element {
     signUpWithEmail,
     toggleMode,
   } = useAuthForm();
-
-  // Initialize auth session on component mount to ensure token refresh
-  useEffect(() => {
-    let isMounted = true;
-    const initializeAuth = async () => {
-      try {
-        if (!isMounted) return;
-
-        await supabase.auth.initialize();
-        supabase.auth.startAutoRefresh();
-
-        if (!isMounted) return;
-
-        const { error } = await supabase.auth.refreshSession();
-        if (error && error.message !== 'No current session') {
-          handleError(error, {
-            analyticsEventName: 'Session_Refresh_Error',
-            showToast: false,
-            sentrySeverity: 'warning',
-          });
-        }
-      } catch (err) {
-        if (!isMounted) return;
-        handleError(err instanceof Error ? err : new Error('Failed to initialize auth'));
-      }
-    };
-
-    initializeAuth();
-
-    return () => {
-      isMounted = false;
-      // Don't stop autoRefresh on unmount to keep session alive
-    };
-  }, []);
 
   // Input handlers
   const handleEmailChange = useCallback(
