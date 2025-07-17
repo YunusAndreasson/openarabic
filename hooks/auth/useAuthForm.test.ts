@@ -1,7 +1,7 @@
-import { renderHook, act } from '@testing-library/react-native';
-import { describe, it, expect, jest } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
+import { act, renderHook } from '@testing-library/react-native';
 
-import { useAuthForm, PASSWORD_REQUIREMENTS } from './useAuthForm';
+import { PASSWORD_REQUIREMENTS, useAuthForm } from './useAuthForm';
 
 jest.mock('expo-router', () => ({
   router: { replace: jest.fn() },
@@ -10,9 +10,12 @@ jest.mock('expo-router', () => ({
 jest.mock('@/services/supabase', () => ({
   supabase: {
     auth: {
-      initialize: jest.fn().mockResolvedValue(undefined),
-      signInWithPassword: jest.fn().mockResolvedValue({ data: { user: { id: '1', email: 'test@example.com' } }, error: null }),
-      signUp: jest.fn().mockResolvedValue({ data: { user: { id: '1', email: 'test@example.com' } }, error: null }),
+      signInWithPassword: jest
+        .fn()
+        .mockResolvedValue({ data: { user: { id: '1', email: 'test@example.com' } }, error: null }),
+      signUp: jest
+        .fn()
+        .mockResolvedValue({ data: { user: { id: '1', email: 'test@example.com' } }, error: null }),
       startAutoRefresh: jest.fn(),
     },
   },
@@ -70,7 +73,6 @@ describe('useAuthForm', () => {
     });
 
     const { supabase } = require('@/services/supabase');
-    expect(supabase.auth.initialize).toHaveBeenCalled();
     expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
       email: 'user@example.com',
       password: 'Password1',

@@ -142,7 +142,7 @@ describe('VocabularyStatCards - Basic Functionality', () => {
       );
 
       // Should have at least the total words button
-      const totalButton = queryByTestId('start-review-all');
+      const totalButton = queryByTestId('start-review-total');
       expect(totalButton).toBeTruthy();
     });
 
@@ -161,7 +161,7 @@ describe('VocabularyStatCards - Basic Functionality', () => {
       );
 
       // Should show at least total words button
-      const totalButton = queryByTestId('start-review-all');
+      const totalButton = queryByTestId('start-review-total');
       expect(totalButton).toBeTruthy();
     });
   });
