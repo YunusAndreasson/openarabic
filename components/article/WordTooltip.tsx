@@ -80,8 +80,7 @@ const STATIC_STYLES = StyleSheet.create({
 
 const calculateTooltipPositioning = (
   layout: NonNullable<WordTooltipProps['layout']>,
-  text: string,
-  hasBookmark: boolean = false
+  text: string
 ) => {
   const { SPACING, ARROW_SIZE, TOOLTIP_MARGIN, SCREEN_MARGIN, CHAR_WIDTH } = TOOLTIP_CONSTANTS;
 
@@ -92,16 +91,12 @@ const calculateTooltipPositioning = (
   const extraTopMargin = LAYOUT.SPACING.SMALL;
   const tooltipTop = layout.y - dynamicTooltipHeight - ARROW_SIZE - TOOLTIP_MARGIN - extraTopMargin;
 
-  const bookmarkSpace = hasBookmark
-    ? LAYOUT.BUTTON.ICON_SIZE.MEDIUM + SPACING * 2 + LAYOUT.SPACING.TINY
-    : 0;
-
   // Simplified width calculation
   const estimatedTextWidth = text.length * CHAR_WIDTH * 1.2;
   const generousPadding = SPACING * 4;
 
   let tooltipWidth = Math.max(
-    estimatedTextWidth + generousPadding + bookmarkSpace,
+    estimatedTextWidth + generousPadding,
     layout.width + SPACING * 2,
     LAYOUT.SPACING.XLARGE
   );
@@ -325,18 +320,9 @@ export const WordTooltip = memo(
       );
     }, [formattedAnalysis, text, colors]);
 
-    // Memoize bookmark icon properties separately
-    const bookmarkProps = useMemo(() => {
-      if (!onStudyListToggle || !wordRootId) return null;
-
-      return {
-        iconColor: isInStudyList ? colors.tint : colors.secondaryText,
-      };
-    }, [onStudyListToggle, wordRootId, isInStudyList, colors.tint, colors.secondaryText]);
-
     // Optimized content rendering with minimal dependencies
     const tooltipContent = useMemo(() => {
-      if (!bookmarkProps) {
+      if (!onStudyListToggle || !wordRootId) {
         return renderColorCodedEnglish;
       }
 
@@ -347,13 +333,21 @@ export const WordTooltip = memo(
             icon={isInStudyList ? 'school' : 'school-outline'}
             size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
             touchSize="small"
-            color={bookmarkProps.iconColor}
+            color={isInStudyList ? colors.tint : colors.secondaryText}
             onPress={handleStudyListPress}
             style={BOOKMARK_STYLE}
           />
         </View>
       );
-    }, [renderColorCodedEnglish, bookmarkProps, handleStudyListPress, isInStudyList]);
+    }, [
+      renderColorCodedEnglish,
+      onStudyListToggle,
+      wordRootId,
+      isInStudyList,
+      colors.tint,
+      colors.secondaryText,
+      handleStudyListPress,
+    ]);
 
     // Simplified positioning calculation
     const positioning = useMemo(() => {
@@ -366,9 +360,8 @@ export const WordTooltip = memo(
         };
       }
 
-      const hasBookmark = !!bookmarkProps;
-      return calculateTooltipPositioning(layout, text || '', hasBookmark);
-    }, [layout, text, bookmarkProps]);
+      return calculateTooltipPositioning(layout, text || '');
+    }, [layout, text]);
 
     // Memoized styles
     const containerStyle = useMemo(

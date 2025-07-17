@@ -47,20 +47,6 @@ export type Database = {
             referencedRelation: "articles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "article_sentences_article_id_fkey"
-            columns: ["article_id"]
-            isOneToOne: false
-            referencedRelation: "articles_list_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "article_sentences_article_id_fkey"
-            columns: ["article_id"]
-            isOneToOne: false
-            referencedRelation: "articles_word_stats"
-            referencedColumns: ["id"]
-          },
         ]
       }
       articles: {
@@ -132,85 +118,6 @@ export type Database = {
         }
         Relationships: []
       }
-      bookmark_categories: {
-        Row: {
-          color: string | null
-          created_at: string | null
-          icon: string | null
-          id: number
-          name: string
-          position: number
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          color?: string | null
-          created_at?: string | null
-          icon?: string | null
-          id?: number
-          name: string
-          position?: number
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          color?: string | null
-          created_at?: string | null
-          icon?: string | null
-          id?: number
-          name?: string
-          position?: number
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      bookmarks: {
-        Row: {
-          added_at: string | null
-          article_id: number
-          id: number
-          order_index: number | null
-          user_id: string
-        }
-        Insert: {
-          added_at?: string | null
-          article_id: number
-          id?: number
-          order_index?: number | null
-          user_id: string
-        }
-        Update: {
-          added_at?: string | null
-          article_id?: number
-          id?: number
-          order_index?: number | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bookmarks_article_id_fkey"
-            columns: ["article_id"]
-            isOneToOne: false
-            referencedRelation: "articles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookmarks_article_id_fkey"
-            columns: ["article_id"]
-            isOneToOne: false
-            referencedRelation: "articles_list_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookmarks_article_id_fkey"
-            columns: ["article_id"]
-            isOneToOne: false
-            referencedRelation: "articles_word_stats"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       categories: {
         Row: {
           id: number
@@ -253,27 +160,6 @@ export type Database = {
             referencedRelation: "articles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "reading_list_article_id_fkey"
-            columns: ["article_id"]
-            isOneToOne: false
-            referencedRelation: "articles_list_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reading_list_article_id_fkey"
-            columns: ["article_id"]
-            isOneToOne: false
-            referencedRelation: "articles_word_stats"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reading_list_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "bookmark_categories"
-            referencedColumns: ["id"]
-          },
         ]
       }
       reading_progress: {
@@ -310,20 +196,6 @@ export type Database = {
             columns: ["article_id"]
             isOneToOne: false
             referencedRelation: "articles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reading_progress_article_id_fkey"
-            columns: ["article_id"]
-            isOneToOne: false
-            referencedRelation: "articles_list_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reading_progress_article_id_fkey"
-            columns: ["article_id"]
-            isOneToOne: false
-            referencedRelation: "articles_word_stats"
             referencedColumns: ["id"]
           },
         ]
@@ -530,72 +402,6 @@ export type Database = {
       }
     }
     Views: {
-      articles_list_view: {
-        Row: {
-          audio_url: string | null
-          author_id: number | null
-          author_name: string | null
-          category_id: number | null
-          category_name: string | null
-          created_at: string | null
-          difficulty_level: number | null
-          id: number | null
-          image_url: string | null
-          sentence_count: number | null
-          summary: string | null
-          title: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "articles_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "authors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "articles_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      articles_word_stats: {
-        Row: {
-          audio_url: string | null
-          author_id: number | null
-          author_name: string | null
-          category_id: number | null
-          category_name: string | null
-          created_at: string | null
-          difficulty_level: number | null
-          id: number | null
-          image_url: string | null
-          root_ids: number[] | null
-          sentence_count: number | null
-          summary: string | null
-          title: string | null
-          word_count: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "articles_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "authors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "articles_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       daily_efficiency_stats: {
         Row: {
           avg_efficiency: number | null
@@ -700,14 +506,6 @@ export type Database = {
           p_total_sentences: number
         }
         Returns: undefined
-      }
-      validate_fsrs_integrity: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          issue_type: string
-          count: number
-          severity: string
-        }[]
       }
     }
     Enums: {
