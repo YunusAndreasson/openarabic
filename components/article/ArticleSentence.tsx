@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   englishText: {
     fontFamily: FONTS.ENGLISH,
     paddingTop: LAYOUT.SPACING.XXXLARGE,
-    paddingHorizontal: LAYOUT.SPACING.TINY,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
   },
   wordsContainer: {
     alignItems: 'center',
