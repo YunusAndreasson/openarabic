@@ -1,6 +1,6 @@
 import type { FlashList } from '@shopify/flash-list';
-import { useCallback, useRef, useState } from 'react';
 import type { MutableRefObject } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { ViewToken } from 'react-native';
 
 import type { Tables } from '@/types/database.types';
@@ -10,6 +10,7 @@ interface UseSentenceScrubberProps {
   sortedSentences: Tables<'article_sentences'>[];
   dueWordRootIds: Set<number>;
   sentenceWordsMap: Map<number, SentenceWord[]>;
+  lastSentenceRead?: number; // Optional: last sentence read for progress calculation
 }
 
 interface UseSentenceScrubberReturn {
@@ -20,18 +21,28 @@ interface UseSentenceScrubberReturn {
   handleSentenceChange: (sentenceIndex: number) => void;
   handleScrubStart: () => void;
   handleScrubEnd: () => void;
+  jumpToLastReadPosition: () => void;
 }
 
 export function useSentenceScrubber({
   sortedSentences,
   dueWordRootIds,
   sentenceWordsMap,
+  lastSentenceRead = 0,
 }: UseSentenceScrubberProps): UseSentenceScrubberReturn {
-  const scrollViewRef = useRef<FlashList<Tables<'article_sentences'>> | null>(
-    null
-  );
+  const scrollViewRef = useRef<FlashList<Tables<'article_sentences'>> | null>(null);
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
   const isUserScrubbing = useRef(false);
+  const lastSentenceReadRef = useRef(lastSentenceRead);
+
+  // Update ref when lastSentenceRead changes
+  lastSentenceReadRef.current = lastSentenceRead;
+
+  // Calculate progress percentage and determine if we should allow jumping to last position
+  const progressPercentage =
+    sortedSentences.length > 0 ? (lastSentenceReadRef.current / sortedSentences.length) * 100 : 0;
+
+  const shouldAllowJumpToLastPosition = progressPercentage >= 15;
 
   // Calculate which sentences contain due words - memoized for performance
   const dueWordSentences = new Set<number>();
@@ -111,6 +122,36 @@ export function useSentenceScrubber({
     [sortedSentences.length]
   );
 
+  // Function to safely jump to last read position (respects 15% threshold)
+  const jumpToLastReadPosition = useCallback(() => {
+    if (
+      !shouldAllowJumpToLastPosition ||
+      lastSentenceReadRef.current <= 0 ||
+      !scrollViewRef.current
+    ) {
+      return;
+    }
+
+    const flashListIndex = lastSentenceReadRef.current + 1; // +1 for header
+
+    try {
+      scrollViewRef.current.scrollToIndex({
+        index: flashListIndex,
+        animated: true,
+        viewPosition: 0.1,
+      });
+      setCurrentSentenceIndex(lastSentenceReadRef.current);
+    } catch {
+      // Fallback to offset-based scrolling
+      const estimatedOffset = lastSentenceReadRef.current * 80;
+      scrollViewRef.current.scrollToOffset({
+        offset: estimatedOffset,
+        animated: true,
+      });
+      setCurrentSentenceIndex(lastSentenceReadRef.current);
+    }
+  }, [shouldAllowJumpToLastPosition]);
+
   // Handle scrub start - mark as user scrubbing to prevent automatic updates
   const handleScrubStart = useCallback(() => {
     isUserScrubbing.current = true;
@@ -132,5 +173,6 @@ export function useSentenceScrubber({
     handleSentenceChange,
     handleScrubStart,
     handleScrubEnd,
+    jumpToLastReadPosition,
   };
 }

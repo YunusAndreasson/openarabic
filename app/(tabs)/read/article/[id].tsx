@@ -171,7 +171,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     }
   }, [articleId, isCurrentArticlePlaying, audioPlayer, globalAudioState]);
 
-  // Initialize sentence scrubber
+  // Initialize sentence scrubber first (without lastSentenceRead initially)
   const {
     currentSentenceIndex,
     scrollViewRef,
@@ -179,10 +179,12 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     handleSentenceChange,
     handleScrubStart,
     handleScrubEnd,
+    jumpToLastReadPosition,
   } = useSentenceScrubber({
     sortedSentences: sortedSentences || [],
     dueWordRootIds,
     sentenceWordsMap,
+    lastSentenceRead: 0, // Will be updated after reading progress loads
   });
 
   // Track reading progress
@@ -212,7 +214,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     }
   }, [article, sortedSentences, isLoadingArticle, fadeIn]);
 
-  // Show toast when resuming reading progress
+  // Show toast when resuming reading progress and handle automatic scrolling
   useEffect(() => {
     if (
       lastSentenceRead !== null &&
@@ -222,6 +224,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     ) {
       const progressPercent = Math.round((lastSentenceRead / sortedSentences.length) * 100);
 
+      // Show resume toast
       selectionFeedback();
       setResumeToast({ visible: true, progress: progressPercent });
 
@@ -229,11 +232,25 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
         setResumeToast({ visible: false, progress: 0 });
       }, 3000);
 
+      // Automatically jump to last read position if progress is 15% or more
+      // This is handled by the useSentenceScrubber hook which respects the 15% threshold
+      if (progressPercent >= 15) {
+        // Small delay to ensure the article is fully loaded
+        const jumpTimer = setTimeout(() => {
+          jumpToLastReadPosition();
+        }, 500);
+
+        return () => {
+          clearTimeout(timer);
+          clearTimeout(jumpTimer);
+        };
+      }
+
       return () => clearTimeout(timer);
     }
 
     return undefined;
-  }, [lastSentenceRead, sortedSentences]);
+  }, [lastSentenceRead, sortedSentences, jumpToLastReadPosition]);
 
   const handleWordPress = useCallback(
     (word: SentenceWord, layout?: LayoutRectangle) => {
