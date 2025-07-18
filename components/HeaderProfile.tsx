@@ -13,7 +13,6 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useAppDispatch } from '@/store/hooks';
 import { openStreakBottomSheet } from '@/store/streakSlice';
 import { handleError } from '@/utils/errorHandling';
-import { selectionFeedback } from '@/utils/haptics';
 import { getSafeStorage } from '@/utils/safeAsyncStorage';
 
 // Helper functions from AccountBadge for consistency
@@ -58,12 +57,10 @@ const HeaderProfile = memo(({ size = 28 }: HeaderProfileProps) => {
   const hasStreak = currentStreak > 0;
 
   const handlePress = useCallback(() => {
-    selectionFeedback();
     router.push(ROUTE_PATHS.ACCOUNT);
   }, []);
 
   const handleStreakPress = useCallback(() => {
-    selectionFeedback();
     dispatch(openStreakBottomSheet());
   }, [dispatch]);
 

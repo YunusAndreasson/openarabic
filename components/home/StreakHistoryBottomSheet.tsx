@@ -12,7 +12,6 @@ import { StreakMetrics } from '@/components/home/StreakMetrics';
 import { LAYOUT } from '@/constants/layout';
 import { useStreakHistory } from '@/hooks/articles/useStreakHistory';
 import { useColors } from '@/hooks/theme/useColors';
-import { selectionFeedback } from '@/utils/haptics';
 
 interface StreakHistoryBottomSheetProps {
   isVisible: boolean;
@@ -30,7 +29,6 @@ export const StreakHistoryBottomSheet = memo<StreakHistoryBottomSheetProps>(
     // Show/hide modal based on isVisible prop
     useEffect(() => {
       if (isVisible) {
-        selectionFeedback(); // Haptic feedback when opening
         bottomSheetRef.current?.expand();
       } else {
         bottomSheetRef.current?.close();
