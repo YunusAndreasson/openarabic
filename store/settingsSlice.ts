@@ -23,7 +23,7 @@ const initialState: SettingsState = {
     enabled: false,
   },
   arabicFont: 'NotoSans', // Default font
-  arabicFontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE, // Default to 17px
+  arabicFontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE, // Default to 20px
 };
 
 const settingsSlice = createSlice({

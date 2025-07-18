@@ -48,8 +48,8 @@ export const ARABIC_FONT_OPTIONS: ArabicFontOption[] = [
 // Font size range - following Miller's Law (5-9 options)
 export const FONT_SIZE_RANGE = {
   MIN: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // 13px
-  MAX: LAYOUT.TYPOGRAPHY.SCALE.HUGE, // 28px
-  DEFAULT: LAYOUT.TYPOGRAPHY.SCALE.LARGE, // 17px
+  MAX: LAYOUT.TYPOGRAPHY.SCALE.MASSIVE, // 40px
+  DEFAULT: LAYOUT.TYPOGRAPHY.SCALE.XLARGE, // 20px
   STEP: 1, // 1px increments for fine control
 } as const;
 

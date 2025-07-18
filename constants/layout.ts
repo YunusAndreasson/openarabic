@@ -249,6 +249,8 @@ export const LAYOUT = {
       XLARGE: BASE_UNIT * 5, // 20 - responsive to base unit (fixed inconsistency)
       XXLARGE: BASE_UNIT * 5.5, // 22 - responsive to base unit
       HUGE: BASE_UNIT * 7, // 28 - responsive to base unit
+      XXHUGE: BASE_UNIT * 8.5, // 34 - responsive to base unit
+      MASSIVE: BASE_UNIT * 10, // 40 - responsive to base unit
     },
     LINE_HEIGHT: TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS,
   },
