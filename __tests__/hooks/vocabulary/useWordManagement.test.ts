@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react-native';
+import { act, renderHook } from '@testing-library/react-native';
 import { useWordManagement } from '../../../hooks/vocabulary/useWordManagement';
 
 jest.mock('../../../hooks/auth/useAuth', () => ({
@@ -42,13 +42,7 @@ jest.mock('../../../services/wordManagement', () => {
 });
 
 const {
-  __mocks: {
-    removeFromStudy,
-    resetProgress,
-    skipForToday,
-    markAsEasy,
-    markAsHard,
-  },
+  __mocks: { removeFromStudy, resetProgress, skipForToday, markAsEasy, markAsHard },
 } = require('../../../services/wordManagement');
 
 jest.mock('../../../utils/haptics', () => ({
@@ -91,12 +85,14 @@ describe('useWordManagement', () => {
     expect(result.current.selectedWord).toBeNull();
   });
 
-  const actions: Array<[
-    keyof ReturnType<typeof useWordManagement>,
-    string,
-    'onWordRemoved' | 'onWordUpdated',
-    (word: any) => any
-  ]> = [
+  const actions: Array<
+    [
+      keyof ReturnType<typeof useWordManagement>,
+      string,
+      'onWordRemoved' | 'onWordUpdated',
+      (word: any) => any
+    ]
+  > = [
     ['handleRemoveFromStudy', 'removeFromStudy', 'onWordRemoved', w => w.root_id],
     ['handleResetProgress', 'resetProgress', 'onWordUpdated', w => w.root_id],
     ['handleSkipForToday', 'skipForToday', 'onWordUpdated', w => w.root_id],
@@ -104,20 +100,21 @@ describe('useWordManagement', () => {
     ['handleMarkAsHard', 'markAsHard', 'onWordUpdated', w => w],
   ];
 
-  test.each(actions)('%s calls service and invalidates queries', async (action, serviceMethod, callbackKey, argFn) => {
-    const callbacks = { onWordRemoved: jest.fn(), onWordUpdated: jest.fn() };
-    const { result } = renderHook(() => useWordManagement(callbacks));
+  test.each(actions)(
+    '%s calls service and invalidates queries',
+    async (action, serviceMethod, callbackKey, argFn) => {
+      const callbacks = { onWordRemoved: jest.fn(), onWordUpdated: jest.fn() };
+      const { result } = renderHook(() => useWordManagement(callbacks));
 
-    await act(async () => {
-      // @ts-ignore dynamic access
-      await result.current[action](baseWord);
-    });
+      await act(async () => {
+        // @ts-ignore dynamic access
+        await result.current[action](baseWord);
+      });
 
-    const service = require('../../../services/wordManagement').wordManagementService;
-    expect(service[serviceMethod]).toHaveBeenCalledWith('u1', argFn(baseWord));
-    expect(invalidateQueries).toHaveBeenCalledTimes(5);
-    expect(callbacks[callbackKey]).toHaveBeenCalledWith(baseWord);
-    expect(result.current.isProcessing).toBe(false);
-  });
+      const service = require('../../../services/wordManagement').wordManagementService;
+      expect(service[serviceMethod]).toHaveBeenCalledWith('u1', argFn(baseWord));
+      expect(invalidateQueries).toHaveBeenCalledTimes(5);
+      expect(callbacks[callbackKey]).toHaveBeenCalledWith(baseWord);
+    }
+  );
 });
-

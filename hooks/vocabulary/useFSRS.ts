@@ -87,11 +87,7 @@ export function useFSRS({
   // Create FSRS instance with configured parameters
   const fsrsInstance = useMemo(() => fsrs(fsrsParams), [fsrsParams]);
 
-  const {
-    data: dueWords,
-    isLoading,
-    refetch,
-  } = useQuery({
+  const { data: dueWords, isLoading } = useQuery({
     queryKey: userId
       ? mode === 'spaced'
         ? ['struggling-words', userId, 50] // Use struggling words key for spaced mode
@@ -411,7 +407,5 @@ export function useFSRS({
     progress,
     updateWord,
     invalidateQueries,
-    refetchDueWords: refetch,
-    resetQueue,
   };
 }

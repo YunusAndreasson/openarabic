@@ -12,10 +12,8 @@ import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 interface ArticleDataResult {
   article: Article | undefined;
   isLoadingArticle: boolean;
-  articleError: Error | null;
   isInReadingList: boolean;
   refetchReadingListStatus: () => void;
-  isLoadingReadingList: boolean;
   selectedWordIds: Set<number>;
   sortedSentences: Required<Article>['article_sentences'];
   sentenceWordsMap: Map<number, SentenceWord[]>;
@@ -33,11 +31,7 @@ export const useArticleData = (
   userId: string | undefined
 ): ArticleDataResult => {
   // Fetch article data with optimized caching
-  const {
-    data: article,
-    isLoading: isLoadingArticle,
-    error: articleError,
-  } = useQuery({
+  const { data: article, isLoading: isLoadingArticle } = useQuery({
     queryKey: ['article', articleId],
     queryFn: () => {
       if (!articleId) throw new Error('Article ID is required');
@@ -51,11 +45,7 @@ export const useArticleData = (
   });
 
   // Check if article is in user's reading list - optimized caching
-  const {
-    data: isInReadingList = false,
-    refetch: refetchReadingListStatus,
-    isLoading: isLoadingReadingList,
-  } = useQuery({
+  const { data: isInReadingList = false, refetch: refetchReadingListStatus } = useQuery({
     queryKey: ['readingList', userId, articleId],
     queryFn: () => {
       if (!userId || !articleId) throw new Error('User ID and Article ID are required');
@@ -147,10 +137,8 @@ export const useArticleData = (
   return {
     article,
     isLoadingArticle,
-    articleError,
     isInReadingList,
     refetchReadingListStatus,
-    isLoadingReadingList,
     selectedWordIds,
     sortedSentences,
     sentenceWordsMap,

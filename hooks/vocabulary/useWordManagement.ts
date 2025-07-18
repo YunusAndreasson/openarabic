@@ -24,7 +24,6 @@ interface UseWordManagementReturn {
   handleSkipForToday: (word: StudyWord) => Promise<void>;
   handleMarkAsEasy: (word: StudyWord) => Promise<void>;
   handleMarkAsHard: (word: StudyWord) => Promise<void>;
-  isProcessing: boolean;
 }
 
 export function useWordManagement(options: UseWordManagementOptions = {}): UseWordManagementReturn {
@@ -34,7 +33,6 @@ export function useWordManagement(options: UseWordManagementOptions = {}): UseWo
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedWord, setSelectedWord] = useState<StudyWord | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
 
   const showWordManagement = useCallback((word: StudyWord) => {
     selectionFeedback();
@@ -76,23 +74,18 @@ export function useWordManagement(options: UseWordManagementOptions = {}): UseWo
     async (word: StudyWord) => {
       if (!user?.id) return;
 
-      setIsProcessing(true);
       try {
         await wordManagementService.removeFromStudy(user.id, word.root_id);
         invalidateQueries();
         onWordRemoved?.(word);
       } catch (error) {
         handleError(
-          error instanceof Error
-            ? error
-            : new Error(STRINGS.FAILED_TO_REMOVE_WORD_FROM_STUDY),
+          error instanceof Error ? error : new Error(STRINGS.FAILED_TO_REMOVE_WORD_FROM_STUDY),
           {
             analyticsEventName: 'Word_Management_Remove_Error',
             showToast: true,
           }
         );
-      } finally {
-        setIsProcessing(false);
       }
     },
     [user?.id, invalidateQueries, onWordRemoved]
@@ -102,23 +95,18 @@ export function useWordManagement(options: UseWordManagementOptions = {}): UseWo
     async (word: StudyWord) => {
       if (!user?.id) return;
 
-      setIsProcessing(true);
       try {
         await wordManagementService.resetProgress(user.id, word.root_id);
         invalidateQueries();
         onWordUpdated?.(word);
       } catch (error) {
         handleError(
-          error instanceof Error
-            ? error
-            : new Error(STRINGS.FAILED_TO_RESET_WORD_PROGRESS),
+          error instanceof Error ? error : new Error(STRINGS.FAILED_TO_RESET_WORD_PROGRESS),
           {
             analyticsEventName: 'Word_Management_Reset_Error',
             showToast: true,
           }
         );
-      } finally {
-        setIsProcessing(false);
       }
     },
     [user?.id, invalidateQueries, onWordUpdated]
@@ -128,23 +116,18 @@ export function useWordManagement(options: UseWordManagementOptions = {}): UseWo
     async (word: StudyWord) => {
       if (!user?.id) return;
 
-      setIsProcessing(true);
       try {
         await wordManagementService.skipForToday(user.id, word.root_id);
         invalidateQueries();
         onWordUpdated?.(word);
       } catch (error) {
         handleError(
-          error instanceof Error
-            ? error
-            : new Error(STRINGS.FAILED_TO_SKIP_WORD_FOR_TODAY),
+          error instanceof Error ? error : new Error(STRINGS.FAILED_TO_SKIP_WORD_FOR_TODAY),
           {
             analyticsEventName: 'Word_Management_Skip_Error',
             showToast: true,
           }
         );
-      } finally {
-        setIsProcessing(false);
       }
     },
     [user?.id, invalidateQueries, onWordUpdated]
@@ -154,23 +137,18 @@ export function useWordManagement(options: UseWordManagementOptions = {}): UseWo
     async (word: StudyWord) => {
       if (!user?.id) return;
 
-      setIsProcessing(true);
       try {
         await wordManagementService.markAsEasy(user.id, word);
         invalidateQueries();
         onWordUpdated?.(word);
       } catch (error) {
         handleError(
-          error instanceof Error
-            ? error
-            : new Error(STRINGS.FAILED_TO_MARK_WORD_AS_EASY),
+          error instanceof Error ? error : new Error(STRINGS.FAILED_TO_MARK_WORD_AS_EASY),
           {
             analyticsEventName: 'Word_Management_Easy_Error',
             showToast: true,
           }
         );
-      } finally {
-        setIsProcessing(false);
       }
     },
     [user?.id, invalidateQueries, onWordUpdated]
@@ -180,23 +158,18 @@ export function useWordManagement(options: UseWordManagementOptions = {}): UseWo
     async (word: StudyWord) => {
       if (!user?.id) return;
 
-      setIsProcessing(true);
       try {
         await wordManagementService.markAsHard(user.id, word);
         invalidateQueries();
         onWordUpdated?.(word);
       } catch (error) {
         handleError(
-          error instanceof Error
-            ? error
-            : new Error(STRINGS.FAILED_TO_MARK_WORD_AS_HARD),
+          error instanceof Error ? error : new Error(STRINGS.FAILED_TO_MARK_WORD_AS_HARD),
           {
             analyticsEventName: 'Word_Management_Hard_Error',
             showToast: true,
           }
         );
-      } finally {
-        setIsProcessing(false);
       }
     },
     [user?.id, invalidateQueries, onWordUpdated]
@@ -212,6 +185,5 @@ export function useWordManagement(options: UseWordManagementOptions = {}): UseWo
     handleSkipForToday,
     handleMarkAsEasy,
     handleMarkAsHard,
-    isProcessing,
   };
 }

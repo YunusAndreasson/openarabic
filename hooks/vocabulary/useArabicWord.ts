@@ -1,27 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useMemo, useState } from 'react';
-import { InteractionManager } from 'react-native';
+import { useMemo } from 'react';
 
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
-const analytics = {
-  track: async (_event: string, _properties?: Record<string, unknown>) => {},
-};
 
 export interface UseArabicWordProps {
   word: SentenceWord;
   position?: number;
-  onPress?: (word: SentenceWord) => void;
 }
 
 export interface UseArabicWordReturn {
-  isAudioHighlighted: boolean;
   isSelected: boolean;
-  setForceSelected: (value: boolean | null) => void;
-  handleSelectionChange: () => void;
 }
 
 /**
@@ -30,10 +22,9 @@ export interface UseArabicWordReturn {
 export function useArabicWord({
   word,
   position: _position,
-  onPress,
 }: UseArabicWordProps): UseArabicWordReturn {
   const { user } = useAuth();
-  const [forceSelected, setForceSelected] = useState<boolean | null>(null);
+  // const [forceSelected, setForceSelected] = useState<boolean | null>(null); // Remove this line
 
   // Get due words data - we use 0 as limit since we only need the due word IDs
   const { dueWordRootIds = new Set<number>() } = useArticlesByDueWords(user?.id, 0);
@@ -66,38 +57,10 @@ export function useArabicWord({
     return studyWords.some((sw: StudyWord) => sw.root_id === word.root_id);
   }, [studyWords, word.root_id]);
 
-  // Since audio functionality is removed, isAudioHighlighted is always false
-  const isAudioHighlighted = false;
-
-  // Calculate final selection state, considering force state, direct selection, and due words
-  const isSelected = forceSelected !== null ? forceSelected : directlySelected || isDueWord;
-
-  const handleSelectionChange = useCallback(() => {
-    if (!user?.id || !onPress) return;
-
-    // Defer analytics tracking until after UI interaction completes
-    InteractionManager.runAfterInteractions(() => {
-      // Analytics tracking - use ADD_STUDY_WORD or REMOVE_STUDY_WORD based on the selection state
-      if (!directlySelected) {
-        analytics.track('ADD_STUDY_WORD', {
-          wordId: word.id,
-          rootId: word.root_id,
-        });
-      } else {
-        analytics.track('REMOVE_STUDY_WORD', {
-          wordId: word.id,
-          rootId: word.root_id,
-        });
-      }
-    });
-
-    onPress(word);
-  }, [user?.id, onPress, word, directlySelected]);
+  // Calculate final selection state, considering direct selection and due words
+  const isSelected = directlySelected || isDueWord;
 
   return {
-    isAudioHighlighted,
     isSelected,
-    setForceSelected,
-    handleSelectionChange,
   };
 }

@@ -34,7 +34,7 @@ interface ArabicWordProps {
 
 function ArabicWordComponent({
   word,
-  onPress,
+  onPress: _onPress,
   onTooltipOpen,
   position,
   settings,
@@ -49,7 +49,6 @@ function ArabicWordComponent({
   const { isSelected } = useArabicWord({
     word,
     position,
-    onPress,
   });
 
   // Use the new analysis hook for color-coding

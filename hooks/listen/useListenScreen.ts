@@ -64,11 +64,7 @@ export const useListenScreen = () => {
     retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 5000),
     placeholderData: [],
   });
-  const {
-    data: readingList = [],
-    isLoading: isReadingListLoading,
-    isFetching: isReadingListFetching,
-  } = readingListQuery;
+  const { data: readingList = [], isLoading: isReadingListLoading } = readingListQuery;
 
   const dedupedReadingList = useMemo(() => {
     if (!readingList?.length) return [];
@@ -140,13 +136,8 @@ export const useListenScreen = () => {
   }, [enhancedTracks, sortedReadingList]);
 
   const shouldShowInitialLoading = useMemo(() => {
-    return (
-      !isDataCached &&
-      isReadingListLoading &&
-      !isReadingListFetching &&
-      sortedReadingList.length === 0
-    );
-  }, [isDataCached, isReadingListLoading, isReadingListFetching, sortedReadingList.length]);
+    return !isDataCached && isReadingListLoading && sortedReadingList.length === 0;
+  }, [isDataCached, isReadingListLoading, sortedReadingList.length]);
 
   useScreenFocusRefresh(queryClient, 'readingList', user?.id, 1000 * 60 * 5, true, true);
   useScreenFocusRefresh(queryClient, 'enhancedAudioTracks', user?.id, 1000 * 60 * 5, true, true);
@@ -305,9 +296,7 @@ export const useListenScreen = () => {
     sortedEnhancedTracks,
     shouldShowInitialLoading,
     isReadingListLoading,
-    isReadingListFetching,
     isStartingPlayback,
-    setPlaybackMode,
     playbackMode,
     duration,
     position,
