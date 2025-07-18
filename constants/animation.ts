@@ -75,9 +75,6 @@ export const PRESS_SCALE = {
 /** Scale amount for icon button press animations */
 export const ICON_BUTTON_PRESS_SCALE = 0.9;
 
-/** Scale amount for insights button press animation */
-export const INSIGHTS_BUTTON_PRESS_SCALE = 0.98;
-
 /** Default opacity reduction for card press animations */
 export const CARD_PRESS_OPACITY = 0.97;
 
@@ -89,15 +86,6 @@ export const WORD_PRESS_SCALE = 0.95;
 
 /** Scale value applied when dragging cards */
 export const CARD_DRAG_SCALE = 1.05;
-
-/** Ratio of screen width required to trigger a review card swipe */
-export const REVIEW_CARD_SWIPE_THRESHOLD_RATIO = 0.04;
-
-/** Delay before resetting card position after swipe */
-export const REVIEW_CARD_RESET_DELAY = 50;
-
-/** Minimum gesture distance before activating swipe */
-export const REVIEW_CARD_MIN_DISTANCE = 0.1;
 
 /** Threshold for skipping progress animations if change is tiny */
 export const PROGRESS_SKIP_THRESHOLD = 50;

@@ -1,12 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
-import type { NativeSyntheticEvent, NativeScrollEvent, ViewStyle } from 'react-native';
-import { useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 
-import {
-  DEFAULT_ANIMATION_DURATION,
-  HEADER_SCROLL_THRESHOLD,
-} from '@/constants/animation';
-import type { AnimatedStyleProp } from '@/types/ui/base.types';
+import { HEADER_SCROLL_THRESHOLD } from '@/constants/animation';
 
 interface UseHeaderVisibilityOptions {
   threshold?: number;
@@ -14,27 +9,15 @@ interface UseHeaderVisibilityOptions {
 }
 
 export interface UseHeaderVisibilityResult {
-  isHeaderVisible: boolean;
-  setIsHeaderVisible: React.Dispatch<React.SetStateAction<boolean>>;
   handleScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
-  animatedStyle: AnimatedStyleProp<ViewStyle>;
 }
 
 export function useHeaderVisibility({
   threshold = HEADER_SCROLL_THRESHOLD,
-  animationDuration = DEFAULT_ANIMATION_DURATION,
 }: UseHeaderVisibilityOptions = {}): UseHeaderVisibilityResult {
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const prevScrollYValue = useRef(0);
   const ticking = useRef(false);
-
-  // Animated style for header opacity
-  const animatedStyle = useAnimatedStyle(
-    () => ({
-      opacity: withTiming(isHeaderVisible ? 1 : 0, { duration: animationDuration }),
-    }),
-    [isHeaderVisible, animationDuration]
-  );
 
   // Debounced scroll handler for performance
   const handleScroll = useCallback(
@@ -59,9 +42,6 @@ export function useHeaderVisibility({
   );
 
   return {
-    isHeaderVisible,
-    setIsHeaderVisible,
     handleScroll,
-    animatedStyle,
   };
 }

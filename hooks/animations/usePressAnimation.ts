@@ -1,17 +1,16 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
+import type { WithSpringConfig } from 'react-native-reanimated';
 import {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
   interpolate,
   runOnUI,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
 } from 'react-native-reanimated';
-import type { SharedValue, WithSpringConfig } from 'react-native-reanimated';
 
-import { SPRING_CONFIG, PRESS_SCALE, CARD_PRESS_OPACITY } from '@/constants/animation';
+import { CARD_PRESS_OPACITY, PRESS_SCALE, SPRING_CONFIG } from '@/constants/animation';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
-
 
 export type PressAnimationType = 'button' | 'card' | 'custom';
 
@@ -55,11 +54,6 @@ export interface PressAnimationResult {
    * Animated style to apply to the component
    */
   animatedStyle: AnimatedStyleProp<ViewStyle>;
-
-  /**
-   * Shared value representing press state (0 = not pressed, 1 = pressed)
-   */
-  pressed: SharedValue<number>;
 
   /**
    * Function to call on press in
@@ -109,7 +103,12 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
     return {
       transform: [{ scale }],
     };
-  }, [pressed, finalScaleAmount, finalOpacityAmount, finalIncludeOpacity]) as AnimatedStyleProp<ViewStyle>;
+  }, [
+    pressed,
+    finalScaleAmount,
+    finalOpacityAmount,
+    finalIncludeOpacity,
+  ]) as AnimatedStyleProp<ViewStyle>;
 
   // Press handlers - optimized to run on UI thread
   const animatePressIn = useCallback(() => {
@@ -144,7 +143,6 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
 
   return {
     animatedStyle,
-    pressed,
     handlePressIn,
     handlePressOut,
   };

@@ -90,14 +90,6 @@ export const PERFORMANCE_THRESHOLDS = {
   POOR: 0,
 } as const;
 
-// Efficiency difficulty zones for scoring
-export const EFFICIENCY_DIFFICULTY_ZONES = {
-  OPTIMAL: { min: 6.0, max: 8.5, score: 10 },
-  GOOD: { min: 5.5, max: 9.0, score: 7 },
-  ACCEPTABLE: { min: 5.0, max: 9.5, score: 5 },
-  EDGE: { min: 4.5, max: 10.0, score: 2 },
-} as const;
-
 // Optimized FSRS configuration
 export const OPTIMIZED_FSRS_CONFIG = {
   learning_steps: DEFAULT_LEARNING_STEPS,

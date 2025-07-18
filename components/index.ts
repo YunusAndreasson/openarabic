@@ -17,7 +17,7 @@ export { EnhancedImage } from './EnhancedImage';
 export { default as Pill } from './Pill';
 export { ProgressBar } from './ProgressBar';
 export { AuthProvider, ToastProvider, useToast } from './providers';
-export { ThemeToggle } from './ThemeToggle';
+
 export { Toggle } from './Toggle';
 
 // Re-export from subdirectories (except article to avoid circular dependency)
@@ -25,11 +25,10 @@ export * from './audio';
 export * from './review';
 export * from './vocabulary';
 
-export { default as AnimatedTouchable } from './AnimatedTouchable';
 export { default as BottomControls } from './BottomControls';
 export { default as FilterSummary } from './FilterSummary';
 export { default as HeaderProfile } from './HeaderProfile';
-export { InfoIcon } from './InfoIcon';
+
 export { default as SortingHeader } from './SortingHeader';
 export { TimePicker } from './TimePicker';
 export { Toast } from './Toast';

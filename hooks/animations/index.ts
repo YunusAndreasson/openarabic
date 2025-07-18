@@ -8,8 +8,8 @@
 export { useOpacityAnimation } from './useOpacityAnimation';
 export { usePressAnimation } from './usePressAnimation';
 export { useTransformAnimation } from './useTransformAnimation';
-export { useProgressAnimation } from './useProgressAnimation';
+
 export { useToggleAnimation } from './useToggleAnimation';
 
 // Export animation configs
-export { TIMING_CONFIG, SPRING_CONFIG } from '@/constants/animation';
+export { SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';

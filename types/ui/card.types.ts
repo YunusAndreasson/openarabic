@@ -1,7 +1,5 @@
 import type { StyleProp, ViewStyle } from 'react-native';
 
-import type { Article } from '@/types/articles.types';
-
 import type { BaseAnimatedStyleProps, BaseOptionalPressableProps } from './base.types';
 
 /**
@@ -31,19 +29,6 @@ export interface BaseCardProps extends BaseAnimatedStyleProps {
 }
 
 /**
- * Variant types for ThemedCard
- */
-export type CardVariant = 'article' | 'basic' | 'compact';
-
-/**
- * Props for basic variant of ThemedCard
- */
-export interface BasicCardProps extends BaseCardProps, BaseOptionalPressableProps {
-  variant: 'basic';
-  children?: React.ReactNode;
-}
-
-/**
  * Props for article variant of ThemedCard
  */
 export interface ArticleCardProps extends BaseCardProps, BaseOptionalPressableProps {
@@ -62,49 +47,3 @@ export interface ArticleCardProps extends BaseCardProps, BaseOptionalPressablePr
   /** Summary text to display in the card */
   summary: string;
 }
-
-/**
- * Props for compact variant of ThemedCard
- */
-export interface CompactCardProps extends BaseCardProps, BaseOptionalPressableProps {
-  /** Variant of the card */
-  variant: 'compact';
-  /** Children to render inside the card (use this OR article data) */
-  children?: React.ReactNode;
-  /** Article data to display in the card */
-  article: Article;
-}
-
-/**
- * ThemedCard is a reusable card component that can display content in different variants.
- * It supports both light and dark themes, handles loading states, and provides smooth animations.
- *
- * The component is optimized for performance with memoization and proper image loading handling.
- * It uses Reanimated 3's built-in animations for optimal performance.
- *
- * The 'compact' variant can handle article data directly, removing the need for CompactArticleCard.
- */
-export type ThemedCardProps =
-  | ArticleCardProps
-  | BasicCardProps
-  | CompactCardProps
-  | (BaseCardProps &
-      BaseOptionalPressableProps & {
-        /** URL of the image to display in the card (for article variant) */
-        imageUrl: string;
-        /** Title text to display in the card (for article variant) */
-        title: string;
-        /** Category text to display in a pill on the card (for article variant) */
-        category: string;
-        /** Author name to display in the card (for article variant) */
-        author?: string;
-        /** Summary text to display in the card (for article variant) */
-        summary?: string;
-        /** Children to render inside the card (for compact variant) */
-        children?: React.ReactNode;
-        /** Article data to display (for compact variant) */
-        article: Article;
-
-        /** Variant of the card */
-        variant?: CardVariant;
-      });

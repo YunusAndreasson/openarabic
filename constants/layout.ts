@@ -294,6 +294,41 @@ export const LAYOUT = {
     HEIGHT: BASE_UNIT * 17.5, // 70 - responsive to base unit
   },
 
+  HEADER: {
+    HEIGHT: {
+      EXPANDED: TOUCH_TARGETS.LARGE * 8, // ~380 - responsive to touch targets
+      COLLAPSED: 0,
+    },
+    NAV_HEIGHT: IS_IOS ? TOUCH_TARGETS.MEDIUM : TOUCH_TARGETS.LARGE + SPACING_SCALE.SMALL, // Platform-specific responsive heights
+    NAV_HEADER_HEIGHT: IS_IOS ? TOUCH_TARGETS.LARGE * 2 + BASE_UNIT : SPACING_SCALE.XLARGE * 4, // Platform-specific responsive heights
+
+    TITLE: {
+      MAIN: {
+        fontSize: BASE_UNIT * 7, // 28 - responsive to base unit
+        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
+        marginLeft: -BASE_UNIT, // -4 - responsive negative margin
+      },
+      SECONDARY: {
+        fontSize: BASE_UNIT * 5, // 20 - responsive to base unit (consistent with XLARGE)
+        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+      },
+      COMPACT: {
+        fontSize: BASE_UNIT * 4.25, // 17 - responsive to base unit
+        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+      },
+    },
+  },
+
+  REVIEW: {
+    BOTTOM_ACTIONS_HEIGHT: TOUCH_TARGETS.LARGE + SPACING_SCALE.LARGE * 2, // Same as CARD.HEIGHT.LIST_ITEM
+    INDICATOR_MAX_WIDTH: BASE_UNIT * 22.5, // 90 - responsive to base unit
+    COMPLETION: {
+      ICON_DEFAULT_SIZE: BASE_UNIT * 25, // 100 - responsive to base unit
+      ICON_CONTAINER_HEIGHT: BASE_UNIT * 30, // 120 - responsive to base unit
+      CONTENT_MAX_WIDTH: BASE_UNIT * 87.5, // 350 - responsive to base unit
+    },
+  },
+
   CALENDAR: {
     EVENT_RIGHT_SECTION: {
       MAX_WIDTH: BASE_UNIT * 37.5, // 150 - responsive to base unit
@@ -335,41 +370,6 @@ export const LAYOUT = {
       SOLID: 'solid',
       DASHED: 'dashed',
       DOTTED: 'dotted',
-    },
-  },
-
-  HEADER: {
-    HEIGHT: {
-      EXPANDED: TOUCH_TARGETS.LARGE * 8, // ~380 - responsive to touch targets
-      COLLAPSED: 0,
-    },
-    NAV_HEIGHT: IS_IOS ? TOUCH_TARGETS.MEDIUM : TOUCH_TARGETS.LARGE + SPACING_SCALE.SMALL, // Platform-specific responsive heights
-    NAV_HEADER_HEIGHT: IS_IOS ? TOUCH_TARGETS.LARGE * 2 + BASE_UNIT : SPACING_SCALE.XLARGE * 4, // Platform-specific responsive heights
-
-    TITLE: {
-      MAIN: {
-        fontSize: BASE_UNIT * 7, // 28 - responsive to base unit
-        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
-        marginLeft: -BASE_UNIT, // -4 - responsive negative margin
-      },
-      SECONDARY: {
-        fontSize: BASE_UNIT * 5, // 20 - responsive to base unit (consistent with XLARGE)
-        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-      },
-      COMPACT: {
-        fontSize: BASE_UNIT * 4.25, // 17 - responsive to base unit
-        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-      },
-    },
-  },
-
-  REVIEW: {
-    BOTTOM_ACTIONS_HEIGHT: TOUCH_TARGETS.LARGE + SPACING_SCALE.LARGE * 2, // Same as CARD.HEIGHT.LIST_ITEM
-    INDICATOR_MAX_WIDTH: BASE_UNIT * 22.5, // 90 - responsive to base unit
-    COMPLETION: {
-      ICON_DEFAULT_SIZE: BASE_UNIT * 25, // 100 - responsive to base unit
-      ICON_CONTAINER_HEIGHT: BASE_UNIT * 30, // 120 - responsive to base unit
-      CONTENT_MAX_WIDTH: BASE_UNIT * 87.5, // 350 - responsive to base unit
     },
   },
 };

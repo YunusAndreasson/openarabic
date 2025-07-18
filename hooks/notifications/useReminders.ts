@@ -1,34 +1,27 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { STRINGS } from '@/constants/strings';
-import { scheduleReminder, hasPermissions } from '@/services/notificationService';
+import { scheduleReminder } from '@/services/notificationService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setReminderTime } from '@/store/settingsSlice';
 import type { ReminderTime } from '@/types/notifications.types';
 import { handleError } from '@/utils/errorHandling';
 
 const analytics = {
-  track: async (
-    _event: string,
-    _properties?: Record<string, unknown>
-  ) => {},
+  track: async (_event: string, _properties?: Record<string, unknown>) => {},
 };
 
 export interface UseRemindersResult {
   reminderTime: ReminderTime;
   updateReminderTime: (newReminderTime: ReminderTime) => Promise<void>;
-  checkPermissions: () => Promise<boolean>;
-  isScheduling: boolean;
   formatReminderTime: (hour: number, minute: number) => string;
 }
 
 export function useReminders(): UseRemindersResult {
   const dispatch = useAppDispatch();
   const reminderTime = useAppSelector(state => state.settings.reminderTime);
-  const [isScheduling, setIsScheduling] = useState(false);
 
   const updateReminderTime = async (newReminderTime: ReminderTime): Promise<void> => {
-    setIsScheduling(true);
     try {
       // Schedule the reminder
       await scheduleReminder(newReminderTime);
@@ -44,17 +37,6 @@ export function useReminders(): UseRemindersResult {
       });
     } catch (error) {
       handleError(error as Error, { showToast: false });
-    } finally {
-      setIsScheduling(false);
-    }
-  };
-
-  const checkPermissions = async (): Promise<boolean> => {
-    try {
-      return await hasPermissions();
-    } catch (error) {
-      handleError(error as Error, { showToast: false });
-      return false;
     }
   };
 
@@ -69,16 +51,8 @@ export function useReminders(): UseRemindersResult {
     () => ({
       reminderTime,
       updateReminderTime,
-      checkPermissions,
-      isScheduling,
       formatReminderTime,
     }),
-    [
-      reminderTime,
-      isScheduling,
-      updateReminderTime,
-      checkPermissions,
-      formatReminderTime,
-    ]
+    [reminderTime, updateReminderTime, formatReminderTime]
   );
 }

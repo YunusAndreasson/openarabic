@@ -76,8 +76,5 @@ export interface ListenParams {
  */
 export interface NowPlayingModalParams {
   articleId?: string;
-  position?: string;
-  duration?: string;
-  audioState?: string;
   [key: string]: string | undefined;
 }

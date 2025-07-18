@@ -3,7 +3,6 @@ export * from './useArabicWordAnalysis';
 export * from './useDictionaryModal';
 export * from './useFSRS';
 export * from './useFSRSQueries';
-export * from './usePracticeBadge';
 
 export * from './useEfficiencyChart';
 export * from './useMasteryChart';
