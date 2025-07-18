@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -11,11 +11,9 @@ import { useArabicWordAnalysis } from '@/hooks/vocabulary';
 import type { WordTooltipProps } from '@/types/ui/modal.types';
 
 const TOOLTIP_CONSTANTS = {
-  SPACING: LAYOUT.SPACING.TINY,
-  ARROW_SIZE: LAYOUT.SPACING.TINY,
-  TOOLTIP_MARGIN: LAYOUT.SPACING.TINY / 5,
-  SCREEN_MARGIN: LAYOUT.SPACING.MEDIUM,
-  CHAR_WIDTH: LAYOUT.SPACING.SMALL,
+  ARROW_SIZE: 6,
+  MIN_PADDING: 12,
+  SCREEN_MARGIN: 16,
   Z_INDEX: 999999,
 } as const;
 
@@ -33,12 +31,8 @@ const SPRING_CONFIG = {
   stiffness: 200,
 } as const;
 
-const TYPOGRAPHY_SIZES = {
-  ENGLISH_HEIGHT: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4,
-} as const;
-
 const STATIC_STYLES = StyleSheet.create({
-  absoluteFill: {
+  overlay: {
     position: 'absolute',
     top: 0,
     left: 0,
@@ -48,85 +42,101 @@ const STATIC_STYLES = StyleSheet.create({
     height: '100%',
   },
   tooltip: {
-    ...LAYOUT.ELEVATION.SUBTLE,
-    alignSelf: 'flex-start',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     position: 'absolute',
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: TOOLTIP_CONSTANTS.MIN_PADDING,
+    paddingVertical: 8,
+    minWidth: 80,
+    maxWidth: SCREEN_WIDTH * 0.85,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   arrow: {
-    borderStyle: 'solid',
-    height: 0,
-    left: 0,
-    marginLeft: -TOOLTIP_CONSTANTS.ARROW_SIZE / 2,
     position: 'absolute',
     width: 0,
+    height: 0,
+    borderStyle: 'solid',
   },
-  tooltipText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+  text: {
+    fontSize: 15,
     fontWeight: '500',
     textAlign: 'center',
+    lineHeight: 20,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
-  englishRow: {
+  contentRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: LAYOUT.SPACING.TINY,
+    gap: 8,
+    height: '100%',
   },
-  englishContent: {
+  textContainer: {
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bookmarkButton: {
+    marginLeft: 4,
   },
 });
 
-const calculateTooltipPositioning = (
+const calculateTooltipDimensions = (
   layout: NonNullable<WordTooltipProps['layout']>,
-  text: string
+  text: string,
+  hasBookmark: boolean
 ) => {
-  const { SPACING, ARROW_SIZE, TOOLTIP_MARGIN, SCREEN_MARGIN, CHAR_WIDTH } = TOOLTIP_CONSTANTS;
+  const { ARROW_SIZE, MIN_PADDING, SCREEN_MARGIN } = TOOLTIP_CONSTANTS;
 
-  // Simplified height calculation for English-only display
-  const dynamicTooltipHeight = TYPOGRAPHY_SIZES.ENGLISH_HEIGHT + SPACING * 2;
+  // Estimate text width (rough calculation)
+  const charWidth = 9; // Approximate character width for fontSize 15
+  const textWidth = text.length * charWidth;
 
-  const wordCenterX = layout.x + layout.width / 2;
-  const extraTopMargin = LAYOUT.SPACING.SMALL;
-  const tooltipTop = layout.y - dynamicTooltipHeight - ARROW_SIZE - TOOLTIP_MARGIN - extraTopMargin;
+  // Add space for bookmark if present
+  const bookmarkWidth = hasBookmark ? 32 : 0;
+  const gapWidth = hasBookmark ? 8 : 0;
 
-  // Simplified width calculation
-  const estimatedTextWidth = text.length * CHAR_WIDTH * 1.2;
-  const generousPadding = SPACING * 4;
+  // Calculate total content width
+  const contentWidth = textWidth + bookmarkWidth + gapWidth;
 
-  let tooltipWidth = Math.max(
-    estimatedTextWidth + generousPadding,
-    layout.width + SPACING * 2,
-    LAYOUT.SPACING.XLARGE
+  // Calculate tooltip width with padding
+  const tooltipWidth = Math.max(
+    contentWidth + MIN_PADDING * 2,
+    layout.width + MIN_PADDING * 2,
+    120 // Minimum width
   );
 
-  tooltipWidth = Math.min(tooltipWidth, SCREEN_WIDTH * 0.9);
+  // Calculate tooltip height
+  const tooltipHeight = 40; // Slightly reduced height for better balance
 
-  // Simplified positioning logic
-  const idealTooltipLeft = wordCenterX - tooltipWidth / 2;
-  const leftOverflow = SCREEN_MARGIN - idealTooltipLeft;
-  const rightOverflow = idealTooltipLeft + tooltipWidth - (SCREEN_WIDTH - SCREEN_MARGIN);
+  // Calculate position
+  const wordCenterX = layout.x + layout.width / 2;
+  const tooltipTop = layout.y - tooltipHeight;
 
-  let tooltipLeftOffset = idealTooltipLeft;
-  let arrowOffset = tooltipWidth / 2;
+  // Calculate horizontal position
+  let tooltipLeft = wordCenterX - tooltipWidth / 2;
+  let arrowLeft = tooltipWidth / 2;
 
-  if (leftOverflow > 0) {
-    tooltipLeftOffset = SCREEN_MARGIN;
-    arrowOffset = wordCenterX - SCREEN_MARGIN;
-  } else if (rightOverflow > 0) {
-    tooltipLeftOffset = SCREEN_WIDTH - SCREEN_MARGIN - tooltipWidth;
-    arrowOffset = wordCenterX - tooltipLeftOffset;
+  // Handle screen boundaries
+  if (tooltipLeft < SCREEN_MARGIN) {
+    tooltipLeft = SCREEN_MARGIN;
+    arrowLeft = wordCenterX - SCREEN_MARGIN;
+  } else if (tooltipLeft + tooltipWidth > SCREEN_WIDTH - SCREEN_MARGIN) {
+    tooltipLeft = SCREEN_WIDTH - SCREEN_MARGIN - tooltipWidth;
+    arrowLeft = wordCenterX - tooltipLeft;
   }
 
+  // Clamp arrow position within tooltip bounds
+  arrowLeft = Math.max(ARROW_SIZE, Math.min(arrowLeft, tooltipWidth - ARROW_SIZE));
+
   return {
+    tooltipLeft,
     tooltipTop,
     tooltipWidth,
-    tooltipLeftOffset,
-    arrowOffset: Math.max(
-      TOOLTIP_CONSTANTS.ARROW_SIZE,
-      Math.min(arrowOffset, tooltipWidth - TOOLTIP_CONSTANTS.ARROW_SIZE)
-    ),
+    tooltipHeight,
+    arrowLeft,
   };
 };
 
@@ -165,54 +175,43 @@ const COLOR_MAP = {
   secondaryText: 'secondaryText',
 } as const;
 
-const CONTENT_STYLE = {
-  alignItems: 'center' as const,
-  justifyContent: 'center' as const,
-  minHeight: TYPOGRAPHY_SIZES.ENGLISH_HEIGHT + LAYOUT.SPACING.SMALL,
-  paddingVertical: LAYOUT.SPACING.SMALL,
-};
-
-const BOOKMARK_STYLE = { marginLeft: LAYOUT.SPACING.TINY };
-
 export const WordTooltip = memo(
   ({
     visible,
     text = '',
     arabicWord,
     layout,
-    onClose: _onClose,
     zIndex,
     isInStudyList = false,
     onStudyListToggle,
     wordRootId,
   }: WordTooltipProps) => {
     const colors = useColors();
-    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // Simplified animations
+    // Animations
     const { fadeIn, animatedStyle: opacityStyle } = useOpacityAnimation(ANIMATION_CONFIG);
     const { animatedStyle: scaleStyle, startAnimation: startScaleAnimation } =
       useTransformAnimation(SPRING_CONFIG);
 
-    // Use the Arabic word analysis hook for English color-coding
+    // Arabic word analysis for English color-coding
     const { formattedAnalysis } = useArabicWordAnalysis(
       arabicWord || '',
       text,
       !!(arabicWord && text)
     );
 
-    // Stable handlers with minimal dependencies
+    // Stable handlers
     const handleStudyListPress = useCallback(() => {
       onStudyListToggle?.();
     }, [onStudyListToggle]);
 
-    // Optimized English text rendering with stable dependencies
+    // Render color-coded English text
     const renderColorCodedEnglish = useMemo(() => {
-      // CRITICAL RULE: Single words should NEVER have grammar color-coding applied
+      // Single words should never have grammar color-coding
       const wordCount = text.trim().split(/\s+/).length;
       if (wordCount === 1) {
         return (
-          <ThemedText skipDefaultColor style={[STATIC_STYLES.tooltipText, { color: colors.text }]}>
+          <ThemedText skipDefaultColor style={[STATIC_STYLES.text, { color: colors.text }]}>
             {text}
           </ThemedText>
         );
@@ -220,7 +219,7 @@ export const WordTooltip = memo(
 
       if (!formattedAnalysis?.sections?.length) {
         return (
-          <ThemedText skipDefaultColor style={[STATIC_STYLES.tooltipText, { color: colors.text }]}>
+          <ThemedText skipDefaultColor style={[STATIC_STYLES.text, { color: colors.text }]}>
             {text}
           </ThemedText>
         );
@@ -233,7 +232,7 @@ export const WordTooltip = memo(
 
       if (!componentSections.length) {
         return (
-          <ThemedText skipDefaultColor style={[STATIC_STYLES.tooltipText, { color: colors.text }]}>
+          <ThemedText skipDefaultColor style={[STATIC_STYLES.text, { color: colors.text }]}>
             {originalEnglish}
           </ThemedText>
         );
@@ -249,7 +248,7 @@ export const WordTooltip = memo(
         const matchIndex = searchText.indexOf(match);
 
         if (matchIndex !== -1) {
-          // Simple word boundary check
+          // Word boundary check
           const prevChar = matchIndex > 0 ? searchText[matchIndex - 1] ?? ' ' : ' ';
           const nextChar =
             matchIndex + match.length < searchText.length
@@ -306,12 +305,12 @@ export const WordTooltip = memo(
       }
 
       return (
-        <ThemedText skipDefaultColor style={STATIC_STYLES.tooltipText}>
+        <ThemedText skipDefaultColor style={STATIC_STYLES.text}>
           {parts.map(part => (
             <ThemedText
               key={part.key}
               skipDefaultColor
-              style={[STATIC_STYLES.tooltipText, { color: part.color }]}
+              style={[STATIC_STYLES.text, { color: part.color }]}
             >
               {part.text}
             </ThemedText>
@@ -320,22 +319,22 @@ export const WordTooltip = memo(
       );
     }, [formattedAnalysis, text, colors]);
 
-    // Optimized content rendering with minimal dependencies
+    // Tooltip content
     const tooltipContent = useMemo(() => {
       if (!onStudyListToggle || !wordRootId) {
         return renderColorCodedEnglish;
       }
 
       return (
-        <View style={STATIC_STYLES.englishRow}>
-          <View style={STATIC_STYLES.englishContent}>{renderColorCodedEnglish}</View>
+        <View style={STATIC_STYLES.contentRow}>
+          <View style={STATIC_STYLES.textContainer}>{renderColorCodedEnglish}</View>
           <TouchableIcon
             icon={isInStudyList ? 'school' : 'school-outline'}
-            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+            size={20}
             touchSize="small"
             color={isInStudyList ? colors.tint : colors.secondaryText}
             onPress={handleStudyListPress}
-            style={BOOKMARK_STYLE}
+            style={STATIC_STYLES.bookmarkButton}
           />
         </View>
       );
@@ -349,24 +348,26 @@ export const WordTooltip = memo(
       handleStudyListPress,
     ]);
 
-    // Simplified positioning calculation
-    const positioning = useMemo(() => {
+    // Calculate tooltip dimensions
+    const dimensions = useMemo(() => {
       if (!layout) {
         return {
+          tooltipLeft: 0,
           tooltipTop: 0,
-          tooltipWidth: SCREEN_WIDTH * 0.25,
-          tooltipLeftOffset: 0,
-          arrowOffset: 0,
+          tooltipWidth: 120,
+          tooltipHeight: 40,
+          arrowLeft: 60,
         };
       }
 
-      return calculateTooltipPositioning(layout, text || '');
-    }, [layout, text]);
+      const hasBookmark = !!(onStudyListToggle && wordRootId);
+      return calculateTooltipDimensions(layout, text || '', hasBookmark);
+    }, [layout, text, onStudyListToggle, wordRootId]);
 
     // Memoized styles
     const containerStyle = useMemo(
       () => ({
-        ...STATIC_STYLES.absoluteFill,
+        ...STATIC_STYLES.overlay,
         zIndex: zIndex ?? TOOLTIP_CONSTANTS.Z_INDEX,
       }),
       [zIndex]
@@ -375,20 +376,21 @@ export const WordTooltip = memo(
     const tooltipStyle = useMemo(
       () => ({
         ...STATIC_STYLES.tooltip,
-        top: positioning.tooltipTop,
-        left: positioning.tooltipLeftOffset,
-        width: positioning.tooltipWidth,
+        top: dimensions.tooltipTop,
+        left: dimensions.tooltipLeft,
+        width: dimensions.tooltipWidth,
+        height: dimensions.tooltipHeight,
         backgroundColor: colors.elevation1,
         borderColor: colors.border,
         shadowColor: colors.shadow,
-        padding: TOOLTIP_CONSTANTS.SPACING,
         zIndex: TOOLTIP_CONSTANTS.Z_INDEX + 1,
         ...LAYOUT.ELEVATION.LARGE,
       }),
       [
-        positioning.tooltipTop,
-        positioning.tooltipLeftOffset,
-        positioning.tooltipWidth,
+        dimensions.tooltipTop,
+        dimensions.tooltipLeft,
+        dimensions.tooltipWidth,
+        dimensions.tooltipHeight,
         colors.elevation1,
         colors.border,
         colors.shadow,
@@ -398,35 +400,23 @@ export const WordTooltip = memo(
     const arrowStyle = useMemo(
       () => ({
         ...STATIC_STYLES.arrow,
-        left: positioning.arrowOffset,
+        left: dimensions.arrowLeft,
+        top: dimensions.tooltipHeight,
         borderTopWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
         borderLeftWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
         borderRightWidth: TOOLTIP_CONSTANTS.ARROW_SIZE,
         borderTopColor: colors.elevation1,
-        bottom: -TOOLTIP_CONSTANTS.ARROW_SIZE,
         borderLeftColor: colors.transparent,
         borderRightColor: colors.transparent,
       }),
-      [positioning.arrowOffset, colors.elevation1, colors.transparent]
+      [dimensions.arrowLeft, dimensions.tooltipHeight, colors.elevation1, colors.transparent]
     );
 
     useEffect(() => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
-
       if (visible) {
         fadeIn();
         startScaleAnimation();
       }
-
-      return () => {
-        if (timerRef.current) {
-          clearTimeout(timerRef.current);
-          timerRef.current = null;
-        }
-      };
     }, [visible, fadeIn, startScaleAnimation]);
 
     if (!visible || !layout) return null;
@@ -435,7 +425,7 @@ export const WordTooltip = memo(
       <View style={containerStyle} pointerEvents="box-none">
         <Animated.View style={[tooltipStyle, opacityStyle, scaleStyle]} testID="word-tooltip">
           <View style={arrowStyle} />
-          <View style={CONTENT_STYLE}>{tooltipContent}</View>
+          {tooltipContent}
         </Animated.View>
       </View>
     );
