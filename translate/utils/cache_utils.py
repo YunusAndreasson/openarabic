@@ -21,6 +21,3 @@ def ensure_valid_cache_files() -> None:
                     fixed_count += 1
                 except Exception as e:
                     logger.info(f"Error fixing cache file {file_path.name}: {str(e)}")
-
-    if fixed_count > 0:
-        logger.info(f"Fixed {fixed_count} cache files with missing extensions")

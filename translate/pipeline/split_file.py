@@ -124,7 +124,6 @@ def main() -> None:
     except KeyboardInterrupt:
         sys.exit(130)
     except Exception as e:
-        logger.info(f"❌ Fatal error during text splitting: {str(e)}")
         sys.exit(1)
 
 

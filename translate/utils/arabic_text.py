@@ -6,13 +6,11 @@ def clean_arabic_text(text: str) -> str:
     if not text:
         return text
 
-    # First remove any SSML tags if present
     text = re.sub(r"<[^>]+>", "", text)
 
     arabic_pattern = r"[^\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF\u064B-\u065F\s]+"
     text = re.sub(arabic_pattern, "", text)
 
-    # Remove any double spaces that might have been created
     text = re.sub(r"\s+", " ", text)
 
     return text.strip()
@@ -39,25 +37,20 @@ def clean_word_for_matching(word: str) -> str:
     if not word:
         return word
 
-    # Remove zero-width and invisible control characters
     invisible_chars = {
-        "\u200b": "",  # zero-width space
-        "\u200c": "",  # zero-width non-joiner
-        "\u200d": "",  # zero-width joiner
-        "\ufeff": "",  # zero-width no-break space (BOM)
-        "\u2028": " ",  # line separator
-        "\u2029": " ",  # paragraph separator
+        "\u200b": "",
+        "\u200c": "",
+        "\u200d": "",
+        "\ufeff": "",
+        "\u2028": " ",
+        "\u2029": " ",
     }
     for char, replacement in invisible_chars.items():
         word = word.replace(char, replacement)
 
-    # Standardize whitespace
     word = " ".join(word.split())
-
-    # Trim any leading/trailing whitespace
     word = word.strip()
 
-    # Remove common punctuation for matching purposes
     punctuation = ".,;:!?\"'()[]{}،؟''»«"
     for p in punctuation:
         word = word.replace(p, "")

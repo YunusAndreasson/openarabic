@@ -12,12 +12,10 @@ if not all([SUPABASE_URL, SUPABASE_KEY]):
         "Missing required environment variables. Please ensure SUPABASE_URL and SUPABASE_KEY are set."
     )
 
-# Initialize client
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 logger = logging.getLogger(__name__)
 
-# Word type mapping from POS to word_types table
 WORD_TYPE_MAPPING: Dict[str, int] = {
     "verb": 1,
     "noun": 2,
@@ -61,37 +59,30 @@ def upload_to_storage(
     content_type: str = "audio/mpeg",
 ) -> str:
     """Upload a file to Supabase storage with retries and return the public URL."""
-    # First check if file already exists
     if check_file_exists(bucket, file_path):
         return f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{file_path}"
 
-    # If file doesn't exist, upload it
     try:
-        logger.info(f"Uploading file {file_path} to {bucket}...")
         supabase.storage.from_(bucket).upload(
             file_path, file_data, file_options={"content-type": content_type}
         )
 
-        # Give storage a moment to process
         time.sleep(0.5)
 
-        # Verify the file was uploaded successfully
         for attempt in range(3):
             if check_file_exists(bucket, file_path):
                 public_url = (
                     f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{file_path}"
                 )
                 return public_url
-            time.sleep(1)  # Wait a bit longer before next check
+            time.sleep(1)
 
         raise Exception(
             f"File upload verification failed after 3 attempts for {file_path}"
         )
     except Exception as e:
-        # If error is 409 (already exists), that's fine - another process may have uploaded it
         if hasattr(e, "statusCode") and e.statusCode == 409:
             return f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{file_path}"
-        # Otherwise, propagate the exception to trigger retry
         logger.info(f"Upload failed: {str(e)}")
         raise
 
@@ -119,7 +110,6 @@ def check_article_exists(content_hash: str) -> tuple[Optional[int], Optional[str
         return None, None
     except Exception as e:
         if "content_hash" in str(e):
-            # Column doesn't exist yet, so no duplicates possible
             return None, None
         raise e
 
@@ -149,6 +139,5 @@ def get_word_type_id(pos: str) -> int:
     """Get word type ID from POS."""
     word_type_id = WORD_TYPE_MAPPING.get(pos.lower())
     if word_type_id is None:
-        # Default to noun if POS not found
         return WORD_TYPE_MAPPING["noun"]
     return word_type_id

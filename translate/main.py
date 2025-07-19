@@ -21,7 +21,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Load environment variables once
 load_api_keys()
 
 
@@ -70,7 +69,6 @@ def review_split_file(split_file: str) -> bool:
         logger.info(f"Difficulty Level: {metadata['difficulty_level']}")
         logger.info(f"Total Sentences: {metadata['total_units']}")
 
-        # Show first few sentences as preview
         if units:
             logger.info("\n📝 Preview of first 3 sentences:")
             for i, unit in enumerate(units[:3]):
@@ -80,7 +78,6 @@ def review_split_file(split_file: str) -> bool:
                     else unit.get("text", "")
                 )
                 logger.info(f"  {i + 1}. {sentence}")
-                logger.info("")
 
         logger.info(f"📁 Split file saved to: {split_file}")
 
@@ -119,7 +116,6 @@ def review_translation(output_file: str) -> bool:
         logger.info(f"Difficulty Level: {metadata.get('difficulty_level', 'Unknown')}")
         logger.info(f"Total Sentences: {len(translations)}")
 
-        # Show first few translations as preview
         if translations:
             logger.info("\n📝 Preview of first 3 translations:")
             for i, translation in enumerate(translations[:3]):
@@ -135,7 +131,6 @@ def review_translation(output_file: str) -> bool:
                 )
                 logger.info(f"  {i + 1}. Original: {original}")
                 logger.info(f"     English: {english}")
-                logger.info("")
 
         logger.info(f"📁 Full translation saved to: {output_file}")
 
@@ -211,24 +206,20 @@ Examples:
 
     args = parser.parse_args()
 
-    # If no arguments provided, show help
     if not any([args.split, args.translate, args.insert]):
         parser.print_help()
         sys.exit(1)
 
-    # Validate input file exists
     if not os.path.exists(DEFAULT_INPUT_FILE):
         logger.info(f"❌ Input file not found: {DEFAULT_INPUT_FILE}")
         sys.exit(1)
 
-    # Validate batch size
     if args.batch_size < 1 or args.batch_size > 10:
         logger.info(f"❌ Batch size must be between 1 and 10, got: {args.batch_size}")
         sys.exit(1)
 
     split_file = os.path.splitext(DEFAULT_INPUT_FILE)[0] + "_split.json"
 
-    # Phase 1: Split
     if args.split:
         logger.info("🔄 Phase 1: Splitting input.txt into sentences...")
         run_split_file(DEFAULT_INPUT_FILE)
@@ -236,7 +227,6 @@ Examples:
             logger.info("Pipeline stopped after split review.")
             sys.exit(0)
 
-    # Phase 2: Translate
     if args.translate:
         if not os.path.exists(split_file):
             logger.info(f"❌ Split file not found: {split_file}")
@@ -249,7 +239,6 @@ Examples:
             logger.info("Pipeline stopped after translation review.")
             sys.exit(0)
 
-    # Phase 3: Insert
     if args.insert:
         if not os.path.exists(DEFAULT_OUTPUT_FILE):
             logger.info(f"❌ Translation output file not found: {DEFAULT_OUTPUT_FILE}")

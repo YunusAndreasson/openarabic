@@ -76,7 +76,6 @@ def main() -> None:
     articles_dir = os.path.abspath(os.path.join(script_dir, "..", "article"))
 
     if not os.path.exists(articles_dir):
-        logger.info(f"❌ Could not find articles directory at {articles_dir}")
         sys.exit(1)
 
     json_files: List[str] = []
@@ -93,7 +92,6 @@ def main() -> None:
                 json_files.append(output_json)
 
     if not json_files:
-        logger.info("❌ No article output.json files found in the articles directory")
         sys.exit(1)
 
     error_count = 0
@@ -106,10 +104,8 @@ def main() -> None:
             process_json_file(json_path, category_id, author_id)
         except Exception as e:
             error_count += 1
-            logger.info(f"❌ Error processing {json_path}: {str(e)}")
 
     if error_count > 0:
-        logger.info(f"❌ Failed to process: {error_count} articles")
         sys.exit(1)
 
     sys.exit(0)

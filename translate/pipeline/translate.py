@@ -138,19 +138,10 @@ def translate_file(
     results, batch_errors = process_batches(all_units, batch_size)
 
     if batch_errors:
-        logger.info(f"❌ Translation failed - {len(batch_errors)} batch(es) failed:")
-        for error in batch_errors:
-            logger.info(f"  - {error}")
         return None
 
     failed_count, issue_count = validate_results(results, all_units)
     if failed_count or issue_count:
-        if failed_count:
-            logger.info(f"❌ Translation contains {failed_count} failed sentence(s)")
-        if issue_count:
-            logger.info(
-                f"❌ Translation contains {issue_count} sentence(s) with validation issues"
-            )
         return None
 
     try:
@@ -166,7 +157,6 @@ def main() -> None:
     output_file = sys.argv[2] if len(sys.argv) >= 3 else DEFAULT_OUTPUT_FILE
 
     if not load_split_data(input_file):
-        logger.info(f"❌ Split file not found: {generate_split_filename(input_file)}")
         sys.exit(1)
 
     batch_size = MAX_BATCH_SIZE
@@ -184,7 +174,6 @@ def main() -> None:
         success = translate_file(input_file, output_file, batch_size)
 
         if not success:
-            logger.info("❌ Translation failed to produce results.")
             sys.exit(1)
 
         sys.exit(0)
@@ -192,7 +181,6 @@ def main() -> None:
     except KeyboardInterrupt:
         sys.exit(130)
     except Exception as e:
-        logger.info(f"❌ Error: {str(e)}")
         sys.exit(1)
 
 

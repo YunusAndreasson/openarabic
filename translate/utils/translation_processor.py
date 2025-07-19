@@ -24,7 +24,6 @@ def create_batches(
         """Get optimized context for each index."""
         return [get_optimized_context(sentences, idx) for idx in indices]
 
-    # Iterate through the sentences starting from the start_index
     num_remaining = len(sentences) - start_index
     for i in range(0, num_remaining, batch_size):
         current_batch_start_global_index = start_index + i
@@ -33,7 +32,7 @@ def create_batches(
             + batch_size
         ]
 
-        if not batch_sentences:  # Should not happen with correct logic, but safeguard
+        if not batch_sentences:
             continue
 
         batch_indices = list(
@@ -42,15 +41,14 @@ def create_batches(
                 current_batch_start_global_index + len(batch_sentences),
             )
         )
-        # Context uses global indices relative to the full 'sentences' list
         batch_contexts = gather_context(batch_indices)
 
         batches.append(
             {
-                "sentences": batch_sentences,  # The actual text for this batch
+                "sentences": batch_sentences,
                 "contexts": batch_contexts,
-                "start_index": current_batch_start_global_index,  # Global start index of this batch
-                "indices": batch_indices,  # Global indices of sentences in this batch
+                "start_index": current_batch_start_global_index,
+                "indices": batch_indices,
             }
         )
 

@@ -85,9 +85,6 @@ def get_or_create_root(
                         update_data["audio_url_en"] = audio_urls["audio_url_en"]
 
                 if update_data:
-                    logger.info(
-                        f"Updating root {root_id} with audio URLs: {update_data}"
-                    )
                     supabase.table("roots").update(update_data).eq(
                         "id", root_id
                     ).execute()
@@ -98,7 +95,6 @@ def get_or_create_root(
     root_data = {"letters": letters, "meaning": meaning}
     result = supabase.table("roots").insert(root_data).execute()
     root_id = result.data[0]["id"]
-    logger.info(f"Created new root with ID {root_id} for '{letters}'")
 
     try:
         from translate.audio.root_audio import get_or_generate_root_audio
@@ -123,10 +119,7 @@ def get_or_create_root(
                 update_data["audio_url_en"] = audio_urls["audio_url_en"]
 
         if update_data:
-            logger.info(f"Updating new root {root_id} with audio URLs: {update_data}")
             supabase.table("roots").update(update_data).eq("id", root_id).execute()
-        else:
-            logger.info(f"Warning: No audio URLs generated for root '{letters}'")
     except Exception as e:
         logger.info(f"Error generating audio for new root '{letters}': {e}")
 
@@ -152,9 +145,7 @@ def insert_sentence_words(
 
     if word_timings:
         if len(word_timings) < len(word_by_word):
-            logger.info(
-                f"Warning: Fewer word timings ({len(word_timings)}) than words in sentence ({len(word_by_word)})"
-            )
+            pass
         sorted_timings = sorted(word_timings, key=lambda x: float(x["start_time"]))
         timing_position = 0
         last_end_time = 0.0
@@ -309,7 +300,6 @@ def concatenate_and_upload_audio(
                 "id", article_id
             ).execute()
 
-            logger.info("Successfully created and uploaded concatenated article audio")
         except Exception as e:
             logger.info(f"Error uploading concatenated audio: {str(e)}")
 
@@ -377,10 +367,6 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> Dict:
                 )
                 timing_stats["total_words"] += word_stats["total_words"]
                 timing_stats["words_with_timings"] += word_stats["words_with_timing"]
-            else:
-                logger.info(
-                    "Warning: No word-by-word translation found, skipping word insertion"
-                )
 
         if sentence_audio_files:
             concatenate_and_upload_audio(sentence_audio_files, temp_dir, article_id)
@@ -442,8 +428,6 @@ def save_timing_report(
                 f"{words_with_timing_pct:.1f},"
                 f"{quality}\n"
             )
-
-        logger.info(f"Saved timing report to {report_file}")
 
     except Exception as e:
         logger.info(f"Failed to save timing report: {str(e)}")
