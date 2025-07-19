@@ -174,7 +174,6 @@ export function useFSRS({
 
         setCurrentWord(first || null);
       } else {
-        // DEBUG: Log why session is empty
         setIsComplete(true);
         if (onComplete && !stateTrackingRef.current.completionTriggered) {
           stateTrackingRef.current.completionTriggered = true;

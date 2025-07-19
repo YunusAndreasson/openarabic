@@ -17,7 +17,7 @@ const SortingHeader: FC = () => {
 
   const handleSortPress = useCallback(
     (sortField: typeof currentSort) => () => {
-      onSortChange(sortField, 'asc'); // Direction parameter is ignored, Redux handles toggle logic
+      onSortChange(sortField);
     },
     [onSortChange]
   );

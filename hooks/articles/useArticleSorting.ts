@@ -16,10 +16,7 @@ export const ARTICLE_SORT_OPTIONS: readonly SortOption<FilterState['sort']['fiel
 export interface UseArticleSortingResult {
   currentSort: FilterState['sort']['field'];
   sortDirection: FilterState['sort']['direction'];
-  onSortChange: (
-    sort: FilterState['sort']['field'],
-    direction: FilterState['sort']['direction']
-  ) => void;
+  onSortChange: (sort: FilterState['sort']['field']) => void;
   sortOptions: typeof ARTICLE_SORT_OPTIONS;
 }
 
@@ -32,8 +29,7 @@ export function useArticleSorting(): UseArticleSortingResult {
   const sortDirection = filtersState?.sort?.direction || 'desc';
 
   const onSortChange = useCallback(
-    (sort: FilterState['sort']['field'], _direction: FilterState['sort']['direction']) => {
-      // The direction parameter is ignored because setSortField handles direction logic internally
+    (sort: FilterState['sort']['field']) => {
       selectionFeedback();
       dispatch(setSortField(sort));
     },

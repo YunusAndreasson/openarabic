@@ -24,7 +24,6 @@ export function useArabicWord({
   position: _position,
 }: UseArabicWordProps): UseArabicWordReturn {
   const { user } = useAuth();
-  // const [forceSelected, setForceSelected] = useState<boolean | null>(null); // Remove this line
 
   // Get due words data - we use 0 as limit since we only need the due word IDs
   const { dueWordRootIds = new Set<number>() } = useArticlesByDueWords(user?.id, 0);

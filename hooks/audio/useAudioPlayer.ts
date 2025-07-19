@@ -181,7 +181,7 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
       }
 
       // Clean up dummy player
-      if (dummyPlayerRef.current && dummyPlayerRef.current.id !== 'fallback-dummy') {
+      if (dummyPlayerRef.current) {
         try {
           if (typeof dummyPlayerRef.current.remove === 'function') {
             dummyPlayerRef.current.remove();
@@ -194,42 +194,32 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
     };
   }, []);
 
-  // FIXED: Create a persistent dummy player that has proper event emitter structure
   const dummyPlayerRef = useRef<any>(null);
 
   // Create dummy player once and reuse it for the entire component lifecycle
   if (!dummyPlayerRef.current) {
-    try {
-      // Create a minimal working player with proper event emitter
-      dummyPlayerRef.current = {
-        id: 'dummy-player-' + Date.now(),
-        currentTime: 0,
-        duration: 0,
-        isLoaded: false,
-        playing: false,
-        playbackState: 'unknown',
-        isBuffering: false,
-        muted: false,
-        volume: 1,
-        playbackRate: 1,
-        // Event emitter methods that useAudioPlayerStatus needs
-        addListener: () => ({ remove: () => {} }),
-        removeListener: () => {},
-        removeAllListeners: () => {},
-        emit: () => {},
-        // Required player methods
-        play: () => Promise.resolve(),
-        pause: () => Promise.resolve(),
-        remove: () => Promise.resolve(),
-        seekTo: () => Promise.resolve(),
-      };
-    } catch {
-      // Dummy player creation failed - use minimal fallback
-      dummyPlayerRef.current = {
-        id: 'fallback-dummy',
-        addListener: () => ({ remove: () => {} }),
-      };
-    }
+    dummyPlayerRef.current = {
+      id: 'dummy-player-' + Date.now(),
+      currentTime: 0,
+      duration: 0,
+      isLoaded: false,
+      playing: false,
+      playbackState: 'unknown',
+      isBuffering: false,
+      muted: false,
+      volume: 1,
+      playbackRate: 1,
+      // Event emitter methods that useAudioPlayerStatus needs
+      addListener: () => ({ remove: () => {} }),
+      removeListener: () => {},
+      removeAllListeners: () => {},
+      emit: () => {},
+      // Required player methods
+      play: () => Promise.resolve(),
+      pause: () => Promise.resolve(),
+      remove: () => Promise.resolve(),
+      seekTo: () => Promise.resolve(),
+    };
   }
 
   // Always provide a non-null player to the status hook
@@ -564,7 +554,6 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
     [loadQueue, prefetchTracks]
   );
 
-  // Legacy actions for compatibility
   const actions = useMemo(
     () => ({
       stopPlayback: stop,
@@ -574,17 +563,13 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
     [stop, startEnhancedPlayback, prefetchTracks]
   );
 
-  // Memoize the return object to prevent unnecessary re-renders
   return useMemo(
     () => ({
-      // Legacy compatibility properties
       progress,
       metadata,
       audioState,
       currentTrackIndex: currentIndex,
       actions,
-
-      // State properties
       isLoading,
       position,
       duration,

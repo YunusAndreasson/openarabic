@@ -41,7 +41,7 @@ export const useArticleData = (
     staleTime: 3600000, // 1 hour - articles update max once a day
     gcTime: 7200000, // 2 hours
     refetchOnMount: false, // Don't refetch on mount if we have data
-    placeholderData: old => old, // Keep old data while fetching
+    placeholderData: old => old,
   });
 
   // Check if article is in user's reading list - optimized caching
@@ -131,8 +131,6 @@ export const useArticleData = (
       return acc;
     }, new Map<number, SentenceWord[]>());
   }, [sortedSentences]);
-
-  // Related articles functionality removed
 
   return {
     article,

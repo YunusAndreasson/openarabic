@@ -117,8 +117,8 @@ export function useGlobalAudioState(): GlobalAudioState {
       return {
         id: currentArticleId,
         title: audioPlayer.currentTrack.title,
-        author: 'Loading...', // Temporary until article data loads
-        image_url: 'https://via.placeholder.com/400x300/5B7F68/FFFFFF?text=Audio', // Tint-colored placeholder
+        author: 'Loading...',
+        image_url: 'https://via.placeholder.com/400x300/5B7F68/FFFFFF?text=Audio',
       };
     }
 

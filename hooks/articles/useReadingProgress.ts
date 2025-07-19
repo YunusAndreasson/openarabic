@@ -232,7 +232,7 @@ export function useSafeBulkReadingProgress(articleIds: number[]) {
   try {
     return useBulkReadingProgress(articleIds);
   } catch {
-    // AuthProvider not available (e.g., in tests) - return empty result
+    // AuthProvider not available - return empty result
     return {
       data: new Map(),
       isLoading: false,

@@ -28,7 +28,7 @@ export const useScreenFocusRefresh = (
   forceRefreshOnFocus = false,
   throttleInterval = 1000
 ): { refreshData: () => void } => {
-  // Ref holds all hook state and props to ensure stability of callbacks.
+  // Ref holds all hook state and props to ensure stability of callbacks
   const stateRef = useRef({
     isInitialMount: true,
     lastRefreshTime: 0,
@@ -44,7 +44,7 @@ export const useScreenFocusRefresh = (
     fullQueryKey: [] as QueryKey,
   });
 
-  // Update ref with the latest props on each render.
+  // Update ref with the latest props on each render
   // This does not trigger re-renders but ensures callbacks access fresh values.
   stateRef.current.queryClient = queryClient;
   stateRef.current.queryKey = queryKey;
@@ -97,7 +97,7 @@ export const useScreenFocusRefresh = (
         const queryState = state.queryClient.getQueryState(state.fullQueryKey);
         const isStale =
           !queryState?.dataUpdatedAt || // No data exists yet
-          now - queryState.dataUpdatedAt > state.staleTime; // Data is older than staleTime
+          now - queryState.dataUpdatedAt > state.staleTime;
         shouldRefresh = isStale;
       }
 

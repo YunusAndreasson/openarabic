@@ -25,7 +25,6 @@ export const useListenScreen = () => {
   const audioPlayer = useSimpleAudioPlayer();
   const { duration, currentTime, currentTrack, isPlaying, isLoading } = audioPlayer;
 
-  // Legacy compatibility - map to old interface
   const position = currentTime;
   const metadata = {
     articleId: currentTrack?.articleId?.toString() || null,

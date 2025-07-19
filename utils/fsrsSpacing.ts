@@ -19,10 +19,10 @@ export function calculateWordPriority(word: StudyWord): number {
   const hoursOverdue = (now.getTime() - dueDate.getTime()) / (1000 * 60 * 60);
   const stability = word.fsrs_stability ?? 1;
   const difficulty = word.fsrs_difficulty ?? DEFAULT_FSRS_DIFFICULTY;
-  const difficultyFactor = (difficulty - 5) * 0.01; // Use 0.01 as expected by tests
+  const difficultyFactor = (difficulty - 5) * 0.01;
   const lapseFactor = (word.fsrs_lapses ?? 0) * 0.5;
 
-  // Follow test expectations:
+  // Priority calculation:
   // - More overdue = lower priority number (more urgent)
   // - Higher stability = lower priority number (more urgent)
   // - Lower stability = higher priority number (less urgent)
