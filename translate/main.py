@@ -7,7 +7,7 @@ import subprocess
 import sys
 from typing import NoReturn
 
-from translate.config import (
+from translate.data.config import (
     DEFAULT_BATCH_SIZE,
     DEFAULT_INPUT_FILE,
     DEFAULT_OUTPUT_FILE,
@@ -64,7 +64,7 @@ def review_split_file(split_file: str) -> bool:
             "total_units": len(units),
         }
 
-        logger.info(f"\n📋 Split Review:")
+        logger.info("\n📋 Split Review:")
         logger.info(f"Title: {metadata['title']}")
         logger.info(f"Summary: {metadata['summary']}")
         logger.info(f"Difficulty Level: {metadata['difficulty_level']}")
@@ -72,7 +72,7 @@ def review_split_file(split_file: str) -> bool:
 
         # Show first few sentences as preview
         if units:
-            logger.info(f"\n📝 Preview of first 3 sentences:")
+            logger.info("\n📝 Preview of first 3 sentences:")
             for i, unit in enumerate(units[:3]):
                 sentence = (
                     unit.get("text", "")[:80] + "..."
@@ -113,7 +113,7 @@ def review_translation(output_file: str) -> bool:
         metadata = data.get("metadata", {})
         translations = data.get("translations", [])
 
-        logger.info(f"\n📋 Translation Review:")
+        logger.info("\n📋 Translation Review:")
         logger.info(f"Title: {metadata.get('title', 'Unknown')}")
         logger.info(f"Summary: {metadata.get('summary', 'No summary')}")
         logger.info(f"Difficulty Level: {metadata.get('difficulty_level', 'Unknown')}")
@@ -121,7 +121,7 @@ def review_translation(output_file: str) -> bool:
 
         # Show first few translations as preview
         if translations:
-            logger.info(f"\n📝 Preview of first 3 translations:")
+            logger.info("\n📝 Preview of first 3 translations:")
             for i, translation in enumerate(translations[:3]):
                 original = (
                     translation.get("original", "")[:50] + "..."

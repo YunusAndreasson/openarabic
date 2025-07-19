@@ -8,7 +8,7 @@ from translate.audio.audio_utils import (
     concatenate_audio_files,
     generate_sentence_audio,
 )
-from translate.config import ARCHIVE_DIR, ROOT_DIR, SUPABASE_URL
+from translate.data.config import ARCHIVE_DIR, ROOT_DIR, SUPABASE_URL
 from translate.utils.arabic_text import clean_arabic_text
 from translate.utils.storage_utils import (
     generate_audio_filename,
@@ -399,7 +399,7 @@ def save_timing_report(
     article_id: int, title: str, json_path: str, timing_stats: Dict
 ) -> None:
     """Save timing statistics to a CSV report file."""
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    os.path.dirname(os.path.abspath(__file__))
     reports_dir = os.path.join(ROOT_DIR, "reports")
     os.makedirs(reports_dir, exist_ok=True)
 

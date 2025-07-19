@@ -1,5 +1,4 @@
 import re
-from typing import List
 
 
 def clean_arabic_text(text: str) -> str:

@@ -1,10 +1,9 @@
 import logging
 from pathlib import Path
-from typing import NoReturn
-
-logger = logging.getLogger(__name__)
 
 from translate.data.config import AUDIO_CACHE_DIR
+
+logger = logging.getLogger(__name__)
 
 
 def ensure_valid_cache_files() -> None:
