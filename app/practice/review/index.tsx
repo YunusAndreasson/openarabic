@@ -1,7 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import type { JSX } from 'react';
-import { useCallback } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,7 +12,6 @@ import {
   ReviewCard,
   ReviewHeader,
 } from '@/components/review';
-import WordManagementModal from '@/components/vocabulary/WordManagementModal';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { useReview } from '@/hooks/review';
 import { useColors } from '@/hooks/theme/useColors';
@@ -65,33 +63,11 @@ export default function ReviewScreen(): JSX.Element {
     isStruggling,
     handleSwipeLeft,
     handleSwipeRight,
-    handleLongPress,
     handleClose,
     isUpdating,
     animatedStyle,
     sessionMetrics,
-    // Word management
-    isWordManagementVisible,
-    selectedWordForManagement,
-    hideWordManagement,
-    handleRemoveFromStudy,
-    handleResetProgress,
-    handleSkipForToday,
-    handleMarkAsEasy,
-    handleMarkAsHard,
   } = useReview({ fromRemember, mode });
-
-  // Check if we have a current word to show the management icon
-  const hasCurrentWord = Boolean(
-    currentSentence.wordForm && !isComplete && !isTransitioningToCompletion
-  );
-
-  // Handle management icon press - use the existing handleLongPress logic
-  const handleManageWord = useCallback(() => {
-    if (hasCurrentWord) {
-      handleLongPress();
-    }
-  }, [hasCurrentWord, handleLongPress]);
 
   if (isComplete || isTransitioningToCompletion) {
     return (
@@ -129,7 +105,7 @@ export default function ReviewScreen(): JSX.Element {
             fontSize={wordFontSize}
             isTransitioning={isTransitioningToCompletion}
             isUpdating={isUpdating}
-            opacityStyle={animatedStyle}
+            opacityStyle={animatedStyle as any}
             testID="review-card"
             word={currentSentence.wordForm}
             onSwipeLeft={handleSwipeLeft}
@@ -144,20 +120,8 @@ export default function ReviewScreen(): JSX.Element {
           />
         </View>
 
-        <ReviewBottomActions onManageWord={handleManageWord} hasCurrentWord={hasCurrentWord} />
+        <ReviewBottomActions />
       </View>
-
-      {/* Word Management Modal */}
-      <WordManagementModal
-        visible={isWordManagementVisible}
-        word={selectedWordForManagement}
-        onClose={hideWordManagement}
-        onRemoveFromStudy={handleRemoveFromStudy}
-        onResetProgress={handleResetProgress}
-        onSkipForToday={handleSkipForToday}
-        onMarkAsEasy={handleMarkAsEasy}
-        onMarkAsHard={handleMarkAsHard}
-      />
     </View>
   );
 }

@@ -29,15 +29,8 @@ export default function DictionaryScreen(): JSX.Element {
   });
 
   // Filter and sort words
-  const {
-    sortedWords,
-    sortOption,
-    sortDirection,
-    setSorting,
-    searchQuery,
-    setSearchQuery,
-    handleWordDelete,
-  } = useDictionaryModal({ studyWords: studyWords || [] });
+  const { sortedWords, sortOption, sortDirection, setSorting, searchQuery, setSearchQuery } =
+    useDictionaryModal({ studyWords: studyWords || [] });
 
   // Show search input when there are 20+ words (progressive disclosure)
   // Use total words count, not filtered results, to prevent search disappearing while typing
@@ -54,10 +47,13 @@ export default function DictionaryScreen(): JSX.Element {
       <DictionaryWordCard
         word={item}
         editMode={editMode}
-        onDelete={() => handleWordDelete(item.root_id)}
+        onDelete={() => {
+          // Word deletion functionality removed
+          console.log('Word deletion not available');
+        }}
       />
     ),
-    [editMode, handleWordDelete]
+    [editMode]
   );
 
   const keyExtractor = useCallback((item: StudyWord) => `word-${item.root_id}`, []);

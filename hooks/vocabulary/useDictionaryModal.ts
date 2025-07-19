@@ -1,11 +1,6 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
-import { useAuth } from '@/hooks/auth/useAuth';
-import { wordManagementService } from '@/services/wordManagement';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { handleError } from '@/utils/errorHandling';
 
 export type DictionarySortOption = 'difficulty' | 'alphabetical' | 'dateAdded';
 export type SortDirection = 'asc' | 'desc';
@@ -22,7 +17,6 @@ interface UseDictionaryModalProps {
 
 interface UseDictionaryModalReturn {
   sortedWords: StudyWord[];
-  handleWordDelete: (rootId: number) => Promise<void>;
   sortOption: DictionarySortOption;
   sortDirection: SortDirection;
   setSorting: (option: DictionarySortOption, direction?: SortDirection) => void;
@@ -33,8 +27,6 @@ interface UseDictionaryModalReturn {
 export const useDictionaryModal = ({
   studyWords,
 }: UseDictionaryModalProps): UseDictionaryModalReturn => {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [sortOption, setSortOption] = useState<DictionarySortOption>('difficulty');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [searchQuery, setSearchQuery] = useState('');
@@ -98,32 +90,8 @@ export const useDictionaryModal = ({
     return sorted;
   }, [studyWords, sortOption, sortDirection, searchQuery]);
 
-  const handleWordDelete = useCallback(
-    async (rootId: number) => {
-      if (!user?.id) return;
-
-      try {
-        await wordManagementService.removeFromStudy(user.id, rootId);
-
-        // Invalidate and refetch FSRS queries to update the UI
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) }),
-          queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) }),
-          queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.stats(user.id) }),
-        ]);
-      } catch (error) {
-        handleError(error as Error, {
-          toastMessage: 'Failed to delete word from study list',
-          sentrySeverity: 'error',
-        });
-      }
-    },
-    [user?.id, queryClient]
-  );
-
   return {
     sortedWords,
-    handleWordDelete,
     sortOption,
     sortDirection,
     setSorting,

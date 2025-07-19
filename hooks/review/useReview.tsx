@@ -3,24 +3,19 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import { InteractionManager } from 'react-native';
-import type { SharedValue } from 'react-native-reanimated';
+import type { AnimatedStyleProp, SharedValue } from 'react-native-reanimated';
 import { useAnimatedStyle } from 'react-native-reanimated';
 
 import { DEFAULT_ANIMATION_DURATION, TIMING_CONFIG } from '@/constants/animation';
 import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
-import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useFSRS } from '@/hooks/vocabulary/useFSRS';
-import { useWordManagement } from '@/hooks/vocabulary/useWordManagement';
 import { useWordSizing } from '@/hooks/vocabulary/useWordSizing';
-import type { EnhancedAudioTrack } from '@/types/audio.types';
-import type { SessionMetrics, WordConfidence } from '@/types/review.types';
-import type { AnimatedStyleProp } from '@/types/ui/base.types';
-import type { StudyWord } from '@/types/vocabulary.types';
+import type { SessionMetrics } from '@/types/review.types';
 import { handleError } from '@/utils/errorHandling';
 
 // Consolidated refs for easier state management
@@ -67,15 +62,6 @@ interface UseReviewReturn {
   handleClose: () => void;
   animatedStyle: AnimatedStyleProp<ViewStyle>;
   sessionMetrics: SessionMetrics;
-  // Word management
-  isWordManagementVisible: boolean;
-  selectedWordForManagement: StudyWord | null;
-  hideWordManagement: () => void;
-  handleRemoveFromStudy: (word: StudyWord) => Promise<void>;
-  handleResetProgress: (word: StudyWord) => Promise<void>;
-  handleSkipForToday: (word: StudyWord) => Promise<void>;
-  handleMarkAsEasy: (word: StudyWord) => Promise<void>;
-  handleMarkAsHard: (word: StudyWord) => Promise<void>;
 }
 
 interface WordSizingConfig {
@@ -195,28 +181,6 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     sessionCooldownHours: fromRemember ? 0 : DEFAULT_SESSION_COOLDOWN_HOURS,
   });
 
-  // Word management integration
-  const {
-    isModalVisible: isWordManagementVisible,
-    selectedWord: selectedWordForManagement,
-    showWordManagement,
-    hideWordManagement,
-    handleRemoveFromStudy,
-    handleResetProgress,
-    handleSkipForToday,
-    handleMarkAsEasy,
-    handleMarkAsHard,
-  } = useWordManagement({
-    onWordRemoved: () => {
-      // Refresh the current session after word removal
-      invalidateQueries();
-    },
-    onWordUpdated: () => {
-      // Refresh the current session after word update
-      invalidateQueries();
-    },
-  });
-
   const wordFontSize = useWordSizing(currentWord?.root?.letters, fontConfig);
 
   // Derive currentSentence directly from currentWord to avoid timing issues
@@ -259,7 +223,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
 
   // Shows meaning overlay if needed
   const displayMeaning = useCallback(
-    (confidence: WordConfidence, isStruggling: boolean) => {
+    (confidence: 'known' | 'vague' | 'unknown', isStruggling: boolean) => {
       if (confidence === 'known') return null;
 
       const meaning = currentWord?.root?.meaning || 'No translation available';
@@ -270,7 +234,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
 
   // Determines if the user is struggling with this word
   const checkIsStruggling = useCallback(
-    (confidence: WordConfidence): boolean => {
+    (confidence: 'known' | 'vague' | 'unknown'): boolean => {
       if (confidence !== 'vague') return false;
 
       const now = Date.now();
@@ -285,7 +249,11 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
 
   // Process the word update in FSRS
   const processFeedback = useCallback(
-    async (confidence: WordConfidence, isStruggling: boolean, controller: AbortController) => {
+    async (
+      confidence: 'known' | 'vague' | 'unknown',
+      isStruggling: boolean,
+      controller: AbortController
+    ) => {
       if (!currentWord?.root_id || controller.signal.aborted) {
         return;
       }
@@ -317,10 +285,10 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
   const playAudio = useCallback((url: string) => {
     if (!url) return Promise.resolve();
 
-    const track: EnhancedAudioTrack = {
+    const track = {
       id: `review-${Date.now()}`,
       audioUrl: url,
-      title: STRINGS.REVIEW_AUDIO,
+      title: 'Review Audio', // Assuming a default title for now
       duration: 0,
     };
 
@@ -333,10 +301,10 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
   const playEnglishFeedback = useCallback((url: string) => {
     if (!url) return Promise.resolve();
 
-    const feedbackTrack: EnhancedAudioTrack = {
+    const feedbackTrack = {
       id: `feedback-${Date.now()}`,
       audioUrl: url,
-      title: STRINGS.ENGLISH_FEEDBACK,
+      title: 'English Feedback', // Assuming a default title for now
       duration: 0,
     };
 
@@ -346,7 +314,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
   }, []);
 
   const handleKnowledgeResponse = useCallback(
-    (confidence: WordConfidence) => {
+    (confidence: 'known' | 'vague' | 'unknown') => {
       // Guard conditions: exit early if we're already in a processing state
       if (
         stateRefs.current.isUpdatingWord ||
@@ -560,8 +528,8 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
   const handleLongPress = useCallback(() => {
     if (isComplete || stateRefs.current.isUpdatingWord || !currentWord) return;
 
-    showWordManagement(currentWord);
-  }, [currentWord, isComplete, showWordManagement]);
+    // showWordManagement(currentWord); // REMOVED
+  }, [currentWord, isComplete /* showWordManagement */]); // REMOVED
 
   const handleClose = useCallback(() => {
     const mounted = { current: true };
@@ -673,14 +641,5 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     handleClose,
     animatedStyle,
     sessionMetrics: sessionMetricsRef.current,
-    // Word management
-    isWordManagementVisible,
-    selectedWordForManagement,
-    hideWordManagement,
-    handleRemoveFromStudy,
-    handleResetProgress,
-    handleSkipForToday,
-    handleMarkAsEasy,
-    handleMarkAsHard,
   };
 }

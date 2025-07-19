@@ -33,7 +33,6 @@ jest.mock('../../components/review/CompletionScreen', () => {
 jest.mock('../../components/review/ReviewHeader', () => () => null);
 jest.mock('../../components/review/MeaningOverlay', () => () => null);
 jest.mock('../../components/review/InstructionFooter', () => () => null);
-jest.mock('../../components/vocabulary/WordManagementModal', () => () => null);
 jest.mock('../../components/ThemedView', () => {
   const React = require('react');
   const { View } = require('react-native');
@@ -94,7 +93,7 @@ jest.mock('../../hooks/review', () => {
     computeProgress,
     handleSwipeLeft,
     handleSwipeRight,
-    useReview: ({ onClose } = {}) => {
+    useReview: ({ onClose }: { onClose?: () => void } = {}) => {
       onCloseCallback = onClose ?? null;
       return {
         showMeaningOverlay: false,
@@ -111,19 +110,10 @@ jest.mock('../../hooks/review', () => {
         isStruggling: false,
         handleSwipeLeft,
         handleSwipeRight,
-        handleLongPress: jest.fn(),
         handleClose,
         animatedStyle: {},
         sessionMetrics: {},
         isUpdating: false,
-        isWordManagementVisible: false,
-        selectedWordForManagement: null,
-        hideWordManagement: jest.fn(),
-        handleRemoveFromStudy: jest.fn(),
-        handleResetProgress: jest.fn(),
-        handleSkipForToday: jest.fn(),
-        handleMarkAsEasy: jest.fn(),
-        handleMarkAsHard: jest.fn(),
       };
     },
   };
