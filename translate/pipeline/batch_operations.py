@@ -1,31 +1,30 @@
+import logging
 import sys
 import time
-import logging
+from typing import Any, Dict, List, Optional
 
-from typing import List, Dict, Any, Optional
-
-from translate.core.utils import call_openai_api
-from translate.core.config import (
-    MODEL_TRANSLATION,
+from translate.data.config import (
     MODEL_OTHER,
+    MODEL_TRANSLATION,
     MODEL_VERIFICATION,
 )
-from translate.core.text_utils import get_optimized_context, filter_arabic_words
-from translate.core.schemas import (
-    TRANSLATE_SENTENCES_FUNCTION,
-    TASHKEEL_FUNCTION,
-    WORD_TRANSLATION_FUNCTION,
-    REFINEMENT_FUNCTION,
-    GENERAL_SYSTEM_PROMPT,
-    SENTENCE_TRANSLATION_USER_PROMPT,
-    TASHKEEL_USER_PROMPT,
-    WORD_BY_WORD_USER_PROMPT,
+from translate.data.schemas import (
     FINAL_VERIFICATION_USER_PROMPT,
+    GENERAL_SYSTEM_PROMPT,
+    REFINEMENT_FUNCTION,
+    SENTENCE_TRANSLATION_USER_PROMPT,
+    TASHKEEL_FUNCTION,
+    TASHKEEL_USER_PROMPT,
+    TRANSLATE_SENTENCES_FUNCTION,
+    WORD_BY_WORD_USER_PROMPT,
+    WORD_TRANSLATION_FUNCTION,
 )
+from translate.utils import call_openai_api
+from translate.utils.text_utils import filter_arabic_words, get_optimized_context
 
 logger = logging.getLogger(__name__)
 
-from translate.core.models import WordTranslationOptions
+from translate.data.models import WordTranslationOptions
 
 
 def _build_word_prompt(
@@ -59,7 +58,7 @@ def batch_translate_full_sentences(
         retry_without_context: bool = False,
     ) -> Dict[str, Any]:
         """Helper function to attempt translation with or without context"""
-        formatted_inputs = []
+        formatted_inputs: List[str] = []
         for i, (sentence, context) in enumerate(zip(sentences, contexts)):
             context_str = (
                 ""
@@ -95,7 +94,7 @@ def batch_translate_full_sentences(
         response = try_translation(sentences, contexts, retry_without_context=True)
 
     if "translations" in response and isinstance(response["translations"], list):
-        results = []
+        results: List[Dict[str, Any]] = []
         for i, item in enumerate(response["translations"]):
             if i >= len(sentences):
                 break
@@ -152,11 +151,11 @@ def batch_translate_full_sentences(
 def batch_add_tashkeel(
     sentences: List[str],
     translation_results: List[Dict[str, Any]],
-    all_sentences: List[str] = None,
-    indices: List[int] = None,
+    all_sentences: Optional[List[str]] = None,
+    indices: Optional[List[int]] = None,
 ) -> List[Dict[str, str]]:
     """Add diacritical marks to multiple sentences in a batch"""
-    formatted_inputs = []
+    formatted_inputs: List[str] = []
     for i, (sentence, translation_data) in enumerate(
         zip(sentences, translation_results)
     ):
@@ -176,7 +175,7 @@ def batch_add_tashkeel(
                 f"- {u.get('text', '')}: {u.get('reason', '')}" for u in uncertainties
             )
 
-        grammar_notes = []
+        grammar_notes: List[str] = []
         if "word_by_word" in translation_data:
             for word in translation_data["word_by_word"]:
                 if word.get("notes") and word.get("arabic"):
@@ -197,7 +196,7 @@ def batch_add_tashkeel(
         {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
         {
             "role": "user",
-                "content": TASHKEEL_USER_PROMPT + "\n\n" + "\n\n".join(formatted_inputs),
+            "content": TASHKEEL_USER_PROMPT + "\n\n" + "\n\n".join(formatted_inputs),
         },
     ]
 
@@ -349,7 +348,7 @@ def batch_translate_words(
                             "word_translations": word_translations_options
                         }
                         break
-                
+
                 raise Exception("No valid word translations returned from model.")
             except Exception as e:
                 attempt += 1
@@ -373,15 +372,11 @@ def batch_refine_translations(
             original = data["original"]
             translation_data = data["translation"]
             tashkeel_data = data["tashkeel"]
-            word_translations_options = data[
-                "word_translations_options"
-            ]
+            word_translations_options = data["word_translations_options"]
             previous_uncertainties = data["previous_uncertainties"]
 
             word_trans_formatted = []
-            for (
-                word_opts
-            ) in word_translations_options:
+            for word_opts in word_translations_options:
                 entry = f"{word_opts.get('arabic', '')}:"
                 eng_opts_str = ", ".join(word_opts.get("english_options", ["N/A"]))
                 ess_opts_str = ", ".join(

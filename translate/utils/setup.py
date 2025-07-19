@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-import sys
-import subprocess
-from pathlib import Path
 import logging
+import subprocess
+import sys
+from pathlib import Path
+from typing import NoReturn
 
 logger = logging.getLogger(__name__)
 
 
-def setup_environment():
+def setup_environment() -> None:
     """Install requirements and set up environment for translation system"""
     logger.info("Setting up Arabic Translation System environment...\n")
 

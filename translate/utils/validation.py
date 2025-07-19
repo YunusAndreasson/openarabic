@@ -1,7 +1,7 @@
-from typing import List, Dict, Any
 import logging
+from typing import Any, Dict, List
 
-from translate.core.models import SentenceTranslation, TranslationValidationError
+from translate.data.models import SentenceTranslation, TranslationValidationError
 
 
 def validate_translation_results(
@@ -30,7 +30,7 @@ def validate_translation_results(
             f"{step_name}: Result count mismatch. Expected {len(original_sentences)}, got {len(results)}"
         )
 
-    errors = []
+    errors: List[str] = []
     for i, (original, result) in enumerate(zip(original_sentences, results)):
         # Check for error markers in translations
         if isinstance(result, dict):
@@ -129,7 +129,7 @@ def validate_final_translation(translation: SentenceTranslation) -> List[str]:
     """
     Validate a final translation result and return any issues found.
     """
-    issues = []
+    issues: List[str] = []
 
     # Check for basic completeness
     if not translation.full_translation:

@@ -1,9 +1,10 @@
-from pathlib import Path
 import logging
+from pathlib import Path
+from typing import NoReturn
 
 logger = logging.getLogger(__name__)
 
-from translate.core.config import AUDIO_CACHE_DIR
+from translate.data.config import AUDIO_CACHE_DIR
 
 
 def ensure_valid_cache_files() -> None:
@@ -13,9 +14,9 @@ def ensure_valid_cache_files() -> None:
     fixed_count = 0
 
     for file_path in cache_dir.iterdir():
-        if file_path.is_file() and not file_path.name.startswith('.'):
-            if file_path.suffix == '':
-                new_path = file_path.with_suffix('.mp3')
+        if file_path.is_file() and not file_path.name.startswith("."):
+            if file_path.suffix == "":
+                new_path = file_path.with_suffix(".mp3")
                 try:
                     file_path.rename(new_path)
                     fixed_count += 1

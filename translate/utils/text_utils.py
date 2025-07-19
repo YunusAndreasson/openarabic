@@ -1,13 +1,12 @@
 import re
 from typing import List, Optional
 
-CONTEXT_WINDOW_SIZE = 2
-
+CONTEXT_WINDOW_SIZE: int = 2
 
 
 def get_sentence_context(sentences: List[str], index: int) -> str:
     """Get context from surrounding sentences for better translation quality"""
-    context_parts = []
+    context_parts: List[str] = []
 
     start_idx = max(0, index - CONTEXT_WINDOW_SIZE)
     if start_idx < index:
@@ -45,7 +44,7 @@ def get_optimized_context(
         return None
 
     if for_tashkeel:
-        context_parts = []
+        context_parts: List[str] = []
 
         if index > 0:
             prev_sent = sentences[index - 1]

@@ -14,7 +14,9 @@ DEFAULT_BATCH_SIZE = 5
 MAX_BATCH_SIZE = 5
 
 # Directory structure
-ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+ROOT_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+)
 ARTICLE_DIR = os.path.join(ROOT_DIR, "article")
 ARCHIVE_DIR = os.path.join(ROOT_DIR, "archive")
 AUDIO_CACHE_DIR = os.path.join(ROOT_DIR, "audio_cache")

@@ -31,6 +31,7 @@ def wrap_in_arabic_ssml(text: str) -> str:
     """
     return f'<speak><lang xml:lang="ar">{text}</lang></speak>'
 
+
 def clean_word_for_matching(word: str) -> str:
     """
     Clean and normalize a word for better timing matching.
@@ -63,5 +64,3 @@ def clean_word_for_matching(word: str) -> str:
         word = word.replace(p, "")
 
     return word
-
-

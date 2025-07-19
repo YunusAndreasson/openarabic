@@ -1,20 +1,25 @@
-import os
 import json
 import logging
+import os
 import sys
+from typing import Any, Dict, List, Optional, Union
 
 from tqdm import tqdm
 
-from translate.core.models import (
+from translate.data.config import (
+    DEFAULT_INPUT_FILE,
+    DEFAULT_OUTPUT_FILE,
+    MAX_BATCH_SIZE,
+)
+from translate.data.models import (
     TextMetadata,
 )
-from translate.core.batch_utils import create_batches, process_batch
-from translate.core.file_utils import (
+from translate.utils.batch_utils import create_batches, process_batch
+from translate.utils.file_utils import (
+    generate_split_filename,
     read_json_file,
     write_json_file,
-    generate_split_filename,
 )
-from translate.core.config import MAX_BATCH_SIZE, DEFAULT_INPUT_FILE, DEFAULT_OUTPUT_FILE
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -23,7 +28,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def load_split_data(input_file: str) -> dict | None:
+def load_split_data(input_file: str) -> Optional[Dict[str, Any]]:
     """Load the split JSON created by split_file.py."""
     split_path = generate_split_filename(input_file)
     if not os.path.exists(split_path):
@@ -31,7 +36,7 @@ def load_split_data(input_file: str) -> dict | None:
     return read_json_file(split_path)
 
 
-def create_metadata(split_data: dict) -> TextMetadata:
+def create_metadata(split_data: Dict[str, Any]) -> TextMetadata:
     """Build a TextMetadata object from raw split data."""
     return TextMetadata(
         title=split_data.get("title", "Untitled Text"),
@@ -41,10 +46,12 @@ def create_metadata(split_data: dict) -> TextMetadata:
     )
 
 
-def process_batches(all_units: list, batch_size: int) -> tuple[list, list]:
+def process_batches(
+    all_units: List[Dict[str, Any]], batch_size: int
+) -> tuple[List[Any], List[str]]:
     """Process all batches and return results and errors."""
-    results: list = []
-    errors: list[str] = []
+    results: List[Any] = []
+    errors: List[str] = []
     batches = create_batches(all_units, 0, batch_size)
     with tqdm(total=len(all_units), desc="Translating", initial=0) as pbar:
         for batch in batches:
@@ -64,7 +71,9 @@ def process_batches(all_units: list, batch_size: int) -> tuple[list, list]:
     return results, errors
 
 
-def validate_results(results: list, all_units: list) -> tuple[int, int]:
+def validate_results(
+    results: List[Any], all_units: List[Dict[str, Any]]
+) -> tuple[int, int]:
     """Return counts of failed and issue translations."""
     failed = 0
     issues = 0
@@ -76,12 +85,22 @@ def validate_results(results: list, all_units: list) -> tuple[int, int]:
         elif getattr(result, "verification_status", "") == "Issues Found":
             issues += 1
         ft = getattr(result, "full_translation", "")
-        if any(m in ft for m in ["[ERROR]", "[BATCH PROCESSING ERROR]", "[Translation Error]", "[Format Error]"]):
+        if any(
+            m in ft
+            for m in [
+                "[ERROR]",
+                "[BATCH PROCESSING ERROR]",
+                "[Translation Error]",
+                "[Format Error]",
+            ]
+        ):
             failed += 1
     return failed, issues
 
 
-def save_translation_output(output_file: str, metadata: TextMetadata, results: list) -> None:
+def save_translation_output(
+    output_file: str, metadata: TextMetadata, results: List[Any]
+) -> None:
     """Persist the translation results to disk."""
     write_json_file(
         output_file,
@@ -91,7 +110,8 @@ def save_translation_output(output_file: str, metadata: TextMetadata, results: l
         },
     )
 
-def serialize(obj):
+
+def serialize(obj: Any) -> Union[Dict[str, Any], List[Any], Any]:
     """Recursively convert Pydantic models and lists into dictionaries."""
     if isinstance(obj, list):
         return [serialize(item) for item in obj]
@@ -102,7 +122,9 @@ def serialize(obj):
     return obj
 
 
-def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATCH_SIZE):
+def translate_file(
+    input_file: str, output_file: str, batch_size: int = MAX_BATCH_SIZE
+) -> Optional[bool]:
     """Translate a pre-split file"""
     split_data = load_split_data(input_file)
     if not split_data:
@@ -138,7 +160,7 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
         return None
 
 
-def main():
+def main() -> None:
     """Main entry point"""
     input_file = sys.argv[1] if len(sys.argv) >= 2 else DEFAULT_INPUT_FILE
     output_file = sys.argv[2] if len(sys.argv) >= 3 else DEFAULT_OUTPUT_FILE

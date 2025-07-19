@@ -1,31 +1,30 @@
-import os
 import json
-import time
 import logging
+import os
 import sys
-from typing import Dict, Any
+import time
+from typing import Any, Dict, List
 
-from translate.core.utils import (
+from translate.utils import (
     call_openai_api,
     token_tracker,
 )
-from translate.core.file_utils import (
+from translate.utils.file_utils import (
+    generate_split_filename,
     read_text_file,
     write_json_file,
-    generate_split_filename,
 )
 
 logger = logging.getLogger(__name__)
-from translate.core.config import (
-    MODEL_ANALYSIS,
+from translate.data.config import (
     DEFAULT_INPUT_FILE,
     DEFAULT_SPLIT_OUTPUT_FILE,
+    MODEL_ANALYSIS,
 )
-
-from translate.core.schemas import (
-    SPLIT_TEXT_FUNCTION,
+from translate.data.schemas import (
     GENERAL_SYSTEM_PROMPT,
     SENTENCE_SPLITTING_USER_PROMPT,
+    SPLIT_TEXT_FUNCTION,
 )
 
 logging.basicConfig(
@@ -33,7 +32,7 @@ logging.basicConfig(
 )
 
 
-def build_split_messages(text: str) -> list[dict]:
+def build_split_messages(text: str) -> List[Dict[str, str]]:
     """Create the chat messages payload for splitting."""
     return [
         {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
@@ -82,7 +81,7 @@ def split_text_into_sentences(text: str) -> Dict[str, Any]:
     return parse_split_response(response)
 
 
-def split_file(input_file: str, output_file: str):
+def split_file(input_file: str, output_file: str) -> Dict[str, Any]:
     """Split an input file into learner-friendly units and save the result."""
     start_time = time.time()
 
@@ -110,7 +109,7 @@ __all__ = [
 ]
 
 
-def main():
+def main() -> None:
     """Main entry point"""
     input_file = sys.argv[1] if len(sys.argv) >= 2 else DEFAULT_INPUT_FILE
 

@@ -1,20 +1,20 @@
-import os
 import json
-import time
 import logging
+import os
 import sys
-from typing import List, Dict, Any, Optional
-
-from translate.core.config import (
-    MODEL_ANALYSIS,
-    MODEL_TRANSLATION,
-    MODEL_OTHER,
-    MODEL_VERIFICATION,
-)
+import time
+from typing import Any, Dict, List, Optional
 
 from openai import OpenAI
 
-_keys_loaded = False
+from translate.data.config import (
+    MODEL_ANALYSIS,
+    MODEL_OTHER,
+    MODEL_TRANSLATION,
+    MODEL_VERIFICATION,
+)
+
+_keys_loaded: bool = False
 
 
 def load_api_keys() -> None:
@@ -29,6 +29,7 @@ def load_api_keys() -> None:
         exec(f.read(), globals())
     _keys_loaded = True
 
+
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
@@ -36,30 +37,25 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-
 class TokenUsageTracker:
     """Track token usage and calculate costs"""
 
-    def __init__(self):
-        self.prompt_tokens = 0
-        self.completion_tokens = 0
-        self.total_tokens = 0
-        self.total_cost = 0
-        self.api_calls = 0
+    def __init__(self) -> None:
+        self.prompt_tokens: int = 0
+        self.completion_tokens: int = 0
+        self.total_tokens: int = 0
+        self.total_cost: float = 0.0
+        self.api_calls: int = 0
 
-    def update(self, usage_data: Dict[str, int]):
+    def update(self, usage_data: Dict[str, int]) -> None:
         """Update token counts from API response"""
         self.prompt_tokens += usage_data.get("prompt_tokens", 0)
         self.completion_tokens += usage_data.get("completion_tokens", 0)
         self.total_tokens += usage_data.get("total_tokens", 0)
         self.api_calls += 1
 
-        prompt_cost = (
-            usage_data.get("prompt_tokens", 0) * 0.01 / 1000
-        )
-        completion_cost = (
-            usage_data.get("completion_tokens", 0) * 0.03 / 1000
-        )
+        prompt_cost = usage_data.get("prompt_tokens", 0) * 0.01 / 1000
+        completion_cost = usage_data.get("completion_tokens", 0) * 0.03 / 1000
         self.total_cost += prompt_cost + completion_cost
 
     def __str__(self) -> str:
@@ -76,7 +72,7 @@ class TokenUsageTracker:
 token_tracker = TokenUsageTracker()
 
 
-def init_openai_client():
+def init_openai_client() -> OpenAI:
     """Initialize the OpenAI client with API key"""
     load_api_keys()
 
@@ -114,7 +110,9 @@ def _create_completion(
     )
 
 
-def _decode_response(response: Any, function_schema: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+def _decode_response(
+    response: Any, function_schema: Optional[Dict[str, Any]]
+) -> Dict[str, Any]:
     """Extract JSON data from the OpenAI API response."""
     if function_schema and hasattr(response.choices[0].message, "function_call"):
         function_call = response.choices[0].message.function_call

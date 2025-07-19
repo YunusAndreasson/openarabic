@@ -1,31 +1,32 @@
 import json
+import logging
 import os
 import sys
-import logging
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+from typing import Any, Dict, List
 
-from translate.core.storage_utils import (
-    supabase,
-    generate_content_hash,
-    check_article_exists,
-    get_category_id,
-    get_author_id,
-)
-from translate.core.database_utils import (
+from translate.utils import load_api_keys
+from translate.utils.cache_utils import ensure_valid_cache_files
+from translate.utils.database_utils import (
+    archive_files,
     insert_article_sentences,
     save_timing_report,
-    archive_files,
     validate_article_data,
 )
-from translate.core.cache_utils import ensure_valid_cache_files
-from translate.core.utils import load_api_keys
+from translate.utils.storage_utils import (
+    check_article_exists,
+    generate_content_hash,
+    get_author_id,
+    get_category_id,
+    supabase,
+)
 
 logger = logging.getLogger(__name__)
 
 load_api_keys()
 
 
-def process_json_file(file_path: str, category_id: int, author_id: int) -> None:
+def process_json_file(file_path: str, category_id: int, author_id: int) -> int:
     """Process the JSON file and insert data into Supabase."""
     with open(file_path, "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -67,7 +68,7 @@ def process_json_file(file_path: str, category_id: int, author_id: int) -> None:
     return article_id
 
 
-def main():
+def main() -> None:
     """Main function to run the script."""
     ensure_valid_cache_files()
 
@@ -78,7 +79,7 @@ def main():
         logger.info(f"❌ Could not find articles directory at {articles_dir}")
         sys.exit(1)
 
-    json_files = []
+    json_files: List[str] = []
 
     direct_output_json = os.path.join(articles_dir, "output.json")
     if os.path.exists(direct_output_json):

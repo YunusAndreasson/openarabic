@@ -1,11 +1,11 @@
+import logging
 import os
 import time
 import uuid
-import logging
-from supabase import create_client
-from typing import Dict, Optional
+from typing import Any, Dict, Optional, Union
 
-from translate.core.config import SUPABASE_URL, SUPABASE_KEY
+from supabase import create_client
+from translate.data.config import SUPABASE_KEY, SUPABASE_URL
 
 if not all([SUPABASE_URL, SUPABASE_KEY]):
     raise EnvironmentError(
@@ -18,7 +18,7 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 logger = logging.getLogger(__name__)
 
 # Word type mapping from POS to word_types table
-WORD_TYPE_MAPPING = {
+WORD_TYPE_MAPPING: Dict[str, int] = {
     "verb": 1,
     "noun": 2,
     "particle": 3,
@@ -55,8 +55,11 @@ def check_file_exists(bucket: str, file_path: str) -> bool:
 
 
 def upload_to_storage(
-    bucket: str, file_path: str, file_data, content_type: str = "audio/mpeg"
-):
+    bucket: str,
+    file_path: str,
+    file_data: Union[bytes, str],
+    content_type: str = "audio/mpeg",
+) -> str:
     """Upload a file to Supabase storage with retries and return the public URL."""
     # First check if file already exists
     if check_file_exists(bucket, file_path):
@@ -93,10 +96,10 @@ def upload_to_storage(
         raise
 
 
-def generate_content_hash(data: Dict) -> str:
+def generate_content_hash(data: Dict[str, Any]) -> str:
     """Generate a unique hash for the article content."""
-    import json
     import hashlib
+    import json
 
     content = json.dumps(data, sort_keys=True)
     return hashlib.sha256(content.encode()).hexdigest()

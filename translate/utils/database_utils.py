@@ -1,25 +1,25 @@
+import logging
 import os
 import shutil
-import logging
-from datetime import datetime, UTC
-from typing import Dict, List, Optional
+from datetime import UTC, datetime
+from typing import Any, Dict, List, Optional
 
-from translate.core.arabic_text import clean_arabic_text
-from translate.core.storage_utils import (
-    supabase,
-    get_word_type_id,
-    generate_audio_filename,
-)
-from translate.core.audio_utils import (
-    generate_sentence_audio,
+from translate.audio.audio_utils import (
     concatenate_audio_files,
+    generate_sentence_audio,
 )
-from translate.core.config import ROOT_DIR, ARCHIVE_DIR, SUPABASE_URL
+from translate.config import ARCHIVE_DIR, ROOT_DIR, SUPABASE_URL
+from translate.utils.arabic_text import clean_arabic_text
+from translate.utils.storage_utils import (
+    generate_audio_filename,
+    get_word_type_id,
+    supabase,
+)
 
 logger = logging.getLogger(__name__)
 
 
-def extract_root_info(word: Dict) -> tuple[str, Optional[str], Optional[str]]:
+def extract_root_info(word: Dict[str, Any]) -> tuple[str, Optional[str], Optional[str]]:
     """Extract root information from a word.
 
     Returns:
@@ -64,20 +64,18 @@ def get_or_create_root(
         root_id = root["id"]
         if not root.get("audio_url") or not root.get("audio_url_en"):
             try:
-                from translate.core.root_audio import get_or_generate_root_audio
+                from translate.audio.root_audio import get_or_generate_root_audio
 
                 english_audio_text = english_translation
                 if not english_audio_text and meaning:
                     if "Auto-generated root for:" in meaning:
-                        english_audio_text = (
-                            meaning.replace("Auto-generated root for:", "").strip()
-                        )
+                        english_audio_text = meaning.replace(
+                            "Auto-generated root for:", ""
+                        ).strip()
                     else:
                         english_audio_text = meaning
 
                 audio_urls = get_or_generate_root_audio(letters, english_audio_text)
-
-
 
                 update_data = {}
                 if audio_urls:
@@ -87,7 +85,9 @@ def get_or_create_root(
                         update_data["audio_url_en"] = audio_urls["audio_url_en"]
 
                 if update_data:
-                    logger.info(f"Updating root {root_id} with audio URLs: {update_data}")
+                    logger.info(
+                        f"Updating root {root_id} with audio URLs: {update_data}"
+                    )
                     supabase.table("roots").update(update_data).eq(
                         "id", root_id
                     ).execute()
@@ -101,7 +101,7 @@ def get_or_create_root(
     logger.info(f"Created new root with ID {root_id} for '{letters}'")
 
     try:
-        from translate.core.root_audio import get_or_generate_root_audio
+        from translate.audio.root_audio import get_or_generate_root_audio
 
         english_audio_text = english_translation
 
@@ -134,8 +134,10 @@ def get_or_create_root(
 
 
 def insert_sentence_words(
-    sentence_id: int, translation: Dict, word_timings: List[Dict] | None = None
-) -> Dict:
+    sentence_id: int,
+    translation: Dict[str, Any],
+    word_timings: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
     """
     Insert words from a sentence with their roots and relationships.
     Uses cleaned Arabic text (without non-Arabic characters) for consistency with TTS.
@@ -146,7 +148,7 @@ def insert_sentence_words(
     total_words = len(word_by_word)
     words_with_timing = 0
 
-    words_data: List[Dict] = []
+    words_data: List[Dict[str, Any]] = []
 
     if word_timings:
         if len(word_timings) < len(word_by_word):
@@ -159,7 +161,9 @@ def insert_sentence_words(
 
         for position, word in enumerate(word_by_word):
             root_letters, root_meaning, english_translation = extract_root_info(word)
-            root_id = get_or_create_root(root_letters, root_meaning, english_translation)
+            root_id = get_or_create_root(
+                root_letters, root_meaning, english_translation
+            )
             word_type_id = get_word_type_id(word.get("pos", "noun"))
 
             original_word = clean_arabic_text(word["arabic"])
@@ -210,7 +214,9 @@ def insert_sentence_words(
     else:
         for position, word in enumerate(word_by_word):
             root_letters, root_meaning, english_translation = extract_root_info(word)
-            root_id = get_or_create_root(root_letters, root_meaning, english_translation)
+            root_id = get_or_create_root(
+                root_letters, root_meaning, english_translation
+            )
             word_type_id = get_word_type_id(word.get("pos", "noun"))
 
             original_word = clean_arabic_text(word["arabic"])
@@ -231,7 +237,6 @@ def insert_sentence_words(
 
     if words_data:
         supabase.table("sentence_words").insert(words_data).execute()
-
 
     return {
         "total_words": total_words,
@@ -360,9 +365,7 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> Dict:
                 "article_id": article_id,
                 "position": idx,
                 "arabic": cleaned_arabic,
-                "english": translation[
-                    "full_translation"
-                ],
+                "english": translation["full_translation"],
                 "audio_url": storage_url,
             }
             result = supabase.table("article_sentences").insert(sentence_data).execute()
@@ -429,7 +432,7 @@ def save_timing_report(
 
             title_escaped = title.replace('"', '""')
             f.write(
-                f"{article_id},\"{title_escaped}\",{now},"
+                f'{article_id},"{title_escaped}",{now},'
                 f"{timing_stats['total_sentences']},"
                 f"{timing_stats['sentences_with_audio']},"
                 f"{timing_stats['sentences_with_timings']},"
