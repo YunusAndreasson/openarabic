@@ -42,7 +42,6 @@ export type RouteParams = {
   '/(tabs)/read/filter': FilterParams;
   '/(tabs)/read/filterModal': FiltersParams;
   '/practice/review': ReviewParams;
-  '/practice/audio': ListenParams;
   '/': Record<string, never>;
   '/(tabs)': Record<string, never>;
   '/(tabs)/practice': Record<string, never>;

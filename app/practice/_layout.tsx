@@ -17,14 +17,6 @@ export default function PracticeLayout(): JSX.Element {
           gestureEnabled: true,
         })}
       />
-      <Stack.Screen
-        name="audio/index"
-        options={createNavigationOptions(colors, {
-          headerShown: false, // Full-screen modal without header
-          presentation: 'fullScreenModal',
-          gestureEnabled: true,
-        })}
-      />
     </Stack>
   );
 }

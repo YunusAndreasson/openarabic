@@ -138,7 +138,14 @@ export default function VocabularyScreen(): JSX.Element {
   const showLoadingIndicator = (isDataLoading || isFetching) && !isDataCached;
 
   // Check if we should show empty state (no study words available)
+  // Only show empty state when we're not loading AND we have no words
   const shouldShowEmpty = !isDataLoading && !isFetching && filteredStudyWords.length === 0;
+
+  // Check if we should show the main content (vocabulary stat cards)
+  // Only show when we're not loading AND we have words OR when we're still loading with cached data
+  const shouldShowMainContent =
+    (!isDataLoading && !isFetching && filteredStudyWords.length > 0) ||
+    ((isDataLoading || isFetching) && isDataCached && filteredStudyWords.length > 0);
 
   // Main content
   return (
@@ -177,7 +184,7 @@ export default function VocabularyScreen(): JSX.Element {
         )}
 
         {/* PRIMARY SECTION: Learning Overview */}
-        {!shouldShowEmpty && (
+        {shouldShowMainContent && (
           <View style={{ marginTop: LAYOUT.SPACING.MEDIUM }}>
             <VocabularyStatCards
               dueWords={dueWordsCount}

@@ -30,7 +30,6 @@ export const ROUTE_PATHS = {
   ACCOUNT_ISLAMIC_CALENDAR: '/(tabs)/read/account/islamicCalendar',
   ACCOUNT_FONT_SELECTOR: '/(tabs)/read/account/font-selector',
   INSIGHTS: '/insights',
-  PRACTICE_AUDIO: '/practice/audio',
   PRACTICE_REVIEW: '/practice/review',
 } as const;
 

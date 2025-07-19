@@ -503,7 +503,6 @@ export const STRINGS = {
   // Help content
   HELP_GETTING_STARTED: 'Getting Started',
   HELP_ACCOUNT_SETTINGS: 'Account & Settings',
-  HELP_AUDIO_PRACTICE: 'Audio & Practice',
   HELP_TROUBLESHOOTING: 'Troubleshooting',
 
   // FAQ Questions and Answers
