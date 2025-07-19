@@ -1,32 +1,65 @@
 # Arabic Translation Pipeline
 
-## Command Line Arguments
+A comprehensive pipeline for translating Arabic text to English with audio generation and database storage.
 
-| Argument       | Description                                         |
-| -------------- | --------------------------------------------------- |
-| `--split`      | Split input.txt into sentences and review           |
-| `--translate`  | Translate split file and review                     |
-| `--insert`     | Process through ElevenLabs and insert into database |
-| `--batch-size` | Batch size for translation (1-10)                   |
+## Architecture Overview
 
-## Examples
+The pipeline is organized into clear, focused modules:
+
+### Core Pipeline (`pipeline/`)
+
+- **`split_file.py`** - Splits input text into sentences
+- **`translate.py`** - Orchestrates the translation process
+- **`translation_engine.py`** - Core AI translation operations (renamed from batch_operations.py)
+- **`insert.py`** - Database insertion and audio processing
+
+### Utilities (`utils/`)
+
+- **`translation_processor.py`** - Translation workflow management (renamed from batch_utils.py)
+- **`api_utils.py`** - OpenAI API integration (renamed from utils.py)
+- **`database_utils.py`** - Database operations and validation
+- **`storage_utils.py`** - Supabase storage operations
+- **`audio_utils.py`** - Audio file processing
+- **`text_utils.py`** - Text processing utilities
+- **`validation.py`** - Data validation
+- **`file_utils.py`** - File I/O operations
+- **`cache_utils.py`** - Cache management
+- **`arabic_text.py`** - Arabic text processing
+- **`set_keys.py`** - API key management
+- **`setup.py`** - Environment setup
+
+### Data (`data/`)
+
+- **`config.py`** - Configuration constants
+- **`models.py`** - Pydantic data models
+- **`schemas.py`** - API schemas and prompts
+
+### Audio (`audio/`)
+
+- **`audio_utils.py`** - Audio generation utilities
+- **`root_audio.py`** - Root word audio processing
+
+## Pipeline Flow
+
+1. **Split** (`split_file.py`) - Break input text into sentences
+2. **Translate** (`translate.py` + `translation_engine.py`) - AI-powered translation
+3. **Insert** (`insert.py`) - Database storage and audio generation
+
+## Usage
 
 ```bash
-# Split input.txt and review
-python main.py --split
-
-# Translate split file and review
-python main.py --translate
-
-# Insert into database
-python main.py --insert
-
-# Split then translate
-python main.py --split --translate
-
-# Translate then insert
-python main.py --translate --insert
-
 # Full pipeline
 python main.py --split --translate --insert
+
+# Individual phases
+python main.py --split
+python main.py --translate
+python main.py --insert
 ```
+
+## Key Improvements
+
+- **Clear naming**: `batch_operations.py` → `translation_engine.py`
+- **Logical grouping**: Translation processing separated from core engine
+- **API focus**: `utils.py` → `api_utils.py` for OpenAI integration
+- **Modular design**: Each module has a single, clear responsibility

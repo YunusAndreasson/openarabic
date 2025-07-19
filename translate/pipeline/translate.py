@@ -14,12 +14,12 @@ from translate.data.config import (
 from translate.data.models import (
     TextMetadata,
 )
-from translate.utils.batch_utils import create_batches, process_batch
 from translate.utils.file_utils import (
     generate_split_filename,
     read_json_file,
     write_json_file,
 )
+from translate.utils.translation_processor import create_batches, process_batch
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"

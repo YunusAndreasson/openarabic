@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, Tuple
 
 from translate.data.models import SentenceTranslation, WordTranslation
-from translate.pipeline.batch_operations import (
+from translate.pipeline.translation_engine import (
     batch_add_tashkeel,
     batch_refine_translations,
     batch_translate_full_sentences,

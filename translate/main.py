@@ -14,7 +14,7 @@ from translate.data.config import (
 )
 from translate.pipeline.split_file import split_file as split_text
 from translate.pipeline.translate import translate_file as translate_text
-from translate.utils import load_api_keys
+from translate.utils.api_utils import load_api_keys
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"

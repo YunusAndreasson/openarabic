@@ -1,16 +1,14 @@
+from .api_utils import (
+    call_openai_api,
+    init_openai_client,
+    load_api_keys,
+    token_tracker,
+)
 from .arabic_text import (
     clean_arabic_text,
     clean_word_for_matching,
     preprocess_text_for_tts,
     wrap_in_arabic_ssml,
-)
-from .batch_utils import (
-    apply_tashkeel,
-    create_batches,
-    process_batch,
-    refine_translations,
-    run_full_translation,
-    translate_words,
 )
 from .cache_utils import ensure_valid_cache_files
 from .database_utils import (
@@ -45,11 +43,13 @@ from .text_utils import (
     get_sentence_context,
     is_arabic_word,
 )
-from .utils import (
-    call_openai_api,
-    init_openai_client,
-    load_api_keys,
-    token_tracker,
+from .translation_processor import (
+    apply_tashkeel,
+    create_batches,
+    process_batch,
+    refine_translations,
+    run_full_translation,
+    translate_words,
 )
 from .validation import (
     validate_final_translation,
