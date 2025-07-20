@@ -443,7 +443,7 @@ def batch_refine_translations(
                 + "\n\n".join(formatted_inputs),
             },
         ]
-        temp_to_use = 1.0 if MODEL_VERIFICATION == "o4-mini" else 0.3
+        temp_to_use = 1.0 if MODEL_VERIFICATION == "gpt-4o-mini" else 0.3
         api_kwargs = {
             "messages": messages,
             "function_schema": REFINEMENT_FUNCTION,

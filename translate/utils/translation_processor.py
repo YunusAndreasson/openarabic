@@ -280,8 +280,8 @@ def process_batch(
     batch_sentences: list[str],
     start_index: int,
     batch_contexts: list[str | None],
-    all_sentences: list[str] = None,
-    batch_indices: list[int] = None,
+    all_sentences: list[str] | None = None,
+    batch_indices: list[int] | None = None,
 ) -> list[SentenceTranslation]:
     """Process a batch of sentences by orchestrating each translation phase."""
     if not batch_sentences:

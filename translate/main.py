@@ -143,7 +143,7 @@ def review_translation(output_file: str) -> bool:
         return False
 
 
-def run_insert_only(input_file: str, output_file: str) -> None:
+def run_insert_only() -> None:
     """Run only the database insertion step."""
     logger.info("Running database insertion step...")
     result = subprocess.run(
@@ -250,7 +250,7 @@ Examples:
         logger.info(
             "🔄 Phase 3: Processing through ElevenLabs and inserting into database...",
         )
-        run_insert_only(DEFAULT_INPUT_FILE, DEFAULT_OUTPUT_FILE)
+        run_insert_only()
 
     # Report token usage statistics
     if token_tracker.api_calls > 0:
