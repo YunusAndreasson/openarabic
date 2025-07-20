@@ -5,7 +5,6 @@ import logging
 import os
 import subprocess
 import sys
-from typing import NoReturn
 
 from translate.data.config import (
     DEFAULT_BATCH_SIZE,
@@ -161,7 +160,7 @@ def run_insert_only(input_file: str, output_file: str) -> None:
     logger.info("✅ Database insertion completed successfully.")
 
 
-def main() -> NoReturn:
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Arabic Translation Pipeline - Step by Step",
         formatter_class=argparse.RawDescriptionHelpFormatter,

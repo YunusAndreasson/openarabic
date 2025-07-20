@@ -1,8 +1,6 @@
-from .api_utils import (
-    call_openai_api,
-    load_api_keys,
-    token_tracker,
-)
+"""Utility functions for the translation pipeline."""
+
+from .api_utils import call_openai_api, load_api_keys, token_tracker
 from .cache_utils import ensure_valid_cache_files
 from .database_utils import (
     archive_files,
@@ -13,6 +11,13 @@ from .database_utils import (
     insert_article_sentences,
     save_timing_report,
     validate_article_data,
+)
+from .exceptions import (
+    AudioGenerationError,
+    ConfigurationError,
+    DatabaseError,
+    TranslationError,
+    ValidationError,
 )
 from .file_utils import (
     generate_split_filename,
@@ -64,4 +69,9 @@ __all__ = [
     "get_word_type_id",
     # Translation processor
     "process_batch",
+    "TranslationError",
+    "AudioGenerationError",
+    "ConfigurationError",
+    "DatabaseError",
+    "ValidationError",
 ]

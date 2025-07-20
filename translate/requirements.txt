@@ -1,8 +1,0 @@
-openai
-pydantic
-tqdm
-supabase
-python-dotenv
-elevenlabs
-setuptools
-mutagen

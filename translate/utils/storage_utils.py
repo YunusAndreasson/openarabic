@@ -6,23 +6,39 @@ from supabase import create_client
 
 from translate.data.config import SUPABASE_KEY, SUPABASE_URL
 
-# Lazy initialization to avoid import-time validation
-_supabase_client = None
+logger = logging.getLogger(__name__)
+
+
+class SupabaseClient:
+    """Singleton class for managing Supabase client."""
+
+    _instance = None
+    _client = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def get_client(self):
+        """Get or create Supabase client with lazy initialization."""
+        if self._client is None:
+            if not all([SUPABASE_URL, SUPABASE_KEY]):
+                raise OSError(
+                    "Missing required environment variables. Please ensure SUPABASE_URL and SUPABASE_KEY are set.",
+                )
+            self._client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        return self._client
+
+
+# Global instance for backward compatibility
+_supabase_client_instance = SupabaseClient()
 
 
 def get_supabase_client():
-    """Get or create Supabase client with lazy initialization."""
-    global _supabase_client
-    if _supabase_client is None:
-        if not all([SUPABASE_URL, SUPABASE_KEY]):
-            raise OSError(
-                "Missing required environment variables. Please ensure SUPABASE_URL and SUPABASE_KEY are set.",
-            )
-        _supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
-    return _supabase_client
+    """Get the Supabase client instance."""
+    return _supabase_client_instance.get_client()
 
-
-logger = logging.getLogger(__name__)
 
 WORD_TYPE_MAPPING: dict[str, int] = {
     "verb": 1,

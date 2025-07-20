@@ -1,0 +1,405 @@
+# Python Translation Pipeline Coding Standards
+
+## Project Overview
+
+This is an Arabic translation pipeline using Python 3.12 with:
+
+- **ElevenLabs API** for audio generation and TTS
+- **Supabase** for database storage and audio file hosting
+- **OpenAI API** for AI-powered translations
+- **Modern Python 3.12** features and type hints
+
+## Development Environment Setup
+
+### Virtual Environment
+
+```bash
+# Always use the existing virtual environment
+cd translate
+source venv/bin/activate
+
+# Install dependencies if needed
+pip install -r requirements.txt
+pip install ruff pytest pytest-cov  # Development dependencies
+```
+
+### Code Quality Tools
+
+```bash
+# Run linting (Ruff)
+python -m ruff check . --output-format=full
+
+# Run formatting check
+python -m ruff format --check .
+
+# Run tests with coverage
+python -m pytest tests/ -v
+```
+
+## Core Principles
+
+- **Pythonic**: Use Python idioms, built-in functions, and standard library
+- **Clean Code**: Simple, readable, maintainable code
+- **No Overengineering**: Prefer simple solutions over complex abstractions
+- **Type Safety**: Use modern type hints with `|` union syntax (Python 3.10+)
+
+## Python 3.12 Best Practices
+
+### Type Hints
+
+```python
+# ✅ Modern union syntax (Python 3.10+)
+def process_audio(text: str) -> dict[str, Any] | None:
+    pass
+
+# ✅ Proper None handling in function signatures
+def batch_process(
+    items: list[str],
+    context: list[str] | None = None,
+    indices: list[int] | None = None,
+) -> list[dict[str, Any]]:
+    pass
+
+# ❌ Avoid old typing syntax
+def process_audio(text: str) -> Optional[Dict[str, Any]]:
+    pass
+
+# ❌ Avoid inconsistent None handling
+def batch_process(
+    items: list[str],
+    context: list[str] = None,  # Should be list[str] | None = None
+    indices: list[int] = None,  # Should be list[int] | None = None
+) -> list[dict[str, Any]]:
+    pass
+```
+
+### Built-in Types
+
+```python
+# ✅ Use built-in types
+from typing import Any  # Only import what you need
+list[str], dict[str, Any], tuple[str, int]
+
+# ❌ Avoid deprecated typing imports
+from typing import List, Dict, Optional, Union
+```
+
+### Exception Handling
+
+```python
+# ✅ Specific exceptions with logging
+try:
+    response = api_call()
+except OSError as e:
+    logger.error(f"Network error: {e}")
+    raise
+
+# ✅ Custom exceptions for domain-specific errors
+class TranslationError(Exception):
+    """Custom exception for translation failures"""
+    pass
+
+class AudioGenerationError(Exception):
+    """Custom exception for audio generation failures"""
+    pass
+
+# ❌ Bare except with pass
+try:
+    response = api_call()
+except Exception:
+    pass
+
+# ❌ Hard exits in library code
+try:
+    process_batch()
+except Exception:
+    sys.exit(1)  # Don't exit in library functions
+```
+
+## API Integration Patterns
+
+### ElevenLabs Audio Generation
+
+```python
+# ✅ Proper error handling and validation
+def generate_audio(text: str, voice_id: str) -> dict[str, Any] | None:
+    try:
+        response = eleven_labs.text_to_speech.convert(
+            text=text,
+            voice_id=voice_id,
+            model_id="eleven_multilingual_v2"
+        )
+        return {"audio": response, "url": generate_url()}
+    except Exception as e:
+        logger.error(f"Audio generation failed: {e}")
+        return None
+```
+
+### Supabase Storage
+
+```python
+# ✅ Direct Supabase uploads
+def upload_audio(filename: str, audio_data: bytes) -> str | None:
+    try:
+        with open(temp_path, "rb") as f:
+            get_supabase_client().storage.from_("audio").upload(
+                filename, f, file_options={"content-type": "audio/mpeg"}
+            )
+        return f"{SUPABASE_URL}/storage/v1/object/public/audio/{filename}"
+    except Exception as e:
+        logger.error(f"Upload failed: {e}")
+        return None
+```
+
+### OpenAI Translation
+
+```python
+# ✅ Structured API calls with retries
+@retry_operation(max_attempts=3)
+def translate_text(text: str) -> dict[str, Any] | None:
+    try:
+        response = openai.chat.completions.create(
+            model="gpt-4o-mini",  # Use correct model names
+            messages=[{"role": "user", "content": text}],
+            temperature=0.3
+        )
+        return {"translation": response.choices[0].message.content}
+    except Exception as e:
+        logger.error(f"Translation failed: {e}")
+        return None
+```
+
+## Configuration Management
+
+### Model Configuration
+
+```python
+# ✅ Use correct OpenAI model names
+MODEL_ANALYSIS = "gpt-4o-mini"
+MODEL_TRANSLATION = "gpt-4o-mini"
+MODEL_OTHER = "gpt-4o-mini"
+MODEL_VERIFICATION = "gpt-4o-mini"
+
+# ❌ Invalid model names
+MODEL_ANALYSIS = "gpt-4.1"      # Invalid
+MODEL_TRANSLATION = "gpt-4.1"   # Invalid
+MODEL_OTHER = "gpt-4o"          # Should be "gpt-4o-mini"
+MODEL_VERIFICATION = "o4-mini"  # Should be "gpt-4o-mini"
+```
+
+## Code Organization
+
+### Import Structure
+
+```python
+# ✅ Standard library first, then third-party, then local
+import logging
+import os
+from typing import Any
+from collections.abc import Callable
+
+from elevenlabs import VoiceSettings
+from supabase import create_client
+
+from ..data.config import AUDIO_CACHE_DIR
+from ..utils.storage_utils import get_supabase_client
+```
+
+### Function Design
+
+```python
+# ✅ Single responsibility, clear names, proper typing
+def validate_mp3(audio_data: bytes, is_cached: bool = False) -> bool:
+    """Validate MP3 data with appropriate strictness level."""
+    if is_cached:
+        return len(audio_data) > 1000  # Lenient for cache
+    return validate_mp3_strict(audio_data)  # Strict for new files
+
+# ✅ Specific return types instead of generic dict
+def batch_refine_translations(
+    refinement_input: list[dict[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:  # More specific than dict[str, list]
+    pass
+```
+
+## Error Handling Patterns
+
+### Graceful Degradation
+
+```python
+# ✅ Audio module with fallbacks
+try:
+    from .audio_utils import generate_sentence_audio
+    AUDIO_AVAILABLE = True
+except ImportError:
+    AUDIO_AVAILABLE = False
+
+    def generate_sentence_audio(*args, **kwargs) -> None:
+        logger.warning("Audio generation not available")
+        return None
+```
+
+### Resource Management
+
+```python
+# ✅ Proper cleanup with context managers
+from contextlib import contextmanager
+import tempfile
+import shutil
+
+@contextmanager
+def temporary_directory():
+    temp_dir = tempfile.mkdtemp()
+    try:
+        yield temp_dir
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+def process_audio_file(filepath: str) -> str | None:
+    with temporary_directory() as temp_dir:
+        result = process_in_temp_dir(temp_dir, filepath)
+        return result
+```
+
+### State Management
+
+```python
+# ✅ Avoid global mutable state
+class SupabaseClient:
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._client = None
+        return cls._instance
+
+    def get_client(self):
+        if self._client is None:
+            # Initialize client
+            pass
+        return self._client
+
+# ❌ Global mutable state
+_supabase_client = None
+
+def get_supabase_client():
+    global _supabase_client  # Avoid global variables
+    if _supabase_client is None:
+        # ... initialization
+    return _supabase_client
+```
+
+## Performance Considerations
+
+### Caching Strategy
+
+```python
+# ✅ Efficient caching with validation
+def get_cached_audio(cache_key: str) -> str | None:
+    cache_path = os.path.join(AUDIO_CACHE_DIR, cache_key)
+
+    if os.path.exists(cache_path) and validate_mp3_file(cache_path):
+        return f"{SUPABASE_URL}/storage/v1/object/public/audio/{cache_key}"
+
+    return None
+```
+
+### Batch Processing
+
+```python
+# ✅ Efficient batch operations
+def process_translations(translations: list[dict]) -> list[dict]:
+    results = []
+    for batch in chunk_list(translations, BATCH_SIZE):
+        batch_results = process_batch(batch)
+        results.extend(batch_results)
+    return results
+```
+
+## Testing Patterns
+
+### Mock External APIs
+
+```python
+# ✅ Proper mocking for tests
+@pytest.fixture
+def mock_elevenlabs():
+    with patch('translate.audio.audio_utils.eleven_labs') as mock:
+        mock.text_to_speech.convert.return_value = b"fake_audio_data"
+        yield mock
+```
+
+### Test Coverage Requirements
+
+- Minimum 35% test coverage (currently 37%)
+- All new code must have corresponding tests
+- Mock external dependencies (APIs, databases)
+
+## File Structure
+
+- Use relative imports within the translate package
+- Keep functions focused and testable
+- Prefer composition over inheritance
+- Use dataclasses for structured data
+- Implement proper logging throughout
+
+## Linting Compliance
+
+### Ruff Configuration
+
+- Follow Ruff configuration in [pyproject.toml](mdc:translate/pyproject.toml)
+- Use modern Python 3.12 syntax
+- Maintain 88-character line length
+- Use double quotes for strings
+- Enable all security and quality checks
+
+### Pre-commit Validation
+
+```bash
+# Always run these before committing
+python -m ruff check . --output-format=full
+python -m ruff format --check .
+python -m pytest tests/ -v
+```
+
+## Common Issues to Avoid
+
+### 1. Type Hint Inconsistencies
+
+- Always use `list[str] | None` instead of `list[str] = None`
+- Use specific return types instead of generic `dict[str, Any]`
+
+### 2. Exception Handling
+
+- Avoid bare `except Exception:` blocks
+- Don't use `sys.exit()` in library functions
+- Create custom exceptions for domain-specific errors
+
+### 3. Resource Management
+
+- Use context managers for file operations
+- Avoid manual cleanup in favor of automatic resource management
+
+### 4. Configuration
+
+- Use correct OpenAI model names (`gpt-4o-mini`, not `gpt-4.1`)
+- Validate configuration values at startup
+
+### 5. Global State
+
+- Avoid global mutable variables
+- Use dependency injection or singleton patterns
+
+## Development Workflow
+
+1. **Setup**: Activate virtual environment and install dependencies
+2. **Development**: Write code following these standards
+3. **Validation**: Run linting, formatting, and tests
+4. **Commit**: Ensure all checks pass before committing
+
+---
+
+- Enable all security and quality checks
+
+---

@@ -1,5 +1,4 @@
 import logging
-import sys
 import time
 from typing import Any
 
@@ -21,6 +20,7 @@ from translate.data.schemas import (
     WORD_TRANSLATION_FUNCTION,
 )
 from translate.utils import call_openai_api
+from translate.utils.exceptions import TranslationError
 from translate.utils.text_utils import filter_arabic_words, get_optimized_context
 
 logger = logging.getLogger(__name__)
@@ -244,8 +244,8 @@ def batch_translate_words(
     sentences: list[str],
     tashkeel_results: list[dict[str, Any]],
     translations: list[dict[str, Any]],
-    all_sentences: list[str] = None,
-    indices: list[int] = None,
+    all_sentences: list[str] | None = None,
+    indices: list[int] | None = None,
 ) -> list[dict[str, Any]]:
     """Create word-by-word translations for multiple sentences in a batch, returning options"""
 
@@ -353,21 +353,23 @@ def batch_translate_words(
                         break
 
                 raise Exception("No valid word translations returned from model.")
-            except Exception:
+            except Exception as err:
                 attempt += 1
                 logger.info(f"Sentence {i} failed, retrying attempt {attempt}")
                 if attempt >= max_retries:
                     logger.info(
                         f"[FATAL] Sentence {i} failed {max_retries} times. Aborting batch.",
                     )
-                    sys.exit(1)
+                    raise TranslationError(
+                        f"Sentence {i} failed {max_retries} times."
+                    ) from err
                 time.sleep(1)
     return processed_results
 
 
 def batch_refine_translations(
     refinement_input: list[dict[str, Any]],
-) -> dict[str, list]:
+) -> dict[str, list[dict[str, Any]]]:
     """Refine all translation components, selecting best options"""
     try:
         formatted_inputs = []

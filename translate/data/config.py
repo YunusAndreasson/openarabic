@@ -5,10 +5,10 @@ import os
 from elevenlabs import VoiceSettings
 
 # OpenAI model configuration
-MODEL_ANALYSIS = "gpt-4.1"
-MODEL_TRANSLATION = "gpt-4.1"
-MODEL_OTHER = "gpt-4o"
-MODEL_VERIFICATION = "o4-mini"
+MODEL_ANALYSIS = "gpt-4o-mini"
+MODEL_TRANSLATION = "gpt-4o-mini"
+MODEL_OTHER = "gpt-4o-mini"
+MODEL_VERIFICATION = "gpt-4o-mini"
 
 # Batch processing defaults
 DEFAULT_BATCH_SIZE = 5
