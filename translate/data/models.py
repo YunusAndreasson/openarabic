@@ -10,13 +10,16 @@ class WordTranslation(BaseModel):
     english: str = Field(description="Final chosen English translation")
     pos: str | None = Field(default=None, description="Part of speech")
     essential: str | None = Field(
-        default=None, description="Essential letters for flashcards"
+        default=None,
+        description="Essential letters for flashcards",
     )
     essential_translation: str | None = Field(
-        default=None, description="Final chosen one-word English meaning"
+        default=None,
+        description="Final chosen one-word English meaning",
     )
     notes: str | None = Field(
-        default=None, description="Any special notes about the translation"
+        default=None,
+        description="Any special notes about the translation",
     )
 
 
@@ -30,7 +33,8 @@ class WordTranslationOptions(BaseModel):
     essential_translation_options: list[str] = Field(default_factory=list)
     notes: str | None = Field(default=None)
     uncertainties: list[dict[str, Any]] = Field(
-        default_factory=list, description="Keep uncertainties tied to the options step"
+        default_factory=list,
+        description="Keep uncertainties tied to the options step",
     )
 
 

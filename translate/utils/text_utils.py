@@ -15,7 +15,7 @@ def get_sentence_context(sentences: list[str], index: int) -> str:
                 context_parts.append(f"Preceding sentence: {preceding[0]}")
             else:
                 context_parts.append(
-                    f"Preceding {len(preceding)} sentences: {' '.join(preceding)}"
+                    f"Preceding {len(preceding)} sentences: {' '.join(preceding)}",
                 )
 
     end_idx = min(len(sentences), index + CONTEXT_WINDOW_SIZE + 1)
@@ -26,7 +26,7 @@ def get_sentence_context(sentences: list[str], index: int) -> str:
                 context_parts.append(f"Following sentence: {following[0]}")
             else:
                 context_parts.append(
-                    f"Following {len(following)} sentences: {' '.join(following)}"
+                    f"Following {len(following)} sentences: {' '.join(following)}",
                 )
 
     if not context_parts:
@@ -36,7 +36,9 @@ def get_sentence_context(sentences: list[str], index: int) -> str:
 
 
 def get_optimized_context(
-    sentences: list[str], index: int, for_tashkeel: bool = False
+    sentences: list[str],
+    index: int,
+    for_tashkeel: bool = False,
 ) -> str | None:
     """Get optimized context based on task type with token efficiency in mind"""
     if index < 0 or index >= len(sentences):

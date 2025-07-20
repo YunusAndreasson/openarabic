@@ -25,12 +25,12 @@ def validate_translation_results(
     """
     if len(results) != len(original_sentences):
         raise TranslationValidationError(
-            f"{step_name}: Result count mismatch. Expected {len(original_sentences)}, got {len(results)}"
+            f"{step_name}: Result count mismatch. Expected {len(original_sentences)}, got {len(results)}",
         )
 
     errors: list[str] = []
     for i, (original, result) in enumerate(
-        zip(original_sentences, results, strict=False)
+        zip(original_sentences, results, strict=False),
     ):
         if isinstance(result, dict):
             translation = (
@@ -61,19 +61,19 @@ def validate_translation_results(
                             ess_opts = word.get("essential_translation_options", [])
                             if not arabic:
                                 errors.append(
-                                    f"Sentence {i}, Word {j}: Missing Arabic text"
+                                    f"Sentence {i}, Word {j}: Missing Arabic text",
                                 )
                             if not eng_options:
                                 errors.append(
-                                    f"Sentence {i}, Word {j}: Missing English options"
+                                    f"Sentence {i}, Word {j}: Missing English options",
                                 )
                             if not word.get("essential"):
                                 errors.append(
-                                    f"Sentence {i}, Word {j}: Missing essential letters"
+                                    f"Sentence {i}, Word {j}: Missing essential letters",
                                 )
                             if not ess_opts:
                                 errors.append(
-                                    f"Sentence {i}, Word {j}: Missing essential translation options"
+                                    f"Sentence {i}, Word {j}: Missing essential translation options",
                                 )
 
             if check_word_translations and "word_by_word" in result:
@@ -85,35 +85,36 @@ def validate_translation_results(
                             english = word.get("english", "")
                             essential = word.get("essential", "")
                             essential_translation = word.get(
-                                "essential_translation", ""
+                                "essential_translation",
+                                "",
                             )
                             if not arabic:
                                 errors.append(
-                                    f"Sentence {i}, Word {j}: Missing final Arabic text"
+                                    f"Sentence {i}, Word {j}: Missing final Arabic text",
                                 )
                             if not english:
                                 errors.append(
-                                    f"Sentence {i}, Word {j}: Missing final English text"
+                                    f"Sentence {i}, Word {j}: Missing final English text",
                                 )
                             if not essential:
                                 errors.append(
-                                    f"Sentence {i}, Word {j}: Missing final essential letters"
+                                    f"Sentence {i}, Word {j}: Missing final essential letters",
                                 )
                             if not essential_translation:
                                 errors.append(
-                                    f"Sentence {i}, Word {j}: Missing final essential translation"
+                                    f"Sentence {i}, Word {j}: Missing final essential translation",
                                 )
 
             if "tashkeel" in result:
                 tashkeel = result["tashkeel"]
                 if tashkeel == original and not any(c in original for c in "ًٌٍَُِّْ"):
                     errors.append(
-                        f"Sentence {i}: Tashkeel appears to be missing (identical to input)"
+                        f"Sentence {i}: Tashkeel appears to be missing (identical to input)",
                     )
 
     if errors:
         raise TranslationValidationError(
-            f"{step_name} validation failed:\n" + "\n".join(errors)
+            f"{step_name} validation failed:\n" + "\n".join(errors),
         )
 
 
@@ -136,11 +137,11 @@ def validate_final_translation(translation: SentenceTranslation) -> list[str]:
 
     if translation.word_by_word:
         orig_word_count = len(
-            [w for w in translation.original.split() if len(w.strip()) > 0]
+            [w for w in translation.original.split() if len(w.strip()) > 0],
         )
         if len(translation.word_by_word) < orig_word_count * 0.5:
             issues.append(
-                f"Word translation count mismatch: got {len(translation.word_by_word)}, expected ~{orig_word_count}"
+                f"Word translation count mismatch: got {len(translation.word_by_word)}, expected ~{orig_word_count}",
             )
 
         for i, word in enumerate(translation.word_by_word):
@@ -152,7 +153,7 @@ def validate_final_translation(translation: SentenceTranslation) -> list[str]:
                 issues.append(f"Final Word {i + 1}: Missing essential letters")
             if not word.essential_translation:
                 issues.append(
-                    f"Final Word {i + 1}: Missing chosen essential translation"
+                    f"Final Word {i + 1}: Missing chosen essential translation",
                 )
 
     else:

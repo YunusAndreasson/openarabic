@@ -9,7 +9,7 @@ from translate.data.config import SUPABASE_KEY, SUPABASE_URL
 
 if not all([SUPABASE_URL, SUPABASE_KEY]):
     raise OSError(
-        "Missing required environment variables. Please ensure SUPABASE_URL and SUPABASE_KEY are set."
+        "Missing required environment variables. Please ensure SUPABASE_URL and SUPABASE_KEY are set.",
     )
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -64,7 +64,9 @@ def upload_to_storage(
 
     try:
         supabase.storage.from_(bucket).upload(
-            file_path, file_data, file_options={"content-type": content_type}
+            file_path,
+            file_data,
+            file_options={"content-type": content_type},
         )
 
         time.sleep(0.5)
@@ -78,7 +80,7 @@ def upload_to_storage(
             time.sleep(1)
 
         raise Exception(
-            f"File upload verification failed after 3 attempts for {file_path}"
+            f"File upload verification failed after 3 attempts for {file_path}",
         )
     except Exception as e:
         if hasattr(e, "statusCode") and e.statusCode == 409:

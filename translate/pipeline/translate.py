@@ -21,7 +21,8 @@ from translate.utils.file_utils import (
 from translate.utils.translation_processor import create_batches, process_batch
 
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
 )
 
 logger = logging.getLogger(__name__)
@@ -46,7 +47,8 @@ def create_metadata(split_data: dict[str, Any]) -> TextMetadata:
 
 
 def process_batches(
-    all_units: list[dict[str, Any]], batch_size: int
+    all_units: list[dict[str, Any]],
+    batch_size: int,
 ) -> tuple[list[Any], list[str]]:
     """Process all batches and return results and errors."""
     results: list[Any] = []
@@ -71,7 +73,8 @@ def process_batches(
 
 
 def validate_results(
-    results: list[Any], all_units: list[dict[str, Any]]
+    results: list[Any],
+    all_units: list[dict[str, Any]],
 ) -> tuple[int, int]:
     """Return counts of failed and issue translations."""
     failed = 0
@@ -98,7 +101,9 @@ def validate_results(
 
 
 def save_translation_output(
-    output_file: str, metadata: TextMetadata, results: list[Any]
+    output_file: str,
+    metadata: TextMetadata,
+    results: list[Any],
 ) -> None:
     """Persist the translation results to disk."""
     write_json_file(
@@ -122,7 +127,9 @@ def serialize(obj: Any) -> dict[str, Any] | list[Any] | Any:
 
 
 def translate_file(
-    input_file: str, output_file: str, batch_size: int = MAX_BATCH_SIZE
+    input_file: str,
+    output_file: str,
+    batch_size: int = MAX_BATCH_SIZE,
 ) -> bool | None:
     """Translate a pre-split file"""
     split_data = load_split_data(input_file)

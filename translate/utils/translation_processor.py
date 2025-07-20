@@ -15,7 +15,9 @@ from translate.utils.validation import (
 
 
 def create_batches(
-    sentences: list[str], start_index: int, batch_size: int
+    sentences: list[str],
+    start_index: int,
+    batch_size: int,
 ) -> list[dict[str, Any]]:
     """Create batches of sentences with their contexts"""
     batches: list[dict[str, Any]] = []
@@ -39,7 +41,7 @@ def create_batches(
             range(
                 current_batch_start_global_index,
                 current_batch_start_global_index + len(batch_sentences),
-            )
+            ),
         )
         batch_contexts = gather_context(batch_indices)
 
@@ -49,7 +51,7 @@ def create_batches(
                 "contexts": batch_contexts,
                 "start_index": current_batch_start_global_index,
                 "indices": batch_indices,
-            }
+            },
         )
 
     return batches
@@ -73,7 +75,10 @@ def apply_tashkeel(
 ) -> list[dict[str, Any]]:
     """Add diacritics to sentences and validate the results."""
     tashkeel = batch_add_tashkeel(
-        batch_sentences, translation_results, all_sentences, batch_indices
+        batch_sentences,
+        translation_results,
+        all_sentences,
+        batch_indices,
     )
     validate_translation_results(batch_sentences, tashkeel, "Tashkeel Addition")
     return tashkeel
@@ -119,7 +124,7 @@ def build_refinement_input(
                 u
                 for word_opts in word_opts_list
                 for u in word_opts.get("uncertainties", [])
-            ]
+            ],
         )
         refinement_input.append(
             {
@@ -132,7 +137,7 @@ def build_refinement_input(
                     "tashkeel": tashkeel_results[i].get("uncertainties", []),
                     "word": all_word_uncertainties[-1],
                 },
-            }
+            },
         )
     return refinement_input, all_word_uncertainties
 
@@ -147,10 +152,12 @@ def create_sentence_translation(
     word_options_result: dict[str, Any],
 ) -> SentenceTranslation:
     refined_tashkeel = refinement.get(
-        "improved_tashkeel", tashkeel_result.get("tashkeel", "")
+        "improved_tashkeel",
+        tashkeel_result.get("tashkeel", ""),
     )
     refined_translation = refinement.get(
-        "improved_translation", translation_result.get("translation", "")
+        "improved_translation",
+        translation_result.get("translation", ""),
     )
 
     notes: list[str] = []
@@ -170,7 +177,7 @@ def create_sentence_translation(
             for r in resolved:
                 notes.append(
                     f"  * Step: {r.get('step', 'N/A')}, "
-                    f"Explanation: {r.get('explanation', 'No explanation')}"
+                    f"Explanation: {r.get('explanation', 'No explanation')}",
                 )
         if remaining:
             notes.append("- Remaining:")
@@ -178,7 +185,7 @@ def create_sentence_translation(
                 notes.append(
                     f"  * Type: {r.get('type', 'N/A')}, "
                     f"Desc: {r.get('description', 'Unknown issue')} "
-                    f"({r.get('reason_unresolved', 'No reason provided')})"
+                    f"({r.get('reason_unresolved', 'No reason provided')})",
                 )
 
     final_word_translations: list[WordTranslation] = []
@@ -195,7 +202,7 @@ def create_sentence_translation(
                     essential=word_data.get("essential"),
                     essential_translation=word_data.get("essential_translation", ""),
                     notes=word_data.get("notes"),
-                )
+                ),
             )
     else:
         word_opts_list = word_options_result.get("word_translations", [])
@@ -207,10 +214,11 @@ def create_sentence_translation(
                     pos=word_opts.get("pos"),
                     essential=word_opts.get("essential"),
                     essential_translation=word_opts.get(
-                        "essential_translation_options", ["[Fallback Error]"]
+                        "essential_translation_options",
+                        ["[Fallback Error]"],
                     )[0],
                     notes=word_opts.get("notes", "") + " (Refinement fallback)",
-                )
+                ),
             )
 
     sentence_translation = SentenceTranslation(
@@ -249,7 +257,10 @@ def refine_translations(
 ) -> list[SentenceTranslation]:
     """Refine translations using previous results and return final objects."""
     inputs, _ = build_refinement_input(
-        batch_sentences, translation_results, tashkeel_results, word_options_results
+        batch_sentences,
+        translation_results,
+        tashkeel_results,
+        word_options_results,
     )
     refinement_results = batch_refine_translations(inputs)
     results: list[SentenceTranslation] = []
@@ -268,7 +279,7 @@ def refine_translations(
                 translation_results[i],
                 tashkeel_results[i],
                 word_options_results[i],
-            )
+            ),
         )
     return results
 
@@ -286,7 +297,10 @@ def process_batch(
 
     translations = run_full_translation(batch_sentences, batch_contexts)
     tashkeel = apply_tashkeel(
-        batch_sentences, translations, all_sentences, batch_indices
+        batch_sentences,
+        translations,
+        all_sentences,
+        batch_indices,
     )
     word_options = translate_words(
         batch_sentences,

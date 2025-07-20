@@ -8,30 +8,18 @@ from pathlib import Path
 
 def run_command(cmd: list[str], description: str) -> bool:
     """Run a command and return success status."""
-    print(f"\n🔄 {description}...")
     try:
         result = subprocess.run(cmd, check=True, capture_output=True, text=True)
-        print(f"✅ {description} completed successfully")
         if result.stdout:
-            print(result.stdout)
+            pass
         return True
-    except subprocess.CalledProcessError as e:
-        print(f"❌ {description} failed:")
-        print(e.stderr)
+    except subprocess.CalledProcessError:
         return False
 
 
 def main():
     """Main development workflow."""
     if len(sys.argv) < 2:
-        print("Usage: python dev.py <command>")
-        print("\nAvailable commands:")
-        print("  check     - Run Ruff linting with auto-fix")
-        print("  format    - Run Ruff formatting")
-        print("  fix       - Run Ruff auto-fix with unsafe fixes")
-        print("  test      - Run tests")
-        print("  clean     - Clean up cache files")
-        print("  all       - Run check, format, and test")
         return 1
 
     command = sys.argv[1]
@@ -71,8 +59,6 @@ def main():
                     shutil.rmtree(cache_path)
                 else:
                     cache_path.unlink()
-                print(f"🧹 Removed {cache_dir}")
-        print("✅ Cleanup completed")
         return 0
 
     elif command == "all":
@@ -83,7 +69,6 @@ def main():
         return 0 if success else 1
 
     else:
-        print(f"Unknown command: {command}")
         return 1
 
 

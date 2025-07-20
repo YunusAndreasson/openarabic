@@ -36,7 +36,8 @@ def generate_sentence_audio(
 
 
 def get_or_generate_root_audio(
-    letters: str, english_text: str
+    letters: str,
+    english_text: str,
 ) -> dict[str, str] | None:
     """Stub function - root audio generation not available."""
     logger.warning("Root audio generation not available - audio module removed")
@@ -92,7 +93,8 @@ def get_or_create_root(
                 if not english_audio_text and meaning:
                     if "Auto-generated root for:" in meaning:
                         english_audio_text = meaning.replace(
-                            "Auto-generated root for:", ""
+                            "Auto-generated root for:",
+                            "",
                         ).strip()
                     else:
                         english_audio_text = meaning
@@ -108,7 +110,8 @@ def get_or_create_root(
 
                 if update_data:
                     supabase.table("roots").update(update_data).eq(
-                        "id", root_id
+                        "id",
+                        root_id,
                     ).execute()
             except Exception as e:
                 logger.info(f"Error generating audio for root '{letters}': {e}")
@@ -124,7 +127,8 @@ def get_or_create_root(
         if not english_audio_text and meaning:
             if "Auto-generated root for:" in meaning:
                 english_audio_text = meaning.replace(
-                    "Auto-generated root for:", ""
+                    "Auto-generated root for:",
+                    "",
                 ).strip()
             else:
                 english_audio_text = meaning
@@ -173,7 +177,9 @@ def insert_sentence_words(
         for position, word in enumerate(word_by_word):
             root_letters, root_meaning, english_translation = extract_root_info(word)
             root_id = get_or_create_root(
-                root_letters, root_meaning, english_translation
+                root_letters,
+                root_meaning,
+                english_translation,
             )
             word_type_id = get_word_type_id(word.get("pos", "noun"))
 
@@ -226,7 +232,9 @@ def insert_sentence_words(
         for position, word in enumerate(word_by_word):
             root_letters, root_meaning, english_translation = extract_root_info(word)
             root_id = get_or_create_root(
-                root_letters, root_meaning, english_translation
+                root_letters,
+                root_meaning,
+                english_translation,
             )
             word_type_id = get_word_type_id(word.get("pos", "noun"))
 
@@ -257,7 +265,8 @@ def insert_sentence_words(
 
 
 def get_adjacent_texts(
-    translations: list[dict], idx: int
+    translations: list[dict],
+    idx: int,
 ) -> tuple[str | None, str | None]:
     """Return previous and next sentence text for context."""
     prev_text = None
@@ -289,16 +298,18 @@ def cleanup_temp_files(files: list[str], temp_dir: str) -> None:
     for file in files:
         try:
             os.remove(file)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Failed to remove file {file}: {e}")
     try:
         os.rmdir(temp_dir)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"Failed to remove directory {temp_dir}: {e}")
 
 
 def concatenate_and_upload_audio(
-    files: list[str], temp_dir: str, article_id: int
+    files: list[str],
+    temp_dir: str,
+    article_id: int,
 ) -> None:
     """Concatenate sentence audio files, upload, and clean up."""
     final_audio_filename = generate_audio_filename()
@@ -317,7 +328,8 @@ def concatenate_and_upload_audio(
                 f"{SUPABASE_URL}/storage/v1/object/public/audio/{final_audio_filename}"
             )
             supabase.table("articles").update({"audio_url": article_audio_url}).eq(
-                "id", article_id
+                "id",
+                article_id,
             ).execute()
 
         except Exception as e:
@@ -383,7 +395,9 @@ def insert_article_sentences(article_id: int, translations: list[dict]) -> dict:
 
             if translation.get("word_by_word"):
                 word_stats = insert_sentence_words(
-                    sentence_id, translation, word_timings
+                    sentence_id,
+                    translation,
+                    word_timings,
                 )
                 timing_stats["total_words"] += word_stats["total_words"]
                 timing_stats["words_with_timings"] += word_stats["words_with_timing"]
@@ -402,7 +416,10 @@ def insert_article_sentences(article_id: int, translations: list[dict]) -> dict:
 
 
 def save_timing_report(
-    article_id: int, title: str, json_path: str, timing_stats: dict
+    article_id: int,
+    title: str,
+    json_path: str,
+    timing_stats: dict,
 ) -> None:
     """Save timing statistics to a CSV report file."""
     os.path.dirname(os.path.abspath(__file__))
@@ -433,7 +450,7 @@ def save_timing_report(
         with open(report_file, "a", encoding="utf-8", newline="") as f:
             if not file_exists:
                 f.write(
-                    "article_id,title,timestamp,total_sentences,sentences_with_audio,sentences_with_timings,sentences_with_partial_timings,sentences_without_timings,total_words,words_with_timing,timing_percentage,quality\n"
+                    "article_id,title,timestamp,total_sentences,sentences_with_audio,sentences_with_timings,sentences_with_partial_timings,sentences_without_timings,total_words,words_with_timing,timing_percentage,quality\n",
                 )
 
             title_escaped = title.replace('"', '""')
@@ -446,7 +463,7 @@ def save_timing_report(
                 f"{timing_stats['total_words']},"
                 f"{timing_stats['words_with_timings']},"
                 f"{words_with_timing_pct:.1f},"
-                f"{quality}\n"
+                f"{quality}\n",
             )
 
     except Exception as e:
@@ -483,7 +500,7 @@ def validate_article_data(data: dict) -> None:
     ]
     if missing_fields:
         raise ValueError(
-            f"Missing required metadata fields: {', '.join(missing_fields)}"
+            f"Missing required metadata fields: {', '.join(missing_fields)}",
         )
 
     if (
@@ -501,33 +518,33 @@ def validate_article_data(data: dict) -> None:
 
         if translation.get("verification_status") == "Failed":
             raise ValueError(
-                f"Translation at position {idx} has failed verification status"
+                f"Translation at position {idx} has failed verification status",
             )
 
         if "[BATCH PROCESSING ERROR]" in translation.get("full_translation", ""):
             raise ValueError(
-                f"Translation at position {idx} contains error marker - translation is incomplete"
+                f"Translation at position {idx} contains error marker - translation is incomplete",
             )
 
         if "[ERROR]" in translation.get("full_translation", ""):
             raise ValueError(
-                f"Translation at position {idx} contains error marker - translation is incomplete"
+                f"Translation at position {idx} contains error marker - translation is incomplete",
             )
 
         if "word_by_word" in translation:
             if not isinstance(translation["word_by_word"], list):
                 raise ValueError(
-                    f"word_by_word must be a list in translation at position {idx}"
+                    f"word_by_word must be a list in translation at position {idx}",
                 )
 
             for word_idx, word in enumerate(translation["word_by_word"]):
                 if not word.get("arabic"):
                     raise ValueError(
-                        f"Missing Arabic word in word_by_word at translation {idx}, word {word_idx}"
+                        f"Missing Arabic word in word_by_word at translation {idx}, word {word_idx}",
                     )
                 if not word.get("english"):
                     raise ValueError(
-                        f"Missing English translation in word_by_word at translation {idx}, word {word_idx}"
+                        f"Missing English translation in word_by_word at translation {idx}, word {word_idx}",
                     )
 
     difficulty = data["metadata"]["difficulty_level"]

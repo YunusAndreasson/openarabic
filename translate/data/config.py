@@ -16,7 +16,7 @@ MAX_BATCH_SIZE = 5
 
 # Directory structure
 ROOT_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."),
 )
 ARTICLE_DIR = os.path.join(ROOT_DIR, "article")
 ARCHIVE_DIR = os.path.join(ROOT_DIR, "archive")

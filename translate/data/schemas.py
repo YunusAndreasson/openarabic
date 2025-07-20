@@ -82,7 +82,7 @@ TRANSLATE_SENTENCES_FUNCTION = {
                     },
                     "required": ["translation"],  # Notes are optional
                 },
-            }
+            },
         },
         "required": ["translations"],
         "examples": [
@@ -92,9 +92,9 @@ TRANSLATE_SENTENCES_FUNCTION = {
                         "translation": "And the Prophet [Muhammad], peace be upon him, said",
                         "notes": "",
                         "uncertainties": [],
-                    }
-                ]
-            }
+                    },
+                ],
+            },
         ],
     },
 }
@@ -141,7 +141,7 @@ TASHKEEL_FUNCTION = {
                     },
                     "required": ["tashkeel"],
                 },
-            }
+            },
         },
         "required": ["tashkeels"],
         "examples": [{"tashkeels": [{"tashkeel": "قَالَ النَّبِيُّ", "uncertainties": []}]}],
@@ -207,11 +207,11 @@ WORD_TRANSLATION_FUNCTION = {
                                     "essential_translation_options",
                                 ],
                             },
-                        }
+                        },
                     },
                     "required": ["word_translations"],
                 },
-            }
+            },
         },
         "required": ["results"],
         "examples": [
@@ -242,10 +242,10 @@ WORD_TRANSLATION_FUNCTION = {
                                 ],
                                 "notes": "Noun, masculine singular, definite.",
                             },
-                        ]
-                    }
-                ]
-            }
+                        ],
+                    },
+                ],
+            },
         ],
     },
 }
@@ -382,7 +382,7 @@ REFINEMENT_FUNCTION = {
                         "changes_made",
                     ],
                 },
-            }
+            },
         },
         "required": ["refinements"],
     },

@@ -21,13 +21,21 @@ def load_api_keys() -> None:
     set_keys_path = os.path.join(os.path.dirname(__file__), "set_keys.py")
     if not os.path.exists(set_keys_path):
         raise FileNotFoundError(f"API keys file not found: {set_keys_path}")
-    with open(set_keys_path) as f:
-        exec(f.read(), globals())
+
+    # Safely load the configuration file
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("set_keys", set_keys_path)
+    if spec and spec.loader:
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
     _keys_loaded = True
 
 
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
 )
 
 logger = logging.getLogger(__name__)
@@ -107,7 +115,8 @@ def _create_completion(
 
 
 def _decode_response(
-    response: Any, function_schema: dict[str, Any] | None
+    response: Any,
+    function_schema: dict[str, Any] | None,
 ) -> dict[str, Any]:
     """Extract JSON data from the OpenAI API response."""
     if function_schema and hasattr(response.choices[0].message, "function_call"):
@@ -117,7 +126,7 @@ def _decode_response(
                 return json.loads(function_call.arguments)
             except json.JSONDecodeError:
                 return {
-                    "error": f"Failed to parse function arguments: {function_call.arguments[:100]}..."
+                    "error": f"Failed to parse function arguments: {function_call.arguments[:100]}...",
                 }
         return {"error": "Function call response was empty"}
 
@@ -159,12 +168,12 @@ def call_openai_api(
 
         except Exception as e:
             logging.error(
-                f"API call failed (attempt {retry_count + 1}/{max_retries}): {str(e)}"
+                f"API call failed (attempt {retry_count + 1}/{max_retries}): {str(e)}",
             )
             retry_count += 1
             if retry_count >= max_retries:
                 return {
-                    "error": f"API call failed after {max_retries} attempts. Error: {str(e)}"
+                    "error": f"API call failed after {max_retries} attempts. Error: {str(e)}",
                 }
 
             time.sleep(backoff_time)

@@ -17,7 +17,8 @@ from translate.pipeline.translate import translate_file as translate_text
 from translate.utils.api_utils import load_api_keys
 
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -82,7 +83,7 @@ def review_split_file(split_file: str) -> bool:
         logger.info(f"📁 Split file saved to: {split_file}")
 
         return confirm_step(
-            "Review complete. Would you like to proceed with translation?"
+            "Review complete. Would you like to proceed with translation?",
         )
 
     except Exception as e:
@@ -135,7 +136,7 @@ def review_translation(output_file: str) -> bool:
         logger.info(f"📁 Full translation saved to: {output_file}")
 
         return confirm_step(
-            "Review complete. Would you like to proceed with database insertion?"
+            "Review complete. Would you like to proceed with database insertion?",
         )
 
     except Exception as e:
@@ -181,11 +182,15 @@ Examples:
     )
 
     parser.add_argument(
-        "--split", action="store_true", help="Split input.txt into sentences and review"
+        "--split",
+        action="store_true",
+        help="Split input.txt into sentences and review",
     )
 
     parser.add_argument(
-        "--translate", action="store_true", help="Translate split file and review"
+        "--translate",
+        action="store_true",
+        help="Translate split file and review",
     )
 
     parser.add_argument(
@@ -244,7 +249,7 @@ Examples:
             sys.exit(1)
 
         logger.info(
-            "🔄 Phase 3: Processing through ElevenLabs and inserting into database..."
+            "🔄 Phase 3: Processing through ElevenLabs and inserting into database...",
         )
         run_insert_only(DEFAULT_INPUT_FILE, DEFAULT_OUTPUT_FILE)
 

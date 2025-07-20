@@ -47,7 +47,8 @@ def _build_word_prompt(
 
 
 def batch_translate_full_sentences(
-    sentences: list[str], contexts: list[str | None]
+    sentences: list[str],
+    contexts: list[str | None],
 ) -> list[dict[str, Any]]:
     """Translate multiple sentences in a single API call with retry logic"""
 
@@ -103,7 +104,7 @@ def batch_translate_full_sentences(
                         "translation": item["t"],
                         "notes": item.get("n"),
                         "uncertainties": item.get("uncertainties", []),
-                    }
+                    },
                 )
             elif isinstance(item, dict) and "translation" in item:
                 results.append(item)
@@ -113,7 +114,7 @@ def batch_translate_full_sentences(
                         "translation": f"[Format Error for: {sentences[i][:20]}...]",
                         "notes": "Response item has unexpected format",
                         "uncertainties": [],
-                    }
+                    },
                 )
 
         while len(results) < len(sentences):
@@ -123,7 +124,7 @@ def batch_translate_full_sentences(
                     "translation": f"[Missing Translation for: {sentences[i][:20]}...]",
                     "notes": "Translation missing in API response",
                     "uncertainties": [],
-                }
+                },
             )
 
         return results
@@ -156,12 +157,14 @@ def batch_add_tashkeel(
     """Add diacritical marks to multiple sentences in a batch"""
     formatted_inputs: list[str] = []
     for i, (sentence, translation_data) in enumerate(
-        zip(sentences, translation_results, strict=False)
+        zip(sentences, translation_results, strict=False),
     ):
         grammar_context = ""
         if all_sentences and indices and i < len(indices):
             context = get_optimized_context(
-                all_sentences, indices[i], for_tashkeel=True
+                all_sentences,
+                indices[i],
+                for_tashkeel=True,
             )
             if context:
                 grammar_context = f"\nGrammatical context: {context}"
@@ -188,7 +191,7 @@ def batch_add_tashkeel(
         formatted_inputs.append(
             f"Set {i + 1}:\n"
             f"Arabic: {sentence}{grammar_context}\n"
-            f"Translation: {translation}{uncertainty_notes}{grammar_notes_str}"
+            f"Translation: {translation}{uncertainty_notes}{grammar_notes_str}",
         )
 
     messages = [
@@ -217,7 +220,7 @@ def batch_add_tashkeel(
                         {
                             "tashkeel": item["t"],
                             "uncertainties": item.get("uncertainties", []),
-                        }
+                        },
                     )
                 elif "tashkeel" in item:
                     results.append(item)
@@ -246,15 +249,15 @@ def batch_translate_words(
 ) -> list[dict[str, Any]]:
     """Create word-by-word translations for multiple sentences in a batch, returning options"""
 
-    MAX_RETRIES = 3
+    max_retries = 3
 
     processed_results = [{"word_translations": []} for _ in range(len(sentences))]
 
     for i, (_sentence, tashkeel_data, translation_data) in enumerate(
-        zip(sentences, tashkeel_results, translations, strict=False)
+        zip(sentences, tashkeel_results, translations, strict=False),
     ):
         attempt = 0
-        while attempt < MAX_RETRIES:
+        while attempt < max_retries:
             try:
                 tashkeel = tashkeel_data.get("tashkeel", "")
                 arabic_words = filter_arabic_words(tashkeel)
@@ -265,7 +268,8 @@ def batch_translate_words(
                     key_terms = set()
                     important_words = [w for w in arabic_words if len(w) > 3]
                     for j in range(
-                        max(0, orig_index - 1), min(len(all_sentences), orig_index + 2)
+                        max(0, orig_index - 1),
+                        min(len(all_sentences), orig_index + 2),
                     ):
                         if j != orig_index:
                             for word in important_words:
@@ -340,11 +344,11 @@ def batch_translate_words(
                                 essential_translation_options=ess_opts,
                                 notes=word_data.get("notes"),
                                 uncertainties=word_data.get("uncertainties", []),
-                            ).model_dump()
+                            ).model_dump(),
                         )
                     if word_translations_options:
                         processed_results[i] = {
-                            "word_translations": word_translations_options
+                            "word_translations": word_translations_options,
                         }
                         break
 
@@ -352,9 +356,9 @@ def batch_translate_words(
             except Exception:
                 attempt += 1
                 logger.info(f"Sentence {i} failed, retrying attempt {attempt}")
-                if attempt >= MAX_RETRIES:
+                if attempt >= max_retries:
                     logger.info(
-                        f"[FATAL] Sentence {i} failed {MAX_RETRIES} times. Aborting batch."
+                        f"[FATAL] Sentence {i} failed {max_retries} times. Aborting batch.",
                     )
                     sys.exit(1)
                 time.sleep(1)
@@ -379,7 +383,7 @@ def batch_refine_translations(
                 entry = f"{word_opts.get('arabic', '')}:"
                 eng_opts_str = ", ".join(word_opts.get("english_options", ["N/A"]))
                 ess_opts_str = ", ".join(
-                    word_opts.get("essential_translation_options", ["N/A"])
+                    word_opts.get("essential_translation_options", ["N/A"]),
                 )
                 entry += f"\n  - English Options: [{eng_opts_str}]"
                 entry += f"\n  - Essential: {word_opts.get('essential', 'N/A')}"
@@ -409,7 +413,7 @@ def batch_refine_translations(
                     for u in word_uncertainties:
                         if isinstance(u, dict):
                             all_uncertainties.append(
-                                f"Word ({word_opts.get('arabic', '')}): {u.get('text', '')} ({u.get('reason', 'No reason')})"
+                                f"Word ({word_opts.get('arabic', '')}): {u.get('text', '')} ({u.get('reason', 'No reason')})",
                             )
 
             formatted_inputs.append(
@@ -425,7 +429,7 @@ def batch_refine_translations(
                     + "\n".join(f"- {u}" for u in all_uncertainties)
                     if all_uncertainties
                     else ""
-                )
+                ),
             )
 
         messages = [
