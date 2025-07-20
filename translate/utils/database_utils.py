@@ -18,6 +18,7 @@ except (ImportError, OSError):
     get_or_generate_root_audio = None
 # Import common database utilities
 from data.config import ARCHIVE_DIR, ROOT_DIR, SUPABASE_URL
+from data.pipeline_types import WordData
 from utils.arabic_text import clean_arabic_text
 from utils.database_common import (
     get_table_record,
@@ -33,7 +34,7 @@ from utils.storage_utils import (
 logger = logging.getLogger(__name__)
 
 
-def extract_root_info(word: dict[str, Any]) -> tuple[str, str | None, str | None]:
+def extract_root_info(word: WordData) -> tuple[str, str | None, str | None]:
     """Extract root information from a word."""
     if word.get("root"):
         return word["root"], word.get("notes"), word.get("english", "")

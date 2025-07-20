@@ -80,7 +80,10 @@ TRANSLATE_SENTENCES_FUNCTION = {
                             },
                         },
                     },
-                    "required": ["translation"],  # Notes are optional
+                    "required": [
+                        "translation",
+                        "uncertainties",
+                    ],  # Ensure uncertainties are always present
                 },
             },
         },
@@ -139,7 +142,7 @@ TASHKEEL_FUNCTION = {
                             },
                         },
                     },
-                    "required": ["tashkeel"],
+                    "required": ["tashkeel", "uncertainties"],
                 },
             },
         },
@@ -496,6 +499,8 @@ Input text:
 
 SENTENCE_TRANSLATION_USER_PROMPT = """Translate Classical Arabic sentences from Islamic texts to English using the `TRANSLATE_SENTENCES_FUNCTION` schema.
 
+CRITICAL: You MUST provide ALL required fields. The `uncertainties` array must be present for every translation, even if empty.
+
 For each sentence, provide:
 1. `translation` (string):
    - Use accessible English, preserving Arabic word order where possible.
@@ -525,10 +530,18 @@ Arabic: وقال النبي صلى الله عليه وسلم
 
 IMPORTANT: Do not modify, normalize, or clean any part of the original Arabic text. Preserve ALL formatting.
 
+VALIDATION CHECKLIST:
+- Every translation has a non-empty `translation` field
+- Every translation has an `uncertainties` array (even if empty)
+- All original text formatting is preserved
+- No fields are missing or null
+
 Input sentences:
 """
 
 TASHKEEL_USER_PROMPT = """Add complete diacritical marks (tashkīl) to EVERY word in the Islamic Arabic text using the `TASHKEEL_FUNCTION` schema.
+
+CRITICAL: You MUST provide ALL required fields. The `uncertainties` array must be present for every tashkeel result, even if empty.
 
 For each input text segment, provide:
 1. `tashkeel` (string):

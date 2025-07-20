@@ -8,6 +8,18 @@ from data.config import (
     MODEL_VERIFICATION,
 )
 from data.models import WordTranslationOptions
+from data.pipeline_types import (
+    RefinementInput,
+    RefinementInputs,
+    RefinementResult,
+    RefinementResults,
+    TashkeelResult,
+    TashkeelResults,
+    TranslationResult,
+    TranslationResults,
+    WordTranslationResult,
+    WordTranslationResults,
+)
 from data.schemas import (
     FINAL_VERIFICATION_USER_PROMPT,
     GENERAL_SYSTEM_PROMPT,
@@ -50,7 +62,7 @@ def _build_word_prompt(
 def batch_translate_full_sentences(
     sentences: list[str],
     contexts: list[str | None],
-) -> list[dict[str, Any]]:
+) -> TranslationResults:
     """Translate multiple sentences in a single API call with retry logic"""
 
     def try_translation(
@@ -95,67 +107,73 @@ def batch_translate_full_sentences(
         response = try_translation(sentences, contexts, retry_without_context=True)
 
     if "translations" in response and isinstance(response["translations"], list):
-        results: list[dict[str, Any]] = []
+        results: TranslationResults = []
         for i, item in enumerate(response["translations"]):
             if i >= len(sentences):
                 break
             if isinstance(item, dict) and "t" in item:
                 results.append(
-                    {
-                        "translation": item["t"],
-                        "notes": item.get("n"),
-                        "uncertainties": item.get("uncertainties", []),
-                    },
+                    TranslationResult(
+                        translation=item["t"],
+                        notes=item.get("n"),
+                        uncertainties=item.get("uncertainties", []),
+                    ),
                 )
             elif isinstance(item, dict) and "translation" in item:
-                results.append(item)
+                results.append(
+                    TranslationResult(
+                        translation=item["translation"],
+                        notes=item.get("notes"),
+                        uncertainties=item.get("uncertainties", []),
+                    )
+                )
             else:
                 results.append(
-                    {
-                        "translation": f"[Format Error for: {sentences[i][:20]}...]",
-                        "notes": "Response item has unexpected format",
-                        "uncertainties": [],
-                    },
+                    TranslationResult(
+                        translation=f"[Format Error for: {sentences[i][:20]}...]",
+                        notes="Response item has unexpected format",
+                        uncertainties=[],
+                    ),
                 )
 
         while len(results) < len(sentences):
             i = len(results)
             results.append(
-                {
-                    "translation": f"[Missing Translation for: {sentences[i][:20]}...]",
-                    "notes": "Translation missing in API response",
-                    "uncertainties": [],
-                },
+                TranslationResult(
+                    translation=f"[Missing Translation for: {sentences[i][:20]}...]",
+                    notes="Translation missing in API response",
+                    uncertainties=[],
+                ),
             )
 
         return results
     elif "error" in response:
         return [
-            {
-                "translation": "[Translation Error]",
-                "notes": response["error"],
-                "uncertainties": [],
-            }
+            TranslationResult(
+                translation="[Translation Error]",
+                notes=response["error"],
+                uncertainties=[],
+            )
             for _ in sentences
         ]
     else:
         return [
-            {
-                "translation": "[Format Error]",
-                "notes": "Response format error",
-                "uncertainties": [],
-            }
+            TranslationResult(
+                translation="[Format Error]",
+                notes="Response format error",
+                uncertainties=[],
+            )
             for _ in sentences
         ]
 
 
 def batch_add_tashkeel(
     sentences: list[str],
-    translation_results: list[dict[str, Any]],
+    translation_results: TranslationResults,
     all_sentences: list[str] | None = None,
     indices: list[int] | None = None,
     context_cache: ContextCache | None = None,
-) -> list[dict[str, str]]:
+) -> TashkeelResults:
     """Add diacritical marks to multiple sentences in a batch"""
     formatted_inputs: list[str] = []
     for i, (sentence, translation_data) in enumerate(
@@ -215,49 +233,62 @@ def batch_add_tashkeel(
     )
 
     if "tashkeels" in response and isinstance(response["tashkeels"], list):
-        results = []
+        results: TashkeelResults = []
         for i, item in enumerate(response["tashkeels"]):
             if i >= len(sentences):
                 break
             if isinstance(item, dict):
                 if "t" in item:
                     results.append(
-                        {
-                            "tashkeel": item["t"],
-                            "uncertainties": item.get("uncertainties", []),
-                        },
+                        TashkeelResult(
+                            tashkeel=item["t"],
+                            uncertainties=item.get("uncertainties", []),
+                        ),
                     )
                 elif "tashkeel" in item:
-                    results.append(item)
+                    results.append(
+                        TashkeelResult(
+                            tashkeel=item["tashkeel"],
+                            uncertainties=item.get("uncertainties", []),
+                        )
+                    )
                 else:
-                    results.append({"tashkeel": sentences[i], "uncertainties": []})
+                    results.append(
+                        TashkeelResult(tashkeel=sentences[i], uncertainties=[])
+                    )
             else:
-                results.append({"tashkeel": sentences[i], "uncertainties": []})
+                results.append(TashkeelResult(tashkeel=sentences[i], uncertainties=[]))
 
         while len(results) < len(sentences):
             i = len(results)
-            results.append({"tashkeel": sentences[i], "uncertainties": []})
+            results.append(TashkeelResult(tashkeel=sentences[i], uncertainties=[]))
 
         return results
     elif "error" in response:
-        return [{"tashkeel": sentence, "uncertainties": []} for sentence in sentences]
+        return [
+            TashkeelResult(tashkeel=sentence, uncertainties=[])
+            for sentence in sentences
+        ]
     else:
-        return [{"tashkeel": sentence, "uncertainties": []} for sentence in sentences]
+        return [
+            TashkeelResult(tashkeel=sentence, uncertainties=[])
+            for sentence in sentences
+        ]
 
 
 def batch_translate_words(
     sentences: list[str],
-    tashkeel_results: list[dict[str, Any]],
-    translations: list[dict[str, Any]],
+    tashkeel_results: TashkeelResults,
+    translations: TranslationResults,
     all_sentences: list[str] | None = None,
     indices: list[int] | None = None,
     context_cache: ContextCache | None = None,
-) -> list[dict[str, Any]]:
+) -> WordTranslationResults:
     """Create word-by-word translations for multiple sentences in a batch, returning options"""
 
     max_retries = 3
 
-    processed_results: list[dict[str, Any]] = [
+    processed_results: WordTranslationResults = [
         {"word_translations": []} for _ in range(len(sentences))
     ]
 
@@ -376,17 +407,20 @@ def batch_translate_words(
 
 
 def batch_refine_translations(
-    refinement_input: list[dict[str, Any]],
-) -> dict[str, list[dict[str, Any]]]:
+    refinement_input: RefinementInputs,
+) -> RefinementResults:
     """Refine all translation components, selecting best options"""
     try:
         formatted_inputs = []
         for i, data in enumerate(refinement_input):
-            original = data["original"]
-            translation_data = data["translation"]
-            tashkeel_data = data["tashkeel"]
-            word_translations_options = data["word_translations_options"]
-            previous_uncertainties = data["previous_uncertainties"]
+            refinement_data: RefinementInput = data
+            original = refinement_data["original"]
+            translation_data: TranslationResult = refinement_data["translation"]
+            tashkeel_data: TashkeelResult = refinement_data["tashkeel"]
+            word_translations_options: list[WordTranslationResult] = refinement_data[
+                "word_translations_options"
+            ]
+            previous_uncertainties = refinement_data["previous_uncertainties"]
 
             word_trans_formatted = []
             for word_opts in word_translations_options:
@@ -461,13 +495,44 @@ def batch_refine_translations(
         }
         response = call_openai_api(**api_kwargs)
         if "refinements" in response and isinstance(response["refinements"], list):
-            return {"refinements": response["refinements"]}
+            results: RefinementResults = []
+            for item in response["refinements"]:
+                if isinstance(item, dict):
+                    results.append(
+                        RefinementResult(
+                            improved_tashkeel=item.get("improved_tashkeel", ""),
+                            improved_translation=item.get("improved_translation", ""),
+                            improved_word_translations=item.get(
+                                "improved_word_translations", []
+                            ),
+                            resolved_uncertainties=item.get(
+                                "resolved_uncertainties", []
+                            ),
+                            remaining_uncertainties=item.get(
+                                "remaining_uncertainties", []
+                            ),
+                            changes_made=item.get("changes_made", []),
+                        )
+                    )
+                else:
+                    # Create empty refinement result if response is malformed
+                    results.append(
+                        RefinementResult(
+                            improved_tashkeel="",
+                            improved_translation="",
+                            improved_word_translations=[],
+                            resolved_uncertainties=[],
+                            remaining_uncertainties=[],
+                            changes_made=[],
+                        )
+                    )
+            return results
         elif "error" in response:
-            return {"refinements": []}
+            return []
         else:
-            return {"refinements": []}
+            return []
     except Exception:
-        return {"refinements": []}
+        return []
 
 
 __all__ = [

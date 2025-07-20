@@ -12,8 +12,10 @@ from data.config import (
     MAX_BATCH_SIZE,
 )
 from data.models import (
+    SentenceTranslation,
     TextMetadata,
 )
+from data.pipeline_types import TranslationBatch
 from utils.context_cache import ContextCache
 from utils.file_utils import (
     generate_split_filename,
@@ -36,9 +38,9 @@ def create_batches(
     start_index: int,
     batch_size: int,
     context_cache: ContextCache | None = None,
-) -> list[dict[str, Any]]:
+) -> list[TranslationBatch]:
     """Create batches of sentences with their contexts"""
-    batches: list[dict[str, Any]] = []
+    batches: list[TranslationBatch] = []
 
     num_remaining = len(sentences) - start_index
     for i in range(0, num_remaining, batch_size):
@@ -67,12 +69,12 @@ def create_batches(
             ]
 
         batches.append(
-            {
-                "sentences": batch_sentences,
-                "contexts": batch_contexts,
-                "start_index": current_batch_start_global_index,
-                "indices": batch_indices,
-            },
+            TranslationBatch(
+                sentences=batch_sentences,
+                contexts=batch_contexts,
+                start_index=current_batch_start_global_index,
+                indices=batch_indices,
+            ),
         )
 
     return batches
@@ -108,7 +110,7 @@ def process_batch(
     all_sentences: list[str] | None = None,
     batch_indices: list[int] | None = None,
     context_cache: Any = None,
-) -> list[Any]:
+) -> list[SentenceTranslation]:
     """Process a batch of sentences by orchestrating each translation phase."""
     if not batch_sentences:
         return []
@@ -166,11 +168,11 @@ def process_batches(
             future_to_batch = {
                 executor.submit(
                     process_batch,
-                    batch["sentences"],
-                    batch["start_index"],
-                    batch["contexts"],
+                    batch.sentences,
+                    batch.start_index,
+                    batch.contexts,
                     all_units,
-                    batch["indices"],
+                    batch.indices,
                     context_cache,
                 ): batch
                 for batch in batches
@@ -185,7 +187,7 @@ def process_batches(
                 except Exception as exc:
                     errors.append(f"Batch {len(errors) + 1}: {exc}")
                 finally:
-                    pbar.update(len(batch["sentences"]))
+                    pbar.update(len(batch.sentences))
 
     return results, errors
 

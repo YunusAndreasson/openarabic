@@ -1,6 +1,17 @@
 from typing import Any
 
 from data.models import SentenceTranslation, WordTranslation
+from data.pipeline_types import (
+    RefinementInput,
+    RefinementInputs,
+    RefinementResult,
+    TashkeelResult,
+    TashkeelResults,
+    TranslationResult,
+    TranslationResults,
+    WordTranslationResult,
+    WordTranslationResults,
+)
 from utils.validation import (
     validate_final_translation,
     validate_translation_results,
@@ -28,7 +39,7 @@ def _get_translation_engine_functions() -> tuple[Any, Any, Any, Any]:
 def run_full_translation(
     batch_sentences: list[str],
     batch_contexts: list[str | None],
-) -> list[dict[str, Any]]:
+) -> TranslationResults:
     """Translate a batch of sentences and validate the results."""
     batch_translate_full_sentences = _get_translation_engine_functions()[2]
     translations = batch_translate_full_sentences(batch_sentences, batch_contexts)
@@ -38,11 +49,11 @@ def run_full_translation(
 
 def apply_tashkeel(
     batch_sentences: list[str],
-    translation_results: list[dict[str, Any]],
+    translation_results: TranslationResults,
     all_sentences: list[str] | None = None,
     batch_indices: list[int] | None = None,
     context_cache: Any = None,
-) -> list[dict[str, Any]]:
+) -> TashkeelResults:
     """Add diacritics to sentences and validate the results."""
     batch_add_tashkeel = _get_translation_engine_functions()[0]
     tashkeel = batch_add_tashkeel(
@@ -58,12 +69,12 @@ def apply_tashkeel(
 
 def translate_words(
     batch_sentences: list[str],
-    tashkeel_results: list[dict[str, Any]],
-    translation_results: list[dict[str, Any]],
+    tashkeel_results: TashkeelResults,
+    translation_results: TranslationResults,
     all_sentences: list[str] | None = None,
     batch_indices: list[int] | None = None,
     context_cache: Any = None,
-) -> list[dict[str, Any]]:
+) -> WordTranslationResults:
     """Generate word-by-word translations and validate them."""
     batch_translate_words = _get_translation_engine_functions()[3]
     word_results = batch_translate_words(
@@ -85,12 +96,12 @@ def translate_words(
 
 def build_refinement_input(
     batch_sentences: list[str],
-    translation_results: list[dict[str, Any]],
-    tashkeel_results: list[dict[str, Any]],
-    word_options_results: list[dict[str, Any]],
-) -> tuple[list[dict[str, Any]], list[list[dict[str, Any]]]]:
+    translation_results: TranslationResults,
+    tashkeel_results: TashkeelResults,
+    word_options_results: WordTranslationResults,
+) -> tuple[RefinementInputs, list[list[dict[str, Any]]]]:
     """Prepare input payload for refinement step."""
-    refinement_input: list[dict[str, Any]] = []
+    refinement_input: RefinementInputs = []
     all_word_uncertainties: list[list[dict[str, Any]]] = []
     for i, opts in enumerate(word_options_results):
         word_opts_list = opts.get("word_translations", [])
@@ -102,17 +113,17 @@ def build_refinement_input(
             ],
         )
         refinement_input.append(
-            {
-                "original": batch_sentences[i],
-                "translation": translation_results[i],
-                "tashkeel": tashkeel_results[i],
-                "word_translations_options": word_opts_list,
-                "previous_uncertainties": {
+            RefinementInput(
+                original=batch_sentences[i],
+                translation=translation_results[i],
+                tashkeel=tashkeel_results[i],
+                word_translations_options=word_opts_list,
+                previous_uncertainties={
                     "translation": translation_results[i].get("uncertainties", []),
                     "tashkeel": tashkeel_results[i].get("uncertainties", []),
                     "word": all_word_uncertainties[-1],
                 },
-            },
+            ),
         )
     return refinement_input, all_word_uncertainties
 
@@ -121,10 +132,10 @@ def create_sentence_translation(
     i: int,
     start_index: int,
     original_sentence: str,
-    refinement: dict[str, Any],
-    translation_result: dict[str, Any],
-    tashkeel_result: dict[str, Any],
-    word_options_result: dict[str, Any],
+    refinement: RefinementResult,
+    translation_result: TranslationResult,
+    tashkeel_result: TashkeelResult,
+    word_options_result: WordTranslationResult,
 ) -> SentenceTranslation:
     refined_tashkeel = refinement.get(
         "improved_tashkeel", tashkeel_result.get("tashkeel", "")
@@ -186,7 +197,7 @@ def create_sentence_translation(
                     essential_translation=word_opts.get(
                         "essential_translation_options", ["[Fallback Error]"]
                     )[0],
-                    notes=word_opts.get("notes", "") + " (Refinement fallback)",
+                    notes=(word_opts.get("notes") or "") + " (Refinement fallback)",
                 ),
             )
 
@@ -220,9 +231,9 @@ def create_sentence_translation(
 def refine_translations(
     batch_sentences: list[str],
     start_index: int,
-    translation_results: list[dict[str, Any]],
-    tashkeel_results: list[dict[str, Any]],
-    word_options_results: list[dict[str, Any]],
+    translation_results: TranslationResults,
+    tashkeel_results: TashkeelResults,
+    word_options_results: WordTranslationResults,
 ) -> list[SentenceTranslation]:
     """Refine translations using previous results and return final objects."""
     inputs, _ = build_refinement_input(
@@ -236,9 +247,16 @@ def refine_translations(
     results: list[SentenceTranslation] = []
     for i in range(len(batch_sentences)):
         refinement = (
-            refinement_results.get("refinements", [])[i]
-            if i < len(refinement_results.get("refinements", []))
-            else {}
+            refinement_results[i]
+            if i < len(refinement_results)
+            else RefinementResult(
+                improved_tashkeel="",
+                improved_translation="",
+                improved_word_translations=[],
+                resolved_uncertainties=[],
+                remaining_uncertainties=[],
+                changes_made=[],
+            )
         )
         results.append(
             create_sentence_translation(

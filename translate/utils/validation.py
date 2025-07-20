@@ -1,11 +1,14 @@
-from typing import Any
-
 from data.models import SentenceTranslation, TranslationValidationError
+from data.pipeline_types import (
+    TashkeelResults,
+    TranslationResults,
+    WordTranslationResults,
+)
 
 
 def validate_translation_results(
     original_sentences: list[str],
-    results: list[dict[str, Any]],
+    results: TranslationResults | TashkeelResults | WordTranslationResults,
     step_name: str,
     check_word_translations: bool = False,
     check_word_options: bool = False,
