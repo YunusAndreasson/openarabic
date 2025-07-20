@@ -6,19 +6,27 @@ import os
 import subprocess
 import sys
 
-from translate.data.config import (
+from data.config import (
     DEFAULT_BATCH_SIZE,
     DEFAULT_INPUT_FILE,
     DEFAULT_OUTPUT_FILE,
 )
-from translate.pipeline.split_file import split_file as split_text
-from translate.pipeline.translate import translate_file as translate_text
-from translate.utils.api_utils import load_api_keys, token_tracker
+from pipeline.split_file import split_file as split_text
+from pipeline.translate import translate_file as translate_text
+from utils.api_utils import load_api_keys, token_tracker
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
+
+# Suppress HTTP request logging from OpenAI client and other libraries
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("openai").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("httpx._client").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 load_api_keys()
@@ -72,11 +80,13 @@ def review_split_file(split_file: str) -> bool:
         if units:
             logger.info("\n📝 Preview of first 3 sentences:")
             for i, unit in enumerate(units[:3]):
-                sentence = (
-                    unit.get("text", "")[:80] + "..."
-                    if len(unit.get("text", "")) > 80
-                    else unit.get("text", "")
-                )
+                # Handle both string and dict formats
+                if isinstance(unit, dict):
+                    sentence = unit.get("text", "")
+                else:
+                    sentence = str(unit)
+
+                sentence = sentence[:80] + "..." if len(sentence) > 80 else sentence
                 logger.info(f"  {i + 1}. {sentence}")
 
         logger.info(f"📁 Split file saved to: {split_file}")
@@ -146,13 +156,23 @@ def review_translation(output_file: str) -> bool:
 def run_insert_only() -> None:
     """Run only the database insertion step."""
     logger.info("Running database insertion step...")
+
+    # Load API keys to ensure environment variables are set
+    from utils.api_utils import load_api_keys
+
+    load_api_keys()
+
+    # Get current environment and add our variables
+    env = os.environ.copy()
+
     result = subprocess.run(
         [
             sys.executable,
-            "-m",
-            "translate.pipeline.insert",
+            "pipeline/insert.py",
         ],
         capture_output=False,
+        cwd=os.path.dirname(os.path.abspath(__file__)),
+        env=env,
     )
     if result.returncode != 0:
         logger.error("❌ insert.py failed.")

@@ -8,5 +8,7 @@ os.environ["SUPABASE_URL"] = "https://kkmnzbeugdoajtzfjkxg.supabase.co"
 os.environ["SUPABASE_KEY"] = (
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrbW56YmV1Z2RvYWp0emZqa3hnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjU3ODk1NDQsImV4cCI6MjA0MTM2NTU0NH0.AjF-MzqjnUuERhgtYMwJKpDtNKBFKXjEmSMqUPeM1Os"
 )
-os.environ["ELEVENLABS_API_KEY"] = "your-elevenlabs-api-key-here"
-os.environ["OPENAI_API_KEY"] = "your-openai-api-key-here"
+os.environ["ELEVENLABS_API_KEY"] = "REDACTED_LEAKED_KEY"
+os.environ["OPENAI_API_KEY"] = (
+    "REDACTED_LEAKED_KEY"
+)

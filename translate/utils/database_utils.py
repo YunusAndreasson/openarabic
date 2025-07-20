@@ -6,19 +6,19 @@ from typing import Any
 
 # Audio utilities - import real implementations (conditional to avoid import-time validation)
 try:
-    from translate.audio.audio_utils import (
+    from audio.audio_utils import (
         concatenate_audio_files,
         generate_sentence_audio,
     )
-    from translate.audio.root_audio import get_or_generate_root_audio
+    from audio.root_audio import get_or_generate_root_audio
 except (ImportError, OSError):
     # Import failed, but we'll handle this gracefully in the functions
     concatenate_audio_files = None
     generate_sentence_audio = None
     get_or_generate_root_audio = None
-from translate.data.config import ARCHIVE_DIR, ROOT_DIR, SUPABASE_URL
-from translate.utils.arabic_text import clean_arabic_text
-from translate.utils.storage_utils import (
+from data.config import ARCHIVE_DIR, ROOT_DIR, SUPABASE_URL
+from utils.arabic_text import clean_arabic_text
+from utils.storage_utils import (
     generate_audio_filename,
     get_supabase_client,
     get_word_type_id,

@@ -4,7 +4,7 @@ from typing import Any
 
 from supabase import create_client
 
-from translate.data.config import SUPABASE_KEY, SUPABASE_URL
+from data.config import SUPABASE_KEY, SUPABASE_URL
 
 logger = logging.getLogger(__name__)
 

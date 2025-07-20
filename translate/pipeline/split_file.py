@@ -2,18 +2,18 @@ import logging
 import sys
 from typing import Any
 
-from translate.data.config import (
+from data.config import (
     DEFAULT_INPUT_FILE,
     DEFAULT_SPLIT_OUTPUT_FILE,
     MODEL_ANALYSIS,
 )
-from translate.data.schemas import (
+from data.schemas import (
     GENERAL_SYSTEM_PROMPT,
     SENTENCE_SPLITTING_USER_PROMPT,
     SPLIT_TEXT_FUNCTION,
 )
-from translate.utils import call_openai_api
-from translate.utils.file_utils import (
+from utils import call_openai_api
+from utils.file_utils import (
     generate_split_filename,
     read_text_file,
     write_json_file,

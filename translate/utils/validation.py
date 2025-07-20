@@ -1,6 +1,6 @@
 from typing import Any
 
-from translate.data.models import SentenceTranslation, TranslationValidationError
+from data.models import SentenceTranslation, TranslationValidationError
 
 
 def validate_translation_results(

@@ -5,21 +5,21 @@ from typing import Any
 
 from tqdm import tqdm
 
-from translate.data.config import (
+from data.config import (
     DEFAULT_INPUT_FILE,
     DEFAULT_OUTPUT_FILE,
     MAX_BATCH_SIZE,
 )
-from translate.data.models import (
+from data.models import (
     TextMetadata,
 )
-from translate.utils.file_utils import (
+from utils.file_utils import (
     generate_split_filename,
     read_json_file,
     write_json_file,
 )
-from translate.utils.text_utils import get_optimized_context
-from translate.utils.translation_processor import process_batch
+from utils.text_utils import get_optimized_context
+from utils.translation_processor import process_batch
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +67,12 @@ def create_batches(
 
 def load_split_data(input_file: str) -> dict[str, Any] | None:
     """Load the split JSON created by split_file.py."""
-    split_path = generate_split_filename(input_file)
+    # If input_file already ends with _split.json, use it directly
+    if input_file.endswith("_split.json"):
+        split_path = input_file
+    else:
+        split_path = generate_split_filename(input_file)
+
     if not os.path.exists(split_path):
         return None
     return read_json_file(split_path)
@@ -84,13 +89,20 @@ def create_metadata(split_data: dict[str, Any]) -> TextMetadata:
 
 
 def process_batches(
-    all_units: list[dict[str, Any]],
+    all_units: list[str] | list[dict[str, Any]],
     batch_size: int,
 ) -> tuple[list[Any], list[str]]:
     """Process all batches and return results and errors."""
     results: list[Any] = []
     errors: list[str] = []
-    batches = create_batches(all_units, 0, batch_size)
+
+    # Convert to list of strings if needed
+    if all_units and isinstance(all_units[0], dict):
+        sentences = [unit.get("text", "") for unit in all_units]
+    else:
+        sentences = all_units
+
+    batches = create_batches(sentences, 0, batch_size)
     with tqdm(total=len(all_units), desc="Translating", initial=0) as pbar:
         for batch in batches:
             try:
