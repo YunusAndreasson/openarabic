@@ -16,8 +16,14 @@ except (ImportError, OSError):
     concatenate_audio_files = None
     generate_sentence_audio = None
     get_or_generate_root_audio = None
+# Import common database utilities
 from data.config import ARCHIVE_DIR, ROOT_DIR, SUPABASE_URL
 from utils.arabic_text import clean_arabic_text
+from utils.database_common import (
+    get_table_record,
+    insert_table_record,
+    update_table_record,
+)
 from utils.storage_utils import (
     generate_audio_filename,
     get_supabase_client,
@@ -52,62 +58,48 @@ def get_or_create_root(
         meaning: The meaning description
         english_translation: The direct English translation for audio generation
     """
+
     letters = " ".join(letters.split())
 
-    result = (
-        get_supabase_client()
-        .table("roots")
-        .select("id", "audio_url", "audio_url_en")
-        .eq("letters", letters)
-        .execute()
+    # Check if root exists
+    root = get_table_record(
+        "roots",
+        ["id", "audio_url", "audio_url_en"],
+        {"letters": letters},
+        f"root lookup for '{letters}'",
     )
-    if result.data:
-        root = result.data[0]
+
+    if root:
         root_id = root["id"]
+        # Generate missing audio if needed
         if not root.get("audio_url") or not root.get("audio_url_en"):
-            try:
-                english_audio_text = english_translation
-                if not english_audio_text and meaning:
-                    if "Auto-generated root for:" in meaning:
-                        english_audio_text = meaning.replace(
-                            "Auto-generated root for:",
-                            "",
-                        ).strip()
-                    else:
-                        english_audio_text = meaning
-
-                audio_urls = None
-                if get_or_generate_root_audio:
-                    audio_urls = get_or_generate_root_audio(letters)
-
-                update_data = {}
-                if audio_urls:
-                    if audio_urls.get("audio_url") and not root.get("audio_url"):
-                        update_data["audio_url"] = audio_urls["audio_url"]
-                    if audio_urls.get("audio_url_en") and not root.get("audio_url_en"):
-                        update_data["audio_url_en"] = audio_urls["audio_url_en"]
-
-                if update_data:
-                    get_supabase_client().table("roots").update(update_data).eq(
-                        "id",
-                        root_id,
-                    ).execute()
-            except Exception as e:
-                logger.error(f"Error generating audio for root '{letters}': {e}")
+            _generate_root_audio(root_id, letters, english_translation, meaning)
         return root_id
 
+    # Create new root
     root_data = {"letters": letters, "meaning": meaning}
-    result = get_supabase_client().table("roots").insert(root_data).execute()
-    root_id = result.data[0]["id"]
+    new_root = insert_table_record(root_data, "roots", f"root creation for '{letters}'")
 
+    if new_root:
+        root_id = new_root["id"]
+        _generate_root_audio(root_id, letters, english_translation, meaning)
+        return root_id
+
+    # Fallback: create without audio
+    logger.error(f"Failed to create root for '{letters}'")
+    return 0
+
+
+def _generate_root_audio(
+    root_id: int, letters: str, english_translation: str | None, meaning: str | None
+) -> None:
+    """Helper function to generate audio for a root."""
     try:
         english_audio_text = english_translation
-
         if not english_audio_text and meaning:
             if "Auto-generated root for:" in meaning:
                 english_audio_text = meaning.replace(
-                    "Auto-generated root for:",
-                    "",
+                    "Auto-generated root for:", ""
                 ).strip()
             else:
                 english_audio_text = meaning
@@ -116,21 +108,22 @@ def get_or_create_root(
         if get_or_generate_root_audio:
             audio_urls = get_or_generate_root_audio(letters)
 
-        update_data = {}
         if audio_urls:
+            update_data = {}
             if audio_urls.get("audio_url"):
                 update_data["audio_url"] = audio_urls["audio_url"]
             if audio_urls.get("audio_url_en"):
                 update_data["audio_url_en"] = audio_urls["audio_url_en"]
 
-        if update_data:
-            get_supabase_client().table("roots").update(update_data).eq(
-                "id", root_id
-            ).execute()
+            if update_data:
+                update_table_record(
+                    "roots",
+                    update_data,
+                    {"id": root_id},
+                    f"root audio update for '{letters}'",
+                )
     except Exception as e:
-        logger.error(f"Error generating audio for new root '{letters}': {e}")
-
-    return root_id
+        logger.error(f"Error generating audio for root '{letters}': {e}")
 
 
 def insert_sentence_words(
