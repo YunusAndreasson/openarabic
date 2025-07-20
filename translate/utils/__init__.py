@@ -25,7 +25,8 @@ from .file_utils import (
     write_json_file,
     write_text_file,
 )
-from .set_keys import set_api_keys
+
+# set_keys.py only sets environment variables, no functions to import
 from .setup import setup_environment
 from .storage_utils import (
     check_article_exists,
@@ -71,7 +72,7 @@ __all__ = [
     "insert_article_sentences",
     "save_timing_report",
     "validate_article_data",
-    "set_api_keys",
+    # "set_api_keys",  # set_keys.py only sets environment variables
     "setup_environment",
     "read_text_file",
     "read_json_file",

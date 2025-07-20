@@ -29,6 +29,9 @@ dev = [
     "pytest-cov>=4.0.0",
 ]
 
+[tool.hatch.build.targets.wheel]
+packages = ["translate"]
+
 [tool.ruff]
 # Same as Black.
 line-length = 88
@@ -88,6 +91,7 @@ ignore = [
     "TC001", # Import typing only in TYPE_CHECKING
     "TC002", # Import typing only in TYPE_CHECKING
     "TC003", # Import typing only in TYPE_CHECKING
+    "COM812", # Use of `dict.get()` with default value is redundant
 ]
 
 [tool.ruff.lint.isort]
@@ -121,4 +125,5 @@ addopts = [
     "--cov=translate",
     "--cov-report=term-missing",
     "--cov-report=html",
+    "--cov-fail-under=35",
 ]

@@ -17,7 +17,7 @@ from translate.utils.storage_utils import (
     generate_content_hash,
     get_author_id,
     get_category_id,
-    supabase,
+    get_supabase_client,
 )
 
 logger = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ def process_json_file(file_path: str, category_id: int, author_id: int) -> int:
         if "content_hash" not in str(e):
             raise e
 
-    result = supabase.table("articles").insert(article_data).execute()
+    result = get_supabase_client().table("articles").insert(article_data).execute()
     article_id = result.data[0]["id"]
 
     timing_stats = insert_article_sentences(article_id, data["translations"])

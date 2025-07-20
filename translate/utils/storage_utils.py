@@ -7,12 +7,21 @@ from supabase import create_client
 
 from translate.data.config import SUPABASE_KEY, SUPABASE_URL
 
-if not all([SUPABASE_URL, SUPABASE_KEY]):
-    raise OSError(
-        "Missing required environment variables. Please ensure SUPABASE_URL and SUPABASE_KEY are set.",
-    )
+# Lazy initialization to avoid import-time validation
+_supabase_client = None
 
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+def get_supabase_client():
+    """Get or create Supabase client with lazy initialization."""
+    global _supabase_client
+    if _supabase_client is None:
+        if not all([SUPABASE_URL, SUPABASE_KEY]):
+            raise OSError(
+                "Missing required environment variables. Please ensure SUPABASE_URL and SUPABASE_KEY are set.",
+            )
+        _supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    return _supabase_client
+
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +42,7 @@ WORD_TYPE_MAPPING: dict[str, int] = {
 def check_file_exists(bucket: str, file_path: str) -> bool:
     """Check if a file exists in Supabase storage."""
     try:
-        supabase.storage.from_(bucket).create_signed_url(file_path, 1)
+        get_supabase_client().storage.from_(bucket).create_signed_url(file_path, 1)
         return True
     except Exception as e:
         msg = str(e)
@@ -63,7 +72,7 @@ def upload_to_storage(
         return f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{file_path}"
 
     try:
-        supabase.storage.from_(bucket).upload(
+        get_supabase_client().storage.from_(bucket).upload(
             file_path,
             file_data,
             file_options={"content-type": content_type},
@@ -102,7 +111,8 @@ def check_article_exists(content_hash: str) -> tuple[int | None, str | None]:
     """Check if an article with this content hash already exists and return its ID and audio_url."""
     try:
         result = (
-            supabase.table("articles")
+            get_supabase_client()
+            .table("articles")
             .select("id, audio_url")
             .eq("content_hash", content_hash)
             .execute()
@@ -123,7 +133,13 @@ def generate_audio_filename() -> str:
 
 def get_category_id(name: str = "aqeedah") -> int:
     """Get category ID by name."""
-    result = supabase.table("categories").select("id").eq("name", name).execute()
+    result = (
+        get_supabase_client()
+        .table("categories")
+        .select("id")
+        .eq("name", name)
+        .execute()
+    )
     if not result.data:
         raise ValueError(f"Category '{name}' not found")
     return result.data[0]["id"]
@@ -131,7 +147,9 @@ def get_category_id(name: str = "aqeedah") -> int:
 
 def get_author_id(name: str = "Ibn Kathir") -> int:
     """Get author ID by name."""
-    result = supabase.table("authors").select("id").eq("name", name).execute()
+    result = (
+        get_supabase_client().table("authors").select("id").eq("name", name).execute()
+    )
     if not result.data:
         raise ValueError(f"Author '{name}' not found")
     return result.data[0]["id"]

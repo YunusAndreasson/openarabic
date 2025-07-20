@@ -8,8 +8,8 @@ from translate.data.config import ARCHIVE_DIR, ROOT_DIR, SUPABASE_URL
 from translate.utils.arabic_text import clean_arabic_text
 from translate.utils.storage_utils import (
     generate_audio_filename,
+    get_supabase_client,
     get_word_type_id,
-    supabase,
 )
 
 logger = logging.getLogger(__name__)
@@ -79,7 +79,8 @@ def get_or_create_root(
     letters = " ".join(letters.split())
 
     result = (
-        supabase.table("roots")
+        get_supabase_client()
+        .table("roots")
         .select("id", "audio_url", "audio_url_en")
         .eq("letters", letters)
         .execute()
@@ -109,7 +110,7 @@ def get_or_create_root(
                         update_data["audio_url_en"] = audio_urls["audio_url_en"]
 
                 if update_data:
-                    supabase.table("roots").update(update_data).eq(
+                    get_supabase_client().table("roots").update(update_data).eq(
                         "id",
                         root_id,
                     ).execute()
@@ -118,7 +119,7 @@ def get_or_create_root(
         return root_id
 
     root_data = {"letters": letters, "meaning": meaning}
-    result = supabase.table("roots").insert(root_data).execute()
+    result = get_supabase_client().table("roots").insert(root_data).execute()
     root_id = result.data[0]["id"]
 
     try:
@@ -143,7 +144,9 @@ def get_or_create_root(
                 update_data["audio_url_en"] = audio_urls["audio_url_en"]
 
         if update_data:
-            supabase.table("roots").update(update_data).eq("id", root_id).execute()
+            get_supabase_client().table("roots").update(update_data).eq(
+                "id", root_id
+            ).execute()
     except Exception as e:
         logger.info(f"Error generating audio for new root '{letters}': {e}")
 
@@ -255,7 +258,7 @@ def insert_sentence_words(
             match_stats["none"] += 1
 
     if words_data:
-        supabase.table("sentence_words").insert(words_data).execute()
+        get_supabase_client().table("sentence_words").insert(words_data).execute()
 
     return {
         "total_words": total_words,
@@ -283,7 +286,7 @@ def get_adjacent_texts(
 def download_audio_for_concat(filename: str, dest_path: str) -> bool:
     """Download an audio file from storage for concatenation."""
     try:
-        response = supabase.storage.from_("audio").download(filename)
+        response = get_supabase_client().storage.from_("audio").download(filename)
         if response:
             with open(dest_path, "wb") as f:
                 f.write(response)
@@ -318,7 +321,7 @@ def concatenate_and_upload_audio(
     if concatenate_audio_files(files, final_audio_path):
         try:
             with open(final_audio_path, "rb") as f:
-                supabase.storage.from_("audio").upload(
+                get_supabase_client().storage.from_("audio").upload(
                     final_audio_filename,
                     f,
                     file_options={"content-type": "audio/mpeg"},
@@ -327,7 +330,9 @@ def concatenate_and_upload_audio(
             article_audio_url = (
                 f"{SUPABASE_URL}/storage/v1/object/public/audio/{final_audio_filename}"
             )
-            supabase.table("articles").update({"audio_url": article_audio_url}).eq(
+            get_supabase_client().table("articles").update(
+                {"audio_url": article_audio_url}
+            ).eq(
                 "id",
                 article_id,
             ).execute()
@@ -390,7 +395,12 @@ def insert_article_sentences(article_id: int, translations: list[dict]) -> dict:
                 "english": translation["full_translation"],
                 "audio_url": storage_url,
             }
-            result = supabase.table("article_sentences").insert(sentence_data).execute()
+            result = (
+                get_supabase_client()
+                .table("article_sentences")
+                .insert(sentence_data)
+                .execute()
+            )
             sentence_id = result.data[0]["id"]
 
             if translation.get("word_by_word"):
