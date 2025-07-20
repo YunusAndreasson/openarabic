@@ -14,7 +14,7 @@ from translate.data.config import (
 )
 from translate.pipeline.split_file import split_file as split_text
 from translate.pipeline.translate import translate_file as translate_text
-from translate.utils.api_utils import load_api_keys
+from translate.utils.api_utils import load_api_keys, token_tracker
 
 logging.basicConfig(
     level=logging.INFO,
@@ -252,6 +252,10 @@ Examples:
             "🔄 Phase 3: Processing through ElevenLabs and inserting into database...",
         )
         run_insert_only(DEFAULT_INPUT_FILE, DEFAULT_OUTPUT_FILE)
+
+    # Report token usage statistics
+    if token_tracker.api_calls > 0:
+        logger.info(f"📊 {token_tracker}")
 
     logger.info("✅ Pipeline completed successfully!")
     sys.exit(0)

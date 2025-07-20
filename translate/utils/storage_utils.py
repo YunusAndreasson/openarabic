@@ -1,5 +1,4 @@
 import logging
-import time
 import uuid
 from typing import Any
 
@@ -59,43 +58,6 @@ def check_file_exists(bucket: str, file_path: str) -> bool:
 
         logging.error(f"check_file_exists failed for {file_path}: {msg}")
         return False
-
-
-def upload_to_storage(
-    bucket: str,
-    file_path: str,
-    file_data: bytes | str,
-    content_type: str = "audio/mpeg",
-) -> str:
-    """Upload a file to Supabase storage with retries and return the public URL."""
-    if check_file_exists(bucket, file_path):
-        return f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{file_path}"
-
-    try:
-        get_supabase_client().storage.from_(bucket).upload(
-            file_path,
-            file_data,
-            file_options={"content-type": content_type},
-        )
-
-        time.sleep(0.5)
-
-        for _attempt in range(3):
-            if check_file_exists(bucket, file_path):
-                public_url = (
-                    f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{file_path}"
-                )
-                return public_url
-            time.sleep(1)
-
-        raise Exception(
-            f"File upload verification failed after 3 attempts for {file_path}",
-        )
-    except Exception as e:
-        if hasattr(e, "statusCode") and e.statusCode == 409:
-            return f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{file_path}"
-        logger.info(f"Upload failed: {str(e)}")
-        raise
 
 
 def generate_content_hash(data: dict[str, Any]) -> str:

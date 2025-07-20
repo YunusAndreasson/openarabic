@@ -1,6 +1,5 @@
 import logging
 import sys
-import time
 from typing import Any
 
 from translate.data.config import (
@@ -81,7 +80,6 @@ def split_text_into_sentences(text: str) -> dict[str, Any]:
 
 def split_file(input_file: str, output_file: str) -> dict[str, Any]:
     """Split an input file into learner-friendly units and save the result."""
-    time.time()
 
     try:
         full_text = read_text_file(input_file)

@@ -14,34 +14,43 @@ from translate.utils.storage_utils import (
 
 logger = logging.getLogger(__name__)
 
+# Audio utilities - import real implementations (conditional to avoid import-time validation)
+try:
+    from translate.audio.audio_utils import (
+        concatenate_audio_files,
+        generate_sentence_audio,
+    )
+    from translate.audio.root_audio import get_or_generate_root_audio
 
-# Audio utilities are not available - audio module removed
-# Stub functions to prevent import errors
-def concatenate_audio_files(files: list[str], output_path: str) -> bool:
-    """Stub function - audio concatenation not available."""
-    logger.warning("Audio concatenation not available - audio module removed")
-    return False
+    AUDIO_AVAILABLE = True
+except (ImportError, OSError) as e:
+    logger.warning(f"Audio module not available: {e}")
+    AUDIO_AVAILABLE = False
 
+    # Fallback stub functions
+    def concatenate_audio_files(files: list[str]) -> bool:
+        """Stub function - audio concatenation not available."""
+        logger.warning("Audio concatenation not available - audio module not loaded")
+        return False
 
-def generate_sentence_audio(
-    text: str,
-    filename: str,
-    tashkeel_text: str | None = None,
-    previous_text: str | None = None,
-    next_text: str | None = None,
-) -> dict[str, Any] | None:
-    """Stub function - sentence audio generation not available."""
-    logger.warning("Sentence audio generation not available - audio module removed")
-    return None
+    def generate_sentence_audio(
+        text: str,
+        filename: str,
+        previous_text: str | None = None,
+        next_text: str | None = None,
+    ) -> dict[str, Any] | None:
+        """Stub function - sentence audio generation not available."""
+        logger.warning(
+            "Sentence audio generation not available - audio module not loaded"
+        )
+        return None
 
-
-def get_or_generate_root_audio(
-    letters: str,
-    english_text: str,
-) -> dict[str, str] | None:
-    """Stub function - root audio generation not available."""
-    logger.warning("Root audio generation not available - audio module removed")
-    return None
+    def get_or_generate_root_audio(
+        letters: str,
+    ) -> dict[str, str] | None:
+        """Stub function - root audio generation not available."""
+        logger.warning("Root audio generation not available - audio module not loaded")
+        return None
 
 
 def extract_root_info(word: dict[str, Any]) -> tuple[str, str | None, str | None]:
@@ -100,7 +109,7 @@ def get_or_create_root(
                     else:
                         english_audio_text = meaning
 
-                audio_urls = get_or_generate_root_audio(letters, english_audio_text)
+                audio_urls = get_or_generate_root_audio(letters)
 
                 update_data = {}
                 if audio_urls:
@@ -134,7 +143,7 @@ def get_or_create_root(
             else:
                 english_audio_text = meaning
 
-        audio_urls = get_or_generate_root_audio(letters, english_audio_text)
+        audio_urls = get_or_generate_root_audio(letters)
 
         update_data = {}
         if audio_urls:
@@ -318,7 +327,7 @@ def concatenate_and_upload_audio(
     final_audio_filename = generate_audio_filename()
     final_audio_path = os.path.join(temp_dir, final_audio_filename)
 
-    if concatenate_audio_files(files, final_audio_path):
+    if concatenate_audio_files(files):
         try:
             with open(final_audio_path, "rb") as f:
                 get_supabase_client().storage.from_("audio").upload(
@@ -368,7 +377,6 @@ def insert_article_sentences(article_id: int, translations: list[dict]) -> dict:
             audio_result = generate_sentence_audio(
                 text=translation["original"],
                 filename=audio_filename,
-                tashkeel_text=translation.get("tashkeel"),
                 previous_text=previous_text,
                 next_text=next_text,
             )
