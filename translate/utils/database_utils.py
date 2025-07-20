@@ -298,7 +298,7 @@ def concatenate_and_upload_audio(
     final_audio_filename = generate_audio_filename()
     final_audio_path = os.path.join(temp_dir, final_audio_filename)
 
-    if concatenate_audio_files and concatenate_audio_files(files):
+    if concatenate_audio_files and concatenate_audio_files(files, final_audio_path):
         try:
             with open(final_audio_path, "rb") as f:
                 get_supabase_client().storage.from_("audio").upload(
