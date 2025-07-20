@@ -2,38 +2,73 @@
 
 ## Project Overview
 
-This is an Arabic translation pipeline using Python 3.12 with:
+Arabic translation pipeline using Python 3.12 with ElevenLabs API, Supabase, OpenAI API, and uv for package management.
 
-- **ElevenLabs API** for audio generation and TTS
-- **Supabase** for database storage and audio file hosting
-- **OpenAI API** for AI-powered translations
-- **Modern Python 3.12** features and type hints
+## Central Important Files
+
+### Core Configuration Files
+
+- **[pyproject.toml](mdc:translate/pyproject.toml)** - Project configuration, dependencies, and tool settings (single source of truth)
+- **[README.md](mdc:translate/README.md)** - Project documentation and architecture overview
+- **[**init**.py](mdc:translate/__init__.py)** - Package metadata and version information
+
+### Critical Application Files
+
+- **[main.py](mdc:translate/main.py)** - Main entry point and CLI interface
+- **[data/config.py](mdc:translate/data/config.py)** - Central configuration with model names and constants
+- **[data/models.py](mdc:translate/data/models.py)** - Pydantic data models for type safety
+- **[data/schemas.py](mdc:translate/data/schemas.py)** - API schemas and prompts
+
+### Core Pipeline Files
+
+- **[pipeline/translation_engine.py](mdc:translate/pipeline/translation_engine.py)** - Core AI translation operations
+- **[pipeline/translate.py](mdc:translate/pipeline/translate.py)** - Translation orchestration
+- **[pipeline/split_file.py](mdc:translate/pipeline/split_file.py)** - Text splitting logic
+- **[pipeline/insert.py](mdc:translate/pipeline/insert.py)** - Database insertion
+
+### Essential Utility Files
+
+- **[utils/exceptions.py](mdc:translate/utils/exceptions.py)** - Custom domain-specific exceptions
+- **[utils/api_utils.py](mdc:translate/utils/api_utils.py)** - OpenAI API integration
+- **[utils/storage_utils.py](mdc:translate/utils/storage_utils.py)** - Supabase storage operations
+- **[utils/database_utils.py](mdc:translate/utils/database_utils.py)** - Database operations
+
+### Audio Processing Files
+
+- **[audio/audio_utils.py](mdc:translate/audio/audio_utils.py)** - ElevenLabs audio generation
+- **[audio/root_audio.py](mdc:translate/audio/root_audio.py)** - Root word audio processing
+
+### Test Files
+
+- **[tests/](mdc:translate/tests/)** - Comprehensive test suite with 37%+ coverage
+- **[tests/conftest.py](mdc:translate/tests/conftest.py)** - Test configuration and fixtures
 
 ## Development Environment Setup
 
-### Virtual Environment
+### Package Management with uv
 
 ```bash
-# Always use the existing virtual environment
-cd translate
-source venv/bin/activate
+# Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install dependencies if needed
-pip install -r requirements.txt
-pip install ruff pytest pytest-cov  # Development dependencies
+# Install dependencies
+uv sync
+
+# Install development dependencies
+uv sync --dev
 ```
 
 ### Code Quality Tools
 
 ```bash
 # Run linting (Ruff)
-python -m ruff check . --output-format=full
+uv run ruff check . --output-format=full
 
 # Run formatting check
-python -m ruff format --check .
+uv run ruff format --check .
 
 # Run tests with coverage
-python -m pytest tests/ -v
+uv run pytest tests/ -v
 ```
 
 ## Core Principles
@@ -42,161 +77,47 @@ python -m pytest tests/ -v
 - **Clean Code**: Simple, readable, maintainable code
 - **No Overengineering**: Prefer simple solutions over complex abstractions
 - **Type Safety**: Use modern type hints with `|` union syntax (Python 3.10+)
+- **Fast Dependencies**: Use uv for lightning-fast package management
 
 ## Python 3.12 Best Practices
 
 ### Type Hints
 
-```python
-# ✅ Modern union syntax (Python 3.10+)
-def process_audio(text: str) -> dict[str, Any] | None:
-    pass
-
-# ✅ Proper None handling in function signatures
-def batch_process(
-    items: list[str],
-    context: list[str] | None = None,
-    indices: list[int] | None = None,
-) -> list[dict[str, Any]]:
-    pass
-
-# ❌ Avoid old typing syntax
-def process_audio(text: str) -> Optional[Dict[str, Any]]:
-    pass
-
-# ❌ Avoid inconsistent None handling
-def batch_process(
-    items: list[str],
-    context: list[str] = None,  # Should be list[str] | None = None
-    indices: list[int] = None,  # Should be list[int] | None = None
-) -> list[dict[str, Any]]:
-    pass
-```
-
-### Built-in Types
-
-```python
-# ✅ Use built-in types
-from typing import Any  # Only import what you need
-list[str], dict[str, Any], tuple[str, int]
-
-# ❌ Avoid deprecated typing imports
-from typing import List, Dict, Optional, Union
-```
+- Use modern union syntax: `list[str] | None` instead of `Optional[List[str]]`
+- Use built-in types: `list[str]`, `dict[str, Any]`, `tuple[str, int]`
+- Always use `list[str] | None = None` instead of `list[str] = None`
 
 ### Exception Handling
 
-```python
-# ✅ Specific exceptions with logging
-try:
-    response = api_call()
-except OSError as e:
-    logger.error(f"Network error: {e}")
-    raise
+- Use specific exceptions with proper error chaining
+- Create custom exceptions for domain-specific errors
+- Avoid bare `except Exception:` blocks
+- Don't use `sys.exit()` in library functions
 
-# ✅ Custom exceptions for domain-specific errors
-class TranslationError(Exception):
-    """Custom exception for translation failures"""
-    pass
+### API Integration
 
-class AudioGenerationError(Exception):
-    """Custom exception for audio generation failures"""
-    pass
-
-# ❌ Bare except with pass
-try:
-    response = api_call()
-except Exception:
-    pass
-
-# ❌ Hard exits in library code
-try:
-    process_batch()
-except Exception:
-    sys.exit(1)  # Don't exit in library functions
-```
-
-## API Integration Patterns
-
-### ElevenLabs Audio Generation
-
-```python
-# ✅ Proper error handling and validation
-def generate_audio(text: str, voice_id: str) -> dict[str, Any] | None:
-    try:
-        response = eleven_labs.text_to_speech.convert(
-            text=text,
-            voice_id=voice_id,
-            model_id="eleven_multilingual_v2"
-        )
-        return {"audio": response, "url": generate_url()}
-    except Exception as e:
-        logger.error(f"Audio generation failed: {e}")
-        return None
-```
-
-### Supabase Storage
-
-```python
-# ✅ Direct Supabase uploads
-def upload_audio(filename: str, audio_data: bytes) -> str | None:
-    try:
-        with open(temp_path, "rb") as f:
-            get_supabase_client().storage.from_("audio").upload(
-                filename, f, file_options={"content-type": "audio/mpeg"}
-            )
-        return f"{SUPABASE_URL}/storage/v1/object/public/audio/{filename}"
-    except Exception as e:
-        logger.error(f"Upload failed: {e}")
-        return None
-```
-
-### OpenAI Translation
-
-```python
-# ✅ Structured API calls with retries
-@retry_operation(max_attempts=3)
-def translate_text(text: str) -> dict[str, Any] | None:
-    try:
-        response = openai.chat.completions.create(
-            model="gpt-4o-mini",  # Use correct model names
-            messages=[{"role": "user", "content": text}],
-            temperature=0.3
-        )
-        return {"translation": response.choices[0].message.content}
-    except Exception as e:
-        logger.error(f"Translation failed: {e}")
-        return None
-```
+- Use proper error handling and validation
+- Implement retry logic for external APIs
+- Use context managers for resource cleanup
+- Validate configuration values at startup
 
 ## Configuration Management
 
 ### Model Configuration
 
-```python
-# ✅ Use correct OpenAI model names
-MODEL_ANALYSIS = "gpt-4o-mini"
-MODEL_TRANSLATION = "gpt-4o-mini"
-MODEL_OTHER = "gpt-4o-mini"
-MODEL_VERIFICATION = "gpt-4o-mini"
-
-# ❌ Invalid model names
-MODEL_ANALYSIS = "gpt-4.1"      # Invalid
-MODEL_TRANSLATION = "gpt-4.1"   # Invalid
-MODEL_OTHER = "gpt-4o"          # Should be "gpt-4o-mini"
-MODEL_VERIFICATION = "o4-mini"  # Should be "gpt-4o-mini"
-```
+- Use correct OpenAI model names: `"gpt-4o-mini"` (not `"gpt-4.1"`)
+- Validate all configuration constants
+- Use environment variables for sensitive data
 
 ## Code Organization
 
 ### Import Structure
 
 ```python
-# ✅ Standard library first, then third-party, then local
+# Standard library first, then third-party, then local
 import logging
 import os
 from typing import Any
-from collections.abc import Callable
 
 from elevenlabs import VoiceSettings
 from supabase import create_client
@@ -207,128 +128,57 @@ from ..utils.storage_utils import get_supabase_client
 
 ### Function Design
 
-```python
-# ✅ Single responsibility, clear names, proper typing
-def validate_mp3(audio_data: bytes, is_cached: bool = False) -> bool:
-    """Validate MP3 data with appropriate strictness level."""
-    if is_cached:
-        return len(audio_data) > 1000  # Lenient for cache
-    return validate_mp3_strict(audio_data)  # Strict for new files
-
-# ✅ Specific return types instead of generic dict
-def batch_refine_translations(
-    refinement_input: list[dict[str, Any]],
-) -> dict[str, list[dict[str, Any]]]:  # More specific than dict[str, list]
-    pass
-```
+- Single responsibility, clear names, proper typing
+- Use specific return types instead of generic `dict[str, Any]`
+- Implement proper resource management with context managers
 
 ## Error Handling Patterns
 
 ### Graceful Degradation
 
 ```python
-# ✅ Audio module with fallbacks
 try:
     from .audio_utils import generate_sentence_audio
     AUDIO_AVAILABLE = True
 except ImportError:
     AUDIO_AVAILABLE = False
-
     def generate_sentence_audio(*args, **kwargs) -> None:
-        logger.warning("Audio generation not available")
         return None
 ```
 
 ### Resource Management
 
-```python
-# ✅ Proper cleanup with context managers
-from contextlib import contextmanager
-import tempfile
-import shutil
-
-@contextmanager
-def temporary_directory():
-    temp_dir = tempfile.mkdtemp()
-    try:
-        yield temp_dir
-    finally:
-        shutil.rmtree(temp_dir, ignore_errors=True)
-
-def process_audio_file(filepath: str) -> str | None:
-    with temporary_directory() as temp_dir:
-        result = process_in_temp_dir(temp_dir, filepath)
-        return result
-```
+- Use context managers for file operations
+- Implement proper cleanup for temporary resources
+- Avoid manual cleanup in favor of automatic resource management
 
 ### State Management
 
-```python
-# ✅ Avoid global mutable state
-class SupabaseClient:
-    _instance = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._client = None
-        return cls._instance
-
-    def get_client(self):
-        if self._client is None:
-            # Initialize client
-            pass
-        return self._client
-
-# ❌ Global mutable state
-_supabase_client = None
-
-def get_supabase_client():
-    global _supabase_client  # Avoid global variables
-    if _supabase_client is None:
-        # ... initialization
-    return _supabase_client
-```
+- Avoid global mutable variables
+- Use singleton patterns or dependency injection
+- Implement proper caching strategies
 
 ## Performance Considerations
 
 ### Caching Strategy
 
-```python
-# ✅ Efficient caching with validation
-def get_cached_audio(cache_key: str) -> str | None:
-    cache_path = os.path.join(AUDIO_CACHE_DIR, cache_key)
-
-    if os.path.exists(cache_path) and validate_mp3_file(cache_path):
-        return f"{SUPABASE_URL}/storage/v1/object/public/audio/{cache_key}"
-
-    return None
-```
+- Implement efficient caching with validation
+- Use proper cache invalidation strategies
+- Validate cached data before use
 
 ### Batch Processing
 
-```python
-# ✅ Efficient batch operations
-def process_translations(translations: list[dict]) -> list[dict]:
-    results = []
-    for batch in chunk_list(translations, BATCH_SIZE):
-        batch_results = process_batch(batch)
-        results.extend(batch_results)
-    return results
-```
+- Use efficient batch operations
+- Implement proper error handling for batch failures
+- Use appropriate batch sizes for API limits
 
 ## Testing Patterns
 
 ### Mock External APIs
 
-```python
-# ✅ Proper mocking for tests
-@pytest.fixture
-def mock_elevenlabs():
-    with patch('translate.audio.audio_utils.eleven_labs') as mock:
-        mock.text_to_speech.convert.return_value = b"fake_audio_data"
-        yield mock
-```
+- Mock all external dependencies in tests
+- Use proper test fixtures and setup
+- Test error conditions and edge cases
 
 ### Test Coverage Requirements
 
@@ -357,10 +207,9 @@ def mock_elevenlabs():
 ### Pre-commit Validation
 
 ```bash
-# Always run these before committing
-python -m ruff check . --output-format=full
-python -m ruff format --check .
-python -m pytest tests/ -v
+uv run ruff check . --output-format=full
+uv run ruff format --check .
+uv run pytest tests/ -v
 ```
 
 ## Common Issues to Avoid
@@ -391,15 +240,30 @@ python -m pytest tests/ -v
 - Avoid global mutable variables
 - Use dependency injection or singleton patterns
 
+### 6. Package Management
+
+- Always use `uv` instead of `pip`
+- Never reference `requirements.txt` (use `pyproject.toml` only)
+- Use `uv sync` for dependency installation
+
 ## Development Workflow
 
-1. **Setup**: Activate virtual environment and install dependencies
+1. **Setup**: Install uv and sync dependencies
 2. **Development**: Write code following these standards
-3. **Validation**: Run linting, formatting, and tests
+3. **Validation**: Run linting, formatting, and tests with uv
 4. **Commit**: Ensure all checks pass before committing
 
----
+## Key Files to Review When Making Changes
 
-- Enable all security and quality checks
+When making changes to the translate app, always review these critical files:
+
+1. **Configuration Changes**: Update [data/config.py](mdc:translate/data/config.py) for new constants
+2. **New Exceptions**: Add to [utils/exceptions.py](mdc:translate/utils/exceptions.py)
+3. **API Changes**: Update [utils/api_utils.py](mdc:translate/utils/api_utils.py)
+4. **Database Changes**: Update [utils/database_utils.py](mdc:translate/utils/database_utils.py)
+5. **Audio Changes**: Update [audio/audio_utils.py](mdc:translate/audio/audio_utils.py)
+6. **Tests**: Add corresponding tests in [tests/](mdc:translate/tests/)
+7. **Documentation**: Update [README.md](mdc:translate/README.md) for new features
+8. **Dependencies**: Update [pyproject.toml](mdc:translate/pyproject.toml) for new packages
 
 ---

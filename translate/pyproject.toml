@@ -10,23 +10,30 @@ authors = [
     {name = "Your Name", email = "your.email@example.com"},
 ]
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.12"
 dependencies = [
-    "openai",
-    "pydantic",
-    "tqdm",
-    "supabase",
-    "python-dotenv",
-    "elevenlabs",
-    "setuptools",
-    "mutagen",
+    "openai>=1.97.0",
+    "pydantic>=2.11.7",
+    "tqdm>=4.67.1",
+    "supabase>=2.17.0",
+    "python-dotenv>=1.1.1",
+    "elevenlabs>=2.7.1",
+    "setuptools>=80.9.0",
+    "mutagen>=1.47.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "ruff>=0.3.0",
-    "pytest>=7.0.0",
-    "pytest-cov>=4.0.0",
+    "ruff>=0.12.4",
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "ruff>=0.12.4",
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -36,7 +43,7 @@ packages = ["translate"]
 # Same as Black.
 line-length = 88
 
-# Assume Python 3.8
+# Assume Python 3.12
 target-version = "py312"
 
 # Exclude a variety of commonly ignored directories.

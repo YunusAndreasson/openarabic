@@ -1,9 +1,8 @@
-from . import data, pipeline, utils
-from .utils.setup import setup_environment
+"""Arabic Translation Pipeline with AI-powered translation and database storage."""
 
-__all__ = [
-    "data",
-    "pipeline",
-    "utils",
-    "setup_environment",
-]
+__version__ = "0.1.0"
+__author__ = "Your Name"
+__email__ = "your.email@example.com"
+
+# Don't import modules here to avoid circular imports
+# Import specific modules as needed in your code
