@@ -102,9 +102,7 @@ class TestTranslateFile:
         output_file = split_file_path.replace("_split.json", "_translated.json")
 
         try:
-            with patch(
-                "translate.utils.translation_processor.process_batch"
-            ) as mock_api:
+            with patch("translate.pipeline.translate.process_batch") as mock_api:
                 mock_api.return_value = []  # Return empty results to simulate failure
 
                 result = translate_file(split_file_path, output_file, batch_size=1)
