@@ -26,7 +26,6 @@ The pipeline is organized into clear, focused modules:
 - **`cache_utils.py`** - Cache management
 - **`arabic_text.py`** - Arabic text processing
 - **`set_keys.py`** - API key management
-- **`setup.py`** - Environment setup
 
 ### Data (`data/`)
 
@@ -48,9 +47,9 @@ The pipeline is organized into clear, focused modules:
 ## Usage
 
 ```bash
-# Activate virtual environment
+# Install dependencies
 cd translate
-source venv/bin/activate
+uv sync
 
 # Full pipeline
 python main.py --split --translate --insert

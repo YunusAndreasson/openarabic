@@ -32,7 +32,7 @@ def confirm_step(prompt: str) -> bool:
             return True
         elif response in ["n", "no"]:
             return False
-        logger.info("Please answer 'y' or 'n'.")
+        logger.error("Please answer 'y' or 'n'.")
 
 
 def run_split_file(input_file: str) -> str:
@@ -86,21 +86,21 @@ def review_split_file(split_file: str) -> bool:
         )
 
     except Exception as e:
-        logger.info(f"❌ Error reading split file: {str(e)}")
+        logger.error(f"❌ Error reading split file: {str(e)}")
         return False
 
 
 def run_translation(input_file: str, output_file: str, batch_size: int) -> None:
     """Translate the previously split file."""
     if not translate_text(input_file, output_file, batch_size):
-        logger.info("❌ Translation failed.")
+        logger.error("❌ Translation failed.")
         sys.exit(1)
 
 
 def review_translation(output_file: str) -> bool:
     """Review the translation output and ask user if they want to continue."""
     if not os.path.exists(output_file):
-        logger.info(f"❌ Translation output file not found: {output_file}")
+        logger.error(f"❌ Translation output file not found: {output_file}")
         return False
 
     try:
@@ -139,7 +139,7 @@ def review_translation(output_file: str) -> bool:
         )
 
     except Exception as e:
-        logger.info(f"❌ Error reading translation file: {str(e)}")
+        logger.error(f"❌ Error reading translation file: {str(e)}")
         return False
 
 
@@ -155,7 +155,7 @@ def run_insert_only(input_file: str, output_file: str) -> None:
         capture_output=False,
     )
     if result.returncode != 0:
-        logger.info("❌ insert.py failed.")
+        logger.error("❌ insert.py failed.")
         sys.exit(1)
     logger.info("✅ Database insertion completed successfully.")
 
@@ -213,11 +213,11 @@ Examples:
         sys.exit(1)
 
     if not os.path.exists(DEFAULT_INPUT_FILE):
-        logger.info(f"❌ Input file not found: {DEFAULT_INPUT_FILE}")
+        logger.error(f"❌ Input file not found: {DEFAULT_INPUT_FILE}")
         sys.exit(1)
 
     if args.batch_size < 1 or args.batch_size > 10:
-        logger.info(f"❌ Batch size must be between 1 and 10, got: {args.batch_size}")
+        logger.error(f"❌ Batch size must be between 1 and 10, got: {args.batch_size}")
         sys.exit(1)
 
     split_file = os.path.splitext(DEFAULT_INPUT_FILE)[0] + "_split.json"
@@ -231,8 +231,8 @@ Examples:
 
     if args.translate:
         if not os.path.exists(split_file):
-            logger.info(f"❌ Split file not found: {split_file}")
-            logger.info("Please run --split first.")
+            logger.error(f"❌ Split file not found: {split_file}")
+            logger.error("Please run --split first.")
             sys.exit(1)
 
         logger.info("🔄 Phase 2: Translating sentences...")
@@ -243,8 +243,8 @@ Examples:
 
     if args.insert:
         if not os.path.exists(DEFAULT_OUTPUT_FILE):
-            logger.info(f"❌ Translation output file not found: {DEFAULT_OUTPUT_FILE}")
-            logger.info("Please run --translate first.")
+            logger.error(f"❌ Translation output file not found: {DEFAULT_OUTPUT_FILE}")
+            logger.error("Please run --translate first.")
             sys.exit(1)
 
         logger.info(

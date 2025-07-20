@@ -20,11 +20,6 @@ from translate.utils.file_utils import (
 )
 from translate.utils.translation_processor import create_batches, process_batch
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-)
-
 logger = logging.getLogger(__name__)
 
 

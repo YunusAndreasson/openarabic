@@ -4,6 +4,18 @@ import shutil
 from datetime import UTC, datetime
 from typing import Any
 
+# Audio utilities - import real implementations (conditional to avoid import-time validation)
+try:
+    from translate.audio.audio_utils import (
+        concatenate_audio_files,
+        generate_sentence_audio,
+    )
+    from translate.audio.root_audio import get_or_generate_root_audio
+except (ImportError, OSError):
+    # Import failed, but we'll handle this gracefully in the functions
+    concatenate_audio_files = None
+    generate_sentence_audio = None
+    get_or_generate_root_audio = None
 from translate.data.config import ARCHIVE_DIR, ROOT_DIR, SUPABASE_URL
 from translate.utils.arabic_text import clean_arabic_text
 from translate.utils.storage_utils import (
@@ -13,44 +25,6 @@ from translate.utils.storage_utils import (
 )
 
 logger = logging.getLogger(__name__)
-
-# Audio utilities - import real implementations (conditional to avoid import-time validation)
-try:
-    from translate.audio.audio_utils import (
-        concatenate_audio_files,
-        generate_sentence_audio,
-    )
-    from translate.audio.root_audio import get_or_generate_root_audio
-
-    AUDIO_AVAILABLE = True
-except (ImportError, OSError) as e:
-    logger.warning(f"Audio module not available: {e}")
-    AUDIO_AVAILABLE = False
-
-    # Fallback stub functions
-    def concatenate_audio_files(files: list[str]) -> bool:
-        """Stub function - audio concatenation not available."""
-        logger.warning("Audio concatenation not available - audio module not loaded")
-        return False
-
-    def generate_sentence_audio(
-        text: str,
-        filename: str,
-        previous_text: str | None = None,
-        next_text: str | None = None,
-    ) -> dict[str, Any] | None:
-        """Stub function - sentence audio generation not available."""
-        logger.warning(
-            "Sentence audio generation not available - audio module not loaded"
-        )
-        return None
-
-    def get_or_generate_root_audio(
-        letters: str,
-    ) -> dict[str, str] | None:
-        """Stub function - root audio generation not available."""
-        logger.warning("Root audio generation not available - audio module not loaded")
-        return None
 
 
 def extract_root_info(word: dict[str, Any]) -> tuple[str, str | None, str | None]:
@@ -109,7 +83,9 @@ def get_or_create_root(
                     else:
                         english_audio_text = meaning
 
-                audio_urls = get_or_generate_root_audio(letters)
+                audio_urls = None
+                if get_or_generate_root_audio:
+                    audio_urls = get_or_generate_root_audio(letters)
 
                 update_data = {}
                 if audio_urls:
@@ -124,7 +100,7 @@ def get_or_create_root(
                         root_id,
                     ).execute()
             except Exception as e:
-                logger.info(f"Error generating audio for root '{letters}': {e}")
+                logger.error(f"Error generating audio for root '{letters}': {e}")
         return root_id
 
     root_data = {"letters": letters, "meaning": meaning}
@@ -143,7 +119,9 @@ def get_or_create_root(
             else:
                 english_audio_text = meaning
 
-        audio_urls = get_or_generate_root_audio(letters)
+        audio_urls = None
+        if get_or_generate_root_audio:
+            audio_urls = get_or_generate_root_audio(letters)
 
         update_data = {}
         if audio_urls:
@@ -157,7 +135,7 @@ def get_or_create_root(
                 "id", root_id
             ).execute()
     except Exception as e:
-        logger.info(f"Error generating audio for new root '{letters}': {e}")
+        logger.error(f"Error generating audio for new root '{letters}': {e}")
 
     return root_id
 
@@ -301,7 +279,7 @@ def download_audio_for_concat(filename: str, dest_path: str) -> bool:
                 f.write(response)
             return True
     except Exception as e:
-        logger.info(f"Error downloading audio file: {str(e)}")
+        logger.error(f"Error downloading audio file: {str(e)}")
     return False
 
 
@@ -327,7 +305,7 @@ def concatenate_and_upload_audio(
     final_audio_filename = generate_audio_filename()
     final_audio_path = os.path.join(temp_dir, final_audio_filename)
 
-    if concatenate_audio_files(files):
+    if concatenate_audio_files and concatenate_audio_files(files):
         try:
             with open(final_audio_path, "rb") as f:
                 get_supabase_client().storage.from_("audio").upload(
@@ -347,7 +325,7 @@ def concatenate_and_upload_audio(
             ).execute()
 
         except Exception as e:
-            logger.info(f"Error uploading concatenated audio: {str(e)}")
+            logger.error(f"Error uploading concatenated audio: {str(e)}")
 
     cleanup_temp_files(files + [final_audio_path], temp_dir)
 
@@ -374,12 +352,14 @@ def insert_article_sentences(article_id: int, translations: list[dict]) -> dict:
             temp_audio_file = os.path.join(temp_dir, f"sentence_{idx}.mp3")
             audio_filename = generate_audio_filename()
 
-            audio_result = generate_sentence_audio(
-                text=translation["original"],
-                filename=audio_filename,
-                previous_text=previous_text,
-                next_text=next_text,
-            )
+            audio_result = None
+            if generate_sentence_audio:
+                audio_result = generate_sentence_audio(
+                    text=translation["original"],
+                    filename=audio_filename,
+                    previous_text=previous_text,
+                    next_text=next_text,
+                )
 
             if audio_result is not None:
                 storage_url = audio_result.get("url", None)
@@ -426,7 +406,7 @@ def insert_article_sentences(article_id: int, translations: list[dict]) -> dict:
             cleanup_temp_files([], temp_dir)
 
     except Exception as e:
-        logger.info(f"Error processing sentences: {str(e)}")
+        logger.error(f"Error processing sentences: {str(e)}")
         cleanup_temp_files(sentence_audio_files, temp_dir)
         raise
 
@@ -485,7 +465,7 @@ def save_timing_report(
             )
 
     except Exception as e:
-        logger.info(f"Failed to save timing report: {str(e)}")
+        logger.error(f"Failed to save timing report: {str(e)}")
 
 
 def archive_files(json_path: str, article_id: int) -> None:

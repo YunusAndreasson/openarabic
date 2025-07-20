@@ -355,9 +355,9 @@ def batch_translate_words(
                 raise Exception("No valid word translations returned from model.")
             except Exception as err:
                 attempt += 1
-                logger.info(f"Sentence {i} failed, retrying attempt {attempt}")
+                logger.error(f"Sentence {i} failed, retrying attempt {attempt}")
                 if attempt >= max_retries:
-                    logger.info(
+                    logger.error(
                         f"[FATAL] Sentence {i} failed {max_retries} times. Aborting batch.",
                     )
                     raise TranslationError(

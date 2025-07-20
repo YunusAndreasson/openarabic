@@ -69,6 +69,7 @@ __all__ = [
     "get_word_type_id",
     # Translation processor
     "process_batch",
+    # Exceptions
     "TranslationError",
     "AudioGenerationError",
     "ConfigurationError",
