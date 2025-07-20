@@ -22,10 +22,6 @@ def create_batches(
     """Create batches of sentences with their contexts"""
     batches: list[dict[str, Any]] = []
 
-    def gather_context(indices: list[int]) -> list[str | None]:
-        """Get optimized context for each index."""
-        return [get_optimized_context(sentences, idx) for idx in indices]
-
     num_remaining = len(sentences) - start_index
     for i in range(0, num_remaining, batch_size):
         current_batch_start_global_index = start_index + i
@@ -43,7 +39,9 @@ def create_batches(
                 current_batch_start_global_index + len(batch_sentences),
             ),
         )
-        batch_contexts = gather_context(batch_indices)
+        batch_contexts = [
+            get_optimized_context(sentences, idx) for idx in batch_indices
+        ]
 
         batches.append(
             {
@@ -152,12 +150,10 @@ def create_sentence_translation(
     word_options_result: dict[str, Any],
 ) -> SentenceTranslation:
     refined_tashkeel = refinement.get(
-        "improved_tashkeel",
-        tashkeel_result.get("tashkeel", ""),
+        "improved_tashkeel", tashkeel_result.get("tashkeel", "")
     )
     refined_translation = refinement.get(
-        "improved_translation",
-        translation_result.get("translation", ""),
+        "improved_translation", translation_result.get("translation", "")
     )
 
     notes: list[str] = []
@@ -176,16 +172,13 @@ def create_sentence_translation(
             notes.append("- Resolved:")
             for r in resolved:
                 notes.append(
-                    f"  * Step: {r.get('step', 'N/A')}, "
-                    f"Explanation: {r.get('explanation', 'No explanation')}",
+                    f"  * Step: {r.get('step', 'N/A')}, Explanation: {r.get('explanation', 'No explanation')}"
                 )
         if remaining:
             notes.append("- Remaining:")
             for r in remaining:
                 notes.append(
-                    f"  * Type: {r.get('type', 'N/A')}, "
-                    f"Desc: {r.get('description', 'Unknown issue')} "
-                    f"({r.get('reason_unresolved', 'No reason provided')})",
+                    f"  * Type: {r.get('type', 'N/A')}, Desc: {r.get('description', 'Unknown issue')} ({r.get('reason_unresolved', 'No reason provided')})"
                 )
 
     final_word_translations: list[WordTranslation] = []
@@ -214,8 +207,7 @@ def create_sentence_translation(
                     pos=word_opts.get("pos"),
                     essential=word_opts.get("essential"),
                     essential_translation=word_opts.get(
-                        "essential_translation_options",
-                        ["[Fallback Error]"],
+                        "essential_translation_options", ["[Fallback Error]"]
                     )[0],
                     notes=word_opts.get("notes", "") + " (Refinement fallback)",
                 ),

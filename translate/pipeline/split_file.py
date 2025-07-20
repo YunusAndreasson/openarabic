@@ -12,9 +12,7 @@ from translate.data.schemas import (
     SENTENCE_SPLITTING_USER_PROMPT,
     SPLIT_TEXT_FUNCTION,
 )
-from translate.utils import (
-    call_openai_api,
-)
+from translate.utils import call_openai_api
 from translate.utils.file_utils import (
     generate_split_filename,
     read_text_file,
@@ -22,11 +20,6 @@ from translate.utils.file_utils import (
 )
 
 logger = logging.getLogger(__name__)
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-)
 
 
 def build_split_messages(text: str) -> list[dict[str, str]]:

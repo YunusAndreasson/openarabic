@@ -28,21 +28,14 @@ logger = logging.getLogger(__name__)
 
 
 def extract_root_info(word: dict[str, Any]) -> tuple[str, str | None, str | None]:
-    """Extract root information from a word.
-
-    Returns:
-        tuple: (arabic_root, meaning, english_translation)
-    """
+    """Extract root information from a word."""
     if word.get("root"):
         return word["root"], word.get("notes"), word.get("english", "")
 
     letters = word.get("essential", word.get("arabic"))
     english = word.get("english", "")
     meaning = word.get("essential_translation") or f"Auto-generated root for: {english}"
-
-    english_translation = word.get("essential_translation", "")
-    if not english_translation:
-        english_translation = english
+    english_translation = word.get("essential_translation", "") or english
 
     return letters, meaning, english_translation
 
@@ -489,16 +482,14 @@ def archive_files(json_path: str, article_id: int) -> None:
 
 
 def validate_article_data(data: dict) -> None:
-    """
-    Validate article data before processing. Raises ValueError with detailed message if validation fails.
-    """
+    """Validate article data before processing."""
     required_metadata = ["title", "summary", "difficulty_level"]
     missing_fields = [
         field for field in required_metadata if not data.get("metadata", {}).get(field)
     ]
     if missing_fields:
         raise ValueError(
-            f"Missing required metadata fields: {', '.join(missing_fields)}",
+            f"Missing required metadata fields: {', '.join(missing_fields)}"
         )
 
     if (
@@ -516,17 +507,17 @@ def validate_article_data(data: dict) -> None:
 
         if translation.get("verification_status") == "Failed":
             raise ValueError(
-                f"Translation at position {idx} has failed verification status",
+                f"Translation at position {idx} has failed verification status"
             )
 
         if "[BATCH PROCESSING ERROR]" in translation.get("full_translation", ""):
             raise ValueError(
-                f"Translation at position {idx} contains error marker - translation is incomplete",
+                f"Translation at position {idx} contains error marker - translation is incomplete"
             )
 
         if "[ERROR]" in translation.get("full_translation", ""):
             raise ValueError(
-                f"Translation at position {idx} contains error marker - translation is incomplete",
+                f"Translation at position {idx} contains error marker - translation is incomplete"
             )
 
         if "word_by_word" in translation:

@@ -38,13 +38,10 @@ from .storage_utils import (
 from .translation_processor import process_batch
 
 __all__ = [
-    # API utilities
     "call_openai_api",
     "load_api_keys",
     "token_tracker",
-    # Cache utilities
     "ensure_valid_cache_files",
-    # Database utilities
     "archive_files",
     "concatenate_audio_files",
     "generate_sentence_audio",
@@ -53,12 +50,10 @@ __all__ = [
     "insert_article_sentences",
     "save_timing_report",
     "validate_article_data",
-    # File utilities
     "generate_split_filename",
     "read_json_file",
     "read_text_file",
     "write_json_file",
-    # Storage utilities
     "check_article_exists",
     "check_file_exists",
     "generate_audio_filename",
@@ -67,9 +62,7 @@ __all__ = [
     "get_category_id",
     "get_supabase_client",
     "get_word_type_id",
-    # Translation processor
     "process_batch",
-    # Exceptions
     "TranslationError",
     "AudioGenerationError",
     "ConfigurationError",

@@ -1,4 +1,3 @@
-# Config exports
 from .config import (
     ARABIC_VOICE_ID,
     ARABIC_WORD_VOICE_ID,
@@ -22,8 +21,6 @@ from .config import (
     SUPABASE_KEY,
     SUPABASE_URL,
 )
-
-# Model exports
 from .models import (
     SentenceTranslation,
     TextMetadata,
@@ -31,8 +28,6 @@ from .models import (
     WordTranslation,
     WordTranslationOptions,
 )
-
-# Schema exports
 from .schemas import (
     FINAL_VERIFICATION_USER_PROMPT,
     GENERAL_SYSTEM_PROMPT,
@@ -48,7 +43,6 @@ from .schemas import (
 )
 
 __all__ = [
-    # Config exports
     "DEFAULT_BATCH_SIZE",
     "DEFAULT_INPUT_FILE",
     "DEFAULT_OUTPUT_FILE",
@@ -70,13 +64,11 @@ __all__ = [
     "ENGLISH_WORD_VOICE_ID",
     "ROOT_DIR",
     "ARCHIVE_DIR",
-    # Model exports
     "SentenceTranslation",
     "WordTranslation",
     "TextMetadata",
     "WordTranslationOptions",
     "TranslationValidationError",
-    # Schema exports
     "GENERAL_SYSTEM_PROMPT",
     "SENTENCE_SPLITTING_USER_PROMPT",
     "SPLIT_TEXT_FUNCTION",
