@@ -1,12 +1,11 @@
 import re
-from typing import List, Optional
 
 CONTEXT_WINDOW_SIZE: int = 2
 
 
-def get_sentence_context(sentences: List[str], index: int) -> str:
+def get_sentence_context(sentences: list[str], index: int) -> str:
     """Get context from surrounding sentences for better translation quality"""
-    context_parts: List[str] = []
+    context_parts: list[str] = []
 
     start_idx = max(0, index - CONTEXT_WINDOW_SIZE)
     if start_idx < index:
@@ -37,14 +36,14 @@ def get_sentence_context(sentences: List[str], index: int) -> str:
 
 
 def get_optimized_context(
-    sentences: List[str], index: int, for_tashkeel: bool = False
-) -> Optional[str]:
+    sentences: list[str], index: int, for_tashkeel: bool = False
+) -> str | None:
     """Get optimized context based on task type with token efficiency in mind"""
     if index < 0 or index >= len(sentences):
         return None
 
     if for_tashkeel:
-        context_parts: List[str] = []
+        context_parts: list[str] = []
 
         if index > 0:
             prev_sent = sentences[index - 1]
@@ -71,7 +70,7 @@ def is_arabic_word(word: str) -> bool:
     return bool(re.search(r"[\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF]", word))
 
 
-def filter_arabic_words(text: str) -> List[str]:
+def filter_arabic_words(text: str) -> list[str]:
     """
     Split text into words and return only those containing Arabic characters.
     Preserves the exact Arabic words while filtering out punctuation and non-Arabic text.

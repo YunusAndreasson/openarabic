@@ -52,7 +52,7 @@ def review_split_file(split_file: str) -> bool:
         return False
 
     try:
-        with open(split_file, "r", encoding="utf-8") as f:
+        with open(split_file, encoding="utf-8") as f:
             data = json.load(f)
 
         units = data.get("units", [])
@@ -104,7 +104,7 @@ def review_translation(output_file: str) -> bool:
         return False
 
     try:
-        with open(output_file, "r", encoding="utf-8") as f:
+        with open(output_file, encoding="utf-8") as f:
             data = json.load(f)
 
         metadata = data.get("metadata", {})
@@ -151,8 +151,6 @@ def run_insert_only(input_file: str, output_file: str) -> None:
             sys.executable,
             "-m",
             "translate.pipeline.insert",
-            input_file,
-            output_file,
         ],
         capture_output=False,
     )

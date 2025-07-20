@@ -2,12 +2,8 @@ import logging
 import os
 import shutil
 from datetime import UTC, datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from translate.audio.audio_utils import (
-    concatenate_audio_files,
-    generate_sentence_audio,
-)
 from translate.data.config import ARCHIVE_DIR, ROOT_DIR, SUPABASE_URL
 from translate.utils.arabic_text import clean_arabic_text
 from translate.utils.storage_utils import (
@@ -19,7 +15,35 @@ from translate.utils.storage_utils import (
 logger = logging.getLogger(__name__)
 
 
-def extract_root_info(word: Dict[str, Any]) -> tuple[str, Optional[str], Optional[str]]:
+# Audio utilities are not available - audio module removed
+# Stub functions to prevent import errors
+def concatenate_audio_files(files: list[str], output_path: str) -> bool:
+    """Stub function - audio concatenation not available."""
+    logger.warning("Audio concatenation not available - audio module removed")
+    return False
+
+
+def generate_sentence_audio(
+    text: str,
+    filename: str,
+    tashkeel_text: str | None = None,
+    previous_text: str | None = None,
+    next_text: str | None = None,
+) -> dict[str, Any] | None:
+    """Stub function - sentence audio generation not available."""
+    logger.warning("Sentence audio generation not available - audio module removed")
+    return None
+
+
+def get_or_generate_root_audio(
+    letters: str, english_text: str
+) -> dict[str, str] | None:
+    """Stub function - root audio generation not available."""
+    logger.warning("Root audio generation not available - audio module removed")
+    return None
+
+
+def extract_root_info(word: dict[str, Any]) -> tuple[str, str | None, str | None]:
     """Extract root information from a word.
 
     Returns:
@@ -41,8 +65,8 @@ def extract_root_info(word: Dict[str, Any]) -> tuple[str, Optional[str], Optiona
 
 def get_or_create_root(
     letters: str,
-    meaning: Optional[str] = None,
-    english_translation: Optional[str] = None,
+    meaning: str | None = None,
+    english_translation: str | None = None,
 ) -> int:
     """Get existing root or create a new one, and generate audio URLs for the root.
 
@@ -64,8 +88,6 @@ def get_or_create_root(
         root_id = root["id"]
         if not root.get("audio_url") or not root.get("audio_url_en"):
             try:
-                from translate.audio.root_audio import get_or_generate_root_audio
-
                 english_audio_text = english_translation
                 if not english_audio_text and meaning:
                     if "Auto-generated root for:" in meaning:
@@ -97,8 +119,6 @@ def get_or_create_root(
     root_id = result.data[0]["id"]
 
     try:
-        from translate.audio.root_audio import get_or_generate_root_audio
-
         english_audio_text = english_translation
 
         if not english_audio_text and meaning:
@@ -128,9 +148,9 @@ def get_or_create_root(
 
 def insert_sentence_words(
     sentence_id: int,
-    translation: Dict[str, Any],
-    word_timings: Optional[List[Dict[str, Any]]] = None,
-) -> Dict[str, Any]:
+    translation: dict[str, Any],
+    word_timings: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     """
     Insert words from a sentence with their roots and relationships.
     Uses cleaned Arabic text (without non-Arabic characters) for consistency with TTS.
@@ -141,7 +161,7 @@ def insert_sentence_words(
     total_words = len(word_by_word)
     words_with_timing = 0
 
-    words_data: List[Dict[str, Any]] = []
+    words_data: list[dict[str, Any]] = []
 
     if word_timings:
         if len(word_timings) < len(word_by_word):
@@ -159,7 +179,7 @@ def insert_sentence_words(
 
             original_word = clean_arabic_text(word["arabic"])
 
-            timing_info: Dict[str, str] = {}
+            timing_info: dict[str, str] = {}
             match_method = "none"
 
             if timing_position < len(sorted_timings):
@@ -237,8 +257,8 @@ def insert_sentence_words(
 
 
 def get_adjacent_texts(
-    translations: List[Dict], idx: int
-) -> tuple[Optional[str], Optional[str]]:
+    translations: list[dict], idx: int
+) -> tuple[str | None, str | None]:
     """Return previous and next sentence text for context."""
     prev_text = None
     next_text = None
@@ -264,7 +284,7 @@ def download_audio_for_concat(filename: str, dest_path: str) -> bool:
     return False
 
 
-def cleanup_temp_files(files: List[str], temp_dir: str) -> None:
+def cleanup_temp_files(files: list[str], temp_dir: str) -> None:
     """Remove temporary files and directory if possible."""
     for file in files:
         try:
@@ -278,7 +298,7 @@ def cleanup_temp_files(files: List[str], temp_dir: str) -> None:
 
 
 def concatenate_and_upload_audio(
-    files: List[str], temp_dir: str, article_id: int
+    files: list[str], temp_dir: str, article_id: int
 ) -> None:
     """Concatenate sentence audio files, upload, and clean up."""
     final_audio_filename = generate_audio_filename()
@@ -306,7 +326,7 @@ def concatenate_and_upload_audio(
     cleanup_temp_files(files + [final_audio_path], temp_dir)
 
 
-def insert_article_sentences(article_id: int, translations: List[Dict]) -> Dict:
+def insert_article_sentences(article_id: int, translations: list[dict]) -> dict:
     """Insert article sentences into the database."""
     timing_stats = {
         "total_sentences": len(translations),
@@ -382,7 +402,7 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> Dict:
 
 
 def save_timing_report(
-    article_id: int, title: str, json_path: str, timing_stats: Dict
+    article_id: int, title: str, json_path: str, timing_stats: dict
 ) -> None:
     """Save timing statistics to a CSV report file."""
     os.path.dirname(os.path.abspath(__file__))
@@ -453,7 +473,7 @@ def archive_files(json_path: str, article_id: int) -> None:
         shutil.move(output_file, archived_output)
 
 
-def validate_article_data(data: Dict) -> None:
+def validate_article_data(data: dict) -> None:
     """
     Validate article data before processing. Raises ValueError with detailed message if validation fails.
     """

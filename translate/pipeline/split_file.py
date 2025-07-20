@@ -1,21 +1,8 @@
-import json
 import logging
-import os
 import sys
 import time
-from typing import Any, Dict, List
+from typing import Any
 
-from translate.utils import (
-    call_openai_api,
-    token_tracker,
-)
-from translate.utils.file_utils import (
-    generate_split_filename,
-    read_text_file,
-    write_json_file,
-)
-
-logger = logging.getLogger(__name__)
 from translate.data.config import (
     DEFAULT_INPUT_FILE,
     DEFAULT_SPLIT_OUTPUT_FILE,
@@ -26,13 +13,23 @@ from translate.data.schemas import (
     SENTENCE_SPLITTING_USER_PROMPT,
     SPLIT_TEXT_FUNCTION,
 )
+from translate.utils import (
+    call_openai_api,
+)
+from translate.utils.file_utils import (
+    generate_split_filename,
+    read_text_file,
+    write_json_file,
+)
+
+logger = logging.getLogger(__name__)
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
 
-def build_split_messages(text: str) -> List[Dict[str, str]]:
+def build_split_messages(text: str) -> list[dict[str, str]]:
     """Create the chat messages payload for splitting."""
     return [
         {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
@@ -40,7 +37,7 @@ def build_split_messages(text: str) -> List[Dict[str, str]]:
     ]
 
 
-def parse_split_response(response: Dict[str, Any]) -> Dict[str, Any]:
+def parse_split_response(response: dict[str, Any]) -> dict[str, Any]:
     """Normalize the split API response."""
     if "error" in response:
         logger.error(f"Failed to analyze text: {response['error']}")
@@ -59,7 +56,7 @@ def parse_split_response(response: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def split_text_into_sentences(text: str) -> Dict[str, Any]:
+def split_text_into_sentences(text: str) -> dict[str, Any]:
     """Use GPT-4.1 to intelligently split text into learner-friendly units and analyze content"""
     if not text or len(text.strip()) == 0:
         return {
@@ -81,9 +78,9 @@ def split_text_into_sentences(text: str) -> Dict[str, Any]:
     return parse_split_response(response)
 
 
-def split_file(input_file: str, output_file: str) -> Dict[str, Any]:
+def split_file(input_file: str, output_file: str) -> dict[str, Any]:
     """Split an input file into learner-friendly units and save the result."""
-    start_time = time.time()
+    time.time()
 
     try:
         full_text = read_text_file(input_file)
@@ -123,7 +120,7 @@ def main() -> None:
         sys.exit(0)
     except KeyboardInterrupt:
         sys.exit(130)
-    except Exception as e:
+    except Exception:
         sys.exit(1)
 
 

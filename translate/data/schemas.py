@@ -28,7 +28,7 @@ DIFFICULTY_LEVELS = {
 
 def format_valid_pos() -> str:
     """Format VALID_POS as a readable list for prompts."""
-    pos_list = sorted(list(VALID_POS))
+    pos_list = sorted(VALID_POS)
     return ", ".join(f"'{pos}'" for pos in pos_list)
 
 

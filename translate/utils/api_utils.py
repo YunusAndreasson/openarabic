@@ -2,15 +2,12 @@ import json
 import logging
 import os
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from openai import OpenAI
 
 from translate.data.config import (
-    MODEL_ANALYSIS,
     MODEL_OTHER,
-    MODEL_TRANSLATION,
-    MODEL_VERIFICATION,
 )
 
 _keys_loaded: bool = False
@@ -46,7 +43,7 @@ class TokenUsageTracker:
         self.total_cost: float = 0.0
         self.api_calls: int = 0
 
-    def update(self, usage_data: Dict[str, int]) -> None:
+    def update(self, usage_data: dict[str, int]) -> None:
         """Update token counts from API response"""
         self.prompt_tokens += usage_data.get("prompt_tokens", 0)
         self.completion_tokens += usage_data.get("completion_tokens", 0)
@@ -77,7 +74,7 @@ def init_openai_client() -> OpenAI:
 
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
-        raise EnvironmentError("OPENAI_API_KEY environment variable is not set.")
+        raise OSError("OPENAI_API_KEY environment variable is not set.")
 
     return OpenAI(api_key=api_key)
 
@@ -86,11 +83,11 @@ client = init_openai_client()
 
 
 def _create_completion(
-    messages: List[Dict[str, str]],
+    messages: list[dict[str, str]],
     temperature: float,
     model: str,
-    function_schema: Optional[Dict[str, Any]] = None,
-    function_name: Optional[str] = None,
+    function_schema: dict[str, Any] | None = None,
+    function_name: str | None = None,
 ) -> Any:
     """Helper to create the chat completion request."""
     if function_schema:
@@ -110,8 +107,8 @@ def _create_completion(
 
 
 def _decode_response(
-    response: Any, function_schema: Optional[Dict[str, Any]]
-) -> Dict[str, Any]:
+    response: Any, function_schema: dict[str, Any] | None
+) -> dict[str, Any]:
     """Extract JSON data from the OpenAI API response."""
     if function_schema and hasattr(response.choices[0].message, "function_call"):
         function_call = response.choices[0].message.function_call
@@ -134,13 +131,13 @@ def _decode_response(
 
 
 def call_openai_api(
-    messages: List[Dict[str, str]],
-    function_schema: Optional[Dict[str, Any]] = None,
-    function_name: Optional[str] = None,
+    messages: list[dict[str, str]],
+    function_schema: dict[str, Any] | None = None,
+    function_name: str | None = None,
     temperature: float = 0.3,
     max_retries: int = 3,
     model: str = MODEL_OTHER,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Call the OpenAI API with retries and standardized decoding."""
     retry_count = 0
     backoff_time = 1

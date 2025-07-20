@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from translate.data.models import SentenceTranslation, WordTranslation
 from translate.pipeline.translation_engine import (
@@ -15,12 +15,12 @@ from translate.utils.validation import (
 
 
 def create_batches(
-    sentences: List[str], start_index: int, batch_size: int
-) -> List[Dict[str, Any]]:
+    sentences: list[str], start_index: int, batch_size: int
+) -> list[dict[str, Any]]:
     """Create batches of sentences with their contexts"""
-    batches: List[Dict[str, Any]] = []
+    batches: list[dict[str, Any]] = []
 
-    def gather_context(indices: List[int]) -> List[Optional[str]]:
+    def gather_context(indices: list[int]) -> list[str | None]:
         """Get optimized context for each index."""
         return [get_optimized_context(sentences, idx) for idx in indices]
 
@@ -56,9 +56,9 @@ def create_batches(
 
 
 def run_full_translation(
-    batch_sentences: List[str],
-    batch_contexts: List[Optional[str]],
-) -> List[Dict[str, Any]]:
+    batch_sentences: list[str],
+    batch_contexts: list[str | None],
+) -> list[dict[str, Any]]:
     """Translate a batch of sentences and validate the results."""
     translations = batch_translate_full_sentences(batch_sentences, batch_contexts)
     validate_translation_results(batch_sentences, translations, "Full Translation")
@@ -66,11 +66,11 @@ def run_full_translation(
 
 
 def apply_tashkeel(
-    batch_sentences: List[str],
-    translation_results: List[Dict[str, Any]],
-    all_sentences: Optional[List[str]] = None,
-    batch_indices: Optional[List[int]] = None,
-) -> List[Dict[str, Any]]:
+    batch_sentences: list[str],
+    translation_results: list[dict[str, Any]],
+    all_sentences: list[str] | None = None,
+    batch_indices: list[int] | None = None,
+) -> list[dict[str, Any]]:
     """Add diacritics to sentences and validate the results."""
     tashkeel = batch_add_tashkeel(
         batch_sentences, translation_results, all_sentences, batch_indices
@@ -80,12 +80,12 @@ def apply_tashkeel(
 
 
 def translate_words(
-    batch_sentences: List[str],
-    tashkeel_results: List[Dict[str, Any]],
-    translation_results: List[Dict[str, Any]],
-    all_sentences: Optional[List[str]] = None,
-    batch_indices: Optional[List[int]] = None,
-) -> List[Dict[str, Any]]:
+    batch_sentences: list[str],
+    tashkeel_results: list[dict[str, Any]],
+    translation_results: list[dict[str, Any]],
+    all_sentences: list[str] | None = None,
+    batch_indices: list[int] | None = None,
+) -> list[dict[str, Any]]:
     """Generate word-by-word translations and validate them."""
     word_results = batch_translate_words(
         batch_sentences,
@@ -104,14 +104,14 @@ def translate_words(
 
 
 def build_refinement_input(
-    batch_sentences: List[str],
-    translation_results: List[Dict[str, Any]],
-    tashkeel_results: List[Dict[str, Any]],
-    word_options_results: List[Dict[str, Any]],
-) -> Tuple[List[Dict[str, Any]], List[List[Dict[str, Any]]]]:
+    batch_sentences: list[str],
+    translation_results: list[dict[str, Any]],
+    tashkeel_results: list[dict[str, Any]],
+    word_options_results: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[list[dict[str, Any]]]]:
     """Prepare input payload for refinement step."""
-    refinement_input: List[Dict[str, Any]] = []
-    all_word_uncertainties: List[List[Dict[str, Any]]] = []
+    refinement_input: list[dict[str, Any]] = []
+    all_word_uncertainties: list[list[dict[str, Any]]] = []
     for i, opts in enumerate(word_options_results):
         word_opts_list = opts.get("word_translations", [])
         all_word_uncertainties.append(
@@ -141,10 +141,10 @@ def create_sentence_translation(
     i: int,
     start_index: int,
     original_sentence: str,
-    refinement: Dict[str, Any],
-    translation_result: Dict[str, Any],
-    tashkeel_result: Dict[str, Any],
-    word_options_result: Dict[str, Any],
+    refinement: dict[str, Any],
+    translation_result: dict[str, Any],
+    tashkeel_result: dict[str, Any],
+    word_options_result: dict[str, Any],
 ) -> SentenceTranslation:
     refined_tashkeel = refinement.get(
         "improved_tashkeel", tashkeel_result.get("tashkeel", "")
@@ -153,7 +153,7 @@ def create_sentence_translation(
         "improved_translation", translation_result.get("translation", "")
     )
 
-    notes: List[str] = []
+    notes: list[str] = []
     if translation_result.get("notes"):
         notes.append(f"Initial Translation Notes: {translation_result['notes']}")
     if refinement.get("changes_made"):
@@ -181,7 +181,7 @@ def create_sentence_translation(
                     f"({r.get('reason_unresolved', 'No reason provided')})"
                 )
 
-    final_word_translations: List[WordTranslation] = []
+    final_word_translations: list[WordTranslation] = []
     refined_words_data = refinement.get("improved_word_translations", [])
     if refined_words_data and isinstance(refined_words_data, list):
         for word_data in refined_words_data:
@@ -241,18 +241,18 @@ def create_sentence_translation(
 
 
 def refine_translations(
-    batch_sentences: List[str],
+    batch_sentences: list[str],
     start_index: int,
-    translation_results: List[Dict[str, Any]],
-    tashkeel_results: List[Dict[str, Any]],
-    word_options_results: List[Dict[str, Any]],
-) -> List[SentenceTranslation]:
+    translation_results: list[dict[str, Any]],
+    tashkeel_results: list[dict[str, Any]],
+    word_options_results: list[dict[str, Any]],
+) -> list[SentenceTranslation]:
     """Refine translations using previous results and return final objects."""
     inputs, _ = build_refinement_input(
         batch_sentences, translation_results, tashkeel_results, word_options_results
     )
     refinement_results = batch_refine_translations(inputs)
-    results: List[SentenceTranslation] = []
+    results: list[SentenceTranslation] = []
     for i in range(len(batch_sentences)):
         refinement = (
             refinement_results.get("refinements", [])[i]
@@ -274,12 +274,12 @@ def refine_translations(
 
 
 def process_batch(
-    batch_sentences: List[str],
+    batch_sentences: list[str],
     start_index: int,
-    batch_contexts: List[Optional[str]],
-    all_sentences: List[str] = None,
-    batch_indices: List[int] = None,
-) -> List[SentenceTranslation]:
+    batch_contexts: list[str | None],
+    all_sentences: list[str] = None,
+    batch_indices: list[int] = None,
+) -> list[SentenceTranslation]:
     """Process a batch of sentences by orchestrating each translation phase."""
     if not batch_sentences:
         return []

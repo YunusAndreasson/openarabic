@@ -19,7 +19,6 @@ The pipeline is organized into clear, focused modules:
 - **`api_utils.py`** - OpenAI API integration (renamed from utils.py)
 - **`database_utils.py`** - Database operations and validation
 - **`storage_utils.py`** - Supabase storage operations
-- **`audio_utils.py`** - Audio file processing
 - **`text_utils.py`** - Text processing utilities
 - **`validation.py`** - Data validation
 - **`file_utils.py`** - File I/O operations
@@ -33,11 +32,6 @@ The pipeline is organized into clear, focused modules:
 - **`config.py`** - Configuration constants
 - **`models.py`** - Pydantic data models
 - **`schemas.py`** - API schemas and prompts
-
-### Audio (`audio/`)
-
-- **`audio_utils.py`** - Audio generation utilities
-- **`root_audio.py`** - Root word audio processing
 
 ## Pipeline Flow
 

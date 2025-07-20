@@ -12,17 +12,17 @@ def setup_environment() -> None:
     py_version = sys.version_info
     if py_version.major < 3 or (py_version.major == 3 and py_version.minor < 8):
         logger.info(
-            "⚠️ Warning: Python 3.8+ recommended. You're running {}.{}.{}".format(
-                py_version.major, py_version.minor, py_version.micro
-            )
+            f"⚠️ Warning: Python 3.8+ recommended. You're running {py_version.major}.{py_version.minor}.{py_version.micro}"
         )
         response = input("Continue anyway? (y/n): ")
         if response.lower() != "y":
             return
 
     try:
+        # Use absolute path to requirements.txt
+        requirements_path = Path(__file__).parent.parent / "requirements.txt"
         subprocess.check_call(
-            [sys.executable, "-m", "pip", "install", "-r", "requirements.txt"]
+            [sys.executable, "-m", "pip", "install", "-r", str(requirements_path)]
         )
     except subprocess.CalledProcessError:
         logger.info(

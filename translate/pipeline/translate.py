@@ -1,8 +1,7 @@
-import json
 import logging
 import os
 import sys
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from tqdm import tqdm
 
@@ -28,7 +27,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def load_split_data(input_file: str) -> Optional[Dict[str, Any]]:
+def load_split_data(input_file: str) -> dict[str, Any] | None:
     """Load the split JSON created by split_file.py."""
     split_path = generate_split_filename(input_file)
     if not os.path.exists(split_path):
@@ -36,7 +35,7 @@ def load_split_data(input_file: str) -> Optional[Dict[str, Any]]:
     return read_json_file(split_path)
 
 
-def create_metadata(split_data: Dict[str, Any]) -> TextMetadata:
+def create_metadata(split_data: dict[str, Any]) -> TextMetadata:
     """Build a TextMetadata object from raw split data."""
     return TextMetadata(
         title=split_data.get("title", "Untitled Text"),
@@ -47,11 +46,11 @@ def create_metadata(split_data: Dict[str, Any]) -> TextMetadata:
 
 
 def process_batches(
-    all_units: List[Dict[str, Any]], batch_size: int
-) -> tuple[List[Any], List[str]]:
+    all_units: list[dict[str, Any]], batch_size: int
+) -> tuple[list[Any], list[str]]:
     """Process all batches and return results and errors."""
-    results: List[Any] = []
-    errors: List[str] = []
+    results: list[Any] = []
+    errors: list[str] = []
     batches = create_batches(all_units, 0, batch_size)
     with tqdm(total=len(all_units), desc="Translating", initial=0) as pbar:
         for batch in batches:
@@ -72,7 +71,7 @@ def process_batches(
 
 
 def validate_results(
-    results: List[Any], all_units: List[Dict[str, Any]]
+    results: list[Any], all_units: list[dict[str, Any]]
 ) -> tuple[int, int]:
     """Return counts of failed and issue translations."""
     failed = 0
@@ -99,7 +98,7 @@ def validate_results(
 
 
 def save_translation_output(
-    output_file: str, metadata: TextMetadata, results: List[Any]
+    output_file: str, metadata: TextMetadata, results: list[Any]
 ) -> None:
     """Persist the translation results to disk."""
     write_json_file(
@@ -111,7 +110,7 @@ def save_translation_output(
     )
 
 
-def serialize(obj: Any) -> Union[Dict[str, Any], List[Any], Any]:
+def serialize(obj: Any) -> dict[str, Any] | list[Any] | Any:
     """Recursively convert Pydantic models and lists into dictionaries."""
     if isinstance(obj, list):
         return [serialize(item) for item in obj]
@@ -124,7 +123,7 @@ def serialize(obj: Any) -> Union[Dict[str, Any], List[Any], Any]:
 
 def translate_file(
     input_file: str, output_file: str, batch_size: int = MAX_BATCH_SIZE
-) -> Optional[bool]:
+) -> bool | None:
     """Translate a pre-split file"""
     split_data = load_split_data(input_file)
     if not split_data:
@@ -180,7 +179,7 @@ def main() -> None:
 
     except KeyboardInterrupt:
         sys.exit(130)
-    except Exception as e:
+    except Exception:
         sys.exit(1)
 
 

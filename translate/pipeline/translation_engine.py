@@ -1,13 +1,14 @@
 import logging
 import sys
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from translate.data.config import (
     MODEL_OTHER,
     MODEL_TRANSLATION,
     MODEL_VERIFICATION,
 )
+from translate.data.models import WordTranslationOptions
 from translate.data.schemas import (
     FINAL_VERIFICATION_USER_PROMPT,
     GENERAL_SYSTEM_PROMPT,
@@ -24,13 +25,11 @@ from translate.utils.text_utils import filter_arabic_words, get_optimized_contex
 
 logger = logging.getLogger(__name__)
 
-from translate.data.models import WordTranslationOptions
-
 
 def _build_word_prompt(
     tashkeel: str,
     translation: str,
-    arabic_words: List[str],
+    arabic_words: list[str],
     semantic_context: str,
     tashkeel_notes: str,
     translation_notes: str,
@@ -48,18 +47,18 @@ def _build_word_prompt(
 
 
 def batch_translate_full_sentences(
-    sentences: List[str], contexts: List[Optional[str]]
-) -> List[Dict[str, Any]]:
+    sentences: list[str], contexts: list[str | None]
+) -> list[dict[str, Any]]:
     """Translate multiple sentences in a single API call with retry logic"""
 
     def try_translation(
-        sentences: List[str],
-        contexts: List[Optional[str]],
+        sentences: list[str],
+        contexts: list[str | None],
         retry_without_context: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Helper function to attempt translation with or without context"""
-        formatted_inputs: List[str] = []
-        for i, (sentence, context) in enumerate(zip(sentences, contexts)):
+        formatted_inputs: list[str] = []
+        for i, (sentence, context) in enumerate(zip(sentences, contexts, strict=False)):
             context_str = (
                 ""
                 if retry_without_context
@@ -94,7 +93,7 @@ def batch_translate_full_sentences(
         response = try_translation(sentences, contexts, retry_without_context=True)
 
     if "translations" in response and isinstance(response["translations"], list):
-        results: List[Dict[str, Any]] = []
+        results: list[dict[str, Any]] = []
         for i, item in enumerate(response["translations"]):
             if i >= len(sentences):
                 break
@@ -149,15 +148,15 @@ def batch_translate_full_sentences(
 
 
 def batch_add_tashkeel(
-    sentences: List[str],
-    translation_results: List[Dict[str, Any]],
-    all_sentences: Optional[List[str]] = None,
-    indices: Optional[List[int]] = None,
-) -> List[Dict[str, str]]:
+    sentences: list[str],
+    translation_results: list[dict[str, Any]],
+    all_sentences: list[str] | None = None,
+    indices: list[int] | None = None,
+) -> list[dict[str, str]]:
     """Add diacritical marks to multiple sentences in a batch"""
-    formatted_inputs: List[str] = []
+    formatted_inputs: list[str] = []
     for i, (sentence, translation_data) in enumerate(
-        zip(sentences, translation_results)
+        zip(sentences, translation_results, strict=False)
     ):
         grammar_context = ""
         if all_sentences and indices and i < len(indices):
@@ -175,7 +174,7 @@ def batch_add_tashkeel(
                 f"- {u.get('text', '')}: {u.get('reason', '')}" for u in uncertainties
             )
 
-        grammar_notes: List[str] = []
+        grammar_notes: list[str] = []
         if "word_by_word" in translation_data:
             for word in translation_data["word_by_word"]:
                 if word.get("notes") and word.get("arabic"):
@@ -239,20 +238,20 @@ def batch_add_tashkeel(
 
 
 def batch_translate_words(
-    sentences: List[str],
-    tashkeel_results: List[Dict[str, Any]],
-    translations: List[Dict[str, Any]],
-    all_sentences: List[str] = None,
-    indices: List[int] = None,
-) -> List[Dict[str, Any]]:
+    sentences: list[str],
+    tashkeel_results: list[dict[str, Any]],
+    translations: list[dict[str, Any]],
+    all_sentences: list[str] = None,
+    indices: list[int] = None,
+) -> list[dict[str, Any]]:
     """Create word-by-word translations for multiple sentences in a batch, returning options"""
 
     MAX_RETRIES = 3
 
     processed_results = [{"word_translations": []} for _ in range(len(sentences))]
 
-    for i, (sentence, tashkeel_data, translation_data) in enumerate(
-        zip(sentences, tashkeel_results, translations)
+    for i, (_sentence, tashkeel_data, translation_data) in enumerate(
+        zip(sentences, tashkeel_results, translations, strict=False)
     ):
         attempt = 0
         while attempt < MAX_RETRIES:
@@ -350,7 +349,7 @@ def batch_translate_words(
                         break
 
                 raise Exception("No valid word translations returned from model.")
-            except Exception as e:
+            except Exception:
                 attempt += 1
                 logger.info(f"Sentence {i} failed, retrying attempt {attempt}")
                 if attempt >= MAX_RETRIES:
@@ -363,8 +362,8 @@ def batch_translate_words(
 
 
 def batch_refine_translations(
-    refinement_input: List[Dict[str, Any]],
-) -> Dict[str, List]:
+    refinement_input: list[dict[str, Any]],
+) -> dict[str, list]:
     """Refine all translation components, selecting best options"""
     try:
         formatted_inputs = []

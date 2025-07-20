@@ -1,14 +1,14 @@
 import logging
-import os
 import time
 import uuid
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 from supabase import create_client
+
 from translate.data.config import SUPABASE_KEY, SUPABASE_URL
 
 if not all([SUPABASE_URL, SUPABASE_KEY]):
-    raise EnvironmentError(
+    raise OSError(
         "Missing required environment variables. Please ensure SUPABASE_URL and SUPABASE_KEY are set."
     )
 
@@ -16,7 +16,7 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 logger = logging.getLogger(__name__)
 
-WORD_TYPE_MAPPING: Dict[str, int] = {
+WORD_TYPE_MAPPING: dict[str, int] = {
     "verb": 1,
     "noun": 2,
     "particle": 3,
@@ -55,7 +55,7 @@ def check_file_exists(bucket: str, file_path: str) -> bool:
 def upload_to_storage(
     bucket: str,
     file_path: str,
-    file_data: Union[bytes, str],
+    file_data: bytes | str,
     content_type: str = "audio/mpeg",
 ) -> str:
     """Upload a file to Supabase storage with retries and return the public URL."""
@@ -69,7 +69,7 @@ def upload_to_storage(
 
         time.sleep(0.5)
 
-        for attempt in range(3):
+        for _attempt in range(3):
             if check_file_exists(bucket, file_path):
                 public_url = (
                     f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{file_path}"
@@ -87,7 +87,7 @@ def upload_to_storage(
         raise
 
 
-def generate_content_hash(data: Dict[str, Any]) -> str:
+def generate_content_hash(data: dict[str, Any]) -> str:
     """Generate a unique hash for the article content."""
     import hashlib
     import json
@@ -96,7 +96,7 @@ def generate_content_hash(data: Dict[str, Any]) -> str:
     return hashlib.sha256(content.encode()).hexdigest()
 
 
-def check_article_exists(content_hash: str) -> tuple[Optional[int], Optional[str]]:
+def check_article_exists(content_hash: str) -> tuple[int | None, str | None]:
     """Check if an article with this content hash already exists and return its ID and audio_url."""
     try:
         result = (

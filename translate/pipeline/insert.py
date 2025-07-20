@@ -3,7 +3,6 @@ import logging
 import os
 import sys
 from datetime import UTC, datetime
-from typing import Any, Dict, List
 
 from translate.utils import load_api_keys
 from translate.utils.cache_utils import ensure_valid_cache_files
@@ -28,7 +27,7 @@ load_api_keys()
 
 def process_json_file(file_path: str, category_id: int, author_id: int) -> int:
     """Process the JSON file and insert data into Supabase."""
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         data = json.load(f)
 
     validate_article_data(data)
@@ -78,7 +77,7 @@ def main() -> None:
     if not os.path.exists(articles_dir):
         sys.exit(1)
 
-    json_files: List[str] = []
+    json_files: list[str] = []
 
     direct_output_json = os.path.join(articles_dir, "output.json")
     if os.path.exists(direct_output_json):
@@ -102,7 +101,7 @@ def main() -> None:
     for json_path in json_files:
         try:
             process_json_file(json_path, category_id, author_id)
-        except Exception as e:
+        except Exception:
             error_count += 1
 
     if error_count > 0:

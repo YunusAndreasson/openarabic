@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -8,14 +8,14 @@ class WordTranslation(BaseModel):
 
     arabic: str
     english: str = Field(description="Final chosen English translation")
-    pos: Optional[str] = Field(default=None, description="Part of speech")
-    essential: Optional[str] = Field(
+    pos: str | None = Field(default=None, description="Part of speech")
+    essential: str | None = Field(
         default=None, description="Essential letters for flashcards"
     )
-    essential_translation: Optional[str] = Field(
+    essential_translation: str | None = Field(
         default=None, description="Final chosen one-word English meaning"
     )
-    notes: Optional[str] = Field(
+    notes: str | None = Field(
         default=None, description="Any special notes about the translation"
     )
 
@@ -24,12 +24,12 @@ class WordTranslationOptions(BaseModel):
     """Intermediate model to hold options before refinement"""
 
     arabic: str
-    english_options: List[str] = Field(default_factory=list)
-    pos: Optional[str] = Field(default=None)
-    essential: Optional[str] = Field(default=None)
-    essential_translation_options: List[str] = Field(default_factory=list)
-    notes: Optional[str] = Field(default=None)
-    uncertainties: List[Dict[str, Any]] = Field(
+    english_options: list[str] = Field(default_factory=list)
+    pos: str | None = Field(default=None)
+    essential: str | None = Field(default=None)
+    essential_translation_options: list[str] = Field(default_factory=list)
+    notes: str | None = Field(default=None)
+    uncertainties: list[dict[str, Any]] = Field(
         default_factory=list, description="Keep uncertainties tied to the options step"
     )
 
@@ -40,11 +40,11 @@ class SentenceTranslation(BaseModel):
     index: int
     original: str
     tashkeel: str = Field(description="Original with diacritical marks")
-    word_by_word: List[WordTranslation] = Field(description="Stores final chosen words")
+    word_by_word: list[WordTranslation] = Field(description="Stores final chosen words")
     full_translation: str
-    notes: Optional[str] = Field(default=None)
-    verification_status: Optional[str] = Field(default=None)
-    verification_issues: Optional[List[str]] = Field(default=None)
+    notes: str | None = Field(default=None)
+    verification_status: str | None = Field(default=None)
+    verification_issues: list[str] | None = Field(default=None)
 
 
 class TextMetadata(BaseModel):

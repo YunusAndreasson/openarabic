@@ -1,6 +1,7 @@
 """Central configuration for the translation tools."""
 
 import os
+
 from elevenlabs import VoiceSettings
 
 # OpenAI model configuration
@@ -37,3 +38,5 @@ DEFAULT_VOICE_SETTINGS = VoiceSettings(use_speaker_boost=True)
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_ORG_ID = os.getenv("OPENAI_ORG_ID", "")
