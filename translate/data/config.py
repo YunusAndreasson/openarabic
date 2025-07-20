@@ -11,8 +11,8 @@ MODEL_OTHER = "gpt-4o-mini"
 MODEL_VERIFICATION = "gpt-4o-mini"
 
 # Batch processing defaults
-DEFAULT_BATCH_SIZE = 5
-MAX_BATCH_SIZE = 5
+DEFAULT_BATCH_SIZE = 12
+MAX_BATCH_SIZE = 12
 
 # Directory structure
 ROOT_DIR = os.path.abspath(

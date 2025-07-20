@@ -20,7 +20,7 @@ class TestConfig:
 
     def test_default_batch_size(self):
         """Test that default batch size is reasonable."""
-        assert 1 <= DEFAULT_BATCH_SIZE <= 10
+        assert 1 <= DEFAULT_BATCH_SIZE <= 15
         assert isinstance(DEFAULT_BATCH_SIZE, int)
 
     def test_default_files(self):

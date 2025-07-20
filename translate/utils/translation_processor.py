@@ -30,6 +30,7 @@ def apply_tashkeel(
     translation_results: list[dict[str, Any]],
     all_sentences: list[str] | None = None,
     batch_indices: list[int] | None = None,
+    context_cache: Any = None,
 ) -> list[dict[str, Any]]:
     """Add diacritics to sentences and validate the results."""
     tashkeel = batch_add_tashkeel(
@@ -37,6 +38,7 @@ def apply_tashkeel(
         translation_results,
         all_sentences,
         batch_indices,
+        context_cache,
     )
     validate_translation_results(batch_sentences, tashkeel, "Tashkeel Addition")
     return tashkeel
@@ -48,6 +50,7 @@ def translate_words(
     translation_results: list[dict[str, Any]],
     all_sentences: list[str] | None = None,
     batch_indices: list[int] | None = None,
+    context_cache: Any = None,
 ) -> list[dict[str, Any]]:
     """Generate word-by-word translations and validate them."""
     word_results = batch_translate_words(
@@ -56,6 +59,7 @@ def translate_words(
         translation_results,
         all_sentences,
         batch_indices,
+        context_cache,
     )
     validate_translation_results(
         batch_sentences,
@@ -242,6 +246,7 @@ def process_batch(
     batch_contexts: list[str | None],
     all_sentences: list[str] | None = None,
     batch_indices: list[int] | None = None,
+    context_cache: Any = None,
 ) -> list[SentenceTranslation]:
     """Process a batch of sentences by orchestrating each translation phase."""
     if not batch_sentences:
@@ -253,6 +258,7 @@ def process_batch(
         translations,
         all_sentences,
         batch_indices,
+        context_cache,
     )
     word_options = translate_words(
         batch_sentences,
@@ -260,6 +266,7 @@ def process_batch(
         translations,
         all_sentences,
         batch_indices,
+        context_cache,
     )
 
     return refine_translations(

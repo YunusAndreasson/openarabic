@@ -20,6 +20,7 @@ from data.schemas import (
     WORD_TRANSLATION_FUNCTION,
 )
 from utils.api_utils import call_openai_api
+from utils.context_cache import ContextCache
 from utils.exceptions import TranslationError
 from utils.text_utils import filter_arabic_words, get_optimized_context
 
@@ -153,6 +154,7 @@ def batch_add_tashkeel(
     translation_results: list[dict[str, Any]],
     all_sentences: list[str] | None = None,
     indices: list[int] | None = None,
+    context_cache: ContextCache | None = None,
 ) -> list[dict[str, str]]:
     """Add diacritical marks to multiple sentences in a batch"""
     formatted_inputs: list[str] = []
@@ -161,11 +163,14 @@ def batch_add_tashkeel(
     ):
         grammar_context = ""
         if all_sentences and indices and i < len(indices):
-            context = get_optimized_context(
-                all_sentences,
-                indices[i],
-                for_tashkeel=True,
-            )
+            if context_cache:
+                context = context_cache.get_context(indices[i], for_tashkeel=True)
+            else:
+                context = get_optimized_context(
+                    all_sentences,
+                    indices[i],
+                    for_tashkeel=True,
+                )
             if context:
                 grammar_context = f"\nGrammatical context: {context}"
 
@@ -246,6 +251,7 @@ def batch_translate_words(
     translations: list[dict[str, Any]],
     all_sentences: list[str] | None = None,
     indices: list[int] | None = None,
+    context_cache: ContextCache | None = None,
 ) -> list[dict[str, Any]]:
     """Create word-by-word translations for multiple sentences in a batch, returning options"""
 

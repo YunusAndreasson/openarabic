@@ -1,3 +1,4 @@
+import concurrent.futures
 import logging
 import os
 import sys
@@ -13,6 +14,7 @@ from data.config import (
 from data.models import (
     TextMetadata,
 )
+from utils.context_cache import ContextCache
 from utils.file_utils import (
     generate_split_filename,
     read_json_file,
@@ -28,6 +30,7 @@ def create_batches(
     sentences: list[str],
     start_index: int,
     batch_size: int,
+    context_cache: ContextCache | None = None,
 ) -> list[dict[str, Any]]:
     """Create batches of sentences with their contexts"""
     batches: list[dict[str, Any]] = []
@@ -49,9 +52,14 @@ def create_batches(
                 current_batch_start_global_index + len(batch_sentences),
             ),
         )
-        batch_contexts = [
-            get_optimized_context(sentences, idx) for idx in batch_indices
-        ]
+
+        # Use context cache if available, otherwise calculate directly
+        if context_cache:
+            batch_contexts = context_cache.get_contexts(batch_indices)
+        else:
+            batch_contexts = [
+                get_optimized_context(sentences, idx) for idx in batch_indices
+            ]
 
         batches.append(
             {
@@ -92,7 +100,7 @@ def process_batches(
     all_units: list[str] | list[dict[str, Any]],
     batch_size: int,
 ) -> tuple[list[Any], list[str]]:
-    """Process all batches and return results and errors."""
+    """Process all batches in parallel and return results and errors."""
     results: list[Any] = []
     errors: list[str] = []
 
@@ -102,22 +110,40 @@ def process_batches(
     else:
         sentences = all_units
 
-    batches = create_batches(sentences, 0, batch_size)
+    # Create context cache for efficiency
+    context_cache = ContextCache(sentences)
+    batches = create_batches(sentences, 0, batch_size, context_cache)
+
+    # Process batches in parallel for better performance
+    max_workers = min(3, len(batches))  # Limit to 3 parallel workers
+
     with tqdm(total=len(all_units), desc="Translating", initial=0) as pbar:
-        for batch in batches:
-            try:
-                batch_results = process_batch(
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all batch processing tasks
+            future_to_batch = {
+                executor.submit(
+                    process_batch,
                     batch["sentences"],
                     batch["start_index"],
                     batch["contexts"],
                     all_units,
                     batch["indices"],
-                )
-                results.extend(batch_results)
-            except Exception as exc:
-                errors.append(f"Batch {len(errors) + 1}: {exc}")
-            finally:
-                pbar.update(len(batch["sentences"]))
+                    context_cache,
+                ): batch
+                for batch in batches
+            }
+
+            # Collect results as they complete
+            for future in concurrent.futures.as_completed(future_to_batch):
+                batch = future_to_batch[future]
+                try:
+                    batch_results = future.result()
+                    results.extend(batch_results)
+                except Exception as exc:
+                    errors.append(f"Batch {len(errors) + 1}: {exc}")
+                finally:
+                    pbar.update(len(batch["sentences"]))
+
     return results, errors
 
 

@@ -1,10 +1,9 @@
 import logging
+import os
 import uuid
 from typing import Any
 
 from supabase import create_client
-
-from data.config import SUPABASE_KEY, SUPABASE_URL
 
 logger = logging.getLogger(__name__)
 
@@ -16,11 +15,15 @@ def get_supabase_client():
     """Get the Supabase client instance."""
     global _supabase_client
     if _supabase_client is None:
-        if not all([SUPABASE_URL, SUPABASE_KEY]):
+        # Check environment variables directly since config might be imported before keys are loaded
+        supabase_url = os.getenv("SUPABASE_URL")
+        supabase_key = os.getenv("SUPABASE_KEY")
+
+        if not all([supabase_url, supabase_key]):
             raise OSError(
                 "Missing required environment variables. Please ensure SUPABASE_URL and SUPABASE_KEY are set."
             )
-        _supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        _supabase_client = create_client(supabase_url, supabase_key)
     return _supabase_client
 
 

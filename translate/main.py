@@ -236,8 +236,8 @@ Examples:
         logger.error(f"❌ Input file not found: {DEFAULT_INPUT_FILE}")
         sys.exit(1)
 
-    if args.batch_size < 1 or args.batch_size > 10:
-        logger.error(f"❌ Batch size must be between 1 and 10, got: {args.batch_size}")
+    if args.batch_size < 1 or args.batch_size > 15:
+        logger.error(f"❌ Batch size must be between 1 and 15, got: {args.batch_size}")
         sys.exit(1)
 
     split_file = os.path.splitext(DEFAULT_INPUT_FILE)[0] + "_split.json"

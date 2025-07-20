@@ -139,12 +139,11 @@ def call_openai_api(
     function_schema: dict[str, Any] | None = None,
     function_name: str | None = None,
     temperature: float = 0.3,
-    max_retries: int = 3,
+    max_retries: int = 2,
     model: str = MODEL_OTHER,
 ) -> dict[str, Any]:
-    """Call the OpenAI API with retries and standardized decoding."""
+    """Call the OpenAI API with optimized retries and exponential backoff."""
     retry_count = 0
-    backoff_time = 1
 
     while retry_count < max_retries:
         try:
@@ -171,8 +170,8 @@ def call_openai_api(
                     "error": f"API call failed after {max_retries} attempts. Error: {str(e)}",
                 }
 
-            time.sleep(backoff_time)
-            backoff_time *= 2
+            # Exponential backoff: 1s, 2s
+            time.sleep(2**retry_count)
 
     return {"error": "Maximum retries exceeded"}
 

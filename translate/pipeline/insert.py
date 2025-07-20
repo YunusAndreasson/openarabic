@@ -21,9 +21,76 @@ from utils.storage_utils import (
     get_supabase_client,
 )
 
+# Import audio utilities for final phase
+try:
+    from audio.audio_utils import generate_audio_filename, generate_sentence_audio
+
+    AUDIO_AVAILABLE = True
+except Exception as e:
+    logger = logging.getLogger(__name__)
+    logger.warning(f"Audio generation not available: {e}")
+    AUDIO_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 load_api_keys()
+
+
+def generate_article_audio(article_id: int, translations: list[dict]) -> None:
+    """Generate audio for all sentences in an article."""
+    if not AUDIO_AVAILABLE:
+        logger.warning("Audio generation not available")
+        return
+
+    for i, translation in enumerate(translations):
+        try:
+            # Get the Arabic text (prefer tashkeel if available)
+            arabic_text = translation.get("tashkeel", translation.get("original", ""))
+            if not arabic_text:
+                logger.warning(f"Skipping sentence {i}: no Arabic text found")
+                continue
+
+            # Generate unique filename
+            audio_filename = generate_audio_filename()
+
+            # Get context for better audio quality
+            previous_text = None
+            next_text = None
+            if i > 0:
+                prev_translation = translations[i - 1]
+                previous_text = prev_translation.get(
+                    "tashkeel", prev_translation.get("original", "")
+                )
+            if i < len(translations) - 1:
+                next_translation = translations[i + 1]
+                next_text = next_translation.get(
+                    "tashkeel", next_translation.get("original", "")
+                )
+
+            # Generate audio
+            audio_result = generate_sentence_audio(
+                text=arabic_text,
+                filename=audio_filename,
+                previous_text=previous_text,
+                next_text=next_text,
+            )
+
+            if audio_result and audio_result.get("url"):
+                # Update the database with the audio URL
+                try:
+                    get_supabase_client().table("article_sentences").update(
+                        {"audio_url": audio_result["url"]}
+                    ).eq("article_id", article_id).eq("position", i).execute()
+                except Exception as e:
+                    logger.error(
+                        f"Failed to update audio URL for sentence {i + 1}: {e}"
+                    )
+            else:
+                logger.error(f"Failed to generate audio for sentence {i + 1}")
+
+        except Exception as e:
+            logger.error(f"Error generating audio for sentence {i + 1}: {e}")
+            # Continue with next sentence - don't fail the entire process
 
 
 def process_json_file(file_path: str, category_id: int, author_id: int) -> int:
@@ -58,6 +125,14 @@ def process_json_file(file_path: str, category_id: int, author_id: int) -> int:
 
     result = get_supabase_client().table("articles").insert(article_data).execute()
     article_id = result.data[0]["id"]
+
+    # Generate audio for sentences in the final phase
+    if AUDIO_AVAILABLE:
+        try:
+            generate_article_audio(article_id, data["translations"])
+        except Exception as e:
+            logger.error(f"Audio generation failed: {e}")
+            # Continue without audio - don't fail the entire pipeline
 
     timing_stats = insert_article_sentences(article_id, data["translations"])
 
