@@ -35,7 +35,6 @@ from .storage_utils import (
     get_supabase_client,
     get_word_type_id,
 )
-from .translation_processor import process_batch
 
 __all__ = [
     "call_openai_api",
@@ -62,7 +61,6 @@ __all__ = [
     "get_category_id",
     "get_supabase_client",
     "get_word_type_id",
-    "process_batch",
     "TranslationError",
     "AudioGenerationError",
     "ConfigurationError",

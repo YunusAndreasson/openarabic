@@ -1,6 +1,8 @@
 from typing import Any
 
 from translate.data.models import SentenceTranslation, WordTranslation
+
+# Import functions directly to avoid circular imports
 from translate.pipeline.translation_engine import (
     batch_add_tashkeel,
     batch_refine_translations,
@@ -12,47 +14,6 @@ from translate.utils.validation import (
     validate_final_translation,
     validate_translation_results,
 )
-
-
-def create_batches(
-    sentences: list[str],
-    start_index: int,
-    batch_size: int,
-) -> list[dict[str, Any]]:
-    """Create batches of sentences with their contexts"""
-    batches: list[dict[str, Any]] = []
-
-    num_remaining = len(sentences) - start_index
-    for i in range(0, num_remaining, batch_size):
-        current_batch_start_global_index = start_index + i
-        batch_sentences = sentences[
-            current_batch_start_global_index : current_batch_start_global_index
-            + batch_size
-        ]
-
-        if not batch_sentences:
-            continue
-
-        batch_indices = list(
-            range(
-                current_batch_start_global_index,
-                current_batch_start_global_index + len(batch_sentences),
-            ),
-        )
-        batch_contexts = [
-            get_optimized_context(sentences, idx) for idx in batch_indices
-        ]
-
-        batches.append(
-            {
-                "sentences": batch_sentences,
-                "contexts": batch_contexts,
-                "start_index": current_batch_start_global_index,
-                "indices": batch_indices,
-            },
-        )
-
-    return batches
 
 
 def run_full_translation(

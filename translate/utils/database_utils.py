@@ -346,6 +346,9 @@ def insert_article_sentences(article_id: int, translations: list[dict]) -> dict:
             audio_filename = generate_audio_filename()
 
             audio_result = None
+            storage_url = None
+            word_timings = []
+
             if generate_sentence_audio:
                 audio_result = generate_sentence_audio(
                     text=translation["original"],

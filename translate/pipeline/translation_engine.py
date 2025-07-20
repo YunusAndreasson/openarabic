@@ -19,7 +19,7 @@ from translate.data.schemas import (
     WORD_BY_WORD_USER_PROMPT,
     WORD_TRANSLATION_FUNCTION,
 )
-from translate.utils import call_openai_api
+from translate.utils.api_utils import call_openai_api
 from translate.utils.exceptions import TranslationError
 from translate.utils.text_utils import filter_arabic_words, get_optimized_context
 

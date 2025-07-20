@@ -18,9 +18,51 @@ from translate.utils.file_utils import (
     read_json_file,
     write_json_file,
 )
-from translate.utils.translation_processor import create_batches, process_batch
+from translate.utils.text_utils import get_optimized_context
+from translate.utils.translation_processor import process_batch
 
 logger = logging.getLogger(__name__)
+
+
+def create_batches(
+    sentences: list[str],
+    start_index: int,
+    batch_size: int,
+) -> list[dict[str, Any]]:
+    """Create batches of sentences with their contexts"""
+    batches: list[dict[str, Any]] = []
+
+    num_remaining = len(sentences) - start_index
+    for i in range(0, num_remaining, batch_size):
+        current_batch_start_global_index = start_index + i
+        batch_sentences = sentences[
+            current_batch_start_global_index : current_batch_start_global_index
+            + batch_size
+        ]
+
+        if not batch_sentences:
+            continue
+
+        batch_indices = list(
+            range(
+                current_batch_start_global_index,
+                current_batch_start_global_index + len(batch_sentences),
+            ),
+        )
+        batch_contexts = [
+            get_optimized_context(sentences, idx) for idx in batch_indices
+        ]
+
+        batches.append(
+            {
+                "sentences": batch_sentences,
+                "contexts": batch_contexts,
+                "start_index": current_batch_start_global_index,
+                "indices": batch_indices,
+            },
+        )
+
+    return batches
 
 
 def load_split_data(input_file: str) -> dict[str, Any] | None:
