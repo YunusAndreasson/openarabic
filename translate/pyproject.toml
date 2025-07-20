@@ -27,6 +27,8 @@ dev = [
     "ruff>=0.12.4",
     "pytest>=8.4.1",
     "pytest-cov>=6.2.1",
+    "mypy>=1.13.0",
+    "vulture>=2.0.0",  # Dead code detection
 ]
 
 [tool.uv]
@@ -34,6 +36,8 @@ dev-dependencies = [
     "ruff>=0.12.4",
     "pytest>=8.4.1",
     "pytest-cov>=6.2.1",
+    "mypy>=1.13.0",
+    "vulture>=2.0.0",  # Dead code detection
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -72,7 +76,7 @@ exclude = [
 ]
 
 [tool.ruff.lint]
-# Enable Pyflakes (`F`), pycodestyle (`E`), and isort (`I`) codes
+# Enable comprehensive linting rules
 select = [
     "E",   # pycodestyle errors
     "F",   # pyflakes
@@ -133,4 +137,67 @@ addopts = [
     "--cov-report=term-missing",
     "--cov-report=html",
     "--cov-fail-under=35",
+]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+show_error_codes = true
+show_error_context = true
+explicit_package_bases = true
+namespace_packages = true
+exclude = [
+    "tests/.*",
+    ".*_test\\.py$",
+    "test_.*\\.py$",
+]
+# Ignore complex external library issues
+disable_error_code = [
+    "call-overload",  # OpenAI API complex overloads
+    "no-any-return",  # External library returns
+    "attr-defined",   # External library attributes
+    "unreachable",    # External library control flow
+    "arg-type",       # Complex function argument types
+    "dict-item",      # Complex dictionary type issues
+    "assignment",     # Complex assignment type issues
+    "return-value",   # Complex return type mismatches
+    "truthy-function", # Function boolean context issues
+    "union-attr",     # Union type attribute access
+    "misc",           # Miscellaneous complex type issues
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "elevenlabs.*",
+    "supabase.*",
+    "openai.*",
+    "tqdm.*",
+    "mutagen.*",
+]
+ignore_missing_imports = true
+
+[tool.vulture]
+min_confidence = 80
+exclude = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*_test.py",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/.venv/*",
+    "*/build/*",
+    "*/dist/*",
+    "*/scripts/*",
+    "*/node_modules/*",
 ]

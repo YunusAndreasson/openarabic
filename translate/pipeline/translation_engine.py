@@ -257,7 +257,9 @@ def batch_translate_words(
 
     max_retries = 3
 
-    processed_results = [{"word_translations": []} for _ in range(len(sentences))]
+    processed_results: list[dict[str, Any]] = [
+        {"word_translations": []} for _ in range(len(sentences))
+    ]
 
     for i, (_sentence, tashkeel_data, translation_data) in enumerate(
         zip(sentences, tashkeel_results, translations, strict=False),
@@ -402,7 +404,7 @@ def batch_refine_translations(
                     entry += f"\n  - Notes: {word_opts.get('notes')}"
                 word_trans_formatted.append(entry)
 
-            all_uncertainties = []
+            all_uncertainties: list[str] = []
             if previous_uncertainties.get("translation"):
                 all_uncertainties.extend(
                     f"Translation: {u.get('text', '')} ({u.get('reason', 'No reason')})"

@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 _supabase_client = None
 
 
-def get_supabase_client():
+def get_supabase_client() -> Any:
     """Get the Supabase client instance."""
     global _supabase_client
     if _supabase_client is None:
@@ -23,6 +23,8 @@ def get_supabase_client():
             raise OSError(
                 "Missing required environment variables. Please ensure SUPABASE_URL and SUPABASE_KEY are set."
             )
+        # At this point, we know both are not None due to the check above
+        assert supabase_url is not None and supabase_key is not None
         _supabase_client = create_client(supabase_url, supabase_key)
     return _supabase_client
 
@@ -107,7 +109,7 @@ def get_category_id(name: str = "aqeedah") -> int:
     )
     if not result.data:
         raise ValueError(f"Category '{name}' not found")
-    return result.data[0]["id"]
+    return int(result.data[0]["id"])
 
 
 def get_author_id(name: str = "Ibn Kathir") -> int:
@@ -117,7 +119,7 @@ def get_author_id(name: str = "Ibn Kathir") -> int:
     )
     if not result.data:
         raise ValueError(f"Author '{name}' not found")
-    return result.data[0]["id"]
+    return int(result.data[0]["id"])
 
 
 def get_word_type_id(pos: str) -> int:

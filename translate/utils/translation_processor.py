@@ -1,10 +1,14 @@
 from typing import Any
 
 from data.models import SentenceTranslation, WordTranslation
+from utils.validation import (
+    validate_final_translation,
+    validate_translation_results,
+)
 
 
 # Import functions lazily to avoid circular imports
-def _get_translation_engine_functions():
+def _get_translation_engine_functions() -> tuple[Any, Any, Any, Any]:
     """Lazy import to avoid circular dependencies."""
     from pipeline.translation_engine import (
         batch_add_tashkeel,
@@ -19,12 +23,6 @@ def _get_translation_engine_functions():
         batch_translate_full_sentences,
         batch_translate_words,
     )
-
-
-from utils.validation import (
-    validate_final_translation,
-    validate_translation_results,
-)
 
 
 def run_full_translation(

@@ -22,7 +22,6 @@ from .database_common import (
     get_table_record,
     get_table_records,
     insert_table_record,
-    safe_database_operation,
     update_table_record,
 )
 from .database_utils import (
@@ -91,7 +90,6 @@ __all__ = [
     "get_table_record",
     "get_table_records",
     "insert_table_record",
-    "safe_database_operation",
     "update_table_record",
     # Database utilities
     "archive_files",

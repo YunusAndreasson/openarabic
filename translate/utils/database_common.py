@@ -1,6 +1,7 @@
 """Common database utilities to eliminate code duplication."""
 
 import logging
+from collections.abc import Callable
 from typing import Any
 
 from utils.storage_utils import get_supabase_client
@@ -9,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def safe_database_operation(
-    operation: callable,
+    operation: Callable[[], Any],
     error_context: str,
     fallback_value: Any = None,
     log_error: bool = True,
@@ -31,14 +32,15 @@ def update_table_record(
 ) -> bool:
     """Common function to update database records."""
 
-    def operation():
+    def operation() -> bool:
         query = get_supabase_client().table(table_name).update(update_data)
         for key, value in conditions.items():
             query = query.eq(key, value)
         query.execute()
         return True
 
-    return safe_database_operation(operation, error_context, False)
+    result = safe_database_operation(operation, error_context, False)
+    return bool(result)
 
 
 def insert_table_record(
@@ -46,11 +48,12 @@ def insert_table_record(
 ) -> dict[str, Any] | None:
     """Common function to insert database records."""
 
-    def operation():
+    def operation() -> dict[str, Any] | None:
         result = get_supabase_client().table(table_name).insert(data).execute()
         return result.data[0] if result.data else None
 
-    return safe_database_operation(operation, error_context, None)
+    result = safe_database_operation(operation, error_context, None)
+    return result if isinstance(result, dict) else None
 
 
 def get_table_record(
@@ -61,14 +64,15 @@ def get_table_record(
 ) -> dict[str, Any] | None:
     """Common function to get database records."""
 
-    def operation():
+    def operation() -> dict[str, Any] | None:
         query = get_supabase_client().table(table_name).select(",".join(select_fields))
         for key, value in conditions.items():
             query = query.eq(key, value)
         result = query.execute()
         return result.data[0] if result.data else None
 
-    return safe_database_operation(operation, error_context, None)
+    result = safe_database_operation(operation, error_context, None)
+    return result if isinstance(result, dict) else None
 
 
 def get_table_records(
@@ -81,7 +85,7 @@ def get_table_records(
 ) -> list[dict[str, Any]]:
     """Common function to get multiple database records."""
 
-    def operation():
+    def operation() -> list[dict[str, Any]]:
         query = get_supabase_client().table(table_name).select(",".join(select_fields))
 
         if conditions:
@@ -97,7 +101,8 @@ def get_table_records(
         result = query.execute()
         return result.data or []
 
-    return safe_database_operation(operation, error_context, [])
+    result = safe_database_operation(operation, error_context, [])
+    return result if isinstance(result, list) else []
 
 
 def check_record_exists(
@@ -105,11 +110,12 @@ def check_record_exists(
 ) -> bool:
     """Common function to check if a record exists."""
 
-    def operation():
+    def operation() -> bool:
         query = get_supabase_client().table(table_name).select("id")
         for key, value in conditions.items():
             query = query.eq(key, value)
         result = query.execute()
         return len(result.data) > 0
 
-    return safe_database_operation(operation, error_context, False)
+    result = safe_database_operation(operation, error_context, False)
+    return bool(result)

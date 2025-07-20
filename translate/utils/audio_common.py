@@ -25,7 +25,7 @@ def save_and_upload_audio(
     """Common function to save audio to temp file and upload to storage."""
     from .error_handling import safe_execute
 
-    def upload_operation():
+    def upload_operation() -> dict[str, str]:
         # Save audio to temporary file
         with open(temp_audio_path, "wb") as f:
             f.write(audio_response)
@@ -51,7 +51,7 @@ def cleanup_temp_file(temp_path: str, context: str = "audio") -> None:
 
     if os.path.exists(temp_path):
 
-        def cleanup_operation():
+        def cleanup_operation() -> None:
             os.remove(temp_path)
 
         safe_execute(

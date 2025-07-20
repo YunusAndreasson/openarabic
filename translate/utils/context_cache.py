@@ -14,9 +14,12 @@ class ContextCache:
         """Get cached context for a sentence index."""
         key = (idx, for_tashkeel)
         if key not in self._cache:
-            self._cache[key] = get_optimized_context(
+            context = get_optimized_context(
                 self.all_sentences, idx, for_tashkeel=for_tashkeel
             )
+            if context is None:
+                context = ""
+            self._cache[key] = context
         return self._cache[key]
 
     def get_contexts(self, indices: list[int], for_tashkeel: bool = False) -> list[str]:
