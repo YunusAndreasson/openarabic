@@ -21,7 +21,12 @@ from utils.file_utils import (
     write_json_file,
 )
 from utils.text_utils import get_optimized_context
-from utils.translation_processor import process_batch
+from utils.translation_processor import (
+    apply_tashkeel,
+    refine_translations,
+    run_full_translation,
+    translate_words,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +98,44 @@ def create_metadata(split_data: dict[str, Any]) -> TextMetadata:
         summary=split_data.get("summary", "No summary available"),
         difficulty_level=split_data.get("difficulty_level", 3),
         total_units=split_data.get("total_units", len(split_data.get("units", []))),
+    )
+
+
+def process_batch(
+    batch_sentences: list[str],
+    start_index: int,
+    batch_contexts: list[str | None],
+    all_sentences: list[str] | None = None,
+    batch_indices: list[int] | None = None,
+    context_cache: Any = None,
+) -> list[Any]:
+    """Process a batch of sentences by orchestrating each translation phase."""
+    if not batch_sentences:
+        return []
+
+    translations = run_full_translation(batch_sentences, batch_contexts)
+    tashkeel = apply_tashkeel(
+        batch_sentences,
+        translations,
+        all_sentences,
+        batch_indices,
+        context_cache,
+    )
+    word_options = translate_words(
+        batch_sentences,
+        tashkeel,
+        translations,
+        all_sentences,
+        batch_indices,
+        context_cache,
+    )
+
+    return refine_translations(
+        batch_sentences,
+        start_index,
+        translations,
+        tashkeel,
+        word_options,
     )
 
 

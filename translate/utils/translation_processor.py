@@ -2,13 +2,25 @@ from typing import Any
 
 from data.models import SentenceTranslation, WordTranslation
 
-# Import functions directly to avoid circular imports
-from pipeline.translation_engine import (
-    batch_add_tashkeel,
-    batch_refine_translations,
-    batch_translate_full_sentences,
-    batch_translate_words,
-)
+
+# Import functions lazily to avoid circular imports
+def _get_translation_engine_functions():
+    """Lazy import to avoid circular dependencies."""
+    from pipeline.translation_engine import (
+        batch_add_tashkeel,
+        batch_refine_translations,
+        batch_translate_full_sentences,
+        batch_translate_words,
+    )
+
+    return (
+        batch_add_tashkeel,
+        batch_refine_translations,
+        batch_translate_full_sentences,
+        batch_translate_words,
+    )
+
+
 from utils.validation import (
     validate_final_translation,
     validate_translation_results,
@@ -20,6 +32,7 @@ def run_full_translation(
     batch_contexts: list[str | None],
 ) -> list[dict[str, Any]]:
     """Translate a batch of sentences and validate the results."""
+    batch_translate_full_sentences = _get_translation_engine_functions()[2]
     translations = batch_translate_full_sentences(batch_sentences, batch_contexts)
     validate_translation_results(batch_sentences, translations, "Full Translation")
     return translations
@@ -33,6 +46,7 @@ def apply_tashkeel(
     context_cache: Any = None,
 ) -> list[dict[str, Any]]:
     """Add diacritics to sentences and validate the results."""
+    batch_add_tashkeel = _get_translation_engine_functions()[0]
     tashkeel = batch_add_tashkeel(
         batch_sentences,
         translation_results,
@@ -53,6 +67,7 @@ def translate_words(
     context_cache: Any = None,
 ) -> list[dict[str, Any]]:
     """Generate word-by-word translations and validate them."""
+    batch_translate_words = _get_translation_engine_functions()[3]
     word_results = batch_translate_words(
         batch_sentences,
         tashkeel_results,
@@ -218,6 +233,7 @@ def refine_translations(
         tashkeel_results,
         word_options_results,
     )
+    batch_refine_translations = _get_translation_engine_functions()[1]
     refinement_results = batch_refine_translations(inputs)
     results: list[SentenceTranslation] = []
     for i in range(len(batch_sentences)):
@@ -240,46 +256,7 @@ def refine_translations(
     return results
 
 
-def process_batch(
-    batch_sentences: list[str],
-    start_index: int,
-    batch_contexts: list[str | None],
-    all_sentences: list[str] | None = None,
-    batch_indices: list[int] | None = None,
-    context_cache: Any = None,
-) -> list[SentenceTranslation]:
-    """Process a batch of sentences by orchestrating each translation phase."""
-    if not batch_sentences:
-        return []
-
-    translations = run_full_translation(batch_sentences, batch_contexts)
-    tashkeel = apply_tashkeel(
-        batch_sentences,
-        translations,
-        all_sentences,
-        batch_indices,
-        context_cache,
-    )
-    word_options = translate_words(
-        batch_sentences,
-        tashkeel,
-        translations,
-        all_sentences,
-        batch_indices,
-        context_cache,
-    )
-
-    return refine_translations(
-        batch_sentences,
-        start_index,
-        translations,
-        tashkeel,
-        word_options,
-    )
-
-
 __all__ = [
-    "process_batch",
     "run_full_translation",
     "apply_tashkeel",
     "translate_words",

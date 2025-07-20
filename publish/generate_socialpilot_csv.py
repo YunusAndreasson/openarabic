@@ -14,7 +14,7 @@ Usage:
 
 import csv
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 import requests
@@ -176,7 +176,7 @@ def generate_socialpilot_csv(words, uploaded_urls):
 
             # Limit to 500 posts (SocialPilot limit)
             if processed_count >= 500:
-                print(f"⚠️  Reached SocialPilot limit of 500 posts")
+                print("⚠️  Reached SocialPilot limit of 500 posts")
                 break
 
     print(f"✅ Generated {csv_filename} with {processed_count} posts")

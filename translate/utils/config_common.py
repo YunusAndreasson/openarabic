@@ -1,7 +1,7 @@
 """Common configuration utilities to eliminate code duplication."""
 
 import os
-from typing import Any, Dict, Optional
+from typing import Any
 
 from data.config import (
     ARABIC_VOICE_ID,
@@ -11,7 +11,7 @@ from data.config import (
 )
 
 
-def get_voice_config(voice_type: str) -> Dict[str, Any]:
+def get_voice_config(voice_type: str) -> dict[str, Any]:
     """Get consistent voice configuration for different types."""
     voice_configs = {
         "arabic_sentence": {
@@ -39,7 +39,7 @@ def get_storage_url(filename: str, bucket: str = "audio") -> str:
     return f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{filename}"
 
 
-def get_environment_config() -> Dict[str, str]:
+def get_environment_config() -> dict[str, str]:
     """Get consistent environment configuration."""
     return {
         "ELEVENLABS_API_KEY": os.getenv("ELEVENLABS_API_KEY", ""),
@@ -61,7 +61,7 @@ def validate_required_config(required_keys: list[str]) -> bool:
     return True
 
 
-def get_audio_config() -> Dict[str, Any]:
+def get_audio_config() -> dict[str, Any]:
     """Get consistent audio configuration."""
     return {
         "voice_configs": {

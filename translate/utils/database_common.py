@@ -1,7 +1,7 @@
 """Common database utilities to eliminate code duplication."""
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from utils.storage_utils import get_supabase_client
 
@@ -25,8 +25,8 @@ def safe_database_operation(
 
 def update_table_record(
     table_name: str,
-    update_data: Dict[str, Any],
-    conditions: Dict[str, Any],
+    update_data: dict[str, Any],
+    conditions: dict[str, Any],
     error_context: str,
 ) -> bool:
     """Common function to update database records."""
@@ -42,8 +42,8 @@ def update_table_record(
 
 
 def insert_table_record(
-    table_name: str, data: Dict[str, Any], error_context: str
-) -> Optional[Dict[str, Any]]:
+    table_name: str, data: dict[str, Any], error_context: str
+) -> dict[str, Any] | None:
     """Common function to insert database records."""
 
     def operation():
@@ -55,10 +55,10 @@ def insert_table_record(
 
 def get_table_record(
     table_name: str,
-    select_fields: List[str],
-    conditions: Dict[str, Any],
+    select_fields: list[str],
+    conditions: dict[str, Any],
     error_context: str,
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     """Common function to get database records."""
 
     def operation():
@@ -73,12 +73,12 @@ def get_table_record(
 
 def get_table_records(
     table_name: str,
-    select_fields: List[str],
-    conditions: Optional[Dict[str, Any]] = None,
-    order_by: Optional[str] = None,
-    limit: Optional[int] = None,
+    select_fields: list[str],
+    conditions: dict[str, Any] | None = None,
+    order_by: str | None = None,
+    limit: int | None = None,
     error_context: str = "query",
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Common function to get multiple database records."""
 
     def operation():
@@ -101,7 +101,7 @@ def get_table_records(
 
 
 def check_record_exists(
-    table_name: str, conditions: Dict[str, Any], error_context: str
+    table_name: str, conditions: dict[str, Any], error_context: str
 ) -> bool:
     """Common function to check if a record exists."""
 

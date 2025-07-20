@@ -1,7 +1,8 @@
 """Common error handling utilities to eliminate code duplication."""
 
 import logging
-from typing import Any, Callable, Optional, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -11,10 +12,10 @@ T = TypeVar("T")
 def safe_execute(
     operation: Callable[[], T],
     error_context: str,
-    fallback_value: Optional[T] = None,
+    fallback_value: T | None = None,
     log_error: bool = True,
     reraise: bool = False,
-) -> Optional[T]:
+) -> T | None:
     """Safely execute an operation with consistent error handling."""
     try:
         return operation()
@@ -30,8 +31,8 @@ def safe_audio_operation(
     operation: Callable[[], T],
     context: str,
     item_name: str,
-    fallback_value: Optional[T] = None,
-) -> Optional[T]:
+    fallback_value: T | None = None,
+) -> T | None:
     """Safely execute audio-related operations with consistent error handling."""
     return safe_execute(
         operation, f"{context} '{item_name}'", fallback_value, log_error=True
@@ -42,8 +43,8 @@ def safe_database_operation(
     operation: Callable[[], T],
     table_name: str,
     operation_type: str,
-    fallback_value: Optional[T] = None,
-) -> Optional[T]:
+    fallback_value: T | None = None,
+) -> T | None:
     """Safely execute database operations with consistent error handling."""
     return safe_execute(
         operation, f"{operation_type} on {table_name}", fallback_value, log_error=True
@@ -54,8 +55,8 @@ def safe_file_operation(
     operation: Callable[[], T],
     file_path: str,
     operation_type: str,
-    fallback_value: Optional[T] = None,
-) -> Optional[T]:
+    fallback_value: T | None = None,
+) -> T | None:
     """Safely execute file operations with consistent error handling."""
     return safe_execute(
         operation, f"{operation_type} on {file_path}", fallback_value, log_error=True
@@ -63,7 +64,7 @@ def safe_file_operation(
 
 
 def handle_import_error(
-    module_name: str, fallback_value: Any = None, warning_message: Optional[str] = None
+    module_name: str, fallback_value: Any = None, warning_message: str | None = None
 ) -> Any:
     """Handle import errors gracefully with consistent logging."""
     if warning_message:

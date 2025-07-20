@@ -2,7 +2,6 @@
 
 import logging
 import os
-from typing import Any, Dict, Optional
 
 from elevenlabs import VoiceSettings
 
@@ -22,9 +21,11 @@ def create_voice_settings(speed: float = 0.8) -> VoiceSettings:
 
 def save_and_upload_audio(
     audio_response: bytes, filename: str, temp_audio_path: str, context: str = "audio"
-) -> Optional[Dict[str, str]]:
+) -> dict[str, str] | None:
     """Common function to save audio to temp file and upload to storage."""
-    try:
+    from .error_handling import safe_execute
+
+    def upload_operation():
         # Save audio to temporary file
         with open(temp_audio_path, "wb") as f:
             f.write(audio_response)
@@ -38,18 +39,27 @@ def save_and_upload_audio(
             )
             final_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{filename}"
             return {"url": final_url}
-    except Exception as e:
-        logger.error(f"Upload failed for {context} '{filename}': {str(e)}")
-        return None
+
+    return safe_execute(
+        upload_operation, f"audio upload for {context} '{filename}'", None
+    )
 
 
 def cleanup_temp_file(temp_path: str, context: str = "audio") -> None:
     """Common function to clean up temporary audio files."""
+    from .error_handling import safe_execute
+
     if os.path.exists(temp_path):
-        try:
+
+        def cleanup_operation():
             os.remove(temp_path)
-        except Exception as e:
-            logger.warning(f"Failed to clean up temp file {temp_path}: {e}")
+
+        safe_execute(
+            cleanup_operation,
+            f"temp file cleanup for {context}",
+            None,
+            log_error=False,  # Use warning level for cleanup failures
+        )
 
 
 def handle_audio_generation_error(
@@ -60,7 +70,7 @@ def handle_audio_generation_error(
 
 
 def validate_audio_response(
-    audio_response: Optional[bytes], context: str, item_name: str
+    audio_response: bytes | None, context: str, item_name: str
 ) -> bool:
     """Common validation for audio API responses."""
     if not audio_response:

@@ -180,7 +180,7 @@ def main():
             failed += 1
 
     # Summary
-    print(f"\n📊 Generation Complete!")
+    print("\n📊 Generation Complete!")
     print(f"✓ Successful: {successful}")
     print(f"✗ Failed: {failed}")
     print(f"📁 Images saved to: {os.path.abspath(OUTPUT_DIR)}")
