@@ -115,16 +115,18 @@ def batch_translate_full_sentences(
                 results.append(
                     TranslationResult(
                         translation=item["t"],
-                        notes=item.get("n"),
+                        notes=item.get("n") or None,
                         uncertainties=item.get("uncertainties", []),
+                        word_by_word=item.get("word_by_word", []),
                     ),
                 )
             elif isinstance(item, dict) and "translation" in item:
                 results.append(
                     TranslationResult(
                         translation=item["translation"],
-                        notes=item.get("notes"),
+                        notes=item.get("notes") or None,
                         uncertainties=item.get("uncertainties", []),
+                        word_by_word=item.get("word_by_word", []),
                     )
                 )
             else:
@@ -133,6 +135,7 @@ def batch_translate_full_sentences(
                         translation=f"[Format Error for: {sentences[i][:20]}...]",
                         notes="Response item has unexpected format",
                         uncertainties=[],
+                        word_by_word=[],
                     ),
                 )
 
@@ -143,6 +146,7 @@ def batch_translate_full_sentences(
                     translation=f"[Missing Translation for: {sentences[i][:20]}...]",
                     notes="Translation missing in API response",
                     uncertainties=[],
+                    word_by_word=[],
                 ),
             )
 
@@ -153,6 +157,7 @@ def batch_translate_full_sentences(
                 translation="[Translation Error]",
                 notes=response["error"],
                 uncertainties=[],
+                word_by_word=[],
             )
             for _ in sentences
         ]
@@ -162,6 +167,7 @@ def batch_translate_full_sentences(
                 translation="[Format Error]",
                 notes="Response format error",
                 uncertainties=[],
+                word_by_word=[],
             )
             for _ in sentences
         ]
@@ -378,10 +384,10 @@ def batch_translate_words(
                             WordTranslationOptions(
                                 arabic=arabic_text,
                                 english_options=eng_opts,
-                                pos=word_data.get("pos"),
+                                pos=word_data.get("pos") or None,
                                 essential=essential_letters,
                                 essential_translation_options=ess_opts,
-                                notes=word_data.get("notes"),
+                                notes=word_data.get("notes") or None,
                                 uncertainties=word_data.get("uncertainties", []),
                             ).model_dump(),
                         )

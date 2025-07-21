@@ -14,16 +14,16 @@ class TranslationUncertainty(TypedDict):
 
 class TranslationResult(TypedDict):
     translation: str
-    notes: NotRequired[str | None]
+    notes: str | None  # Required - always expected
     uncertainties: list[TranslationUncertainty]
-    word_by_word: NotRequired[list[dict[str, Any]]]  # Optional field for later stages
+    word_by_word: list[dict[str, Any]]  # Required
 
 
 # Tashkeel result structure (matches TASHKEEL_FUNCTION schema)
 class TashkeelUncertainty(TypedDict):
     word: str
     reason: str
-    related_translation_uncertainty: NotRequired[str | None]
+    related_translation_uncertainty: str | None  # Required - always expected
 
 
 class TashkeelResult(TypedDict):
@@ -35,10 +35,10 @@ class TashkeelResult(TypedDict):
 class WordTranslationOption(TypedDict):
     arabic: str
     english_options: list[str]
-    pos: NotRequired[str | None]
+    pos: str | None  # Required
     essential: str
     essential_translation_options: list[str]
-    notes: NotRequired[str | None]
+    notes: str | None  # Required - always expected
     uncertainties: list[
         dict[str, Any]
     ]  # Schema defines as "type": "object" - keeping flexible
@@ -52,10 +52,10 @@ class WordTranslationResult(TypedDict):
 class RefinedWordTranslation(TypedDict):
     arabic: str
     english: str
-    pos: NotRequired[str | None]
+    pos: str | None  # Required
     essential: str
     essential_translation: str
-    notes: NotRequired[str | None]
+    notes: str | None  # Required - always expected
 
 
 class ResolvedUncertainty(TypedDict):
@@ -119,8 +119,8 @@ class AudioAPIResponse(TypedDict):
     """API response structure for audio generation"""
 
     audio: bytes
-    alignment: NotRequired[dict[str, Any] | None]
-    audio_base_64: NotRequired[str | None]
+    alignment: dict[str, Any] | None  # Required - always expected
+    audio_base_64: str | None  # Required
 
 
 class WordTimingData(TypedDict):
@@ -137,8 +137,8 @@ class AudioGenerationResult(TypedDict):
 
     url: str
     word_timings: list[WordTimingData]
-    filename: NotRequired[str | None]
-    duration: NotRequired[float | None]
+    filename: str | None  # Required
+    duration: float | None  # Required
 
 
 # Database insertion structures
@@ -177,9 +177,9 @@ class WordData(TypedDict):
     english: str
     essential: str
     essential_translation: str
-    pos: NotRequired[str | None]
-    notes: NotRequired[str | None]
-    root: NotRequired[str | None]
+    pos: str | None  # Required
+    notes: str | None  # Required - always expected
+    root: str | None  # Required
 
 
 # Type aliases for common collections

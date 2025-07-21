@@ -59,7 +59,7 @@ TRANSLATE_SENTENCES_FUNCTION = {
                         },
                         "notes": {
                             "type": "string",
-                            "description": "Translation notes (optional)",
+                            "description": "Translation notes (always expected)",
                         },
                         "uncertainties": {
                             "type": "array",
@@ -79,11 +79,18 @@ TRANSLATE_SENTENCES_FUNCTION = {
                                 "required": ["text", "reason"],
                             },
                         },
+                        "word_by_word": {
+                            "type": "array",
+                            "description": "Word-by-word analysis (always expected)",
+                            "items": {"type": "object"},
+                        },
                     },
                     "required": [
                         "translation",
+                        "notes",
                         "uncertainties",
-                    ],  # Ensure uncertainties are always present
+                        "word_by_word",
+                    ],  # All fields are required
                 },
             },
         },
@@ -93,8 +100,9 @@ TRANSLATE_SENTENCES_FUNCTION = {
                 "translations": [
                     {
                         "translation": "And the Prophet [Muhammad], peace be upon him, said",
-                        "notes": "",
+                        "notes": "Grammatical structure: قَالَ (perfect tense verb) + النَّبِيُّ (subject in nominative case with definite article)",
                         "uncertainties": [],
+                        "word_by_word": [],
                     },
                 ],
             },
@@ -135,10 +143,14 @@ TASHKEEL_FUNCTION = {
                                     },
                                     "related_translation_uncertainty": {
                                         "type": "string",
-                                        "description": "Related uncertainty from translation step (optional)",
+                                        "description": "Related uncertainty from translation step (always expected)",
                                     },
                                 },
-                                "required": ["word", "reason"],
+                                "required": [
+                                    "word",
+                                    "reason",
+                                    "related_translation_uncertainty",
+                                ],
                             },
                         },
                     },
@@ -182,7 +194,7 @@ WORD_TRANSLATION_FUNCTION = {
                                     "pos": {
                                         "type": "string",
                                         "enum": list(VALID_POS),
-                                        "description": "Part of speech",
+                                        "description": "Part of speech (always expected)",
                                     },
                                     "essential": {
                                         "type": "string",
@@ -195,7 +207,7 @@ WORD_TRANSLATION_FUNCTION = {
                                     },
                                     "notes": {
                                         "type": "string",
-                                        "description": "Grammar notes or context (optional)",
+                                        "description": "Grammar notes or context (always expected)",
                                     },
                                     "uncertainties": {
                                         "type": "array",
@@ -206,8 +218,11 @@ WORD_TRANSLATION_FUNCTION = {
                                 "required": [
                                     "arabic",
                                     "english_options",
+                                    "pos",
                                     "essential",
                                     "essential_translation_options",
+                                    "notes",
+                                    "uncertainties",
                                 ],
                             },
                         },
@@ -233,6 +248,7 @@ WORD_TRANSLATION_FUNCTION = {
                                     "utter",
                                 ],
                                 "notes": "Verb, perfect tense, 3rd person masculine singular.",
+                                "uncertainties": [],
                             },
                             {
                                 "arabic": "النَّبِيُّ",
@@ -244,6 +260,7 @@ WORD_TRANSLATION_FUNCTION = {
                                     "messenger",
                                 ],
                                 "notes": "Noun, masculine singular, definite.",
+                                "uncertainties": [],
                             },
                         ],
                     },
@@ -290,7 +307,7 @@ REFINEMENT_FUNCTION = {
                                     },
                                     "pos": {
                                         "type": "string",
-                                        "description": "Refined Part of speech",
+                                        "description": "Refined Part of speech (always expected)",
                                     },
                                     "essential": {
                                         "type": "string",
@@ -302,14 +319,16 @@ REFINEMENT_FUNCTION = {
                                     },
                                     "notes": {
                                         "type": "string",
-                                        "description": "Refined notes (optional)",
+                                        "description": "Refined notes (always expected)",
                                     },
                                 },
                                 "required": [
                                     "arabic",
                                     "english",
+                                    "pos",
                                     "essential",
                                     "essential_translation",
+                                    "notes",
                                 ],
                             },
                         },
