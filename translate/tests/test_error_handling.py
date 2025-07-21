@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from translate.utils.error_handling import (
+from utils.error_handling import (
     handle_import_error,
     safe_audio_operation,
     safe_database_operation,
@@ -58,7 +58,7 @@ class TestSafeExecute:
         def operation():
             raise ValueError("test error")
 
-        with patch("translate.utils.error_handling.logger") as mock_logger:
+        with patch("utils.error_handling.logger") as mock_logger:
             result = safe_execute(operation, "test operation", log_error=False)
             assert result is None
             mock_logger.error.assert_not_called()
@@ -69,7 +69,7 @@ class TestSafeExecute:
         def operation():
             raise ValueError("test error")
 
-        with patch("translate.utils.error_handling.logger") as mock_logger:
+        with patch("utils.error_handling.logger") as mock_logger:
             result = safe_execute(operation, "test operation", log_error=True)
             assert result is None
             mock_logger.error.assert_called_once()
@@ -104,7 +104,7 @@ class TestSafeAudioOperation:
         def operation():
             raise RuntimeError("audio error")
 
-        with patch("translate.utils.error_handling.logger") as mock_logger:
+        with patch("utils.error_handling.logger") as mock_logger:
             safe_audio_operation(operation, "play", "test_audio.mp3")
             mock_logger.error.assert_called_once()
             error_msg = mock_logger.error.call_args[0][0]
@@ -140,7 +140,7 @@ class TestSafeDatabaseOperation:
         def operation():
             raise ConnectionError("db error")
 
-        with patch("translate.utils.error_handling.logger") as mock_logger:
+        with patch("utils.error_handling.logger") as mock_logger:
             safe_database_operation(operation, "users", "select")
             mock_logger.error.assert_called_once()
             error_msg = mock_logger.error.call_args[0][0]
@@ -176,7 +176,7 @@ class TestSafeFileOperation:
         def operation():
             raise FileNotFoundError("file not found")
 
-        with patch("translate.utils.error_handling.logger") as mock_logger:
+        with patch("utils.error_handling.logger") as mock_logger:
             safe_file_operation(operation, "/path/to/file.txt", "read")
             mock_logger.error.assert_called_once()
             error_msg = mock_logger.error.call_args[0][0]
@@ -188,7 +188,7 @@ class TestHandleImportError:
 
     def test_handle_import_error_default_message(self):
         """Test import error handling with default message."""
-        with patch("translate.utils.error_handling.logger") as mock_logger:
+        with patch("utils.error_handling.logger") as mock_logger:
             result = handle_import_error("test_module")
             assert result is None
             mock_logger.warning.assert_called_once()
@@ -197,7 +197,7 @@ class TestHandleImportError:
 
     def test_handle_import_error_custom_message(self):
         """Test import error handling with custom message."""
-        with patch("translate.utils.error_handling.logger") as mock_logger:
+        with patch("utils.error_handling.logger") as mock_logger:
             result = handle_import_error(
                 "test_module", warning_message="Custom warning"
             )
@@ -206,14 +206,14 @@ class TestHandleImportError:
 
     def test_handle_import_error_with_fallback(self):
         """Test import error handling with fallback value."""
-        with patch("translate.utils.error_handling.logger") as mock_logger:
+        with patch("utils.error_handling.logger") as mock_logger:
             result = handle_import_error("test_module", fallback_value="fallback_value")
             assert result == "fallback_value"
             mock_logger.warning.assert_called_once()
 
     def test_handle_import_error_no_warning(self):
         """Test import error handling without warning message."""
-        with patch("translate.utils.error_handling.logger") as mock_logger:
+        with patch("utils.error_handling.logger") as mock_logger:
             result = handle_import_error("test_module", warning_message=None)
             assert result is None
             mock_logger.warning.assert_called_once()

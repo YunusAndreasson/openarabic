@@ -5,8 +5,8 @@ import os
 
 from elevenlabs import VoiceSettings
 
-from translate.data.config import AUDIO_TEMP_DIR, DEFAULT_VOICE_SETTINGS, SUPABASE_URL
-from translate.utils.storage_utils import get_supabase_client
+from data.config import AUDIO_TEMP_DIR, DEFAULT_VOICE_SETTINGS, SUPABASE_URL
+from utils.storage_utils import get_supabase_client
 
 logger = logging.getLogger(__name__)
 

@@ -5,7 +5,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from translate.main import (
+from main import (
     confirm_step,
     review_split_file,
     review_translation,
@@ -109,7 +109,7 @@ class TestMainWorkflow:
         result = review_translation("nonexistent_file.json")
         assert result is False
 
-    @patch("translate.main.split_text")
+    @patch("main.split_text")
     def test_run_split_file_success(self, mock_split_text):
         """Test run_split_file success."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
@@ -134,7 +134,7 @@ class TestMainWorkflow:
             Path(input_file).unlink(missing_ok=True)
             Path(output_file).unlink(missing_ok=True)
 
-    @patch("translate.main.translate_text")
+    @patch("main.translate_text")
     def test_run_translation_success(self, mock_translate_text):
         """Test run_translation success."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
@@ -158,8 +158,8 @@ class TestMainWorkflow:
 class TestEndToEndWorkflow:
     """Test end-to-end workflow with mocked components."""
 
-    @patch("translate.main.split_text")
-    @patch("translate.main.translate_text")
+    @patch("main.split_text")
+    @patch("main.translate_text")
     def test_full_workflow_mocked(self, mock_translate_text, mock_split_text):
         """Test full workflow with mocked components."""
         # Create temporary files

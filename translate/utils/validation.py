@@ -4,8 +4,8 @@ Validation utilities for translation pipeline results.
 
 import logging
 
-from translate.data.models import SentenceTranslation, TranslationValidationError
-from translate.data.pipeline_types import (
+from data.models import SentenceTranslation, TranslationValidationError
+from data.pipeline_types import (
     TashkeelResults,
     TranslationResults,
     WordTranslationResults,

@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from translate.utils.config_common import (
+from utils.config_common import (
     get_audio_config,
     get_environment_config,
     get_storage_url,
@@ -15,21 +15,21 @@ from translate.utils.config_common import (
     get_voice_config,
     validate_required_config,
 )
-from translate.utils.error_handling import (
+from utils.error_handling import (
     handle_import_error,
     safe_audio_operation,
     safe_database_operation,
     safe_execute,
     safe_file_operation,
 )
-from translate.utils.exceptions import (
+from utils.exceptions import (
     AudioGenerationError,
     ConfigurationError,
     DatabaseError,
     TranslationError,
     ValidationError,
 )
-from translate.utils.file_utils import (
+from utils.file_utils import (
     ensure_directory,
     generate_split_filename,
     read_json_file,
@@ -190,7 +190,7 @@ class TestConfigCommon:
         os.environ,
         {"SUPABASE_URL": "https://test.supabase.co", "SUPABASE_KEY": "test_key"},
     )
-    @patch("translate.utils.config_common.create_client")
+    @patch("utils.config_common.create_client")
     def test_get_supabase_client_success(self, mock_create_client):
         """Test get_supabase_client function with valid environment."""
         mock_client = MagicMock()
@@ -206,7 +206,7 @@ class TestConfigCommon:
     def test_get_supabase_client_missing_env(self):
         """Test get_supabase_client function with missing environment variables."""
         # Reset the global client to ensure the function is called again
-        import translate.utils.config_common as config_common
+        import utils.config_common as config_common
 
         config_common._supabase_client = None
 
@@ -300,7 +300,7 @@ class TestAudioCommon:
 
     def test_create_voice_settings(self):
         """Test create_voice_settings function."""
-        from translate.utils.audio_common import create_voice_settings
+        from utils.audio_common import create_voice_settings
 
         settings = create_voice_settings(speed=0.9)
         assert settings.speed == 0.9
@@ -309,7 +309,7 @@ class TestAudioCommon:
 
     def test_get_temp_audio_path(self):
         """Test get_temp_audio_path function."""
-        from translate.utils.audio_common import get_temp_audio_path
+        from utils.audio_common import get_temp_audio_path
 
         path = get_temp_audio_path("test.mp3")
         assert "test.mp3" in path
@@ -317,48 +317,48 @@ class TestAudioCommon:
 
     def test_get_storage_url(self):
         """Test get_storage_url function."""
-        from translate.utils.audio_common import get_storage_url
+        from utils.audio_common import get_storage_url
 
         url = get_storage_url("test.mp3", "audio")
         assert "storage/v1/object/public/audio/test.mp3" in url
 
     def test_validate_audio_response_success(self):
         """Test validate_audio_response with valid response."""
-        from translate.utils.audio_common import validate_audio_response
+        from utils.audio_common import validate_audio_response
 
         result = validate_audio_response(b"audio_data", "test", "item.mp3")
         assert result is True
 
     def test_validate_audio_response_empty(self):
         """Test validate_audio_response with empty response."""
-        from translate.utils.audio_common import validate_audio_response
+        from utils.audio_common import validate_audio_response
 
         result = validate_audio_response(None, "test", "item.mp3")
         assert result is False
 
     def test_validate_audio_response_empty_bytes(self):
         """Test validate_audio_response with empty bytes."""
-        from translate.utils.audio_common import validate_audio_response
+        from utils.audio_common import validate_audio_response
 
         result = validate_audio_response(b"", "test", "item.mp3")
         assert result is False
 
-    @patch("translate.utils.audio_common.os.path.exists")
-    @patch("translate.utils.audio_common.os.remove")
+    @patch("utils.audio_common.os.path.exists")
+    @patch("utils.audio_common.os.remove")
     def test_cleanup_temp_file_exists(self, mock_remove, mock_exists):
         """Test cleanup_temp_file when file exists."""
-        from translate.utils.audio_common import cleanup_temp_file
+        from utils.audio_common import cleanup_temp_file
 
         mock_exists.return_value = True
 
         cleanup_temp_file("/path/to/file.mp3", "test")
         mock_remove.assert_called_once_with("/path/to/file.mp3")
 
-    @patch("translate.utils.audio_common.os.path.exists")
-    @patch("translate.utils.audio_common.os.remove")
+    @patch("utils.audio_common.os.path.exists")
+    @patch("utils.audio_common.os.remove")
     def test_cleanup_temp_file_not_exists(self, mock_remove, mock_exists):
         """Test cleanup_temp_file when file doesn't exist."""
-        from translate.utils.audio_common import cleanup_temp_file
+        from utils.audio_common import cleanup_temp_file
 
         mock_exists.return_value = False
 
@@ -371,7 +371,7 @@ class TestStorageUtils:
 
     def test_generate_content_hash(self):
         """Test generate_content_hash function."""
-        from translate.utils.storage_utils import generate_content_hash
+        from utils.storage_utils import generate_content_hash
 
         data = {"title": "Test", "content": "Hello"}
         hash1 = generate_content_hash(data)
@@ -382,7 +382,7 @@ class TestStorageUtils:
 
     def test_generate_content_hash_different_data(self):
         """Test generate_content_hash with different data."""
-        from translate.utils.storage_utils import generate_content_hash
+        from utils.storage_utils import generate_content_hash
 
         data1 = {"title": "Test", "content": "Hello"}
         data2 = {"title": "Test", "content": "World"}
@@ -394,7 +394,7 @@ class TestStorageUtils:
 
     def test_generate_audio_filename(self):
         """Test generate_audio_filename function."""
-        from translate.utils.storage_utils import generate_audio_filename
+        from utils.storage_utils import generate_audio_filename
 
         filename = generate_audio_filename()
         assert filename.endswith(".mp3")
@@ -402,8 +402,8 @@ class TestStorageUtils:
 
     def test_get_word_type_id_valid(self):
         """Test get_word_type_id with valid POS."""
-        from translate.data.enums import PartOfSpeech
-        from translate.utils.storage_utils import get_word_type_id
+        from data.enums import PartOfSpeech
+        from utils.storage_utils import get_word_type_id
 
         # Test with valid POS
         result = get_word_type_id(PartOfSpeech.NOUN.value)
@@ -411,7 +411,7 @@ class TestStorageUtils:
 
     def test_get_word_type_id_invalid(self):
         """Test get_word_type_id with invalid POS."""
-        from translate.utils.storage_utils import get_word_type_id
+        from utils.storage_utils import get_word_type_id
 
         # Test with invalid POS - should default to NOUN
         result = get_word_type_id("invalid_pos")
@@ -419,27 +419,27 @@ class TestStorageUtils:
 
     def test_get_word_type_id_case_insensitive(self):
         """Test get_word_type_id with different cases."""
-        from translate.utils.storage_utils import get_word_type_id
+        from utils.storage_utils import get_word_type_id
 
         # Test case insensitivity
         result1 = get_word_type_id("VERB")
         result2 = get_word_type_id("verb")
         assert result1 == result2 == 1
 
-    @patch("translate.utils.storage_utils.get_supabase_client")
+    @patch("utils.storage_utils.get_supabase_client")
     def test_check_file_exists_true(self, mock_client):
         """Test check_file_exists when file exists."""
-        from translate.utils.storage_utils import check_file_exists
+        from utils.storage_utils import check_file_exists
 
         mock_client.return_value.storage.from_.return_value.create_signed_url.return_value = "url"
 
         result = check_file_exists("bucket", "file.mp3")
         assert result is True
 
-    @patch("translate.utils.storage_utils.get_supabase_client")
+    @patch("utils.storage_utils.get_supabase_client")
     def test_check_file_exists_false(self, mock_client):
         """Test check_file_exists when file doesn't exist."""
-        from translate.utils.storage_utils import check_file_exists
+        from utils.storage_utils import check_file_exists
 
         mock_client.return_value.storage.from_.return_value.create_signed_url.side_effect = Exception(
             "Object not found"
@@ -454,12 +454,12 @@ class TestTranslationProcessor:
 
     def test_run_full_translation_validation(self):
         """Test run_full_translation with validation."""
-        from translate.data.pipeline_types import TranslationResult
-        from translate.utils.translation_processor import run_full_translation
+        from data.pipeline_types import TranslationResult
+        from utils.translation_processor import run_full_translation
 
         # Mock the translation engine function
         with patch(
-            "translate.utils.translation_processor._get_translation_engine_functions"
+            "utils.translation_processor._get_translation_engine_functions"
         ) as mock_get:
             mock_translate = MagicMock()
             mock_translate.return_value = [
@@ -486,12 +486,12 @@ class TestTranslationProcessor:
 
     def test_apply_tashkeel_validation(self):
         """Test apply_tashkeel with validation."""
-        from translate.data.pipeline_types import TashkeelResult, TranslationResult
-        from translate.utils.translation_processor import apply_tashkeel
+        from data.pipeline_types import TashkeelResult, TranslationResult
+        from utils.translation_processor import apply_tashkeel
 
         # Mock the translation engine function
         with patch(
-            "translate.utils.translation_processor._get_translation_engine_functions"
+            "utils.translation_processor._get_translation_engine_functions"
         ) as mock_get:
             mock_tashkeel = MagicMock()
             mock_tashkeel.return_value = [
@@ -520,16 +520,16 @@ class TestTranslationProcessor:
 
     def test_translate_words_validation(self):
         """Test translate_words with validation."""
-        from translate.data.pipeline_types import (
+        from data.pipeline_types import (
             TashkeelResult,
             TranslationResult,
             WordTranslationResult,
         )
-        from translate.utils.translation_processor import translate_words
+        from utils.translation_processor import translate_words
 
         # Mock the translation engine function
         with patch(
-            "translate.utils.translation_processor._get_translation_engine_functions"
+            "utils.translation_processor._get_translation_engine_functions"
         ) as mock_get:
             mock_words = MagicMock()
             mock_words.return_value = [

@@ -17,16 +17,16 @@ except (ImportError, OSError):
     generate_sentence_audio = None
     get_or_generate_root_audio = None
 # Import common database utilities
-from translate.data.config import ARCHIVE_DIR, ROOT_DIR, SUPABASE_URL
-from translate.data.enums import DifficultyLevel, PartOfSpeech
-from translate.data.pipeline_types import WordData
-from translate.utils.arabic_text import clean_arabic_text
-from translate.utils.database_common import (
+from data.config import ARCHIVE_DIR, ROOT_DIR, SUPABASE_URL
+from data.enums import DifficultyLevel, PartOfSpeech
+from data.pipeline_types import WordData
+from utils.arabic_text import clean_arabic_text
+from utils.database_common import (
     get_table_record,
     insert_table_record,
     update_table_record,
 )
-from translate.utils.storage_utils import (
+from utils.storage_utils import (
     generate_audio_filename,
     get_supabase_client,
     get_word_type_id,

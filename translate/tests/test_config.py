@@ -1,14 +1,14 @@
 """Tests for configuration and data models."""
 
-from translate.data.config import (
+from data.config import (
     DEFAULT_BATCH_SIZE,
     DEFAULT_INPUT_FILE,
     DEFAULT_OUTPUT_FILE,
     MODEL_TRANSLATION,
     MODEL_VERIFICATION,
 )
-from translate.data.enums import DifficultyLevel, PartOfSpeech
-from translate.data.models import (
+from data.enums import DifficultyLevel, PartOfSpeech
+from data.models import (
     SentenceTranslation,
     TextMetadata,
     WordTranslation,

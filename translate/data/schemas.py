@@ -403,7 +403,7 @@ SPLIT_TEXT_FUNCTION = {
             },
             "difficulty_level": {
                 "type": "integer",
-                "enum": DIFFICULTY_LEVELS.keys(),
+                "enum": list(DIFFICULTY_LEVELS.keys()),
                 "description": "Difficulty rating (1-5)",
             },
             "units": {
@@ -487,12 +487,12 @@ IMPORTANT:
 - AVOID units that are excessively short (e.g., 1-3 words) unless grammatically necessary (like single-word interjections).
 - Preserve ALL original text formatting, punctuation, and special characters in each unit
 
-Return results using the `SPLIT_TEXT_FUNCTION` schema.
+Return results using the `SPLIT_TEXT_FUNCTION` schema as valid JSON.
 Input text:
 """
 )
 
-SENTENCE_TRANSLATION_USER_PROMPT = """Translate Classical Arabic sentences from Islamic texts to English using the `TRANSLATE_SENTENCES_FUNCTION` schema.
+SENTENCE_TRANSLATION_USER_PROMPT = """Translate Classical Arabic sentences from Islamic texts to English using the `TRANSLATE_SENTENCES_FUNCTION` schema. Return your response as valid JSON.
 
 CRITICAL: You MUST provide ALL required fields. The `uncertainties` array must be present for every translation, even if empty.
 
@@ -534,7 +534,7 @@ VALIDATION CHECKLIST:
 Input sentences:
 """
 
-TASHKEEL_USER_PROMPT = """Add complete diacritical marks (tashkīl) to EVERY word in the Islamic Arabic text using the `TASHKEEL_FUNCTION` schema.
+TASHKEEL_USER_PROMPT = """Add complete diacritical marks (tashkīl) to EVERY word in the Islamic Arabic text using the `TASHKEEL_FUNCTION` schema. Return your response as valid JSON.
 
 CRITICAL: You MUST provide ALL required fields. The `uncertainties` array must be present for every tashkeel result, even if empty.
 
@@ -601,7 +601,7 @@ Input sentences (with existing diacritics):
 """
 )
 
-FINAL_VERIFICATION_USER_PROMPT = """Review and refine the provided Islamic Arabic translation components using the `REFINEMENT_FUNCTION` schema. Resolve ambiguities and select the single best option for word translations, prioritizing accuracy and clarity for learners.
+FINAL_VERIFICATION_USER_PROMPT = """Review and refine the provided Islamic Arabic translation components using the `REFINEMENT_FUNCTION` schema. Resolve ambiguities and select the single best option for word translation. Return your response as valid JSON.
 
 For each word, carefully consider:
 1. The provided grammatical notes and context from previous steps

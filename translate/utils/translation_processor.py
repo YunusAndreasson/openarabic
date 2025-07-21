@@ -1,7 +1,7 @@
 from typing import Any
 
-from translate.data.models import SentenceTranslation, WordTranslation
-from translate.data.pipeline_types import (
+from data.models import SentenceTranslation, WordTranslation
+from data.pipeline_types import (
     RefinementInput,
     RefinementInputs,
     RefinementResult,
@@ -12,7 +12,7 @@ from translate.data.pipeline_types import (
     WordTranslationResult,
     WordTranslationResults,
 )
-from translate.utils.validation import (
+from utils.validation import (
     validate_final_translation,
     validate_tashkeel_added,
     validate_translation_results,

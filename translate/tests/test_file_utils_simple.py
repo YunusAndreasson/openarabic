@@ -9,7 +9,7 @@ import pytest
 
 def test_read_text_file_basic():
     """Test reading a basic text file."""
-    from translate.utils.file_utils import read_text_file
+    from utils.file_utils import read_text_file
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
         f.write("مرحبا بالعالم")
@@ -24,7 +24,7 @@ def test_read_text_file_basic():
 
 def test_read_text_file_empty():
     """Test reading an empty text file."""
-    from translate.utils.file_utils import read_text_file
+    from utils.file_utils import read_text_file
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
         temp_file = f.name
@@ -38,7 +38,7 @@ def test_read_text_file_empty():
 
 def test_read_text_file_not_found():
     """Test reading a non-existent file."""
-    from translate.utils.file_utils import read_text_file
+    from utils.file_utils import read_text_file
 
     with pytest.raises(FileNotFoundError):
         read_text_file("nonexistent_file.txt")
@@ -46,7 +46,7 @@ def test_read_text_file_not_found():
 
 def test_read_json_file_basic():
     """Test reading a basic JSON file."""
-    from translate.utils.file_utils import read_json_file
+    from utils.file_utils import read_json_file
 
     test_data = {"title": "Test", "content": "مرحبا بالعالم"}
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
@@ -62,7 +62,7 @@ def test_read_json_file_basic():
 
 def test_read_json_file_not_found():
     """Test reading a non-existent JSON file."""
-    from translate.utils.file_utils import read_json_file
+    from utils.file_utils import read_json_file
 
     with pytest.raises(FileNotFoundError):
         read_json_file("nonexistent_file.json")
@@ -70,7 +70,7 @@ def test_read_json_file_not_found():
 
 def test_write_json_file_basic():
     """Test writing a basic JSON file."""
-    from translate.utils.file_utils import write_json_file
+    from utils.file_utils import write_json_file
 
     test_data = {"title": "Test", "content": "مرحبا بالعالم"}
     with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
@@ -89,7 +89,7 @@ def test_write_json_file_basic():
 
 def test_write_text_file_basic():
     """Test writing a basic text file."""
-    from translate.utils.file_utils import write_text_file
+    from utils.file_utils import write_text_file
 
     test_content = "مرحبا بالعالم"
     with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
@@ -108,7 +108,7 @@ def test_write_text_file_basic():
 
 def test_ensure_directory_new():
     """Test creating a new directory."""
-    from translate.utils.file_utils import ensure_directory
+    from utils.file_utils import ensure_directory
 
     with tempfile.TemporaryDirectory() as temp_dir:
         new_dir = Path(temp_dir) / "new_directory"
@@ -119,7 +119,7 @@ def test_ensure_directory_new():
 
 def test_ensure_directory_exists():
     """Test ensuring an existing directory."""
-    from translate.utils.file_utils import ensure_directory
+    from utils.file_utils import ensure_directory
 
     with tempfile.TemporaryDirectory() as temp_dir:
         ensure_directory(temp_dir)
@@ -129,7 +129,7 @@ def test_ensure_directory_exists():
 
 def test_generate_split_filename_basic():
     """Test basic split filename generation."""
-    from translate.utils.file_utils import generate_split_filename
+    from utils.file_utils import generate_split_filename
 
     input_file = "input.txt"
     result = generate_split_filename(input_file)
@@ -138,7 +138,7 @@ def test_generate_split_filename_basic():
 
 def test_generate_split_filename_with_path():
     """Test split filename generation with path."""
-    from translate.utils.file_utils import generate_split_filename
+    from utils.file_utils import generate_split_filename
 
     input_file = "/path/to/input.txt"
     result = generate_split_filename(input_file)
@@ -147,7 +147,7 @@ def test_generate_split_filename_with_path():
 
 def test_generate_split_filename_with_different_extension():
     """Test split filename generation with different extension."""
-    from translate.utils.file_utils import generate_split_filename
+    from utils.file_utils import generate_split_filename
 
     input_file = "input.md"
     result = generate_split_filename(input_file)

@@ -5,16 +5,16 @@ from typing import Any
 
 from tqdm import tqdm
 
-from translate.data.models import (
+from data.models import (
     SentenceTranslation,
     SplitResult,
     TextMetadata,
     TranslationValidationError,
 )
-from translate.data.pipeline_types import TranslationBatch
-from translate.utils.context_cache import ContextCache
-from translate.utils.file_utils import write_json_file
-from translate.utils.translation_processor import (
+from data.pipeline_types import TranslationBatch
+from utils.context_cache import ContextCache
+from utils.file_utils import write_json_file
+from utils.translation_processor import (
     apply_tashkeel,
     refine_translations,
     run_full_translation,

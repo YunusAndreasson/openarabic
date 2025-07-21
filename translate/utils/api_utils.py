@@ -6,7 +6,7 @@ from typing import Any
 
 from openai import OpenAI
 
-from translate.data.config import (
+from data.config import (
     MODEL_OTHER,
 )
 

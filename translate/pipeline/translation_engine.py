@@ -2,13 +2,13 @@ import logging
 import time
 from typing import Any
 
-from translate.data.config import (
+from data.config import (
     MODEL_OTHER,
     MODEL_TRANSLATION,
     MODEL_VERIFICATION,
 )
-from translate.data.models import WordTranslationOptions
-from translate.data.pipeline_types import (
+from data.models import WordTranslationOptions
+from data.pipeline_types import (
     RefinementInput,
     RefinementInputs,
     RefinementResult,
@@ -20,7 +20,7 @@ from translate.data.pipeline_types import (
     WordTranslationResult,
     WordTranslationResults,
 )
-from translate.data.schemas import (
+from data.schemas import (
     FINAL_VERIFICATION_USER_PROMPT,
     GENERAL_SYSTEM_PROMPT,
     REFINEMENT_FUNCTION,
@@ -31,10 +31,10 @@ from translate.data.schemas import (
     WORD_BY_WORD_USER_PROMPT,
     WORD_TRANSLATION_FUNCTION,
 )
-from translate.utils.api_utils import call_openai_api
-from translate.utils.context_cache import ContextCache
-from translate.utils.exceptions import TranslationError
-from translate.utils.text_utils import filter_arabic_words, get_optimized_context
+from utils.api_utils import call_openai_api
+from utils.context_cache import ContextCache
+from utils.exceptions import TranslationError
+from utils.text_utils import filter_arabic_words, get_optimized_context
 
 logger = logging.getLogger(__name__)
 

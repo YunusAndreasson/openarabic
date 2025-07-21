@@ -2,7 +2,7 @@
 
 from unittest.mock import patch
 
-from translate.utils.context_cache import ContextCache
+from utils.context_cache import ContextCache
 
 
 class TestContextCache:
@@ -21,9 +21,7 @@ class TestContextCache:
         sentences = ["مرحبا", "بالعالم", "هذا نص تجريبي"]
         cache = ContextCache(sentences)
 
-        with patch(
-            "translate.utils.context_cache.get_optimized_context"
-        ) as mock_get_context:
+        with patch("utils.context_cache.get_optimized_context") as mock_get_context:
             mock_get_context.return_value = "Context for sentence 1"
 
             result = cache.get_context(1)
@@ -37,9 +35,7 @@ class TestContextCache:
         sentences = ["مرحبا", "بالعالم", "هذا نص تجريبي"]
         cache = ContextCache(sentences)
 
-        with patch(
-            "translate.utils.context_cache.get_optimized_context"
-        ) as mock_get_context:
+        with patch("utils.context_cache.get_optimized_context") as mock_get_context:
             mock_get_context.return_value = "Cached context"
 
             # First call
@@ -56,9 +52,7 @@ class TestContextCache:
         sentences = ["مرحبا", "بالعالم", "هذا نص تجريبي"]
         cache = ContextCache(sentences)
 
-        with patch(
-            "translate.utils.context_cache.get_optimized_context"
-        ) as mock_get_context:
+        with patch("utils.context_cache.get_optimized_context") as mock_get_context:
             mock_get_context.return_value = "Tashkeel context"
 
             result = cache.get_context(1, for_tashkeel=True)
@@ -72,9 +66,7 @@ class TestContextCache:
         sentences = ["مرحبا", "بالعالم", "هذا نص تجريبي"]
         cache = ContextCache(sentences)
 
-        with patch(
-            "translate.utils.context_cache.get_optimized_context"
-        ) as mock_get_context:
+        with patch("utils.context_cache.get_optimized_context") as mock_get_context:
             mock_get_context.side_effect = [
                 "Context 1",
                 "Context 2",
@@ -99,9 +91,7 @@ class TestContextCache:
         sentences = ["مرحبا", "بالعالم", "هذا نص تجريبي"]
         cache = ContextCache(sentences)
 
-        with patch(
-            "translate.utils.context_cache.get_optimized_context"
-        ) as mock_get_context:
+        with patch("utils.context_cache.get_optimized_context") as mock_get_context:
             mock_get_context.return_value = None
 
             result = cache.get_context(1)
@@ -115,9 +105,7 @@ class TestContextCache:
         sentences = ["مرحبا", "بالعالم", "هذا نص تجريبي"]
         cache = ContextCache(sentences)
 
-        with patch(
-            "translate.utils.context_cache.get_optimized_context"
-        ) as mock_get_context:
+        with patch("utils.context_cache.get_optimized_context") as mock_get_context:
             mock_get_context.side_effect = ["Context 0", "Context 2"]
 
             result = cache.get_contexts([0, 2])
@@ -132,9 +120,7 @@ class TestContextCache:
         sentences = ["مرحبا", "بالعالم", "هذا نص تجريبي"]
         cache = ContextCache(sentences)
 
-        with patch(
-            "translate.utils.context_cache.get_optimized_context"
-        ) as mock_get_context:
+        with patch("utils.context_cache.get_optimized_context") as mock_get_context:
             mock_get_context.side_effect = ["Tashkeel Context 0", "Tashkeel Context 1"]
 
             result = cache.get_contexts([0, 1], for_tashkeel=True)
@@ -158,9 +144,7 @@ class TestContextCache:
         sentences = ["مرحبا", "بالعالم", "هذا نص تجريبي"]
         cache = ContextCache(sentences)
 
-        with patch(
-            "translate.utils.context_cache.get_optimized_context"
-        ) as mock_get_context:
+        with patch("utils.context_cache.get_optimized_context") as mock_get_context:
             mock_get_context.side_effect = ["Context 0", "Context 1"]
 
             # First call
@@ -176,9 +160,7 @@ class TestContextCache:
         sentences = ["مرحبا", "بالعالم", "هذا نص تجريبي"]
         cache = ContextCache(sentences)
 
-        with patch(
-            "translate.utils.context_cache.get_optimized_context"
-        ) as mock_get_context:
+        with patch("utils.context_cache.get_optimized_context") as mock_get_context:
             mock_get_context.side_effect = ["Context 0", "Context 1", "Context 2"]
 
             # Get contexts for indices 0, 1, 2

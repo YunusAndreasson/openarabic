@@ -4,7 +4,7 @@
 echo "🚀 Running validation checks..."
 
 echo -e "\n🔍 Linting (ruff)..."
-uv run ruff check . --output-format=full
+uv run ruff check --fix . --output-format=full
 if [ $? -eq 0 ]; then
     echo "✅ Linting (ruff) passed"
 else
@@ -40,7 +40,7 @@ else
 fi
 
 echo -e "\n🔍 Running tests..."
-uv run pytest tests/ -v --tb=short
+PYTHONPATH=. uv run pytest tests/ -v --tb=short
 if [ $? -eq 0 ]; then
     echo "✅ Tests passed"
 else

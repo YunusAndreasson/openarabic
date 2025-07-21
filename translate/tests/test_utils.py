@@ -2,12 +2,12 @@
 
 import pytest
 
-from translate.data.models import SentenceTranslation, WordTranslation
-from translate.utils.text_utils import (
+from data.models import SentenceTranslation, WordTranslation
+from utils.text_utils import (
     filter_arabic_words,
     get_optimized_context,
 )
-from translate.utils.validation import (
+from utils.validation import (
     TranslationValidationError,
     validate_final_translation,
     validate_translation_results,

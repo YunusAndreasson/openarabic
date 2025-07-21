@@ -2,7 +2,7 @@
 
 from unittest.mock import patch
 
-from translate.utils.cache_utils import ensure_valid_cache_files
+from utils.cache_utils import ensure_valid_cache_files
 
 
 class TestEnsureValidCacheFiles:
@@ -10,8 +10,8 @@ class TestEnsureValidCacheFiles:
 
     def test_ensure_valid_cache_files_empty_directory(self, tmp_path):
         """Test with empty cache directory."""
-        with patch("translate.utils.cache_utils.AUDIO_CACHE_DIR", str(tmp_path)):
-            with patch("translate.utils.cache_utils.logger") as mock_logger:
+        with patch("utils.cache_utils.AUDIO_CACHE_DIR", str(tmp_path)):
+            with patch("utils.cache_utils.logger") as mock_logger:
                 ensure_valid_cache_files()
                 mock_logger.info.assert_not_called()
 
@@ -21,8 +21,8 @@ class TestEnsureValidCacheFiles:
         (tmp_path / "file1.mp3").touch()
         (tmp_path / "file2.mp3").touch()
 
-        with patch("translate.utils.cache_utils.AUDIO_CACHE_DIR", str(tmp_path)):
-            with patch("translate.utils.cache_utils.logger") as mock_logger:
+        with patch("utils.cache_utils.AUDIO_CACHE_DIR", str(tmp_path)):
+            with patch("utils.cache_utils.logger") as mock_logger:
                 ensure_valid_cache_files()
                 mock_logger.info.assert_not_called()
 
@@ -32,8 +32,8 @@ class TestEnsureValidCacheFiles:
         (tmp_path / "file1").touch()
         (tmp_path / "file2").touch()
 
-        with patch("translate.utils.cache_utils.AUDIO_CACHE_DIR", str(tmp_path)):
-            with patch("translate.utils.cache_utils.logger") as mock_logger:
+        with patch("utils.cache_utils.AUDIO_CACHE_DIR", str(tmp_path)):
+            with patch("utils.cache_utils.logger") as mock_logger:
                 ensure_valid_cache_files()
 
                 # Check that files were renamed
@@ -52,8 +52,8 @@ class TestEnsureValidCacheFiles:
         # Create hidden file without extension
         (tmp_path / ".hidden_file").touch()
 
-        with patch("translate.utils.cache_utils.AUDIO_CACHE_DIR", str(tmp_path)):
-            with patch("translate.utils.cache_utils.logger") as mock_logger:
+        with patch("utils.cache_utils.AUDIO_CACHE_DIR", str(tmp_path)):
+            with patch("utils.cache_utils.logger") as mock_logger:
                 ensure_valid_cache_files()
                 mock_logger.info.assert_not_called()
                 assert (tmp_path / ".hidden_file").exists()  # Should not be renamed
@@ -63,8 +63,8 @@ class TestEnsureValidCacheFiles:
         # Create a directory
         (tmp_path / "subdir").mkdir()
 
-        with patch("translate.utils.cache_utils.AUDIO_CACHE_DIR", str(tmp_path)):
-            with patch("translate.utils.cache_utils.logger") as mock_logger:
+        with patch("utils.cache_utils.AUDIO_CACHE_DIR", str(tmp_path)):
+            with patch("utils.cache_utils.logger") as mock_logger:
                 ensure_valid_cache_files()
                 mock_logger.info.assert_not_called()
 
@@ -74,11 +74,11 @@ class TestEnsureValidCacheFiles:
         (tmp_path / "file1").touch()
 
         # Mock rename to raise an exception
-        with patch("translate.utils.cache_utils.AUDIO_CACHE_DIR", str(tmp_path)):
+        with patch("utils.cache_utils.AUDIO_CACHE_DIR", str(tmp_path)):
             with patch("pathlib.Path.rename") as mock_rename:
                 mock_rename.side_effect = OSError("Permission denied")
 
-                with patch("translate.utils.cache_utils.logger") as mock_logger:
+                with patch("utils.cache_utils.logger") as mock_logger:
                     ensure_valid_cache_files()
 
                     # Should log error but continue
@@ -95,8 +95,8 @@ class TestEnsureValidCacheFiles:
         (tmp_path / ".hidden").touch()  # Hidden file
         (tmp_path / "subdir").mkdir()  # Directory
 
-        with patch("translate.utils.cache_utils.AUDIO_CACHE_DIR", str(tmp_path)):
-            with patch("translate.utils.cache_utils.logger") as mock_logger:
+        with patch("utils.cache_utils.AUDIO_CACHE_DIR", str(tmp_path)):
+            with patch("utils.cache_utils.logger") as mock_logger:
                 ensure_valid_cache_files()
 
                 # Only file1 should be fixed
@@ -113,8 +113,8 @@ class TestEnsureValidCacheFiles:
         """Test that cache directory is created if it doesn't exist."""
         cache_dir = tmp_path / "nonexistent_cache"
 
-        with patch("translate.utils.cache_utils.AUDIO_CACHE_DIR", str(cache_dir)):
-            with patch("translate.utils.cache_utils.logger") as mock_logger:
+        with patch("utils.cache_utils.AUDIO_CACHE_DIR", str(cache_dir)):
+            with patch("utils.cache_utils.logger") as mock_logger:
                 ensure_valid_cache_files()
 
                 assert cache_dir.exists()

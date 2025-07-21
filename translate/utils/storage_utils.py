@@ -4,7 +4,7 @@ import logging
 import uuid
 from typing import Any
 
-from translate.data.enums import PartOfSpeech
+from data.enums import PartOfSpeech
 
 from .config_common import get_supabase_client
 

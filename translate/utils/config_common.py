@@ -5,7 +5,7 @@ from typing import Any
 
 from supabase import create_client
 
-from translate.data.config import (
+from data.config import (
     ARABIC_VOICE_ID,
     ARABIC_WORD_VOICE_ID,
     ENGLISH_WORD_VOICE_ID,

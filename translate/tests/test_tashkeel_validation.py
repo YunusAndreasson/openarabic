@@ -4,9 +4,9 @@ Tests for tashkeel validation functionality.
 
 import pytest
 
-from translate.data.models import TranslationValidationError
-from translate.data.pipeline_types import TashkeelResult, TashkeelResults
-from translate.utils.validation import validate_tashkeel_added
+from data.models import TranslationValidationError
+from data.pipeline_types import TashkeelResult, TashkeelResults
+from utils.validation import validate_tashkeel_added
 
 
 class TestTashkeelValidation:

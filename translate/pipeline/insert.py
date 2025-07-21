@@ -5,16 +5,16 @@ import sys
 from datetime import UTC, datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from translate.data.models import ArticleData, SentenceTranslation
-from translate.utils import load_api_keys
-from translate.utils.cache_utils import ensure_valid_cache_files
-from translate.utils.database_utils import (
+from data.models import ArticleData, SentenceTranslation
+from utils import load_api_keys
+from utils.cache_utils import ensure_valid_cache_files
+from utils.database_utils import (
     archive_files,
     insert_article_sentences,
     save_timing_report,
     validate_article_data,
 )
-from translate.utils.storage_utils import (
+from utils.storage_utils import (
     check_article_exists,
     generate_content_hash,
     get_author_id,
@@ -24,7 +24,7 @@ from translate.utils.storage_utils import (
 
 # Import audio utilities for final phase
 try:
-    from translate.audio.audio_utils import (
+    from audio.audio_utils import (
         generate_audio_filename,
         generate_sentence_audio,
     )
