@@ -21,6 +21,7 @@ from utils.storage_utils import (
     get_category_id,
     get_supabase_client,
 )
+from utils.validation import validate_batch_before_processing
 
 # Import audio utilities for final phase
 try:
@@ -133,11 +134,20 @@ def process_json_file(file_path: str, category_id: int, author_id: int) -> int:
         logger.error(f"Failed to insert article: {e}")
         raise
 
+    # Convert dict translations back to SentenceTranslation objects for validation
+    translations = [SentenceTranslation(**t) for t in data["translations"]]
+
+    # Validate translations before processing
+    try:
+        validate_batch_before_processing(translations)
+        logger.info(f"Validation passed for {len(translations)} translations")
+    except Exception as e:
+        logger.error(f"Validation failed: {e}")
+        raise
+
     # Generate audio for sentences in the final phase
     if AUDIO_AVAILABLE:
         try:
-            # Convert dict translations back to SentenceTranslation objects
-            translations = [SentenceTranslation(**t) for t in data["translations"]]
             generate_article_audio(article_id, translations)
         except Exception as e:
             logger.error(f"Audio generation failed: {e}")

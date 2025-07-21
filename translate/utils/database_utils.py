@@ -276,12 +276,25 @@ def cleanup_temp_files(files: list[str], temp_dir: str) -> None:
     for file in files:
         try:
             os.remove(file)
+        except FileNotFoundError:
+            # File was already removed, this is fine
+            pass
+        except PermissionError as e:
+            logger.warning(f"Permission denied removing file {file}: {e}")
+        except OSError as e:
+            logger.warning(f"Failed to remove file {file}: {e}")
         except Exception as e:
-            logger.debug(f"Failed to remove file {file}: {e}")
+            logger.error(f"Unexpected error removing file {file}: {e}")
+
     try:
         os.rmdir(temp_dir)
+    except FileNotFoundError:
+        # Directory was already removed, this is fine
+        pass
+    except OSError as e:
+        logger.warning(f"Failed to remove directory {temp_dir}: {e}")
     except Exception as e:
-        logger.debug(f"Failed to remove directory {temp_dir}: {e}")
+        logger.error(f"Unexpected error removing directory {temp_dir}: {e}")
 
 
 def concatenate_and_upload_audio(

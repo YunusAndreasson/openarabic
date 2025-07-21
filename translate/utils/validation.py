@@ -244,6 +244,9 @@ def validate_final_translation(translation: SentenceTranslation) -> list[str]:
             "[Translation Error]",
             "[Format Error]",
             "[BATCH PROCESSING ERROR]",
+            "[Fallback Error]",
+            "[API Error]",
+            "[Validation Error]",
         ]
     ):
         issues.append("Translation contains error marker")
@@ -269,12 +272,64 @@ def validate_final_translation(translation: SentenceTranslation) -> list[str]:
             if not word_trans.essential.strip():
                 issues.append(f"Word {i}: Missing essential letters")
 
+            # Check for error markers in word translations
+            if any(
+                err in word_trans.english
+                for err in ["[Error]", "[Fallback]", "[Missing]"]
+            ):
+                issues.append(f"Word {i}: Contains error marker in translation")
+
     # Check verification status if present
     if translation.verification_status and translation.verification_status not in [
         "verified",
         "needs_review",
         "failed",
+        "Issues Found",
     ]:
         issues.append(f"Invalid verification status: {translation.verification_status}")
 
     return issues
+
+
+def validate_translation_before_processing(translation: SentenceTranslation) -> None:
+    """
+    Validate translation before processing and raise exception if critical issues found.
+    This prevents processing of invalid data.
+    """
+    issues = validate_final_translation(translation)
+
+    # Define critical issues that should prevent processing
+    critical_issues = [
+        "Missing original Arabic text",
+        "Missing full translation",
+        "Translation contains error marker",
+        "Missing word-by-word translations",
+    ]
+
+    critical_found = [
+        issue
+        for issue in issues
+        if any(critical in issue for critical in critical_issues)
+    ]
+
+    if critical_found:
+        raise TranslationValidationError(
+            "Critical validation issues found, cannot process translation:\n"
+            + "\n".join(critical_found)
+        )
+
+    if issues:
+        logger.warning(f"Translation has non-critical issues: {issues}")
+
+
+def validate_batch_before_processing(translations: list[SentenceTranslation]) -> None:
+    """
+    Validate a batch of translations before processing and raise exception if any have critical issues.
+    """
+    for i, translation in enumerate(translations):
+        try:
+            validate_translation_before_processing(translation)
+        except TranslationValidationError as e:
+            raise TranslationValidationError(
+                f"Translation {i} (index {translation.index}) failed validation: {str(e)}"
+            ) from e
