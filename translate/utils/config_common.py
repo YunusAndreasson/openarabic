@@ -3,7 +3,7 @@
 import os
 from typing import Any
 
-from data.config import (
+from translate.data.config import (
     ARABIC_VOICE_ID,
     ARABIC_WORD_VOICE_ID,
     ENGLISH_WORD_VOICE_ID,

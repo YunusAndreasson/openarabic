@@ -317,7 +317,7 @@ class TestValidateFinalTranslation:
         )
 
         issues = validate_final_translation(translation)
-        assert "Missing tashkeel" in issues
+        assert "Missing tashkeel text" in issues
 
     def test_validate_final_translation_error_marker(self):
         """Test validation with error marker in translation."""
@@ -387,4 +387,4 @@ class TestValidateFinalTranslation:
         )
 
         issues = validate_final_translation(translation)
-        assert "Final Word 1: Missing Arabic text" in issues
+        assert "Word 0: Missing Arabic text" in issues

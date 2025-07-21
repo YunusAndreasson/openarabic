@@ -243,12 +243,15 @@ uv sync
 # Install development dependencies
 uv sync --dev
 
-# Run code quality checks
-uv run ruff check . --output-format=full
-uv run ruff format --check .
+# Run all validation checks and tests (recommended)
+./validate.sh
 
-# Run tests
-uv run pytest tests/ -v
+# Run individual checks
+uv run ruff check . --output-format=full  # Linting
+uv run ruff format --check .              # Formatting
+uv run mypy . --ignore-missing-imports    # Type checking
+uv run vulture .                          # Dead code detection
+uv run pytest tests/ -v                   # Tests
 ```
 
 ## Key Features

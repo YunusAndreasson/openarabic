@@ -2,8 +2,8 @@
 Validation utilities for translation pipeline.
 """
 
-from data.models import SentenceTranslation, TranslationValidationError
-from data.pipeline_types import (
+from translate.data.models import SentenceTranslation, TranslationValidationError
+from translate.data.pipeline_types import (
     TashkeelResults,
     TranslationResults,
     WordTranslationResults,
@@ -138,6 +138,15 @@ def validate_final_translation(translation: SentenceTranslation) -> list[str]:
 
     if not translation.full_translation.strip():
         issues.append("Missing full translation")
+    elif any(
+        err in translation.full_translation
+        for err in [
+            "[Translation Error]",
+            "[Format Error]",
+            "[BATCH PROCESSING ERROR]",
+        ]
+    ):
+        issues.append("Translation contains error marker")
 
     # Check word-by-word translations
     if not translation.word_by_word:

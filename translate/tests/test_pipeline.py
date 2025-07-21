@@ -27,11 +27,11 @@ class TestSplitFile:
                 mock_api.return_value = {
                     "title": "Test Article",
                     "summary": "A test article",
-                    "difficulty_level": "beginner",
+                    "difficulty_level": 1,
                     "units": [
-                        {"text": "مرحبا بالعالم."},
-                        {"text": "هذا نص تجريبي."},
-                        {"text": "لاختبار الترجمة."},
+                        "مرحبا بالعالم.",
+                        "هذا نص تجريبي.",
+                        "لاختبار الترجمة.",
                     ],
                 }
 
@@ -66,7 +66,7 @@ class TestSplitFile:
                 mock_api.return_value = {
                     "title": "Empty Article",
                     "summary": "Empty content",
-                    "difficulty_level": "beginner",
+                    "difficulty_level": 1,
                     "units": [],
                 }
 
@@ -88,11 +88,12 @@ class TestTranslateFile:
         split_data = {
             "title": "Test Article",
             "summary": "A test article",
-            "difficulty_level": "beginner",
+            "difficulty_level": 1,
             "units": [
-                {"text": "مرحبا بالعالم."},
-                {"text": "هذا نص تجريبي."},
+                "مرحبا بالعالم.",
+                "هذا نص تجريبي.",
             ],
+            "total_units": 2,
         }
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
@@ -107,7 +108,7 @@ class TestTranslateFile:
 
                 result = translate_file(split_file_path, output_file, batch_size=1)
 
-                assert result is None  # Should return None on failure
+                assert result is False  # Should return False on failure
 
         finally:
             Path(split_file_path).unlink(missing_ok=True)

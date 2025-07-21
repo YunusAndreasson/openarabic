@@ -4,7 +4,7 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
-from utils.storage_utils import get_supabase_client
+from translate.utils.storage_utils import get_supabase_client
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 from typing import Any
 
-from data.models import SentenceTranslation, WordTranslation
-from data.pipeline_types import (
+from translate.data.models import SentenceTranslation, WordTranslation
+from translate.data.pipeline_types import (
     RefinementInput,
     RefinementInputs,
     RefinementResult,
@@ -12,7 +12,7 @@ from data.pipeline_types import (
     WordTranslationResult,
     WordTranslationResults,
 )
-from utils.validation import (
+from translate.utils.validation import (
     validate_final_translation,
     validate_translation_results,
 )

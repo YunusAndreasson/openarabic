@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-from data.config import AUDIO_CACHE_DIR
+from translate.data.config import AUDIO_CACHE_DIR
 
 logger = logging.getLogger(__name__)
 
