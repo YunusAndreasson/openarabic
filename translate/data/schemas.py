@@ -69,10 +69,8 @@ TRANSLATE_SENTENCES_FUNCTION = {
                     },
                     "required": [
                         "translation",
-                        "notes",
-                        "uncertainties",
                         "word_by_word",
-                    ],  # All fields are required
+                    ],
                 },
             },
         },
@@ -131,7 +129,6 @@ TASHKEEL_FUNCTION = {
                                 "required": [
                                     "word",
                                     "reason",
-                                    "related_translation_uncertainty",
                                 ],
                             },
                         },
@@ -203,8 +200,6 @@ WORD_TRANSLATION_FUNCTION = {
                                     "pos",
                                     "essential",
                                     "essential_translation_options",
-                                    "notes",
-                                    "uncertainties",
                                 ],
                             },
                         },
@@ -310,7 +305,6 @@ REFINEMENT_FUNCTION = {
                                     "pos",
                                     "essential",
                                     "essential_translation",
-                                    "notes",
                                 ],
                             },
                         },

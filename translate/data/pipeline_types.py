@@ -14,16 +14,16 @@ class TranslationUncertainty(TypedDict):
 
 class TranslationResult(TypedDict):
     translation: str
-    notes: str | None  # Required - always expected
+    notes: str | None  # Optional
     uncertainties: list[TranslationUncertainty]
-    word_by_word: list[dict[str, Any]]  # Required
+    word_by_word: list[dict[str, Any]]
 
 
 # Tashkeel result structure (matches TASHKEEL_FUNCTION schema)
 class TashkeelUncertainty(TypedDict):
     word: str
     reason: str
-    related_translation_uncertainty: str | None  # Required - always expected
+    related_translation_uncertainty: str | None  # Optional
 
 
 class TashkeelResult(TypedDict):
@@ -35,10 +35,10 @@ class TashkeelResult(TypedDict):
 class WordTranslationOption(TypedDict):
     arabic: str
     english_options: list[str]
-    pos: str | None  # Required
+    pos: str  # Required in schema
     essential: str
     essential_translation_options: list[str]
-    notes: str | None  # Required - always expected
+    notes: str | None  # Optional
     uncertainties: list[
         dict[str, Any]
     ]  # Schema defines as "type": "object" - keeping flexible
@@ -52,10 +52,10 @@ class WordTranslationResult(TypedDict):
 class RefinedWordTranslation(TypedDict):
     arabic: str
     english: str
-    pos: str | None  # Required
+    pos: str  # Required in schema
     essential: str
     essential_translation: str
-    notes: str | None  # Required - always expected
+    notes: str | None  # Optional
 
 
 class ResolvedUncertainty(TypedDict):
@@ -119,8 +119,8 @@ class AudioAPIResponse(TypedDict):
     """API response structure for audio generation"""
 
     audio: bytes
-    alignment: dict[str, Any] | None  # Required - always expected
-    audio_base_64: str | None  # Required
+    alignment: dict[str, Any]  # Required in schema
+    audio_base_64: str  # Required in schema
 
 
 class WordTimingData(TypedDict):
@@ -137,8 +137,8 @@ class AudioGenerationResult(TypedDict):
 
     url: str
     word_timings: list[WordTimingData]
-    filename: str | None  # Required
-    duration: float | None  # Required
+    filename: str  # Required in schema
+    duration: float  # Required in schema
 
 
 # Database insertion structures
@@ -177,9 +177,9 @@ class WordData(TypedDict):
     english: str
     essential: str
     essential_translation: str
-    pos: str | None  # Required
-    notes: str | None  # Required - always expected
-    root: str | None  # Required
+    pos: str  # Required in schema
+    notes: str | None  # Optional
+    root: str  # Required in schema
 
 
 # Type aliases for common collections
