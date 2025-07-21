@@ -1,45 +1,27 @@
+"""Storage utilities for Supabase integration."""
+
 import logging
-import os
 import uuid
 from typing import Any
 
-from supabase import create_client
+from translate.data.enums import PartOfSpeech
+
+from .config_common import get_supabase_client
 
 logger = logging.getLogger(__name__)
 
-
-_supabase_client = None
-
-
-def get_supabase_client() -> Any:
-    """Get the Supabase client instance."""
-    global _supabase_client
-    if _supabase_client is None:
-        # Check environment variables directly since config might be imported before keys are loaded
-        supabase_url = os.getenv("SUPABASE_URL")
-        supabase_key = os.getenv("SUPABASE_KEY")
-
-        if not all([supabase_url, supabase_key]):
-            raise OSError(
-                "Missing required environment variables. Please ensure SUPABASE_URL and SUPABASE_KEY are set."
-            )
-        # At this point, we know both are not None due to the check above
-        assert supabase_url is not None and supabase_key is not None
-        _supabase_client = create_client(supabase_url, supabase_key)
-    return _supabase_client
-
-
+# Word type mapping using enum values
 WORD_TYPE_MAPPING: dict[str, int] = {
-    "verb": 1,
-    "noun": 2,
-    "particle": 3,
-    "adjective": 4,
-    "pronoun": 5,
-    "adverb": 6,
-    "preposition": 7,
-    "conjunction": 8,
-    "interjection": 9,
-    "numeral": 56,
+    PartOfSpeech.VERB.value: 1,
+    PartOfSpeech.NOUN.value: 2,
+    PartOfSpeech.PARTICLE.value: 3,
+    PartOfSpeech.ADJECTIVE.value: 4,
+    PartOfSpeech.PRONOUN.value: 5,
+    PartOfSpeech.ADVERB.value: 6,
+    PartOfSpeech.PREPOSITION.value: 7,
+    PartOfSpeech.CONJUNCTION.value: 8,
+    PartOfSpeech.INTERJECTION.value: 9,
+    PartOfSpeech.NUMERAL.value: 56,
 }
 
 
@@ -126,5 +108,5 @@ def get_word_type_id(pos: str) -> int:
     """Get word type ID from POS."""
     word_type_id = WORD_TYPE_MAPPING.get(pos.lower())
     if word_type_id is None:
-        return WORD_TYPE_MAPPING["noun"]
+        return WORD_TYPE_MAPPING[PartOfSpeech.NOUN.value]
     return word_type_id

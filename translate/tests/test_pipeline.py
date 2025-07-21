@@ -5,6 +5,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from translate.data.enums import DifficultyLevel
 from translate.pipeline.split_file import split_file
 from translate.pipeline.translate import translate_file
 from translate.utils.api_utils import call_openai_api
@@ -27,7 +28,7 @@ class TestSplitFile:
                 mock_api.return_value = {
                     "title": "Test Article",
                     "summary": "A test article",
-                    "difficulty_level": 1,
+                    "difficulty_level": DifficultyLevel.BASIC.value,
                     "units": [
                         "مرحبا بالعالم.",
                         "هذا نص تجريبي.",
@@ -66,7 +67,7 @@ class TestSplitFile:
                 mock_api.return_value = {
                     "title": "Empty Article",
                     "summary": "Empty content",
-                    "difficulty_level": 1,
+                    "difficulty_level": DifficultyLevel.BASIC.value,
                     "units": [],
                 }
 
@@ -88,7 +89,7 @@ class TestTranslateFile:
         split_data = {
             "title": "Test Article",
             "summary": "A test article",
-            "difficulty_level": 1,
+            "difficulty_level": DifficultyLevel.BASIC.value,
             "units": [
                 "مرحبا بالعالم.",
                 "هذا نص تجريبي.",

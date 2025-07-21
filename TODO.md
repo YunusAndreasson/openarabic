@@ -1,8 +1,4 @@
-- [] Find a way to better test tashkeel
-- [] Use Google TRanslate for single words
+- [] Use Google Translate for single words
 - [] Validate Google Translate with OpenAI
-- [] Validate Datatypes in DB to make sure sentnce, words, etc are not optional
 - [] Use the new OpenAI API for more context
 - [] Use audio for single word when tapping it in app
-- [] Validate if we can use enums
-- [] Improve the README.md for the translation pipeline to verify correct flow.

@@ -7,6 +7,7 @@ from translate.data.config import (
     MODEL_TRANSLATION,
     MODEL_VERIFICATION,
 )
+from translate.data.enums import DifficultyLevel, PartOfSpeech
 from translate.data.models import (
     SentenceTranslation,
     TextMetadata,
@@ -46,12 +47,12 @@ class TestModels:
         metadata = TextMetadata(
             title="Test Article",
             summary="A test article for translation",
-            difficulty_level=2,  # intermediate level
+            difficulty_level=DifficultyLevel.ELEMENTARY.value,  # intermediate level
             total_units=5,
         )
         assert metadata.title == "Test Article"
         assert metadata.summary == "A test article for translation"
-        assert metadata.difficulty_level == 2
+        assert metadata.difficulty_level == DifficultyLevel.ELEMENTARY.value
         assert metadata.total_units == 5
 
     def test_sentence_translation_creation(self):
@@ -82,9 +83,9 @@ class TestModels:
             english_options=["hello", "hi", "greetings"],
             essential="مرحب",
             essential_translation_options=["hello", "hi"],
-            pos="interjection",
+            pos=PartOfSpeech.INTERJECTION.value,
             notes="Common greeting",
         )
         assert options.arabic == "مرحبا"
         assert len(options.english_options) == 3
-        assert options.pos == "interjection"
+        assert options.pos == PartOfSpeech.INTERJECTION.value

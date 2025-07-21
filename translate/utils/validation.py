@@ -1,6 +1,8 @@
 """
-Validation utilities for translation pipeline.
+Validation utilities for translation pipeline results.
 """
+
+import logging
 
 from translate.data.models import SentenceTranslation, TranslationValidationError
 from translate.data.pipeline_types import (
@@ -8,6 +10,104 @@ from translate.data.pipeline_types import (
     TranslationResults,
     WordTranslationResults,
 )
+
+logger = logging.getLogger(__name__)
+
+
+def validate_tashkeel_added(
+    original_sentences: list[str],
+    tashkeel_results: TashkeelResults,
+    sentence_indices: list[int] | None = None,
+) -> None:
+    """
+    Validate that tashkeel was actually added to the text and break the pipeline if it wasn't.
+
+    Args:
+        original_sentences: List of original Arabic sentences
+        tashkeel_results: Results from tashkeel processing
+        sentence_indices: Optional list of sentence indices for better error reporting
+
+    Raises:
+        TranslationValidationError: If tashkeel was not added to any sentence
+    """
+    failed_sentences: list[tuple[int, str, str]] = []
+
+    # Arabic diacritical marks that should be present in tashkeel
+    diacritical_marks = "ًٌٍَُِّْ"
+
+    for i, (original, tashkeel_result) in enumerate(
+        zip(original_sentences, tashkeel_results, strict=False)
+    ):
+        # Get the actual sentence index for error reporting
+        sentence_index = (
+            sentence_indices[i] if sentence_indices and i < len(sentence_indices) else i
+        )
+
+        # Extract tashkeel text
+        tashkeel_text = tashkeel_result.get("tashkeel", "")
+
+        # Check if tashkeel was actually added
+        tashkeel_added = False
+
+        # If tashkeel is empty, it's definitely not added
+        if not tashkeel_text.strip():
+            tashkeel_added = False
+        else:
+            # Method 1: Check if tashkeel text is different from original
+            if tashkeel_text != original:
+                tashkeel_added = True
+            else:
+                # Method 2: Check if diacritical marks were added
+                original_has_diacritics = any(c in original for c in diacritical_marks)
+                tashkeel_has_diacritics = any(
+                    c in tashkeel_text for c in diacritical_marks
+                )
+
+                if tashkeel_has_diacritics and not original_has_diacritics:
+                    tashkeel_added = True
+                elif tashkeel_has_diacritics and original_has_diacritics:
+                    # Both have diacritics, check if tashkeel has more or different ones
+                    original_diacritic_count = sum(
+                        1 for c in original if c in diacritical_marks
+                    )
+                    tashkeel_diacritic_count = sum(
+                        1 for c in tashkeel_text if c in diacritical_marks
+                    )
+
+                    if tashkeel_diacritic_count > original_diacritic_count:
+                        tashkeel_added = True
+                    elif tashkeel_text != original:  # Different diacritics
+                        tashkeel_added = True
+                    else:
+                        # If text is identical and both have same diacritics, consider it valid
+                        # (this handles cases where the original already had proper tashkeel)
+                        tashkeel_added = True
+
+        if not tashkeel_added:
+            failed_sentences.append((sentence_index, original, tashkeel_text))
+            logger.error(
+                f"Tashkeel validation failed for sentence {sentence_index}: "
+                f"Original: '{original}' -> Tashkeel: '{tashkeel_text}'"
+            )
+
+    if failed_sentences:
+        error_details = []
+        for sentence_index, original, tashkeel in failed_sentences:
+            error_details.append(
+                f"Line {sentence_index + 1}: Original='{original}' -> Tashkeel='{tashkeel}'"
+            )
+
+        error_message = (
+            f"Tashkeel validation failed: {len(failed_sentences)} sentences did not have tashkeel added:\n"
+            + "\n".join(error_details)
+        )
+
+        logger.error(error_message)
+        raise TranslationValidationError(error_message)
+
+    logger.info(
+        f"Tashkeel validation passed: {len(original_sentences)} sentences processed successfully"
+    )
 
 
 def validate_translation_results(
@@ -18,7 +118,7 @@ def validate_translation_results(
     check_word_options: bool = False,
 ) -> None:
     """
-    Validate translation results and raise TranslationValidationError if issues found.
+    Validate translation results and raise ValidationError if issues found.
     """
     if len(results) != len(original_sentences):
         raise TranslationValidationError(

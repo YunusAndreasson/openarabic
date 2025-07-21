@@ -18,6 +18,7 @@ except (ImportError, OSError):
     get_or_generate_root_audio = None
 # Import common database utilities
 from translate.data.config import ARCHIVE_DIR, ROOT_DIR, SUPABASE_URL
+from translate.data.enums import DifficultyLevel, PartOfSpeech
 from translate.data.pipeline_types import WordData
 from translate.utils.arabic_text import clean_arabic_text
 from translate.utils.database_common import (
@@ -158,7 +159,7 @@ def insert_sentence_words(
                 root_meaning,
                 english_translation,
             )
-            word_type_id = get_word_type_id(word.get("pos", "noun"))
+            word_type_id = get_word_type_id(word.get("pos", PartOfSpeech.NOUN.value))
 
             original_word = clean_arabic_text(word["arabic"])
 
@@ -198,7 +199,7 @@ def insert_sentence_words(
                 "english": word["english"],
                 "word_type_id": word_type_id,
                 "root_id": root_id,
-                "difficulty_level": 1,
+                "difficulty_level": DifficultyLevel.BASIC.value,
                 "grammar_note": word.get("notes"),
                 "audio_start": timing_info.get("start_time"),
                 "audio_end": timing_info.get("end_time"),
@@ -213,7 +214,7 @@ def insert_sentence_words(
                 root_meaning,
                 english_translation,
             )
-            word_type_id = get_word_type_id(word.get("pos", "noun"))
+            word_type_id = get_word_type_id(word.get("pos", PartOfSpeech.NOUN.value))
 
             original_word = clean_arabic_text(word["arabic"])
 
@@ -224,7 +225,7 @@ def insert_sentence_words(
                 "english": word["english"],
                 "word_type_id": word_type_id,
                 "root_id": root_id,
-                "difficulty_level": 1,
+                "difficulty_level": DifficultyLevel.BASIC.value,
                 "grammar_note": word.get("notes"),
             }
 
@@ -534,5 +535,11 @@ def validate_article_data(data: dict) -> None:
                     )
 
     difficulty = data["metadata"]["difficulty_level"]
-    if not isinstance(difficulty, int) or difficulty < 1 or difficulty > 5:
-        raise ValueError("Difficulty level must be an integer between 1 and 5")
+    if (
+        not isinstance(difficulty, int)
+        or difficulty < DifficultyLevel.BASIC.value
+        or difficulty > DifficultyLevel.EXPERT.value
+    ):
+        raise ValueError(
+            f"Difficulty level must be an integer between {DifficultyLevel.BASIC.value} and {DifficultyLevel.EXPERT.value}"
+        )

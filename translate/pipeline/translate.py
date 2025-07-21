@@ -5,7 +5,12 @@ from typing import Any
 
 from tqdm import tqdm
 
-from translate.data.models import SentenceTranslation, SplitResult, TextMetadata
+from translate.data.models import (
+    SentenceTranslation,
+    SplitResult,
+    TextMetadata,
+    TranslationValidationError,
+)
 from translate.data.pipeline_types import TranslationBatch
 from translate.utils.context_cache import ContextCache
 from translate.utils.file_utils import write_json_file
@@ -165,6 +170,11 @@ def process_batches(
                 try:
                     batch_results = future.result()
                     results.extend(batch_results)
+                    pbar.update(len(batch["sentences"]))
+                except TranslationValidationError as e:
+                    error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed validation: {str(e)}"
+                    errors.append(error_msg)
+                    logger.error(error_msg)
                     pbar.update(len(batch["sentences"]))
                 except (ValueError, TypeError, RuntimeError) as e:
                     error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed: {str(e)}"

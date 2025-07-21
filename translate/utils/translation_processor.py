@@ -14,6 +14,7 @@ from translate.data.pipeline_types import (
 )
 from translate.utils.validation import (
     validate_final_translation,
+    validate_tashkeel_added,
     validate_translation_results,
 )
 
@@ -63,6 +64,11 @@ def apply_tashkeel(
         batch_indices,
         context_cache,
     )
+
+    # Validate that tashkeel was actually added and break pipeline if not
+    validate_tashkeel_added(batch_sentences, tashkeel, batch_indices)
+
+    # Additional validation for other aspects
     validate_translation_results(batch_sentences, tashkeel, "Tashkeel Addition")
     return tashkeel
 

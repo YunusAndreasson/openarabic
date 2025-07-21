@@ -3,6 +3,8 @@
 import os
 from typing import Any
 
+from supabase import create_client
+
 from translate.data.config import (
     ARABIC_VOICE_ID,
     ARABIC_WORD_VOICE_ID,
@@ -78,3 +80,24 @@ def get_audio_config() -> dict[str, Any]:
             "max_file_size": 10 * 1024 * 1024,  # 10MB maximum
         },
     }
+
+
+_supabase_client = None
+
+
+def get_supabase_client() -> Any:
+    """Get the Supabase client instance."""
+    global _supabase_client
+    if _supabase_client is None:
+        # Check environment variables directly since config might be imported before keys are loaded
+        supabase_url = os.getenv("SUPABASE_URL")
+        supabase_key = os.getenv("SUPABASE_KEY")
+
+        if not all([supabase_url, supabase_key]):
+            raise OSError(
+                "Missing required environment variables. Please ensure SUPABASE_URL and SUPABASE_KEY are set."
+            )
+        # At this point, we know both are not None due to the check above
+        assert supabase_url is not None and supabase_key is not None
+        _supabase_client = create_client(supabase_url, supabase_key)
+    return _supabase_client

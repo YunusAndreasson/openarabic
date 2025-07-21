@@ -7,6 +7,7 @@ from translate.data.config import (
     DEFAULT_SPLIT_OUTPUT_FILE,
     MODEL_ANALYSIS,
 )
+from translate.data.enums import DifficultyLevel
 from translate.data.models import SplitResult
 from translate.data.schemas import (
     GENERAL_SYSTEM_PROMPT,
@@ -39,7 +40,7 @@ def parse_split_response(response: dict[str, Any]) -> SplitResult:
             units=[],
             title="Error",
             summary=response["error"],
-            difficulty_level=1,
+            difficulty_level=DifficultyLevel.BASIC.value,
             total_units=0,
         )
 
@@ -47,7 +48,9 @@ def parse_split_response(response: dict[str, Any]) -> SplitResult:
         units=response.get("units", []),
         title=response.get("title", "Untitled Text"),
         summary=response.get("summary", "No summary available"),
-        difficulty_level=response.get("difficulty_level", 3),
+        difficulty_level=response.get(
+            "difficulty_level", DifficultyLevel.INTERMEDIATE.value
+        ),
         total_units=len(response.get("units", [])),
         unit_types=response.get("unit_types"),
     )
@@ -60,7 +63,7 @@ def split_text_into_sentences(text: str) -> SplitResult:
             units=[],
             title="Empty Text",
             summary="No content",
-            difficulty_level=1,
+            difficulty_level=DifficultyLevel.BASIC.value,
             total_units=0,
         )
 

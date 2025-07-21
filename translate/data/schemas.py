@@ -2,41 +2,23 @@
 This file contains all the schemas, prompts, and constants for the translation system.
 """
 
+from .enums import DifficultyLevel, PartOfSpeech
+
 # Define valid parts of speech
-VALID_POS = {
-    "verb",
-    "noun",
-    "particle",
-    "adjective",
-    "pronoun",
-    "adverb",
-    "preposition",
-    "conjunction",
-    "interjection",
-    "numeral",
-}
+VALID_POS = PartOfSpeech.values()
 
 # Define difficulty levels with descriptions
-DIFFICULTY_LEVELS = {
-    1: "Basic - Simple vocabulary and grammar",
-    2: "Elementary - Common vocabulary with basic grammar structures",
-    3: "Intermediate - Mixed vocabulary with moderate grammar complexity",
-    4: "Advanced - Specialized vocabulary with complex grammar",
-    5: "Expert - Technical/scholarly vocabulary with intricate grammar",
-}
+DIFFICULTY_LEVELS = {level.value: level.description for level in DifficultyLevel}
 
 
 def format_valid_pos() -> str:
     """Format VALID_POS as a readable list for prompts."""
-    pos_list = sorted(VALID_POS)
-    return ", ".join(f"'{pos}'" for pos in pos_list)
+    return PartOfSpeech.format_for_prompt()
 
 
 def format_difficulty_levels() -> str:
     """Format difficulty levels as a readable list for prompts."""
-    return "\n".join(
-        f"Level {level}: {desc}" for level, desc in sorted(DIFFICULTY_LEVELS.items())
-    )
+    return DifficultyLevel.format_for_prompt()
 
 
 # Define function schemas for API operations
@@ -193,7 +175,7 @@ WORD_TRANSLATION_FUNCTION = {
                                     },
                                     "pos": {
                                         "type": "string",
-                                        "enum": list(VALID_POS),
+                                        "enum": VALID_POS,
                                         "description": "Part of speech (always expected)",
                                     },
                                     "essential": {
@@ -240,7 +222,7 @@ WORD_TRANSLATION_FUNCTION = {
                             {
                                 "arabic": "قَالَ",
                                 "english_options": ["he said", "he spoke", "he stated"],
-                                "pos": "verb",
+                                "pos": PartOfSpeech.VERB.value,
                                 "essential": "قَالَ",
                                 "essential_translation_options": [
                                     "say",
@@ -253,7 +235,7 @@ WORD_TRANSLATION_FUNCTION = {
                             {
                                 "arabic": "النَّبِيُّ",
                                 "english_options": ["the prophet", "the messenger"],
-                                "pos": "noun",
+                                "pos": PartOfSpeech.NOUN.value,
                                 "essential": "نَبِيّ",
                                 "essential_translation_options": [
                                     "prophet",
@@ -427,7 +409,7 @@ SPLIT_TEXT_FUNCTION = {
             },
             "difficulty_level": {
                 "type": "integer",
-                "enum": list(DIFFICULTY_LEVELS.keys()),
+                "enum": DIFFICULTY_LEVELS.keys(),
                 "description": "Difficulty rating (1-5)",
             },
             "units": {
