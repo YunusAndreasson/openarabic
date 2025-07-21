@@ -1,6 +1,8 @@
+import functools
 import re
 
 
+@functools.cache
 def clean_arabic_text(text: str) -> str:
     """Clean Arabic text by removing all non-Arabic characters."""
     if not text:
@@ -29,6 +31,7 @@ def wrap_in_arabic_ssml(text: str) -> str:
     return f'<speak><lang xml:lang="ar">{text}</lang></speak>'
 
 
+@functools.cache
 def clean_word_for_matching(word: str) -> str:
     """
     Clean and normalize a word for better timing matching.

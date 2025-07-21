@@ -3,7 +3,7 @@ Type aliases for pipeline data structures to improve type safety.
 These match the existing schema structures exactly.
 """
 
-from typing import Any, TypedDict
+from typing import Any, NotRequired, TypedDict
 
 
 # Translation result structure (matches TRANSLATE_SENTENCES_FUNCTION schema)
@@ -12,18 +12,18 @@ class TranslationUncertainty(TypedDict):
     reason: str
 
 
-class TranslationResult(TypedDict, total=False):
+class TranslationResult(TypedDict):
     translation: str
-    notes: str | None
+    notes: NotRequired[str | None]
     uncertainties: list[TranslationUncertainty]
-    word_by_word: list[dict[str, Any]]  # Optional field for later stages
+    word_by_word: NotRequired[list[dict[str, Any]]]  # Optional field for later stages
 
 
 # Tashkeel result structure (matches TASHKEEL_FUNCTION schema)
-class TashkeelUncertainty(TypedDict, total=False):
+class TashkeelUncertainty(TypedDict):
     word: str
     reason: str
-    related_translation_uncertainty: str | None
+    related_translation_uncertainty: NotRequired[str | None]
 
 
 class TashkeelResult(TypedDict):
@@ -35,10 +35,10 @@ class TashkeelResult(TypedDict):
 class WordTranslationOption(TypedDict):
     arabic: str
     english_options: list[str]
-    pos: str | None
+    pos: NotRequired[str | None]
     essential: str
     essential_translation_options: list[str]
-    notes: str | None
+    notes: NotRequired[str | None]
     uncertainties: list[
         dict[str, Any]
     ]  # Schema defines as "type": "object" - keeping flexible
@@ -52,10 +52,10 @@ class WordTranslationResult(TypedDict):
 class RefinedWordTranslation(TypedDict):
     arabic: str
     english: str
-    pos: str | None
+    pos: NotRequired[str | None]
     essential: str
     essential_translation: str
-    notes: str | None
+    notes: NotRequired[str | None]
 
 
 class ResolvedUncertainty(TypedDict):
@@ -114,13 +114,13 @@ class SplitErrorResponse(TypedDict):
     error: str
 
 
-# Audio generation structures
+# Audio phase structures
 class AudioAPIResponse(TypedDict):
     """API response structure for audio generation"""
 
     audio: bytes
-    alignment: dict[str, Any] | None
-    audio_base_64: str | None
+    alignment: NotRequired[dict[str, Any] | None]
+    audio_base_64: NotRequired[str | None]
 
 
 class WordTimingData(TypedDict):
@@ -137,8 +137,8 @@ class AudioGenerationResult(TypedDict):
 
     url: str
     word_timings: list[WordTimingData]
-    filename: str | None
-    duration: float | None
+    filename: NotRequired[str | None]
+    duration: NotRequired[float | None]
 
 
 # Database insertion structures
@@ -154,6 +154,7 @@ class ArticleInsertData(TypedDict):
     created_at: str
 
 
+# Performance tracking structures
 class TimingStats(TypedDict):
     """Performance timing statistics"""
 
@@ -163,25 +164,25 @@ class TimingStats(TypedDict):
     errors: int
 
 
-# API response wrapper
+# Generic API response structure
 class APIResponse(TypedDict):
     success: bool
-    data: dict[str, Any] | None
-    error: str | None
+    data: NotRequired[dict[str, Any] | None]
+    error: NotRequired[str | None]
 
 
 # Word data structure for database operations
-class WordData(TypedDict, total=False):
+class WordData(TypedDict):
     arabic: str
     english: str
     essential: str
     essential_translation: str
-    pos: str | None
-    notes: str | None
-    root: str | None
+    pos: NotRequired[str | None]
+    notes: NotRequired[str | None]
+    root: NotRequired[str | None]
 
 
-# Type aliases for common patterns
+# Type aliases for common collections
 TranslationResults = list[TranslationResult]
 TashkeelResults = list[TashkeelResult]
 WordTranslationResults = list[WordTranslationResult]
