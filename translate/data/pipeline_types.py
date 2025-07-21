@@ -97,6 +97,72 @@ class RefinementInput(TypedDict):
     previous_uncertainties: dict[str, list[dict[str, Any]]]
 
 
+# Split phase structures
+class SplitAPIResponse(TypedDict):
+    """API response structure for split phase"""
+
+    title: str
+    summary: str
+    difficulty_level: int
+    units: list[str]
+    unit_types: list[str]
+
+
+class SplitErrorResponse(TypedDict):
+    """Error response structure for split phase"""
+
+    error: str
+
+
+# Audio generation structures
+class AudioAPIResponse(TypedDict):
+    """API response structure for audio generation"""
+
+    audio: bytes
+    alignment: dict[str, Any] | None
+    audio_base_64: str | None
+
+
+class WordTimingData(TypedDict):
+    """Word timing data from audio alignment"""
+
+    word: str
+    cleaned_word: str
+    start_time: str
+    end_time: str
+
+
+class AudioGenerationResult(TypedDict):
+    """Result from audio generation with word timings"""
+
+    url: str
+    word_timings: list[WordTimingData]
+    filename: str | None
+    duration: float | None
+
+
+# Database insertion structures
+class ArticleInsertData(TypedDict):
+    """Data structure for article insertion"""
+
+    title: str
+    summary: str
+    difficulty_level: int
+    category_id: int
+    author_id: int
+    content_hash: str
+    created_at: str
+
+
+class TimingStats(TypedDict):
+    """Performance timing statistics"""
+
+    total_time: float
+    sentences_processed: int
+    average_time_per_sentence: float
+    errors: int
+
+
 # API response wrapper
 class APIResponse(TypedDict):
     success: bool
@@ -121,3 +187,5 @@ TashkeelResults = list[TashkeelResult]
 WordTranslationResults = list[WordTranslationResult]
 RefinementResults = list[RefinementResult]
 RefinementInputs = list[RefinementInput]
+SplitResults = list[str]  # List of split units
+AudioResults = list[AudioGenerationResult]

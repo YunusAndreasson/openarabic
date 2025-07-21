@@ -7,6 +7,7 @@ from data.config import (
     DEFAULT_SPLIT_OUTPUT_FILE,
     MODEL_ANALYSIS,
 )
+from data.models import SplitResult
 from data.schemas import (
     GENERAL_SYSTEM_PROMPT,
     SENTENCE_SPLITTING_USER_PROMPT,
@@ -30,34 +31,38 @@ def build_split_messages(text: str) -> list[dict[str, str]]:
     ]
 
 
-def parse_split_response(response: dict[str, Any]) -> dict[str, Any]:
+def parse_split_response(response: dict[str, Any]) -> SplitResult:
     """Normalize the split API response."""
     if "error" in response:
         logger.error(f"Failed to analyze text: {response['error']}")
-        return {
-            "units": [],
-            "title": "Error",
-            "summary": response["error"],
-            "difficulty_level": 1,
-        }
+        return SplitResult(
+            units=[],
+            title="Error",
+            summary=response["error"],
+            difficulty_level=1,
+            total_units=0,
+        )
 
-    return {
-        "units": response.get("units", []),
-        "title": response.get("title", "Untitled Text"),
-        "summary": response.get("summary", "No summary available"),
-        "difficulty_level": response.get("difficulty_level", 3),
-    }
+    return SplitResult(
+        units=response.get("units", []),
+        title=response.get("title", "Untitled Text"),
+        summary=response.get("summary", "No summary available"),
+        difficulty_level=response.get("difficulty_level", 3),
+        total_units=len(response.get("units", [])),
+        unit_types=response.get("unit_types"),
+    )
 
 
-def split_text_into_sentences(text: str) -> dict[str, Any]:
+def split_text_into_sentences(text: str) -> SplitResult:
     """Use GPT-4.1 to intelligently split text into learner-friendly units and analyze content"""
     if not text or len(text.strip()) == 0:
-        return {
-            "units": [],
-            "title": "Empty Text",
-            "summary": "No content",
-            "difficulty_level": 1,
-        }
+        return SplitResult(
+            units=[],
+            title="Empty Text",
+            summary="No content",
+            difficulty_level=1,
+            total_units=0,
+        )
 
     messages = build_split_messages(text)
 
@@ -71,7 +76,7 @@ def split_text_into_sentences(text: str) -> dict[str, Any]:
     return parse_split_response(response)
 
 
-def split_file(input_file: str, output_file: str) -> dict[str, Any]:
+def split_file(input_file: str, output_file: str) -> SplitResult:
     """Split an input file into learner-friendly units and save the result."""
 
     try:
@@ -79,9 +84,9 @@ def split_file(input_file: str, output_file: str) -> dict[str, Any]:
 
         split_result = split_text_into_sentences(full_text)
 
-        split_result["total_units"] = len(split_result["units"])
-
-        write_json_file(output_file, split_result)
+        # Convert to dict for JSON serialization
+        split_dict = split_result.model_dump()
+        write_json_file(output_file, split_dict)
 
         return split_result
 

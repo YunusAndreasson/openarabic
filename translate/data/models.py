@@ -60,6 +60,54 @@ class TextMetadata(BaseModel):
     total_units: int
 
 
+class SplitResult(BaseModel):
+    """Complete result from text splitting phase"""
+
+    units: list[str] = Field(description="Array of text units/sentences")
+    title: str = Field(description="Concise English title (3-7 words)")
+    summary: str = Field(description="One-sentence summary of main content")
+    difficulty_level: int = Field(ge=1, le=5, description="Difficulty rating (1-5)")
+    total_units: int = Field(description="Total number of units")
+    unit_types: list[str] | None = Field(
+        default=None,
+        description="Type of each unit (simple, compound, condition, quote, verse, phrase, etc.)",
+    )
+
+
+class WordTiming(BaseModel):
+    """Word-level timing information from audio generation"""
+
+    word: str = Field(description="Original Arabic word")
+    cleaned_word: str = Field(description="Cleaned word for matching")
+    start_time: str = Field(description="Start time in seconds")
+    end_time: str = Field(description="End time in seconds")
+
+
+class AudioResult(BaseModel):
+    """Result from audio generation"""
+
+    url: str = Field(description="Audio file URL in storage")
+    word_timings: list[WordTiming] = Field(
+        default_factory=list, description="Word-level timing information"
+    )
+    filename: str | None = Field(default=None, description="Generated filename")
+    duration: float | None = Field(
+        default=None, description="Audio duration in seconds"
+    )
+
+
+class ArticleData(BaseModel):
+    """Data structure for article insertion"""
+
+    title: str = Field(description="Article title")
+    summary: str = Field(description="Article summary")
+    difficulty_level: int = Field(ge=1, le=5, description="Difficulty level")
+    category_id: int = Field(description="Category ID in database")
+    author_id: int = Field(description="Author ID in database")
+    content_hash: str = Field(description="SHA-256 hash of content for deduplication")
+    created_at: str = Field(description="ISO format timestamp")
+
+
 class TranslationValidationError(Exception):
     """Custom exception for translation validation errors"""
 

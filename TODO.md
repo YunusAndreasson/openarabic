@@ -5,3 +5,4 @@
 - [] Use the new OpenAI API for more context
 - [] Use audio for single word when tapping it in app
 - [] Validate if we can use enums
+- [] Improve the README.md for the translation pipeline to verify correct flow.

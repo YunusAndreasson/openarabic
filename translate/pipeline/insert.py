@@ -5,6 +5,7 @@ import sys
 from datetime import UTC, datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from data.models import ArticleData, SentenceTranslation
 from utils import load_api_keys
 from utils.cache_utils import ensure_valid_cache_files
 from utils.database_utils import (
@@ -36,7 +37,9 @@ logger = logging.getLogger(__name__)
 load_api_keys()
 
 
-def generate_article_audio(article_id: int, translations: list[dict]) -> None:
+def generate_article_audio(
+    article_id: int, translations: list[SentenceTranslation]
+) -> None:
     """Generate audio for all sentences in an article."""
     if not AUDIO_AVAILABLE:
         logger.warning("Audio generation not available")
@@ -45,7 +48,7 @@ def generate_article_audio(article_id: int, translations: list[dict]) -> None:
     for i, translation in enumerate(translations):
         try:
             # Get the Arabic text (prefer tashkeel if available)
-            arabic_text = translation.get("tashkeel", translation.get("original", ""))
+            arabic_text = translation.tashkeel or translation.original
             if not arabic_text:
                 logger.warning(f"Skipping sentence {i}: no Arabic text found")
                 continue
@@ -58,14 +61,10 @@ def generate_article_audio(article_id: int, translations: list[dict]) -> None:
             next_text = None
             if i > 0:
                 prev_translation = translations[i - 1]
-                previous_text = prev_translation.get(
-                    "tashkeel", prev_translation.get("original", "")
-                )
+                previous_text = prev_translation.tashkeel or prev_translation.original
             if i < len(translations) - 1:
                 next_translation = translations[i + 1]
-                next_text = next_translation.get(
-                    "tashkeel", next_translation.get("original", "")
-                )
+                next_text = next_translation.tashkeel or next_translation.original
 
             # Generate audio
             audio_result = generate_sentence_audio(
@@ -75,11 +74,11 @@ def generate_article_audio(article_id: int, translations: list[dict]) -> None:
                 next_text=next_text,
             )
 
-            if audio_result and audio_result.get("url"):
+            if audio_result and audio_result.url:
                 # Update the database with the audio URL
                 try:
                     get_supabase_client().table("article_sentences").update(
-                        {"audio_url": audio_result["url"]}
+                        {"audio_url": audio_result.url}
                     ).eq("article_id", article_id).eq("position", i).execute()
                 except Exception as e:
                     logger.error(
@@ -108,28 +107,35 @@ def process_json_file(file_path: str, category_id: int, author_id: int) -> int:
         archive_files(file_path, existing_article_id)
         return existing_article_id
 
-    article_data = {
-        "title": data["metadata"]["title"],
-        "summary": data["metadata"]["summary"],
-        "difficulty_level": data["metadata"]["difficulty_level"],
-        "category_id": category_id,
-        "author_id": author_id,
-        "created_at": datetime.now(UTC).isoformat(),
-    }
+    # Create ArticleData object
+    article_data = ArticleData(
+        title=data["metadata"]["title"],
+        summary=data["metadata"]["summary"],
+        difficulty_level=data["metadata"]["difficulty_level"],
+        category_id=category_id,
+        author_id=author_id,
+        content_hash=content_hash,
+        created_at=datetime.now(UTC).isoformat(),
+    )
 
     try:
-        article_data["content_hash"] = content_hash
+        result = (
+            get_supabase_client()
+            .table("articles")
+            .insert(article_data.model_dump())
+            .execute()
+        )
+        article_id = result.data[0]["id"]
     except Exception as e:
-        if "content_hash" not in str(e):
-            raise e
-
-    result = get_supabase_client().table("articles").insert(article_data).execute()
-    article_id = result.data[0]["id"]
+        logger.error(f"Failed to insert article: {e}")
+        raise
 
     # Generate audio for sentences in the final phase
     if AUDIO_AVAILABLE:
         try:
-            generate_article_audio(article_id, data["translations"])
+            # Convert dict translations back to SentenceTranslation objects
+            translations = [SentenceTranslation(**t) for t in data["translations"]]
+            generate_article_audio(article_id, translations)
         except Exception as e:
             logger.error(f"Audio generation failed: {e}")
             # Continue without audio - don't fail the entire pipeline
@@ -177,13 +183,16 @@ def main() -> None:
     for json_path in json_files:
         try:
             process_json_file(json_path, category_id, author_id)
-        except Exception:
+            logger.info(f"Successfully processed: {json_path}")
+        except Exception as e:
             error_count += 1
+            logger.error(f"Failed to process {json_path}: {e}")
 
     if error_count > 0:
+        logger.error(f"Failed to process {error_count} files")
         sys.exit(1)
 
-    sys.exit(0)
+    logger.info("All files processed successfully")
 
 
 if __name__ == "__main__":

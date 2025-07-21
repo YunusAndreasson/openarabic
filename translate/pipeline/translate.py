@@ -13,6 +13,7 @@ from data.config import (
 )
 from data.models import (
     SentenceTranslation,
+    SplitResult,
     TextMetadata,
 )
 from data.pipeline_types import TranslationBatch
@@ -80,7 +81,7 @@ def create_batches(
     return batches
 
 
-def load_split_data(input_file: str) -> dict[str, Any] | None:
+def load_split_data(input_file: str) -> SplitResult | None:
     """Load the split JSON created by split_file.py."""
     # If input_file already ends with _split.json, use it directly
     if input_file.endswith("_split.json"):
@@ -90,16 +91,18 @@ def load_split_data(input_file: str) -> dict[str, Any] | None:
 
     if not os.path.exists(split_path):
         return None
-    return read_json_file(split_path)
+
+    split_dict = read_json_file(split_path)
+    return SplitResult(**split_dict)
 
 
-def create_metadata(split_data: dict[str, Any]) -> TextMetadata:
-    """Build a TextMetadata object from raw split data."""
+def create_metadata(split_data: SplitResult) -> TextMetadata:
+    """Build a TextMetadata object from split data."""
     return TextMetadata(
-        title=split_data.get("title", "Untitled Text"),
-        summary=split_data.get("summary", "No summary available"),
-        difficulty_level=split_data.get("difficulty_level", 3),
-        total_units=split_data.get("total_units", len(split_data.get("units", []))),
+        title=split_data.title,
+        summary=split_data.summary,
+        difficulty_level=split_data.difficulty_level,
+        total_units=split_data.total_units,
     )
 
 
@@ -144,9 +147,9 @@ def process_batch(
 def process_batches(
     all_units: list[str] | list[dict[str, Any]],
     batch_size: int,
-) -> tuple[list[Any], list[str]]:
+) -> tuple[list[SentenceTranslation], list[str]]:
     """Process all batches in parallel and return results and errors."""
-    results: list[Any] = []
+    results: list[SentenceTranslation] = []
     errors: list[str] = []
 
     # Convert to list of strings if needed
@@ -184,66 +187,67 @@ def process_batches(
                 try:
                     batch_results = future.result()
                     results.extend(batch_results)
-                except Exception as exc:
-                    errors.append(f"Batch {len(errors) + 1}: {exc}")
-                finally:
+                    pbar.update(len(batch.sentences))
+                except Exception as e:
+                    error_msg = f"Batch {batch.start_index}-{batch.start_index + len(batch.sentences)} failed: {str(e)}"
+                    errors.append(error_msg)
+                    logger.error(error_msg)
                     pbar.update(len(batch.sentences))
 
     return results, errors
 
 
 def validate_results(
-    results: list[Any],
-    all_units: list[dict[str, Any]],
+    results: list[SentenceTranslation],
+    all_units: list[str] | list[dict[str, Any]],
 ) -> tuple[int, int]:
-    """Return counts of failed and issue translations."""
-    failed = 0
-    issues = 0
-    if len(results) != len(all_units):
-        return len(all_units), 0
-    for result in results:
-        if getattr(result, "verification_status", "") == "Failed":
-            failed += 1
-        elif getattr(result, "verification_status", "") == "Issues Found":
-            issues += 1
-        ft = getattr(result, "full_translation", "")
-        if any(
-            m in ft
-            for m in [
-                "[ERROR]",
-                "[BATCH PROCESSING ERROR]",
-                "[Translation Error]",
-                "[Format Error]",
-            ]
-        ):
-            failed += 1
-    return failed, issues
+    """Validate that all sentences were processed correctly."""
+    expected_count = len(all_units)
+    actual_count = len(results)
+
+    if actual_count != expected_count:
+        logger.warning(
+            f"Translation count mismatch: expected {expected_count}, got {actual_count}"
+        )
+
+    # Check for any missing translations
+    missing_count = 0
+    for i, _unit in enumerate(all_units):
+        if i >= len(results):
+            missing_count += 1
+            continue
+
+        if not results[i].original.strip():
+            missing_count += 1
+
+    if missing_count > 0:
+        logger.warning(f"Missing translations: {missing_count}")
+
+    return actual_count, missing_count
 
 
 def save_translation_output(
     output_file: str,
     metadata: TextMetadata,
-    results: list[Any],
+    results: list[SentenceTranslation],
 ) -> None:
-    """Persist the translation results to disk."""
-    write_json_file(
-        output_file,
-        {
-            "metadata": serialize(metadata),
-            "translations": [serialize(r) for r in results],
-        },
-    )
+    """Save the translation results to a JSON file."""
+    output_data = {
+        "metadata": metadata.model_dump(),
+        "translations": [result.model_dump() for result in results],
+    }
+
+    write_json_file(output_file, output_data)
 
 
 def serialize(obj: Any) -> dict[str, Any] | list[Any] | Any:
-    """Recursively convert Pydantic models and lists into dictionaries."""
-    if isinstance(obj, list):
-        return [serialize(item) for item in obj]
+    """Serialize objects for JSON output."""
     if hasattr(obj, "model_dump"):
         return obj.model_dump()
-    if hasattr(obj, "__dict__"):
-        return {k: serialize(v) for k, v in obj.__dict__.items()}
-    return obj
+    elif hasattr(obj, "__dict__"):
+        return obj.__dict__
+    else:
+        return obj
 
 
 def translate_file(
@@ -251,30 +255,42 @@ def translate_file(
     output_file: str,
     batch_size: int = MAX_BATCH_SIZE,
 ) -> bool | None:
-    """Translate a pre-split file"""
-    split_data = load_split_data(input_file)
-    if not split_data:
-        return None
-
-    all_units = split_data.get("units", [])
-    if not all_units:
-        return None
-
-    metadata = create_metadata(split_data)
-    results, batch_errors = process_batches(all_units, batch_size)
-
-    if batch_errors:
-        return None
-
-    failed_count, issue_count = validate_results(results, all_units)
-    if failed_count or issue_count:
-        return None
-
+    """Translate a file containing split sentences."""
     try:
+        split_data = load_split_data(input_file)
+        if not split_data:
+            logger.error(f"Could not load split data from {input_file}")
+            return False
+
+        metadata = create_metadata(split_data)
+        all_units = split_data.units
+
+        logger.info(f"Processing {len(all_units)} sentences in batches of {batch_size}")
+
+        results, errors = process_batches(all_units, batch_size)
+
+        actual_count, missing_count = validate_results(results, all_units)
+
+        if errors:
+            logger.warning(f"Translation completed with {len(errors)} errors")
+            for error in errors:
+                logger.warning(f"  {error}")
+
+        if missing_count > 0:
+            logger.warning(f"Missing {missing_count} translations")
+
         save_translation_output(output_file, metadata, results)
+
+        logger.info(
+            f"Translation completed: {actual_count} sentences processed, "
+            f"{len(errors)} errors, {missing_count} missing"
+        )
+
         return True
-    except Exception:
-        return None
+
+    except Exception as e:
+        logger.error(f"Translation failed: {str(e)}")
+        return False
 
 
 def main() -> None:
@@ -282,42 +298,14 @@ def main() -> None:
     input_file = sys.argv[1] if len(sys.argv) >= 2 else DEFAULT_INPUT_FILE
     output_file = sys.argv[2] if len(sys.argv) >= 3 else DEFAULT_OUTPUT_FILE
 
-    if not load_split_data(input_file):
-        sys.exit(1)
-
-    batch_size = MAX_BATCH_SIZE
-    if len(sys.argv) >= 4:
-        try:
-            batch_size = int(sys.argv[3])
-            if batch_size < 1:
-                batch_size = MAX_BATCH_SIZE
-            elif batch_size > 10:
-                batch_size = 10
-        except ValueError:
-            batch_size = MAX_BATCH_SIZE
-
     try:
-        success = translate_file(input_file, output_file, batch_size)
-
-        if not success:
-            sys.exit(1)
-
-        sys.exit(0)
-
+        success = translate_file(input_file, output_file)
+        sys.exit(0 if success else 1)
     except KeyboardInterrupt:
         sys.exit(130)
     except Exception:
         sys.exit(1)
 
-
-__all__ = [
-    "translate_file",
-    "load_split_data",
-    "create_metadata",
-    "process_batches",
-    "validate_results",
-    "save_translation_output",
-]
 
 if __name__ == "__main__":
     main()

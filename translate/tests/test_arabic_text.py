@@ -1,6 +1,5 @@
 """Tests for Arabic text utilities."""
 
-
 from translate.utils.arabic_text import (
     clean_arabic_text,
     clean_word_for_matching,
