@@ -64,3 +64,23 @@ publish/socialpilot_*.csv
 publish/requirements.txt
 publish/*.ttf
 publish/*.otf
+
+# Translation pipeline directories - generated content
+translate/0_inbox/
+translate/1_split/
+translate/2_translate/
+translate/3_insert/
+translate/audio_cache/
+translate/reports/
+translate/article/
+translate/archive/
+translate/audio/
+translate/__pycache__/
+translate/.coverage
+translate/htmlcov/
+translate/.pytest_cache/
+translate/.mypy_cache/
+translate/.ruff_cache/
+translate/venv/
+translate/.venv/
+translate/uv.lock

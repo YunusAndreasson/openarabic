@@ -178,6 +178,7 @@ module.exports = [
       '__tests__/',
       '**/*.test.*',
       '**/*.spec.*',
+      'translate/',
     ],
   },
 ];

@@ -3,8 +3,10 @@ import logging
 import os
 import sys
 from datetime import UTC, datetime
+from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from data.config import AUTHOR_NUMBER_MAPPING, TRANSLATE_DIR
 from data.models import ArticleData, SentenceTranslation
 from utils import load_api_keys
 from utils.cache_utils import ensure_valid_cache_files
@@ -12,7 +14,6 @@ from utils.database_utils import (
     archive_files,
     insert_article_sentences,
     save_timing_report,
-    validate_article_data,
 )
 from utils.storage_utils import (
     check_article_exists,
@@ -96,19 +97,64 @@ def generate_article_audio(
             # Continue with next sentence - don't fail the entire process
 
 
-def process_json_file(file_path: str, category_id: int, author_id: int) -> int:
+def detect_author_from_file_path(file_path: str) -> tuple[str, int]:
+    """
+    Detect author from file path structure.
+    Returns (author_name, author_id)
+    """
+    # Extract author number from filename (e.g., "5_test_article_translated.json" -> "5")
+    filename = Path(file_path).name
+    author_number = filename.split("_")[0]
+
+    # Look up author name by number
+    if author_number in AUTHOR_NUMBER_MAPPING:
+        author_name = AUTHOR_NUMBER_MAPPING[author_number]
+        try:
+            author_id = get_author_id(author_name)
+            return author_name, author_id
+        except ValueError:
+            logger.error(f"Author not found in database: {author_name}")
+            raise
+
+    # Fallback to default author if not found
+    logger.warning("Could not detect author from file path, using default")
+    default_author = "Ibn Kathir"
+    author_id = get_author_id(default_author)
+    return default_author, author_id
+
+
+def process_json_file(file_path: str, category_id: int = None) -> int:
     """Process the JSON file and insert data into Supabase."""
-    with open(file_path, encoding="utf-8") as f:
-        data = json.load(f)
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File not found: {file_path}")
 
-    validate_article_data(data)
+    # Detect author from file path
+    author_name, author_id = detect_author_from_file_path(file_path)
+    logger.info(f"Processing file for author: {author_name} (ID: {author_id})")
 
+    # Use default category if not specified
+    if category_id is None:
+        category_id = get_category_id("aqeedah")
+
+    try:
+        with open(file_path, encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as e:
+        logger.error(f"Failed to read JSON file: {e}")
+        raise
+
+    # Validate required fields
+    if "metadata" not in data or "translations" not in data:
+        raise ValueError("Invalid JSON structure: missing metadata or translations")
+
+    # Check if article already exists
     content_hash = generate_content_hash(data)
-
-    existing_article_id, _ = check_article_exists(content_hash)
+    existing_article_id, existing_audio_url = check_article_exists(content_hash)
 
     if existing_article_id:
-        archive_files(file_path, existing_article_id)
+        logger.info(
+            f"Article already exists with ID {existing_article_id} and audio URL: {existing_audio_url}"
+        )
         return existing_article_id
 
     # Create ArticleData object
@@ -162,41 +208,46 @@ def process_json_file(file_path: str, category_id: int, author_id: int) -> int:
     return article_id
 
 
+def find_translation_files() -> list[str]:
+    """Find all translation files in the translate directory."""
+    translation_files: list[str] = []
+
+    if not os.path.exists(TRANSLATE_DIR):
+        logger.warning(f"Translate directory not found: {TRANSLATE_DIR}")
+        return translation_files
+
+    # Look for translated JSON files in flat directory
+    for file_name in os.listdir(TRANSLATE_DIR):
+        if file_name.endswith("_translated.json"):
+            translation_file = os.path.join(TRANSLATE_DIR, file_name)
+            translation_files.append(translation_file)
+            logger.info(f"Found translation file: {translation_file}")
+
+    return translation_files
+
+
 def main() -> None:
     """Main function to run the script."""
     ensure_valid_cache_files()
 
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    articles_dir = os.path.abspath(os.path.join(script_dir, "..", "article"))
+    # Find all translation files
+    translation_files = find_translation_files()
 
-    if not os.path.exists(articles_dir):
-        sys.exit(1)
-
-    json_files: list[str] = []
-
-    direct_output_json = os.path.join(articles_dir, "output.json")
-    if os.path.exists(direct_output_json):
-        json_files.append(direct_output_json)
-
-    for item in os.listdir(articles_dir):
-        item_path = os.path.join(articles_dir, item)
-        if os.path.isdir(item_path):
-            output_json = os.path.join(item_path, "output.json")
-            if os.path.exists(output_json):
-                json_files.append(output_json)
-
-    if not json_files:
+    if not translation_files:
+        logger.error("No translation files found")
+        logger.info(
+            f"Please run the translation phase first. Expected location: {TRANSLATE_DIR}"
+        )
         sys.exit(1)
 
     error_count = 0
 
-    category_id = get_category_id("aqeedah")
-    author_id = get_author_id("Ibn Kathir")
-
-    for json_path in json_files:
+    for json_path in translation_files:
         try:
-            process_json_file(json_path, category_id, author_id)
-            logger.info(f"Successfully processed: {json_path}")
+            article_id = process_json_file(json_path)
+            logger.info(
+                f"Successfully processed: {json_path} -> Article ID: {article_id}"
+            )
         except Exception as e:
             error_count += 1
             logger.error(f"Failed to process {json_path}: {e}")

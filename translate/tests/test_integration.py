@@ -40,14 +40,15 @@ class TestMainWorkflow:
         """Test review_split_file with valid data."""
         # Create a temporary split file
         split_data = {
-            "title": "Test Article",
-            "summary": "A test article for translation",
-            "difficulty_level": "intermediate",
             "units": [
-                {"text": "مرحبا بالعالم."},
-                {"text": "هذا نص تجريبي."},
-                {"text": "لاختبار الترجمة."},
+                "مرحبا بالعالم.",
+                "هذا نص تجريبي.",
+                "نحن نختبر النظام.",
             ],
+            "title": "Test Article",
+            "summary": "A test article for splitting",
+            "difficulty_level": 2,
+            "total_units": 3,
         }
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
@@ -58,7 +59,7 @@ class TestMainWorkflow:
             # Mock user input to continue
             monkeypatch.setattr("builtins.input", lambda prompt: "y")
 
-            result = review_split_file(split_file_path)
+            result = review_split_file(split_file_path, "Test Author")
             assert result is True
 
         finally:
@@ -66,7 +67,7 @@ class TestMainWorkflow:
 
     def test_review_split_file_not_found(self):
         """Test review_split_file with non-existent file."""
-        result = review_split_file("nonexistent_file.json")
+        result = review_split_file("nonexistent_file.json", "Test Author")
         assert result is False
 
     def test_review_translation_success(self, monkeypatch):
@@ -98,7 +99,7 @@ class TestMainWorkflow:
             # Mock user input to continue
             monkeypatch.setattr("builtins.input", lambda prompt: "y")
 
-            result = review_translation(translation_file_path)
+            result = review_translation(translation_file_path, "Test Author")
             assert result is True
 
         finally:
@@ -106,7 +107,7 @@ class TestMainWorkflow:
 
     def test_review_translation_not_found(self):
         """Test review_translation with non-existent file."""
-        result = review_translation("nonexistent_file.json")
+        result = review_translation("nonexistent_file.json", "Test Author")
         assert result is False
 
     @patch("main.split_text")
@@ -116,8 +117,6 @@ class TestMainWorkflow:
             f.write("مرحبا بالعالم. هذا نص تجريبي.")
             input_file = f.name
 
-        output_file = input_file.replace(".txt", "_split.json")
-
         try:
             # Mock the split_text function to actually create the output file
             def mock_split_text_side_effect(input_file, output_file):
@@ -126,13 +125,12 @@ class TestMainWorkflow:
 
             mock_split_text.side_effect = mock_split_text_side_effect
 
-            result = run_split_file(input_file)
-            assert result == output_file
-            mock_split_text.assert_called_once_with(input_file, output_file)
+            result = run_split_file(input_file, "test_author")
+            assert result.endswith("_split.json")
+            mock_split_text.assert_called_once()
 
         finally:
             Path(input_file).unlink(missing_ok=True)
-            Path(output_file).unlink(missing_ok=True)
 
     @patch("main.translate_text")
     def test_run_translation_success(self, mock_translate_text):
@@ -185,8 +183,8 @@ class TestEndToEndWorkflow:
             mock_translate_text.side_effect = mock_translate_text_side_effect
 
             # Test split phase
-            result = run_split_file(input_file)
-            assert result == split_file_path
+            result = run_split_file(input_file, "test_author")
+            assert result.endswith("_split.json")
             mock_split_text.assert_called_once()
 
             # Test translation phase

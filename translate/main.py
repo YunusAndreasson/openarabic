@@ -5,14 +5,18 @@ import logging
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 # Add current directory to path for testing
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from data.config import (
+    AUTHOR_FOLDER_MAPPING,
+    AUTHOR_NUMBER_MAPPING,
     DEFAULT_BATCH_SIZE,
-    DEFAULT_INPUT_FILE,
-    DEFAULT_OUTPUT_FILE,
+    INBOX_DIR,
+    SPLIT_DIR,
+    TRANSLATE_DIR,
 )
 from pipeline.split_file import split_file as split_text
 from pipeline.translate import translate_file as translate_text
@@ -35,20 +39,52 @@ logger = logging.getLogger(__name__)
 load_api_keys()
 
 
-def confirm_step(prompt: str) -> bool:
-    """Get user confirmation for a step"""
-    while True:
-        response = input(f"{prompt} (y/n): ").lower().strip()
-        if response in ["y", "yes"]:
-            return True
-        elif response in ["n", "no"]:
-            return False
-        logger.error("Please answer 'y' or 'n'.")
+def find_input_files_in_inbox() -> list[tuple[str, str, str]]:
+    """
+    Find all input files in the inbox directory.
+    Returns list of tuples: (input_file_path, author_folder, author_name)
+    """
+    input_files: list[tuple[str, str, str]] = []
+
+    if not os.path.exists(INBOX_DIR):
+        logger.warning(f"Inbox directory not found: {INBOX_DIR}")
+        return input_files
+
+    for author_folder in os.listdir(INBOX_DIR):
+        author_folder_path = os.path.join(INBOX_DIR, author_folder)
+
+        if not os.path.isdir(author_folder_path):
+            continue
+
+        if author_folder not in AUTHOR_FOLDER_MAPPING:
+            logger.warning(f"Unknown author folder: {author_folder}")
+            continue
+
+        author_name = AUTHOR_FOLDER_MAPPING[author_folder]
+
+        # Look for .txt files in the author folder
+        for file_name in os.listdir(author_folder_path):
+            if file_name.endswith(".txt"):
+                input_file_path = os.path.join(author_folder_path, file_name)
+                input_files.append((input_file_path, author_folder, author_name))
+                logger.info(
+                    f"Found input file: {input_file_path} for author: {author_name}"
+                )
+
+    return input_files
 
 
-def run_split_file(input_file: str) -> str:
+def run_split_file(input_file: str, author_folder: str) -> str:
     """Split the input text into sentences."""
-    output_file = os.path.splitext(input_file)[0] + "_split.json"
+    # Create split output filename based on input filename with author prefix
+    input_path = Path(input_file)
+    author_number = author_folder.split("_")[0]  # Extract number from folder name
+    split_filename = f"{author_number}_{input_path.stem}_split.json"
+    output_file = os.path.join(SPLIT_DIR, split_filename)
+
+    # Ensure split directory exists
+    os.makedirs(SPLIT_DIR, exist_ok=True)
+
     split_text(input_file, output_file)
     if not os.path.exists(output_file):
         logger.info(f"❌ Split file not created: {output_file}")
@@ -56,7 +92,7 @@ def run_split_file(input_file: str) -> str:
     return output_file
 
 
-def review_split_file(split_file: str) -> bool:
+def review_split_file(split_file: str, author_name: str) -> bool:
     """Review the split file and ask user if they want to continue."""
     if not os.path.exists(split_file):
         logger.info(f"❌ Split file not found: {split_file}")
@@ -75,6 +111,7 @@ def review_split_file(split_file: str) -> bool:
         }
 
         logger.info("\n📋 Split Review:")
+        logger.info(f"Author: {author_name}")
         logger.info(f"Title: {metadata['title']}")
         logger.info(f"Summary: {metadata['summary']}")
         logger.info(f"Difficulty Level: {metadata['difficulty_level']}")
@@ -110,7 +147,7 @@ def run_translation(input_file: str, output_file: str, batch_size: int) -> None:
         sys.exit(1)
 
 
-def review_translation(output_file: str) -> bool:
+def review_translation(output_file: str, author_name: str) -> bool:
     """Review the translation output and ask user if they want to continue."""
     if not os.path.exists(output_file):
         logger.error(f"❌ Translation output file not found: {output_file}")
@@ -124,6 +161,7 @@ def review_translation(output_file: str) -> bool:
         translations = data.get("translations", [])
 
         logger.info("\n📋 Translation Review:")
+        logger.info(f"Author: {author_name}")
         logger.info(f"Title: {metadata.get('title', 'Unknown')}")
         logger.info(f"Summary: {metadata.get('summary', 'No summary')}")
         logger.info(f"Difficulty Level: {metadata.get('difficulty_level', 'Unknown')}")
@@ -183,19 +221,30 @@ def run_insert_only() -> None:
     logger.info("✅ Database insertion completed successfully.")
 
 
+def confirm_step(prompt: str) -> bool:
+    """Get user confirmation for a step"""
+    while True:
+        response = input(f"{prompt} (y/n): ").lower().strip()
+        if response in ["y", "yes"]:
+            return True
+        elif response in ["n", "no"]:
+            return False
+        logger.error("Please answer 'y' or 'n'.")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Arabic Translation Pipeline - Step by Step",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Pipeline Phases:
-  1. Split: Split input.txt into sentences
+  1. Split: Split input files from 0_inbox into sentences
   2. Translate: Translate split sentences to English
   3. Insert: Process through ElevenLabs and insert into database
 
 Examples:
-  python main.py --split                    # Split input.txt and review
-  python main.py --translate                # Translate split file and review
+  python main.py --split                    # Split all files from inbox and review
+  python main.py --translate                # Translate split files and review
   python main.py --insert                   # Insert into database
   python main.py --split --translate        # Split then translate
   python main.py --translate --insert       # Translate then insert
@@ -206,13 +255,13 @@ Examples:
     parser.add_argument(
         "--split",
         action="store_true",
-        help="Split input.txt into sentences and review",
+        help="Split input files from 0_inbox into sentences and review",
     )
 
     parser.add_argument(
         "--translate",
         action="store_true",
-        help="Translate split file and review",
+        help="Translate split files and review",
     )
 
     parser.add_argument(
@@ -235,44 +284,98 @@ Examples:
         parser.print_help()
         sys.exit(1)
 
-    if not os.path.exists(DEFAULT_INPUT_FILE):
-        logger.error(f"❌ Input file not found: {DEFAULT_INPUT_FILE}")
-        sys.exit(1)
-
     if args.batch_size < 1 or args.batch_size > 15:
         logger.error(f"❌ Batch size must be between 1 and 15, got: {args.batch_size}")
         sys.exit(1)
 
-    split_file = os.path.splitext(DEFAULT_INPUT_FILE)[0] + "_split.json"
-
     if args.split:
-        logger.info("🔄 Phase 1: Splitting input.txt into sentences...")
-        run_split_file(DEFAULT_INPUT_FILE)
-        if not review_split_file(split_file):
-            logger.info("Pipeline stopped after split review.")
-            sys.exit(0)
+        logger.info("🔄 Phase 1: Splitting input files from inbox into sentences...")
+
+        input_files = find_input_files_in_inbox()
+        if not input_files:
+            logger.error("❌ No input files found in inbox directory")
+            logger.info(f"Please place .txt files in author folders under: {INBOX_DIR}")
+            sys.exit(1)
+
+        split_files = []
+        for input_file, author_folder, author_name in input_files:
+            logger.info(f"Processing {input_file} for author: {author_name}")
+            split_file = run_split_file(input_file, author_folder)
+            split_files.append((split_file, author_name))
+
+        # Review all split files
+        for split_file, author_name in split_files:
+            if not review_split_file(split_file, author_name):
+                logger.info(f"Pipeline stopped after split review for {author_name}.")
+                sys.exit(0)
 
     if args.translate:
-        if not os.path.exists(split_file):
-            logger.error(f"❌ Split file not found: {split_file}")
+        # Find all split files in the split directory
+        split_files = []
+        if os.path.exists(SPLIT_DIR):
+            for file_name in os.listdir(SPLIT_DIR):
+                if file_name.endswith("_split.json"):
+                    split_file = os.path.join(SPLIT_DIR, file_name)
+                    # Extract author number from filename
+                    author_number = file_name.split("_")[0]
+                    author_name = AUTHOR_NUMBER_MAPPING.get(author_number, "Unknown")
+                    split_files.append((split_file, author_number, author_name))
+
+        if not split_files:
+            logger.error(f"❌ No split files found in: {SPLIT_DIR}")
             logger.error("Please run --split first.")
             sys.exit(1)
 
         logger.info("🔄 Phase 2: Translating sentences...")
-        run_translation(split_file, DEFAULT_OUTPUT_FILE, args.batch_size)
-        if not review_translation(DEFAULT_OUTPUT_FILE):
-            logger.info("Pipeline stopped after translation review.")
-            sys.exit(0)
+
+        for split_file, author_number, author_name in split_files:
+            logger.info(f"Translating {split_file} for author: {author_name}")
+
+            # Create translation output filename
+            split_path = Path(split_file)
+            # Remove the author prefix and _split suffix, then add author prefix and _translated suffix
+            base_name = split_path.stem.replace("_split", "")
+            if base_name.startswith(f"{author_number}_"):
+                base_name = base_name[len(f"{author_number}_") :]
+            translate_filename = f"{author_number}_{base_name}_translated.json"
+            output_file = os.path.join(TRANSLATE_DIR, translate_filename)
+
+            # Ensure translate directory exists
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
+            run_translation(split_file, output_file, args.batch_size)
+
+            if not review_translation(output_file, author_name):
+                logger.info(
+                    f"Pipeline stopped after translation review for {author_name}."
+                )
+                sys.exit(0)
 
     if args.insert:
-        if not os.path.exists(DEFAULT_OUTPUT_FILE):
-            logger.error(f"❌ Translation output file not found: {DEFAULT_OUTPUT_FILE}")
+        # Find all translation files in the translate directory
+        translation_files = []
+        if os.path.exists(TRANSLATE_DIR):
+            for file_name in os.listdir(TRANSLATE_DIR):
+                if file_name.endswith("_translated.json"):
+                    translation_file = os.path.join(TRANSLATE_DIR, file_name)
+                    # Extract author number from filename
+                    author_number = file_name.split("_")[0]
+                    author_name = AUTHOR_NUMBER_MAPPING.get(author_number, "Unknown")
+                    translation_files.append(
+                        (translation_file, author_number, author_name)
+                    )
+
+        if not translation_files:
+            logger.error(f"❌ No translation files found in: {TRANSLATE_DIR}")
             logger.error("Please run --translate first.")
             sys.exit(1)
 
         logger.info(
             "🔄 Phase 3: Processing through ElevenLabs and inserting into database...",
         )
+
+        # Update insert.py to handle the new file structure
+        # For now, we'll use the legacy approach but with the new file locations
         run_insert_only()
 
     # Report token usage statistics
@@ -289,6 +392,7 @@ __all__ = [
     "confirm_step",
     "review_split_file",
     "review_translation",
+    "find_input_files_in_inbox",
 ]
 
 

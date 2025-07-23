@@ -170,5 +170,11 @@ reports/
 temp_audio/
 *.env
 
+# Pipeline directories - generated content
+0_inbox/
+1_split/
+2_translate/
+3_insert/
+
 # API Keys and sensitive configuration
 utils/set_keys.py
