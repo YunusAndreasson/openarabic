@@ -112,18 +112,19 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors }) =
         withOpacity(colors.black, 0.4), // Dark overlay for light text visibility
       ] as const;
     } else {
-      // Light/sepia mode - use light overlay to provide contrast for dark text
+      // Light/sepia mode - use background color overlay to provide contrast for dark text
+      // This ensures sepia mode uses warm sepia tones instead of pure white
       return [
         'transparent',
         'transparent',
-        withOpacity(colors.white, 0.03),
-        withOpacity(colors.white, 0.08),
-        withOpacity(colors.white, 0.15),
-        withOpacity(colors.white, 0.25),
-        withOpacity(colors.white, 0.4), // Light overlay for dark text visibility
+        withOpacity(colors.background, 0.03),
+        withOpacity(colors.background, 0.08),
+        withOpacity(colors.background, 0.15),
+        withOpacity(colors.background, 0.25),
+        withOpacity(colors.background, 0.4), // Background overlay for dark text visibility
       ] as const;
     }
-  }, [colors.black, colors.white, colors.background]);
+  }, [colors.black, colors.background]);
 
   // Background gradient colors for smooth transition to content with memoization
   const backgroundGradientColors = useMemo(() => {
@@ -131,7 +132,8 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors }) =
     const isDarkMode = colors.background === '#0E1512'; // basePalette.sage.darkest
 
     // Use appropriate overlay color based on theme
-    const overlayColor = isDarkMode ? colors.black : colors.white;
+    // For sepia mode, use background color instead of white to maintain warm tones
+    const overlayColor = isDarkMode ? colors.black : colors.background;
 
     return [
       'transparent',
@@ -145,7 +147,7 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors }) =
       withOpacity(overlayColor, 0.85),
       bgColor,
     ] as const;
-  }, [colors.background, colors.black, colors.white]);
+  }, [colors.background, colors.black]);
 
   // Memoize EnhancedImage props to prevent unnecessary re-renders
   const imageProps = useMemo(

@@ -36,7 +36,7 @@
     "ai:debug": "yarn test --verbose --no-coverage"
   },
   "dependencies": {
-    "@babel/runtime": "^7.27.6",
+    "@babel/runtime": "^7.28.2",
     "@expo/vector-icons": "^14.1.0",
     "@gorhom/bottom-sheet": "^5.1.6",
     "@react-native-async-storage/async-storage": "2.1.2",
@@ -102,7 +102,7 @@
     "@typescript-eslint/eslint-plugin": "^8.38.0",
     "@typescript-eslint/parser": "^8.38.0",
     "babel-plugin-module-resolver": "^5.0.2",
-    "babel-preset-expo": "^13.2.3",
+    "babel-preset-expo": "~13.0.0",
     "concurrently": "^9.2.0",
     "eslint": "9.31.0",
     "eslint-config-expo": "~9.2.0",
