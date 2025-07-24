@@ -131,13 +131,13 @@ export function useReadingProgress({
       // Ensure sentenceIndex is valid (0-based indexing: 0 to totalSentences-1)
       const validSentenceIndex = Math.max(0, Math.min(sentenceIndex, totalSentences - 1));
 
-      // Update if we've made meaningful progress (at least 1 sentence forward)
+      // Update if we've moved to a different position (not just forward progress)
       const lastRecorded = Math.max(
         lastSavedSentenceRef.current,
         progress?.last_sentence_read ?? 0
       );
 
-      if (validSentenceIndex > lastRecorded) {
+      if (validSentenceIndex !== lastRecorded) {
         updateProgressMutation.mutate(validSentenceIndex);
       }
     },
@@ -153,7 +153,7 @@ export function useReadingProgress({
 
   // Auto-save progress with debouncing and improved cleanup
   useEffect(() => {
-    if (!isActive || currentSentenceIndex <= 0 || !user?.id) return;
+    if (!isActive || !user?.id) return;
 
     const timeoutId = setTimeout(() => {
       updateProgress(currentSentenceIndex);
@@ -166,7 +166,7 @@ export function useReadingProgress({
   useEffect(() => {
     return () => {
       // Save final progress when hook unmounts
-      if (isActive && currentSentenceIndex > 0 && user?.id && articleId > 0) {
+      if (isActive && currentSentenceIndex >= 0 && user?.id && articleId > 0) {
         const lastRecorded = Math.max(
           lastSavedSentenceRef.current,
           progress?.last_sentence_read ?? 0
@@ -177,7 +177,8 @@ export function useReadingProgress({
           Math.min(currentSentenceIndex, totalSentences - 1)
         );
 
-        if (validFinalSentenceIndex > lastRecorded && user?.id) {
+        // Save progress if we're at a different position than last recorded
+        if (validFinalSentenceIndex !== lastRecorded && user?.id) {
           // Save final progress without logging
           readingProgressService
             .updateProgress({

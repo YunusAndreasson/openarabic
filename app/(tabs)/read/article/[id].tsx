@@ -1,7 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import type { JSX } from 'react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, type LayoutRectangle, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -111,6 +111,12 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     layout: LayoutRectangle;
   } | null>(null);
 
+  // Ref to track current sentence index for reading progress
+  const currentSentenceIndexRef = useRef(0);
+
+  // Ref to track if resume has been triggered for this session
+  const hasResumedRef = useRef(false);
+
   // Handle scroll to close tooltip and hide header
   const handleScroll = useCallback(
     (event: any) => {
@@ -171,7 +177,15 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     }
   }, [articleId, isCurrentArticlePlaying, audioPlayer, globalAudioState]);
 
-  // Initialize sentence scrubber first (without lastSentenceRead initially)
+  // Track reading progress first
+  const { lastSentenceRead } = useReadingProgress({
+    articleId: articleId ?? 0,
+    totalSentences: sortedSentences?.length ?? 0,
+    currentSentenceIndex: currentSentenceIndexRef.current,
+    isActive: !!article && !isLoadingArticle,
+  });
+
+  // Initialize sentence scrubber with actual reading progress
   const {
     currentSentenceIndex,
     scrollViewRef,
@@ -184,16 +198,13 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     sortedSentences: sortedSentences || [],
     dueWordRootIds,
     sentenceWordsMap,
-    lastSentenceRead: 0, // Will be updated after reading progress loads
+    lastSentenceRead: lastSentenceRead ?? 0,
   });
 
-  // Track reading progress
-  const { lastSentenceRead } = useReadingProgress({
-    articleId: articleId ?? 0,
-    totalSentences: sortedSentences?.length ?? 0,
-    currentSentenceIndex,
-    isActive: !!article && !isLoadingArticle,
-  });
+  // Update the ref when currentSentenceIndex changes
+  useEffect(() => {
+    currentSentenceIndexRef.current = currentSentenceIndex;
+  }, [currentSentenceIndex]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -220,7 +231,8 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
       lastSentenceRead !== null &&
       lastSentenceRead > 0 &&
       sortedSentences &&
-      sortedSentences.length > 0
+      sortedSentences.length > 0 &&
+      !hasResumedRef.current
     ) {
       const progressPercent = Math.round((lastSentenceRead / sortedSentences.length) * 100);
 
@@ -228,25 +240,28 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
       selectionFeedback();
       setResumeToast({ visible: true, progress: progressPercent });
 
-      const timer = setTimeout(() => {
+      // Always hide toast after 3 seconds
+      const toastTimer = setTimeout(() => {
         setResumeToast({ visible: false, progress: 0 });
       }, 3000);
 
       // Automatically jump to last read position if progress is 15% or more
-      // This is handled by the useSentenceScrubber hook which respects the 15% threshold
       if (progressPercent >= 15) {
         // Small delay to ensure the article is fully loaded
         const jumpTimer = setTimeout(() => {
           jumpToLastReadPosition();
         }, 500);
 
+        // Mark as resumed to prevent multiple triggers
+        hasResumedRef.current = true;
+
         return () => {
-          clearTimeout(timer);
+          clearTimeout(toastTimer);
           clearTimeout(jumpTimer);
         };
       }
 
-      return () => clearTimeout(timer);
+      return () => clearTimeout(toastTimer);
     }
 
     return undefined;

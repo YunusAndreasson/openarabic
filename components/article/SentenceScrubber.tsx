@@ -75,9 +75,22 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
 
     // Update position when sentence changes (only when not dragging)
     React.useEffect(() => {
+      console.log('SentenceScrubber useEffect triggered:', {
+        currentSentence,
+        maxSentenceIndex,
+        isValidScrubber,
+        isDragging: isDragging.value,
+        trackWidth: trackWidth.value,
+      });
+
       if (!isDragging.value && trackWidth.value > 0 && isValidScrubber) {
         const progress = currentSentence / maxSentenceIndex;
         const newPosition = calculatePosition(progress, trackWidth.value);
+        console.log('Updating scrubber position:', {
+          progress,
+          newPosition,
+          currentSentence,
+        });
         handlePosition.value = withSpring(newPosition, SPRING_CONFIG);
 
         // Update ref when position changes externally (not from scrubbing)
@@ -115,6 +128,7 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
         Gesture.Pan()
           .onBegin(() => {
             'worklet';
+            console.log('Scrubber gesture begin - setting isDragging to true');
             isDragging.value = true;
             showTooltip.value = withSpring(1, TOOLTIP_SPRING_CONFIG);
             runOnJS(onScrubStart)();
@@ -135,6 +149,7 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
           })
           .onEnd(() => {
             'worklet';
+            console.log('Scrubber gesture end - setting isDragging to false');
             isDragging.value = false;
             showTooltip.value = withSpring(0, TOOLTIP_SPRING_CONFIG);
             runOnJS(onScrubEnd)();

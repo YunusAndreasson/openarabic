@@ -1,6 +1,6 @@
 import type { FlashList } from '@shopify/flash-list';
 import type { MutableRefObject } from 'react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ViewToken } from 'react-native';
 
 import type { Tables } from '@/types/database.types';
@@ -34,15 +34,29 @@ export function useSentenceScrubber({
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
   const isUserScrubbing = useRef(false);
   const lastSentenceReadRef = useRef(lastSentenceRead);
+  const isJumpingToLastPosition = useRef(false);
+  const isJumpingRef = useRef(false); // New flag to prevent progress saving during jumps
 
-  // Update ref when lastSentenceRead changes
-  lastSentenceReadRef.current = lastSentenceRead;
+  // Update ref when lastSentenceRead changes and handle resume logic
+  useEffect(() => {
+    lastSentenceReadRef.current = lastSentenceRead;
+  }, [lastSentenceRead]);
 
   // Calculate progress percentage and determine if we should allow jumping to last position
-  const progressPercentage =
-    sortedSentences.length > 0 ? (lastSentenceReadRef.current / sortedSentences.length) * 100 : 0;
+  const progressPercentage = useMemo(() => {
+    const percentage =
+      sortedSentences.length > 0 ? (lastSentenceReadRef.current / sortedSentences.length) * 100 : 0;
+    console.log('Progress calculation:', {
+      lastSentenceRead: lastSentenceReadRef.current,
+      totalSentences: sortedSentences.length,
+      percentage,
+    });
+    return percentage;
+  }, [sortedSentences.length, lastSentenceReadRef.current]);
 
-  const shouldAllowJumpToLastPosition = progressPercentage >= 15;
+  const shouldAllowJumpToLastPosition = useMemo(() => {
+    return progressPercentage >= 15;
+  }, [progressPercentage]);
 
   // Calculate which sentences contain due words - memoized for performance
   const dueWordSentences = new Set<number>();
@@ -58,8 +72,9 @@ export function useSentenceScrubber({
   // Enhanced viewable items changed handler with better tracking
   const handleViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-      // Don't update scrubber position if user is actively scrubbing
-      if (isUserScrubbing.current || viewableItems.length === 0) return;
+      // Don't update scrubber position if user is actively scrubbing or jumping to last position
+      if (isUserScrubbing.current || isJumpingToLastPosition.current || viewableItems.length === 0)
+        return;
 
       // Find all visible sentences (excluding header at index 0)
       const visibleSentences = viewableItems
@@ -132,6 +147,10 @@ export function useSentenceScrubber({
       return;
     }
 
+    // Set flags to prevent handleViewableItemsChanged and progress saving from interfering
+    isJumpingToLastPosition.current = true;
+    isJumpingRef.current = true;
+
     const flashListIndex = lastSentenceReadRef.current + 1; // +1 for header
 
     try {
@@ -150,6 +169,12 @@ export function useSentenceScrubber({
       });
       setCurrentSentenceIndex(lastSentenceReadRef.current);
     }
+
+    // Clear the flags after a delay to allow the scroll animation to complete
+    setTimeout(() => {
+      isJumpingToLastPosition.current = false;
+      isJumpingRef.current = false;
+    }, 2000); // 2 second delay to ensure scroll animation completes and viewable items settle
   }, [shouldAllowJumpToLastPosition]);
 
   // Handle scrub start - mark as user scrubbing to prevent automatic updates
