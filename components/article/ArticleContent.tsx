@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   titleContainer: {
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     marginTop: -LAYOUT.SPACING.XXXLARGE,
     paddingBottom: LAYOUT.SPACING.TINY,
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     width: '100%', // Full width for title without button interference
   },
   authorContainer: {
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
   playIconOffset: {

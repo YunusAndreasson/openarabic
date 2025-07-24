@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   englishText: {
     fontFamily: FONTS.ENGLISH,
     paddingTop: LAYOUT.SPACING.XXXLARGE,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   wordsContainer: {
     alignItems: 'center',
@@ -171,8 +171,9 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.TINY,
     justifyContent: 'flex-start',
     minHeight: LAYOUT.SPACING.XLARGE * 1.5,
-    paddingRight: LAYOUT.SPACING.TINY,
-    paddingVertical: LAYOUT.SPACING.TINY,
+    paddingLeft: LAYOUT.SPACING.MEDIUM,
+    paddingRight: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
     width: '100%',
   },
 });
