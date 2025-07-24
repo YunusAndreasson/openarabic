@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { Fragment, useEffect, type ComponentProps, type FC } from 'react';
-import type { ViewStyle } from 'react-native';
 import { InteractionManager, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
 
@@ -26,19 +25,15 @@ import { useColors } from '@/hooks/theme/useColors';
 import type { SessionMetrics } from '@/types/review.types';
 import { successFeedback } from '@/utils/haptics';
 
-const EMPTY_OBJECT = {};
-
 interface CompletionScreenProps {
   onClose: () => void;
   title?: string;
   subtitle?: string;
   buttonText?: string;
-  buttonVariant?: 'filled' | 'outlined';
   iconName?: ComponentProps<typeof Ionicons>['name'];
   iconSize?: number;
   useThemedView?: boolean;
   contentStyle?: object;
-  buttonStyle?: object;
   sessionMetrics?: SessionMetrics;
   testID?: string;
 }
@@ -48,12 +43,10 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
   title = STRINGS.SESSION_COMPLETE,
   subtitle = STRINGS.ALL_WORDS_PRACTICED,
   buttonText = STRINGS.CONTINUE,
-  buttonVariant = 'outlined',
   iconName = 'checkmark-circle',
   iconSize = LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE,
   useThemedView = false,
-  contentStyle = EMPTY_OBJECT,
-  buttonStyle = EMPTY_OBJECT,
+  contentStyle = {},
   sessionMetrics,
   testID,
 }) => {
@@ -159,12 +152,7 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
           encouragingMetrics ? COMPLETION_BUTTON_DELAY.WITH_METRICS : COMPLETION_BUTTON_DELAY.BASE
         ).duration(TIMING_CONFIG.GENTLE.duration)}
       >
-        <ThemedButton
-          style={[styles.doneButton, buttonStyle]}
-          title={buttonText}
-          variant={buttonVariant}
-          onPress={onClose}
-        />
+        <ThemedButton title={buttonText} variant="filled" onPress={onClose} style={styles.button} />
       </Animated.View>
     </View>
   );
@@ -198,18 +186,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: LAYOUT.SPACING.XLARGE, // Increased for better breathing room
-  } as ViewStyle,
+  },
   contentContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     maxWidth: LAYOUT.REVIEW.COMPLETION.CONTENT_MAX_WIDTH,
     width: '100%',
   },
-  doneButton: {
-    marginTop: LAYOUT.SPACING.LARGE, // Increased spacing for better visual separation
-    minWidth: LAYOUT.BUTTON.HEIGHT.LARGE * 6, // Proper button sizing using button constants
-    paddingVertical: LAYOUT.SPACING.MEDIUM, // Consistent with button height system
-  },
+
   iconContainer: {
     alignItems: 'center',
     height: LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE + LAYOUT.SPACING.LARGE, // Reduced height for better proportion
@@ -219,7 +203,7 @@ const styles = StyleSheet.create({
   metricContent: {
     alignItems: 'center',
     flexDirection: 'row',
-    paddingVertical: LAYOUT.SPACING.SMALL, // Added padding for better touch targets
+    paddingVertical: LAYOUT.SPACING.TINY, // Reduced padding for tighter spacing
   },
   metricIconContainer: {
     alignItems: 'center',
@@ -232,7 +216,7 @@ const styles = StyleSheet.create({
   metricItem: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.TINY, // Reduced vertical padding
     backgroundColor: 'rgba(0, 0, 0, 0.02)', // Subtle background for visual separation
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     borderColor: 'rgba(0, 0, 0, 0.05)', // Subtle border for definition
@@ -249,9 +233,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center', // Center text vertically with icon
   },
   metricsContainer: {
-    gap: LAYOUT.SPACING.MEDIUM, // Consistent gap using spacing scale
-    marginTop: LAYOUT.SPACING.LARGE, // Increased for better visual separation
+    gap: LAYOUT.SPACING.SMALL, // Reduced gap between metric items
+    marginTop: LAYOUT.SPACING.MEDIUM, // Reduced top margin
     width: '100%',
+  },
+  button: {
+    alignSelf: 'center', // Center the button
+    width: LAYOUT.BUTTON.HEIGHT.LARGE * 6, // Fixed width to match content
   },
   subtitleText: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,

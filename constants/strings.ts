@@ -486,7 +486,7 @@ export const STRINGS = {
   STREAK_EXCELLENT_TEMPLATE: '{count}-word streak - excellent focus',
   STREAK_ACHIEVED_TEMPLATE: '{count}-word streak achieved',
   MASTERED_WORDS_TEMPLATE: '{count} words reached strong level',
-  MEMORY_STRENGTH_BOOST_TEMPLATE: '+{days} days average memory strength boost',
+  MEMORY_STRENGTH_BOOST_TEMPLATE: '+{days} days memory strength boost',
   WORDS_PER_MIN_TEMPLATE: '{rate} words/min - efficient learning',
   WORDS_REVIEWED_DEDICATION_TEMPLATE: '{count} words reviewed - dedication pays off',
   WORDS_REVIEWED_GREAT_TEMPLATE: '{count} words reviewed - great effort',
