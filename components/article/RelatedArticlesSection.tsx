@@ -2,13 +2,10 @@ import { router } from 'expo-router';
 import React, { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
 import { ArticleCard } from '@/components/home/ArticleCard';
-import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
-import { STRINGS } from '@/constants/strings';
 import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeaturedArticles';
-import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 import { selectionFeedback } from '@/utils/haptics';
 
@@ -32,11 +29,6 @@ interface RelatedArticlesSectionProps {
    * Optional custom navigation handler
    */
   onArticlePress?: (article: Article) => void;
-
-  /**
-   * Optional custom title for the section
-   */
-  sectionTitle?: string;
 }
 
 /**
@@ -46,15 +38,7 @@ interface RelatedArticlesSectionProps {
  * Uses existing article selection logic for consistency and efficiency.
  */
 export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
-  ({
-    currentArticleId,
-    articlesData,
-    maxArticles = 5,
-    onArticlePress,
-    sectionTitle = STRINGS.CONTINUE_READING,
-  }) => {
-    const colors = useColors();
-
+  ({ currentArticleId, articlesData, maxArticles = 5, onArticlePress }) => {
     // Filter out current article efficiently with memoization
     const filteredArticles = useMemo(() => {
       return articlesData.filter(article => article.id !== currentArticleId);
@@ -80,18 +64,6 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
 
     const handleArticlePress = onArticlePress || defaultNavigationHandler;
 
-    // Memoized styles for performance
-    const sectionTitleStyle = useMemo(
-      () => ({
-        fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-        fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
-        color: colors.tint,
-        marginBottom: LAYOUT.SPACING.MEDIUM,
-        textAlign: 'left' as const,
-      }),
-      [colors.tint]
-    );
-
     // Early return if no articles to show
     if (relatedArticles.length === 0) {
       return null;
@@ -99,8 +71,6 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
 
     return (
       <View style={styles.container}>
-        <ThemedText style={sectionTitleStyle}>{sectionTitle}</ThemedText>
-
         {relatedArticles.map((article, index) => (
           <View key={article.id} style={index > 0 ? styles.articleSpacing : undefined}>
             <ArticleCard
