@@ -85,8 +85,8 @@ const ReviewCardInternal = ({
   const isAnimatingRef = useSharedValue(false);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ===== OPTIMIZED ANIMATED STYLE (MINIMAL DEPENDENCIES) =====
-  const swipeContainerStyle = useAnimatedStyle(() => {
+  // ===== COMBINED ANIMATED STYLE (SINGLE ANIMATED VIEW) =====
+  const combinedAnimatedStyle = useAnimatedStyle(() => {
     'worklet';
     return {
       transform: [{ translateX: translateX.value }],
@@ -184,10 +184,16 @@ const ReviewCardInternal = ({
 
   return (
     <GestureDetector gesture={panGesture}>
-      <Animated.View style={[STATIC_STYLES.swipeContainer, swipeContainerStyle]} testID={testID}>
-        <Animated.View style={[STATIC_STYLES.wordContainer, opacityStyle]}>
-          <WordDisplayComponent {...wordDisplayProps} />
-        </Animated.View>
+      <Animated.View
+        style={[
+          STATIC_STYLES.swipeContainer,
+          STATIC_STYLES.wordContainer,
+          combinedAnimatedStyle,
+          opacityStyle,
+        ]}
+        testID={testID}
+      >
+        <WordDisplayComponent {...wordDisplayProps} />
       </Animated.View>
     </GestureDetector>
   );
