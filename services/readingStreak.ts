@@ -42,7 +42,7 @@ export class ReadingStreakService {
     startDate.setDate(startDate.getDate() - days);
 
     const { data, error } = await supabase
-      .from('reading_progress' as any)
+      .from('reading_progress')
       .select('updated_at')
       .eq('user_id', userId)
       .gte('updated_at', startDate.toISOString())

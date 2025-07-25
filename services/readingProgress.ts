@@ -1,4 +1,8 @@
+import type { Database } from '@/types/database.types';
+
 import { supabase } from './supabase';
+
+type ReadingProgressRow = Database['public']['Tables']['reading_progress']['Row'];
 
 export interface ReadingProgress {
   user_id: string;
@@ -27,8 +31,7 @@ export class ReadingProgressService {
     lastSentenceRead,
     totalSentences,
   }: UpdateReadingProgressParams): Promise<void> {
-    // Use direct SQL to bypass TypeScript issues
-    const { error } = await supabase.rpc('upsert_reading_progress' as any, {
+    const { error } = await supabase.rpc('upsert_reading_progress', {
       p_user_id: userId,
       p_article_id: articleId,
       p_last_sentence_read: lastSentenceRead,
@@ -45,7 +48,7 @@ export class ReadingProgressService {
    */
   static async getProgress(userId: string, articleId: number): Promise<ReadingProgress | null> {
     const { data, error } = await supabase
-      .from('reading_progress' as any)
+      .from('reading_progress')
       .select('*')
       .eq('user_id', userId)
       .eq('article_id', articleId)
@@ -70,7 +73,7 @@ export class ReadingProgressService {
     }
 
     const { data, error } = await supabase
-      .from('reading_progress' as any)
+      .from('reading_progress')
       .select('*')
       .eq('user_id', userId)
       .in('article_id', articleIds);
@@ -81,8 +84,8 @@ export class ReadingProgressService {
 
     // Convert to Map for easy lookup
     const progressMap = new Map<number, ReadingProgress>();
-    (data as unknown as ReadingProgress[]).forEach(progress => {
-      progressMap.set(progress.article_id, progress);
+    (data as ReadingProgressRow[]).forEach(progress => {
+      progressMap.set(progress.article_id, progress as ReadingProgress);
     });
 
     return progressMap;
@@ -96,7 +99,7 @@ export class ReadingProgressService {
     sortOrder: 'asc' | 'desc' = 'asc'
   ): Promise<ReadingProgress[]> {
     const { data, error } = await supabase
-      .from('reading_progress' as any)
+      .from('reading_progress')
       .select('*')
       .eq('user_id', userId)
       .order('progress_percentage', { ascending: sortOrder === 'asc' });
@@ -105,7 +108,7 @@ export class ReadingProgressService {
       throw new Error(`Failed to get articles by progress: ${error.message}`);
     }
 
-    return data as unknown as ReadingProgress[];
+    return (data as ReadingProgressRow[]).map(row => row as ReadingProgress);
   }
 }
 

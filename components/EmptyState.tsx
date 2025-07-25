@@ -54,7 +54,7 @@ const EmptyState = memo(
     iconSize = DEFAULT_ICON_SIZE,
     iconContainerStyle,
     hideArticlesButton = false,
-  }: Partial<EmptyStateProps> & Pick<EmptyStateProps, 'colors' | 'description' | 'title'>) => {
+  }: EmptyStateProps) => {
     const IconComponent: ComponentType<ComponentProps<typeof Ionicons>> =
       icon && typeof icon !== 'string' ? icon : Ionicons;
     const iconName: ComponentProps<typeof Ionicons>['name'] =

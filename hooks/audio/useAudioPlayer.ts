@@ -99,7 +99,7 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
   const [state, dispatch] = useReducer(playerReducer, initialState);
   const { currentTrack, queue: _queue, currentIndex, isLoading, shouldAutoPlay } = state;
 
-  // FIXED: Manual player management to prevent orphaned players
+  // Manual player management to prevent orphaned players
   const audioPlayerRef = useRef<any>(null);
   const currentSourceRef = useRef<string | null>(null);
 
@@ -143,7 +143,7 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
           audioPlayerRef.current.remove();
         }
       } catch {
-        // Old player cleanup error - handle silently
+        // Player cleanup error - handle silently
       }
     }
 
@@ -180,14 +180,14 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
         currentSourceRef.current = null;
       }
 
-      // Clean up dummy player
+      // Clean up fallback player
       if (dummyPlayerRef.current) {
         try {
           if (typeof dummyPlayerRef.current.remove === 'function') {
             dummyPlayerRef.current.remove();
           }
         } catch {
-          // Dummy player cleanup error - handle silently
+          // Player cleanup error - handle silently
         }
         dummyPlayerRef.current = null;
       }
@@ -196,7 +196,7 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
 
   const dummyPlayerRef = useRef<any>(null);
 
-  // Create dummy player once and reuse it for the entire component lifecycle
+  // Create fallback player once and reuse it for the entire component lifecycle
   if (!dummyPlayerRef.current) {
     dummyPlayerRef.current = {
       id: 'dummy-player-' + Date.now(),
@@ -311,7 +311,7 @@ export function useAudioPlayer(): EnhancedPlayerAPI {
     try {
       await setAudioModeAsync({
         playsInSilentMode: true,
-        shouldPlayInBackground: false, // DISABLED: Prevents native player lifecycle issues
+        shouldPlayInBackground: false,
         shouldRouteThroughEarpiece: false,
       });
     } catch (error) {

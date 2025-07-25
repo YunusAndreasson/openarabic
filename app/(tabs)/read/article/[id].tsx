@@ -1,3 +1,4 @@
+import type { FlashList } from '@shopify/flash-list';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import type { JSX } from 'react';
@@ -331,7 +332,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
           onSentenceChange={handleSentenceChange}
           onScrubStart={handleScrubStart}
           onScrubEnd={handleScrubEnd}
-          scrollViewRef={scrollViewRef as React.RefObject<any>}
+          scrollViewRef={scrollViewRef as React.RefObject<FlashList<Tables<'article_sentences'>>>}
           isInReadingList={isInReadingList}
           onToggleReadingList={handleToggleReadingListWithFeedback}
           onPlayPress={handlePlayPress}

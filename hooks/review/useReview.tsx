@@ -516,20 +516,16 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
   }, [currentWord, isComplete, isTransitioningToCompletion, playAudio]);
 
   const handleSwipeLeft = useCallback(() => {
-    // Removed haptic feedback for swipe left
     handleKnowledgeResponse('unknown');
   }, [handleKnowledgeResponse]);
 
   const handleSwipeRight = useCallback(() => {
-    // No haptic feedback for "known" response
     handleKnowledgeResponse('known');
   }, [handleKnowledgeResponse]);
 
   const handleLongPress = useCallback(() => {
     if (isComplete || stateRefs.current.isUpdatingWord || !currentWord) return;
-
-    // showWordManagement(currentWord); // REMOVED
-  }, [currentWord, isComplete /* showWordManagement */]); // REMOVED
+  }, [currentWord, isComplete]);
 
   const handleClose = useCallback(() => {
     const mounted = { current: true };

@@ -17,16 +17,12 @@ import type { Article } from '@/types/articles.types';
 
 import ListArticleItem from './ListArticleItem';
 
-// Extract constants outside component to prevent recreation
-
 // Use responsive height for filtered article items
 const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM;
 const DRAW_DISTANCE_MULTIPLIER = LIST_DRAW_DISTANCE_MULTIPLIER;
 
-// Static separator component
 const SeparatorComponent = () => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />;
 
-// Static styles to prevent recreation
 const STATIC_STYLES = StyleSheet.create({
   container: {
     flex: 1,
@@ -100,7 +96,7 @@ const FilteredArticleViewComparison = (
   // Quick path comparisons first (most likely to change)
   if (prevProps.articles !== nextProps.articles) return false;
   if (prevProps.loading !== nextProps.loading) return false;
-  if (prevProps.editMode !== nextProps.editMode) return false; // CRITICAL: Check editMode!
+  if (prevProps.editMode !== nextProps.editMode) return false;
   if (prevProps.onArticlePress !== nextProps.onArticlePress) return false;
   if (prevProps.onArticleDelete !== nextProps.onArticleDelete) return false;
   if (prevProps.onArticleReorder !== nextProps.onArticleReorder) return false;
