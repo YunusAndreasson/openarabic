@@ -131,20 +131,8 @@ const createSummaryStyle = (isDarkMode: boolean) => ({
   opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.SECONDARY, isDarkMode),
 });
 
-// Cache for typography styles
-const titleStyleCache = new Map<boolean, ReturnType<typeof createTitleStyle>>();
-const authorStyleCache = new Map<boolean, ReturnType<typeof createAuthorStyle>>();
-const summaryStyleCache = new Map<boolean, ReturnType<typeof createSummaryStyle>>();
-
 /**
  * High-performance article card component optimized for list rendering
- *
- * Performance optimizations:
- * - React.memo with custom comparison function
- * - Memoized expensive style calculations
- * - Static constants extracted outside component
- * - Cached typography styles
- * - Optimized prop handling
  */
 function ArticleCardComponent({
   title,
@@ -181,27 +169,9 @@ function ArticleCardComponent({
     return [TRANSPARENT_COLOR, TRANSPARENT_COLOR, TRANSPARENT_COLOR, TRANSPARENT_COLOR] as const;
   }, [colors.background, colors.card, isDarkMode]);
 
-  // Optimized cached typography styles
-  const titleStyle = useMemo(() => {
-    if (!titleStyleCache.has(isDarkMode)) {
-      titleStyleCache.set(isDarkMode, createTitleStyle(isDarkMode));
-    }
-    return titleStyleCache.get(isDarkMode) ?? createTitleStyle(isDarkMode);
-  }, [isDarkMode]);
-
-  const authorStyle = useMemo(() => {
-    if (!authorStyleCache.has(isDarkMode)) {
-      authorStyleCache.set(isDarkMode, createAuthorStyle(isDarkMode));
-    }
-    return authorStyleCache.get(isDarkMode) ?? createAuthorStyle(isDarkMode);
-  }, [isDarkMode]);
-
-  const summaryStyle = useMemo(() => {
-    if (!summaryStyleCache.has(isDarkMode)) {
-      summaryStyleCache.set(isDarkMode, createSummaryStyle(isDarkMode));
-    }
-    return summaryStyleCache.get(isDarkMode) ?? createSummaryStyle(isDarkMode);
-  }, [isDarkMode]);
+  const titleStyle = useMemo(() => createTitleStyle(isDarkMode), [isDarkMode]);
+  const authorStyle = useMemo(() => createAuthorStyle(isDarkMode), [isDarkMode]);
+  const summaryStyle = useMemo(() => createSummaryStyle(isDarkMode), [isDarkMode]);
 
   // Memoize computed values for child components
   const imageContainerStyle = useMemo(

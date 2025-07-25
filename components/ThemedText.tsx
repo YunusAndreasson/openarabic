@@ -1,12 +1,12 @@
-import { useMemo, memo } from 'react';
+import { memo, useMemo } from 'react';
 import type { StyleProp, TextStyle } from 'react-native';
-import { Text, StyleSheet } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
 import {
-  LAYOUT,
-  getArabicTextStyle,
   FONTS,
+  LAYOUT,
   TYPOGRAPHY_HIERARCHY,
+  getArabicTextStyle,
   getEnhancedOpacity,
 } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -153,7 +153,6 @@ function ThemedTextComponent({
   );
 }
 
-// Memoize the component to prevent unnecessary rerenders
 export const ThemedText = memo(ThemedTextComponent);
 
 // Enhanced typography styles with micro-adjustments and semantic relationships

@@ -18,9 +18,6 @@ import type { Article } from '@/types/articles.types';
 import ListArticleItem from './ListArticleItem';
 
 // Extract constants outside component to prevent recreation
-const NOOP_ARTICLE_PRESS = () => {};
-const NOOP_DELETE = () => {};
-const NOOP_DRAG_END = () => {};
 
 // Use responsive height for filtered article items
 const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM;
@@ -123,9 +120,9 @@ const FilteredArticleViewComparison = (
  */
 const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
   articles,
-  onArticlePress = NOOP_ARTICLE_PRESS,
-  onArticleDelete = NOOP_DELETE,
-  onArticleReorder = NOOP_DRAG_END,
+  onArticlePress = () => {},
+  onArticleDelete = () => {},
+  onArticleReorder = () => {},
   editMode = false,
   totalCount,
   loading = false,

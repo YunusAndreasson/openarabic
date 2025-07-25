@@ -84,7 +84,6 @@ const AudioProgressIndicator = ({
 
       {/* Progress Bar */}
       <ProgressBar
-        animationTriggered={progressPercentage > 0}
         backgroundColor={barBackgroundColor}
         fillColor={barFillColor}
         height={progressBarHeight}

@@ -24,9 +24,7 @@ const CARD_SPACING = LAYOUT.SPACING.MEDIUM;
 const CARD_WIDTH = SCREEN_WIDTH * 0.8; // 80% of screen width for better visibility
 // Calculate height based on content needs while reducing excessive bottom padding
 // Analysis: ArticleCard contains image (~40% of height) + title (2 lines) + author (1 line) + summary + padding
-// Original: XXXLARGE * 8 (192px content space) - often too much bottom padding for summaries
-// New: XXXLARGE * 7 (168px content space) - sufficient for 3-4 lines of summary text + proper padding
-const BASE_CONTENT_HEIGHT = LAYOUT.SPACING.XXXLARGE * 7; // Conservative reduction ensures no text cutoff
+const BASE_CONTENT_HEIGHT = LAYOUT.SPACING.XXXLARGE * 7;
 const BASE_CARD_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM + BASE_CONTENT_HEIGHT;
 
 /**
@@ -141,7 +139,6 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    // Removed marginBottom to match consistent spacing pattern used in Practice screen
     // FilterSection provides its own marginTop for proper section spacing
   },
   scrollContainer: {

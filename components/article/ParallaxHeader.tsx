@@ -16,9 +16,7 @@ const GRADIENT_HEIGHT_PERCENTAGE = '60%';
 
 // Static styles to prevent recreation
 const STATIC_STYLES = StyleSheet.create({
-  container: {
-    // Remove position relative to avoid z-index issues
-  },
+  container: {},
   imageSection: {
     width: '100%',
     position: 'relative',

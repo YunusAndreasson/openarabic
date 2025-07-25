@@ -29,7 +29,7 @@ const MetricCard = memo<MetricCardProps>(({ icon, value, label, color, isHighlig
         {
           backgroundColor: colors.card, // Use consistent card background for all metric cards
           borderColor: colors.borderOverlay, // Use subtle border for all cards
-          borderWidth: isHighlight ? 0 : LAYOUT.BORDER.WIDTH.THIN, // Remove border for highlighted card
+          borderWidth: isHighlight ? 0 : LAYOUT.BORDER.WIDTH.THIN,
         },
       ]}
     >

@@ -4,7 +4,6 @@ import { useCallback } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ProgressBar } from '@/components/ProgressBar';
-import { PROGRESS_BAR_ANIMATION_DURATION } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectionFeedback } from '@/utils/haptics';
@@ -46,12 +45,7 @@ const ListenHeader: FC<ListenHeaderProps> = ({
   return (
     <View style={styles.header}>
       <View style={styles.progressContainer}>
-        <ProgressBar
-          key={animationKey}
-          animationDuration={PROGRESS_BAR_ANIMATION_DURATION}
-          animationTriggered={animationKey > 1}
-          progress={Math.max(progress, maxProgress)}
-        />
+        <ProgressBar key={animationKey} progress={Math.max(progress, maxProgress)} />
       </View>
 
       {/* Close button */}

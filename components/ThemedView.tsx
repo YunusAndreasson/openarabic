@@ -54,7 +54,6 @@ function ThemedViewComponent({
     return includeBottomInset ? undefined : ['top', 'left', 'right'];
   }, [includeBottomInset, safeAreaEdges]);
 
-  // Memoize the scrollable content separately to reduce dependency chain
   const scrollableContent = useMemo(
     () => (
       <ScrollView
@@ -73,7 +72,6 @@ function ThemedViewComponent({
     [children, contentContainerStyle, scrollViewProps]
   );
 
-  // Render the component with fewer dependencies
   if (useSafeArea) {
     return (
       <SafeAreaView style={themedStyle} {...otherProps} edges={edges}>
@@ -95,5 +93,4 @@ const styles = StyleSheet.create({
   },
 });
 
-// Memoize the component to prevent unnecessary rerenders
 export const ThemedView = memo(ThemedViewComponent);

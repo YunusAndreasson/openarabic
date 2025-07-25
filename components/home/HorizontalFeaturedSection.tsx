@@ -58,10 +58,8 @@ const HorizontalFeaturedSectionInternal = memo(function HorizontalFeaturedSectio
   // Use the multiple featured articles selection hook
   const featuredArticles = useMultipleFeaturedArticles(articlesData, refreshKey, scope);
 
-  // Memoize the selected articles for the slider
   const selectedArticles = useMemo(() => featuredArticles.articles, [featuredArticles.articles]);
 
-  // Memoize the onPress callback to prevent unnecessary re-renders
   const memoizedOnPress = useCallback(
     (article: Article) => {
       onArticlePress(article);
@@ -69,7 +67,6 @@ const HorizontalFeaturedSectionInternal = memo(function HorizontalFeaturedSectio
     [onArticlePress]
   );
 
-  // Memoize slider props
   const sliderProps = useMemo(() => {
     if (!selectedArticles.length) return null;
     return {

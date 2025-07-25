@@ -9,7 +9,6 @@ import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectionFeedback } from '@/utils/haptics';
 
-// ===== STATIC CONSTANTS EXTRACTION (CRITICAL FOR PERFORMANCE) =====
 const REVIEW_HEADER_CONSTANTS = {
   MIN_PROGRESS_VALUE: REVIEW_MIN_PROGRESS_VALUE,
 } as const;
@@ -47,14 +46,12 @@ interface ReviewHeaderProps {
   onClose?: () => void;
 }
 
-// ===== HELPER FUNCTIONS EXTRACTED (PURE FUNCTIONS OUTSIDE COMPONENT) =====
 const calculateDisplayProgress = (progress: number, maxProgress: number): number =>
   Math.max(progress, maxProgress);
 
 const shouldTriggerAnimation = (animationKey: number): boolean =>
   animationKey > REVIEW_HEADER_CONSTANTS.MIN_PROGRESS_VALUE;
 
-// ===== COMPONENT WITH ADVANCED OPTIMIZATION =====
 const ReviewHeaderInternal: FC<ReviewHeaderProps> = ({
   progress,
   maxProgress,
@@ -63,7 +60,6 @@ const ReviewHeaderInternal: FC<ReviewHeaderProps> = ({
 }) => {
   const colors = useColors();
 
-  // ===== MEMOIZED VALUES (PREVENT EXPENSIVE RECALCULATIONS) =====
   const displayProgress = useMemo(
     () => calculateDisplayProgress(progress, maxProgress),
     [progress, maxProgress]
@@ -79,7 +75,6 @@ const ReviewHeaderInternal: FC<ReviewHeaderProps> = ({
     }
   }, [onClose]);
 
-  // ===== MEMOIZED CHILD PROPS (PREVENT CHILD RE-RENDERS) =====
   const progressBarProps = useMemo(
     () => ({
       animationDuration: PROGRESS_BAR_ANIMATION_DURATION,
@@ -118,7 +113,6 @@ const ReviewHeaderInternal: FC<ReviewHeaderProps> = ({
   );
 };
 
-// ===== CUSTOM MEMO COMPARISON FUNCTION (PREVENTS UNNECESSARY RE-RENDERS) =====
 const ReviewHeaderComparison = (
   prevProps: ReviewHeaderProps,
   nextProps: ReviewHeaderProps

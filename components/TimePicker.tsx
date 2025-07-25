@@ -108,7 +108,6 @@ export const TimePicker = memo(
       [onClose]
     );
 
-    // Memoize dynamic styles to prevent recalculation
     const dynamicStyles = useMemo(
       () => ({
         bottomSheet: [styles.bottomSheet, { backgroundColor: colors.elevation1 }],

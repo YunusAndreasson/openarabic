@@ -251,14 +251,12 @@ interface ArticleContentProps {
   onClose: () => void;
 }
 
-// Extract constants outside component for better performance
 const SENTENCE_ITEM_HEIGHT = LAYOUT.SENTENCE_ITEM.HEIGHT;
 const SCROLL_THROTTLE = SCROLL_EVENT_THROTTLE;
 const DRAW_DISTANCE_MULTIPLIER = SENTENCE_DRAW_DISTANCE_MULTIPLIER;
 
 const getItemType = () => 'sentence';
 
-// Optimize main component with memo and custom comparison
 export const ArticleContent = memo<ArticleContentProps>(
   ({
     id,
@@ -290,7 +288,6 @@ export const ArticleContent = memo<ArticleContentProps>(
       [handleScroll]
     );
 
-    // Memoize the header component for better performance
     const headerComponent = useMemo(
       () => (
         <Fragment>
@@ -309,7 +306,6 @@ export const ArticleContent = memo<ArticleContentProps>(
       gcTime: 7200000, // 2 hours
     });
 
-    // Memoize the footer component for related articles
     const footerComponent = useMemo(
       () => <RelatedArticlesSection currentArticleId={article.id} articlesData={articlesData} />,
       [article.id, articlesData]
@@ -321,10 +317,9 @@ export const ArticleContent = memo<ArticleContentProps>(
       layout.size = SENTENCE_ITEM_HEIGHT;
     }, []);
 
-    // Memoize content container style with proper bottom padding
     const contentContainerStyle = useMemo(
       () => ({
-        paddingTop: 0, // Remove padding since ParallaxHeader handles its own layout
+        paddingTop: 0,
         paddingBottom: insets.bottom + LAYOUT.SPACING.XXXLARGE, // Safe area + comfortable reading space
       }),
       [insets.bottom]
@@ -346,14 +341,14 @@ export const ArticleContent = memo<ArticleContentProps>(
               estimatedFirstItemOffset={0}
               estimatedItemSize={SENTENCE_ITEM_HEIGHT}
               extraData={''}
-              getItemType={getItemTypeCallback} // Add item type for better optimization
+              getItemType={getItemTypeCallback}
               initialScrollIndex={0}
               keyExtractor={item => item.id.toString()}
               ListHeaderComponent={headerComponent}
               ListFooterComponent={footerComponent}
-              overScrollMode="auto" // Allow controlled overscroll for parallax
-              persistentScrollbar={false} // Remove native scrollbar - using custom scrubber
-              removeClippedSubviews={true} // Improve performance
+              overScrollMode="auto"
+              persistentScrollbar={false}
+              removeClippedSubviews={true}
               renderItem={renderSentenceItem}
               scrollEventThrottle={SCROLL_THROTTLE}
               showsVerticalScrollIndicator={false} // Hide native scroll indicator
@@ -389,7 +384,6 @@ export const ArticleContent = memo<ArticleContentProps>(
       </View>
     );
   },
-  // Custom comparison function for performance-critical props
   (prevProps, nextProps) => {
     return (
       prevProps.id === nextProps.id &&

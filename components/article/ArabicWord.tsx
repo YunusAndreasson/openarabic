@@ -21,7 +21,6 @@ import type { SentenceWord } from '@/types/vocabulary.types';
 
 interface ArabicWordProps {
   word: SentenceWord;
-  onPress: (word: SentenceWord) => void;
   onTooltipOpen: (layout: LayoutRectangle) => void;
   position?: number;
   settings: {
@@ -34,7 +33,6 @@ interface ArabicWordProps {
 
 function ArabicWordComponent({
   word,
-  onPress: _onPress,
   onTooltipOpen,
   position,
   settings,

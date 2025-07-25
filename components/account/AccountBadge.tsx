@@ -34,7 +34,7 @@ interface AccountBadgeProps {
 const getFirstNameFromEmail = (email: string): string => {
   const beforeAt = email.split('@')[0];
   if (!beforeAt) return 'User';
-  // Remove common separators and capitalize
+
   const cleaned = beforeAt.replace(/[._-]/g, ' ');
   return cleaned
     .split(' ')

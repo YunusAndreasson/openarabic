@@ -92,18 +92,18 @@ const styles = StyleSheet.create({
   },
   badge: {
     position: 'absolute',
-    top: LAYOUT.SPACING.TINY / 2, // Use half spacing instead of hardcoded offset
-    right: LAYOUT.SPACING.TINY / 2, // Use half spacing instead of hardcoded offset
-    minWidth: LAYOUT.SPACING.LARGE, // 16px responsive
-    minHeight: LAYOUT.SPACING.LARGE, // 16px responsive
-    borderRadius: LAYOUT.SPACING.SMALL, // 8px for rounded appearance
+    top: LAYOUT.SPACING.TINY / 2,
+    right: LAYOUT.SPACING.TINY / 2,
+    minWidth: LAYOUT.SPACING.LARGE,
+    minHeight: LAYOUT.SPACING.LARGE,
+    borderRadius: LAYOUT.SPACING.SMALL,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: LAYOUT.SPACING.TINY,
   },
   badgeText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY, // Use scale instead of hardcoded
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // Use scale instead of hardcoded
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
   },
 });
 

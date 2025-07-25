@@ -137,7 +137,7 @@ export const ChartAxes = memo(
             styles.xAxisContainer,
             {
               width: width,
-              left: 0, // Remove the Y_AXIS_WIDTH offset since chart content already has margin
+              left: 0,
               top: height + 2, // Reduced gap between chart and labels for better alignment
               marginLeft: showYAxis ? Y_AXIS_WIDTH : 0, // Use margin instead to match chart content
             },
@@ -167,7 +167,7 @@ export const ChartAxes = memo(
                     styles.xLabelText,
                     {
                       color: textColor,
-                      fontWeight: isToday ? '600' : '500', // Make today bold
+                      fontWeight: isToday ? '600' : '500',
                       textDecorationLine: isToday ? 'underline' : 'none', // Underline today
                       // Adjust text alignment for edge labels to improve visual balance
                       textAlign:

@@ -6,7 +6,6 @@ import Animated from 'react-native-reanimated';
 import { ThemedText } from '@/components/ThemedText';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
-import { CACHE_SIZE } from '@/constants/performance';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { WordDisplayProps } from '@/types/ui/review.types';
@@ -18,7 +17,6 @@ interface BatchedWordDisplayColors {
   englishText: string;
 }
 
-// ===== STATIC CONSTANTS EXTRACTION (CRITICAL FOR PERFORMANCE) =====
 const WORD_DISPLAY_CONSTANTS = {
   DEFAULT_FONT_SIZE: LAYOUT.SPACING.XXLARGE,
   PADDING_TOP_RATIO: 0.15,
@@ -33,7 +31,6 @@ const ANIMATION_CONFIG = {
   TRANSLATION_DURATION: TIMING_CONFIG.GENTLE.duration,
 } as const;
 
-// ===== STATIC STYLES USING STYLESHEET.CREATE =====
 const STATIC_STYLES = StyleSheet.create({
   container: {
     alignItems: 'center',
@@ -65,7 +62,6 @@ const STATIC_STYLES = StyleSheet.create({
   } as TextStyle,
 });
 
-// ===== HELPER FUNCTIONS EXTRACTED (PURE FUNCTIONS OUTSIDE COMPONENT) =====
 const calculateDynamicPadding = (fontSize: number) => ({
   paddingTop: fontSize * WORD_DISPLAY_CONSTANTS.PADDING_TOP_RATIO,
   paddingBottom: fontSize * WORD_DISPLAY_CONSTANTS.PADDING_BOTTOM_RATIO,
@@ -81,41 +77,14 @@ const createTextStyleBase = (fontSize: number) =>
     ...calculateDynamicPadding(fontSize),
   });
 
-// ===== CACHE MANAGEMENT FOR PERFORMANCE =====
-const clearOldestCacheEntry = (cache: Map<string, TextStyle>): void => {
-  const firstKey = cache.keys().next().value;
-  if (firstKey !== undefined) {
-    cache.delete(firstKey);
-  }
-};
-
-// Module-level cache for expensive style calculations
-const styleCache = new Map<string, TextStyle>();
-const CACHE_MAX_SIZE = CACHE_SIZE.MEDIUM; // Limit cache size
-
-const getCachedTextStyle = (fontSize: number, colors: BatchedWordDisplayColors): TextStyle => {
-  const cacheKey = `${fontSize}-${colors.arabicText}-${colors.shadow}`;
-
-  const cached = styleCache.get(cacheKey);
-  if (cached) {
-    return cached;
-  }
-
+const createTextStyle = (fontSize: number, colors: BatchedWordDisplayColors): TextStyle => {
   const baseStyle = createTextStyleBase(fontSize);
-  const result: TextStyle = {
+  return {
     ...baseStyle,
     color: colors.arabicText,
     ...LAYOUT.ELEVATION.SMALL,
     shadowColor: colors.shadow,
   };
-
-  // Manage cache size (LRU-style)
-  if (styleCache.size >= CACHE_MAX_SIZE) {
-    clearOldestCacheEntry(styleCache);
-  }
-
-  styleCache.set(cacheKey, result);
-  return result;
 };
 
 /**
@@ -140,9 +109,8 @@ const WordDisplayInternal = ({
     [colors.arabicText, colors.shadow, colors.englishText]
   );
 
-  // ===== ADVANCED CACHING WITH MAP-BASED SOLUTION =====
   const textStyle = useMemo(
-    () => getCachedTextStyle(fontSize, batchedColors),
+    () => createTextStyle(fontSize, batchedColors),
     [fontSize, batchedColors]
   );
 
@@ -152,12 +120,10 @@ const WordDisplayInternal = ({
     duration: ANIMATION_CONFIG.TRANSLATION_DURATION,
   });
 
-  // Update opacity when translation changes - memoized to prevent unnecessary calls
   useEffect(() => {
     setOpacity(translation ? 1 : 0);
   }, [translation, setOpacity]);
 
-  // ===== MEMOIZED STYLE OBJECTS (PREVENTS CHILD RE-RENDERS) =====
   const containerStyle = useMemo(() => [STATIC_STYLES.container, style], [style]);
 
   const translationTextStyle = useMemo(
@@ -165,7 +131,6 @@ const WordDisplayInternal = ({
     [batchedColors.englishText]
   );
 
-  // ===== MEMOIZED CHILD PROPS =====
   const arabicTextProps = useMemo(
     () => ({
       skipDefaultColor: true,
@@ -204,23 +169,20 @@ const WordDisplayInternal = ({
   );
 };
 
-// ===== CUSTOM MEMO COMPARISON FUNCTION (PREVENTS UNNECESSARY RE-RENDERS) =====
 const WordDisplayComparison = (
   prevProps: WordDisplayProps,
   nextProps: WordDisplayProps
 ): boolean => {
-  // Compare primitive values first (fastest)
   if (prevProps.word !== nextProps.word) return false;
   if (prevProps.fontSize !== nextProps.fontSize) return false;
   if (prevProps.translation !== nextProps.translation) return false;
 
-  // Style object comparison (most expensive) - check reference first
+  // Style object comparison - check reference first
   if (prevProps.style === nextProps.style) return true;
   if (prevProps.style === null && nextProps.style === null) return true;
   if (prevProps.style === null || nextProps.style === null) return false;
 
-  // Deep comparison only if references differ
-  return JSON.stringify(prevProps.style) === JSON.stringify(nextProps.style);
+  return false; // Skip deep comparison for performance
 };
 
 export const WordDisplay = memo(WordDisplayInternal, WordDisplayComparison);

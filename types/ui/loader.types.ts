@@ -1,11 +1,9 @@
 import type { ViewStyle } from 'react-native';
 
-import type { BaseAnimatedStyleProps } from './base.types';
-
 /**
  * Props for the ProgressBar component
  */
-export interface ProgressBarProps extends BaseAnimatedStyleProps {
+export interface ProgressBarProps {
   /**
    * Progress value between 0 and 100
    */
@@ -15,6 +13,10 @@ export interface ProgressBarProps extends BaseAnimatedStyleProps {
    * @default LAYOUT.SPACING.SMALL
    */
   height?: number;
+  /**
+   * Custom style for the progress bar container
+   */
+  style?: ViewStyle;
   /**
    * Custom style for the progress fill
    */
@@ -29,14 +31,4 @@ export interface ProgressBarProps extends BaseAnimatedStyleProps {
    * If not provided, uses theme's tint color
    */
   fillColor?: string;
-  /**
-   * Whether to animate the progress bar
-   * @default false
-   */
-  animationTriggered?: boolean;
-  /**
-   * Duration of the animation in milliseconds
-   * @default PROGRESS_BAR_ANIMATION_DURATION
-   */
-  animationDuration?: number;
 }

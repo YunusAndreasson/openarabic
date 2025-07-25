@@ -13,7 +13,6 @@ interface BatchedBottomActionColors {
   success: string;
 }
 
-// ===== STATIC CONSTANTS EXTRACTION (CRITICAL FOR PERFORMANCE) =====
 const BOTTOM_ACTIONS_CONSTANTS = {
   ICON_SIZE: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
   TINT_OPACITY: '20', // 12.5% opacity
@@ -22,7 +21,6 @@ const BOTTOM_ACTIONS_CONSTANTS = {
   TEXT_LINE_HEIGHT: LAYOUT.SPACING.LARGE,
 } as const;
 
-// ===== STATIC STYLES USING STYLESHEET.CREATE =====
 const STATIC_STYLES = StyleSheet.create({
   container: {
     flexDirection: 'row',
@@ -57,7 +55,6 @@ const STATIC_STYLES = StyleSheet.create({
   },
 });
 
-// ===== HELPER FUNCTIONS EXTRACTED (PURE FUNCTIONS OUTSIDE COMPONENT) =====
 const createTintColors = (colors: BatchedBottomActionColors) => ({
   error: colors.error + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY,
   success: colors.success + BOTTOM_ACTIONS_CONSTANTS.TINT_OPACITY,
@@ -69,11 +66,9 @@ const createIconProps = (name: ComponentProps<typeof Ionicons>['name'], color: s
   color,
 });
 
-// ===== COMPONENT WITH ADVANCED OPTIMIZATION =====
 const ReviewBottomActionsInternal: FC = memo(() => {
   const colors = useColors();
 
-  // ===== COLOR BATCHING (PREVENTS MULTIPLE COLOR CALCULATIONS) =====
   const batchedColors = useMemo(
     () => ({
       error: colors.error,
@@ -82,10 +77,8 @@ const ReviewBottomActionsInternal: FC = memo(() => {
     [colors.error, colors.success]
   );
 
-  // ===== ADVANCED MEMOIZATION =====
   const tintColors = useMemo(() => createTintColors(batchedColors), [batchedColors]);
 
-  // ===== MEMOIZED ICON COMPONENTS (PREVENT RECREATION) =====
   const iconComponents = useMemo(
     () => ({
       left: <Ionicons {...createIconProps('chevron-back', batchedColors.error)} />,
@@ -94,7 +87,6 @@ const ReviewBottomActionsInternal: FC = memo(() => {
     [batchedColors]
   );
 
-  // ===== MEMOIZED STYLE OBJECTS (PREVENT CHILD RE-RENDERS) =====
   const indicatorStyles = useMemo(
     () => ({
       leftIndicator: [STATIC_STYLES.swipeIndicator, { backgroundColor: tintColors.error }],
@@ -128,7 +120,6 @@ const ReviewBottomActionsInternal: FC = memo(() => {
   );
 });
 
-// ===== CUSTOM MEMO COMPARISON FUNCTION (PREVENTS UNNECESSARY RE-RENDERS) =====
 const ReviewBottomActionsComparison = (_prevProps: unknown, _nextProps: unknown): boolean => {
   // No props to compare anymore
   return true;

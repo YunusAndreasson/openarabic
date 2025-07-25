@@ -72,7 +72,6 @@ export const ThemePicker: FC<ThemePickerProps> = memo(({ isVisible, onClose }) =
   const handleThemeSelect = useCallback(
     (theme: Theme) => {
       dispatch(setTheme(theme));
-      // Remove automatic closing - let user close manually or via backdrop
     },
     [dispatch]
   );
@@ -85,7 +84,6 @@ export const ThemePicker: FC<ThemePickerProps> = memo(({ isVisible, onClose }) =
     [onClose]
   );
 
-  // Memoize dynamic styles to prevent recalculation (same pattern as TimePicker)
   const dynamicStyles = useMemo(
     () => ({
       bottomSheet: [styles.bottomSheet, { backgroundColor: colors.elevation1 }],

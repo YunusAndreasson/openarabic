@@ -57,12 +57,6 @@ const styles = StyleSheet.create({
 
 /**
  * High-performance image component optimized for loading and caching
- *
- * Performance optimizations:
- * - React.memo with custom comparison function
- * - Static constants extracted outside component
- * - Optimized memoization strategies
- * - Props spreading optimization
  */
 function EnhancedImageInternal({
   source,

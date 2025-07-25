@@ -5,13 +5,11 @@ import Animated from 'react-native-reanimated';
 import { ThemedText } from '@/components/ThemedText';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
-import { CACHE_SIZE } from '@/constants/performance';
 import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { MeaningOverlayProps } from '@/types/ui/review.types';
 
-// ===== STATIC CONSTANTS EXTRACTION (CRITICAL FOR PERFORMANCE) =====
 const MEANING_OVERLAY_CONSTANTS = {
   HEIGHT_MULTIPLIER: 5,
   LINE_HEIGHT_MULTIPLIER: 1.4,
@@ -28,7 +26,6 @@ const ANIMATION_CONFIG = {
   DEFAULT_DELAY: 0,
 } as const;
 
-// ===== STATIC STYLES USING STYLESHEET.CREATE =====
 const STATIC_STYLES = StyleSheet.create({
   overlay: {
     alignItems: 'center',
@@ -52,7 +49,6 @@ const STATIC_STYLES = StyleSheet.create({
   },
 });
 
-// ===== HELPER FUNCTIONS EXTRACTED (PURE FUNCTIONS OUTSIDE COMPONENT) =====
 const determineTextColor = (
   isWarning: boolean,
   isVague: boolean,
@@ -72,39 +68,12 @@ const calculateFontSize = (isWarning: boolean, isVague: boolean, isStruggling: b
   return MEANING_OVERLAY_CONSTANTS.FONT_SIZE_DEFAULT;
 };
 
-// ===== CACHE MANAGEMENT FOR PERFORMANCE =====
-const clearOldestCacheEntry = (cache: Map<string, TextStyle>): void => {
-  const firstKey = cache.keys().next().value;
-  if (firstKey !== undefined) {
-    cache.delete(firstKey);
-  }
-};
-
-// Module-level cache for style calculations
-const textStyleCache = new Map<string, TextStyle>();
-const CACHE_MAX_SIZE = CACHE_SIZE.SMALL; // LRU management
-
-const getCachedTextStyle = (textColor: string, fontSize: number): TextStyle => {
-  const cacheKey = `${textColor}-${fontSize}`;
-
-  const cached = textStyleCache.get(cacheKey);
-  if (cached) {
-    return cached;
-  }
-
-  const result = {
+const createTextStyle = (textColor: string, fontSize: number): TextStyle => {
+  return {
     ...STATIC_STYLES.text,
     color: textColor,
     fontSize: fontSize,
   };
-
-  // Manage cache size (LRU-style)
-  if (textStyleCache.size >= CACHE_MAX_SIZE) {
-    clearOldestCacheEntry(textStyleCache);
-  }
-
-  textStyleCache.set(cacheKey, result);
-  return result;
 };
 
 /**
@@ -127,7 +96,6 @@ const MeaningOverlayInternal = (props: MeaningOverlayProps) => {
   const [shouldRender, setShouldRender] = useState(visible);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ===== MEMOIZED CALCULATIONS (PREVENT EXPENSIVE RECALCULATIONS) =====
   const textColor = useMemo(
     () => determineTextColor(isWarning, isVague, isStruggling, colors),
     [isWarning, isVague, isStruggling, colors]
@@ -138,13 +106,12 @@ const MeaningOverlayInternal = (props: MeaningOverlayProps) => {
     [isWarning, isVague, isStruggling]
   );
 
-  // ===== ADVANCED STYLE MEMOIZATION =====
   const overlayStyle = useMemo(
     () => [STATIC_STYLES.overlay, { backgroundColor: colors.elevation0 }],
     [colors.elevation0]
   );
 
-  const textStyle = useMemo(() => getCachedTextStyle(textColor, fontSize), [textColor, fontSize]);
+  const textStyle = useMemo(() => createTextStyle(textColor, fontSize), [textColor, fontSize]);
 
   // ===== OPTIMIZED ANIMATION HANDLING =====
   const { animatedStyle, startAnimation, reverseAnimation } = useOpacityAnimation({
@@ -199,12 +166,10 @@ const MeaningOverlayInternal = (props: MeaningOverlayProps) => {
   );
 };
 
-// ===== CUSTOM MEMO COMPARISON FUNCTION (PREVENTS UNNECESSARY RE-RENDERS) =====
 const MeaningOverlayComparison = (
   prevProps: MeaningOverlayProps,
   nextProps: MeaningOverlayProps
 ): boolean => {
-  // Compare primitive values first (fastest)
   if (prevProps.visible !== nextProps.visible) return false;
   if (prevProps.meaning !== nextProps.meaning) return false;
   if (prevProps.isWarning !== nextProps.isWarning) return false;
@@ -213,7 +178,6 @@ const MeaningOverlayComparison = (
   if (prevProps.duration !== nextProps.duration) return false;
   if (prevProps.animate !== nextProps.animate) return false;
 
-  // Function reference comparison
   if (prevProps.onClose !== nextProps.onClose) return false;
 
   return true;

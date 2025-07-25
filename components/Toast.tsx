@@ -61,7 +61,6 @@ export const Toast = memo(
     const colors = useColors();
     const insets = useSafeAreaInsets();
 
-    // Memoize animation config to prevent unnecessary re-creation
     const animationConfig = useMemo(
       () => ({
         initialScale:

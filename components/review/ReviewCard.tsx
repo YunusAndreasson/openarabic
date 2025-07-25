@@ -16,7 +16,6 @@ import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 import WordDisplayComponent from './WordDisplay';
 
-// ===== STATIC CONSTANTS EXTRACTION (CRITICAL FOR PERFORMANCE) =====
 const REVIEW_CARD_CONSTANTS = {
   SWIPE_THRESHOLD_RATIO: 0.04,
   RESET_DELAY: 50,
@@ -36,7 +35,6 @@ const ANIMATION_CONFIG = {
   RESET_DELAY: REVIEW_CARD_CONSTANTS.RESET_DELAY,
 } as const;
 
-// ===== STATIC STYLES USING STYLESHEET.CREATE =====
 const STATIC_STYLES = StyleSheet.create({
   swipeContainer: {
     alignItems: 'center',
@@ -66,11 +64,9 @@ interface ReviewCardProps {
   testID?: string;
 }
 
-// ===== HELPER FUNCTIONS EXTRACTED (PURE FUNCTIONS OUTSIDE COMPONENT) =====
 const calculateSwipeThreshold = (screenWidth: number): number =>
   screenWidth * REVIEW_CARD_CONSTANTS.SWIPE_THRESHOLD_RATIO;
 
-// ===== COMPONENT WITH ADVANCED OPTIMIZATION =====
 const ReviewCardInternal = ({
   word,
   fontSize,
@@ -81,16 +77,12 @@ const ReviewCardInternal = ({
   opacityStyle,
   testID,
 }: ReviewCardProps) => {
-  // ===== ANIMATION VALUES =====
   const translateX = useSharedValue(0);
   const isAnimatingRef = useSharedValue(false);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ===== MEMOIZED VALUES (PREVENT EXPENSIVE RECALCULATIONS) =====
   const screenWidth = SCREEN_WIDTH;
   const swipeThreshold = useMemo(() => calculateSwipeThreshold(screenWidth), [screenWidth]);
-
-  // ===== ADVANCED STYLE MEMOIZATION =====
   const swipeContainerStyle = useAnimatedStyle(() => {
     'worklet';
     return {
@@ -103,7 +95,6 @@ const ReviewCardInternal = ({
     [opacityStyle]
   );
 
-  // ===== OPTIMIZED CALLBACK FUNCTIONS =====
   const resetPosition = useCallback(() => {
     isAnimatingRef.value = true;
     translateX.value = withTiming(0, ANIMATION_CONFIG.TIMING, () => {
@@ -131,7 +122,6 @@ const ReviewCardInternal = ({
     [onSwipeLeft, onSwipeRight, resetPosition]
   );
 
-  // ===== GESTURE OPTIMIZATION WITH MEMOIZATION =====
   const panGesture = useMemo(
     () =>
       Gesture.Pan()
@@ -180,7 +170,6 @@ const ReviewCardInternal = ({
     ]
   );
 
-  // ===== MEMOIZED CHILD PROPS (PREVENT CHILD RE-RENDERS) =====
   const wordDisplayProps = useMemo(
     () => ({
       fontSize,
@@ -189,7 +178,6 @@ const ReviewCardInternal = ({
     [fontSize, word]
   );
 
-  // ===== CLEANUP EFFECT =====
   useEffect(() => {
     return () => {
       if (resetTimerRef.current) {
@@ -211,7 +199,6 @@ const ReviewCardInternal = ({
   );
 };
 
-// ===== CUSTOM MEMO COMPARISON FUNCTION (PREVENTS UNNECESSARY RE-RENDERS) =====
 const ReviewCardComparison = (prevProps: ReviewCardProps, nextProps: ReviewCardProps): boolean => {
   // Compare primitive values first (fastest)
   if (prevProps.word !== nextProps.word) return false;
@@ -224,13 +211,12 @@ const ReviewCardComparison = (prevProps: ReviewCardProps, nextProps: ReviewCardP
   if (prevProps.onSwipeLeft !== nextProps.onSwipeLeft) return false;
   if (prevProps.onSwipeRight !== nextProps.onSwipeRight) return false;
 
-  // Style object comparison (most expensive) - check reference first
+  // Style object comparison - check reference first
   if (prevProps.opacityStyle === nextProps.opacityStyle) return true;
   if (prevProps.opacityStyle === null && nextProps.opacityStyle === null) return true;
   if (prevProps.opacityStyle === null || nextProps.opacityStyle === null) return false;
 
-  // Deep comparison only if references differ
-  return JSON.stringify(prevProps.opacityStyle) === JSON.stringify(nextProps.opacityStyle);
+  return false; // Skip deep comparison for performance
 };
 
 export const ReviewCard = memo(ReviewCardInternal, ReviewCardComparison);

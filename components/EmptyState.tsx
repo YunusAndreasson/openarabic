@@ -160,9 +160,7 @@ const styles = StyleSheet.create({
   description: {
     marginTop: LAYOUT.SPACING.MEDIUM,
   },
-  icon: {
-    // Remove transform for more consistent sizing
-  },
+  icon: {},
   iconContainer: {
     alignItems: 'center',
     height: LAYOUT.BUTTON.HEIGHT.LARGE * 2,

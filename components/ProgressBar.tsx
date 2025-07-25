@@ -7,13 +7,11 @@ import { useColors } from '@/hooks/theme/useColors';
 import type { ProgressBarProps } from '@/types/ui/loader.types';
 
 /**
- * A simple, crash-resistant progress bar component that displays progress
- * without complex animations that could cause crashes.
+ * A simple, crash-resistant progress bar component that displays progress.
  *
  * Features:
  * - Theme integration with light/dark mode
  * - Customizable colors and dimensions
- * - No animations to prevent crashes
  * - Crash prevention for invalid values
  */
 function ProgressBarComponent({
@@ -23,15 +21,9 @@ function ProgressBarComponent({
   fillStyle,
   backgroundColor,
   fillColor,
-  animationTriggered = false, // Ignored - no animations
-  animationDuration = 0, // Ignored - no animations
 }: ProgressBarProps) {
-  // Ignore animation parameters to prevent linter errors
-  void animationTriggered;
-  void animationDuration;
   const colors = useColors();
 
-  // CRITICAL: Safe progress calculation without shared values
   const safeProgress = useMemo(() => {
     // Handle invalid inputs that could crash
     if (typeof rawProgress !== 'number' || isNaN(rawProgress) || !isFinite(rawProgress)) {
@@ -70,7 +62,6 @@ function ProgressBarComponent({
         {
           backgroundColor: progressFillColor,
           borderRadius: height / 2,
-          // CRITICAL: Use simple width percentage instead of animated values
           width: `${safeProgress}%`,
         },
         fillStyle,
@@ -96,5 +87,4 @@ const defaultStyles = StyleSheet.create({
   },
 });
 
-// Memoize the component to prevent unnecessary re-renders
 export const ProgressBar = memo(ProgressBarComponent);

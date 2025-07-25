@@ -58,10 +58,8 @@ const GenericFeaturedSectionInternal = memo(function GenericFeaturedSectionInter
   // Use the new generic featured article selection hook
   const featuredArticle = useFeaturedArticleSelection(articlesData, refreshKey, scope);
 
-  // Memoize the selected article for FeaturedSection
   const selectedArticle = useMemo(() => featuredArticle.article, [featuredArticle.article]);
 
-  // Memoize the onPress callback to prevent unnecessary re-renders
   const memoizedOnPress = useCallback(
     (article: Article) => {
       onArticlePress(article);
@@ -69,7 +67,6 @@ const GenericFeaturedSectionInternal = memo(function GenericFeaturedSectionInter
     [onArticlePress]
   );
 
-  // Memoize FeaturedSection props
   const featuredSectionProps = useMemo(() => {
     if (!selectedArticle) return null;
     return {

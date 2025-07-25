@@ -111,7 +111,6 @@ export const useChartTooltip = () => {
   });
 
   // Jakob's Law: Analytics apps keep tooltips visible until user interaction changes
-  // Removed auto-hide behavior to match user expectations from Google Analytics, Mixpanel, etc.
 
   const showTooltip = useCallback(
     (x: number, y: number, value: string, label: string, yOffset: number = -40) => {
