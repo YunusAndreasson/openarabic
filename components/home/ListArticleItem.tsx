@@ -16,6 +16,7 @@ interface ListArticleItemProps {
   };
   isBeingDragged?: boolean;
   progressPercentage?: number;
+  hasStartedReading?: boolean;
 }
 
 const ListArticleItem = memo(
@@ -27,6 +28,7 @@ const ListArticleItem = memo(
     dragHandleProps,
     isBeingDragged = false,
     progressPercentage,
+    hasStartedReading,
   }: ListArticleItemProps): JSX.Element => {
     const handlePress = useCallback(() => onPress?.(article), [onPress, article]);
 
@@ -41,6 +43,7 @@ const ListArticleItem = memo(
         dragHandleProps={dragHandleProps}
         isBeingDragged={isBeingDragged}
         progressPercentage={progressPercentage}
+        hasStartedReading={hasStartedReading}
       />
     );
   }

@@ -46,7 +46,7 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
   iconName = 'checkmark-circle',
   iconSize = LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE,
   useThemedView = false,
-  contentStyle = {},
+  contentStyle,
   sessionMetrics,
   testID,
 }) => {
@@ -81,7 +81,7 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
   const encouragingMetrics = useEncouragingMetrics(sessionMetrics, colors);
 
   const Content = (
-    <View style={[styles.contentContainer, contentStyle]}>
+    <View style={[styles.contentContainer, contentStyle || {}]}>
       {/* Success Icon - Primary visual element */}
       <Animated.View
         entering={ZoomIn.delay(QUICK_ANIMATION_DURATION)

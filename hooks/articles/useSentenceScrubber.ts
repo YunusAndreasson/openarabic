@@ -46,11 +46,6 @@ export function useSentenceScrubber({
   const progressPercentage = useMemo(() => {
     const percentage =
       sortedSentences.length > 0 ? (lastSentenceReadRef.current / sortedSentences.length) * 100 : 0;
-    console.log('Progress calculation:', {
-      lastSentenceRead: lastSentenceReadRef.current,
-      totalSentences: sortedSentences.length,
-      percentage,
-    });
     return percentage;
   }, [sortedSentences.length, lastSentenceReadRef.current]);
 

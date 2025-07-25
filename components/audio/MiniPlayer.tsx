@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { JSX } from 'react';
 import React, { memo, useCallback } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View, type GestureResponderEvent } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
@@ -72,7 +72,7 @@ const MiniPlayerComponent = ({
 
   // Handle play/pause with haptic feedback
   const handlePlayPause = useCallback(
-    (event: any) => {
+    (event: GestureResponderEvent) => {
       event.stopPropagation(); // Prevent card tap
       selectionFeedback();
       onPlayPause();

@@ -17,6 +17,7 @@ const STATIC_DATA_KEYS = new Set(['categories', 'authors', 'articles']);
 const FILTERED_ARTICLE_KEYS = new Set(['filtered-articles']);
 const USER_DATA_KEYS = new Set(['readingList']);
 const VOCABULARY_KEYS = new Set(['fsrs-words', 'vocabulary-stats']);
+const READING_PROGRESS_KEYS = new Set(['reading-progress', 'reading-progress-bulk']);
 const EXCLUDED_KEYS = new Set(['isInReadingList', 'audio-tracks', 'struggling-words']);
 const EXCLUDED_PATTERNS = new Set(['due', 'live']);
 
@@ -38,7 +39,8 @@ const shouldDehydrateQuery = (query: Query): boolean => {
   if (
     STATIC_DATA_KEYS.has(firstKey) ||
     FILTERED_ARTICLE_KEYS.has(firstKey) ||
-    USER_DATA_KEYS.has(firstKey)
+    USER_DATA_KEYS.has(firstKey) ||
+    READING_PROGRESS_KEYS.has(firstKey)
   ) {
     return true;
   }

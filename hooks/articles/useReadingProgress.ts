@@ -85,8 +85,10 @@ export function useReadingProgress({
       }
       return result;
     },
-    enabled: !!user?.id && articleId > 0,
+    enabled: !!user?.id && articleId >= 0,
     staleTime: 30000, // Cache for 30 seconds
+    refetchOnMount: false, // Don't refetch on mount - use persisted data first
+    retry: 3, // Retry up to 3 times if the query fails
   });
 
   // Mutation to update reading progress
@@ -124,7 +126,7 @@ export function useReadingProgress({
   // Improved progress update logic
   const updateProgress = useCallback(
     (sentenceIndex: number) => {
-      if (!isActive || !user?.id || articleId <= 0 || totalSentences <= 0) {
+      if (!isActive || !user?.id || articleId < 0 || totalSentences <= 0) {
         return;
       }
 
@@ -166,7 +168,7 @@ export function useReadingProgress({
   useEffect(() => {
     return () => {
       // Save final progress when hook unmounts
-      if (isActive && currentSentenceIndex >= 0 && user?.id && articleId > 0) {
+      if (isActive && currentSentenceIndex >= 0 && user?.id && articleId >= 0) {
         const lastRecorded = Math.max(
           lastSavedSentenceRef.current,
           progress?.last_sentence_read ?? 0
@@ -224,14 +226,22 @@ export function useBulkReadingProgress(articleIds: number[]) {
       return readingProgressService.getBulkProgress(user.id, articleIds);
     },
     enabled: !!user?.id && articleIds.length > 0,
-    staleTime: 60000, // Cache for 1 minute
+    staleTime: 0, // Always consider data stale to force refetch
+    refetchOnMount: true, // Force refetch on mount to ensure we get fresh data
+    retry: 3, // Retry up to 3 times if the query fails
+    gcTime: 1000 * 60 * 60 * 24, // Keep in memory for 24 hours
   });
 }
 
 // Safe wrapper hook for bulk reading progress that handles missing AuthProvider
 export function useSafeBulkReadingProgress(articleIds: number[]) {
   try {
-    return useBulkReadingProgress(articleIds);
+    const result = useBulkReadingProgress(articleIds);
+    // Ensure data is always a Map, even if the query returns undefined
+    return {
+      ...result,
+      data: result.data || new Map(),
+    };
   } catch {
     // AuthProvider not available - return empty result
     return {

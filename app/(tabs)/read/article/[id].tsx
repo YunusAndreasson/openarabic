@@ -2,15 +2,19 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import type { JSX } from 'react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState, type LayoutRectangle, View } from 'react-native';
+import {
+  AppState,
+  View,
+  type LayoutRectangle,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
 import { ArticleSentence, WordTooltip } from '@/components/article';
 import { ArticleContent } from '@/components/article/ArticleContent';
 import { MiniPlayer } from '@/components/audio';
 import { ToastProvider, useToast } from '@/components/providers';
 import { TIMING_CONFIG } from '@/constants/animation';
-import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
@@ -33,41 +37,12 @@ import { selectionFeedback } from '@/utils/haptics';
 
 const FLEX_ONE_STYLE = { flex: 1 } as const;
 
-// Static resume toast styles
-const RESUME_TOAST_STYLES = {
-  container: {
-    position: 'absolute' as const,
-    bottom: LAYOUT.SPACING.XLARGE * 3,
-    left: LAYOUT.SPACING.XLARGE,
-    right: LAYOUT.SPACING.XLARGE,
-    alignItems: 'center' as const,
-    zIndex: LAYOUT.Z_INDEX.POPUP,
-  },
-  toast: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    ...LAYOUT.ELEVATION.SMALL,
-  },
-  text: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600' as const,
-    textAlign: 'center' as const,
-  },
-} as const;
-
 // Inner component with toast context access
 const ArticleScreenContent = ({ id }: { id: string }) => {
   const colors = useColors();
   const { user } = useAuth();
   const fontScale = useAppSelectorMemo(state => state.settings.fontScale);
   const { showToast } = useToast();
-
-  // Local state for resume toast positioned near scrubber
-  const [resumeToast, setResumeToast] = useState<{
-    visible: boolean;
-    progress: number;
-  }>({ visible: false, progress: 0 });
 
   const audioPlayer = useSimpleAudioPlayer();
   const globalAudioState = useGlobalAudioState();
@@ -119,7 +94,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
 
   // Handle scroll to close tooltip and hide header
   const handleScroll = useCallback(
-    (event: any) => {
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       handleHeaderScroll(event);
       // Close tooltip when user scrolls
       if (activeTooltip) {
@@ -177,12 +152,14 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     }
   }, [articleId, isCurrentArticlePlaying, audioPlayer, globalAudioState]);
 
-  // Track reading progress first
-  const { lastSentenceRead } = useReadingProgress({
-    articleId: articleId ?? 0,
+  // Track reading progress with proper initialization
+  const isActive = !!article && !isLoadingArticle;
+
+  const { lastSentenceRead, updateProgress } = useReadingProgress({
+    articleId: articleId ?? 0, // Use 0 if articleId is undefined/null
     totalSentences: sortedSentences?.length ?? 0,
     currentSentenceIndex: currentSentenceIndexRef.current,
-    isActive: !!article && !isLoadingArticle,
+    isActive,
   });
 
   // Initialize sentence scrubber with actual reading progress
@@ -205,6 +182,18 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
   useEffect(() => {
     currentSentenceIndexRef.current = currentSentenceIndex;
   }, [currentSentenceIndex]);
+
+  // Update reading progress when current sentence changes (but only after initial load)
+  useEffect(() => {
+    if (
+      !!article &&
+      !isLoadingArticle &&
+      currentSentenceIndex >= 0 &&
+      currentSentenceIndexRef.current > 0
+    ) {
+      updateProgress(currentSentenceIndex);
+    }
+  }, [currentSentenceIndex, article, isLoadingArticle, updateProgress]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -232,18 +221,14 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
       lastSentenceRead > 0 &&
       sortedSentences &&
       sortedSentences.length > 0 &&
-      !hasResumedRef.current
+      !hasResumedRef.current &&
+      !isLoadingArticle // Only trigger when article is fully loaded
     ) {
       const progressPercent = Math.round((lastSentenceRead / sortedSentences.length) * 100);
 
-      // Show resume toast
+      // Show resume toast using the proper Toast component
       selectionFeedback();
-      setResumeToast({ visible: true, progress: progressPercent });
-
-      // Always hide toast after 3 seconds
-      const toastTimer = setTimeout(() => {
-        setResumeToast({ visible: false, progress: 0 });
-      }, 3000);
+      showToast(`Resumed at ${progressPercent}%`, 3000, 'success');
 
       // Automatically jump to last read position if progress is 15% or more
       if (progressPercent >= 15) {
@@ -256,16 +241,13 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
         hasResumedRef.current = true;
 
         return () => {
-          clearTimeout(toastTimer);
           clearTimeout(jumpTimer);
         };
       }
-
-      return () => clearTimeout(toastTimer);
     }
 
     return undefined;
-  }, [lastSentenceRead, sortedSentences, jumpToLastReadPosition]);
+  }, [sortedSentences, jumpToLastReadPosition, isLoadingArticle, showToast]); // Removed lastSentenceRead from dependencies
 
   const handleWordPress = useCallback(
     (word: SentenceWord, layout?: LayoutRectangle) => {
@@ -333,22 +315,6 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     [getWordsForSentence, fontScale, colors, dueWordRootIds, handleWordPress]
   );
 
-  const resumeToastStyle = useMemo(
-    () => ({
-      ...RESUME_TOAST_STYLES.toast,
-      backgroundColor: colors.success || colors.tint,
-    }),
-    [colors.success, colors.tint]
-  );
-
-  const resumeTextStyle = useMemo(
-    () => ({
-      ...RESUME_TOAST_STYLES.text,
-      color: colors.white,
-    }),
-    [colors.white]
-  );
-
   return (
     <View style={FLEX_ONE_STYLE}>
       {article && sortedSentences ? (
@@ -403,15 +369,6 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
         onStudyListToggle={handleStudyListToggle}
         wordRootId={activeTooltip?.word.root_id}
       />
-
-      {/* Resume toast positioned near scrubber */}
-      {resumeToast.visible && (
-        <View style={RESUME_TOAST_STYLES.container}>
-          <View style={resumeToastStyle}>
-            <ThemedText style={resumeTextStyle}>Resumed at {resumeToast.progress}%</ThemedText>
-          </View>
-        </View>
-      )}
     </View>
   );
 };

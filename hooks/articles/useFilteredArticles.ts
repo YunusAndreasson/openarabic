@@ -13,7 +13,9 @@ export const useFilteredArticles = (articles: Article[]) => {
 
   // Fetch bulk reading progress for all articles (safely handles missing AuthProvider)
   const articleIds = useMemo(() => articles.map(article => article.id), [articles]);
-  const { data: progressMap = new Map() } = useSafeBulkReadingProgress(articleIds);
+  const { data: progressMapRaw = new Map() } = useSafeBulkReadingProgress(articleIds);
+  // Ensure progressMap is always a Map to prevent runtime errors
+  const progressMap = progressMapRaw instanceof Map ? progressMapRaw : new Map();
 
   // Provide default values if the state hasn't been rehydrated yet
   const sort = filtersState?.sort || {

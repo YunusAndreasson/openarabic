@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import type { ThemeColors } from '@/types/ui/theme.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { selectionFeedback } from '@/utils/haptics';
 
@@ -20,7 +21,7 @@ const getDifficultyLabel = (difficulty: number): string => {
   return 'Hard';
 };
 
-const getDifficultyColor = (difficulty: number, colors: any): string => {
+const getDifficultyColor = (difficulty: number, colors: ThemeColors): string => {
   if (difficulty <= 1.5) return colors.success;
   if (difficulty <= 2.5) return colors.warning;
   return colors.error;

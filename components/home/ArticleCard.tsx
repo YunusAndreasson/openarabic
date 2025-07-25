@@ -33,6 +33,7 @@ interface ArticleCardProps {
   imageUrl?: string;
   // Reading progress
   progressPercentage?: number;
+  hasStartedReading?: boolean;
 }
 
 export const ArticleCard: FC<ArticleCardProps> = ({
@@ -47,6 +48,7 @@ export const ArticleCard: FC<ArticleCardProps> = ({
   onPlayPress,
   imageUrl,
   progressPercentage,
+  hasStartedReading,
 }) => {
   const isDarkMode = useIsDarkMode();
   const colors = useColors();
@@ -135,7 +137,7 @@ export const ArticleCard: FC<ArticleCardProps> = ({
                   {author}
                   {difficultyLevel && ` • ${getDifficultyText(difficultyLevel)}`}
                 </ThemedText>
-                {progressPercentage !== undefined && progressPercentage > 0 && (
+                {hasStartedReading && progressPercentage !== undefined && (
                   <View style={styles.progressContainer}>
                     <ProgressCircle
                       percentage={progressPercentage}

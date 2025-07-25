@@ -135,7 +135,9 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
 
   // Fetch bulk reading progress for all articles
   const articleIds = useMemo(() => articles.map(article => article.id), [articles]);
-  const { data: progressMap = new Map() } = useSafeBulkReadingProgress(articleIds);
+  const { data: progressMapRaw = new Map() } = useSafeBulkReadingProgress(articleIds);
+  // Ensure progressMap is always a Map to prevent runtime errors
+  const progressMap = progressMapRaw instanceof Map ? progressMapRaw : new Map();
 
   // Memoize expensive computations
   const articlesLength = useMemo(() => articles.length, [articles.length]);
@@ -179,6 +181,7 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
       const { item } = params;
       const progress = progressMap.get(item.id);
       const progressPercentage = progress?.progress_percentage ?? 0;
+      const hasStartedReading = progress !== undefined; // Article has been started if there's a progress record
 
       if (editMode && 'drag' in params) {
         // DraggableFlatList render
@@ -199,6 +202,7 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
             }
             isBeingDragged={isDragging}
             progressPercentage={progressPercentage}
+            hasStartedReading={hasStartedReading}
           />
         );
       } else {
@@ -210,6 +214,7 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
             onPress={!editMode ? onArticlePress : undefined}
             onDelete={() => onArticleDelete(item.id)}
             progressPercentage={progressPercentage}
+            hasStartedReading={hasStartedReading}
           />
         );
       }

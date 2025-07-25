@@ -1,5 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PERSISTENCE_OPTIONS, clearPersistedCache, getPersistedCacheSize } from '../../utils/queryPersistence';
+import {
+  PERSISTENCE_OPTIONS,
+  clearPersistedCache,
+  getPersistedCacheSize,
+} from '../../utils/queryPersistence';
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
   setItem: jest.fn(() => Promise.resolve()),
@@ -25,6 +29,8 @@ describe('queryPersistence utils', () => {
       'readingList',
       'fsrs-words',
       'vocabulary-stats',
+      'reading-progress',
+      'reading-progress-bulk',
     ];
     for (const key of allowedKeys) {
       const query = { queryKey: [key] } as any;
@@ -33,11 +39,7 @@ describe('queryPersistence utils', () => {
   });
 
   it('skips excluded query keys and patterns', () => {
-    const excluded = [
-      'isInReadingList',
-      'audio-tracks',
-      'struggling-words',
-    ];
+    const excluded = ['isInReadingList', 'audio-tracks', 'struggling-words'];
     for (const key of excluded) {
       const query = { queryKey: [key] } as any;
       expect(shouldDehydrateQuery(query)).toBe(false);

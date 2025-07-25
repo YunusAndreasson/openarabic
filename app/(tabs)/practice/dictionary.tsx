@@ -48,8 +48,7 @@ export default function DictionaryScreen(): JSX.Element {
         word={item}
         editMode={editMode}
         onDelete={() => {
-          // Word deletion functionality removed
-          console.log('Word deletion not available');
+          // Word deletion functionality removed - placeholder for future implementation
         }}
       />
     ),
