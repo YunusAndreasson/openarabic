@@ -93,12 +93,6 @@ const ReviewCardInternal = ({
     };
   }, []);
 
-  // ===== MEMOIZED STYLES (PREVENT RECREATION) =====
-  const wordContainerStyle = useMemo(
-    () => [STATIC_STYLES.wordContainer, opacityStyle],
-    [opacityStyle]
-  );
-
   // ===== OPTIMIZED RESET FUNCTION (WORKLET-READY) =====
   const resetPosition = useCallback(() => {
     'worklet';
@@ -191,7 +185,7 @@ const ReviewCardInternal = ({
   return (
     <GestureDetector gesture={panGesture}>
       <Animated.View style={[STATIC_STYLES.swipeContainer, swipeContainerStyle]} testID={testID}>
-        <Animated.View style={wordContainerStyle}>
+        <Animated.View style={[STATIC_STYLES.wordContainer, opacityStyle]}>
           <WordDisplayComponent {...wordDisplayProps} />
         </Animated.View>
       </Animated.View>
