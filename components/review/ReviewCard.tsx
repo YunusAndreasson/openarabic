@@ -16,18 +16,25 @@ import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 import WordDisplayComponent from './WordDisplay';
 
+// ===== STATIC CONSTANTS (EXTRACTED FOR MAXIMUM PERFORMANCE) =====
 const REVIEW_CARD_CONSTANTS = {
   SWIPE_THRESHOLD_RATIO: 0.04,
   RESET_DELAY: 50,
   MIN_DISTANCE: 0.1,
   MAX_TRANSLATION_RATIO: LAYOUT.OPACITY.HOVER,
-};
+} as const;
+
+// Pre-calculated values for maximum performance
+const STATIC_CALCULATIONS = {
+  SWIPE_THRESHOLD: SCREEN_WIDTH * REVIEW_CARD_CONSTANTS.SWIPE_THRESHOLD_RATIO,
+  MAX_TRANSLATION: SCREEN_WIDTH * REVIEW_CARD_CONSTANTS.MAX_TRANSLATION_RATIO,
+} as const;
 
 // Static gesture detection thresholds
 const GESTURE_CONFIG = {
   MIN_DISTANCE: REVIEW_CARD_CONSTANTS.MIN_DISTANCE,
   ACTIVE_OFFSET_X: [-1, 1] as [number, number],
-};
+} as const;
 
 // Static animation configuration
 const ANIMATION_CONFIG = {
@@ -64,9 +71,6 @@ interface ReviewCardProps {
   testID?: string;
 }
 
-const calculateSwipeThreshold = (screenWidth: number): number =>
-  screenWidth * REVIEW_CARD_CONSTANTS.SWIPE_THRESHOLD_RATIO;
-
 const ReviewCardInternal = ({
   word,
   fontSize,
@@ -81,8 +85,7 @@ const ReviewCardInternal = ({
   const isAnimatingRef = useSharedValue(false);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const screenWidth = SCREEN_WIDTH;
-  const swipeThreshold = useMemo(() => calculateSwipeThreshold(screenWidth), [screenWidth]);
+  // ===== OPTIMIZED ANIMATED STYLE (MINIMAL DEPENDENCIES) =====
   const swipeContainerStyle = useAnimatedStyle(() => {
     'worklet';
     return {
@@ -90,21 +93,25 @@ const ReviewCardInternal = ({
     };
   }, []);
 
+  // ===== MEMOIZED STYLES (PREVENT RECREATION) =====
   const wordContainerStyle = useMemo(
     () => [STATIC_STYLES.wordContainer, opacityStyle],
     [opacityStyle]
   );
 
+  // ===== OPTIMIZED RESET FUNCTION (WORKLET-READY) =====
   const resetPosition = useCallback(() => {
+    'worklet';
     isAnimatingRef.value = true;
     translateX.value = withTiming(0, ANIMATION_CONFIG.TIMING, () => {
       isAnimatingRef.value = false;
     });
   }, [translateX, isAnimatingRef]);
 
+  // ===== OPTIMIZED SWIPE HANDLER (MINIMAL JS THREAD WORK) =====
   const handleSwipeComplete = useCallback(
     (isRight: boolean) => {
-      // Trigger the swipe action
+      // Trigger the swipe action immediately
       if (isRight) {
         onSwipeRight();
       } else {
@@ -122,6 +129,7 @@ const ReviewCardInternal = ({
     [onSwipeLeft, onSwipeRight, resetPosition]
   );
 
+  // ===== OPTIMIZED GESTURE HANDLER (STATIC CALCULATIONS) =====
   const panGesture = useMemo(
     () =>
       Gesture.Pan()
@@ -131,11 +139,10 @@ const ReviewCardInternal = ({
         .onUpdate(event => {
           'worklet';
           if (!isAnimatingRef.value && event.translationX !== undefined) {
-            // Clamp translation to prevent extreme values that could cause crashes
-            const maxTranslation = screenWidth * REVIEW_CARD_CONSTANTS.MAX_TRANSLATION_RATIO;
+            // Use pre-calculated max translation for maximum performance
             const clampedTranslation = Math.max(
-              -maxTranslation,
-              Math.min(maxTranslation, event.translationX)
+              -STATIC_CALCULATIONS.MAX_TRANSLATION,
+              Math.min(STATIC_CALCULATIONS.MAX_TRANSLATION, event.translationX)
             );
             translateX.value = clampedTranslation;
           }
@@ -143,15 +150,14 @@ const ReviewCardInternal = ({
         .onEnd(event => {
           'worklet';
           if (!isAnimatingRef.value && event.translationX !== undefined) {
-            const threshold = swipeThreshold;
             const translationX = event.translationX;
 
-            // Check if swipe threshold is met (inline to avoid function call in worklet)
-            if (Math.abs(translationX) > threshold) {
+            // Use pre-calculated threshold for maximum performance
+            if (Math.abs(translationX) > STATIC_CALCULATIONS.SWIPE_THRESHOLD) {
               const isRight = translationX > 0;
               runOnJS(handleSwipeComplete)(isRight);
             } else {
-              // Simple reset on UI thread
+              // Simple reset on UI thread with optimized timing
               isAnimatingRef.value = true;
               translateX.value = withTiming(0, ANIMATION_CONFIG.TIMING, () => {
                 isAnimatingRef.value = false;
@@ -159,17 +165,10 @@ const ReviewCardInternal = ({
             }
           }
         }),
-    [
-      isUpdating,
-      isTransitioning,
-      isAnimatingRef,
-      translateX,
-      handleSwipeComplete,
-      swipeThreshold,
-      screenWidth,
-    ]
+    [isUpdating, isTransitioning, isAnimatingRef, translateX, handleSwipeComplete]
   );
 
+  // ===== MEMOIZED PROPS (PREVENT CHILD RE-RENDERS) =====
   const wordDisplayProps = useMemo(
     () => ({
       fontSize,
@@ -178,6 +177,7 @@ const ReviewCardInternal = ({
     [fontSize, word]
   );
 
+  // ===== CLEANUP (PREVENT MEMORY LEAKS) =====
   useEffect(() => {
     return () => {
       if (resetTimerRef.current) {
@@ -199,6 +199,7 @@ const ReviewCardInternal = ({
   );
 };
 
+// ===== OPTIMIZED COMPARISON FUNCTION (MAXIMUM PERFORMANCE) =====
 const ReviewCardComparison = (prevProps: ReviewCardProps, nextProps: ReviewCardProps): boolean => {
   // Compare primitive values first (fastest)
   if (prevProps.word !== nextProps.word) return false;
