@@ -111,14 +111,17 @@ const FilteredArticleViewComparison = (
   return true;
 };
 
+// Static empty functions to avoid infinite render loops
+const noop = () => {};
+
 /**
  * Internal component implementation
  */
 const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
   articles,
-  onArticlePress = () => {},
-  onArticleDelete = () => {},
-  onArticleReorder = () => {},
+  onArticlePress = noop,
+  onArticleDelete = noop,
+  onArticleReorder = noop,
   editMode = false,
   totalCount,
   loading = false,

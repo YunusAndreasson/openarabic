@@ -11,6 +11,7 @@ import { QueryClient, onlineManager } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { useFonts } from 'expo-font';
 import { Stack, useNavigationContainerRef, useRouter } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, Platform, StyleSheet, View } from 'react-native';
@@ -119,6 +120,14 @@ function AppContent() {
   const navigationRef = useNavigationContainerRef();
   const [hasAttemptedRedirect, setHasAttemptedRedirect] = useState(false);
   const router = useRouter();
+
+  // Configure splash screen fade animation
+  useEffect(() => {
+    SplashScreen.setOptions({
+      duration: 1000, // 1 second fade animation duration
+      fade: true, // Use fade animation
+    });
+  }, []);
 
   // Centralized system UI theme management
   useSystemUITheme();
