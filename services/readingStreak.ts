@@ -67,11 +67,14 @@ export class ReadingStreakService {
     }
 
     // Mark dates with activity
-    (data || []).forEach((record: any) => {
-      if (record.updated_at) {
-        const date = new Date(record.updated_at).toISOString().split('T')[0];
-        if (date) {
-          activityMap.set(date, true);
+    (data || []).forEach(record => {
+      if (record && typeof record === 'object' && 'updated_at' in record) {
+        const typedRecord = record as { updated_at: string | null };
+        if (typedRecord.updated_at) {
+          const date = new Date(typedRecord.updated_at).toISOString().split('T')[0];
+          if (date) {
+            activityMap.set(date, true);
+          }
         }
       }
     });

@@ -1,5 +1,12 @@
 import { memo, useCallback, useRef, type FC } from 'react';
-import { Platform, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
 
 import ArticleCard from '@/components/ArticleCard';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
@@ -49,7 +56,7 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
    * Handle scroll events to detect when cards come into view
    */
   const handleScroll = useCallback(
-    (event: any) => {
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const { contentOffset } = event.nativeEvent;
       const scrollX = contentOffset.x;
 
