@@ -17,7 +17,7 @@ export interface SpacingState {
 export function calculateWordPriority(word: StudyWord): number {
   const now = new Date();
   const dueDate = word.fsrs_due ? new Date(word.fsrs_due) : now;
-  const hoursOverdue = Math.max(0, (now.getTime() - dueDate.getTime()) / (1000 * 60 * 60));
+  const hoursOverdue = (now.getTime() - dueDate.getTime()) / (1000 * 60 * 60);
   const stability = word.fsrs_stability ?? 1;
   const difficulty = word.fsrs_difficulty ?? DEFAULT_FSRS_DIFFICULTY;
   const difficultyFactor = (difficulty - 5) * 0.01;
@@ -30,7 +30,7 @@ export function calculateWordPriority(word: StudyWord): number {
   // - More lapses = lower priority number (more urgent)
   // - Struggling words = lower priority number (more urgent)
   const basePriority = 10; // Start with a high base value
-  const stabilityFactor = stability * 0.1; // Higher stability = less urgent (higher number)
+  const stabilityFactor = Math.max(0, 10 - stability) * 0.1; // Lower stability = more urgent (lower number)
   const strugglingFactor = isStrugglingWord(word) ? -10.0 : 0; // Struggling words get much higher priority (lower number)
 
   return (

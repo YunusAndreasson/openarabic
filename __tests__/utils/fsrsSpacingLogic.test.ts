@@ -1,13 +1,13 @@
-import { PriorityQueue } from '../../utils/priorityQueue';
-import {
-  calculateWordPriority,
-  getNextWordWithSpacing,
-  updateSpacingCounters,
-  createSpacingState,
-  type SpacingState,
-} from '../../utils/fsrsSpacing';
 import { MIN_WORD_SPACING } from '../../constants/fsrs';
 import type { StudyWord } from '../../types/vocabulary.types';
+import {
+  calculateWordPriority,
+  createSpacingState,
+  getNextWordWithSpacing,
+  updateSpacingCounters,
+  type SpacingState,
+} from '../../utils/fsrsSpacing';
+import { PriorityQueue } from '../../utils/priorityQueue';
 
 const createTestWord = (overrides: Partial<StudyWord> = {}): StudyWord => {
   const now = Date.now();
@@ -106,8 +106,8 @@ describe('FSRS Spacing Logic - Comprehensive Tests', () => {
       // stabilityFactor = Math.max(0, 10 - stability) * 0.1
       // For stability=1: stabilityFactor = 9 * 0.1 = 0.9
       // For stability=10: stabilityFactor = 0 * 0.1 = 0
-      // So lowPriority = -1 + 0.9 + 0.015 = -0.085
-      // And highPriority = -1 + 0 + 0.015 = -0.985
+      // So lowPriority = 10 - 0.1 - 0.9 + 0.015 = 9.015
+      // And highPriority = 10 - 0.1 - 0 + 0.015 = 9.915
       expect(lowPriority).toBeGreaterThan(highPriority);
     });
 

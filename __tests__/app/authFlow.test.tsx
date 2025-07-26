@@ -10,6 +10,14 @@ jest.mock('@expo/vector-icons', () => ({
   Ionicons: (props: any) => <props.name {...props} />,
 }));
 
+jest.mock('@react-navigation/native', () => {
+  const React = require('react');
+  return {
+    NavigationContainer: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    useFocusEffect: jest.fn(),
+  };
+});
+
 jest.mock('@react-navigation/elements', () => {
   const React = require('react');
   const { Text } = require('react-native');
