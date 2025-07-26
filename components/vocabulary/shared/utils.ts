@@ -64,11 +64,12 @@ export const calculateRetrievability = (
 
 // Calculate learning efficiency score
 export const calculateEfficiencyScore = (word: StudyWord): number => {
-  const difficulty = word.fsrs_difficulty ?? 6.5; // Default to medium difficulty in 5-10 range
-  const lapses = word.fsrs_lapses ?? 0;
-  const stability = word.fsrs_stability ?? 0;
-  const state = word.fsrs_state ?? 0;
-  const reps = word.fsrs_reps ?? 0;
+  // Handle NaN and invalid values
+  const difficulty = isNaN(word.fsrs_difficulty ?? 6.5) ? 6.5 : word.fsrs_difficulty ?? 6.5;
+  const lapses = isNaN(word.fsrs_lapses ?? 0) ? 0 : word.fsrs_lapses ?? 0;
+  const stability = isNaN(word.fsrs_stability ?? 0) ? 0 : word.fsrs_stability ?? 0;
+  const state = isNaN(word.fsrs_state ?? 0) ? 0 : word.fsrs_state ?? 0;
+  const reps = isNaN(word.fsrs_reps ?? 0) ? 0 : word.fsrs_reps ?? 0;
 
   let score = 0;
 

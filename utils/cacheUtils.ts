@@ -12,7 +12,10 @@ export function formatBytes(bytes: number, decimals: number = 2): string {
 
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+  // Ensure i is within bounds of the sizes array
+  const boundedIndex = Math.min(i, sizes.length - 1);
+
+  return `${parseFloat((bytes / Math.pow(k, boundedIndex)).toFixed(dm))} ${sizes[boundedIndex]}`;
 }
 
 /**
