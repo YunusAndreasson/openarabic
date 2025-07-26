@@ -4,11 +4,11 @@ import React, { memo, useCallback, useState, type FC } from 'react';
 import { LayoutAnimation, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import SectionTitle from '@/components/SectionTitle';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { selectionFeedback } from '@/utils/haptics';
 
 // FAQ item type
 interface FAQItem {
@@ -31,7 +31,6 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(({ item, isExpanded, on
 
   const handlePress = useCallback(() => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    selectionFeedback();
     onToggle(item.id);
   }, [item.id, onToggle]);
 
@@ -45,6 +44,8 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(({ item, isExpanded, on
           borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
           paddingHorizontal: LAYOUT.SPACING.LARGE,
           paddingVertical: LAYOUT.SPACING.LARGE,
+          minHeight: LAYOUT.BUTTON.HEIGHT.MEDIUM, // Proper touch target following Fitts' Law
+          ...LAYOUT.ELEVATION.SUBTLE, // Consistent elevation
         }}
         onPress={handlePress}
         android_ripple={{ color: colors.navigationRipple, borderless: false }}
@@ -77,6 +78,7 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(({ item, isExpanded, on
             paddingHorizontal: LAYOUT.SPACING.LARGE,
             paddingVertical: LAYOUT.SPACING.LARGE,
             marginTop: LAYOUT.SPACING.SMALL,
+            ...LAYOUT.ELEVATION.SUBTLE, // Consistent elevation for expanded content
           }}
         >
           <ThemedText type="body" variant="secondary">
@@ -99,24 +101,24 @@ const HelpScreen: FC = () => {
     'Getting Started': [
       {
         id: 'what-is-app',
-        question: 'What is this app?',
+        question: 'What is OpenArabic?',
         answer:
           'A free Arabic learning app. Read classical Islamic texts with translations and build vocabulary through spaced repetition.',
         category: 'Getting Started',
       },
       {
         id: 'is-free',
-        question: 'Is this app free?',
+        question: 'Is it free?',
         answer:
           'Yes, completely free with no ads or subscriptions. Created by Yûnus Andréasson (yunus@edenmind.com) for everyone.',
         category: 'Getting Started',
       },
       {
         id: 'who-is-this-for',
-        question: 'Who is this app for?',
+        question: 'Who is this for?',
         answer:
-          'Perfect for readers who can recognize Arabic letters and basic words but struggle with full texts. Add unknown words to your study list and memorize them.',
-        category: 'Who is this app for?',
+          'Readers who can recognize Arabic letters and basic words but struggle with full texts. Add unknown words to your study list and memorize them.',
+        category: 'Who is this for?',
       },
       {
         id: 'how-to-start',
@@ -137,7 +139,7 @@ const HelpScreen: FC = () => {
     'Design Philosophy': [
       {
         id: 'why-simple',
-        question: 'Why is the app so simple?',
+        question: 'Why is the interface so simple?',
         answer:
           'Minimalism puts content first. Removing distracting features is as important as adding new ones. Every element serves your Arabic learning.',
         category: 'Design Philosophy',
@@ -204,6 +206,27 @@ const HelpScreen: FC = () => {
           'Uses i+1 principle: 90-95% familiar words with just enough new vocabulary to challenge you. Perfect comprehensible input for natural learning.',
         category: 'Content',
       },
+      {
+        id: 'comprehensible-input',
+        question: 'What is comprehensible input?',
+        answer:
+          'Language you can mostly understand (90-95%) with just a few new words. Like reading a story where you know most words but learn 2-3 new ones from context. This is how children naturally learn language.',
+        category: 'Content',
+      },
+      {
+        id: 'i-plus-one',
+        question: 'What does i+1 mean?',
+        answer:
+          'Your current level (i) plus one step beyond (+1). Articles contain mostly familiar language with just enough new vocabulary to challenge you without overwhelming. This creates the perfect learning zone.',
+        category: 'Content',
+      },
+      {
+        id: 'natural-acquisition',
+        question: 'How does natural acquisition work?',
+        answer:
+          'You absorb new words and grammar patterns by understanding messages, not memorizing rules. Like how you learned your first language - through meaningful exposure, not textbooks.',
+        category: 'Content',
+      },
     ],
 
     Technical: [
@@ -227,6 +250,37 @@ const HelpScreen: FC = () => {
         answer:
           'Partially. Downloaded articles and cached audio work offline. Adding new words or syncing progress requires internet connection.',
         category: 'Technical',
+      },
+    ],
+
+    'Learning Science': [
+      {
+        id: 'why-90-percent',
+        question: 'Why 90-95% familiar words?',
+        answer:
+          'Research shows this is the sweet spot for learning. Too easy (100%) = no progress. Too hard (below 90%) = overwhelming. 90-95% lets you understand while picking up new language naturally.',
+        category: 'Learning Science',
+      },
+      {
+        id: 'affective-filter',
+        question: 'What is the affective filter?',
+        answer:
+          'Your mental state affects learning. When relaxed and motivated, you absorb language easily. When stressed or anxious, learning slows down. The app creates a calm, focused environment.',
+        category: 'Learning Science',
+      },
+      {
+        id: 'input-vs-output',
+        question: 'Why focus on reading/listening?',
+        answer:
+          'Input (reading/listening) drives language acquisition. You learn by understanding messages, not by forcing yourself to speak. Speaking naturally emerges once you have enough input.',
+        category: 'Learning Science',
+      },
+      {
+        id: 'natural-order',
+        question: 'How does the natural order work?',
+        answer:
+          'Your brain acquires language features in a predictable sequence, regardless of how you study. The app works with this natural order, not against it.',
+        category: 'Learning Science',
       },
     ],
   };
@@ -269,13 +323,7 @@ const HelpScreen: FC = () => {
       >
         {Object.entries(FAQ_BY_CATEGORY).map(([category, items], categoryIndex) => (
           <View key={category} style={categoryIndex > 0 ? styles.categorySpacing : undefined}>
-            <ThemedText
-              type="heading2"
-              weight="semibold"
-              style={{ marginBottom: LAYOUT.SPACING.MEDIUM }}
-            >
-              {category}
-            </ThemedText>
+            <SectionTitle title={category} isFirstSection={categoryIndex === 0} />
             <View style={styles.categoryContainer}>
               {items.map(item => (
                 <FAQItemComponent

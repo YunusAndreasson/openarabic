@@ -233,7 +233,7 @@ const AccountScreen: FC = () => {
                     />
                   </View>
                   <ThemedText style={styles.cardText} type="body" weight="medium">
-                    Frequent Questions
+                    Help
                   </ThemedText>
                 </View>
                 <Ionicons
