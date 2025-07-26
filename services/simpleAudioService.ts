@@ -59,16 +59,19 @@ class SimpleAudioService {
       this.currentPlayer = createAudioPlayer(track.audioUrl);
       this.currentTrack = track;
 
-      // Update status to loading
+      // IMMEDIATE FEEDBACK: Update status to loading right away
       this.updateStatus({ isLoading: true, isPlaying: false, currentTrack: this.currentTrack });
 
       // Start playback
       await this.currentPlayer.play();
 
-      // Start polling for status updates
+      // IMMEDIATE FEEDBACK: Update to playing state immediately after play() succeeds
+      this.updateStatus({ isLoading: false, isPlaying: true });
+
+      // Start polling for status updates with faster interval
       this.startStatusPolling();
 
-      // Set loading timeout
+      // Set loading timeout as fallback
       this.loadingTimeout = setTimeout(() => {
         if (this.status.isLoading) {
           this.updateStatus({ isLoading: false, isPlaying: false });
@@ -98,6 +101,9 @@ class SimpleAudioService {
    */
   async stop(): Promise<void> {
     try {
+      // IMMEDIATE FEEDBACK: Update status immediately when stop is called
+      this.updateStatus({ isPlaying: false, isLoading: false });
+
       await this.stopInternal();
       this.updateStatus({ isPlaying: false, isLoading: false, currentTrack: null });
     } catch {
@@ -173,7 +179,7 @@ class SimpleAudioService {
       clearInterval(this.statusPollingInterval);
     }
 
-    // Reduce polling frequency to prevent issues
+    // FASTER POLLING: Reduce interval from 1000ms to 250ms for more responsive UI
     this.statusPollingInterval = setInterval(() => {
       if (this.currentPlayer) {
         try {
@@ -206,7 +212,7 @@ class SimpleAudioService {
           this.updateStatus({ isPlaying: false, isLoading: false });
         }
       }
-    }, 1000);
+    }, 250); // Reduced from 1000ms to 250ms for faster response
   }
 
   /**

@@ -79,8 +79,9 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     const currentArticleId = audioPlayer.currentTrack?.articleId
       ? parseInt(audioPlayer.currentTrack.articleId.toString(), 10)
       : null;
-    return currentArticleId === articleId;
-  }, [audioPlayer.currentTrack?.articleId, articleId]);
+    // Check both that it's the current article AND that it's actually playing
+    return currentArticleId === articleId && audioPlayer.isPlaying;
+  }, [audioPlayer.currentTrack?.articleId, audioPlayer.isPlaying, articleId]);
 
   const [activeTooltip, setActiveTooltip] = useState<{
     word: SentenceWord;
