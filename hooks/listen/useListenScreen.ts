@@ -208,6 +208,11 @@ export const useListenScreen = () => {
         selectionFeedback();
         await readingListService.removeFromReadingList(user.id, articleId);
         dispatch(removeFromCustomOrder(articleId));
+
+        // Immediately update the specific article's reading list status
+        queryClient.setQueryData(['readingList', user.id, articleId], false);
+
+        // Then invalidate related queries to ensure consistency
         queryClient.invalidateQueries({
           queryKey: ['readingList', user.id],
         });

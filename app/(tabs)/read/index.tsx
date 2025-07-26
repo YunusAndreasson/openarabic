@@ -20,8 +20,6 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
-import { useAppDispatch } from '@/store/hooks';
-import { updateLastOpenedArticle } from '@/store/readingListSlice';
 import type { Article, Category } from '@/types/articles.types';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
@@ -45,7 +43,7 @@ export default function ReadScreen(): JSX.Element {
   const colors = useColors();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
-  const dispatch = useAppDispatch();
+
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { prefetchArticle } = useAppPreloader();
@@ -131,14 +129,13 @@ export default function ReadScreen(): JSX.Element {
 
   const handleArticlePress = useCallback(
     (article: Article) => {
-      dispatch(updateLastOpenedArticle(article.id));
       // Prefetch article data after navigation animation completes
       InteractionManager.runAfterInteractions(() => {
         prefetchArticle(article.id);
       });
       router.push(getArticleRoute(article.id, article.title));
     },
-    [dispatch, prefetchArticle]
+    [prefetchArticle]
   );
 
   const handleSelectCategory = useCallback((categoryId: number, categoryName?: string) => {

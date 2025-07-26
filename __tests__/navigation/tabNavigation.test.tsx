@@ -4,6 +4,7 @@ jest.mock('@react-navigation/native', () => {
   const React = require('react');
   return {
     NavigationContainer: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    useFocusEffect: jest.fn(),
   };
 });
 

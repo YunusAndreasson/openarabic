@@ -1,21 +1,16 @@
+import { combineReducers, configureStore, type PreloadedState } from '@reduxjs/toolkit';
 import { useMemo, type ReactNode } from 'react';
 import { Provider } from 'react-redux';
-import {
-  configureStore,
-  combineReducers,
-  type PreloadedState,
-} from '@reduxjs/toolkit';
 
-import themeReducer from '@/store/themeSlice';
-import settingsReducer from '@/store/settingsSlice';
-import readingListReducer from '@/store/readingListSlice';
 import filtersReducer from '@/store/filtersSlice';
 import listenReducer from '@/store/listenSlice';
+
+import settingsReducer from '@/store/settingsSlice';
+import themeReducer from '@/store/themeSlice';
 
 const rootReducer = combineReducers({
   theme: themeReducer,
   settings: settingsReducer,
-  readingList: readingListReducer,
   filters: filtersReducer,
   listen: listenReducer,
 });
@@ -27,7 +22,7 @@ export const defaultPreloadedState: TestRootState = rootReducer(undefined, {
 }) as TestRootState;
 
 export const setupTestStore = (
-  preloadedState: PreloadedState<TestRootState> = defaultPreloadedState,
+  preloadedState: PreloadedState<TestRootState> = defaultPreloadedState
 ) =>
   configureStore({
     reducer: rootReducer,

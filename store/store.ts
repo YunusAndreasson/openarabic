@@ -8,7 +8,6 @@ import { getSafeStorage } from '@/utils/safeAsyncStorage';
 import editModeReducer from './editModeSlice';
 import filtersReducer from './filtersSlice';
 import listenReducer from './listenSlice';
-import readingListReducer from './readingListSlice';
 import settingsReducer from './settingsSlice';
 import streakReducer from './streakSlice';
 import themeReducer from './themeSlice';
@@ -17,7 +16,6 @@ import themeReducer from './themeSlice';
 const rootReducer = combineReducers({
   theme: themeReducer,
   settings: settingsReducer,
-  readingList: readingListReducer,
   filters: filtersReducer,
   listen: listenReducer,
   editMode: editModeReducer,
@@ -68,7 +66,7 @@ const persistConfig: PersistConfig<RootStateShape> = {
     }
     return Promise.resolve(state);
   },
-  whitelist: ['theme', 'settings', 'readingList', 'filters', 'listen', 'streak'],
+  whitelist: ['theme', 'settings', 'filters', 'listen', 'streak'],
 };
 
 const persistedReducer = persistReducer<RootStateShape>(persistConfig, rootReducer);

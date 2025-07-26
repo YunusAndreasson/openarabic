@@ -1,4 +1,5 @@
 import { useHeaderHeight } from '@react-navigation/elements';
+import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import type { JSX } from 'react';
 import { memo, useCallback, useEffect, useMemo } from 'react';
@@ -99,8 +100,20 @@ ListenListItem.displayName = 'ListenListItem';
 
 export default function ListenScreen(): JSX.Element {
   const colors = useColors(); // Only used for EmptyState
-  const { editMode } = useEditMode('listen');
+  const { editMode, reset } = useEditMode('listen');
   const { showToast } = useToast();
+
+  // Reset edit mode when screen loses focus
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        // Reset edit mode when navigating away from the screen
+        if (editMode) {
+          reset();
+        }
+      };
+    }, [editMode, reset])
+  );
 
   // Simplified destructuring - only get what we actually use
   const {

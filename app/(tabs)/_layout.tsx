@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { BlurView } from 'expo-blur';
 import { Tabs, router } from 'expo-router';
 import type { JSX } from 'react';
@@ -79,6 +80,18 @@ export default function TabLayout(): JSX.Element {
       router.replace(ROUTE_PATHS.AUTH);
     }
   }, [session, isLoading]);
+
+  // Close streak modal when tab loses focus
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        // Cleanup function - close streak modal when leaving tab
+        if (isStreakBottomSheetVisible) {
+          dispatch(closeStreakBottomSheet());
+        }
+      };
+    }, [dispatch, isStreakBottomSheetVisible])
+  );
 
   const handleCloseStreakBottomSheet = useCallback(() => {
     dispatch(closeStreakBottomSheet());

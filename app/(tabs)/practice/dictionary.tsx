@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
@@ -23,9 +24,21 @@ import type { StudyWord } from '@/types/vocabulary.types';
 export default function DictionaryScreen(): JSX.Element {
   const { user } = useAuth();
   const colors = useColors();
-  const { editMode } = useEditMode('dictionary');
+  const { editMode, reset } = useEditMode('dictionary');
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
+
+  // Reset edit mode when screen loses focus
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        // Reset edit mode when navigating away from the screen
+        if (editMode) {
+          reset();
+        }
+      };
+    }, [editMode, reset])
+  );
 
   // Get all study words
   const { allWords: studyWords, isLoading } = useFSRSQueries({

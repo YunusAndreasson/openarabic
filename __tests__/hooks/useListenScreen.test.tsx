@@ -43,18 +43,24 @@ const mockUseQuery = jest
 
 jest.mock('@tanstack/react-query', () => {
   const invalidateQueries = jest.fn();
+  const setQueryData = jest.fn();
   return {
     __esModule: true,
     useQuery: (...args: any[]) => mockUseQuery(...args),
     useQueryClient: () => ({
       getQueryData: () => readingListItems,
       invalidateQueries,
+      setQueryData,
     }),
     __invalidateQueries: invalidateQueries,
+    __setQueryData: setQueryData,
   };
 });
 
-const { __invalidateQueries: invalidateQueries } = require('@tanstack/react-query');
+const {
+  __invalidateQueries: invalidateQueries,
+  __setQueryData: setQueryData,
+} = require('@tanstack/react-query');
 
 jest.mock('../../hooks/auth/useAuth', () => ({
   useAuth: () => ({ user: { id: 'user-1' } }),
@@ -270,6 +276,7 @@ describe('useListenScreen', () => {
 
     expect(readingListService.removeFromReadingList).toHaveBeenCalledWith('user-1', 1);
     expect(mockDispatch).toHaveBeenCalledWith(removeFromCustomOrder(1));
+    expect(setQueryData).toHaveBeenCalledWith(['readingList', 'user-1', 1], false);
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['readingList', 'user-1'] });
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['enhancedAudioTracks', 'user-1'] });
   });
