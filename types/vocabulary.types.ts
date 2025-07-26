@@ -21,9 +21,7 @@ export interface StudyWord {
   root?: Tables<'roots'> | null;
   user_id: string;
 
-
   difficulty?: number;
-
 
   fsrs_due: string | null;
   fsrs_stability: number | null;
@@ -35,7 +33,6 @@ export interface StudyWord {
   fsrs_lapses: number | null;
   fsrs_state: number | null;
   fsrs_last_review: string | null;
-
 
   created_at: string;
   success_streak?: number;
@@ -52,4 +49,5 @@ export type StatCategory =
   | 'learning'
   | 'mastered'
   | 'needsAttention'
+  | 'struggling'
   | 'total';

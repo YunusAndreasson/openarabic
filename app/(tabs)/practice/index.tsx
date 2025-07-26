@@ -69,9 +69,12 @@ export default function VocabularyScreen(): JSX.Element {
           router.push(getPracticeReviewRoute());
           break;
         case 'needsAttention':
+        case 'struggling': {
           // Practice challenging/struggling words
-          router.push(getPracticeReviewRoute({ mode: 'spaced' }));
+          const route = getPracticeReviewRoute({ mode: 'spaced' });
+          router.push(route);
           break;
+        }
         case 'total':
           // Practice all words (using fromRemember for all words)
           router.push(getPracticeReviewRoute({ fromRemember: 'true' }));
