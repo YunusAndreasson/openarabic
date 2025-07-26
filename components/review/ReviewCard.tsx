@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   cancelAnimation,
@@ -81,9 +81,27 @@ const ReviewCardInternal = ({
   opacityStyle,
   testID,
 }: ReviewCardProps) => {
+  // const colors = useColors();
   const translateX = useSharedValue(0);
   const isAnimatingRef = useSharedValue(false);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ===== SWIPE BACKGROUND COLOR ANIMATION =====
+  const swipeBackgroundStyle = useAnimatedStyle(() => {
+    'worklet';
+    // Interpolate color: left = error, right = success, center = transparent
+    let bgColor = 'transparent';
+    if (translateX.value < 0) {
+      // Swiping left: interpolate from transparent to error
+      const t = Math.min(Math.abs(translateX.value) / STATIC_CALCULATIONS.MAX_TRANSLATION, 1);
+      bgColor = `rgba(211,47,47,${t * 0.18})`; // #D32F2F, 18% opacity at max
+    } else if (translateX.value > 0) {
+      // Swiping right: interpolate from transparent to success
+      const t = Math.min(translateX.value / STATIC_CALCULATIONS.MAX_TRANSLATION, 1);
+      bgColor = `rgba(76,127,90,${t * 0.18})`; // #4C7F5A, 18% opacity at max
+    }
+    return { backgroundColor: bgColor };
+  }, []);
 
   // ===== COMBINED ANIMATED STYLE (SINGLE ANIMATED VIEW) =====
   const combinedAnimatedStyle = useAnimatedStyle(() => {
@@ -184,17 +202,18 @@ const ReviewCardInternal = ({
 
   return (
     <GestureDetector gesture={panGesture}>
-      <Animated.View
-        style={[
-          STATIC_STYLES.swipeContainer,
-          STATIC_STYLES.wordContainer,
-          combinedAnimatedStyle,
-          opacityStyle,
-        ]}
-        testID={testID}
-      >
-        <WordDisplayComponent {...wordDisplayProps} />
-      </Animated.View>
+      <View style={STATIC_STYLES.swipeContainer}>
+        <Animated.View
+          style={[STATIC_STYLES.swipeContainer, swipeBackgroundStyle]}
+          pointerEvents="none"
+        />
+        <Animated.View
+          style={[STATIC_STYLES.wordContainer, combinedAnimatedStyle, opacityStyle]}
+          testID={testID}
+        >
+          <WordDisplayComponent {...wordDisplayProps} />
+        </Animated.View>
+      </View>
     </GestureDetector>
   );
 };

@@ -41,8 +41,8 @@ const basePalette = {
 
   // Semantic warm tones
   semantic: {
-    error: '#B85454', // Muted sage-toned red - matches sage green saturation/lightness
-    errorDark: '#D17676', // Lighter muted red for dark mode
+    error: '#D32F2F', // Vibrant red for clear error states
+    errorDark: '#F44336', // Lighter vibrant red for dark mode
     success: '#4C7F5A', // Deep forest success
     successDark: '#72A47F', // Lighter forest for dark mode
     warning: '#B8954B', // Muted sage-toned gold - matches sage green tone
