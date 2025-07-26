@@ -25,7 +25,7 @@ export const ROUTE_PATHS = {
   PRACTICE_TAB: '/(tabs)/practice',
   LISTEN_TAB: '/(tabs)/listen',
   ACCOUNT: '/(tabs)/read/account',
-  ACCOUNT_FONT_SELECTOR: '/(tabs)/read/account/font-selector',
+  ACCOUNT_FONT_SELECTOR: '/(tabs)/read/account/FontSelector',
   ACCOUNT_ISLAMIC_CALENDAR: '/(tabs)/read/account/islamicCalendar',
   INSIGHTS: '/insights',
   PRACTICE_REVIEW: '/practice/review',

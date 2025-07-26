@@ -19,7 +19,7 @@ export default function AccountLayout(): JSX.Element {
         })}
       />
       <Stack.Screen
-        name="font-selector"
+        name="FontSelector"
         options={createNavigationOptions(colors, {
           title: STRINGS.ARABIC_FONT,
           headerLeft: () => <DoneButton />,

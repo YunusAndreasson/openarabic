@@ -309,7 +309,7 @@ function AppContent() {
             })}
           />
           <Stack.Screen
-            name="now-playing"
+            name="NowPlaying"
             options={createNavigationOptions(colors, {
               headerShown: false, // Full-screen modal without header
               gestureEnabled: true,
