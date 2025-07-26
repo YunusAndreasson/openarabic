@@ -36,7 +36,7 @@ const SortingHeader: FC = () => {
                 styles.sortOption,
                 {
                   backgroundColor: isActive ? colors.tintBackground : 'transparent',
-                  borderColor: isActive ? colors.tint : colors.border,
+                  borderColor: isActive ? colors.tint : colors.borderOverlay,
                 },
               ]}
               onPress={handleSortPress(option.key)}

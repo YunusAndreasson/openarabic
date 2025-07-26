@@ -151,8 +151,8 @@ const opacity = {
 const elevation = {
   light: {
     level0: basePalette.sage.lighter, // Background - #F2F7F4 (matches background color)
-    level1: basePalette.sage.lightest, // Cards - #F8FAF9 (elevated above background)
-    level2: '#FCFDFC', // Raised elements - calculated to be lighter than level1 for proper elevation
+    level1: '#F0F6F2', // Cards - more saturated sage tint for better brand presence
+    level2: '#F5F9F5', // Raised elements - enhanced sage tint
     level3: '#FEFEFE', // Floating elements - calculated for maximum visual elevation
   },
   dark: {
@@ -163,8 +163,8 @@ const elevation = {
   },
   sepia: {
     level0: basePalette.autumn.paper.lighter, // Background - warm cream tone
-    level1: basePalette.autumn.paper.lightest, // Cards - pristine parchment
-    level2: '#FCFAF7', // Raised elements - warmer than level1
+    level1: '#F7E8D5', // Cards - more saturated sepia tint for better brand presence
+    level2: '#F9EDDC', // Raised elements - enhanced sepia tint
     level3: basePalette.sepiaPure.white, // Floating elements - warm sepia white (more sepia than pure white)
   },
 } as const;
@@ -248,7 +248,7 @@ const lightColors: ThemeColors = {
   transparent: basePalette.pure.transparent,
   overlay: applyOpacity(basePalette.sage.lighter, opacity.modal),
   modalOverlay: applyOpacity(basePalette.sage.lighter, opacity.full),
-  borderOverlay: applyOpacity(basePalette.tint.primary, opacity.light),
+  borderOverlay: applyOpacity(basePalette.tint.primary, opacity.border),
   buttonOverlay: applyOpacity(basePalette.tint.primary, opacity.medium),
   backdropOverlay: applyOpacity(basePalette.forest.dark, opacity.backdrop),
 
@@ -329,7 +329,7 @@ const darkColors: ThemeColors = {
   transparent: basePalette.pure.transparent,
   overlay: applyOpacity(basePalette.sage.darkest, opacity.modal),
   modalOverlay: applyOpacity(basePalette.sage.darkest, opacity.full),
-  borderOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.medium),
+  borderOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.border),
   buttonOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.strong),
   backdropOverlay: applyOpacity(basePalette.sage.darkest, opacity.darkBackdrop),
 
@@ -410,7 +410,7 @@ const sepiaColors: ThemeColors = {
   transparent: basePalette.pure.transparent,
   overlay: applyOpacity(basePalette.autumn.paper.lighter, opacity.modal),
   modalOverlay: applyOpacity(basePalette.autumn.paper.lighter, opacity.full),
-  borderOverlay: applyOpacity(basePalette.autumn.accent.primary, opacity.light),
+  borderOverlay: applyOpacity(basePalette.autumn.accent.primary, opacity.border),
   buttonOverlay: applyOpacity(basePalette.autumn.accent.primary, opacity.medium),
   backdropOverlay: applyOpacity(basePalette.autumn.dark, opacity.backdrop),
 
