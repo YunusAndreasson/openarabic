@@ -314,7 +314,17 @@ export function useFSRS({
           : 100;
         setProgress(newProgress);
 
-        if (!nextItem && spacingQueueRef.current.spacedWords.length === 0) {
+        // FIXED: Check for completion when no next word is available AND either:
+        // 1. No words in spacing queue, OR
+        // 2. All words in spacing queue have remainingSpacing > 0 (can't be shown yet)
+        const hasAvailableSpacedWords = spacingQueueRef.current.spacedWords.some(
+          item => item.remainingSpacing <= 0
+        );
+
+        if (
+          !nextItem &&
+          (!spacingQueueRef.current.spacedWords.length || !hasAvailableSpacedWords)
+        ) {
           if (!stateTrackingRef.current.completionTriggered) {
             stateTrackingRef.current.completionTriggered = true;
             setTimeout(() => {
