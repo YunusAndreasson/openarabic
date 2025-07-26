@@ -11,18 +11,12 @@ import { ChartGrid } from '@/components/vocabulary/shared/ChartGrid';
 import { ChartMainLine } from '@/components/vocabulary/shared/ChartMainLine';
 import { ChartPerformanceZones } from '@/components/vocabulary/shared/ChartPerformanceZones';
 import { GRAPH_HEIGHT_LARGE } from '@/components/vocabulary/shared/constants';
+import { generateDataPointKeys, generateMilestoneKeys, type ChartPoint } from '@/utils/chartUtils';
 
 // Extract constants outside component for better performance
 const DEFAULT_Y_MAX = 100;
 const DEFAULT_TOP_PADDING = 0;
 const CONTENT_HEIGHT_OFFSET = 32;
-
-interface ChartPoint {
-  x: number;
-  y: number;
-  date: Date;
-  rate?: number; // For milestones
-}
 
 interface PerformanceZone {
   color: string;
@@ -147,20 +141,10 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
     );
 
     // Memoized data point keys for stable rendering
-    const dataPointKeys = useMemo(
-      () => dataPoints.map((point: ChartPoint) => `data-point-${point.date.toISOString()}`),
-      [dataPoints]
-    );
+    const dataPointKeys = useMemo(() => generateDataPointKeys(dataPoints), [dataPoints]);
 
     // Memoized milestone keys for stable rendering
-    const milestoneKeys = useMemo(
-      () =>
-        milestones.map((milestone: ChartPoint, index: number) => {
-          const keyIdentifier = 'rate' in milestone ? milestone.rate : index;
-          return `milestone-${milestone.date.toISOString()}-${keyIdentifier}`;
-        }),
-      [milestones]
-    );
+    const milestoneKeys = useMemo(() => generateMilestoneKeys(milestones), [milestones]);
 
     // Memoized chart components for better Skia rendering performance
     const chartComponents = useMemo(() => {

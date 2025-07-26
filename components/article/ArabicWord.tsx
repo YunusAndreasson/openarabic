@@ -7,7 +7,7 @@ import {
   type ComponentRef,
   type RefObject,
 } from 'react';
-import type { LayoutChangeEvent, LayoutRectangle, TextStyle, ViewStyle } from 'react-native';
+import type { LayoutChangeEvent, LayoutRectangle, TextStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -18,6 +18,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useArabicWord, useArabicWordAnalysis } from '@/hooks/vocabulary';
 import type { TextWeight } from '@/types/ui/text.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
+import { getSelectedStyle, type ArabicWordColors } from '@/utils/textStyleUtils';
 
 interface ArabicWordProps {
   word: SentenceWord;
@@ -127,18 +128,19 @@ function ArabicWordComponent({
     }
   }, [absoluteLayout, onTooltipOpen, wordRef]);
 
-  const getSelectedStyle = useCallback(
-    (): ViewStyle => ({
-      borderBottomWidth: 1,
-      borderBottomColor: isDueWord ? colors.wordDueUnderline : colors.wordSelectionUnderline,
+  // ===== COLOR BATCHING (PREVENTS MULTIPLE COLOR CALCULATIONS) =====
+  const batchedColors = useMemo(
+    (): ArabicWordColors => ({
+      wordDueUnderline: colors.wordDueUnderline,
+      wordSelectionUnderline: colors.wordSelectionUnderline,
     }),
-    [colors.wordDueUnderline, colors.wordSelectionUnderline, isDueWord]
+    [colors.wordDueUnderline, colors.wordSelectionUnderline]
   );
 
   // Compute final styles for the word container
   const containerStyle = useMemo(
-    () => [styles.wordContainer, isSelected && getSelectedStyle()],
-    [isSelected, getSelectedStyle]
+    () => [styles.wordContainer, getSelectedStyle(isSelected, isDueWord, batchedColors)],
+    [isSelected, isDueWord, batchedColors]
   );
 
   // Render colored segments or single word

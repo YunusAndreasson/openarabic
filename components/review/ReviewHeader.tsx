@@ -4,14 +4,11 @@ import { memo, useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ProgressBar } from '@/components/ProgressBar';
-import { PROGRESS_BAR_ANIMATION_DURATION, REVIEW_MIN_PROGRESS_VALUE } from '@/constants/animation';
+import { PROGRESS_BAR_ANIMATION_DURATION } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectionFeedback } from '@/utils/haptics';
-
-const REVIEW_HEADER_CONSTANTS = {
-  MIN_PROGRESS_VALUE: REVIEW_MIN_PROGRESS_VALUE,
-} as const;
+import { calculateDisplayProgress, shouldTriggerAnimation } from '@/utils/progressUtils';
 
 // ===== STATIC STYLES USING STYLESHEET.CREATE =====
 const STATIC_STYLES = StyleSheet.create({
@@ -45,12 +42,6 @@ interface ReviewHeaderProps {
   animationKey: number;
   onClose?: () => void;
 }
-
-const calculateDisplayProgress = (progress: number, maxProgress: number): number =>
-  Math.max(progress, maxProgress);
-
-const shouldTriggerAnimation = (animationKey: number): boolean =>
-  animationKey > REVIEW_HEADER_CONSTANTS.MIN_PROGRESS_VALUE;
 
 const ReviewHeaderInternal: FC<ReviewHeaderProps> = ({
   progress,

@@ -540,12 +540,14 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
   }, [currentWord, isComplete, isTransitioningToCompletion, playAudio]);
 
   const handleSwipeLeft = useCallback(() => {
+    if (isComplete || stateRefs.current.isUpdatingWord || !currentWord) return;
     handleKnowledgeResponse('unknown');
-  }, [handleKnowledgeResponse]);
+  }, [handleKnowledgeResponse, isComplete, currentWord]);
 
   const handleSwipeRight = useCallback(() => {
+    if (isComplete || stateRefs.current.isUpdatingWord || !currentWord) return;
     handleKnowledgeResponse('known');
-  }, [handleKnowledgeResponse]);
+  }, [handleKnowledgeResponse, isComplete, currentWord]);
 
   const handleLongPress = useCallback(() => {
     if (isComplete || stateRefs.current.isUpdatingWord || !currentWord) return;

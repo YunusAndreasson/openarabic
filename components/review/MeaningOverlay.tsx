@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, type TextStyle } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -9,6 +9,12 @@ import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { MeaningOverlayProps } from '@/types/ui/review.types';
+import {
+  calculateFontSize,
+  createMeaningOverlayTextStyle,
+  determineTextColor,
+  type MeaningOverlayColors,
+} from '@/utils/textStyleUtils';
 
 const MEANING_OVERLAY_CONSTANTS = {
   HEIGHT_MULTIPLIER: 5,
@@ -16,8 +22,6 @@ const MEANING_OVERLAY_CONSTANTS = {
   CLEANUP_DELAY: 50,
   DEFAULT_DURATION: TIMING_CONFIG.FAST.duration,
   DEFAULT_HEIGHT: LAYOUT.BUTTON.HEIGHT.LARGE * 5 + LAYOUT.SPACING.MEDIUM,
-  FONT_SIZE_SPECIAL: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + LAYOUT.SPACING.TINY, // 20 + 4 = 24px - consistent increase
-  FONT_SIZE_DEFAULT: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
 } as const;
 
 // Static animation configuration
@@ -49,33 +53,6 @@ const STATIC_STYLES = StyleSheet.create({
   },
 });
 
-const determineTextColor = (
-  isWarning: boolean,
-  isVague: boolean,
-  isStruggling: boolean,
-  colors: ReturnType<typeof useColors>
-): string => {
-  if (isWarning) return colors.warning;
-  if (isVague) return colors.warning;
-  if (isStruggling) return colors.error;
-  return colors.text;
-};
-
-const calculateFontSize = (isWarning: boolean, isVague: boolean, isStruggling: boolean): number => {
-  if (isWarning || isVague || isStruggling) {
-    return MEANING_OVERLAY_CONSTANTS.FONT_SIZE_SPECIAL;
-  }
-  return MEANING_OVERLAY_CONSTANTS.FONT_SIZE_DEFAULT;
-};
-
-const createTextStyle = (textColor: string, fontSize: number): TextStyle => {
-  return {
-    ...STATIC_STYLES.text,
-    color: textColor,
-    fontSize: fontSize,
-  };
-};
-
 /**
  * Component that displays the meaning of a word with a fade animation
  * without changing the background brightness
@@ -96,9 +73,19 @@ const MeaningOverlayInternal = (props: MeaningOverlayProps) => {
   const [shouldRender, setShouldRender] = useState(visible);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // ===== COLOR BATCHING (PREVENTS MULTIPLE COLOR CALCULATIONS) =====
+  const batchedColors = useMemo(
+    (): MeaningOverlayColors => ({
+      warning: colors.warning,
+      error: colors.error,
+      text: colors.text,
+    }),
+    [colors.warning, colors.error, colors.text]
+  );
+
   const textColor = useMemo(
-    () => determineTextColor(isWarning, isVague, isStruggling, colors),
-    [isWarning, isVague, isStruggling, colors]
+    () => determineTextColor(isWarning, isVague, isStruggling, batchedColors),
+    [isWarning, isVague, isStruggling, batchedColors]
   );
 
   const fontSize = useMemo(
@@ -111,7 +98,10 @@ const MeaningOverlayInternal = (props: MeaningOverlayProps) => {
     [colors.elevation0]
   );
 
-  const textStyle = useMemo(() => createTextStyle(textColor, fontSize), [textColor, fontSize]);
+  const textStyle = useMemo(
+    () => createMeaningOverlayTextStyle(textColor, fontSize, STATIC_STYLES.text),
+    [textColor, fontSize]
+  );
 
   // ===== OPTIMIZED ANIMATION HANDLING =====
   const { animatedStyle, startAnimation, reverseAnimation } = useOpacityAnimation({
@@ -142,49 +132,52 @@ const MeaningOverlayInternal = (props: MeaningOverlayProps) => {
         animate ? duration + MEANING_OVERLAY_CONSTANTS.CLEANUP_DELAY : 0
       );
     }
-
-    return cleanup;
   }, [
     visible,
+    shouldRender,
     startAnimation,
     reverseAnimation,
-    shouldRender,
-    duration,
-    animate,
     onClose,
     cleanup,
+    animate,
+    duration,
   ]);
 
-  if (!shouldRender) return null;
+  // ===== CLEANUP ON UNMOUNT =====
+  useEffect(() => {
+    return cleanup;
+  }, [cleanup]);
+
+  if (!shouldRender) {
+    return null;
+  }
 
   return (
     <Animated.View style={[overlayStyle, animatedStyle]}>
-      <ThemedText skipDefaultColor style={textStyle}>
+      <ThemedText style={textStyle} numberOfLines={3}>
         {meaning || STRINGS.NO_TRANSLATION_AVAILABLE}
       </ThemedText>
     </Animated.View>
   );
 };
 
+// ===== OPTIMIZED COMPARISON FUNCTION (PREVENT UNNECESSARY RE-RENDERS) =====
 const MeaningOverlayComparison = (
   prevProps: MeaningOverlayProps,
   nextProps: MeaningOverlayProps
 ): boolean => {
-  if (prevProps.visible !== nextProps.visible) return false;
-  if (prevProps.meaning !== nextProps.meaning) return false;
-  if (prevProps.isWarning !== nextProps.isWarning) return false;
-  if (prevProps.isVague !== nextProps.isVague) return false;
-  if (prevProps.isStruggling !== nextProps.isStruggling) return false;
-  if (prevProps.duration !== nextProps.duration) return false;
-  if (prevProps.animate !== nextProps.animate) return false;
-
-  if (prevProps.onClose !== nextProps.onClose) return false;
-
-  return true;
+  return (
+    prevProps.visible === nextProps.visible &&
+    prevProps.meaning === nextProps.meaning &&
+    prevProps.isWarning === nextProps.isWarning &&
+    prevProps.isVague === nextProps.isVague &&
+    prevProps.isStruggling === nextProps.isStruggling &&
+    prevProps.duration === nextProps.duration &&
+    prevProps.animate === nextProps.animate &&
+    prevProps.onClose === nextProps.onClose
+  );
 };
 
 export const MeaningOverlay = memo(MeaningOverlayInternal, MeaningOverlayComparison);
-
-MeaningOverlay.displayName = 'MeaningOverlay';
 
 export default MeaningOverlay;

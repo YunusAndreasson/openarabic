@@ -1,29 +1,24 @@
 import { memo, useEffect, useMemo } from 'react';
-import type { TextStyle, ViewStyle } from 'react-native';
+import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { TIMING_CONFIG } from '@/constants/animation';
-import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { WordDisplayProps } from '@/types/ui/review.types';
-
-// ===== INTERFACES =====
-interface BatchedWordDisplayColors {
-  arabicText: string;
-  shadow: string;
-  englishText: string;
-}
+import {
+  createTextStyle,
+  createTranslationTextStyle,
+  type BatchedTextColors,
+} from '@/utils/textStyleUtils';
 
 const WORD_DISPLAY_CONSTANTS = {
   DEFAULT_FONT_SIZE: LAYOUT.SPACING.XXLARGE,
-  PADDING_TOP_RATIO: 0.15,
-  PADDING_BOTTOM_RATIO: 0.05,
   TEXT_HEIGHT_MULTIPLIER: 9,
   TRANSLATION_HEIGHT_MULTIPLIER: 2.5,
-  TRANSLATION_FONT_MULTIPLIER: 1.1,
 } as const;
 
 // Static animation configuration
@@ -54,38 +49,7 @@ const STATIC_STYLES = StyleSheet.create({
     minHeight: LAYOUT.BUTTON.HEIGHT.LARGE * WORD_DISPLAY_CONSTANTS.TRANSLATION_HEIGHT_MULTIPLIER,
     paddingTop: LAYOUT.SPACING.TINY,
   } as ViewStyle,
-  translationText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE * WORD_DISPLAY_CONSTANTS.TRANSLATION_FONT_MULTIPLIER,
-    fontWeight: '400',
-    opacity: LAYOUT.OPACITY.HIGH,
-    textAlign: 'center',
-  } as TextStyle,
 });
-
-const calculateDynamicPadding = (fontSize: number) => ({
-  paddingTop: fontSize * WORD_DISPLAY_CONSTANTS.PADDING_TOP_RATIO,
-  paddingBottom: fontSize * WORD_DISPLAY_CONSTANTS.PADDING_BOTTOM_RATIO,
-});
-
-const createTextStyleBase = (fontSize: number) =>
-  getArabicTextStyle(fontSize, {
-    fontWeight: '700',
-    textAlign: 'center',
-    paddingVertical: LAYOUT.SPACING.MICRO,
-    includeFontPadding: false,
-    textAlignVertical: 'center',
-    ...calculateDynamicPadding(fontSize),
-  });
-
-const createTextStyle = (fontSize: number, colors: BatchedWordDisplayColors): TextStyle => {
-  const baseStyle = createTextStyleBase(fontSize);
-  return {
-    ...baseStyle,
-    color: colors.arabicText,
-    ...LAYOUT.ELEVATION.SMALL,
-    shadowColor: colors.shadow,
-  };
-};
 
 /**
  * Component to display a word with optimal styling and sizing
@@ -101,7 +65,7 @@ const WordDisplayInternal = ({
 
   // ===== COLOR BATCHING (PREVENTS MULTIPLE COLOR CALCULATIONS) =====
   const batchedColors = useMemo(
-    () => ({
+    (): BatchedTextColors => ({
       arabicText: colors.arabicText,
       shadow: colors.shadow,
       englishText: colors.englishText,
@@ -127,8 +91,8 @@ const WordDisplayInternal = ({
   const containerStyle = useMemo(() => [STATIC_STYLES.container, style], [style]);
 
   const translationTextStyle = useMemo(
-    () => [STATIC_STYLES.translationText, { color: batchedColors.englishText }],
-    [batchedColors.englishText]
+    () => createTranslationTextStyle(fontSize, batchedColors.englishText),
+    [fontSize, batchedColors.englishText]
   );
 
   const arabicTextProps = useMemo(
@@ -147,42 +111,37 @@ const WordDisplayInternal = ({
       skipDefaultColor: true,
       colorName: 'englishText' as const,
       style: translationTextStyle,
-      children: translation || ' ',
+      type: 'body' as const,
+      children: translation,
     }),
     [translationTextStyle, translation]
   );
 
   return (
     <View style={containerStyle}>
-      {/* Fixed Arabic text container - always in the same position */}
       <View style={STATIC_STYLES.arabicContainer}>
-        <ThemedText key={`word-${word}`} {...arabicTextProps} />
+        <ThemedText {...arabicTextProps} />
       </View>
-
-      {/* Fixed translation container - always reserves space */}
-      <View style={STATIC_STYLES.translationContainer}>
-        <Animated.View style={translationAnimatedStyle as ViewStyle}>
+      {translation && (
+        <Animated.View style={[STATIC_STYLES.translationContainer, translationAnimatedStyle]}>
           <ThemedText {...translationTextProps} />
         </Animated.View>
-      </View>
+      )}
     </View>
   );
 };
 
+// ===== OPTIMIZED COMPARISON FUNCTION (PREVENT UNNECESSARY RE-RENDERS) =====
 const WordDisplayComparison = (
   prevProps: WordDisplayProps,
   nextProps: WordDisplayProps
 ): boolean => {
-  if (prevProps.word !== nextProps.word) return false;
-  if (prevProps.fontSize !== nextProps.fontSize) return false;
-  if (prevProps.translation !== nextProps.translation) return false;
-
-  // Style object comparison - check reference first
-  if (prevProps.style === nextProps.style) return true;
-  if (prevProps.style === null && nextProps.style === null) return true;
-  if (prevProps.style === null || nextProps.style === null) return false;
-
-  return false; // Skip deep comparison for performance
+  return (
+    prevProps.word === nextProps.word &&
+    prevProps.fontSize === nextProps.fontSize &&
+    prevProps.translation === nextProps.translation &&
+    prevProps.style === nextProps.style
+  );
 };
 
 export const WordDisplay = memo(WordDisplayInternal, WordDisplayComparison);
