@@ -2,4 +2,3 @@
 - [] Validate Google Translate with OpenAI
 - [] Use the new OpenAI API for more context
 - [] Use audio for single word when tapping it in app
-- [] If sliding left, audio stops in review

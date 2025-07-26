@@ -16,10 +16,9 @@ interface MetricCardProps {
   value: string;
   label: string;
   color: string;
-  isHighlight?: boolean;
 }
 
-const MetricCard = memo<MetricCardProps>(({ icon, value, label, color, isHighlight = false }) => {
+const MetricCard = memo<MetricCardProps>(({ icon, value, label, color }) => {
   const colors = useColors();
 
   return (
@@ -27,20 +26,16 @@ const MetricCard = memo<MetricCardProps>(({ icon, value, label, color, isHighlig
       style={[
         styles.metricCard,
         {
-          backgroundColor: colors.card, // Use consistent card background for all metric cards
-          borderColor: colors.borderOverlay, // Use subtle border for all cards
-          borderWidth: isHighlight ? 0 : LAYOUT.BORDER.WIDTH.THIN,
+          backgroundColor: colors.card,
+          borderColor: colors.borderOverlay,
+          borderWidth: LAYOUT.BORDER.WIDTH.THIN,
         },
       ]}
     >
       <View style={[styles.iconContainer, { backgroundColor: color + '14' }]}>
         <Ionicons name={icon} size={16} color={color} />
       </View>
-      <ThemedText
-        type="heading2"
-        weight="bold"
-        style={[styles.metricValue, { color: isHighlight ? colors.tint : colors.text }]}
-      >
+      <ThemedText type="heading2" weight="bold" style={[styles.metricValue, { color }]}>
         {value}
       </ThemedText>
       <ThemedText type="caption" colorName="textTertiary" style={styles.metricLabel}>
@@ -68,7 +63,6 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
   };
 
   const currentStreakColor = getStreakColor(metrics.currentStreak);
-  const isCurrentStreakHighlight = metrics.currentStreak > 0;
 
   return (
     <View style={styles.container}>
@@ -78,7 +72,6 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
           value={metrics.currentStreak.toString()}
           label="Current streak"
           color={currentStreakColor}
-          isHighlight={isCurrentStreakHighlight}
         />
 
         <MetricCard
