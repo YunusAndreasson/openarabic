@@ -19,27 +19,6 @@ export default function AccountLayout(): JSX.Element {
         })}
       />
       <Stack.Screen
-        name="classicalTexts"
-        options={createNavigationOptions(colors, {
-          title: STRINGS.CLASSICAL_TEXTS,
-          headerLeft: () => <DoneButton />,
-        })}
-      />
-      <Stack.Screen
-        name="learningMethod"
-        options={createNavigationOptions(colors, {
-          title: STRINGS.LEARNING_METHOD,
-          headerLeft: () => <DoneButton />,
-        })}
-      />
-      <Stack.Screen
-        name="islamicCalendar"
-        options={createNavigationOptions(colors, {
-          title: STRINGS.ISLAMIC_CALENDAR,
-          isRegularScreen: true,
-        })}
-      />
-      <Stack.Screen
         name="font-selector"
         options={createNavigationOptions(colors, {
           title: STRINGS.ARABIC_FONT,
@@ -51,6 +30,13 @@ export default function AccountLayout(): JSX.Element {
         options={createNavigationOptions(colors, {
           title: STRINGS.HELP,
           headerLeft: () => <DoneButton />,
+        })}
+      />
+      <Stack.Screen
+        name="islamicCalendar"
+        options={createNavigationOptions(colors, {
+          title: STRINGS.ISLAMIC_CALENDAR,
+          isRegularScreen: true,
         })}
       />
     </Stack>

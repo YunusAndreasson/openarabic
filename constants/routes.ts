@@ -25,10 +25,8 @@ export const ROUTE_PATHS = {
   PRACTICE_TAB: '/(tabs)/practice',
   LISTEN_TAB: '/(tabs)/listen',
   ACCOUNT: '/(tabs)/read/account',
-  ACCOUNT_LEARNING_METHOD: '/(tabs)/read/account/learningMethod',
-  ACCOUNT_CLASSICAL_TEXTS: '/(tabs)/read/account/classicalTexts',
-  ACCOUNT_ISLAMIC_CALENDAR: '/(tabs)/read/account/islamicCalendar',
   ACCOUNT_FONT_SELECTOR: '/(tabs)/read/account/font-selector',
+  ACCOUNT_ISLAMIC_CALENDAR: '/(tabs)/read/account/islamicCalendar',
   INSIGHTS: '/insights',
   PRACTICE_REVIEW: '/practice/review',
 } as const;

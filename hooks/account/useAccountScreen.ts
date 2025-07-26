@@ -263,14 +263,6 @@ export const useAccountScreen = () => {
     }
   }, [user?.email]);
 
-  const handleLearningMethodPress = useCallback(() => {
-    router.push(ROUTE_PATHS.ACCOUNT_LEARNING_METHOD);
-  }, []);
-
-  const handleClassicalTextsPress = useCallback(() => {
-    router.push(ROUTE_PATHS.ACCOUNT_CLASSICAL_TEXTS);
-  }, []);
-
   const handleFontSelectorPress = useCallback(() => {
     router.push(ROUTE_PATHS.ACCOUNT_FONT_SELECTOR);
   }, []);
@@ -289,8 +281,6 @@ export const useAccountScreen = () => {
       handleReminderToggle,
       handleSignOut,
       handleSupportContact,
-      handleLearningMethodPress,
-      handleClassicalTextsPress,
       handleFontSelectorPress,
       appVersion,
       currentYear,
@@ -309,8 +299,6 @@ export const useAccountScreen = () => {
       handleReminderToggle,
       handleSignOut,
       handleSupportContact,
-      handleLearningMethodPress,
-      handleClassicalTextsPress,
       handleFontSelectorPress,
       appVersion,
       currentYear,

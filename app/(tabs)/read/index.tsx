@@ -36,9 +36,6 @@ const styles = StyleSheet.create({
   },
 });
 
-// Static footer component - no props needed
-const ListFooterComponent = () => <HijriDateFooter />;
-
 export default function ReadScreen(): JSX.Element {
   const colors = useColors();
   const headerHeight = useHeaderHeight();
@@ -158,6 +155,9 @@ export default function ReadScreen(): JSX.Element {
     [articlesData, refreshKey, handleArticlePress, categoriesWithArticles, handleSelectCategory]
   );
 
+  // Static footer component - no props needed
+  const ListFooterComponent = () => <HijriDateFooter />;
+
   const contentContainerStyle = useMemo(
     () => ({
       ...styles.listContentContainer,
@@ -185,8 +185,8 @@ export default function ReadScreen(): JSX.Element {
       <ArticleList
         contentContainerStyle={contentContainerStyle}
         isRefreshing={isRefreshing}
-        ListFooterComponent={ListFooterComponent}
         ListHeaderComponent={ListHeaderComponent}
+        ListFooterComponent={ListFooterComponent}
         progressViewOffset={headerHeight + LAYOUT.SPACING.XXLARGE}
         onArticlePress={handleArticlePress}
         onRefresh={handleRefresh}
