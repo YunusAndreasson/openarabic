@@ -51,14 +51,14 @@ const basePalette = {
 
   // Green-tinted pure values (never pure white/black)
   pure: {
-    white: '#FEFEFE', // True white with subtle green tint (same as elevation3)
+    white: '#FEFEFC', // True white with subtle green tint (was #FEFEFE - too pure)
     black: '#0A0F0B', // Subtle green-tinted black
     transparent: 'transparent',
   },
 
   // Sepia-tinted pure values for autumn theme
   sepiaPure: {
-    white: '#FEFCF9', // Warm sepia white (instead of pure white)
+    white: '#FEFCF7', // Warm sepia white (was #FEFCF9 - too close to pure white)
     black: '#0F0B0A', // Subtle sepia-tinted black (warm brown-black)
   },
 
@@ -150,10 +150,10 @@ const opacity = {
 // Elevation system
 const elevation = {
   light: {
-    level0: basePalette.sage.lighter, // Background - #F2F7F4 (matches background color)
-    level1: '#F0F6F2', // Cards - more saturated sage tint for better brand presence
-    level2: '#F5F9F5', // Raised elements - enhanced sage tint
-    level3: '#FEFEFE', // Floating elements - calculated for maximum visual elevation
+    level0: basePalette.sage.lighter, // Background - matches background color
+    level1: basePalette.sage.lightest, // Cards - use palette reference for consistency
+    level2: basePalette.pure.white, // Raised elements - use palette reference for consistency
+    level3: basePalette.pure.white, // Floating elements - use branded white instead of hardcoded
   },
   dark: {
     level0: basePalette.sage.darkest, // Background - matches current background
@@ -163,9 +163,9 @@ const elevation = {
   },
   sepia: {
     level0: basePalette.autumn.paper.lighter, // Background - warm cream tone
-    level1: '#F7E8D5', // Cards - more saturated sepia tint for better brand presence
-    level2: '#F9EDDC', // Raised elements - enhanced sepia tint
-    level3: basePalette.sepiaPure.white, // Floating elements - warm sepia white (more sepia than pure white)
+    level1: basePalette.autumn.paper.light, // Cards - use palette reference for consistency
+    level2: basePalette.autumn.paper.lighter, // Raised elements - use palette reference for consistency
+    level3: basePalette.sepiaPure.white, // Floating elements - warm sepia white
   },
 } as const;
 
