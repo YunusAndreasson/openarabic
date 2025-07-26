@@ -1,3 +1,4 @@
+import type { FilterState } from '@/store/filtersSlice';
 import type { Article } from '@/types/articles.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -118,4 +119,87 @@ export function getArticlesByDifficultWords(
     .sort((a, b) => b.difficultWordCount - a.difficultWordCount)
     .map(item => item.article)
     .slice(0, limit);
+}
+
+/**
+ * Create comparators for article sorting
+ */
+export function createComparators(
+  progressMap: Map<number, { progress_percentage: number }>
+): Record<FilterState['sort']['field'], (a: Article, b: Article) => number> {
+  return {
+    author: (a, b) => a.author.name.localeCompare(b.author.name),
+    date: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    difficulty: (a, b) => a.difficulty_level - b.difficulty_level,
+    progress: (a, b) => {
+      const progressA = progressMap.get(a.id)?.progress_percentage ?? 0;
+      const progressB = progressMap.get(b.id)?.progress_percentage ?? 0;
+      return progressA - progressB;
+    },
+  };
+}
+
+/**
+ * Calculate filter date based on date range
+ */
+export function calculateFilterDate(dateRange: FilterState['filters']['dateRange']): Date | null {
+  if (dateRange === 'all') return null;
+  const date = new Date();
+  if (dateRange === 'week') {
+    date.setDate(date.getDate() - 7);
+  } else if (dateRange === 'month') {
+    date.setDate(date.getDate() - 30);
+  }
+  return date;
+}
+
+/**
+ * Filter articles based on filter criteria
+ */
+export function filterArticles(
+  articles: Article[],
+  filters: FilterState['filters'],
+  filterDate: Date | null
+): Article[] {
+  if (!articles?.length) return [];
+
+  return articles.filter(article => {
+    // Filter by authors
+    if (
+      filters.authorIds.length > 0 &&
+      (!article.author || !filters.authorIds.includes(article.author.id))
+    ) {
+      return false;
+    }
+
+    // Filter by difficulty range
+    if (
+      (filters.difficultyRange[0] > 1 || filters.difficultyRange[1] < 5) &&
+      (article.difficulty_level < filters.difficultyRange[0] ||
+        article.difficulty_level > filters.difficultyRange[1])
+    ) {
+      return false;
+    }
+
+    // Filter by date range
+    if (filterDate && new Date(article.created_at) < filterDate) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+/**
+ * Sort articles using the specified comparator and direction
+ */
+export function sortArticles<T>(
+  articles: T[],
+  comparator: (a: T, b: T) => number,
+  direction: 'asc' | 'desc'
+): T[] {
+  return [...articles].sort((a, b) => {
+    const result = comparator(a, b);
+    return direction === 'desc' ? -result : result;
+  });
 }

@@ -35,7 +35,7 @@ import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StatCategory, StudyWord } from '@/types/vocabulary.types';
 import { selectionFeedback } from '@/utils/haptics';
-import { isStrugglingWord } from '@/utils/wordClassification';
+import { calculateWordCategories } from '@/utils/wordClassification';
 
 import { MemoryCapacityGauge } from './charts/MemoryCapacityGauge';
 
@@ -91,47 +91,9 @@ export const VocabularyStatCards = memo(
       [masteredWords, learningWords, dueWords, studyWords]
     );
 
-    // Calculate word categories
+    // Calculate word categories using utility functions
     const wordCategories = useMemo(() => {
-      const { studyWords, dueWords: _dueWords } = validatedInput;
-
-      // Calculate due words from study words if not provided
-      const now = new Date().toISOString();
-      const calculatedDueWords = studyWords.filter(
-        word => (word.fsrs_due ?? '9999-12-31') <= now
-      ).length;
-
-      // FIXED: Use server-side logic for learning words (matching session logic)
-      // Server: 'fsrs_state.in.(0,1,3),and(fsrs_state.eq.2,fsrs_stability.lt.5)'
-      const learningWords = studyWords.filter(word => {
-        const state = word.fsrs_state;
-        const stability = word.fsrs_stability ?? 0;
-        return state === 0 || state === 1 || state === 3 || (state === 2 && stability < 5);
-      }).length;
-
-      // FIXED: Use server-side logic for mastered words (matching session logic)
-      // Server: 'fsrs_state.eq.2,fsrs_stability.gte.5'
-      const masteredWords = studyWords.filter(word => {
-        const state = word.fsrs_state;
-        const stability = word.fsrs_stability ?? 0;
-        return state === 2 && stability >= 5;
-      }).length;
-
-      // FIXED: Only count struggling words that have been reviewed (matching session logic)
-      // This ensures the display count matches what users will actually practice
-      const strugglingWords = studyWords.filter(word => {
-        // Must have been reviewed at least once (matching session's reviewedOnly: true)
-        const hasBeenReviewed = word.fsrs_last_review != null && (word.fsrs_reps ?? 0) > 0;
-        return hasBeenReviewed && isStrugglingWord(word);
-      }).length;
-
-      return {
-        // Prioritize dueWords prop over calculated value for consistency
-        dueWords: validatedInput.dueWords > 0 ? validatedInput.dueWords : calculatedDueWords,
-        learningWords,
-        strugglingWords,
-        masteredWords,
-      };
+      return calculateWordCategories(validatedInput.studyWords, validatedInput.dueWords);
     }, [validatedInput.studyWords, validatedInput.dueWords]);
 
     // Create scientifically-grounded practice session cards coordinated with Memory Capacity Gauge

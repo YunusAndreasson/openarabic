@@ -1,0 +1,163 @@
+import {
+  TOOLTIP_CONSTANTS,
+  calculateArrowPosition,
+  calculateContentWidth,
+  calculateTooltipDimensions,
+  calculateTooltipWidth,
+  estimateTextWidth,
+  handleScreenBoundaries,
+  type TooltipLayout,
+} from '@/utils/positioningUtils';
+
+describe('Positioning Utilities', () => {
+  describe('TOOLTIP_CONSTANTS', () => {
+    it('should have correct constant values', () => {
+      expect(TOOLTIP_CONSTANTS.ARROW_SIZE).toBe(6);
+      expect(TOOLTIP_CONSTANTS.MIN_PADDING).toBe(12);
+      expect(TOOLTIP_CONSTANTS.SCREEN_MARGIN).toBe(16);
+      expect(TOOLTIP_CONSTANTS.Z_INDEX).toBe(999999);
+      expect(TOOLTIP_CONSTANTS.MIN_WIDTH).toBe(80);
+      expect(TOOLTIP_CONSTANTS.MAX_WIDTH_RATIO).toBe(0.85);
+      expect(TOOLTIP_CONSTANTS.HEIGHT).toBe(40);
+      expect(TOOLTIP_CONSTANTS.CHAR_WIDTH).toBe(9);
+      expect(TOOLTIP_CONSTANTS.BOOKMARK_WIDTH).toBe(32);
+      expect(TOOLTIP_CONSTANTS.GAP_WIDTH).toBe(8);
+    });
+  });
+
+  describe('calculateTooltipDimensions', () => {
+    const mockLayout: TooltipLayout = {
+      x: 100,
+      y: 200,
+      width: 50,
+      height: 30,
+    };
+
+    it('should calculate dimensions for simple text without bookmark', () => {
+      const result = calculateTooltipDimensions(mockLayout, 'Hello', false);
+
+      expect(result.tooltipTop).toBe(160); // 200 - 40
+      expect(result.tooltipWidth).toBeGreaterThanOrEqual(TOOLTIP_CONSTANTS.MIN_WIDTH);
+      expect(result.tooltipHeight).toBe(TOOLTIP_CONSTANTS.HEIGHT);
+      expect(result.arrowLeft).toBeGreaterThanOrEqual(TOOLTIP_CONSTANTS.ARROW_SIZE);
+    });
+
+    it('should calculate dimensions for text with bookmark', () => {
+      const result = calculateTooltipDimensions(mockLayout, 'Hello', true);
+
+      expect(result.tooltipTop).toBe(160);
+      expect(result.tooltipWidth).toBeGreaterThanOrEqual(TOOLTIP_CONSTANTS.MIN_WIDTH);
+      expect(result.tooltipHeight).toBe(TOOLTIP_CONSTANTS.HEIGHT);
+    });
+
+    it('should handle long text', () => {
+      const longText = 'This is a very long text that should increase the tooltip width';
+      const result = calculateTooltipDimensions(mockLayout, longText, false);
+
+      expect(result.tooltipWidth).toBeGreaterThan(TOOLTIP_CONSTANTS.MIN_WIDTH);
+    });
+
+    it('should handle edge positioning near screen boundaries', () => {
+      const edgeLayout: TooltipLayout = {
+        x: 0,
+        y: 200,
+        width: 50,
+        height: 30,
+      };
+
+      const result = calculateTooltipDimensions(edgeLayout, 'Test', false);
+      expect(result.tooltipLeft).toBe(TOOLTIP_CONSTANTS.SCREEN_MARGIN);
+    });
+  });
+
+  describe('calculateArrowPosition', () => {
+    it('should calculate arrow position correctly', () => {
+      const result = calculateArrowPosition(100, 50, 100, 6);
+      expect(result).toBe(50); // 100 - 50
+    });
+
+    it('should clamp arrow position to minimum', () => {
+      const result = calculateArrowPosition(10, 50, 100, 6);
+      expect(result).toBe(6); // Clamped to arrow size
+    });
+
+    it('should clamp arrow position to maximum', () => {
+      const result = calculateArrowPosition(200, 50, 100, 6);
+      expect(result).toBe(94); // 100 - 6 (clamped to max)
+    });
+  });
+
+  describe('handleScreenBoundaries', () => {
+    it('should return original position when within bounds', () => {
+      const result = handleScreenBoundaries(100, 50, 16);
+      expect(result).toBe(100);
+    });
+
+    it('should adjust position when too close to left edge', () => {
+      const result = handleScreenBoundaries(5, 50, 16);
+      expect(result).toBe(16);
+    });
+
+    it('should adjust position when too close to right edge', () => {
+      // SCREEN_WIDTH defaults to 375 in test environments
+      const screenWidth = 375;
+      const result = handleScreenBoundaries(350, 50, 16);
+      expect(result).toBe(screenWidth - 16 - 50); // SCREEN_WIDTH - margin - width
+    });
+  });
+
+  describe('estimateTextWidth', () => {
+    it('should estimate text width correctly', () => {
+      const result = estimateTextWidth('Hello');
+      expect(result).toBe(45); // 5 * 9
+    });
+
+    it('should use custom character width', () => {
+      const result = estimateTextWidth('Hello', 10);
+      expect(result).toBe(50); // 5 * 10
+    });
+
+    it('should handle empty string', () => {
+      const result = estimateTextWidth('');
+      expect(result).toBe(0);
+    });
+  });
+
+  describe('calculateContentWidth', () => {
+    it('should calculate width without bookmark', () => {
+      const result = calculateContentWidth(50, false);
+      expect(result).toBe(50);
+    });
+
+    it('should calculate width with bookmark', () => {
+      const result = calculateContentWidth(50, true);
+      expect(result).toBe(90); // 50 + 32 + 8
+    });
+  });
+
+  describe('calculateTooltipWidth', () => {
+    it('should calculate width with minimum constraint', () => {
+      const result = calculateTooltipWidth(10, 20);
+      expect(result).toBe(TOOLTIP_CONSTANTS.MIN_WIDTH);
+    });
+
+    it('should calculate width based on content', () => {
+      const contentWidth = 100;
+      const result = calculateTooltipWidth(contentWidth, 20);
+      expect(result).toBe(contentWidth + TOOLTIP_CONSTANTS.MIN_PADDING * 2);
+    });
+
+    it('should calculate width based on layout', () => {
+      const layoutWidth = 100;
+      const result = calculateTooltipWidth(10, layoutWidth);
+      expect(result).toBe(layoutWidth + TOOLTIP_CONSTANTS.MIN_PADDING * 2);
+    });
+
+    it('should respect maximum width constraint', () => {
+      const veryLargeContent = 1000;
+      const result = calculateTooltipWidth(veryLargeContent, 1000);
+      // Should be constrained by MAX_WIDTH_RATIO
+      expect(result).toBeLessThanOrEqual(390 * TOOLTIP_CONSTANTS.MAX_WIDTH_RATIO);
+    });
+  });
+});

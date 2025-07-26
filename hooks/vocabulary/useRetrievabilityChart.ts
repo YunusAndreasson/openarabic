@@ -8,24 +8,13 @@ import {
   GRAPH_HEIGHT_LARGE,
   useGraphWidth,
 } from '@/components/vocabulary/shared/constants';
-import {
-  calculateRetrievability,
-  createStandardizedPerformanceZones,
-} from '@/components/vocabulary/shared/utils';
-import {
-  CRITICAL_RETRIEVABILITY_THRESHOLD,
-  TREND_CHANGE_THRESHOLD,
-  URGENT_RETRIEVABILITY_THRESHOLD,
-} from '@/constants/fsrs';
+import { createStandardizedPerformanceZones } from '@/components/vocabulary/shared/utils';
 import type { StudyWord } from '@/types/vocabulary.types';
-
-interface RetrievabilityForecast {
-  date: Date;
-  averageRetrievability: number;
-  wordCount: number;
-  criticalWords: number;
-  urgentWords: number;
-}
+import {
+  calculateRetrievabilityForecast,
+  calculateRetrievabilityTrend,
+  type RetrievabilityForecast,
+} from '@/utils/fsrsUtils';
 
 interface RetrievabilityChartData {
   retrievabilityPath: string;
@@ -51,50 +40,9 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
   const chartColors = useChartColors();
   const graphWidth = useGraphWidth();
 
-  const validWords = useMemo<(StudyWord & { lastReviewDate: Date })[]>(
-    () =>
-      studyWords
-        .filter(w => w.fsrs_last_review && (w.fsrs_reps ?? 0) > 0)
-        .map(w => ({ ...w, lastReviewDate: new Date(w.fsrs_last_review as string) })),
-    [studyWords]
-  );
-
   const retrievabilityData = useMemo<RetrievabilityForecast[]>(() => {
-    // Generate future dates starting from today for memory decay forecasting
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
-
-    const dates: Date[] = [];
-    for (let i = 0; i < DAYS_7; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i); // Future dates starting from today
-      date.setHours(23, 59, 59, 999);
-      dates.push(date);
-    }
-
-    return dates.map(date => {
-      let totalRetrievability = 0;
-      let wordCount = 0;
-      let criticalWords = 0;
-      let urgentWords = 0;
-
-      validWords.forEach(word => {
-        const retrievability = calculateRetrievability(word, date, word.lastReviewDate);
-        totalRetrievability += retrievability;
-        wordCount++;
-
-        if (retrievability < CRITICAL_RETRIEVABILITY_THRESHOLD) {
-          criticalWords++;
-        }
-        if (retrievability < URGENT_RETRIEVABILITY_THRESHOLD) {
-          urgentWords++;
-        }
-      });
-
-      const averageRetrievability = wordCount > 0 ? (totalRetrievability / wordCount) * 100 : 0;
-      return { date, averageRetrievability, wordCount, criticalWords, urgentWords };
-    });
-  }, [validWords]);
+    return calculateRetrievabilityForecast(studyWords, DAYS_7);
+  }, [studyWords]);
 
   const chartData = useMemo<RetrievabilityChartData>(() => {
     if (retrievabilityData.length === 0) {
@@ -149,25 +97,12 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
 
     const performanceZones = createStandardizedPerformanceZones(GRAPH_HEIGHT_LARGE, 0, chartColors);
 
-    // For future predictions, analyze the forecast trend
+    // Calculate trend using utility function
+    const trend = calculateRetrievabilityTrend(retrievabilityData);
+
+    // Get today's data for insights
     const todayData = retrievabilityData[0]; // Today (leftmost)
-    const futureData = retrievabilityData.slice(1); // Next 6 days
-
     const currentRetrievability = todayData?.averageRetrievability || 0;
-    const futureAvg =
-      futureData.length > 0
-        ? futureData.reduce((sum, day) => sum + day.averageRetrievability, 0) / futureData.length
-        : 0;
-
-    // Calculate trend based on future decay prediction
-    const change = futureAvg - currentRetrievability;
-    const trend =
-      change > TREND_CHANGE_THRESHOLD
-        ? 'improving' // Unlikely for memory decay, but possible with reviews
-        : change < -TREND_CHANGE_THRESHOLD
-        ? 'declining' // Expected for memory decay
-        : 'stable';
-
     const criticalWords = todayData?.criticalWords || 0;
 
     return {

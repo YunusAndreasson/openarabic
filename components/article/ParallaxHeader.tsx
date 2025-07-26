@@ -4,15 +4,15 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
-import { SCREEN_WIDTH } from '@/constants/layout';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { Article } from '@/types/articles.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
-import { withOpacity } from '@/utils/colorUtils';
+import {
+  calculateHeaderHeight,
+  createBackgroundGradientColors,
+  createImageGradientColors,
+} from '@/utils/gradientUtils';
 
-// Extract constants outside component to prevent recreation
-const GOLDEN_RATIO = 1.618; // True golden ratio for optimal header proportions
-const BASE_HEADER_HEIGHT = Math.round(SCREEN_WIDTH / GOLDEN_RATIO); // Base height based on golden ratio
 const GRADIENT_HEIGHT_PERCENTAGE = '60%';
 
 // Static styles to prevent recreation
@@ -79,7 +79,7 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors }) =
 
   // Calculate dynamic height including safe area for proper image display
   const headerHeight = useMemo(() => {
-    return BASE_HEADER_HEIGHT + insets.top;
+    return calculateHeaderHeight(insets.top);
   }, [insets.top]);
 
   // Memoize image section style with dynamic height
@@ -96,54 +96,13 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors }) =
 
   // Enhanced gradient for better text visibility - different approach for light vs dark mode
   const imageGradientColors = useMemo(() => {
-    // Use proper theme detection instead of hardcoded color comparison
-    if (isDarkMode) {
-      // Dark mode - use dark overlay for light text visibility
-      return [
-        'transparent',
-        'transparent',
-        withOpacity(colors.black, 0.03),
-        withOpacity(colors.black, 0.08),
-        withOpacity(colors.black, 0.15),
-        withOpacity(colors.black, 0.25),
-        withOpacity(colors.black, 0.4), // Dark overlay for light text visibility
-      ] as const;
-    } else {
-      // Light/sepia mode - use background color overlay to provide contrast for dark text
-      // This ensures sepia mode uses warm sepia tones instead of pure white
-      return [
-        'transparent',
-        'transparent',
-        withOpacity(colors.background, 0.03),
-        withOpacity(colors.background, 0.08),
-        withOpacity(colors.background, 0.15),
-        withOpacity(colors.background, 0.25),
-        withOpacity(colors.background, 0.4), // Background overlay for dark text visibility
-      ] as const;
-    }
-  }, [colors.black, colors.background, isDarkMode]);
+    return createImageGradientColors(colors, isDarkMode);
+  }, [colors, isDarkMode]);
 
   // Background gradient colors for smooth transition to content with memoization
   const backgroundGradientColors = useMemo(() => {
-    const bgColor = colors.background;
-
-    // Use appropriate overlay color based on theme
-    // For sepia mode, use background color instead of white to maintain warm tones
-    const overlayColor = isDarkMode ? colors.black : colors.background;
-
-    return [
-      'transparent',
-      'transparent',
-      'transparent',
-      withOpacity(overlayColor, 0.05),
-      withOpacity(overlayColor, 0.15),
-      withOpacity(overlayColor, 0.3),
-      withOpacity(overlayColor, 0.5),
-      withOpacity(overlayColor, 0.7),
-      withOpacity(overlayColor, 0.85),
-      bgColor,
-    ] as const;
-  }, [colors.background, colors.black, isDarkMode]);
+    return createBackgroundGradientColors(colors, isDarkMode);
+  }, [colors, isDarkMode]);
 
   // Memoize EnhancedImage props to prevent unnecessary re-renders
   const imageProps = useMemo(

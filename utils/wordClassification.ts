@@ -1,9 +1,9 @@
 import {
+  DEFAULT_FSRS_DIFFICULTY,
   STRUGGLING_DIFFICULTY_THRESHOLD,
   STRUGGLING_LAPSES_THRESHOLD,
-  UNSTABLE_STABILITY_THRESHOLD,
   UNSTABLE_DIFFICULTY_THRESHOLD,
-  DEFAULT_FSRS_DIFFICULTY,
+  UNSTABLE_STABILITY_THRESHOLD,
 } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -30,6 +30,78 @@ export function isStrugglingWord(word: StudyWord): boolean {
     lapses >= STRUGGLING_LAPSES_THRESHOLD;
 
   return isHighDifficultyWithLapses || isStrugglingInLearning || isUnstableAndDifficult;
+}
+
+/**
+ * Calculate due words from study words
+ * Uses FSRS due date logic to determine which words are currently due for review
+ */
+export function calculateDueWords(studyWords: StudyWord[]): number {
+  const now = new Date().toISOString();
+  return studyWords.filter(word => (word.fsrs_due ?? '9999-12-31') <= now).length;
+}
+
+/**
+ * Calculate learning words using server-side logic (matching session logic)
+ * Server: 'fsrs_state.in.(0,1,3),and(fsrs_state.eq.2,fsrs_stability.lt.5)'
+ */
+export function calculateLearningWords(studyWords: StudyWord[]): number {
+  return studyWords.filter(word => {
+    const state = word.fsrs_state;
+    const stability = word.fsrs_stability ?? 0;
+    return state === 0 || state === 1 || state === 3 || (state === 2 && stability < 5);
+  }).length;
+}
+
+/**
+ * Calculate mastered words using server-side logic (matching session logic)
+ * Server: 'fsrs_state.eq.2,fsrs_stability.gte.5'
+ */
+export function calculateMasteredWords(studyWords: StudyWord[]): number {
+  return studyWords.filter(word => {
+    const state = word.fsrs_state;
+    const stability = word.fsrs_stability ?? 0;
+    return state === 2 && stability >= 5;
+  }).length;
+}
+
+/**
+ * Calculate struggling words that have been reviewed (matching session logic)
+ * This ensures the display count matches what users will actually practice
+ */
+export function calculateStrugglingWords(studyWords: StudyWord[]): number {
+  return studyWords.filter(word => {
+    // Must have been reviewed at least once (matching session's reviewedOnly: true)
+    const hasBeenReviewed = word.fsrs_last_review != null && (word.fsrs_reps ?? 0) > 0;
+    return hasBeenReviewed && isStrugglingWord(word);
+  }).length;
+}
+
+/**
+ * Calculate all word categories in a single pass for efficiency
+ * Returns an object with all category counts
+ */
+export function calculateWordCategories(
+  studyWords: StudyWord[],
+  dueWordsProp?: number
+): {
+  dueWords: number;
+  learningWords: number;
+  masteredWords: number;
+  strugglingWords: number;
+} {
+  const calculatedDueWords = calculateDueWords(studyWords);
+  const learningWords = calculateLearningWords(studyWords);
+  const masteredWords = calculateMasteredWords(studyWords);
+  const strugglingWords = calculateStrugglingWords(studyWords);
+
+  return {
+    // Prioritize dueWords prop over calculated value for consistency
+    dueWords: dueWordsProp && dueWordsProp > 0 ? dueWordsProp : calculatedDueWords,
+    learningWords,
+    masteredWords,
+    strugglingWords,
+  };
 }
 
 /**

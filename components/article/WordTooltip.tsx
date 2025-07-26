@@ -9,13 +9,11 @@ import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useArabicWordAnalysis } from '@/hooks/vocabulary';
 import type { WordTooltipProps } from '@/types/ui/modal.types';
-
-const TOOLTIP_CONSTANTS = {
-  ARROW_SIZE: 6,
-  MIN_PADDING: 12,
-  SCREEN_MARGIN: 16,
-  Z_INDEX: 999999,
-} as const;
+import {
+  TOOLTIP_CONSTANTS,
+  calculateTooltipDimensions,
+  type TooltipLayout,
+} from '@/utils/positioningUtils';
 
 const ANIMATION_CONFIG = {
   initialOpacity: 0,
@@ -82,63 +80,6 @@ const STATIC_STYLES = StyleSheet.create({
     marginLeft: 4,
   },
 });
-
-const calculateTooltipDimensions = (
-  layout: NonNullable<WordTooltipProps['layout']>,
-  text: string,
-  hasBookmark: boolean
-) => {
-  const { ARROW_SIZE, MIN_PADDING, SCREEN_MARGIN } = TOOLTIP_CONSTANTS;
-
-  // Estimate text width (rough calculation)
-  const charWidth = 9; // Approximate character width for fontSize 15
-  const textWidth = text.length * charWidth;
-
-  // Add space for bookmark if present
-  const bookmarkWidth = hasBookmark ? 32 : 0;
-  const gapWidth = hasBookmark ? 8 : 0;
-
-  // Calculate total content width
-  const contentWidth = textWidth + bookmarkWidth + gapWidth;
-
-  // Calculate tooltip width with padding
-  const tooltipWidth = Math.max(
-    contentWidth + MIN_PADDING * 2,
-    layout.width + MIN_PADDING * 2,
-    120 // Minimum width
-  );
-
-  // Calculate tooltip height
-  const tooltipHeight = 40; // Slightly reduced height for better balance
-
-  // Calculate position
-  const wordCenterX = layout.x + layout.width / 2;
-  const tooltipTop = layout.y - tooltipHeight;
-
-  // Calculate horizontal position
-  let tooltipLeft = wordCenterX - tooltipWidth / 2;
-  let arrowLeft = tooltipWidth / 2;
-
-  // Handle screen boundaries
-  if (tooltipLeft < SCREEN_MARGIN) {
-    tooltipLeft = SCREEN_MARGIN;
-    arrowLeft = wordCenterX - SCREEN_MARGIN;
-  } else if (tooltipLeft + tooltipWidth > SCREEN_WIDTH - SCREEN_MARGIN) {
-    tooltipLeft = SCREEN_WIDTH - SCREEN_MARGIN - tooltipWidth;
-    arrowLeft = wordCenterX - tooltipLeft;
-  }
-
-  // Clamp arrow position within tooltip bounds
-  arrowLeft = Math.max(ARROW_SIZE, Math.min(arrowLeft, tooltipWidth - ARROW_SIZE));
-
-  return {
-    tooltipLeft,
-    tooltipTop,
-    tooltipWidth,
-    tooltipHeight,
-    arrowLeft,
-  };
-};
 
 const WordTooltipComparison = (
   prevProps: WordTooltipProps,
@@ -361,7 +302,7 @@ export const WordTooltip = memo(
       }
 
       const hasBookmark = !!(onStudyListToggle && wordRootId);
-      return calculateTooltipDimensions(layout, text || '', hasBookmark);
+      return calculateTooltipDimensions(layout as TooltipLayout, text || '', hasBookmark);
     }, [layout, text, onStudyListToggle, wordRootId]);
 
     // Memoized styles

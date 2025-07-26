@@ -19,6 +19,7 @@ import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { withOpacity } from '@/utils/colorUtils';
+import { createAudioOverlayColors, createAudioOverlayGradient } from '@/utils/gradientUtils';
 
 // Modal drag indicator component positioned over background image
 const ModalDragIndicator = () => {
@@ -125,28 +126,13 @@ export default function NowPlayingModal() {
 
   // Enhanced gradient system using proper dark overlay for text contrast
   const gradientColors = useMemo(() => {
-    // Always use dark overlay for proper white text contrast regardless of theme
-    const darkOverlay = colors.shadow;
-    return [
-      withOpacity(darkOverlay, 0.3), // Lighter at top
-      withOpacity(darkOverlay, 0.5), // Medium in middle
-      withOpacity(darkOverlay, 0.7), // Darker at bottom for text readability
-    ] as const;
+    return createAudioOverlayGradient(colors.shadow);
   }, [colors.shadow]);
 
   // Semantic overlay colors following design system
-  const overlayColors = useMemo(
-    () => ({
-      controlBackground: withOpacity(colors.white, 0.28), // Using opacity.selection for interactive elements
-      progressBackground: withOpacity(colors.white, 0.15), // Using opacity.border for tracks
-      dragIndicator: withOpacity(colors.white, 0.68), // Using opacity.backdrop for visibility
-      timerActive: withOpacity(colors.warning, 0.92), // Using opacity.modal for strong states
-      textPrimary: colors.white, // Use theme-aware white for text
-      textSecondary: withOpacity(colors.white, 0.85), // Secondary text
-      textTertiary: withOpacity(colors.white, 0.75), // Tertiary text
-    }),
-    [colors.white, colors.warning]
-  );
+  const overlayColors = useMemo(() => {
+    return createAudioOverlayColors(colors);
+  }, [colors]);
 
   // Calculate sentence progress for display
   const sentenceProgressText =

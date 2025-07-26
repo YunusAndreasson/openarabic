@@ -8,6 +8,15 @@ export const GESTURE_CONSTANTS = {
   MAX_TRANSLATION_RATIO: LAYOUT.OPACITY.HOVER,
 } as const;
 
+// ===== SCRUBBER CONSTANTS =====
+export const SCRUBBER_CONSTANTS = {
+  HANDLE_SIZE: 20,
+  HANDLE_SIZE_ACTIVE: 28,
+  TRACK_HEIGHT: 4,
+  TRACK_HEIGHT_ACTIVE: 12,
+  DEFAULT_TRACK_WIDTH: 300,
+} as const;
+
 // ===== GESTURE CONFIGURATION =====
 export const GESTURE_CONFIG = {
   MIN_DISTANCE: GESTURE_CONSTANTS.MIN_DISTANCE,
@@ -99,4 +108,71 @@ export const getSwipeAction = (
     return getSwipeDirection(translationX);
   }
   return null;
+};
+
+// ===== SCRUBBER UTILITIES =====
+
+/**
+ * Calculates the handle position based on progress and track width
+ * @param progress - Progress value between 0 and 1
+ * @param trackWidth - Width of the track
+ * @param handleSize - Size of the handle (default: SCRUBBER_CONSTANTS.HANDLE_SIZE)
+ * @returns The calculated position in pixels
+ */
+export const calculatePosition = (
+  progress: number,
+  trackWidth: number,
+  handleSize: number = SCRUBBER_CONSTANTS.HANDLE_SIZE
+): number => {
+  'worklet';
+  return progress * (trackWidth - handleSize);
+};
+
+/**
+ * Validates and clamps progress to valid range
+ * @param progress - Progress value to validate
+ * @returns Clamped progress value between 0 and 1
+ */
+export const validateProgress = (progress: number): number => {
+  'worklet';
+  return Math.max(0, Math.min(1, progress));
+};
+
+/**
+ * Calculates sentence index from progress and total sentences
+ * @param progress - Progress value between 0 and 1
+ * @param totalSentences - Total number of sentences
+ * @returns The calculated sentence index (0-based)
+ */
+export const calculateSentenceIndex = (progress: number, totalSentences: number): number => {
+  'worklet';
+  const validProgress = validateProgress(progress);
+  return Math.round(validProgress * (totalSentences - 1));
+};
+
+/**
+ * Calculates progress from sentence index and total sentences
+ * @param sentenceIndex - Current sentence index (0-based)
+ * @param totalSentences - Total number of sentences
+ * @returns The calculated progress value between 0 and 1
+ */
+export const calculateProgressFromIndex = (
+  sentenceIndex: number,
+  totalSentences: number
+): number => {
+  'worklet';
+  if (totalSentences <= 1) return 0;
+  const validIndex = Math.max(0, Math.min(sentenceIndex, totalSentences - 1));
+  return validIndex / (totalSentences - 1);
+};
+
+/**
+ * Validates sentence index and clamps to valid range
+ * @param sentenceIndex - Sentence index to validate
+ * @param totalSentences - Total number of sentences
+ * @returns Clamped sentence index
+ */
+export const validateSentenceIndex = (sentenceIndex: number, totalSentences: number): number => {
+  'worklet';
+  return Math.max(0, Math.min(Math.floor(sentenceIndex), totalSentences - 1));
 };

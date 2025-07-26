@@ -19,6 +19,13 @@ import { articlesService } from '@/services/articles';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
+import {
+  createContentContainerStyle,
+  createFlashListConfig,
+  createListContainerStyle,
+  createOverrideItemLayout,
+  createViewabilityConfig,
+} from '@/utils/listUtils';
 
 // Static styles for better performance
 const styles = StyleSheet.create({
@@ -54,9 +61,6 @@ const styles = StyleSheet.create({
 const SENTENCE_ITEM_HEIGHT = LAYOUT.SENTENCE_ITEM.HEIGHT;
 const SCROLL_THROTTLE = SCROLL_EVENT_THROTTLE;
 const DRAW_DISTANCE_MULTIPLIER = SENTENCE_DRAW_DISTANCE_MULTIPLIER;
-
-// Static functions for better performance
-const getItemType = () => 'sentence';
 
 interface ArticleTitleProps {
   title: string;
@@ -318,69 +322,68 @@ export const ArticleContent = memo<ArticleContentProps>(
       [article.id, articlesData]
     );
 
-    // Static callback for better performance
-    const getItemTypeCallback = useCallback(getItemType, []);
-
-    // Static override layout callback
-    const overrideItemLayout = useCallback((layout: { span?: number; size?: number }) => {
-      layout.size = SENTENCE_ITEM_HEIGHT;
-    }, []);
-
     // Memoized content container style
     const contentContainerStyle = useMemo(
-      () => ({
-        paddingTop: 0,
-        paddingBottom: insets.bottom + LAYOUT.SPACING.XXXLARGE, // Safe area + comfortable reading space
-      }),
+      () => createContentContainerStyle(insets.bottom),
       [insets.bottom]
     );
 
     // Memoized list container style
     const listContainerStyle = useMemo(
-      () => [styles.listContainer, styles.content, { backgroundColor: colors.background }],
+      () => createListContainerStyle(colors.background),
       [colors.background]
     );
 
     // Memoized viewability config
-    const viewabilityConfig = useMemo(
-      () => ({
-        itemVisiblePercentThreshold: 50, // Consider item visible when 50% is visible
-        minimumViewTime: 100, // Minimum time item must be visible before triggering
-      }),
-      []
+    const viewabilityConfig = useMemo(() => createViewabilityConfig(), []);
+
+    // Static override layout callback
+    const overrideItemLayout = useCallback(createOverrideItemLayout(SENTENCE_ITEM_HEIGHT), []);
+
+    // Create FlashList configuration
+    const flashListConfig = useMemo(
+      () =>
+        createFlashListConfig({
+          data: sortedSentences,
+          renderItem: renderSentenceItem,
+          keyExtractor: item => item.id.toString(),
+          estimatedItemSize: SENTENCE_ITEM_HEIGHT,
+          contentContainerStyle,
+          ListHeaderComponent: headerComponent,
+          ListFooterComponent: footerComponent,
+          onScroll: handleAnimatedScroll,
+          onViewableItemsChanged: handleViewableItemsChanged,
+          viewabilityConfig,
+          overrideItemLayout,
+          drawDistance: SENTENCE_ITEM_HEIGHT * DRAW_DISTANCE_MULTIPLIER,
+          scrollEventThrottle: SCROLL_THROTTLE,
+          showsVerticalScrollIndicator: false,
+          removeClippedSubviews: true,
+          alwaysBounceVertical: false,
+          bounces: true,
+          overScrollMode: 'auto',
+          persistentScrollbar: false,
+          extraData: '',
+          initialScrollIndex: 0,
+        }),
+      [
+        sortedSentences,
+        renderSentenceItem,
+        contentContainerStyle,
+        headerComponent,
+        footerComponent,
+        handleAnimatedScroll,
+        handleViewableItemsChanged,
+        viewabilityConfig,
+        overrideItemLayout,
+      ]
     );
 
     return (
       <View style={styles.flexOne}>
         {sortedSentences && sortedSentences.length > 0 ? (
           <View style={listContainerStyle}>
-            <FlashList
-              ref={scrollViewRef}
-              key={`article-${id}`}
-              alwaysBounceVertical={false}
-              bounces={true}
-              data={sortedSentences}
-              drawDistance={SENTENCE_ITEM_HEIGHT * DRAW_DISTANCE_MULTIPLIER}
-              estimatedFirstItemOffset={0}
-              estimatedItemSize={SENTENCE_ITEM_HEIGHT}
-              extraData={''}
-              getItemType={getItemTypeCallback}
-              initialScrollIndex={0}
-              keyExtractor={item => item.id.toString()}
-              ListHeaderComponent={headerComponent}
-              ListFooterComponent={footerComponent}
-              overScrollMode="auto"
-              persistentScrollbar={false}
-              removeClippedSubviews={true}
-              renderItem={renderSentenceItem}
-              scrollEventThrottle={SCROLL_THROTTLE}
-              showsVerticalScrollIndicator={false} // Hide native scroll indicator
-              contentContainerStyle={contentContainerStyle}
-              overrideItemLayout={overrideItemLayout}
-              onScroll={handleAnimatedScroll}
-              onViewableItemsChanged={handleViewableItemsChanged}
-              viewabilityConfig={viewabilityConfig}
-            />
+            <FlashList ref={scrollViewRef} key={`article-${id}`} {...flashListConfig} />
 
             {/* Custom sentence scrubber */}
             <SentenceScrubber

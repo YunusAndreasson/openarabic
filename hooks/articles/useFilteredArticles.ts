@@ -1,9 +1,14 @@
 import { useMemo } from 'react';
 
 import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
-import type { FilterState } from '@/store/filtersSlice';
 import { useAppSelector } from '@/store/hooks';
 import type { Article } from '@/types/articles.types';
+import {
+  calculateFilterDate,
+  createComparators,
+  filterArticles,
+  sortArticles,
+} from '@/utils/articleUtils';
 
 /**
  * Custom hook to filter and sort articles based on Redux filter state
@@ -29,67 +34,27 @@ export const useFilteredArticles = (articles: Article[]) => {
     dateRange: 'all' as const,
   };
 
-  const comparators: Record<FilterState['sort']['field'], (a: Article, b: Article) => number> = {
-    author: (a, b) => a.author.name.localeCompare(b.author.name),
-    date: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-    difficulty: (a, b) => a.difficulty_level - b.difficulty_level,
-    progress: (a, b) => {
-      const progressA = progressMap.get(a.id)?.progress_percentage ?? 0;
-      const progressB = progressMap.get(b.id)?.progress_percentage ?? 0;
-      return progressA - progressB;
-    },
-  };
+  // Create comparators using utility function
+  const comparators = useMemo(() => {
+    return createComparators(progressMap);
+  }, [progressMap]);
 
   // Pre-calculate date filter if needed
   const filterDate = useMemo(() => {
-    if (filters.dateRange === 'all') return null;
-    const date = new Date();
-    if (filters.dateRange === 'week') {
-      date.setDate(date.getDate() - 7);
-    } else if (filters.dateRange === 'month') {
-      date.setDate(date.getDate() - 30);
-    }
-    return date;
+    return calculateFilterDate(filters.dateRange);
   }, [filters.dateRange]);
 
   const filteredAndSortedArticles = useMemo(() => {
     // Return empty array if articles are not provided or filters state is not ready
     if (!articles?.length || !filtersState) return [];
 
-    // Apply filters
-    const filteredArticles = articles.filter(article => {
-      // Filter by authors
-      if (
-        filters.authorIds.length > 0 &&
-        (!article.author || !filters.authorIds.includes(article.author.id))
-      ) {
-        return false;
-      }
+    // Apply filters using utility function
+    const filteredArticles = filterArticles(articles, filters, filterDate);
 
-      // Filter by difficulty range
-      if (
-        (filters.difficultyRange[0] > 1 || filters.difficultyRange[1] < 5) &&
-        (article.difficulty_level < filters.difficultyRange[0] ||
-          article.difficulty_level > filters.difficultyRange[1])
-      ) {
-        return false;
-      }
-
-      // Filter by date range
-      if (filterDate && new Date(article.created_at) < filterDate) {
-        return false;
-      }
-
-      return true;
-    });
-
-    // Apply sorting
-    return filteredArticles.sort((a, b) => {
-      const comparator = comparators[sort.field];
-      const result = comparator ? comparator(a, b) : 0;
-      return sort.direction === 'desc' ? -result : result;
-    });
-  }, [articles, sort, filters, filterDate, filtersState, progressMap]);
+    // Apply sorting using utility function
+    const comparator = comparators[sort.field];
+    return sortArticles(filteredArticles, comparator, sort.direction);
+  }, [articles, sort, filters, filterDate, filtersState, comparators]);
 
   return filteredAndSortedArticles;
 };

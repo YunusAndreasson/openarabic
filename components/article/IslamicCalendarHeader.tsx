@@ -8,6 +8,10 @@ import { HIJRI_MONTHS } from '@/constants/hijri';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import {
+  createStrongDarkOverlayGradient,
+  createThemeBackgroundGradient,
+} from '@/utils/gradientUtils';
 
 const GOLDEN_RATIO = 1.618;
 const HEADER_HEIGHT = 400;
@@ -114,33 +118,12 @@ export const IslamicCalendarHeader = memo<IslamicCalendarHeaderProps>(
 
     // Enhanced gradient for better text readability using theme colors
     const imageGradientColors = useMemo(() => {
-      // Use much stronger dark overlay for excellent text contrast in all themes
-      return [
-        'transparent',
-        'rgba(0, 0, 0, 0.1)',
-        'rgba(0, 0, 0, 0.3)',
-        'rgba(0, 0, 0, 0.5)',
-        'rgba(0, 0, 0, 0.7)',
-        'rgba(0, 0, 0, 0.85)',
-        'rgba(0, 0, 0, 0.95)',
-      ] as const;
+      return createStrongDarkOverlayGradient();
     }, []);
 
     // Background gradient colors for smooth transition using proper theme detection
     const backgroundGradientColors = useMemo(() => {
-      // Use theme background color directly for better sepia mode support
-      return [
-        'transparent',
-        'transparent',
-        'transparent',
-        `${colors.background}15`, // 15% opacity
-        `${colors.background}40`, // 25% opacity
-        `${colors.background}66`, // 40% opacity
-        `${colors.background}99`, // 60% opacity
-        `${colors.background}CC`, // 80% opacity
-        `${colors.background}F2`, // 95% opacity
-        colors.background,
-      ] as const;
+      return createThemeBackgroundGradient(colors.background);
     }, [colors.background]);
 
     return (

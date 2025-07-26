@@ -11,6 +11,7 @@ import Animated, {
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { SCRUBBER_CONSTANTS, calculatePosition } from '@/utils/gestureUtils';
 import { selectionFeedback } from '@/utils/haptics';
 
 interface SentenceScrubberProps {
@@ -22,11 +23,11 @@ interface SentenceScrubberProps {
 }
 
 // Constants for better performance - Updated for Jakob's Law compliance
-const HANDLE_SIZE = 20;
-const HANDLE_SIZE_ACTIVE = 28; // Larger during interaction (iOS pattern)
-const TRACK_HEIGHT = 4;
-const TRACK_HEIGHT_ACTIVE = 12; // Much thicker during interaction for better visibility
-const DEFAULT_TRACK_WIDTH = 300;
+const HANDLE_SIZE = SCRUBBER_CONSTANTS.HANDLE_SIZE;
+const HANDLE_SIZE_ACTIVE = SCRUBBER_CONSTANTS.HANDLE_SIZE_ACTIVE;
+const TRACK_HEIGHT = SCRUBBER_CONSTANTS.TRACK_HEIGHT;
+const TRACK_HEIGHT_ACTIVE = SCRUBBER_CONSTANTS.TRACK_HEIGHT_ACTIVE;
+const DEFAULT_TRACK_WIDTH = SCRUBBER_CONSTANTS.DEFAULT_TRACK_WIDTH;
 const SPRING_CONFIG = { damping: 20, stiffness: 400 };
 const TOOLTIP_SPRING_CONFIG = { damping: 15, stiffness: 300 };
 
@@ -36,7 +37,7 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
     const lastSentenceRef = useRef(currentSentence);
 
     // Shared values for performance
-    const trackWidth = useSharedValue(DEFAULT_TRACK_WIDTH);
+    const trackWidth = useSharedValue(DEFAULT_TRACK_WIDTH as number);
     const handlePosition = useSharedValue(0);
     const showTooltip = useSharedValue(0);
     const isDragging = useSharedValue(false);
@@ -66,12 +67,6 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
       },
       [maxSentenceIndex, onSentenceChange, triggerHapticFeedback]
     );
-
-    // Optimized position calculation
-    const calculatePosition = useCallback((progress: number, width: number) => {
-      'worklet';
-      return progress * (width - HANDLE_SIZE);
-    }, []);
 
     // Update position when sentence changes (only when not dragging)
     React.useEffect(() => {
