@@ -126,7 +126,7 @@ export function useReadingProgress({
   // Improved progress update logic
   const updateProgress = useCallback(
     (sentenceIndex: number) => {
-      if (!isActive || !user?.id || articleId < 0 || totalSentences <= 0) {
+      if (!isActive || !user?.id || articleId <= 0 || totalSentences <= 0) {
         return;
       }
 
@@ -168,7 +168,7 @@ export function useReadingProgress({
   useEffect(() => {
     return () => {
       // Save final progress when hook unmounts
-      if (isActive && currentSentenceIndex >= 0 && user?.id && articleId >= 0) {
+      if (isActive && currentSentenceIndex >= 0 && user?.id && articleId > 0) {
         const lastRecorded = Math.max(
           lastSavedSentenceRef.current,
           progress?.last_sentence_read ?? 0

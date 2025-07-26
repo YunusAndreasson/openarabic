@@ -91,8 +91,13 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
   // Ref to track current sentence index for reading progress
   const currentSentenceIndexRef = useRef(0);
 
-  // Ref to track if resume has been triggered for this session
-  const hasResumedRef = useRef(false);
+  // Ref to track if we've already handled the initial resume for this article
+  const hasHandledInitialResumeRef = useRef(false);
+
+  // Reset resume flag when article changes
+  useEffect(() => {
+    hasHandledInitialResumeRef.current = false;
+  }, [articleId]);
 
   // Handle scroll to close tooltip and hide header
   const handleScroll = useCallback(
@@ -189,12 +194,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
 
   // Update reading progress when current sentence changes (but only after initial load)
   useEffect(() => {
-    if (
-      !!article &&
-      !isLoadingArticle &&
-      currentSentenceIndex >= 0 &&
-      currentSentenceIndexRef.current > 0
-    ) {
+    if (!!article && !isLoadingArticle && currentSentenceIndex >= 0) {
       updateProgress(currentSentenceIndex);
     }
   }, [currentSentenceIndex, article, isLoadingArticle, updateProgress]);
@@ -218,45 +218,41 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     }
   }, [article, sortedSentences, isLoadingArticle, fadeIn]);
 
-  // Show toast when resuming reading progress and handle automatic scrolling
+  // Handle initial resume when article is fully loaded
   useEffect(() => {
+    // Only run once when everything is ready and we haven't handled resume yet
     if (
-      effectiveLastSentenceRead > 0 &&
+      !hasHandledInitialResumeRef.current &&
+      !isLoadingArticle &&
+      article &&
       sortedSentences &&
       sortedSentences.length > 0 &&
-      !hasResumedRef.current &&
-      !isLoadingArticle // Only trigger when article is fully loaded
+      lastSentenceRead !== null &&
+      lastSentenceRead > 0
     ) {
-      const progressPercent = Math.round(
-        (effectiveLastSentenceRead / sortedSentences.length) * 100
-      );
+      const progressPercent = Math.round((lastSentenceRead / sortedSentences.length) * 100);
 
-      // Show resume toast using the proper Toast component
+      // Show resume toast
       selectionFeedback();
       showToast(`Resumed at ${progressPercent}%`, 3000, 'success');
 
-      // Automatically jump to last read position if progress is 15% or more
+      // Jump to last read position if progress is 15% or more
       if (progressPercent >= 15) {
-        // Small delay to ensure the article is fully loaded
-        const jumpTimer = setTimeout(() => {
+        setTimeout(() => {
           jumpToLastReadPosition();
         }, 500);
-
-        // Mark as resumed to prevent multiple triggers
-        hasResumedRef.current = true;
-
-        return () => {
-          clearTimeout(jumpTimer);
-        };
       }
-    }
 
-    return undefined;
+      // Mark as handled - this prevents any further resume logic
+      hasHandledInitialResumeRef.current = true;
+    }
   }, [
-    effectiveLastSentenceRead,
-    sortedSentences,
-    jumpToLastReadPosition,
+    hasHandledInitialResumeRef.current, // This ensures it only runs once
     isLoadingArticle,
+    article,
+    sortedSentences,
+    lastSentenceRead,
+    jumpToLastReadPosition,
     showToast,
   ]);
 
