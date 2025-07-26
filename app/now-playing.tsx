@@ -125,13 +125,13 @@ export default function NowPlayingModal() {
   // Enhanced gradient system using proper dark overlay for text contrast
   const gradientColors = useMemo(() => {
     // Always use dark overlay for proper white text contrast regardless of theme
-    const darkOverlay = '#000000';
+    const darkOverlay = colors.shadow;
     return [
       withOpacity(darkOverlay, 0.3), // Lighter at top
       withOpacity(darkOverlay, 0.5), // Medium in middle
       withOpacity(darkOverlay, 0.7), // Darker at bottom for text readability
     ] as const;
-  }, []);
+  }, [colors.shadow]);
 
   // Semantic overlay colors following design system
   const overlayColors = useMemo(

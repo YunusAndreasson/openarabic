@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { SCREEN_WIDTH } from '@/constants/layout';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { Article } from '@/types/articles.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { withOpacity } from '@/utils/colorUtils';
@@ -74,6 +75,7 @@ const ParallaxHeaderComparison = (
  */
 const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors }) => {
   const insets = useSafeAreaInsets();
+  const isDarkMode = useIsDarkMode();
 
   // Calculate dynamic height including safe area for proper image display
   const headerHeight = useMemo(() => {
@@ -94,10 +96,7 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors }) =
 
   // Enhanced gradient for better text visibility - different approach for light vs dark mode
   const imageGradientColors = useMemo(() => {
-    // Detect dark mode by checking if background is dark (contains 'darkest' sage color)
-    // Dark mode uses dark sage background, light/sepia use light backgrounds
-    const isDarkMode = colors.background === '#0E1512'; // basePalette.sage.darkest
-
+    // Use proper theme detection instead of hardcoded color comparison
     if (isDarkMode) {
       // Dark mode - use dark overlay for light text visibility
       return [
@@ -122,12 +121,11 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors }) =
         withOpacity(colors.background, 0.4), // Background overlay for dark text visibility
       ] as const;
     }
-  }, [colors.black, colors.background]);
+  }, [colors.black, colors.background, isDarkMode]);
 
   // Background gradient colors for smooth transition to content with memoization
   const backgroundGradientColors = useMemo(() => {
     const bgColor = colors.background;
-    const isDarkMode = colors.background === '#0E1512'; // basePalette.sage.darkest
 
     // Use appropriate overlay color based on theme
     // For sepia mode, use background color instead of white to maintain warm tones
@@ -145,7 +143,7 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors }) =
       withOpacity(overlayColor, 0.85),
       bgColor,
     ] as const;
-  }, [colors.background, colors.black]);
+  }, [colors.background, colors.black, isDarkMode]);
 
   // Memoize EnhancedImage props to prevent unnecessary re-renders
   const imageProps = useMemo(

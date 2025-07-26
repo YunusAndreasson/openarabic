@@ -14,6 +14,7 @@ import { SCROLL_EVENT_THROTTLE, SENTENCE_DRAW_DISTANCE_MULTIPLIER } from '@/cons
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { articlesService } from '@/services/articles';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
@@ -109,6 +110,7 @@ const FloatingActionButtons = memo<{
 }>(({ isInReadingList, onToggleReadingList, onPlayPress, isPlaying, onClose }) => {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const isDarkMode = useIsDarkMode();
 
   const buttonStyle = useMemo(
     () => ({
@@ -119,10 +121,10 @@ const FloatingActionButtons = memo<{
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
       // Reduce prominence in light mode where light colors are more visible
-      opacity: colors.background === '#0E1512' ? 0.7 : 0.45, // More subtle in light mode, more visible in dark mode
+      opacity: isDarkMode ? 0.7 : 0.45, // More subtle in light mode, more visible in dark mode
       ...LAYOUT.ELEVATION.SUBTLE,
     }),
-    [colors.elevation1, colors.background]
+    [colors.elevation1, isDarkMode]
   );
 
   const activeButtonStyle = useMemo(
@@ -130,9 +132,9 @@ const FloatingActionButtons = memo<{
       ...buttonStyle,
       backgroundColor: colors.elevation2,
       // Slightly higher opacity for active state but still more subtle in light mode
-      opacity: colors.background === '#0E1512' ? 0.85 : 0.6,
+      opacity: isDarkMode ? 0.85 : 0.6,
     }),
-    [buttonStyle, colors.elevation2, colors.background]
+    [buttonStyle, colors.elevation2, isDarkMode]
   );
 
   // Memoize button positions with safe area insets
