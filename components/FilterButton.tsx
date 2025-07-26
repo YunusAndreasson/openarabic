@@ -28,14 +28,7 @@ const FilterButton = memo(({ onPress }: FilterButtonProps) => {
   return (
     <View style={styles.container}>
       <AnimatedPressable
-        style={[
-          styles.button,
-          { backgroundColor: colors.transparent },
-          activeFiltersCount > 0 && {
-            backgroundColor: colors.elevation2,
-          },
-          animatedStyle,
-        ]}
+        style={[styles.button, { backgroundColor: colors.transparent }, animatedStyle]}
         onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}

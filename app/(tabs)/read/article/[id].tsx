@@ -125,7 +125,6 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
   }, [articleId, isInReadingList, handleToggleReadingList, showToast]);
 
   const handleClose = useCallback(() => {
-    selectionFeedback();
     router.back();
   }, []);
 
