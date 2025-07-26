@@ -1,3 +1,4 @@
+import * as fc from 'fast-check';
 import type { StudyWord } from '../../types/vocabulary.types';
 
 /**
@@ -27,6 +28,299 @@ export const createTestWord = (overrides: Partial<StudyWord> = {}): StudyWord =>
     root: undefined,
     ...overrides,
   } as StudyWord;
+};
+
+// Property-based test generators
+export const fsrsArbitraries = {
+  // Generate valid FSRS stability values (0.1 to 100)
+  stability: fc.float({
+    min: Math.fround(0.1),
+    max: Math.fround(100),
+    noDefaultInfinity: true,
+    noNaN: true,
+  }),
+
+  // Generate valid FSRS difficulty values (1.3 to 10)
+  difficulty: fc.float({
+    min: Math.fround(1.3),
+    max: Math.fround(10),
+    noDefaultInfinity: true,
+    noNaN: true,
+  }),
+
+  // Generate FSRS states (0-3)
+  state: fc.integer({ min: 0, max: 3 }),
+
+  // Generate reasonable rep counts (0-100)
+  reps: fc.integer({ min: 0, max: 100 }),
+
+  // Generate lapse counts (0-20)
+  lapses: fc.integer({ min: 0, max: 20 }),
+
+  // Generate due dates (past, present, future) - ensure valid dates
+  dueDate: fc
+    .date({
+      min: new Date('2020-01-01T00:00:00.000Z'),
+      max: new Date('2030-01-01T00:00:00.000Z'),
+    })
+    .filter(date => !isNaN(date.getTime())),
+
+  // Generate overdue hours (0-720 hours = 30 days)
+  overdueHours: fc.integer({ min: 0, max: 720 }),
+
+  // Generate word IDs
+  wordId: fc.integer({ min: 1, max: 10000 }),
+};
+
+// Generate complete StudyWord with property-based values
+export const studyWordArbitrary = fc.record({
+  root_id: fsrsArbitraries.wordId,
+  user_id: fc.constant('test-user'),
+  created_at: fc
+    .date()
+    .filter(d => !isNaN(d.getTime()))
+    .map(d => d.toISOString()),
+  fsrs_due: fsrsArbitraries.dueDate.map(d => d.toISOString()),
+  fsrs_stability: fsrsArbitraries.stability,
+  fsrs_difficulty: fsrsArbitraries.difficulty,
+  fsrs_elapsed_days: fc.integer({ min: 0, max: 365 }),
+  fsrs_scheduled_days: fc.integer({ min: 0, max: 365 }),
+  fsrs_learning_steps: fc.integer({ min: 0, max: 10 }),
+  fsrs_reps: fsrsArbitraries.reps,
+  fsrs_lapses: fsrsArbitraries.lapses,
+  fsrs_state: fsrsArbitraries.state,
+  fsrs_last_review: fc.option(
+    fc
+      .date()
+      .filter(d => !isNaN(d.getTime()))
+      .map(d => d.toISOString())
+  ),
+  difficulty: fc.float({ min: 0, max: 1, noDefaultInfinity: true, noNaN: true }),
+  success_streak: fc.integer({ min: 0, max: 100 }),
+  root: fc.constant(undefined),
+}) as fc.Arbitrary<StudyWord>;
+
+// Generate word sets with specific properties
+export const wordSetArbitrary = (size: number = 10) =>
+  fc.array(studyWordArbitrary, { minLength: size, maxLength: size });
+
+// Generate struggling words (high difficulty + lapses)
+export const strugglingWordArbitrary = fc.record({
+  root_id: fsrsArbitraries.wordId,
+  user_id: fc.constant('test-user'),
+  created_at: fc
+    .date()
+    .filter(d => !isNaN(d.getTime()))
+    .map(d => d.toISOString()),
+  fsrs_due: fsrsArbitraries.dueDate.map(d => d.toISOString()),
+  fsrs_stability: fc.float({
+    min: Math.fround(0.1),
+    max: Math.fround(5),
+    noDefaultInfinity: true,
+    noNaN: true,
+  }), // Low stability
+  fsrs_difficulty: fc.float({
+    min: Math.fround(8.0),
+    max: Math.fround(10),
+    noDefaultInfinity: true,
+    noNaN: true,
+  }), // High difficulty
+  fsrs_elapsed_days: fc.integer({ min: 0, max: 365 }),
+  fsrs_scheduled_days: fc.integer({ min: 0, max: 365 }),
+  fsrs_learning_steps: fc.integer({ min: 0, max: 10 }),
+  fsrs_reps: fsrsArbitraries.reps,
+  fsrs_lapses: fc.integer({ min: 1, max: 20 }), // At least 1 lapse
+  fsrs_state: fc.integer({ min: 1, max: 3 }), // Learning, Review, or Relearning
+  fsrs_last_review: fc.option(
+    fc
+      .date()
+      .filter(d => !isNaN(d.getTime()))
+      .map(d => d.toISOString())
+  ),
+  difficulty: fc.float({
+    min: Math.fround(0.7),
+    max: Math.fround(1),
+    noDefaultInfinity: true,
+    noNaN: true,
+  }), // High difficulty
+  success_streak: fc.integer({ min: 0, max: 5 }), // Low success streak
+  root: fc.constant(undefined),
+}) as fc.Arbitrary<StudyWord>;
+
+// Generate due words (overdue)
+export const dueWordArbitrary = fc.record({
+  root_id: fsrsArbitraries.wordId,
+  user_id: fc.constant('test-user'),
+  created_at: fc
+    .date()
+    .filter(d => !isNaN(d.getTime()))
+    .map(d => d.toISOString()),
+  fsrs_due: fc
+    .date({ max: new Date(Date.now() - 60000) }) // At least 1 minute in the past
+    .filter(d => !isNaN(d.getTime()))
+    .map(d => d.toISOString()), // Past due date
+  fsrs_stability: fsrsArbitraries.stability,
+  fsrs_difficulty: fsrsArbitraries.difficulty,
+  fsrs_elapsed_days: fc.integer({ min: 0, max: 365 }),
+  fsrs_scheduled_days: fc.integer({ min: 0, max: 365 }),
+  fsrs_learning_steps: fc.integer({ min: 0, max: 10 }),
+  fsrs_reps: fsrsArbitraries.reps,
+  fsrs_lapses: fsrsArbitraries.lapses,
+  fsrs_state: fsrsArbitraries.state,
+  fsrs_last_review: fc.option(
+    fc
+      .date()
+      .filter(d => !isNaN(d.getTime()))
+      .map(d => d.toISOString())
+  ),
+  difficulty: fc.float({ min: 0, max: 1, noDefaultInfinity: true, noNaN: true }),
+  success_streak: fc.integer({ min: 0, max: 100 }),
+  root: fc.constant(undefined),
+}) as fc.Arbitrary<StudyWord>;
+
+// Property-based test utilities
+export const propertyTestUtils = {
+  // Test that a function is idempotent (same result when called twice)
+  testIdempotent: <T>(fn: (input: T) => any, arbitrary: fc.Arbitrary<T>) => {
+    return fc.property(arbitrary, input => {
+      const result1 = fn(input);
+      const result2 = fn(input);
+      expect(result1).toEqual(result2);
+    });
+  },
+
+  // Test that a function preserves ordering
+  testOrdering: <T>(fn: (input: T) => number, arbitrary: fc.Arbitrary<T>) => {
+    return fc.property(fc.array(arbitrary, { minLength: 2, maxLength: 10 }), inputs => {
+      const sorted = [...inputs].sort((a, b) => fn(a) - fn(b));
+      const mapped = inputs.map(fn);
+      const sortedMapped = [...mapped].sort((a, b) => a - b);
+      expect(mapped).toEqual(sortedMapped);
+    });
+  },
+
+  // Test that a function never throws for valid inputs
+  testNoThrows: <T>(fn: (input: T) => any, arbitrary: fc.Arbitrary<T>) => {
+    return fc.property(arbitrary, input => {
+      expect(() => fn(input)).not.toThrow();
+    });
+  },
+
+  // Test that a function returns consistent types
+  testConsistentTypes: <T, R>(
+    fn: (input: T) => R,
+    arbitrary: fc.Arbitrary<T>,
+    expectedType: string
+  ) => {
+    return fc.property(arbitrary, input => {
+      const result = fn(input);
+      expect(typeof result).toBe(expectedType);
+    });
+  },
+
+  // Test that a function preserves invariants
+  testInvariant: <T>(
+    fn: (input: T) => any,
+    arbitrary: fc.Arbitrary<T>,
+    invariant: (input: T, output: any) => boolean
+  ) => {
+    return fc.property(arbitrary, input => {
+      const output = fn(input);
+      expect(invariant(input, output)).toBe(true);
+    });
+  },
+};
+
+// Advanced test scenarios
+export const advancedTestScenarios = {
+  // Generate edge case combinations
+  edgeCaseCombinations: () => {
+    const scenarios = [
+      { name: 'null values', overrides: { fsrs_stability: null, fsrs_difficulty: null } },
+      { name: 'extreme values', overrides: { fsrs_stability: 999, fsrs_difficulty: 15 } },
+      { name: 'zero values', overrides: { fsrs_stability: 0, fsrs_difficulty: 0 } },
+      { name: 'negative values', overrides: { fsrs_stability: -1, fsrs_difficulty: -1 } },
+      {
+        name: 'invalid dates',
+        overrides: { fsrs_due: 'invalid-date', fsrs_last_review: 'also-invalid' },
+      },
+      {
+        name: 'future dates',
+        overrides: { fsrs_due: new Date(Date.now() + 86400000).toISOString() },
+      },
+      { name: 'very old dates', overrides: { fsrs_due: new Date('1900-01-01').toISOString() } },
+    ];
+
+    return fc
+      .record({
+        scenario: fc.constantFrom(...scenarios),
+        wordId: fsrsArbitraries.wordId,
+      })
+      .map(({ scenario, wordId }) => ({
+        ...scenario,
+        word: createTestWord({ root_id: wordId, ...scenario.overrides }),
+      }));
+  },
+
+  // Generate state transition sequences
+  stateTransitionSequences: () => {
+    const validTransitions = [
+      [0, 1], // New -> Learning
+      [1, 2], // Learning -> Review
+      [1, 3], // Learning -> Relearning
+      [2, 3], // Review -> Relearning
+      [3, 1], // Relearning -> Learning
+    ];
+
+    return fc
+      .array(fc.constantFrom(...validTransitions), { minLength: 3, maxLength: 10 })
+      .map(transitions => {
+        const words = transitions.map(([fromState, toState], index) =>
+          createTestWord({
+            root_id: index + 1,
+            fsrs_state: fromState,
+            fsrs_reps: index,
+            fsrs_last_review: new Date(Date.now() - index * 86400000).toISOString(),
+          })
+        );
+        return { transitions, words };
+      });
+  },
+
+  // Generate performance stress tests
+  performanceStressTests: () => {
+    return fc
+      .record({
+        wordCount: fc.integer({ min: 100, max: 1000 }),
+        complexity: fc.constantFrom('low', 'medium', 'high'),
+      })
+      .map(({ wordCount, complexity }) => {
+        const words = Array.from({ length: wordCount }, (_, i) => {
+          const baseWord = createTestWord({ root_id: i + 1 });
+          switch (complexity) {
+            case 'low':
+              return { ...baseWord, fsrs_stability: 5, fsrs_difficulty: 6.5 };
+            case 'medium':
+              return {
+                ...baseWord,
+                fsrs_stability: Math.random() * 10 + 1,
+                fsrs_difficulty: Math.random() * 5 + 5,
+                fsrs_state: Math.floor(Math.random() * 4),
+              };
+            case 'high':
+              return {
+                ...baseWord,
+                fsrs_stability: Math.random() * 100 + 1,
+                fsrs_difficulty: Math.random() * 10 + 1,
+                fsrs_state: Math.floor(Math.random() * 4),
+                fsrs_reps: Math.floor(Math.random() * 50),
+                fsrs_lapses: Math.floor(Math.random() * 10),
+              };
+          }
+        });
+        return { wordCount, complexity, words };
+      });
+  },
 };
 
 // Factory for creating word sets with priority scenarios

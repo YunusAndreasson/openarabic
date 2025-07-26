@@ -97,8 +97,9 @@ export function useMemoryCapacityGauge({
     // Trend calculation aligned with 3-phase system
     // Only show "improving" in green phase when memory is actually in good state
     const hasUrgentWords = studyWords.some(word => {
-      const now = new Date().toISOString();
-      const isDue = (word.fsrs_due ?? '9999-12-31') <= now;
+      const now = new Date();
+      const dueDate = word.fsrs_due ? new Date(word.fsrs_due) : new Date('9999-12-31');
+      const isDue = dueDate <= now;
       const hasBeenReviewed = word.fsrs_last_review != null && (word.fsrs_reps ?? 0) > 0;
       const isStruggling = hasBeenReviewed && isStrugglingWord(word);
       return isDue || isStruggling;
@@ -114,9 +115,12 @@ export function useMemoryCapacityGauge({
 
   // Calculate word states for proper phase determination
   const wordStates = useMemo(() => {
-    const now = new Date().toISOString();
+    const now = new Date();
 
-    const dueWords = studyWords.filter(word => (word.fsrs_due ?? '9999-12-31') <= now).length;
+    const dueWords = studyWords.filter(word => {
+      const dueDate = word.fsrs_due ? new Date(word.fsrs_due) : new Date('9999-12-31');
+      return dueDate <= now;
+    }).length;
 
     const strugglingWords = studyWords.filter(word => {
       const hasBeenReviewed = word.fsrs_last_review != null && (word.fsrs_reps ?? 0) > 0;
