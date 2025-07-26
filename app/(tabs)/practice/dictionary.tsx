@@ -83,7 +83,10 @@ export default function DictionaryScreen(): JSX.Element {
         await toggleRootMutation.mutateAsync({ userId: user.id, rootId });
       } catch (error) {
         // Error handling is already done in the mutation
-        console.error('Failed to delete word:', error);
+        // Only log in development to avoid console noise in production
+        if (__DEV__) {
+          console.error('Failed to delete word:', error);
+        }
       }
     },
     [user?.id, toggleRootMutation]
