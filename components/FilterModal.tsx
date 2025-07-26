@@ -148,7 +148,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
             </Pressable>
 
             {expandedSections.authors && (
-              <View style={[styles.expandedContent, { backgroundColor: colors.elevation1 }]}>
+              <View style={[styles.expandedContent, { backgroundColor: colors.elevation2 }]}>
                 <View style={styles.pillGrid}>
                   {authorChunks.map(chunk => (
                     <View key={chunk[0]?.id || chunk.length} style={styles.authorChunk}>
@@ -214,7 +214,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
             </Pressable>
 
             {expandedSections.difficulty && (
-              <View style={[styles.expandedContent, { backgroundColor: colors.elevation1 }]}>
+              <View style={[styles.expandedContent, { backgroundColor: colors.elevation2 }]}>
                 <View style={styles.pillGrid}>
                   {DIFFICULTY_OPTIONS.map(option => (
                     <Pill
@@ -279,7 +279,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
             </Pressable>
 
             {expandedSections.dateRange && (
-              <View style={[styles.expandedContent, { backgroundColor: colors.elevation1 }]}>
+              <View style={[styles.expandedContent, { backgroundColor: colors.elevation2 }]}>
                 <View style={styles.pillGrid}>
                   {DATE_RANGE_OPTIONS.map(option => (
                     <Pill

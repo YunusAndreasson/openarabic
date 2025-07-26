@@ -118,9 +118,6 @@ export const ThemePicker: FC<ThemePickerProps> = memo(({ isVisible, onClose }) =
           <ThemedText type="heading3" weight="bold">
             Theme
           </ThemedText>
-          <ThemedText type="caption" variant="secondary" style={styles.subtitle}>
-            Choose your preferred visual experience
-          </ThemedText>
         </View>
 
         {/* Theme Options */}
@@ -197,9 +194,7 @@ const styles = StyleSheet.create({
     paddingBottom: LAYOUT.SPACING.MEDIUM,
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
-  subtitle: {
-    marginTop: LAYOUT.SPACING.TINY,
-  },
+
   optionsContainer: {
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     gap: LAYOUT.SPACING.MEDIUM,

@@ -71,12 +71,12 @@ export function useFilterModal(availableAuthors: Author[]): UseFilterModalResult
   });
 
   const toggleSection = useCallback((section: keyof ExpandedSections) => {
-    selectionFeedback();
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
   }, []);
 
   const handleAuthorToggle = useCallback(
     (authorId: number) => {
+      selectionFeedback();
       dispatch(toggleAuthor(authorId));
     },
     [dispatch]
@@ -84,6 +84,7 @@ export function useFilterModal(availableAuthors: Author[]): UseFilterModalResult
 
   const handleDifficultySelect = useCallback(
     (range: [number, number]) => {
+      selectionFeedback();
       dispatch(setDifficultyRange(range));
     },
     [dispatch]
@@ -91,6 +92,7 @@ export function useFilterModal(availableAuthors: Author[]): UseFilterModalResult
 
   const handleDateRangeSelect = useCallback(
     (dateRange: FilterState['filters']['dateRange']) => {
+      selectionFeedback();
       dispatch(setDateRange(dateRange));
     },
     [dispatch]
