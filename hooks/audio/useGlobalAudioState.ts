@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AUDIO_STATES } from '@/constants/audio';
 import { useArticleData } from '@/hooks/articles/useArticleData';
@@ -36,6 +36,9 @@ export interface GlobalAudioState {
   showSleepTimerModal: boolean;
   sleepTimerRemainingTime: number;
 
+  // Navigation state
+  shouldHideMiniPlayer: boolean;
+
   // Action handlers
   onPlayPause: () => void;
   onTimerPress: () => void;
@@ -58,6 +61,9 @@ export function useGlobalAudioState(): GlobalAudioState {
 
   // Sleep timer modal state
   const [showSleepTimerModal, setShowSleepTimerModal] = useState(false);
+
+  // Track if we've navigated to modal during this audio session
+  const hasNavigatedToModalRef = useRef(false);
 
   // Get reading list for queue tracking
   const { sortedEnhancedTracks } = useListenScreen();
@@ -147,6 +153,10 @@ export function useGlobalAudioState(): GlobalAudioState {
 
   const handleExpandPress = useCallback(() => {
     if (currentArticleId) {
+      // Mark that we've navigated to modal to prevent mini-player flickering
+      hasNavigatedToModalRef.current = true;
+
+      // Navigate to modal
       openNowPlayingModal({ articleId: currentArticleId.toString() });
     }
   }, [currentArticleId]);
@@ -174,6 +184,18 @@ export function useGlobalAudioState(): GlobalAudioState {
     setShowSleepTimerModal(false);
   }, []);
 
+  // Cleanup navigation state when audio stops
+  useEffect(() => {
+    if (!audioPlayer.currentTrack) {
+      hasNavigatedToModalRef.current = false;
+    }
+  }, [audioPlayer.currentTrack]);
+
+  // Determine if mini-player should be hidden due to navigation
+  const shouldHideMiniPlayer = useMemo(() => {
+    return hasNavigatedToModalRef.current && (audioPlayer.isPlaying || audioPlayer.isLoading);
+  }, [audioPlayer.isPlaying, audioPlayer.isLoading]);
+
   return {
     isPlaying: audioPlayer.isPlaying,
     audioState: audioPlayer.isPlaying
@@ -188,6 +210,7 @@ export function useGlobalAudioState(): GlobalAudioState {
     isTimerActive: sleepTimer.state.isActive,
     showSleepTimerModal,
     sleepTimerRemainingTime: sleepTimer.state.remainingTime,
+    shouldHideMiniPlayer,
     onPlayPause: handlePlayPause,
     onTimerPress: handleTimerPress,
     onExpandPress: handleExpandPress,

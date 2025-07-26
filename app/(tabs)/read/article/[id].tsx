@@ -350,7 +350,8 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
       {/* Mini-player for article modal */}
       {globalAudioState.currentArticle &&
         (globalAudioState.isPlaying || globalAudioState.audioState === 'loading') &&
-        !globalAudioState.showSleepTimerModal && (
+        !globalAudioState.showSleepTimerModal &&
+        !globalAudioState.shouldHideMiniPlayer && (
           <MiniPlayer
             article={globalAudioState.currentArticle}
             isPlaying={globalAudioState.isPlaying}
