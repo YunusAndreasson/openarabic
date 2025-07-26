@@ -72,37 +72,31 @@ export default function InsightsScreen(): JSX.Element {
         </View>
 
         {/* Word Mastery Chart */}
-        <View style={[styles.chartCard, { backgroundColor: colors.elevation1 }]}>
+        <View style={styles.chartSection}>
           <SectionTitle
             title={INFO_TITLES.mastery}
             subtitle={STRINGS.MEMORY_STRENGTH_ACROSS_VOCABULARY}
             isFirstSection={true}
           />
-          <View style={styles.chartWrapper}>
-            <MasteryChart studyWords={validStudyWords} hideTitle={true} />
-          </View>
+          <MasteryChart studyWords={validStudyWords} hideTitle={true} />
         </View>
 
         {/* Learning Progress Chart */}
-        <View style={[styles.chartCard, { backgroundColor: colors.elevation1 }]}>
+        <View style={styles.chartSection}>
           <SectionTitle
             title={INFO_TITLES.efficiency}
             subtitle={STRINGS.VOCABULARY_ACQUISITION_VELOCITY}
           />
-          <View style={styles.chartWrapper}>
-            <EfficiencyChart studyWords={validStudyWords} hideTitle={true} />
-          </View>
+          <EfficiencyChart studyWords={validStudyWords} hideTitle={true} />
         </View>
 
         {/* Review Timing Chart */}
-        <View style={[styles.chartCard, { backgroundColor: colors.elevation1 }]}>
+        <View style={styles.chartSection}>
           <SectionTitle
             title={INFO_TITLES.retrievability}
             subtitle={STRINGS.MEMORY_RETENTION_OPTIMAL_TIMING}
           />
-          <View style={styles.chartWrapper}>
-            <RetrievabilityChart studyWords={validStudyWords} hideTitle={true} />
-          </View>
+          <RetrievabilityChart studyWords={validStudyWords} hideTitle={true} />
         </View>
       </ScrollView>
     </ThemedView>
@@ -117,16 +111,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingTop: LAYOUT.SPACING.MEDIUM,
   },
-  chartCard: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+  chartSection: {
     marginBottom: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.MEDIUM, // Reduced bottom padding for better balance
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM, // Reduced horizontal padding for charts
-    ...LAYOUT.ELEVATION.SMALL,
-  },
-  chartWrapper: {
-    marginTop: LAYOUT.SPACING.TINY,
   },
   errorContainer: {
     alignItems: 'center',

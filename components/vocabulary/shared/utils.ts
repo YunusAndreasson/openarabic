@@ -3,25 +3,40 @@ import type { StudyWord } from '@/types/vocabulary.types';
 
 import { PERFORMANCE_THRESHOLDS } from './constants';
 
-// Generate date range for charts
+// Generate date range for charts - using UTC to avoid timezone issues
 export const generateDateRange = (days: number) => {
   const today = new Date();
-  today.setHours(23, 59, 59, 999);
+  // Create UTC date for today at 23:59:59.999
+  const utcToday = new Date(
+    Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 23, 59, 59, 999)
+  );
 
   const dates: Date[] = [];
   for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(today.getDate() - i);
-    date.setHours(23, 59, 59, 999);
+    const date = new Date(utcToday);
+    date.setUTCDate(utcToday.getUTCDate() - i);
     dates.push(date);
   }
 
   return dates;
 };
 
-// Check if dates match (same day)
+// Get UTC date string (YYYY-MM-DD) for consistent timezone handling
+export const getUTCDateString = (date: Date): string => {
+  const dateString = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+  )
+    .toISOString()
+    .split('T')[0];
+  return dateString || '';
+};
+
+// Check if dates match (same day) - using UTC to avoid timezone issues
 export const isSameDay = (date1: Date, date2: Date): boolean => {
-  return date1.toDateString() === date2.toDateString();
+  // Convert both dates to UTC and compare year/month/day
+  const utc1 = new Date(Date.UTC(date1.getUTCFullYear(), date1.getUTCMonth(), date1.getUTCDate()));
+  const utc2 = new Date(Date.UTC(date2.getUTCFullYear(), date2.getUTCMonth(), date2.getUTCDate()));
+  return utc1.getTime() === utc2.getTime();
 };
 
 // Calculate retrievability using FSRS formula

@@ -88,7 +88,14 @@ export class ReadingStreakService {
    * Calculate reading streak from daily activity data
    */
   static calculateStreak(activities: DailyReadingActivity[]): ReadingStreak {
-    const today = new Date().toISOString().split('T')[0];
+    // Use UTC dates for consistent timezone handling
+    const today = new Date();
+    const todayStr = new Date(
+      Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())
+    )
+      .toISOString()
+      .split('T')[0];
+
     const activeDays = activities.filter(day => day.hasActivity);
 
     if (activeDays.length === 0) {
@@ -106,22 +113,34 @@ export class ReadingStreakService {
     // Calculate current streak
     let currentStreak = 0;
     const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+    const yesterdayStr = new Date(
+      Date.UTC(yesterday.getUTCFullYear(), yesterday.getUTCMonth(), yesterday.getUTCDate())
+    )
+      .toISOString()
+      .split('T')[0];
 
     const mostRecentDate = sortedActiveDays[0]?.date;
     const hasRecentActivity =
-      mostRecentDate && (mostRecentDate === today || mostRecentDate === yesterdayStr);
+      mostRecentDate && (mostRecentDate === todayStr || mostRecentDate === yesterdayStr);
 
     if (hasRecentActivity) {
       const activeDatesSet = new Set(sortedActiveDays.map(a => a.date));
       let currentDate = new Date(mostRecentDate);
 
       while (true) {
-        const dateStr = currentDate.toISOString().split('T')[0];
+        const dateStr = new Date(
+          Date.UTC(
+            currentDate.getUTCFullYear(),
+            currentDate.getUTCMonth(),
+            currentDate.getUTCDate()
+          )
+        )
+          .toISOString()
+          .split('T')[0];
         if (dateStr && activeDatesSet.has(dateStr)) {
           currentStreak++;
-          currentDate.setDate(currentDate.getDate() - 1);
+          currentDate.setUTCDate(currentDate.getUTCDate() - 1);
         } else {
           break;
         }
@@ -212,12 +231,23 @@ export class ReadingStreakService {
     // Mark the most recent period as active if it's current
     if (periods.length > 0) {
       const lastPeriod = periods[periods.length - 1];
-      const today = new Date().toISOString().split('T')[0];
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      // Use UTC dates for consistent timezone handling
+      const today = new Date();
+      const todayStr = new Date(
+        Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())
+      )
+        .toISOString()
+        .split('T')[0];
 
-      if (lastPeriod && (lastPeriod.endDate === today || lastPeriod.endDate === yesterdayStr)) {
+      const yesterday = new Date();
+      yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+      const yesterdayStr = new Date(
+        Date.UTC(yesterday.getUTCFullYear(), yesterday.getUTCMonth(), yesterday.getUTCDate())
+      )
+        .toISOString()
+        .split('T')[0];
+
+      if (lastPeriod && (lastPeriod.endDate === todayStr || lastPeriod.endDate === yesterdayStr)) {
         lastPeriod.isActive = true;
       }
     }

@@ -28,9 +28,11 @@ export const StreakChart = memo<StreakChartProps>(
         const start = new Date(period.startDate);
         const end = new Date(period.endDate);
 
-        // Mark all dates in this period
-        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-          const dateStr = d.toISOString().split('T')[0];
+        // Mark all dates in this period using UTC for consistent timezone handling
+        for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+          const dateStr = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
+            .toISOString()
+            .split('T')[0];
           if (dateStr) {
             map.set(dateStr, period);
           }
