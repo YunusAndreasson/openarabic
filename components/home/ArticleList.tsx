@@ -22,11 +22,15 @@ import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 
-// Use responsive height calculation based on content and spacing
-const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM + LAYOUT.SPACING.XXXLARGE * 8; // Base + content space
+// Optimized constants for better performance
+const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM + LAYOUT.SPACING.XXXLARGE * 8;
 const DRAW_DISTANCE = ITEM_HEIGHT * LIST_DRAW_DISTANCE_MULTIPLIER;
 const ESTIMATED_LIST_SIZE = { height: ITEM_HEIGHT * 10, width: 0 };
+
+// Static key extractor for better performance
 const articleKeyExtractor = (item: Article) => `article-${item.id}`;
+
+// Static separator component
 const SeparatorComponent = () => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />;
 
 interface ArticleItemProps {
@@ -60,7 +64,6 @@ const ArticleItem = memo(({ item, onPress }: ArticleItemProps) => {
 
 ArticleItem.displayName = 'ArticleItem';
 
-// Simplified props for single usage
 interface ArticleListProps {
   onRefresh?: () => void;
   onArticlePress: (article: Article) => void;
@@ -92,13 +95,13 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
 
     useImperativeHandle(ref, () => listRef.current as FlashList<Article>, []);
 
-    const keyExtractor = useCallback(articleKeyExtractor, []);
-
+    // Optimized render item with stable reference
     const renderItem: ListRenderItem<Article> = useCallback(
       ({ item }) => <ArticleItem item={item} onPress={onArticlePress} />,
       [onArticlePress]
     );
 
+    // Optimized refresh handler
     const handleRefreshWithTransition = useCallback(() => {
       if (onRefresh) {
         startTransition(() => {
@@ -107,6 +110,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
       }
     }, [onRefresh]);
 
+    // Memoized refresh control
     const refreshControl = useMemo(
       () => (
         <RefreshControl
@@ -135,26 +139,26 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
       ]
     );
 
+    // Optimized content container style
     const safeContentContainerStyle = useMemo(
       () => ({
         ...(contentContainerStyle as ContentStyle),
         paddingBottom: insets.bottom + LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
       }),
-      [contentContainerStyle, insets]
+      [contentContainerStyle, insets.bottom]
     );
 
+    // Simplified FlashList configuration - removed empty data array
     const flashListConfig = useMemo(
       () => ({
-        // Always hide main list since we only show header/footer
-        data: [] as Article[],
+        data: [] as Article[], // Empty data since articles are in header
         renderItem,
-        keyExtractor,
+        keyExtractor: articleKeyExtractor,
         estimatedItemSize: ITEM_HEIGHT,
         showsVerticalScrollIndicator: false,
         contentContainerStyle: safeContentContainerStyle,
         ListHeaderComponent,
         ListFooterComponent,
-        ListEmptyComponent: null,
         refreshControl,
         scrollEventThrottle: 16,
         ItemSeparatorComponent: SeparatorComponent,
@@ -179,7 +183,6 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
       }),
       [
         renderItem,
-        keyExtractor,
         safeContentContainerStyle,
         ListHeaderComponent,
         ListFooterComponent,

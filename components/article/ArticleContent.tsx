@@ -20,6 +20,7 @@ import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 
+// Static styles for better performance
 const styles = StyleSheet.create({
   content: {
     flex: 1,
@@ -48,6 +49,14 @@ const styles = StyleSheet.create({
     marginLeft: LAYOUT.SPACING.TINY,
   },
 });
+
+// Static constants for better performance
+const SENTENCE_ITEM_HEIGHT = LAYOUT.SENTENCE_ITEM.HEIGHT;
+const SCROLL_THROTTLE = SCROLL_EVENT_THROTTLE;
+const DRAW_DISTANCE_MULTIPLIER = SENTENCE_DRAW_DISTANCE_MULTIPLIER;
+
+// Static functions for better performance
+const getItemType = () => 'sentence';
 
 interface ArticleTitleProps {
   title: string;
@@ -253,12 +262,6 @@ interface ArticleContentProps {
   onClose: () => void;
 }
 
-const SENTENCE_ITEM_HEIGHT = LAYOUT.SENTENCE_ITEM.HEIGHT;
-const SCROLL_THROTTLE = SCROLL_EVENT_THROTTLE;
-const DRAW_DISTANCE_MULTIPLIER = SENTENCE_DRAW_DISTANCE_MULTIPLIER;
-
-const getItemType = () => 'sentence';
-
 export const ArticleContent = memo<ArticleContentProps>(
   ({
     id,
@@ -282,7 +285,7 @@ export const ArticleContent = memo<ArticleContentProps>(
   }) => {
     const insets = useSafeAreaInsets();
 
-    // Handle scroll events
+    // Optimized scroll handler with stable reference
     const handleAnimatedScroll = useCallback(
       (event: NativeSyntheticEvent<NativeScrollEvent>) => {
         handleScroll(event);
@@ -290,6 +293,7 @@ export const ArticleContent = memo<ArticleContentProps>(
       [handleScroll]
     );
 
+    // Memoized header component with stable references
     const headerComponent = useMemo(
       () => (
         <Fragment>
@@ -297,7 +301,7 @@ export const ArticleContent = memo<ArticleContentProps>(
           <ArticleTitle title={article.title} author={article.author} />
         </Fragment>
       ),
-      [article, colors]
+      [article.id, article.title, article.author.id, article.author.name, colors]
     );
 
     // Get all articles for recommendations - moved here to be part of main component
@@ -308,17 +312,21 @@ export const ArticleContent = memo<ArticleContentProps>(
       gcTime: 7200000, // 2 hours
     });
 
+    // Memoized footer component with stable references
     const footerComponent = useMemo(
       () => <RelatedArticlesSection currentArticleId={article.id} articlesData={articlesData} />,
       [article.id, articlesData]
     );
 
+    // Static callback for better performance
     const getItemTypeCallback = useCallback(getItemType, []);
 
+    // Static override layout callback
     const overrideItemLayout = useCallback((layout: { span?: number; size?: number }) => {
       layout.size = SENTENCE_ITEM_HEIGHT;
     }, []);
 
+    // Memoized content container style
     const contentContainerStyle = useMemo(
       () => ({
         paddingTop: 0,
@@ -327,12 +335,25 @@ export const ArticleContent = memo<ArticleContentProps>(
       [insets.bottom]
     );
 
+    // Memoized list container style
+    const listContainerStyle = useMemo(
+      () => [styles.listContainer, styles.content, { backgroundColor: colors.background }],
+      [colors.background]
+    );
+
+    // Memoized viewability config
+    const viewabilityConfig = useMemo(
+      () => ({
+        itemVisiblePercentThreshold: 50, // Consider item visible when 50% is visible
+        minimumViewTime: 100, // Minimum time item must be visible before triggering
+      }),
+      []
+    );
+
     return (
       <View style={styles.flexOne}>
         {sortedSentences && sortedSentences.length > 0 ? (
-          <View
-            style={[styles.listContainer, styles.content, { backgroundColor: colors.background }]}
-          >
+          <View style={listContainerStyle}>
             <FlashList
               ref={scrollViewRef}
               key={`article-${id}`}
@@ -358,10 +379,7 @@ export const ArticleContent = memo<ArticleContentProps>(
               overrideItemLayout={overrideItemLayout}
               onScroll={handleAnimatedScroll}
               onViewableItemsChanged={handleViewableItemsChanged}
-              viewabilityConfig={{
-                itemVisiblePercentThreshold: 50, // Consider item visible when 50% is visible
-                minimumViewTime: 100, // Minimum time item must be visible before triggering
-              }}
+              viewabilityConfig={viewabilityConfig}
             />
 
             {/* Custom sentence scrubber */}
@@ -386,23 +404,37 @@ export const ArticleContent = memo<ArticleContentProps>(
       </View>
     );
   },
+  // Simplified memo comparison function - only check primitive values and stable references
   (prevProps, nextProps) => {
-    return (
-      prevProps.id === nextProps.id &&
-      prevProps.article === nextProps.article &&
-      prevProps.sortedSentences === nextProps.sortedSentences &&
-      prevProps.renderSentenceItem === nextProps.renderSentenceItem &&
-      prevProps.handleScroll === nextProps.handleScroll &&
-      prevProps.handleViewableItemsChanged === nextProps.handleViewableItemsChanged &&
-      prevProps.colors === nextProps.colors &&
-      prevProps.currentSentenceIndex === nextProps.currentSentenceIndex &&
-      prevProps.totalSentences === nextProps.totalSentences &&
-      prevProps.isInReadingList === nextProps.isInReadingList &&
-      prevProps.onToggleReadingList === nextProps.onToggleReadingList &&
-      prevProps.onPlayPress === nextProps.onPlayPress &&
-      prevProps.isPlaying === nextProps.isPlaying &&
-      prevProps.onClose === nextProps.onClose
-    );
+    // Check primitive values first for early return
+    if (
+      prevProps.id !== nextProps.id ||
+      prevProps.currentSentenceIndex !== nextProps.currentSentenceIndex ||
+      prevProps.totalSentences !== nextProps.totalSentences ||
+      prevProps.isInReadingList !== nextProps.isInReadingList ||
+      prevProps.isPlaying !== nextProps.isPlaying
+    ) {
+      return false;
+    }
+
+    // Check stable references
+    if (
+      prevProps.article.id !== nextProps.article.id ||
+      prevProps.article.title !== nextProps.article.title ||
+      prevProps.article.author.id !== nextProps.article.author.id ||
+      prevProps.article.author.name !== nextProps.article.author.name ||
+      prevProps.sortedSentences !== nextProps.sortedSentences ||
+      prevProps.renderSentenceItem !== nextProps.renderSentenceItem ||
+      prevProps.handleScroll !== nextProps.handleScroll ||
+      prevProps.handleViewableItemsChanged !== nextProps.handleViewableItemsChanged ||
+      prevProps.onToggleReadingList !== nextProps.onToggleReadingList ||
+      prevProps.onPlayPress !== nextProps.onPlayPress ||
+      prevProps.onClose !== nextProps.onClose
+    ) {
+      return false;
+    }
+
+    return true;
   }
 );
 
