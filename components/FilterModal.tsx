@@ -94,7 +94,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                 {activeFiltersCount === 1 ? 'Active Filter' : 'Active Filters'}
               </ThemedText>
               <Pressable onPress={handleClearAll} style={styles.clearAllButton}>
-                <ThemedText type="label" colorName="tint" weight="semibold">
+                <ThemedText type="label" colorName="warning" weight="semibold">
                   {STRINGS.RESET_FILTERS}
                 </ThemedText>
               </Pressable>
@@ -348,11 +348,12 @@ const styles = StyleSheet.create({
 
   // Filter Sections
   filterSection: {
-    marginBottom: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   filterRow: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     minHeight: MIN_TOUCH_TARGET.LARGE,
+    paddingVertical: LAYOUT.SPACING.SMALL,
   },
   filterRowExpanded: {
     // Background color applied via colors.elevation2 in component
@@ -364,7 +365,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   filterRowLeft: {
     flexDirection: 'row',
@@ -373,8 +374,8 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.MEDIUM,
   },
   filterIconContainer: {
-    width: MIN_TOUCH_TARGET.SMALL,
-    height: MIN_TOUCH_TARGET.SMALL,
+    width: MIN_TOUCH_TARGET.MEDIUM,
+    height: MIN_TOUCH_TARGET.MEDIUM,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     justifyContent: 'center',
     alignItems: 'center',
@@ -384,16 +385,16 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.TINY,
   },
   expandIndicator: {
-    width: MIN_TOUCH_TARGET.SMALL,
-    height: MIN_TOUCH_TARGET.SMALL,
+    width: MIN_TOUCH_TARGET.MEDIUM,
+    height: MIN_TOUCH_TARGET.MEDIUM,
     justifyContent: 'center',
     alignItems: 'center',
   },
 
   // Expanded Content
   expandedContent: {
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.LARGE,
+    paddingTop: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.SPACING.XLARGE,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   pillGrid: {
