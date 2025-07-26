@@ -163,6 +163,9 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     isActive,
   });
 
+  // Use 0 as fallback when reading progress is not available yet
+  const effectiveLastSentenceRead = lastSentenceRead ?? 0;
+
   // Initialize sentence scrubber with actual reading progress
   const {
     currentSentenceIndex,
@@ -176,7 +179,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     sortedSentences: sortedSentences || [],
     dueWordRootIds,
     sentenceWordsMap,
-    lastSentenceRead: lastSentenceRead ?? 0,
+    lastSentenceRead: effectiveLastSentenceRead,
   });
 
   // Update the ref when currentSentenceIndex changes
@@ -218,14 +221,15 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
   // Show toast when resuming reading progress and handle automatic scrolling
   useEffect(() => {
     if (
-      lastSentenceRead !== null &&
-      lastSentenceRead > 0 &&
+      effectiveLastSentenceRead > 0 &&
       sortedSentences &&
       sortedSentences.length > 0 &&
       !hasResumedRef.current &&
       !isLoadingArticle // Only trigger when article is fully loaded
     ) {
-      const progressPercent = Math.round((lastSentenceRead / sortedSentences.length) * 100);
+      const progressPercent = Math.round(
+        (effectiveLastSentenceRead / sortedSentences.length) * 100
+      );
 
       // Show resume toast using the proper Toast component
       selectionFeedback();
@@ -248,7 +252,13 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     }
 
     return undefined;
-  }, [sortedSentences, jumpToLastReadPosition, isLoadingArticle, showToast]); // Removed lastSentenceRead from dependencies
+  }, [
+    effectiveLastSentenceRead,
+    sortedSentences,
+    jumpToLastReadPosition,
+    isLoadingArticle,
+    showToast,
+  ]);
 
   const handleWordPress = useCallback(
     (word: SentenceWord, layout?: LayoutRectangle) => {

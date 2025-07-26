@@ -85,7 +85,7 @@ export function useReadingProgress({
       }
       return result;
     },
-    enabled: !!user?.id && articleId >= 0,
+    enabled: !!user?.id && articleId > 0, // Only enable when we have a valid articleId (not 0)
     staleTime: 30000, // Cache for 30 seconds
     refetchOnMount: false, // Don't refetch on mount - use persisted data first
     retry: 3, // Retry up to 3 times if the query fails
