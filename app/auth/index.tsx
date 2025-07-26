@@ -1,24 +1,20 @@
 import { Stack } from 'expo-router';
 import type { JSX } from 'react';
 import { memo } from 'react';
-import { StyleSheet, View, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
 import Auth from '@/components/auth';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { useColors } from '@/hooks/theme/useColors';
 
 const AuthScreen = memo(function AuthScreen(): JSX.Element {
-  const colors = useColors();
   const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView
-      edges={['top']}
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
+    <ThemedView style={styles.container} useSafeArea={true} safeAreaEdges={['top']}>
       <Stack.Screen
         options={{
           headerShown: false,
@@ -31,10 +27,8 @@ const AuthScreen = memo(function AuthScreen(): JSX.Element {
         keyboardVerticalOffset={Platform.select({ ios: 0, default: 20 })}
         style={styles.keyboardAvoidingView}
       >
-        <ScrollView
-          keyboardDismissMode="on-drag"
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+        <ThemedView
+          scrollable
           style={styles.scrollView}
           contentContainerStyle={[
             styles.scrollContent,
@@ -68,9 +62,9 @@ const AuthScreen = memo(function AuthScreen(): JSX.Element {
           >
             <Auth />
           </View>
-        </ScrollView>
+        </ThemedView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ThemedView>
   );
 });
 

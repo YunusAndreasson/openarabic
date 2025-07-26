@@ -147,8 +147,8 @@ export default function DictionaryScreen(): JSX.Element {
 
       {/* Conditional Search Input */}
       {showSearch && (
-        <View style={styles.searchContainer}>
-          <View style={[styles.searchInputContainer, { borderColor: colors.border }]}>
+        <ThemedView style={styles.searchContainer}>
+          <ThemedView style={[styles.searchInputContainer, { borderColor: colors.border }]}>
             <Ionicons
               name="search-outline"
               size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
@@ -163,8 +163,8 @@ export default function DictionaryScreen(): JSX.Element {
               style={[styles.searchInput, { color: colors.text }]}
               clearButtonMode="while-editing"
             />
-          </View>
-        </View>
+          </ThemedView>
+        </ThemedView>
       )}
 
       {/* Show no results message when search returns nothing */}
