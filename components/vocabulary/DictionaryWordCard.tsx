@@ -50,7 +50,10 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
         await audioPlayer.play(track);
       } catch (error) {
         // Audio playback errors are handled silently to avoid disrupting the UX
-        console.warn('Failed to play word audio:', error);
+        // Only log in development for debugging
+        if (__DEV__) {
+          console.warn('Failed to play word audio:', error);
+        }
       }
     }, [word.root?.audio_url, word.root_id, word.root?.letters, audioPlayer, editMode]);
 

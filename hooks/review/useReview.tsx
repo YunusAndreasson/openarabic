@@ -12,6 +12,7 @@ import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
+import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useFSRS } from '@/hooks/vocabulary/useFSRS';
 import { useWordSizing } from '@/hooks/vocabulary/useWordSizing';
@@ -94,6 +95,9 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
 
   // Use enhanced audio player instead of local expo-av implementation
   const audioPlayer = useAudioPlayer();
+
+  // Use simple audio player for English feedback to avoid conflicts
+  const simpleAudioPlayer = useSimpleAudioPlayer();
 
   // Create stable refs for audio player methods to avoid dependency issues
   const audioPlayerRef = useRef(audioPlayer);
@@ -298,20 +302,23 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
   }, []);
 
   // Enhanced audio playback for English feedback (non-blocking)
-  const playEnglishFeedback = useCallback((url: string) => {
-    if (!url) return Promise.resolve();
+  const playEnglishFeedback = useCallback(
+    (url: string) => {
+      if (!url) return Promise.resolve();
 
-    const feedbackTrack = {
-      id: `feedback-${Date.now()}`,
-      audioUrl: url,
-      title: 'English Feedback', // Assuming a default title for now
-      duration: 0,
-    };
+      const feedbackTrack = {
+        id: `feedback-${Date.now()}`,
+        audioUrl: url,
+        title: 'English Feedback', // Assuming a default title for now
+        duration: 0,
+      };
 
-    return audioPlayerRef.current.actions.startEnhancedPlayback([feedbackTrack], 0).catch(error => {
-      handleError(error instanceof Error ? error : new Error(String(error)));
-    });
-  }, []);
+      return simpleAudioPlayer.play(feedbackTrack).catch((error: Error) => {
+        handleError(error instanceof Error ? error : new Error(String(error)));
+      });
+    },
+    [simpleAudioPlayer]
+  );
 
   const handleKnowledgeResponse = useCallback(
     (confidence: 'known' | 'vague' | 'unknown') => {
@@ -501,18 +508,35 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       return;
     }
 
-    if (currentWord?.root) {
-      const wordId = String(currentWord.root_id || 'unknown');
-      const audioUrl = currentWord.root.audio_url;
+    if (!currentWord?.root) {
+      return;
+    }
 
-      // ALWAYS play audio for Arabic words
-      if (audioUrl) {
-        playAudio(audioUrl).catch(handleError);
-      }
+    const wordId = String(currentWord.root_id || 'unknown');
+    const audioUrl = currentWord.root.audio_url;
 
-      // Update the lastProcessedWordId after playing audio
+    // Use a ref to track if this effect is still valid
+    const effectRef = { current: true };
+
+    // ALWAYS play audio for Arabic words
+    if (audioUrl) {
+      playAudio(audioUrl)
+        .catch(handleError)
+        .finally(() => {
+          // Only update if the effect is still valid (word hasn't changed)
+          if (effectRef.current && timeRefs.current.lastProcessedWordId === wordId) {
+            timeRefs.current.lastProcessedWordId = wordId;
+          }
+        });
+    } else {
+      // Update the lastProcessedWordId even if no audio
       timeRefs.current.lastProcessedWordId = wordId;
     }
+
+    // Cleanup function to mark effect as invalid if word changes
+    return () => {
+      effectRef.current = false;
+    };
   }, [currentWord, isComplete, isTransitioningToCompletion, playAudio]);
 
   const handleSwipeLeft = useCallback(() => {

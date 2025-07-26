@@ -251,13 +251,20 @@ class SimpleAudioService {
   private updateStatus(updates: Partial<AudioStatus>): void {
     this.status = { ...this.status, ...updates };
 
+    // Create a copy of listeners to avoid modification during iteration
+    const listenersCopy = new Set(this.listeners);
+
     // Notify all listeners
-    this.listeners.forEach(listener => {
+    listenersCopy.forEach(listener => {
       try {
         listener(this.status);
-      } catch {
-        // Remove problematic listeners
+      } catch (error) {
+        // Remove problematic listeners and log error for debugging
         this.listeners.delete(listener);
+        // Only log in development to avoid console noise in production
+        if (__DEV__) {
+          console.warn('Removed problematic audio listener:', error);
+        }
       }
     });
   }
