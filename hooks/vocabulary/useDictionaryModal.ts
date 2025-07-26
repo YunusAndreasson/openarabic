@@ -71,8 +71,8 @@ export const useDictionaryModal = ({
           break;
         }
         case 'alphabetical': {
-          const textA = a.root?.letters || '';
-          const textB = b.root?.letters || '';
+          const textA = a.root?.meaning || '';
+          const textB = b.root?.meaning || '';
           compareValue = textA.localeCompare(textB);
           break;
         }

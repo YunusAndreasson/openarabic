@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { memo, useCallback } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import BaseCard from '@/components/BaseCard';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
@@ -30,7 +30,7 @@ const getDifficultyColor = (difficulty: number, colors: ThemeColors): string => 
 };
 
 export const DictionaryWordCard = memo<DictionaryWordCardProps>(
-  ({ word, editMode, onDelete: _onDelete }) => {
+  ({ word, editMode, onDelete }) => {
     const colors = useColors();
     const audioPlayer = useSimpleAudioPlayer();
 
@@ -57,6 +57,14 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
       }
     }, [word.root?.audio_url, word.root_id, word.root?.letters, audioPlayer, editMode]);
 
+    // Handle delete button press
+    const handleDeletePress = useCallback(() => {
+      if (!editMode) return;
+
+      selectionFeedback();
+      onDelete();
+    }, [editMode, onDelete]);
+
     const difficultyValue = word.fsrs_difficulty ?? 1.0;
     const difficultyColor = getDifficultyColor(difficultyValue, colors);
     const difficultyLabel = getDifficultyLabel(difficultyValue);
@@ -67,41 +75,49 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
     const hasAudio = !!word.root?.audio_url;
 
     return (
-      <BaseCard
-        style={styles.container}
-        onPress={handleCardPress}
-        disabled={editMode || !hasAudio}
-        shadowSize="small"
-        contentStyle={styles.cardContent}
-      >
-        <View style={styles.content}>
-          {/* Word Information */}
-          <View style={styles.wordInfo}>
-            <Text style={[styles.arabicText, { color: colors.text }]}>{arabicText}</Text>
-            <Text style={[styles.englishText, { color: colors.secondaryText }]}>{englishText}</Text>
-          </View>
-
-          {/* Right Section: Difficulty Badge and Delete Button */}
-          <View style={styles.rightSection}>
-            <View style={[styles.difficultyBadge, { backgroundColor: difficultyColor }]}>
-              <Text style={[styles.difficultyText, { color: colors.white }]}>
-                {difficultyLabel}
+      <View style={styles.container}>
+        <BaseCard
+          style={styles.card}
+          onPress={handleCardPress}
+          disabled={editMode || !hasAudio}
+          shadowSize="small"
+          contentStyle={styles.cardContent}
+        >
+          <View style={styles.content}>
+            {/* Word Information */}
+            <View style={styles.wordInfo}>
+              <Text style={[styles.arabicText, { color: colors.text }]}>{arabicText}</Text>
+              <Text style={[styles.englishText, { color: colors.secondaryText }]}>
+                {englishText}
               </Text>
             </View>
 
-            {/* Delete Button (only in edit mode) */}
-            {editMode && (
-              <View style={[styles.deleteButton, { backgroundColor: colors.error }]}>
-                <Ionicons
-                  name="trash-outline"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  color={colors.white}
-                />
+            {/* Right Section: Difficulty Badge */}
+            <View style={styles.rightSection}>
+              <View style={[styles.difficultyBadge, { backgroundColor: difficultyColor }]}>
+                <Text style={[styles.difficultyText, { color: colors.white }]}>
+                  {difficultyLabel}
+                </Text>
               </View>
-            )}
+            </View>
           </View>
-        </View>
-      </BaseCard>
+        </BaseCard>
+
+        {/* Delete Button (separate from card, only in edit mode) */}
+        {editMode && (
+          <TouchableOpacity
+            style={[styles.deleteButton, { backgroundColor: colors.error }]}
+            onPress={handleDeletePress}
+            activeOpacity={LAYOUT.OPACITY.PRESSED}
+          >
+            <Ionicons
+              name="trash-outline"
+              size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+              color={colors.white}
+            />
+          </TouchableOpacity>
+        )}
+      </View>
     );
   },
   (prevProps, nextProps) => {
@@ -122,6 +138,12 @@ const styles = StyleSheet.create({
   container: {
     height: 64,
     marginBottom: LAYOUT.SPACING.TINY,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  card: {
+    flex: 1,
+    marginRight: LAYOUT.SPACING.SMALL,
   },
   cardContent: {
     minHeight: 64,
@@ -151,7 +173,6 @@ const styles = StyleSheet.create({
   rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: LAYOUT.SPACING.SMALL,
   },
   difficultyBadge: {
     borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
