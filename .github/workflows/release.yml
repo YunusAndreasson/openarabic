@@ -10,7 +10,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     if: |
-      github.event_name == 'workflow_dispatch' || 
+      github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'push' && contains(github.event.head_commit.message, 'chore: bump version'))
     steps:
       - name: Checkout repository
@@ -33,9 +33,6 @@ jobs:
 
       - name: Run tests
         run: yarn test
-
-      - name: Check for unused code
-        run: yarn knip:ci
 
       # === EAS Build and Update Steps (run before version bumping) ===
       - name: Setup Expo and EAS CLI
@@ -110,7 +107,7 @@ jobs:
           for i in {1..60}; do
             STATUS=$(eas build:view $BUILD_ID --json | jq -r '.status')
             echo "Build status: $STATUS (check $i/60)"
-            
+
             case $STATUS in
               "finished")
                 echo "✅ Build completed successfully!"

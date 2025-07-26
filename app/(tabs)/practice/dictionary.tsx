@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
+import { useQueryClient } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useMemo } from 'react';
@@ -10,7 +11,9 @@ import EmptyState from '@/components/EmptyState';
 import { ThemedView } from '@/components/ThemedView';
 import EditModeButton from '@/components/ui/EditModeButton';
 import { DictionarySortingHeader, DictionaryWordCard } from '@/components/vocabulary';
+import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
+import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useEditMode } from '@/hooks/ui/useEditMode';
@@ -22,11 +25,26 @@ export default function DictionaryScreen(): JSX.Element {
   const colors = useColors();
   const { editMode } = useEditMode('dictionary');
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
 
   // Get all study words
   const { allWords: studyWords, isLoading } = useFSRSQueries({
     userId: user?.id,
   });
+
+  // Get mutations for word management
+  const { toggleRootMutation } = useArticleMutations(
+    user?.id,
+    () => {}, // No reading list refetch needed for dictionary
+    async () => {
+      // Invalidate FSRS queries to refresh the data
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) });
+        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
+        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.stats(user.id) });
+      }
+    }
+  );
 
   // Filter and sort words
   const { sortedWords, sortOption, sortDirection, setSorting, searchQuery, setSearchQuery } =
@@ -41,18 +59,33 @@ export default function DictionaryScreen(): JSX.Element {
   const hasSearchQuery = searchQuery.trim().length > 0;
   const showNoResultsMessage = !hasWords && hasSearchQuery && (studyWords || []).length > 0;
 
+  // Handle word deletion
+  const handleDeleteWord = useCallback(
+    async (rootId: number) => {
+      if (!user?.id) return;
+
+      try {
+        // Use the existing toggle mutation which handles both add and remove
+        // Since the word exists in study words, this will remove it
+        await toggleRootMutation.mutateAsync({ userId: user.id, rootId });
+      } catch (error) {
+        // Error handling is already done in the mutation
+        console.error('Failed to delete word:', error);
+      }
+    },
+    [user?.id, toggleRootMutation]
+  );
+
   const renderItem = useCallback(
     // eslint-disable-next-line react/no-unused-prop-types
     ({ item }: { item: StudyWord }) => (
       <DictionaryWordCard
         word={item}
         editMode={editMode}
-        onDelete={() => {
-          // Word deletion functionality removed - placeholder for future implementation
-        }}
+        onDelete={() => handleDeleteWord(item.root_id)}
       />
     ),
-    [editMode]
+    [editMode, handleDeleteWord]
   );
 
   const keyExtractor = useCallback((item: StudyWord) => `word-${item.root_id}`, []);
