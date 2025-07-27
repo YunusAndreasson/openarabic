@@ -4,7 +4,7 @@ The NowPlaying modal has been made independent and can now be used from any scre
 
 ## Location
 
-The modal is now located at `app/now-playing.tsx` (moved from `app/(tabs)/listen/NowPlaying.tsx`)
+The modal is now located at `app/NowPlaying.tsx` (moved from `app/(tabs)/listen/NowPlaying.tsx`)
 
 ## How to Use
 
@@ -33,7 +33,7 @@ import { router } from 'expo-router';
 
 // With parameters
 router.push({
-  pathname: '/now-playing',
+  pathname: '/NowPlaying',
   params: {
     articleId: '123',
     position: '5000',
@@ -42,7 +42,7 @@ router.push({
 
 // Without parameters
 router.push({
-  pathname: '/now-playing',
+  pathname: '/NowPlaying',
   params: undefined,
 });
 
@@ -69,7 +69,7 @@ router.dismiss();
 
 ## Migration Notes
 
-- Old route `/(tabs)/listen/NowPlaying` is now `/now-playing`
+- Old route `/(tabs)/listen/NowPlaying` is now `/NowPlaying`
 - The modal is configured in the root layout (`app/_layout.tsx`)
 - All navigation calls have been updated to use the new route
 - The Listen tab layout no longer includes the NowPlaying screen

@@ -8,7 +8,7 @@ import type { NowPlayingModalParams } from '@/types/navigation.types';
  */
 export const openNowPlayingModal = (params?: NowPlayingModalParams) => {
   router.push({
-    pathname: '/(tabs)/listen/now-playing',
+    pathname: '/NowPlaying',
     params,
   });
 };
