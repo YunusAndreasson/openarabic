@@ -11,7 +11,7 @@ import Animated, {
 
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { SCRUBBER_CONSTANTS, calculatePosition } from '@/utils/gestureUtils';
+import { SCRUBBER_CONSTANTS } from '@/utils/gestureUtils';
 import { selectionFeedback } from '@/utils/haptics';
 
 interface SentenceScrubberProps {
@@ -72,20 +72,13 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
     React.useEffect(() => {
       if (!isDragging.value && trackWidth.value > 0 && isValidScrubber) {
         const progress = currentSentence / maxSentenceIndex;
-        const newPosition = calculatePosition(progress, trackWidth.value);
+        const newPosition = progress * (trackWidth.value - HANDLE_SIZE);
         handlePosition.value = withSpring(newPosition, SPRING_CONFIG);
 
         // Update ref when position changes externally (not from scrubbing)
         lastSentenceRef.current = currentSentence;
       }
-    }, [
-      currentSentence,
-      maxSentenceIndex,
-      isValidScrubber,
-      calculatePosition,
-      isDragging,
-      trackWidth,
-    ]);
+    }, [currentSentence, maxSentenceIndex, isValidScrubber, isDragging, trackWidth]);
 
     // Memoized track layout handler
     const onLayout = useCallback(
@@ -97,11 +90,12 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
           // Update position with new width immediately
           if (isValidScrubber) {
             const progress = currentSentence / maxSentenceIndex;
-            handlePosition.value = calculatePosition(progress, width);
+            const position = progress * (width - HANDLE_SIZE);
+            handlePosition.value = position;
           }
         }
       },
-      [currentSentence, maxSentenceIndex, isValidScrubber, calculatePosition]
+      [currentSentence, maxSentenceIndex, isValidScrubber]
     );
 
     // Optimized pan gesture with better performance
@@ -121,7 +115,7 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
               const progress = Math.max(0, Math.min(1, event.x / trackWidth.value));
 
               // Update handle position immediately for responsive feel
-              handlePosition.value = calculatePosition(progress, trackWidth.value);
+              handlePosition.value = progress * (trackWidth.value - HANDLE_SIZE);
 
               // Calculate sentence index efficiently
               const sentenceIndex = Math.round(progress * maxSentenceIndex);

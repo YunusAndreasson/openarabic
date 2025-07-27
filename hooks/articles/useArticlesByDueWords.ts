@@ -86,13 +86,8 @@ export function useArticlesByDueWords(
   // Process and sort articles by words count
   const sortedArticles = useMemo(() => {
     if (limit <= 0) return [];
-    const isLoadingWords =
-      isLoadingDueWords || (dueWords.length === 0 && isLoadingAllWords);
-    if (
-      isLoadingWords ||
-      (isLoadingArticles && wordsToUse.length > 0) ||
-      !wordsToUse.length
-    ) {
+    const isLoadingWords = isLoadingDueWords || (dueWords.length === 0 && isLoadingAllWords);
+    if (isLoadingWords || (isLoadingArticles && wordsToUse.length > 0) || !wordsToUse.length) {
       return [];
     }
     return getArticlesByDueWords(articlesData, wordsToUse, limit);

@@ -23,14 +23,12 @@ export const GESTURE_CONFIG = {
   ACTIVE_OFFSET_X: [-1, 1] as [number, number],
 } as const;
 
-// ===== DYNAMIC CALCULATIONS (WORKLET-SAFE) =====
+// ===== DYNAMIC CALCULATIONS =====
 export const getSwipeThreshold = (): number => {
-  'worklet';
   return SCREEN_WIDTH * GESTURE_CONSTANTS.SWIPE_THRESHOLD_RATIO;
 };
 
 export const getMaxTranslation = (): number => {
-  'worklet';
   return SCREEN_WIDTH * GESTURE_CONSTANTS.MAX_TRANSLATION_RATIO;
 };
 
@@ -67,7 +65,6 @@ export const calculateMaxTranslation = (
  * @returns The clamped translation value
  */
 export const clampTranslation = (translationX: number, maxTranslation?: number): number => {
-  'worklet';
   const max = maxTranslation ?? getMaxTranslation();
   return Math.max(-max, Math.min(max, translationX));
 };
@@ -79,7 +76,6 @@ export const clampTranslation = (translationX: number, maxTranslation?: number):
  * @returns True if the gesture meets the threshold
  */
 export const isSwipeThresholdMet = (translationX: number, threshold?: number): boolean => {
-  'worklet';
   const thresh = threshold ?? getSwipeThreshold();
   return Math.abs(translationX) > thresh;
 };
@@ -103,76 +99,8 @@ export const getSwipeAction = (
   translationX: number,
   threshold?: number
 ): 'left' | 'right' | null => {
-  'worklet';
   if (isSwipeThresholdMet(translationX, threshold)) {
     return getSwipeDirection(translationX);
   }
   return null;
-};
-
-// ===== SCRUBBER UTILITIES =====
-
-/**
- * Calculates the handle position based on progress and track width
- * @param progress - Progress value between 0 and 1
- * @param trackWidth - Width of the track
- * @param handleSize - Size of the handle (default: SCRUBBER_CONSTANTS.HANDLE_SIZE)
- * @returns The calculated position in pixels
- */
-export const calculatePosition = (
-  progress: number,
-  trackWidth: number,
-  handleSize: number = SCRUBBER_CONSTANTS.HANDLE_SIZE
-): number => {
-  'worklet';
-  return progress * (trackWidth - handleSize);
-};
-
-/**
- * Validates and clamps progress to valid range
- * @param progress - Progress value to validate
- * @returns Clamped progress value between 0 and 1
- */
-export const validateProgress = (progress: number): number => {
-  'worklet';
-  return Math.max(0, Math.min(1, progress));
-};
-
-/**
- * Calculates sentence index from progress and total sentences
- * @param progress - Progress value between 0 and 1
- * @param totalSentences - Total number of sentences
- * @returns The calculated sentence index (0-based)
- */
-export const calculateSentenceIndex = (progress: number, totalSentences: number): number => {
-  'worklet';
-  const validProgress = validateProgress(progress);
-  return Math.round(validProgress * (totalSentences - 1));
-};
-
-/**
- * Calculates progress from sentence index and total sentences
- * @param sentenceIndex - Current sentence index (0-based)
- * @param totalSentences - Total number of sentences
- * @returns The calculated progress value between 0 and 1
- */
-export const calculateProgressFromIndex = (
-  sentenceIndex: number,
-  totalSentences: number
-): number => {
-  'worklet';
-  if (totalSentences <= 1) return 0;
-  const validIndex = Math.max(0, Math.min(sentenceIndex, totalSentences - 1));
-  return validIndex / (totalSentences - 1);
-};
-
-/**
- * Validates sentence index and clamps to valid range
- * @param sentenceIndex - Sentence index to validate
- * @param totalSentences - Total number of sentences
- * @returns Clamped sentence index
- */
-export const validateSentenceIndex = (sentenceIndex: number, totalSentences: number): number => {
-  'worklet';
-  return Math.max(0, Math.min(Math.floor(sentenceIndex), totalSentences - 1));
 };

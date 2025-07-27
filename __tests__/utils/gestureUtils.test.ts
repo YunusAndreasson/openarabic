@@ -1,13 +1,17 @@
 import {
+  calculateMaxTranslation,
+  calculateSwipeThreshold,
+  clampTranslation,
+  GESTURE_CONSTANTS,
+  getMaxTranslation,
+  getSwipeAction,
+  getSwipeDirection,
+  getSwipeThreshold,
+  isSwipeThresholdMet,
   SCRUBBER_CONSTANTS,
-  calculatePosition,
-  calculateProgressFromIndex,
-  calculateSentenceIndex,
-  validateProgress,
-  validateSentenceIndex,
 } from '@/utils/gestureUtils';
 
-describe('Scrubber Utilities', () => {
+describe('Gesture Utilities', () => {
   describe('SCRUBBER_CONSTANTS', () => {
     it('should have correct constant values', () => {
       expect(SCRUBBER_CONSTANTS.HANDLE_SIZE).toBe(20);
@@ -18,112 +22,99 @@ describe('Scrubber Utilities', () => {
     });
   });
 
-  describe('calculatePosition', () => {
-    it('should calculate position correctly for progress 0', () => {
-      const result = calculatePosition(0, 300);
-      expect(result).toBe(0);
-    });
-
-    it('should calculate position correctly for progress 0.5', () => {
-      const result = calculatePosition(0.5, 300);
-      expect(result).toBe(140); // 0.5 * (300 - 20)
-    });
-
-    it('should calculate position correctly for progress 1', () => {
-      const result = calculatePosition(1, 300);
-      expect(result).toBe(280); // 1 * (300 - 20)
-    });
-
-    it('should use custom handle size', () => {
-      const result = calculatePosition(0.5, 300, 30);
-      expect(result).toBe(135); // 0.5 * (300 - 30)
+  describe('GESTURE_CONSTANTS', () => {
+    it('should have correct constant values', () => {
+      expect(GESTURE_CONSTANTS.SWIPE_THRESHOLD_RATIO).toBe(0.04);
+      expect(GESTURE_CONSTANTS.RESET_DELAY).toBe(50);
+      expect(GESTURE_CONSTANTS.MIN_DISTANCE).toBe(0.1);
     });
   });
 
-  describe('validateProgress', () => {
-    it('should clamp negative values to 0', () => {
-      expect(validateProgress(-0.5)).toBe(0);
-      expect(validateProgress(-1)).toBe(0);
-    });
-
-    it('should clamp values above 1 to 1', () => {
-      expect(validateProgress(1.5)).toBe(1);
-      expect(validateProgress(2)).toBe(1);
-    });
-
-    it('should return valid values unchanged', () => {
-      expect(validateProgress(0)).toBe(0);
-      expect(validateProgress(0.5)).toBe(0.5);
-      expect(validateProgress(1)).toBe(1);
+  describe('getSwipeThreshold', () => {
+    it('should calculate swipe threshold correctly', () => {
+      const result = getSwipeThreshold();
+      expect(result).toBeGreaterThan(0);
     });
   });
 
-  describe('calculateSentenceIndex', () => {
-    it('should calculate index for progress 0', () => {
-      expect(calculateSentenceIndex(0, 10)).toBe(0);
-    });
-
-    it('should calculate index for progress 0.5', () => {
-      expect(calculateSentenceIndex(0.5, 10)).toBe(5);
-    });
-
-    it('should calculate index for progress 1', () => {
-      expect(calculateSentenceIndex(1, 10)).toBe(9);
-    });
-
-    it('should handle single sentence', () => {
-      expect(calculateSentenceIndex(0.5, 1)).toBe(0);
-    });
-
-    it('should validate progress before calculation', () => {
-      expect(calculateSentenceIndex(-0.5, 10)).toBe(0);
-      expect(calculateSentenceIndex(1.5, 10)).toBe(9);
+  describe('getMaxTranslation', () => {
+    it('should calculate max translation correctly', () => {
+      const result = getMaxTranslation();
+      expect(result).toBeGreaterThan(0);
     });
   });
 
-  describe('calculateProgressFromIndex', () => {
-    it('should calculate progress for first sentence', () => {
-      expect(calculateProgressFromIndex(0, 10)).toBe(0);
-    });
-
-    it('should calculate progress for middle sentence', () => {
-      expect(calculateProgressFromIndex(5, 10)).toBe(5 / 9); // 0.555...
-    });
-
-    it('should calculate progress for last sentence', () => {
-      expect(calculateProgressFromIndex(9, 10)).toBe(1);
-    });
-
-    it('should handle single sentence', () => {
-      expect(calculateProgressFromIndex(0, 1)).toBe(0);
-    });
-
-    it('should clamp invalid indices', () => {
-      expect(calculateProgressFromIndex(-1, 10)).toBe(0);
-      expect(calculateProgressFromIndex(15, 10)).toBe(1);
+  describe('calculateSwipeThreshold', () => {
+    it('should calculate swipe threshold with custom screen width', () => {
+      const result = calculateSwipeThreshold(400, 0.05);
+      expect(result).toBe(20); // 400 * 0.05
     });
   });
 
-  describe('validateSentenceIndex', () => {
-    it('should clamp negative indices to 0', () => {
-      expect(validateSentenceIndex(-1, 10)).toBe(0);
-      expect(validateSentenceIndex(-5, 10)).toBe(0);
+  describe('calculateMaxTranslation', () => {
+    it('should calculate max translation with custom screen width', () => {
+      const result = calculateMaxTranslation(400, 0.1);
+      expect(result).toBe(40); // 400 * 0.1
+    });
+  });
+
+  describe('clampTranslation', () => {
+    it('should clamp translation to max value', () => {
+      const maxTranslation = 100;
+      const result = clampTranslation(150, maxTranslation);
+      expect(result).toBe(100);
     });
 
-    it('should clamp indices above max to max', () => {
-      expect(validateSentenceIndex(10, 10)).toBe(9);
-      expect(validateSentenceIndex(15, 10)).toBe(9);
+    it('should clamp translation to negative max value', () => {
+      const maxTranslation = 100;
+      const result = clampTranslation(-150, maxTranslation);
+      expect(result).toBe(-100);
     });
 
-    it('should return valid indices unchanged', () => {
-      expect(validateSentenceIndex(0, 10)).toBe(0);
-      expect(validateSentenceIndex(5, 10)).toBe(5);
-      expect(validateSentenceIndex(9, 10)).toBe(9);
+    it('should return translation within bounds unchanged', () => {
+      const maxTranslation = 100;
+      const result = clampTranslation(50, maxTranslation);
+      expect(result).toBe(50);
+    });
+  });
+
+  describe('isSwipeThresholdMet', () => {
+    it('should return true when translation exceeds threshold', () => {
+      const threshold = 10;
+      const result = isSwipeThresholdMet(15, threshold);
+      expect(result).toBe(true);
     });
 
-    it('should floor decimal indices', () => {
-      expect(validateSentenceIndex(5.7, 10)).toBe(5);
-      expect(validateSentenceIndex(5.2, 10)).toBe(5);
+    it('should return false when translation is below threshold', () => {
+      const threshold = 10;
+      const result = isSwipeThresholdMet(5, threshold);
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('getSwipeDirection', () => {
+    it('should return right for positive translation', () => {
+      const result = getSwipeDirection(10);
+      expect(result).toBe('right');
+    });
+
+    it('should return left for negative translation', () => {
+      const result = getSwipeDirection(-10);
+      expect(result).toBe('left');
+    });
+  });
+
+  describe('getSwipeAction', () => {
+    it('should return swipe direction when threshold is met', () => {
+      const threshold = 10;
+      const result = getSwipeAction(15, threshold);
+      expect(result).toBe('right');
+    });
+
+    it('should return null when threshold is not met', () => {
+      const threshold = 10;
+      const result = getSwipeAction(5, threshold);
+      expect(result).toBe(null);
     });
   });
 });
