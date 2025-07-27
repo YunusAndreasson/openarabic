@@ -1,4 +1,4 @@
-import { memo, useCallback, useRef, type FC } from 'react';
+import { memo, useCallback, useMemo, useRef, type FC } from 'react';
 import {
   Platform,
   ScrollView,
@@ -50,6 +50,58 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
   // Limit to 5 articles for the slider
   const displayArticles = articles.slice(0, 5);
 
+  // Memoize the article press handler to prevent inline function creation
+  const handleArticlePress = useCallback(
+    (article: Article) => {
+      onArticlePress(article);
+    },
+    [onArticlePress]
+  );
+
+  // Memoize the article cards to prevent unnecessary re-renders
+  const articleCards = useMemo(() => {
+    return displayArticles.map((article, index) => (
+      <View
+        key={article.id}
+        style={[
+          styles.cardContainer,
+          {
+            height: getContentAwareHeight(String(article.summary)), // Dynamic height based on content
+            marginLeft: index === 0 ? 0 : CARD_SPACING, // No extra padding on first card - parent provides padding
+          },
+        ]}
+      >
+        <ArticleCard
+          author={article.author.name}
+          category={article.category.name}
+          categoryForDisplay={article.category.name}
+          imageUrl={String(article.image_url)}
+          style={[
+            styles.card,
+            { backgroundColor: colors.card }, // Use consistent card background
+            // Override with very subtle shadow for large featured cards
+            {
+              ...Platform.select({
+                ios: {
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.12,
+                  shadowRadius: 3,
+                },
+                android: {
+                  elevation: 2,
+                },
+              }),
+              shadowColor: colors.shadow,
+            },
+          ]}
+          summary={String(article.summary)}
+          title={article.title}
+          onPress={() => handleArticlePress(article)}
+        />
+      </View>
+    ));
+  }, [displayArticles, colors.card, colors.shadow, handleArticlePress]);
+
   /**
    * Handle scroll events to detect when cards come into view
    */
@@ -92,46 +144,7 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
-        {displayArticles.map((article, index) => (
-          <View
-            key={article.id}
-            style={[
-              styles.cardContainer,
-              {
-                height: getContentAwareHeight(String(article.summary)), // Dynamic height based on content
-                marginLeft: index === 0 ? 0 : CARD_SPACING, // No extra padding on first card - parent provides padding
-              },
-            ]}
-          >
-            <ArticleCard
-              author={article.author.name}
-              category={article.category.name}
-              categoryForDisplay={article.category.name}
-              imageUrl={String(article.image_url)}
-              style={[
-                styles.card,
-                { backgroundColor: colors.card }, // Use consistent card background
-                // Override with very subtle shadow for large featured cards
-                {
-                  ...Platform.select({
-                    ios: {
-                      shadowOffset: { width: 0, height: 1 },
-                      shadowOpacity: 0.12,
-                      shadowRadius: 3,
-                    },
-                    android: {
-                      elevation: 2,
-                    },
-                  }),
-                  shadowColor: colors.shadow,
-                },
-              ]}
-              summary={String(article.summary)}
-              title={article.title}
-              onPress={() => onArticlePress(article)}
-            />
-          </View>
-        ))}
+        {articleCards}
       </ScrollView>
     </View>
   );

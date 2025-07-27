@@ -7,7 +7,7 @@ import {
 describe('Progress Utilities', () => {
   describe('PROGRESS_CONSTANTS', () => {
     it('should have correct constant values', () => {
-      expect(PROGRESS_CONSTANTS.MIN_PROGRESS_VALUE).toBe(0.1);
+      expect(PROGRESS_CONSTANTS.MIN_PROGRESS_VALUE).toBe(1);
     });
   });
 

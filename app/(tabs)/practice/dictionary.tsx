@@ -106,6 +106,9 @@ export default function DictionaryScreen(): JSX.Element {
 
   const keyExtractor = useCallback((item: StudyWord) => `word-${item.root_id}`, []);
 
+  // Memoize the item separator to prevent inline function creation
+  const ItemSeparator = useCallback(() => <View style={{ height: LAYOUT.SPACING.TINY }} />, []);
+
   const contentContainerStyle = useMemo(
     () => ({
       paddingTop: LAYOUT.SPACING.MEDIUM,
@@ -188,7 +191,7 @@ export default function DictionaryScreen(): JSX.Element {
           removeClippedSubviews={true}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={contentContainerStyle}
-          ItemSeparatorComponent={() => <View style={{ height: LAYOUT.SPACING.TINY }} />}
+          ItemSeparatorComponent={ItemSeparator}
           extraData={{ editMode }}
         />
       )}

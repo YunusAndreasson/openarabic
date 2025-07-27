@@ -64,26 +64,35 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
 
     const handleArticlePress = onArticlePress || defaultNavigationHandler;
 
+    // Memoize the article press handler to prevent inline function creation
+    const createArticlePressHandler = useCallback(
+      (article: Article) => {
+        return () => handleArticlePress(article);
+      },
+      [handleArticlePress]
+    );
+
+    // Memoize the article cards to prevent unnecessary re-renders
+    const articleCards = useMemo(() => {
+      return relatedArticles.map((article, index) => (
+        <View key={article.id} style={index > 0 ? styles.articleSpacing : undefined}>
+          <ArticleCard
+            title={article.title}
+            author={article.author.name}
+            difficultyLevel={article.difficulty_level}
+            imageUrl={article.image_url || undefined}
+            onPress={createArticlePressHandler(article)}
+          />
+        </View>
+      ));
+    }, [relatedArticles, createArticlePressHandler]);
+
     // Early return if no articles to show
     if (relatedArticles.length === 0) {
       return null;
     }
 
-    return (
-      <View style={styles.container}>
-        {relatedArticles.map((article, index) => (
-          <View key={article.id} style={index > 0 ? styles.articleSpacing : undefined}>
-            <ArticleCard
-              title={article.title}
-              author={article.author.name}
-              difficultyLevel={article.difficulty_level}
-              imageUrl={article.image_url || undefined}
-              onPress={() => handleArticlePress(article)}
-            />
-          </View>
-        ))}
-      </View>
-    );
+    return <View style={styles.container}>{articleCards}</View>;
   }
 );
 

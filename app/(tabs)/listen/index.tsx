@@ -36,6 +36,9 @@ const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.AUDIO_ITEM;
 // Memoized separator component for both DraggableFlatList and FlashList
 const ItemSeparator = () => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />;
 
+// Memoized key extractor to prevent inline function creation
+const keyExtractor = (item: ReadingListItem) => `${item.article_id}`;
+
 // Memoized list item with optimized comparison
 const ListenListItem = memo(
   ({
@@ -55,35 +58,46 @@ const ListenListItem = memo(
     _isBeingDragged?: boolean;
     audioState: AudioState;
   }) => {
+    // Memoize event handlers to prevent inline function creation
+    const handleDelete = useCallback(() => {
+      onDelete(item.article_id);
+    }, [onDelete, item.article_id]);
+
+    const handlePress = useCallback(() => {
+      if (!editMode && audioState !== AUDIO_STATES.PLAYING) {
+        onPlayPress(item.article_id);
+      }
+    }, [editMode, audioState, onPlayPress, item.article_id]);
+
+    const handlePlayPress = useCallback(() => {
+      if (!editMode && audioState !== AUDIO_STATES.PLAYING) {
+        onPlayPress(item.article_id);
+      }
+    }, [editMode, audioState, onPlayPress, item.article_id]);
+
+    // Memoize drag handle props to prevent object recreation
+    const dragHandleProps = useMemo(() => {
+      if (!drag) return undefined;
+      return {
+        onLongPress: drag,
+        delayLongPress: 100,
+      };
+    }, [drag]);
+
     return (
       <ArticleCard
         author={item.articles.author.name}
         title={item.articles.title}
         editMode={editMode}
         isBeingDragged={_isBeingDragged}
-        onDelete={() => onDelete(item.article_id)}
+        onDelete={handleDelete}
         // Entire card triggers playback when not in edit mode and not playing
-        onPress={
-          !editMode && audioState !== AUDIO_STATES.PLAYING
-            ? () => onPlayPress(item.article_id)
-            : undefined
-        }
+        onPress={!editMode && audioState !== AUDIO_STATES.PLAYING ? handlePress : undefined}
         // Play button also triggers playback, hide when any audio is playing
-        onPlayPress={
-          !editMode && audioState !== AUDIO_STATES.PLAYING
-            ? () => onPlayPress(item.article_id)
-            : undefined
-        }
+        onPlayPress={!editMode && audioState !== AUDIO_STATES.PLAYING ? handlePlayPress : undefined}
         // Add article image for playlist-style appearance
         imageUrl={String(item.articles.image_url)}
-        {...(drag
-          ? {
-              dragHandleProps: {
-                onLongPress: drag,
-                delayLongPress: 100,
-              },
-            }
-          : {})}
+        dragHandleProps={dragHandleProps}
       />
     );
   },
@@ -295,6 +309,9 @@ export default function ListenScreen(): JSX.Element {
     [audioState, editMode, handleDelete, handleArticlePlay]
   );
 
+  // Memoize the key extractor to prevent inline function creation
+  const memoizedKeyExtractor = useCallback(keyExtractor, []);
+
   return (
     <ThemedView
       includeBottomInset={false}
@@ -305,7 +322,7 @@ export default function ListenScreen(): JSX.Element {
         {editMode ? (
           <DraggableFlatList<ReadingListItem>
             data={sortedReadingList}
-            keyExtractor={item => `${item.article_id}`}
+            keyExtractor={memoizedKeyExtractor}
             renderItem={renderItem}
             onDragEnd={handleDragEnd}
             showsVerticalScrollIndicator={false}
@@ -319,7 +336,7 @@ export default function ListenScreen(): JSX.Element {
             drawDistance={ITEM_HEIGHT * 5}
             estimatedItemSize={ITEM_HEIGHT}
             extraData={{ audioState, editMode }} // Simplified extraData
-            keyExtractor={item => `${item.article_id}`}
+            keyExtractor={memoizedKeyExtractor}
             removeClippedSubviews={true}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={listContainerStyle}

@@ -1,4 +1,4 @@
-import { useEffect, type FC } from 'react';
+import { memo, useEffect, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -36,140 +36,164 @@ interface ArticleCardProps {
   hasStartedReading?: boolean;
 }
 
-export const ArticleCard: FC<ArticleCardProps> = ({
-  title,
-  author,
-  difficultyLevel,
-  onPress,
-  editMode = false,
-  onDelete,
-  dragHandleProps,
-  isBeingDragged = false,
-  onPlayPress,
-  imageUrl,
-  progressPercentage,
-  hasStartedReading,
-}) => {
-  const isDarkMode = useIsDarkMode();
-  const colors = useColors();
-  // Play button has tint background: white icon in light mode, dark icon in dark mode
-  const playIconColor = isDarkMode ? colors.black : colors.white;
+export const ArticleCard: FC<ArticleCardProps> = memo(
+  ({
+    title,
+    author,
+    difficultyLevel,
+    onPress,
+    editMode = false,
+    onDelete,
+    dragHandleProps,
+    isBeingDragged = false,
+    onPlayPress,
+    imageUrl,
+    progressPercentage,
+    hasStartedReading,
+  }) => {
+    const isDarkMode = useIsDarkMode();
+    const colors = useColors();
+    // Play button has tint background: white icon in light mode, dark icon in dark mode
+    const playIconColor = isDarkMode ? colors.black : colors.white;
 
-  const { animatedStyle, startAnimation, setValue } = useTransformAnimation({
-    type: 'scale',
-    initialValue: 1,
-    targetValue: 1,
-    useSpring: true,
-    damping: ARTICLE_CARD_SPRING.damping,
-    stiffness: ARTICLE_CARD_SPRING.stiffness,
-  });
+    const { animatedStyle, startAnimation, setValue } = useTransformAnimation({
+      type: 'scale',
+      initialValue: 1,
+      targetValue: 1,
+      useSpring: true,
+      damping: ARTICLE_CARD_SPRING.damping,
+      stiffness: ARTICLE_CARD_SPRING.stiffness,
+    });
 
-  useEffect(() => {
-    if (isBeingDragged) {
-      setValue(CARD_DRAG_SCALE);
-    } else if (editMode) {
-      setValue(WORD_PRESS_SCALE);
-    } else {
-      startAnimation();
-    }
-  }, [editMode, isBeingDragged, startAnimation, setValue]);
+    useEffect(() => {
+      if (isBeingDragged) {
+        setValue(CARD_DRAG_SCALE);
+      } else if (editMode) {
+        setValue(WORD_PRESS_SCALE);
+      } else {
+        startAnimation();
+      }
+    }, [editMode, isBeingDragged, startAnimation, setValue]);
 
-  // Enhanced title and author styles with semantic colors
-  const titleOpacity = getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY, isDarkMode);
-  const authorOpacity = getEnhancedOpacity(
-    TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.SECONDARY,
-    isDarkMode
-  );
+    // Enhanced title and author styles with semantic colors
+    const titleOpacity = getEnhancedOpacity(
+      TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY,
+      isDarkMode
+    );
+    const authorOpacity = getEnhancedOpacity(
+      TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.SECONDARY,
+      isDarkMode
+    );
 
-  // Helper function to get difficulty text
-  const getDifficultyText = (level: number): string => {
-    if (level <= 2) return 'Beginner';
-    if (level === 3) return 'Intermediate';
-    return 'Advanced';
-  };
+    // Helper function to get difficulty text
+    const getDifficultyText = (level: number): string => {
+      if (level <= 2) return 'Beginner';
+      if (level === 3) return 'Intermediate';
+      return 'Advanced';
+    };
 
-  return (
-    <Animated.View style={[styles.cardContainer, animatedStyle]}>
-      {/* Drag Handle - shows on left in edit mode */}
-      {editMode && dragHandleProps && (
-        <View style={styles.dragHandleContainer}>
-          <DragHandle
-            onLongPress={dragHandleProps.onLongPress}
-            delayLongPress={dragHandleProps.delayLongPress}
-          />
-        </View>
-      )}
-
-      <View style={styles.cardWrapper}>
-        <BaseCard shadowSize="small" onPress={editMode ? undefined : onPress}>
-          <View style={styles.cardContent}>
-            {/* Article thumbnail - playlist style */}
-            {imageUrl && (
-              <View style={styles.imageContainer}>
-                <EnhancedImage
-                  source={imageUrl}
-                  style={styles.thumbnailImage}
-                  contentFit="cover"
-                  cachePolicy="disk"
-                />
-              </View>
-            )}
-
-            <View style={styles.textContent}>
-              <ThemedText
-                colorName="headingText"
-                style={[styles.titleText, { opacity: titleOpacity }]}
-                type="heading3"
-                numberOfLines={2}
-                ellipsizeMode="tail"
-              >
-                {title}
-              </ThemedText>
-              <View style={styles.authorRow}>
-                <ThemedText
-                  skipDefaultColor
-                  colorName="authorText"
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                  style={[styles.authorText, { opacity: authorOpacity }]}
-                  type="label"
-                >
-                  {author}
-                  {difficultyLevel && ` • ${getDifficultyText(difficultyLevel)}`}
-                </ThemedText>
-                {hasStartedReading && progressPercentage !== undefined && (
-                  <View style={styles.progressContainer}>
-                    <ProgressCircle
-                      percentage={progressPercentage}
-                      size={28}
-                      strokeWidth={4}
-                      showPercentage={false}
-                      style={styles.progressCircle}
-                    />
-                  </View>
-                )}
-              </View>
-            </View>
-
-            {/* Right side content - play button only (no chevron) */}
-            {!editMode && onPlayPress && (
-              <View style={styles.playButtonContainer}>
-                <PlayButton onPress={onPlayPress} isPlaying={false} iconColor={playIconColor} />
-              </View>
-            )}
+    return (
+      <Animated.View style={[styles.cardContainer, animatedStyle]}>
+        {/* Drag Handle - shows on left in edit mode */}
+        {editMode && dragHandleProps && (
+          <View style={styles.dragHandleContainer}>
+            <DragHandle
+              onLongPress={dragHandleProps.onLongPress}
+              delayLongPress={dragHandleProps.delayLongPress}
+            />
           </View>
-        </BaseCard>
-      </View>
+        )}
 
-      {/* Delete Button - shows on right in edit mode */}
-      {editMode && onDelete && (
-        <View style={styles.deleteButtonContainer}>
-          <DeleteButton onPress={onDelete} />
+        <View style={styles.cardWrapper}>
+          <BaseCard shadowSize="small" onPress={editMode ? undefined : onPress}>
+            <View style={styles.cardContent}>
+              {/* Article thumbnail - playlist style */}
+              {imageUrl && (
+                <View style={styles.imageContainer}>
+                  <EnhancedImage
+                    source={imageUrl}
+                    style={styles.thumbnailImage}
+                    contentFit="cover"
+                    cachePolicy="disk"
+                  />
+                </View>
+              )}
+
+              <View style={styles.textContent}>
+                <ThemedText
+                  colorName="headingText"
+                  style={[styles.titleText, { opacity: titleOpacity }]}
+                  type="heading3"
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
+                >
+                  {title}
+                </ThemedText>
+                <View style={styles.authorRow}>
+                  <ThemedText
+                    skipDefaultColor
+                    colorName="authorText"
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    style={[styles.authorText, { opacity: authorOpacity }]}
+                    type="label"
+                  >
+                    {author}
+                    {difficultyLevel && ` • ${getDifficultyText(difficultyLevel)}`}
+                  </ThemedText>
+                  {hasStartedReading && progressPercentage !== undefined && (
+                    <View style={styles.progressContainer}>
+                      <ProgressCircle
+                        percentage={progressPercentage}
+                        size={28}
+                        strokeWidth={4}
+                        showPercentage={false}
+                        style={styles.progressCircle}
+                      />
+                    </View>
+                  )}
+                </View>
+              </View>
+
+              {/* Right side content - play button only (no chevron) */}
+              {!editMode && onPlayPress && (
+                <View style={styles.playButtonContainer}>
+                  <PlayButton onPress={onPlayPress} isPlaying={false} iconColor={playIconColor} />
+                </View>
+              )}
+            </View>
+          </BaseCard>
         </View>
-      )}
-    </Animated.View>
-  );
-};
+
+        {/* Delete Button - shows on right in edit mode */}
+        {editMode && onDelete && (
+          <View style={styles.deleteButtonContainer}>
+            <DeleteButton onPress={onDelete} />
+          </View>
+        )}
+      </Animated.View>
+    );
+  },
+  (prevProps, nextProps) => {
+    // Custom comparison function to prevent unnecessary re-renders
+    return (
+      prevProps.title === nextProps.title &&
+      prevProps.author === nextProps.author &&
+      prevProps.difficultyLevel === nextProps.difficultyLevel &&
+      prevProps.editMode === nextProps.editMode &&
+      prevProps.isBeingDragged === nextProps.isBeingDragged &&
+      prevProps.imageUrl === nextProps.imageUrl &&
+      prevProps.progressPercentage === nextProps.progressPercentage &&
+      prevProps.hasStartedReading === nextProps.hasStartedReading &&
+      prevProps.onPress === nextProps.onPress &&
+      prevProps.onDelete === nextProps.onDelete &&
+      prevProps.onPlayPress === nextProps.onPlayPress &&
+      prevProps.dragHandleProps === nextProps.dragHandleProps
+    );
+  }
+);
+
+ArticleCard.displayName = 'ArticleCard';
 
 const styles = StyleSheet.create({
   cardContainer: {
