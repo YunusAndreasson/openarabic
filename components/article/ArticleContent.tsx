@@ -19,13 +19,96 @@ import { articlesService } from '@/services/articles';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
-import {
-  createContentContainerStyle,
-  createFlashListConfig,
-  createListContainerStyle,
-  createOverrideItemLayout,
-  createViewabilityConfig,
-} from '@/utils/listUtils';
+
+// Inline utility functions since they're only used in this component
+const createViewabilityConfig = () => ({
+  itemVisiblePercentThreshold: 50, // Consider item visible when 50% is visible
+  minimumViewTime: 100, // Minimum time item must be visible before triggering
+});
+
+const createContentContainerStyle = (bottomInset: number) => ({
+  paddingTop: 0,
+  paddingBottom: bottomInset + 48, // Safe area + comfortable reading space
+});
+
+const createListContainerStyle = (backgroundColor: string) => ({
+  flex: 1,
+  height: 100,
+  backgroundColor,
+});
+
+const createOverrideItemLayout =
+  (itemHeight: number) => (layout: { span?: number; size?: number }) => {
+    layout.size = itemHeight;
+  };
+
+const createFlashListConfig = <T,>({
+  data,
+  renderItem,
+  keyExtractor,
+  estimatedItemSize,
+  contentContainerStyle,
+  ListHeaderComponent,
+  ListFooterComponent,
+  onScroll,
+  onViewableItemsChanged,
+  viewabilityConfig,
+  overrideItemLayout,
+  drawDistance,
+  scrollEventThrottle = 16,
+  showsVerticalScrollIndicator = false,
+  removeClippedSubviews = true,
+  alwaysBounceVertical = false,
+  bounces = true,
+  overScrollMode = 'auto',
+  persistentScrollbar = false,
+  extraData,
+  initialScrollIndex = 0,
+}: {
+  data: T[];
+  renderItem: (info: { item: T; index: number }) => React.ReactElement;
+  keyExtractor: (item: T, index: number) => string;
+  estimatedItemSize: number;
+  contentContainerStyle?: any;
+  ListHeaderComponent?: React.ComponentType<any> | React.ReactElement | null;
+  ListFooterComponent?: React.ComponentType<any> | React.ReactElement | null;
+  onScroll?: (event: any) => void;
+  onViewableItemsChanged?: (info: { viewableItems: any[] }) => void;
+  viewabilityConfig?: any;
+  overrideItemLayout?: (layout: { span?: number; size?: number }) => void;
+  drawDistance?: number;
+  scrollEventThrottle?: number;
+  showsVerticalScrollIndicator?: boolean;
+  removeClippedSubviews?: boolean;
+  alwaysBounceVertical?: boolean;
+  bounces?: boolean;
+  overScrollMode?: 'auto' | 'always' | 'never';
+  persistentScrollbar?: boolean;
+  extraData?: any;
+  initialScrollIndex?: number;
+}) => ({
+  data,
+  renderItem,
+  keyExtractor,
+  estimatedItemSize,
+  contentContainerStyle,
+  ListHeaderComponent,
+  ListFooterComponent,
+  onScroll,
+  onViewableItemsChanged,
+  viewabilityConfig,
+  overrideItemLayout,
+  drawDistance,
+  scrollEventThrottle,
+  showsVerticalScrollIndicator,
+  removeClippedSubviews,
+  alwaysBounceVertical,
+  bounces,
+  overScrollMode,
+  persistentScrollbar,
+  extraData,
+  initialScrollIndex,
+});
 
 // Static styles for better performance
 const styles = StyleSheet.create({

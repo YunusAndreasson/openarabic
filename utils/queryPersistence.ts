@@ -1,11 +1,7 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import type { Query } from '@tanstack/react-query';
 
-import { STRINGS } from '@/constants/strings';
-
-import { handleError } from './errorHandling';
-import { getSafeStorage, isAsyncStorageAvailable } from './safeAsyncStorage';
+import { getSafeStorage } from './safeAsyncStorage';
 
 // Constants for better performance and maintainability
 const CACHE_KEY = 'REACT_QUERY_OFFLINE_CACHE';
@@ -73,42 +69,3 @@ export const PERSISTENCE_OPTIONS = {
     shouldDehydrateQuery,
   },
 } as const;
-
-/**
- * Clear persisted cache (useful for debugging or user logout)
- */
-export const clearPersistedCache = async (): Promise<void> => {
-  if (!isAsyncStorageAvailable()) {
-    handleError(new Error(STRINGS.ERROR_ASYNC_STORAGE_CANNOT_CLEAR), {
-      showToast: false,
-    });
-    return;
-  }
-  try {
-    await AsyncStorage.removeItem(CACHE_KEY);
-  } catch (error) {
-    handleError(error as Error, { showToast: false });
-  }
-};
-
-/**
- * Get the size of persisted cache for debugging
- */
-export const getPersistedCacheSize = async (): Promise<number> => {
-  if (!isAsyncStorageAvailable()) {
-    handleError(new Error(STRINGS.ERROR_ASYNC_STORAGE_CANNOT_READ), {
-      showToast: false,
-    });
-    return 0;
-  }
-  try {
-    const cache = await AsyncStorage.getItem(CACHE_KEY);
-    if (!cache) return 0;
-
-    // Calculate size in bytes (approximate)
-    return new TextEncoder().encode(cache).length;
-  } catch (error) {
-    handleError(error as Error, { showToast: false });
-    return 0;
-  }
-};

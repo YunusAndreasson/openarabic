@@ -16,6 +16,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
 import { getSafeStorage } from '@/utils/safeAsyncStorage';
+import { getFirstNameFromEmail } from '@/utils/stringUtils';
 
 // Static constants for performance
 const PROFILE_PHOTO_SIZE = 64;
@@ -29,18 +30,6 @@ interface AccountBadgeProps {
   userEmail: string;
   userId: string;
 }
-
-// Helper function to extract first name from email
-const getFirstNameFromEmail = (email: string): string => {
-  const beforeAt = email.split('@')[0];
-  if (!beforeAt) return 'User';
-
-  const cleaned = beforeAt.replace(/[._-]/g, ' ');
-  return cleaned
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
-};
 
 // Helper function to format member since date
 const formatMemberSince = (createdAt: string): string => {

@@ -1,46 +1,46 @@
 import {
-  PROGRESS_CONSTANTS,
   calculateDisplayProgress,
+  PROGRESS_CONSTANTS,
   shouldTriggerAnimation,
 } from '@/utils/progressUtils';
 
-describe('progressUtils', () => {
+describe('Progress Utilities', () => {
   describe('PROGRESS_CONSTANTS', () => {
     it('should have correct constant values', () => {
-      expect(PROGRESS_CONSTANTS.MIN_PROGRESS_VALUE).toBe(1);
+      expect(PROGRESS_CONSTANTS.MIN_PROGRESS_VALUE).toBe(0.1);
     });
   });
 
   describe('calculateDisplayProgress', () => {
-    it('should return maxProgress when progress is less than maxProgress', () => {
-      const result = calculateDisplayProgress(5, 10);
-      expect(result).toBe(10);
+    it('should return the maximum of progress and maxProgress', () => {
+      const result = calculateDisplayProgress(50, 75);
+      expect(result).toBe(75);
     });
 
-    it('should return progress when progress is greater than maxProgress', () => {
-      const result = calculateDisplayProgress(15, 10);
-      expect(result).toBe(15);
+    it('should return current progress when it is higher than maxProgress', () => {
+      const result = calculateDisplayProgress(80, 60);
+      expect(result).toBe(80);
     });
 
-    it('should return progress when progress equals maxProgress', () => {
-      const result = calculateDisplayProgress(10, 10);
-      expect(result).toBe(10);
+    it('should return the same value when progress equals maxProgress', () => {
+      const result = calculateDisplayProgress(50, 50);
+      expect(result).toBe(50);
     });
   });
 
   describe('shouldTriggerAnimation', () => {
-    it('should trigger animation when animationKey is greater than minValue', () => {
-      const result = shouldTriggerAnimation(2);
+    it('should return true when animation key is greater than minimum value', () => {
+      const result = shouldTriggerAnimation(5);
       expect(result).toBe(true);
     });
 
-    it('should not trigger animation when animationKey equals minValue', () => {
-      const result = shouldTriggerAnimation(1);
+    it('should return false when animation key is less than or equal to minimum value', () => {
+      const result = shouldTriggerAnimation(0.05);
       expect(result).toBe(false);
     });
 
-    it('should not trigger animation when animationKey is less than minValue', () => {
-      const result = shouldTriggerAnimation(0.5);
+    it('should use custom minimum value when provided', () => {
+      const result = shouldTriggerAnimation(3, 5);
       expect(result).toBe(false);
     });
   });

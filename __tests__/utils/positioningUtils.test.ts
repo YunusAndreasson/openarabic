@@ -1,10 +1,7 @@
 import {
   TOOLTIP_CONSTANTS,
   calculateArrowPosition,
-  calculateContentWidth,
   calculateTooltipDimensions,
-  calculateTooltipWidth,
-  estimateTextWidth,
   handleScreenBoundaries,
   type TooltipLayout,
 } from '@/utils/positioningUtils';
@@ -103,61 +100,6 @@ describe('Positioning Utilities', () => {
       const screenWidth = 375;
       const result = handleScreenBoundaries(350, 50, 16);
       expect(result).toBe(screenWidth - 16 - 50); // SCREEN_WIDTH - margin - width
-    });
-  });
-
-  describe('estimateTextWidth', () => {
-    it('should estimate text width correctly', () => {
-      const result = estimateTextWidth('Hello');
-      expect(result).toBe(45); // 5 * 9
-    });
-
-    it('should use custom character width', () => {
-      const result = estimateTextWidth('Hello', 10);
-      expect(result).toBe(50); // 5 * 10
-    });
-
-    it('should handle empty string', () => {
-      const result = estimateTextWidth('');
-      expect(result).toBe(0);
-    });
-  });
-
-  describe('calculateContentWidth', () => {
-    it('should calculate width without bookmark', () => {
-      const result = calculateContentWidth(50, false);
-      expect(result).toBe(50);
-    });
-
-    it('should calculate width with bookmark', () => {
-      const result = calculateContentWidth(50, true);
-      expect(result).toBe(90); // 50 + 32 + 8
-    });
-  });
-
-  describe('calculateTooltipWidth', () => {
-    it('should calculate width with minimum constraint', () => {
-      const result = calculateTooltipWidth(10, 20);
-      expect(result).toBe(TOOLTIP_CONSTANTS.MIN_WIDTH);
-    });
-
-    it('should calculate width based on content', () => {
-      const contentWidth = 100;
-      const result = calculateTooltipWidth(contentWidth, 20);
-      expect(result).toBe(contentWidth + TOOLTIP_CONSTANTS.MIN_PADDING * 2);
-    });
-
-    it('should calculate width based on layout', () => {
-      const layoutWidth = 100;
-      const result = calculateTooltipWidth(10, layoutWidth);
-      expect(result).toBe(layoutWidth + TOOLTIP_CONSTANTS.MIN_PADDING * 2);
-    });
-
-    it('should respect maximum width constraint', () => {
-      const veryLargeContent = 1000;
-      const result = calculateTooltipWidth(veryLargeContent, 1000);
-      // Should be constrained by MAX_WIDTH_RATIO
-      expect(result).toBeLessThanOrEqual(390 * TOOLTIP_CONSTANTS.MAX_WIDTH_RATIO);
     });
   });
 });

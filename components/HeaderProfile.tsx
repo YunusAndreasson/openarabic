@@ -14,23 +14,9 @@ import { useAppDispatch } from '@/store/hooks';
 import { openStreakBottomSheet } from '@/store/streakSlice';
 import { handleError } from '@/utils/errorHandling';
 import { getSafeStorage } from '@/utils/safeAsyncStorage';
+import { getFirstNameFromEmail } from '@/utils/stringUtils';
 
 // Helper functions from AccountBadge for consistency
-const getFirstNameFromEmail = (email: string): string => {
-  if (!email) return 'User';
-
-  const localPart = email.split('@')[0];
-  if (!localPart) return 'User';
-
-  // Handle common separators and capitalize
-  const cleanName = localPart
-    .split(/[._-]/)
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-    .join(' ');
-
-  return cleanName.split(' ')[0] || 'User';
-};
-
 const getInitials = (name: string): string => {
   const words = name.trim().split(/\s+/);
   if (words.length === 1) {
