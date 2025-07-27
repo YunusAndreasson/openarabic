@@ -47,6 +47,14 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_ORG_ID = os.getenv("OPENAI_ORG_ID", "")
 
+# Google Cloud Translate configuration
+GOOGLE_CLOUD_PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT_ID", "")
+
+# Translation settings for individual root words
+TRANSLATION_BATCH_SIZE = 100  # Number of root words to process in a batch
+TRANSLATION_RETRY_ATTEMPTS = 3
+TRANSLATION_TIMEOUT = 30
+
 # Author mapping for inbox folders and file prefixes
 AUTHOR_FOLDER_MAPPING = {
     "1_al_imam_an_nawawi": "al-Imam an-Nawawi",

@@ -178,3 +178,5 @@ temp_audio/
 
 # API Keys and sensitive configuration
 utils/set_keys.py
+*.json
+openarabic-*.json

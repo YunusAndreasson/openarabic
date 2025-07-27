@@ -12,3 +12,7 @@ os.environ["ELEVENLABS_API_KEY"] = "REDACTED_LEAKED_KEY"
 os.environ["OPENAI_API_KEY"] = (
     "REDACTED_LEAKED_KEY"
 )
+
+# Google Cloud Translate configuration
+# Uses service account authentication with openarabic-3711db289212.json
+os.environ["GOOGLE_CLOUD_PROJECT_ID"] = "openarabic"

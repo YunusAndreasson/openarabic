@@ -1,6 +1,5 @@
-import logging
 import time
-from typing import Any
+from typing import Any, cast
 
 from data.config import (
     MODEL_OTHER,
@@ -17,6 +16,7 @@ from data.pipeline_types import (
     TashkeelResults,
     TranslationResult,
     TranslationResults,
+    WordTranslationOption,
     WordTranslationResult,
     WordTranslationResults,
 )
@@ -34,9 +34,8 @@ from data.schemas import (
 from utils.api_utils import call_openai_api
 from utils.context_cache import ContextCache
 from utils.exceptions import TranslationError
+from utils.google_translate_service import GoogleTranslateService
 from utils.text_utils import filter_arabic_words, get_optimized_context
-
-logger = logging.getLogger(__name__)
 
 
 def _build_word_prompt(
@@ -400,11 +399,7 @@ def batch_translate_words(
                 raise Exception("No valid word translations returned from model.")
             except Exception as err:
                 attempt += 1
-                logger.error(f"Sentence {i} failed, retrying attempt {attempt}")
                 if attempt >= max_retries:
-                    logger.error(
-                        f"[FATAL] Sentence {i} failed {max_retries} times. Aborting batch.",
-                    )
                     raise TranslationError(
                         f"Sentence {i} failed {max_retries} times."
                     ) from err
@@ -541,9 +536,74 @@ def batch_refine_translations(
         return []
 
 
+def batch_translate_root_words_with_google_cloud(
+    sentences: list[str],
+    tashkeel_results: TashkeelResults,
+    translations: TranslationResults,
+    all_sentences: list[str] | None = None,
+    indices: list[int] | None = None,
+    context_cache: ContextCache | None = None,
+) -> WordTranslationResults:
+    """Translate individual Arabic root words using Google Cloud Translate - OUT OF CONTEXT."""
+    service = GoogleTranslateService(credentials_path="openarabic-3711db289212.json")
+    results: WordTranslationResults = []
+
+    # Extract individual Arabic words from sentences, then extract root words
+    arabic_words = filter_arabic_words(
+        " ".join(sentences)
+    )  # CRITICAL: Use existing function
+
+    # TODO: Add root word extraction logic here
+    # For now, use individual words as root words
+    root_words = (
+        arabic_words  # This should be enhanced with proper root word extraction
+    )
+
+    # Translate each root word individually OUT OF CONTEXT
+    for root_word in root_words:
+        try:
+            root_word_translation = service.translate_single_root_word(root_word)
+            # Convert to WordTranslationOptions format
+            word_option = cast(
+                WordTranslationOption,
+                {
+                    "arabic": root_word,
+                    "english_options": [root_word_translation["translated_text"]],
+                    "pos": root_word_translation.get("pos", "noun"),
+                    "essential": root_word,
+                    "essential_translation_options": [
+                        root_word_translation["translated_text"]
+                    ],
+                    "notes": root_word_translation.get("notes"),
+                    "uncertainties": root_word_translation.get("uncertainties", []),
+                },
+            )
+            results.append({"word_translations": [word_option]})
+        except Exception as e:
+            # Add fallback result
+            word_option = cast(
+                WordTranslationOption,
+                {
+                    "arabic": root_word,
+                    "english_options": ["[Translation Error]"],
+                    "pos": "noun",
+                    "essential": root_word,
+                    "essential_translation_options": ["[Translation Error]"],
+                    "notes": f"Google Cloud translation failed: {e}",
+                    "uncertainties": [
+                        {"text": root_word, "reason": f"Translation error: {e}"}
+                    ],
+                },
+            )
+            results.append({"word_translations": [word_option]})
+
+    return results
+
+
 __all__ = [
     "batch_translate_full_sentences",
     "batch_add_tashkeel",
     "batch_translate_words",
+    "batch_translate_root_words_with_google_cloud",
     "batch_refine_translations",
 ]

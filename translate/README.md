@@ -122,6 +122,61 @@ The pipeline automatically maps folder names to database authors:
 - Default category: "aqeedah"
 - Audio generation: Enabled if ElevenLabs API key is available
 
+## API Setup
+
+### OpenAI API
+
+Set your OpenAI API key:
+
+```bash
+export OPENAI_API_KEY="your_openai_api_key_here"
+```
+
+### Google Cloud Translate API
+
+For individual root word translation, set up Google Cloud Translate:
+
+1. **Create a Google Cloud Project**:
+
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project or select an existing one
+   - Note your Project ID
+
+2. **Enable the Cloud Translation API**:
+
+   - In the Google Cloud Console, go to "APIs & Services" > "Library"
+   - Search for "Cloud Translation API"
+   - Click "Enable"
+
+3. **Create API Credentials**:
+
+   - Go to "APIs & Services" > "Credentials"
+   - Click "Create Credentials" > "API Key"
+   - Copy the API key
+
+4. **Set Environment Variables**:
+   ```bash
+   export GOOGLE_CLOUD_API_KEY="your_google_cloud_api_key_here"
+   export GOOGLE_CLOUD_PROJECT_ID="your_project_id_here"
+   ```
+
+### ElevenLabs API (Optional)
+
+For audio generation, set your ElevenLabs API key:
+
+```bash
+export ELEVENLABS_API_KEY="your_elevenlabs_api_key_here"
+```
+
+### Supabase (Optional)
+
+For database operations, set your Supabase credentials:
+
+```bash
+export SUPABASE_URL="your_supabase_url_here"
+export SUPABASE_KEY="your_supabase_key_here"
+```
+
 ## Error Handling
 
 - Each phase validates input files before processing
