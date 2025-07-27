@@ -3,7 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { ActivityIndicator, InteractionManager, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -30,19 +30,29 @@ export default function VocabularyScreen(): JSX.Element {
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
 
+  // Add ref to prevent infinite re-renders
+  const hasPrefetchedRef = useRef(false);
+
   // Combine focus effects for better performance
   useFocusEffect(
     useCallback(() => {
       if (!user?.id) return;
+
+      // Prevent multiple prefetch calls
+      if (hasPrefetchedRef.current) return;
 
       const hasStudyWords = queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id));
       const hasDueWords = queryClient.getQueryData(FSRS_QUERY_KEYS.due(user.id));
 
       // Only fetch if we're missing either data set
       if (!hasStudyWords || !hasDueWords) {
+        hasPrefetchedRef.current = true;
         InteractionManager.runAfterInteractions(() => {
           prefetchVocabularyData();
         });
+      } else {
+        // Mark as prefetched even if data exists to prevent future calls
+        hasPrefetchedRef.current = true;
       }
     }, [user?.id, prefetchVocabularyData, queryClient])
   );
