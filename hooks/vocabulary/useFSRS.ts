@@ -222,16 +222,12 @@ export function useFSRS({
 
   const updateWord = useCallback(
     async (rootId: number, confidence: WordConfidence) => {
-      // Use refs for frequently changing values to avoid dependency issues
-      const currentWordRef = currentWord;
-      const isCompleteRef = isComplete;
-
-      if (!userId || !currentWordRef || currentWordRef.root_id !== rootId) {
+      if (!userId || !currentWord || currentWord.root_id !== rootId) {
         return;
       }
 
       if (
-        isCompleteRef ||
+        isComplete ||
         stateTrackingRef.current.completionTriggered ||
         stateTrackingRef.current.isProcessingUpdate
       ) {
@@ -241,7 +237,7 @@ export function useFSRS({
       stateTrackingRef.current.isProcessingUpdate = true;
 
       try {
-        const card = convertToFSRSCard(currentWordRef);
+        const card = convertToFSRSCard(currentWord);
         const now = new Date();
 
         const rating =
@@ -255,8 +251,8 @@ export function useFSRS({
 
         // Update the word with new FSRS parameters and session tracking
         const wordUpdateData = {
-          success_streak: confidence === 'known' ? (currentWordRef.success_streak || 0) + 1 : 0,
-          difficulty: currentWordRef.difficulty,
+          success_streak: confidence === 'known' ? (currentWord.success_streak || 0) + 1 : 0,
+          difficulty: currentWord.difficulty,
           fsrs_due: newCard.due.toISOString(),
           fsrs_stability: newCard.stability,
           fsrs_difficulty: newCard.difficulty,
@@ -289,7 +285,7 @@ export function useFSRS({
         } else {
           // For vague/unknown responses, add the word back to the spacing queue
           const updatedWord: StudyWord = {
-            ...currentWordRef,
+            ...currentWord,
             fsrs_due: wordUpdateData.fsrs_due,
             fsrs_stability: wordUpdateData.fsrs_stability,
             fsrs_difficulty: wordUpdateData.fsrs_difficulty,
@@ -334,7 +330,6 @@ export function useFSRS({
             setTimeout(() => {
               if (stateTrackingRef.current.completionTriggered) {
                 setIsComplete(true);
-                // Call onComplete directly instead of depending on it
                 if (onComplete) onComplete();
               }
             }, 0);
@@ -351,13 +346,33 @@ export function useFSRS({
     },
     [
       userId,
+      currentWord,
+      isComplete,
       convertToFSRSCard,
       fsrsInstance,
+      onComplete,
       getNextWordWithSpacing,
       updateSpacingCounters,
-      // Remove currentWord, isComplete, onComplete from dependencies
     ]
   );
+
+  const resetQueue = useCallback(() => {
+    stateTrackingRef.current.queueInitialized = false;
+    setWordQueue([]);
+    setCurrentWord(null);
+    setProgress(0);
+    setIsComplete(false);
+    stateTrackingRef.current.completionTriggered = false;
+    stateTrackingRef.current.isProcessingUpdate = false;
+    countersRef.current = {
+      totalWords: 0,
+      processedWords: 0,
+      knownWords: 0,
+      uniqueWords: new Set(),
+    };
+    queueRef.current = new PriorityQueue<StudyWord>();
+    spacingQueueRef.current = createSpacingState();
+  }, []);
 
   // Clean up on unmount
   useEffect(() => {
@@ -372,24 +387,10 @@ export function useFSRS({
         completionTimeoutRef.current = null;
       }
 
-      // Reset state directly instead of depending on resetQueue
-      stateTrackingRef.current.queueInitialized = false;
-      setWordQueue([]);
-      setCurrentWord(null);
-      setProgress(0);
-      setIsComplete(false);
-      stateTrackingRef.current.completionTriggered = false;
-      stateTrackingRef.current.isProcessingUpdate = false;
-      countersRef.current = {
-        totalWords: 0,
-        processedWords: 0,
-        knownWords: 0,
-        uniqueWords: new Set(),
-      };
-      queueRef.current = new PriorityQueue<StudyWord>();
-      spacingQueueRef.current = createSpacingState();
+      // Reset state
+      resetQueue();
     };
-  }, []); // Remove resetQueue dependency
+  }, [resetQueue]);
 
   const invalidateQueries = useCallback(() => {
     if (!userId) return;
@@ -402,7 +403,6 @@ export function useFSRS({
     queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.stats(userId) });
     queryClient.invalidateQueries({ queryKey: ['vocabulary-stats'] });
 
-    // Reset state directly instead of depending on resetQueue
     stateTrackingRef.current.queueInitialized = false;
     queueRef.current = new PriorityQueue<StudyWord>();
     spacingQueueRef.current = createSpacingState();
