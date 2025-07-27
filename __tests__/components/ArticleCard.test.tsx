@@ -1,145 +1,186 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { render } from '@testing-library/react-native';
+import { render, screen } from '@testing-library/react-native';
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
 
+import { ArticleCard } from '../../components/home/ArticleCard';
 import { AUDIO_STATES } from '../../constants/audio';
+import { useColors } from '../../hooks/theme/useColors';
 
-// Create a simplified test component that mimics the ArticleCard play button logic
-const TestArticleCard = ({
-  onPlayPress,
-  editMode = false,
-  audioState = AUDIO_STATES.IDLE,
-}: {
-  onPlayPress?: () => void;
-  editMode?: boolean;
-  audioState?: string;
-}) => {
-  // Play button is shown when not in edit mode and not currently playing
-  const shouldShowPlayButton = !!onPlayPress && !editMode && audioState !== AUDIO_STATES.PLAYING;
+// Mock the theme hook
+jest.mock('../../hooks/theme/useColors');
+const mockUseColors = useColors as jest.MockedFunction<typeof useColors>;
 
-  return (
-    <View testID="article-card">
-      <Text>Test Article</Text>
-      <Text>Test Author</Text>
+// Mock FlashList
+jest.mock('@shopify/flash-list', () => ({
+  FlashList: 'FlashList',
+}));
 
-      {/* Play Button - mimics the logic from ArticleCard */}
-      {!editMode && (
-        <View testID="play-button-container">
-          {shouldShowPlayButton ? (
-            <TouchableOpacity testID="play-button" onPress={onPlayPress}>
-              <Text>Play</Text>
-            </TouchableOpacity>
-          ) : (
-            <View testID="play-button-placeholder" />
-          )}
-        </View>
-      )}
-    </View>
-  );
-};
+// Mock Ionicons
+jest.mock('@expo/vector-icons', () => ({
+  Ionicons: 'Ionicons',
+}));
 
-describe('ArticleCard Play Button Visibility Logic', () => {
+describe('ArticleCard', () => {
+  const mockColors = {
+    background: '#ffffff',
+    text: '#000000',
+    secondaryText: '#666666',
+    border: '#e0e0e0',
+    tint: '#007AFF',
+    elevation1: '#f8f8f8',
+    elevation2: '#f0f0f0',
+    elevation3: '#e8e8e8',
+    shadow: '#000000',
+    success: '#34C759',
+    warning: '#FF9500',
+    error: '#FF3B30',
+    black: '#000000',
+    white: '#ffffff',
+  };
+
   beforeEach(() => {
+    mockUseColors.mockReturnValue(mockColors);
+  });
+
+  afterEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('Basic Visibility Rules', () => {
-    it('shows play button when not in edit mode', () => {
-      const { getByTestId } = render(<TestArticleCard onPlayPress={jest.fn()} editMode={false} />);
+  const defaultProps = {
+    title: 'Test Article Title',
+    author: 'Test Author',
+  };
 
-      expect(getByTestId('play-button')).toBeTruthy();
-    });
+  it('renders with title and author', () => {
+    render(<ArticleCard {...defaultProps} />);
 
-    it('hides play button when in edit mode', () => {
-      const { queryByTestId } = render(<TestArticleCard onPlayPress={jest.fn()} editMode={true} />);
-
-      expect(queryByTestId('play-button')).toBeNull();
-    });
-
-    it('hides play button when no onPlayPress is provided', () => {
-      const { queryByTestId } = render(<TestArticleCard editMode={false} />);
-
-      expect(queryByTestId('play-button')).toBeNull();
-    });
+    expect(screen.getByText('Test Article Title')).toBeTruthy();
+    expect(screen.getByText('Test Author')).toBeTruthy();
   });
 
-  describe('Audio State Integration', () => {
-    it('shows play button when audio is idle', () => {
-      const { getByTestId } = render(
-        <TestArticleCard onPlayPress={jest.fn()} editMode={false} audioState={AUDIO_STATES.IDLE} />
-      );
+  it('calls onPress when pressed', () => {
+    const onPress = jest.fn();
+    render(<ArticleCard {...defaultProps} onPress={onPress} />);
 
-      expect(getByTestId('play-button')).toBeTruthy();
-    });
+    const card = screen.getByText('Test Article Title');
+    card.props.onPress();
 
-    it('hides play button when audio is playing (key behavior)', () => {
-      const { queryByTestId } = render(
-        <TestArticleCard
-          onPlayPress={jest.fn()}
-          editMode={false}
-          audioState={AUDIO_STATES.PLAYING}
-        />
-      );
-
-      expect(queryByTestId('play-button')).toBeNull();
-    });
-
-    it('shows play button when audio is stopped', () => {
-      const { getByTestId } = render(
-        <TestArticleCard
-          onPlayPress={jest.fn()}
-          editMode={false}
-          audioState={AUDIO_STATES.STOPPED}
-        />
-      );
-
-      expect(getByTestId('play-button')).toBeTruthy();
-    });
-
-    it('shows play button when audio is loading', () => {
-      const { getByTestId } = render(
-        <TestArticleCard
-          onPlayPress={jest.fn()}
-          editMode={false}
-          audioState={AUDIO_STATES.LOADING}
-        />
-      );
-
-      expect(getByTestId('play-button')).toBeTruthy();
-    });
+    expect(onPress).toHaveBeenCalledTimes(1);
   });
 
-  describe('Logic Validation', () => {
-    const cases: Array<[boolean, boolean, string, boolean]> = [
-      // hasOnPlayPress, editMode, audioState, expectedVisible
-      [true, false, AUDIO_STATES.IDLE, true],
-      [true, false, AUDIO_STATES.LOADING, true],
-      [true, false, AUDIO_STATES.PLAYING, false],
-      [true, false, AUDIO_STATES.STOPPED, true],
-      [true, false, AUDIO_STATES.ERROR, true],
-      [true, true, AUDIO_STATES.IDLE, false],
-      [false, false, AUDIO_STATES.IDLE, false],
-    ];
+  it('shows play button when onPlayPress is provided and not in edit mode', () => {
+    const onPlayPress = jest.fn();
+    render(<ArticleCard {...defaultProps} onPlayPress={onPlayPress} />);
 
-    test.each(cases)(
-      'hasOnPlayPress=%s editMode=%s state=%s → visible=%s',
-      (hasOnPlayPress, editMode, audioState, expectedVisible) => {
-        const { queryByTestId } = render(
-          <TestArticleCard
-            onPlayPress={hasOnPlayPress ? jest.fn() : undefined}
-            editMode={editMode}
-            audioState={audioState}
-          />
-        );
+    // The play button should be visible
+    expect(screen.getByTestId('play-button')).toBeTruthy();
+  });
 
-        const playButton = queryByTestId('play-button');
-        if (expectedVisible) {
-          expect(playButton).toBeTruthy();
-        } else {
-          expect(playButton).toBeNull();
-        }
-      }
-    );
+  it('hides play button when onPlayPress is not provided', () => {
+    render(<ArticleCard {...defaultProps} />);
+
+    // The play button should not be visible
+    expect(screen.queryByTestId('play-button')).toBeNull();
+  });
+
+  it('hides play button when in edit mode', () => {
+    const onPlayPress = jest.fn();
+    render(<ArticleCard {...defaultProps} onPlayPress={onPlayPress} editMode={true} />);
+
+    // The play button should not be visible in edit mode
+    expect(screen.queryByTestId('play-button')).toBeNull();
+  });
+
+  it('calls onPlayPress when play button is pressed', () => {
+    const onPlayPress = jest.fn();
+    render(<ArticleCard {...defaultProps} onPlayPress={onPlayPress} />);
+
+    const playButton = screen.getByTestId('play-button');
+    playButton.props.onPress();
+
+    expect(onPlayPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows delete button when in edit mode', () => {
+    render(<ArticleCard {...defaultProps} editMode={true} onDelete={jest.fn()} />);
+
+    expect(screen.getByTestId('delete-button')).toBeTruthy();
+  });
+
+  it('calls onDelete when delete button is pressed', () => {
+    const onDelete = jest.fn();
+    render(<ArticleCard {...defaultProps} editMode={true} onDelete={onDelete} />);
+
+    const deleteButton = screen.getByTestId('delete-button');
+    deleteButton.props.onPress();
+
+    expect(onDelete).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders with image when imageUrl is provided', () => {
+    const imageUrl = 'https://example.com/image.jpg';
+    render(<ArticleCard {...defaultProps} imageUrl={imageUrl} />);
+
+    // The image should be rendered
+    expect(screen.getByTestId('article-image')).toBeTruthy();
+  });
+
+  // Test the actual usage pattern from ListenScreen
+  describe('audio state integration', () => {
+    it('provides onPress and onPlayPress when audio is idle', () => {
+      const onPlayPress = jest.fn();
+      const audioState = AUDIO_STATES.IDLE;
+
+      // Simulate the logic from ListenScreen - check if not playing
+      const isPlaying = audioState === AUDIO_STATES.PLAYING;
+      const shouldEnablePlayback = !isPlaying;
+
+      render(
+        <ArticleCard
+          {...defaultProps}
+          onPress={shouldEnablePlayback ? onPlayPress : undefined}
+          onPlayPress={shouldEnablePlayback ? onPlayPress : undefined}
+        />
+      );
+
+      expect(screen.getByTestId('play-button')).toBeTruthy();
+    });
+
+    it('disables onPress and onPlayPress when audio is playing', () => {
+      const onPlayPress = jest.fn();
+      const audioState = AUDIO_STATES.PLAYING;
+
+      // Simulate the logic from ListenScreen - check if not playing
+      const isPlaying = audioState === AUDIO_STATES.PLAYING;
+      const shouldEnablePlayback = !isPlaying;
+
+      render(
+        <ArticleCard
+          {...defaultProps}
+          onPress={shouldEnablePlayback ? onPlayPress : undefined}
+          onPlayPress={shouldEnablePlayback ? onPlayPress : undefined}
+        />
+      );
+
+      expect(screen.queryByTestId('play-button')).toBeNull();
+    });
+
+    it('enables onPress and onPlayPress when audio is loading', () => {
+      const onPlayPress = jest.fn();
+      const audioState = AUDIO_STATES.LOADING;
+
+      // Simulate the logic from ListenScreen - check if not playing
+      const isPlaying = audioState === AUDIO_STATES.PLAYING;
+      const shouldEnablePlayback = !isPlaying;
+
+      render(
+        <ArticleCard
+          {...defaultProps}
+          onPress={shouldEnablePlayback ? onPlayPress : undefined}
+          onPlayPress={shouldEnablePlayback ? onPlayPress : undefined}
+        />
+      );
+
+      expect(screen.getByTestId('play-button')).toBeTruthy();
+    });
   });
 });

@@ -11,11 +11,11 @@ import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsr
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { useOpacityAnimation } from '@/hooks/animations';
-import { useAudioPlayer } from '@/hooks/audio/useAudioPlayer';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useFSRS } from '@/hooks/vocabulary/useFSRS';
 import { useWordSizing } from '@/hooks/vocabulary/useWordSizing';
+import type { EnhancedAudioTrack } from '@/types/audio.types';
 import type { SessionMetrics } from '@/types/review.types';
 import { handleError } from '@/utils/errorHandling';
 
@@ -94,10 +94,10 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
   const queryClient = useQueryClient();
 
   // Use enhanced audio player instead of local expo-av implementation
-  const audioPlayer = useAudioPlayer();
+  const audioPlayer = useSimpleAudioPlayer();
 
   // Use simple audio player for English feedback to avoid conflicts
-  const simpleAudioPlayer = useSimpleAudioPlayer();
+  // const simpleAudioPlayer = useSimpleAudioPlayer(); // This line is removed
 
   // Create stable refs for audio player methods to avoid dependency issues
   const audioPlayerRef = useRef(audioPlayer);
@@ -159,7 +159,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     stateRefs.current.completionTriggered = true;
 
     // Stop any playing audio to free resources
-    audioPlayerRef.current.actions.stopPlayback().catch(() => {});
+    audioPlayerRef.current.stop().catch(() => {});
     setIsTransitioningToCompletion(true);
     fadeOut();
 
@@ -285,39 +285,42 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     [currentWord?.root_id, updateWord, fadeIn]
   );
 
-  // Enhanced audio playback function for single audio files
-  const playAudio = useCallback((url: string) => {
-    if (!url) return Promise.resolve();
+  // Handle audio playback for review words
+  const handleAudioPlayback = useCallback(
+    async (track: EnhancedAudioTrack) => {
+      try {
+        // Stop any existing audio first
+        await audioPlayer.stop();
 
-    const track = {
-      id: `review-${Date.now()}`,
-      audioUrl: url,
-      title: 'Review Audio', // Assuming a default title for now
-      duration: 0,
-    };
-
-    return audioPlayerRef.current.actions.startEnhancedPlayback([track], 0).catch(error => {
-      handleError(error instanceof Error ? error : new Error(String(error)));
-    });
-  }, []);
-
-  // Enhanced audio playback for English feedback (non-blocking)
-  const playEnglishFeedback = useCallback(
-    (url: string) => {
-      if (!url) return Promise.resolve();
-
-      const feedbackTrack = {
-        id: `feedback-${Date.now()}`,
-        audioUrl: url,
-        title: 'English Feedback', // Assuming a default title for now
-        duration: 0,
-      };
-
-      return simpleAudioPlayer.play(feedbackTrack).catch((error: Error) => {
-        handleError(error instanceof Error ? error : new Error(String(error)));
-      });
+        // Play the new track
+        const success = await audioPlayer.play(track);
+        if (!success) {
+          throw new Error('Failed to start audio playback');
+        }
+      } catch (error) {
+        handleError(error as Error);
+      }
     },
-    [simpleAudioPlayer]
+    [audioPlayer]
+  );
+
+  // Handle English audio feedback
+  const handleEnglishAudio = useCallback(
+    async (track: EnhancedAudioTrack) => {
+      try {
+        // Stop any existing audio first
+        await audioPlayer.stop();
+
+        // Play the English track
+        const success = await audioPlayer.play(track);
+        if (!success) {
+          throw new Error('Failed to start English audio');
+        }
+      } catch (error: unknown) {
+        handleError(error as Error);
+      }
+    },
+    [audioPlayer]
   );
 
   const handleKnowledgeResponse = useCallback(
@@ -385,7 +388,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
         if (controller.signal.aborted) return;
 
         // Clean up any playing audio before proceeding
-        audioPlayerRef.current.actions.stopPlayback().catch(() => {});
+        audioPlayerRef.current.stop().catch(() => {});
         fadeOut();
 
         setTimeout(() => {
@@ -402,7 +405,12 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
             (confidence === 'vague' || confidence === 'unknown') &&
             currentWord?.root?.audio_url_en
           ) {
-            playEnglishFeedback(currentWord.root.audio_url_en);
+            handleEnglishAudio({
+              id: `feedback-${Date.now()}`,
+              audioUrl: currentWord.root.audio_url_en,
+              title: 'English Feedback',
+              duration: 0,
+            });
           }
 
           // Track vague responses for future struggle detection
@@ -435,7 +443,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       checkIsStruggling,
       displayMeaning,
       processFeedback,
-      playEnglishFeedback,
+      handleEnglishAudio,
       currentWord?.root?.audio_url_en,
       currentWord?.fsrs_stability,
     ]
@@ -449,7 +457,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
 
     if (isComplete) {
       // Ensure any remaining audio is stopped
-      audioPlayerRef.current.actions.stopPlayback().catch(() => {});
+      audioPlayerRef.current.stop().catch(() => {});
     }
   }, [isComplete, isTransitioningToCompletion, triggerCompletionTransition]);
 
@@ -520,7 +528,12 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
 
     // ALWAYS play audio for Arabic words
     if (audioUrl) {
-      playAudio(audioUrl)
+      handleAudioPlayback({
+        id: `review-${Date.now()}`,
+        audioUrl: audioUrl,
+        title: 'Review Audio',
+        duration: 0,
+      })
         .catch(handleError)
         .finally(() => {
           // Only update if the effect is still valid (word hasn't changed)
@@ -537,7 +550,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     return () => {
       effectRef.current = false;
     };
-  }, [currentWord, isComplete, isTransitioningToCompletion, playAudio]);
+  }, [currentWord, isComplete, isTransitioningToCompletion, handleAudioPlayback]);
 
   const handleSwipeLeft = useCallback(() => {
     if (isComplete || stateRefs.current.isUpdatingWord || !currentWord) return;
@@ -557,7 +570,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     const mounted = { current: true };
 
     // Stop any playing audio when closing
-    audioPlayerRef.current.actions.stopPlayback().catch(() => {});
+    audioPlayerRef.current.stop().catch(() => {});
 
     if (!mounted.current) return;
 
@@ -610,7 +623,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       setShowMeaningOverlay(false);
       fadeIn();
 
-      audioPlayerRef.current.actions.stopPlayback().catch(() => {});
+      audioPlayerRef.current.stop().catch(() => {});
 
       // Clean up all timers
       if (stateRefs.current.meaningTimeout) {

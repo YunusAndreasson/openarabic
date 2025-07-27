@@ -20,7 +20,9 @@ export const useListenScreen = () => {
 
   const customOrder = useAppSelector(state => state.listen.customOrder);
 
+  // STABILIZATION: Add debouncing for playback mode changes
   const [playbackMode, setPlaybackMode] = useState<'all' | 'none'>('none');
+  const playbackModeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const audioPlayer = useSimpleAudioPlayer();
   const { duration, currentTime, currentTrack, isPlaying, isLoading } = audioPlayer;
@@ -35,15 +37,6 @@ export const useListenScreen = () => {
     : isLoading
     ? AUDIO_STATES.LOADING
     : AUDIO_STATES.IDLE;
-
-  const isStartingPlayback = isLoading;
-
-  const loadingTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-
-  const clearLoadingTimeouts = useCallback(() => {
-    loadingTimeoutsRef.current.forEach(timeout => clearTimeout(timeout));
-    loadingTimeoutsRef.current = [];
-  }, []);
 
   const sleepTimer = useSleepTimer(() => {
     audioPlayer.stop();
@@ -143,10 +136,12 @@ export const useListenScreen = () => {
 
   const isCurrentlyPlaying = audioState === AUDIO_STATES.PLAYING;
 
+  // STABILIZATION: Enhanced handlePlayAll with better state management
   const handlePlayAll = useCallback(async () => {
-    // Clear timeouts directly without relying on callback
-    loadingTimeoutsRef.current.forEach(timeout => clearTimeout(timeout));
-    loadingTimeoutsRef.current = [];
+    // Clear playback mode timeout
+    if (playbackModeTimeoutRef.current) {
+      clearTimeout(playbackModeTimeoutRef.current);
+    }
 
     // Get current values directly instead of relying on captured values
     const currentAudioState = audioState;
@@ -162,33 +157,45 @@ export const useListenScreen = () => {
       try {
         selectionFeedback();
         await audioPlayer.stop();
-        setPlaybackMode('none');
+        // STABILIZATION: Debounce playback mode change
+        playbackModeTimeoutRef.current = setTimeout(() => {
+          setPlaybackMode('none');
+        }, 100);
       } catch {
-        setPlaybackMode('none');
+        playbackModeTimeoutRef.current = setTimeout(() => {
+          setPlaybackMode('none');
+        }, 100);
       }
     } else if (currentTracks.length) {
       try {
         selectionFeedback();
+        // STABILIZATION: Set playback mode immediately for UI feedback
         setPlaybackMode('all');
 
         // SIMPLIFIED: Just play the first track (service handles one track at a time)
         const firstTrack = currentTracks[0];
         if (!firstTrack) {
-          setPlaybackMode('none');
+          playbackModeTimeoutRef.current = setTimeout(() => {
+            setPlaybackMode('none');
+          }, 100);
           return;
         }
 
         // Start playing immediately without loading states
         const success = await audioPlayer.play(firstTrack);
         if (!success) {
-          setPlaybackMode('none');
+          playbackModeTimeoutRef.current = setTimeout(() => {
+            setPlaybackMode('none');
+          }, 100);
         }
       } catch (error) {
-        setPlaybackMode('none');
+        playbackModeTimeoutRef.current = setTimeout(() => {
+          setPlaybackMode('none');
+        }, 100);
         handleError(error as Error);
       }
     }
-  }, [playbackMode, sortedEnhancedTracks, audioPlayer.play, audioPlayer.stop]);
+  }, [playbackMode, sortedEnhancedTracks, audioPlayer.play, audioPlayer.stop, audioState]);
 
   const handleSleepTimerSet = useCallback(
     (minutes: number) => {
@@ -228,14 +235,17 @@ export const useListenScreen = () => {
 
   const handleArticlePlay = useCallback(
     async (articleId: number) => {
-      if (isStartingPlayback) {
+      if (isLoading) {
         return;
       }
 
       if (isCurrentlyPlaying && parseInt(metadata.articleId ?? '', 10) === articleId) {
         selectionFeedback();
         await audioPlayer.stop();
-        setPlaybackMode('none');
+        // STABILIZATION: Debounce playback mode change
+        playbackModeTimeoutRef.current = setTimeout(() => {
+          setPlaybackMode('none');
+        }, 100);
         return;
       }
 
@@ -245,7 +255,9 @@ export const useListenScreen = () => {
         // Play the specific track from enhanced tracks
         const trackToPlay = sortedEnhancedTracks[articleIndex];
         if (!trackToPlay) {
-          setPlaybackMode('none');
+          playbackModeTimeoutRef.current = setTimeout(() => {
+            setPlaybackMode('none');
+          }, 100);
           return;
         }
 
@@ -254,10 +266,14 @@ export const useListenScreen = () => {
           setPlaybackMode('all');
           const success = await audioPlayer.play(trackToPlay);
           if (!success) {
-            setPlaybackMode('none');
+            playbackModeTimeoutRef.current = setTimeout(() => {
+              setPlaybackMode('none');
+            }, 100);
           }
         } catch (error) {
-          setPlaybackMode('none');
+          playbackModeTimeoutRef.current = setTimeout(() => {
+            setPlaybackMode('none');
+          }, 100);
           handleError(error as Error);
         }
       } else {
@@ -270,19 +286,25 @@ export const useListenScreen = () => {
           if (track) {
             const success = await audioPlayer.play(track);
             if (!success) {
-              setPlaybackMode('none');
+              playbackModeTimeoutRef.current = setTimeout(() => {
+                setPlaybackMode('none');
+              }, 100);
             }
           } else {
-            setPlaybackMode('none');
+            playbackModeTimeoutRef.current = setTimeout(() => {
+              setPlaybackMode('none');
+            }, 100);
           }
         } catch (error) {
-          setPlaybackMode('none');
+          playbackModeTimeoutRef.current = setTimeout(() => {
+            setPlaybackMode('none');
+          }, 100);
           handleError(error as Error);
         }
       }
     },
     [
-      isStartingPlayback,
+      isLoading,
       isCurrentlyPlaying,
       metadata.articleId,
       sortedEnhancedTracks,
@@ -291,16 +313,20 @@ export const useListenScreen = () => {
     ]
   );
 
+  // Cleanup timeouts on unmount
   useEffect(() => {
-    return clearLoadingTimeouts;
-  }, [clearLoadingTimeouts]);
+    return () => {
+      if (playbackModeTimeoutRef.current) {
+        clearTimeout(playbackModeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return {
     sortedReadingList,
     sortedEnhancedTracks,
     shouldShowInitialLoading,
     isReadingListLoading,
-    isStartingPlayback,
     playbackMode,
     duration,
     position,

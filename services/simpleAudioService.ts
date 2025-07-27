@@ -14,6 +14,10 @@ class SimpleAudioService {
   private loadingTimeout: ReturnType<typeof setTimeout> | null = null;
   private audioSessionConfigured = false;
 
+  // STABILIZATION: Add state transition smoothing
+  private lastStatusUpdate = 0;
+  private statusUpdateThrottle = 500; // Minimum 500ms between status updates
+
   // Current audio status
   private status: AudioStatus = {
     isPlaying: false,
@@ -68,7 +72,7 @@ class SimpleAudioService {
       // IMMEDIATE FEEDBACK: Update to playing state immediately after play() succeeds
       this.updateStatus({ isLoading: false, isPlaying: true });
 
-      // Start polling for status updates with faster interval
+      // Start polling for status updates with optimized interval
       this.startStatusPolling();
 
       // Set loading timeout as fallback
@@ -179,7 +183,8 @@ class SimpleAudioService {
       clearInterval(this.statusPollingInterval);
     }
 
-    // FASTER POLLING: Reduce interval from 1000ms to 250ms for more responsive UI
+    // STABILIZATION: Reduced polling frequency from 250ms to 1000ms for better performance
+    // This reduces rapid state changes that cause UI instability
     this.statusPollingInterval = setInterval(() => {
       if (this.currentPlayer) {
         try {
@@ -192,10 +197,11 @@ class SimpleAudioService {
             isNaN(currentTime) || !isFinite(currentTime) ? 0 : Math.max(0, currentTime);
           const safeDuration = isNaN(duration) || !isFinite(duration) ? 0 : Math.max(0, duration);
 
-          // Only update if values have changed significantly
+          // STABILIZATION: Only update if values have changed significantly
+          // Increased threshold from 0.5s to 1s to reduce rapid updates
           const hasChanged =
-            Math.abs(this.status.currentTime - safeCurrentTime) > 0.5 ||
-            Math.abs(this.status.duration - safeDuration) > 0.5 ||
+            Math.abs(this.status.currentTime - safeCurrentTime) > 1 ||
+            Math.abs(this.status.duration - safeDuration) > 1 ||
             this.status.isPlaying !== isPlaying;
 
           if (hasChanged) {
@@ -212,7 +218,7 @@ class SimpleAudioService {
           this.updateStatus({ isPlaying: false, isLoading: false });
         }
       }
-    }, 250); // Reduced from 1000ms to 250ms for faster response
+    }, 1000); // Increased from 250ms to 1000ms for stability
   }
 
   /**
@@ -252,9 +258,21 @@ class SimpleAudioService {
   }
 
   /**
-   * Update status and notify listeners
+   * STABILIZATION: Enhanced status update with throttling to prevent rapid changes
    */
   private updateStatus(updates: Partial<AudioStatus>): void {
+    const now = Date.now();
+
+    // Throttle status updates to prevent rapid UI changes
+    if (now - this.lastStatusUpdate < this.statusUpdateThrottle) {
+      // Only allow critical updates (like stopping) to bypass throttling
+      const isCriticalUpdate = updates.isPlaying === false || updates.isLoading === false;
+      if (!isCriticalUpdate) {
+        return;
+      }
+    }
+
+    this.lastStatusUpdate = now;
     this.status = { ...this.status, ...updates };
 
     // Create a copy of listeners to avoid modification during iteration

@@ -62,8 +62,10 @@ export function useGlobalAudioState(): GlobalAudioState {
   // Sleep timer modal state
   const [showSleepTimerModal, setShowSleepTimerModal] = useState(false);
 
-  // Track if we've navigated to modal during this audio session
+  // STABILIZATION: Enhanced navigation state tracking
   const hasNavigatedToModalRef = useRef(false);
+  const navigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastNavigationTimeRef = useRef(0);
 
   // Get reading list for queue tracking
   const { sortedEnhancedTracks } = useListenScreen();
@@ -137,6 +139,34 @@ export function useGlobalAudioState(): GlobalAudioState {
     audioPlayer.isLoading,
   ]);
 
+  // STABILIZATION: Debounced navigation function to prevent rapid modal open/close
+  const navigateToModal = useCallback(() => {
+    const now = Date.now();
+    const timeSinceLastNavigation = now - lastNavigationTimeRef.current;
+
+    // Prevent navigation if it's been less than 1 second since last navigation
+    if (timeSinceLastNavigation < 1000) {
+      return;
+    }
+
+    // Clear existing timeout
+    if (navigationTimeoutRef.current) {
+      clearTimeout(navigationTimeoutRef.current);
+    }
+
+    // Add small delay to prevent rapid navigation
+    navigationTimeoutRef.current = setTimeout(() => {
+      if (currentArticleId) {
+        // Mark that we've navigated to modal
+        hasNavigatedToModalRef.current = true;
+        lastNavigationTimeRef.current = Date.now();
+
+        // Navigate to modal
+        openNowPlayingModal({ articleId: currentArticleId.toString() });
+      }
+    }, 100);
+  }, [currentArticleId]);
+
   // Action handlers
   const handlePlayPause = useCallback(async () => {
     if (audioPlayer.isPlaying) {
@@ -152,19 +182,13 @@ export function useGlobalAudioState(): GlobalAudioState {
   }, []);
 
   const handleExpandPress = useCallback(() => {
-    if (currentArticleId) {
-      // Mark that we've navigated to modal to prevent mini-player flickering
-      hasNavigatedToModalRef.current = true;
-
-      // Navigate to modal
-      openNowPlayingModal({ articleId: currentArticleId.toString() });
-    }
-  }, [currentArticleId]);
+    navigateToModal();
+  }, [navigateToModal]);
 
   const handleMiniPlayerPress = useCallback(() => {
     // Tap entire mini-player to expand - same as expand button
-    handleExpandPress();
-  }, [handleExpandPress]);
+    navigateToModal();
+  }, [navigateToModal]);
 
   // Sleep timer handlers
   const handleSleepTimerSet = useCallback(
@@ -184,15 +208,27 @@ export function useGlobalAudioState(): GlobalAudioState {
     setShowSleepTimerModal(false);
   }, []);
 
-  // Cleanup navigation state when audio stops
+  // STABILIZATION: Enhanced cleanup logic for navigation state
   useEffect(() => {
-    if (!audioPlayer.currentTrack) {
+    // Reset navigation state when audio stops completely
+    if (!audioPlayer.currentTrack && !audioPlayer.isLoading) {
       hasNavigatedToModalRef.current = false;
+      lastNavigationTimeRef.current = 0;
     }
-  }, [audioPlayer.currentTrack]);
+  }, [audioPlayer.currentTrack, audioPlayer.isLoading]);
 
-  // Determine if mini-player should be hidden due to navigation
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (navigationTimeoutRef.current) {
+        clearTimeout(navigationTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // STABILIZATION: Simplified mini-player visibility logic
   const shouldHideMiniPlayer = useMemo(() => {
+    // Hide mini-player if we've navigated to modal and audio is still playing/loading
     return hasNavigatedToModalRef.current && (audioPlayer.isPlaying || audioPlayer.isLoading);
   }, [audioPlayer.isPlaying, audioPlayer.isLoading]);
 
