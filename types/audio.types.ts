@@ -7,8 +7,7 @@ export type EnhancedAudioTrack = {
   id: string;
   /** ID of the article this track belongs to */
   articleId?: number;
-  /** Root ID for vocabulary tracks (optional) */
-  rootId?: number;
+
   /** URL to the audio file */
   audioUrl: string;
   /** Title of the article (used for display) */
