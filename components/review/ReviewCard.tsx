@@ -198,16 +198,13 @@ const ReviewCardInternal = ({
   return (
     <View style={STATIC_STYLES.swipeContainer}>
       <GestureDetector gesture={panGesture}>
-        <Animated.View
-          style={[
-            STATIC_STYLES.wordContainer,
-            combinedAnimatedStyle,
-            swipeBackgroundStyle,
-            opacityStyle,
-          ]}
-          testID={testID}
-        >
-          <WordDisplayComponent {...wordDisplayProps} />
+        <Animated.View style={[STATIC_STYLES.swipeContainer, swipeBackgroundStyle]}>
+          <Animated.View
+            style={[STATIC_STYLES.wordContainer, combinedAnimatedStyle, opacityStyle]}
+            testID={testID}
+          >
+            <WordDisplayComponent {...wordDisplayProps} />
+          </Animated.View>
         </Animated.View>
       </GestureDetector>
     </View>
