@@ -108,9 +108,16 @@ export const calculateChartDateRange = (
   if (sortedPoints.length === 0) {
     return null;
   }
+  const firstPoint = sortedPoints[0];
+  const lastPoint = sortedPoints[sortedPoints.length - 1];
+
+  if (!firstPoint || !lastPoint) {
+    return null;
+  }
+
   return {
-    minDate: sortedPoints[0]!.date,
-    maxDate: sortedPoints[sortedPoints.length - 1]!.date,
+    minDate: firstPoint.date,
+    maxDate: lastPoint.date,
   };
 };
 

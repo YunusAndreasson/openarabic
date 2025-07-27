@@ -67,12 +67,11 @@ export const calculateTooltipDimensions = (
   const contentWidth = textWidth + bookmarkWidth + gapWidth;
 
   // Calculate tooltip width with padding
-  const tooltipWidth = Math.max(
-    contentWidth + MIN_PADDING * 2,
-    layout.width + MIN_PADDING * 2,
-    MIN_WIDTH,
-    SCREEN_WIDTH * MAX_WIDTH_RATIO
-  );
+  const tooltipWidth = Math.max(contentWidth + MIN_PADDING * 2, MIN_WIDTH);
+
+  // Apply maximum width constraint
+  const maxWidth = SCREEN_WIDTH * MAX_WIDTH_RATIO;
+  const finalTooltipWidth = Math.min(tooltipWidth, maxWidth);
 
   // Calculate tooltip height
   const tooltipHeight = HEIGHT;
@@ -82,25 +81,25 @@ export const calculateTooltipDimensions = (
   const tooltipTop = layout.y - tooltipHeight;
 
   // Calculate horizontal position
-  let tooltipLeft = wordCenterX - tooltipWidth / 2;
-  let arrowLeft = tooltipWidth / 2;
+  let tooltipLeft = wordCenterX - finalTooltipWidth / 2;
+  let arrowLeft = finalTooltipWidth / 2;
 
   // Handle screen boundaries
   if (tooltipLeft < SCREEN_MARGIN) {
     tooltipLeft = SCREEN_MARGIN;
     arrowLeft = wordCenterX - SCREEN_MARGIN;
-  } else if (tooltipLeft + tooltipWidth > SCREEN_WIDTH - SCREEN_MARGIN) {
-    tooltipLeft = SCREEN_WIDTH - SCREEN_MARGIN - tooltipWidth;
+  } else if (tooltipLeft + finalTooltipWidth > SCREEN_WIDTH - SCREEN_MARGIN) {
+    tooltipLeft = SCREEN_WIDTH - SCREEN_MARGIN - finalTooltipWidth;
     arrowLeft = wordCenterX - tooltipLeft;
   }
 
   // Clamp arrow position within tooltip bounds
-  arrowLeft = Math.max(ARROW_SIZE, Math.min(arrowLeft, tooltipWidth - ARROW_SIZE));
+  arrowLeft = Math.max(ARROW_SIZE, Math.min(arrowLeft, finalTooltipWidth - ARROW_SIZE));
 
   return {
     tooltipLeft,
     tooltipTop,
-    tooltipWidth,
+    tooltipWidth: finalTooltipWidth,
     tooltipHeight,
     arrowLeft,
   };

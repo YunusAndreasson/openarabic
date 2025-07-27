@@ -156,7 +156,7 @@ export default function ReadScreen(): JSX.Element {
   );
 
   // Static footer component - no props needed
-  const ListFooterComponent = () => <HijriDateFooter />;
+  const ListFooterComponent = useMemo(() => <HijriDateFooter />, []);
 
   const contentContainerStyle = useMemo(
     () => ({
