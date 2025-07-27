@@ -2,7 +2,7 @@
   "expo": {
     "name": "Open Arabic",
     "slug": "open-arabic",
-    "version": "1447.2.1",
+    "version": "1447.2.2",
     "description": "Learn Arabic through immersive reading, listening, and spaced repetition practice. Master vocabulary with authentic articles and audio content.",
     "orientation": "portrait",
     "icon": "./assets/images/oaLogo-square.png",
@@ -19,7 +19,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "openarabic",
-      "buildNumber": "40",
+      "buildNumber": "41",
       "infoPlist": {
         "UIBackgroundModes": [
           "audio",
@@ -42,7 +42,7 @@
         "foregroundImage": "./assets/images/oaLogo-square.png"
       },
       "package": "com.edenmind.OpenArabic",
-      "versionCode": 40,
+      "versionCode": 41,
       "permissions": [
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.WAKE_LOCK",
