@@ -149,6 +149,21 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
     [onArticleReorder]
   );
 
+  // Memoize delete handler creator to prevent inline function creation
+  const createDeleteHandler = useCallback(
+    (articleId: number) => () => onArticleDelete(articleId),
+    [onArticleDelete]
+  );
+
+  // Memoize drag handle props creator to prevent object recreation
+  const createDragHandleProps = useCallback(
+    (drag: () => void) => ({
+      onLongPress: drag,
+      delayLongPress: 100,
+    }),
+    []
+  );
+
   // Memoize list components
   const ListFooterComponent = useMemo(() => {
     return <View style={STATIC_STYLES.footerSpacer} />;
@@ -187,15 +202,8 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
             article={item}
             editMode={editMode}
             onPress={!editMode ? onArticlePress : undefined}
-            onDelete={() => onArticleDelete(item.id)}
-            dragHandleProps={
-              drag
-                ? {
-                    onLongPress: drag,
-                    delayLongPress: 100,
-                  }
-                : undefined
-            }
+            onDelete={createDeleteHandler(item.id)}
+            dragHandleProps={drag ? createDragHandleProps(drag) : undefined}
             isBeingDragged={isDragging}
             progressPercentage={progressPercentage}
             hasStartedReading={hasStartedReading}
@@ -208,14 +216,14 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
             article={item}
             editMode={editMode}
             onPress={!editMode ? onArticlePress : undefined}
-            onDelete={() => onArticleDelete(item.id)}
+            onDelete={createDeleteHandler(item.id)}
             progressPercentage={progressPercentage}
             hasStartedReading={hasStartedReading}
           />
         );
       }
     },
-    [editMode, onArticlePress, onArticleDelete, progressMap]
+    [editMode, onArticlePress, createDeleteHandler, createDragHandleProps, progressMap]
   );
 
   const renderSeparator = useCallback(() => SeparatorComponent(), []);

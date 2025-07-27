@@ -23,7 +23,7 @@
  */
 
 import { useRouter } from 'expo-router';
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
@@ -183,6 +183,17 @@ export const VocabularyStatCards = memo(
       return config.value.toString();
     };
 
+    // Memoize the category press handler to prevent inline function creation
+    const createCategoryPressHandler = useCallback(
+      (category: StatCategory) => {
+        return () => {
+          selectionFeedback();
+          onStartReview?.(category);
+        };
+      },
+      [onStartReview]
+    );
+
     return (
       <View style={styles.container}>
         {/* Memory Capacity Gauge - scientifically grounded with color coordination */}
@@ -192,14 +203,7 @@ export const VocabularyStatCards = memo(
           <TouchableOpacity
             key={config.category}
             activeOpacity={config.disabled ? 1 : 0.7}
-            onPress={
-              config.disabled
-                ? undefined
-                : () => {
-                    selectionFeedback();
-                    onStartReview?.(config.category);
-                  }
-            }
+            onPress={config.disabled ? undefined : createCategoryPressHandler(config.category)}
             onPressIn={config.disabled ? undefined : handlePressIn}
             onPressOut={config.disabled ? undefined : handlePressOut}
             testID={`start-review-${config.category}`}

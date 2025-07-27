@@ -423,13 +423,16 @@ export const ArticleContent = memo<ArticleContentProps>(
     // Static override layout callback
     const overrideItemLayout = useCallback(createOverrideItemLayout(SENTENCE_ITEM_HEIGHT), []);
 
+    // Memoize the key extractor to prevent inline function creation
+    const keyExtractor = useCallback((item: Tables<'article_sentences'>) => item.id.toString(), []);
+
     // Create FlashList configuration
     const flashListConfig = useMemo(
       () =>
         createFlashListConfig({
           data: sortedSentences,
           renderItem: renderSentenceItem,
-          keyExtractor: item => item.id.toString(),
+          keyExtractor,
           estimatedItemSize: SENTENCE_ITEM_HEIGHT,
           contentContainerStyle,
           ListHeaderComponent: headerComponent,
@@ -452,6 +455,7 @@ export const ArticleContent = memo<ArticleContentProps>(
       [
         sortedSentences,
         renderSentenceItem,
+        keyExtractor,
         contentContainerStyle,
         headerComponent,
         footerComponent,
