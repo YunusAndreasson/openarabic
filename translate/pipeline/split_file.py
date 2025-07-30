@@ -12,14 +12,14 @@ from data.models import SplitResult
 from data.schemas import (
     GENERAL_SYSTEM_PROMPT,
     SENTENCE_SPLITTING_USER_PROMPT,
-    SPLIT_TEXT_FUNCTION,
+    SPLIT_TEXT_TOOL,
 )
-from utils import call_openai_api
 from utils.file_utils import (
     generate_split_filename,
     read_text_file,
     write_json_file,
 )
+from utils.responses_api import call_response_api
 
 logger = logging.getLogger(__name__)
 
@@ -69,9 +69,9 @@ def split_text_into_sentences(text: str) -> SplitResult:
 
     messages = build_split_messages(text)
 
-    response = call_openai_api(
+    response = call_response_api(
         messages,
-        function_schema=SPLIT_TEXT_FUNCTION,
+        function_schema=SPLIT_TEXT_TOOL,
         function_name="split_text_into_sentences",
         model=MODEL_ANALYSIS,
     )

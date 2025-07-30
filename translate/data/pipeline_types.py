@@ -6,7 +6,7 @@ These match the existing schema structures exactly.
 from typing import Any, NotRequired, TypedDict
 
 
-# Translation result structure (matches TRANSLATE_SENTENCES_FUNCTION schema)
+# Translation result structure (matches TRANSLATE_SENTENCES_TOOL schema)
 class TranslationUncertainty(TypedDict):
     text: str
     reason: str
@@ -19,7 +19,7 @@ class TranslationResult(TypedDict):
     word_by_word: list[dict[str, Any]]
 
 
-# Tashkeel result structure (matches TASHKEEL_FUNCTION schema)
+# Tashkeel result structure (matches TASHKEEL_TOOL schema)
 class TashkeelUncertainty(TypedDict):
     word: str
     reason: str
@@ -31,7 +31,7 @@ class TashkeelResult(TypedDict):
     uncertainties: list[TashkeelUncertainty]
 
 
-# Word translation options structure (matches WORD_TRANSLATION_FUNCTION schema)
+# Word translation options structure (matches WORD_TRANSLATION_TOOL schema)
 class WordTranslationOption(TypedDict):
     arabic: str
     english_options: list[str]
@@ -48,7 +48,7 @@ class WordTranslationResult(TypedDict):
     word_translations: list[WordTranslationOption]
 
 
-# Refinement result structure (matches REFINEMENT_FUNCTION schema)
+# Refinement result structure (matches REFINEMENT_TOOL schema)
 class RefinedWordTranslation(TypedDict):
     arabic: str
     english: str

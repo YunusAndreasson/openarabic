@@ -1,6 +1,5 @@
 """Utility functions for the translation pipeline."""
 
-from .api_utils import call_openai_api, load_api_keys, token_tracker
 from .audio_common import (
     cleanup_temp_file,
     create_voice_settings,
@@ -54,6 +53,7 @@ from .file_utils import (
     read_text_file,
     write_json_file,
 )
+from .responses_api import call_response_api, load_api_keys, token_tracker
 from .storage_utils import (
     check_article_exists,
     check_file_exists,
@@ -67,7 +67,7 @@ from .storage_utils import (
 
 __all__ = [
     # API utilities
-    "call_openai_api",
+    "call_response_api",
     "load_api_keys",
     "token_tracker",
     # Audio common utilities

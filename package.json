@@ -96,7 +96,7 @@
     "@expo/metro-config": "^0.20.17",
     "@jest/globals": "^30.0.5",
     "@sentry/cli": "^2.50.2",
-    "@testing-library/react-native": "^13.2.1",
+    "@testing-library/react-native": "^13.2.2",
     "@types/jest": "^30.0.0",
     "@types/react": "~19.0.10",
     "@typescript-eslint/eslint-plugin": "^8.38.0",

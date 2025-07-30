@@ -3,12 +3,12 @@
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from data.enums import DifficultyLevel
 from pipeline.split_file import split_file
 from pipeline.translate import translate_file
-from utils.api_utils import call_openai_api
+from utils.responses_api import call_response_api
 
 
 class TestSplitFile:
@@ -24,17 +24,15 @@ class TestSplitFile:
 
         try:
             # Mock the API call to avoid actual API usage
-            with patch("translate.pipeline.split_file.call_openai_api") as mock_api:
-                mock_api.return_value = {
-                    "title": "Test Article",
-                    "summary": "A test article",
-                    "difficulty_level": DifficultyLevel.BASIC.value,
-                    "units": [
-                        "مرحبا بالعالم.",
-                        "هذا نص تجريبي.",
-                        "لاختبار الترجمة.",
-                    ],
-                }
+            with patch("utils.responses_api.client") as mock_client:
+                mock_client.responses.create.return_value = type(
+                    "Response",
+                    (),
+                    {
+                        "output": type("Output", (), {"tool_calls": None})(),
+                        "output_text": '```json\n{"title": "Test Article", "summary": "A test article", "difficulty_level": 1, "units": ["مرحبا بالعالم.", "هذا نص تجريبي.", "لاختبار الترجمة."], "unit_types": ["sentence", "sentence", "sentence"]}\n```',
+                    },
+                )()
 
                 split_file(input_file, output_file)
 
@@ -63,13 +61,15 @@ class TestSplitFile:
         output_file = input_file.replace(".txt", "_split.json")
 
         try:
-            with patch("translate.pipeline.split_file.call_openai_api") as mock_api:
-                mock_api.return_value = {
-                    "title": "Empty Article",
-                    "summary": "Empty content",
-                    "difficulty_level": DifficultyLevel.BASIC.value,
-                    "units": [],
-                }
+            with patch("utils.responses_api.client") as mock_client:
+                mock_client.responses.create.return_value = type(
+                    "Response",
+                    (),
+                    {
+                        "output": type("Output", (), {"tool_calls": None})(),
+                        "output_text": '```json\n{"title": "Empty Article", "summary": "Empty content", "difficulty_level": 1, "units": [], "unit_types": []}\n```',
+                    },
+                )()
 
                 split_file(input_file, output_file)
 
@@ -136,51 +136,47 @@ class TestTranslateFile:
             Path(output_file).unlink(missing_ok=True)
 
 
-class TestAPIUtils:
-    """Test API utility functions."""
+class TestResponseAPI:
+    """Test Response API utility functions."""
 
-    @patch("utils.api_utils._create_completion")
-    def test_call_openai_api_success(self, mock_create_completion):
-        """Test successful API call."""
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = '{"translation": "Hello"}'
-        mock_response.usage = MagicMock()
-        mock_response.usage.model_dump.return_value = {
-            "prompt_tokens": 10,
-            "completion_tokens": 5,
-            "total_tokens": 15,
-        }
-
-        mock_create_completion.return_value = mock_response
+    @patch("utils.responses_api.client")
+    def test_call_response_api_success(self, mock_client):
+        """Test successful Response API call."""
+        # Mock the responses.create method
+        mock_client.responses.create.return_value = type(
+            "Response",
+            (),
+            {
+                "output": type("Output", (), {"tool_calls": None})(),
+                "output_text": '```json\n{"translation": "Hello"}\n```',
+            },
+        )()
 
         messages = [{"role": "user", "content": "Translate: مرحبا and return as JSON"}]
-        result = call_openai_api(messages, temperature=0.3)
+        result = call_response_api(messages, temperature=0.3)
 
         assert "translation" in result
         assert result["translation"] == "Hello"
 
-    @patch("utils.api_utils._create_completion")
-    def test_call_openai_api_retry_on_failure(self, mock_create_completion):
-        """Test API call retries on failure."""
-        # Mock the successful response
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = '{"translation": "Hello"}'
-        mock_response.usage = MagicMock()
-        mock_response.usage.model_dump.return_value = {
-            "prompt_tokens": 10,
-            "completion_tokens": 5,
-            "total_tokens": 15,
-        }
-        mock_create_completion.side_effect = [
+    @patch("utils.responses_api.client")
+    def test_call_response_api_retry_on_failure(self, mock_client):
+        """Test Response API call retries on failure."""
+        # Mock the responses.create method
+        mock_client.responses.create.side_effect = [
             Exception("API Error"),
             Exception("API Error"),
-            mock_response,
+            type(
+                "Response",
+                (),
+                {
+                    "output": type("Output", (), {"tool_calls": None})(),
+                    "output_text": '```json\n{"translation": "Hello"}\n```',
+                },
+            )(),
         ]
 
         messages = [{"role": "user", "content": "Translate: مرحبا and return as JSON"}]
-        result = call_openai_api(messages, max_retries=3)
+        result = call_response_api(messages, max_retries=3)
 
         assert "translation" in result
-        assert mock_create_completion.call_count == 3
+        assert mock_client.responses.create.call_count == 3

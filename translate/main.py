@@ -20,7 +20,7 @@ from data.config import (
 )
 from pipeline.split_file import split_file as split_text
 from pipeline.translate import translate_file as translate_text
-from utils.api_utils import load_api_keys, token_tracker
+from utils.responses_api import load_api_keys, token_tracker
 
 logging.basicConfig(
     level=logging.INFO,
@@ -199,7 +199,7 @@ def run_insert_only() -> None:
     logger.info("Running database insertion step...")
 
     # Load API keys to ensure environment variables are set
-    from utils.api_utils import load_api_keys
+    from utils.responses_api import load_api_keys
 
     load_api_keys()
 

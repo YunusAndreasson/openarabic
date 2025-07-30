@@ -21,405 +21,428 @@ def format_difficulty_levels() -> str:
     return DifficultyLevel.format_for_prompt()
 
 
-# Define function schemas for API operations
-# Function for translating sentences
-TRANSLATE_SENTENCES_FUNCTION = {
+# Define tool schemas for Response API operations
+# Tool for translating sentences
+TRANSLATE_SENTENCES_TOOL = {
     "name": "translate_sentences",
-    "description": "Translate Classical Arabic sentences from Islamic texts to English, preserving word order where possible and noting uncertainties",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "translations": {
-                "type": "array",
-                "description": "Array of translation results",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "translation": {
-                            "type": "string",
-                            "description": "The English translation",
-                        },
-                        "notes": {
-                            "type": "string",
-                            "description": "Translation notes (always expected)",
-                        },
-                        "uncertainties": {
-                            "type": "array",
-                            "description": "List of uncertain parts",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "text": {
-                                        "type": "string",
-                                        "description": "Uncertain text",
+    "type": "function",
+    "function": {
+        "description": "Translate Classical Arabic sentences from Islamic texts to English, preserving word order where possible and noting uncertainties",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "translations": {
+                    "type": "array",
+                    "description": "Array of translation results",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "translation": {
+                                "type": "string",
+                                "description": "The English translation",
+                            },
+                            "notes": {
+                                "type": "string",
+                                "description": "Translation notes (always expected)",
+                            },
+                            "uncertainties": {
+                                "type": "array",
+                                "description": "List of uncertain parts",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "text": {
+                                            "type": "string",
+                                            "description": "Uncertain text",
+                                        },
+                                        "reason": {
+                                            "type": "string",
+                                            "description": "Reason for uncertainty",
+                                        },
                                     },
-                                    "reason": {
-                                        "type": "string",
-                                        "description": "Reason for uncertainty",
-                                    },
+                                    "required": ["text", "reason"],
                                 },
-                                "required": ["text", "reason"],
+                            },
+                            "word_by_word": {
+                                "type": "array",
+                                "description": "Word-by-word analysis (always expected)",
+                                "items": {"type": "object"},
                             },
                         },
-                        "word_by_word": {
-                            "type": "array",
-                            "description": "Word-by-word analysis (always expected)",
-                            "items": {"type": "object"},
-                        },
-                    },
-                    "required": [
-                        "translation",
-                        "word_by_word",
-                    ],
-                },
-            },
-        },
-        "required": ["translations"],
-        "examples": [
-            {
-                "translations": [
-                    {
-                        "translation": "And the Prophet [Muhammad], peace be upon him, said",
-                        "notes": "Grammatical structure: قَالَ (perfect tense verb) + النَّبِيُّ (subject in nominative case with definite article)",
-                        "uncertainties": [],
-                        "word_by_word": [],
-                    },
-                ],
-            },
-        ],
-    },
-}
-
-# Function for adding tashkeel (diacritical marks)
-TASHKEEL_FUNCTION = {
-    "name": "add_tashkeel",
-    "description": "Add proper diacritical marks (tashkeel/harakat) to Arabic texts",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "tashkeels": {
-                "type": "array",
-                "description": "Array of texts with diacritics added",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "tashkeel": {
-                            "type": "string",
-                            "description": "The text with diacritics",
-                        },
-                        "uncertainties": {
-                            "type": "array",
-                            "description": "List of uncertain diacritics",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "word": {
-                                        "type": "string",
-                                        "description": "Word with uncertain diacritic",
-                                    },
-                                    "reason": {
-                                        "type": "string",
-                                        "description": "Reason for uncertainty",
-                                    },
-                                    "related_translation_uncertainty": {
-                                        "type": "string",
-                                        "description": "Related uncertainty from translation step (always expected)",
-                                    },
-                                },
-                                "required": [
-                                    "word",
-                                    "reason",
-                                ],
-                            },
-                        },
-                    },
-                    "required": ["tashkeel", "uncertainties"],
-                },
-            },
-        },
-        "required": ["tashkeels"],
-        "examples": [{"tashkeels": [{"tashkeel": "قَالَ النَّبِيُّ", "uncertainties": []}]}],
-    },
-}
-
-# Function for word-by-word translation
-WORD_TRANSLATION_FUNCTION = {
-    "name": "translate_words",
-    "description": "Create word-by-word translations for Arabic sentences, providing top options",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "results": {
-                "type": "array",
-                "description": "Array of word translation results for each sentence",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "word_translations": {
-                            "type": "array",
-                            "description": "Word-by-word translations for the sentence",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "arabic": {
-                                        "type": "string",
-                                        "description": "The original Arabic word with original formatting",
-                                    },
-                                    "english_options": {
-                                        "type": "array",
-                                        "description": "Top 3 likely English translations in context (most likely first)",
-                                        "items": {"type": "string"},
-                                    },
-                                    "pos": {
-                                        "type": "string",
-                                        "enum": VALID_POS,
-                                        "description": "Part of speech (always expected)",
-                                    },
-                                    "essential": {
-                                        "type": "string",
-                                        "description": "Arabic word stripped of common affixes (و, ف, ب, ك, ل, س, etc.) and common suffixes (object pronouns و, ه, ك, ي, نا, etc.), excluding case/mood endings. Provide just the core letters, ideally with basic diacritics if standard (e.g., base verb form like فَعَلَ). Aim for the simplest recognizable form for flashcards.",
-                                    },
-                                    "essential_translation_options": {
-                                        "type": "array",
-                                        "description": "Top 3 likely one-word English lexical meanings (most likely first)",
-                                        "items": {"type": "string"},
-                                    },
-                                    "notes": {
-                                        "type": "string",
-                                        "description": "Grammar notes or context (always expected)",
-                                    },
-                                    "uncertainties": {
-                                        "type": "array",
-                                        "description": "List of uncertain parts for this word",
-                                        "items": {"type": "object"},
-                                    },
-                                },
-                                "required": [
-                                    "arabic",
-                                    "english_options",
-                                    "pos",
-                                    "essential",
-                                    "essential_translation_options",
-                                ],
-                            },
-                        },
-                    },
-                    "required": ["word_translations"],
-                },
-            },
-        },
-        "required": ["results"],
-        "examples": [
-            {
-                "results": [
-                    {
-                        "word_translations": [
-                            {
-                                "arabic": "قَالَ",
-                                "english_options": ["he said", "he spoke", "he stated"],
-                                "pos": PartOfSpeech.VERB.value,
-                                "essential": "قَالَ",
-                                "essential_translation_options": [
-                                    "say",
-                                    "speak",
-                                    "utter",
-                                ],
-                                "notes": "Verb, perfect tense, 3rd person masculine singular.",
-                                "uncertainties": [],
-                            },
-                            {
-                                "arabic": "النَّبِيُّ",
-                                "english_options": ["the prophet", "the messenger"],
-                                "pos": PartOfSpeech.NOUN.value,
-                                "essential": "نَبِيّ",
-                                "essential_translation_options": [
-                                    "prophet",
-                                    "messenger",
-                                ],
-                                "notes": "Noun, masculine singular, definite.",
-                                "uncertainties": [],
-                            },
+                        "required": [
+                            "translation",
+                            "word_by_word",
                         ],
                     },
-                ],
-            },
-        ],
-    },
-}
-
-# Function for refining translations
-REFINEMENT_FUNCTION = {
-    "name": "refine_translations",
-    "description": "Refine translations, selecting the best options based on full context",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "refinements": {
-                "type": "array",
-                "description": "Array of refined translation results",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "improved_tashkeel": {
-                            "type": "string",
-                            "description": "Corrected text with diacritics",
-                        },
-                        "improved_translation": {
-                            "type": "string",
-                            "description": "Refined full sentence translation",
-                        },
-                        "improved_word_translations": {
-                            "type": "array",
-                            "description": "Refined word-by-word translations with single best options chosen",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "arabic": {
-                                        "type": "string",
-                                        "description": "The original Arabic word",
-                                    },
-                                    "english": {
-                                        "type": "string",
-                                        "description": "The *single* best English translation in context",
-                                    },
-                                    "pos": {
-                                        "type": "string",
-                                        "description": "Refined Part of speech (always expected)",
-                                    },
-                                    "essential": {
-                                        "type": "string",
-                                        "description": "Refined essential letters",
-                                    },
-                                    "essential_translation": {
-                                        "type": "string",
-                                        "description": "The *single* best one-word English lexical meaning",
-                                    },
-                                    "notes": {
-                                        "type": "string",
-                                        "description": "Refined notes (always expected)",
-                                    },
-                                },
-                                "required": [
-                                    "arabic",
-                                    "english",
-                                    "pos",
-                                    "essential",
-                                    "essential_translation",
-                                ],
-                            },
-                        },
-                        "resolved_uncertainties": {
-                            "type": "array",
-                            "description": "How uncertainties were resolved",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "step": {
-                                        "type": "string",
-                                        "description": "Step where uncertainty occurred (e.g., 'tashkeel', 'translation')",
-                                    },
-                                    "original_uncertainty": {
-                                        "type": "object",
-                                        "description": "The original uncertainty object",
-                                    },
-                                    "resolution": {
-                                        "type": "string",
-                                        "description": "Description of the resolution",
-                                    },
-                                    "explanation": {
-                                        "type": "string",
-                                        "description": "Reasoning for the resolution",
-                                    },
-                                },
-                                "required": [
-                                    "step",
-                                    "original_uncertainty",
-                                    "resolution",
-                                    "explanation",
-                                ],
-                            },
-                        },
-                        "remaining_uncertainties": {
-                            "type": "array",
-                            "description": "Uncertainties that couldn't be fully resolved",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "type": {
-                                        "type": "string",
-                                        "description": "Type of uncertainty (e.g., 'diacritic', 'word meaning')",
-                                    },
-                                    "description": {
-                                        "type": "string",
-                                        "description": "Description of the uncertainty",
-                                    },
-                                    "reason_unresolved": {
-                                        "type": "string",
-                                        "description": "Why it remains unresolved",
-                                    },
-                                },
-                                "required": [
-                                    "type",
-                                    "description",
-                                    "reason_unresolved",
-                                ],
-                            },
-                        },
-                        "changes_made": {
-                            "type": "array",
-                            "description": "List of significant changes made during refinement",
-                            "items": {"type": "string"},
-                        },
-                    },
-                    "required": [
-                        "improved_tashkeel",
-                        "improved_translation",
-                        "improved_word_translations",
-                        "resolved_uncertainties",
-                        "remaining_uncertainties",
-                        "changes_made",
-                    ],
                 },
             },
+            "required": ["translations"],
+            "examples": [
+                {
+                    "translations": [
+                        {
+                            "translation": "And the Prophet [Muhammad], peace be upon him, said",
+                            "notes": "Grammatical structure: قَالَ (perfect tense verb) + النَّبِيُّ (subject in nominative case with definite article)",
+                            "uncertainties": [],
+                            "word_by_word": [],
+                        },
+                    ],
+                },
+            ],
         },
-        "required": ["refinements"],
     },
 }
 
-# Function for splitting text into sentences
-SPLIT_TEXT_FUNCTION = {
-    "name": "split_text_into_sentences",
-    "description": "Split Islamic Arabic text into meaningful units for learning and analyze content",
-    "parameters": {
-        "type": "object",
-        "properties": {
-            "title": {
-                "type": "string",
-                "description": "Concise English title (3-7 words)",
+# Tool for adding tashkeel (diacritical marks)
+TASHKEEL_TOOL = {
+    "name": "add_tashkeel",
+    "type": "function",
+    "function": {
+        "description": "Add proper diacritical marks (tashkeel/harakat) to Arabic texts",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "tashkeels": {
+                    "type": "array",
+                    "description": "Array of texts with diacritics added",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "tashkeel": {
+                                "type": "string",
+                                "description": "The text with diacritics",
+                            },
+                            "uncertainties": {
+                                "type": "array",
+                                "description": "List of uncertain diacritics",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "word": {
+                                            "type": "string",
+                                            "description": "Word with uncertain diacritic",
+                                        },
+                                        "reason": {
+                                            "type": "string",
+                                            "description": "Reason for uncertainty",
+                                        },
+                                        "related_translation_uncertainty": {
+                                            "type": "string",
+                                            "description": "Related uncertainty from translation step (always expected)",
+                                        },
+                                    },
+                                    "required": [
+                                        "word",
+                                        "reason",
+                                    ],
+                                },
+                            },
+                        },
+                        "required": ["tashkeel", "uncertainties"],
+                    },
+                },
             },
-            "summary": {
-                "type": "string",
-                "description": "One-sentence summary of main content",
-            },
-            "difficulty_level": {
-                "type": "integer",
-                "enum": list(DIFFICULTY_LEVELS.keys()),
-                "description": "Difficulty rating (1-5)",
-            },
-            "units": {
-                "type": "array",
-                "description": "Array of text units",
-                "items": {"type": "string"},
-            },
-            "unit_types": {
-                "type": "array",
-                "description": "Type of each unit",
-                "items": {"type": "string"},
-            },
+            "required": ["tashkeels"],
+            "examples": [
+                {"tashkeels": [{"tashkeel": "قَالَ النَّبِيُّ", "uncertainties": []}]}
+            ],
         },
-        "required": ["title", "summary", "difficulty_level", "units", "unit_types"],
     },
 }
+
+# Tool for word-by-word translation
+WORD_TRANSLATION_TOOL = {
+    "name": "translate_words",
+    "type": "function",
+    "function": {
+        "description": "Create word-by-word translations for Arabic sentences, providing top options",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "results": {
+                    "type": "array",
+                    "description": "Array of word translation results for each sentence",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "word_translations": {
+                                "type": "array",
+                                "description": "Word-by-word translations for the sentence",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "arabic": {
+                                            "type": "string",
+                                            "description": "The original Arabic word with original formatting",
+                                        },
+                                        "english_options": {
+                                            "type": "array",
+                                            "description": "Top 3 likely English translations in context (most likely first)",
+                                            "items": {"type": "string"},
+                                        },
+                                        "pos": {
+                                            "type": "string",
+                                            "enum": VALID_POS,
+                                            "description": "Part of speech (always expected)",
+                                        },
+                                        "essential": {
+                                            "type": "string",
+                                            "description": "Arabic word stripped of common affixes (و, ف, ب, ك, ل, س, etc.) and common suffixes (object pronouns و, ه, ك, ي, نا, etc.), excluding case/mood endings. Provide just the core letters, ideally with basic diacritics if standard (e.g., base verb form like فَعَلَ). Aim for the simplest recognizable form for flashcards.",
+                                        },
+                                        "essential_translation_options": {
+                                            "type": "array",
+                                            "description": "Top 3 likely one-word English lexical meanings (most likely first)",
+                                            "items": {"type": "string"},
+                                        },
+                                        "notes": {
+                                            "type": "string",
+                                            "description": "Grammar notes or context (always expected)",
+                                        },
+                                        "uncertainties": {
+                                            "type": "array",
+                                            "description": "List of uncertain parts for this word",
+                                            "items": {"type": "object"},
+                                        },
+                                    },
+                                    "required": [
+                                        "arabic",
+                                        "english_options",
+                                        "pos",
+                                        "essential",
+                                        "essential_translation_options",
+                                    ],
+                                },
+                            },
+                        },
+                        "required": ["word_translations"],
+                    },
+                },
+            },
+            "required": ["results"],
+            "examples": [
+                {
+                    "results": [
+                        {
+                            "word_translations": [
+                                {
+                                    "arabic": "قَالَ",
+                                    "english_options": [
+                                        "he said",
+                                        "he spoke",
+                                        "he stated",
+                                    ],
+                                    "pos": PartOfSpeech.VERB.value,
+                                    "essential": "قَالَ",
+                                    "essential_translation_options": [
+                                        "say",
+                                        "speak",
+                                        "utter",
+                                    ],
+                                    "notes": "Verb, perfect tense, 3rd person masculine singular.",
+                                    "uncertainties": [],
+                                },
+                                {
+                                    "arabic": "النَّبِيُّ",
+                                    "english_options": ["the prophet", "the messenger"],
+                                    "pos": PartOfSpeech.NOUN.value,
+                                    "essential": "نَبِيّ",
+                                    "essential_translation_options": [
+                                        "prophet",
+                                        "messenger",
+                                    ],
+                                    "notes": "Noun, masculine singular, definite.",
+                                    "uncertainties": [],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+    },
+}
+
+# Tool for refining translations
+REFINEMENT_TOOL = {
+    "name": "refine_translations",
+    "type": "function",
+    "function": {
+        "description": "Refine translations, selecting the best options based on full context",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "refinements": {
+                    "type": "array",
+                    "description": "Array of refined translation results",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "improved_tashkeel": {
+                                "type": "string",
+                                "description": "Corrected text with diacritics",
+                            },
+                            "improved_translation": {
+                                "type": "string",
+                                "description": "Refined full sentence translation",
+                            },
+                            "improved_word_translations": {
+                                "type": "array",
+                                "description": "Refined word-by-word translations with single best options chosen",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "arabic": {
+                                            "type": "string",
+                                            "description": "The original Arabic word",
+                                        },
+                                        "english": {
+                                            "type": "string",
+                                            "description": "The *single* best English translation in context",
+                                        },
+                                        "pos": {
+                                            "type": "string",
+                                            "description": "Refined Part of speech (always expected)",
+                                        },
+                                        "essential": {
+                                            "type": "string",
+                                            "description": "Refined essential letters",
+                                        },
+                                        "essential_translation": {
+                                            "type": "string",
+                                            "description": "The *single* best one-word English lexical meaning",
+                                        },
+                                        "notes": {
+                                            "type": "string",
+                                            "description": "Refined notes (always expected)",
+                                        },
+                                    },
+                                    "required": [
+                                        "arabic",
+                                        "english",
+                                        "pos",
+                                        "essential",
+                                        "essential_translation",
+                                    ],
+                                },
+                            },
+                            "resolved_uncertainties": {
+                                "type": "array",
+                                "description": "How uncertainties were resolved",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "step": {
+                                            "type": "string",
+                                            "description": "Step where uncertainty occurred (e.g., 'tashkeel', 'translation')",
+                                        },
+                                        "original_uncertainty": {
+                                            "type": "object",
+                                            "description": "The original uncertainty object",
+                                        },
+                                        "resolution": {
+                                            "type": "string",
+                                            "description": "Description of the resolution",
+                                        },
+                                        "explanation": {
+                                            "type": "string",
+                                            "description": "Reasoning for the resolution",
+                                        },
+                                    },
+                                    "required": [
+                                        "step",
+                                        "original_uncertainty",
+                                        "resolution",
+                                        "explanation",
+                                    ],
+                                },
+                            },
+                            "remaining_uncertainties": {
+                                "type": "array",
+                                "description": "Uncertainties that couldn't be fully resolved",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string",
+                                            "description": "Type of uncertainty (e.g., 'diacritic', 'word meaning')",
+                                        },
+                                        "description": {
+                                            "type": "string",
+                                            "description": "Description of the uncertainty",
+                                        },
+                                        "reason_unresolved": {
+                                            "type": "string",
+                                            "description": "Why it remains unresolved",
+                                        },
+                                    },
+                                    "required": [
+                                        "type",
+                                        "description",
+                                        "reason_unresolved",
+                                    ],
+                                },
+                            },
+                            "changes_made": {
+                                "type": "array",
+                                "description": "List of significant changes made during refinement",
+                                "items": {"type": "string"},
+                            },
+                        },
+                        "required": [
+                            "improved_tashkeel",
+                            "improved_translation",
+                            "improved_word_translations",
+                            "resolved_uncertainties",
+                            "remaining_uncertainties",
+                            "changes_made",
+                        ],
+                    },
+                },
+            },
+            "required": ["refinements"],
+        },
+    },
+}
+
+# Tool for splitting text into sentences
+SPLIT_TEXT_TOOL = {
+    "name": "split_text_into_sentences",
+    "type": "function",
+    "function": {
+        "description": "Split Islamic Arabic text into meaningful units for learning and analyze content",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "title": {
+                    "type": "string",
+                    "description": "Concise English title (3-7 words)",
+                },
+                "summary": {
+                    "type": "string",
+                    "description": "One-sentence summary of main content",
+                },
+                "difficulty_level": {
+                    "type": "integer",
+                    "enum": list(DIFFICULTY_LEVELS.keys()),
+                    "description": "Difficulty rating (1-5)",
+                },
+                "units": {
+                    "type": "array",
+                    "description": "Array of text units",
+                    "items": {"type": "string"},
+                },
+                "unit_types": {
+                    "type": "array",
+                    "description": "Type of each unit",
+                    "items": {"type": "string"},
+                },
+            },
+            "required": ["title", "summary", "difficulty_level", "units", "unit_types"],
+        },
+    },
+}
+
+# Legacy function schemas removed - use TOOL versions instead
 
 # Prompt instructions
 GENERAL_SYSTEM_PROMPT = """Expert translator specializing in Classical Arabic Islamic texts and teaching.
@@ -487,12 +510,12 @@ IMPORTANT:
 - AVOID units that are excessively short (e.g., 1-3 words) unless grammatically necessary (like single-word interjections).
 - Preserve ALL original text formatting, punctuation, and special characters in each unit
 
-Return results using the `SPLIT_TEXT_FUNCTION` schema as valid JSON.
+Return results using the `SPLIT_TEXT_TOOL` schema as valid JSON.
 Input text:
 """
 )
 
-SENTENCE_TRANSLATION_USER_PROMPT = """Translate Classical Arabic sentences from Islamic texts to English using the `TRANSLATE_SENTENCES_FUNCTION` schema. Return your response as valid JSON.
+SENTENCE_TRANSLATION_USER_PROMPT = """Translate Classical Arabic sentences from Islamic texts to English using the `TRANSLATE_SENTENCES_TOOL` schema. Return your response as valid JSON.
 
 CRITICAL: You MUST provide ALL required fields. The `uncertainties` array must be present for every translation, even if empty.
 
@@ -534,7 +557,7 @@ VALIDATION CHECKLIST:
 Input sentences:
 """
 
-TASHKEEL_USER_PROMPT = """Add complete diacritical marks (tashkīl) to EVERY word in the Islamic Arabic text using the `TASHKEEL_FUNCTION` schema. Return your response as valid JSON.
+TASHKEEL_USER_PROMPT = """Add complete diacritical marks (tashkīl) to EVERY word in the Islamic Arabic text using the `TASHKEEL_TOOL` schema. Return your response as valid JSON.
 
 CRITICAL: You MUST provide ALL required fields. The `uncertainties` array must be present for every tashkeel result, even if empty.
 
@@ -576,7 +599,7 @@ Input texts:
 """
 
 WORD_BY_WORD_USER_PROMPT = (
-    "IMPORTANT: Return only a JSON object matching the `WORD_TRANSLATION_FUNCTION` schema.\\n"
+    "IMPORTANT: Return only a JSON object matching the `WORD_TRANSLATION_TOOL` schema.\\n"
     "ENSURE: The `essential` field must be populated for every word; never return null for this.\\n"
     "ENSURE: Provide the top 1-3 most likely options for `english_options` and `essential_translation_options`, ordered from most to least likely.\\n"
     "ENSURE: The `essential` field should contain the core letters, stripped of affixes/suffixes and case/mood endings. Basic standard diacritics (like on فَعَلَ) are acceptable, but avoid complex or preserved original diacritics unless part of the base form.\\n"
@@ -601,7 +624,7 @@ Input sentences (with existing diacritics):
 """
 )
 
-FINAL_VERIFICATION_USER_PROMPT = """Review and refine the provided Islamic Arabic translation components using the `REFINEMENT_FUNCTION` schema. Resolve ambiguities and select the single best option for word translation. Return your response as valid JSON.
+FINAL_VERIFICATION_USER_PROMPT = """Review and refine the provided Islamic Arabic translation components using the `REFINEMENT_TOOL` schema. Resolve ambiguities and select the single best option for word translation. Return your response as valid JSON.
 
 For each word, carefully consider:
 1. The provided grammatical notes and context from previous steps

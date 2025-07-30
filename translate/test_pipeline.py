@@ -8,8 +8,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from data.config import DEFAULT_INPUT_FILE
-from data.schemas import SENTENCE_SPLITTING_USER_PROMPT, SPLIT_TEXT_FUNCTION
-from utils.api_utils import call_openai_api, load_api_keys
+from data.schemas import SENTENCE_SPLITTING_USER_PROMPT, SPLIT_TEXT_TOOL
+from utils.responses_api import call_response_api, load_api_keys
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -45,9 +45,9 @@ def test_split_phase():
     ]
 
     try:
-        response = call_openai_api(
+        response = call_response_api(
             messages,
-            function_schema=SPLIT_TEXT_FUNCTION,
+            function_schema=SPLIT_TEXT_TOOL,
             function_name="split_text_into_sentences",
             model="gpt-4o-mini",
         )

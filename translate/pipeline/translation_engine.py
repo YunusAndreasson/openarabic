@@ -23,18 +23,18 @@ from data.pipeline_types import (
 from data.schemas import (
     FINAL_VERIFICATION_USER_PROMPT,
     GENERAL_SYSTEM_PROMPT,
-    REFINEMENT_FUNCTION,
+    REFINEMENT_TOOL,
     SENTENCE_TRANSLATION_USER_PROMPT,
-    TASHKEEL_FUNCTION,
+    TASHKEEL_TOOL,
     TASHKEEL_USER_PROMPT,
-    TRANSLATE_SENTENCES_FUNCTION,
+    TRANSLATE_SENTENCES_TOOL,
     WORD_BY_WORD_USER_PROMPT,
-    WORD_TRANSLATION_FUNCTION,
+    WORD_TRANSLATION_TOOL,
 )
-from utils.api_utils import call_openai_api
 from utils.context_cache import ContextCache
 from utils.exceptions import TranslationError
 from utils.google_translate_service import GoogleTranslateService
+from utils.responses_api import call_response_api
 from utils.text_utils import filter_arabic_words, get_optimized_context
 
 
@@ -88,9 +88,9 @@ def batch_translate_full_sentences(
                 + "\n\n".join(formatted_inputs),
             },
         ]
-        return call_openai_api(
+        return call_response_api(
             messages,
-            function_schema=TRANSLATE_SENTENCES_FUNCTION,
+            function_schema=TRANSLATE_SENTENCES_TOOL,
             function_name="translate_sentences",
             model=MODEL_TRANSLATION,
         )
@@ -230,9 +230,9 @@ def batch_add_tashkeel(
         },
     ]
 
-    response = call_openai_api(
+    response = call_response_api(
         messages,
-        function_schema=TASHKEEL_FUNCTION,
+        function_schema=TASHKEEL_TOOL,
         function_name="add_tashkeel",
         model=MODEL_OTHER,
     )
@@ -352,9 +352,9 @@ def batch_translate_words(
                         "content": WORD_BY_WORD_USER_PROMPT + "\n\n" + formatted_input,
                     },
                 ]
-                response = call_openai_api(
+                response = call_response_api(
                     messages,
-                    function_schema=WORD_TRANSLATION_FUNCTION,
+                    function_schema=WORD_TRANSLATION_TOOL,
                     function_name="translate_words",
                     model=MODEL_TRANSLATION,
                 )
@@ -489,12 +489,12 @@ def batch_refine_translations(
         temp_to_use = 1.0 if MODEL_VERIFICATION == "gpt-4o-mini" else 0.3
         api_kwargs = {
             "messages": messages,
-            "function_schema": REFINEMENT_FUNCTION,
+            "function_schema": REFINEMENT_TOOL,
             "function_name": "refine_translations",
             "model": MODEL_VERIFICATION,
             "temperature": temp_to_use,
         }
-        response = call_openai_api(**api_kwargs)
+        response = call_response_api(**api_kwargs)
         if "refinements" in response and isinstance(response["refinements"], list):
             results: RefinementResults = []
             for item in response["refinements"]:
@@ -565,7 +565,7 @@ def batch_translate_root_words_with_google_cloud(
             root_word_translation = service.translate_single_root_word(root_word)
             # Convert to WordTranslationOptions format
             word_option = cast(
-                WordTranslationOption,
+                "WordTranslationOption",
                 {
                     "arabic": root_word,
                     "english_options": [root_word_translation["translated_text"]],
@@ -582,7 +582,7 @@ def batch_translate_root_words_with_google_cloud(
         except Exception as e:
             # Add fallback result
             word_option = cast(
-                WordTranslationOption,
+                "WordTranslationOption",
                 {
                     "arabic": root_word,
                     "english_options": ["[Translation Error]"],

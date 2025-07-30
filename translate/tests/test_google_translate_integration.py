@@ -2,8 +2,6 @@
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from data.pipeline_types import TashkeelResult, TranslationResult
 from pipeline.translation_engine import batch_translate_root_words_with_google_cloud
 from utils.exceptions import TranslationError
