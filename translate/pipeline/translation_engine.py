@@ -91,7 +91,7 @@ def batch_translate_full_sentences(
         return call_response_api(
             messages,
             function_schema=TRANSLATE_SENTENCES_TOOL,
-            function_name="translate_sentences",
+            _function_name="translate_sentences",
             model=MODEL_TRANSLATION,
         )
 
@@ -233,7 +233,7 @@ def batch_add_tashkeel(
     response = call_response_api(
         messages,
         function_schema=TASHKEEL_TOOL,
-        function_name="add_tashkeel",
+        _function_name="add_tashkeel",
         model=MODEL_OTHER,
     )
 
@@ -355,7 +355,7 @@ def batch_translate_words(
                 response = call_response_api(
                     messages,
                     function_schema=WORD_TRANSLATION_TOOL,
-                    function_name="translate_words",
+                    _function_name="translate_words",
                     model=MODEL_TRANSLATION,
                 )
                 if "results" in response and isinstance(response["results"], list):

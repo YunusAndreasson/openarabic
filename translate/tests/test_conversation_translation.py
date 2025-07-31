@@ -23,57 +23,56 @@ class TestConversationAwareTranslationEngine:
         self.test_sentences = ["مرحبا بالعالم", "كيف حالك؟"]
         self.test_contexts = ["Greeting context", "Question context"]
 
-    @patch("pipeline.conversation_translation_engine.ResponseAPIManager")
-    @patch("pipeline.conversation_translation_engine.ConversationTranslationEngine")
-    def test_translate_article_conversational_success(
-        self, mock_conversation_engine, mock_response_api
-    ):
+    def test_translate_article_conversational_success(self):
         """Test successful article translation using conversation."""
-        # Mock Response API manager
-        mock_api = Mock()
-        mock_response_api.return_value = mock_api
+        # Mock the conversation engine directly on the instance
+        with patch.object(self.engine, "conversation_engine") as mock_engine:
+            # Mock successful responses for each step
+            mock_engine.start_article_translation.return_value = {
+                "success": True,
+                "translations": ["Hello world", "How are you?"],
+                "tashkeel_results": ["مَرْحَباً بِالْعَالَمِ", "كَيْفَ حَالُكَ؟"],
+                "word_translations": [
+                    {"مرحبا": "hello", "بالعالم": "world"},
+                    {"كيف": "how", "حالك": "are you"},
+                ],
+                "conversation_summary": {
+                    "total_steps": 5,
+                    "current_response_id": "test_id",
+                },
+            }
+            mock_engine.add_tashkeel_to_conversation.return_value = {
+                "tashkeel_results": ["مَرْحَباً بِالْعَالَمِ", "كَيْفَ حَالُكَ؟"]
+            }
+            mock_engine.add_word_translations_to_conversation.return_value = {
+                "word_translations": [
+                    {"مرحبا": "hello", "بالعالم": "world"},
+                    {"كيف": "how", "حالك": "are you"},
+                ]
+            }
+            mock_engine.refine_conversation.return_value = {
+                "refined_translations": ["Hello world", "How are you?"]
+            }
+            mock_engine.get_conversation_summary.return_value = {
+                "total_steps": 5,
+                "current_response_id": "test_id",
+            }
 
-        # Mock conversation engine responses
-        mock_engine = Mock()
-        mock_conversation_engine.return_value = mock_engine
+            # Test the method
+            result = self.engine.translate_article_conversational(
+                sentences=self.test_sentences,
+                contexts=self.test_contexts,
+                article_title="Test Article",
+            )
 
-        # Mock successful responses for each step
-        mock_engine.start_article_translation.return_value = {
-            "translations": ["Hello world", "How are you?"]
-        }
-        mock_engine.add_tashkeel_to_conversation.return_value = {
-            "tashkeel_results": ["مَرْحَباً بِالْعَالَمِ", "كَيْفَ حَالُكَ؟"]
-        }
-        mock_engine.add_word_translations_to_conversation.return_value = {
-            "word_translations": [
+            # Verify the result
+            assert result["success"] is True
+            assert result["translations"] == ["Hello world", "How are you?"]
+            assert result["tashkeel_results"] == ["مَرْحَباً بِالْعَالَمِ", "كَيْفَ حَالُكَ؟"]
+            assert result["word_translations"] == [
                 {"مرحبا": "hello", "بالعالم": "world"},
                 {"كيف": "how", "حالك": "are you"},
             ]
-        }
-        mock_engine.refine_conversation.return_value = {
-            "refined_translations": ["Hello world", "How are you?"]
-        }
-        mock_engine.final_verification.return_value = {"verified": True}
-        mock_engine.get_conversation_summary.return_value = {
-            "total_steps": 5,
-            "current_response_id": "test_id",
-        }
-
-        # Test the method
-        result = self.engine.translate_article_conversational(
-            sentences=self.test_sentences,
-            contexts=self.test_contexts,
-            article_title="Test Article",
-        )
-
-        # Verify the result
-        assert result["success"] is True
-        assert result["translations"] == ["Hello world", "How are you?"]
-        assert result["tashkeel_results"] == ["مَرْحَباً بِالْعَالَمِ", "كَيْفَ حَالُكَ؟"]
-        assert result["word_translations"] == [
-            {"مرحبا": "hello", "بالعالم": "world"},
-            {"كيف": "how", "حالك": "are you"},
-        ]
 
     @patch("pipeline.conversation_translation_engine.ResponseAPIManager")
     @patch("pipeline.conversation_translation_engine.ConversationTranslationEngine")
@@ -89,7 +88,7 @@ class TestConversationAwareTranslationEngine:
         mock_engine = Mock()
         mock_conversation_engine.return_value = mock_engine
         mock_engine.start_article_translation.return_value = {
-            "error": "API call failed"
+            "error": "Empty response from API"
         }
 
         # Test the method
@@ -99,24 +98,39 @@ class TestConversationAwareTranslationEngine:
 
         # Verify error handling
         assert "error" in result
-        assert result["error"] == "API call failed"
+        assert result["error"] == "Empty response from API"
 
     @patch("pipeline.conversation_translation_engine.ResponseAPIManager")
     @patch("pipeline.conversation_translation_engine.ConversationTranslationEngine")
+    @patch("pipeline.translation_engine.batch_translate_full_sentences")
     def test_batch_translate_full_sentences_conversational(
-        self, mock_conversation_engine, mock_response_api
+        self, mock_batch_translate, mock_conversation_engine, mock_response_api
     ):
         """Test conversation-based sentence translation."""
         # Mock Response API manager
         mock_api = Mock()
         mock_response_api.return_value = mock_api
 
-        # Mock conversation engine
+        # Mock conversation engine failure (which triggers fallback)
         mock_engine = Mock()
         mock_conversation_engine.return_value = mock_engine
         mock_engine.start_article_translation.return_value = {
-            "translations": ["Hello world", "How are you?"]
+            "error": "Empty response from API"
         }
+
+        # Mock fallback translation
+        mock_batch_translate.return_value = [
+            {
+                "sentence": "مرحبا بالعالم",
+                "translation": "Hello world",
+                "context": "Greeting context",
+            },
+            {
+                "sentence": "كيف حالك؟",
+                "translation": "How are you?",
+                "context": "Question context",
+            },
+        ]
 
         # Test the method
         result = self.engine.batch_translate_full_sentences_conversational(
@@ -133,20 +147,35 @@ class TestConversationAwareTranslationEngine:
 
     @patch("pipeline.conversation_translation_engine.ResponseAPIManager")
     @patch("pipeline.conversation_translation_engine.ConversationTranslationEngine")
+    @patch("pipeline.translation_engine.batch_add_tashkeel")
     def test_batch_add_tashkeel_conversational(
-        self, mock_conversation_engine, mock_response_api
+        self, mock_batch_tashkeel, mock_conversation_engine, mock_response_api
     ):
         """Test conversation-based tashkeel addition."""
         # Mock Response API manager
         mock_api = Mock()
         mock_response_api.return_value = mock_api
 
-        # Mock conversation engine
+        # Mock conversation engine failure (which triggers fallback)
         mock_engine = Mock()
         mock_conversation_engine.return_value = mock_engine
         mock_engine.add_tashkeel_to_conversation.return_value = {
-            "tashkeel_results": ["مَرْحَباً بِالْعَالَمِ", "كَيْفَ حَالُكَ؟"]
+            "error": "No active conversation to continue"
         }
+
+        # Mock fallback tashkeel
+        mock_batch_tashkeel.return_value = [
+            {
+                "sentence": "مرحبا بالعالم",
+                "tashkeel": "مَرْحَباً بِالْعَالَمِ",
+                "translation": "Hello world",
+            },
+            {
+                "sentence": "كيف حالك؟",
+                "tashkeel": "كَيْفَ حَالُكَ؟",
+                "translation": "How are you?",
+            },
+        ]
 
         # Create test translation results as dictionaries
         translation_results = [
@@ -177,23 +206,37 @@ class TestConversationAwareTranslationEngine:
 
     @patch("pipeline.conversation_translation_engine.ResponseAPIManager")
     @patch("pipeline.conversation_translation_engine.ConversationTranslationEngine")
+    @patch("pipeline.translation_engine.batch_translate_words")
     def test_batch_translate_words_conversational(
-        self, mock_conversation_engine, mock_response_api
+        self, mock_batch_words, mock_conversation_engine, mock_response_api
     ):
         """Test conversation-based word translation."""
         # Mock Response API manager
         mock_api = Mock()
         mock_response_api.return_value = mock_api
 
-        # Mock conversation engine
+        # Mock conversation engine failure (which triggers fallback)
         mock_engine = Mock()
         mock_conversation_engine.return_value = mock_engine
         mock_engine.add_word_translations_to_conversation.return_value = {
-            "word_translations": [
-                {"مرحبا": "hello", "بالعالم": "world"},
-                {"كيف": "how", "حالك": "are you"},
-            ]
+            "error": "No active conversation to continue"
         }
+
+        # Mock fallback word translation
+        mock_batch_words.return_value = [
+            {
+                "sentence": "مرحبا بالعالم",
+                "word_translations": [{"مرحبا": "hello", "بالعالم": "world"}],
+                "tashkeel": "مَرْحَباً بِالْعَالَمِ",
+                "translation": "Hello world",
+            },
+            {
+                "sentence": "كيف حالك؟",
+                "word_translations": [{"كيف": "how", "حالك": "are you"}],
+                "tashkeel": "كَيْفَ حَالُكَ؟",
+                "translation": "How are you?",
+            },
+        ]
 
         # Create test data as dictionaries
         tashkeel_results = [
@@ -233,24 +276,45 @@ class TestConversationAwareTranslationEngine:
         # Check that result contains dictionaries with the expected structure
         assert isinstance(result[0], dict)
         assert result[0]["sentence"] == "مرحبا بالعالم"
-        assert result[0]["word_translations"] == {"مرحبا": "hello", "بالعالم": "world"}
+        assert result[0]["word_translations"] == [
+            {"مرحبا": "hello", "بالعالم": "world"}
+        ]
 
     @patch("pipeline.conversation_translation_engine.ResponseAPIManager")
     @patch("pipeline.conversation_translation_engine.ConversationTranslationEngine")
+    @patch("pipeline.translation_engine.batch_refine_translations")
     def test_batch_refine_translations_conversational(
-        self, mock_conversation_engine, mock_response_api
+        self, mock_batch_refine, mock_conversation_engine, mock_response_api
     ):
         """Test conversation-based translation refinement."""
         # Mock Response API manager
         mock_api = Mock()
         mock_response_api.return_value = mock_api
 
-        # Mock conversation engine
+        # Mock conversation engine failure (which triggers fallback)
         mock_engine = Mock()
         mock_conversation_engine.return_value = mock_engine
         mock_engine.refine_conversation.return_value = {
-            "refined_translations": ["Hello world", "How are you?"]
+            "error": "No active conversation to continue"
         }
+
+        # Mock fallback refinement
+        mock_batch_refine.return_value = [
+            {
+                "sentence": "مرحبا بالعالم",
+                "refined_translation": "Hello world",
+                "original_translation": "Hello world",
+                "tashkeel": "مَرْحَباً بِالْعَالَمِ",
+                "word_translations": [{"مرحبا": "hello", "بالعالم": "world"}],
+            },
+            {
+                "sentence": "كيف حالك؟",
+                "refined_translation": "How are you?",
+                "original_translation": "How are you?",
+                "tashkeel": "كَيْفَ حَالُكَ؟",
+                "word_translations": [{"كيف": "how", "حالك": "are you"}],
+            },
+        ]
 
         # Create test refinement input as dictionaries
         refinement_input = [

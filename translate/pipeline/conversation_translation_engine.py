@@ -96,11 +96,9 @@ class ConversationAwareTranslationEngine:
                         refined_translations = refinement_result["refined_translations"]
 
                         # Final verification
-                        verification_result = (
-                            self.conversation_engine.final_verification(
-                                final_translations=refined_translations,
-                                original_sentences=sentences,
-                            )
+                        self.conversation_engine.final_verification(
+                            final_translations=refined_translations,
+                            original_sentences=sentences,
                         )
 
                         return {
@@ -117,7 +115,7 @@ class ConversationAwareTranslationEngine:
         self,
         sentences: list[str],
         contexts: list[str | None],
-    ) -> TranslationResults:
+    ) -> list[dict[str, Any]]:
         """Translate sentences using conversation-based approach"""
         if not sentences:
             return []
@@ -156,39 +154,46 @@ class ConversationAwareTranslationEngine:
         all_sentences: list[str] | None = None,
         indices: list[int] | None = None,
         context_cache: ContextCache | None = None,
-    ) -> TashkeelResults:
+    ) -> list[dict[str, Any]]:
         """Add tashkeel using conversation-based approach"""
         if not sentences or not translation_results:
             return []
 
         # Extract translations (handle both TypedDict and dict)
         translations = []
-        for result in translation_results:
-            if hasattr(result, "translation"):
-                translations.append(result.translation)
-            elif isinstance(result, dict) and "translation" in result:
-                translations.append(result["translation"])
+        for translation_result in translation_results:
+            if hasattr(translation_result, "translation"):
+                translations.append(translation_result.translation)
+            elif (
+                isinstance(translation_result, dict)
+                and "translation" in translation_result
+            ):
+                translations.append(translation_result["translation"])
             else:
                 translations.append("")
 
         # Use conversation engine for tashkeel
-        result = self.conversation_engine.add_tashkeel_to_conversation(
-            sentences=sentences,
-            translations=translations,
-            all_sentences=all_sentences,
-            indices=indices,
+        conversation_result: dict[str, Any] = (
+            self.conversation_engine.add_tashkeel_to_conversation(
+                sentences=sentences,
+                translations=translations,
+                all_sentences=all_sentences,
+                indices=indices,
+            )
         )
 
-        if "error" in result:
-            logger.error(f"Conversation tashkeel failed: {result['error']}")
+        if "error" in conversation_result:
+            logger.error(
+                f"Conversation tashkeel failed: {conversation_result['error']}"
+            )
             # Fallback to regular tashkeel
             return self._fallback_tashkeel(
                 sentences, translation_results, all_sentences, indices, context_cache
             )
 
         # Extract tashkeel results from conversation result
-        if "tashkeel_results" in result:
-            tashkeel_results = result["tashkeel_results"]
+        if "tashkeel_results" in conversation_result:
+            tashkeel_results = conversation_result["tashkeel_results"]
             return [
                 {
                     "sentence": sentence,
@@ -212,41 +217,48 @@ class ConversationAwareTranslationEngine:
         all_sentences: list[str] | None = None,
         indices: list[int] | None = None,
         context_cache: ContextCache | None = None,
-    ) -> WordTranslationResults:
+    ) -> list[dict[str, Any]]:
         """Translate words using conversation-based approach"""
         if not sentences or not tashkeel_results or not translations:
             return []
 
         # Extract data (handle both TypedDict and dict)
         tashkeel_texts = []
-        for result in tashkeel_results:
-            if hasattr(result, "tashkeel"):
-                tashkeel_texts.append(result.tashkeel)
-            elif isinstance(result, dict) and "tashkeel" in result:
-                tashkeel_texts.append(result["tashkeel"])
+        for tashkeel_result in tashkeel_results:
+            if hasattr(tashkeel_result, "tashkeel"):
+                tashkeel_texts.append(tashkeel_result.tashkeel)
+            elif isinstance(tashkeel_result, dict) and "tashkeel" in tashkeel_result:
+                tashkeel_texts.append(tashkeel_result["tashkeel"])
             else:
                 tashkeel_texts.append("")
 
         translation_texts = []
-        for result in translations:
-            if hasattr(result, "translation"):
-                translation_texts.append(result.translation)
-            elif isinstance(result, dict) and "translation" in result:
-                translation_texts.append(result["translation"])
+        for translation_result in translations:
+            if hasattr(translation_result, "translation"):
+                translation_texts.append(translation_result.translation)
+            elif (
+                isinstance(translation_result, dict)
+                and "translation" in translation_result
+            ):
+                translation_texts.append(translation_result["translation"])
             else:
                 translation_texts.append("")
 
         # Use conversation engine for word translations
-        result = self.conversation_engine.add_word_translations_to_conversation(
-            sentences=sentences,
-            tashkeel_results=tashkeel_texts,
-            translations=translation_texts,
-            all_sentences=all_sentences,
-            indices=indices,
+        conversation_result: dict[str, Any] = (
+            self.conversation_engine.add_word_translations_to_conversation(
+                sentences=sentences,
+                tashkeel_results=tashkeel_texts,
+                translations=translation_texts,
+                all_sentences=all_sentences,
+                indices=indices,
+            )
         )
 
-        if "error" in result:
-            logger.error(f"Conversation word translation failed: {result['error']}")
+        if "error" in conversation_result:
+            logger.error(
+                f"Conversation word translation failed: {conversation_result['error']}"
+            )
             # Fallback to regular word translation
             return self._fallback_word_translation(
                 sentences,
@@ -258,8 +270,8 @@ class ConversationAwareTranslationEngine:
             )
 
         # Extract word translation results from conversation result
-        if "word_translations" in result:
-            word_translations = result["word_translations"]
+        if "word_translations" in conversation_result:
+            word_translations = conversation_result["word_translations"]
             return [
                 {
                     "sentence": sentence,
@@ -288,37 +300,41 @@ class ConversationAwareTranslationEngine:
     def batch_refine_translations_conversational(
         self,
         refinement_input: RefinementInputs,
-    ) -> RefinementResults:
+    ) -> list[dict[str, Any]]:
         """Refine translations using conversation-based approach"""
         if not refinement_input:
             return []
 
         # Use conversation engine for refinement
-        result = self.conversation_engine.refine_conversation(refinement_input)
+        conversation_result: dict[str, Any] = (
+            self.conversation_engine.refine_conversation(refinement_input)
+        )
 
-        if "error" in result:
-            logger.error(f"Conversation refinement failed: {result['error']}")
+        if "error" in conversation_result:
+            logger.error(
+                f"Conversation refinement failed: {conversation_result['error']}"
+            )
             # Fallback to regular refinement
             return self._fallback_refinement(refinement_input)
 
         # Extract refinement results from conversation result
-        if "refined_translations" in result:
-            refined_translations = result["refined_translations"]
+        if "refined_translations" in conversation_result:
+            refined_translations = conversation_result["refined_translations"]
             return [
                 {
-                    "sentence": input_item["sentence"]
+                    "sentence": input_item["original"]
                     if isinstance(input_item, dict)
-                    else input_item.sentence,
+                    else input_item.original,
                     "refined_translation": refined_translation,
-                    "original_translation": input_item["translation"]
+                    "original_translation": input_item["translation"]["translation"]
                     if isinstance(input_item, dict)
-                    else input_item.translation,
-                    "tashkeel": input_item["tashkeel"]
+                    else input_item.translation.translation,
+                    "tashkeel": input_item["tashkeel"]["tashkeel"]
                     if isinstance(input_item, dict)
-                    else input_item.tashkeel,
-                    "word_translations": input_item["word_translations"]
+                    else input_item.tashkeel.tashkeel,
+                    "word_translations": input_item["word_translations_options"]
                     if isinstance(input_item, dict)
-                    else input_item.word_translations,
+                    else input_item.word_translations_options,
                 }
                 for input_item, refined_translation in zip(
                     refinement_input, refined_translations, strict=False

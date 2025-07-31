@@ -283,7 +283,7 @@ class ConversationTranslationEngine:
         """Build prompt for word-by-word translations"""
         prompt_parts = [WORD_BY_WORD_USER_PROMPT]
 
-        for i, (sentence, tashkeel, translation) in enumerate(
+        for i, (_sentence, tashkeel, translation) in enumerate(
             zip(sentences, tashkeel_results, translations, strict=False)
         ):
             context_info = ""
