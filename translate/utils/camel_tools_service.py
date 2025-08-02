@@ -1,7 +1,6 @@
 """Camel-tools service for Arabic morphological analysis and tashkeel generation."""
 
 import logging
-from typing import Optional
 
 from camel_tools.morphology import database, reinflector
 
@@ -11,7 +10,7 @@ logger = logging.getLogger(__name__)
 class CamelToolsService:
     """Service for Arabic morphological analysis using camel-tools."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the camel-tools service with default MSA database."""
         # Use the default Calima MSA database (calima-msa-r13) with reinflection support
         self.db = database.MorphologyDB.builtin_db(flags="r")
@@ -119,7 +118,7 @@ class CamelToolsService:
 
 
 # Global instance for reuse
-_camel_tools_service: Optional[CamelToolsService] = None
+_camel_tools_service: CamelToolsService | None = None
 
 
 def get_camel_tools_service() -> CamelToolsService:

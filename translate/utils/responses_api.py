@@ -8,7 +8,6 @@ Response API, which maintains state across multiple interactions.
 import json
 import logging
 import os
-import random
 import time
 from typing import Any
 
@@ -46,7 +45,8 @@ def _calculate_backoff_delay(
 ) -> float:
     """Calculate exponential backoff delay with jitter."""
     delay = min(base_delay * (2**attempt), max_delay)
-    jitter = random.uniform(0, 0.1 * delay)  # 10% jitter
+    # Simple jitter using modulo to avoid cryptographic concerns
+    jitter = (delay * 0.1) * (attempt % 10) / 10  # 0-10% jitter
     return delay + jitter
 
 
@@ -452,7 +452,7 @@ class ResponseAPIManager:
 
                 # Add parameter details for better understanding
                 if parameters.get("properties"):
-                    instructions += f"  Parameters:\n"
+                    instructions += "  Parameters:\n"
                     for param_name, param_details in parameters["properties"].items():
                         param_desc = param_details.get("description", "No description")
                         param_type = param_details.get("type", "unknown")

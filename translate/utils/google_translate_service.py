@@ -2,7 +2,7 @@
 
 import os
 import time
-from typing import Any, Optional
+from typing import Any
 
 from google.cloud import translate_v3
 
@@ -37,7 +37,7 @@ class GoogleTranslateService:
         root_word: str,
         source_lang: str = "ar",
         target_lang: str = "en",
-        context: Optional[str] = None,
+        context: str | None = None,
     ) -> dict:
         """Translate a single Arabic root word to English with optional context."""
         try:
@@ -96,7 +96,7 @@ class GoogleTranslateService:
         self,
         root_word: str,
         max_retries: int = TRANSLATION_RETRY_ATTEMPTS,
-        context: Optional[str] = None,
+        context: str | None = None,
     ) -> dict:
         """Translate root word with retry logic."""
         for attempt in range(max_retries):
