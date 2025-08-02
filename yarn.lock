@@ -2552,17 +2552,17 @@
   dependencies:
     "@tanstack/query-core" "5.83.1"
 
-"@tanstack/react-query-persist-client@^5.84.0":
-  version "5.84.0"
-  resolved "https://registry.yarnpkg.com/@tanstack/react-query-persist-client/-/react-query-persist-client-5.84.0.tgz#8bc1279c1207d1a603a14ecf2e1a71aa3168a7e6"
-  integrity sha512-vpe2KnCkbcZmbk4SXObKxJL9BKP6IlZxBOi5Ua7oZFa8LKoECBHR+oK0YoEhtQKVaBaRbSc7G0YsuUZWct7vRQ==
+"@tanstack/react-query-persist-client@^5.84.1":
+  version "5.84.1"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-query-persist-client/-/react-query-persist-client-5.84.1.tgz#17e834636567e6dbf9c3c3e5a138e262e361ac87"
+  integrity sha512-Qpn2kg7eI+dI4AHeXmI0FYn1JVwluSESA3iJ+KJv9zZiluPhiFmzFT++j9QYwu/LHUwp4PmjqSPHkuBLiYkTRQ==
   dependencies:
     "@tanstack/query-persist-client-core" "5.83.1"
 
-"@tanstack/react-query@^5.84.0":
-  version "5.84.0"
-  resolved "https://registry.yarnpkg.com/@tanstack/react-query/-/react-query-5.84.0.tgz#4e369b5f94114a9e15d01f0ada4726bfc1de406b"
-  integrity sha512-iPycFGLq5lltDE16Jf13Nx7SOvtfoopfOH/+Ahbdd+z4QqOfYu/SOkY86AVYVcKjneuqPxTm8e85lSGhwe0cog==
+"@tanstack/react-query@^5.84.1":
+  version "5.84.1"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-query/-/react-query-5.84.1.tgz#de36a13a07d3c38abfef20e215f7c97c66a03947"
+  integrity sha512-zo7EUygcWJMQfFNWDSG7CBhy8irje/XY0RDVKKV4IQJAysb+ZJkkJPcnQi+KboyGUgT+SQebRFoTqLuTtfoDLw==
   dependencies:
     "@tanstack/query-core" "5.83.1"
 
@@ -2615,11 +2615,11 @@
     "@babel/types" "^7.0.0"
 
 "@types/babel__traverse@*", "@types/babel__traverse@^7.0.6":
-  version "7.20.7"
-  resolved "https://registry.yarnpkg.com/@types/babel__traverse/-/babel__traverse-7.20.7.tgz#968cdc2366ec3da159f61166428ee40f370e56c2"
-  integrity sha512-dkO5fhS7+/oos4ciWxyEyjWe48zmG6wbCheo/G2ZnHx4fs3EU6YC6UM8rk56gAjNJ9P3MTH2jo5jb92/K6wbng==
+  version "7.28.0"
+  resolved "https://registry.yarnpkg.com/@types/babel__traverse/-/babel__traverse-7.28.0.tgz#07d713d6cce0d265c9849db0cbe62d3f61f36f74"
+  integrity sha512-8PvcXf70gTDZBgt9ptxJ8elBeBjcLOAcOtoO/mPJjtji1+CdGbHgm77om1GrsPxsiE+uXIpNSK64UYaIwQXd4Q==
   dependencies:
-    "@babel/types" "^7.20.7"
+    "@babel/types" "^7.28.2"
 
 "@types/estree@^1.0.6":
   version "1.0.8"

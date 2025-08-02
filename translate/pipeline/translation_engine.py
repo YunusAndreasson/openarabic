@@ -1,3 +1,4 @@
+import logging
 import time
 from typing import Any, cast
 
@@ -36,6 +37,8 @@ from utils.exceptions import TranslationError
 from utils.google_translate_service import GoogleTranslateService
 from utils.responses_api import call_response_api
 from utils.text_utils import filter_arabic_words, get_optimized_context
+
+logger = logging.getLogger(__name__)
 
 
 def _build_word_prompt(
@@ -90,8 +93,7 @@ def batch_translate_full_sentences(
         ]
         return call_response_api(
             messages,
-            function_schema=TRANSLATE_SENTENCES_TOOL,
-            _function_name="translate_sentences",
+            tools=[TRANSLATE_SENTENCES_TOOL],
             model=MODEL_TRANSLATION,
         )
 
@@ -232,8 +234,7 @@ def batch_add_tashkeel(
 
     response = call_response_api(
         messages,
-        function_schema=TASHKEEL_TOOL,
-        _function_name="add_tashkeel",
+        tools=[TASHKEEL_TOOL],
         model=MODEL_OTHER,
     )
 
@@ -354,48 +355,84 @@ def batch_translate_words(
                 ]
                 response = call_response_api(
                     messages,
-                    function_schema=WORD_TRANSLATION_TOOL,
-                    _function_name="translate_words",
+                    tools=[WORD_TRANSLATION_TOOL],
                     model=MODEL_TRANSLATION,
                 )
-                if "results" in response and isinstance(response["results"], list):
-                    result = response["results"][0] if response["results"] else {}
-                    word_translations_options = []
-                    raw_word_translations = result.get("word_translations", [])
-                    if not isinstance(raw_word_translations, list):
-                        raw_word_translations = []
-                    for word_data in raw_word_translations:
-                        if not isinstance(word_data, dict):
-                            continue
-                        eng_opts = word_data.get("english_options", [])
-                        if not isinstance(eng_opts, list) or not all(
-                            isinstance(s, str) for s in eng_opts
-                        ):
-                            eng_opts = []
-                        ess_opts = word_data.get("essential_translation_options", [])
-                        if not isinstance(ess_opts, list) or not all(
-                            isinstance(s, str) for s in ess_opts
-                        ):
-                            ess_opts = []
-                        arabic_text = word_data.get("arabic", "")
-                        essential_letters = word_data.get("essential", arabic_text)
-                        word_translations_options.append(
-                            WordTranslationOptions(
-                                arabic=arabic_text,
-                                english_options=eng_opts,
-                                pos=word_data.get("pos") or None,
-                                essential=essential_letters,
-                                essential_translation_options=ess_opts,
-                                notes=word_data.get("notes") or None,
-                                uncertainties=word_data.get("uncertainties", []),
-                            ).model_dump(),
-                        )
-                    if word_translations_options:
-                        processed_results[i] = {
-                            "word_translations": word_translations_options,
-                        }
-                        break
 
+                logger.info(f"Word translation response type: {type(response)}")
+                logger.info(
+                    f"Word translation response keys: {list(response.keys()) if isinstance(response, dict) else 'not a dict'}"
+                )
+
+                # Handle Response API format - data is returned directly, not wrapped in "results"
+                if "results" in response and isinstance(response["results"], list):
+                    # Check if results contains individual word objects or sentence objects
+                    if response["results"] and isinstance(response["results"][0], dict):
+                        if "word_translations" in response["results"][0]:
+                            # Sentence object with word_translations
+                            result = response["results"][0]
+                        else:
+                            # Individual word objects - wrap them in a sentence object
+                            result = {"word_translations": response["results"]}
+                    else:
+                        result = {}
+                elif isinstance(response, dict) and "word_translations" in response:
+                    # Response API returns data directly
+                    result = response
+                else:
+                    # Try to find word_translations in the response
+                    result = response if isinstance(response, dict) else {}
+
+                logger.info(
+                    f"Processed result keys: {list(result.keys()) if isinstance(result, dict) else 'not a dict'}"
+                )
+
+                word_translations_options = []
+                raw_word_translations = result.get("word_translations", [])
+                if not isinstance(raw_word_translations, list):
+                    raw_word_translations = []
+                logger.info(
+                    f"Raw word translations count: {len(raw_word_translations)}"
+                )
+
+                for word_data in raw_word_translations:
+                    if not isinstance(word_data, dict):
+                        continue
+                    eng_opts = word_data.get("english_options", [])
+                    if not isinstance(eng_opts, list) or not all(
+                        isinstance(s, str) for s in eng_opts
+                    ):
+                        eng_opts = []
+                    ess_opts = word_data.get("essential_translation_options", [])
+                    if not isinstance(ess_opts, list) or not all(
+                        isinstance(s, str) for s in ess_opts
+                    ):
+                        ess_opts = []
+                    arabic_text = word_data.get("arabic", "")
+                    essential_letters = word_data.get("essential", arabic_text)
+                    word_translations_options.append(
+                        WordTranslationOptions(
+                            arabic=arabic_text,
+                            english_options=eng_opts,
+                            pos=word_data.get("pos") or None,
+                            essential=essential_letters,
+                            essential_translation_options=ess_opts,
+                            notes=word_data.get("notes") or None,
+                            uncertainties=word_data.get("uncertainties", []),
+                        ).model_dump(),
+                    )
+                if word_translations_options:
+                    processed_results[i] = {
+                        "word_translations": word_translations_options,
+                    }
+                    logger.info(
+                        f"Successfully processed word translations for sentence {i}"
+                    )
+                    break
+
+                logger.error(
+                    f"No valid word translations returned from model for sentence {i}"
+                )
                 raise Exception("No valid word translations returned from model.")
             except Exception as err:
                 attempt += 1
@@ -412,6 +449,8 @@ def batch_refine_translations(
 ) -> RefinementResults:
     """Refine all translation components, selecting best options"""
     try:
+        logger.info(f"Starting batch refinement with {len(refinement_input)} inputs")
+
         formatted_inputs = []
         for i, data in enumerate(refinement_input):
             refinement_data: RefinementInput = data
@@ -489,13 +528,21 @@ def batch_refine_translations(
         temp_to_use = 1.0 if MODEL_VERIFICATION == "gpt-4o-mini" else 0.3
         api_kwargs = {
             "messages": messages,
-            "function_schema": REFINEMENT_TOOL,
-            "function_name": "refine_translations",
+            "tools": [REFINEMENT_TOOL],
             "model": MODEL_VERIFICATION,
             "temperature": temp_to_use,
         }
+
+        logger.info(
+            f"Calling Response API with {len(messages)} messages and {len(api_kwargs['tools'])} tools"
+        )
         response = call_response_api(**api_kwargs)
+        logger.info(
+            f"Response received: {type(response)} with keys: {list(response.keys()) if isinstance(response, dict) else 'not a dict'}"
+        )
+
         if "refinements" in response and isinstance(response["refinements"], list):
+            logger.info(f"Found {len(response['refinements'])} refinements in response")
             results: RefinementResults = []
             for item in response["refinements"]:
                 if isinstance(item, dict):
@@ -517,6 +564,7 @@ def batch_refine_translations(
                     )
                 else:
                     # Create empty refinement result if response is malformed
+                    logger.warning(f"Malformed refinement item: {type(item)}")
                     results.append(
                         RefinementResult(
                             improved_tashkeel="",
@@ -527,12 +575,16 @@ def batch_refine_translations(
                             changes_made=[],
                         )
                     )
+            logger.info(f"Returning {len(results)} refinement results")
             return results
         elif "error" in response:
+            logger.error(f"API returned error: {response['error']}")
             return []
         else:
+            logger.warning(f"Unexpected response format: {response}")
             return []
-    except Exception:
+    except Exception as e:
+        logger.error(f"Exception in batch_refine_translations: {e}")
         return []
 
 

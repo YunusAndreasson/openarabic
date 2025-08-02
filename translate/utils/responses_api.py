@@ -3,9 +3,6 @@ Response API manager for OpenAI's Response API integration.
 
 This module provides a conversation-based approach to translation using OpenAI's
 Response API, which maintains state across multiple interactions.
-
-Note: Currently using Chat Completions API with tool format as a fallback
-until Response API becomes available in the OpenAI client.
 """
 
 import json
@@ -94,7 +91,7 @@ client = init_openai_client()
 
 
 class ResponseAPIManager:
-    """Manages conversations using OpenAI's Response API (fallback to Chat Completions)"""
+    """Manages conversations using OpenAI's Response API"""
 
     def __init__(self, model: str = MODEL_OTHER) -> None:
         self.model = model
@@ -117,12 +114,36 @@ class ResponseAPIManager:
                 # Convert messages to input format for Response API
                 input_text = self._messages_to_input(messages)
 
-                # Create response using the actual Response API
+                # Convert tools to Response API format with proper schema validation
+                response_tools = []
+                if tools:
+                    for tool in tools:
+                        if tool.get("type") == "function" and tool.get("function"):
+                            # Response API expects name at top level
+                            response_tools.append(
+                                {
+                                    "name": tool.get("name", ""),
+                                    "type": "function",
+                                    "function": {
+                                        "description": tool.get("function", {}).get(
+                                            "description", ""
+                                        ),
+                                        "parameters": tool.get("function", {}).get(
+                                            "parameters", {}
+                                        ),
+                                    },
+                                }
+                            )
+
+                # Create response using the Response API with proper configuration
                 response = self.client.responses.create(
                     model=self.model,
                     instructions=self._get_instructions_for_tools(tools),
                     input=input_text,
-                    tools=tools or [],
+                    tools=response_tools or [],
+                    tool_choice="required"
+                    if tools
+                    else "auto",  # Force tool usage when tools are provided
                 )
 
                 # Parse the response
@@ -146,9 +167,7 @@ class ResponseAPIManager:
                 )
                 retry_count += 1
                 if retry_count >= max_retries:
-                    return {
-                        "error": f"Response API call failed after {max_retries} attempts. Error: {str(e)}",
-                    }
+                    return {"error": f"Maximum retries exceeded: {str(e)}"}
 
                 # Exponential backoff: 1s, 2s
                 time.sleep(2**retry_count)
@@ -208,23 +227,33 @@ class ResponseAPIManager:
         tools: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """Parse the response from the Response API"""
-        if not response.output:
+        # Check for tool calls in the output
+        if hasattr(response, "output") and response.output:
+            for output_item in response.output:
+                if hasattr(output_item, "type") and output_item.type == "function_call":
+                    if hasattr(output_item, "arguments") and output_item.arguments:
+                        try:
+                            result = json.loads(output_item.arguments)
+                            # Check if the result is empty or has default values
+                            if not result or (
+                                isinstance(result, dict) and not any(result.values())
+                            ):
+                                return {
+                                    "error": "Function call returned empty arguments"
+                                }
+                            return result
+                        except json.JSONDecodeError:
+                            return {
+                                "error": f"Failed to parse function arguments: {output_item.arguments[:100]}...",
+                            }
+                    return {"error": "Function call response was empty"}
+
+        # Check for output_text which contains the main response
+        if hasattr(response, "output_text") and response.output_text:
+            content = response.output_text
+        else:
             return {"error": "Empty response from API"}
 
-        # Check for tool calls in Response API format
-        if hasattr(response.output, "tool_calls") and response.output.tool_calls:
-            tool_call = response.output.tool_calls[0]
-            if tool_call and tool_call.function and tool_call.function.arguments:
-                try:
-                    return json.loads(tool_call.function.arguments)
-                except json.JSONDecodeError:
-                    return {
-                        "error": f"Failed to parse function arguments: {tool_call.function.arguments[:100]}...",
-                    }
-            return {"error": "Function call response was empty"}
-
-        # Parse regular content from Response API
-        content = response.output_text or ""
         if not content:
             return {"error": "Empty response from API"}
 
@@ -280,32 +309,53 @@ class ResponseAPIManager:
         if not tools:
             return base_instructions
 
-        # Create instructions that explain the available tools
+        # Create detailed instructions that explain the available tools and usage
         instructions = (
             base_instructions + "\n\nYou have access to the following tools:\n"
         )
+
         for tool in tools:
             if tool.get("type") == "function" and tool.get("function"):
                 func = tool["function"]
-                instructions += f"- {func.get('name', 'unknown')}: {func.get('description', 'No description')}\n"
+                tool_name = tool.get("name", "unknown")
+                description = func.get("description", "No description")
+                parameters = func.get("parameters", {})
+
+                instructions += f"- {tool_name}: {description}\n"
+
+                # Add parameter details for better understanding
+                if parameters.get("properties"):
+                    instructions += f"  Parameters:\n"
+                    for param_name, param_details in parameters["properties"].items():
+                        param_desc = param_details.get("description", "No description")
+                        param_type = param_details.get("type", "unknown")
+                        instructions += (
+                            f"    - {param_name} ({param_type}): {param_desc}\n"
+                        )
 
         instructions += (
-            "\nUse the appropriate tool when needed and respond with the tool's output. "
-            "Maintain context and consistency throughout the conversation."
+            "\nCRITICAL INSTRUCTIONS FOR TOOL USAGE:\n"
+            "1. You MUST use the appropriate tool when processing the input.\n"
+            "2. Do not respond directly with text - always call the function.\n"
+            "3. Provide ALL required parameters with valid values.\n"
+            "4. Follow the exact parameter types and descriptions specified.\n"
+            "5. Ensure your function arguments are complete and accurate.\n"
+            "6. Use structured JSON format for all function calls.\n"
+            "7. Maintain context and consistency throughout the conversation.\n"
+            "8. If you're unsure about a parameter, provide your best estimate based on the context.\n"
+            "\n"
+            "EXAMPLE: When you need to refine translations, call the function with both "
+            "improved_tashkeel and improved_translation parameters filled with appropriate values."
         )
         return instructions
 
     def get_conversation_state(self) -> dict[str, Any]:
         """Get the current conversation state"""
-        return {
-            "current_response_id": self.current_response_id,
-            "conversation_state": self.conversation_state,
-        }
+        return self.conversation_state.copy()
 
     def set_conversation_state(self, state: dict[str, Any]) -> None:
         """Set the conversation state"""
-        self.conversation_state = state.get("conversation_state", {})
-        self.current_response_id = state.get("current_response_id")
+        self.conversation_state = state.copy()
 
     def reset_conversation(self) -> None:
         """Reset the conversation state"""

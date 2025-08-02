@@ -71,8 +71,7 @@ def split_text_into_sentences(text: str) -> SplitResult:
 
     response = call_response_api(
         messages,
-        function_schema=SPLIT_TEXT_TOOL,
-        _function_name="split_text_into_sentences",
+        tools=[SPLIT_TEXT_TOOL],
         model=MODEL_ANALYSIS,
     )
 

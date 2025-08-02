@@ -438,6 +438,15 @@ SPLIT_TEXT_TOOL = {
                 },
             },
             "required": ["title", "summary", "difficulty_level", "units", "unit_types"],
+            "examples": [
+                {
+                    "title": "Islamic Greeting and Praise",
+                    "summary": "Text begins with basmala and contains praise to Allah",
+                    "difficulty_level": 2,
+                    "units": ["بسم الله الرحمن الرحيم", "الحمد لله رب العالمين"],
+                    "unit_types": ["basmala", "praise"],
+                }
+            ],
         },
     },
 }
