@@ -22,7 +22,10 @@ from utils.storage_utils import (
     get_category_id,
     get_supabase_client,
 )
-from utils.validation import validate_batch_before_processing
+from utils.validation import (
+    validate_batch_before_processing,
+    validate_batch_no_placeholder_data,
+)
 
 # Import audio utilities for final phase
 try:
@@ -189,6 +192,16 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
         logger.info(f"Validation passed for {len(translations)} translations")
     except Exception as e:
         logger.error(f"Validation failed: {e}")
+        raise
+
+    # CRITICAL: Final validation to prevent placeholder data insertion
+    try:
+        validate_batch_no_placeholder_data(translations)
+        logger.info(
+            f"Placeholder validation passed for {len(translations)} translations"
+        )
+    except Exception as e:
+        logger.error(f"CRITICAL: Placeholder data detected - aborting insertion: {e}")
         raise
 
     timing_stats = insert_article_sentences(article_id, data["translations"])

@@ -498,27 +498,14 @@ def batch_translate_words(
                     }
                     break
                 else:
-                    # If we still have no options, create a minimal fallback
-                    logger.warning(f"Creating minimal fallback for sentence {i}")
-                    processed_results[i] = {
-                        "word_translations": [
-                            WordTranslationOptions(
-                                arabic=_sentence,
-                                english_options=["[Translation failed]"],
-                                pos="unknown",
-                                essential=_sentence,
-                                essential_translation_options=["[Translation failed]"],
-                                notes="Minimal fallback due to complete API failure",
-                                uncertainties=[
-                                    {
-                                        "text": _sentence,
-                                        "reason": "Complete API failure",
-                                    }
-                                ],
-                            ).model_dump(),
-                        ],
-                    }
-                    break
+                    # CRITICAL: Fail completely instead of creating placeholder data
+                    logger.error(
+                        f"All translation attempts failed for sentence {i} after {max_retries} attempts - failing completely"
+                    )
+                    raise Exception(
+                        f"Translation failed for sentence {i} after {max_retries} attempts. "
+                        f"Placeholder data creation is not allowed."
+                    )
 
             except Exception as err:
                 attempt += 1
@@ -526,29 +513,14 @@ def batch_translate_words(
                     f"Word translation attempt {attempt} failed for sentence {i}: {err}"
                 )
                 if attempt >= max_retries:
-                    # Create fallback result instead of raising exception
+                    # CRITICAL: Fail completely instead of creating placeholder data
                     logger.error(
-                        f"Creating fallback for sentence {i} after {max_retries} failed attempts"
+                        f"All translation attempts failed for sentence {i} after {max_retries} attempts - failing completely"
                     )
-                    processed_results[i] = {
-                        "word_translations": [
-                            WordTranslationOptions(
-                                arabic=_sentence,
-                                english_options=["[Translation failed]"],
-                                pos="unknown",
-                                essential=_sentence,
-                                essential_translation_options=["[Translation failed]"],
-                                notes=f"Fallback due to error: {str(err)}",
-                                uncertainties=[
-                                    {
-                                        "text": _sentence,
-                                        "reason": f"Error after {max_retries} attempts: {str(err)}",
-                                    }
-                                ],
-                            ).model_dump(),
-                        ],
-                    }
-                    break
+                    raise Exception(
+                        f"Translation failed for sentence {i} after {max_retries} attempts. "
+                        f"Placeholder data creation is not allowed. Error: {str(err)}"
+                    ) from err
                 time.sleep(1)
 
     return processed_results

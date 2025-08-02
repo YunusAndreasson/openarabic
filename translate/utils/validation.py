@@ -326,3 +326,81 @@ def validate_batch_before_processing(translations: list[SentenceTranslation]) ->
             raise TranslationValidationError(
                 f"Translation {i} (index {translation.index}) failed validation: {str(e)}"
             ) from e
+
+
+def validate_no_placeholder_data(translation: SentenceTranslation) -> None:
+    """
+    Strict validation that prevents any placeholder or error marker data from being inserted.
+    This is the final guard rail before database insertion.
+    """
+    critical_errors = []
+
+    # Check full translation for error markers
+    if any(
+        err in (translation.full_translation or "") for err in TRANSLATION_ERROR_MARKERS
+    ):
+        critical_errors.append(
+            f"Full translation contains error marker: {translation.full_translation}"
+        )
+
+    # Check word-by-word translations for error markers
+    for i, word_trans in enumerate(translation.word_by_word):
+        if any(err in (word_trans.english or "") for err in TRANSLATION_ERROR_MARKERS):
+            critical_errors.append(
+                f"Word {i} English translation contains error marker: {word_trans.english}"
+            )
+
+        if any(
+            err in (word_trans.essential_translation or "")
+            for err in TRANSLATION_ERROR_MARKERS
+        ):
+            critical_errors.append(
+                f"Word {i} essential translation contains error marker: {word_trans.essential_translation}"
+            )
+
+    # Check for placeholder patterns
+    placeholder_patterns = [
+        "[Translation failed]",
+        "[Error]",
+        "[Fallback]",
+        "[Missing]",
+        "[API Error]",
+        "[BATCH PROCESSING ERROR]",
+        "[Format Error]",
+        "[Validation Error]",
+        "[Fallback Error]",
+    ]
+
+    for pattern in placeholder_patterns:
+        if pattern in (translation.full_translation or ""):
+            critical_errors.append(f"Full translation contains placeholder: {pattern}")
+
+        for i, word_trans in enumerate(translation.word_by_word):
+            if pattern in (word_trans.english or ""):
+                critical_errors.append(
+                    f"Word {i} English contains placeholder: {pattern}"
+                )
+            if pattern in (word_trans.essential_translation or ""):
+                critical_errors.append(
+                    f"Word {i} essential translation contains placeholder: {pattern}"
+                )
+
+    if critical_errors:
+        raise TranslationValidationError(
+            "CRITICAL: Placeholder/error data detected - cannot insert into database:\n"
+            + "\n".join(critical_errors)
+        )
+
+
+def validate_batch_no_placeholder_data(translations: list[SentenceTranslation]) -> None:
+    """
+    Validate a batch of translations to ensure no placeholder data is present.
+    This is the final guard rail before database insertion.
+    """
+    for i, translation in enumerate(translations):
+        try:
+            validate_no_placeholder_data(translation)
+        except TranslationValidationError as e:
+            raise TranslationValidationError(
+                f"Translation {i} (index {translation.index}) contains placeholder data: {str(e)}"
+            ) from e

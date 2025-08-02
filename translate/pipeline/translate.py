@@ -12,7 +12,6 @@ from data.models import (
     SplitResult,
     TextMetadata,
     TranslationValidationError,
-    WordTranslation,
 )
 from data.pipeline_types import (
     TranslationBatch,
@@ -196,31 +195,11 @@ def process_batch(
         logger.error(
             f"Batch processing failed for batch starting at {start_index}: {e}"
         )
-        # Create minimal fallback results
-        fallback_results = []
-        for i, sentence in enumerate(batch_sentences):
-            fallback_results.append(
-                SentenceTranslation(
-                    index=start_index + i,
-                    original=sentence,
-                    tashkeel=sentence,  # Use original as fallback
-                    word_by_word=[
-                        WordTranslation(
-                            arabic=sentence,
-                            english="[Translation failed]",
-                            pos="unknown",
-                            essential=sentence,
-                            essential_translation="[Translation failed]",
-                            notes=f"Fallback due to batch processing error: {str(e)}",
-                        )
-                    ],
-                    full_translation="[Translation failed]",
-                    notes=f"Batch processing failed: {str(e)}",
-                    verification_status="Issues Found",
-                    verification_issues=[f"Batch processing error: {str(e)}"],
-                )
-            )
-        return fallback_results
+        # CRITICAL: Fail completely instead of creating placeholder data
+        raise Exception(
+            f"Batch processing failed after all retries for batch starting at {start_index}. "
+            f"Placeholder data creation is not allowed. Error: {str(e)}"
+        ) from e
 
 
 def process_batches(
