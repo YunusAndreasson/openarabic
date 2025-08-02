@@ -2,7 +2,7 @@
 
 import os
 import time
-from typing import Any
+from typing import Any, Optional
 
 from google.cloud import translate_v3
 
@@ -33,12 +33,20 @@ class GoogleTranslateService:
         self.parent = f"projects/{self.project_id}/locations/global"
 
     def translate_single_root_word(
-        self, root_word: str, source_lang: str = "ar", target_lang: str = "en"
+        self,
+        root_word: str,
+        source_lang: str = "ar",
+        target_lang: str = "en",
+        context: Optional[str] = None,
     ) -> dict:
-        """Translate a single Arabic root word to English - OUT OF CONTEXT."""
+        """Translate a single Arabic root word to English with optional context."""
         try:
+            # For now, translate just the word without context
+            # TODO: Implement proper context-aware translation using glossaries
+            content_to_translate = root_word
+
             response = self.client.translate_text(
-                contents=[root_word],
+                contents=[content_to_translate],
                 parent=self.parent,
                 mime_type="text/plain",
                 source_language_code=source_lang,
@@ -54,7 +62,6 @@ class GoogleTranslateService:
 
             translation_result: dict[str, Any] = {
                 "translated_text": translation.translated_text,
-                "confidence": getattr(translation, "confidence", 0.95),
                 "detected_language": getattr(
                     translation, "detected_language_code", source_lang
                 ),
@@ -62,16 +69,19 @@ class GoogleTranslateService:
                 "source_language": source_lang,
                 "target_language": target_lang,
                 "pos": "noun",
-                "notes": f"Google Cloud Translate v3 root word translation - confidence: {getattr(translation, 'confidence', 0.95)}",
+                "notes": f"Google Cloud Translate v3 translation{' (context available but not implemented)' if context else ''}",
                 "uncertainties": [],
             }
 
-            # Add uncertainty if confidence is low
-            if getattr(translation, "confidence", 0.95) < 0.7:
+            # Add uncertainty if translation is empty
+            if (
+                not translation.translated_text
+                or translation.translated_text.strip() == ""
+            ):
                 translation_result["uncertainties"].append(
                     {
                         "text": root_word,
-                        "reason": f"Low confidence translation ({getattr(translation, 'confidence', 0.95)})",
+                        "reason": "Empty translation returned",
                     }
                 )
 
@@ -83,12 +93,15 @@ class GoogleTranslateService:
             ) from e
 
     def translate_root_word_with_retry(
-        self, root_word: str, max_retries: int = TRANSLATION_RETRY_ATTEMPTS
+        self,
+        root_word: str,
+        max_retries: int = TRANSLATION_RETRY_ATTEMPTS,
+        context: Optional[str] = None,
     ) -> dict:
         """Translate root word with retry logic."""
         for attempt in range(max_retries):
             try:
-                return self.translate_single_root_word(root_word)
+                return self.translate_single_root_word(root_word, context=context)
             except Exception as e:
                 if attempt == max_retries - 1:
                     raise TranslationError(

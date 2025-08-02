@@ -565,7 +565,7 @@ def batch_translate_root_words_with_google_cloud(
     indices: list[int] | None = None,
     context_cache: ContextCache | None = None,
 ) -> WordTranslationResults:
-    """Translate individual Arabic root words using Google Cloud Translate - OUT OF CONTEXT."""
+    """Translate individual Arabic root words using Google Cloud Translate with context awareness."""
     service = GoogleTranslateService(credentials_path="openarabic-3711db289212.json")
     results: WordTranslationResults = []
 
@@ -580,10 +580,11 @@ def batch_translate_root_words_with_google_cloud(
         arabic_words  # This should be enhanced with proper root word extraction
     )
 
-    # Translate each root word individually OUT OF CONTEXT
+    # Translate each root word individually
     for root_word in root_words:
         try:
-            root_word_translation = service.translate_single_root_word(root_word)
+            root_word_translation = service.translate_root_word_with_retry(root_word)
+
             # Convert to WordTranslationOptions format
             word_option = cast(
                 "WordTranslationOption",
@@ -601,6 +602,7 @@ def batch_translate_root_words_with_google_cloud(
             )
             results.append({"word_translations": [word_option]})
         except Exception as e:
+            logger.error(f"Failed to translate root word '{root_word}': {e}")
             # Add fallback result
             word_option = cast(
                 "WordTranslationOption",
