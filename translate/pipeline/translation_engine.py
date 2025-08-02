@@ -505,7 +505,7 @@ def batch_translate_words(
                             WordTranslationOptions(
                                 arabic=_sentence,
                                 english_options=["[Translation failed]"],
-                                pos=None,
+                                pos="unknown",
                                 essential=_sentence,
                                 essential_translation_options=["[Translation failed]"],
                                 notes="Minimal fallback due to complete API failure",
@@ -534,10 +534,10 @@ def batch_translate_words(
                         "word_translations": [
                             WordTranslationOptions(
                                 arabic=_sentence,
-                                english_options=["[Translation error]"],
-                                pos=None,
+                                english_options=["[Translation failed]"],
+                                pos="unknown",
                                 essential=_sentence,
-                                essential_translation_options=["[Translation error]"],
+                                essential_translation_options=["[Translation failed]"],
                                 notes=f"Fallback due to error: {str(err)}",
                                 uncertainties=[
                                     {

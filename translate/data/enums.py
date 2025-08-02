@@ -18,6 +18,9 @@ class PartOfSpeech(Enum):
     CONJUNCTION = "conjunction"
     INTERJECTION = "interjection"
     NUMERAL = "numeral"
+    PROPER_NOUN = "proper noun"
+    DEMONSTRATIVE_PRONOUN = "demonstrative pronoun"
+    RELATIVE_PRONOUN = "relative pronoun"
 
     @classmethod
     def values(cls) -> list[str]:

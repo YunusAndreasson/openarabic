@@ -104,6 +104,10 @@ def process_batch(
     if not batch_sentences:
         return []
 
+    # Ensure batch_indices is properly set
+    if batch_indices is None:
+        batch_indices = list(range(start_index, start_index + len(batch_sentences)))
+
     try:
         # Use regular translation pipeline with Response API
         translations = run_full_translation(batch_sentences, batch_contexts)
@@ -151,7 +155,7 @@ def process_batch(
                         {
                             "arabic": word,
                             "english_options": [f"[{word}]"],
-                            "pos": None,
+                            "pos": "unknown",
                             "essential": word,
                             "essential_translation_options": [f"[{word}]"],
                             "notes": "Fallback due to word translation failure",
@@ -204,7 +208,7 @@ def process_batch(
                         WordTranslation(
                             arabic=sentence,
                             english="[Translation failed]",
-                            pos=None,
+                            pos="unknown",
                             essential=sentence,
                             essential_translation="[Translation failed]",
                             notes=f"Fallback due to batch processing error: {str(e)}",

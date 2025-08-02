@@ -210,9 +210,9 @@ def create_sentence_translation(
         word_opts_list = word_options_result.get("word_translations", [])
         for word_opts in word_opts_list:
             # Handle fallback cases where english_options might be empty or contain error messages
-            english_options = word_opts.get("english_options", ["[Fallback Error]"])
+            english_options = word_opts.get("english_options", ["[Translation failed]"])
             essential_options = word_opts.get(
-                "essential_translation_options", ["[Fallback Error]"]
+                "essential_translation_options", ["[Translation failed]"]
             )
 
             # Use first option or fallback text
@@ -226,7 +226,7 @@ def create_sentence_translation(
                     arabic=word_opts.get("arabic", ""),
                     english=english,
                     pos=word_opts.get("pos"),
-                    essential=word_opts.get("essential"),
+                    essential=word_opts.get("essential", word_opts.get("arabic", "")),
                     essential_translation=essential_translation,
                     notes=(word_opts.get("notes") or "") + " (Refinement fallback)",
                 ),

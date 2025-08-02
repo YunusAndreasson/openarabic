@@ -18,7 +18,7 @@ except (ImportError, OSError):
     get_or_generate_root_audio = None
 # Import common database utilities
 from data.config import ARCHIVE_DIR, ROOT_DIR, SUPABASE_URL
-from data.enums import DifficultyLevel, PartOfSpeech
+from data.enums import DifficultyLevel
 from data.pipeline_types import WordData
 from utils.arabic_text import clean_arabic_text
 from utils.database_common import (
@@ -159,7 +159,7 @@ def insert_sentence_words(
                 root_meaning,
                 english_translation,
             )
-            word_type_id = get_word_type_id(word.get("pos", PartOfSpeech.NOUN.value))
+            word_type_id = get_word_type_id(word.get("pos", "unknown"))
 
             original_word = clean_arabic_text(word["arabic"])
 
@@ -214,7 +214,7 @@ def insert_sentence_words(
                 root_meaning,
                 english_translation,
             )
-            word_type_id = get_word_type_id(word.get("pos", PartOfSpeech.NOUN.value))
+            word_type_id = get_word_type_id(word.get("pos", "unknown"))
 
             original_word = clean_arabic_text(word["arabic"])
 

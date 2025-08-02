@@ -22,6 +22,9 @@ WORD_TYPE_MAPPING: dict[str, int] = {
     PartOfSpeech.CONJUNCTION.value: 8,
     PartOfSpeech.INTERJECTION.value: 9,
     PartOfSpeech.NUMERAL.value: 56,
+    PartOfSpeech.PROPER_NOUN.value: 107,
+    PartOfSpeech.DEMONSTRATIVE_PRONOUN.value: 108,
+    PartOfSpeech.RELATIVE_PRONOUN.value: 109,
 }
 
 
@@ -106,9 +109,13 @@ def get_author_id(name: str = "Ibn Kathir") -> int:
 
 def get_word_type_id(pos: str | None) -> int:
     """Get word type ID from POS."""
-    if pos is None:
+    if pos is None or pos.lower() in ["unknown", "none", ""]:
+        # Default to noun for unknown POS values
         return WORD_TYPE_MAPPING[PartOfSpeech.NOUN.value]
+
     word_type_id = WORD_TYPE_MAPPING.get(pos.lower())
     if word_type_id is None:
+        # Log unknown POS for debugging
+        logger.warning(f"Unknown POS value: '{pos}', defaulting to noun")
         return WORD_TYPE_MAPPING[PartOfSpeech.NOUN.value]
     return word_type_id

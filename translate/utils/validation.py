@@ -4,6 +4,7 @@ Validation utilities for translation pipeline results.
 
 import logging
 
+from data import TRANSLATION_ERROR_MARKERS
 from data.models import SentenceTranslation, TranslationValidationError
 from data.pipeline_types import (
     TashkeelResults,
@@ -75,7 +76,9 @@ def validate_tashkeel_added(
                     elif tashkeel_text != original:  # Different diacritics
                         tashkeel_added = True
                     else:
-                        # (this handles cases where the original already had proper tashkeel)
+                        # If original has diacritics and tashkeel is identical,
+                        # we should still validate that the tashkeel is correct
+                        # but not fail the validation since the original already had proper tashkeel
                         tashkeel_added = True
                 else:
                     # If original has no diacritics and tashkeel is identical,
@@ -138,14 +141,7 @@ def validate_translation_results(
             translation = result.get("translation", "") or result.get("t", "")
 
             # Check for error markers in translation
-            if any(
-                err in translation
-                for err in [
-                    "[Translation Error]",
-                    "[Format Error]",
-                    "[BATCH PROCESSING ERROR]",
-                ]
-            ):
+            if any(err in translation for err in TRANSLATION_ERROR_MARKERS):
                 errors.append(f"Sentence {i}: Contains error marker in translation")
 
             if translation and len(translation.strip()) < 3:
@@ -248,17 +244,7 @@ def validate_final_translation(translation: SentenceTranslation) -> list[str]:
 
     if not translation.full_translation.strip():
         issues.append("Missing full translation")
-    elif any(
-        err in translation.full_translation
-        for err in [
-            "[Translation Error]",
-            "[Format Error]",
-            "[BATCH PROCESSING ERROR]",
-            "[Fallback Error]",
-            "[API Error]",
-            "[Validation Error]",
-        ]
-    ):
+    elif any(err in translation.full_translation for err in TRANSLATION_ERROR_MARKERS):
         issues.append("Translation contains error marker")
 
     # Check word-by-word translations
@@ -283,10 +269,7 @@ def validate_final_translation(translation: SentenceTranslation) -> list[str]:
                 issues.append(f"Word {i}: Missing essential letters")
 
             # Check for error markers in word translations
-            if any(
-                err in word_trans.english
-                for err in ["[Error]", "[Fallback]", "[Missing]"]
-            ):
+            if any(err in word_trans.english for err in TRANSLATION_ERROR_MARKERS):
                 issues.append(f"Word {i}: Contains error marker in translation")
 
     # Check verification status if present
