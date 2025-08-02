@@ -32,6 +32,10 @@ from data.schemas import (
     WORD_BY_WORD_USER_PROMPT,
     WORD_TRANSLATION_TOOL,
 )
+from utils.camel_tools_service import (
+    format_tashkeel_suggestions,
+    generate_tashkeel_suggestions,
+)
 from utils.context_cache import ContextCache
 from utils.exceptions import TranslationError
 from utils.google_translate_service import GoogleTranslateService
@@ -218,10 +222,15 @@ def batch_add_tashkeel(
                 f"- {note}" for note in grammar_notes
             )
 
+        # Generate camel-tools tashkeel suggestions
+        camel_suggestions = generate_tashkeel_suggestions(sentence)
+        camel_suggestions_str = format_tashkeel_suggestions(camel_suggestions)
+
         formatted_inputs.append(
             f"Set {i + 1}:\n"
             f"Arabic: {sentence}{grammar_context}\n"
-            f"Translation: {translation}{uncertainty_notes}{grammar_notes_str}",
+            f"Translation: {translation}{uncertainty_notes}{grammar_notes_str}"
+            f"{f'\n{camel_suggestions_str}' if camel_suggestions_str else ''}",
         )
 
     messages = [
