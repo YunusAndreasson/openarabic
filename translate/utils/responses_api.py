@@ -8,6 +8,7 @@ Response API, which maintains state across multiple interactions.
 import json
 import logging
 import os
+import random
 import time
 from typing import Any
 
@@ -40,6 +41,55 @@ def load_api_keys() -> None:
     _keys_loaded = True
 
 
+def _calculate_backoff_delay(
+    attempt: int, base_delay: float = 1.0, max_delay: float = 60.0
+) -> float:
+    """Calculate exponential backoff delay with jitter."""
+    delay = min(base_delay * (2**attempt), max_delay)
+    jitter = random.uniform(0, 0.1 * delay)  # 10% jitter
+    return delay + jitter
+
+
+def _is_retryable_error(error: Exception) -> bool:
+    """Determine if an error is retryable."""
+    error_str = str(error).lower()
+
+    # Retryable errors
+    retryable_patterns = [
+        "rate limit",
+        "429",
+        "timeout",
+        "server error",
+        "500",
+        "502",
+        "503",
+        "504",
+        "connection",
+        "network",
+    ]
+
+    # Non-retryable errors
+    non_retryable_patterns = [
+        "invalid api key",
+        "authentication",
+        "401",
+        "403",
+        "invalid request",
+        "400",
+    ]
+
+    for pattern in non_retryable_patterns:
+        if pattern in error_str:
+            return False
+
+    for pattern in retryable_patterns:
+        if pattern in error_str:
+            return True
+
+    # Default to retryable for unknown errors
+    return True
+
+
 class TokenUsageTracker:
     """Track token usage and calculate costs for Response API"""
 
@@ -49,6 +99,9 @@ class TokenUsageTracker:
         self.total_tokens: int = 0
         self.total_cost: float = 0.0
         self.api_calls: int = 0
+        self.successful_calls: int = 0
+        self.failed_calls: int = 0
+        self.retry_attempts: int = 0
 
     def update(self, usage_data: dict[str, int]) -> None:
         """Update token counts from API response"""
@@ -62,10 +115,32 @@ class TokenUsageTracker:
         completion_cost = usage_data.get("completion_tokens", 0) * 0.03 / 1000
         self.total_cost += prompt_cost + completion_cost
 
+    def record_success(self) -> None:
+        """Record a successful API call"""
+        self.successful_calls += 1
+
+    def record_failure(self) -> None:
+        """Record a failed API call"""
+        self.failed_calls += 1
+
+    def record_retry(self) -> None:
+        """Record a retry attempt"""
+        self.retry_attempts += 1
+
+    def get_success_rate(self) -> float:
+        """Calculate success rate"""
+        total = self.successful_calls + self.failed_calls
+        return (self.successful_calls / total * 100) if total > 0 else 0.0
+
     def __str__(self) -> str:
+        success_rate = self.get_success_rate()
         return (
             f"\nToken Usage Statistics:\n"
             f"Total API Calls: {self.api_calls:,}\n"
+            f"Successful Calls: {self.successful_calls:,}\n"
+            f"Failed Calls: {self.failed_calls:,}\n"
+            f"Retry Attempts: {self.retry_attempts:,}\n"
+            f"Success Rate: {success_rate:.1f}%\n"
             f"Prompt Tokens: {self.prompt_tokens:,}\n"
             f"Completion Tokens: {self.completion_tokens:,}\n"
             f"Total Tokens: {self.total_tokens:,}\n"
@@ -104,7 +179,7 @@ class ResponseAPIManager:
         messages: list[dict[str, str]],
         tools: list[dict[str, Any]] | None = None,
         temperature: float = 0.3,
-        max_retries: int = 2,
+        max_retries: int = 4,  # Increased from 2 to 4
     ) -> dict[str, Any]:
         """Start a new conversation with the Response API"""
         retry_count = 0
@@ -159,19 +234,40 @@ class ResponseAPIManager:
                 if hasattr(response, "usage") and response.usage:
                     token_tracker.update(response.usage.model_dump())
 
+                # Record successful call
+                if "error" not in result:
+                    token_tracker.record_success()
+                else:
+                    token_tracker.record_failure()
+
                 return result
 
             except Exception as e:
-                logging.error(
-                    f"Response API call failed (attempt {retry_count + 1}/{max_retries}): {str(e)}",
-                )
                 retry_count += 1
+                token_tracker.record_retry()
+
+                # Check if error is retryable
+                if not _is_retryable_error(e):
+                    logger.error(f"Non-retryable error in Response API call: {str(e)}")
+                    token_tracker.record_failure()
+                    return {"error": f"Non-retryable error: {str(e)}"}
+
                 if retry_count >= max_retries:
+                    logger.error(
+                        f"Response API call failed after {max_retries} attempts: {str(e)}"
+                    )
+                    token_tracker.record_failure()
                     return {"error": f"Maximum retries exceeded: {str(e)}"}
 
-                # Exponential backoff: 1s, 2s
-                time.sleep(2**retry_count)
+                # Calculate backoff delay with jitter
+                delay = _calculate_backoff_delay(retry_count - 1)
+                logger.warning(
+                    f"Response API call failed (attempt {retry_count}/{max_retries}), "
+                    f"retrying in {delay:.2f}s: {str(e)}"
+                )
+                time.sleep(delay)
 
+        token_tracker.record_failure()
         return {"error": "Maximum retries exceeded"}
 
     def continue_conversation(
@@ -226,7 +322,7 @@ class ResponseAPIManager:
         response: Any,
         tools: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
-        """Parse the response from the Response API"""
+        """Parse the response from the Response API with enhanced validation"""
         # Check for tool calls in the output
         if hasattr(response, "output") and response.output:
             for output_item in response.output:
@@ -234,32 +330,55 @@ class ResponseAPIManager:
                     if hasattr(output_item, "arguments") and output_item.arguments:
                         try:
                             result = json.loads(output_item.arguments)
-                            # Check if the result is empty or has default values
-                            if not result or (
-                                isinstance(result, dict) and not any(result.values())
-                            ):
-                                return {
-                                    "error": "Function call returned empty arguments"
-                                }
+
+                            # Enhanced validation: Check for empty or malformed results
+                            if not result:
+                                logger.warning("Function call returned empty result")
+                                return {"error": "Function call returned empty result"}
+
+                            if isinstance(result, dict):
+                                # Check if all values are empty or None
+                                if not any(result.values()):
+                                    logger.warning(
+                                        "Function call returned result with all empty values"
+                                    )
+                                    return {
+                                        "error": "Function call returned result with all empty values"
+                                    }
+
+                                # Log successful function call for monitoring
+                                logger.info(
+                                    f"Successfully parsed function call: {output_item.name}"
+                                )
+
                             return result
-                        except json.JSONDecodeError:
+                        except json.JSONDecodeError as e:
+                            logger.error(
+                                f"Failed to parse function arguments: {output_item.arguments[:100]}... Error: {e}"
+                            )
                             return {
-                                "error": f"Failed to parse function arguments: {output_item.arguments[:100]}...",
+                                "error": f"Failed to parse function arguments: {output_item.arguments[:100]}..."
                             }
-                    return {"error": "Function call response was empty"}
+                    else:
+                        logger.warning("Function call response was empty")
+                        return {"error": "Function call response was empty"}
 
         # Check for output_text which contains the main response
         if hasattr(response, "output_text") and response.output_text:
             content = response.output_text
         else:
+            logger.warning("Empty response from API")
             return {"error": "Empty response from API"}
 
         if not content:
+            logger.warning("Empty content in response")
             return {"error": "Empty response from API"}
 
         # Try to parse as JSON directly
         try:
-            return json.loads(content)
+            result = json.loads(content)
+            logger.info("Successfully parsed JSON response")
+            return result
         except json.JSONDecodeError:
             # Try to extract JSON from markdown code blocks
             import re
@@ -267,18 +386,26 @@ class ResponseAPIManager:
             json_match = re.search(r"```(?:json)?\s*\n(.*?)\n```", content, re.DOTALL)
             if json_match:
                 try:
-                    return json.loads(json_match.group(1).strip())
+                    result = json.loads(json_match.group(1).strip())
+                    logger.info("Successfully parsed JSON from markdown code block")
+                    return result
                 except json.JSONDecodeError:
-                    pass
+                    logger.warning("Failed to parse JSON from markdown code block")
 
             # Try to find JSON-like content without markdown
             json_match = re.search(r"\{.*\}", content, re.DOTALL)
             if json_match:
                 try:
-                    return json.loads(json_match.group(0))
+                    result = json.loads(json_match.group(0))
+                    logger.info("Successfully parsed JSON from content")
+                    return result
                 except json.JSONDecodeError:
-                    pass
+                    logger.warning("Failed to parse JSON from content")
 
+            # Log the raw response for debugging
+            logger.error(
+                f"Failed to parse JSON response. Raw content: {content[:200]}..."
+            )
             return {"error": f"Failed to parse JSON: {content[:100]}..."}
 
     def _messages_to_input(self, messages: list[dict[str, str]]) -> str:
