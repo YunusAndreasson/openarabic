@@ -3,7 +3,6 @@
 import concurrent.futures
 import json
 import logging
-from pathlib import Path
 from typing import Any
 
 from tqdm import tqdm
@@ -16,15 +15,7 @@ from data.models import (
     WordTranslation,
 )
 from data.pipeline_types import (
-    RefinementInput,
-    RefinementInputs,
     TranslationBatch,
-)
-from pipeline.translation_engine import (
-    batch_add_tashkeel,
-    batch_refine_translations,
-    batch_translate_full_sentences,
-    batch_translate_words,
 )
 from utils.context_cache import ContextCache
 from utils.file_utils import write_json_file
@@ -169,7 +160,26 @@ def process_batch(
                             ],
                         }
                     )
-                word_options.append({"word_translations": fallback_word_translations})
+                word_options.append(
+                    {
+                        "word_translations": [
+                            {
+                                "arabic": word,
+                                "english_options": [f"[{word}]"],
+                                "pos": "unknown",
+                                "essential": word,
+                                "essential_translation_options": [f"[{word}]"],
+                                "notes": "Fallback due to word translation failure",
+                                "uncertainties": [
+                                    {
+                                        "text": word,
+                                        "reason": "Word translation step failed",
+                                    }
+                                ],
+                            }
+                        ]
+                    }
+                )
 
         return refine_translations(
             batch_sentences,

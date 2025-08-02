@@ -27,7 +27,6 @@ from data.schemas import (
     REFINEMENT_TOOL,
     SENTENCE_TRANSLATION_USER_PROMPT,
     TASHKEEL_TOOL,
-    TASHKEEL_USER_PROMPT,
     TRANSLATE_SENTENCES_TOOL,
     WORD_BY_WORD_USER_PROMPT,
     WORD_TRANSLATION_TOOL,
@@ -37,10 +36,9 @@ from utils.camel_tools_service import (
     generate_tashkeel_suggestions,
 )
 from utils.context_cache import ContextCache
-from utils.exceptions import TranslationError
 from utils.google_translate_service import GoogleTranslateService
 from utils.responses_api import call_response_api
-from utils.text_utils import filter_arabic_words, get_optimized_context
+from utils.text_utils import filter_arabic_words
 
 logger = logging.getLogger(__name__)
 
