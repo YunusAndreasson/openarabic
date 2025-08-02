@@ -45,6 +45,21 @@ from utils.text_utils import filter_arabic_words, get_optimized_context
 logger = logging.getLogger(__name__)
 
 
+def _validate_uncertainties(uncertainties: list[Any]) -> list[dict[str, str]]:
+    """Validate and convert uncertainties to proper format."""
+    validated = []
+    for item in uncertainties:
+        if isinstance(item, dict) and "text" in item and "reason" in item:
+            validated.append(item)
+        elif isinstance(item, str):
+            # Convert string to proper format
+            validated.append({"text": "unknown", "reason": item})
+        else:
+            # Skip invalid items
+            continue
+    return validated
+
+
 def _build_word_prompt(
     tashkeel: str,
     translation: str,
@@ -472,7 +487,9 @@ def batch_translate_words(
                                 essential=essential_letters,
                                 essential_translation_options=ess_opts,
                                 notes=word_data.get("notes") or None,
-                                uncertainties=word_data.get("uncertainties", []),
+                                uncertainties=_validate_uncertainties(
+                                    word_data.get("uncertainties", [])
+                                ),
                             ).model_dump(),
                         )
 
