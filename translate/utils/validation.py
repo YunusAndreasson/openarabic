@@ -79,9 +79,8 @@ def validate_tashkeel_added(
                         tashkeel_added = True
                 else:
                     # If original has no diacritics and tashkeel is identical,
-                    # the tashkeel service might not have added any - consider it valid anyway
-                    # This is more lenient to account for camel_tools suggestions and edge cases
-                    tashkeel_added = True
+                    # the tashkeel service failed to add diacritics
+                    tashkeel_added = False
 
         if not tashkeel_added:
             failed_sentences.append((sentence_index, original, tashkeel_text))
@@ -160,23 +159,25 @@ def validate_translation_results(
                 ):
                     for j, word in enumerate(word_trans):
                         arabic = word.get("arabic", "")
-                        english = word.get("english", "")
-                        essential_translation = word.get("essential_translation", "")
+                        english_options = word.get("english_options", [])
+                        essential_translation_options = word.get(
+                            "essential_translation_options", []
+                        )
                         if not arabic:
                             errors.append(
                                 f"Sentence {i}, Word {j}: Missing Arabic text",
                             )
-                        if not english:
+                        if not english_options:
                             errors.append(
-                                f"Sentence {i}, Word {j}: Missing English translation",
+                                f"Sentence {i}, Word {j}: Missing English options",
                             )
                         if not word.get("essential"):
                             errors.append(
                                 f"Sentence {i}, Word {j}: Missing essential letters",
                             )
-                        if not essential_translation:
+                        if not essential_translation_options:
                             errors.append(
-                                f"Sentence {i}, Word {j}: Missing essential translation",
+                                f"Sentence {i}, Word {j}: Missing essential translation options",
                             )
 
             # Check word translations if requested
@@ -208,6 +209,11 @@ def validate_translation_results(
                         if not essential_translation:
                             errors.append(
                                 f"Sentence {i}, Word {j}: Missing final essential translation",
+                            )
+                        pos = word.get("pos", "")
+                        if not pos:
+                            errors.append(
+                                f"Sentence {i}, Word {j}: Missing part of speech",
                             )
 
             # Check tashkeel

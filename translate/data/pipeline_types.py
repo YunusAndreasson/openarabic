@@ -38,10 +38,8 @@ class WordTranslationOption(TypedDict):
     pos: str  # Required in schema
     essential: str
     essential_translation_options: list[str]
-    notes: str | None  # Optional
-    uncertainties: list[
-        dict[str, Any]
-    ]  # Schema defines as "type": "object" - keeping flexible
+    notes: str  # Required in schema
+    uncertainties: list[dict[str, str]]  # text and reason
 
 
 class WordTranslationResult(TypedDict):
@@ -55,12 +53,12 @@ class RefinedWordTranslation(TypedDict):
     pos: str  # Required in schema
     essential: str
     essential_translation: str
-    notes: str | None  # Optional
+    notes: str  # Required in schema
 
 
 class ResolvedUncertainty(TypedDict):
     step: str
-    original_uncertainty: dict[str, Any]
+    original_uncertainty: dict[str, str]  # text and reason
     resolution: str
     explanation: str
 

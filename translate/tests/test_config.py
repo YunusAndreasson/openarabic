@@ -62,12 +62,15 @@ class TestModels:
             original="مرحبا بالعالم",
             full_translation="Hello world",
             tashkeel="مَرْحَبًا بِالْعَالَمِ",
+            notes="Simple greeting sentence",
             word_by_word=[
                 WordTranslation(
                     arabic="مرحبا",
                     english="hello",
+                    pos="interjection",
                     essential="مرحب",
                     essential_translation="hello",
+                    notes="Greeting word",
                 )
             ],
         )

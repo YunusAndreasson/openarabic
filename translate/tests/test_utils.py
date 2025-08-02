@@ -128,8 +128,10 @@ class TestValidation:
                     {
                         "arabic": "مرحبا",
                         "english_options": ["hello", "hi"],
+                        "pos": "interjection",
                         "essential": "مرحبا",
                         "essential_translation_options": ["hello", "hi"],
+                        "notes": "Greeting word",
                     }
                 ],
             }
@@ -150,8 +152,10 @@ class TestValidation:
                     {
                         "arabic": "",
                         "english_options": ["hello", "hi"],
+                        "pos": "interjection",
                         "essential": "مرحبا",
                         "essential_translation_options": ["hello", "hi"],
+                        "notes": "Greeting word",
                     }
                 ],
             }
@@ -172,8 +176,10 @@ class TestValidation:
                     {
                         "arabic": "مرحبا",
                         "english_options": [],
+                        "pos": "interjection",
                         "essential": "مرحبا",
                         "essential_translation_options": ["hello", "hi"],
+                        "notes": "Greeting word",
                     }
                 ],
             }
@@ -194,8 +200,10 @@ class TestValidation:
                     {
                         "arabic": "مرحبا",
                         "english": "hello",
+                        "pos": "interjection",
                         "essential": "مرحبا",
                         "essential_translation": "hello",
+                        "notes": "Greeting word",
                     }
                 ],
             }
@@ -216,8 +224,10 @@ class TestValidation:
                     {
                         "arabic": "",
                         "english": "hello",
+                        "pos": "interjection",
                         "essential": "مرحبا",
                         "essential_translation": "hello",
+                        "notes": "Greeting word",
                     }
                 ],
             }
@@ -277,8 +287,10 @@ class TestValidateFinalTranslation:
             WordTranslation(
                 arabic="مرحبا",
                 english="hello",
+                pos="interjection",
                 essential="مرحبا",
                 essential_translation="hello",
+                notes="Greeting word",
             )
         ]
 
@@ -287,6 +299,7 @@ class TestValidateFinalTranslation:
             original="مرحبا",
             full_translation="Hello",
             tashkeel="مَرْحَباً",
+            notes="Simple greeting",
             word_by_word=word_translations,
         )
 
@@ -300,6 +313,7 @@ class TestValidateFinalTranslation:
             original="مرحبا",
             full_translation="",
             tashkeel="مَرْحَباً",
+            notes="Empty translation",
             word_by_word=[],
         )
 
@@ -313,6 +327,7 @@ class TestValidateFinalTranslation:
             original="مرحبا",
             full_translation="Hello",
             tashkeel="",
+            notes="Missing tashkeel",
             word_by_word=[],
         )
 
@@ -326,6 +341,7 @@ class TestValidateFinalTranslation:
             original="مرحبا",
             full_translation="[Translation Error] Hello",
             tashkeel="مَرْحَباً",
+            notes="Error in translation",
             word_by_word=[],
         )
 
@@ -339,6 +355,7 @@ class TestValidateFinalTranslation:
             original="مرحبا بالعالم",
             full_translation="Hello world",
             tashkeel="مَرْحَباً بِالْعَالَمِ",
+            notes="Missing word translations",
             word_by_word=[],
         )
 
@@ -351,8 +368,10 @@ class TestValidateFinalTranslation:
             WordTranslation(
                 arabic="مرحبا",
                 english="hello",
+                pos="interjection",
                 essential="مرحبا",
                 essential_translation="hello",
+                notes="Greeting word",
             )
         ]
 
@@ -361,6 +380,7 @@ class TestValidateFinalTranslation:
             original="مرحبا بالعالم هذا نص",  # 4 words
             full_translation="Hello world this text",
             tashkeel="مَرْحَباً بِالْعَالَمِ هَذَا نَصّ",
+            notes="Word count mismatch",
             word_by_word=word_translations,  # Only 1 word translation
         )
 
@@ -373,8 +393,10 @@ class TestValidateFinalTranslation:
             WordTranslation(
                 arabic="",
                 english="hello",
+                pos="interjection",
                 essential="مرحبا",
                 essential_translation="hello",
+                notes="Missing Arabic text",
             )
         ]
 
@@ -383,6 +405,7 @@ class TestValidateFinalTranslation:
             original="مرحبا",
             full_translation="Hello",
             tashkeel="مَرْحَباً",
+            notes="Missing word fields",
             word_by_word=word_translations,
         )
 

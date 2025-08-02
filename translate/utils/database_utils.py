@@ -546,6 +546,18 @@ def validate_article_data(data: dict) -> None:
                     raise ValueError(
                         f"Missing English translation in word_by_word at translation {idx}, word {word_idx}",
                     )
+                if not word.get("pos"):
+                    raise ValueError(
+                        f"Missing part of speech in word_by_word at translation {idx}, word {word_idx}",
+                    )
+                if not word.get("essential"):
+                    raise ValueError(
+                        f"Missing essential letters in word_by_word at translation {idx}, word {word_idx}",
+                    )
+                if not word.get("essential_translation"):
+                    raise ValueError(
+                        f"Missing essential translation in word_by_word at translation {idx}, word {word_idx}",
+                    )
 
     difficulty = data["metadata"]["difficulty_level"]
     if (

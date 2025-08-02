@@ -43,7 +43,7 @@ TRANSLATE_SENTENCES_TOOL = {
                             },
                             "notes": {
                                 "type": "string",
-                                "description": "Translation notes (always expected)",
+                                "description": "Translation notes (optional)",
                             },
                             "uncertainties": {
                                 "type": "array",
@@ -66,7 +66,42 @@ TRANSLATE_SENTENCES_TOOL = {
                             "word_by_word": {
                                 "type": "array",
                                 "description": "Word-by-word analysis (always expected)",
-                                "items": {"type": "object"},
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "arabic": {
+                                            "type": "string",
+                                            "description": "The original Arabic word",
+                                        },
+                                        "english": {
+                                            "type": "string",
+                                            "description": "The English translation",
+                                        },
+                                        "pos": {
+                                            "type": "string",
+                                            "description": "Part of speech",
+                                        },
+                                        "essential": {
+                                            "type": "string",
+                                            "description": "Essential letters",
+                                        },
+                                        "essential_translation": {
+                                            "type": "string",
+                                            "description": "Essential translation",
+                                        },
+                                        "notes": {
+                                            "type": "string",
+                                            "description": "Additional notes (optional)",
+                                        },
+                                    },
+                                    "required": [
+                                        "arabic",
+                                        "english",
+                                        "pos",
+                                        "essential",
+                                        "essential_translation",
+                                    ],
+                                },
                             },
                         },
                         "required": [
@@ -128,7 +163,7 @@ TASHKEEL_TOOL = {
                                         },
                                         "related_translation_uncertainty": {
                                             "type": "string",
-                                            "description": "Related uncertainty from translation step (always expected)",
+                                            "description": "Related uncertainty from translation step (optional)",
                                         },
                                     },
                                     "required": [
@@ -183,11 +218,11 @@ WORD_TRANSLATION_TOOL = {
                                         "pos": {
                                             "type": "string",
                                             "enum": VALID_POS,
-                                            "description": "Part of speech (always expected)",
+                                            "description": "Part of speech (required)",
                                         },
                                         "essential": {
                                             "type": "string",
-                                            "description": "Arabic word stripped of common affixes (و, ف, ب, ك, ل, س, etc.) and common suffixes (object pronouns و, ه, ك, ي, نا, etc.), excluding case/mood endings. Provide just the core letters, ideally with basic diacritics if standard (e.g., base verb form like فَعَلَ). Aim for the simplest recognizable form for flashcards.",
+                                            "description": "Arabic word stripped of common affixes (و, ف, ب, ك, ل, س, etc.) and common suffixes (object pronouns و, ه, ك, ي, نا, etc.), excluding case/mood endings. Provide just the core letters, ideally with basic diacritics if standard (e.g., base verb form like فَعَلَ). Aim for the simplest recognizable form for flashcards. (required)",
                                         },
                                         "essential_translation_options": {
                                             "type": "array",
@@ -196,12 +231,25 @@ WORD_TRANSLATION_TOOL = {
                                         },
                                         "notes": {
                                             "type": "string",
-                                            "description": "Grammar notes or context (always expected)",
+                                            "description": "Grammar notes or context (required)",
                                         },
                                         "uncertainties": {
                                             "type": "array",
                                             "description": "List of uncertain parts for this word",
-                                            "items": {"type": "object"},
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "text": {
+                                                        "type": "string",
+                                                        "description": "The uncertain text or word",
+                                                    },
+                                                    "reason": {
+                                                        "type": "string",
+                                                        "description": "Reason for uncertainty",
+                                                    },
+                                                },
+                                                "required": ["text", "reason"],
+                                            },
                                         },
                                     },
                                     "required": [
@@ -338,6 +386,17 @@ REFINEMENT_TOOL = {
                                         "original_uncertainty": {
                                             "type": "object",
                                             "description": "The original uncertainty object",
+                                            "properties": {
+                                                "text": {
+                                                    "type": "string",
+                                                    "description": "The uncertain text or word",
+                                                },
+                                                "reason": {
+                                                    "type": "string",
+                                                    "description": "Reason for uncertainty",
+                                                },
+                                            },
+                                            "required": ["text", "reason"],
                                         },
                                         "resolution": {
                                             "type": "string",
@@ -384,7 +443,7 @@ REFINEMENT_TOOL = {
                             },
                             "changes_made": {
                                 "type": "array",
-                                "description": "List of significant changes made during refinement",
+                                "description": "List of specific changes made during refinement (e.g., 'Selected option 1 for word 3', 'Corrected tashkeel for word 2')",
                                 "items": {"type": "string"},
                             },
                         },
@@ -560,6 +619,7 @@ IMPORTANT: Do not modify, normalize, or clean any part of the original Arabic te
 VALIDATION CHECKLIST:
 - Every translation has a non-empty `translation` field
 - Every translation has an `uncertainties` array (even if empty)
+- Every translation has a `word_by_word` array with proper structure
 - All original text formatting is preserved
 - No fields are missing or null
 
@@ -610,6 +670,8 @@ Input texts:
 WORD_BY_WORD_USER_PROMPT = (
     "IMPORTANT: Return only a JSON object matching the `WORD_TRANSLATION_TOOL` schema.\\n"
     "ENSURE: The `essential` field must be populated for every word; never return null for this.\\n"
+    "ENSURE: The `pos` field must be populated for every word; never return null for this.\\n"
+    "ENSURE: The `notes` field must be populated for every word; never return null for this.\\n"
     "ENSURE: Provide the top 1-3 most likely options for `english_options` and `essential_translation_options`, ordered from most to least likely.\\n"
     "ENSURE: The `essential` field should contain the core letters, stripped of affixes/suffixes and case/mood endings. Basic standard diacritics (like on فَعَلَ) are acceptable, but avoid complex or preserved original diacritics unless part of the base form.\\n"
     "ENSURE: Preserve ALL original text formatting, punctuation, and special characters in the `arabic` field.\\n"

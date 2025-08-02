@@ -41,8 +41,8 @@ class TestTashkeelValidation:
         error_message = str(exc_info.value)
         assert "Tashkeel validation failed" in error_message
         assert "2 sentences did not have tashkeel added" in error_message
-        assert "Line 1: Original='قال النبي' -> Tashkeel='قال النبي'" in error_message
-        assert "Line 2: Original='في المسجد' -> Tashkeel='في المسجد'" in error_message
+        assert "Line 1: 'قال النبي' -> 'قال النبي'" in error_message
+        assert "Line 2: 'في المسجد' -> 'في المسجد'" in error_message
 
     def test_validate_tashkeel_added_partial_failure(self):
         """Test tashkeel validation when some sentences have diacritics and others don't."""
@@ -55,13 +55,12 @@ class TestTashkeelValidation:
             TashkeelResult(tashkeel="بِسْمِ اللَّهِ", uncertainties=[]),  # Diacritics added
         ]
 
-        with pytest.raises(TranslationValidationError) as exc_info:
-            validate_tashkeel_added(original_sentences, tashkeel_results)
+        # Should not raise an error when only SOME sentences fail (new lenient behavior)
+        # It should only log a warning
+        validate_tashkeel_added(original_sentences, tashkeel_results)
 
-        error_message = str(exc_info.value)
-        assert "Tashkeel validation failed" in error_message
-        assert "1 sentences did not have tashkeel added" in error_message
-        assert "Line 2: Original='في المسجد' -> Tashkeel='في المسجد'" in error_message
+        # The validation should pass without raising an exception
+        # The warning is logged but doesn't break the pipeline
 
     def test_validate_tashkeel_added_with_sentence_indices(self):
         """Test tashkeel validation with custom sentence indices."""
@@ -79,9 +78,7 @@ class TestTashkeelValidation:
             )
 
         error_message = str(exc_info.value)
-        assert (
-            "Line 6: Original='قال النبي' -> Tashkeel='قال النبي'" in error_message
-        )  # Index + 1
+        assert "Line 6: 'قال النبي' -> 'قال النبي'" in error_message  # Index + 1
 
     def test_validate_tashkeel_added_original_has_diacritics(self):
         """Test tashkeel validation when original text already has some diacritics."""
@@ -125,4 +122,4 @@ class TestTashkeelValidation:
 
         error_message = str(exc_info.value)
         assert "Tashkeel validation failed" in error_message
-        assert "Line 1: Original='قال النبي' -> Tashkeel=''" in error_message
+        assert "Line 1: 'قال النبي' -> ''" in error_message

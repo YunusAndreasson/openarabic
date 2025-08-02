@@ -17,8 +17,7 @@ class WordTranslation(BaseModel):
         default=None,
         description="Final chosen one-word English meaning",
     )
-    notes: str | None = Field(
-        default=None,
+    notes: str = Field(
         description="Any special notes about the translation",
     )
 
@@ -28,10 +27,10 @@ class WordTranslationOptions(BaseModel):
 
     arabic: str
     english_options: list[str] = Field(default_factory=list)
-    pos: str | None = Field(default=None)
-    essential: str | None = Field(default=None)
+    pos: str
+    essential: str
     essential_translation_options: list[str] = Field(default_factory=list)
-    notes: str | None = Field(default=None)
+    notes: str
     uncertainties: list[dict[str, Any]] = Field(
         default_factory=list,
         description="Keep uncertainties tied to the options step",
@@ -46,7 +45,7 @@ class SentenceTranslation(BaseModel):
     tashkeel: str = Field(description="Original with diacritical marks")
     word_by_word: list[WordTranslation] = Field(description="Stores final chosen words")
     full_translation: str
-    notes: str | None = Field(default=None)
+    notes: str
     verification_status: str | None = Field(default=None)
     verification_issues: list[str] | None = Field(default=None)
 

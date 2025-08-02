@@ -75,13 +75,13 @@ class TestWrapInArabicSSML:
         """Test wrapping text in Arabic SSML tags."""
         text = "مرحبا بالعالم"
         result = wrap_in_arabic_ssml(text)
-        expected = '<speak><lang xml:lang="ar">مرحبا بالعالم</lang></speak>'
+        expected = "مرحبا بالعالم"  # Now returns plain text
         assert result == expected
 
     def test_wrap_in_arabic_ssml_empty(self):
         """Test wrapping empty text in SSML."""
         result = wrap_in_arabic_ssml("")
-        expected = '<speak><lang xml:lang="ar"></lang></speak>'
+        expected = ""  # Now returns plain text
         assert result == expected
 
 

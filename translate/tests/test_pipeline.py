@@ -131,6 +131,7 @@ class TestTranslateFile:
                             pos="interjection",
                             essential="مرحب",
                             essential_translation="hello",
+                            notes="Greeting word",
                         )
                     ],
                     full_translation="Hello world.",
