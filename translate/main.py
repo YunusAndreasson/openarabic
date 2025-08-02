@@ -92,7 +92,9 @@ def run_split_file(input_file: str, author_folder: str) -> str:
     return output_file
 
 
-def review_split_file(split_file: str, author_name: str) -> bool:
+def review_split_file(
+    split_file: str, author_name: str, force_yes: bool = False
+) -> bool:
     """Review the split file and ask user if they want to continue."""
     if not os.path.exists(split_file):
         logger.info(f"❌ Split file not found: {split_file}")
@@ -133,6 +135,7 @@ def review_split_file(split_file: str, author_name: str) -> bool:
 
         return confirm_step(
             "Review complete. Would you like to proceed with translation?",
+            force_yes,
         )
 
     except Exception as e:
@@ -147,7 +150,9 @@ def run_translation(input_file: str, output_file: str, batch_size: int) -> None:
         sys.exit(1)
 
 
-def review_translation(output_file: str, author_name: str) -> bool:
+def review_translation(
+    output_file: str, author_name: str, force_yes: bool = False
+) -> bool:
     """Review the translation output and ask user if they want to continue."""
     if not os.path.exists(output_file):
         logger.error(f"❌ Translation output file not found: {output_file}")
@@ -187,6 +192,7 @@ def review_translation(output_file: str, author_name: str) -> bool:
 
         return confirm_step(
             "Review complete. Would you like to proceed with database insertion?",
+            force_yes,
         )
 
     except Exception as e:
@@ -221,8 +227,12 @@ def run_insert_only() -> None:
     logger.info("✅ Database insertion completed successfully.")
 
 
-def confirm_step(prompt: str) -> bool:
+def confirm_step(prompt: str, force_yes: bool = False) -> bool:
     """Get user confirmation for a step"""
+    if force_yes:
+        logger.info(f"Auto-confirming: {prompt}")
+        return True
+
     while True:
         response = input(f"{prompt} (y/n): ").lower().strip()
         if response in ["y", "yes"]:
@@ -249,6 +259,7 @@ Examples:
   python main.py --split --translate        # Split then translate
   python main.py --translate --insert       # Translate then insert
   python main.py --split --translate --insert  # Full pipeline
+  python main.py --split --translate --insert --force-yes  # Full pipeline with auto-confirm
         """,
     )
 
@@ -278,6 +289,13 @@ Examples:
         help=f"Batch size for translation (default: {DEFAULT_BATCH_SIZE})",
     )
 
+    parser.add_argument(
+        "--force-yes",
+        "-y",
+        action="store_true",
+        help="Automatically answer 'yes' to all confirmation questions",
+    )
+
     args = parser.parse_args()
 
     if not any([args.split, args.translate, args.insert]):
@@ -288,6 +306,7 @@ Examples:
         logger.error(f"❌ Batch size must be between 1 and 15, got: {args.batch_size}")
         sys.exit(1)
 
+    # Only run split phase if specifically requested
     if args.split:
         logger.info("🔄 Phase 1: Splitting input files from inbox into sentences...")
 
@@ -305,10 +324,11 @@ Examples:
 
         # Review all split files
         for split_file, author_name in split_files:
-            if not review_split_file(split_file, author_name):
+            if not review_split_file(split_file, author_name, args.force_yes):
                 logger.info(f"Pipeline stopped after split review for {author_name}.")
                 sys.exit(0)
 
+    # Only run translate phase if specifically requested
     if args.translate:
         # Find all split files in the split directory
         split_files = []
@@ -345,12 +365,13 @@ Examples:
 
             run_translation(split_file, output_file, args.batch_size)
 
-            if not review_translation(output_file, author_name):
+            if not review_translation(output_file, author_name, args.force_yes):
                 logger.info(
                     f"Pipeline stopped after translation review for {author_name}."
                 )
                 sys.exit(0)
 
+    # Only run insert phase if specifically requested
     if args.insert:
         # Find all translation files in the translate directory
         translation_files = []

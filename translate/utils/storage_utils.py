@@ -104,8 +104,10 @@ def get_author_id(name: str = "Ibn Kathir") -> int:
     return int(result.data[0]["id"])
 
 
-def get_word_type_id(pos: str) -> int:
+def get_word_type_id(pos: str | None) -> int:
     """Get word type ID from POS."""
+    if pos is None:
+        return WORD_TYPE_MAPPING[PartOfSpeech.NOUN.value]
     word_type_id = WORD_TYPE_MAPPING.get(pos.lower())
     if word_type_id is None:
         return WORD_TYPE_MAPPING[PartOfSpeech.NOUN.value]

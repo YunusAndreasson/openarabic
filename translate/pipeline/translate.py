@@ -1,6 +1,9 @@
+"""Translation pipeline for processing Arabic text files."""
+
 import concurrent.futures
 import json
 import logging
+from pathlib import Path
 from typing import Any
 
 from tqdm import tqdm
@@ -10,10 +13,22 @@ from data.models import (
     SplitResult,
     TextMetadata,
     TranslationValidationError,
+    WordTranslation,
 )
-from data.pipeline_types import TranslationBatch
+from data.pipeline_types import (
+    RefinementInput,
+    RefinementInputs,
+    TranslationBatch,
+)
+from pipeline.translation_engine import (
+    batch_add_tashkeel,
+    batch_refine_translations,
+    batch_translate_full_sentences,
+    batch_translate_words,
+)
 from utils.context_cache import ContextCache
 from utils.file_utils import write_json_file
+from utils.text_utils import filter_arabic_words
 from utils.translation_processor import (
     apply_tashkeel,
     refine_translations,
@@ -23,9 +38,8 @@ from utils.translation_processor import (
 
 logger = logging.getLogger(__name__)
 
-# Constants
-MAX_BATCH_SIZE = 5
-MAX_CONTEXT_SENTENCES = 2
+# Maximum batch size for processing
+MAX_BATCH_SIZE = 12
 
 
 def create_batches(
@@ -99,31 +113,100 @@ def process_batch(
     if not batch_sentences:
         return []
 
-    # Use regular translation pipeline with Response API
-    translations = run_full_translation(batch_sentences, batch_contexts)
-    tashkeel = apply_tashkeel(
-        batch_sentences,
-        translations,
-        all_sentences,
-        batch_indices,
-        context_cache,
-    )
-    word_options = translate_words(
-        batch_sentences,
-        tashkeel,
-        translations,
-        all_sentences,
-        batch_indices,
-        context_cache,
-    )
+    try:
+        # Use regular translation pipeline with Response API
+        translations = run_full_translation(batch_sentences, batch_contexts)
 
-    return refine_translations(
-        batch_sentences,
-        start_index,
-        translations,
-        tashkeel,
-        word_options,
-    )
+        # Add error handling for tashkeel step
+        try:
+            tashkeel = apply_tashkeel(
+                batch_sentences,
+                translations,
+                all_sentences,
+                batch_indices,
+                context_cache,
+            )
+        except Exception as e:
+            logger.error(
+                f"Tashkeel step failed for batch starting at {start_index}: {e}"
+            )
+            # Create fallback tashkeel results
+            tashkeel = [
+                {"tashkeel": sentence, "uncertainties": []}
+                for sentence in batch_sentences
+            ]
+
+        # Add error handling for word translation step
+        try:
+            word_options = translate_words(
+                batch_sentences,
+                tashkeel,
+                translations,
+                all_sentences,
+                batch_indices,
+                context_cache,
+            )
+        except Exception as e:
+            logger.error(
+                f"Word translation step failed for batch starting at {start_index}: {e}"
+            )
+            # Create fallback word options
+            word_options = []
+            for sentence in batch_sentences:
+                arabic_words = filter_arabic_words(sentence)
+                fallback_word_translations = []
+                for word in arabic_words:
+                    fallback_word_translations.append(
+                        {
+                            "arabic": word,
+                            "english_options": [f"[{word}]"],
+                            "pos": None,
+                            "essential": word,
+                            "essential_translation_options": [f"[{word}]"],
+                            "notes": "Fallback due to word translation failure",
+                            "uncertainties": [
+                                {"text": word, "reason": "Word translation step failed"}
+                            ],
+                        }
+                    )
+                word_options.append({"word_translations": fallback_word_translations})
+
+        return refine_translations(
+            batch_sentences,
+            start_index,
+            translations,
+            tashkeel,
+            word_options,
+        )
+    except Exception as e:
+        logger.error(
+            f"Batch processing failed for batch starting at {start_index}: {e}"
+        )
+        # Create minimal fallback results
+        fallback_results = []
+        for i, sentence in enumerate(batch_sentences):
+            fallback_results.append(
+                SentenceTranslation(
+                    index=start_index + i,
+                    original=sentence,
+                    tashkeel=sentence,  # Use original as fallback
+                    word_by_word=[
+                        WordTranslation(
+                            arabic=sentence,
+                            english="[Translation failed]",
+                            pos=None,
+                            essential=sentence,
+                            essential_translation="[Translation failed]",
+                            notes=f"Fallback due to batch processing error: {str(e)}",
+                        )
+                    ],
+                    full_translation="[Translation failed]",
+                    notes=f"Batch processing failed: {str(e)}",
+                    verification_status="Issues Found",
+                    verification_issues=[f"Batch processing error: {str(e)}"],
+                )
+            )
+        return fallback_results
 
 
 def process_batches(

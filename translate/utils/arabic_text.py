@@ -25,10 +25,10 @@ def preprocess_text_for_tts(text: str) -> str:
 
 def wrap_in_arabic_ssml(text: str) -> str:
     """
-    Wrap text in Arabic SSML tags for proper language handling.
-    This ensures the text is properly pronounced as Arabic.
+    Return plain Arabic text without SSML wrapping.
+    ElevenLabs multilingual model handles Arabic text directly without SSML.
     """
-    return f'<speak><lang xml:lang="ar">{text}</lang></speak>'
+    return text
 
 
 @functools.cache

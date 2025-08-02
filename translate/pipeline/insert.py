@@ -191,15 +191,15 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
         logger.error(f"Validation failed: {e}")
         raise
 
-    # Generate audio for sentences in the final phase
+    timing_stats = insert_article_sentences(article_id, data["translations"])
+
+    # Generate audio for sentences after they've been inserted
     if AUDIO_AVAILABLE:
         try:
             generate_article_audio(article_id, translations)
         except Exception as e:
             logger.error(f"Audio generation failed: {e}")
             # Continue without audio - don't fail the entire pipeline
-
-    timing_stats = insert_article_sentences(article_id, data["translations"])
 
     archive_files(file_path, article_id)
 

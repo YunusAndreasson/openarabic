@@ -185,37 +185,29 @@ def batch_add_tashkeel(
     indices: list[int] | None = None,
     context_cache: ContextCache | None = None,
 ) -> TashkeelResults:
-    """Add diacritical marks to multiple sentences in a batch"""
-    formatted_inputs: list[str] = []
-    for i, (sentence, translation_data) in enumerate(
-        zip(sentences, translation_results, strict=False),
-    ):
-        grammar_context = ""
-        if all_sentences and indices and i < len(indices):
-            if context_cache:
-                context = context_cache.get_context(indices[i], for_tashkeel=True)
-            else:
-                context = get_optimized_context(
-                    all_sentences,
-                    indices[i],
-                    for_tashkeel=True,
-                )
-            if context:
-                grammar_context = f"\nGrammatical context: {context}"
+    """Add diacritics to sentences using camel_tools suggestions as primary source."""
+    if not sentences:
+        return []
 
+    # Generate camel-tools tashkeel suggestions for all sentences
+    camel_suggestions_list = []
+    for sentence in sentences:
+        suggestions = generate_tashkeel_suggestions(sentence)
+        camel_suggestions_list.append(suggestions)
+
+    # Format inputs for the AI, emphasizing use of camel_tools suggestions
+    formatted_inputs = []
+    for i, (sentence, translation_data, camel_suggestions) in enumerate(
+        zip(sentences, translation_results, camel_suggestions_list, strict=False)
+    ):
         translation = translation_data.get("translation", "")
-        uncertainties = translation_data.get("uncertainties", [])
         uncertainty_notes = ""
-        if uncertainties:
+        if translation_data.get("uncertainties"):
             uncertainty_notes = "\nTranslation uncertainties:\n" + "\n".join(
-                f"- {u.get('text', '')}: {u.get('reason', '')}" for u in uncertainties
+                f"- {u}" for u in translation_data["uncertainties"]
             )
 
-        grammar_notes: list[str] = []
-        if "word_by_word" in translation_data:
-            for word in translation_data["word_by_word"]:
-                if word.get("notes") and word.get("arabic"):
-                    grammar_notes.append(f"{word['arabic']}: {word['notes']}")
+        grammar_notes = translation_data.get("grammar_notes", [])
         grammar_notes_str = ""
         if grammar_notes:
             grammar_notes_str = "\nGrammatical notes:\n" + "\n".join(
@@ -223,21 +215,62 @@ def batch_add_tashkeel(
             )
 
         # Generate camel-tools tashkeel suggestions
-        camel_suggestions = generate_tashkeel_suggestions(sentence)
         camel_suggestions_str = format_tashkeel_suggestions(camel_suggestions)
+
+        # Create a tashkeel-enhanced version of the sentence using camel_tools suggestions
+        enhanced_sentence = sentence
+        for original_word, suggested_tashkeel in camel_suggestions.items():
+            if (
+                suggested_tashkeel != original_word
+            ):  # Only replace if camel_tools provided a suggestion
+                enhanced_sentence = enhanced_sentence.replace(
+                    original_word, suggested_tashkeel
+                )
 
         formatted_inputs.append(
             f"Set {i + 1}:\n"
-            f"Arabic: {sentence}{grammar_context}\n"
+            f"Original Arabic: {sentence}\n"
+            f"Camel-tools enhanced: {enhanced_sentence}\n"
             f"Translation: {translation}{uncertainty_notes}{grammar_notes_str}"
             f"{f'\n{camel_suggestions_str}' if camel_suggestions_str else ''}",
         )
+
+    # Modified prompt to emphasize using camel_tools suggestions
+    modified_prompt = """IMPORTANT: Use the provided camel-tools tashkeel suggestions as your PRIMARY source for diacritics.
+
+The camel-tools suggestions are based on morphological analysis and should be used as the foundation. Your role is to:
+1. Use the camel-tools suggestions where provided
+2. Add any missing diacritics that camel-tools didn't cover
+3. Verify and improve the overall tashkeel based on the translation context
+4. Ensure complete vocalization of all words
+
+Add complete diacritical marks (tashkīl) to EVERY word in the Islamic Arabic text using the `TASHKEEL_TOOL` schema. Return your response as valid JSON.
+
+CRITICAL: You MUST provide ALL required fields. The `uncertainties` array must be present for every tashkeel result, even if empty.
+
+For each input text segment, provide:
+1. `tashkeel` (string):
+   - Start with the camel-tools enhanced version provided
+   - Add ALL necessary marks: fatḥa (َ), kasra (ِ), ḍamma (ُ), sukūn (ْ), shadda (ّ), and tanwīn (ً ٍ ٌ).
+   - Ensure EVERY eligible letter has appropriate diacritics (full vocalization).
+   - Use translation context and provided grammatical notes to resolve vowelization ambiguities.
+   - Pay special attention to case endings based on grammatical roles noted.
+   - Consider verb forms, tenses, and moods indicated in the notes.
+   - Ensure grammatical accuracy (case endings, conjugations).
+   - Preserve ALL original punctuation, formatting, and special characters.
+2. `uncertainties` (array of objects, optional):
+   - List specific words where diacritics are uncertain.
+   - Each object should have `word` (the word), `reason` (why it's uncertain), and optionally `related_translation_uncertainty`.
+   - Provide the primary interpretation based on context even if uncertain.
+
+Input texts:
+"""
 
     messages = [
         {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
         {
             "role": "user",
-            "content": TASHKEEL_USER_PROMPT + "\n\n" + "\n\n".join(formatted_inputs),
+            "content": modified_prompt + "\n\n" + "\n\n".join(formatted_inputs),
         },
     ]
 
@@ -392,46 +425,117 @@ def batch_translate_words(
                 if not isinstance(raw_word_translations, list):
                     raw_word_translations = []
 
-                for word_data in raw_word_translations:
-                    if not isinstance(word_data, dict):
-                        continue
-                    eng_opts = word_data.get("english_options", [])
-                    if not isinstance(eng_opts, list) or not all(
-                        isinstance(s, str) for s in eng_opts
-                    ):
-                        eng_opts = []
-                    ess_opts = word_data.get("essential_translation_options", [])
-                    if not isinstance(ess_opts, list) or not all(
-                        isinstance(s, str) for s in ess_opts
-                    ):
-                        ess_opts = []
-                    arabic_text = word_data.get("arabic", "")
-                    essential_letters = word_data.get("essential", arabic_text)
-                    word_translations_options.append(
-                        WordTranslationOptions(
-                            arabic=arabic_text,
-                            english_options=eng_opts,
-                            pos=word_data.get("pos") or None,
-                            essential=essential_letters,
-                            essential_translation_options=ess_opts,
-                            notes=word_data.get("notes") or None,
-                            uncertainties=word_data.get("uncertainties", []),
-                        ).model_dump(),
+                # If we got no word translations, create fallback ones
+                if not raw_word_translations:
+                    logger.warning(
+                        f"No word translations returned for sentence {i}, creating fallback"
                     )
+                    # Create basic fallback word translations
+                    for word in arabic_words:
+                        word_translations_options.append(
+                            WordTranslationOptions(
+                                arabic=word,
+                                english_options=[f"[{word}]"],
+                                pos=None,
+                                essential=word,
+                                essential_translation_options=[f"[{word}]"],
+                                notes="Fallback translation due to API failure",
+                                uncertainties=[
+                                    {
+                                        "text": word,
+                                        "reason": "API returned empty result",
+                                    }
+                                ],
+                            ).model_dump(),
+                        )
+                else:
+                    for word_data in raw_word_translations:
+                        if not isinstance(word_data, dict):
+                            continue
+                        eng_opts = word_data.get("english_options", [])
+                        if not isinstance(eng_opts, list) or not all(
+                            isinstance(s, str) for s in eng_opts
+                        ):
+                            eng_opts = []
+                        ess_opts = word_data.get("essential_translation_options", [])
+                        if not isinstance(ess_opts, list) or not all(
+                            isinstance(s, str) for s in ess_opts
+                        ):
+                            ess_opts = []
+                        arabic_text = word_data.get("arabic", "")
+                        essential_letters = word_data.get("essential", arabic_text)
+                        word_translations_options.append(
+                            WordTranslationOptions(
+                                arabic=arabic_text,
+                                english_options=eng_opts,
+                                pos=word_data.get("pos") or None,
+                                essential=essential_letters,
+                                essential_translation_options=ess_opts,
+                                notes=word_data.get("notes") or None,
+                                uncertainties=word_data.get("uncertainties", []),
+                            ).model_dump(),
+                        )
+
+                # Always ensure we have some result, even if it's fallback
                 if word_translations_options:
                     processed_results[i] = {
                         "word_translations": word_translations_options,
                     }
                     break
+                else:
+                    # If we still have no options, create a minimal fallback
+                    logger.warning(f"Creating minimal fallback for sentence {i}")
+                    processed_results[i] = {
+                        "word_translations": [
+                            WordTranslationOptions(
+                                arabic=_sentence,
+                                english_options=["[Translation failed]"],
+                                pos=None,
+                                essential=_sentence,
+                                essential_translation_options=["[Translation failed]"],
+                                notes="Minimal fallback due to complete API failure",
+                                uncertainties=[
+                                    {
+                                        "text": _sentence,
+                                        "reason": "Complete API failure",
+                                    }
+                                ],
+                            ).model_dump(),
+                        ],
+                    }
+                    break
 
-                raise Exception("No valid word translations returned from model.")
             except Exception as err:
                 attempt += 1
+                logger.error(
+                    f"Word translation attempt {attempt} failed for sentence {i}: {err}"
+                )
                 if attempt >= max_retries:
-                    raise TranslationError(
-                        f"Sentence {i} failed {max_retries} times."
-                    ) from err
+                    # Create fallback result instead of raising exception
+                    logger.error(
+                        f"Creating fallback for sentence {i} after {max_retries} failed attempts"
+                    )
+                    processed_results[i] = {
+                        "word_translations": [
+                            WordTranslationOptions(
+                                arabic=_sentence,
+                                english_options=["[Translation error]"],
+                                pos=None,
+                                essential=_sentence,
+                                essential_translation_options=["[Translation error]"],
+                                notes=f"Fallback due to error: {str(err)}",
+                                uncertainties=[
+                                    {
+                                        "text": _sentence,
+                                        "reason": f"Error after {max_retries} attempts: {str(err)}",
+                                    }
+                                ],
+                            ).model_dump(),
+                        ],
+                    }
+                    break
                 time.sleep(1)
+
     return processed_results
 
 

@@ -80,7 +80,7 @@ def get_or_create_root(
 
     # Create new root
     root_data = {"letters": letters, "meaning": meaning}
-    new_root = insert_table_record(root_data, "roots", f"root creation for '{letters}'")
+    new_root = insert_table_record("roots", root_data, f"root creation for '{letters}'")
 
     if new_root:
         root_id = new_root["id"]

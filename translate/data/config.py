@@ -39,9 +39,12 @@ DEFAULT_OUTPUT_FILE = os.path.join(ARTICLE_DIR, "output.json")
 DEFAULT_SPLIT_OUTPUT_FILE = os.path.join(ARTICLE_DIR, "input_split.json")
 
 # Voice configuration
-ARABIC_VOICE_ID = "nPczCjzI2devNBz1zQrb"
-ARABIC_WORD_VOICE_ID = "IES4nrmZdUBHByLBde0P"
-ENGLISH_WORD_VOICE_ID = "IKne3meq5aSn9XLyUdCD"
+# Using multilingual voices that support Arabic text
+ARABIC_VOICE_ID = (
+    "21m00Tcm4TlvDq8ikWAM"  # Rachel - multilingual voice supporting Arabic
+)
+ARABIC_WORD_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"  # Rachel for Arabic words
+ENGLISH_WORD_VOICE_ID = "IKne3meq5aSn9XLyUdCD"  # Keep existing English voice
 DEFAULT_VOICE_SETTINGS = VoiceSettings(use_speaker_boost=True)
 
 # External services
