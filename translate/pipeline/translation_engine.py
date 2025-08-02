@@ -359,11 +359,6 @@ def batch_translate_words(
                     model=MODEL_TRANSLATION,
                 )
 
-                logger.info(f"Word translation response type: {type(response)}")
-                logger.info(
-                    f"Word translation response keys: {list(response.keys()) if isinstance(response, dict) else 'not a dict'}"
-                )
-
                 # Handle Response API format - data is returned directly, not wrapped in "results"
                 if "results" in response and isinstance(response["results"], list):
                     # Check if results contains individual word objects or sentence objects
@@ -383,17 +378,10 @@ def batch_translate_words(
                     # Try to find word_translations in the response
                     result = response if isinstance(response, dict) else {}
 
-                logger.info(
-                    f"Processed result keys: {list(result.keys()) if isinstance(result, dict) else 'not a dict'}"
-                )
-
                 word_translations_options = []
                 raw_word_translations = result.get("word_translations", [])
                 if not isinstance(raw_word_translations, list):
                     raw_word_translations = []
-                logger.info(
-                    f"Raw word translations count: {len(raw_word_translations)}"
-                )
 
                 for word_data in raw_word_translations:
                     if not isinstance(word_data, dict):
@@ -425,14 +413,8 @@ def batch_translate_words(
                     processed_results[i] = {
                         "word_translations": word_translations_options,
                     }
-                    logger.info(
-                        f"Successfully processed word translations for sentence {i}"
-                    )
                     break
 
-                logger.error(
-                    f"No valid word translations returned from model for sentence {i}"
-                )
                 raise Exception("No valid word translations returned from model.")
             except Exception as err:
                 attempt += 1
@@ -449,8 +431,6 @@ def batch_refine_translations(
 ) -> RefinementResults:
     """Refine all translation components, selecting best options"""
     try:
-        logger.info(f"Starting batch refinement with {len(refinement_input)} inputs")
-
         formatted_inputs = []
         for i, data in enumerate(refinement_input):
             refinement_data: RefinementInput = data
@@ -533,16 +513,9 @@ def batch_refine_translations(
             "temperature": temp_to_use,
         }
 
-        logger.info(
-            f"Calling Response API with {len(messages)} messages and {len(api_kwargs['tools'])} tools"
-        )
         response = call_response_api(**api_kwargs)
-        logger.info(
-            f"Response received: {type(response)} with keys: {list(response.keys()) if isinstance(response, dict) else 'not a dict'}"
-        )
 
         if "refinements" in response and isinstance(response["refinements"], list):
-            logger.info(f"Found {len(response['refinements'])} refinements in response")
             results: RefinementResults = []
             for item in response["refinements"]:
                 if isinstance(item, dict):
@@ -564,7 +537,6 @@ def batch_refine_translations(
                     )
                 else:
                     # Create empty refinement result if response is malformed
-                    logger.warning(f"Malformed refinement item: {type(item)}")
                     results.append(
                         RefinementResult(
                             improved_tashkeel="",
@@ -575,13 +547,10 @@ def batch_refine_translations(
                             changes_made=[],
                         )
                     )
-            logger.info(f"Returning {len(results)} refinement results")
             return results
         elif "error" in response:
-            logger.error(f"API returned error: {response['error']}")
             return []
         else:
-            logger.warning(f"Unexpected response format: {response}")
             return []
     except Exception as e:
         logger.error(f"Exception in batch_refine_translations: {e}")

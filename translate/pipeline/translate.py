@@ -21,8 +21,6 @@ from utils.translation_processor import (
     translate_words,
 )
 
-from .conversation_translation_engine import ConversationAwareTranslationEngine
-
 logger = logging.getLogger(__name__)
 
 # Constants
@@ -96,77 +94,41 @@ def process_batch(
     all_sentences: list[str] | None = None,
     batch_indices: list[int] | None = None,
     context_cache: Any = None,
-    use_conversation: bool = False,
 ) -> list[SentenceTranslation]:
     """Process a single batch of sentences."""
     if not batch_sentences:
         return []
 
-    if use_conversation:
-        # Use conversation-based translation
-        conversation_engine = ConversationAwareTranslationEngine()
+    # Use regular translation pipeline with Response API
+    translations = run_full_translation(batch_sentences, batch_contexts)
+    tashkeel = apply_tashkeel(
+        batch_sentences,
+        translations,
+        all_sentences,
+        batch_indices,
+        context_cache,
+    )
+    word_options = translate_words(
+        batch_sentences,
+        tashkeel,
+        translations,
+        all_sentences,
+        batch_indices,
+        context_cache,
+    )
 
-        # Run conversation-based translation pipeline
-        translations = (
-            conversation_engine.batch_translate_full_sentences_conversational(
-                batch_sentences, batch_contexts
-            )
-        )
-        tashkeel = conversation_engine.batch_add_tashkeel_conversational(
-            batch_sentences,
-            translations,
-            all_sentences,
-            batch_indices,
-            context_cache,
-        )
-        word_options = conversation_engine.batch_translate_words_conversational(
-            batch_sentences,
-            tashkeel,
-            translations,
-            all_sentences,
-            batch_indices,
-            context_cache,
-        )
-
-        return refine_translations(
-            batch_sentences,
-            start_index,
-            translations,
-            tashkeel,
-            word_options,
-        )
-    else:
-        # Use regular translation pipeline
-        translations = run_full_translation(batch_sentences, batch_contexts)
-        tashkeel = apply_tashkeel(
-            batch_sentences,
-            translations,
-            all_sentences,
-            batch_indices,
-            context_cache,
-        )
-        word_options = translate_words(
-            batch_sentences,
-            tashkeel,
-            translations,
-            all_sentences,
-            batch_indices,
-            context_cache,
-        )
-
-        return refine_translations(
-            batch_sentences,
-            start_index,
-            translations,
-            tashkeel,
-            word_options,
-        )
+    return refine_translations(
+        batch_sentences,
+        start_index,
+        translations,
+        tashkeel,
+        word_options,
+    )
 
 
 def process_batches(
     all_units: list[str] | list[dict[str, Any]],
     batch_size: int,
-    use_conversation: bool = False,
 ) -> tuple[list[SentenceTranslation], list[str]]:
     """Process all batches in parallel and return results and errors."""
     results: list[SentenceTranslation] = []
@@ -198,7 +160,6 @@ def process_batches(
                     all_units,
                     batch["indices"],
                     context_cache,
-                    use_conversation,
                 ): batch
                 for batch in batches
             }
@@ -291,7 +252,6 @@ def translate_file(
     input_file: str,
     output_file: str,
     batch_size: int = MAX_BATCH_SIZE,
-    use_conversation: bool = False,
 ) -> bool | None:
     """Translate a file containing split sentences."""
     try:
@@ -305,7 +265,7 @@ def translate_file(
 
         logger.info(f"Processing {len(all_units)} sentences in batches of {batch_size}")
 
-        results, errors = process_batches(all_units, batch_size, use_conversation)
+        results, errors = process_batches(all_units, batch_size)
 
         actual_count, missing_count = validate_results(results, all_units)
 
@@ -350,19 +310,12 @@ def main() -> None:
         "--batch-size",
         type=int,
         default=MAX_BATCH_SIZE,
-        help="Batch size for processing",
-    )
-    parser.add_argument(
-        "--use-conversation",
-        action="store_true",
-        help="Use conversation-based translation with Response API",
+        help=f"Batch size for processing (default: {MAX_BATCH_SIZE})",
     )
 
     args = parser.parse_args()
 
-    success = translate_file(
-        args.input, args.output, args.batch_size, args.use_conversation
-    )
+    success = translate_file(args.input, args.output, args.batch_size)
     if success:
         logger.info(
             f"Translation completed successfully. Output saved to {args.output}"
