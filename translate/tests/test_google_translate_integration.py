@@ -18,7 +18,8 @@ class TestGoogleTranslateIntegration:
         mock_service = MagicMock()
         mock_service_class.return_value = mock_service
 
-        mock_service.translate_single_root_word.return_value = {
+        # Create a proper mock return value
+        mock_translation_result = {
             "translated_text": "Hello",
             "confidence": 0.95,
             "detected_language": "ar",
@@ -29,6 +30,9 @@ class TestGoogleTranslateIntegration:
             "notes": "Google Cloud Translate v3 root word translation",
             "uncertainties": [],
         }
+        mock_service.translate_root_word_with_retry.return_value = (
+            mock_translation_result
+        )
 
         sentences = ["مرحبا عالم"]
         tashkeel_results = [TashkeelResult(tashkeel="مرحبا عالم", uncertainties=[])]
@@ -53,7 +57,7 @@ class TestGoogleTranslateIntegration:
         """Test handling of translation errors in pipeline integration."""
         mock_service = MagicMock()
         mock_service_class.return_value = mock_service
-        mock_service.translate_single_root_word.side_effect = TranslationError(
+        mock_service.translate_root_word_with_retry.side_effect = TranslationError(
             "API Error"
         )
 

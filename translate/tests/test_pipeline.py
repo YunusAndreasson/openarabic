@@ -3,7 +3,7 @@
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from data.enums import DifficultyLevel
 from pipeline.split_file import split_file
@@ -25,14 +25,20 @@ class TestSplitFile:
         try:
             # Mock the API call to avoid actual API usage
             with patch("utils.responses_api.client") as mock_client:
-                mock_client.responses.create.return_value = type(
-                    "Response",
-                    (),
-                    {
-                        "output": type("Output", (), {"tool_calls": None})(),
-                        "output_text": '```json\n{"title": "Test Article", "summary": "A test article", "difficulty_level": 1, "units": ["مرحبا بالعالم.", "هذا نص تجريبي.", "لاختبار الترجمة."], "unit_types": ["sentence", "sentence", "sentence"]}\n```',
-                    },
-                )()
+                mock_response = Mock()
+                mock_response.output = None  # No tool calls
+                mock_response.output_text = '```json\n{"title": "Test Article", "summary": "A test article", "difficulty_level": 1, "units": ["مرحبا بالعالم.", "هذا نص تجريبي.", "لاختبار الترجمة."], "unit_types": ["sentence", "sentence", "sentence"]}\n```'
+
+                # Mock usage data
+                mock_usage = Mock()
+                mock_usage.model_dump.return_value = {
+                    "prompt_tokens": 10,
+                    "completion_tokens": 5,
+                    "total_tokens": 15,
+                }
+                mock_response.usage = mock_usage
+
+                mock_client.responses.create.return_value = mock_response
 
                 split_file(input_file, output_file)
 
@@ -62,14 +68,20 @@ class TestSplitFile:
 
         try:
             with patch("utils.responses_api.client") as mock_client:
-                mock_client.responses.create.return_value = type(
-                    "Response",
-                    (),
-                    {
-                        "output": type("Output", (), {"tool_calls": None})(),
-                        "output_text": '```json\n{"title": "Empty Article", "summary": "Empty content", "difficulty_level": 1, "units": [], "unit_types": []}\n```',
-                    },
-                )()
+                mock_response = Mock()
+                mock_response.output = None  # No tool calls
+                mock_response.output_text = '```json\n{"title": "Empty Article", "summary": "Empty content", "difficulty_level": 1, "units": [], "unit_types": []}\n```'
+
+                # Mock usage data
+                mock_usage = Mock()
+                mock_usage.model_dump.return_value = {
+                    "prompt_tokens": 10,
+                    "completion_tokens": 5,
+                    "total_tokens": 15,
+                }
+                mock_response.usage = mock_usage
+
+                mock_client.responses.create.return_value = mock_response
 
                 split_file(input_file, output_file)
 
@@ -142,15 +154,21 @@ class TestResponseAPI:
     @patch("utils.responses_api.client")
     def test_call_response_api_success(self, mock_client):
         """Test successful Response API call."""
-        # Mock the responses.create method
-        mock_client.responses.create.return_value = type(
-            "Response",
-            (),
-            {
-                "output": type("Output", (), {"tool_calls": None})(),
-                "output_text": '```json\n{"translation": "Hello"}\n```',
-            },
-        )()
+        # Mock the responses.create method with proper structure
+        mock_response = Mock()
+        mock_response.output = None  # No tool calls
+        mock_response.output_text = '```json\n{"translation": "Hello"}\n```'
+
+        # Mock usage data
+        mock_usage = Mock()
+        mock_usage.model_dump.return_value = {
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "total_tokens": 15,
+        }
+        mock_response.usage = mock_usage
+
+        mock_client.responses.create.return_value = mock_response
 
         messages = [{"role": "user", "content": "Translate: مرحبا and return as JSON"}]
         result = call_response_api(messages, temperature=0.3)
@@ -161,18 +179,24 @@ class TestResponseAPI:
     @patch("utils.responses_api.client")
     def test_call_response_api_retry_on_failure(self, mock_client):
         """Test Response API call retries on failure."""
-        # Mock the responses.create method
+        # Mock the responses.create method with proper structure
+        mock_response = Mock()
+        mock_response.output = None  # No tool calls
+        mock_response.output_text = '```json\n{"translation": "Hello"}\n```'
+
+        # Mock usage data
+        mock_usage = Mock()
+        mock_usage.model_dump.return_value = {
+            "prompt_tokens": 10,
+            "completion_tokens": 5,
+            "total_tokens": 15,
+        }
+        mock_response.usage = mock_usage
+
         mock_client.responses.create.side_effect = [
             Exception("API Error"),
             Exception("API Error"),
-            type(
-                "Response",
-                (),
-                {
-                    "output": type("Output", (), {"tool_calls": None})(),
-                    "output_text": '```json\n{"translation": "Hello"}\n```',
-                },
-            )(),
+            mock_response,
         ]
 
         messages = [{"role": "user", "content": "Translate: مرحبا and return as JSON"}]
