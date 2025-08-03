@@ -35,7 +35,6 @@ def build_split_messages(text: str) -> list[dict[str, str]]:
 def parse_split_response(response: dict[str, Any]) -> SplitResult:
     """Normalize the split API response."""
     if "error" in response:
-        logger.error(f"Failed to analyze text: {response['error']}")
         return SplitResult(
             units=[],
             title="Error",
@@ -93,7 +92,6 @@ def split_file(input_file: str, output_file: str) -> SplitResult:
         return split_result
 
     except Exception as e:
-        logging.error(f"Text splitting failed: {str(e)}")
         raise RuntimeError(f"Text splitting failed: {str(e)}") from e
 
 

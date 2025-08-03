@@ -440,9 +440,6 @@ def batch_translate_words(
 
                 # If we got no word translations, create fallback ones
                 if not raw_word_translations:
-                    logger.warning(
-                        f"No word translations returned for sentence {i}, creating fallback"
-                    )
                     # Create basic fallback word translations
                     for word in arabic_words:
                         word_translations_options.append(
@@ -499,9 +496,6 @@ def batch_translate_words(
                     break
                 else:
                     # CRITICAL: Fail completely instead of creating placeholder data
-                    logger.error(
-                        f"All translation attempts failed for sentence {i} after {max_retries} attempts - failing completely"
-                    )
                     raise Exception(
                         f"Translation failed for sentence {i} after {max_retries} attempts. "
                         f"Placeholder data creation is not allowed."
@@ -509,14 +503,8 @@ def batch_translate_words(
 
             except Exception as err:
                 attempt += 1
-                logger.error(
-                    f"Word translation attempt {attempt} failed for sentence {i}: {err}"
-                )
                 if attempt >= max_retries:
                     # CRITICAL: Fail completely instead of creating placeholder data
-                    logger.error(
-                        f"All translation attempts failed for sentence {i} after {max_retries} attempts - failing completely"
-                    )
                     raise Exception(
                         f"Translation failed for sentence {i} after {max_retries} attempts. "
                         f"Placeholder data creation is not allowed. Error: {str(err)}"
@@ -652,8 +640,7 @@ def batch_refine_translations(
             return []
         else:
             return []
-    except Exception as e:
-        logger.error(f"Exception in batch_refine_translations: {e}")
+    except Exception:
         return []
 
 
@@ -702,7 +689,6 @@ def batch_translate_root_words_with_google_cloud(
             )
             results.append({"word_translations": [word_option]})
         except Exception as e:
-            logger.error(f"Failed to translate root word '{root_word}': {e}")
             # Add fallback result
             word_option = cast(
                 "WordTranslationOption",

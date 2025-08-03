@@ -224,7 +224,14 @@ def process_batches(
     # Process batches in parallel for better performance
     max_workers = min(3, len(batches))  # Limit to 3 parallel workers
 
-    with tqdm(total=len(all_units), desc="Translating", initial=0) as pbar:
+    with tqdm(
+        total=len(all_units),
+        desc="Phase: Translate - Processing batches",
+        unit="sentences",
+        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]",
+        ncols=100,
+        colour="blue",
+    ) as pbar:
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all batch processing tasks
             future_to_batch = {
@@ -250,17 +257,14 @@ def process_batches(
                 except TranslationValidationError as e:
                     error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed validation: {str(e)}"
                     errors.append(error_msg)
-                    logger.error(error_msg)
                     pbar.update(len(batch["sentences"]))
                 except (ValueError, TypeError, RuntimeError) as e:
                     error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed: {str(e)}"
                     errors.append(error_msg)
-                    logger.error(error_msg)
                     pbar.update(len(batch["sentences"]))
                 except Exception as e:
                     error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed with unexpected error: {str(e)}"
                     errors.append(error_msg)
-                    logger.error(error_msg)
                     pbar.update(len(batch["sentences"]))
 
     return results, errors
@@ -271,13 +275,7 @@ def validate_results(
     all_units: list[str] | list[dict[str, Any]],
 ) -> tuple[int, int]:
     """Validate that all sentences were processed correctly."""
-    expected_count = len(all_units)
     actual_count = len(results)
-
-    if actual_count != expected_count:
-        logger.warning(
-            f"Translation count mismatch: expected {expected_count}, got {actual_count}, difference: {expected_count - actual_count}"
-        )
 
     # Check for any missing translations using pattern matching
     missing_count = 0
@@ -293,9 +291,6 @@ def validate_results(
             case _:
                 if not results[i].original.strip():
                     missing_count += 1
-
-    if missing_count > 0:
-        logger.warning(f"Missing translations: {missing_count}")
 
     return actual_count, missing_count
 
