@@ -454,7 +454,7 @@ class TestTranslationProcessor:
 
     def test_run_full_translation_validation(self):
         """Test run_full_translation with validation."""
-        from data.pipeline_types import TranslationResult
+        from data.models import TranslationResult
         from utils.translation_processor import run_full_translation
 
         # Mock the translation engine function
@@ -482,11 +482,11 @@ class TestTranslationProcessor:
 
             result = run_full_translation(sentences, contexts)
             assert len(result) == 1
-            assert result[0]["translation"] == "Hello world"
+            assert result[0].translation == "Hello world"
 
     def test_apply_tashkeel_validation(self):
         """Test apply_tashkeel with validation."""
-        from data.pipeline_types import TashkeelResult, TranslationResult
+        from data.models import TashkeelResult, TranslationResult
         from utils.translation_processor import apply_tashkeel
 
         # Mock the translation engine function
@@ -525,11 +525,11 @@ class TestTranslationProcessor:
 
             result = apply_tashkeel(sentences, translations)
             assert len(result) == 1
-            assert "مَرْحَبًا" in result[0]["tashkeel"]
+            assert "مَرْحَبًا" in result[0].tashkeel
 
     def test_translate_words_validation(self):
         """Test translate_words with validation."""
-        from data.pipeline_types import (
+        from data.models import (
             TashkeelResult,
             TranslationResult,
             WordTranslationResult,
@@ -582,5 +582,5 @@ class TestTranslationProcessor:
 
             result = translate_words(sentences, tashkeel_results, translations)
             assert len(result) == 1
-            assert len(result[0]["word_translations"]) == 1
-            assert result[0]["word_translations"][0]["arabic"] == "مرحبا"
+            assert len(result[0].word_translations) == 1
+            assert result[0].word_translations[0].arabic == "مرحبا"

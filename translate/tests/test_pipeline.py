@@ -167,7 +167,7 @@ class TestResponseAPI:
         }
 
         messages = [{"role": "user", "content": "Translate: مرحبا and return as JSON"}]
-        result = call_response_api(messages, temperature=0.3)
+        result = call_response_api(messages)
 
         # New format: result contains {"text": "...", "success": True}
         assert "text" in result
@@ -176,22 +176,14 @@ class TestResponseAPI:
 
     @patch("utils.responses_api.ResponsesAPIManager.start_conversation")
     def test_call_response_api_retry_on_failure(self, mock_start_conversation):
-        """Test Response API call retries on failure."""
-        # Mock the start_conversation method to fail twice then succeed
-        mock_start_conversation.side_effect = [
-            Exception("API Error"),
-            Exception("API Error"),
-            {
-                "response_id": "test-id",
-                "text": '```json\n{"translation": "Hello"}\n```',
-                "success": True,
-            },
-        ]
+        """Test Response API call handles failure."""
+        # Mock the start_conversation method to fail
+        mock_start_conversation.side_effect = Exception("API Error")
 
         messages = [{"role": "user", "content": "Translate: مرحبا and return as JSON"}]
-        result = call_response_api(messages, max_retries=3)
+        result = call_response_api(messages)
 
-        # New format: result contains {"text": "...", "success": True}
-        assert "text" in result
-        assert result["success"] is True
-        assert mock_start_conversation.call_count == 3
+        # Should return error response
+        assert result["success"] is False
+        assert "error" in result
+        assert mock_start_conversation.call_count == 1

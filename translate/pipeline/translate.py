@@ -369,8 +369,8 @@ def translate_file(
             logger.info(
                 "File contains no sentences to translate - creating empty output"
             )
-            results = []
-            errors = []
+            results: list[SentenceTranslation] = []
+            errors: list[str] = []
             actual_count = 0
             missing_count = 0
         else:

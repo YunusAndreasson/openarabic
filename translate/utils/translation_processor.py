@@ -1,15 +1,18 @@
 from typing import Any
 
-from data.models import SentenceTranslation, WordTranslation
+from data.models import (
+    RefinementResult,
+    SentenceTranslation,
+    TashkeelResult,
+    TranslationResult,
+    WordTranslation,
+    WordTranslationResult,
+)
 from data.pipeline_types import (
     RefinementInput,
     RefinementInputs,
-    RefinementResult,
-    TashkeelResult,
     TashkeelResults,
-    TranslationResult,
     TranslationResults,
-    WordTranslationResult,
     WordTranslationResults,
 )
 from utils.responses_api import ResponsesAPIManager
@@ -289,7 +292,7 @@ def create_sentence_translation(
                     pos=pos,
                     essential=essential,
                     essential_translation=essential_translation,
-                    notes=notes + " (Refinement fallback)",
+                    notes=(notes or "") + " (Refinement fallback)",
                 ),
             )
 

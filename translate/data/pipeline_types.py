@@ -6,31 +6,6 @@ These match the existing schema structures exactly.
 from typing import Any, NotRequired, TypedDict
 
 
-# Translation result structure (matches TRANSLATE_SENTENCES_TOOL schema)
-class TranslationUncertainty(TypedDict):
-    text: str
-    reason: str
-
-
-class TranslationResult(TypedDict):
-    translation: str
-    notes: str  # Required
-    uncertainties: list[TranslationUncertainty]
-    word_by_word: list[dict[str, Any]]
-
-
-# Tashkeel result structure (matches TASHKEEL_TOOL schema)
-class TashkeelUncertainty(TypedDict):
-    word: str
-    reason: str
-    related_translation_uncertainty: str | None  # Optional
-
-
-class TashkeelResult(TypedDict):
-    tashkeel: str
-    uncertainties: list[TashkeelUncertainty]
-
-
 # Word translation options structure (matches WORD_TRANSLATION_TOOL schema)
 class WordTranslationOption(TypedDict):
     arabic: str
@@ -40,10 +15,6 @@ class WordTranslationOption(TypedDict):
     essential_translation_options: list[str]
     notes: str  # Required in schema
     uncertainties: list[dict[str, str]]  # text and reason
-
-
-class WordTranslationResult(TypedDict):
-    word_translations: list[WordTranslationOption]
 
 
 # Refinement result structure (matches REFINEMENT_TOOL schema)
@@ -69,15 +40,6 @@ class RemainingUncertainty(TypedDict):
     reason_unresolved: str
 
 
-class RefinementResult(TypedDict):
-    improved_tashkeel: str
-    improved_translation: str
-    improved_word_translations: list[RefinedWordTranslation]
-    resolved_uncertainties: list[ResolvedUncertainty]
-    remaining_uncertainties: list[RemainingUncertainty]
-    changes_made: list[str]
-
-
 # Batch processing structure
 class TranslationBatch(TypedDict):
     sentences: list[str]
@@ -89,8 +51,8 @@ class TranslationBatch(TypedDict):
 # Refinement input structure
 class RefinementInput(TypedDict):
     original: str
-    translation: TranslationResult
-    tashkeel: TashkeelResult
+    translation: dict[str, Any]  # TranslationResult from models.py
+    tashkeel: dict[str, Any]  # TashkeelResult from models.py
     word_translations_options: list[WordTranslationOption]
     previous_uncertainties: dict[str, list[dict[str, Any]]]
 
@@ -181,10 +143,12 @@ class WordData(TypedDict):
 
 
 # Type aliases for common collections
-TranslationResults = list[TranslationResult]
-TashkeelResults = list[TashkeelResult]
-WordTranslationResults = list[WordTranslationResult]
-RefinementResults = list[RefinementResult]
+TranslationResults = list[dict[str, Any]]  # list[TranslationResult] from models.py
+TashkeelResults = list[dict[str, Any]]  # list[TashkeelResult] from models.py
+WordTranslationResults = list[
+    dict[str, Any]
+]  # list[WordTranslationResult] from models.py
+RefinementResults = list[dict[str, Any]]  # list[RefinementResult] from models.py
 RefinementInputs = list[RefinementInput]
 SplitResults = list[str]  # List of split units
 AudioResults = list[AudioGenerationResult]

@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock, patch
 
-from data.pipeline_types import TashkeelResult, TranslationResult
+from data.models import TashkeelResult, TranslationResult
 from pipeline.translation_engine import batch_translate_root_words_with_google_cloud
 from utils.exceptions import TranslationError
 
@@ -38,7 +38,7 @@ class TestGoogleTranslateIntegration:
         tashkeel_results = [TashkeelResult(tashkeel="مرحبا عالم", uncertainties=[])]
         translations = [
             TranslationResult(
-                translation="Hello world", notes=None, uncertainties=[], word_by_word=[]
+                translation="Hello world", notes="", uncertainties=[], word_by_word=[]
             )
         ]
 
@@ -65,7 +65,7 @@ class TestGoogleTranslateIntegration:
         tashkeel_results = [TashkeelResult(tashkeel="مرحبا", uncertainties=[])]
         translations = [
             TranslationResult(
-                translation="Hello", notes=None, uncertainties=[], word_by_word=[]
+                translation="Hello", notes="", uncertainties=[], word_by_word=[]
             )
         ]
 
