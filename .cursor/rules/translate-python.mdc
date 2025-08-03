@@ -147,6 +147,38 @@ uv run pytest tests/ -v
 ./validate.sh
 ```
 
+### CLI Usage Patterns
+
+The pipeline supports step-by-step execution with confirmation prompts:
+
+```bash
+# Split phase only (with confirmation)
+uv run python main.py --split
+
+# Translate phase only (with confirmation)
+uv run python main.py --translate
+
+# Insert phase only (with confirmation)
+uv run python main.py --insert
+
+# Full pipeline with confirmation at each step
+uv run python main.py --split --translate --insert
+
+# Full pipeline with automatic confirmation (bypass all prompts)
+uv run python main.py --split --translate --insert --force-yes
+
+# Custom batch size
+uv run python main.py --split --translate --insert --batch-size 8 --force-yes
+```
+
+**Important CLI Parameters:**
+
+- `--split`: Split input files from 0_inbox into sentences
+- `--translate`: Translate split sentences to English
+- `--insert`: Process through ElevenLabs and insert into database
+- `--force-yes` or `-y`: Automatically answer 'yes' to all confirmation questions
+- `--batch-size` or `-b`: Set batch size for translation (1-15, default: 12)
+
 ## Core Principles
 
 - **Pythonic**: Use Python idioms, built-in functions, and standard library
@@ -452,6 +484,17 @@ uv run pytest tests/ -v
 - Implement proper error handling between stages
 - Maintain data consistency across stages
 
+### 9. Response API Issues
+
+- **CRITICAL**: The Response API function calling mechanism requires proper function execution handling
+- When the API makes a function call, it expects the function result to be provided in the next request
+- Error "No tool output found for function call" indicates missing function execution results
+- The API structure uses `response.tool_calls` with `tool_call.function.arguments` for parsing
+- Function calling requires implementing a proper tool execution loop
+- The `continue_conversation` method uses `previous_response_id` parameter, not a separate `continue` method
+- Tools must be passed again in each conversation continuation call
+- Consider implementing a proper function execution handler or using regular OpenAI API for translation
+
 ## Development Workflow
 
 1. **Setup**: Install uv and sync dependencies
@@ -459,6 +502,17 @@ uv run pytest tests/ -v
 3. **Validation**: Run linting, formatting, and tests with uv
 4. **Translation Testing**: Test with Arabic text samples
 5. **Pipeline Testing**: Verify all 6 stages work correctly
+
+   ```bash
+   # Test full pipeline with automatic confirmation
+   uv run python main.py --split --translate --insert --force-yes
+
+   # Test individual phases
+   uv run python main.py --split --force-yes
+   uv run python main.py --translate --force-yes
+   uv run python main.py --insert --force-yes
+   ```
+
 6. **Commit**: Ensure all checks pass before committing
 
 ## Key Files to Review When Making Changes

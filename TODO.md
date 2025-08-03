@@ -2,3 +2,5 @@
 - [x] Validate Google Translate with OpenAI
 
 - [x] Use the new OpenAI API for more context
+
+Remove successfully parsed function call
