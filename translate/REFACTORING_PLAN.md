@@ -4,6 +4,21 @@
 
 This document outlines obvious simplifications and refactoring opportunities in the translation pipeline after successful Response API integration. All changes maintain existing functionality while removing unnecessary complexity.
 
+## ⚠️ **CRITICAL VALIDATION FINDINGS**
+
+**Items marked with ⚠️ must NOT be removed** as they would break functionality:
+
+- `cast` from typing - USED for Google Translate service type conversion
+- `time` import - USED for retry delays in error handling
+- `context_cache` parameter - USED for context extraction in tashkeel generation
+- Parameters like `all_sentences`, `indices` - USED for cross-sentence analysis
+
+**Safe to remove:**
+
+- Legacy methods marked as such in responses_api.py
+- Unused parameters in call_response_api (marked with # noqa: F841)
+- Duplicate type definitions (after careful migration to Pydantic models)
+
 ## Phase 1: Remove Legacy Code and Dead Imports
 
 ### Response API Cleanup
@@ -31,11 +46,11 @@ This document outlines obvious simplifications and refactoring opportunities in 
 
 ### Import Cleanup
 
-- [ ] **Remove unused imports from `translation_engine.py`**
+- [ ] **Review imports in `translation_engine.py`**
 
-  - Remove `cast` from typing (not used)
-  - Remove `time` import (not used)
-  - Remove unused pipeline_types imports that duplicate models.py
+  - ⚠️ **KEEP `cast` from typing** - USED in lines 804 and 821 for Google Translate service
+  - ⚠️ **KEEP `time` import** - USED in line 605 for retry delays (time.sleep(1))
+  - Remove unused pipeline_types imports that duplicate models.py (after verification)
 
 - [ ] **Consolidate model imports**
   - Remove duplicate type definitions between `models.py` and `pipeline_types.py`
@@ -91,10 +106,10 @@ This document outlines obvious simplifications and refactoring opportunities in 
 
 ### Batch Function Parameter Cleanup
 
-- [ ] **Remove unused parameters from batch functions**
-  - Remove `context_cache` parameter from functions that don't use it
-  - Remove `all_sentences` and `indices` parameters where not needed
-  - Keep only parameters that are actually used in each function
+- [ ] **Review parameter usage in batch functions**
+  - ⚠️ **KEEP `context_cache` parameter** - USED in `batch_add_tashkeel()` for context extraction
+  - ⚠️ **KEEP `all_sentences` and `indices` parameters** - USED for context and cross-sentence analysis
+  - Only remove parameters that are truly unused after careful verification
 
 ### Helper Function Extraction
 
@@ -204,7 +219,9 @@ This document outlines obvious simplifications and refactoring opportunities in 
 
 ## Estimated Impact
 
-- **Code Reduction**: ~200-300 lines of code removed
-- **Complexity Reduction**: ~30-40% reduction in cyclomatic complexity
-- **Maintainability**: Significant improvement in code readability
-- **Risk**: Low (mostly removal of unused code)
+- **Code Reduction**: ~100-150 lines of code removed (reduced from initial estimate)
+- **Complexity Reduction**: ~15-25% reduction in cyclomatic complexity
+- **Maintainability**: Moderate improvement in code readability
+- **Risk**: Very Low (only verified unused code removal)
+
+**Note**: Initial estimates were reduced after validation revealed several "unused" items are actually required for functionality.
