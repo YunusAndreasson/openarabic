@@ -9,7 +9,7 @@ import json
 import logging
 import os
 import time
-from typing import Any
+from typing import Any, Dict, List, Optional
 
 from openai import OpenAI
 
@@ -166,356 +166,276 @@ def init_openai_client() -> OpenAI:
 client = init_openai_client()
 
 
-class ResponseAPIManager:
-    """Manages conversations using OpenAI's Response API"""
+class ResponsesAPIManager:
+    def __init__(self, model: str = MODEL_OTHER):
+        """
+        Initialize the Responses API manager with Structured Outputs support.
 
-    def __init__(self, model: str = MODEL_OTHER) -> None:
+        Args:
+            model: The model to use for responses (must support structured outputs)
+        """
+        load_api_keys()
+        self.client = OpenAI()
         self.model = model
-        self.client = client
-        self.conversation_state: dict[str, Any] = {}
         self.current_response_id: str | None = None
-
-    def start_document_conversation(
-        self, full_text: str, tools: list[dict[str, Any]] | None = None
-    ) -> str:
-        """Start a new conversation with the full document uploaded once"""
-        messages = [
-            {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
-            {
-                "role": "user",
-                "content": f"Here is the complete Arabic text to translate:\n\n{full_text}\n\nI will ask you to process specific parts of this document in subsequent messages.",
-            },
-        ]
-
-        response = self.start_conversation(messages, tools=tools)
-        self.current_response_id = response.get("response_id")
-        return self.current_response_id
-
-    def continue_with_stage(
-        self, stage_message: str, tools: list[dict[str, Any]] | None = None
-    ) -> dict[str, Any]:
-        """Continue existing conversation for a new pipeline stage"""
-        if not self.current_response_id:
-            raise ValueError(
-                "No active conversation. Call start_document_conversation first."
-            )
-
-        return self.continue_conversation(self.current_response_id, stage_message)
+        self.logger = logging.getLogger(__name__)
 
     def start_conversation(
         self,
-        messages: list[dict[str, str]],
-        tools: list[dict[str, Any]] | None = None,
-        temperature: float = 0.3,
-        max_retries: int = 4,  # Increased from 2 to 4
+        messages: list[dict[str, Any]],
+        use_structured_output: bool = True,
+        response_model: Any = None,
     ) -> dict[str, Any]:
-        """Start a new conversation with the Response API"""
-        retry_count = 0
+        """
+        Start a conversation using Response API with Structured Outputs.
 
-        while retry_count < max_retries:
-            try:
-                # Convert messages to input format for Response API
-                input_text = self._messages_to_input(messages)
+        Args:
+            messages: List of message dictionaries
+            use_structured_output: Whether to use structured JSON output
+            response_model: Pydantic model for structured output (imported from pipeline_types.py)
 
-                # Convert tools to Response API format with proper schema validation
-                response_tools = []
-                if tools:
-                    for tool in tools:
-                        if tool.get("type") == "function" and tool.get("function"):
-                            # Response API expects name at top level
-                            response_tools.append(
-                                {
-                                    "name": tool.get("name", ""),
-                                    "type": "function",
-                                    "function": {
-                                        "description": tool.get("function", {}).get(
-                                            "description", ""
-                                        ),
-                                        "parameters": tool.get("function", {}).get(
-                                            "parameters", {}
-                                        ),
-                                    },
-                                }
-                            )
+        Returns:
+            Dictionary containing response data and metadata
+        """
+        try:
+            if use_structured_output and response_model:
+                # Use Response API with Pydantic model structured parsing
+                response = self.client.responses.parse(
+                    model=self.model,
+                    input=messages,
+                    text_format=response_model,
+                )
 
-                # Create response using the Response API with proper configuration
+                # Store response ID and parse structured result
+                self.current_response_id = response.id
+
+                return {
+                    "response_id": response.id,
+                    "data": response.output_parsed.model_dump(),
+                    "success": True,
+                }
+            else:
+                # Regular text response
                 response = self.client.responses.create(
                     model=self.model,
-                    instructions=self._get_instructions_for_tools(tools),
-                    input=input_text,
-                    tools=response_tools or [],
-                    tool_choice="required"
-                    if tools
-                    else "auto",  # Force tool usage when tools are provided
+                    input=messages,
                 )
 
-                # Parse the response
-                result = self._parse_response(response, tools)
+                self.current_response_id = response.id
 
-                # Store response ID for conversation continuation
-                if hasattr(response, "id"):
-                    result["response_id"] = response.id
-                    self.current_response_id = response.id
-                    self.conversation_state["current_response_id"] = response.id
+                return {
+                    "response_id": response.id,
+                    "text": response.output_text,
+                    "success": True,
+                }
 
-                # Update token usage if available
-                if hasattr(response, "usage") and response.usage:
-                    token_tracker.update(response.usage.model_dump())
-
-                # Record successful call
-                if "error" not in result:
-                    token_tracker.record_success()
-                else:
-                    token_tracker.record_failure()
-
-                return result
-
-            except Exception as e:
-                retry_count += 1
-                token_tracker.record_retry()
-
-                # Check if error is retryable
-                if not _is_retryable_error(e):
-                    logger.error(f"Non-retryable error in Response API call: {str(e)}")
-                    token_tracker.record_failure()
-                    return {"error": f"Non-retryable error: {str(e)}"}
-
-                if retry_count >= max_retries:
-                    logger.error(
-                        f"Response API call failed after {max_retries} attempts: {str(e)}"
-                    )
-                    token_tracker.record_failure()
-                    return {"error": f"Maximum retries exceeded: {str(e)}"}
-
-                # Calculate backoff delay with jitter
-                delay = _calculate_backoff_delay(retry_count - 1)
-                logger.warning(
-                    f"Response API call failed (attempt {retry_count}/{max_retries}), "
-                    f"retrying in {delay:.2f}s: {str(e)}"
-                )
-                time.sleep(delay)
-
-        token_tracker.record_failure()
-        return {"error": "Maximum retries exceeded"}
+        except Exception as e:
+            self.logger.error(f"Error in start_conversation: {str(e)}")
+            return {"response_id": None, "error": str(e), "success": False}
 
     def continue_conversation(
         self,
         response_id: str,
         message: str,
-        max_retries: int = 2,
+        use_structured_output: bool = True,
+        response_model: Any = None,
     ) -> dict[str, Any]:
-        """Continue an existing conversation with the Response API"""
-        retry_count = 0
+        """
+        Continue a conversation using the Response API with Structured Outputs.
 
-        while retry_count < max_retries:
-            try:
-                # Continue the conversation using the Response API
-                response = self.client.responses.continue_(
-                    response_id=response_id,
+        Args:
+            response_id: Previous response ID
+            message: Message to send
+            use_structured_output: Whether to use structured JSON output
+            response_model: Pydantic model for structured output (imported from pipeline_types.py)
+
+        Returns:
+            Dictionary containing response data and metadata
+        """
+        try:
+            if use_structured_output and response_model:
+                # Use Response API with Pydantic model structured parsing
+                response = self.client.responses.parse(
                     input=message,
+                    previous_response_id=response_id,
+                    model=self.model,
+                    text_format=response_model,
                 )
 
-                # Parse the response
-                result = self._parse_response(response)
+                # Update response ID and parse structured result
+                self.current_response_id = response.id
 
-                # Store response ID for conversation continuation
-                if hasattr(response, "id"):
-                    result["response_id"] = response.id
-                    self.current_response_id = response.id
-                    self.conversation_state["current_response_id"] = response.id
-
-                # Update token usage if available
-                if hasattr(response, "usage") and response.usage:
-                    token_tracker.update(response.usage.model_dump())
-
-                return result
-
-            except Exception as e:
-                logging.error(
-                    f"Response API continue failed (attempt {retry_count + 1}/{max_retries}): {str(e)}",
+                return {
+                    "response_id": response.id,
+                    "data": response.output_parsed.model_dump(),
+                    "success": True,
+                }
+            else:
+                # Regular text response
+                response = self.client.responses.create(
+                    input=message,
+                    previous_response_id=response_id,
+                    model=self.model,
                 )
-                retry_count += 1
-                if retry_count >= max_retries:
-                    return {
-                        "error": f"Response API continue failed after {max_retries} attempts. Error: {str(e)}",
-                    }
 
-                # Exponential backoff: 1s, 2s
-                time.sleep(2**retry_count)
+                self.current_response_id = response.id
 
-        return {"error": "Maximum retries exceeded"}
+                return {
+                    "response_id": response.id,
+                    "text": response.output_text,
+                    "success": True,
+                }
+
+        except Exception as e:
+            self.logger.error(f"Error in continue_conversation: {str(e)}")
+            return {"response_id": response_id, "error": str(e), "success": False}
+
+    def start_document_conversation(
+        self,
+        sentences: list[str],
+        context: str = "",
+        response_model: Any = None,
+    ) -> str | None:
+        """
+        Start a document-level conversation for translation with structured output.
+
+        Args:
+            sentences: List of sentences to translate
+            context: Additional context
+            response_model: Pydantic model for structured output (imported from pipeline_types.py)
+
+        Returns:
+            Response ID for the conversation
+        """
+        try:
+            # Create a comprehensive translation prompt
+            document_prompt = f"""You are an expert Arabic-to-English translator specializing in Islamic texts.
+
+CONTEXT: {context}
+
+TASK: Translate the following {len(sentences)} Arabic sentences to English with detailed analysis.
+
+SENTENCES TO TRANSLATE:
+"""
+            for i, sentence in enumerate(sentences):
+                document_prompt += f"{i + 1}. {sentence}\n"
+
+            document_prompt += """
+REQUIREMENTS:
+- Provide accurate English translations
+- Include word-by-word breakdown with parts of speech (pos)
+- Extract essential Arabic forms for each word (essential)
+- Provide essential translations (essential_translation)
+- Add translation notes explaining context and choices
+- Mark any uncertainties or ambiguities
+- Return results as structured data with a "translations" array
+
+IMPORTANT: Each translation should have:
+- "translation": the English translation
+- "notes": translation notes and context
+- "word_by_word": array of word analysis with arabic, english, pos, essential, essential_translation, notes
+- "uncertainties": array of any uncertain elements with text and reason
+
+Please translate all sentences now."""
+
+            # Start conversation with structured output using proper message format
+            messages = [
+                {
+                    "role": "system",
+                    "content": "You are an expert Arabic-to-English translator specializing in Islamic texts. Provide structured translation data.",
+                },
+                {"role": "user", "content": document_prompt},
+            ]
+
+            response = self.start_conversation(
+                messages, use_structured_output=True, response_model=response_model
+            )
+
+            if response.get("success"):
+                self.logger.info("Document conversation started successfully")
+                return response.get("response_id")
+            else:
+                self.logger.warning(
+                    f"Document conversation error: {response.get('error', 'Unknown error')}"
+                )
+                return response.get("response_id")
+
+        except Exception as e:
+            self.logger.error(f"Error starting document conversation: {str(e)}")
+            return None
+
+    def continue_with_stage(
+        self,
+        stage_message: str,
+        tools: list[dict[str, Any]] | None = None,  # Legacy parameter - ignored
+        response_model: Any = None,
+    ) -> dict[str, Any]:
+        """
+        Continue conversation with a stage-specific message.
+
+        Args:
+            stage_message: Message for this translation stage
+            tools: Legacy parameter - ignored (we use Pydantic models now)
+            response_model: Pydantic model for structured output (imported from pipeline_types.py)
+
+        Returns:
+            Response data dictionary
+        """
+        if not self.current_response_id:
+            self.logger.error("No active conversation to continue")
+            return {"error": "No active conversation", "success": False}
+
+        # Note: tools parameter is ignored as we now use Pydantic models with text_format
+        return self.continue_conversation(
+            self.current_response_id,
+            stage_message,
+            use_structured_output=True,
+            response_model=response_model,
+        )
 
     def _parse_response(
         self,
         response: Any,
         tools: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
-        """Parse the response from the Response API with enhanced validation"""
-        # Check for tool calls in the output
-        if hasattr(response, "output") and response.output:
-            for output_item in response.output:
-                if hasattr(output_item, "type") and output_item.type == "function_call":
-                    if hasattr(output_item, "arguments") and output_item.arguments:
-                        try:
-                            result = json.loads(output_item.arguments)
-
-                            # Enhanced validation: Check for empty or malformed results
-                            if not result:
-                                logger.warning("Function call returned empty result")
-                                return {"error": "Function call returned empty result"}
-
-                            if isinstance(result, dict):
-                                # Check if all values are empty or None
-                                if not any(result.values()):
-                                    logger.warning(
-                                        "Function call returned result with all empty values"
-                                    )
-                                    return {
-                                        "error": "Function call returned result with all empty values"
-                                    }
-
-                                # Log successful function call for monitoring
-                                logger.info(
-                                    f"Successfully parsed function call: {output_item.name}"
-                                )
-
-                            return result
-                        except json.JSONDecodeError as e:
-                            logger.error(
-                                f"Failed to parse function arguments: {output_item.arguments[:100]}... Error: {e}"
-                            )
-                            return {
-                                "error": f"Failed to parse function arguments: {output_item.arguments[:100]}..."
-                            }
-                    else:
-                        logger.warning("Function call response was empty")
-                        return {"error": "Function call response was empty"}
-
-        # Check for output_text which contains the main response
-        if hasattr(response, "output_text") and response.output_text:
-            content = response.output_text
+        """
+        Legacy method for backward compatibility.
+        For structured responses, the parsing is handled automatically by responses.parse()
+        """
+        if hasattr(response, "output_parsed") and response.output_parsed:
+            # Already parsed by responses.parse()
+            return response.output_parsed.model_dump()
+        elif hasattr(response, "output_text") and response.output_text:
+            # Try to parse as JSON for backward compatibility
+            try:
+                return json.loads(response.output_text)
+            except json.JSONDecodeError:
+                return {"text": response.output_text}
         else:
-            logger.warning("Empty response from API")
-            return {"error": "Empty response from API"}
+            return {"error": "No parseable content found in response"}
 
-        if not content:
-            logger.warning("Empty content in response")
-            return {"error": "Empty response from API"}
+    # Remove legacy methods that are no longer needed
+    def _parse_structured_response(
+        self, response: Any, expect_json: bool = True
+    ) -> dict[str, Any]:
+        """Legacy method - use _parse_response instead"""
+        return self._parse_response(response)
 
-        # Try to parse as JSON directly
-        try:
-            result = json.loads(content)
-            logger.info("Successfully parsed JSON response")
-            return result
-        except json.JSONDecodeError:
-            # Try to extract JSON from markdown code blocks
-            import re
-
-            json_match = re.search(r"```(?:json)?\s*\n(.*?)\n```", content, re.DOTALL)
-            if json_match:
-                try:
-                    result = json.loads(json_match.group(1).strip())
-                    logger.info("Successfully parsed JSON from markdown code block")
-                    return result
-                except json.JSONDecodeError:
-                    logger.warning("Failed to parse JSON from markdown code block")
-
-            # Try to find JSON-like content without markdown
-            json_match = re.search(r"\{.*\}", content, re.DOTALL)
-            if json_match:
-                try:
-                    result = json.loads(json_match.group(0))
-                    logger.info("Successfully parsed JSON from content")
-                    return result
-                except json.JSONDecodeError:
-                    logger.warning("Failed to parse JSON from content")
-
-            # Log the raw response for debugging
-            logger.error(
-                f"Failed to parse JSON response. Raw content: {content[:200]}..."
-            )
-            return {"error": f"Failed to parse JSON: {content[:100]}..."}
-
-    def _messages_to_input(self, messages: list[dict[str, str]]) -> str:
-        """Convert messages list to input text for Response API"""
-        if not messages:
-            return ""
-
-        # Build conversation history for better context
-        conversation_parts = []
+    def _format_messages_for_input(self, messages: list[dict[str, Any]]) -> str:
+        """Legacy method - Response API now accepts messages directly"""
+        # This method is kept for backward compatibility but may not be needed
+        formatted_parts = []
         for message in messages:
-            role = message.get("role", "")
+            role = message.get("role", "user")
             content = message.get("content", "")
-
             if role == "system":
-                # System messages become part of the instructions
-                continue
+                formatted_parts.append(f"System Instructions: {content}")
             elif role == "user":
-                conversation_parts.append(f"User: {content}")
+                formatted_parts.append(f"User Request: {content}")
             elif role == "assistant":
-                conversation_parts.append(f"Assistant: {content}")
+                formatted_parts.append(f"Previous Response: {content}")
 
-        return "\n\n".join(conversation_parts)
-
-    def _get_instructions_for_tools(self, tools: list[dict[str, Any]] | None) -> str:
-        """Generate instructions for the Response API based on available tools"""
-        base_instructions = "You are a helpful AI assistant specialized in Arabic to English translation."
-
-        if not tools:
-            return base_instructions
-
-        # Create detailed instructions that explain the available tools and usage
-        instructions = (
-            base_instructions + "\n\nYou have access to the following tools:\n"
-        )
-
-        for tool in tools:
-            if tool.get("type") == "function" and tool.get("function"):
-                func = tool["function"]
-                tool_name = tool.get("name", "unknown")
-                description = func.get("description", "No description")
-                parameters = func.get("parameters", {})
-
-                instructions += f"- {tool_name}: {description}\n"
-
-                # Add parameter details for better understanding
-                if parameters.get("properties"):
-                    instructions += "  Parameters:\n"
-                    for param_name, param_details in parameters["properties"].items():
-                        param_desc = param_details.get("description", "No description")
-                        param_type = param_details.get("type", "unknown")
-                        instructions += (
-                            f"    - {param_name} ({param_type}): {param_desc}\n"
-                        )
-
-        instructions += (
-            "\nCRITICAL INSTRUCTIONS FOR TOOL USAGE:\n"
-            "1. You MUST use the appropriate tool when processing the input.\n"
-            "2. Do not respond directly with text - always call the function.\n"
-            "3. Provide ALL required parameters with valid values.\n"
-            "4. Follow the exact parameter types and descriptions specified.\n"
-            "5. Ensure your function arguments are complete and accurate.\n"
-            "6. Use structured JSON format for all function calls.\n"
-            "7. Maintain context and consistency throughout the conversation.\n"
-            "8. If you're unsure about a parameter, provide your best estimate based on the context.\n"
-            "\n"
-            "EXAMPLE: When you need to refine translations, call the function with both "
-            "improved_tashkeel and improved_translation parameters filled with appropriate values."
-        )
-        return instructions
-
-    def get_conversation_state(self) -> dict[str, Any]:
-        """Get the current conversation state"""
-        return self.conversation_state.copy()
-
-    def set_conversation_state(self, state: dict[str, Any]) -> None:
-        """Set the conversation state"""
-        self.conversation_state = state.copy()
-
-    def reset_conversation(self) -> None:
-        """Reset the conversation state"""
-        self.conversation_state = {}
-        self.current_response_id = None
+        return "\n\n".join(formatted_parts)
 
 
 # Convenience function for backward compatibility
@@ -541,7 +461,7 @@ def call_response_api(
     elif tool_schema:
         tools = [tool_schema]
 
-    manager = ResponseAPIManager(model=model)
+    manager = ResponsesAPIManager(model=model)
     return manager.start_conversation(
         messages=messages,
         tools=tools,
@@ -550,4 +470,4 @@ def call_response_api(
     )
 
 
-__all__ = ["token_tracker", "call_response_api", "ResponseAPIManager", "load_api_keys"]
+__all__ = ["token_tracker", "call_response_api", "ResponsesAPIManager", "load_api_keys"]

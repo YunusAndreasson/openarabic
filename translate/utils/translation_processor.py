@@ -12,7 +12,7 @@ from data.pipeline_types import (
     WordTranslationResult,
     WordTranslationResults,
 )
-from utils.responses_api import ResponseAPIManager
+from utils.responses_api import ResponsesAPIManager
 from utils.validation import (
     validate_final_translation,
     validate_tashkeel_added,
@@ -41,7 +41,7 @@ def _get_translation_engine_functions() -> tuple[Any, Any, Any, Any]:
 def run_full_translation(
     batch_sentences: list[str],
     batch_contexts: list[str | None],
-    conversation_manager: ResponseAPIManager | None = None,
+    conversation_manager: ResponsesAPIManager | None = None,
 ) -> TranslationResults:
     """Translate a batch of sentences and validate the results."""
     batch_translate_full_sentences = _get_translation_engine_functions()[2]
@@ -58,7 +58,7 @@ def apply_tashkeel(
     all_sentences: list[str] | None = None,
     batch_indices: list[int] | None = None,
     context_cache: Any = None,
-    conversation_manager: ResponseAPIManager | None = None,
+    conversation_manager: ResponsesAPIManager | None = None,
 ) -> TashkeelResults:
     """Add diacritics to sentences and validate the results."""
     batch_add_tashkeel = _get_translation_engine_functions()[0]
@@ -84,7 +84,7 @@ def translate_words(
     all_sentences: list[str] | None = None,
     batch_indices: list[int] | None = None,
     context_cache: Any = None,
-    conversation_manager: ResponseAPIManager | None = None,
+    conversation_manager: ResponsesAPIManager | None = None,
 ) -> WordTranslationResults:
     """Generate word-by-word translations and validate them."""
     batch_translate_words = _get_translation_engine_functions()[3]
@@ -282,7 +282,7 @@ def refine_translations(
     translation_results: TranslationResults,
     tashkeel_results: TashkeelResults,
     word_options_results: WordTranslationResults,
-    conversation_manager: ResponseAPIManager | None = None,
+    conversation_manager: ResponsesAPIManager | None = None,
 ) -> list[SentenceTranslation]:
     """Refine translations using previous results and return final objects."""
     inputs, _ = build_refinement_input(

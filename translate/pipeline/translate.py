@@ -18,7 +18,7 @@ from data.pipeline_types import (
 )
 from utils.context_cache import ContextCache
 from utils.file_utils import write_json_file
-from utils.responses_api import ResponseAPIManager
+from utils.responses_api import ResponsesAPIManager
 from utils.text_utils import filter_arabic_words
 from utils.translation_processor import (
     apply_tashkeel,
@@ -99,7 +99,7 @@ def process_batch(
     all_sentences: list[str] | None = None,
     batch_indices: list[int] | None = None,
     context_cache: Any = None,
-    conversation_manager: ResponseAPIManager | None = None,
+    conversation_manager: ResponsesAPIManager | None = None,
 ) -> list[SentenceTranslation]:
     """Process a single batch of sentences."""
     if not batch_sentences:
@@ -212,7 +212,7 @@ def process_batch(
 def process_batches(
     all_units: list[str] | list[dict[str, Any]],
     batch_size: int,
-    conversation_manager: ResponseAPIManager | None = None,
+    conversation_manager: ResponsesAPIManager | None = None,
 ) -> tuple[list[SentenceTranslation], list[str]]:
     """Process all batches in parallel and return results and errors."""
     results: list[SentenceTranslation] = []
@@ -349,9 +349,9 @@ def translate_file(
         # Initialize conversation manager for document-level continuity
         conversation_manager = None
         if use_conversation_continuity:
-            from utils.responses_api import ResponseAPIManager
+            from utils.responses_api import ResponsesAPIManager
 
-            conversation_manager = ResponseAPIManager()
+            conversation_manager = ResponsesAPIManager()
 
             # Start document-level conversation with full text
             sentences = [

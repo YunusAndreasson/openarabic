@@ -37,7 +37,7 @@ from utils.camel_tools_service import (
 )
 from utils.context_cache import ContextCache
 from utils.google_translate_service import GoogleTranslateService
-from utils.responses_api import ResponseAPIManager, call_response_api
+from utils.responses_api import ResponsesAPIManager, call_response_api
 from utils.text_utils import filter_arabic_words
 
 logger = logging.getLogger(__name__)
@@ -81,7 +81,7 @@ def _build_word_prompt(
 def batch_translate_full_sentences(
     sentences: list[str],
     contexts: list[str | None],
-    conversation_manager: ResponseAPIManager | None = None,
+    conversation_manager: ResponsesAPIManager | None = None,
 ) -> TranslationResults:
     """Translate multiple sentences in a single API call with retry logic"""
 
@@ -217,7 +217,7 @@ def batch_add_tashkeel(
     all_sentences: list[str] | None = None,
     indices: list[int] | None = None,
     context_cache: ContextCache | None = None,
-    conversation_manager: ResponseAPIManager | None = None,
+    conversation_manager: ResponsesAPIManager | None = None,
 ) -> TashkeelResults:
     """Add diacritics to sentences using camel_tools suggestions as primary source."""
     if not sentences:
@@ -391,7 +391,7 @@ def batch_translate_words(
     all_sentences: list[str] | None = None,
     indices: list[int] | None = None,
     context_cache: ContextCache | None = None,
-    conversation_manager: ResponseAPIManager | None = None,
+    conversation_manager: ResponsesAPIManager | None = None,
 ) -> WordTranslationResults:
     """Create word-by-word translations for multiple sentences in a batch, returning options"""
 
@@ -575,7 +575,7 @@ def batch_translate_words(
 
 def batch_refine_translations(
     refinement_input: RefinementInputs,
-    conversation_manager: ResponseAPIManager | None = None,
+    conversation_manager: ResponsesAPIManager | None = None,
 ) -> RefinementResults:
     """Refine all translation components, selecting best options"""
     try:

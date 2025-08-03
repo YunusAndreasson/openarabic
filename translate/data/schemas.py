@@ -31,6 +31,14 @@ TRANSLATE_SENTENCES_TOOL = {
         "parameters": {
             "type": "object",
             "properties": {
+                "sentences": {
+                    "type": "array",
+                    "description": "Array of Arabic sentences to translate",
+                    "items": {
+                        "type": "string",
+                        "description": "A single Arabic sentence to translate",
+                    },
+                },
                 "translations": {
                     "type": "array",
                     "description": "Array of translation results",
@@ -61,6 +69,7 @@ TRANSLATE_SENTENCES_TOOL = {
                                         },
                                     },
                                     "required": ["text", "reason"],
+                                    "additionalProperties": False,
                                 },
                             },
                             "word_by_word": {
@@ -100,7 +109,9 @@ TRANSLATE_SENTENCES_TOOL = {
                                         "pos",
                                         "essential",
                                         "essential_translation",
+                                        "notes",
                                     ],
+                                    "additionalProperties": False,
                                 },
                             },
                         },
@@ -108,13 +119,17 @@ TRANSLATE_SENTENCES_TOOL = {
                             "translation",
                             "notes",
                             "word_by_word",
+                            "uncertainties",
                         ],
+                        "additionalProperties": False,
                     },
                 },
             },
-            "required": ["translations"],
+            "required": ["sentences", "translations"],
+            "additionalProperties": False,
             "examples": [
                 {
+                    "sentences": ["قال النبي صلى الله عليه وسلم: إنما الأعمال بالنيات"],
                     "translations": [
                         {
                             "translation": "And the Prophet [Muhammad], peace be upon him, said",
@@ -143,6 +158,7 @@ TRANSLATE_SENTENCES_TOOL = {
                 },
             ],
         },
+        "strict": True,
     },
 }
 
