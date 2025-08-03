@@ -12,7 +12,6 @@ from data.models import SplitResult
 from data.schemas import (
     GENERAL_SYSTEM_PROMPT,
     SENTENCE_SPLITTING_USER_PROMPT,
-    SPLIT_TEXT_TOOL,
 )
 from utils.file_utils import (
     generate_split_filename,
@@ -34,6 +33,7 @@ def build_split_messages(text: str) -> list[dict[str, str]]:
 
 def parse_split_response(response: dict[str, Any]) -> SplitResult:
     """Normalize the split API response."""
+    # Handle new Response API format with wrapped data
     if "error" in response:
         return SplitResult(
             units=[],
@@ -43,15 +43,23 @@ def parse_split_response(response: dict[str, Any]) -> SplitResult:
             total_units=0,
         )
 
+    # Extract data from new Response API format
+    if "data" in response and response.get("success"):
+        # New format: {"data": {...}, "success": True}
+        data = response["data"]
+    else:
+        # Legacy format: direct data
+        data = response
+
     return SplitResult(
-        units=response.get("units", []),
-        title=response.get("title", "Untitled Text"),
-        summary=response.get("summary", "No summary available"),
-        difficulty_level=response.get(
+        units=data.get("units", []),
+        title=data.get("title", "Untitled Text"),
+        summary=data.get("summary", "No summary available"),
+        difficulty_level=data.get(
             "difficulty_level", DifficultyLevel.INTERMEDIATE.value
         ),
-        total_units=len(response.get("units", [])),
-        unit_types=response.get("unit_types"),
+        total_units=len(data.get("units", [])),
+        unit_types=data.get("unit_types"),
     )
 
 
@@ -70,7 +78,7 @@ def split_text_into_sentences(text: str) -> SplitResult:
 
     response = call_response_api(
         messages,
-        tools=[SPLIT_TEXT_TOOL],
+        response_model=SplitResult,
         model=MODEL_ANALYSIS,
     )
 

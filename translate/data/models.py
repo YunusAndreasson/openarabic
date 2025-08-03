@@ -37,6 +37,72 @@ class WordTranslationOptions(BaseModel):
     )
 
 
+class TranslationUncertainty(BaseModel):
+    """Uncertainty in translation"""
+
+    text: str = Field(description="Text with uncertainty")
+    reason: str = Field(description="Reason for uncertainty")
+
+
+class TranslationResult(BaseModel):
+    """Result from sentence translation step"""
+
+    translation: str = Field(description="English translation")
+    notes: str = Field(description="Translation notes and context")
+    uncertainties: list[TranslationUncertainty] = Field(
+        default_factory=list, description="Areas of uncertainty in translation"
+    )
+    word_by_word: list[dict[str, Any]] = Field(
+        default_factory=list, description="Word-by-word analysis"
+    )
+
+
+class TashkeelUncertainty(BaseModel):
+    """Uncertainty in tashkeel/diacritical marks"""
+
+    word: str = Field(description="Word with uncertain diacritics")
+    reason: str = Field(description="Reason for uncertainty")
+    related_translation_uncertainty: str | None = Field(
+        default=None, description="Related translation uncertainty"
+    )
+
+
+class TashkeelResult(BaseModel):
+    """Result from tashkeel addition step"""
+
+    tashkeel: str = Field(description="Text with diacritical marks added")
+    uncertainties: list[TashkeelUncertainty] = Field(
+        default_factory=list, description="Uncertain diacritical marks"
+    )
+
+
+class WordTranslationResult(BaseModel):
+    """Result from word-by-word translation step"""
+
+    word_translations: list[WordTranslationOptions] = Field(
+        description="Word translation options before refinement"
+    )
+
+
+class RefinementResult(BaseModel):
+    """Result from final refinement step"""
+
+    improved_tashkeel: str = Field(description="Refined diacritical marks")
+    improved_translation: str = Field(description="Refined translation")
+    improved_word_translations: list[WordTranslation] = Field(
+        description="Final refined word translations"
+    )
+    resolved_uncertainties: list[dict[str, str]] = Field(
+        default_factory=list, description="Uncertainties that were resolved"
+    )
+    remaining_uncertainties: list[dict[str, str]] = Field(
+        default_factory=list, description="Uncertainties that remain unresolved"
+    )
+    changes_made: list[str] = Field(
+        default_factory=list, description="List of changes made during refinement"
+    )
+
+
 class SentenceTranslation(BaseModel):
     """Complete sentence translation with all components"""
 

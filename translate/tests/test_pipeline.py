@@ -3,7 +3,7 @@
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 from data.enums import DifficultyLevel
 from pipeline.split_file import split_file
@@ -24,21 +24,25 @@ class TestSplitFile:
 
         try:
             # Mock the API call to avoid actual API usage
-            with patch("utils.responses_api.client") as mock_client:
-                mock_response = Mock()
-                mock_response.output = None  # No tool calls
-                mock_response.output_text = '```json\n{"title": "Test Article", "summary": "A test article", "difficulty_level": 1, "units": ["مرحبا بالعالم.", "هذا نص تجريبي.", "لاختبار الترجمة."], "unit_types": ["sentence", "sentence", "sentence"]}\n```'
-
-                # Mock usage data
-                mock_usage = Mock()
-                mock_usage.model_dump.return_value = {
-                    "prompt_tokens": 10,
-                    "completion_tokens": 5,
-                    "total_tokens": 15,
+            with patch(
+                "utils.responses_api.ResponsesAPIManager.start_conversation"
+            ) as mock_start_conversation:
+                # Mock the start_conversation method to return structured data
+                mock_start_conversation.return_value = {
+                    "response_id": "test-id",
+                    "data": {
+                        "title": "Test Article",
+                        "summary": "A test article",
+                        "difficulty_level": 1,
+                        "units": [
+                            "مرحبا بالعالم.",
+                            "هذا نص تجريبي.",
+                            "لاختبار الترجمة.",
+                        ],
+                        "unit_types": ["sentence", "sentence", "sentence"],
+                    },
+                    "success": True,
                 }
-                mock_response.usage = mock_usage
-
-                mock_client.responses.create.return_value = mock_response
 
                 split_file(input_file, output_file)
 
@@ -67,21 +71,21 @@ class TestSplitFile:
         output_file = input_file.replace(".txt", "_split.json")
 
         try:
-            with patch("utils.responses_api.client") as mock_client:
-                mock_response = Mock()
-                mock_response.output = None  # No tool calls
-                mock_response.output_text = '```json\n{"title": "Empty Article", "summary": "Empty content", "difficulty_level": 1, "units": [], "unit_types": []}\n```'
-
-                # Mock usage data
-                mock_usage = Mock()
-                mock_usage.model_dump.return_value = {
-                    "prompt_tokens": 10,
-                    "completion_tokens": 5,
-                    "total_tokens": 15,
+            with patch(
+                "utils.responses_api.ResponsesAPIManager.start_conversation"
+            ) as mock_start_conversation:
+                # Mock the start_conversation method to return structured data
+                mock_start_conversation.return_value = {
+                    "response_id": "test-id",
+                    "data": {
+                        "title": "Empty Article",
+                        "summary": "Empty content",
+                        "difficulty_level": 1,
+                        "units": [],
+                        "unit_types": [],
+                    },
+                    "success": True,
                 }
-                mock_response.usage = mock_usage
-
-                mock_client.responses.create.return_value = mock_response
 
                 split_file(input_file, output_file)
 
@@ -152,56 +156,42 @@ class TestTranslateFile:
 class TestResponseAPI:
     """Test Response API utility functions."""
 
-    @patch("utils.responses_api.client")
-    def test_call_response_api_success(self, mock_client):
+    @patch("utils.responses_api.ResponsesAPIManager.start_conversation")
+    def test_call_response_api_success(self, mock_start_conversation):
         """Test successful Response API call."""
-        # Mock the responses.create method with proper structure
-        mock_response = Mock()
-        mock_response.output = None  # No tool calls
-        mock_response.output_text = '```json\n{"translation": "Hello"}\n```'
-
-        # Mock usage data
-        mock_usage = Mock()
-        mock_usage.model_dump.return_value = {
-            "prompt_tokens": 10,
-            "completion_tokens": 5,
-            "total_tokens": 15,
+        # Mock the start_conversation method to return the expected format
+        mock_start_conversation.return_value = {
+            "response_id": "test-id",
+            "text": '```json\n{"translation": "Hello"}\n```',
+            "success": True,
         }
-        mock_response.usage = mock_usage
-
-        mock_client.responses.create.return_value = mock_response
 
         messages = [{"role": "user", "content": "Translate: مرحبا and return as JSON"}]
         result = call_response_api(messages, temperature=0.3)
 
-        assert "translation" in result
-        assert result["translation"] == "Hello"
+        # New format: result contains {"text": "...", "success": True}
+        assert "text" in result
+        assert result["success"] is True
+        assert "Hello" in result["text"]
 
-    @patch("utils.responses_api.client")
-    def test_call_response_api_retry_on_failure(self, mock_client):
+    @patch("utils.responses_api.ResponsesAPIManager.start_conversation")
+    def test_call_response_api_retry_on_failure(self, mock_start_conversation):
         """Test Response API call retries on failure."""
-        # Mock the responses.create method with proper structure
-        mock_response = Mock()
-        mock_response.output = None  # No tool calls
-        mock_response.output_text = '```json\n{"translation": "Hello"}\n```'
-
-        # Mock usage data
-        mock_usage = Mock()
-        mock_usage.model_dump.return_value = {
-            "prompt_tokens": 10,
-            "completion_tokens": 5,
-            "total_tokens": 15,
-        }
-        mock_response.usage = mock_usage
-
-        mock_client.responses.create.side_effect = [
+        # Mock the start_conversation method to fail twice then succeed
+        mock_start_conversation.side_effect = [
             Exception("API Error"),
             Exception("API Error"),
-            mock_response,
+            {
+                "response_id": "test-id",
+                "text": '```json\n{"translation": "Hello"}\n```',
+                "success": True,
+            },
         ]
 
         messages = [{"role": "user", "content": "Translate: مرحبا and return as JSON"}]
         result = call_response_api(messages, max_retries=3)
 
-        assert "translation" in result
-        assert mock_client.responses.create.call_count == 3
+        # New format: result contains {"text": "...", "success": True}
+        assert "text" in result
+        assert result["success"] is True
+        assert mock_start_conversation.call_count == 3

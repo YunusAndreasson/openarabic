@@ -7,29 +7,27 @@ from data.config import (
     MODEL_TRANSLATION,
     MODEL_VERIFICATION,
 )
-from data.models import WordTranslationOptions
+from data.models import (
+    RefinementResult,
+    TashkeelResult,
+    TranslationResult,
+    WordTranslationOptions,
+    WordTranslationResult,
+)
 from data.pipeline_types import (
     RefinementInput,
     RefinementInputs,
-    RefinementResult,
     RefinementResults,
-    TashkeelResult,
     TashkeelResults,
-    TranslationResult,
     TranslationResults,
     WordTranslationOption,
-    WordTranslationResult,
     WordTranslationResults,
 )
 from data.schemas import (
     FINAL_VERIFICATION_USER_PROMPT,
     GENERAL_SYSTEM_PROMPT,
-    REFINEMENT_TOOL,
     SENTENCE_TRANSLATION_USER_PROMPT,
-    TASHKEEL_TOOL,
-    TRANSLATE_SENTENCES_TOOL,
     WORD_BY_WORD_USER_PROMPT,
-    WORD_TRANSLATION_TOOL,
 )
 from utils.camel_tools_service import (
     format_tashkeel_suggestions,
@@ -111,7 +109,7 @@ def batch_translate_full_sentences(
         ]
         return call_response_api(
             messages,
-            tools=[TRANSLATE_SENTENCES_TOOL],
+            response_model=TranslationResult,
             model=MODEL_TRANSLATION,
         )
 
@@ -123,7 +121,7 @@ def batch_translate_full_sentences(
             f"Please translate sentences {sentence_indices} from the uploaded document"
         )
         response = conversation_manager.continue_with_stage(
-            message, [TRANSLATE_SENTENCES_TOOL]
+            message, response_model=TranslationResult
         )
     else:
         # Use standard implementation when no conversation manager
@@ -139,7 +137,7 @@ def batch_translate_full_sentences(
         if conversation_manager and conversation_manager.current_response_id:
             response = conversation_manager.continue_with_stage(
                 f"Retry translation for sentences {sentence_indices} without context",
-                [TRANSLATE_SENTENCES_TOOL],
+                response_model=TranslationResult,
             )
         else:
             response = try_translation(sentences, contexts, retry_without_context=True)
@@ -296,7 +294,7 @@ The camel-tools suggestions are based on morphological analysis but may not cons
 4. Add any missing diacritics that camel-tools didn't cover
 5. Ensure complete vocalization of all words with context-appropriate diacritics
 
-Add complete diacritical marks (tashkīl) to EVERY word in the Islamic Arabic text using the `TASHKEEL_TOOL` schema. Return your response as valid JSON.
+Add complete diacritical marks (tashkīl) to EVERY word in the Islamic Arabic text. Return your response as valid JSON matching the TashkeelResult structure.
 
 CRITICAL: You MUST provide ALL required fields. The `uncertainties` array must be present for every tashkeel result, even if empty.
 
@@ -323,7 +321,9 @@ Input texts:
         # Reference specific sentences from uploaded document with context emphasis
         sentence_indices = list(range(len(sentences)))
         message = f"Add tashkeel to sentences {sentence_indices} from the uploaded document. Use camel-tools suggestions as starting point but improve them using the full document context and translation."
-        response = conversation_manager.continue_with_stage(message, [TASHKEEL_TOOL])
+        response = conversation_manager.continue_with_stage(
+            message, response_model=TashkeelResult
+        )
     else:
         # Use standard implementation when no conversation manager
         messages = [
@@ -336,7 +336,7 @@ Input texts:
 
         response = call_response_api(
             messages,
-            tools=[TASHKEEL_TOOL],
+            response_model=TashkeelResult,
             model=MODEL_OTHER,
         )
 
@@ -454,7 +454,7 @@ def batch_translate_words(
                     # Reference specific sentences from uploaded document
                     message = f"Analyze words in sentence {i + 1} from the uploaded document. Tashkeel: {tashkeel}, Translation: {translation}"
                     response = conversation_manager.continue_with_stage(
-                        message, [WORD_TRANSLATION_TOOL]
+                        message, response_model=WordTranslationResult
                     )
                 else:
                     # Use standard implementation when no conversation manager
@@ -469,7 +469,7 @@ def batch_translate_words(
                     ]
                     response = call_response_api(
                         messages,
-                        tools=[WORD_TRANSLATION_TOOL],
+                        response_model=WordTranslationResult,
                         model=MODEL_TRANSLATION,
                     )
 
@@ -501,22 +501,21 @@ def batch_translate_words(
                 if not raw_word_translations:
                     # Create basic fallback word translations
                     for word in arabic_words:
-                        word_translations_options.append(
-                            WordTranslationOptions(
-                                arabic=word,
-                                english_options=[f"[{word}]"],
-                                pos=None,
-                                essential=word,
-                                essential_translation_options=[f"[{word}]"],
-                                notes="Fallback translation due to API failure",
-                                uncertainties=[
-                                    {
-                                        "text": word,
-                                        "reason": "API returned empty result",
-                                    }
-                                ],
-                            ).model_dump(),
+                        word_option = WordTranslationOptions(
+                            arabic=word,
+                            english_options=[f"[{word}]"],
+                            pos=None,
+                            essential=word,
+                            essential_translation_options=[f"[{word}]"],
+                            notes="Fallback translation due to API failure",
+                            uncertainties=[
+                                {
+                                    "text": word,
+                                    "reason": "API returned empty result",
+                                }
+                            ],
                         )
+                        word_translations_options.append(word_option)
                 else:
                     for word_data in raw_word_translations:
                         if not isinstance(word_data, dict):
@@ -533,19 +532,18 @@ def batch_translate_words(
                             ess_opts = []
                         arabic_text = word_data.get("arabic", "")
                         essential_letters = word_data.get("essential", arabic_text)
-                        word_translations_options.append(
-                            WordTranslationOptions(
-                                arabic=arabic_text,
-                                english_options=eng_opts,
-                                pos=word_data.get("pos") or None,
-                                essential=essential_letters,
-                                essential_translation_options=ess_opts,
-                                notes=word_data.get("notes") or None,
-                                uncertainties=_validate_uncertainties(
-                                    word_data.get("uncertainties", [])
-                                ),
-                            ).model_dump(),
+                        word_option = WordTranslationOptions(
+                            arabic=arabic_text,
+                            english_options=eng_opts,
+                            pos=word_data.get("pos") or None,
+                            essential=essential_letters,
+                            essential_translation_options=ess_opts,
+                            notes=word_data.get("notes") or None,
+                            uncertainties=_validate_uncertainties(
+                                word_data.get("uncertainties", [])
+                            ),
                         )
+                        word_translations_options.append(word_option)
 
                 # Always ensure we have some result, even if it's fallback
                 if word_translations_options:
@@ -658,14 +656,14 @@ def batch_refine_translations(
             # Reference specific sentences from uploaded document
             message = "Refine translations for sentences from the uploaded document. Use the provided refinement data to select best options."
             response = conversation_manager.continue_with_stage(
-                message, [REFINEMENT_TOOL]
+                message, response_model=RefinementResult
             )
         else:
             # Use standard implementation when no conversation manager
             temp_to_use = 1.0 if MODEL_VERIFICATION == "gpt-4o-mini" else 0.3
             api_kwargs = {
                 "messages": messages,
-                "tools": [REFINEMENT_TOOL],
+                "response_model": RefinementResult,
                 "model": MODEL_VERIFICATION,
                 "temperature": temp_to_use,
             }

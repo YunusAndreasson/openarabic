@@ -8,13 +8,11 @@ Response API, which maintains state across multiple interactions.
 import json
 import logging
 import os
-import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from openai import OpenAI
 
 from data.config import MODEL_OTHER
-from data.schemas import GENERAL_SYSTEM_PROMPT
 
 logger = logging.getLogger(__name__)
 
@@ -367,7 +365,7 @@ Please translate all sentences now."""
     def continue_with_stage(
         self,
         stage_message: str,
-        tools: list[dict[str, Any]] | None = None,  # Legacy parameter - ignored
+        tools: list[dict[str, Any]] | None = None,  # noqa: F841
         response_model: Any = None,
     ) -> dict[str, Any]:
         """
@@ -396,7 +394,7 @@ Please translate all sentences now."""
     def _parse_response(
         self,
         response: Any,
-        tools: list[dict[str, Any]] | None = None,
+        tools: list[dict[str, Any]] | None = None,  # noqa: F841
     ) -> dict[str, Any]:
         """
         Legacy method for backward compatibility.
@@ -416,7 +414,9 @@ Please translate all sentences now."""
 
     # Remove legacy methods that are no longer needed
     def _parse_structured_response(
-        self, response: Any, expect_json: bool = True
+        self,
+        response: Any,
+        expect_json: bool = True,  # noqa: F841
     ) -> dict[str, Any]:
         """Legacy method - use _parse_response instead"""
         return self._parse_response(response)
@@ -441,33 +441,52 @@ Please translate all sentences now."""
 # Convenience function for backward compatibility
 def call_response_api(
     messages: list[dict[str, str]],
-    tools: list[dict[str, Any]] | None = None,
-    function_schema: dict[str, Any] | None = None,
-    _function_name: str | None = None,
-    tool_schema: dict[str, Any] | None = None,
-    _tool_name: str | None = None,
-    temperature: float = 0.3,
-    max_retries: int = 2,
+    tools: list[dict[str, Any]] | None = None,  # noqa: F841
+    function_schema: dict[str, Any] | None = None,  # noqa: F841
+    _function_name: str | None = None,  # noqa: F841
+    tool_schema: dict[str, Any] | None = None,  # noqa: F841
+    _tool_name: str | None = None,  # noqa: F841
+    temperature: float = 0.3,  # noqa: F841
+    max_retries: int = 2,  # noqa: F841
     model: str = MODEL_OTHER,
+    response_model: Any = None,
 ) -> dict[str, Any]:
-    """Call the Response API with the given messages and tools"""
-    # Handle both old and new parameter names for backward compatibility
-    if function_schema:
-        # Convert function schema to tool format if needed
-        if function_schema.get("type") == "function":
-            tools = [function_schema]
-        else:
-            tools = [{"type": "function", "function": function_schema}]
-    elif tool_schema:
-        tools = [tool_schema]
-
+    """Call the Response API with the given messages and response model"""
     manager = ResponsesAPIManager(model=model)
-    return manager.start_conversation(
-        messages=messages,
-        tools=tools,
-        temperature=temperature,
-        max_retries=max_retries,
-    )
+
+    # Retry logic for backward compatibility
+    for attempt in range(max_retries + 1):
+        try:
+            result = manager.start_conversation(
+                messages=messages,
+                response_model=response_model,
+            )
+
+            # If successful, return immediately
+            if result.get("success"):
+                return result
+
+            # If not successful but no exception, return the error result
+            return result
+
+        except Exception as e:
+            # If this is the last attempt, re-raise the exception
+            if attempt == max_retries:
+                return {
+                    "response_id": None,
+                    "error": str(e),
+                    "success": False,
+                }
+
+            # Otherwise, continue to next retry
+            continue
+
+    # This should never be reached, but just in case
+    return {
+        "response_id": None,
+        "error": "Max retries exceeded",
+        "success": False,
+    }
 
 
 __all__ = ["token_tracker", "call_response_api", "ResponsesAPIManager", "load_api_keys"]
