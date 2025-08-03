@@ -1,0 +1,294 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+
+# Arabic Translation Pipeline Guide
+
+## Pipeline Overview
+
+The Arabic translation pipeline processes Islamic texts through a sophisticated 6-stage system with intelligent error recovery and validation. The pipeline follows files from input through final database insertion with comprehensive quality checks.
+
+## File Flow Architecture
+
+### Directory Structure
+
+```
+translate/
+├── 0_inbox/                    # Raw input files by author
+│   ├── 1_al_imam_an_nawawi/
+│   ├── 2_ibn_al_qayyim_al_jawziyyah/
+│   └── [author_folders]/
+├── 1_split/                    # Sentence-split files (flat)
+├── 2_translate/                # Translated files (flat)
+├── 3_insert/                   # Final processed files (flat)
+├── archive/                    # Processed files archive
+└── audio_cache/                # Audio file caching
+```
+
+### File Naming Convention
+
+- **Input**: `0_inbox/{author_number}_{author_name}/article.txt`
+- **Split**: `1_split/{author_number}_{article_name}_split.json`
+- **Translated**: `2_translate/{author_number}_{article_name}_translated.json`
+- **Final**: `3_insert/{author_number}_{article_name}_final.json`
+
+## Pipeline Stages & Validation
+
+### Stage 0: Intelligent Text Splitting
+
+**Command**: `uv run python main.py --split`
+
+**Validation Points**:
+
+- ✅ Input file exists in correct author folder
+- ✅ File contains valid Arabic text
+- ✅ Split output contains required metadata:
+  - `title`: Concise English title (3-7 words)
+  - `summary`: One-sentence summary
+  - `difficulty_level`: 1-5 rating
+  - `unit_types`: Classification array
+- ✅ Sentences are learner-friendly units
+- ✅ Quran verses kept intact
+- ✅ Narrator chains broken appropriately
+- ✅ Brief prayers kept whole
+
+**Error Recovery**:
+
+- If splitting fails: Check Arabic text encoding (UTF-8)
+- If metadata missing: Re-run with `--force-yes` flag
+- If units too long/short: Adjust splitting logic in [pipeline/split_file.py](mdc:translate/pipeline/split_file.py)
+
+### Stage 1: Sentence Translation
+
+**Command**: `uv run python main.py --translate`
+
+**Validation Points**:
+
+- ✅ Split file exists in `1_split/`
+- ✅ Translation contains required fields:
+  - `translation`: Non-empty English translation
+  - `notes`: Required field with translation notes
+  - `uncertainties`: Array of translation uncertainties
+- ✅ All sentences translated (no empty translations)
+- ✅ Translation quality meets Islamic text standards
+
+**Error Recovery**:
+
+- If translation empty: Check OpenAI API key and quota
+- If quality poor: Increase batch size or use GPT-4o model
+- If API errors: Implement exponential backoff in [pipeline/translation_engine.py](mdc:translate/pipeline/translation_engine.py)
+
+### Stage 2: Tashkeel Generation
+
+**Validation Points**:
+
+- ✅ Tashkeel added to all Arabic words
+- ✅ Diacritical marks complete (fatḥa, kasra, ḍamma, sukūn, shadda, tanwīn)
+- ✅ Camel-tools integration working
+- ✅ No empty tashkeel fields
+
+**Error Recovery**:
+
+- If tashkeel missing: Check camel-tools installation and Calima MSA database
+- If diacritics incomplete: Verify camel-tools service in [utils/camel_tools_service.py](mdc:translate/utils/camel_tools_service.py)
+- If camel-tools fails: Fallback to reinflector method
+
+### Stage 3: Word-by-Word Translation
+
+**Validation Points**:
+
+- ✅ Word-by-word data present for all words
+- ✅ Root letters extracted correctly
+- ✅ Multiple translation options provided (1-3 per word)
+- ✅ Part-of-speech tagging accurate
+- ✅ Grammatical notes included
+
+**Error Recovery**:
+
+- If word data missing: Check word analysis logic in [pipeline/translation_engine.py](mdc:translate/pipeline/translation_engine.py)
+- If root extraction fails: Verify Arabic word analysis in [utils/arabicWordAnalysis.ts](mdc:utils/arabicWordAnalysis.ts)
+
+### Stage 4: Google Cloud Integration
+
+**Validation Points**:
+
+- ✅ Google Cloud Translate API configured
+- ✅ Root word translations available as fallback
+- ✅ Retry logic working (3 attempts with exponential backoff)
+- ✅ API rate limits respected
+
+**Error Recovery**:
+
+- If Google Cloud fails: Check `GOOGLE_CLOUD_PROJECT_ID` environment variable
+- If rate limited: Implement proper backoff in [utils/google_translate_service.py](mdc:translate/utils/google_translate_service.py)
+- If authentication fails: Verify service account credentials
+
+### Stage 5: Final Verification
+
+**Validation Points**:
+
+- ✅ GPT-4o verification completed
+- ✅ Ambiguities resolved
+- ✅ Best translation options selected
+- ✅ Consistency checks passed
+- ✅ All uncertainties documented
+
+**Error Recovery**:
+
+- If verification fails: Check GPT-4o API access and quota
+- If ambiguities unresolved: Manual review required
+- If consistency issues: Re-run verification with different prompts
+
+### Stage 6: Audio Generation & Database Insertion
+
+**Command**: `uv run python main.py --insert`
+
+**Validation Points**:
+
+- ✅ Translated file exists in `2_translate/`
+- ✅ Audio files generated for all sentences
+- ✅ Audio quality meets standards
+- ✅ Database insertion successful
+- ✅ Author mapping correct
+- ✅ Files archived properly
+
+**Error Recovery**:
+
+- If audio generation fails: Check ElevenLabs API key and quota
+- If database insertion fails: Verify Supabase credentials and schema
+- If author mapping wrong: Check folder naming convention
+
+## Error Analysis & Recovery
+
+### Common Failure Points
+
+1. **Input Validation Failures**:
+
+   - File not in correct author folder
+   - Invalid Arabic text encoding
+   - Empty or corrupted files
+
+2. **API Failures**:
+
+   - OpenAI API quota exceeded
+   - Google Cloud authentication issues
+   - ElevenLabs API errors
+   - Network connectivity problems
+
+3. **Processing Failures**:
+   - Camel-tools morphological analysis errors
+   - Translation quality below threshold
+   - Audio generation failures
+   - Database constraint violations
+
+### Recovery Strategies
+
+1. **Automatic Retry**:
+
+   - Implement exponential backoff for API calls
+   - Retry failed batches with smaller sizes
+   - Use fallback translation methods
+
+2. **Manual Intervention**:
+
+   - Review failed translations manually
+   - Adjust batch sizes for problematic files
+   - Verify environment variables and API keys
+
+3. **Pipeline Restart**:
+   - Clear intermediate files and restart from failed stage
+   - Use `--force-yes` flag for automatic confirmation
+   - Process files individually for debugging
+
+## Quality Assurance
+
+### Validation Checklist
+
+Before proceeding to next stage, verify:
+
+- [ ] All required fields present and non-empty
+- [ ] Translation quality meets Islamic text standards
+- [ ] Tashkeel complete and accurate
+- [ ] Word-by-word analysis comprehensive
+- [ ] Audio files generated successfully
+- [ ] Database insertion completed
+- [ ] Files archived properly
+
+### Monitoring & Logging
+
+- Use `./validate.sh` for comprehensive validation
+- Check logs for detailed error messages
+- Monitor API usage and quotas
+- Track processing time and success rates
+
+## Configuration Management
+
+### Environment Variables
+
+- `OPENAI_API_KEY`: Required for translation and verification
+- `GOOGLE_CLOUD_PROJECT_ID`: Required for root word translation
+- `ELEVENLABS_API_KEY`: Optional for audio generation
+- `SUPABASE_URL` & `SUPABASE_KEY`: Optional for database operations
+
+### Batch Size Optimization
+
+- Default: 12 sentences per batch
+- Maximum: 15 sentences per batch
+- Adjust based on API limits and processing speed
+
+## File Tracking & Debugging
+
+### Track File Through Pipeline
+
+```bash
+# Check input file
+ls 0_inbox/{author_folder}/article.txt
+
+# Check split output
+ls 1_split/{author_number}_article_split.json
+
+# Check translation output
+ls 2_translate/{author_number}_article_translated.json
+
+# Check final output
+ls 3_insert/{author_number}_article_final.json
+
+# Check audio files
+ls audio_cache/{article_name}/
+```
+
+### Debug Failed Processing
+
+```bash
+# Run validation
+./validate.sh
+
+# Check specific stage
+uv run python main.py --split --force-yes
+
+# Process single file for debugging
+# (Modify pipeline to accept single file input)
+```
+
+## Best Practices
+
+1. **Always validate input files** before processing
+2. **Monitor API quotas** to avoid rate limiting
+3. **Use appropriate batch sizes** for your API limits
+4. **Implement proper error handling** with fallbacks
+5. **Archive processed files** to maintain clean directories
+6. **Log all operations** for debugging and auditing
+7. **Test with small files** before processing large batches
+
+## Integration with Main Application
+
+The pipeline integrates with the React Native app through:
+
+- [database.types.ts](mdc:types/database.types.ts): Database schema definitions
+- [fsrs.ts](mdc:constants/fsrs.ts): Spaced repetition system integration
+- [arabicWordComponents.ts](mdc:constants/arabicWordComponents.ts): Arabic analysis rules
+- [validation.py](mdc:translate/utils/validation.py): Data validation logic
+
+This ensures consistent data quality and proper integration with the mobile application's vocabulary learning features.
