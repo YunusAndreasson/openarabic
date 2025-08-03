@@ -21,7 +21,6 @@ from data.pipeline_types import (
     RefinementResults,
     TashkeelResults,
     TranslationResults,
-    WordTranslationOption,
     WordTranslationResults,
 )
 from data.schemas import (
@@ -807,7 +806,7 @@ def batch_translate_root_words_with_google_cloud(
 
             # Convert to WordTranslationOptions format
             word_option = cast(
-                "WordTranslationOption",
+                "WordTranslationOptions",
                 {
                     "arabic": root_word,
                     "english_options": [root_word_translation["translated_text"]],
@@ -824,7 +823,7 @@ def batch_translate_root_words_with_google_cloud(
         except Exception as e:
             # Add fallback result
             word_option = cast(
-                "WordTranslationOption",
+                "WordTranslationOptions",
                 {
                     "arabic": root_word,
                     "english_options": ["[Translation Error]"],

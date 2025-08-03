@@ -6,40 +6,6 @@ These match the existing schema structures exactly.
 from typing import Any, NotRequired, TypedDict
 
 
-# Word translation options structure (matches WORD_TRANSLATION_TOOL schema)
-class WordTranslationOption(TypedDict):
-    arabic: str
-    english_options: list[str]
-    pos: str  # Required in schema
-    essential: str
-    essential_translation_options: list[str]
-    notes: str  # Required in schema
-    uncertainties: list[dict[str, str]]  # text and reason
-
-
-# Refinement result structure (matches REFINEMENT_TOOL schema)
-class RefinedWordTranslation(TypedDict):
-    arabic: str
-    english: str
-    pos: str  # Required in schema
-    essential: str
-    essential_translation: str
-    notes: str  # Required in schema
-
-
-class ResolvedUncertainty(TypedDict):
-    step: str
-    original_uncertainty: dict[str, str]  # text and reason
-    resolution: str
-    explanation: str
-
-
-class RemainingUncertainty(TypedDict):
-    type: str
-    description: str
-    reason_unresolved: str
-
-
 # Batch processing structure
 class TranslationBatch(TypedDict):
     sentences: list[str]
@@ -53,7 +19,9 @@ class RefinementInput(TypedDict):
     original: str
     translation: dict[str, Any]  # TranslationResult from models.py
     tashkeel: dict[str, Any]  # TashkeelResult from models.py
-    word_translations_options: list[WordTranslationOption]
+    word_translations_options: list[
+        dict[str, Any]
+    ]  # list[WordTranslationOption] from models.py
     previous_uncertainties: dict[str, list[dict[str, Any]]]
 
 
@@ -143,12 +111,15 @@ class WordData(TypedDict):
 
 
 # Type aliases for common collections
+# These are used for internal processing and can contain either Pydantic models or dict representations
 TranslationResults = list[dict[str, Any]]  # list[TranslationResult] from models.py
 TashkeelResults = list[dict[str, Any]]  # list[TashkeelResult] from models.py
 WordTranslationResults = list[
     dict[str, Any]
 ]  # list[WordTranslationResult] from models.py
 RefinementResults = list[dict[str, Any]]  # list[RefinementResult] from models.py
+
+# Internal processing types (TypedDict for performance)
 RefinementInputs = list[RefinementInput]
 SplitResults = list[str]  # List of split units
 AudioResults = list[AudioGenerationResult]

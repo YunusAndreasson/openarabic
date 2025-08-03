@@ -57,6 +57,56 @@ class WordTranslationOptions(BaseModel):
     )
 
 
+class WordTranslationOption(BaseModel):
+    """Word translation option structure for internal processing"""
+
+    arabic: str = Field(description="Arabic word")
+    english_options: list[str] = Field(
+        default_factory=list, description="English translation options"
+    )
+    pos: str = Field(description="Part of speech")
+    essential: str = Field(description="Essential letters")
+    essential_translation_options: list[str] = Field(
+        default_factory=list, description="Essential translation options"
+    )
+    notes: str = Field(description="Translation notes")
+    uncertainties: list[dict[str, str]] = Field(
+        default_factory=list, description="Uncertainties with text and reason"
+    )
+
+
+class RefinedWordTranslation(BaseModel):
+    """Refined word translation structure for final output"""
+
+    arabic: str = Field(description="Arabic word")
+    english: str = Field(description="Final English translation")
+    pos: str = Field(description="Part of speech")
+    essential: str = Field(description="Essential letters")
+    essential_translation: str = Field(description="Essential translation")
+    notes: str = Field(description="Translation notes")
+
+
+class ResolvedUncertainty(BaseModel):
+    """Uncertainty that was resolved during refinement"""
+
+    step: str = Field(description="Processing step where uncertainty was resolved")
+    original_uncertainty: dict[str, str] = Field(
+        description="Original uncertainty with text and reason"
+    )
+    resolution: str = Field(description="How the uncertainty was resolved")
+    explanation: str = Field(description="Explanation of the resolution")
+
+
+class RemainingUncertainty(BaseModel):
+    """Uncertainty that remains unresolved after refinement"""
+
+    type: str = Field(description="Type of uncertainty")
+    description: str = Field(description="Description of the uncertainty")
+    reason_unresolved: str = Field(
+        description="Reason why uncertainty could not be resolved"
+    )
+
+
 class TranslationUncertainty(BaseModel):
     """Uncertainty in translation"""
 
@@ -112,10 +162,10 @@ class RefinementResult(BaseModel):
     improved_word_translations: list[WordTranslation] = Field(
         description="Final refined word translations"
     )
-    resolved_uncertainties: list[dict[str, str]] | None = Field(
+    resolved_uncertainties: list[ResolvedUncertainty] | None = Field(
         default=None, description="Uncertainties that were resolved"
     )
-    remaining_uncertainties: list[dict[str, str]] | None = Field(
+    remaining_uncertainties: list[RemainingUncertainty] | None = Field(
         default=None, description="Uncertainties that remain unresolved"
     )
     changes_made: list[str] | None = Field(
