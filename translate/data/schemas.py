@@ -106,9 +106,17 @@ SENTENCE_TRANSLATION_USER_PROMPT = """Translate Classical Arabic sentences from 
 - translation: English translation string
 - notes: Translation notes and context
 - uncertainties: Array of uncertainty objects with text and reason
-- word_by_word: Array for word-by-word analysis
+- word_by_word: Array of word-by-word analysis objects
 
 CRITICAL: You MUST provide ALL required fields. The `uncertainties` array must be present for every translation, even if empty.
+
+Each word_by_word object must include:
+- arabic: Original Arabic word (preserve exact formatting)
+- english: English translation
+- pos: Part of speech (noun, verb, adjective, etc.)
+- essential: Essential root letters (core letters without affixes/suffixes)
+- essential_translation: Root meaning in English
+- notes: Grammar notes and context
 
 For each sentence, provide:
 1. `translation` (string):

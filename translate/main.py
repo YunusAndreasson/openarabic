@@ -142,7 +142,9 @@ def review_split_file(
 
 def run_translation(input_file: str, output_file: str, batch_size: int) -> None:
     """Translate the previously split file."""
-    if not translate_text(input_file, output_file, batch_size):
+    if not translate_text(
+        input_file, output_file, batch_size, use_conversation_continuity=False
+    ):
         logger.error("❌ Translation failed.")
         raise RuntimeError("Translation failed.")
 

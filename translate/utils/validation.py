@@ -36,12 +36,15 @@ def validate_tashkeel_added(
     failed_sentences: list[tuple[int, str, str]] = []
 
     for i, (original, tashkeel_result) in enumerate(
-        zip(original_sentences, tashkeel_results, strict=False)
+        zip(original_sentences, tashkeel_results, strict=False),
     ):
-        sentence_index = sentence_indices[i] if sentence_indices else i
+        # Handle both TashkeelResult objects and dictionaries
+        if hasattr(tashkeel_result, "tashkeel"):
+            tashkeel_text = tashkeel_result.tashkeel
+        else:
+            tashkeel_text = tashkeel_result.get("tashkeel", "")
 
-        # Extract tashkeel text
-        tashkeel_text = tashkeel_result.get("tashkeel", "")
+        sentence_index = sentence_indices[i] if sentence_indices else i
 
         # Check if tashkeel was actually added
         tashkeel_added = False
@@ -136,9 +139,15 @@ def validate_translation_results(
         zip(original_sentences, results, strict=False),
     ):
         # Handle different result formats
-        if isinstance(result, dict):
+        if isinstance(result, dict) or hasattr(result, "model_dump"):
+            # Convert Pydantic model to dict if needed
+            if hasattr(result, "model_dump"):
+                result_dict = result.model_dump()
+            else:
+                result_dict = result
+
             # Get translation text from either "translation" or "t" field
-            translation = result.get("translation", "") or result.get("t", "")
+            translation = result_dict.get("translation", "") or result_dict.get("t", "")
 
             # Check for error markers in translation
             if any(err in translation for err in TRANSLATION_ERROR_MARKERS):
@@ -151,8 +160,8 @@ def validate_translation_results(
                 errors.append(f"Sentence {i}: Suspiciously short translation")
 
             # Check word options if requested
-            if check_word_options and "word_translations" in result:
-                word_trans = result["word_translations"]
+            if check_word_options and "word_translations" in result_dict:
+                word_trans = result_dict["word_translations"]
                 if isinstance(word_trans, list) and all(
                     isinstance(word, dict) for word in word_trans
                 ):
@@ -180,8 +189,8 @@ def validate_translation_results(
                             )
 
             # Check word translations if requested
-            if check_word_translations and "word_by_word" in result:
-                word_trans = result["word_by_word"]
+            if check_word_translations and "word_by_word" in result_dict:
+                word_trans = result_dict["word_by_word"]
                 if not word_trans:
                     errors.append(f"Sentence {i}: Missing word-by-word translations")
                 elif isinstance(word_trans, list) and all(
@@ -218,8 +227,8 @@ def validate_translation_results(
                             )
 
             # Check tashkeel
-            if "tashkeel" in result:
-                tashkeel = result["tashkeel"]
+            if "tashkeel" in result_dict:
+                tashkeel = result_dict["tashkeel"]
                 if not tashkeel.strip():
                     errors.append(f"Sentence {i}: Missing tashkeel")
                 elif tashkeel == original and not any(c in original for c in "ًٌٍَُِّْ"):

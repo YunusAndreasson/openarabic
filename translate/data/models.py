@@ -1,6 +1,24 @@
-from typing import Any
+from typing import Any, TypedDict
 
 from pydantic import BaseModel, Field
+
+
+class WordUncertainty(TypedDict):
+    """Uncertainty in word translation"""
+
+    text: str  # The uncertain text
+    reason: str  # Reason for uncertainty
+
+
+class WordByWordItem(TypedDict):
+    """Individual word-by-word analysis item"""
+
+    arabic: str  # Arabic word (word_form in database)
+    english: str  # English translation (english in database)
+    pos: str  # Part of speech (word_type_id in database)
+    essential: str  # Essential letters for root generation (letters in roots table)
+    essential_translation: str  # Root meaning (meaning in roots table)
+    notes: str  # Grammar notes (grammar_note in database)
 
 
 class WordTranslation(BaseModel):
@@ -31,7 +49,7 @@ class WordTranslationOptions(BaseModel):
     essential: str
     essential_translation_options: list[str] = Field(default_factory=list)
     notes: str
-    uncertainties: list[dict[str, Any]] = Field(
+    uncertainties: list[WordUncertainty] = Field(
         default_factory=list,
         description="Keep uncertainties tied to the options step",
     )
@@ -52,7 +70,7 @@ class TranslationResult(BaseModel):
     uncertainties: list[TranslationUncertainty] = Field(
         default_factory=list, description="Areas of uncertainty in translation"
     )
-    word_by_word: list[dict[str, Any]] = Field(
+    word_by_word: list[WordByWordItem] = Field(
         default_factory=list, description="Word-by-word analysis"
     )
 
