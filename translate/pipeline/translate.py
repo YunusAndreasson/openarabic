@@ -230,7 +230,7 @@ def process_batches(
     batches = create_batches(sentences, 0, batch_size, context_cache)
 
     # Process batches in parallel for better performance
-    max_workers = min(3, len(batches))  # Limit to 3 parallel workers
+    max_workers = max(1, min(3, len(batches)))  # Ensure at least 1 worker, limit to 3
 
     with tqdm(
         total=len(all_units),
@@ -364,9 +364,20 @@ def translate_file(
             conversation_manager.start_document_conversation(full_text)
             logger.info("Document conversation started successfully")
 
-        results, errors = process_batches(all_units, batch_size, conversation_manager)
-
-        actual_count, missing_count = validate_results(results, all_units)
+        # Handle empty files
+        if len(all_units) == 0:
+            logger.info(
+                "File contains no sentences to translate - creating empty output"
+            )
+            results = []
+            errors = []
+            actual_count = 0
+            missing_count = 0
+        else:
+            results, errors = process_batches(
+                all_units, batch_size, conversation_manager
+            )
+            actual_count, missing_count = validate_results(results, all_units)
 
         if errors:
             logger.warning(f"Translation completed with {len(errors)} errors")
@@ -378,7 +389,8 @@ def translate_file(
                 f"Translation completed with {missing_count} missing translations"
             )
 
-        if actual_count == 0:
+        # Only fail if we expected translations but got none
+        if len(all_units) > 0 and actual_count == 0:
             logger.error("No translations were generated")
             return False
 

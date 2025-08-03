@@ -1,5 +1,3 @@
-from typing import Any, TypedDict
-
 from pydantic import BaseModel, Field
 
 
@@ -49,10 +47,10 @@ class WordTranslationOptions(BaseModel):
 
     arabic: str
     english_options: list[str] = Field(default_factory=list)
-    pos: str
-    essential: str
+    pos: str = Field(description="Part of speech")
+    essential: str = Field(description="Essential letters")
     essential_translation_options: list[str] = Field(default_factory=list)
-    notes: str
+    notes: str | None = Field(default=None, description="Translation notes")
     uncertainties: list[WordUncertainty] = Field(
         default_factory=list,
         description="Keep uncertainties tied to the options step",
@@ -114,14 +112,14 @@ class RefinementResult(BaseModel):
     improved_word_translations: list[WordTranslation] = Field(
         description="Final refined word translations"
     )
-    resolved_uncertainties: list[dict[str, str]] = Field(
-        default_factory=list, description="Uncertainties that were resolved"
+    resolved_uncertainties: list[dict[str, str]] | None = Field(
+        default=None, description="Uncertainties that were resolved"
     )
-    remaining_uncertainties: list[dict[str, str]] = Field(
-        default_factory=list, description="Uncertainties that remain unresolved"
+    remaining_uncertainties: list[dict[str, str]] | None = Field(
+        default=None, description="Uncertainties that remain unresolved"
     )
-    changes_made: list[str] = Field(
-        default_factory=list, description="List of changes made during refinement"
+    changes_made: list[str] | None = Field(
+        default=None, description="List of changes made during refinement"
     )
 
 

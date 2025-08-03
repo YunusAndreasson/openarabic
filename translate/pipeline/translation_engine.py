@@ -13,6 +13,7 @@ from data.models import (
     TranslationResult,
     WordTranslationOptions,
     WordTranslationResult,
+    WordUncertainty,
 )
 from data.pipeline_types import (
     RefinementInput,
@@ -41,15 +42,17 @@ from utils.text_utils import filter_arabic_words
 logger = logging.getLogger(__name__)
 
 
-def _validate_uncertainties(uncertainties: list[Any]) -> list[dict[str, str]]:
+def _validate_uncertainties(uncertainties: list[Any]) -> list[WordUncertainty]:
     """Validate and convert uncertainties to proper format."""
     validated = []
     for item in uncertainties:
         if isinstance(item, dict) and "text" in item and "reason" in item:
-            validated.append(item)
+            validated.append(WordUncertainty(text=item["text"], reason=item["reason"]))
         elif isinstance(item, str):
             # Convert string to proper format
-            validated.append({"text": "unknown", "reason": item})
+            validated.append(WordUncertainty(text="unknown", reason=item))
+        elif isinstance(item, WordUncertainty):
+            validated.append(item)
         else:
             # Skip invalid items
             continue
@@ -129,67 +132,85 @@ def batch_translate_full_sentences(
         # Use standard implementation when no conversation manager
         response = try_translation(sentences, contexts)
 
-    if (
-        "error" in response
-        or not isinstance(response, list)
-        or len(response) < len(sentences)
-    ):
-        # Retry without context
-        response = try_translation(sentences, contexts, retry_without_context=True)
+    # Handle Response API response structure
+    results: TranslationResults = []
 
-    if isinstance(response, list):
-        results: TranslationResults = []
-        for i, item in enumerate(response):
-            if i >= len(sentences):
-                break
-            if isinstance(item, TranslationResult):
-                # Response API returns TranslationResult objects directly
-                results.append(item)
-            elif isinstance(item, dict) and "translation" in item:
-                # Convert dictionary to TranslationResult
-                results.append(
-                    TranslationResult(
-                        translation=item["translation"],
-                        notes=item.get("notes", ""),
-                        uncertainties=item.get("uncertainties", []),
-                        word_by_word=item.get("word_by_word", []),
-                    ),
-                )
-            else:
-                # Fallback: create empty result
-                results.append(
-                    TranslationResult(
-                        translation="[Translation failed]",
-                        notes="Failed to parse response",
-                        uncertainties=[],
-                        word_by_word=[],
-                    )
-                )
-
-        # Ensure we have results for all sentences
-        while len(results) < len(sentences):
-            i = len(results)
+    if "error" in response or not response.get("success"):
+        # API call failed, create error results
+        for i in range(len(sentences)):
             results.append(
                 TranslationResult(
                     translation="[Translation failed]",
-                    notes="No response for this sentence",
+                    notes=f"API error: {response.get('error', 'Unknown error')}",
+                    uncertainties=[],
+                    word_by_word=[],
+                )
+            )
+    elif "data" in response:
+        # Response API with structured output returns a single TranslationResult
+        # We need to handle batch processing differently
+        if len(sentences) == 1:
+            # Single sentence - use the response directly
+            data = response["data"]
+            results.append(
+                TranslationResult(
+                    translation=data.get("translation", "[Translation failed]"),
+                    notes=data.get("notes", ""),
+                    uncertainties=data.get("uncertainties", []),
+                    word_by_word=data.get("word_by_word", []),
+                )
+            )
+        else:
+            # Multiple sentences - Response API can't handle this in one call
+            # We need to process each sentence individually
+            for i, sentence in enumerate(sentences):
+                individual_response = try_translation(
+                    [sentence], [contexts[i] if contexts else None]
+                )
+                if individual_response.get("success") and "data" in individual_response:
+                    data = individual_response["data"]
+                    results.append(
+                        TranslationResult(
+                            translation=data.get("translation", "[Translation failed]"),
+                            notes=data.get("notes", ""),
+                            uncertainties=data.get("uncertainties", []),
+                            word_by_word=data.get("word_by_word", []),
+                        )
+                    )
+                else:
+                    results.append(
+                        TranslationResult(
+                            translation="[Translation failed]",
+                            notes="Failed to translate individual sentence",
+                            uncertainties=[],
+                            word_by_word=[],
+                        )
+                    )
+    else:
+        # Unexpected response format
+        for i in range(len(sentences)):
+            results.append(
+                TranslationResult(
+                    translation="[Translation failed]",
+                    notes="Unexpected response format",
                     uncertainties=[],
                     word_by_word=[],
                 )
             )
 
-        return results
-    else:
-        # Fallback: create empty results for all sentences
-        return [
+    # Ensure we have results for all sentences
+    while len(results) < len(sentences):
+        i = len(results)
+        results.append(
             TranslationResult(
                 translation="[Translation failed]",
-                notes="API response was invalid",
+                notes="No response for this sentence",
                 uncertainties=[],
                 word_by_word=[],
             )
-            for _ in sentences
-        ]
+        )
+
+    return results
 
 
 def batch_add_tashkeel(
@@ -482,8 +503,15 @@ def batch_translate_words(
                         model=MODEL_TRANSLATION,
                     )
 
-                # Handle Response API format - data is returned directly, not wrapped in "results"
-                if "results" in response and isinstance(response["results"], list):
+                # Handle Response API format - data is returned in the "data" field
+                if (
+                    isinstance(response, dict)
+                    and "data" in response
+                    and response.get("success")
+                ):
+                    # Response API returns data in the "data" field
+                    result = response["data"]
+                elif "results" in response and isinstance(response["results"], list):
                     # Check if results contains individual word objects or sentence objects
                     if response["results"] and isinstance(response["results"][0], dict):
                         if "word_translations" in response["results"][0]:
@@ -495,7 +523,7 @@ def batch_translate_words(
                     else:
                         result = {}
                 elif isinstance(response, dict) and "word_translations" in response:
-                    # Response API returns data directly
+                    # Direct response format
                     result = response
                 else:
                     # Try to find word_translations in the response
@@ -518,10 +546,10 @@ def batch_translate_words(
                             essential_translation_options=[f"[{word}]"],
                             notes="Fallback translation due to API failure",
                             uncertainties=[
-                                {
-                                    "text": word,
-                                    "reason": "API returned empty result",
-                                }
+                                WordUncertainty(
+                                    text=word,
+                                    reason="API returned empty result",
+                                )
                             ],
                         )
                         word_translations_options.append(word_option)
@@ -544,10 +572,10 @@ def batch_translate_words(
                         word_option = WordTranslationOptions(
                             arabic=arabic_text,
                             english_options=eng_opts,
-                            pos=word_data.get("pos") or None,
-                            essential=essential_letters,
+                            pos=word_data.get("pos") or "unknown",
+                            essential=essential_letters or arabic_text,
                             essential_translation_options=ess_opts,
-                            notes=word_data.get("notes") or None,
+                            notes=word_data.get("notes"),
                             uncertainties=_validate_uncertainties(
                                 word_data.get("uncertainties", [])
                             ),

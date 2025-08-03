@@ -15,7 +15,6 @@ from data.pipeline_types import (
 from utils.responses_api import ResponsesAPIManager
 from utils.validation import (
     validate_final_translation,
-    validate_tashkeel_added,
     validate_translation_results,
 )
 

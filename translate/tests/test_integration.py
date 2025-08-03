@@ -1,9 +1,13 @@
 """Integration tests for the main workflow."""
 
 import json
+import os
+import sys
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import (
     confirm_step,
@@ -146,7 +150,9 @@ class TestMainWorkflow:
             mock_translate_text.return_value = True
 
             run_translation(input_file, output_file, batch_size=2)
-            mock_translate_text.assert_called_once_with(input_file, output_file, 2)
+            mock_translate_text.assert_called_once_with(
+                input_file, output_file, 2, use_conversation_continuity=False
+            )
 
         finally:
             Path(input_file).unlink(missing_ok=True)
@@ -174,7 +180,9 @@ class TestEndToEndWorkflow:
                 with open(output_file, "w") as f:
                     f.write('{"units": []}')
 
-            def mock_translate_text_side_effect(input_file, output_file, batch_size):
+            def mock_translate_text_side_effect(
+                input_file, output_file, batch_size, use_conversation_continuity=True
+            ):
                 with open(output_file, "w") as f:
                     f.write('{"translations": []}')
                 return True
