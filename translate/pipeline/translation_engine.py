@@ -33,7 +33,7 @@ from data.schemas import (
 )
 from utils.camel_tools_service import (
     format_tashkeel_suggestions,
-    generate_tashkeel_suggestions,
+    generate_tashkeel_suggestions_with_context,
 )
 from utils.context_cache import ContextCache
 from utils.google_translate_service import GoogleTranslateService
@@ -223,10 +223,20 @@ def batch_add_tashkeel(
     if not sentences:
         return []
 
-    # Generate camel-tools tashkeel suggestions for all sentences
+    # Generate camel-tools tashkeel suggestions for all sentences with context
     camel_suggestions_list = []
-    for sentence in sentences:
-        suggestions = generate_tashkeel_suggestions(sentence)
+    for i, sentence in enumerate(sentences):
+        # Get context for this sentence
+        context = None
+        if context_cache and indices and i < len(indices):
+            context = context_cache.get_context(indices[i], for_tashkeel=True)
+
+        suggestions = generate_tashkeel_suggestions_with_context(
+            sentence,
+            context=context,
+            sentence_index=indices[i] if indices and i < len(indices) else i,
+            all_sentences=all_sentences,
+        )
         camel_suggestions_list.append(suggestions)
 
     # Format inputs for the AI, emphasizing use of camel_tools suggestions
@@ -261,22 +271,30 @@ def batch_add_tashkeel(
                     original_word, suggested_tashkeel
                 )
 
+        # Get context for this sentence
+        context_info = ""
+        if context_cache and indices and i < len(indices):
+            context = context_cache.get_context(indices[i], for_tashkeel=True)
+            if context and context.strip():
+                context_info = f"\nContext from surrounding sentences: {context}"
+
         formatted_inputs.append(
             f"Set {i + 1}:\n"
             f"Original Arabic: {sentence}\n"
             f"Camel-tools enhanced: {enhanced_sentence}\n"
-            f"Translation: {translation}{uncertainty_notes}{grammar_notes_str}"
+            f"Translation: {translation}{uncertainty_notes}{grammar_notes_str}{context_info}"
             f"{f'\n{camel_suggestions_str}' if camel_suggestions_str else ''}",
         )
 
-    # Modified prompt to emphasize using camel_tools suggestions
-    modified_prompt = """IMPORTANT: Use the provided camel-tools tashkeel suggestions as your PRIMARY source for diacritics.
+    # Modified prompt to emphasize using camel_tools suggestions as starting point
+    modified_prompt = """IMPORTANT: Use the provided camel-tools tashkeel suggestions as a STARTING POINT, but improve them using context and translation.
 
-The camel-tools suggestions are based on morphological analysis and should be used as the foundation. Your role is to:
-1. Use the camel-tools suggestions where provided
-2. Add any missing diacritics that camel-tools didn't cover
-3. Verify and improve the overall tashkeel based on the translation context
-4. Ensure complete vocalization of all words
+The camel-tools suggestions are based on morphological analysis but may not consider sentence context. Your role is to:
+1. Start with the camel-tools suggestions as a foundation
+2. Use the translation context and surrounding sentences to improve accuracy
+3. Override camel-tools suggestions when context indicates different diacritics
+4. Add any missing diacritics that camel-tools didn't cover
+5. Ensure complete vocalization of all words with context-appropriate diacritics
 
 Add complete diacritical marks (tashkīl) to EVERY word in the Islamic Arabic text using the `TASHKEEL_TOOL` schema. Return your response as valid JSON.
 
@@ -302,9 +320,9 @@ Input texts:
 
     # Use conversation continuity if available
     if conversation_manager and conversation_manager.current_response_id:
-        # Reference specific sentences from uploaded document
+        # Reference specific sentences from uploaded document with context emphasis
         sentence_indices = list(range(len(sentences)))
-        message = f"Add tashkeel to sentences {sentence_indices} from the uploaded document. Use camel-tools suggestions as primary source."
+        message = f"Add tashkeel to sentences {sentence_indices} from the uploaded document. Use camel-tools suggestions as starting point but improve them using the full document context and translation."
         response = conversation_manager.continue_with_stage(message, [TASHKEEL_TOOL])
     else:
         # Use standard implementation when no conversation manager

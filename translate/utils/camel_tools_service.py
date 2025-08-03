@@ -154,6 +154,47 @@ def generate_tashkeel_suggestions(sentence: str) -> dict[str, str]:
     return suggestions
 
 
+def generate_tashkeel_suggestions_with_context(
+    sentence: str,
+    context: str | None = None,
+    sentence_index: int | None = None,
+    all_sentences: list[str] | None = None,
+) -> dict[str, str]:
+    """
+    Generate tashkeel suggestions for Arabic words in a sentence with context.
+
+    Args:
+        sentence: Arabic sentence without diacritics
+        context: Context from surrounding sentences
+        sentence_index: Index of the sentence in the document
+        all_sentences: All sentences in the document for additional context
+
+    Returns:
+        Dictionary mapping original words to their tashkeel suggestions
+    """
+    service = get_camel_tools_service()
+
+    if not service.is_available():
+        logger.warning("Camel-tools not available, returning original sentence")
+        return {}
+
+    # Split sentence into words (simple space-based splitting)
+    words = sentence.split()
+
+    # Generate suggestions for Arabic words only
+    suggestions = service.generate_tashkeel_suggestions_batch(words)
+
+    # If context is available, enhance suggestions with contextual information
+    if context and context.strip():
+        logger.debug(
+            f"Enhancing tashkeel suggestions with context for sentence {sentence_index}"
+        )
+        # Context can be used to improve suggestions, but camel-tools doesn't directly support it
+        # The context will be provided to OpenAI for final refinement
+
+    return suggestions
+
+
 def format_tashkeel_suggestions(suggestions: dict[str, str]) -> str:
     """
     Format tashkeel suggestions for inclusion in OpenAI prompt.
@@ -183,5 +224,6 @@ __all__ = [
     "CamelToolsService",
     "get_camel_tools_service",
     "generate_tashkeel_suggestions",
+    "generate_tashkeel_suggestions_with_context",
     "format_tashkeel_suggestions",
 ]
