@@ -107,57 +107,27 @@ def batch_translate_full_sentences(
                 + "\n\n".join(formatted_inputs),
             },
         ]
-        # Temporarily use standard OpenAI API instead of Response API
-        import json
 
-        from openai import OpenAI
+        # Use Response API with fixed TranslationResult model
+        return call_response_api(
+            messages,
+            response_model=TranslationResult,
+            model=MODEL_TRANSLATION,
+        )
 
-        client = OpenAI()
-
-        try:
-            response = client.chat.completions.create(
-                model=MODEL_TRANSLATION,
-                messages=messages,
-                temperature=0.3,
-                max_tokens=2000,
-            )
-
-            # Parse the response manually
-            content = response.choices[0].message.content
-            if content:
-                # Try to extract JSON from the response
-                try:
-                    # Look for JSON in the response
-                    start = content.find("{")
-                    end = content.rfind("}") + 1
-                    if start != -1 and end != 0:
-                        json_str = content[start:end]
-                        data = json.loads(json_str)
-
-                        # Convert to expected format
-                        if isinstance(data, dict) and "translation" in data:
-                            return [data]
-                except json.JSONDecodeError:
-                    pass
-
-                # Fallback: create a simple translation result
-                return [
-                    {
-                        "translation": content.strip(),
-                        "notes": "Standard API response",
-                        "uncertainties": [],
-                        "word_by_word": [],
-                    }
-                ]
-            else:
-                return {"error": "Empty response from API"}
-
-        except Exception as e:
-            return {"error": f"API call failed: {str(e)}"}
-
-    # Temporarily disable conversation feature due to schema issues
-    # Use standard implementation
-    response = try_translation(sentences, contexts)
+    # Use conversation continuity if available
+    if conversation_manager and conversation_manager.current_response_id:
+        # Reference specific sentences from uploaded document
+        sentence_indices = list(range(len(sentences)))
+        message = (
+            f"Please translate sentences {sentence_indices} from the uploaded document"
+        )
+        response = conversation_manager.continue_with_stage(
+            message, response_model=TranslationResult
+        )
+    else:
+        # Use standard implementation when no conversation manager
+        response = try_translation(sentences, contexts)
 
     if (
         "error" in response
@@ -172,61 +142,49 @@ def batch_translate_full_sentences(
         for i, item in enumerate(response):
             if i >= len(sentences):
                 break
-            if isinstance(item, dict) and "t" in item:
-                results.append(
-                    TranslationResult(
-                        translation=item["t"],
-                        notes=item.get("n") or "",
-                        uncertainties=item.get("uncertainties", []),
-                        word_by_word=item.get("word_by_word", []),
-                    ),
-                )
+            if isinstance(item, TranslationResult):
+                # Response API returns TranslationResult objects directly
+                results.append(item)
             elif isinstance(item, dict) and "translation" in item:
+                # Convert dictionary to TranslationResult
                 results.append(
                     TranslationResult(
                         translation=item["translation"],
-                        notes=item.get("notes") or "",
+                        notes=item.get("notes", ""),
                         uncertainties=item.get("uncertainties", []),
                         word_by_word=item.get("word_by_word", []),
-                    )
-                )
-            else:
-                results.append(
-                    TranslationResult(
-                        translation=f"[Format Error for: {sentences[i][:20]}...]",
-                        notes="Response item has unexpected format",
-                        uncertainties=[],
-                        word_by_word=[],
                     ),
                 )
+            else:
+                # Fallback: create empty result
+                results.append(
+                    TranslationResult(
+                        translation="[Translation failed]",
+                        notes="Failed to parse response",
+                        uncertainties=[],
+                        word_by_word=[],
+                    )
+                )
 
+        # Ensure we have results for all sentences
         while len(results) < len(sentences):
             i = len(results)
             results.append(
                 TranslationResult(
-                    translation=f"[Missing Translation for: {sentences[i][:20]}...]",
-                    notes="Translation missing in API response",
+                    translation="[Translation failed]",
+                    notes="No response for this sentence",
                     uncertainties=[],
                     word_by_word=[],
-                ),
+                )
             )
 
         return results
-    elif "error" in response:
-        return [
-            TranslationResult(
-                translation="[Translation Error]",
-                notes=response["error"],
-                uncertainties=[],
-                word_by_word=[],
-            )
-            for _ in sentences
-        ]
     else:
+        # Fallback: create empty results for all sentences
         return [
             TranslationResult(
-                translation="[Format Error]",
-                notes="Response format error",
+                translation="[Translation failed]",
+                notes="API response was invalid",
                 uncertainties=[],
                 word_by_word=[],
             )

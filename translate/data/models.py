@@ -3,22 +3,26 @@ from typing import Any, TypedDict
 from pydantic import BaseModel, Field
 
 
-class WordUncertainty(TypedDict):
+class WordUncertainty(BaseModel):
     """Uncertainty in word translation"""
 
-    text: str  # The uncertain text
-    reason: str  # Reason for uncertainty
+    text: str = Field(description="The uncertain text")
+    reason: str = Field(description="Reason for uncertainty")
 
 
-class WordByWordItem(TypedDict):
+class WordByWordItem(BaseModel):
     """Individual word-by-word analysis item"""
 
-    arabic: str  # Arabic word (word_form in database)
-    english: str  # English translation (english in database)
-    pos: str  # Part of speech (word_type_id in database)
-    essential: str  # Essential letters for root generation (letters in roots table)
-    essential_translation: str  # Root meaning (meaning in roots table)
-    notes: str  # Grammar notes (grammar_note in database)
+    arabic: str = Field(description="Arabic word (word_form in database)")
+    english: str = Field(description="English translation (english in database)")
+    pos: str = Field(description="Part of speech (word_type_id in database)")
+    essential: str = Field(
+        description="Essential letters for root generation (letters in roots table)"
+    )
+    essential_translation: str = Field(
+        description="Root meaning (meaning in roots table)"
+    )
+    notes: str = Field(description="Grammar notes (grammar_note in database)")
 
 
 class WordTranslation(BaseModel):
