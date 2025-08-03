@@ -14,7 +14,7 @@ class TranslationUncertainty(TypedDict):
 
 class TranslationResult(TypedDict):
     translation: str
-    notes: str | None  # Optional
+    notes: str  # Required
     uncertainties: list[TranslationUncertainty]
     word_by_word: list[dict[str, Any]]
 
@@ -176,7 +176,7 @@ class WordData(TypedDict):
     essential: str
     essential_translation: str
     pos: str  # Required in schema
-    notes: str | None  # Optional
+    notes: str  # Required
     root: str  # Required in schema
 
 

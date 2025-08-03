@@ -144,7 +144,10 @@ def validate_translation_results(
             if any(err in translation for err in TRANSLATION_ERROR_MARKERS):
                 errors.append(f"Sentence {i}: Contains error marker in translation")
 
-            if translation and len(translation.strip()) < 3:
+            # Check for empty or very short translation
+            if not translation.strip():
+                errors.append(f"Sentence {i}: Missing translation")
+            elif len(translation.strip()) < 3:
                 errors.append(f"Sentence {i}: Suspiciously short translation")
 
             # Check word options if requested
@@ -179,7 +182,9 @@ def validate_translation_results(
             # Check word translations if requested
             if check_word_translations and "word_by_word" in result:
                 word_trans = result["word_by_word"]
-                if isinstance(word_trans, list) and all(
+                if not word_trans:
+                    errors.append(f"Sentence {i}: Missing word-by-word translations")
+                elif isinstance(word_trans, list) and all(
                     isinstance(word, dict) for word in word_trans
                 ):
                     for j, word in enumerate(word_trans):
@@ -215,7 +220,9 @@ def validate_translation_results(
             # Check tashkeel
             if "tashkeel" in result:
                 tashkeel = result["tashkeel"]
-                if tashkeel == original and not any(c in original for c in "ًٌٍَُِّْ"):
+                if not tashkeel.strip():
+                    errors.append(f"Sentence {i}: Missing tashkeel")
+                elif tashkeel == original and not any(c in original for c in "ًٌٍَُِّْ"):
                     errors.append(
                         f"Sentence {i}: Tashkeel appears to be missing (identical to input)",
                     )

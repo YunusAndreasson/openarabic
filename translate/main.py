@@ -320,7 +320,6 @@ Examples:
 
         split_files = []
         for input_file, author_folder, author_name in input_files:
-            logger.info(f"Processing {input_file} for author: {author_name}")
             split_file = run_split_file(input_file, author_folder)
             split_files.append((split_file, author_name))
 

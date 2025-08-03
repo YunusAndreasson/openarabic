@@ -133,7 +133,7 @@ def batch_translate_full_sentences(
                 results.append(
                     TranslationResult(
                         translation=item["t"],
-                        notes=item.get("n") or None,
+                        notes=item.get("n") or "",
                         uncertainties=item.get("uncertainties", []),
                         word_by_word=item.get("word_by_word", []),
                     ),
@@ -142,7 +142,7 @@ def batch_translate_full_sentences(
                 results.append(
                     TranslationResult(
                         translation=item["translation"],
-                        notes=item.get("notes") or None,
+                        notes=item.get("notes") or "",
                         uncertainties=item.get("uncertainties", []),
                         word_by_word=item.get("word_by_word", []),
                     )

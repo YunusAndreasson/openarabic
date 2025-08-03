@@ -43,7 +43,7 @@ TRANSLATE_SENTENCES_TOOL = {
                             },
                             "notes": {
                                 "type": "string",
-                                "description": "Translation notes (optional)",
+                                "description": "Translation notes (required)",
                             },
                             "uncertainties": {
                                 "type": "array",
@@ -91,7 +91,7 @@ TRANSLATE_SENTENCES_TOOL = {
                                         },
                                         "notes": {
                                             "type": "string",
-                                            "description": "Additional notes (optional)",
+                                            "description": "Additional notes (required)",
                                         },
                                     },
                                     "required": [
@@ -106,6 +106,7 @@ TRANSLATE_SENTENCES_TOOL = {
                         },
                         "required": [
                             "translation",
+                            "notes",
                             "word_by_word",
                         ],
                     },
@@ -119,7 +120,24 @@ TRANSLATE_SENTENCES_TOOL = {
                             "translation": "And the Prophet [Muhammad], peace be upon him, said",
                             "notes": "Grammatical structure: قَالَ (perfect tense verb) + النَّبِيُّ (subject in nominative case with definite article)",
                             "uncertainties": [],
-                            "word_by_word": [],
+                            "word_by_word": [
+                                {
+                                    "arabic": "قَالَ",
+                                    "english": "he said",
+                                    "pos": "verb",
+                                    "essential": "قَالَ",
+                                    "essential_translation": "say",
+                                    "notes": "Perfect tense verb, 3rd person masculine singular",
+                                },
+                                {
+                                    "arabic": "النَّبِيُّ",
+                                    "english": "the prophet",
+                                    "pos": "noun",
+                                    "essential": "نَبِي",
+                                    "essential_translation": "prophet",
+                                    "notes": "Noun, masculine singular, definite",
+                                },
+                            ],
                         },
                     ],
                 },
@@ -258,6 +276,7 @@ WORD_TRANSLATION_TOOL = {
                                         "pos",
                                         "essential",
                                         "essential_translation_options",
+                                        "notes",
                                     ],
                                 },
                             },
@@ -370,6 +389,7 @@ REFINEMENT_TOOL = {
                                         "pos",
                                         "essential",
                                         "essential_translation",
+                                        "notes",
                                     ],
                                 },
                             },
@@ -459,6 +479,84 @@ REFINEMENT_TOOL = {
                 },
             },
             "required": ["refinements"],
+            "examples": [
+                {
+                    "refinements": [
+                        {
+                            "improved_tashkeel": "قَالَ النَّبِيُّ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ",
+                            "improved_translation": "The Prophet, peace be upon him, said",
+                            "improved_word_translations": [
+                                {
+                                    "arabic": "قَالَ",
+                                    "english": "said",
+                                    "pos": "verb",
+                                    "essential": "قَالَ",
+                                    "essential_translation": "say",
+                                    "notes": "Perfect tense verb, 3rd person masculine singular",
+                                },
+                                {
+                                    "arabic": "النَّبِيُّ",
+                                    "english": "the prophet",
+                                    "pos": "noun",
+                                    "essential": "نَبِي",
+                                    "essential_translation": "prophet",
+                                    "notes": "Noun, masculine singular, definite with al- prefix",
+                                },
+                                {
+                                    "arabic": "صَلَّى",
+                                    "english": "pray",
+                                    "pos": "verb",
+                                    "essential": "صَلَّى",
+                                    "essential_translation": "pray",
+                                    "notes": "Perfect tense verb in invocation context",
+                                },
+                                {
+                                    "arabic": "اللَّهُ",
+                                    "english": "Allah",
+                                    "pos": "noun",
+                                    "essential": "اللَّه",
+                                    "essential_translation": "Allah",
+                                    "notes": "Proper noun, divine name",
+                                },
+                                {
+                                    "arabic": "عَلَيْهِ",
+                                    "english": "upon him",
+                                    "pos": "preposition",
+                                    "essential": "عَلَى",
+                                    "essential_translation": "upon",
+                                    "notes": "Preposition with 3rd person masculine singular pronoun",
+                                },
+                                {
+                                    "arabic": "وَسَلَّمَ",
+                                    "english": "and grant peace",
+                                    "pos": "verb",
+                                    "essential": "سَلَّمَ",
+                                    "essential_translation": "grant peace",
+                                    "notes": "Coordinated perfect tense verb with wa- prefix",
+                                },
+                            ],
+                            "resolved_uncertainties": [
+                                {
+                                    "step": "tashkeel",
+                                    "original_uncertainty": {
+                                        "text": "النبي",
+                                        "reason": "Uncertain case ending for subject position",
+                                    },
+                                    "resolution": "Applied nominative case ending -u",
+                                    "explanation": "Subject of verb قَالَ requires nominative case",
+                                },
+                            ],
+                            "remaining_uncertainties": [],
+                            "changes_made": [
+                                "Corrected tashkeel for النَّبِيُّ (added nominative case ending)",
+                                "Selected 'said' as best translation for قَالَ in context",
+                                "Chose 'prophet' as essential translation for نَبِي",
+                                "Resolved preposition case ending for عَلَيْهِ",
+                            ],
+                        },
+                    ],
+                },
+            ],
         },
     },
 }
@@ -600,7 +698,7 @@ For each sentence, provide:
    - Ensure grammatical accuracy (case endings, conjugations).
    - Ensure full vocalization according to standard Classical Arabic rules, applying diacritics to all letters requiring them based on grammar and context.
    - Preserve ALL original punctuation, formatting, and special characters.
-2. `notes` (string, optional):
+2. `notes` (string, required):
    - Additional context or explanations regarding the translation.
 3. `uncertainties` (array of objects, optional):
    - List specific words where diacritics are uncertain.
@@ -686,7 +784,7 @@ For each sentence, return a result object containing `word_translations`, an arr
     + """).
 - `essential` (string): Arabic word stripped of common affixes (و, ف, ب, ك, ل, س, etc.) and common suffixes (object pronouns و, ه, ك, ي, نا, etc.), excluding case/mood endings. Provide just the core letters, ideally with basic diacritics if standard (e.g., base verb form like فَعَلَ). Aim for the simplest recognizable form for flashcards. Example: For 'وَقَالُوا', essential is 'قَالَ'. For 'الْمُسْلِمَ', essential is 'مُسْلِم'.
 - `essential_translation_options` (array of strings): Top 1-3 likely one-word English lexical meanings (dictionary form) of the `essential` Arabic word, without grammar (most likely first). **Focus on the primary/most common meaning found in standard dictionaries like Hans Wehr.**
-- `notes` (string, optional): Any additional grammatical or contextual details. **Include relevant details like verb form (e.g., Form II, perfect), grammatical case (e.g., accusative), particle function, or specific reasons for translation choices if non-obvious. Provide an empty string if no specific note is needed.**
+- `notes` (string, required): Any additional grammatical or contextual details. **Include relevant details like verb form (e.g., Form II, perfect), grammatical case (e.g., accusative), particle function, or specific reasons for translation choices if non-obvious. Provide an empty string if no specific note is needed.**
 - `uncertainties` (array, optional): List any uncertainties related to this specific word's analysis.
 
 Output MUST be a JSON object containing a `results` array, where each item corresponds to an input sentence and contains the `word_translations` array as described.
@@ -719,7 +817,7 @@ Based on the initial tashkeel, sentence translation, and word-by-word analysis (
     - `pos` (string): The refined part of speech.
     - `essential` (string): The refined essential letters.
     - `essential_translation` (string): The *single chosen* lexical/dictionary English translation. **Select the most accurate and common dictionary meaning (like Hans Wehr primary sense)** from the options.
-    - `notes` (string, optional): Refined notes. **Ensure notes are comprehensive, including grammatical details (verb form, case), context, or choice rationale where helpful for a learner. Consolidate or refine notes from previous steps.**
+    - `notes` (string, required): Refined notes. **Ensure notes are comprehensive, including grammatical details (verb form, case), context, or choice rationale where helpful for a learner. Consolidate or refine notes from previous steps.**
 4.  `resolved_uncertainties` (array of objects): Explain how initial uncertainties (from tashkeel, translation, or word analysis) were resolved. Include `step`, `original_uncertainty` object, `resolution`, and `explanation`.
 5.  `remaining_uncertainties` (array of objects): Document any uncertainties that could not be definitively resolved. Include `type`, `description`, and `reason_unresolved`.
 6.  `changes_made` (array of strings): List significant changes made compared to the initial analysis steps, including the selection of specific word translation options and corrections to tashkeel/translation.

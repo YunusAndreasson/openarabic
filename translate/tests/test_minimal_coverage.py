@@ -510,7 +510,16 @@ class TestTranslationProcessor:
                     translation="Hello world",
                     notes="Test notes",
                     uncertainties=[],
-                    word_by_word=[],
+                    word_by_word=[
+                        {
+                            "arabic": "مرحبا",
+                            "english": "hello",
+                            "pos": "interjection",
+                            "essential": "مرحبا",
+                            "essential_translation": "hello",
+                            "notes": "greeting",
+                        }
+                    ],
                 )
             ]
 
@@ -558,7 +567,16 @@ class TestTranslationProcessor:
                     translation="Hello world",
                     notes="Test notes",
                     uncertainties=[],
-                    word_by_word=[],
+                    word_by_word=[
+                        {
+                            "arabic": "مرحبا",
+                            "english": "hello",
+                            "pos": "interjection",
+                            "essential": "مرحبا",
+                            "essential_translation": "hello",
+                            "notes": "greeting",
+                        }
+                    ],
                 )
             ]
 

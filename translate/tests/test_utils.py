@@ -85,8 +85,9 @@ class TestValidation:
         original_sentences = ["مرحبا"]
         results = [{"translation": ""}]  # Empty translation
 
-        # This should not raise an error as empty translations are allowed
-        validate_translation_results(original_sentences, results, "Test")
+        # This should raise an error as empty translations are not allowed
+        with pytest.raises(TranslationValidationError):
+            validate_translation_results(original_sentences, results, "Test")
 
         # Test with very short translation that should trigger validation
         results = [{"translation": "a"}]  # Too short
