@@ -239,7 +239,7 @@ def find_translation_files() -> list[str]:
     return translation_files
 
 
-def main() -> None:
+def main() -> int:
     """Main function to run the script."""
     ensure_valid_cache_files()
 
@@ -251,7 +251,7 @@ def main() -> None:
         logger.info(
             f"Please run the translation phase first. Expected location: {TRANSLATE_DIR}"
         )
-        sys.exit(1)
+        return 1
 
     error_count = 0
 
@@ -267,10 +267,11 @@ def main() -> None:
 
     if error_count > 0:
         logger.error(f"Failed to process {error_count} files")
-        sys.exit(1)
+        return 1
 
     logger.info("All files processed successfully")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

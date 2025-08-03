@@ -17,7 +17,7 @@ Generate beautiful social media images for all 306 Arabic words with English tra
 1. **Install Python dependency:**
 
    ```bash
-   pip install -r requirements.txt
+   uv sync
    ```
 
 2. **Run the script:**
@@ -35,7 +35,7 @@ Make sure these files are in the same directory:
 - `arabic_words.csv` - Word data (306 words)
 - `Scheherazade.ttf` - Arabic font
 - `Inter.ttf` - English font
-- `requirements.txt` - Dependencies
+- `pyproject.toml` - Dependencies
 
 ## Design Specifications
 

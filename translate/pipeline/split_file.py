@@ -94,7 +94,7 @@ def split_file(input_file: str, output_file: str) -> SplitResult:
 
     except Exception as e:
         logging.error(f"Text splitting failed: {str(e)}")
-        raise
+        raise RuntimeError(f"Text splitting failed: {str(e)}") from e
 
 
 __all__ = [
@@ -105,7 +105,7 @@ __all__ = [
 ]
 
 
-def main() -> None:
+def main() -> int:
     """Main entry point"""
     input_file = sys.argv[1] if len(sys.argv) >= 2 else DEFAULT_INPUT_FILE
 
@@ -116,12 +116,12 @@ def main() -> None:
 
     try:
         split_file(input_file, output_file)
-        sys.exit(0)
+        return 0
     except KeyboardInterrupt:
-        sys.exit(130)
+        return 130
     except Exception:
-        sys.exit(1)
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

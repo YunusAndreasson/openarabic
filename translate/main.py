@@ -88,7 +88,7 @@ def run_split_file(input_file: str, author_folder: str) -> str:
     split_text(input_file, output_file)
     if not os.path.exists(output_file):
         logger.info(f"❌ Split file not created: {output_file}")
-        sys.exit(1)
+        raise RuntimeError(f"Split file not created: {output_file}")
     return output_file
 
 
@@ -147,7 +147,7 @@ def run_translation(input_file: str, output_file: str, batch_size: int) -> None:
     """Translate the previously split file."""
     if not translate_text(input_file, output_file, batch_size):
         logger.error("❌ Translation failed.")
-        sys.exit(1)
+        raise RuntimeError("Translation failed.")
 
 
 def review_translation(
@@ -223,7 +223,7 @@ def run_insert_only() -> None:
     )
     if result.returncode != 0:
         logger.error("❌ insert.py failed.")
-        sys.exit(1)
+        raise RuntimeError("insert.py failed.")
     logger.info("✅ Database insertion completed successfully.")
 
 
@@ -304,7 +304,7 @@ Examples:
 
     if args.batch_size < 1 or args.batch_size > 15:
         logger.error(f"❌ Batch size must be between 1 and 15, got: {args.batch_size}")
-        sys.exit(1)
+        raise ValueError(f"Batch size must be between 1 and 15, got: {args.batch_size}")
 
     # Only run split phase if specifically requested
     if args.split:
@@ -314,7 +314,9 @@ Examples:
         if not input_files:
             logger.error("❌ No input files found in inbox directory")
             logger.info(f"Please place .txt files in author folders under: {INBOX_DIR}")
-            sys.exit(1)
+            raise FileNotFoundError(
+                f"No input files found in inbox directory: {INBOX_DIR}"
+            )
 
         split_files = []
         for input_file, author_folder, author_name in input_files:
@@ -326,7 +328,7 @@ Examples:
         for split_file, author_name in split_files:
             if not review_split_file(split_file, author_name, args.force_yes):
                 logger.info(f"Pipeline stopped after split review for {author_name}.")
-                sys.exit(0)
+                return
 
     # Only run translate phase if specifically requested
     if args.translate:
@@ -344,7 +346,7 @@ Examples:
         if not split_files:
             logger.error(f"❌ No split files found in: {SPLIT_DIR}")
             logger.error("Please run --split first.")
-            sys.exit(1)
+            raise FileNotFoundError(f"No split files found in: {SPLIT_DIR}")
 
         logger.info("🔄 Phase 2: Translating sentences...")
 
@@ -369,7 +371,7 @@ Examples:
                 logger.info(
                     f"Pipeline stopped after translation review for {author_name}."
                 )
-                sys.exit(0)
+                return
 
     # Only run insert phase if specifically requested
     if args.insert:
@@ -389,7 +391,7 @@ Examples:
         if not translation_files:
             logger.error(f"❌ No translation files found in: {TRANSLATE_DIR}")
             logger.error("Please run --translate first.")
-            sys.exit(1)
+            raise FileNotFoundError(f"No translation files found in: {TRANSLATE_DIR}")
 
         logger.info(
             "🔄 Phase 3: Processing through ElevenLabs and inserting into database...",
@@ -404,7 +406,6 @@ Examples:
         logger.info(f"📊 {token_tracker}")
 
     logger.info("✅ Pipeline completed successfully!")
-    sys.exit(0)
 
 
 __all__ = [
@@ -423,3 +424,6 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         logger.info("\n⚠️  Operation cancelled by user")
         sys.exit(130)
+    except Exception as e:
+        logger.error(f"❌ Pipeline failed: {e}")
+        sys.exit(1)
