@@ -37,7 +37,7 @@ from utils.camel_tools_service import (
 )
 from utils.context_cache import ContextCache
 from utils.google_translate_service import GoogleTranslateService
-from utils.responses_api import call_response_api
+from utils.responses_api import ResponseAPIManager, call_response_api
 from utils.text_utils import filter_arabic_words
 
 logger = logging.getLogger(__name__)
@@ -81,6 +81,7 @@ def _build_word_prompt(
 def batch_translate_full_sentences(
     sentences: list[str],
     contexts: list[str | None],
+    conversation_manager: ResponseAPIManager | None = None,
 ) -> TranslationResults:
     """Translate multiple sentences in a single API call with retry logic"""
 
@@ -114,7 +115,19 @@ def batch_translate_full_sentences(
             model=MODEL_TRANSLATION,
         )
 
-    response = try_translation(sentences, contexts)
+    # Use conversation continuity if available
+    if conversation_manager and conversation_manager.current_response_id:
+        # Reference specific sentences from uploaded document
+        sentence_indices = list(range(len(sentences)))
+        message = (
+            f"Please translate sentences {sentence_indices} from the uploaded document"
+        )
+        response = conversation_manager.continue_with_stage(
+            message, [TRANSLATE_SENTENCES_TOOL]
+        )
+    else:
+        # Use standard implementation when no conversation manager
+        response = try_translation(sentences, contexts)
 
     if (
         "error" in response
@@ -122,7 +135,14 @@ def batch_translate_full_sentences(
         or not isinstance(response.get("translations"), list)
         or len(response.get("translations", [])) < len(sentences)
     ):
-        response = try_translation(sentences, contexts, retry_without_context=True)
+        # Retry without context if conversation continuity failed
+        if conversation_manager and conversation_manager.current_response_id:
+            response = conversation_manager.continue_with_stage(
+                f"Retry translation for sentences {sentence_indices} without context",
+                [TRANSLATE_SENTENCES_TOOL],
+            )
+        else:
+            response = try_translation(sentences, contexts, retry_without_context=True)
 
     if "translations" in response and isinstance(response["translations"], list):
         results: TranslationResults = []
@@ -197,6 +217,7 @@ def batch_add_tashkeel(
     all_sentences: list[str] | None = None,
     indices: list[int] | None = None,
     context_cache: ContextCache | None = None,
+    conversation_manager: ResponseAPIManager | None = None,
 ) -> TashkeelResults:
     """Add diacritics to sentences using camel_tools suggestions as primary source."""
     if not sentences:
@@ -279,19 +300,27 @@ For each input text segment, provide:
 Input texts:
 """
 
-    messages = [
-        {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
-        {
-            "role": "user",
-            "content": modified_prompt + "\n\n" + "\n\n".join(formatted_inputs),
-        },
-    ]
+    # Use conversation continuity if available
+    if conversation_manager and conversation_manager.current_response_id:
+        # Reference specific sentences from uploaded document
+        sentence_indices = list(range(len(sentences)))
+        message = f"Add tashkeel to sentences {sentence_indices} from the uploaded document. Use camel-tools suggestions as primary source."
+        response = conversation_manager.continue_with_stage(message, [TASHKEEL_TOOL])
+    else:
+        # Use standard implementation when no conversation manager
+        messages = [
+            {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
+            {
+                "role": "user",
+                "content": modified_prompt + "\n\n" + "\n\n".join(formatted_inputs),
+            },
+        ]
 
-    response = call_response_api(
-        messages,
-        tools=[TASHKEEL_TOOL],
-        model=MODEL_OTHER,
-    )
+        response = call_response_api(
+            messages,
+            tools=[TASHKEEL_TOOL],
+            model=MODEL_OTHER,
+        )
 
     if "tashkeels" in response and isinstance(response["tashkeels"], list):
         results: TashkeelResults = []
@@ -344,6 +373,7 @@ def batch_translate_words(
     all_sentences: list[str] | None = None,
     indices: list[int] | None = None,
     context_cache: ContextCache | None = None,
+    conversation_manager: ResponseAPIManager | None = None,
 ) -> WordTranslationResults:
     """Create word-by-word translations for multiple sentences in a batch, returning options"""
 
@@ -401,18 +431,29 @@ def batch_translate_words(
                     tashkeel_notes,
                     translation_notes,
                 )
-                messages = [
-                    {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
-                    {
-                        "role": "user",
-                        "content": WORD_BY_WORD_USER_PROMPT + "\n\n" + formatted_input,
-                    },
-                ]
-                response = call_response_api(
-                    messages,
-                    tools=[WORD_TRANSLATION_TOOL],
-                    model=MODEL_TRANSLATION,
-                )
+                # Use conversation continuity if available
+                if conversation_manager and conversation_manager.current_response_id:
+                    # Reference specific sentences from uploaded document
+                    message = f"Analyze words in sentence {i + 1} from the uploaded document. Tashkeel: {tashkeel}, Translation: {translation}"
+                    response = conversation_manager.continue_with_stage(
+                        message, [WORD_TRANSLATION_TOOL]
+                    )
+                else:
+                    # Use standard implementation when no conversation manager
+                    messages = [
+                        {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
+                        {
+                            "role": "user",
+                            "content": WORD_BY_WORD_USER_PROMPT
+                            + "\n\n"
+                            + formatted_input,
+                        },
+                    ]
+                    response = call_response_api(
+                        messages,
+                        tools=[WORD_TRANSLATION_TOOL],
+                        model=MODEL_TRANSLATION,
+                    )
 
                 # Handle Response API format - data is returned directly, not wrapped in "results"
                 if "results" in response and isinstance(response["results"], list):
@@ -516,6 +557,7 @@ def batch_translate_words(
 
 def batch_refine_translations(
     refinement_input: RefinementInputs,
+    conversation_manager: ResponseAPIManager | None = None,
 ) -> RefinementResults:
     """Refine all translation components, selecting best options"""
     try:
@@ -593,15 +635,24 @@ def batch_refine_translations(
                 + "\n\n".join(formatted_inputs),
             },
         ]
-        temp_to_use = 1.0 if MODEL_VERIFICATION == "gpt-4o-mini" else 0.3
-        api_kwargs = {
-            "messages": messages,
-            "tools": [REFINEMENT_TOOL],
-            "model": MODEL_VERIFICATION,
-            "temperature": temp_to_use,
-        }
+        # Use conversation continuity if available
+        if conversation_manager and conversation_manager.current_response_id:
+            # Reference specific sentences from uploaded document
+            message = "Refine translations for sentences from the uploaded document. Use the provided refinement data to select best options."
+            response = conversation_manager.continue_with_stage(
+                message, [REFINEMENT_TOOL]
+            )
+        else:
+            # Use standard implementation when no conversation manager
+            temp_to_use = 1.0 if MODEL_VERIFICATION == "gpt-4o-mini" else 0.3
+            api_kwargs = {
+                "messages": messages,
+                "tools": [REFINEMENT_TOOL],
+                "model": MODEL_VERIFICATION,
+                "temperature": temp_to_use,
+            }
 
-        response = call_response_api(**api_kwargs)
+            response = call_response_api(**api_kwargs)
 
         if "refinements" in response and isinstance(response["refinements"], list):
             results: RefinementResults = []

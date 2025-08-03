@@ -12,6 +12,7 @@ from data.pipeline_types import (
     WordTranslationResult,
     WordTranslationResults,
 )
+from utils.responses_api import ResponseAPIManager
 from utils.validation import (
     validate_final_translation,
     validate_tashkeel_added,
@@ -40,10 +41,13 @@ def _get_translation_engine_functions() -> tuple[Any, Any, Any, Any]:
 def run_full_translation(
     batch_sentences: list[str],
     batch_contexts: list[str | None],
+    conversation_manager: ResponseAPIManager | None = None,
 ) -> TranslationResults:
     """Translate a batch of sentences and validate the results."""
     batch_translate_full_sentences = _get_translation_engine_functions()[2]
-    translations = batch_translate_full_sentences(batch_sentences, batch_contexts)
+    translations = batch_translate_full_sentences(
+        batch_sentences, batch_contexts, conversation_manager
+    )
     validate_translation_results(batch_sentences, translations, "Full Translation")
     return translations
 
@@ -54,6 +58,7 @@ def apply_tashkeel(
     all_sentences: list[str] | None = None,
     batch_indices: list[int] | None = None,
     context_cache: Any = None,
+    conversation_manager: ResponseAPIManager | None = None,
 ) -> TashkeelResults:
     """Add diacritics to sentences and validate the results."""
     batch_add_tashkeel = _get_translation_engine_functions()[0]
@@ -63,6 +68,7 @@ def apply_tashkeel(
         all_sentences,
         batch_indices,
         context_cache,
+        conversation_manager,
     )
 
     # Validate that tashkeel was actually added and break pipeline if not
@@ -78,6 +84,7 @@ def translate_words(
     all_sentences: list[str] | None = None,
     batch_indices: list[int] | None = None,
     context_cache: Any = None,
+    conversation_manager: ResponseAPIManager | None = None,
 ) -> WordTranslationResults:
     """Generate word-by-word translations and validate them."""
     batch_translate_words = _get_translation_engine_functions()[3]
@@ -88,6 +95,7 @@ def translate_words(
         all_sentences,
         batch_indices,
         context_cache,
+        conversation_manager,
     )
     # Temporarily disable word options validation to allow pipeline to complete
     # validate_translation_results(
@@ -274,6 +282,7 @@ def refine_translations(
     translation_results: TranslationResults,
     tashkeel_results: TashkeelResults,
     word_options_results: WordTranslationResults,
+    conversation_manager: ResponseAPIManager | None = None,
 ) -> list[SentenceTranslation]:
     """Refine translations using previous results and return final objects."""
     inputs, _ = build_refinement_input(
@@ -283,7 +292,7 @@ def refine_translations(
         word_options_results,
     )
     batch_refine_translations = _get_translation_engine_functions()[1]
-    refinement_results = batch_refine_translations(inputs)
+    refinement_results = batch_refine_translations(inputs, conversation_manager)
     results: list[SentenceTranslation] = []
     for i in range(len(batch_sentences)):
         refinement = (

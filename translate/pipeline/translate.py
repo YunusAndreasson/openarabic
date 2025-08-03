@@ -18,6 +18,7 @@ from data.pipeline_types import (
 )
 from utils.context_cache import ContextCache
 from utils.file_utils import write_json_file
+from utils.responses_api import ResponseAPIManager
 from utils.text_utils import filter_arabic_words
 from utils.translation_processor import (
     apply_tashkeel,
@@ -98,6 +99,7 @@ def process_batch(
     all_sentences: list[str] | None = None,
     batch_indices: list[int] | None = None,
     context_cache: Any = None,
+    conversation_manager: ResponseAPIManager | None = None,
 ) -> list[SentenceTranslation]:
     """Process a single batch of sentences."""
     if not batch_sentences:
@@ -109,7 +111,9 @@ def process_batch(
 
     try:
         # Use regular translation pipeline with Response API
-        translations = run_full_translation(batch_sentences, batch_contexts)
+        translations = run_full_translation(
+            batch_sentences, batch_contexts, conversation_manager
+        )
 
         # Add error handling for tashkeel step
         try:
@@ -119,6 +123,7 @@ def process_batch(
                 all_sentences,
                 batch_indices,
                 context_cache,
+                conversation_manager,
             )
         except Exception as e:
             logger.error(
@@ -139,6 +144,7 @@ def process_batch(
                 all_sentences,
                 batch_indices,
                 context_cache,
+                conversation_manager,
             )
         except Exception as e:
             logger.error(
@@ -190,6 +196,7 @@ def process_batch(
             translations,
             tashkeel,
             word_options,
+            conversation_manager,
         )
     except Exception as e:
         logger.error(
@@ -205,6 +212,7 @@ def process_batch(
 def process_batches(
     all_units: list[str] | list[dict[str, Any]],
     batch_size: int,
+    conversation_manager: ResponseAPIManager | None = None,
 ) -> tuple[list[SentenceTranslation], list[str]]:
     """Process all batches in parallel and return results and errors."""
     results: list[SentenceTranslation] = []
@@ -243,6 +251,7 @@ def process_batches(
                     all_units,
                     batch["indices"],
                     context_cache,
+                    conversation_manager,
                 ): batch
                 for batch in batches
             }
@@ -323,6 +332,7 @@ def translate_file(
     input_file: str,
     output_file: str,
     batch_size: int = MAX_BATCH_SIZE,
+    use_conversation_continuity: bool = True,
 ) -> bool | None:
     """Translate a file containing split sentences."""
     try:
@@ -336,7 +346,25 @@ def translate_file(
 
         logger.info(f"Processing {len(all_units)} sentences in batches of {batch_size}")
 
-        results, errors = process_batches(all_units, batch_size)
+        # Initialize conversation manager for document-level continuity
+        conversation_manager = None
+        if use_conversation_continuity:
+            from utils.responses_api import ResponseAPIManager
+
+            conversation_manager = ResponseAPIManager()
+
+            # Start document-level conversation with full text
+            sentences = [
+                unit.get("text", "") if isinstance(unit, dict) else unit
+                for unit in all_units
+            ]
+            full_text = "\n\n".join(sentences)
+
+            logger.info("Starting document-level conversation for context continuity")
+            conversation_manager.start_document_conversation(full_text)
+            logger.info("Document conversation started successfully")
+
+        results, errors = process_batches(all_units, batch_size, conversation_manager)
 
         actual_count, missing_count = validate_results(results, all_units)
 
@@ -383,10 +411,17 @@ def main() -> None:
         default=MAX_BATCH_SIZE,
         help=f"Batch size for processing (default: {MAX_BATCH_SIZE})",
     )
+    parser.add_argument(
+        "--no-conversation-continuity",
+        action="store_true",
+        help="Disable conversation continuity optimization",
+    )
 
     args = parser.parse_args()
 
-    success = translate_file(args.input, args.output, args.batch_size)
+    success = translate_file(
+        args.input, args.output, args.batch_size, not args.no_conversation_continuity
+    )
     if success:
         logger.info(
             f"Translation completed successfully. Output saved to {args.output}"

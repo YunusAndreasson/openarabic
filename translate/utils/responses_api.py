@@ -14,6 +14,7 @@ from typing import Any
 from openai import OpenAI
 
 from data.config import MODEL_OTHER
+from data.schemas import GENERAL_SYSTEM_PROMPT
 
 logger = logging.getLogger(__name__)
 
@@ -173,6 +174,33 @@ class ResponseAPIManager:
         self.client = client
         self.conversation_state: dict[str, Any] = {}
         self.current_response_id: str | None = None
+
+    def start_document_conversation(
+        self, full_text: str, tools: list[dict[str, Any]] | None = None
+    ) -> str:
+        """Start a new conversation with the full document uploaded once"""
+        messages = [
+            {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
+            {
+                "role": "user",
+                "content": f"Here is the complete Arabic text to translate:\n\n{full_text}\n\nI will ask you to process specific parts of this document in subsequent messages.",
+            },
+        ]
+
+        response = self.start_conversation(messages, tools=tools)
+        self.current_response_id = response.get("response_id")
+        return self.current_response_id
+
+    def continue_with_stage(
+        self, stage_message: str, tools: list[dict[str, Any]] | None = None
+    ) -> dict[str, Any]:
+        """Continue existing conversation for a new pipeline stage"""
+        if not self.current_response_id:
+            raise ValueError(
+                "No active conversation. Call start_document_conversation first."
+            )
+
+        return self.continue_conversation(self.current_response_id, stage_message)
 
     def start_conversation(
         self,
