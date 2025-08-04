@@ -5,7 +5,6 @@ import os
 from elevenlabs import VoiceSettings
 
 # OpenAI model configuration - Optimized based on research findings
-# gpt-4o-mini: New small reasoning model - ideal for high-volume phases
 # gpt-4o: Higher quality, more reliable (95%+ success rate) - ideal for quality-critical phases
 MODEL_ANALYSIS = "gpt-4o"  # High-volume analysis phase
 MODEL_TRANSLATION = "gpt-4o"  # High-volume translation phase

@@ -15,9 +15,6 @@ class CamelToolsService:
         # Use the default Calima MSA database (calima-msa-r13) with reinflection support
         self.db = database.MorphologyDB.builtin_db(flags="r")
         self.reinflector = reinflector.Reinflector(self.db)
-        logger.info(
-            "Camel-tools service initialized successfully with Calima MSA database"
-        )
 
     def is_available(self) -> bool:
         """Check if camel-tools service is available."""

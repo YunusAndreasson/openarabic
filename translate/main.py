@@ -95,7 +95,7 @@ def review_split_file(
 ) -> bool:
     """Review the split file and ask user if they want to continue."""
     if not os.path.exists(split_file):
-        logger.info(f"❌ Split file not found: {split_file}")
+        logger.error(f"❌ Split file not found: {split_file}")
         return False
 
     try:
@@ -202,7 +202,6 @@ def review_translation(
 
 def run_insert_only() -> None:
     """Run only the database insertion step."""
-    logger.info("Running database insertion step...")
 
     # Load API keys to ensure environment variables are set
     from utils.responses_api import load_api_keys
@@ -229,13 +228,11 @@ def run_insert_only() -> None:
         if result.stderr:
             logger.error(f"stderr: {result.stderr}")
         raise RuntimeError("insert.py failed.")
-    logger.info("✅ Database insertion completed successfully.")
 
 
 def confirm_step(prompt: str, force_yes: bool = False) -> bool:
     """Get user confirmation for a step"""
     if force_yes:
-        logger.info(f"Auto-confirming: {prompt}")
         return True
 
     while True:
@@ -429,7 +426,7 @@ Examples:
 
     # Report token usage statistics
     if token_tracker.api_calls > 0:
-        logger.info(f"📊 {token_tracker}")
+        pass  # Token usage reporting removed to reduce noise
 
     log_pipeline_completion()
 

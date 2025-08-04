@@ -321,8 +321,6 @@ def translate_file(
         metadata = create_metadata(split_data)
         all_units = split_data.units
 
-        logger.info(f"Processing {len(all_units)} sentences in batches of {batch_size}")
-
         # Initialize conversation manager for document-level continuity
         conversation_manager = None
         if use_conversation_continuity:
@@ -337,15 +335,10 @@ def translate_file(
             ]
             full_text = "\n\n".join(sentences)
 
-            logger.info("Starting document-level conversation for context continuity")
             conversation_manager.start_document_conversation(full_text)
-            logger.info("Document conversation started successfully")
 
         # Handle empty files
         if len(all_units) == 0:
-            logger.info(
-                "File contains no sentences to translate - creating empty output"
-            )
             results: list[SentenceTranslation] = []
             errors: list[str] = []
             actual_count = 0
@@ -373,11 +366,6 @@ def translate_file(
 
         save_translation_output(output_file, metadata, results)
 
-        logger.info(
-            f"Translation completed successfully. "
-            f"Generated {actual_count} translations, "
-            f"{len(errors)} errors, {missing_count} missing"
-        )
         return True
 
     except Exception as e:

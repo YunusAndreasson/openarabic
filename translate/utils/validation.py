@@ -113,10 +113,6 @@ def validate_tashkeel_added(
             logger.warning(
                 f"Tashkeel validation partially failed: {len(failed_sentences)} out of {len(original_sentences)} sentences did not have tashkeel added"
             )
-    else:
-        logger.info(
-            f"Tashkeel validation passed: {len(original_sentences)} sentences processed successfully"
-        )
 
 
 def validate_translation_results(

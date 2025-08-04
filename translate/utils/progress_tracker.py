@@ -34,8 +34,6 @@ class PipelineProgressTracker:
             colour="green",
         )
 
-        logger.info(f"🚀 Starting {phase_name} phase...")
-
     def update(self, n: int = 1, description: str = None) -> None:
         """Update the current progress bar."""
         if self.current_pbar:
@@ -98,7 +96,8 @@ def log_pipeline_completion() -> None:
 
 def log_phase_start(phase_name: str) -> None:
     """Log the start of a pipeline phase."""
-    logger.info(f"🔄 Starting {phase_name} phase...")
+    # Phase start is now handled by TQDM progress bars
+    pass
 
 
 def log_irrecoverable_error(error: str) -> None:

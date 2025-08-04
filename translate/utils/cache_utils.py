@@ -23,4 +23,4 @@ def ensure_valid_cache_files() -> None:
                     logger.error(f"Error fixing cache file {file_path.name}: {str(e)}")
 
     if fixed_count > 0:
-        logger.info(f"✅ Fixed {fixed_count} cache files by adding .mp3 extension")
+        pass  # Cache file fixing info removed to reduce noise

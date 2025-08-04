@@ -133,7 +133,6 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
 
     # Detect author from file path
     author_name, author_id = detect_author_from_file_path(file_path)
-    logger.info(f"Processing file for author: {author_name} (ID: {author_id})")
 
     # Use default category if not specified
     if category_id is None:
@@ -189,7 +188,7 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
     # Validate translations before processing
     try:
         validate_batch_before_processing(translations)
-        logger.info(f"Validation passed for {len(translations)} translations")
+
     except Exception as e:
         logger.error(f"Validation failed: {e}")
         raise
@@ -197,9 +196,7 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
     # CRITICAL: Final validation to prevent placeholder data insertion
     try:
         validate_batch_no_placeholder_data(translations)
-        logger.info(
-            f"Placeholder validation passed for {len(translations)} translations"
-        )
+
     except Exception as e:
         logger.error(f"CRITICAL: Placeholder data detected - aborting insertion: {e}")
         raise
@@ -234,7 +231,6 @@ def find_translation_files() -> list[str]:
         if file_name.endswith("_translated.json"):
             translation_file = os.path.join(TRANSLATE_DIR, file_name)
             translation_files.append(translation_file)
-            logger.info(f"Found translation file: {translation_file}")
 
     return translation_files
 
@@ -257,10 +253,8 @@ def main() -> int:
 
     for json_path in translation_files:
         try:
-            article_id = process_json_file(json_path)
-            logger.info(
-                f"Successfully processed: {json_path} -> Article ID: {article_id}"
-            )
+            process_json_file(json_path)
+
         except Exception as e:
             error_count += 1
             logger.error(f"Failed to process {json_path}: {e}")
@@ -269,7 +263,6 @@ def main() -> int:
         logger.error(f"Failed to process {error_count} files")
         return 1
 
-    logger.info("All files processed successfully")
     return 0
 
 

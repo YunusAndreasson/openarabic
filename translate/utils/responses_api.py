@@ -26,16 +26,13 @@ def load_api_keys() -> None:
 
     # Check if environment variables are already set
     if os.getenv("OPENAI_API_KEY"):
-        logger.info("Using API keys from environment variables")
         _keys_loaded = True
         return
 
     set_keys_path = os.path.join(os.path.dirname(__file__), "set_keys.py")
     if not os.path.exists(set_keys_path):
         logger.warning(f"API keys file not found: {set_keys_path}")
-        logger.info(
-            "Please set OPENAI_API_KEY environment variable or create set_keys.py"
-        )
+
         raise FileNotFoundError(
             f"API keys file not found: {set_keys_path}. "
             "Please set OPENAI_API_KEY environment variable or create set_keys.py"
@@ -302,7 +299,6 @@ Please translate all sentences now."""
             )
 
             if response.get("success"):
-                self.logger.info("Document conversation started successfully")
                 return response.get("response_id")
             else:
                 self.logger.warning(

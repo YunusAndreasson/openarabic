@@ -42,10 +42,8 @@ class TestEnsureValidCacheFiles:
                 assert not (tmp_path / "file1").exists()
                 assert not (tmp_path / "file2").exists()
 
-                # Check logging
-                mock_logger.info.assert_called_once_with(
-                    "✅ Fixed 2 cache files by adding .mp3 extension"
-                )
+                # Info logging removed to reduce noise during pipeline execution
+                mock_logger.info.assert_not_called()
 
     def test_ensure_valid_cache_files_ignores_hidden_files(self, tmp_path):
         """Test that hidden files are ignored."""
@@ -105,9 +103,8 @@ class TestEnsureValidCacheFiles:
                 assert (tmp_path / ".hidden").exists()
                 assert (tmp_path / "subdir").exists()
 
-                mock_logger.info.assert_called_once_with(
-                    "✅ Fixed 1 cache files by adding .mp3 extension"
-                )
+                # Info logging removed to reduce noise during pipeline execution
+                mock_logger.info.assert_not_called()
 
     def test_ensure_valid_cache_files_creates_directory_if_not_exists(self, tmp_path):
         """Test that cache directory is created if it doesn't exist."""
