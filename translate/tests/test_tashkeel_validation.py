@@ -3,6 +3,7 @@ Tests for tashkeel validation functionality.
 """
 
 import pytest
+from pydantic import ValidationError
 
 from data.models import TashkeelResult, TranslationValidationError
 from data.pipeline_types import TashkeelResults
@@ -111,15 +112,7 @@ class TestTashkeelValidation:
         validate_tashkeel_added(original_sentences, tashkeel_results)
 
     def test_validate_tashkeel_added_missing_tashkeel_field(self):
-        """Test tashkeel validation when tashkeel field is missing."""
-        original_sentences = ["قال النبي"]
-        tashkeel_results: TashkeelResults = [
-            TashkeelResult(tashkeel="", uncertainties=[]),  # Empty tashkeel
-        ]
-
-        with pytest.raises(TranslationValidationError) as exc_info:
-            validate_tashkeel_added(original_sentences, tashkeel_results)
-
-        error_message = str(exc_info.value)
-        assert "Tashkeel validation failed" in error_message
-        assert "Line 1: 'قال النبي' -> ''" in error_message
+        """Test tashkeel validation when tashkeel field is empty (now raises ValidationError)."""
+        # With our new validation, empty tashkeel should raise ValidationError during model creation
+        with pytest.raises(ValidationError):
+            TashkeelResult(tashkeel="", uncertainties=[])  # Empty tashkeel now invalid

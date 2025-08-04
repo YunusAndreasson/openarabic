@@ -4,14 +4,18 @@ import os
 
 from elevenlabs import VoiceSettings
 
-# OpenAI model configuration - Optimized based on research findings
-# gpt-4o: Higher quality, more reliable (95%+ success rate) - ideal for quality-critical phases
-MODEL_ANALYSIS = "gpt-4o"  # High-volume analysis phase
-MODEL_TRANSLATION = "gpt-4o"  # High-volume translation phase
-MODEL_OTHER = "gpt-4o"  # General operations
-MODEL_VERIFICATION = (
-    "gpt-4o"  # Quality-critical verification phase - higher reliability needed
+# OpenAI model configuration - Optimized for Arabic processing based on research
+# gpt-4o: Proven Arabic handling, faster and more cost-effective for general structured outputs
+# o1-mini: Superior Arabic reasoning, fewer hallucinations, accuracy-critical verification
+# Trade-off: o1-mini is 16-30x slower but much better for Arabic verification
+MODEL_ANALYSIS = (
+    "gpt-4o-mini"  # Fast, cost-effective text splitting (minimal Arabic complexity)
 )
+MODEL_TRANSLATION = (
+    "gpt-4o"  # Reliable Arabic translation with good structured output compliance
+)
+MODEL_OTHER = "gpt-4o"  # Solid Arabic tashkeel generation with schema enforcement
+MODEL_VERIFICATION = "o1-mini"  # Superior Arabic reasoning and verification - worth the cost for accuracy
 
 # Batch processing defaults
 DEFAULT_BATCH_SIZE = 12

@@ -1,4 +1,7 @@
-from pydantic import BaseModel, Field
+import re
+import unicodedata
+
+from pydantic import BaseModel, Field, field_validator
 
 
 class WordUncertainty(BaseModel):
@@ -45,12 +48,24 @@ class WordTranslation(BaseModel):
 class WordTranslationOptions(BaseModel):
     """Intermediate model to hold options before refinement"""
 
-    arabic: str
-    english_options: list[str] = Field(default_factory=list)
-    pos: str = Field(description="Part of speech")
-    essential: str = Field(description="Essential letters")
-    essential_translation_options: list[str] = Field(default_factory=list)
-    notes: str | None = Field(default=None, description="Translation notes")
+    arabic: str = Field(description="Original Arabic word - preserve exact formatting")
+    english_options: list[str] = Field(
+        min_length=1,
+        max_length=3,
+        description="1-3 English translation options, ordered by likelihood",
+    )
+    pos: str = Field(description="Part of speech - must be from valid POS enum values")
+    essential: str = Field(
+        description="Essential root letters - never null, core letters without affixes"
+    )
+    essential_translation_options: list[str] = Field(
+        min_length=1,
+        max_length=3,
+        description="1-3 essential translation options, ordered by likelihood",
+    )
+    notes: str = Field(
+        description="Translation notes - never null, provide grammar context"
+    )
     uncertainties: list[WordUncertainty] = Field(
         default_factory=list,
         description="Keep uncertainties tied to the options step",
@@ -117,13 +132,15 @@ class TranslationUncertainty(BaseModel):
 class TranslationResult(BaseModel):
     """Result from sentence translation step"""
 
-    translation: str = Field(description="English translation")
-    notes: str = Field(description="Translation notes and context")
+    translation: str = Field(description="English translation - REQUIRED field")
+    notes: str = Field(description="Translation notes and context - REQUIRED field")
     uncertainties: list[TranslationUncertainty] = Field(
-        default_factory=list, description="Areas of uncertainty in translation"
+        default_factory=list,
+        description="Areas of uncertainty in translation - REQUIRED field, can be empty",
     )
     word_by_word: list[WordByWordItem] = Field(
-        default_factory=list, description="Word-by-word analysis"
+        default_factory=list,
+        description="Word-by-word analysis - REQUIRED field, can be empty",
     )
 
 
@@ -140,10 +157,32 @@ class TashkeelUncertainty(BaseModel):
 class TashkeelResult(BaseModel):
     """Result from tashkeel addition step"""
 
-    tashkeel: str = Field(description="Text with diacritical marks added")
-    uncertainties: list[TashkeelUncertainty] = Field(
-        default_factory=list, description="Uncertain diacritical marks"
+    tashkeel: str = Field(
+        description="Text with diacritical marks added - REQUIRED field"
     )
+    uncertainties: list[TashkeelUncertainty] = Field(
+        default_factory=list,
+        description="Uncertain diacritical marks - REQUIRED field, can be empty",
+    )
+
+    @field_validator("tashkeel")
+    @classmethod
+    def validate_arabic_text(cls, v: str) -> str:
+        """Validate and normalize Arabic text for proper processing."""
+        if not v or not v.strip():
+            raise ValueError("Tashkeel text cannot be empty")
+
+        # Normalize Unicode to handle Arabic script variations
+        normalized = unicodedata.normalize("NFC", v)
+
+        # Check for basic Arabic content (allowing diacritics and punctuation)
+        arabic_pattern = re.compile(
+            r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]"
+        )
+        if not arabic_pattern.search(normalized):
+            raise ValueError("Text must contain Arabic characters")
+
+        return normalized
 
 
 class WordTranslationResult(BaseModel):

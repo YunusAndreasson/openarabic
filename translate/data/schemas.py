@@ -102,21 +102,9 @@ Input text:
 """
 )
 
-SENTENCE_TRANSLATION_USER_PROMPT = """Translate Classical Arabic sentences from Islamic texts to English. Return response as JSON matching the TranslationResult structure with fields:
-- translation: English translation string
-- notes: Translation notes and context
-- uncertainties: Array of uncertainty objects with text and reason
-- word_by_word: Array of word-by-word analysis objects
+SENTENCE_TRANSLATION_USER_PROMPT = """Translate Classical Arabic sentences from Islamic texts to English with proper context and linguistic accuracy.
 
-CRITICAL: You MUST provide ALL required fields. The `uncertainties` array must be present for every translation, even if empty.
-
-Each word_by_word object must include:
-- arabic: Original Arabic word (preserve exact formatting)
-- english: English translation
-- pos: Part of speech (noun, verb, adjective, etc.)
-- essential: Essential root letters (core letters without affixes/suffixes)
-- essential_translation: Root meaning in English
-- notes: Grammar notes and context
+Focus on preserving Islamic terminology and classical Arabic meanings. Handle Arabic script complexities carefully including proper tashkeel preservation.
 
 For each sentence, provide:
 1. `translation` (string):
@@ -159,11 +147,9 @@ Provide a natural, accessible English translation that preserves the meaning and
 Input sentences:
 """
 
-TASHKEEL_USER_PROMPT = """Add complete diacritical marks (tashkīl) to EVERY word in the Islamic Arabic text. Return JSON matching TashkeelResult structure with fields:
-- tashkeel: Text with diacritical marks added
-- uncertainties: Array of uncertainty objects for unclear diacritics
+TASHKEEL_USER_PROMPT = """Add complete diacritical marks (tashkīl) to Islamic Arabic text with full vocalization.
 
-CRITICAL: You MUST provide ALL required fields. The `uncertainties` array must be present for every tashkeel result, even if empty.
+Focus on grammatical accuracy and proper case endings. Handle Arabic script complexities carefully.
 
 Requirements:
 - Ensure EVERY eligible letter has appropriate diacritics (full vocalization).
@@ -183,49 +169,59 @@ Input text:
 """
 
 WORD_BY_WORD_USER_PROMPT = (
-    "IMPORTANT: Return only a JSON object matching the WordTranslationResult structure.\\n"
-    "ENSURE: The `essential` field must be populated for every word; never return null for this.\\n"
-    "ENSURE: The `pos` field must be populated for every word; never return null for this.\\n"
-    "ENSURE: The `notes` field must be populated for every word; never return null for this.\\n"
-    "ENSURE: Provide the top 1-3 most likely options for `english_options` and `essential_translation_options`, ordered from most to least likely.\\n"
-    "ENSURE: The `essential` field should contain the core letters, stripped of affixes/suffixes and case/mood endings. Basic standard diacritics (like on فَعَلَ) are acceptable, but avoid complex or preserved original diacritics unless part of the base form.\\n"
-    "ENSURE: Preserve ALL original text formatting, punctuation, and special characters in the `arabic` field.\\n"
     """Translate Arabic words individually. Return JSON matching WordTranslationResult structure with fields:
-- word_translations: Array of WordTranslationOptions objects
+- word_translations: Array of WordTranslationOptions objects (REQUIRED)
 
-Each WordTranslationOptions object must include:
-- arabic: Original Arabic word
-- english_options: Array of English translation options
-- pos: Part of speech (required)
-- essential: Essential letters (required)
-- essential_translation_options: Array of essential translation options
-- notes: Translation notes (required)
-- uncertainties: Array of uncertainty objects
+Each WordTranslationOptions object must include ALL of these required fields:
+- arabic: Original Arabic word (REQUIRED - preserve exact formatting)
+- english_options: Array of English translation options (REQUIRED - 1-3 options, ordered most to least likely)
+- pos: Part of speech from valid options (REQUIRED - never null)
+- essential: Essential root letters (REQUIRED - never null, core letters without affixes)
+- essential_translation_options: Array of essential translation options (REQUIRED - 1-3 options)
+- notes: Translation notes (REQUIRED - never null, provide grammar context)
+- uncertainties: Array of uncertainty objects (REQUIRED - can be empty array)
 
-ENSURE: The `essential` field must be populated for every word; never return null for this.
-ENSURE: The `pos` field must be populated for every word; never return null for this.
-ENSURE: The `notes` field must be populated for every word; never return null for this.
+VALIDATION REQUIREMENTS:
+- ALL fields above are mandatory and must be present for every word
+- `pos` must be one of: """
+    + format_valid_pos()
+    + """
+- `essential` should contain core letters, stripped of affixes/suffixes and case/mood endings
+- Basic standard diacritics (like on فَعَلَ) are acceptable in `essential` field
+- Preserve ALL original text formatting, punctuation, and special characters in `arabic` field
+- Provide 1-3 options for `english_options` and `essential_translation_options`, ordered by likelihood
 
-ENSURE: The `essential` field should contain the core letters, stripped of affixes/suffixes and case/mood endings. Basic standard diacritics (like on فَعَلَ) are acceptable, but avoid complex or preserved original diacritics.
-ENSURE: Preserve ALL original text formatting, punctuation, and special characters in the `arabic` field.
-
-IMPORTANT: Return only a JSON object matching the WordTranslationResult schema.
+CRITICAL: Return only valid JSON matching WordTranslationResult schema. Every word must have ALL required fields populated.
 
 Input for word-by-word translation:
 """
 )
 
-FINAL_VERIFICATION_USER_PROMPT = """Review and refine the provided Islamic Arabic translation components. Return JSON matching RefinementResult structure with fields:
-- improved_tashkeel: Refined diacritical marks
-- improved_translation: Refined translation
-- improved_word_translations: Array of final WordTranslation objects
-- resolved_uncertainties: Array of resolved uncertainty objects
-- remaining_uncertainties: Array of unresolved uncertainty objects
-- changes_made: Array of change descriptions
+FINAL_VERIFICATION_USER_PROMPT = """Review and refine the provided Islamic Arabic translation components. Return JSON matching RefinementResult structure with ALL required fields:
 
-Resolve ambiguities and select the single best option for word translation. Ensure consistency across all components and address any uncertainties that can be resolved based on context.
+REQUIRED FIELDS:
+- improved_tashkeel: Refined diacritical marks (REQUIRED - string)
+- improved_translation: Refined translation (REQUIRED - string)
+- improved_word_translations: Array of final WordTranslation objects (REQUIRED - each must have: arabic, english, pos, essential, essential_translation, notes)
 
-Return your response as valid JSON.
+OPTIONAL FIELDS (provide null if not applicable):
+- resolved_uncertainties: Array of resolved uncertainty objects (OPTIONAL - null or array)
+- remaining_uncertainties: Array of unresolved uncertainty objects (OPTIONAL - null or array)
+- changes_made: Array of change descriptions (OPTIONAL - null or array)
+
+PROCESSING REQUIREMENTS:
+- Resolve ambiguities and select the single best option for each word translation
+- Ensure consistency across all components (tashkeel, translation, word translations)
+- Address any uncertainties that can be resolved based on context
+- For `improved_word_translations`, each WordTranslation object must include ALL required fields:
+  * arabic: Original Arabic word
+  * english: Single best English translation (not array)
+  * pos: Part of speech from valid options
+  * essential: Essential root letters
+  * essential_translation: Single best root meaning (not array)
+  * notes: Grammar and translation notes
+
+CRITICAL: Return valid JSON with ALL required fields populated. Optional fields can be null.
 
 Input components to refine:
 """

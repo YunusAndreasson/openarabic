@@ -1,6 +1,7 @@
 import logging
 import os
 import time
+import unicodedata
 from typing import Any, cast
 
 from data.config import (
@@ -40,6 +41,30 @@ from utils.responses_api import ResponsesAPIManager, call_response_api
 from utils.text_utils import filter_arabic_words
 
 logger = logging.getLogger(__name__)
+
+
+def _handle_arabic_processing_error(
+    text: str, operation: str, error: Exception
+) -> None:
+    """Handle Arabic text processing errors with proper logging and context."""
+    # Normalize text for logging
+    normalized_text = unicodedata.normalize(
+        "NFC", text[:50]
+    )  # First 50 chars for context
+
+    error_msg = f"Arabic {operation} failed for text: '{normalized_text}'"
+    if len(text) > 50:
+        error_msg += "..."
+
+    # Log specific error details for Arabic text issues
+    if "Unicode" in str(error) or "encoding" in str(error).lower():
+        logger.error(f"{error_msg} - Unicode/encoding issue: {error}")
+    elif "JSON" in str(error) or "parsing" in str(error).lower():
+        logger.error(
+            f"{error_msg} - JSON parsing failed (possible Arabic formatting issue): {error}"
+        )
+    else:
+        logger.error(f"{error_msg} - {error}")
 
 
 def _extract_response_data(response: dict[str, Any]) -> dict[str, Any] | None:
@@ -402,11 +427,22 @@ Input texts:
             },
         ]
 
-        response = call_response_api(
-            messages,
-            response_model=TashkeelResult,
-            model=MODEL_OTHER,
-        )
+        try:
+            response = call_response_api(
+                messages,
+                response_model=TashkeelResult,
+                model=MODEL_OTHER,
+            )
+        except Exception as e:
+            # Handle Arabic-specific processing errors
+            for sentence in sentences:
+                _handle_arabic_processing_error(sentence, "tashkeel generation", e)
+
+            # Return fallback results without tashkeel
+            return [
+                TashkeelResult(tashkeel=sentence, uncertainties=[])
+                for sentence in sentences
+            ]
 
     if "tashkeels" in response and isinstance(response["tashkeels"], list):
         results: TashkeelResults = []
