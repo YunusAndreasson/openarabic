@@ -18,6 +18,7 @@ from data.pipeline_types import (
 from utils.responses_api import ResponsesAPIManager
 from utils.validation import (
     validate_final_translation,
+    validate_tashkeel_added,
     validate_translation_results,
 )
 
@@ -80,8 +81,7 @@ def apply_tashkeel(
     )
 
     # Validate that tashkeel was actually added and break pipeline if not
-    # Temporarily disable tashkeel validation to allow pipeline to continue
-    # validate_tashkeel_added(batch_sentences, tashkeel, batch_indices)
+    validate_tashkeel_added(batch_sentences, tashkeel, batch_indices)
 
     return tashkeel
 
@@ -105,13 +105,13 @@ def translate_words(
         batch_indices,
         conversation_manager,
     )
-    # Temporarily disable word options validation to allow pipeline to complete
-    # validate_translation_results(
-    #     batch_sentences,
-    #     word_results,
-    #     "Word Translation Options",
-    #     check_word_options=True,
-    # )
+    # Validate word translation results
+    validate_translation_results(
+        batch_sentences,
+        word_results,
+        "Word Translation Options",
+        check_word_options=True,
+    )
     return word_results
 
 

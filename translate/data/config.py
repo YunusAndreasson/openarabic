@@ -15,7 +15,7 @@ MODEL_TRANSLATION = (
     "gpt-4o"  # Reliable Arabic translation with good structured output compliance
 )
 MODEL_OTHER = "gpt-4o"  # Solid Arabic tashkeel generation with schema enforcement
-MODEL_VERIFICATION = "o4-mini"  # Superior Arabic reasoning and verification - worth the cost for accuracy
+MODEL_VERIFICATION = "gpt-4o-mini"  # Superior Arabic reasoning and verification - worth the cost for accuracy
 
 # Batch processing defaults
 DEFAULT_BATCH_SIZE = 12

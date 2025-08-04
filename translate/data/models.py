@@ -105,8 +105,8 @@ class ResolvedUncertainty(BaseModel):
     """Uncertainty that was resolved during refinement"""
 
     step: str = Field(description="Processing step where uncertainty was resolved")
-    original_uncertainty: dict[str, str] = Field(
-        description="Original uncertainty with text and reason"
+    original_uncertainty: dict[str, str] | None = Field(
+        default=None, description="Original uncertainty with text and reason"
     )
     resolution: str = Field(description="How the uncertainty was resolved")
     explanation: str = Field(description="Explanation of the resolution")

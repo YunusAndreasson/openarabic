@@ -74,6 +74,24 @@ def _extract_response_data(response: dict[str, Any]) -> dict[str, Any] | None:
     return response.get("data")
 
 
+def _extract_tashkeel_data(response: dict[str, Any]) -> dict[str, Any] | None:
+    """Extract tashkeel data from various response formats."""
+    if isinstance(response, dict):
+        # Response API format: response["data"]["tashkeel"]
+        if "data" in response and "tashkeel" in response["data"]:
+            return {
+                "tashkeel": response["data"]["tashkeel"],
+                "uncertainties": response["data"].get("uncertainties", []),
+            }
+        # Direct format: response["tashkeel"]
+        elif "tashkeel" in response:
+            return {
+                "tashkeel": response["tashkeel"],
+                "uncertainties": response.get("uncertainties", []),
+            }
+    return None
+
+
 def _validate_word_data(word_data: dict[str, Any]) -> dict[str, Any]:
     """Validate and clean word data from API response."""
     if not isinstance(word_data, dict):
@@ -428,64 +446,57 @@ Input texts:
         ]
 
         try:
-            response = call_response_api(
-                messages,
-                response_model=TashkeelResult,
-                model=MODEL_OTHER,
-            )
+            # Process each sentence individually to get proper tashkeel results
+            results: TashkeelResults = []
+            for i, sentence in enumerate(sentences):
+                # Create individual prompt for each sentence
+                individual_prompt = f"""Add complete diacritical marks (tashkīl) to this Islamic Arabic text. Return your response as valid JSON matching the TashkeelResult structure.
+
+CRITICAL: You MUST provide ALL required fields. The `uncertainties` array must be present, even if empty.
+
+Input text: {sentence}
+
+Provide:
+1. `tashkeel` (string): Add ALL necessary marks: fatḥa (َ), kasra (ِ), ḍamma (ُ), sukūn (ْ), shadda (ّ), and tanwīn (ً ٍ ٌ). Ensure EVERY eligible letter has appropriate diacritics (full vocalization).
+2. `uncertainties` (array of objects, optional): List specific words where diacritics are uncertain.
+
+Return as JSON:"""
+
+                individual_messages = [
+                    {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
+                    {"role": "user", "content": individual_prompt},
+                ]
+
+                response = call_response_api(
+                    individual_messages,
+                    response_model=TashkeelResult,
+                    model=MODEL_OTHER,
+                )
+
+                if "error" in response:
+                    raise RuntimeError(
+                        f"Tashkeel API error for sentence {i}: {response['error']}"
+                    )
+
+                # Extract the tashkeel result from the response using helper function
+                tashkeel_data = _extract_tashkeel_data(response)
+                if tashkeel_data:
+                    results.append(TashkeelResult(**tashkeel_data))
+                else:
+                    raise RuntimeError(
+                        f"Invalid tashkeel response format for sentence {i}: {response}"
+                    )
+
         except Exception as e:
             # Handle Arabic-specific processing errors
             for sentence in sentences:
                 _handle_arabic_processing_error(sentence, "tashkeel generation", e)
 
-            # Return fallback results without tashkeel
-            return [
-                TashkeelResult(tashkeel=sentence, uncertainties=[])
-                for sentence in sentences
-            ]
+            # Fail the pipeline instead of returning fallback results
+            raise RuntimeError(f"Tashkeel generation failed: {e}")
 
-    if "tashkeels" in response and isinstance(response["tashkeels"], list):
-        results: TashkeelResults = []
-        for i, item in enumerate(response["tashkeels"]):
-            if i >= len(sentences):
-                break
-            if isinstance(item, dict):
-                if "t" in item:
-                    results.append(
-                        TashkeelResult(
-                            tashkeel=item["t"],
-                            uncertainties=item.get("uncertainties", []),
-                        ),
-                    )
-                elif "tashkeel" in item:
-                    results.append(
-                        TashkeelResult(
-                            tashkeel=item["tashkeel"],
-                            uncertainties=item.get("uncertainties", []),
-                        )
-                    )
-                else:
-                    results.append(
-                        TashkeelResult(tashkeel=sentences[i], uncertainties=[])
-                    )
-            else:
-                results.append(TashkeelResult(tashkeel=sentences[i], uncertainties=[]))
-
-        while len(results) < len(sentences):
-            i = len(results)
-            results.append(TashkeelResult(tashkeel=sentences[i], uncertainties=[]))
-
-        return results
-    elif "error" in response:
-        return [
-            TashkeelResult(tashkeel=sentence, uncertainties=[])
-            for sentence in sentences
-        ]
-    else:
-        return [
-            TashkeelResult(tashkeel=sentence, uncertainties=[])
-            for sentence in sentences
-        ]
+    # Return the results
+    return results
 
 
 def batch_translate_words(
@@ -539,14 +550,14 @@ def batch_translate_words(
                 tashkeel_notes = ""
                 if tashkeel_uncertainties:
                     tashkeel_notes = "\nTashkeel uncertainties:\n" + "\n".join(
-                        f"- {u.get('word', '')}: {u.get('reason', '')}"
+                        f"- {getattr(u, 'word', str(u))}: {getattr(u, 'reason', str(u))}"
                         for u in tashkeel_uncertainties
                     )
 
                 translation_notes = ""
                 if translation_uncertainties:
                     translation_notes = "\nTranslation uncertainties:\n" + "\n".join(
-                        f"- {u.get('text', '')}: {u.get('reason', '')}"
+                        f"- {getattr(u, 'text', str(u))}: {getattr(u, 'reason', str(u))}"
                         for u in translation_uncertainties
                     )
                 formatted_input = _build_word_prompt(
@@ -716,15 +727,15 @@ def batch_refine_translations(
             all_uncertainties: list[str] = []
             if previous_uncertainties.get("translation"):
                 all_uncertainties.extend(
-                    f"Translation: {u.get('text', '')} ({u.get('reason', 'No reason')})"
+                    f"Translation: {getattr(u, 'text', str(u))} ({getattr(u, 'reason', 'No reason')})"
                     for u in previous_uncertainties["translation"]
-                    if isinstance(u, dict)
+                    if hasattr(u, "text") or isinstance(u, dict)
                 )
             if previous_uncertainties.get("tashkeel"):
                 all_uncertainties.extend(
-                    f"Diacritics: {u.get('word', '')} ({u.get('reason', 'No reason')})"
+                    f"Diacritics: {getattr(u, 'word', str(u))} ({getattr(u, 'reason', 'No reason')})"
                     for u in previous_uncertainties["tashkeel"]
-                    if isinstance(u, dict)
+                    if hasattr(u, "word") or isinstance(u, dict)
                 )
             for word_opts in word_translations_options:
                 # Handle uncertainties from both objects and dictionaries
@@ -740,6 +751,10 @@ def batch_refine_translations(
                         if isinstance(u, dict):
                             all_uncertainties.append(
                                 f"Word ({arabic}): {u.get('text', '')} ({u.get('reason', 'No reason')})",
+                            )
+                        elif hasattr(u, "text"):
+                            all_uncertainties.append(
+                                f"Word ({arabic}): {getattr(u, 'text', '')} ({getattr(u, 'reason', 'No reason')})",
                             )
 
             translation, _ = _get_translation_data(translation_data)
@@ -779,15 +794,11 @@ def batch_refine_translations(
             )
         else:
             # Use standard implementation when no conversation manager
-            temp_to_use = 1.0 if MODEL_VERIFICATION == "gpt-4o-mini" else 0.3
-            api_kwargs = {
-                "messages": messages,
-                "response_model": RefinementResult,
-                "model": MODEL_VERIFICATION,
-                "temperature": temp_to_use,
-            }
-
-            response = call_response_api(**api_kwargs)
+            response = call_response_api(
+                messages=messages,
+                response_model=RefinementResult,
+                model=MODEL_VERIFICATION,
+            )
 
         if "refinements" in response and isinstance(response["refinements"], list):
             results: RefinementResults = []

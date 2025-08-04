@@ -142,18 +142,25 @@ def validate_translation_results(
             else:
                 result_dict = result
 
-            # Get translation text from either "translation" or "t" field
-            translation = result_dict.get("translation", "") or result_dict.get("t", "")
+            # Handle different result types
+            if "word_translations" in result_dict:
+                # This is a word translation result - skip translation field validation
+                pass
+            else:
+                # This is a sentence translation result - validate translation field
+                translation = result_dict.get("translation", "") or result_dict.get(
+                    "t", ""
+                )
 
-            # Check for error markers in translation
-            if any(err in translation for err in TRANSLATION_ERROR_MARKERS):
-                errors.append(f"Sentence {i}: Contains error marker in translation")
+                # Check for error markers in translation
+                if any(err in translation for err in TRANSLATION_ERROR_MARKERS):
+                    errors.append(f"Sentence {i}: Contains error marker in translation")
 
-            # Check for empty or very short translation
-            if not translation.strip():
-                errors.append(f"Sentence {i}: Missing translation")
-            elif len(translation.strip()) < 3:
-                errors.append(f"Sentence {i}: Suspiciously short translation")
+                # Check for empty or very short translation
+                if not translation.strip():
+                    errors.append(f"Sentence {i}: Missing translation")
+                elif len(translation.strip()) < 3:
+                    errors.append(f"Sentence {i}: Suspiciously short translation")
 
             # Check word options if requested
             if check_word_options and "word_translations" in result_dict:
