@@ -21,23 +21,29 @@ from utils.validation import (
     validate_translation_results,
 )
 
-
 # Import functions lazily to avoid circular imports
-def _get_translation_engine_functions() -> tuple[Any, Any, Any, Any]:
-    """Lazy import to avoid circular dependencies."""
-    from pipeline.translation_engine import (
-        batch_add_tashkeel,
-        batch_refine_translations,
-        batch_translate_full_sentences,
-        batch_translate_words,
-    )
+_translation_engine_functions: tuple[Any, Any, Any, Any] | None = None
 
-    return (
-        batch_add_tashkeel,
-        batch_refine_translations,
-        batch_translate_full_sentences,
-        batch_translate_words,
-    )
+
+def _get_translation_engine_functions() -> tuple[Any, Any, Any, Any]:
+    """Lazy import to avoid circular dependencies with caching."""
+    global _translation_engine_functions
+    if _translation_engine_functions is None:
+        from pipeline.translation_engine import (
+            batch_add_tashkeel,
+            batch_refine_translations,
+            batch_translate_full_sentences,
+            batch_translate_words,
+        )
+
+        _translation_engine_functions = (
+            batch_add_tashkeel,
+            batch_refine_translations,
+            batch_translate_full_sentences,
+            batch_translate_words,
+        )
+
+    return _translation_engine_functions
 
 
 def run_full_translation(
@@ -166,61 +172,17 @@ def create_sentence_translation(
     tashkeel_result: TashkeelResult,
     word_options_result: WordTranslationResult,
 ) -> SentenceTranslation:
-    # Ensure we have tashkeel data - use original tashkeel if refinement doesn't have improved version
-    if hasattr(refinement, "improved_tashkeel"):
-        refined_tashkeel = (
-            refinement.improved_tashkeel
-            if refinement.improved_tashkeel.strip()
-            else (
-                tashkeel_result.tashkeel
-                if hasattr(tashkeel_result, "tashkeel")
-                else tashkeel_result.get("tashkeel", "")
-            )
-        )
-    else:
-        refined_tashkeel = (
-            refinement.get("improved_tashkeel", "")
-            if refinement.get("improved_tashkeel", "").strip()
-            else (
-                tashkeel_result.tashkeel
-                if hasattr(tashkeel_result, "tashkeel")
-                else tashkeel_result.get("tashkeel", "")
-            )
-        )
+    # Get tashkeel data - prefer refined version, fallback to original
+    refined_tashkeel = (
+        refinement.improved_tashkeel or tashkeel_result.tashkeel or original_sentence
+    )
 
-    # If refined_tashkeel is still empty, try to get it from the original tashkeel result
-    if not refined_tashkeel.strip():
-        refined_tashkeel = tashkeel_result.get("tashkeel", "")
-
-    # If still empty, use the original sentence as fallback
-    if not refined_tashkeel.strip():
-        refined_tashkeel = original_sentence
-
-    # Ensure we have translation data - use original translation if refinement doesn't have improved version
-    if hasattr(refinement, "improved_translation"):
-        refined_translation = (
-            refinement.improved_translation
-            if refinement.improved_translation.strip()
-            else (
-                translation_result.translation
-                if hasattr(translation_result, "translation")
-                else translation_result.get("translation", "")
-            )
-        )
-    else:
-        refined_translation = (
-            refinement.get("improved_translation", "")
-            if refinement.get("improved_translation", "").strip()
-            else (
-                translation_result.translation
-                if hasattr(translation_result, "translation")
-                else translation_result.get("translation", "")
-            )
-        )
-
-    # If refined_translation is still empty, try to get it from the original translation result
-    if not refined_translation.strip():
-        refined_translation = translation_result.get("translation", "")
+    # Get translation data - prefer refined version, fallback to original
+    refined_translation = (
+        refinement.improved_translation
+        or translation_result.translation
+        or "[Translation failed]"
+    )
 
     # Handle refined word translations
     if hasattr(refinement, "improved_word_translations"):

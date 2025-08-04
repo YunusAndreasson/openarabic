@@ -1,4 +1,5 @@
 import logging
+import os
 import time
 from typing import Any, cast
 
@@ -154,6 +155,17 @@ def batch_translate_full_sentences(
     ) -> dict[str, Any]:
         """Helper function to attempt translation with or without context"""
         formatted_inputs: list[str] = []
+        # Verify lengths match before processing
+        if len(sentences) != len(contexts):
+            logger.warning(
+                f"Length mismatch: {len(sentences)} sentences vs {len(contexts)} contexts"
+            )
+            # Pad contexts if shorter, truncate if longer
+            if len(contexts) < len(sentences):
+                contexts.extend([None] * (len(sentences) - len(contexts)))
+            else:
+                contexts = contexts[: len(sentences)]
+
         for i, (sentence, context) in enumerate(zip(sentences, contexts, strict=False)):
             context_str = (
                 ""
@@ -213,10 +225,10 @@ def batch_translate_full_sentences(
         # Single sentence - use the response directly
         results.append(
             TranslationResult(
-                translation=data.get("translation", "[Translation failed]"),
-                notes=data.get("notes", ""),
-                uncertainties=data.get("uncertainties", []),
-                word_by_word=data.get("word_by_word", []),
+                translation=data["translation"],
+                notes=data["notes"],
+                uncertainties=data["uncertainties"],
+                word_by_word=data["word_by_word"],
             )
         )
     else:
@@ -312,13 +324,18 @@ def batch_add_tashkeel(
         camel_suggestions_str = format_tashkeel_suggestions(camel_suggestions)
 
         # Create a tashkeel-enhanced version of the sentence using camel_tools suggestions
+        # Use token-aware replacement to avoid modifying substrings in other words
         enhanced_sentence = sentence
         for original_word, suggested_tashkeel in camel_suggestions.items():
             if (
                 suggested_tashkeel != original_word
             ):  # Only replace if camel_tools provided a suggestion
-                enhanced_sentence = enhanced_sentence.replace(
-                    original_word, suggested_tashkeel
+                # Use word boundary replacement to avoid substring issues
+                import re
+
+                pattern = r"\b" + re.escape(original_word) + r"\b"
+                enhanced_sentence = re.sub(
+                    pattern, suggested_tashkeel, enhanced_sentence
                 )
 
         # Get context for this sentence
@@ -333,7 +350,7 @@ def batch_add_tashkeel(
             f"Original Arabic: {sentence}\n"
             f"Camel-tools enhanced: {enhanced_sentence}\n"
             f"Translation: {translation}{uncertainty_notes}{grammar_notes_str}{context_info}"
-            f"{f'\n{camel_suggestions_str}' if camel_suggestions_str else ''}",
+            f"{f'\n{camel_suggestions_str}' if camel_suggestions_str else ''}"
         )
 
     # Modified prompt to emphasize using camel_tools suggestions as starting point
@@ -775,7 +792,9 @@ def batch_refine_translations(
             return []
         else:
             return []
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error in batch_refine_translations: {e}")
+        # Return empty results but log the error for debugging
         return []
 
 
@@ -785,7 +804,9 @@ def batch_translate_root_words_with_google_cloud(
     translations: TranslationResults,
 ) -> WordTranslationResults:
     """Translate individual Arabic root words using Google Cloud Translate with context awareness."""
-    service = GoogleTranslateService(credentials_path="openarabic-3711db289212.json")
+    # Use environment variable for credentials path or default to None
+    credentials_path = os.getenv("GOOGLE_CLOUD_CREDENTIALS_PATH")
+    service = GoogleTranslateService(credentials_path=credentials_path)
     results: WordTranslationResults = []
 
     # Extract individual Arabic words from sentences, then extract root words

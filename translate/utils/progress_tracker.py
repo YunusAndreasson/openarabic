@@ -118,6 +118,7 @@ def log_phase_start(phase_name: str) -> None:
 def log_phase_completion(phase_name: str) -> None:
     """Log the completion of a pipeline phase."""
     # No longer logging phase completion - it's shown in TQDM bar
+    # Parameter kept for API compatibility but not used
     pass
 
 

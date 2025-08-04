@@ -59,6 +59,7 @@ def find_input_files_in_inbox() -> list[tuple[str, str, str]]:
             continue
 
         if author_folder not in AUTHOR_FOLDER_MAPPING:
+            logger.debug(f"Skipping unknown author folder: {author_folder}")
             continue
 
         author_name = AUTHOR_FOLDER_MAPPING[author_folder]
@@ -216,12 +217,17 @@ def run_insert_only() -> None:
             sys.executable,
             "pipeline/insert.py",
         ],
-        capture_output=False,
+        capture_output=True,
+        text=True,
         cwd=os.path.dirname(os.path.abspath(__file__)),
         env=env,
     )
     if result.returncode != 0:
         logger.error("❌ insert.py failed.")
+        if result.stdout:
+            logger.error(f"stdout: {result.stdout}")
+        if result.stderr:
+            logger.error(f"stderr: {result.stderr}")
         raise RuntimeError("insert.py failed.")
     logger.info("✅ Database insertion completed successfully.")
 

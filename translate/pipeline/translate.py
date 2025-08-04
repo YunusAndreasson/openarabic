@@ -33,6 +33,27 @@ logger = logging.getLogger(__name__)
 MAX_BATCH_SIZE = 12
 
 
+def create_fallback_word_translations(sentence: str) -> dict[str, Any]:
+    """Create fallback word translations for a sentence when translation fails."""
+    arabic_words = filter_arabic_words(sentence)
+    fallback_word_translations = []
+    for word in arabic_words:
+        fallback_word_translations.append(
+            {
+                "arabic": word,
+                "english_options": [f"[{word}]"],
+                "pos": "unknown",
+                "essential": word,
+                "essential_translation_options": [f"[{word}]"],
+                "notes": "Fallback due to word translation failure",
+                "uncertainties": [
+                    {"text": word, "reason": "Word translation step failed"}
+                ],
+            }
+        )
+    return {"word_translations": fallback_word_translations}
+
+
 def create_batches(
     sentences: list[str],
     start_index: int,
@@ -51,10 +72,10 @@ def create_batches(
 
         # Get context for each sentence in the batch
         if context_cache:
-            batch_contexts = [
-                context_cache.get_contexts([idx], for_tashkeel=False)[0]
-                for idx in batch_indices
-            ]
+            # Batch the context requests for efficiency
+            batch_contexts = context_cache.get_contexts(
+                batch_indices, for_tashkeel=False
+            )
         else:
             batch_contexts = [""] * len(batch_sentences)
 
@@ -151,44 +172,10 @@ def process_batch(
                 f"Word translation step failed for batch starting at {start_index}: {e}"
             )
             # Create fallback word options
-            word_options = []
-            for sentence in batch_sentences:
-                arabic_words = filter_arabic_words(sentence)
-                fallback_word_translations = []
-                for word in arabic_words:
-                    fallback_word_translations.append(
-                        {
-                            "arabic": word,
-                            "english_options": [f"[{word}]"],
-                            "pos": "unknown",
-                            "essential": word,
-                            "essential_translation_options": [f"[{word}]"],
-                            "notes": "Fallback due to word translation failure",
-                            "uncertainties": [
-                                {"text": word, "reason": "Word translation step failed"}
-                            ],
-                        }
-                    )
-                word_options.append(
-                    {
-                        "word_translations": [
-                            {
-                                "arabic": word,
-                                "english_options": [f"[{word}]"],
-                                "pos": "unknown",
-                                "essential": word,
-                                "essential_translation_options": [f"[{word}]"],
-                                "notes": "Fallback due to word translation failure",
-                                "uncertainties": [
-                                    {
-                                        "text": word,
-                                        "reason": "Word translation step failed",
-                                    }
-                                ],
-                            }
-                        ]
-                    }
-                )
+            word_options = [
+                create_fallback_word_translations(sentence)
+                for sentence in batch_sentences
+            ]
 
         return refine_translations(
             batch_sentences,

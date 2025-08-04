@@ -137,7 +137,7 @@ def insert_sentence_words(
     Insert words from a sentence with their roots and relationships.
     Uses cleaned Arabic text (without non-Arabic characters) for consistency with TTS.
     """
-    word_by_word = translation.get("word_by_word", [])
+    word_by_word = translation["word_by_word"]
 
     match_stats = {"exact": 0, "position": 0, "fuzzy": 0, "none": 0}
     total_words = len(word_by_word)
@@ -420,7 +420,7 @@ def insert_article_sentences(article_id: int, translations: list[dict]) -> dict:
 def save_timing_report(
     article_id: int,
     title: str,
-    json_path: str,
+    json_path: str,  # Unused parameter kept for API compatibility
     timing_stats: dict,
 ) -> None:
     """Save timing statistics to a CSV report file."""

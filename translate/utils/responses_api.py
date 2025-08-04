@@ -20,13 +20,27 @@ _keys_loaded: bool = False
 
 
 def load_api_keys() -> None:
-    """Load API keys from set_keys.py if present."""
+    """Load API keys from set_keys.py if present, or use environment variables."""
     global _keys_loaded
     if _keys_loaded:
         return
+
+    # Check if environment variables are already set
+    if os.getenv("OPENAI_API_KEY"):
+        logger.info("Using API keys from environment variables")
+        _keys_loaded = True
+        return
+
     set_keys_path = os.path.join(os.path.dirname(__file__), "set_keys.py")
     if not os.path.exists(set_keys_path):
-        raise FileNotFoundError(f"API keys file not found: {set_keys_path}")
+        logger.warning(f"API keys file not found: {set_keys_path}")
+        logger.info(
+            "Please set OPENAI_API_KEY environment variable or create set_keys.py"
+        )
+        raise FileNotFoundError(
+            f"API keys file not found: {set_keys_path}. "
+            "Please set OPENAI_API_KEY environment variable or create set_keys.py"
+        )
 
     # Safely load the configuration file
     import importlib.util
@@ -161,7 +175,16 @@ def init_openai_client() -> OpenAI:
     return OpenAI(api_key=api_key)
 
 
-client = init_openai_client()
+# Lazy initialization - only create client when first needed
+_client: OpenAI | None = None
+
+
+def get_openai_client() -> OpenAI:
+    """Get OpenAI client with lazy initialization."""
+    global _client
+    if _client is None:
+        _client = init_openai_client()
+    return _client
 
 
 class ResponsesAPIManager:

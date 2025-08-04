@@ -52,13 +52,11 @@ def parse_split_response(response: dict[str, Any]) -> SplitResult:
         data = response
 
     return SplitResult(
-        units=data.get("units", []),
-        title=data.get("title", "Untitled Text"),
-        summary=data.get("summary", "No summary available"),
-        difficulty_level=data.get(
-            "difficulty_level", DifficultyLevel.INTERMEDIATE.value
-        ),
-        total_units=len(data.get("units", [])),
+        units=data["units"],
+        title=data["title"],
+        summary=data["summary"],
+        difficulty_level=data["difficulty_level"],
+        total_units=len(data["units"]),
         unit_types=data.get("unit_types"),
     )
 

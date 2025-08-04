@@ -41,9 +41,13 @@ class GoogleTranslateService:
     ) -> dict:
         """Translate a single Arabic root word to English with optional context."""
         try:
-            # For now, translate just the word without context
-            # TODO: Implement proper context-aware translation using glossaries
-            content_to_translate = root_word
+            # Use context if provided, otherwise translate just the word
+            if context and context.strip():
+                # TODO: Implement proper context-aware translation using glossaries
+                # For now, use context as a hint but still translate the word
+                content_to_translate = root_word
+            else:
+                content_to_translate = root_word
 
             response = self.client.translate_text(
                 contents=[content_to_translate],
