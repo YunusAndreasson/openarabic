@@ -9,13 +9,13 @@ from elevenlabs import VoiceSettings
 # o1-mini: Superior Arabic reasoning, fewer hallucinations, accuracy-critical verification
 # Trade-off: o1-mini is 16-30x slower but much better for Arabic verification
 MODEL_ANALYSIS = (
-    "gpt-4o-mini"  # Fast, cost-effective text splitting (minimal Arabic complexity)
+    "gpt-4o"  # Fast, cost-effective text splitting (minimal Arabic complexity)
 )
 MODEL_TRANSLATION = (
     "gpt-4o"  # Reliable Arabic translation with good structured output compliance
 )
 MODEL_OTHER = "gpt-4o"  # Solid Arabic tashkeel generation with schema enforcement
-MODEL_VERIFICATION = "o1-mini"  # Superior Arabic reasoning and verification - worth the cost for accuracy
+MODEL_VERIFICATION = "o4-mini"  # Superior Arabic reasoning and verification - worth the cost for accuracy
 
 # Batch processing defaults
 DEFAULT_BATCH_SIZE = 12
