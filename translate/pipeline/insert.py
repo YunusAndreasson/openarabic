@@ -216,7 +216,7 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
 
     archive_files(file_path, article_id)
 
-    save_timing_report(article_id, data["metadata"]["title"], file_path, timing_stats)
+    save_timing_report(article_id, data["metadata"]["title"], timing_stats)
 
     return article_id
 

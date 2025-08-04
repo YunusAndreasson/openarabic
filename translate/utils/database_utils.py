@@ -420,7 +420,6 @@ def insert_article_sentences(article_id: int, translations: list[dict]) -> dict:
 def save_timing_report(
     article_id: int,
     title: str,
-    json_path: str,  # Unused parameter kept for API compatibility
     timing_stats: dict,
 ) -> None:
     """Save timing statistics to a CSV report file."""

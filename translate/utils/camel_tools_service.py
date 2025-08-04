@@ -158,8 +158,6 @@ def generate_tashkeel_suggestions_with_context(
     sentence: str,
     context: str | None = None,
     sentence_index: int | None = None,
-    all_sentences: list[str]
-    | None = None,  # Unused parameter kept for API compatibility
 ) -> dict[str, str]:
     """
     Generate tashkeel suggestions for Arabic words in a sentence with context.

@@ -305,16 +305,6 @@ def save_translation_output(
     write_json_file(output_file, output_data)
 
 
-def serialize(obj: Any) -> dict[str, Any] | list[Any] | Any:
-    """Serialize objects for JSON output."""
-    if hasattr(obj, "model_dump"):
-        return obj.model_dump()
-    elif hasattr(obj, "__dict__"):
-        return obj.__dict__
-    else:
-        return obj
-
-
 def translate_file(
     input_file: str,
     output_file: str,

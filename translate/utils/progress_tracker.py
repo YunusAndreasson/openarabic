@@ -86,20 +86,6 @@ class PipelineProgressTracker:
 progress_tracker = PipelineProgressTracker()
 
 
-def create_phase_progress_bar(
-    phase_name: str, total: int, description: str = None
-) -> tqdm:
-    """Create a progress bar for a specific phase."""
-    return tqdm(
-        total=total,
-        desc=f"Phase: {phase_name} - {description or ''}",
-        unit="items",
-        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]",
-        ncols=100,
-        colour="green",
-    )
-
-
 def log_pipeline_start() -> None:
     """Log the start of the pipeline."""
     logger.info("🚀 Starting Arabic Translation Pipeline")
@@ -115,21 +101,9 @@ def log_phase_start(phase_name: str) -> None:
     logger.info(f"🔄 Starting {phase_name} phase...")
 
 
-def log_phase_completion(phase_name: str) -> None:
-    """Log the completion of a pipeline phase."""
-    # No longer logging phase completion - it's shown in TQDM bar
-    # Parameter kept for API compatibility but not used
-    pass
-
-
 def log_irrecoverable_error(error: str) -> None:
     """Log an irrecoverable error that stops the pipeline."""
     logger.error(f"💥 Pipeline failed irrecoverably: {error}")
-
-
-def log_recoverable_error(error: str) -> None:
-    """Log a recoverable error that doesn't stop the pipeline."""
-    logger.error(f"⚠️  Error occurred: {error}")
 
 
 def suppress_verbose_logging() -> None:

@@ -299,7 +299,6 @@ def batch_add_tashkeel(
             sentence,
             context=context,
             sentence_index=indices[i] if indices and i < len(indices) else i,
-            all_sentences=all_sentences,
         )
         camel_suggestions_list.append(suggestions)
 
@@ -459,7 +458,6 @@ def batch_translate_words(
     translations: TranslationResults,
     all_sentences: list[str] | None = None,
     indices: list[int] | None = None,
-    context_cache: ContextCache | None = None,
     conversation_manager: ResponsesAPIManager | None = None,
 ) -> WordTranslationResults:
     """Create word-by-word translations for multiple sentences in a batch, returning options"""
@@ -800,8 +798,6 @@ def batch_refine_translations(
 
 def batch_translate_root_words_with_google_cloud(
     sentences: list[str],
-    tashkeel_results: TashkeelResults,
-    translations: TranslationResults,
 ) -> WordTranslationResults:
     """Translate individual Arabic root words using Google Cloud Translate with context awareness."""
     # Use environment variable for credentials path or default to None

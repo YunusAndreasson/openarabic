@@ -103,7 +103,6 @@ def translate_words(
         translation_results,
         all_sentences,
         batch_indices,
-        context_cache,
         conversation_manager,
     )
     # Temporarily disable word options validation to allow pipeline to complete

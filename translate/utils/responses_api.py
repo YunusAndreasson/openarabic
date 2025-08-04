@@ -5,7 +5,6 @@ This module provides a conversation-based approach to translation using OpenAI's
 Response API, which maintains state across multiple interactions.
 """
 
-import json
 import logging
 import os
 from typing import Any
@@ -53,56 +52,6 @@ def load_api_keys() -> None:
     _keys_loaded = True
 
 
-def _calculate_backoff_delay(
-    attempt: int, base_delay: float = 1.0, max_delay: float = 60.0
-) -> float:
-    """Calculate exponential backoff delay with jitter."""
-    delay = min(base_delay * (2**attempt), max_delay)
-    # Simple jitter using modulo to avoid cryptographic concerns
-    jitter = (delay * 0.1) * (attempt % 10) / 10  # 0-10% jitter
-    return delay + jitter
-
-
-def _is_retryable_error(error: Exception) -> bool:
-    """Determine if an error is retryable."""
-    error_str = str(error).lower()
-
-    # Retryable errors
-    retryable_patterns = [
-        "rate limit",
-        "429",
-        "timeout",
-        "server error",
-        "500",
-        "502",
-        "503",
-        "504",
-        "connection",
-        "network",
-    ]
-
-    # Non-retryable errors
-    non_retryable_patterns = [
-        "invalid api key",
-        "authentication",
-        "401",
-        "403",
-        "invalid request",
-        "400",
-    ]
-
-    for pattern in non_retryable_patterns:
-        if pattern in error_str:
-            return False
-
-    for pattern in retryable_patterns:
-        if pattern in error_str:
-            return True
-
-    # Default to retryable for unknown errors
-    return True
-
-
 class TokenUsageTracker:
     """Track token usage and calculate costs for Response API"""
 
@@ -127,18 +76,6 @@ class TokenUsageTracker:
         prompt_cost = usage_data.get("prompt_tokens", 0) * 0.01 / 1000
         completion_cost = usage_data.get("completion_tokens", 0) * 0.03 / 1000
         self.total_cost += prompt_cost + completion_cost
-
-    def record_success(self) -> None:
-        """Record a successful API call"""
-        self.successful_calls += 1
-
-    def record_failure(self) -> None:
-        """Record a failed API call"""
-        self.failed_calls += 1
-
-    def record_retry(self) -> None:
-        """Record a retry attempt"""
-        self.retry_attempts += 1
 
     def get_success_rate(self) -> float:
         """Calculate success rate"""
@@ -177,14 +114,6 @@ def init_openai_client() -> OpenAI:
 
 # Lazy initialization - only create client when first needed
 _client: OpenAI | None = None
-
-
-def get_openai_client() -> OpenAI:
-    """Get OpenAI client with lazy initialization."""
-    global _client
-    if _client is None:
-        _client = init_openai_client()
-    return _client
 
 
 class ResponsesAPIManager:
@@ -412,20 +341,6 @@ Please translate all sentences now."""
             use_structured_output=True,
             response_model=response_model,
         )
-
-    def _parse_response(self, response: Any) -> dict[str, Any]:
-        """Parse Response API response into standard format"""
-        if hasattr(response, "output_parsed") and response.output_parsed:
-            # Already parsed by responses.parse()
-            return response.output_parsed.model_dump()
-        elif hasattr(response, "output_text") and response.output_text:
-            # Try to parse as JSON for backward compatibility
-            try:
-                return json.loads(response.output_text)
-            except json.JSONDecodeError:
-                return {"text": response.output_text}
-        else:
-            return {"error": "No parseable content found in response"}
 
 
 def call_response_api(

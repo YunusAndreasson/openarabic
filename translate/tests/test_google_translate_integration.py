@@ -2,7 +2,6 @@
 
 from unittest.mock import MagicMock, patch
 
-from data.models import TashkeelResult, TranslationResult
 from pipeline.translation_engine import batch_translate_root_words_with_google_cloud
 from utils.exceptions import TranslationError
 
@@ -35,16 +34,8 @@ class TestGoogleTranslateIntegration:
         )
 
         sentences = ["مرحبا عالم"]
-        tashkeel_results = [TashkeelResult(tashkeel="مرحبا عالم", uncertainties=[])]
-        translations = [
-            TranslationResult(
-                translation="Hello world", notes="", uncertainties=[], word_by_word=[]
-            )
-        ]
 
-        results = batch_translate_root_words_with_google_cloud(
-            sentences, tashkeel_results, translations
-        )
+        results = batch_translate_root_words_with_google_cloud(sentences)
 
         assert len(results) == 2
         assert results[0]["word_translations"][0]["arabic"] == "مرحبا"
@@ -62,16 +53,8 @@ class TestGoogleTranslateIntegration:
         )
 
         sentences = ["مرحبا"]
-        tashkeel_results = [TashkeelResult(tashkeel="مرحبا", uncertainties=[])]
-        translations = [
-            TranslationResult(
-                translation="Hello", notes="", uncertainties=[], word_by_word=[]
-            )
-        ]
 
-        results = batch_translate_root_words_with_google_cloud(
-            sentences, tashkeel_results, translations
-        )
+        results = batch_translate_root_words_with_google_cloud(sentences)
 
         assert len(results) == 1
         assert results[0]["word_translations"][0]["english_options"] == [
