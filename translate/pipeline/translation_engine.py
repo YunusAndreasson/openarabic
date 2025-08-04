@@ -118,19 +118,6 @@ def _validate_word_data(word_data: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _create_fallback_translation(word: str) -> WordTranslationOptions:
-    """Create fallback translation for failed API calls."""
-    return WordTranslationOptions(
-        arabic=word,
-        english_options=[f"[{word}]"],
-        pos="noun",
-        essential=word,
-        essential_translation_options=[f"[{word}]"],
-        notes="Fallback translation due to API failure",
-        uncertainties=[WordUncertainty(text=word, reason="API returned empty result")],
-    )
-
-
 def _get_translation_data(obj: Any) -> tuple[str, list[Any]]:
     """Extract translation and uncertainties from TranslationResult object or dict."""
     if hasattr(obj, "translation"):
@@ -256,14 +243,7 @@ def batch_translate_full_sentences(
         # API call failed, create error results
         error_msg = response.get("error", "Unknown error")
         for _ in range(len(sentences)):
-            results.append(
-                TranslationResult(
-                    translation="[Translation failed]",
-                    notes=f"API error: {error_msg}",
-                    uncertainties=[],
-                    word_by_word=[],
-                )
-            )
+            raise RuntimeError(f"Translation failed: {error_msg}")
     elif len(sentences) == 1:
         # Single sentence - use the response directly
         results.append(
@@ -285,34 +265,19 @@ def batch_translate_full_sentences(
             if individual_data is not None:
                 results.append(
                     TranslationResult(
-                        translation=individual_data.get(
-                            "translation", "[Translation failed]"
-                        ),
+                        translation=individual_data.get("translation", ""),
                         notes=individual_data.get("notes", ""),
                         uncertainties=individual_data.get("uncertainties", []),
                         word_by_word=individual_data.get("word_by_word", []),
                     )
                 )
             else:
-                results.append(
-                    TranslationResult(
-                        translation="[Translation failed]",
-                        notes="Failed to translate individual sentence",
-                        uncertainties=[],
-                        word_by_word=[],
-                    )
-                )
+                raise RuntimeError(f"Failed to translate sentence {i}")
 
     # Ensure we have results for all sentences
-    while len(results) < len(sentences):
-        i = len(results)
-        results.append(
-            TranslationResult(
-                translation="[Translation failed]",
-                notes="No response for this sentence",
-                uncertainties=[],
-                word_by_word=[],
-            )
+    if len(results) < len(sentences):
+        raise RuntimeError(
+            f"Missing results: got {len(results)} for {len(sentences)} sentences"
         )
 
     return results
@@ -620,13 +585,11 @@ def batch_translate_words(
                 if not isinstance(raw_word_translations, list):
                     raw_word_translations = []
 
-                # If we got no word translations, create fallback ones
+                # Require valid word translations - no fallbacks allowed
                 if not raw_word_translations:
-                    # Create basic fallback word translations
-                    for word in arabic_words:
-                        word_translations_options.append(
-                            _create_fallback_translation(word)
-                        )
+                    raise RuntimeError(
+                        f"No word translations returned for sentence {i}"
+                    )
                 else:
                     for word_data in raw_word_translations:
                         if not isinstance(word_data, dict):
