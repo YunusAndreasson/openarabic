@@ -358,7 +358,7 @@ def create_sentence_translation(
 
     validation_issues = validate_final_translation(sentence_translation)
     if validation_issues:
-        sentence_translation.verification_status = "Issues Found"
+        sentence_translation.verification_status = "needs_review"
         if sentence_translation.verification_issues:
             sentence_translation.verification_issues.extend(validation_issues)
         else:

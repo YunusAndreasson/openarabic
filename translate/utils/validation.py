@@ -294,7 +294,8 @@ def validate_final_translation(translation: SentenceTranslation) -> list[str]:
         "verified",
         "needs_review",
         "failed",
-        "Issues Found",
+        "pending",
+        "partial",
     ]:
         issues.append(f"Invalid verification status: {translation.verification_status}")
 
