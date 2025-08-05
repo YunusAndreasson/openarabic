@@ -13,9 +13,9 @@ from data.models import (
     RefinementResult,
     TashkeelResult,
     TranslationResult,
-    WordTranslationOptions,
+    Uncertainty,
+    WordTranslation,
     WordTranslationResult,
-    WordUncertainty,
 )
 from data.pipeline_types import (
     RefinementInput,
@@ -133,16 +133,16 @@ def _get_tashkeel_data(obj: Any) -> tuple[str, list[Any]]:
         return obj.get("tashkeel", ""), obj.get("uncertainties", [])
 
 
-def _validate_uncertainties(uncertainties: list[Any]) -> list[WordUncertainty]:
+def _validate_uncertainties(uncertainties: list[Any]) -> list[Uncertainty]:
     """Validate and convert uncertainties to proper format."""
     validated = []
     for item in uncertainties:
         if isinstance(item, dict) and "text" in item and "reason" in item:
-            validated.append(WordUncertainty(text=item["text"], reason=item["reason"]))
+            validated.append(Uncertainty(text=item["text"], reason=item["reason"]))
         elif isinstance(item, str):
             # Convert string to proper format
-            validated.append(WordUncertainty(text="unknown", reason=item))
-        elif isinstance(item, WordUncertainty):
+            validated.append(Uncertainty(text="unknown", reason=item))
+        elif isinstance(item, Uncertainty):
             validated.append(item)
         else:
             # Skip invalid items
@@ -518,12 +518,12 @@ def batch_translate_words(
                         if not isinstance(word_data, dict):
                             continue
                         validated_data = _validate_word_data(word_data)
-                        word_option = WordTranslationOptions(
+                        word_option = WordTranslation(
                             arabic=validated_data["arabic"],
-                            english_options=validated_data["english_options"],
+                            english=validated_data["english_options"],
                             pos=validated_data["pos"],
                             essential=validated_data["essential"],
-                            essential_translation_options=validated_data[
+                            essential_translation=validated_data[
                                 "essential_translation_options"
                             ],
                             notes=validated_data["notes"],
@@ -578,12 +578,22 @@ def batch_refine_translations(
 
             word_trans_formatted = []
             for word_opts in word_translations_options:
-                # Handle both WordTranslationOptions objects and dictionaries
+                # Handle both WordTranslation objects and dictionaries
                 if hasattr(word_opts, "arabic"):
                     arabic = word_opts.arabic
-                    english_options = word_opts.english_options
+                    english_options = (
+                        word_opts.english
+                        if isinstance(word_opts.english, list)
+                        else [word_opts.english]
+                    )
                     essential_translation_options = (
-                        word_opts.essential_translation_options
+                        (
+                            word_opts.essential_translation
+                            if isinstance(word_opts.essential_translation, list)
+                            else [word_opts.essential_translation]
+                        )
+                        if word_opts.essential_translation
+                        else ["N/A"]
                     )
                     essential = word_opts.essential
                     pos = word_opts.pos
@@ -754,17 +764,15 @@ def batch_translate_root_words_with_google_cloud(
         try:
             root_word_translation = service.translate_root_word_with_retry(root_word)
 
-            # Convert to WordTranslationOptions format
+            # Convert to WordTranslation format
             word_option = cast(
-                "WordTranslationOptions",
+                "WordTranslation",
                 {
                     "arabic": root_word,
-                    "english_options": [root_word_translation["translated_text"]],
+                    "english": [root_word_translation["translated_text"]],
                     "pos": root_word_translation.get("pos", "noun"),
                     "essential": root_word,
-                    "essential_translation_options": [
-                        root_word_translation["translated_text"]
-                    ],
+                    "essential_translation": [root_word_translation["translated_text"]],
                     "notes": root_word_translation.get("notes"),
                     "uncertainties": root_word_translation.get("uncertainties", []),
                 },

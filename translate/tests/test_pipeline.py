@@ -39,7 +39,7 @@ class TestSplitFile:
                             "هذا نص تجريبي.",
                             "لاختبار الترجمة.",
                         ],
-                        "unit_types": ["sentence", "sentence", "sentence"],
+                        "unit_types": ["simple", "simple", "simple"],
                     },
                     "success": True,
                 }

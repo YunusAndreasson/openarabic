@@ -177,7 +177,9 @@ def create_sentence_translation(
     )
 
     # Get translation data - prefer refined version, require valid translation
-    refined_translation = refinement.improved_translation or translation_result.translation
+    refined_translation = (
+        refinement.improved_translation or translation_result.translation
+    )
     if not refined_translation:
         raise ValueError(f"Translation failed for sentence: {original_sentence}")
 
@@ -212,24 +214,31 @@ def create_sentence_translation(
 
         for word_opts in word_opts_list:
             # Get translation options - require valid data
-            if hasattr(word_opts, "english_options"):
-                english_options = word_opts.english_options
+            if hasattr(word_opts, "english"):
+                english = word_opts.english
             else:
-                english_options = word_opts.get("english_options", [])
+                english = word_opts.get("english", [])
 
-            if hasattr(word_opts, "essential_translation_options"):
-                essential_options = word_opts.essential_translation_options
+            if hasattr(word_opts, "essential_translation"):
+                essential_translation = word_opts.essential_translation
             else:
-                essential_options = word_opts.get("essential_translation_options", [])
+                essential_translation = word_opts.get("essential_translation", [])
 
             # Require valid translation options
-            if not english_options:
-                raise ValueError(f"Missing English translation options for word: {word_opts.get('arabic', 'unknown')}")
-            if not essential_options:
-                raise ValueError(f"Missing essential translation options for word: {word_opts.get('arabic', 'unknown')}")
+            if not english:
+                raise ValueError(
+                    f"Missing English translation options for word: {word_opts.get('arabic', 'unknown')}"
+                )
+            if not essential_translation:
+                raise ValueError(
+                    f"Missing essential translation options for word: {word_opts.get('arabic', 'unknown')}"
+                )
 
-            english = english_options[0]
-            essential_translation = essential_options[0]
+            # Handle both single values and lists
+            if isinstance(english, list):
+                english = english[0]
+            if isinstance(essential_translation, list):
+                essential_translation = essential_translation[0]
 
             # Get other fields from word_opts object or dictionary
             if hasattr(word_opts, "arabic"):

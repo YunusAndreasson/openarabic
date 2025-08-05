@@ -41,7 +41,7 @@ class TestGoogleTranslateIntegration:
 
         assert len(results) == 2
         assert results[0]["word_translations"][0]["arabic"] == "مرحبا"
-        assert results[0]["word_translations"][0]["english_options"] == ["Hello"]
+        assert results[0]["word_translations"][0]["english"] == ["Hello"]
 
     @patch("pipeline.translation_engine.GoogleTranslateService")
     def test_batch_translate_root_words_with_google_cloud_translation_error(
@@ -57,5 +57,8 @@ class TestGoogleTranslateIntegration:
         sentences = ["مرحبا"]
 
         # Expect the function to raise an exception instead of creating fallback data
-        with pytest.raises(Exception, match="Google Cloud translation failed for root word 'مرحبا': API Error"):
+        with pytest.raises(
+            Exception,
+            match="Google Cloud translation failed for root word 'مرحبا': API Error",
+        ):
             batch_translate_root_words_with_google_cloud(sentences)

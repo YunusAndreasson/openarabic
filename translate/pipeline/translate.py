@@ -31,9 +31,6 @@ logger = logging.getLogger(__name__)
 MAX_BATCH_SIZE = 12
 
 
-
-
-
 def create_batches(
     sentences: list[str],
     start_index: int,

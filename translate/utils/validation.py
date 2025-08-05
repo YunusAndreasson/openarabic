@@ -170,15 +170,13 @@ def validate_translation_results(
                 ):
                     for j, word in enumerate(word_trans):
                         arabic = word.get("arabic", "")
-                        english_options = word.get("english_options", [])
-                        essential_translation_options = word.get(
-                            "essential_translation_options", []
-                        )
+                        english = word.get("english", [])
+                        essential_translation = word.get("essential_translation", [])
                         if not arabic:
                             errors.append(
                                 f"Sentence {i}, Word {j}: Missing Arabic text",
                             )
-                        if not english_options:
+                        if not english:
                             errors.append(
                                 f"Sentence {i}, Word {j}: Missing English options",
                             )
@@ -186,7 +184,7 @@ def validate_translation_results(
                             errors.append(
                                 f"Sentence {i}, Word {j}: Missing essential letters",
                             )
-                        if not essential_translation_options:
+                        if not essential_translation:
                             errors.append(
                                 f"Sentence {i}, Word {j}: Missing essential translation options",
                             )

@@ -128,10 +128,10 @@ class TestValidation:
                 "word_translations": [
                     {
                         "arabic": "مرحبا",
-                        "english_options": ["hello", "hi"],
+                        "english": ["hello", "hi"],
                         "pos": "interjection",
                         "essential": "مرحبا",
-                        "essential_translation_options": ["hello", "hi"],
+                        "essential_translation": ["hello", "hi"],
                         "notes": "Greeting word",
                     }
                 ],
@@ -152,10 +152,10 @@ class TestValidation:
                 "word_translations": [
                     {
                         "arabic": "",
-                        "english_options": ["hello", "hi"],
+                        "english": ["hello", "hi"],
                         "pos": "interjection",
                         "essential": "مرحبا",
-                        "essential_translation_options": ["hello", "hi"],
+                        "essential_translation": ["hello", "hi"],
                         "notes": "Greeting word",
                     }
                 ],
@@ -176,10 +176,10 @@ class TestValidation:
                 "word_translations": [
                     {
                         "arabic": "مرحبا",
-                        "english_options": [],
+                        "english": [],
                         "pos": "interjection",
                         "essential": "مرحبا",
-                        "essential_translation_options": ["hello", "hi"],
+                        "essential_translation": ["hello", "hi"],
                         "notes": "Greeting word",
                     }
                 ],

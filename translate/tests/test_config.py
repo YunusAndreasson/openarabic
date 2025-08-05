@@ -12,7 +12,6 @@ from data.models import (
     SentenceTranslation,
     TextMetadata,
     WordTranslation,
-    WordTranslationOptions,
 )
 
 
@@ -80,15 +79,15 @@ class TestModels:
         assert translation.index == 0
 
     def test_word_translation_options(self):
-        """Test WordTranslationOptions model creation."""
-        options = WordTranslationOptions(
+        """Test WordTranslation model creation with options."""
+        options = WordTranslation(
             arabic="مرحبا",
-            english_options=["hello", "hi", "greetings"],
+            english=["hello", "hi", "greetings"],
             essential="مرحب",
-            essential_translation_options=["hello", "hi"],
+            essential_translation=["hello", "hi"],
             pos=PartOfSpeech.INTERJECTION.value,
             notes="Common greeting",
         )
         assert options.arabic == "مرحبا"
-        assert len(options.english_options) == 3
+        assert len(options.english) == 3
         assert options.pos == PartOfSpeech.INTERJECTION.value

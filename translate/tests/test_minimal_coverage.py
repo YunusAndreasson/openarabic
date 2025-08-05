@@ -546,10 +546,10 @@ class TestTranslationProcessor:
                     word_translations=[
                         {
                             "arabic": "مرحبا",
-                            "english_options": ["hello"],
+                            "english": ["hello"],
                             "pos": "interjection",
                             "essential": "hello",
-                            "essential_translation_options": ["hello"],
+                            "essential_translation": ["hello"],
                             "notes": "greeting",
                             "uncertainties": [],
                         }
