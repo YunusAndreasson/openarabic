@@ -260,6 +260,7 @@ def create_sentence_translation(
                     essential=essential,
                     essential_translation=essential_translation,
                     notes=notes or "",
+                    uncertainties=[],
                 ),
             )
 

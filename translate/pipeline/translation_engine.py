@@ -138,10 +138,36 @@ def _validate_uncertainties(uncertainties: list[Any]) -> list[Uncertainty]:
     validated = []
     for item in uncertainties:
         if isinstance(item, dict) and "text" in item and "reason" in item:
-            validated.append(Uncertainty(text=item["text"], reason=item["reason"]))
+            validated.append(
+                Uncertainty(
+                    text=item["text"],
+                    reason=item["reason"],
+                    word="unknown",
+                    type="unknown",
+                    step="unknown",
+                    resolution="unknown",
+                    explanation="unknown",
+                    related_translation_uncertainty="unknown",
+                    original_uncertainty="unknown",
+                    reason_unresolved="unknown",
+                )
+            )
         elif isinstance(item, str):
             # Convert string to proper format
-            validated.append(Uncertainty(text="unknown", reason=item))
+            validated.append(
+                Uncertainty(
+                    text="unknown",
+                    reason=item,
+                    word="unknown",
+                    type="unknown",
+                    step="unknown",
+                    resolution="unknown",
+                    explanation="unknown",
+                    related_translation_uncertainty="unknown",
+                    original_uncertainty="unknown",
+                    reason_unresolved="unknown",
+                )
+            )
         elif isinstance(item, Uncertainty):
             validated.append(item)
         else:

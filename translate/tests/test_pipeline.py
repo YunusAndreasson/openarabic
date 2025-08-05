@@ -111,6 +111,7 @@ class TestTranslateFile:
                 "هذا نص تجريبي.",
             ],
             "total_units": 2,
+            "unit_types": "unknown",
         }
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
@@ -136,10 +137,13 @@ class TestTranslateFile:
                             essential="مرحب",
                             essential_translation="hello",
                             notes="Greeting word",
+                            uncertainties=[],
                         )
                     ],
                     full_translation="Hello world.",
                     notes="Test translation",
+                    verification_status="unknown",
+                    verification_issues="unknown",
                 )
 
                 mock_api.return_value = [mock_translation]

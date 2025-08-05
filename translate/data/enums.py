@@ -18,6 +18,9 @@ class PartOfSpeech(str, Enum):
     INTERJECTION = "interjection"
     PARTICLE = "particle"
     NUMERAL = "numeral"
+    PROPER_NOUN = "proper_noun"
+    DEMONSTRATIVE_PRONOUN = "demonstrative_pronoun"
+    RELATIVE_PRONOUN = "relative_pronoun"
 
 
 class DifficultyLevel(int, Enum):

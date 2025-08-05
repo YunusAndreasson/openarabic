@@ -467,7 +467,17 @@ class TestTranslationProcessor:
                     translation="Hello world",
                     notes="Test notes",
                     uncertainties=[],
-                    word_by_word=[],
+                    word_by_word=[
+                        {
+                            "arabic": "مرحبا",
+                            "english": "hello",
+                            "pos": "interjection",
+                            "essential": "مرحبا",
+                            "essential_translation": "hello",
+                            "notes": "greeting",
+                            "uncertainties": [],
+                        }
+                    ],
                 )
             ]
             mock_get.return_value = (
@@ -518,6 +528,7 @@ class TestTranslationProcessor:
                             "essential": "مرحبا",
                             "essential_translation": "hello",
                             "notes": "greeting",
+                            "uncertainties": [],
                         }
                     ],
                 )
@@ -546,10 +557,10 @@ class TestTranslationProcessor:
                     word_translations=[
                         {
                             "arabic": "مرحبا",
-                            "english": ["hello"],
+                            "english": "hello",
                             "pos": "interjection",
-                            "essential": "hello",
-                            "essential_translation": ["hello"],
+                            "essential": "مرحبا",
+                            "essential_translation": "hello",
                             "notes": "greeting",
                             "uncertainties": [],
                         }
@@ -575,6 +586,7 @@ class TestTranslationProcessor:
                             "essential": "مرحبا",
                             "essential_translation": "hello",
                             "notes": "greeting",
+                            "uncertainties": [],
                         }
                     ],
                 )

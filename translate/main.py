@@ -8,6 +8,16 @@ from pathlib import Path
 # Add current directory to path for testing
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+# Load API keys at startup
+try:
+    from utils import set_keys
+
+    logging.getLogger(__name__).info("API keys loaded from set_keys.py")
+except ImportError:
+    logging.getLogger(__name__).warning(
+        "set_keys.py not found, using environment variables"
+    )
+
 from data.config import (
     AUTHOR_FOLDER_MAPPING,
     AUTHOR_NUMBER_MAPPING,

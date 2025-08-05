@@ -1,5 +1,4 @@
 import re
-import unicodedata
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
@@ -213,7 +212,7 @@ class TextMetadata(BaseModel):
     title: str = Field(description="Concise English title (3-7 words)")
     summary: str = Field(description="One-sentence summary of main content")
     difficulty_level: DifficultyLevel = Field(description="Difficulty rating (1-5)")
-    total_units: int = Field(description="Total number of units", ge=1)
+    total_units: int = Field(description="Total number of units", ge=0)
 
 
 class SplitResult(TextMetadata):

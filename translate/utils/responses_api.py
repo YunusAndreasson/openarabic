@@ -24,27 +24,29 @@ def load_api_keys() -> None:
     if _keys_loaded:
         return
 
-    # Check if environment variables are already set
-    if os.getenv("OPENAI_API_KEY"):
-        _keys_loaded = True
-        return
-
+    # Always try to load from set_keys.py first
     set_keys_path = os.path.join(os.path.dirname(__file__), "set_keys.py")
-    if not os.path.exists(set_keys_path):
+    if os.path.exists(set_keys_path):
+        try:
+            # Safely load the configuration file
+            import importlib.util
+
+            spec = importlib.util.spec_from_file_location("set_keys", set_keys_path)
+            if spec and spec.loader:
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                logger.info("API keys loaded from set_keys.py")
+        except Exception as e:
+            logger.warning(f"Failed to load API keys from set_keys.py: {e}")
+    else:
         logger.warning(f"API keys file not found: {set_keys_path}")
 
-        raise FileNotFoundError(
-            f"API keys file not found: {set_keys_path}. "
-            "Please set OPENAI_API_KEY environment variable or create set_keys.py"
+    # Verify that required API keys are set
+    if not os.getenv("OPENAI_API_KEY"):
+        raise ValueError(
+            "OPENAI_API_KEY environment variable is not set. "
+            "Please set it in set_keys.py or as an environment variable."
         )
-
-    # Safely load the configuration file
-    import importlib.util
-
-    spec = importlib.util.spec_from_file_location("set_keys", set_keys_path)
-    if spec and spec.loader:
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
 
     _keys_loaded = True
 

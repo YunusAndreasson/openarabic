@@ -41,6 +41,7 @@ def parse_split_response(response: dict[str, Any]) -> SplitResult:
             summary=response["error"],
             difficulty_level=DifficultyLevel.BASIC.value,
             total_units=0,
+            unit_types="unknown",
         )
 
     # Extract data from new Response API format
@@ -57,7 +58,7 @@ def parse_split_response(response: dict[str, Any]) -> SplitResult:
         summary=data["summary"],
         difficulty_level=data["difficulty_level"],
         total_units=len(data["units"]),
-        unit_types=data.get("unit_types"),
+        unit_types=data.get("unit_types", "unknown"),
     )
 
 
@@ -70,6 +71,7 @@ def split_text_into_sentences(text: str) -> SplitResult:
             summary="No content",
             difficulty_level=DifficultyLevel.BASIC.value,
             total_units=0,
+            unit_types="unknown",
         )
 
     messages = build_split_messages(text)

@@ -70,8 +70,11 @@ class TestModels:
                     essential="مرحب",
                     essential_translation="hello",
                     notes="Greeting word",
+                    uncertainties=[],
                 )
             ],
+            verification_status="pending",
+            verification_issues="unknown",
         )
         assert translation.original == "مرحبا بالعالم"
         assert translation.full_translation == "Hello world"
@@ -87,6 +90,7 @@ class TestModels:
             essential_translation=["hello", "hi"],
             pos=PartOfSpeech.INTERJECTION.value,
             notes="Common greeting",
+            uncertainties=[],
         )
         assert options.arabic == "مرحبا"
         assert len(options.english) == 3
