@@ -2,6 +2,8 @@
 
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from pipeline.translation_engine import batch_translate_root_words_with_google_cloud
 from utils.exceptions import TranslationError
 
@@ -54,9 +56,6 @@ class TestGoogleTranslateIntegration:
 
         sentences = ["مرحبا"]
 
-        results = batch_translate_root_words_with_google_cloud(sentences)
-
-        assert len(results) == 1
-        assert results[0]["word_translations"][0]["english_options"] == [
-            "[Translation Error]"
-        ]
+        # Expect the function to raise an exception instead of creating fallback data
+        with pytest.raises(Exception, match="Google Cloud translation failed for root word 'مرحبا': API Error"):
+            batch_translate_root_words_with_google_cloud(sentences)

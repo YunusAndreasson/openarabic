@@ -171,17 +171,15 @@ def create_sentence_translation(
     tashkeel_result: TashkeelResult,
     word_options_result: WordTranslationResult,
 ) -> SentenceTranslation:
-    # Get tashkeel data - prefer refined version, fallback to original
+    # Get tashkeel data - prefer refined version, use original if not available
     refined_tashkeel = (
         refinement.improved_tashkeel or tashkeel_result.tashkeel or original_sentence
     )
 
-    # Get translation data - prefer refined version, fallback to original
-    refined_translation = (
-        refinement.improved_translation
-        or translation_result.translation
-        or "[Translation failed]"
-    )
+    # Get translation data - prefer refined version, require valid translation
+    refined_translation = refinement.improved_translation or translation_result.translation
+    if not refined_translation:
+        raise ValueError(f"Translation failed for sentence: {original_sentence}")
 
     # Handle refined word translations
     if hasattr(refinement, "improved_word_translations"):
@@ -213,26 +211,25 @@ def create_sentence_translation(
             word_opts_list = word_options_result.get("word_translations", [])
 
         for word_opts in word_opts_list:
-            # Handle fallback cases where english_options might be empty or contain error messages
+            # Get translation options - require valid data
             if hasattr(word_opts, "english_options"):
                 english_options = word_opts.english_options
             else:
-                english_options = word_opts.get(
-                    "english_options", ["[Translation failed]"]
-                )
+                english_options = word_opts.get("english_options", [])
 
             if hasattr(word_opts, "essential_translation_options"):
                 essential_options = word_opts.essential_translation_options
             else:
-                essential_options = word_opts.get(
-                    "essential_translation_options", ["[Translation failed]"]
-                )
+                essential_options = word_opts.get("essential_translation_options", [])
 
-            # Use first option or fallback text
-            english = english_options[0] if english_options else "[Translation failed]"
-            essential_translation = (
-                essential_options[0] if essential_options else "[Translation failed]"
-            )
+            # Require valid translation options
+            if not english_options:
+                raise ValueError(f"Missing English translation options for word: {word_opts.get('arabic', 'unknown')}")
+            if not essential_options:
+                raise ValueError(f"Missing essential translation options for word: {word_opts.get('arabic', 'unknown')}")
+
+            english = english_options[0]
+            essential_translation = essential_options[0]
 
             # Get other fields from word_opts object or dictionary
             if hasattr(word_opts, "arabic"):
@@ -253,20 +250,13 @@ def create_sentence_translation(
                     pos=pos,
                     essential=essential,
                     essential_translation=essential_translation,
-                    notes=(notes or "") + " (Refinement fallback)",
+                    notes=notes or "",
                 ),
             )
 
-    # If refined_translation is still empty, create a fallback translation from word translations
+    # Require valid translation - no fallbacks allowed
     if not refined_translation.strip():
-        word_translations = []
-        for word_trans in final_word_translations:
-            if hasattr(word_trans, "english") and word_trans.english:
-                word_translations.append(word_trans.english)
-        if word_translations:
-            refined_translation = " ".join(word_translations)
-        else:
-            refined_translation = "[Translation failed]"
+        raise ValueError(f"Translation is empty for sentence: {original_sentence}")
 
     # Get notes from translation result
     notes = []

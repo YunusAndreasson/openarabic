@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 import argparse
-import json
 import logging
 import os
-import subprocess
 import sys
 from pathlib import Path
 
@@ -29,6 +27,8 @@ from utils.progress_tracker import (
     suppress_verbose_logging,
 )
 from utils.responses_api import load_api_keys, token_tracker
+from utils.review_helpers import review_file_with_preview
+from utils.subprocess_utils import run_pipeline_step
 
 logging.basicConfig(
     level=logging.INFO,
@@ -94,51 +94,13 @@ def review_split_file(
     split_file: str, author_name: str, force_yes: bool = False
 ) -> bool:
     """Review the split file and ask user if they want to continue."""
-    if not os.path.exists(split_file):
-        logger.error(f"❌ Split file not found: {split_file}")
-        return False
-
-    try:
-        with open(split_file, encoding="utf-8") as f:
-            data = json.load(f)
-
-        units = data.get("units", [])
-        metadata = {
-            "title": data.get("title", "Unknown"),
-            "summary": data.get("summary", "No summary"),
-            "difficulty_level": data.get("difficulty_level", "Unknown"),
-            "total_units": len(units),
-        }
-
-        logger.info("\n📋 Split Review:")
-        logger.info(f"Author: {author_name}")
-        logger.info(f"Title: {metadata['title']}")
-        logger.info(f"Summary: {metadata['summary']}")
-        logger.info(f"Difficulty Level: {metadata['difficulty_level']}")
-        logger.info(f"Total Sentences: {metadata['total_units']}")
-
-        if units:
-            logger.info("\n📝 Preview of first 3 sentences:")
-            for i, unit in enumerate(units[:3]):
-                # Handle both string and dict formats
-                if isinstance(unit, dict):
-                    sentence = unit.get("text", "")
-                else:
-                    sentence = str(unit)
-
-                sentence = sentence[:80] + "..." if len(sentence) > 80 else sentence
-                logger.info(f"  {i + 1}. {sentence}")
-
-        logger.info(f"📁 Split file saved to: {split_file}")
-
-        return confirm_step(
-            "Review complete. Would you like to proceed with translation?",
-            force_yes,
-        )
-
-    except Exception as e:
-        logger.error(f"❌ Error reading split file: {str(e)}")
-        return False
+    return review_file_with_preview(
+        file_path=split_file,
+        author_name=author_name,
+        file_type="Split",
+        force_yes=force_yes,
+        confirm_prompt="Review complete. Would you like to proceed with translation?",
+    )
 
 
 def run_translation(input_file: str, output_file: str, batch_size: int) -> None:
@@ -154,50 +116,13 @@ def review_translation(
     output_file: str, author_name: str, force_yes: bool = False
 ) -> bool:
     """Review the translation output and ask user if they want to continue."""
-    if not os.path.exists(output_file):
-        logger.error(f"❌ Translation output file not found: {output_file}")
-        return False
-
-    try:
-        with open(output_file, encoding="utf-8") as f:
-            data = json.load(f)
-
-        metadata = data.get("metadata", {})
-        translations = data.get("translations", [])
-
-        logger.info("\n📋 Translation Review:")
-        logger.info(f"Author: {author_name}")
-        logger.info(f"Title: {metadata.get('title', 'Unknown')}")
-        logger.info(f"Summary: {metadata.get('summary', 'No summary')}")
-        logger.info(f"Difficulty Level: {metadata.get('difficulty_level', 'Unknown')}")
-        logger.info(f"Total Sentences: {len(translations)}")
-
-        if translations:
-            logger.info("\n📝 Preview of first 3 translations:")
-            for i, translation in enumerate(translations[:3]):
-                original = (
-                    translation.get("original", "")[:50] + "..."
-                    if len(translation.get("original", "")) > 50
-                    else translation.get("original", "")
-                )
-                english = (
-                    translation.get("full_translation", "")[:50] + "..."
-                    if len(translation.get("full_translation", "")) > 50
-                    else translation.get("full_translation", "")
-                )
-                logger.info(f"  {i + 1}. Original: {original}")
-                logger.info(f"     English: {english}")
-
-        logger.info(f"📁 Full translation saved to: {output_file}")
-
-        return confirm_step(
-            "Review complete. Would you like to proceed with database insertion?",
-            force_yes,
-        )
-
-    except Exception as e:
-        logger.error(f"❌ Error reading translation file: {str(e)}")
-        return False
+    return review_file_with_preview(
+        file_path=output_file,
+        author_name=author_name,
+        file_type="Translation",
+        force_yes=force_yes,
+        confirm_prompt="Review complete. Would you like to proceed with database insertion?",
+    )
 
 
 def run_insert_only() -> None:
@@ -208,40 +133,12 @@ def run_insert_only() -> None:
 
     load_api_keys()
 
-    # Get current environment and add our variables
-    env = os.environ.copy()
-
-    result = subprocess.run(
-        [
-            sys.executable,
-            "pipeline/insert.py",
-        ],
-        capture_output=True,
-        text=True,
+    # Run the insertion step using the subprocess utility
+    run_pipeline_step(
+        script_path="pipeline/insert.py",
+        description="database insertion",
         cwd=os.path.dirname(os.path.abspath(__file__)),
-        env=env,
     )
-    if result.returncode != 0:
-        logger.error("❌ insert.py failed.")
-        if result.stdout:
-            logger.error(f"stdout: {result.stdout}")
-        if result.stderr:
-            logger.error(f"stderr: {result.stderr}")
-        raise RuntimeError("insert.py failed.")
-
-
-def confirm_step(prompt: str, force_yes: bool = False) -> bool:
-    """Get user confirmation for a step"""
-    if force_yes:
-        return True
-
-    while True:
-        response = input(f"{prompt} (y/n): ").lower().strip()
-        if response in ["y", "yes"]:
-            return True
-        elif response in ["n", "no"]:
-            return False
-        logger.error("Please answer 'y' or 'n'.")
 
 
 def main() -> None:
@@ -434,7 +331,6 @@ Examples:
 __all__ = [
     "run_split_file",
     "run_translation",
-    "confirm_step",
     "review_split_file",
     "review_translation",
     "find_input_files_in_inbox",

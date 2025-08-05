@@ -14,22 +14,22 @@ class WordUncertainty(BaseModel):
 class WordByWordItem(BaseModel):
     """Individual word-by-word analysis item"""
 
-    arabic: str = Field(description="Arabic word (word_form in database)")
-    english: str = Field(description="English translation (english in database)")
-    pos: str = Field(description="Part of speech (word_type_id in database)")
+    arabic: str = Field(description="Original Arabic word - preserve exact formatting")
+    english: str = Field(description="English translation")
+    pos: str = Field(description="Part of speech")
     essential: str = Field(
-        description="Essential letters for root generation (letters in roots table)"
+        description="Essential letters with prefix and sufis stripped"
     )
     essential_translation: str = Field(
-        description="Root meaning (meaning in roots table)"
+        description="Litteral translation of the essential word"
     )
-    notes: str = Field(description="Grammar notes (grammar_note in database)")
+    notes: str = Field(description="Grammar notes")
 
 
 class WordTranslation(BaseModel):
     """Word-level translation with grammatical details"""
 
-    arabic: str
+    arabic: str = Field(description="Original Arabic word - preserve exact formatting")
     english: str = Field(description="Final chosen English translation")
     pos: str | None = Field(default=None, description="Part of speech")
     essential: str | None = Field(

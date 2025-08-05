@@ -10,12 +10,12 @@ from unittest.mock import patch
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import (
-    confirm_step,
     review_split_file,
     review_translation,
     run_split_file,
     run_translation,
 )
+from utils.review_helpers import confirm_step
 
 
 class TestMainWorkflow:

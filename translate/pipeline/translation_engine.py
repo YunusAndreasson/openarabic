@@ -29,7 +29,6 @@ from data.schemas import (
     FINAL_VERIFICATION_USER_PROMPT,
     GENERAL_SYSTEM_PROMPT,
     SENTENCE_TRANSLATION_USER_PROMPT,
-    WORD_BY_WORD_USER_PROMPT,
 )
 from utils.camel_tools_service import (
     format_tashkeel_suggestions,
@@ -360,38 +359,6 @@ def batch_add_tashkeel(
             f"{f'\n{camel_suggestions_str}' if camel_suggestions_str else ''}"
         )
 
-    # Modified prompt to emphasize using camel_tools suggestions as starting point
-    modified_prompt = """IMPORTANT: Use the provided camel-tools tashkeel suggestions as a STARTING POINT, but improve them using context and translation.
-
-The camel-tools suggestions are based on morphological analysis but may not consider sentence context. Your role is to:
-1. Start with the camel-tools suggestions as a foundation
-2. Use the translation context and surrounding sentences to improve accuracy
-3. Override camel-tools suggestions when context indicates different diacritics
-4. Add any missing diacritics that camel-tools didn't cover
-5. Ensure complete vocalization of all words with context-appropriate diacritics
-
-Add complete diacritical marks (tashkīl) to EVERY word in the Islamic Arabic text. Return your response as valid JSON matching the TashkeelResult structure.
-
-CRITICAL: You MUST provide ALL required fields. The `uncertainties` array must be present for every tashkeel result, even if empty.
-
-For each input text segment, provide:
-1. `tashkeel` (string):
-   - Start with the camel-tools enhanced version provided
-   - Add ALL necessary marks: fatḥa (َ), kasra (ِ), ḍamma (ُ), sukūn (ْ), shadda (ّ), and tanwīn (ً ٍ ٌ).
-   - Ensure EVERY eligible letter has appropriate diacritics (full vocalization).
-   - Use translation context and provided grammatical notes to resolve vowelization ambiguities.
-   - Pay special attention to case endings based on grammatical roles noted.
-   - Consider verb forms, tenses, and moods indicated in the notes.
-   - Ensure grammatical accuracy (case endings, conjugations).
-   - Preserve ALL original punctuation, formatting, and special characters.
-2. `uncertainties` (array of objects, optional):
-   - List specific words where diacritics are uncertain.
-   - Each object should have `word` (the word), `reason` (why it's uncertain), and optionally `related_translation_uncertainty`.
-   - Provide the primary interpretation based on context even if uncertain.
-
-Input texts:
-"""
-
     # Use conversation continuity if available
     if conversation_manager and conversation_manager.current_response_id:
         # Reference specific sentences from uploaded document with context emphasis
@@ -402,14 +369,6 @@ Input texts:
         )
     else:
         # Use standard implementation when no conversation manager
-        messages = [
-            {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
-            {
-                "role": "user",
-                "content": modified_prompt + "\n\n" + "\n\n".join(formatted_inputs),
-            },
-        ]
-
         try:
             # Process each sentence individually to get proper tashkeel results
             results: TashkeelResults = []
@@ -458,7 +417,7 @@ Return as JSON:"""
                 _handle_arabic_processing_error(sentence, "tashkeel generation", e)
 
             # Fail the pipeline instead of returning fallback results
-            raise RuntimeError(f"Tashkeel generation failed: {e}")
+            raise RuntimeError(f"Tashkeel generation failed: {e}") from e
 
     # Return the results
     return results
@@ -494,7 +453,6 @@ def batch_translate_words(
 
                 arabic_words = filter_arabic_words(tashkeel)
 
-                semantic_context = ""
                 if all_sentences and indices and i < len(indices):
                     orig_index = indices[i]
                     key_terms = set()
@@ -507,32 +465,7 @@ def batch_translate_words(
                             for word in important_words:
                                 if word in all_sentences[j]:
                                     key_terms.add(word)
-                    if key_terms:
-                        semantic_context = (
-                            f"\nRelated terms in context: {', '.join(key_terms)}"
-                        )
 
-                tashkeel_notes = ""
-                if tashkeel_uncertainties:
-                    tashkeel_notes = "\nTashkeel uncertainties:\n" + "\n".join(
-                        f"- {getattr(u, 'word', str(u))}: {getattr(u, 'reason', str(u))}"
-                        for u in tashkeel_uncertainties
-                    )
-
-                translation_notes = ""
-                if translation_uncertainties:
-                    translation_notes = "\nTranslation uncertainties:\n" + "\n".join(
-                        f"- {getattr(u, 'text', str(u))}: {getattr(u, 'reason', str(u))}"
-                        for u in translation_uncertainties
-                    )
-                formatted_input = _build_word_prompt(
-                    tashkeel,
-                    translation,
-                    arabic_words,
-                    semantic_context,
-                    tashkeel_notes,
-                    translation_notes,
-                )
                 # Use conversation continuity if available
                 if conversation_manager and conversation_manager.current_response_id:
                     # Reference specific sentences from uploaded document
@@ -542,19 +475,9 @@ def batch_translate_words(
                     )
                 else:
                     # Use standard implementation when no conversation manager
-                    messages = [
-                        {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
-                        {
-                            "role": "user",
-                            "content": WORD_BY_WORD_USER_PROMPT
-                            + "\n\n"
-                            + formatted_input,
-                        },
-                    ]
-                    response = call_response_api(
-                        messages,
-                        response_model=WordTranslationResult,
-                        model=MODEL_TRANSLATION,
+                    # TODO: Implement standard word translation when no conversation manager
+                    raise NotImplementedError(
+                        "Standard word translation not implemented"
                     )
 
                 # Handle Response API format - data is returned in the "data" field
@@ -610,7 +533,7 @@ def batch_translate_words(
                         )
                         word_translations_options.append(word_option)
 
-                # Always ensure we have some result, even if it's fallback
+                # Require valid word translations - no fallbacks allowed
                 if word_translations_options:
                     processed_results[i] = {
                         "word_translations": word_translations_options,
@@ -848,22 +771,10 @@ def batch_translate_root_words_with_google_cloud(
             )
             results.append({"word_translations": [word_option]})
         except Exception as e:
-            # Add fallback result
-            word_option = cast(
-                "WordTranslationOptions",
-                {
-                    "arabic": root_word,
-                    "english_options": ["[Translation Error]"],
-                    "pos": "noun",
-                    "essential": root_word,
-                    "essential_translation_options": ["[Translation Error]"],
-                    "notes": f"Google Cloud translation failed: {e}",
-                    "uncertainties": [
-                        {"text": root_word, "reason": f"Translation error: {e}"}
-                    ],
-                },
-            )
-            results.append({"word_translations": [word_option]})
+            # CRITICAL: Fail completely instead of creating fallback data
+            raise Exception(
+                f"Google Cloud translation failed for root word '{root_word}': {e}"
+            ) from e
 
     return results
 

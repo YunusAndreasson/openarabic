@@ -1,11 +1,8 @@
 """Translation pipeline for processing Arabic text files."""
 
 import concurrent.futures
-import json
 import logging
 from typing import Any
-
-from tqdm import tqdm
 
 from data.models import (
     SentenceTranslation,
@@ -17,9 +14,10 @@ from data.pipeline_types import (
     TranslationBatch,
 )
 from utils.context_cache import ContextCache
-from utils.file_utils import write_json_file
+from utils.error_handling import safe_file_operation
+from utils.file_utils import read_json_file, write_json_file
+from utils.progress_tracker import progress_tracker
 from utils.responses_api import ResponsesAPIManager
-from utils.text_utils import filter_arabic_words
 from utils.translation_processor import (
     apply_tashkeel,
     refine_translations,
@@ -33,25 +31,7 @@ logger = logging.getLogger(__name__)
 MAX_BATCH_SIZE = 12
 
 
-def create_fallback_word_translations(sentence: str) -> dict[str, Any]:
-    """Create fallback word translations for a sentence when translation fails."""
-    arabic_words = filter_arabic_words(sentence)
-    fallback_word_translations = []
-    for word in arabic_words:
-        fallback_word_translations.append(
-            {
-                "arabic": word,
-                "english_options": [f"[{word}]"],
-                "pos": "unknown",
-                "essential": word,
-                "essential_translation_options": [f"[{word}]"],
-                "notes": "Fallback due to word translation failure",
-                "uncertainties": [
-                    {"text": word, "reason": "Word translation step failed"}
-                ],
-            }
-        )
-    return {"word_translations": fallback_word_translations}
+
 
 
 def create_batches(
@@ -92,15 +72,18 @@ def create_batches(
 
 def load_split_data(input_file: str) -> SplitResult | None:
     """Load split data from JSON file."""
-    try:
-        with open(input_file, encoding="utf-8") as f:
-            data = json.load(f)
+    data = safe_file_operation(
+        lambda: read_json_file(input_file),
+        input_file,
+        "reading",
+        fallback_value=None,
+    )
 
-        # Instantiate SplitResult from loaded data
-        return SplitResult(**data)
-    except Exception as e:
-        logger.error(f"Error loading split data: {e}")
+    if data is None:
         return None
+
+    # Instantiate SplitResult from loaded data
+    return SplitResult(**data)
 
 
 def create_metadata(split_data: SplitResult) -> TextMetadata:
@@ -131,52 +114,35 @@ def process_batch(
         batch_indices = list(range(start_index, start_index + len(batch_sentences)))
 
     try:
-        # Use regular translation pipeline with Response API
-        translations = run_full_translation(
+        # Step 1: Run full translation
+        translations = _run_translation_step(
             batch_sentences, batch_contexts, conversation_manager
         )
 
-        # Add error handling for tashkeel step
-        try:
-            tashkeel = apply_tashkeel(
-                batch_sentences,
-                translations,
-                all_sentences,
-                batch_indices,
-                context_cache,
-                conversation_manager,
-            )
-        except Exception as e:
-            logger.error(
-                f"Tashkeel step failed for batch starting at {start_index}: {e}"
-            )
-            # Create fallback tashkeel results
-            tashkeel = [
-                {"tashkeel": sentence, "uncertainties": []}
-                for sentence in batch_sentences
-            ]
+        # Step 2: Apply tashkeel
+        tashkeel = _run_tashkeel_step(
+            batch_sentences,
+            translations,
+            all_sentences,
+            batch_indices,
+            context_cache,
+            conversation_manager,
+            start_index,
+        )
 
-        # Add error handling for word translation step
-        try:
-            word_options = translate_words(
-                batch_sentences,
-                tashkeel,
-                translations,
-                all_sentences,
-                batch_indices,
-                context_cache,
-                conversation_manager,
-            )
-        except Exception as e:
-            logger.error(
-                f"Word translation step failed for batch starting at {start_index}: {e}"
-            )
-            # Create fallback word options
-            word_options = [
-                create_fallback_word_translations(sentence)
-                for sentence in batch_sentences
-            ]
+        # Step 3: Translate words
+        word_options = _run_word_translation_step(
+            batch_sentences,
+            tashkeel,
+            translations,
+            all_sentences,
+            batch_indices,
+            context_cache,
+            conversation_manager,
+            start_index,
+        )
 
+        # Step 4: Refine translations
         return refine_translations(
             batch_sentences,
             start_index,
@@ -194,6 +160,57 @@ def process_batch(
             f"Batch processing failed after all retries for batch starting at {start_index}. "
             f"Placeholder data creation is not allowed. Error: {str(e)}"
         ) from e
+
+
+def _run_translation_step(
+    batch_sentences: list[str],
+    batch_contexts: list[str | None],
+    conversation_manager: ResponsesAPIManager | None,
+) -> list[Any]:
+    """Run the full translation step for a batch."""
+    return run_full_translation(batch_sentences, batch_contexts, conversation_manager)
+
+
+def _run_tashkeel_step(
+    batch_sentences: list[str],
+    translations: list[Any],
+    all_sentences: list[str] | None,
+    batch_indices: list[int],
+    context_cache: Any,
+    conversation_manager: ResponsesAPIManager | None,
+    start_index: int,
+) -> list[dict[str, Any]]:
+    """Run the tashkeel step for a batch."""
+    return apply_tashkeel(
+        batch_sentences,
+        translations,
+        all_sentences,
+        batch_indices,
+        context_cache,
+        conversation_manager,
+    )
+
+
+def _run_word_translation_step(
+    batch_sentences: list[str],
+    tashkeel: list[dict[str, Any]],
+    translations: list[Any],
+    all_sentences: list[str] | None,
+    batch_indices: list[int],
+    context_cache: Any,
+    conversation_manager: ResponsesAPIManager | None,
+    start_index: int,
+) -> list[dict[str, Any]]:
+    """Run the word translation step for a batch."""
+    return translate_words(
+        batch_sentences,
+        tashkeel,
+        translations,
+        all_sentences,
+        batch_indices,
+        context_cache,
+        conversation_manager,
+    )
 
 
 def process_batches(
@@ -219,49 +236,46 @@ def process_batches(
     # Process batches in parallel for better performance
     max_workers = max(1, min(3, len(batches)))  # Ensure at least 1 worker, limit to 3
 
-    with tqdm(
-        total=len(all_units),
-        desc="Phase: Translate - Processing batches",
-        unit="sentences",
-        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]",
-        ncols=100,
-        colour="blue",
-    ) as pbar:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            # Submit all batch processing tasks
-            future_to_batch = {
-                executor.submit(
-                    process_batch,
-                    batch["sentences"],
-                    batch["start_index"],
-                    batch["contexts"],
-                    all_units,
-                    batch["indices"],
-                    context_cache,
-                    conversation_manager,
-                ): batch
-                for batch in batches
-            }
+    # Use the existing progress tracker instead of creating a new tqdm bar
+    progress_tracker.start_phase("Translate", len(all_units), "Processing batches")
 
-            # Collect results as they complete
-            for future in concurrent.futures.as_completed(future_to_batch):
-                batch = future_to_batch[future]
-                try:
-                    batch_results = future.result()
-                    results.extend(batch_results)
-                    pbar.update(len(batch["sentences"]))
-                except TranslationValidationError as e:
-                    error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed validation: {str(e)}"
-                    errors.append(error_msg)
-                    pbar.update(len(batch["sentences"]))
-                except (ValueError, TypeError, RuntimeError) as e:
-                    error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed: {str(e)}"
-                    errors.append(error_msg)
-                    pbar.update(len(batch["sentences"]))
-                except Exception as e:
-                    error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed with unexpected error: {str(e)}"
-                    errors.append(error_msg)
-                    pbar.update(len(batch["sentences"]))
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        # Submit all batch processing tasks
+        future_to_batch = {
+            executor.submit(
+                process_batch,
+                batch["sentences"],
+                batch["start_index"],
+                batch["contexts"],
+                all_units,
+                batch["indices"],
+                context_cache,
+                conversation_manager,
+            ): batch
+            for batch in batches
+        }
+
+        # Collect results as they complete
+        for future in concurrent.futures.as_completed(future_to_batch):
+            batch = future_to_batch[future]
+            try:
+                batch_results = future.result()
+                results.extend(batch_results)
+                progress_tracker.update(len(batch["sentences"]))
+            except TranslationValidationError as e:
+                error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed validation: {str(e)}"
+                errors.append(error_msg)
+                progress_tracker.update(len(batch["sentences"]))
+            except (ValueError, TypeError, RuntimeError) as e:
+                error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed: {str(e)}"
+                errors.append(error_msg)
+                progress_tracker.update(len(batch["sentences"]))
+            except Exception as e:
+                error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed with unexpected error: {str(e)}"
+                errors.append(error_msg)
+                progress_tracker.update(len(batch["sentences"]))
+
+    progress_tracker.finish_phase(success=True)
 
     return results, errors
 

@@ -15,7 +15,7 @@ MODEL_TRANSLATION = (
     "gpt-4o"  # Reliable Arabic translation with good structured output compliance
 )
 MODEL_OTHER = "gpt-4o"  # Solid Arabic tashkeel generation with schema enforcement
-MODEL_VERIFICATION = "gpt-4o-mini"  # Superior Arabic reasoning and verification - worth the cost for accuracy
+MODEL_VERIFICATION = "o4-mini"  # Superior Arabic reasoning and verification - worth the cost for accuracy
 
 # Batch processing defaults
 DEFAULT_BATCH_SIZE = 12
@@ -84,21 +84,8 @@ AUTHOR_FOLDER_MAPPING = {
     "15_al_imam_al_dhahabi": "al-Imam al-Dhahabi",
 }
 
-# Author number to name mapping for flat file structure
+# Derive author number mapping from folder mapping for single source of truth
 AUTHOR_NUMBER_MAPPING = {
-    "1": "al-Imam an-Nawawi",
-    "2": "Ibn al-Qayyim al-Jawziyyah",
-    "3": "Ibn Taymiyyah",
-    "4": "Ibn al-Jawzi",
-    "5": "Ibn Kathir",
-    "6": "al-Imam al-Bukhari",
-    "7": "al-Imam Muslim",
-    "8": "Ibn Hajar al-Asqalani",
-    "9": "al-Imam Malik",
-    "10": "al-Imam ash-Shafii",
-    "11": "al-Imam Ahmad ibn Hanbal",
-    "12": "al-Imam at-Tirmidhi",
-    "13": "al-Imam as-Suyuti",
-    "14": "at-Tabari",
-    "15": "al-Imam al-Dhahabi",
+    folder.split("_")[0]: author_name
+    for folder, author_name in AUTHOR_FOLDER_MAPPING.items()
 }
