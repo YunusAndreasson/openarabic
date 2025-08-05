@@ -2,39 +2,26 @@
 Enums for the translation system to provide type safety and consolidate constants.
 """
 
-from enum import Enum, IntEnum
+from enum import Enum
 
 
-class PartOfSpeech(Enum):
-    """Valid parts of speech for Arabic words."""
+class PartOfSpeech(str, Enum):
+    """Part of speech for Arabic words"""
 
-    VERB = "verb"
     NOUN = "noun"
-    PARTICLE = "particle"
+    VERB = "verb"
     ADJECTIVE = "adjective"
-    PRONOUN = "pronoun"
     ADVERB = "adverb"
+    PRONOUN = "pronoun"
     PREPOSITION = "preposition"
     CONJUNCTION = "conjunction"
     INTERJECTION = "interjection"
+    PARTICLE = "particle"
     NUMERAL = "numeral"
-    PROPER_NOUN = "proper noun"
-    DEMONSTRATIVE_PRONOUN = "demonstrative pronoun"
-    RELATIVE_PRONOUN = "relative pronoun"
-
-    @classmethod
-    def values(cls) -> list[str]:
-        """Get all valid POS values as a list."""
-        return [pos.value for pos in cls]
-
-    @classmethod
-    def format_for_prompt(cls) -> str:
-        """Format POS values as a readable list for prompts."""
-        return ", ".join(f"'{pos.value}'" for pos in sorted(cls, key=lambda x: x.value))
 
 
-class DifficultyLevel(IntEnum):
-    """Difficulty levels for Islamic texts."""
+class DifficultyLevel(int, Enum):
+    """Difficulty level for text content"""
 
     BASIC = 1
     ELEMENTARY = 2
@@ -42,34 +29,9 @@ class DifficultyLevel(IntEnum):
     ADVANCED = 4
     EXPERT = 5
 
-    @property
-    def description(self) -> str:
-        """Get the description for this difficulty level."""
-        descriptions = {
-            DifficultyLevel.BASIC: "Basic - Simple vocabulary and grammar",
-            DifficultyLevel.ELEMENTARY: "Elementary - Common vocabulary with basic grammar structures",
-            DifficultyLevel.INTERMEDIATE: "Intermediate - Mixed vocabulary with moderate grammar complexity",
-            DifficultyLevel.ADVANCED: "Advanced - Specialized vocabulary with complex grammar",
-            DifficultyLevel.EXPERT: "Expert - Technical/scholarly vocabulary with intricate grammar",
-        }
-        return descriptions[self]
 
-    @classmethod
-    def format_for_prompt(cls) -> str:
-        """Format difficulty levels as a readable list for prompts."""
-        return "\n".join(
-            f"Level {level.value}: {level.description}"
-            for level in sorted(cls, key=lambda x: x.value)
-        )
-
-    @classmethod
-    def values(cls) -> list[int]:
-        """Get all valid difficulty level values as a list."""
-        return [level.value for level in cls]
-
-
-class UnitType(Enum):
-    """Types of text units for splitting."""
+class UnitType(str, Enum):
+    """Type of text unit for splitting"""
 
     SIMPLE = "simple"
     COMPOUND = "compound"
@@ -77,11 +39,10 @@ class UnitType(Enum):
     QUOTE = "quote"
     VERSE = "verse"
     PHRASE = "phrase"
-
-    @classmethod
-    def values(cls) -> list[str]:
-        """Get all valid unit type values as a list."""
-        return [unit_type.value for unit_type in cls]
+    NARRATOR_CHAIN = "narrator_chain"
+    PRAYER = "prayer"
+    HADITH = "hadith"
+    COMMENTARY = "commentary"
 
 
 class PipelinePhase(Enum):
@@ -101,19 +62,27 @@ class PipelinePhase(Enum):
         return [phase.value for phase in cls]
 
 
-class UncertaintyType(Enum):
-    """Types of uncertainties in the translation process."""
+class UncertaintyType(str, Enum):
+    """Type of uncertainty in translation"""
 
-    TRANSLATION = "translation"
-    TASHKEEL = "tashkeel"
-    WORD_MEANING = "word_meaning"
     GRAMMAR = "grammar"
+    VOCABULARY = "vocabulary"
     CONTEXT = "context"
+    TASHKEEL = "tashkeel"
+    TRANSLATION = "translation"
+    CULTURAL = "cultural"
+    TECHNICAL = "technical"
+    AMBIGUITY = "ambiguity"
 
-    @classmethod
-    def values(cls) -> list[str]:
-        """Get all valid uncertainty type values as a list."""
-        return [uncertainty_type.value for uncertainty_type in cls]
+
+class VerificationStatus(str, Enum):
+    """Status of translation verification"""
+
+    PENDING = "pending"
+    SUCCESS = "success"
+    FAILED = "failed"
+    PARTIAL = "partial"
+    NEEDS_REVIEW = "needs_review"
 
 
 class ErrorType(Enum):

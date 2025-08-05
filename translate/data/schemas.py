@@ -6,20 +6,29 @@ Pydantic models are defined in data/models.py.
 from .enums import DifficultyLevel, PartOfSpeech
 
 # Define valid parts of speech
-VALID_POS = PartOfSpeech.values()
+VALID_POS = [pos.value for pos in PartOfSpeech]
 
 # Define difficulty levels with descriptions
-DIFFICULTY_LEVELS = {level.value: level.description for level in DifficultyLevel}
+DIFFICULTY_LEVELS = {
+    DifficultyLevel.BASIC: "Basic - Simple vocabulary and grammar",
+    DifficultyLevel.ELEMENTARY: "Elementary - Common vocabulary with basic grammar structures",
+    DifficultyLevel.INTERMEDIATE: "Intermediate - Mixed vocabulary with moderate grammar complexity",
+    DifficultyLevel.ADVANCED: "Advanced - Specialized vocabulary with complex grammar",
+    DifficultyLevel.EXPERT: "Expert - Technical/scholarly vocabulary with intricate grammar",
+}
 
 
 def format_valid_pos() -> str:
     """Format VALID_POS as a readable list for prompts."""
-    return PartOfSpeech.format_for_prompt()
+    return ", ".join(f"'{pos.value}'" for pos in sorted(PartOfSpeech, key=lambda x: x.value))
 
 
 def format_difficulty_levels() -> str:
     """Format difficulty levels as a readable list for prompts."""
-    return DifficultyLevel.format_for_prompt()
+    return "\n".join(
+        f"Level {level.value}: {DIFFICULTY_LEVELS[level]}"
+        for level in sorted(DifficultyLevel, key=lambda x: x.value)
+    )
 
 
 # Prompt instructions
