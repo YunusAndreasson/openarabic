@@ -69,40 +69,9 @@ class PipelineProgressTracker:
 
         self.current_phase = None
 
-    def log_error(self, error: str) -> None:
-        """Log an error during processing."""
-        logger.error(f"❌ {error}")
-
-    def log_failure(self, error: str) -> None:
-        """Log an irrecoverable failure."""
-        logger.error(f"💥 Pipeline failed: {error}")
-        if self.current_pbar:
-            self.finish_phase(success=False)
-
 
 # Global progress tracker instance
 progress_tracker = PipelineProgressTracker()
-
-
-def log_pipeline_start() -> None:
-    """Log the start of the pipeline."""
-    logger.info("🚀 Starting Arabic Translation Pipeline")
-
-
-def log_pipeline_completion() -> None:
-    """Log the successful completion of the pipeline."""
-    logger.info("✅ Pipeline completed successfully!")
-
-
-def log_phase_start(phase_name: str) -> None:
-    """Log the start of a pipeline phase."""
-    # Phase start is now handled by TQDM progress bars
-    pass
-
-
-def log_irrecoverable_error(error: str) -> None:
-    """Log an irrecoverable error that stops the pipeline."""
-    logger.error(f"💥 Pipeline failed irrecoverably: {error}")
 
 
 def suppress_verbose_logging() -> None:

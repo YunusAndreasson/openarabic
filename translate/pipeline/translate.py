@@ -230,17 +230,16 @@ def process_batches(
     context_cache = ContextCache(sentences)
     batches = create_batches(sentences, 0, batch_size, context_cache)
 
-    # Process batches in parallel for better performance
-    max_workers = max(1, min(3, len(batches)))  # Ensure at least 1 worker, limit to 3
+    # Process batches sequentially to avoid conversation manager conflicts
+    # max_workers = max(1, min(3, len(batches)))  # Ensure at least 1 worker, limit to 3
 
     # Use the existing progress tracker instead of creating a new tqdm bar
     progress_tracker.start_phase("Translate", len(all_units), "Processing batches")
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        # Submit all batch processing tasks
-        future_to_batch = {
-            executor.submit(
-                process_batch,
+    # Process batches sequentially to avoid conversation manager conflicts
+    for batch in batches:
+        try:
+            batch_results = process_batch(
                 batch["sentences"],
                 batch["start_index"],
                 batch["contexts"],
@@ -248,29 +247,21 @@ def process_batches(
                 batch["indices"],
                 context_cache,
                 conversation_manager,
-            ): batch
-            for batch in batches
-        }
-
-        # Collect results as they complete
-        for future in concurrent.futures.as_completed(future_to_batch):
-            batch = future_to_batch[future]
-            try:
-                batch_results = future.result()
-                results.extend(batch_results)
-                progress_tracker.update(len(batch["sentences"]))
-            except TranslationValidationError as e:
-                error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed validation: {str(e)}"
-                errors.append(error_msg)
-                progress_tracker.update(len(batch["sentences"]))
-            except (ValueError, TypeError, RuntimeError) as e:
-                error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed: {str(e)}"
-                errors.append(error_msg)
-                progress_tracker.update(len(batch["sentences"]))
-            except Exception as e:
-                error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed with unexpected error: {str(e)}"
-                errors.append(error_msg)
-                progress_tracker.update(len(batch["sentences"]))
+            )
+            results.extend(batch_results)
+            progress_tracker.update(len(batch["sentences"]))
+        except TranslationValidationError as e:
+            error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed validation: {str(e)}"
+            errors.append(error_msg)
+            progress_tracker.update(len(batch["sentences"]))
+        except (ValueError, TypeError, RuntimeError) as e:
+            error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed: {str(e)}"
+            errors.append(error_msg)
+            progress_tracker.update(len(batch["sentences"]))
+        except Exception as e:
+            error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed with unexpected error: {str(e)}"
+            errors.append(error_msg)
+            progress_tracker.update(len(batch["sentences"]))
 
     progress_tracker.finish_phase(success=True)
 
@@ -344,9 +335,13 @@ def translate_file(
                 unit.get("text", "") if isinstance(unit, dict) else unit
                 for unit in all_units
             ]
-            full_text = "\n\n".join(sentences)
 
-            conversation_manager.start_document_conversation(full_text)
+            response_id = conversation_manager.start_document_conversation(sentences)
+            
+            # Debug: Check if conversation manager was properly initialized
+            if not conversation_manager.current_response_id:
+                logger.error("Conversation manager failed to initialize - no response_id set")
+                raise RuntimeError("Conversation manager initialization failed")
 
         # Handle empty files
         if len(all_units) == 0:

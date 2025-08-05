@@ -17,7 +17,7 @@ def review_file_with_preview(
     confirm_prompt: str = "",
 ) -> bool:
     """
-    Generic file review function that loads JSON, logs metadata, and shows preview.
+    Generic file review function that loads JSON and asks for confirmation.
 
     Args:
         file_path: Path to the JSON file to review
@@ -45,28 +45,6 @@ def review_file_with_preview(
         logger.error(f"❌ Failed to load {file_type.lower()} file: {file_path}")
         return False
 
-    # Extract metadata based on file type
-    if file_type.lower() == "split":
-        metadata = extract_split_metadata(data)
-        units = data.get("units", [])
-        preview_items = units
-    elif file_type.lower() == "translation":
-        metadata = extract_translation_metadata(data)
-        translations = data.get("translations", [])
-        preview_items = translations
-    else:
-        logger.error(f"❌ Unknown file type: {file_type}")
-        return False
-
-    # Log metadata
-    log_review_metadata(author_name, metadata, file_type)
-
-    # Show preview
-    if preview_items:
-        show_preview(preview_items, file_type)
-
-    logger.info(f"📁 {file_type} file saved to: {file_path}")
-
     # Get user confirmation
     if not confirm_prompt:
         confirm_prompt = (
@@ -74,74 +52,6 @@ def review_file_with_preview(
         )
 
     return confirm_step(confirm_prompt, force_yes)
-
-
-def extract_split_metadata(data: dict[str, Any]) -> dict[str, Any]:
-    """Extract metadata from split file data."""
-    units = data.get("units", [])
-    return {
-        "title": data.get("title", "Unknown"),
-        "summary": data.get("summary", "No summary"),
-        "difficulty_level": data.get("difficulty_level", "Unknown"),
-        "total_units": len(units),
-    }
-
-
-def extract_translation_metadata(data: dict[str, Any]) -> dict[str, Any]:
-    """Extract metadata from translation file data."""
-    translations = data.get("translations", [])
-    metadata = data.get("metadata", {})
-    return {
-        "title": metadata.get("title", "Unknown"),
-        "summary": metadata.get("summary", "No summary"),
-        "difficulty_level": metadata.get("difficulty_level", "Unknown"),
-        "total_units": len(translations),
-    }
-
-
-def log_review_metadata(
-    author_name: str, metadata: dict[str, Any], file_type: str
-) -> None:
-    """Log metadata for file review."""
-    logger.info(f"\n📋 {file_type} Review:")
-    logger.info(f"Author: {author_name}")
-    logger.info(f"Title: {metadata['title']}")
-    logger.info(f"Summary: {metadata['summary']}")
-    logger.info(f"Difficulty Level: {metadata['difficulty_level']}")
-    logger.info(f"Total Sentences: {metadata['total_units']}")
-
-
-def show_preview(items: list[Any], file_type: str) -> None:
-    """Show preview of first 3 items."""
-    logger.info(
-        f"\n📝 Preview of first 3 {'sentences' if file_type.lower() == 'split' else 'translations'}:"
-    )
-
-    for i, item in enumerate(items[:3]):
-        if file_type.lower() == "split":
-            # Handle both string and dict formats for split files
-            if isinstance(item, dict):
-                sentence = item.get("text", "")
-            else:
-                sentence = str(item)
-
-            sentence = sentence[:80] + "..." if len(sentence) > 80 else sentence
-            logger.info(f"  {i + 1}. {sentence}")
-
-        elif file_type.lower() == "translation":
-            # Show original and English translation
-            original = (
-                item.get("original", "")[:50] + "..."
-                if len(item.get("original", "")) > 50
-                else item.get("original", "")
-            )
-            english = (
-                item.get("full_translation", "")[:50] + "..."
-                if len(item.get("full_translation", "")) > 50
-                else item.get("full_translation", "")
-            )
-            logger.info(f"  {i + 1}. Original: {original}")
-            logger.info(f"     English: {english}")
 
 
 def confirm_step(prompt: str, force_yes: bool = False) -> bool:

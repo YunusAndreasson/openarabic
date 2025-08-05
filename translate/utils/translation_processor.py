@@ -216,22 +216,36 @@ def create_sentence_translation(
             # Get translation options - require valid data
             if hasattr(word_opts, "english"):
                 english = word_opts.english
-            else:
+            elif isinstance(word_opts, dict):
                 english = word_opts.get("english", [])
+            else:
+                english = []
 
             if hasattr(word_opts, "essential_translation"):
                 essential_translation = word_opts.essential_translation
-            else:
+            elif isinstance(word_opts, dict):
                 essential_translation = word_opts.get("essential_translation", [])
+            else:
+                essential_translation = []
 
             # Require valid translation options
             if not english:
+                arabic_name = getattr(word_opts, "arabic", None) or (
+                    word_opts.get("arabic", "unknown")
+                    if isinstance(word_opts, dict)
+                    else "unknown"
+                )
                 raise ValueError(
-                    f"Missing English translation options for word: {word_opts.get('arabic', 'unknown')}"
+                    f"Missing English translation options for word: {arabic_name}"
                 )
             if not essential_translation:
+                arabic_name = getattr(word_opts, "arabic", None) or (
+                    word_opts.get("arabic", "unknown")
+                    if isinstance(word_opts, dict)
+                    else "unknown"
+                )
                 raise ValueError(
-                    f"Missing essential translation options for word: {word_opts.get('arabic', 'unknown')}"
+                    f"Missing essential translation options for word: {arabic_name}"
                 )
 
             # Handle both single values and lists
@@ -246,11 +260,17 @@ def create_sentence_translation(
                 pos = word_opts.pos
                 essential = word_opts.essential
                 notes = word_opts.notes
-            else:
+            elif isinstance(word_opts, dict):
                 arabic = word_opts.get("arabic", "")
                 pos = word_opts.get("pos")
                 essential = word_opts.get("essential", word_opts.get("arabic", ""))
                 notes = word_opts.get("notes") or ""
+            else:
+                # Fallback for unknown format
+                arabic = str(word_opts) if word_opts else ""
+                pos = None
+                essential = arabic
+                notes = ""
 
             final_word_translations.append(
                 WordTranslation(
@@ -324,16 +344,16 @@ def create_sentence_translation(
         word_by_word=final_word_translations,
         full_translation=refined_translation,
         notes="\n".join(notes) if notes else None,
-        verification_status="Refined"
+        verification_status="success"
         if (hasattr(refinement, "changes_made") and refinement.changes_made)
         or (hasattr(refinement, "get") and refinement.get("changes_made"))
-        else "Verified",
+        else "success",
         verification_issues=[
             f"{u.get('type', 'N/A')}: {u.get('description', 'Unspecified issue')}"
             for u in remaining
         ]
         if remaining
-        else None,
+        else [],
     )
 
     validation_issues = validate_final_translation(sentence_translation)

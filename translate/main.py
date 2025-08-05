@@ -29,10 +29,6 @@ from data.config import (
 from pipeline.split_file import split_file as split_text
 from pipeline.translate import translate_file as translate_text
 from utils.progress_tracker import (
-    log_irrecoverable_error,
-    log_phase_start,
-    log_pipeline_completion,
-    log_pipeline_start,
     progress_tracker,
     suppress_verbose_logging,
 )
@@ -113,10 +109,15 @@ def review_split_file(
     )
 
 
-def run_translation(input_file: str, output_file: str, batch_size: int) -> None:
-    """Translate the previously split file."""
+def run_translation(
+    input_file: str,
+    output_file: str,
+    batch_size: int,
+    use_conversation_continuity: bool = True,
+) -> None:
+    """Run the full translation pipeline."""
     if not translate_text(
-        input_file, output_file, batch_size, use_conversation_continuity=False
+        input_file, output_file, batch_size, use_conversation_continuity=True
     ):
         logger.error("❌ Translation failed.")
         raise RuntimeError("Translation failed.")
@@ -215,17 +216,15 @@ Examples:
         raise ValueError(f"Batch size must be between 1 and 15, got: {args.batch_size}")
 
     # Start pipeline
-    log_pipeline_start()
+    # Pipeline start is now handled by progress bars
 
     # Only run split phase if specifically requested
     if args.split:
-        log_phase_start("Split")
+        # Phase start is now handled by progress bars
 
         input_files = find_input_files_in_inbox()
         if not input_files:
-            log_irrecoverable_error(
-                f"No input files found in inbox directory: {INBOX_DIR}"
-            )
+            logger.error(f"No input files found in inbox directory: {INBOX_DIR}")
             raise FileNotFoundError(
                 f"No input files found in inbox directory: {INBOX_DIR}"
             )
@@ -263,10 +262,10 @@ Examples:
                     split_files.append((split_file, author_number, author_name))
 
         if not split_files:
-            log_irrecoverable_error(f"No split files found in: {SPLIT_DIR}")
+            logger.error(f"No split files found in: {SPLIT_DIR}")
             raise FileNotFoundError(f"No split files found in: {SPLIT_DIR}")
 
-        log_phase_start("Translate")
+        # Phase start is now handled by progress bars
 
         # Start progress tracking for translation phase
         progress_tracker.start_phase(
@@ -310,13 +309,11 @@ Examples:
                         (translation_file, author_number, author_name)
                     )
 
-        progress_tracker.finish_phase()
-
         if not translation_files:
-            log_irrecoverable_error(f"No translation files found in: {TRANSLATE_DIR}")
+            logger.error(f"No translation files found in: {TRANSLATE_DIR}")
             raise FileNotFoundError(f"No translation files found in: {TRANSLATE_DIR}")
 
-        log_phase_start("Insert")
+        # Phase start is now handled by progress bars
 
         # Start progress tracking for insert phase
         progress_tracker.start_phase(
@@ -335,7 +332,7 @@ Examples:
     if token_tracker.api_calls > 0:
         pass  # Token usage reporting removed to reduce noise
 
-    log_pipeline_completion()
+    # Pipeline completion is now handled by progress bars
 
 
 __all__ = [
@@ -354,5 +351,5 @@ if __name__ == "__main__":
         logger.info("\n⚠️  Operation cancelled by user")
         sys.exit(130)
     except Exception as e:
-        log_irrecoverable_error(str(e))
+        logger.error(f"Pipeline failed: {e}")
         sys.exit(1)

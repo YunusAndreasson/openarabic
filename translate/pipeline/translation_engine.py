@@ -96,13 +96,25 @@ def _validate_word_data(word_data: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(word_data, dict):
         return {}
 
-    # Validate english_options
+    # Handle both 'english' (string) and 'english_options' (list) formats
     eng_opts = word_data.get("english_options", [])
+    if not eng_opts:
+        # Try 'english' field if 'english_options' is not present
+        english_str = word_data.get("english", "")
+        if english_str:
+            eng_opts = [english_str] if isinstance(english_str, str) else []
+
     if not isinstance(eng_opts, list) or not all(isinstance(s, str) for s in eng_opts):
         eng_opts = []
 
-    # Validate essential_translation_options
+    # Handle both 'essential_translation' (string) and 'essential_translation_options' (list) formats
     ess_opts = word_data.get("essential_translation_options", [])
+    if not ess_opts:
+        # Try 'essential_translation' field if 'essential_translation_options' is not present
+        essential_str = word_data.get("essential_translation", "")
+        if essential_str:
+            ess_opts = [essential_str] if isinstance(essential_str, str) else []
+
     if not isinstance(ess_opts, list) or not all(isinstance(s, str) for s in ess_opts):
         ess_opts = []
 
@@ -201,7 +213,8 @@ def batch_translate_full_sentences(
     contexts: list[str | None],
     conversation_manager: ResponsesAPIManager | None = None,
 ) -> TranslationResults:
-    """Translate multiple sentences in a single API call with retry logic"""
+    """Translate full sentences with context."""
+    results: TranslationResults = []
 
     def try_translation(
         sentences: list[str],
@@ -261,8 +274,6 @@ def batch_translate_full_sentences(
         response = try_translation(sentences, contexts)
 
     # Handle Response API response structure
-    results: TranslationResults = []
-
     data = _extract_response_data(response)
     if data is None:
         # API call failed, create error results
@@ -280,24 +291,65 @@ def batch_translate_full_sentences(
             )
         )
     else:
-        # Multiple sentences - Response API can't handle this in one call
-        # We need to process each sentence individually
-        for i, sentence in enumerate(sentences):
-            individual_response = try_translation(
-                [sentence], [contexts[i] if contexts else None]
-            )
-            individual_data = _extract_response_data(individual_response)
-            if individual_data is not None:
-                results.append(
-                    TranslationResult(
-                        translation=individual_data.get("translation", ""),
-                        notes=individual_data.get("notes", ""),
-                        uncertainties=individual_data.get("uncertainties", []),
-                        word_by_word=individual_data.get("word_by_word", []),
+        # Multiple sentences - need to handle both conversation manager and standard cases
+        if conversation_manager and conversation_manager.current_response_id:
+            # For conversation manager, try to extract multiple results from the response
+            # If that fails, fall back to individual processing
+            try:
+                # Try to extract multiple results from conversation manager response
+                if isinstance(data, list) and len(data) == len(sentences):
+                    # Response contains multiple results
+                    for item in data:
+                        results.append(
+                            TranslationResult(
+                                translation=item.get("translation", ""),
+                                notes=item.get("notes", ""),
+                                uncertainties=item.get("uncertainties", []),
+                                word_by_word=item.get("word_by_word", []),
+                            )
+                        )
+                else:
+                    # Single result from conversation manager, need individual processing
+                    raise ValueError("Single result for multiple sentences")
+            except (ValueError, KeyError, TypeError):
+                # Fall back to individual processing for conversation manager
+                for i, sentence in enumerate(sentences):
+                    individual_message = (
+                        f"Please translate sentence {i + 1} from the uploaded document"
                     )
+                    individual_response = conversation_manager.continue_with_stage(
+                        individual_message, response_model=TranslationResult
+                    )
+                    individual_data = _extract_response_data(individual_response)
+                    if individual_data is not None:
+                        results.append(
+                            TranslationResult(
+                                translation=individual_data.get("translation", ""),
+                                notes=individual_data.get("notes", ""),
+                                uncertainties=individual_data.get("uncertainties", []),
+                                word_by_word=individual_data.get("word_by_word", []),
+                            )
+                        )
+                    else:
+                        raise RuntimeError(f"Failed to translate sentence {i}")
+        else:
+            # Standard implementation - process each sentence individually
+            for i, sentence in enumerate(sentences):
+                individual_response = try_translation(
+                    [sentence], [contexts[i] if contexts else None]
                 )
-            else:
-                raise RuntimeError(f"Failed to translate sentence {i}")
+                individual_data = _extract_response_data(individual_response)
+                if individual_data is not None:
+                    results.append(
+                        TranslationResult(
+                            translation=individual_data.get("translation", ""),
+                            notes=individual_data.get("notes", ""),
+                            uncertainties=individual_data.get("uncertainties", []),
+                            word_by_word=individual_data.get("word_by_word", []),
+                        )
+                    )
+                else:
+                    raise RuntimeError(f"Failed to translate sentence {i}")
 
     # Ensure we have results for all sentences
     if len(results) < len(sentences):
@@ -316,74 +368,8 @@ def batch_add_tashkeel(
     context_cache: ContextCache | None = None,
     conversation_manager: ResponsesAPIManager | None = None,
 ) -> TashkeelResults:
-    """Add diacritics to sentences using camel_tools suggestions as primary source."""
-    if not sentences:
-        return []
-
-    # Generate camel-tools tashkeel suggestions for all sentences with context
-    camel_suggestions_list = []
-    for i, sentence in enumerate(sentences):
-        # Get context for this sentence
-        context = None
-        if context_cache and indices and i < len(indices):
-            context = context_cache.get_context(indices[i], for_tashkeel=True)
-
-        suggestions = generate_tashkeel_suggestions_with_context(
-            sentence,
-            context=context,
-            sentence_index=indices[i] if indices and i < len(indices) else i,
-        )
-        camel_suggestions_list.append(suggestions)
-
-    # Format inputs for the AI, emphasizing use of camel_tools suggestions
-    formatted_inputs = []
-    for i, (sentence, translation_data, camel_suggestions) in enumerate(
-        zip(sentences, translation_results, camel_suggestions_list, strict=False)
-    ):
-        # Handle both TranslationResult objects and dictionaries
-        translation, uncertainties = _get_translation_data(translation_data)
-
-        uncertainty_notes = ""
-        if uncertainties:
-            uncertainty_notes = "\nTranslation uncertainties:\n" + "\n".join(
-                f"- {u}" for u in uncertainties
-            )
-
-        # Handle grammar notes (may not exist in current structure)
-        grammar_notes_str = ""
-
-        # Generate camel-tools tashkeel suggestions
-        camel_suggestions_str = format_tashkeel_suggestions(camel_suggestions)
-
-        # Create a tashkeel-enhanced version of the sentence using camel_tools suggestions
-        # Use token-aware replacement to avoid modifying substrings in other words
-        enhanced_sentence = sentence
-        for original_word, suggested_tashkeel in camel_suggestions.items():
-            if (
-                suggested_tashkeel != original_word
-            ):  # Only replace if camel_tools provided a suggestion
-                # Use word boundary replacement to avoid substring issues
-                import re
-
-                pattern = r"\b" + re.escape(original_word) + r"\b"
-                enhanced_sentence = re.sub(
-                    pattern, suggested_tashkeel, enhanced_sentence
-                )
-
-        # Get context for this sentence
-        context_info = ""
-        if context_cache and indices and i < len(indices):
-            context = context_cache.get_context(indices[i], for_tashkeel=True)
-            if context and context.strip():
-                context_info = f"\nContext from surrounding sentences: {context}"
-
-        formatted_inputs.append(
-            f"Set {i + 1}:\n"
-            f"Original Arabic: {sentence}\n"
-            f"Camel-tools enhanced: {enhanced_sentence}\n"
-            f"Translation: {translation}{uncertainty_notes}{grammar_notes_str}{context_info}"
-            f"{f'\n{camel_suggestions_str}' if camel_suggestions_str else ''}"
-        )
+    """Add diacritical marks to Arabic text."""
+    results: TashkeelResults = []
 
     # Use conversation continuity if available
     if conversation_manager and conversation_manager.current_response_id:
@@ -393,18 +379,82 @@ def batch_add_tashkeel(
         response = conversation_manager.continue_with_stage(
             message, response_model=TashkeelResult
         )
+
+        # Handle conversation manager response
+        data = _extract_tashkeel_data(response)
+        if data is not None:
+            results.append(TashkeelResult(**data))
+        else:
+            # Fall back to individual processing for conversation manager
+            for i, sentence in enumerate(sentences):
+                individual_message = f"Add complete diacritical marks to sentence {i + 1} from the uploaded document"
+                individual_response = conversation_manager.continue_with_stage(
+                    individual_message, response_model=TashkeelResult
+                )
+                individual_data = _extract_tashkeel_data(individual_response)
+                if individual_data is not None:
+                    results.append(TashkeelResult(**individual_data))
+                else:
+                    raise RuntimeError(f"Failed to generate tashkeel for sentence {i}")
     else:
         # Use standard implementation when no conversation manager
-        try:
-            # Process each sentence individually to get proper tashkeel results
-            results: TashkeelResults = []
-            for i, sentence in enumerate(sentences):
-                # Create individual prompt for each sentence
-                individual_prompt = f"""Add complete diacritical marks (tashkīl) to this Islamic Arabic text. Return your response as valid JSON matching the TashkeelResult structure.
+        for i, (sentence, translation_result) in enumerate(
+            zip(sentences, translation_results)
+        ):
+            # Get context for this sentence
+            context = None
+            if context_cache and indices and i < len(indices):
+                context = context_cache.get_context(indices[i], for_tashkeel=True)
+
+            suggestions = generate_tashkeel_suggestions_with_context(
+                sentence,
+                context=context,
+                sentence_index=indices[i] if indices and i < len(indices) else i,
+            )
+
+            # Handle both TranslationResult objects and dictionaries
+            translation, uncertainties = _get_translation_data(translation_result)
+
+            uncertainty_notes = ""
+            if uncertainties:
+                uncertainty_notes = "\nTranslation uncertainties:\n" + "\n".join(
+                    f"- {u}" for u in uncertainties
+                )
+
+            # Handle grammar notes (may not exist in current structure)
+            grammar_notes_str = ""
+
+            # Generate camel-tools tashkeel suggestions
+            camel_suggestions_str = format_tashkeel_suggestions(suggestions)
+
+            # Create a tashkeel-enhanced version of the sentence using camel_tools suggestions
+            # Use token-aware replacement to avoid modifying substrings in other words
+            enhanced_sentence = sentence
+            for original_word, suggested_tashkeel in suggestions.items():
+                if (
+                    suggested_tashkeel != original_word
+                ):  # Only replace if camel_tools provided a suggestion
+                    # Use word boundary replacement to avoid substring issues
+                    import re
+
+                    pattern = r"\b" + re.escape(original_word) + r"\b"
+                    enhanced_sentence = re.sub(
+                        pattern, suggested_tashkeel, enhanced_sentence
+                    )
+
+            # Get context for this sentence
+            context_info = ""
+            if context_cache and indices and i < len(indices):
+                context = context_cache.get_context(indices[i], for_tashkeel=True)
+                if context and context.strip():
+                    context_info = f"\nContext from surrounding sentences: {context}"
+
+            # Use standard translation approach
+            individual_prompt = f"""Add complete diacritical marks (tashkīl) to this Islamic Arabic text. Return your response as valid JSON matching the TashkeelResult structure.
 
 CRITICAL: You MUST provide ALL required fields. The `uncertainties` array must be present, even if empty.
 
-Input text: {sentence}
+Input text: {enhanced_sentence}
 
 Provide:
 1. `tashkeel` (string): Add ALL necessary marks: fatḥa (َ), kasra (ِ), ḍamma (ُ), sukūn (ْ), shadda (ّ), and tanwīn (ً ٍ ٌ). Ensure EVERY eligible letter has appropriate diacritics (full vocalization).
@@ -412,40 +462,23 @@ Provide:
 
 Return as JSON:"""
 
-                individual_messages = [
-                    {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
-                    {"role": "user", "content": individual_prompt},
-                ]
+            individual_messages = [
+                {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
+                {"role": "user", "content": individual_prompt},
+            ]
 
-                response = call_response_api(
-                    individual_messages,
-                    response_model=TashkeelResult,
-                    model=MODEL_OTHER,
-                )
+            response = call_response_api(
+                individual_messages,
+                response_model=TashkeelResult,
+                model=MODEL_OTHER,
+            )
 
-                if "error" in response:
-                    raise RuntimeError(
-                        f"Tashkeel API error for sentence {i}: {response['error']}"
-                    )
+            data = _extract_tashkeel_data(response)
+            if data is not None:
+                results.append(TashkeelResult(**data))
+            else:
+                raise RuntimeError(f"Failed to generate tashkeel for sentence {i}")
 
-                # Extract the tashkeel result from the response using helper function
-                tashkeel_data = _extract_tashkeel_data(response)
-                if tashkeel_data:
-                    results.append(TashkeelResult(**tashkeel_data))
-                else:
-                    raise RuntimeError(
-                        f"Invalid tashkeel response format for sentence {i}: {response}"
-                    )
-
-        except Exception as e:
-            # Handle Arabic-specific processing errors
-            for sentence in sentences:
-                _handle_arabic_processing_error(sentence, "tashkeel generation", e)
-
-            # Fail the pipeline instead of returning fallback results
-            raise RuntimeError(f"Tashkeel generation failed: {e}") from e
-
-    # Return the results
     return results
 
 
@@ -457,24 +490,23 @@ def batch_translate_words(
     indices: list[int] | None = None,
     conversation_manager: ResponsesAPIManager | None = None,
 ) -> WordTranslationResults:
-    """Create word-by-word translations for multiple sentences in a batch, returning options"""
-
-    max_retries = 3
-
+    """Translate individual words with context from full sentence translation."""
     processed_results: WordTranslationResults = [
         {"word_translations": []} for _ in range(len(sentences))
     ]
 
-    for i, (_, tashkeel_data, translation_data) in enumerate(
-        zip(sentences, tashkeel_results, translations, strict=False),
+    max_retries = 3
+
+    for i, (sentence, tashkeel_result, translation_result) in enumerate(
+        zip(sentences, tashkeel_results, translations)
     ):
         attempt = 0
         while attempt < max_retries:
             try:
                 # Handle both TranslationResult objects and dictionaries
-                tashkeel, tashkeel_uncertainties = _get_tashkeel_data(tashkeel_data)
+                tashkeel, tashkeel_uncertainties = _get_tashkeel_data(tashkeel_result)
                 translation, translation_uncertainties = _get_translation_data(
-                    translation_data
+                    translation_result
                 )
 
                 arabic_words = filter_arabic_words(tashkeel)
@@ -500,10 +532,10 @@ def batch_translate_words(
                         message, response_model=WordTranslationResult
                     )
                 else:
-                    # Use standard implementation when no conversation manager
-                    # TODO: Implement standard word translation when no conversation manager
-                    raise NotImplementedError(
-                        "Standard word translation not implemented"
+                    # CRITICAL: Conversation manager must be properly initialized
+                    raise RuntimeError(
+                        f"Conversation manager not properly initialized. "
+                        f"current_response_id: {getattr(conversation_manager, 'current_response_id', None) if conversation_manager else None}"
                     )
 
                 # Handle Response API format - data is returned in the "data" field
@@ -605,7 +637,8 @@ def batch_refine_translations(
             word_trans_formatted = []
             for word_opts in word_translations_options:
                 # Handle both WordTranslation objects and dictionaries
-                if hasattr(word_opts, "arabic"):
+                if hasattr(word_opts, "arabic") and hasattr(word_opts, "english"):
+                    # WordTranslation object
                     arabic = word_opts.arabic
                     english_options = (
                         word_opts.english
@@ -624,7 +657,8 @@ def batch_refine_translations(
                     essential = word_opts.essential
                     pos = word_opts.pos
                     notes = word_opts.notes
-                else:
+                elif isinstance(word_opts, dict):
+                    # Dictionary format
                     arabic = word_opts.get("arabic", "")
                     english_options = word_opts.get("english_options", ["N/A"])
                     essential_translation_options = word_opts.get(
@@ -633,6 +667,14 @@ def batch_refine_translations(
                     essential = word_opts.get("essential", "N/A")
                     pos = word_opts.get("pos")
                     notes = word_opts.get("notes")
+                else:
+                    # Fallback for unknown format
+                    arabic = str(word_opts) if word_opts else ""
+                    english_options = ["N/A"]
+                    essential_translation_options = ["N/A"]
+                    essential = "N/A"
+                    pos = None
+                    notes = None
 
                 entry = f"{arabic}:"
                 eng_opts_str = ", ".join(english_options)
@@ -756,8 +798,10 @@ def batch_refine_translations(
                     )
             return results
         elif "error" in response:
+            # Return empty results for error case
             return []
         else:
+            # Return empty results for unexpected response format
             return []
     except Exception as e:
         logger.error(f"Error in batch_refine_translations: {e}")

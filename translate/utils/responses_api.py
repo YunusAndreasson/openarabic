@@ -180,6 +180,7 @@ class ResponsesAPIManager:
 
         except Exception as e:
             self.logger.error(f"Error in start_conversation: {str(e)}")
+            self.current_response_id = None
             return {"response_id": None, "error": str(e), "success": False}
 
     def continue_conversation(
@@ -301,12 +302,15 @@ Please translate all sentences now."""
             )
 
             if response.get("success"):
-                return response.get("response_id")
+                # Ensure current_response_id is set
+                self.current_response_id = response.get("response_id")
+                return self.current_response_id
             else:
                 self.logger.warning(
                     f"Document conversation error: {response.get('error', 'Unknown error')}"
                 )
-                return response.get("response_id")
+                # Don't return response_id on error - let it be None
+                return None
 
         except Exception as e:
             self.logger.error(f"Error starting document conversation: {str(e)}")
