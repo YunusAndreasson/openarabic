@@ -1,7 +1,6 @@
 """Review helper utilities for the translation pipeline."""
 
 import logging
-from typing import Any
 
 from utils.error_handling import safe_file_operation
 from utils.file_utils import read_json_file

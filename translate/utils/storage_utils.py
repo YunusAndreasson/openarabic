@@ -119,3 +119,79 @@ def get_word_type_id(pos: str | None) -> int:
         logger.warning(f"Unknown POS value: '{pos}', defaulting to noun")
         return WORD_TYPE_MAPPING[PartOfSpeech.NOUN.value]
     return word_type_id
+
+
+def get_random_image_url(
+    bucket: str = "images", folder: str = "", max_retries: int = 3
+) -> str | None:
+    """
+    Get a random image URL from the specified Supabase storage bucket.
+
+    Args:
+        bucket: Storage bucket name (default: "images")
+        folder: Optional folder path within the bucket
+        max_retries: Maximum number of retries if listing fails
+
+    Returns:
+        Public URL of a random image, or None if no images found
+    """
+    import secrets
+
+    from .config_common import SUPABASE_URL
+
+    for attempt in range(max_retries):
+        try:
+            # List all files in the bucket/folder
+            result = get_supabase_client().storage.from_(bucket).list(folder)
+
+            # Supabase storage.list() returns a list of file objects directly
+            files = result if isinstance(result, list) else []
+
+            if not files:
+                logger.warning(f"No files found in bucket '{bucket}' folder '{folder}'")
+                return None
+
+            # Filter for image files
+            image_extensions = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"}
+            image_files = []
+
+            for file in files:
+                # Since we know files are dictionaries, access name directly
+                if isinstance(file, dict) and "name" in file:
+                    filename = file["name"]
+                    if any(filename.lower().endswith(ext) for ext in image_extensions):
+                        image_files.append(file)
+
+            if not image_files:
+                logger.warning(
+                    f"No image files found in bucket '{bucket}' folder '{folder}'"
+                )
+                return None
+
+            # Select a random image
+            random_image = secrets.choice(image_files)
+            filename = random_image["name"]
+            file_path = f"{folder}/{filename}" if folder else filename
+            public_url = f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{file_path}"
+
+            logger.info(f"Selected random image: {filename}")
+            return public_url
+
+        except Exception as e:
+            logger.error(
+                f"Failed to get random image (attempt {attempt + 1}/{max_retries}): {e}"
+            )
+            if attempt == max_retries - 1:
+                logger.error(
+                    f"All attempts failed to get random image from bucket '{bucket}'"
+                )
+                return None
+
+    return None
+
+
+def get_random_article_image_url() -> str | None:
+    """
+    Get a random image URL from the images bucket for articles.
+    """
+    return get_random_image_url("images", "")

@@ -331,7 +331,9 @@ def concatenate_and_upload_audio(
     cleanup_temp_files(files + [final_audio_path], temp_dir)
 
 
-def insert_article_sentences(article_id: int, translations: list[dict]) -> dict:
+def insert_article_sentences(
+    article_id: int, translations: list[dict], progress_tracker: Any = None
+) -> dict:
     """Insert article sentences into the database."""
     timing_stats = {
         "total_sentences": len(translations),
@@ -346,8 +348,16 @@ def insert_article_sentences(article_id: int, translations: list[dict]) -> dict:
     temp_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "temp_audio")
     os.makedirs(temp_dir, exist_ok=True)
 
+    use_progress = progress_tracker is not None
+
     try:
         for idx, translation in enumerate(translations):
+            # Update progress for current sentence
+            if use_progress:
+                progress_tracker.set_description(
+                    f"Inserting sentence {idx + 1}/{len(translations)}"
+                )
+                progress_tracker.update(1)
             previous_text, next_text = get_adjacent_texts(translations, idx)
 
             temp_audio_file = os.path.join(temp_dir, f"sentence_{idx}.mp3")

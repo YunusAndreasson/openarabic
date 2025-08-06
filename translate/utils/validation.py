@@ -291,7 +291,7 @@ def validate_final_translation(translation: SentenceTranslation) -> list[str]:
 
     # Check verification status if present
     if translation.verification_status and translation.verification_status not in [
-        "verified",
+        "success",
         "needs_review",
         "failed",
         "pending",

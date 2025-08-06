@@ -16,6 +16,7 @@ class PipelineProgressTracker:
     def __init__(self) -> None:
         self.current_phase = None
         self.current_pbar = None
+        self._finished = False
 
     def start_phase(self, phase_name: str, total: int, description: str = None) -> None:
         """Start a new pipeline phase with a progress bar."""
@@ -23,6 +24,7 @@ class PipelineProgressTracker:
             self.current_pbar.close()
 
         self.current_phase = phase_name
+        self._finished = False
         desc = description or f"Phase: {phase_name}"
 
         self.current_pbar = tqdm(
@@ -32,6 +34,7 @@ class PipelineProgressTracker:
             bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]",
             ncols=100,
             colour="green",
+            leave=False,
         )
 
     def update(self, n: int = 1, description: str = None) -> None:
@@ -52,12 +55,16 @@ class PipelineProgressTracker:
 
     def finish_phase(self, success: bool = True) -> None:
         """Finish the current phase."""
-        if self.current_pbar:
+        if self.current_pbar and self.current_phase and not self._finished:
             if success:
-                # Show completion in the TQDM bar instead of logging
+                # Show completion with checkmark
                 self.current_pbar.set_description(
                     f"✅ Phase: {self.current_phase} - Completed"
                 )
+                # Force a final update to show the completion
+                self.current_pbar.refresh()
+                # Log completion message
+                logger.info(f"✅ Phase: {self.current_phase} - Completed")
             else:
                 self.current_pbar.set_description(
                     f"❌ Phase: {self.current_phase} - Failed"
@@ -66,8 +73,12 @@ class PipelineProgressTracker:
 
             self.current_pbar.close()
             self.current_pbar = None
-
-        self.current_phase = None
+            self.current_phase = None
+            self._finished = True
+        elif self.current_phase and not self._finished:
+            # Phase was already finished, just clear the state
+            self.current_phase = None
+            self._finished = True
 
 
 # Global progress tracker instance

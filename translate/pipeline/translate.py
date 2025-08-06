@@ -1,6 +1,5 @@
 """Translation pipeline for processing Arabic text files."""
 
-import concurrent.futures
 import logging
 from typing import Any
 
@@ -16,7 +15,6 @@ from data.pipeline_types import (
 from utils.context_cache import ContextCache
 from utils.error_handling import safe_file_operation
 from utils.file_utils import read_json_file, write_json_file
-from utils.progress_tracker import progress_tracker
 from utils.responses_api import ResponsesAPIManager
 from utils.translation_processor import (
     apply_tashkeel,
@@ -233,9 +231,6 @@ def process_batches(
     # Process batches sequentially to avoid conversation manager conflicts
     # max_workers = max(1, min(3, len(batches)))  # Ensure at least 1 worker, limit to 3
 
-    # Use the existing progress tracker instead of creating a new tqdm bar
-    progress_tracker.start_phase("Translate", len(all_units), "Processing batches")
-
     # Process batches sequentially to avoid conversation manager conflicts
     for batch in batches:
         try:
@@ -249,21 +244,15 @@ def process_batches(
                 conversation_manager,
             )
             results.extend(batch_results)
-            progress_tracker.update(len(batch["sentences"]))
         except TranslationValidationError as e:
             error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed validation: {str(e)}"
             errors.append(error_msg)
-            progress_tracker.update(len(batch["sentences"]))
         except (ValueError, TypeError, RuntimeError) as e:
             error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed: {str(e)}"
             errors.append(error_msg)
-            progress_tracker.update(len(batch["sentences"]))
         except Exception as e:
             error_msg = f"Batch {batch['start_index']}-{batch['start_index'] + len(batch['sentences'])} failed with unexpected error: {str(e)}"
             errors.append(error_msg)
-            progress_tracker.update(len(batch["sentences"]))
-
-    progress_tracker.finish_phase(success=True)
 
     return results, errors
 
@@ -336,11 +325,13 @@ def translate_file(
                 for unit in all_units
             ]
 
-            response_id = conversation_manager.start_document_conversation(sentences)
-            
+            conversation_manager.start_document_conversation(sentences)
+
             # Debug: Check if conversation manager was properly initialized
             if not conversation_manager.current_response_id:
-                logger.error("Conversation manager failed to initialize - no response_id set")
+                logger.error(
+                    "Conversation manager failed to initialize - no response_id set"
+                )
                 raise RuntimeError("Conversation manager initialization failed")
 
         # Handle empty files

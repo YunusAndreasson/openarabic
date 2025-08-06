@@ -151,7 +151,7 @@ class TestMainWorkflow:
 
             run_translation(input_file, output_file, batch_size=2)
             mock_translate_text.assert_called_once_with(
-                input_file, output_file, 2, use_conversation_continuity=False
+                input_file, output_file, 2, use_conversation_continuity=True
             )
 
         finally:

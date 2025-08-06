@@ -31,7 +31,6 @@ from data.schemas import (
     SENTENCE_TRANSLATION_USER_PROMPT,
 )
 from utils.camel_tools_service import (
-    format_tashkeel_suggestions,
     generate_tashkeel_suggestions_with_context,
 )
 from utils.context_cache import ContextCache
@@ -149,21 +148,68 @@ def _validate_uncertainties(uncertainties: list[Any]) -> list[Uncertainty]:
     """Validate and convert uncertainties to proper format."""
     validated = []
     for item in uncertainties:
-        if isinstance(item, dict) and "text" in item and "reason" in item:
-            validated.append(
-                Uncertainty(
-                    text=item["text"],
-                    reason=item["reason"],
-                    word="unknown",
-                    type="unknown",
-                    step="unknown",
-                    resolution="unknown",
-                    explanation="unknown",
-                    related_translation_uncertainty="unknown",
-                    original_uncertainty="unknown",
-                    reason_unresolved="unknown",
+        if isinstance(item, dict):
+            # Handle various dictionary formats
+            if "text" in item and "reason" in item:
+                # Standard format
+                validated.append(
+                    Uncertainty(
+                        text=item["text"],
+                        reason=item["reason"],
+                        word=item.get("word", "unknown"),
+                        type=item.get("type", "unknown"),
+                        step=item.get("step", "unknown"),
+                        resolution=item.get("resolution", "unknown"),
+                        explanation=item.get("explanation", "unknown"),
+                        related_translation_uncertainty=item.get(
+                            "related_translation_uncertainty", "unknown"
+                        ),
+                        original_uncertainty=item.get(
+                            "original_uncertainty", "unknown"
+                        ),
+                        reason_unresolved=item.get("reason_unresolved", "unknown"),
+                    )
                 )
-            )
+            elif "word" in item and "reason" in item:
+                # Tashkeel uncertainty format
+                validated.append(
+                    Uncertainty(
+                        text="unknown",
+                        reason=item["reason"],
+                        word=item["word"],
+                        type=item.get("type", "unknown"),
+                        step=item.get("step", "unknown"),
+                        resolution=item.get("resolution", "unknown"),
+                        explanation=item.get("explanation", "unknown"),
+                        related_translation_uncertainty=item.get(
+                            "related_translation_uncertainty", "unknown"
+                        ),
+                        original_uncertainty=item.get(
+                            "original_uncertainty", "unknown"
+                        ),
+                        reason_unresolved=item.get("reason_unresolved", "unknown"),
+                    )
+                )
+            elif "reason" in item:
+                # Minimal format with just reason
+                validated.append(
+                    Uncertainty(
+                        text=item.get("text", "unknown"),
+                        reason=item["reason"],
+                        word=item.get("word", "unknown"),
+                        type=item.get("type", "unknown"),
+                        step=item.get("step", "unknown"),
+                        resolution=item.get("resolution", "unknown"),
+                        explanation=item.get("explanation", "unknown"),
+                        related_translation_uncertainty=item.get(
+                            "related_translation_uncertainty", "unknown"
+                        ),
+                        original_uncertainty=item.get(
+                            "original_uncertainty", "unknown"
+                        ),
+                        reason_unresolved=item.get("reason_unresolved", "unknown"),
+                    )
+                )
         elif isinstance(item, str):
             # Convert string to proper format
             validated.append(
@@ -183,7 +229,8 @@ def _validate_uncertainties(uncertainties: list[Any]) -> list[Uncertainty]:
         elif isinstance(item, Uncertainty):
             validated.append(item)
         else:
-            # Skip invalid items
+            # Skip invalid items but log for debugging
+            logger.debug(f"Skipping invalid uncertainty item: {type(item)} - {item}")
             continue
     return validated
 
@@ -261,19 +308,36 @@ def batch_translate_full_sentences(
 
     # Use conversation continuity if available
     if conversation_manager and conversation_manager.current_response_id:
-        # Reference specific sentences from uploaded document
-        sentence_indices = list(range(len(sentences)))
-        message = (
-            f"Please translate sentences {sentence_indices} from the uploaded document"
-        )
-        response = conversation_manager.continue_with_stage(
-            message, response_model=TranslationResult
-        )
+        # Process each sentence individually with conversation manager
+        for i, sentence in enumerate(sentences):
+            context_str = (
+                f"\nContext: {contexts[i]}" if contexts and contexts[i] else ""
+            )
+            individual_message = (
+                f"Please translate sentence {i + 1} from the uploaded document.\n\n"
+                f"Sentence: {sentence}{context_str}"
+            )
+            individual_response = conversation_manager.continue_with_stage(
+                individual_message, response_model=TranslationResult
+            )
+            individual_data = _extract_response_data(individual_response)
+            if individual_data is not None:
+                results.append(
+                    TranslationResult(
+                        translation=individual_data.get("translation", ""),
+                        notes=individual_data.get("notes", ""),
+                        uncertainties=individual_data.get("uncertainties", []),
+                        word_by_word=individual_data.get("word_by_word", []),
+                    )
+                )
+            else:
+                raise RuntimeError(f"Failed to translate sentence {i}")
+        return results
     else:
         # Use standard implementation when no conversation manager
         response = try_translation(sentences, contexts)
 
-    # Handle Response API response structure
+    # Handle Response API response structure (only for standard implementation)
     data = _extract_response_data(response)
     if data is None:
         # API call failed, create error results
@@ -291,70 +355,28 @@ def batch_translate_full_sentences(
             )
         )
     else:
-        # Multiple sentences - need to handle both conversation manager and standard cases
-        if conversation_manager and conversation_manager.current_response_id:
-            # For conversation manager, try to extract multiple results from the response
-            # If that fails, fall back to individual processing
-            try:
-                # Try to extract multiple results from conversation manager response
-                if isinstance(data, list) and len(data) == len(sentences):
-                    # Response contains multiple results
-                    for item in data:
-                        results.append(
-                            TranslationResult(
-                                translation=item.get("translation", ""),
-                                notes=item.get("notes", ""),
-                                uncertainties=item.get("uncertainties", []),
-                                word_by_word=item.get("word_by_word", []),
-                            )
-                        )
-                else:
-                    # Single result from conversation manager, need individual processing
-                    raise ValueError("Single result for multiple sentences")
-            except (ValueError, KeyError, TypeError):
-                # Fall back to individual processing for conversation manager
-                for i, sentence in enumerate(sentences):
-                    individual_message = (
-                        f"Please translate sentence {i + 1} from the uploaded document"
+        # Multiple sentences - process each sentence individually
+        for i, sentence in enumerate(sentences):
+            individual_response = try_translation(
+                [sentence], [contexts[i] if contexts else None]
+            )
+            individual_data = _extract_response_data(individual_response)
+            if individual_data is not None:
+                results.append(
+                    TranslationResult(
+                        translation=individual_data.get("translation", ""),
+                        notes=individual_data.get("notes", ""),
+                        uncertainties=individual_data.get("uncertainties", []),
+                        word_by_word=individual_data.get("word_by_word", []),
                     )
-                    individual_response = conversation_manager.continue_with_stage(
-                        individual_message, response_model=TranslationResult
-                    )
-                    individual_data = _extract_response_data(individual_response)
-                    if individual_data is not None:
-                        results.append(
-                            TranslationResult(
-                                translation=individual_data.get("translation", ""),
-                                notes=individual_data.get("notes", ""),
-                                uncertainties=individual_data.get("uncertainties", []),
-                                word_by_word=individual_data.get("word_by_word", []),
-                            )
-                        )
-                    else:
-                        raise RuntimeError(f"Failed to translate sentence {i}")
-        else:
-            # Standard implementation - process each sentence individually
-            for i, sentence in enumerate(sentences):
-                individual_response = try_translation(
-                    [sentence], [contexts[i] if contexts else None]
                 )
-                individual_data = _extract_response_data(individual_response)
-                if individual_data is not None:
-                    results.append(
-                        TranslationResult(
-                            translation=individual_data.get("translation", ""),
-                            notes=individual_data.get("notes", ""),
-                            uncertainties=individual_data.get("uncertainties", []),
-                            word_by_word=individual_data.get("word_by_word", []),
-                        )
-                    )
-                else:
-                    raise RuntimeError(f"Failed to translate sentence {i}")
+            else:
+                raise RuntimeError(f"Failed to translate sentence {i}")
 
-    # Ensure we have results for all sentences
-    if len(results) < len(sentences):
+    # Basic validation - ensure we have results for all sentences
+    if len(results) != len(sentences):
         raise RuntimeError(
-            f"Missing results: got {len(results)} for {len(sentences)} sentences"
+            f"Result count mismatch - got {len(results)} results for {len(sentences)} sentences"
         )
 
     return results
@@ -373,33 +395,50 @@ def batch_add_tashkeel(
 
     # Use conversation continuity if available
     if conversation_manager and conversation_manager.current_response_id:
-        # Reference specific sentences from uploaded document with context emphasis
-        sentence_indices = list(range(len(sentences)))
-        message = f"Add tashkeel to sentences {sentence_indices} from the uploaded document. Use camel-tools suggestions as starting point but improve them using the full document context and translation."
-        response = conversation_manager.continue_with_stage(
-            message, response_model=TashkeelResult
-        )
+        # Process each sentence individually with conversation manager
+        for i, sentence in enumerate(sentences):
+            # Get context for this sentence
+            context = None
+            if context_cache and indices and i < len(indices):
+                context = context_cache.get_context(indices[i], for_tashkeel=True)
 
-        # Handle conversation manager response
-        data = _extract_tashkeel_data(response)
-        if data is not None:
-            results.append(TashkeelResult(**data))
-        else:
-            # Fall back to individual processing for conversation manager
-            for i, sentence in enumerate(sentences):
-                individual_message = f"Add complete diacritical marks to sentence {i + 1} from the uploaded document"
-                individual_response = conversation_manager.continue_with_stage(
-                    individual_message, response_model=TashkeelResult
-                )
-                individual_data = _extract_tashkeel_data(individual_response)
-                if individual_data is not None:
-                    results.append(TashkeelResult(**individual_data))
-                else:
-                    raise RuntimeError(f"Failed to generate tashkeel for sentence {i}")
+            # Get camel-tools suggestions for this specific sentence
+            suggestions = generate_tashkeel_suggestions_with_context(
+                sentence,
+                context=context,
+                sentence_index=indices[i] if indices and i < len(indices) else i,
+            )
+
+            # Create enhanced sentence with camel-tools suggestions
+            enhanced_sentence = sentence
+            for original_word, suggested_tashkeel in suggestions.items():
+                if suggested_tashkeel != original_word:
+                    import re
+
+                    pattern = r"\b" + re.escape(original_word) + r"\b"
+                    enhanced_sentence = re.sub(
+                        pattern, suggested_tashkeel, enhanced_sentence
+                    )
+
+            # Build context info
+            context_info = ""
+            if context and context.strip():
+                context_info = f"\nContext from surrounding sentences: {context}"
+
+            # Process this specific sentence with conversation manager
+            individual_message = f"Add complete diacritical marks to sentence {i + 1} from the uploaded document. CRITICAL: Process the EXACT sentence provided, do not generate generic responses.\n\nInput text: {enhanced_sentence}{context_info}"
+            individual_response = conversation_manager.continue_with_stage(
+                individual_message, response_model=TashkeelResult
+            )
+            individual_data = _extract_tashkeel_data(individual_response)
+            if individual_data is not None:
+                results.append(TashkeelResult(**individual_data))
+            else:
+                raise RuntimeError(f"Failed to generate tashkeel for sentence {i}")
     else:
         # Use standard implementation when no conversation manager
         for i, (sentence, translation_result) in enumerate(
-            zip(sentences, translation_results)
+            zip(sentences, translation_results, strict=False)
         ):
             # Get context for this sentence
             context = None
@@ -414,18 +453,6 @@ def batch_add_tashkeel(
 
             # Handle both TranslationResult objects and dictionaries
             translation, uncertainties = _get_translation_data(translation_result)
-
-            uncertainty_notes = ""
-            if uncertainties:
-                uncertainty_notes = "\nTranslation uncertainties:\n" + "\n".join(
-                    f"- {u}" for u in uncertainties
-                )
-
-            # Handle grammar notes (may not exist in current structure)
-            grammar_notes_str = ""
-
-            # Generate camel-tools tashkeel suggestions
-            camel_suggestions_str = format_tashkeel_suggestions(suggestions)
 
             # Create a tashkeel-enhanced version of the sentence using camel_tools suggestions
             # Use token-aware replacement to avoid modifying substrings in other words
@@ -456,6 +483,12 @@ CRITICAL: You MUST provide ALL required fields. The `uncertainties` array must b
 
 Input text: {enhanced_sentence}
 
+CRITICAL INSTRUCTIONS:
+1. You MUST process the EXACT input text provided above
+2. Do NOT generate a different sentence or generic response
+3. Add diacritical marks to the EXACT words in the input text
+4. Preserve the original word order and structure
+
 Provide:
 1. `tashkeel` (string): Add ALL necessary marks: fatḥa (َ), kasra (ِ), ḍamma (ُ), sukūn (ْ), shadda (ّ), and tanwīn (ً ٍ ٌ). Ensure EVERY eligible letter has appropriate diacritics (full vocalization).
 2. `uncertainties` (array of objects, optional): List specific words where diacritics are uncertain.
@@ -479,6 +512,12 @@ Return as JSON:"""
             else:
                 raise RuntimeError(f"Failed to generate tashkeel for sentence {i}")
 
+    # Basic validation - ensure we have results for all sentences
+    if len(results) != len(sentences):
+        raise RuntimeError(
+            f"Tashkeel result count mismatch - got {len(results)} results for {len(sentences)} sentences"
+        )
+
     return results
 
 
@@ -497,8 +536,8 @@ def batch_translate_words(
 
     max_retries = 3
 
-    for i, (sentence, tashkeel_result, translation_result) in enumerate(
-        zip(sentences, tashkeel_results, translations)
+    for i, (_sentence, tashkeel_result, translation_result) in enumerate(
+        zip(sentences, tashkeel_results, translations, strict=False)
     ):
         attempt = 0
         while attempt < max_retries:
@@ -526,8 +565,38 @@ def batch_translate_words(
 
                 # Use conversation continuity if available
                 if conversation_manager and conversation_manager.current_response_id:
-                    # Reference specific sentences from uploaded document
-                    message = f"Analyze words in sentence {i + 1} from the uploaded document. Tashkeel: {tashkeel}, Translation: {translation}"
+                    # Build comprehensive prompt for this specific sentence
+                    semantic_context = ""
+                    if all_sentences and indices and i < len(indices):
+                        orig_index = indices[i]
+                        # Get surrounding context
+                        context_sentences = []
+                        for j in range(
+                            max(0, orig_index - 1),
+                            min(len(all_sentences), orig_index + 2),
+                        ):
+                            if j != orig_index:
+                                context_sentences.append(all_sentences[j])
+                        if context_sentences:
+                            semantic_context = f"\nContext from surrounding sentences: {' '.join(context_sentences)}"
+
+                    # Build tashkeel notes
+                    tashkeel_notes = ""
+                    if tashkeel_uncertainties:
+                        tashkeel_notes = "\nTashkeel uncertainties:\n" + "\n".join(
+                            f"- {u}" for u in tashkeel_uncertainties
+                        )
+
+                    # Build translation notes
+                    translation_notes = ""
+                    if translation_uncertainties:
+                        translation_notes = (
+                            "\nTranslation uncertainties:\n"
+                            + "\n".join(f"- {u}" for u in translation_uncertainties)
+                        )
+
+                    # Create comprehensive prompt for this sentence
+                    message = f"Analyze words in sentence {i + 1} from the uploaded document. CRITICAL: Process the EXACT sentence provided.\n\nTashkeel: {tashkeel}\nTranslation: {translation}{semantic_context}{tashkeel_notes}{translation_notes}"
                     response = conversation_manager.continue_with_stage(
                         message, response_model=WordTranslationResult
                     )
@@ -613,6 +682,12 @@ def batch_translate_words(
                         f"Placeholder data creation is not allowed. Error: {str(err)}"
                     ) from err
                 time.sleep(1)
+
+    # Basic validation - ensure we have results for all sentences
+    if len(processed_results) != len(sentences):
+        raise RuntimeError(
+            f"Word translation result count mismatch - got {len(processed_results)} results for {len(sentences)} sentences"
+        )
 
     return processed_results
 
@@ -829,30 +904,34 @@ def batch_translate_root_words_with_google_cloud(
         arabic_words  # This should be enhanced with proper root word extraction
     )
 
-    # Translate each root word individually
-    for root_word in root_words:
-        try:
-            root_word_translation = service.translate_root_word_with_retry(root_word)
+    if not root_words:
+        return results
 
-            # Convert to WordTranslation format
+    try:
+        # Use batch translation for efficiency
+        batch_translations = service.translate_root_words_batch(
+            root_words, batch_size=100
+        )
+
+        # Convert batch results to WordTranslation format
+        for translation_result in batch_translations:
             word_option = cast(
                 "WordTranslation",
                 {
-                    "arabic": root_word,
-                    "english": [root_word_translation["translated_text"]],
-                    "pos": root_word_translation.get("pos", "noun"),
-                    "essential": root_word,
-                    "essential_translation": [root_word_translation["translated_text"]],
-                    "notes": root_word_translation.get("notes"),
-                    "uncertainties": root_word_translation.get("uncertainties", []),
+                    "arabic": translation_result["original_text"],
+                    "english": [translation_result["translated_text"]],
+                    "pos": translation_result.get("pos", "noun"),
+                    "essential": translation_result["original_text"],
+                    "essential_translation": [translation_result["translated_text"]],
+                    "notes": translation_result.get("notes"),
+                    "uncertainties": translation_result.get("uncertainties", []),
                 },
             )
             results.append({"word_translations": [word_option]})
-        except Exception as e:
-            # CRITICAL: Fail completely instead of creating fallback data
-            raise Exception(
-                f"Google Cloud translation failed for root word '{root_word}': {e}"
-            ) from e
+
+    except Exception as e:
+        # CRITICAL: Fail completely instead of creating fallback data
+        raise Exception(f"Google Cloud batch translation failed: {e}") from e
 
     return results
 

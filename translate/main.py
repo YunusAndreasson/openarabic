@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Load API keys at startup
 try:
-    from utils import set_keys
+    import utils.set_keys  # noqa: F401  # Import for side effects only
 
     logging.getLogger(__name__).info("API keys loaded from set_keys.py")
 except ImportError:
@@ -268,9 +268,7 @@ Examples:
         # Phase start is now handled by progress bars
 
         # Start progress tracking for translation phase
-        progress_tracker.start_phase(
-            "Translate", len(split_files), "Translating sentences"
-        )
+        progress_tracker.start_phase("Translate", len(split_files), "Translating files")
 
         for _i, (split_file, author_number, author_name) in enumerate(split_files):
             progress_tracker.set_description(f"Translating {author_name}")
@@ -294,6 +292,8 @@ Examples:
 
             progress_tracker.update(1)
 
+        progress_tracker.finish_phase()
+
     # Only run insert phase if specifically requested
     if args.insert:
         # Find all translation files in the translate directory
@@ -315,16 +315,50 @@ Examples:
 
         # Phase start is now handled by progress bars
 
+        # Calculate total sentences for progress tracking
+        total_sentences = 0
+        for translation_file, _, _ in translation_files:
+            try:
+                import json
+
+                with open(translation_file, encoding="utf-8") as f:
+                    data = json.load(f)
+                    total_sentences += len(data.get("translations", []))
+            except Exception as e:
+                logger.debug(
+                    f"Could not read sentence count from {translation_file}: {e}"
+                )
+
         # Start progress tracking for insert phase
         progress_tracker.start_phase(
             "Insert",
-            len(translation_files),
-            "Processing through ElevenLabs and database",
+            total_sentences,
+            "Processing sentences through ElevenLabs and database",
         )
 
-        # Update insert.py to handle the new file structure
-        # For now, we'll use the legacy approach but with the new file locations
-        run_insert_only()
+        # Process each translation file
+        for _i, (translation_file, _author_number, author_name) in enumerate(
+            translation_files
+        ):
+            # Get sentence count for progress tracking
+            try:
+                import json
+
+                with open(translation_file, encoding="utf-8") as f:
+                    data = json.load(f)
+                    sentence_count = len(data.get("translations", []))
+            except Exception:
+                sentence_count = 0
+
+            # Run the insertion step for this specific file
+            run_pipeline_step(
+                script_path="pipeline/insert.py",
+                description=f"database insertion for {author_name}",
+                cwd=os.path.dirname(os.path.abspath(__file__)),
+            )
+
+            # Update progress for all sentences in this file
+            progress_tracker.update(sentence_count)
 
         progress_tracker.finish_phase()
 

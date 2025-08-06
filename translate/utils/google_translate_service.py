@@ -96,6 +96,80 @@ class GoogleTranslateService:
                 f"Failed to translate root word '{root_word}': {e}"
             ) from e
 
+    def translate_root_words_batch(
+        self,
+        root_words: list[str],
+        source_lang: str = "ar",
+        target_lang: str = "en",
+        batch_size: int = 100,
+        max_retries: int = TRANSLATION_RETRY_ATTEMPTS,
+    ) -> list[dict]:
+        """Translate multiple Arabic root words in batches for efficiency."""
+        results = []
+
+        # Process words in batches
+        for i in range(0, len(root_words), batch_size):
+            batch = root_words[i : i + batch_size]
+
+            # Retry logic for each batch
+            for attempt in range(max_retries):
+                try:
+                    response = self.client.translate_text(
+                        contents=batch,
+                        parent=self.parent,
+                        mime_type="text/plain",
+                        source_language_code=source_lang,
+                        target_language_code=target_lang,
+                    )
+
+                    if not response.translations:
+                        raise TranslationError(
+                            f"No translations returned for batch starting at index {i}"
+                        )
+
+                    # Process each translation in the batch
+                    for j, translation in enumerate(response.translations):
+                        original_word = batch[j]
+
+                        translation_result: dict[str, Any] = {
+                            "translated_text": translation.translated_text,
+                            "detected_language": getattr(
+                                translation, "detected_language_code", source_lang
+                            ),
+                            "original_text": original_word,
+                            "source_language": source_lang,
+                            "target_language": target_lang,
+                            "pos": "noun",
+                            "notes": "Google Cloud Translate v3 batch translation",
+                            "uncertainties": [],
+                        }
+
+                        # Add uncertainty if translation is empty
+                        if (
+                            not translation.translated_text
+                            or translation.translated_text.strip() == ""
+                        ):
+                            translation_result["uncertainties"].append(
+                                {
+                                    "text": original_word,
+                                    "reason": "Empty translation returned",
+                                }
+                            )
+
+                        results.append(translation_result)
+
+                    # Success - break out of retry loop
+                    break
+
+                except Exception as e:
+                    if attempt == max_retries - 1:
+                        raise TranslationError(
+                            f"Failed to translate batch starting at index {i} after {max_retries} attempts: {e}"
+                        ) from e
+                    time.sleep(2**attempt)  # Exponential backoff
+
+        return results
+
     def translate_root_word_with_retry(
         self,
         root_word: str,

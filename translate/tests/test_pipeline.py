@@ -3,7 +3,7 @@
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from data.enums import DifficultyLevel
 from pipeline.split_file import split_file
@@ -121,7 +121,16 @@ class TestTranslateFile:
         output_file = split_file_path.replace("_split.json", "_translated.json")
 
         try:
-            with patch("pipeline.translate.process_batch") as mock_api:
+            with (
+                patch("pipeline.translate.process_batch") as mock_api,
+                patch("utils.responses_api.ResponsesAPIManager") as mock_manager_class,
+            ):
+                # Mock the conversation manager
+                mock_manager = MagicMock()
+                mock_manager.current_response_id = "test-response-id"
+                mock_manager.start_document_conversation.return_value = None
+                mock_manager_class.return_value = mock_manager
+
                 # Create proper SentenceTranslation objects
                 from data.models import SentenceTranslation, WordTranslation
 

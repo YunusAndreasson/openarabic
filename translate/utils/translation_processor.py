@@ -272,6 +272,18 @@ def create_sentence_translation(
                 essential = arabic
                 notes = ""
 
+            # Preserve uncertainties from the original word translation
+            word_uncertainties = []
+            if hasattr(word_opts, "uncertainties"):
+                word_uncertainties = word_opts.uncertainties
+            elif isinstance(word_opts, dict):
+                word_uncertainties = word_opts.get("uncertainties", [])
+
+            # Validate uncertainties to ensure they're in the correct format
+            from pipeline.translation_engine import _validate_uncertainties
+
+            validated_uncertainties = _validate_uncertainties(word_uncertainties)
+
             final_word_translations.append(
                 WordTranslation(
                     arabic=arabic,
@@ -280,7 +292,7 @@ def create_sentence_translation(
                     essential=essential,
                     essential_translation=essential_translation,
                     notes=notes or "",
-                    uncertainties=[],
+                    uncertainties=validated_uncertainties,
                 ),
             )
 
