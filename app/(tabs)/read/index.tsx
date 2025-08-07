@@ -13,6 +13,7 @@ import { HijriDateFooter } from '@/components/home/HijriDateFooter';
 import IntelligentArticleSection from '@/components/home/IntelligentArticleSection';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
+import { CACHE_TIMES } from '@/constants/queryConfig';
 import { getArticleRoute, getFilterRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
@@ -59,8 +60,7 @@ export default function ReadScreen(): JSX.Element {
   const { data: articlesData = [], isLoading: isArticlesLoading } = useQuery({
     queryKey: ['articles'],
     queryFn: () => articlesService.getArticles(),
-    staleTime: 3600000,
-    gcTime: 7200000,
+    ...CACHE_TIMES.ARTICLES,
     retry: 3,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
@@ -98,18 +98,18 @@ export default function ReadScreen(): JSX.Element {
     mediumFeedback();
 
     try {
-      // Refetch core queries explicitly for immediate data update
+      // Force complete cache invalidation for immediate data update
       const refreshPromises = [
-        queryClient.refetchQueries({ queryKey: ['articles'] }),
-        queryClient.refetchQueries({ queryKey: ['categories'] }),
+        queryClient.invalidateQueries({ queryKey: ['articles'] }),
+        queryClient.invalidateQueries({ queryKey: ['categories'] }),
       ];
 
       // Add user-specific queries if authenticated
       if (user?.id) {
         refreshPromises.push(
-          queryClient.refetchQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) }),
-          queryClient.refetchQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) }),
-          queryClient.refetchQueries({ queryKey: ['reading-streak', user.id] })
+          queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) }),
+          queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) }),
+          queryClient.invalidateQueries({ queryKey: ['reading-streak', user.id] })
         );
       }
 

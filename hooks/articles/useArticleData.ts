@@ -38,8 +38,7 @@ export const useArticleData = (
       return articlesService.getArticleById(articleId);
     },
     enabled: !!articleId,
-    staleTime: 3600000, // 1 hour - articles update max once a day
-    gcTime: 7200000, // 2 hours
+    ...CACHE_TIMES.ARTICLES,
     refetchOnMount: false, // Don't refetch on mount if we have data
     placeholderData: old => old,
   });

@@ -6,6 +6,7 @@ import { InteractionManager } from 'react-native';
 
 import ErrorState from '@/components/ErrorState';
 import FilteredArticleView from '@/components/home/FilteredArticleView';
+import { CACHE_TIMES } from '@/constants/queryConfig';
 import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
@@ -56,6 +57,7 @@ export default function FilterScreen(): JSX.Element {
       return await articlesService.getArticles({ categoryId: numericId });
     },
     enabled: !hasInvalidParams,
+    ...CACHE_TIMES.ARTICLES,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     placeholderData: old => old,

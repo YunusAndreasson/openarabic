@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/react-native';
 import { useQueryClient } from '@tanstack/react-query';
-import { useState, useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { CACHE_TIMES } from '@/constants/queryConfig';
@@ -47,18 +47,12 @@ export const useAppPreloader = (): AppPreloaderResult => {
           ...CACHE_TIMES.STATIC,
           retry: 3,
         }),
-        queryClient
-          .fetchQuery({
-            queryKey: ['articles', 'minimal'],
-            queryFn: () => articlesService.getArticles({ limit: 20 }), // Load first 20 articles
-            ...CACHE_TIMES.ARTICLES,
-            retry: 3,
-          })
-          .then(data => {
-            // Make initial articles available under the main key for reuse in the Read tab
-            queryClient.setQueryData(['articles'], data);
-            return data;
-          }),
+        queryClient.fetchQuery({
+          queryKey: ['articles'],
+          queryFn: () => articlesService.getArticles(), // Load all articles
+          ...CACHE_TIMES.ARTICLES,
+          retry: 3,
+        }),
       ];
 
       const [_categories, _articles] = await Promise.all(criticalPromises);
