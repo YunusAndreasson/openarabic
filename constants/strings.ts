@@ -178,9 +178,8 @@ export const STRINGS = {
   VOCABULARY_ACQUISITION_VELOCITY: 'Measure how quickly you master new vocabulary',
   MEMORY_RETENTION_OPTIMAL_TIMING: 'See when words need review for maximum retention',
 
-  // Account & settings
+  // Account
   ACCOUNT: 'Account',
-  SETTINGS: 'Settings',
   HELP: 'Help',
   CONTACT_SUPPORT: 'Contact support',
   SUPPORT_EMAIL: 'yunus@edenmind.com',
@@ -500,7 +499,7 @@ export const STRINGS = {
 
   // Help content
   HELP_GETTING_STARTED: 'Getting Started',
-  HELP_ACCOUNT_SETTINGS: 'Account & Settings',
+  HELP_ACCOUNT_SETTINGS: 'Account',
   HELP_TROUBLESHOOTING: 'Troubleshooting',
 
   // FAQ Questions and Answers
@@ -518,15 +517,15 @@ export const STRINGS = {
 
   FAQ_CHANGE_STUDY_REMINDERS_Q: 'How do I change my study reminders?',
   FAQ_CHANGE_STUDY_REMINDERS_A:
-    "Go to Account settings, toggle study reminders on, then tap Time to set when you'd like to be reminded to practice.",
+    "Go to Account, toggle study reminders on, then tap Time to set when you'd like to be reminded to practice.",
 
   FAQ_CLEAR_AUDIO_CACHE_Q: 'How do I clear audio cache?',
   FAQ_CLEAR_AUDIO_CACHE_A:
-    'In Account settings, find Audio cache and tap Clear. This frees up storage space and audio will re-download when needed.',
+    'In Account, find Audio cache and tap Clear. This frees up storage space and audio will re-download when needed.',
 
   FAQ_CHANGE_THEMES_Q: 'How do I change themes?',
   FAQ_CHANGE_THEMES_A:
-    'In Account settings, tap Theme to choose from different color schemes that match your preference and environment.',
+    'In Account, tap Theme to choose from different color schemes that match your preference and environment.',
 
   FAQ_AUDIO_NOT_PLAYING_Q: "Why isn't audio playing?",
   FAQ_AUDIO_NOT_PLAYING_A:

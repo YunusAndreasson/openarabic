@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react-native';
+import { act, renderHook } from '@testing-library/react-native';
 
 import { useNavigationWithDebounce } from '@/hooks/navigation/useNavigationWithDebounce';
 
@@ -95,7 +95,7 @@ describe('useNavigationWithDebounce', () => {
     });
 
     act(() => {
-      result.current.navigateTo('/settings');
+      result.current.navigateTo('/account');
     });
 
     expect(router.push).toHaveBeenCalledTimes(1);

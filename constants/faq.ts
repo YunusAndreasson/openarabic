@@ -172,7 +172,7 @@ export const FAQ_DATA: FAQCategory[] = [
         id: 'clear-cache',
         question: 'How do I clear audio cache?',
         answer:
-          'Account settings → Audio cache → Clear. Audio will re-download when needed. This frees up device storage space.',
+          'Account → Audio cache → Clear. Audio will re-download when needed. This frees up device storage space.',
         category: 'Technical',
       },
       {

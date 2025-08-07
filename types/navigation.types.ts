@@ -46,7 +46,6 @@ export type RouteParams = {
   '/(tabs)': Record<string, never>;
   '/(tabs)/practice': Record<string, never>;
   '/(tabs)/listen': Record<string, never>;
-  '/settings': Record<string, never>;
   '/insights': Record<string, never>;
 };
 

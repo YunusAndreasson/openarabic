@@ -1,8 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
+import type { FlashListProps } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import { useQuery } from '@tanstack/react-query';
 import React, { Fragment, memo, useCallback, useMemo, type ReactElement } from 'react';
-import type { NativeScrollEvent, NativeSyntheticEvent, ViewToken } from 'react-native';
+import type {
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  ViewToken,
+  ViewabilityConfig,
+} from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -69,12 +75,12 @@ const createFlashListConfig = <T,>({
   renderItem: (info: { item: T; index: number }) => React.ReactElement;
   keyExtractor: (item: T, index: number) => string;
   estimatedItemSize: number;
-  contentContainerStyle?: any;
-  ListHeaderComponent?: React.ComponentType<any> | React.ReactElement | null;
-  ListFooterComponent?: React.ComponentType<any> | React.ReactElement | null;
-  onScroll?: (event: any) => void;
-  onViewableItemsChanged?: (info: { viewableItems: any[] }) => void;
-  viewabilityConfig?: any;
+  contentContainerStyle?: FlashListProps<T>['contentContainerStyle'];
+  ListHeaderComponent?: React.ComponentType<unknown> | React.ReactElement | null;
+  ListFooterComponent?: React.ComponentType<unknown> | React.ReactElement | null;
+  onScroll?: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  onViewableItemsChanged?: (info: { viewableItems: ViewToken[] }) => void;
+  viewabilityConfig?: ViewabilityConfig;
   overrideItemLayout?: (layout: { span?: number; size?: number }) => void;
   drawDistance?: number;
   scrollEventThrottle?: number;
@@ -84,7 +90,7 @@ const createFlashListConfig = <T,>({
   bounces?: boolean;
   overScrollMode?: 'auto' | 'always' | 'never';
   persistentScrollbar?: boolean;
-  extraData?: any;
+  extraData?: unknown;
   initialScrollIndex?: number;
 }) => ({
   data,

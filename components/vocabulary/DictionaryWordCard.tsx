@@ -8,6 +8,7 @@ import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
 
 interface DictionaryWordCardProps {
@@ -49,11 +50,10 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
 
         await audioPlayer.play(track);
       } catch (error) {
-        // Audio playback errors are handled silently to avoid disrupting the UX
-        // Only log in development for debugging
-        if (__DEV__) {
-          console.warn('Failed to play word audio:', error);
-        }
+        await handleError(error instanceof Error ? error : String(error), {
+          showToast: false,
+          captureSentry: !__DEV__,
+        });
       }
     }, [word.root?.audio_url, word.root_id, word.root?.letters, audioPlayer, editMode]);
 
@@ -110,11 +110,7 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
             onPress={handleDeletePress}
             activeOpacity={LAYOUT.OPACITY.PRESSED}
           >
-            <Ionicons
-              name="trash-outline"
-              size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-              color={colors.white}
-            />
+            <Ionicons name="trash" size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={colors.white} />
           </TouchableOpacity>
         )}
       </View>

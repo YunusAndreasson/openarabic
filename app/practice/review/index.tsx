@@ -105,7 +105,7 @@ export default function ReviewScreen(): JSX.Element {
             fontSize={wordFontSize}
             isTransitioning={isTransitioningToCompletion}
             isUpdating={isUpdating}
-            opacityStyle={animatedStyle as any}
+            opacityStyle={animatedStyle}
             testID="review-card"
             word={currentSentence.wordForm}
             onSwipeLeft={handleSwipeLeft}

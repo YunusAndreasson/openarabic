@@ -20,6 +20,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import { useDictionaryModal, useFSRSQueries } from '@/hooks/vocabulary';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { handleError } from '@/utils/errorHandling';
 
 export default function DictionaryScreen(): JSX.Element {
   const { user } = useAuth();
@@ -82,11 +83,12 @@ export default function DictionaryScreen(): JSX.Element {
         // Since the word exists in study words, this will remove it
         await toggleRootMutation.mutateAsync({ userId: user.id, rootId });
       } catch (error) {
-        // Error handling is already done in the mutation
-        // Only log in development to avoid console noise in production
-        if (__DEV__) {
-          console.error('Failed to delete word:', error);
-        }
+        // Mutation already handles error states; avoid noisy logs
+        await handleError(error instanceof Error ? error : String(error), {
+          showToast: true,
+          toastMessage: 'Failed to delete word',
+          captureSentry: !__DEV__,
+        });
       }
     },
     [user?.id, toggleRootMutation]

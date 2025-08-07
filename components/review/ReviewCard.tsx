@@ -2,6 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import type { AnimatedStyleProp as ReanimatedAnimatedStyleProp } from 'react-native-reanimated';
 import Animated, {
   cancelAnimation,
   runOnJS,
@@ -12,7 +13,7 @@ import Animated, {
 
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, SCREEN_WIDTH, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
-import type { AnimatedStyleProp } from '@/types/ui/base.types';
+import type { AnimatedStyleProp as AppAnimatedStyleProp } from '@/types/ui/base.types';
 
 import WordDisplayComponent from './WordDisplay';
 
@@ -59,7 +60,7 @@ interface ReviewCardProps {
   onSwipeRight: () => void;
   isUpdating: boolean;
   isTransitioning: boolean;
-  opacityStyle: AnimatedStyleProp<ViewStyle>;
+  opacityStyle: ReanimatedAnimatedStyleProp<ViewStyle> | AppAnimatedStyleProp<ViewStyle>;
   testID?: string;
 }
 

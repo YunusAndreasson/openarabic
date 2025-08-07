@@ -173,7 +173,7 @@ export const useAccountScreen = () => {
         Alert.alert(STRINGS.ENABLE_NOTIFICATIONS, STRINGS.TURN_ON_NOTIFICATIONS, [
           { text: STRINGS.CANCEL, style: 'cancel' },
           {
-            text: STRINGS.SETTINGS,
+            text: STRINGS.ACCOUNT,
             onPress: () => {
               Linking.openSettings();
             },

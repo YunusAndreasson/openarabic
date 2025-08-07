@@ -6,8 +6,21 @@ import { handleError } from '@/utils/errorHandling';
 /**
  * Simple audio service - single source of truth for native audio player
  */
+type BasicAudioPlayer = {
+  play?: () => Promise<void> | void;
+  pause?: () => Promise<void> | void;
+  seekTo?: (position: number) => Promise<void> | void;
+  remove?: () => Promise<void> | void;
+  playing?: boolean;
+  isPlaying?: boolean;
+  currentTime?: number;
+  position?: number;
+  duration?: number;
+  durationMillis?: number;
+};
+
 class SimpleAudioService {
-  private currentPlayer: any = null;
+  private currentPlayer: BasicAudioPlayer | null = null;
   private currentTrack: EnhancedAudioTrack | null = null;
   private listeners: Set<(status: AudioStatus) => void> = new Set();
   private statusPollingInterval: ReturnType<typeof setInterval> | null = null;
@@ -67,7 +80,7 @@ class SimpleAudioService {
       this.updateStatus({ isLoading: true, isPlaying: false, currentTrack: this.currentTrack });
 
       // Start playback
-      await this.currentPlayer.play();
+      await this.currentPlayer.play?.();
 
       // IMMEDIATE FEEDBACK: Update to playing state immediately after play() succeeds
       this.updateStatus({ isLoading: false, isPlaying: true });
