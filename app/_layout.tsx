@@ -174,17 +174,20 @@ function AppContent() {
   }, [session, appReady, isAuthLoading]);
 
   const colors = useColors();
-  const navigationTheme = useMemo(() => (isDark ? DarkTheme : DefaultTheme), [isDark]);
-
-  // Extend the navigation theme with custom colors for iOS back buttons
-  useEffect(() => {
-    // Update the navigation theme to ensure iOS back buttons use the tint color
+  const navigationTheme = useMemo(() => {
+    const baseTheme = isDark ? DarkTheme : DefaultTheme;
+    // On iOS, ensure the native back button uses our tint color by deriving a theme object
     if (Platform.OS === 'ios') {
-      // This affects the native iOS back button text color
-      DefaultTheme.colors.primary = colors.tint;
-      DarkTheme.colors.primary = colors.tint;
+      return {
+        ...baseTheme,
+        colors: {
+          ...baseTheme.colors,
+          primary: colors.tint,
+        },
+      };
     }
-  }, [colors.tint]);
+    return baseTheme;
+  }, [isDark, colors.tint]);
 
   // Set default theme based on system preference if none is set yet
   useEffect(() => {

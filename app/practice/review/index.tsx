@@ -1,5 +1,4 @@
 import { useLocalSearchParams } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import type { JSX } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
@@ -15,7 +14,6 @@ import {
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { useReview } from '@/hooks/review';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 
 const baseStyles = StyleSheet.create({
   container: {
@@ -46,7 +44,6 @@ export default function ReviewScreen(): JSX.Element {
   const mode = params['mode'] as string | undefined;
   const insets = useSafeAreaInsets();
   const colors = useColors();
-  const isDarkMode = useIsDarkMode();
 
   const {
     showMeaningOverlay,
@@ -81,8 +78,6 @@ export default function ReviewScreen(): JSX.Element {
 
   return (
     <View style={[baseStyles.container, { backgroundColor: colors.background }]}>
-      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
-
       <View
         style={[
           baseStyles.contentContainer,

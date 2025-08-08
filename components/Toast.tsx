@@ -111,7 +111,7 @@ export const Toast = memo(
       stiffness: TOAST_SPRING.stiffness,
     });
 
-    const animatedStyle = [opacityStyle, scaleStyle, translateYStyle];
+    // Keep individual animated styles separate for clarity
 
     const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -218,7 +218,10 @@ export const Toast = memo(
     if (!visible) return null;
 
     return (
-      <Animated.View pointerEvents="none" style={[containerStyle, ...animatedStyle]}>
+      <Animated.View
+        pointerEvents="none"
+        style={[containerStyle, opacityStyle, scaleStyle, translateYStyle]}
+      >
         <View
           style={[
             styles.toast,

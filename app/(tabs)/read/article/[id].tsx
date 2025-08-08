@@ -1,6 +1,5 @@
 import type { FlashList } from '@shopify/flash-list';
 import { router, useLocalSearchParams } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import type { JSX } from 'react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -27,7 +26,6 @@ import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useHeaderVisibility } from '@/hooks/ui/useHeaderVisibility';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { useAppSelectorMemo } from '@/store/hooks';
@@ -383,18 +381,11 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
 
 export default function ArticleScreen(): JSX.Element {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const isDarkMode = useIsDarkMode();
   const colors = useColors();
 
   return (
     <ToastProvider>
       <View style={[FLEX_ONE_STYLE, { backgroundColor: colors.background }]}>
-        <StatusBar
-          animated={true}
-          style={isDarkMode ? 'light' : 'dark'}
-          translucent={true}
-          backgroundColor="transparent"
-        />
         <ArticleScreenContent id={id ?? ''} />
       </View>
     </ToastProvider>

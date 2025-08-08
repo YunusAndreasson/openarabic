@@ -1,6 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -156,8 +155,6 @@ export default function NowPlayingModal() {
 
   return (
     <ThemedView style={styles.container}>
-      <StatusBar style="light" />
-
       {/* Background Image */}
       <View style={styles.backgroundContainer}>
         <EnhancedImage source={String(article?.image_url || '')} style={styles.backgroundImage} />

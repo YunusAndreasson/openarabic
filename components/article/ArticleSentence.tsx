@@ -2,7 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import type { ComponentRef, ReactNode, RefObject } from 'react';
 import { createRef, useEffect, useMemo, useRef } from 'react';
 import type { LayoutRectangle, StyleProp, TouchableOpacity, ViewStyle } from 'react-native';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Animated, { type AnimatedStyleProp } from 'react-native-reanimated';
 
 import { ArabicWord } from '@/components/article/ArabicWord';
@@ -145,7 +145,7 @@ function ArticleSentenceComponent({
     <View style={[styles.container, containerStyle]}>
       <Animated.View style={backgroundStyle} />
       {settings.showEnglish && sentence.english && (
-        <Animated.Text style={englishTextStyle}>{sentence.english}</Animated.Text>
+        <Text style={englishTextStyle as any}>{sentence.english}</Text>
       )}
       <View style={styles.wordsContainer}>{renderedWords}</View>
     </View>

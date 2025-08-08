@@ -2,7 +2,6 @@ import { memo, useMemo, type FC } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
-import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { BaseCardProps } from '@/types/ui/card.types';
 
@@ -21,8 +20,6 @@ const BaseCard: FC<BaseCardProps> = memo(
     testID,
   }) => {
     const colors = useColors();
-
-    const { handlePressIn, handlePressOut } = usePressAnimation();
 
     const shadowStyles = useMemo(() => {
       if (shadowSize === 'none') return {};
@@ -84,8 +81,6 @@ const BaseCard: FC<BaseCardProps> = memo(
         ]}
         onPress={onPress}
         onLongPress={onLongPress}
-        onPressIn={includePressAnimation ? handlePressIn : undefined}
-        onPressOut={includePressAnimation ? handlePressOut : undefined}
       >
         <View style={combinedContentStyle}>{children}</View>
       </Pressable>

@@ -1,4 +1,3 @@
-import { StatusBar } from 'expo-status-bar';
 import type { JSX } from 'react';
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -13,7 +12,6 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 
 import { INFO_TITLES } from './_layout';
@@ -21,7 +19,6 @@ import { INFO_TITLES } from './_layout';
 export default function InsightsScreen(): JSX.Element {
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
-  const isDarkMode = useIsDarkMode();
   const colors = useColors();
 
   // Use the FSRS queries hook for data fetching
@@ -38,7 +35,6 @@ export default function InsightsScreen(): JSX.Element {
   if (error) {
     return (
       <ThemedView style={styles.container}>
-        <StatusBar style={isDarkMode ? 'light' : 'dark'} />
         <Animated.View
           entering={FadeIn.duration(LAYOUT.ANIMATION.DURATION.SLOW)}
           style={[styles.errorContainer, { backgroundColor: colors.elevation1 }]}
@@ -51,8 +47,6 @@ export default function InsightsScreen(): JSX.Element {
 
   return (
     <ThemedView style={styles.container}>
-      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
-
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
