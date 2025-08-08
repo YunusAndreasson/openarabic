@@ -150,7 +150,7 @@ export default function TabLayout(): JSX.Element {
               title: screen.title,
               tabBarIcon: ({ focused, color }) => (
                 <Ionicons
-                  name={focused ? screen.iconFilled : screen.iconOutline}
+                  name={screen.iconFilled}
                   size={LAYOUT.BUTTON.ICON_SIZE.XLARGE}
                   color={color}
                   style={{

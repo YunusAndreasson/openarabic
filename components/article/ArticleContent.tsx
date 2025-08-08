@@ -300,7 +300,7 @@ const FloatingActionButtons = memo<{
           }
         >
           <Ionicons
-            name={isInReadingList ? 'headset' : 'headset-outline'}
+            name="headset"
             size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
             color={isInReadingList ? colors.tint : colors.secondaryText}
           />

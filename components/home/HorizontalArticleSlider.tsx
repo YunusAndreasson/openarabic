@@ -1,6 +1,5 @@
 import { memo, useCallback, useMemo, useRef, type FC } from 'react';
 import {
-  Platform,
   ScrollView,
   StyleSheet,
   View,
@@ -78,21 +77,8 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
           imageUrl={String(article.image_url)}
           style={[
             styles.card,
-            { backgroundColor: colors.card }, // Use consistent card background
-            // Override with very subtle shadow for large featured cards
-            {
-              ...Platform.select({
-                ios: {
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.12,
-                  shadowRadius: 3,
-                },
-                android: {
-                  elevation: 2,
-                },
-              }),
-              shadowColor: colors.shadow,
-            },
+            { backgroundColor: colors.card },
+            { shadowColor: colors.shadow, ...LAYOUT.ELEVATION.SUBTLE },
           ]}
           summary={String(article.summary)}
           title={article.title}

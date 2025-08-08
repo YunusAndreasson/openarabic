@@ -5,7 +5,7 @@ import Animated from 'react-native-reanimated';
 import { ThemedText } from '@/components/ThemedText';
 import TouchableIcon from '@/components/TouchableIcon';
 import type { ColorName } from '@/constants/Colors';
-import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useArabicWordAnalysis } from '@/hooks/vocabulary';
@@ -58,10 +58,11 @@ const STATIC_STYLES = StyleSheet.create({
     borderStyle: 'solid',
   },
   text: {
-    fontSize: 15,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '500',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight:
+      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
     includeFontPadding: false,
     textAlignVertical: 'center',
   },
@@ -272,7 +273,7 @@ export const WordTooltip = memo(
         <View style={STATIC_STYLES.contentRow}>
           <View style={STATIC_STYLES.textContainer}>{renderColorCodedEnglish}</View>
           <TouchableIcon
-            icon={isInStudyList ? 'school' : 'school-outline'}
+            icon={'school'}
             size={20}
             touchSize="small"
             color={isInStudyList ? colors.tint : colors.secondaryText}

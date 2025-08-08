@@ -303,7 +303,6 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
-    textShadowColor: 'rgba(0,0,0,0.8)',
   },
 
   author: {
@@ -311,7 +310,6 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.TINY,
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
-    textShadowColor: 'rgba(0,0,0,0.6)',
   },
 
   progressText: {
@@ -321,7 +319,6 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.MEDIUM,
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
-    textShadowColor: 'rgba(0,0,0,0.6)',
   },
 
   sentenceSection: {
@@ -345,7 +342,6 @@ const styles = StyleSheet.create({
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
-    textShadowColor: 'rgba(0,0,0,0.7)',
   },
 
   bottomControlsContainer: {

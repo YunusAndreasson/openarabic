@@ -86,7 +86,7 @@ const BottomControls = memo<BottomControlsProps>(
             >
               <Ionicons
                 color={isTimerActive ? colors.background : colors.secondaryText}
-                name={isTimerActive ? 'timer' : 'timer-outline'}
+                name={'timer'}
                 size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
               />
               {isTimerActive && (

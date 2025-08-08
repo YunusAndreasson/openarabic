@@ -32,19 +32,19 @@ export const THEME_OPTIONS: ThemeOption[] = [
     id: Theme.Light,
     title: 'Birches in Spring',
     subtitle: 'Clean, bright interface with crisp contrast for daytime reading',
-    icon: 'sunny-outline',
+    icon: 'sunny',
   },
   {
     id: Theme.Dark,
     title: 'Midnight Summer',
     subtitle: 'Gentle on the eyes with warm tones for comfortable evening study',
-    icon: 'moon-outline',
+    icon: 'moon',
   },
   {
     id: Theme.Sepia,
     title: 'Autumn Leaves',
     subtitle: 'Warm, nostalgic tones reminiscent of aged parchment for cozy reading',
-    icon: 'leaf-outline',
+    icon: 'leaf',
   },
 ];
 

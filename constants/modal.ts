@@ -1,5 +1,4 @@
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
-import { Platform } from 'react-native';
 
 import { LAYOUT } from './layout';
 
@@ -62,18 +61,9 @@ export function createNavigationOptions(
     gestureEnabled: true,
     contentStyle: {
       backgroundColor: colors.background,
-      // Add subtle shadow for modal separation using elevation system
-      ...Platform.select({
-        ios: {
-          shadowColor: colors.shadow,
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.15,
-          shadowRadius: 8,
-        },
-        android: {
-          elevation: 8,
-        },
-      }),
+      // Subtle elevation for modal separation
+      shadowColor: colors.shadow,
+      ...LAYOUT.ELEVATION.MEDIUM,
     },
     ...baseOptions,
   };

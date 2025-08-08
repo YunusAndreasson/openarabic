@@ -69,7 +69,7 @@ function Auth(): JSX.Element {
             autoCapitalize="none"
             autoComplete="email"
             error={emailError}
-            icon="mail-outline"
+            icon="mail"
             importantForAutofill="yes"
             keyboardType="email-address"
             placeholder={STRINGS.YOUR_EMAIL}
@@ -88,11 +88,11 @@ function Auth(): JSX.Element {
             autoCapitalize="none"
             autoComplete={isRegistering ? 'password-new' : 'password'}
             error={passwordError}
-            icon="lock-closed-outline"
+            icon="lock-closed"
             importantForAutofill="yes"
             placeholder={STRINGS.YOUR_PASSWORD}
             returnKeyType="done"
-            rightIcon={showPassword ? 'eye-off-outline' : 'eye-outline'}
+            rightIcon={showPassword ? 'eye-off' : 'eye'}
             secureTextEntry={!showPassword}
             textAlignVertical="center"
             textContentType={isRegistering ? 'newPassword' : 'password'}

@@ -45,7 +45,7 @@ const EmptyState = memo(
     title,
     description,
     actionText,
-    icon = 'book-outline',
+    icon = 'book',
     onAction,
     containerStyle,
     colors,
@@ -58,9 +58,7 @@ const EmptyState = memo(
     const IconComponent: ComponentType<ComponentProps<typeof Ionicons>> =
       icon && typeof icon !== 'string' ? icon : Ionicons;
     const iconName: ComponentProps<typeof Ionicons>['name'] =
-      typeof icon === 'string'
-        ? (icon as ComponentProps<typeof Ionicons>['name'])
-        : 'alert-circle-outline';
+      typeof icon === 'string' ? (icon as ComponentProps<typeof Ionicons>['name']) : 'alert-circle';
 
     const defaultActionButton = !hideArticlesButton && (
       <ThemedButton

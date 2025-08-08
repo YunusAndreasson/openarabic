@@ -239,7 +239,7 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
     () => ({
       colors,
       description: STRINGS.TRY_ADJUSTING_FILTERS,
-      icon: 'funnel-outline' as const,
+      icon: 'funnel' as const,
       title: STRINGS.NO_ARTICLES_FOUND,
       hideArticlesButton: true,
       containerStyle: STATIC_STYLES.emptyContainer,
