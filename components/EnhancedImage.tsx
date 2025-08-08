@@ -24,9 +24,7 @@ const EnhancedImageComparison = (
     prevProps.contentFit !== nextProps.contentFit ||
     prevProps.contentPosition !== nextProps.contentPosition ||
     prevProps.cachePolicy !== nextProps.cachePolicy ||
-    prevProps.allowDownscaling !== nextProps.allowDownscaling ||
     prevProps.priority !== nextProps.priority ||
-    prevProps.autoplay !== nextProps.autoplay ||
     prevProps.onLoad !== nextProps.onLoad ||
     prevProps.onError !== nextProps.onError ||
     prevProps.testID !== nextProps.testID
@@ -66,9 +64,7 @@ function EnhancedImageInternal({
   onLoad,
   onError,
   cachePolicy = DEFAULT_CACHE_POLICY,
-  allowDownscaling = true,
   priority = DEFAULT_PRIORITY,
-  autoplay = true,
   testID,
 }: EnhancedImageProps) {
   const colors = useColors();
@@ -82,8 +78,6 @@ function EnhancedImageInternal({
   // Memoize Image props to prevent unnecessary re-renders
   const imageProps = useMemo(
     () => ({
-      allowDownscaling,
-      autoplay,
       cachePolicy,
       contentFit,
       contentPosition,
@@ -92,7 +86,7 @@ function EnhancedImageInternal({
       style: styles.image,
       ...(testID ? { testID } : {}),
     }),
-    [allowDownscaling, autoplay, cachePolicy, contentFit, contentPosition, priority, source, testID]
+    [cachePolicy, contentFit, contentPosition, priority, source, testID]
   );
 
   // Memoize callback props separately to avoid recreating imageProps

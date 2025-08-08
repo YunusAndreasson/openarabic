@@ -3,14 +3,12 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
-import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/theme/useColors';
 
 interface ProgressCircleProps {
   percentage: number; // 0-100
   size?: number;
   strokeWidth?: number;
-  showPercentage?: boolean;
   style?: object;
 }
 
@@ -21,7 +19,6 @@ export function ProgressCircle({
   percentage,
   size = DEFAULT_SIZE,
   strokeWidth = DEFAULT_STROKE_WIDTH,
-  showPercentage = false,
   style,
 }: ProgressCircleProps): JSX.Element {
   const colors = useColors();
@@ -48,12 +45,6 @@ export function ProgressCircle({
     },
     svg: {
       transform: [{ rotate: '-90deg' }], // Rotate to start from top (12 o'clock)
-    },
-    percentageText: {
-      fontSize: size * 0.25, // Scale text with circle size
-      fontWeight: '600',
-      textAlign: 'center',
-      position: 'absolute',
     },
   });
 
@@ -86,11 +77,7 @@ export function ProgressCircle({
         />
       </Svg>
 
-      {showPercentage && (
-        <ThemedText colorName="text" style={styles.percentageText} type="caption" weight="semibold">
-          {Math.round(clampedPercentage)}%
-        </ThemedText>
-      )}
+      {/* percentage text overlay removed for simplification */}
     </View>
   );
 }

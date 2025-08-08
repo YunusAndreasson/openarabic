@@ -11,6 +11,7 @@ import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
 import { Theme } from '@/constants/Colors';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import { setTheme } from '@/store/themeSlice';
@@ -116,7 +117,7 @@ export const ThemePicker: FC<ThemePickerProps> = memo(({ isVisible, onClose }) =
         {/* Header */}
         <View style={styles.header}>
           <ThemedText type="heading3" weight="bold">
-            Theme
+            {STRINGS.THEME}
           </ThemedText>
         </View>
 

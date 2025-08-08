@@ -34,12 +34,6 @@ export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressabl
   /** Caching policy */
   cachePolicy?: ImageConfig['cachePolicy'];
 
-  /** Whether the image is allowed to be downscaled when rendered */
-  allowDownscaling?: boolean;
-
   /** Loading priority */
   priority?: 'high' | 'low' | 'normal';
-
-  /** Whether animated images should automatically play */
-  autoplay?: boolean;
 }

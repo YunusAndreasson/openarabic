@@ -16,27 +16,11 @@ import type { StudyWord } from '@/types/vocabulary.types';
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 interface DictionaryButtonProps {
-  /**
-   * Hide the button when there are no words to manage
-   */
-  hideWhenEmpty?: boolean;
-
-  /**
-   * Number of words available (used with hideWhenEmpty)
-   */
-  wordCount?: number;
-
-  /**
-   * Optional custom styling
-   */
+  /** Optional custom styling */
   style?: ViewStyle;
 }
 
-export default function DictionaryButton({
-  hideWhenEmpty = false,
-  wordCount = 0,
-  style,
-}: DictionaryButtonProps = {}): JSX.Element | null {
+export default function DictionaryButton({ style }: DictionaryButtonProps = {}): JSX.Element {
   const colors = useColors();
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     includeOpacity: true,
@@ -45,10 +29,6 @@ export default function DictionaryButton({
   const handlePress = useCallback(() => {
     router.push('/(tabs)/practice/dictionary');
   }, []);
-
-  if (hideWhenEmpty && wordCount === 0) {
-    return null;
-  }
 
   return (
     <AnimatedTouchable
@@ -112,7 +92,7 @@ export function PracticeDictionaryButton({
   const filteredStudyWords =
     allWords?.filter((word: StudyWord) => word != null && word.root_id != null) ?? [];
 
-  return (
-    <DictionaryButton hideWhenEmpty={true} wordCount={filteredStudyWords.length} style={style} />
-  );
+  if (filteredStudyWords.length === 0) return null;
+
+  return <DictionaryButton style={style} />;
 }

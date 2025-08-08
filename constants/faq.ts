@@ -19,55 +19,36 @@ export const FAQ_DATA: FAQCategory[] = [
         id: 'what-is-app',
         question: 'What is OpenArabic?',
         answer:
-          'A free Arabic learning app. Read classical Islamic texts with translations and build vocabulary through spaced repetition.',
+          'A free Arabic learning app focused on reading authentic classical texts with precise translations and science-backed spaced repetition (FSRS) for durable vocabulary growth.',
         category: 'Getting Started',
       },
       {
         id: 'is-free',
         question: 'Is it free?',
         answer:
-          'Yes, completely free with no ads or subscriptions. Created by Yûnus Andréasson (yunus@edenmind.com) for everyone.',
+          'Yes. No ads, no subscriptions. Built as a public good by Yûnus Andréasson (yunus@edenmind.com).',
         category: 'Getting Started',
       },
       {
         id: 'who-is-this-for',
         question: 'Who is this for?',
         answer:
-          'Readers who can recognize Arabic letters and basic words but struggle with full texts. Add unknown words to your study list and memorize them.',
+          'Learners who can decode Arabic and want to read real texts efficiently. You tap unknown words to add them, then the app schedules optimal reviews to convert them into long‑term memory.',
         category: 'Getting Started',
       },
       {
         id: 'how-to-start',
         question: 'How do I get started?',
         answer:
-          'Go to Read tab, choose an article, tap Arabic words to see translations, then tap the school icon to add words to your study list. Use Practice tab to review with spaced repetition.',
+          'Open Library, pick an article, tap words to see meanings, then add unfamiliar words to your study list. Use Study to review with FSRS. Add gradually; prioritize due reviews before adding more.',
         category: 'Getting Started',
       },
       {
         id: 'learning-speed',
         question: 'How quickly will I learn?',
         answer:
-          'Learning speed varies by individual. The FSRS algorithm optimizes review timing - words you know well appear less often, difficult words more frequently.',
+          'Pace depends on input volume and regularity. FSRS spaces reviews to the edge of forgetting: stable words surface rarely; weak words reappear sooner for efficient consolidation.',
         category: 'Getting Started',
-      },
-    ],
-  },
-  {
-    name: 'Design Philosophy',
-    items: [
-      {
-        id: 'why-simple',
-        question: 'Why is the interface so simple?',
-        answer:
-          'Minimalism puts content first. Removing distracting features is as important as adding new ones. Every element serves your Arabic learning.',
-        category: 'Design Philosophy',
-      },
-      {
-        id: 'what-makes-different',
-        question: 'What makes this different?',
-        answer:
-          'Designed for the perfect experience reading classical Arabic texts, even without full fluency. Clean interface, authentic literature, smart learning.',
-        category: 'Design Philosophy',
       },
     ],
   },
@@ -78,149 +59,156 @@ export const FAQ_DATA: FAQCategory[] = [
         id: 'spaced-repetition',
         question: 'How does spaced repetition work?',
         answer:
-          'Uses the FSRS algorithm to show words just before you forget them. Good answers = longer intervals, difficult words = more frequent practice.',
+          'We use FSRS to predict forgetting curves and schedule reviews just before recall drops. Your responses update stability and difficulty, dynamically adjusting intervals per word.',
         category: 'Features',
       },
       {
         id: 'memory-gauge',
         question: 'What is the Memory Gauge?',
         answer:
-          'Shows your learning capacity in Practice tab. Green = ready for new words, Yellow = practice struggling words, Red = review due words first.',
+          'A quick capacity signal derived from your due load and weak items. Green: room for new words. Yellow: reinforce struggling words. Red: clear due reviews first to restore capacity.',
         category: 'Features',
       },
       {
         id: 'word-highlighting',
         question: 'Why are some words highlighted together?',
         answer:
-          'Arabic words can combine multiple English meanings. Color-coding shows prefixes, suffixes, and components in multi-word translations only. Single words are never color-coded.',
+          'Arabic morphology can map to multi‑word English phrases. We color‑link Arabic components to English only when the English side has multiple words and exact matches. Single‑word translations are never color‑coded.',
         category: 'Features',
       },
       {
         id: 'study-reminders',
         question: 'How do study reminders work?',
         answer:
-          "Go to Account → toggle Study reminders on → tap Time to set your preferred reminder time. You'll get daily notifications to practice.",
+          'Account → Study reminders → enable and set a time. Notifications are local to your device. You can disable them anytime.',
         category: 'Features',
       },
       {
         id: 'audio-features',
         question: 'What audio features are available?',
         answer:
-          'Listen to articles with sleep timer, playlist management, and progress tracking. Audio downloads automatically and works offline once cached.',
+          'A focused now‑playing experience with sleep timer, playlist management, and progress tracking. Audio caches automatically for offline playback once downloaded. Controls emphasize Play/Stop for clarity.',
+        category: 'Features',
+      },
+      {
+        id: 'article-selection',
+        question: 'How are recommended articles selected?',
+        answer:
+          'We target i+1 difficulty: mostly known vocabulary with a small, meaningful challenge. Selection balances your study load (due words) with variety for sustained progress.',
+        category: 'Features',
+      },
+      {
+        id: 'word-difficulty',
+        question: 'How is word difficulty determined?',
+        answer:
+          'Difficulty emerges from your review history: response quality, stability, and elapsed time. FSRS uses these signals to adapt intervals; there are no arbitrary “levels.”',
         category: 'Features',
       },
     ],
   },
   {
-    name: 'Content',
-    items: [
-      {
-        id: 'why-classical-texts',
-        question: 'Why classical texts?',
-        answer:
-          'Classical Arabic is the foundation. These texts teach proper grammar, vocabulary, and style while connecting you to Islamic literary heritage.',
-        category: 'Content',
-      },
-      {
-        id: 'theology-disclaimer',
-        question: 'Is this for theology questions?',
-        answer:
-          'No, this is an Arabic language learning app. For detailed Islamic theology or jurisprudence, consult qualified scholars and traditional sources.',
-        category: 'Content',
-      },
-      {
-        id: 'article-recommendations',
-        question: 'How are articles chosen for me?',
-        answer:
-          'Uses i+1 principle: 90-95% familiar words with just enough new vocabulary to challenge you. Perfect comprehensible input for natural learning.',
-        category: 'Content',
-      },
-      {
-        id: 'comprehensible-input',
-        question: 'What is comprehensible input?',
-        answer:
-          'Language you can mostly understand (90-95%) with just a few new words. Like reading a story where you know most words but learn 2-3 new ones from context. This is how children naturally learn language.',
-        category: 'Content',
-      },
-      {
-        id: 'i-plus-one',
-        question: 'What does i+1 mean?',
-        answer:
-          'Your current level (i) plus one step beyond (+1). Articles contain mostly familiar language with just enough new vocabulary to challenge you without overwhelming. This creates the perfect learning zone.',
-        category: 'Content',
-      },
-      {
-        id: 'natural-acquisition',
-        question: 'How does natural acquisition work?',
-        answer:
-          'You absorb new words and grammar patterns by understanding messages, not memorizing rules. Like how you learned your first language - through meaningful exposure, not textbooks.',
-        category: 'Content',
-      },
-    ],
-  },
-  {
-    name: 'Technical',
+    name: 'Offline & storage',
     items: [
       {
         id: 'audio-cache',
         question: 'What is audio cache?',
         answer:
-          'Downloaded audio files stored on your device for offline playback. Go to Account → Audio cache → Clear to free up storage space.',
-        category: 'Technical',
-      },
-      {
-        id: 'clear-cache',
-        question: 'How do I clear audio cache?',
-        answer:
-          'Account → Audio cache → Clear. Audio will re-download when needed. This frees up device storage space.',
-        category: 'Technical',
+          'Downloaded audio stored locally for offline playback. Manage it in Account → Audio cache. Clearing it frees space; tracks re‑download on demand.',
+        category: 'Offline & storage',
       },
       {
         id: 'offline-mode',
         question: 'Does this work offline?',
         answer:
-          'Partially. Downloaded articles, cached audio, and vocabulary practice work offline. Adding new words or syncing progress requires internet connection.',
-        category: 'Technical',
+          'Partially. Cached audio and previously loaded content play offline; vocabulary reviews work offline as well. Sync (e.g., new words, progress) needs a connection.',
+        category: 'Offline & storage',
       },
       {
         id: 'app-structure',
         question: 'How is the app organized?',
         answer:
-          'Read tab: Browse and read articles. Listen tab: Audio playlist with sleep timer. Practice tab: Vocabulary review with spaced repetition. Account: Settings and preferences.',
-        category: 'Technical',
+          'Library: read articles. Playlist: listen with timer and queue. Study: spaced‑repetition reviews. Account: fonts, theme, notifications, and cache management.',
+        category: 'Offline & storage',
       },
     ],
   },
   {
-    name: 'Learning Science',
+    name: 'Learning approach',
     items: [
+      {
+        id: 'why-classical-texts',
+        question: 'Why classical texts?',
+        answer:
+          'Classical Arabic underpins grammar, style, and core vocabulary. Reading source texts develops accurate patterns while connecting you to the Islamic literary tradition.',
+        category: 'Learning approach',
+      },
+      {
+        id: 'theology-disclaimer',
+        question: 'Is this for theology questions?',
+        answer:
+          'No. It is a language tool. For fiqh or creed questions, consult qualified scholars and reliable references.',
+        category: 'Learning approach',
+      },
+      {
+        id: 'comprehensible-input',
+        question: 'What is comprehensible input?',
+        answer:
+          'Input that is mostly understood with minimal effort, containing a manageable number of new items. This supports natural acquisition via context and repetition rather than explicit rule memorization.',
+        category: 'Learning approach',
+      },
+      {
+        id: 'i-plus-one',
+        question: 'What does i+1 mean?',
+        answer:
+          'Your current competence (i) plus a small incremental challenge (+1). Content stays readable while nudging growth; it should feel engaging, not exhausting.',
+        category: 'Learning approach',
+      },
+      {
+        id: 'natural-acquisition',
+        question: 'How does natural acquisition work?',
+        answer:
+          'Through meaningful exposure: your brain internalizes patterns from messages you understand. You need sustained input and well‑timed retrieval, not grammar drills alone.',
+        category: 'Learning approach',
+      },
       {
         id: 'why-90-percent',
         question: 'Why 90-95% familiar words?',
         answer:
-          'Research shows this is the sweet spot for learning. Too easy (100%) = no progress. Too hard (below 90%) = overwhelming. 90-95% lets you understand while picking up new language naturally.',
-        category: 'Learning Science',
+          'It maximizes comprehension while introducing just enough novelty to learn from context. Below ~90% becomes decoding practice; above ~95% slows growth.',
+        category: 'Learning approach',
       },
       {
         id: 'affective-filter',
         question: 'What is the affective filter?',
         answer:
-          'Your mental state affects learning. When relaxed and motivated, you absorb language easily. When stressed or anxious, learning slows down. The app creates a calm, focused environment.',
-        category: 'Learning Science',
+          'Emotional state affects intake. Calm, focused sessions improve acquisition; stress reduces it. The design intentionally avoids pressure and interruption.',
+        category: 'Learning approach',
       },
       {
         id: 'input-vs-output',
         question: 'Why focus on reading/listening?',
         answer:
-          'Input (reading/listening) drives language acquisition. You learn by understanding messages, not by forcing yourself to speak. Speaking naturally emerges once you have enough input.',
-        category: 'Learning Science',
+          'Acquisition is input‑driven: you build competence by understanding messages. Output stabilizes once the internal system is ready; forcing it early is inefficient.',
+        category: 'Learning approach',
       },
       {
         id: 'natural-order',
         question: 'How does the natural order work?',
         answer:
-          'Your brain acquires language features in a predictable sequence, regardless of how you study. The app works with this natural order, not against it.',
-        category: 'Learning Science',
+          'Features are internalized in a fairly robust sequence, independent of syllabus order. The app respects this by emphasizing abundant, level‑appropriate input.',
+        category: 'Learning approach',
+      },
+    ],
+  },
+  {
+    name: 'Privacy & data',
+    items: [
+      {
+        id: 'privacy-data',
+        question: 'What data do you store?',
+        answer:
+          'Your account email, study items and review history, reading list, and basic settings. No ads and no third‑party analytics; diagnostics are minimal and used only to improve reliability.',
+        category: 'Privacy & data',
       },
     ],
   },

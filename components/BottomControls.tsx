@@ -1,60 +1,43 @@
-import { Ionicons } from '@expo/vector-icons';
 import { memo, useMemo } from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LAYOUT } from '@/constants/layout';
-import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
 import { ThemedButton } from './ThemedButton';
-import { ThemedText } from './ThemedText';
 
 export type BottomControlsProps = {
   primaryLabel: string;
   onPrimaryPress: () => void;
-  primaryVariant?: 'filled' | 'outlined';
   primaryDisabled?: boolean;
   primaryLoading?: boolean;
 
   primaryDisablePressAnimation?: boolean;
   secondaryLabel?: string;
   onSecondaryPress?: () => void;
-  secondaryVariant?: 'filled' | 'outlined';
   secondaryDisabled?: boolean;
-
-  // Timer button props
-  showTimerButton?: boolean;
-  onTimerPress?: () => void;
-  isTimerActive?: boolean;
 };
 
 const BottomControls = memo<BottomControlsProps>(
   ({
     primaryLabel,
     onPrimaryPress,
-    primaryVariant = 'filled',
     primaryDisabled = false,
     primaryLoading = false,
     primaryDisablePressAnimation,
     secondaryLabel,
     onSecondaryPress,
-    secondaryVariant = 'outlined',
     secondaryDisabled = false,
-    showTimerButton = false,
-    onTimerPress,
-    isTimerActive = false,
   }) => {
     const colors = useColors();
     const insets = useSafeAreaInsets();
 
     const hasSecondaryButton = Boolean(secondaryLabel && onSecondaryPress);
-    const hasTimerButton = showTimerButton && onTimerPress;
 
     const dynamicStyles = useMemo(
       () => ({
         secondaryButton: { shadowColor: colors.shadow },
-        timerButton: { shadowColor: colors.shadow },
       }),
       [colors.shadow]
     );
@@ -69,45 +52,6 @@ const BottomControls = memo<BottomControlsProps>(
           },
         ]}
       >
-        {/* Timer button - positioned in top-right corner */}
-        {hasTimerButton && (
-          <View style={styles.timerContainer}>
-            <TouchableOpacity
-              activeOpacity={LAYOUT.OPACITY.PRESSED}
-              style={[
-                styles.timerButton,
-                dynamicStyles.timerButton,
-                {
-                  backgroundColor: isTimerActive ? colors.tint : colors.elevation1,
-                  borderColor: isTimerActive ? colors.tint : colors.border,
-                },
-              ]}
-              onPress={onTimerPress}
-            >
-              <Ionicons
-                color={isTimerActive ? colors.background : colors.secondaryText}
-                name={'timer'}
-                size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-              />
-              {isTimerActive && (
-                <ThemedText
-                  skipDefaultColor
-                  type="caption"
-                  style={[
-                    styles.timerLabel,
-                    {
-                      color: colors.background,
-                      fontWeight: '600',
-                    },
-                  ]}
-                >
-                  {STRINGS.TIMER}
-                </ThemedText>
-              )}
-            </TouchableOpacity>
-          </View>
-        )}
-
         {/* Action buttons row */}
         <View style={styles.buttonsRow}>
           {hasSecondaryButton && (
@@ -115,7 +59,7 @@ const BottomControls = memo<BottomControlsProps>(
               <ThemedButton
                 disabled={secondaryDisabled}
                 title={secondaryLabel ?? ''}
-                variant={secondaryVariant}
+                variant="outlined"
                 hapticFeedback={false}
                 style={[
                   styles.button,
@@ -140,7 +84,6 @@ const BottomControls = memo<BottomControlsProps>(
               hapticFeedback={false}
               style={styles.button}
               title={primaryLabel}
-              variant={primaryVariant}
               onPress={onPrimaryPress}
               testID="primary-action-button"
             />
@@ -175,24 +118,6 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     backgroundColor: 'transparent',
-  },
-  timerButton: {
-    alignItems: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: 1,
-    flexDirection: 'row',
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.TINY,
-    ...LAYOUT.ELEVATION.SUBTLE,
-  },
-  timerContainer: {
-    alignItems: 'flex-end',
-    marginBottom: LAYOUT.SPACING.SMALL,
-    width: '100%',
-  },
-  timerLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    marginLeft: LAYOUT.SPACING.TINY,
   },
 });
 

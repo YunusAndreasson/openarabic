@@ -358,8 +358,6 @@ export default function ListenScreen(): JSX.Element {
           primaryLoading={isPlayAllLoading}
           primaryDisablePressAnimation={true}
           primaryLabel={STRINGS.PLAY_ALL}
-          primaryVariant="filled"
-          showTimerButton={false}
           onPrimaryPress={handlePlayAllStable}
         />
       </View>

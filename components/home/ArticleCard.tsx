@@ -113,7 +113,6 @@ export const ArticleCard: FC<ArticleCardProps> = memo(
                   <EnhancedImage
                     source={imageUrl}
                     style={styles.thumbnailImage}
-                    contentFit="cover"
                     cachePolicy="disk"
                   />
                 </View>
@@ -147,7 +146,6 @@ export const ArticleCard: FC<ArticleCardProps> = memo(
                         percentage={progressPercentage}
                         size={28}
                         strokeWidth={4}
-                        showPercentage={false}
                         style={styles.progressCircle}
                       />
                     </View>

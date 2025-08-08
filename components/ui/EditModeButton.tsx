@@ -30,25 +30,9 @@ interface EditModeButtonProps {
    * Optional custom styling
    */
   style?: ViewStyle;
-
-  /**
-   * Hide the button when there are no items to manage
-   */
-  hideWhenEmpty?: boolean;
-
-  /**
-   * Number of items available to manage (used with hideWhenEmpty)
-   */
-  itemCount?: number;
 }
 
-const EditModeButton: FC<EditModeButtonProps> = ({
-  type,
-  onEditModeChange,
-  style,
-  hideWhenEmpty = false,
-  itemCount = 0,
-}) => {
+const EditModeButton: FC<EditModeButtonProps> = ({ type, onEditModeChange, style }) => {
   const colors = useColors();
   const { editMode, toggle } = useEditMode(type);
 
@@ -69,11 +53,6 @@ const EditModeButton: FC<EditModeButtonProps> = ({
     : type === 'dictionary'
     ? STRINGS.MANAGE
     : STRINGS.EDIT;
-
-  // Hide the button if hideWhenEmpty is true and there are no items
-  if (hideWhenEmpty && itemCount === 0) {
-    return null;
-  }
 
   return (
     <AnimatedTouchable
@@ -117,15 +96,11 @@ export const ListenEditModeButton: FC<{
 }> = ({ onEditModeChange, style }) => {
   const { sortedReadingList } = useListenScreen();
 
-  return (
-    <EditModeButton
-      type="listen"
-      hideWhenEmpty={true}
-      itemCount={sortedReadingList.length}
-      onEditModeChange={onEditModeChange}
-      style={style}
-    />
-  );
+  if (sortedReadingList.length === 0) {
+    return null;
+  }
+
+  return <EditModeButton type="listen" onEditModeChange={onEditModeChange} style={style} />;
 };
 
 const styles = StyleSheet.create({

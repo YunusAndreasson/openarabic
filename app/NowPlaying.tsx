@@ -12,6 +12,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useCurrentSentence } from '@/hooks/audio/useCurrentSentence';
@@ -159,11 +160,7 @@ export default function NowPlayingModal() {
 
       {/* Background Image */}
       <View style={styles.backgroundContainer}>
-        <EnhancedImage
-          source={String(article?.image_url || '')}
-          style={styles.backgroundImage}
-          contentFit="cover"
-        />
+        <EnhancedImage source={String(article?.image_url || '')} style={styles.backgroundImage} />
 
         {/* Audio-Reactive Gradient Overlay */}
         <Animated.View style={[styles.gradientContainer, gradientAnimation.animatedStyle]}>
@@ -193,7 +190,7 @@ export default function NowPlayingModal() {
             ]}
             numberOfLines={2}
           >
-            {isActuallyLoading ? 'Preparing audio...' : article?.title || 'Loading article...'}
+            {isActuallyLoading ? STRINGS.PREPARING_AUDIO : article?.title || STRINGS.LOADING}
           </ThemedText>
           <ThemedText
             type="body"
@@ -237,8 +234,8 @@ export default function NowPlayingModal() {
             ]}
           >
             {isActuallyLoading
-              ? 'Preparing audio...'
-              : currentSentence?.english || 'Listening to audio...'}
+              ? STRINGS.PREPARING_AUDIO
+              : currentSentence?.english || STRINGS.LOADING}
           </ThemedText>
         </Animated.View>
       </View>
