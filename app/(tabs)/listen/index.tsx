@@ -28,13 +28,16 @@ const styles = StyleSheet.create({
   flexOne: {
     flex: 1,
   },
+  separator: {
+    height: LAYOUT.SPACING.MEDIUM,
+  },
 });
 
 // Use responsive height calculation instead of hardcoded value
 const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.AUDIO_ITEM;
 
 // Memoized separator component for both DraggableFlatList and FlashList
-const ItemSeparator = () => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />;
+const ItemSeparator = memo(() => <View style={styles.separator} />);
 
 // Memoized key extractor to prevent inline function creation
 const keyExtractor = (item: ReadingListItem) => `${item.article_id}`;
@@ -312,6 +315,9 @@ export default function ListenScreen(): JSX.Element {
   // Memoize the key extractor to prevent inline function creation
   const memoizedKeyExtractor = useCallback(keyExtractor, []);
 
+  // Memoize extraData object to avoid new identity on each render
+  const listExtraData = useMemo(() => ({ audioState, editMode }), [audioState, editMode]);
+
   return (
     <ThemedView
       includeBottomInset={false}
@@ -335,7 +341,7 @@ export default function ListenScreen(): JSX.Element {
             data={sortedReadingList}
             drawDistance={ITEM_HEIGHT * 5}
             estimatedItemSize={ITEM_HEIGHT}
-            extraData={{ audioState, editMode }} // Simplified extraData
+            extraData={listExtraData}
             keyExtractor={memoizedKeyExtractor}
             removeClippedSubviews={true}
             showsVerticalScrollIndicator={false}

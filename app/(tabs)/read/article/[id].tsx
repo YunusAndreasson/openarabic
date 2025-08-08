@@ -159,12 +159,13 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
   // Track reading progress with proper initialization
   const isActive = !!article && !isLoadingArticle;
 
-  const { lastSentenceRead, updateProgress } = useReadingProgress({
-    articleId: articleId ?? 0, // Use 0 if articleId is undefined/null
-    totalSentences: sortedSentences?.length ?? 0,
-    currentSentenceIndex: currentSentenceIndexRef.current,
-    isActive,
-  });
+  const { lastSentenceRead, updateProgress, initialLastSentenceRead, hadExistingProgressOnMount } =
+    useReadingProgress({
+      articleId: articleId ?? 0, // Use 0 if articleId is undefined/null
+      totalSentences: sortedSentences?.length ?? 0,
+      currentSentenceIndex: currentSentenceIndexRef.current,
+      isActive,
+    });
 
   // Use 0 as fallback when reading progress is not available yet
   const effectiveLastSentenceRead = lastSentenceRead ?? 0;
@@ -216,6 +217,19 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     }
   }, [article, sortedSentences, isLoadingArticle, fadeIn]);
 
+  // Limit resume behavior to a short window right after content becomes ready
+  const resumeWindowActiveRef = useRef(false);
+  useEffect(() => {
+    if (article && sortedSentences && sortedSentences.length > 0 && !isLoadingArticle) {
+      resumeWindowActiveRef.current = true;
+      const timeoutId = setTimeout(() => {
+        resumeWindowActiveRef.current = false;
+      }, 1500);
+      return () => clearTimeout(timeoutId);
+    }
+    return () => {};
+  }, [article, sortedSentences, isLoadingArticle]);
+
   // Handle initial resume when article is fully loaded
   useEffect(() => {
     // Only run once when everything is ready and we haven't handled resume yet
@@ -225,10 +239,11 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
       article &&
       sortedSentences &&
       sortedSentences.length > 0 &&
-      lastSentenceRead !== null &&
-      lastSentenceRead > 0
+      hadExistingProgressOnMount &&
+      resumeWindowActiveRef.current
     ) {
-      const progressPercent = Math.round((lastSentenceRead / sortedSentences.length) * 100);
+      const baselineLastSentence = initialLastSentenceRead ?? 0;
+      const progressPercent = Math.round((baselineLastSentence / sortedSentences.length) * 100);
 
       // Show resume toast
       selectionFeedback();
@@ -245,11 +260,10 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
       hasHandledInitialResumeRef.current = true;
     }
   }, [
-    hasHandledInitialResumeRef.current, // This ensures it only runs once
     isLoadingArticle,
     article,
     sortedSentences,
-    lastSentenceRead,
+    hadExistingProgressOnMount,
     jumpToLastReadPosition,
     showToast,
   ]);

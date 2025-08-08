@@ -22,19 +22,16 @@ const TAB_SCREENS = [
   {
     name: 'read',
     title: STRINGS.READ,
-    iconOutline: 'book-outline',
     iconFilled: 'book',
   },
   {
     name: 'listen',
     title: STRINGS.LISTEN,
-    iconOutline: 'headset-outline',
     iconFilled: 'headset',
   },
   {
     name: 'practice',
     title: STRINGS.PRACTICE,
-    iconOutline: 'school-outline',
     iconFilled: 'school',
   },
 ] as const;

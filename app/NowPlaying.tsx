@@ -182,7 +182,7 @@ export default function NowPlayingModal() {
               styles.title,
               {
                 color: overlayColors.textPrimary,
-                textShadowColor: withOpacity(colors.black, 0.8),
+                textShadowColor: colors.textShadowDark,
               },
             ]}
             numberOfLines={2}
@@ -196,7 +196,7 @@ export default function NowPlayingModal() {
               styles.author,
               {
                 color: overlayColors.textSecondary,
-                textShadowColor: withOpacity(colors.black, 0.6),
+                textShadowColor: colors.textShadowDark,
               },
             ]}
           >
@@ -214,7 +214,7 @@ export default function NowPlayingModal() {
               styles.progressText,
               {
                 color: overlayColors.textTertiary,
-                textShadowColor: withOpacity(colors.black, 0.6),
+                textShadowColor: colors.textShadowDark,
               },
             ]}
           >
@@ -227,7 +227,7 @@ export default function NowPlayingModal() {
             type="body"
             style={[
               styles.englishText,
-              { color: overlayColors.textPrimary, textShadowColor: withOpacity(colors.black, 0.7) },
+              { color: overlayColors.textPrimary, textShadowColor: colors.textShadowDark },
             ]}
           >
             {isActuallyLoading

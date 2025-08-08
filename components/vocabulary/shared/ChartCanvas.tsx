@@ -1,6 +1,6 @@
 import { Canvas } from '@shopify/react-native-skia';
 import type { ReactNode } from 'react';
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
 
 import type { DataPoint } from '@/types/ui/chart.types';
@@ -25,11 +25,13 @@ export const ChartCanvas = memo(
     const resolvedWidth = width ?? graphWidth;
     const { tooltip, showTooltip, hideTooltip } = useChartTooltip();
 
+    const canvasStyle = useMemo(() => ({ width: resolvedWidth, height }), [resolvedWidth, height]);
+
     return (
       <TouchableWithoutFeedback onPress={hideTooltip}>
         <View style={[styles.container, { width: resolvedWidth, height }]}>
           {/* Main Chart Canvas */}
-          <Canvas style={{ width: resolvedWidth, height }}>{children}</Canvas>
+          <Canvas style={canvasStyle}>{children}</Canvas>
 
           {/* Interactive Data Point Overlays */}
           {dataPoints.map(point => (

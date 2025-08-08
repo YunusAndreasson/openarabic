@@ -11,6 +11,7 @@ import DragHandle, { type DragHandleProps } from '@/components/listen/DragHandle
 import PlayButton from '@/components/listen/PlayButton';
 import { ARTICLE_CARD_SPRING, CARD_DRAG_SCALE, WORD_PRESS_SCALE } from '@/constants/animation';
 import { getEnhancedOpacity, LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
@@ -87,9 +88,9 @@ export const ArticleCard: FC<ArticleCardProps> = memo(
 
     // Helper function to get difficulty text
     const getDifficultyText = (level: number): string => {
-      if (level <= 2) return 'Beginner';
-      if (level === 3) return 'Intermediate';
-      return 'Advanced';
+      if (level <= 2) return STRINGS.BEGINNER;
+      if (level === 3) return STRINGS.INTERMEDIATE;
+      return STRINGS.ADVANCED;
     };
 
     return (

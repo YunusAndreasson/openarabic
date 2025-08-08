@@ -121,6 +121,9 @@ export default function DictionaryScreen(): JSX.Element {
     [insets.bottom]
   );
 
+  // Stable object identity to avoid list-wide rerenders
+  const listExtraData = useMemo(() => ({ editMode }), [editMode]);
+
   if (!hasWords && !isLoading && !showNoResultsMessage) {
     return (
       <ThemedView style={styles.container}>
@@ -195,7 +198,7 @@ export default function DictionaryScreen(): JSX.Element {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={contentContainerStyle}
           ItemSeparatorComponent={ItemSeparator}
-          extraData={{ editMode }}
+          extraData={listExtraData}
         />
       )}
     </ThemedView>

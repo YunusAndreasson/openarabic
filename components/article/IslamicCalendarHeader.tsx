@@ -8,7 +8,6 @@ import { HIJRI_MONTHS } from '@/constants/hijri';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
-import { withOpacity } from '@/utils/colorUtils';
 import {
   createStrongDarkOverlayGradient,
   createThemeBackgroundGradient,
@@ -160,7 +159,7 @@ export const IslamicCalendarHeader = memo<IslamicCalendarHeaderProps>(
               skipDefaultColor
               style={[
                 styles.hijriDate,
-                { color: colors.white, textShadowColor: withOpacity(colors.black, 0.9) },
+                { color: colors.white, textShadowColor: colors.textShadowDark },
               ]}
             >
               {dateInfo.hijriDate}
@@ -171,7 +170,7 @@ export const IslamicCalendarHeader = memo<IslamicCalendarHeaderProps>(
               skipDefaultColor
               style={[
                 styles.englishDate,
-                { color: colors.white, textShadowColor: withOpacity(colors.black, 0.9) },
+                { color: colors.white, textShadowColor: colors.textShadowDark },
               ]}
             >
               {dateInfo.englishDate}
@@ -183,7 +182,7 @@ export const IslamicCalendarHeader = memo<IslamicCalendarHeaderProps>(
                 skipDefaultColor
                 style={[
                   styles.activeCount,
-                  { color: colors.white, textShadowColor: withOpacity(colors.black, 0.9) },
+                  { color: colors.white, textShadowColor: colors.textShadowDark },
                 ]}
               >
                 {activeEventsCount === 1

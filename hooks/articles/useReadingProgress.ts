@@ -37,6 +37,10 @@ export function useReadingProgress({
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const lastSavedSentenceRef = useRef<number>(0);
+  // Capture the progress value as it existed on the initial load of this hook.
+  // This lets consumers differentiate between pre-existing progress and progress
+  // that was created/updated during the current session.
+  const initialLastSentenceReadRef = useRef<number | null>(null);
 
   // Query to get current reading progress
   const { data: progress, isLoading } = useQuery({
@@ -90,6 +94,14 @@ export function useReadingProgress({
     refetchOnMount: false, // Don't refetch on mount - use persisted data first
     retry: 3, // Retry up to 3 times if the query fails
   });
+
+  // Capture the initial progress exactly once when the first query result resolves
+  // (post-sanitization). If there was no existing progress, this stores 0.
+  useEffect(() => {
+    if (initialLastSentenceReadRef.current === null && !isLoading) {
+      initialLastSentenceReadRef.current = progress?.last_sentence_read ?? 0;
+    }
+  }, [isLoading, progress?.last_sentence_read]);
 
   // Mutation to update reading progress
   const updateProgressMutation = useMutation({
@@ -208,10 +220,13 @@ export function useReadingProgress({
         }
       : null,
     isLoading,
-    updateProgress: (sentenceIndex: number) => updateProgress(sentenceIndex),
+    updateProgress,
     isUpdating: updateProgressMutation.isPending,
     // New: expose the last sentence read for jumping functionality
     lastSentenceRead: progress?.last_sentence_read ?? 0,
+    // New: expose initial values to distinguish pre-existing progress from session updates
+    initialLastSentenceRead: initialLastSentenceReadRef.current ?? 0,
+    hadExistingProgressOnMount: (initialLastSentenceReadRef.current ?? 0) > 0,
   };
 }
 

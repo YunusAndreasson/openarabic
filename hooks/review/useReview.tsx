@@ -28,7 +28,8 @@ interface ReviewTimeRefs {
 interface ReviewStateRefs {
   meaningTimeout: ReturnType<typeof setTimeout> | null;
   completionTransition: ReturnType<typeof setTimeout> | null;
-  timeoutRef: ReturnType<typeof setTimeout> | null;
+  initialTransitionTimeout: ReturnType<typeof setTimeout> | null;
+  fadeAnimationTimeout: ReturnType<typeof setTimeout> | null;
   maxProgress: number;
   completionTriggered: boolean;
   isUpdatingWord: boolean;
@@ -127,7 +128,8 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
   const stateRefs = useRef<ReviewStateRefs>({
     meaningTimeout: null,
     completionTransition: null,
-    timeoutRef: null,
+    initialTransitionTimeout: null,
+    fadeAnimationTimeout: null,
     maxProgress: 0,
     completionTriggered: false,
     isUpdatingWord: false,
@@ -378,14 +380,24 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       }
 
       // Start transition animation
-      setTimeout(() => {
+      // Clear any pending transition timers before scheduling new ones
+      if (stateRefs.current.initialTransitionTimeout) {
+        clearTimeout(stateRefs.current.initialTransitionTimeout);
+        stateRefs.current.initialTransitionTimeout = null;
+      }
+      if (stateRefs.current.fadeAnimationTimeout) {
+        clearTimeout(stateRefs.current.fadeAnimationTimeout);
+        stateRefs.current.fadeAnimationTimeout = null;
+      }
+
+      stateRefs.current.initialTransitionTimeout = setTimeout(() => {
         if (controller.signal.aborted) return;
 
         // Clean up any playing audio before proceeding
         audioPlayerRef.current.stop().catch(() => {});
         fadeOut();
 
-        setTimeout(() => {
+        stateRefs.current.fadeAnimationTimeout = setTimeout(() => {
           if (controller.signal.aborted) return;
 
           // Determine if user is struggling with this word
@@ -521,7 +533,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
         .catch(handleError)
         .finally(() => {
           // Only update if the effect is still valid (word hasn't changed)
-          if (effectRef.current && timeRefs.current.lastProcessedWordId === wordId) {
+          if (effectRef.current) {
             timeRefs.current.lastProcessedWordId = wordId;
           }
         });
@@ -618,6 +630,16 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       if (stateRefs.current.completionTransition) {
         clearTimeout(stateRefs.current.completionTransition);
         stateRefs.current.completionTransition = null;
+      }
+
+      if (stateRefs.current.initialTransitionTimeout) {
+        clearTimeout(stateRefs.current.initialTransitionTimeout);
+        stateRefs.current.initialTransitionTimeout = null;
+      }
+
+      if (stateRefs.current.fadeAnimationTimeout) {
+        clearTimeout(stateRefs.current.fadeAnimationTimeout);
+        stateRefs.current.fadeAnimationTimeout = null;
       }
 
       if (navigationTimerRef.current) {
