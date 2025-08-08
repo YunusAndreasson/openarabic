@@ -295,75 +295,7 @@ class TestErrorHandling:
         assert result == "fallback"
 
 
-class TestAudioCommon:
-    """Test audio common utilities."""
-
-    def test_create_voice_settings(self):
-        """Test create_voice_settings function."""
-        from utils.audio_common import create_voice_settings
-
-        settings = create_voice_settings(speed=0.9)
-        assert settings.speed == 0.9
-        assert hasattr(settings, "stability")
-        assert hasattr(settings, "similarity_boost")
-
-    def test_get_temp_audio_path(self):
-        """Test get_temp_audio_path function."""
-        from utils.audio_common import get_temp_audio_path
-
-        path = get_temp_audio_path("test.mp3")
-        assert "test.mp3" in path
-        assert path.endswith("test.mp3")
-
-    def test_get_storage_url(self):
-        """Test get_storage_url function."""
-        from utils.audio_common import get_storage_url
-
-        url = get_storage_url("test.mp3", "audio")
-        assert "storage/v1/object/public/audio/test.mp3" in url
-
-    def test_validate_audio_response_success(self):
-        """Test validate_audio_response with valid response."""
-        from utils.audio_common import validate_audio_response
-
-        result = validate_audio_response(b"audio_data", "test", "item.mp3")
-        assert result is True
-
-    def test_validate_audio_response_empty(self):
-        """Test validate_audio_response with empty response."""
-        from utils.audio_common import validate_audio_response
-
-        result = validate_audio_response(None, "test", "item.mp3")
-        assert result is False
-
-    def test_validate_audio_response_empty_bytes(self):
-        """Test validate_audio_response with empty bytes."""
-        from utils.audio_common import validate_audio_response
-
-        result = validate_audio_response(b"", "test", "item.mp3")
-        assert result is False
-
-    @patch("utils.audio_common.os.path.exists")
-    @patch("utils.audio_common.os.remove")
-    def test_cleanup_temp_file_exists(self, mock_remove, mock_exists):
-        """Test cleanup_temp_file when file exists."""
-        from utils.audio_common import cleanup_temp_file
-
-        mock_exists.return_value = True
-
-        cleanup_temp_file("/path/to/file.mp3", "test")
-        mock_remove.assert_called_once_with("/path/to/file.mp3")
-
-    @patch("utils.audio_common.os.path.exists")
-    @patch("utils.audio_common.os.remove")
-    def test_cleanup_temp_file_not_exists(self, mock_remove, mock_exists):
-        """Test cleanup_temp_file when file doesn't exist."""
-        from utils.audio_common import cleanup_temp_file
-
-        mock_exists.return_value = False
-
-        cleanup_temp_file("/path/to/file.mp3", "test")
-        mock_remove.assert_not_called()
+# Removed TestAudioCommon: utils.audio_common was deleted as unused in production
 
 
 class TestStorageUtils:

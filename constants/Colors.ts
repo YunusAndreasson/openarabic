@@ -461,7 +461,7 @@ export enum Theme {
   Sepia = 'sepia',
 }
 
-export type ColorName = keyof typeof Colors.light;
+export type ColorName = keyof ThemeColors;
 
 // Simple validation helpers - Use these to verify critical color relationships
 export const colorValidation = {

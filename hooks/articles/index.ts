@@ -1,14 +1,2 @@
-export { useArticleData } from './useArticleData';
-export { useArticleMutations } from './useArticleMutations';
-export { useArticleRenderers } from './useArticleRenderers';
-export { useArticlesByDifficultWords } from './useArticlesByDifficultWords';
-export { useArticlesByDueWords } from './useArticlesByDueWords';
-export { useFeaturedArticleSelection } from './useFeaturedArticleSelection';
-export { useFilteredArticles } from './useFilteredArticles';
-export { useFilterModal } from './useFilterModal';
-export { useIntelligentArticleSelection } from './useIntelligentArticleSelection';
-export { useMultipleFeaturedArticles } from './useMultipleFeaturedArticles';
-export { useReadingProgress } from './useReadingProgress';
-export { useReadingStreak } from './useReadingStreak';
-export { useSentenceScrubber } from './useSentenceScrubber';
-export { useStreakHistory } from './useStreakHistory';
+// Barrel file is unused by app code; keep empty to avoid dead exports while
+// preserving the file for potential future consolidation.

@@ -4,6 +4,7 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import TouchableIcon from '@/components/TouchableIcon';
+import type { ColorName } from '@/constants/Colors';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
@@ -205,10 +206,11 @@ export const WordTooltip = memo(
           if (isValidMatch) {
             const colorKey = section.colorName as keyof typeof COLOR_MAP;
             const colorValue = COLOR_MAP[colorKey] || 'tint';
+            const themeColorName: ColorName = colorValue;
             matchPositions.push({
               start: matchIndex,
               end: matchIndex + match.length,
-              color: colors[colorValue as keyof typeof colors] as string,
+              color: colors[themeColorName],
             });
           }
         }

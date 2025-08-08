@@ -29,7 +29,7 @@ export const queryPersister = createAsyncStoragePersister({
 // Optimized shouldDehydrateQuery function
 const shouldDehydrateQuery = (query: Query): boolean => {
   const queryKey = query.queryKey;
-  const firstKey = queryKey[0] as string;
+  const firstKey = typeof queryKey[0] === 'string' ? queryKey[0] : '';
 
   // Fast lookups using Sets
   if (

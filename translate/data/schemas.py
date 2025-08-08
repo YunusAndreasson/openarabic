@@ -92,7 +92,7 @@ Rules:
    - Keep brief prayers whole
    - Keep related phrases conveying single concepts together
    - Preserve ALL original punctuation and formatting
-4. Mark unit types: simple, compound, condition, quote, verse, phrase, etc.
+4. Mark unit types: simple, compound, condition, quote, verse, phrase, hadith, commentary, etc.
 5. Example length: "ولا شك أن ما يصيب المسلم في هذه الدنيا من آفات ومحن ما هو إلا محض ابتلاء من الله،"
 
 IMPORTANT:
@@ -123,12 +123,7 @@ For each sentence, provide:
    - Use simple vocabulary appropriate for Islamic content (no obscure terms).
    - Add bracketed words [like this] for clarity if needed but not present in the original text.
    - Match register: solemn for supplications, precise for hadith.
-   - Ensure EVERY eligible letter has appropriate diacritics (full vocalization).
-   - Use translation context and provided grammatical notes to resolve vowelization ambiguities.
-   - Pay special attention to case endings based on grammatical roles noted.
-   - Consider verb forms, tenses, and moods indicated in the notes.
-   - Ensure grammatical accuracy (case endings, conjugations).
-   - Ensure full vocalization according to standard Classical Arabic rules, applying diacritics to all letters requiring them based on grammar and context.
+    - Ensure grammatical accuracy (conjugations, agreement, basic syntax).
    - Preserve ALL original punctuation, formatting, and special characters.
 2. `notes` (string, required):
    - Additional context or explanations regarding the translation.
@@ -185,10 +180,10 @@ WORD_BY_WORD_USER_PROMPT = (
 
 Each WordTranslationOptions object must include ALL of these required fields:
 - arabic: Original Arabic word (REQUIRED - preserve exact formatting)
-- english_options: Array of English translation options (REQUIRED - 1-3 options, ordered most to least likely)
+- english: Array of English translation options (REQUIRED - 1-3 options, ordered most to least likely)
 - pos: Part of speech from valid options (REQUIRED - never null)
 - essential: Essential root letters (REQUIRED - never null, core letters without affixes)
-- essential_translation_options: Array of essential translation options (REQUIRED - 1-3 options)
+- essential_translation: Array of essential translation options (REQUIRED - 1-3 options)
 - notes: Translation notes (REQUIRED - never null, provide grammar context)
 - uncertainties: Array of uncertainty objects (REQUIRED - can be empty array)
 
@@ -200,7 +195,7 @@ VALIDATION REQUIREMENTS:
 - `essential` should contain core letters, stripped of affixes/suffixes and case/mood endings
 - Basic standard diacritics (like on فَعَلَ) are acceptable in `essential` field
 - Preserve ALL original text formatting, punctuation, and special characters in `arabic` field
-- Provide 1-3 options for `english_options` and `essential_translation_options`, ordered by likelihood
+- Provide 1-3 options for `english` and `essential_translation`, ordered by likelihood
 
 CRITICAL: Return only valid JSON matching WordTranslationResult schema. Every word must have ALL required fields populated.
 
@@ -215,10 +210,10 @@ REQUIRED FIELDS:
 - improved_translation: Refined translation (REQUIRED - string)
 - improved_word_translations: Array of final WordTranslation objects (REQUIRED - each must have: arabic, english, pos, essential, essential_translation, notes)
 
-OPTIONAL FIELDS (provide null if not applicable):
-- resolved_uncertainties: Array of resolved uncertainty objects (OPTIONAL - null or array)
-- remaining_uncertainties: Array of unresolved uncertainty objects (OPTIONAL - null or array)
-- changes_made: Array of change descriptions (OPTIONAL - null or array)
+OPTIONAL FIELDS (use 'unknown' or [] when not applicable):
+- resolved_uncertainties: Array of resolved uncertainty objects (OPTIONAL - 'unknown' or array)
+- remaining_uncertainties: Array of unresolved uncertainty objects (OPTIONAL - 'unknown' or array)
+- changes_made: Array of change descriptions (OPTIONAL - 'unknown' or array)
 
 PROCESSING REQUIREMENTS:
 - Resolve ambiguities and select the single best option for each word translation
@@ -232,7 +227,7 @@ PROCESSING REQUIREMENTS:
   * essential_translation: Single best root meaning (not array)
   * notes: Grammar and translation notes
 
-CRITICAL: Return valid JSON with ALL required fields populated. Optional fields can be null.
+CRITICAL: Return valid JSON with ALL required fields populated. Optional fields should use 'unknown' or [] when not applicable.
 
 Input components to refine:
 """

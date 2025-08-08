@@ -1,13 +1,5 @@
 """Utility functions for the translation pipeline."""
 
-from .audio_common import (
-    cleanup_temp_file,
-    create_voice_settings,
-    get_temp_audio_path,
-    handle_audio_generation_error,
-    save_and_upload_audio,
-    validate_audio_response,
-)
 from .cache_utils import ensure_valid_cache_files
 from .config_common import (
     get_audio_config,
@@ -70,13 +62,6 @@ __all__ = [
     "call_response_api",
     "load_api_keys",
     "token_tracker",
-    # Audio common utilities
-    "cleanup_temp_file",
-    "create_voice_settings",
-    "get_temp_audio_path",
-    "handle_audio_generation_error",
-    "save_and_upload_audio",
-    "validate_audio_response",
     # Cache utilities
     "ensure_valid_cache_files",
     # Configuration common utilities

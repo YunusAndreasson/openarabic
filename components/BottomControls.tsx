@@ -114,7 +114,7 @@ const BottomControls = memo<BottomControlsProps>(
             <View style={styles.buttonContainer}>
               <ThemedButton
                 disabled={secondaryDisabled}
-                title={secondaryLabel as string}
+                title={secondaryLabel ?? ''}
                 variant={secondaryVariant}
                 style={[
                   styles.button,

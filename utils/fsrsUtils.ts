@@ -67,7 +67,10 @@ export function calculateRetrievabilityForecast(
   // Filter to only include words that have been reviewed
   const validWords = studyWords
     .filter(w => w.fsrs_last_review && (w.fsrs_reps ?? 0) > 0)
-    .map(w => ({ ...w, lastReviewDate: new Date(w.fsrs_last_review as string) }));
+    .map(w => ({
+      ...w,
+      lastReviewDate: new Date(w.fsrs_last_review!),
+    }));
 
   // Generate future dates for forecasting
   const dates = generateForecastDates(days);

@@ -126,29 +126,7 @@ def get_camel_tools_service() -> CamelToolsService:
     return _camel_tools_service
 
 
-def generate_tashkeel_suggestions(sentence: str) -> dict[str, str]:
-    """
-    Generate tashkeel suggestions for all Arabic words in a sentence.
-
-    Args:
-        sentence: Arabic sentence without diacritics
-
-    Returns:
-        Dictionary mapping original words to their tashkeel suggestions
-    """
-    service = get_camel_tools_service()
-
-    if not service.is_available():
-        logger.warning("Camel-tools not available, returning original sentence")
-        return {}
-
-    # Split sentence into words (simple space-based splitting)
-    words = sentence.split()
-
-    # Generate suggestions for Arabic words only
-    suggestions = service.generate_tashkeel_suggestions_batch(words)
-
-    return suggestions
+## Removed unused helper generate_tashkeel_suggestions (kept context-aware variant only)
 
 
 def generate_tashkeel_suggestions_with_context(
@@ -191,35 +169,11 @@ def generate_tashkeel_suggestions_with_context(
     return suggestions
 
 
-def format_tashkeel_suggestions(suggestions: dict[str, str]) -> str:
-    """
-    Format tashkeel suggestions for inclusion in OpenAI prompt.
-
-    Args:
-        suggestions: Dictionary of word -> tashkeel suggestion mappings
-
-    Returns:
-        Formatted string for prompt inclusion
-    """
-    if not suggestions:
-        return ""
-
-    formatted_lines = ["Camel-tools tashkeel suggestions:"]
-
-    for original, suggested in suggestions.items():
-        if original != suggested:
-            formatted_lines.append(f"  '{original}' → '{suggested}'")
-
-    if len(formatted_lines) == 1:  # Only header
-        return ""
-
-    return "\n".join(formatted_lines)
+## Removed unused formatter format_tashkeel_suggestions
 
 
 __all__ = [
     "CamelToolsService",
     "get_camel_tools_service",
-    "generate_tashkeel_suggestions",
     "generate_tashkeel_suggestions_with_context",
-    "format_tashkeel_suggestions",
 ]

@@ -14,19 +14,21 @@ export const isAsyncStorageAvailable = (): boolean => {
   }
 };
 
-const fallbackStorage = {
-  async getItem() {
-    return null as string | null;
+type StorageLike = Pick<typeof AsyncStorage, 'getItem' | 'setItem' | 'removeItem'>;
+
+const fallbackStorage: StorageLike = {
+  async getItem(_key: string) {
+    return null;
   },
-  async setItem() {
+  async setItem(_key: string, _value: string) {
     // no-op
   },
-  async removeItem() {
+  async removeItem(_key: string) {
     // no-op
   },
 };
 
-export const getSafeStorage = () => {
+export const getSafeStorage = (): StorageLike => {
   if (isAsyncStorageAvailable()) {
     return AsyncStorage;
   }

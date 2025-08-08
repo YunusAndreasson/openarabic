@@ -8,18 +8,10 @@ export interface WordDisplayProps {
   word: string;
   /** The font size for the word */
   fontSize?: number;
-  /** Whether to show the meaning */
-  showMeaning?: boolean;
   /** Translation of the word */
   translation?: string;
-  /** Function called when the word is pressed */
-  onPress?: () => void;
   /** Additional style for the container */
   style?: StyleProp<ViewStyle>;
-  /** Size of the text */
-  size?: 'large' | 'medium' | 'small';
-  /** Arabic word to display (alternative to word prop) */
-  arabicWord?: string;
 }
 
 /**

@@ -19,36 +19,43 @@ class Uncertainty(BaseModel):
 
     # Core uncertainty fields - using union with "unknown" instead of None
     text: str | Literal["unknown"] = Field(
-        description="The uncertain text (for word/translation uncertainties)"
+        default="unknown",
+        description="The uncertain text (for word/translation uncertainties)",
     )
     word: str | Literal["unknown"] = Field(
-        description="Word with uncertain diacritics (for tashkeel uncertainties)"
+        default="unknown",
+        description="Word with uncertain diacritics (for tashkeel uncertainties)",
     )
     type: UncertaintyType | Literal["unknown"] = Field(
-        description="Type of uncertainty (for remaining uncertainties)"
+        default="unknown",
+        description="Type of uncertainty (for remaining uncertainties)",
     )
-    reason: str = Field(description="Reason for uncertainty")
+    reason: str = Field(default="unknown", description="Reason for uncertainty")
 
     # Resolution fields - using union with "unknown" instead of None
     step: str | Literal["unknown"] = Field(
-        description="Processing step where uncertainty was resolved"
+        default="unknown",
+        description="Processing step where uncertainty was resolved",
     )
     resolution: str | Literal["unknown"] = Field(
-        description="How the uncertainty was resolved"
+        default="unknown", description="How the uncertainty was resolved"
     )
     explanation: str | Literal["unknown"] = Field(
-        description="Explanation of the resolution"
+        default="unknown", description="Explanation of the resolution"
     )
 
     # Related fields - using union with "unknown" instead of None
     related_translation_uncertainty: str | Literal["unknown"] = Field(
-        description="Related translation uncertainty (for tashkeel uncertainties)"
+        default="unknown",
+        description="Related translation uncertainty (for tashkeel uncertainties)",
     )
     original_uncertainty: dict[str, str] | Literal["unknown"] = Field(
-        description="Original uncertainty with text and reason (for resolved uncertainties)"
+        default="unknown",
+        description="Original uncertainty with text and reason (for resolved uncertainties)",
     )
     reason_unresolved: str | Literal["unknown"] = Field(
-        description="Reason why uncertainty could not be resolved (for remaining uncertainties)"
+        default="unknown",
+        description="Reason why uncertainty could not be resolved (for remaining uncertainties)",
     )
 
     @property

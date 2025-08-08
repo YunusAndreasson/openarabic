@@ -100,21 +100,6 @@ class TokenUsageTracker:
 token_tracker = TokenUsageTracker()
 
 
-def init_openai_client() -> OpenAI:
-    """Initialize the OpenAI client with API key"""
-    load_api_keys()
-
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise OSError("OPENAI_API_KEY environment variable is not set.")
-
-    return OpenAI(api_key=api_key)
-
-
-# Lazy initialization - only create client when first needed
-_client: OpenAI | None = None
-
-
 class ResponsesAPIManager:
     def __init__(self, model: str = MODEL_OTHER):
         """
