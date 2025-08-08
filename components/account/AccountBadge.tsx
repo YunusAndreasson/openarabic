@@ -6,6 +6,7 @@ import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from 'react-nat
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
+  withSequence,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
@@ -146,9 +147,7 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId }) =
 
   // Handle photo press animation
   const handlePhotoPress = useCallback(() => {
-    scaleValue.value = withSpring(0.95, SPRING_CONFIG, () => {
-      scaleValue.value = withSpring(1, SPRING_CONFIG);
-    });
+    scaleValue.value = withSequence(withSpring(0.95, SPRING_CONFIG), withSpring(1, SPRING_CONFIG));
     handlePhotoSelect();
   }, [scaleValue, handlePhotoSelect]);
 

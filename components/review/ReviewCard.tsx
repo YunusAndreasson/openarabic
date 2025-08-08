@@ -5,6 +5,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import type { AnimatedStyleProp as ReanimatedAnimatedStyleProp } from 'react-native-reanimated';
 import Animated, {
   cancelAnimation,
+  interpolateColor,
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
@@ -82,36 +83,28 @@ const ReviewCardInternal = ({
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ===== SWIPE BACKGROUND COLOR ANIMATION =====
-  // Precompute RGB strings from theme colors on JS thread
-  const errorRgb = useMemo(() => {
-    // withOpacity returns rgba(r,g,b,a); extract r,g,b for worklet usage
-    const rgba = withOpacity(colors.error, 1);
-    const inside = rgba.slice(rgba.indexOf('(') + 1, rgba.lastIndexOf(')'));
-    return inside.split(',').slice(0, 3).join(',');
-  }, [colors.error]);
-
-  const successRgb = useMemo(() => {
-    const rgba = withOpacity(colors.success, 1);
-    const inside = rgba.slice(rgba.indexOf('(') + 1, rgba.lastIndexOf(')'));
-    return inside.split(',').slice(0, 3).join(',');
-  }, [colors.success]);
+  const errorStart = useMemo(() => withOpacity(colors.error, 0), [colors.error]);
+  const errorEnd = useMemo(() => withOpacity(colors.error, 0.18), [colors.error]);
+  const successStart = useMemo(() => withOpacity(colors.success, 0), [colors.success]);
+  const successEnd = useMemo(() => withOpacity(colors.success, 0.18), [colors.success]);
 
   const swipeBackgroundStyle = useAnimatedStyle(() => {
     'worklet';
-    // Interpolate color: left = error, right = success, center = transparent
-    let bgColor = 'transparent';
     const maxTranslation = SCREEN_WIDTH * GESTURE_CONSTANTS.MAX_TRANSLATION_RATIO;
+    const t = Math.min(Math.abs(translateX.value) / maxTranslation, 1);
+
     if (translateX.value < 0) {
-      // Swiping left: interpolate from transparent to error
-      const t = Math.min(Math.abs(translateX.value) / maxTranslation, 1);
-      bgColor = `rgba(${errorRgb},${t * 0.18})`;
-    } else if (translateX.value > 0) {
-      // Swiping right: interpolate from transparent to success
-      const t = Math.min(translateX.value / maxTranslation, 1);
-      bgColor = `rgba(${successRgb},${t * 0.18})`;
+      return {
+        backgroundColor: interpolateColor(t, [0, 1], [errorStart, errorEnd]),
+      };
     }
-    return { backgroundColor: bgColor };
-  }, [errorRgb, successRgb]);
+    if (translateX.value > 0) {
+      return {
+        backgroundColor: interpolateColor(t, [0, 1], [successStart, successEnd]),
+      };
+    }
+    return { backgroundColor: 'transparent' };
+  }, [errorStart, errorEnd, successStart, successEnd]);
 
   // ===== COMBINED ANIMATED STYLE (SINGLE ANIMATED VIEW) =====
   const combinedAnimatedStyle = useAnimatedStyle(() => {

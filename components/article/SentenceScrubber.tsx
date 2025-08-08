@@ -41,6 +41,8 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
     const handlePosition = useSharedValue(0);
     const showTooltip = useSharedValue(0);
     const isDragging = useSharedValue(false);
+    // Gate JS bridging by tracking last emitted index on UI thread
+    const lastIndex = useSharedValue(currentSentence);
 
     // Memoized calculations to prevent unnecessary recalculations
     const isValidScrubber = useMemo(() => totalSentences > 1, [totalSentences]);
@@ -77,6 +79,8 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
 
         // Update ref when position changes externally (not from scrubbing)
         lastSentenceRef.current = currentSentence;
+        // Sync lastIndex shared value to prevent redundant runOnJS on next drag
+        lastIndex.value = currentSentence;
       }
     }, [currentSentence, maxSentenceIndex, isValidScrubber, isDragging, trackWidth]);
 
@@ -119,7 +123,11 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
 
               // Calculate sentence index efficiently
               const sentenceIndex = Math.round(progress * maxSentenceIndex);
-              runOnJS(safeSentenceChange)(sentenceIndex);
+              // Only bridge to JS when the index actually changes
+              if (sentenceIndex !== lastIndex.value) {
+                lastIndex.value = sentenceIndex;
+                runOnJS(safeSentenceChange)(sentenceIndex);
+              }
             }
           })
           .onEnd(() => {
