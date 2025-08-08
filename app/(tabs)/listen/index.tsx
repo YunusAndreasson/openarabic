@@ -264,7 +264,7 @@ export default function ListenScreen(): JSX.Element {
         <EmptyState
           colors={colors}
           description={STRINGS.PLAYLIST_EMPTY_DESCRIPTION}
-          icon="headset-outline"
+          icon="headset"
           iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
           title={STRINGS.PLAYLIST_EMPTY_TITLE}
           containerStyle={{

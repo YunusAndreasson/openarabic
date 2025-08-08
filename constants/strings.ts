@@ -94,6 +94,8 @@ export const STRINGS = {
   // Empty states & hints - more actionable
   TRY_ADJUSTING_FILTERS: 'Try different filters',
   NO_ARTICLES_FOUND: 'No matches found',
+  NO_MATCHES_FOUND: 'No matches found',
+  TRY_DIFFERENT_SEARCH: 'Try a different search term or check spelling',
   NO_ARTICLES_SAVED: 'No saved articles',
   LISTENING_PLAYLIST_EMPTY: 'Add articles to build your playlist',
 
@@ -104,6 +106,12 @@ export const STRINGS = {
   // Practice tab empty state - user-centric and study-focused
   STUDY_LIST_EMPTY_TITLE: 'No words to study',
   STUDY_LIST_EMPTY_DESCRIPTION: 'Add words from articles to start practicing',
+
+  // Dictionary
+  DICTIONARY: 'Dictionary',
+  NO_STUDY_WORDS: 'No study words',
+  ADD_WORDS_TO_STUDY_LIST: 'Add words to your study list to see them here',
+  SEARCH_WORDS_PLACEHOLDER: 'Search words...',
 
   PROGRESS_NOT_AVAILABLE: "Progress isn't available right now",
   ERROR_LOADING_DATA: "Couldn't load data",

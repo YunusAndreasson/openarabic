@@ -163,7 +163,7 @@ export default function IslamicCalendarScreen(): JSX.Element {
                         <View style={styles.dateRow}>
                           <Ionicons
                             color={colors.interactiveSecondary}
-                            name="calendar-outline"
+                            name="calendar"
                             size={LAYOUT.SPACING.MEDIUM}
                           />
                           <ThemedText style={styles.dateText} type="caption" variant="secondary">
@@ -185,7 +185,7 @@ export default function IslamicCalendarScreen(): JSX.Element {
             <View style={styles.noteContent}>
               <Ionicons
                 color={colors.interactiveSecondary}
-                name="information-circle-outline"
+                name="information-circle"
                 size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
               />
               <ThemedText style={styles.noteText} type="caption" variant="secondary">

@@ -14,6 +14,7 @@ import EditModeButton from '@/components/ui/EditModeButton';
 import { DictionarySortingHeader, DictionaryWordCard } from '@/components/vocabulary';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
@@ -125,10 +126,10 @@ export default function DictionaryScreen(): JSX.Element {
       <ThemedView style={styles.container}>
         <EmptyState
           colors={colors}
-          description="Add words to your study list to see them here"
-          icon="book-outline"
+          description={STRINGS.ADD_WORDS_TO_STUDY_LIST}
+          icon="book"
           iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
-          title="No Study Words"
+          title={STRINGS.NO_STUDY_WORDS}
           containerStyle={contentContainerStyle}
         />
       </ThemedView>
@@ -139,7 +140,7 @@ export default function DictionaryScreen(): JSX.Element {
     <ThemedView style={styles.container} includeBottomInset={false}>
       <Stack.Screen
         options={{
-          title: 'Dictionary',
+          title: STRINGS.DICTIONARY,
           headerRight: () => <EditModeButton type="dictionary" />,
         }}
       />
@@ -155,13 +156,13 @@ export default function DictionaryScreen(): JSX.Element {
         <ThemedView style={styles.searchContainer}>
           <ThemedView style={[styles.searchInputContainer, { borderColor: colors.border }]}>
             <Ionicons
-              name="search-outline"
+              name="search"
               size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
               color={colors.icon}
               style={styles.searchIcon}
             />
             <TextInput
-              placeholder="Search words..."
+              placeholder={STRINGS.SEARCH_WORDS_PLACEHOLDER}
               placeholderTextColor={colors.textTertiary}
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -176,10 +177,10 @@ export default function DictionaryScreen(): JSX.Element {
       {showNoResultsMessage ? (
         <EmptyState
           colors={colors}
-          description="Try a different search term or check spelling"
-          icon="search-outline"
+          description={STRINGS.TRY_DIFFERENT_SEARCH}
+          icon="search"
           iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
-          title="No matches found"
+          title={STRINGS.NO_MATCHES_FOUND}
           containerStyle={contentContainerStyle}
           hideArticlesButton={true}
         />

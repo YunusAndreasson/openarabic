@@ -189,7 +189,7 @@ export default function VocabularyScreen(): JSX.Element {
           <EmptyState
             colors={colors}
             description={STRINGS.STUDY_LIST_EMPTY_DESCRIPTION}
-            icon="school-outline"
+            icon="school"
             iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
             title={STRINGS.STUDY_LIST_EMPTY_TITLE}
             containerStyle={emptyStateContainerStyle}
