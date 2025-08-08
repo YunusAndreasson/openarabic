@@ -164,7 +164,7 @@ const elevation = {
   sepia: {
     level0: basePalette.autumn.paper.lighter, // Background - warm cream tone
     level1: basePalette.autumn.paper.light, // Cards - use palette reference for consistency
-    level2: basePalette.autumn.paper.lighter, // Raised elements - use palette reference for consistency
+    level2: basePalette.autumn.paper.lightest, // Raised elements - distinct from level0/1 for proper hierarchy
     level3: basePalette.sepiaPure.white, // Floating elements - warm sepia white
   },
 } as const;

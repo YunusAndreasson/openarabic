@@ -116,6 +116,7 @@ const BottomControls = memo<BottomControlsProps>(
                 disabled={secondaryDisabled}
                 title={secondaryLabel ?? ''}
                 variant={secondaryVariant}
+                hapticFeedback={false}
                 style={[
                   styles.button,
                   styles.secondaryButton,
@@ -136,6 +137,7 @@ const BottomControls = memo<BottomControlsProps>(
               disabled={primaryDisabled}
               loading={primaryLoading}
               disablePressAnimation={primaryDisablePressAnimation}
+              hapticFeedback={false}
               style={styles.button}
               title={primaryLabel}
               variant={primaryVariant}

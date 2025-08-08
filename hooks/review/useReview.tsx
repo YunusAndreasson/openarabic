@@ -567,7 +567,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       if (user?.id) {
         queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
         queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) });
-        queryClient.invalidateQueries({ queryKey: ['vocabulary-stats'] });
+        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.stats(user.id) });
       }
     });
 

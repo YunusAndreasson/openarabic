@@ -20,7 +20,6 @@ export const FSRS_QUERY_KEYS = {
   DUE_WORDS: 'fsrs-words-due',
   STUDY_WORDS: 'fsrs-words-study',
   USER_WORDS: 'fsrs-words-user',
-  VOCABULARY_STATS: 'fsrs-vocabulary-stats',
   MASTERY_CHART: 'fsrs-mastery-chart',
   RETRIEVABILITY_CHART: 'fsrs-retrievability-chart',
   MEMORY_CAPACITY: 'fsrs-memory-capacity',

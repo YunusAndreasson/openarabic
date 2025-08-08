@@ -17,9 +17,8 @@ const RELATED_QUERY_KEYS = (userId: string) =>
   [
     FSRS_QUERY_KEYS.all(userId),
     FSRS_QUERY_KEYS.due(userId),
-    ['studyWordsCounts', userId] as const,
     ['enhancedAudioTracks', userId] as const,
-    ['vocabulary-stats'] as const,
+    FSRS_QUERY_KEYS.stats(userId),
   ] as const;
 
 interface ArticleMutationsResult {

@@ -184,7 +184,8 @@ export const Toast = memo(
       if (type === 'important' || type === 'error') {
         return colors.white;
       }
-      return isDarkMode ? colors.text : colors.white;
+      // Default variant uses elevation3 background; choose contrasting text color
+      return isDarkMode ? colors.text : colors.text;
     }, [type, isDarkMode, colors.text, colors.white]);
 
     // For mobile-only apps, use constant screen width

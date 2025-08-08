@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 
+import { ROUTE_PATHS } from '@/constants/routes';
 import type { NowPlayingModalParams } from '@/types/navigation.types';
 
 /**
@@ -8,7 +9,7 @@ import type { NowPlayingModalParams } from '@/types/navigation.types';
  */
 export const openNowPlayingModal = (params?: NowPlayingModalParams) => {
   router.push({
-    pathname: '/NowPlaying',
+    pathname: ROUTE_PATHS.NOW_PLAYING,
     params,
   });
 };

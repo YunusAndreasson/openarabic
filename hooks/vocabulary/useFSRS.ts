@@ -401,7 +401,6 @@ export function useFSRS({
 
     // Also invalidate related queries
     queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.stats(userId) });
-    queryClient.invalidateQueries({ queryKey: ['vocabulary-stats'] });
 
     stateTrackingRef.current.queueInitialized = false;
     queueRef.current = new PriorityQueue<StudyWord>();

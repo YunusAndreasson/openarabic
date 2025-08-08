@@ -17,6 +17,7 @@ import {
   QUICK_ANIMATION_DURATION,
   TIMING_CONFIG,
 } from '@/constants/animation';
+import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -63,9 +64,12 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
         queryClient.invalidateQueries({
           predicate: query => {
             const key = query.queryKey[0];
-            return key === 'fsrs-words' || key === 'vocabulary-stats';
+            return key === 'fsrs-words';
           },
         });
+        if (user?.id) {
+          queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.stats(user.id) });
+        }
       });
     }
   }, [user?.id, queryClient, useThemedView]);
