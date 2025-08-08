@@ -120,5 +120,3 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
 
   return { retrievabilityData, chartData };
 }
-
-export default useRetrievabilityChart;

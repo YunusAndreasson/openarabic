@@ -73,11 +73,11 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
         xLabels={retrievabilityData.map(data =>
           data.date.toLocaleDateString('en-US', { weekday: 'short' })
         )} // Show all 7 days including days with no data
-        xLabelPositions={retrievabilityData.map((_, index) => {
-          // Calculate positions for all 7 days for proper label alignment
+        xLabelPositions={(() => {
           const allDayPositions = calculateDataPointPositions(retrievabilityData.length);
-          return allDayPositions[index] || 0;
-        })}
+          // Calculate positions for all 7 days for proper label alignment
+          return retrievabilityData.map((_, index) => allDayPositions[index] || 0);
+        })()}
         yMax={100}
         topPadding={0}
         graphWidth={graphWidth}

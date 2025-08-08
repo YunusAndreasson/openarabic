@@ -39,7 +39,6 @@ export interface ArticleParams {
  */
 export type RouteParams = {
   '/(tabs)/read/article/[id]': ArticleParams;
-  '/(tabs)/read/filter': FilterParams;
   '/(tabs)/read/filterModal': FiltersParams;
   '/practice/review': ReviewParams;
   '/': Record<string, never>;

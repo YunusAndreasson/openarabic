@@ -63,10 +63,10 @@ export const EfficiencyChart = memo<EfficiencyChartProps>(
         xLabels={efficiencyData.map(data =>
           data.date.toLocaleDateString('en-US', { weekday: 'short' })
         )}
-        xLabelPositions={efficiencyData.map((_, index) => {
+        xLabelPositions={(() => {
           const allDayPositions = calculateDataPointPositions(efficiencyData.length);
-          return allDayPositions[index] || 0;
-        })}
+          return efficiencyData.map((_, index) => allDayPositions[index] || 0);
+        })()}
         yMax={100}
         topPadding={0}
         graphWidth={graphWidth}

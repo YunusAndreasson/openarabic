@@ -66,8 +66,7 @@ const createFlashListConfig = <T,>({
   removeClippedSubviews = true,
   alwaysBounceVertical = false,
   bounces = true,
-  overScrollMode = 'auto',
-  persistentScrollbar = false,
+  overScrollMode = 'never',
   extraData,
   initialScrollIndex = 0,
 }: {
@@ -89,7 +88,6 @@ const createFlashListConfig = <T,>({
   alwaysBounceVertical?: boolean;
   bounces?: boolean;
   overScrollMode?: 'auto' | 'always' | 'never';
-  persistentScrollbar?: boolean;
   extraData?: unknown;
   initialScrollIndex?: number;
 }) => ({
@@ -111,7 +109,6 @@ const createFlashListConfig = <T,>({
   alwaysBounceVertical,
   bounces,
   overScrollMode,
-  persistentScrollbar,
   extraData,
   initialScrollIndex,
 });

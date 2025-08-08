@@ -19,7 +19,6 @@ interface FSRSWordUpdate {
   fsrs_state: number;
   fsrs_last_review: string;
   success_streak?: number;
-  difficulty?: number;
 }
 
 // Define options for fetching FSRS words
@@ -76,7 +75,6 @@ export const studyWordsFSRSService = {
       const columns = `
         root_id,
         user_id,
-        difficulty,
         success_streak,
         fsrs_due,
         fsrs_stability,
@@ -248,7 +246,6 @@ export const studyWordsFSRSService = {
         p_rating: rating,
         p_learning_steps: learningSteps,
         p_success_streak: update.success_streak ?? undefined,
-        p_difficulty: update.difficulty ?? undefined,
       });
 
       if (error) {
@@ -313,7 +310,6 @@ export const studyWordsFSRSService = {
       user_id: userId,
       root_id: rootId,
       created_at: now.toISOString(),
-      difficulty: INITIAL_FSRS_DIFFICULTY / 10.0, // Normalize difficulty to 0-1 scale for backward compatibility
       success_streak: 0,
       fsrs_due: now.toISOString(),
       fsrs_stability: INITIAL_STABILITY,

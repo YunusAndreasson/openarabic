@@ -11,18 +11,13 @@ import { ChartGrid } from '@/components/vocabulary/shared/ChartGrid';
 import { ChartMainLine } from '@/components/vocabulary/shared/ChartMainLine';
 import { ChartPerformanceZones } from '@/components/vocabulary/shared/ChartPerformanceZones';
 import { GRAPH_HEIGHT_LARGE } from '@/components/vocabulary/shared/constants';
+import type { PerformanceZone } from '@/types/ui/chart.types';
 import { generateDataPointKeys, generateMilestoneKeys, type ChartPoint } from '@/utils/chartUtils';
 
 // Extract constants outside component for better performance
 const DEFAULT_Y_MAX = 100;
 const DEFAULT_TOP_PADDING = 0;
 const CONTENT_HEIGHT_OFFSET = 32;
-
-interface PerformanceZone {
-  color: string;
-  y: number;
-  height: number;
-}
 
 interface VocabularyChartProps<T> {
   // Chart data

@@ -162,12 +162,10 @@ export function useFSRS({
 
         queueRef.current = new PriorityQueue<StudyWord>();
 
-        // Prioritize words by due date and FSRS metrics instead of array index
-        dueWords.forEach(word => {
-          const priority = calculateWordPriority(word);
-          queueRef.current.push(word, priority);
-        });
-
+        // Prioritize words by due date and FSRS metrics using heapify
+        const items = dueWords;
+        const priorities = dueWords.map(w => calculateWordPriority(w));
+        queueRef.current.heapify(items, priorities);
         const ordered = queueRef.current.toArray();
         setWordQueue(ordered);
         const first = getNextWordWithSpacing();
@@ -252,7 +250,6 @@ export function useFSRS({
         // Update the word with new FSRS parameters and session tracking
         const wordUpdateData = {
           success_streak: confidence === 'known' ? (currentWord.success_streak || 0) + 1 : 0,
-          difficulty: currentWord.difficulty,
           fsrs_due: newCard.due.toISOString(),
           fsrs_stability: newCard.stability,
           fsrs_difficulty: newCard.difficulty,
@@ -305,7 +302,7 @@ export function useFSRS({
           });
         }
 
-        const nextItem = getNextWordWithSpacing();
+        let nextItem = getNextWordWithSpacing();
         const remaining = queueRef.current.toArray();
 
         const uniqueWordCount = countersRef.current.uniqueWords.size;
@@ -320,6 +317,20 @@ export function useFSRS({
         const hasAvailableSpacedWords = spacingQueueRef.current.spacedWords.some(
           item => item.remainingSpacing <= 0
         );
+
+        if (!nextItem) {
+          if (spacingQueueRef.current.spacedWords.length > 0 && !hasAvailableSpacedWords) {
+            // Fallback: pick the spaced word with the smallest remaining spacing to avoid
+            // premature completion when the main queue is empty.
+            const minIdx = spacingQueueRef.current.spacedWords.reduce(
+              (best, curr, idx, arr) =>
+                curr.remainingSpacing < arr[best].remainingSpacing ? idx : best,
+              0
+            );
+            const picked = spacingQueueRef.current.spacedWords.splice(minIdx, 1)[0];
+            nextItem = picked?.word ?? null;
+          }
+        }
 
         if (
           !nextItem &&

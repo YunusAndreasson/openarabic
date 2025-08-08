@@ -174,5 +174,3 @@ export function useEfficiencyChart(studyWords: StudyWord[]): UseEfficiencyChartR
 
   return { efficiencyData, chartData };
 }
-
-export default useEfficiencyChart;

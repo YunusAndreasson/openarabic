@@ -3,7 +3,7 @@ export { BaseChart } from './BaseChart';
 export { ChartAxes, Y_AXIS_WIDTH } from './ChartAxes';
 export { ChartCanvas } from './ChartCanvas';
 export { ChartGrid } from './ChartGrid';
-export { DataPointOverlay } from './ChartInteractivity';
+// Note: DataPointOverlay is internal to ChartCanvas; not exported to avoid misuse
 
 // New shared chart components for DRY refactoring
 export { ChartAreaFill } from './ChartAreaFill';

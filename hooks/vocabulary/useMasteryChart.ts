@@ -257,5 +257,3 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
     insights: chartData.insights,
   };
 }
-
-export default useMasteryChart;

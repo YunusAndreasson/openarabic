@@ -21,8 +21,6 @@ export interface StudyWord {
   root?: Tables<'roots'> | null;
   user_id: string;
 
-  difficulty?: number;
-
   fsrs_due: string | null;
   fsrs_stability: number | null;
   fsrs_difficulty: number | null;

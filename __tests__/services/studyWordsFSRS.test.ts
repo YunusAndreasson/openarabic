@@ -92,7 +92,6 @@ describe('updateWordAndReview', () => {
     fsrs_state: 0,
     fsrs_last_review: '2024-01-01T00:00:00.000Z',
     success_streak: 1,
-    difficulty: 0.5,
   };
 
   it('calls RPC to update and record review', async () => {

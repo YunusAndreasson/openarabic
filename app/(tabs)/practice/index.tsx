@@ -7,14 +7,12 @@ import { useCallback, useMemo, useRef } from 'react';
 import { ActivityIndicator, InteractionManager, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import EmptyState from '@/components/EmptyState';
 import { ThemedView } from '@/components/ThemedView';
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
 import { VocabularyStatCards } from '@/components/vocabulary/VocabularyStatCards';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { getPracticeReviewRoute } from '@/constants/routes';
-import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
@@ -128,14 +126,7 @@ export default function VocabularyScreen(): JSX.Element {
     return { learningWords, masteredWords };
   }, [filteredStudyWords]);
 
-  // Memoize EmptyState container style to prevent object recreation
-  const emptyStateContainerStyle = useMemo(
-    () => ({
-      paddingTop: LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.MEDIUM,
-      paddingBottom: LAYOUT.SPACING.LARGE,
-    }),
-    []
-  );
+  // (empty state container style removed)
 
   // Show error message if there was an error loading data
   if (error) {
@@ -150,9 +141,8 @@ export default function VocabularyScreen(): JSX.Element {
   const isDataCached = !!(user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id)));
   const showLoadingIndicator = (isDataLoading || isFetching) && !isDataCached;
 
-  // Check if we should show empty state (no study words available)
-  // Only show empty state when we're not loading AND we have no words
-  const shouldShowEmpty = !isDataLoading && !isFetching && filteredStudyWords.length === 0;
+  // Do not show an empty state; keep the screen clean when no words
+  const shouldShowEmpty = false;
 
   // Check if we should show the main content (vocabulary stat cards)
   // Only show when we're not loading AND we have words OR when we're still loading with cached data
@@ -184,17 +174,7 @@ export default function VocabularyScreen(): JSX.Element {
           </ThemedView>
         )}
 
-        {/* Empty state when no study words */}
-        {shouldShowEmpty && (
-          <EmptyState
-            colors={colors}
-            description={STRINGS.STUDY_LIST_EMPTY_DESCRIPTION}
-            icon="school"
-            iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
-            title={STRINGS.STUDY_LIST_EMPTY_TITLE}
-            containerStyle={emptyStateContainerStyle}
-          />
-        )}
+        {/* No empty state when no study words */}
 
         {/* PRIMARY SECTION: Learning Overview */}
         {shouldShowMainContent && (

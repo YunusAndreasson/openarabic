@@ -6,10 +6,11 @@ export interface DataPoint<T = unknown> {
   data?: T;
 }
 
-export interface LegendItemProps {
-  type: 'area' | 'bar' | 'dot' | 'line';
+// Shared performance zone type for vocabulary charts
+export interface PerformanceZone {
   color: string;
-  label: string;
+  y: number;
+  height: number;
 }
 
 /**

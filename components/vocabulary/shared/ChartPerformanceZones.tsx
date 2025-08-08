@@ -1,16 +1,11 @@
-import { Rect, Mask, Path } from '@shopify/react-native-skia';
+import { Mask, Path, Rect } from '@shopify/react-native-skia';
 import { memo } from 'react';
 
 import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import { GRAPH_HEIGHT_LARGE } from '@/components/vocabulary/shared/constants';
 import { createAreaFillPath } from '@/components/vocabulary/shared/utils';
 import { useColors } from '@/hooks/theme/useColors';
-
-interface PerformanceZone {
-  color: string;
-  y: number;
-  height: number;
-}
+import type { PerformanceZone } from '@/types/ui/chart.types';
 
 interface ChartPerformanceZonesProps {
   zones: PerformanceZone[];

@@ -14,8 +14,7 @@ CREATE OR REPLACE FUNCTION update_word_and_review(
   p_fsrs_last_review TIMESTAMPTZ,
   p_rating INTEGER,
   p_learning_steps INTEGER,
-  p_success_streak INTEGER DEFAULT NULL,
-  p_difficulty REAL DEFAULT NULL
+  p_success_streak INTEGER DEFAULT NULL
 ) RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -25,14 +24,14 @@ DECLARE
 BEGIN
   -- Check if the study word exists and belongs to the user
   SELECT EXISTS(
-    SELECT 1 FROM study_words 
+    SELECT 1 FROM study_words
     WHERE user_id = p_user_id AND root_id = p_root_id
   ) INTO word_exists;
-  
+
   IF NOT word_exists THEN
     RAISE EXCEPTION 'Study word not found or does not belong to user';
   END IF;
-  
+
   -- Update the study word with FSRS parameters
   UPDATE study_words SET
     fsrs_due = p_fsrs_due,
@@ -45,10 +44,9 @@ BEGIN
     fsrs_lapses = p_fsrs_lapses,
     fsrs_state = p_fsrs_state,
     fsrs_last_review = p_fsrs_last_review,
-    success_streak = COALESCE(p_success_streak, success_streak),
-    difficulty = COALESCE(p_difficulty, difficulty)
+    success_streak = COALESCE(p_success_streak, success_streak)
   WHERE user_id = p_user_id AND root_id = p_root_id;
-  
+
   -- Record the review
   INSERT INTO reviews (
     user_id,
@@ -63,11 +61,11 @@ BEGIN
     p_learning_steps,
     NOW()
   );
-  
+
   RETURN TRUE;
 EXCEPTION
   WHEN OTHERS THEN
     -- Re-raise the exception to ensure transaction rollback
     RAISE;
 END;
-$$; 
+$$;

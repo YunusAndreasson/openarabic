@@ -122,7 +122,7 @@ const MiniPlayerComponent = ({
         <View style={styles.contentRow}>
           {/* Artwork */}
           <View style={styles.artworkContainer}>
-            <EnhancedImage source={article.image_url} style={styles.artwork} cachePolicy="disk" />
+            <EnhancedImage source={article.image_url} style={styles.artwork} />
           </View>
 
           {/* Text Content and Time Display Column */}

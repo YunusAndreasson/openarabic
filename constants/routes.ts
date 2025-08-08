@@ -5,16 +5,6 @@ export const getArticleRoute = (id: number, headerTitle?: string): string => {
   return `${base}?${search.toString()}`;
 };
 
-export const getFilterRoute = (
-  type: 'category' | 'author',
-  id: number | string,
-  name?: string
-): string => {
-  const params = new URLSearchParams({ type, id: id.toString() });
-  if (name) params.append('name', name);
-  return `/(tabs)/read/filter?${params.toString()}`;
-};
-
 export const getFilterModalRoute = (categoryId: number): string =>
   `/(tabs)/read/filterModal?categoryId=${categoryId}`;
 

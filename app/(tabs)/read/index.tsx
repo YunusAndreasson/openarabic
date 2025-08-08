@@ -14,7 +14,7 @@ import IntelligentArticleSection from '@/components/home/IntelligentArticleSecti
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { CACHE_TIMES } from '@/constants/queryConfig';
-import { getArticleRoute, getFilterRoute } from '@/constants/routes';
+import { getArticleRoute, getFilterModalRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -135,8 +135,8 @@ export default function ReadScreen(): JSX.Element {
     [prefetchArticle]
   );
 
-  const handleSelectCategory = useCallback((categoryId: number, categoryName?: string) => {
-    router.push(getFilterRoute('category', categoryId, categoryName));
+  const handleSelectCategory = useCallback((categoryId: number) => {
+    router.push(getFilterModalRoute(categoryId));
   }, []);
 
   // Simplified header component - categories are guaranteed to have articles

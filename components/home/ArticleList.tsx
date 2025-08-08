@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import ArticleCard from '@/components/ArticleCard';
 import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
@@ -25,7 +25,7 @@ import type { Article } from '@/types/articles.types';
 // Optimized constants for better performance
 const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM + LAYOUT.SPACING.XXXLARGE * 8;
 const DRAW_DISTANCE = ITEM_HEIGHT * LIST_DRAW_DISTANCE_MULTIPLIER;
-const ESTIMATED_LIST_SIZE = { height: ITEM_HEIGHT * 10, width: 0 };
+const ESTIMATED_LIST_SIZE = { height: ITEM_HEIGHT * 10, width: SCREEN_WIDTH };
 
 // Static key extractor for better performance
 const articleKeyExtractor = (item: Article) => `article-${item.id}`;

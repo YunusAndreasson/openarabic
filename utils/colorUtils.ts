@@ -50,8 +50,6 @@ function hexToRgb(hex: string): string {
  */
 export function withOpacity(hex: string, opacity: number): string {
   const validOpacity =
-    typeof opacity === 'number' && !Number.isNaN(opacity)
-      ? Math.max(0, Math.min(1, opacity))
-      : 1;
+    typeof opacity === 'number' && !Number.isNaN(opacity) ? Math.max(0, Math.min(1, opacity)) : 1;
   return `rgba(${hexToRgb(hex)},${validOpacity})`;
 }
