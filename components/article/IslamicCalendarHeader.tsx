@@ -8,6 +8,7 @@ import { HIJRI_MONTHS } from '@/constants/hijri';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import { withOpacity } from '@/utils/colorUtils';
 import {
   createStrongDarkOverlayGradient,
   createThemeBackgroundGradient,
@@ -118,8 +119,8 @@ export const IslamicCalendarHeader = memo<IslamicCalendarHeaderProps>(
 
     // Enhanced gradient for better text readability using theme colors
     const imageGradientColors = useMemo(() => {
-      return createStrongDarkOverlayGradient();
-    }, []);
+      return createStrongDarkOverlayGradient(colors.black);
+    }, [colors.black]);
 
     // Background gradient colors for smooth transition using proper theme detection
     const backgroundGradientColors = useMemo(() => {
@@ -159,7 +160,7 @@ export const IslamicCalendarHeader = memo<IslamicCalendarHeaderProps>(
               skipDefaultColor
               style={[
                 styles.hijriDate,
-                { color: colors.white, textShadowColor: 'rgba(0, 0, 0, 0.9)' },
+                { color: colors.white, textShadowColor: withOpacity(colors.black, 0.9) },
               ]}
             >
               {dateInfo.hijriDate}
@@ -170,7 +171,7 @@ export const IslamicCalendarHeader = memo<IslamicCalendarHeaderProps>(
               skipDefaultColor
               style={[
                 styles.englishDate,
-                { color: colors.white, textShadowColor: 'rgba(0, 0, 0, 0.9)' },
+                { color: colors.white, textShadowColor: withOpacity(colors.black, 0.9) },
               ]}
             >
               {dateInfo.englishDate}
@@ -182,7 +183,7 @@ export const IslamicCalendarHeader = memo<IslamicCalendarHeaderProps>(
                 skipDefaultColor
                 style={[
                   styles.activeCount,
-                  { color: colors.white, textShadowColor: 'rgba(0, 0, 0, 0.9)' },
+                  { color: colors.white, textShadowColor: withOpacity(colors.black, 0.9) },
                 ]}
               >
                 {activeEventsCount === 1

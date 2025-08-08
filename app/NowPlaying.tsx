@@ -184,7 +184,13 @@ export default function NowPlayingModal() {
         <View style={styles.headerInfo}>
           <ThemedText
             type="heading3"
-            style={[styles.title, { color: overlayColors.textPrimary }]}
+            style={[
+              styles.title,
+              {
+                color: overlayColors.textPrimary,
+                textShadowColor: withOpacity(colors.black, 0.8),
+              },
+            ]}
             numberOfLines={2}
           >
             {isActuallyLoading ? 'Preparing audio...' : article?.title || 'Loading article...'}
@@ -192,7 +198,13 @@ export default function NowPlayingModal() {
           <ThemedText
             type="body"
             variant="secondary"
-            style={[styles.author, { color: overlayColors.textSecondary }]}
+            style={[
+              styles.author,
+              {
+                color: overlayColors.textSecondary,
+                textShadowColor: withOpacity(colors.black, 0.6),
+              },
+            ]}
           >
             {article?.author?.name || ''}
           </ThemedText>
@@ -204,7 +216,13 @@ export default function NowPlayingModal() {
         {sentenceProgressText && (
           <ThemedText
             type="caption"
-            style={[styles.progressText, { color: overlayColors.textTertiary }]}
+            style={[
+              styles.progressText,
+              {
+                color: overlayColors.textTertiary,
+                textShadowColor: withOpacity(colors.black, 0.6),
+              },
+            ]}
           >
             {sentenceProgressText}
           </ThemedText>
@@ -213,7 +231,10 @@ export default function NowPlayingModal() {
         <Animated.View style={[styles.sentenceContainer, sentenceAnimation.animatedStyle]}>
           <ThemedText
             type="body"
-            style={[styles.englishText, { color: overlayColors.textPrimary }]}
+            style={[
+              styles.englishText,
+              { color: overlayColors.textPrimary, textShadowColor: withOpacity(colors.black, 0.7) },
+            ]}
           >
             {isActuallyLoading
               ? 'Preparing audio...'

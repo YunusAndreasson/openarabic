@@ -76,23 +76,17 @@ export function createBackgroundGradientColors(
 /**
  * Create strong dark overlay gradient for excellent text contrast (used in IslamicCalendarHeader)
  */
-export function createStrongDarkOverlayGradient(): readonly [
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string
-] {
+export function createStrongDarkOverlayGradient(
+  baseColor = '#000000'
+): readonly [string, string, string, string, string, string, string] {
   return [
     'transparent',
-    'rgba(0, 0, 0, 0.1)',
-    'rgba(0, 0, 0, 0.3)',
-    'rgba(0, 0, 0, 0.5)',
-    'rgba(0, 0, 0, 0.7)',
-    'rgba(0, 0, 0, 0.85)',
-    'rgba(0, 0, 0, 0.95)',
+    withOpacity(baseColor, 0.1),
+    withOpacity(baseColor, 0.3),
+    withOpacity(baseColor, 0.5),
+    withOpacity(baseColor, 0.7),
+    withOpacity(baseColor, 0.85),
+    withOpacity(baseColor, 0.95),
   ] as const;
 }
 

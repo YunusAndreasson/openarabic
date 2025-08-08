@@ -23,6 +23,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useEncouragingMetrics } from '@/hooks/review/useEncouragingMetrics';
 import { useColors } from '@/hooks/theme/useColors';
 import type { SessionMetrics } from '@/types/review.types';
+import { withOpacity } from '@/utils/colorUtils';
 import { successFeedback } from '@/utils/haptics';
 
 interface CompletionScreenProps {
@@ -121,7 +122,13 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
                   entering={FadeInUp.delay(
                     COMPLETION_METRIC_BASE_DELAY + index * COMPLETION_METRIC_STAGGER
                   ).duration(TIMING_CONFIG.GENTLE.duration)}
-                  style={styles.metricItem}
+                  style={[
+                    styles.metricItem,
+                    {
+                      backgroundColor: withOpacity(colors.black, 0.02),
+                      borderColor: withOpacity(colors.black, 0.05),
+                    },
+                  ]}
                 >
                   <View style={styles.metricContent}>
                     <View
@@ -217,9 +224,7 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingVertical: LAYOUT.SPACING.TINY, // Reduced vertical padding
-    backgroundColor: 'rgba(0, 0, 0, 0.02)', // Subtle background for visual separation
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    borderColor: 'rgba(0, 0, 0, 0.05)', // Subtle border for definition
   },
   metricText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // Proper typography scale instead of spacing

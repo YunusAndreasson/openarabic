@@ -116,7 +116,7 @@ const HeaderProfile = memo(({ size = 28 }: HeaderProfileProps) => {
             <ThemedText
               type="label"
               weight="bold"
-              style={[styles.initialsText, { fontSize: size * 0.4, color: 'white' }]}
+              style={[styles.initialsText, { fontSize: size * 0.4, color: colors.white }]}
             >
               {initials}
             </ThemedText>

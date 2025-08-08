@@ -13,7 +13,9 @@ import Animated, {
 
 import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, SCREEN_WIDTH, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
+import { useColors } from '@/hooks/theme/useColors';
 import type { AnimatedStyleProp as AppAnimatedStyleProp } from '@/types/ui/base.types';
+import { withOpacity } from '@/utils/colorUtils';
 
 import WordDisplayComponent from './WordDisplay';
 
@@ -74,12 +76,26 @@ const ReviewCardInternal = ({
   opacityStyle,
   testID,
 }: ReviewCardProps) => {
-  // const colors = useColors();
+  const colors = useColors();
   const translateX = useSharedValue(0);
   const isAnimatingRef = useSharedValue(false);
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ===== SWIPE BACKGROUND COLOR ANIMATION =====
+  // Precompute RGB strings from theme colors on JS thread
+  const errorRgb = useMemo(() => {
+    // withOpacity returns rgba(r,g,b,a); extract r,g,b for worklet usage
+    const rgba = withOpacity(colors.error, 1);
+    const inside = rgba.slice(rgba.indexOf('(') + 1, rgba.lastIndexOf(')'));
+    return inside.split(',').slice(0, 3).join(',');
+  }, [colors.error]);
+
+  const successRgb = useMemo(() => {
+    const rgba = withOpacity(colors.success, 1);
+    const inside = rgba.slice(rgba.indexOf('(') + 1, rgba.lastIndexOf(')'));
+    return inside.split(',').slice(0, 3).join(',');
+  }, [colors.success]);
+
   const swipeBackgroundStyle = useAnimatedStyle(() => {
     'worklet';
     // Interpolate color: left = error, right = success, center = transparent
@@ -88,14 +104,14 @@ const ReviewCardInternal = ({
     if (translateX.value < 0) {
       // Swiping left: interpolate from transparent to error
       const t = Math.min(Math.abs(translateX.value) / maxTranslation, 1);
-      bgColor = `rgba(211,47,47,${t * 0.18})`; // #D32F2F, 18% opacity at max
+      bgColor = `rgba(${errorRgb},${t * 0.18})`;
     } else if (translateX.value > 0) {
       // Swiping right: interpolate from transparent to success
       const t = Math.min(translateX.value / maxTranslation, 1);
-      bgColor = `rgba(76,127,90,${t * 0.18})`; // #4C7F5A, 18% opacity at max
+      bgColor = `rgba(${successRgb},${t * 0.18})`;
     }
     return { backgroundColor: bgColor };
-  }, []);
+  }, [errorRgb, successRgb]);
 
   // ===== COMBINED ANIMATED STYLE (SINGLE ANIMATED VIEW) =====
   const combinedAnimatedStyle = useAnimatedStyle(() => {

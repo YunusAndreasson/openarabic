@@ -207,7 +207,11 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId }) =
                 />
               ) : (
                 <View style={dynamicStyles.initialsContainer}>
-                  <ThemedText type="heading2" weight="bold" style={styles.initialsText}>
+                  <ThemedText
+                    type="heading2"
+                    weight="bold"
+                    style={[styles.initialsText, { color: colors.white }]}
+                  >
                     {initials}
                   </ThemedText>
                 </View>
@@ -281,7 +285,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   initialsText: {
-    color: 'white',
     fontSize: 18,
   },
   editIconContainer: {
