@@ -198,12 +198,14 @@ export function useGlobalAudioState(): GlobalAudioState {
   // Action handlers
   const handlePlayPause = useCallback(async () => {
     if (audioPlayer.isPlaying) {
-      await audioPlayer.stop(); // Use stop instead of pause since there's no resume
-    } else {
-      // For now, just stop - resume functionality would need to be implemented
-      await audioPlayer.stop();
+      await audioPlayer.pause();
+      return;
     }
-  }, [audioPlayer.isPlaying, audioPlayer]);
+
+    // If not playing and we have a current track, resume; otherwise do nothing here.
+    // Play for a new track is handled by screen-level actions (e.g., handleArticlePlay).
+    await audioPlayer.resume();
+  }, [audioPlayer.isPlaying, audioPlayer.pause, audioPlayer.resume]);
 
   const handleTimerPress = useCallback(() => {
     setShowSleepTimerModal(true);

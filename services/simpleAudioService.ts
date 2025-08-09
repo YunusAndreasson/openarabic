@@ -29,7 +29,7 @@ class SimpleAudioService {
 
   // STABILIZATION: Add state transition smoothing
   private lastStatusUpdate = 0;
-  private statusUpdateThrottle = 500; // Minimum 500ms between status updates
+  private statusUpdateThrottle = 300; // Minimum 300ms between status updates for smoother UI
 
   // Current audio status
   private status: AudioStatus = {
@@ -48,11 +48,15 @@ class SimpleAudioService {
 
     try {
       await setAudioModeAsync({
-        playsInSilentMode: true,
-        allowsRecording: false,
-        shouldPlayInBackground: false,
-        shouldRouteThroughEarpiece: false,
-      });
+        // iOS
+        playsInSilentModeIOS: true,
+        allowsRecordingIOS: false,
+        // Background behavior
+        staysActiveInBackground: false,
+        // Android
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      } as unknown as Record<string, unknown>);
       this.audioSessionConfigured = true;
     } catch {
       // Audio session configuration failed - handle silently
@@ -196,25 +200,32 @@ class SimpleAudioService {
       clearInterval(this.statusPollingInterval);
     }
 
-    // STABILIZATION: Reduced polling frequency from 250ms to 1000ms for better performance
-    // This reduces rapid state changes that cause UI instability
+    // Balanced polling interval for smoother progress updates
     this.statusPollingInterval = setInterval(() => {
       if (this.currentPlayer) {
         try {
           const isPlaying = this.currentPlayer.playing || this.currentPlayer.isPlaying || false;
-          const currentTime = this.currentPlayer.currentTime || this.currentPlayer.position || 0;
-          const duration = this.currentPlayer.duration || this.currentPlayer.durationMillis || 0;
+          // Normalize to seconds if millis provided
+          const rawPosition = this.currentPlayer.currentTime ?? this.currentPlayer.position ?? 0;
+          const rawDuration = this.currentPlayer.duration ?? this.currentPlayer.durationMillis ?? 0;
+
+          const currentTimeSeconds =
+            rawPosition > 1000 && rawPosition > 600 ? rawPosition / 1000 : rawPosition;
+          const durationSeconds =
+            rawDuration > 1000 && rawDuration > 600 ? rawDuration / 1000 : rawDuration;
 
           // Add safety checks for invalid values
           const safeCurrentTime =
-            isNaN(currentTime) || !isFinite(currentTime) ? 0 : Math.max(0, currentTime);
-          const safeDuration = isNaN(duration) || !isFinite(duration) ? 0 : Math.max(0, duration);
+            isNaN(currentTimeSeconds) || !isFinite(currentTimeSeconds)
+              ? 0
+              : Math.max(0, currentTimeSeconds);
+          const safeDuration =
+            isNaN(durationSeconds) || !isFinite(durationSeconds) ? 0 : Math.max(0, durationSeconds);
 
-          // STABILIZATION: Only update if values have changed significantly
-          // Increased threshold from 0.5s to 1s to reduce rapid updates
+          // Only update if values have changed meaningfully (reduce UI churn but stay smooth)
           const hasChanged =
-            Math.abs(this.status.currentTime - safeCurrentTime) > 1 ||
-            Math.abs(this.status.duration - safeDuration) > 1 ||
+            Math.abs(this.status.currentTime - safeCurrentTime) > 0.3 ||
+            Math.abs(this.status.duration - safeDuration) > 0.3 ||
             this.status.isPlaying !== isPlaying;
 
           if (hasChanged) {
@@ -231,7 +242,7 @@ class SimpleAudioService {
           this.updateStatus({ isPlaying: false, isLoading: false });
         }
       }
-    }, 1000); // Increased from 250ms to 1000ms for stability
+    }, 500);
   }
 
   /**

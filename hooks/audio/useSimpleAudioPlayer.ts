@@ -11,12 +11,23 @@ export const useSimpleAudioPlayer = () => {
   const [status, setStatus] = useState<AudioStatus>(() => simpleAudioService.getStatus());
   const isMountedRef = useRef(true);
 
-  // Subscribe to status updates
+  // Subscribe to status updates with shallow change detection to avoid redundant renders
   useEffect(() => {
     const unsubscribe = simpleAudioService.subscribe(newStatus => {
-      if (isMountedRef.current) {
-        setStatus(newStatus);
-      }
+      if (!isMountedRef.current) return;
+
+      setStatus(prev => {
+        if (!prev) return newStatus;
+
+        const didChange =
+          prev.isPlaying !== newStatus.isPlaying ||
+          prev.isLoading !== newStatus.isLoading ||
+          Math.floor(prev.currentTime) !== Math.floor(newStatus.currentTime) ||
+          Math.floor(prev.duration) !== Math.floor(newStatus.duration) ||
+          (prev.currentTrack?.id ?? null) !== (newStatus.currentTrack?.id ?? null);
+
+        return didChange ? newStatus : prev;
+      });
     });
 
     return unsubscribe;
@@ -42,6 +53,12 @@ export const useSimpleAudioPlayer = () => {
     await simpleAudioService.pause();
   }, []);
 
+  // Resume function
+  const resume = useCallback(async (): Promise<void> => {
+    if (!isMountedRef.current) return;
+    await simpleAudioService.resume();
+  }, []);
+
   // Stop function
   const stop = useCallback(async (): Promise<void> => {
     if (!isMountedRef.current) return;
@@ -59,6 +76,7 @@ export const useSimpleAudioPlayer = () => {
     // Actions
     play,
     pause,
+    resume,
     stop,
 
     // Full status object for advanced use cases
