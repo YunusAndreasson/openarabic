@@ -291,8 +291,7 @@ export default function ListenScreen(): JSX.Element {
   // Memoize the key extractor to prevent inline function creation
   const memoizedKeyExtractor = useCallback(keyExtractor, []);
 
-  // Memoize extraData object to avoid new identity on each render
-  const listExtraData = useMemo(() => ({ audioState, editMode }), [audioState, editMode]);
+  // Removed FlashList extraData: row components already receive stable props via renderItem
 
   return (
     <ThemedView
@@ -317,7 +316,6 @@ export default function ListenScreen(): JSX.Element {
             data={sortedReadingList}
             drawDistance={ITEM_HEIGHT * 5}
             estimatedItemSize={ITEM_HEIGHT}
-            extraData={listExtraData}
             keyExtractor={memoizedKeyExtractor}
             removeClippedSubviews={true}
             showsVerticalScrollIndicator={false}

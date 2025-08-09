@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
 import React from 'react';
 
 import ErrorState from '@common/ErrorState';
 import FilteredArticleView from '@read/FilteredArticleView';
 
+import { getArticleRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { articlesService } from '@/services/articles';
 import type { Article } from '@/types/articles.types';
@@ -36,5 +37,11 @@ export default function CategoryFilterScreen(): JSX.Element {
     );
   }
 
-  return <FilteredArticleView articles={articles} loading={isLoading} />;
+  return (
+    <FilteredArticleView
+      articles={articles}
+      loading={isLoading}
+      onArticlePress={article => router.push(getArticleRoute(article.id, article.title))}
+    />
+  );
 }
