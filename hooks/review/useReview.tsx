@@ -116,6 +116,9 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
   const [progressAnimationKey, setProgressAnimationKey] = useState(0);
   const [isVagueMeaning, setIsVagueMeaning] = useState(false);
   const [isStruggling, setIsStruggling] = useState(false);
+  // Ensure UI re-renders when updating state changes so gestures re-enable
+  const [isUpdatingUI, setIsUpdatingUI] = useState(false);
+  // No extra key needed; audio plays on currentWord changes
 
   // Consolidated time tracking refs
   const timeRefs = useRef<ReviewTimeRefs>({
@@ -278,6 +281,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
         fadeIn();
       } finally {
         stateRefs.current.isUpdatingWord = false;
+        setIsUpdatingUI(false);
         if (stateRefs.current.meaningTimeout) {
           clearTimeout(stateRefs.current.meaningTimeout);
           stateRefs.current.meaningTimeout = null;
@@ -333,6 +337,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
 
       // Set updating flag immediately to prevent concurrent processing
       stateRefs.current.isUpdatingWord = true;
+      setIsUpdatingUI(true);
 
       // Abort any previous operation
       if (abortControllerRef.current) {
@@ -648,6 +653,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       }
 
       stateRefs.current.isUpdatingWord = false;
+      setIsUpdatingUI(false);
       stateRefs.current.maxProgress = 0;
       timeRefs.current.lastProcessedWordId = null;
     };
@@ -668,7 +674,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     isTransitioningToCompletion,
     opacity,
     isComplete,
-    isUpdating: stateRefs.current.isUpdatingWord,
+    isUpdating: isUpdatingUI,
     progress,
     maxProgress: stateRefs.current.maxProgress,
     progressAnimationKey,

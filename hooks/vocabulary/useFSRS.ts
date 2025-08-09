@@ -220,7 +220,7 @@ export function useFSRS({
 
   const updateWord = useCallback(
     async (rootId: number, confidence: WordConfidence) => {
-      if (!userId || !currentWord || currentWord.root_id !== rootId) {
+      if (!userId || !currentWord) {
         return;
       }
 
@@ -234,34 +234,103 @@ export function useFSRS({
 
       stateTrackingRef.current.isProcessingUpdate = true;
 
-      try {
-        const card = convertToFSRSCard(currentWord);
-        const now = new Date();
+      const card = convertToFSRSCard(currentWord);
+      const now = new Date();
 
-        const rating =
-          confidence === 'known'
-            ? Rating.Good
-            : confidence === 'vague'
-            ? Rating.Hard
-            : Rating.Again;
+      const rating =
+        confidence === 'known' ? Rating.Good : confidence === 'vague' ? Rating.Hard : Rating.Again;
 
-        const { card: newCard } = fsrsInstance.next(card, now, rating);
+      const { card: newCard } = fsrsInstance.next(card, now, rating);
 
-        // Update the word with new FSRS parameters and session tracking
-        const wordUpdateData = {
-          success_streak: confidence === 'known' ? (currentWord.success_streak || 0) + 1 : 0,
-          fsrs_due: newCard.due.toISOString(),
-          fsrs_stability: newCard.stability,
-          fsrs_difficulty: newCard.difficulty,
-          fsrs_elapsed_days: newCard.elapsed_days,
-          fsrs_scheduled_days: newCard.scheduled_days,
-          fsrs_reps: newCard.reps,
-          fsrs_learning_steps: newCard.learning_steps,
-          fsrs_lapses: newCard.lapses,
-          fsrs_state: newCard.state,
-          fsrs_last_review: now.toISOString(),
+      // Prepare FSRS update payload
+      const wordUpdateData = {
+        success_streak: confidence === 'known' ? (currentWord.success_streak || 0) + 1 : 0,
+        fsrs_due: newCard.due.toISOString(),
+        fsrs_stability: newCard.stability,
+        fsrs_difficulty: newCard.difficulty,
+        fsrs_elapsed_days: newCard.elapsed_days,
+        fsrs_scheduled_days: newCard.scheduled_days,
+        fsrs_reps: newCard.reps,
+        fsrs_learning_steps: newCard.learning_steps,
+        fsrs_lapses: newCard.lapses,
+        fsrs_state: newCard.state,
+        fsrs_last_review: now.toISOString(),
+      };
+
+      // Track session counters immediately
+      countersRef.current.processedWords += 1;
+      countersRef.current.uniqueWords.add(rootId);
+      if (confidence === 'known') {
+        countersRef.current.knownWords += 1;
+      } else {
+        // For vague/unknown responses, add the word back to the spacing queue now
+        const updatedWord: StudyWord = {
+          ...currentWord,
+          fsrs_due: wordUpdateData.fsrs_due,
+          fsrs_stability: wordUpdateData.fsrs_stability,
+          fsrs_difficulty: wordUpdateData.fsrs_difficulty,
+          fsrs_elapsed_days: wordUpdateData.fsrs_elapsed_days,
+          fsrs_scheduled_days: wordUpdateData.fsrs_scheduled_days,
+          fsrs_reps: wordUpdateData.fsrs_reps,
+          fsrs_learning_steps: wordUpdateData.fsrs_learning_steps,
+          fsrs_lapses: wordUpdateData.fsrs_lapses,
+          fsrs_state: wordUpdateData.fsrs_state,
+          fsrs_last_review: wordUpdateData.fsrs_last_review,
         };
+        spacingQueueRef.current.spacedWords.push({
+          word: updatedWord,
+          remainingSpacing: MIN_WORD_SPACING,
+        });
+      }
 
+      // Update spacing counters before selecting next word
+      updateSpacingCounters(rootId);
+
+      // Select the next word optimistically
+      let nextItem = getNextWordWithSpacing();
+      // Safety: never immediately return the same word again
+      // If the next item matches the just-processed root, keep popping
+      // until we find a different word or the queue is exhausted.
+      let guardIterations = 0;
+      while (nextItem && nextItem.root_id === rootId && guardIterations < 5) {
+        nextItem = getNextWordWithSpacing();
+        guardIterations += 1;
+      }
+      const remaining = queueRef.current.toArray();
+
+      const uniqueWordCount = countersRef.current.uniqueWords.size;
+      const newProgress = uniqueWordCount
+        ? Math.min(Math.round((countersRef.current.knownWords / uniqueWordCount) * 100), 100)
+        : 100;
+      setProgress(newProgress);
+
+      // FIXED: Check for completion when no next word is available AND either:
+      // 1. No words in spacing queue, OR
+      // 2. All words in spacing queue have remainingSpacing > 0 (can't be shown yet)
+      const hasAvailableSpacedWords = spacingQueueRef.current.spacedWords.some(
+        item => item.remainingSpacing <= 0
+      );
+
+      // Do not prematurely pick from spacedWords if none are ready. If there are no
+      // available words yet (all spaced), we will complete the session below.
+
+      if (!nextItem && (!spacingQueueRef.current.spacedWords.length || !hasAvailableSpacedWords)) {
+        if (!stateTrackingRef.current.completionTriggered) {
+          stateTrackingRef.current.completionTriggered = true;
+          setTimeout(() => {
+            if (stateTrackingRef.current.completionTriggered) {
+              setIsComplete(true);
+              if (onComplete) onComplete();
+            }
+          }, 0);
+        }
+      }
+
+      setCurrentWord(nextItem || null);
+      setWordQueue(remaining);
+
+      // Persist update; errors won't block UI progression
+      try {
         await studyWordsFSRSService.updateWordAndReview(
           userId,
           rootId,
@@ -269,91 +338,11 @@ export function useFSRS({
           rating,
           newCard.learning_steps
         );
-
-        // Track session counters
-        countersRef.current.processedWords += 1;
-        countersRef.current.uniqueWords.add(rootId);
-
-        // Update spacing counters
-        updateSpacingCounters(rootId);
-
-        if (confidence === 'known') {
-          countersRef.current.knownWords += 1;
-        } else {
-          // For vague/unknown responses, add the word back to the spacing queue
-          const updatedWord: StudyWord = {
-            ...currentWord,
-            fsrs_due: wordUpdateData.fsrs_due,
-            fsrs_stability: wordUpdateData.fsrs_stability,
-            fsrs_difficulty: wordUpdateData.fsrs_difficulty,
-            fsrs_elapsed_days: wordUpdateData.fsrs_elapsed_days,
-            fsrs_scheduled_days: wordUpdateData.fsrs_scheduled_days,
-            fsrs_reps: wordUpdateData.fsrs_reps,
-            fsrs_learning_steps: wordUpdateData.fsrs_learning_steps,
-            fsrs_lapses: wordUpdateData.fsrs_lapses,
-            fsrs_state: wordUpdateData.fsrs_state,
-            fsrs_last_review: wordUpdateData.fsrs_last_review,
-          };
-
-          // Add to spacing queue with proper spacing
-          spacingQueueRef.current.spacedWords.push({
-            word: updatedWord,
-            remainingSpacing: MIN_WORD_SPACING,
-          });
-        }
-
-        let nextItem = getNextWordWithSpacing();
-        const remaining = queueRef.current.toArray();
-
-        const uniqueWordCount = countersRef.current.uniqueWords.size;
-        const newProgress = uniqueWordCount
-          ? Math.min(Math.round((countersRef.current.knownWords / uniqueWordCount) * 100), 100)
-          : 100;
-        setProgress(newProgress);
-
-        // FIXED: Check for completion when no next word is available AND either:
-        // 1. No words in spacing queue, OR
-        // 2. All words in spacing queue have remainingSpacing > 0 (can't be shown yet)
-        const hasAvailableSpacedWords = spacingQueueRef.current.spacedWords.some(
-          item => item.remainingSpacing <= 0
-        );
-
-        if (!nextItem) {
-          if (spacingQueueRef.current.spacedWords.length > 0 && !hasAvailableSpacedWords) {
-            // Fallback: pick the spaced word with the smallest remaining spacing to avoid
-            // premature completion when the main queue is empty.
-            const minIdx = spacingQueueRef.current.spacedWords.reduce(
-              (best, curr, idx, arr) =>
-                curr.remainingSpacing < arr[best].remainingSpacing ? idx : best,
-              0
-            );
-            const picked = spacingQueueRef.current.spacedWords.splice(minIdx, 1)[0];
-            nextItem = picked?.word ?? null;
-          }
-        }
-
-        if (
-          !nextItem &&
-          (!spacingQueueRef.current.spacedWords.length || !hasAvailableSpacedWords)
-        ) {
-          if (!stateTrackingRef.current.completionTriggered) {
-            stateTrackingRef.current.completionTriggered = true;
-            setTimeout(() => {
-              if (stateTrackingRef.current.completionTriggered) {
-                setIsComplete(true);
-                if (onComplete) onComplete();
-              }
-            }, 0);
-          }
-        }
-
-        setCurrentWord(nextItem || null);
-        setWordQueue(remaining);
       } catch (error) {
         handleError(error instanceof Error ? error : new Error(String(error)));
-      } finally {
-        stateTrackingRef.current.isProcessingUpdate = false;
       }
+
+      stateTrackingRef.current.isProcessingUpdate = false;
     },
     [
       userId,
