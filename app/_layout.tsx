@@ -151,8 +151,7 @@ function AppContent() {
   // Centralized system UI theme management
   useSystemUITheme();
 
-  // Global audio state for mini-player
-  const globalAudioState = useGlobalAudioState();
+  // Global audio state moved into AudioOverlays to avoid re-rendering the root
 
   const [fontsLoaded] = useFonts({
     NotoSans: notoSansFont,
@@ -336,31 +335,8 @@ function AppContent() {
             {/* NowPlaying is nested at /(tabs)/listen/now-playing; no root-level screen needed */}
           </Stack>
 
-          {/* Mini-player always above tab bar, but below modals */}
-          {globalAudioState.currentArticle &&
-            (globalAudioState.isPlaying || globalAudioState.audioState === 'loading') &&
-            !globalAudioState.showSleepTimerModal &&
-            !globalAudioState.shouldHideMiniPlayer && (
-              <MiniPlayer
-                article={globalAudioState.currentArticle}
-                isPlaying={globalAudioState.isPlaying}
-                isTimerActive={globalAudioState.isTimerActive}
-                position={globalAudioState.position}
-                duration={globalAudioState.duration}
-                onPlayPause={globalAudioState.onPlayPause}
-                onTimerPress={globalAudioState.onTimerPress}
-                onExpand={globalAudioState.onExpand}
-              />
-            )}
-          {/* SleepTimer rendered last to ensure it overlays everything */}
-          <SleepTimer
-            isVisible={globalAudioState.showSleepTimerModal}
-            isActive={globalAudioState.isTimerActive}
-            remainingTime={globalAudioState.sleepTimerRemainingTime}
-            onClose={globalAudioState.onSleepTimerClose}
-            onTimerSet={globalAudioState.onSleepTimerSet}
-            onTimerCancel={globalAudioState.onSleepTimerCancel}
-          />
+          {/* Audio overlays are isolated to prevent root re-renders on audio ticks */}
+          <AudioOverlays />
 
           <StatusBar style={isDark ? 'light' : 'dark'} />
         </View>
@@ -386,6 +362,43 @@ const styles = StyleSheet.create({
   gestureRoot: {
     flex: 1,
   },
+});
+
+const AudioOverlays = memo(function AudioOverlays() {
+  const globalAudioState = useGlobalAudioState();
+
+  const shouldShowMiniPlayer =
+    Boolean(globalAudioState.currentArticle) &&
+    (globalAudioState.isPlaying || globalAudioState.audioState === 'loading') &&
+    !globalAudioState.showSleepTimerModal &&
+    !globalAudioState.shouldHideMiniPlayer;
+
+  return (
+    <>
+      {shouldShowMiniPlayer && (
+        <MiniPlayer
+          article={globalAudioState.currentArticle}
+          isPlaying={globalAudioState.isPlaying}
+          isTimerActive={globalAudioState.isTimerActive}
+          position={globalAudioState.position}
+          duration={globalAudioState.duration}
+          onPlayPause={globalAudioState.onPlayPause}
+          onTimerPress={globalAudioState.onTimerPress}
+          onExpand={globalAudioState.onExpand}
+        />
+      )}
+
+      {/* SleepTimer rendered last to ensure it overlays everything */}
+      <SleepTimer
+        isVisible={globalAudioState.showSleepTimerModal}
+        isActive={globalAudioState.isTimerActive}
+        remainingTime={globalAudioState.sleepTimerRemainingTime}
+        onClose={globalAudioState.onSleepTimerClose}
+        onTimerSet={globalAudioState.onSleepTimerSet}
+        onTimerCancel={globalAudioState.onSleepTimerCancel}
+      />
+    </>
+  );
 });
 
 const ErrorFallback = memo(function ErrorFallback({ error }: FallbackProps) {
