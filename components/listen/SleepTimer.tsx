@@ -24,14 +24,7 @@ export interface SleepTimerProps {
 const timerOptions = [5, 10, 15, 30, 45, 60]; // minutes
 const DEFAULT_SELECTED_MINUTES = 15; // Pre-select 15 minutes
 
-// Simplified time formatter
-const formatTime = (seconds: number): string => {
-  if (!seconds || seconds < 0) return '0:00';
-
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-};
+// Use shared formatter
 
 const SleepTimerComponent = ({
   isVisible,

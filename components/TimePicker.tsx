@@ -11,6 +11,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import { formatDateTo12hClock } from '@/utils/time';
 
 import { ThemedButton } from './ThemedButton';
 import { ThemedText } from './ThemedText';
@@ -86,14 +87,7 @@ export const TimePicker = memo(
       onClose();
     }, [selectedDate, extractTimeAndSet, onClose]);
 
-    const formatTime = useCallback((date: Date) => {
-      const hour = date.getHours();
-      const minute = date.getMinutes();
-      const period = hour >= 12 ? 'PM' : 'AM';
-      const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-      const displayMinute = minute.toString().padStart(2, '0');
-      return `${displayHour}:${displayMinute} ${period}`;
-    }, []);
+    const formatTime = useCallback((date: Date) => formatDateTo12hClock(date), []);
 
     // Use built-in backdrop component
     const renderBackdrop = useCallback(

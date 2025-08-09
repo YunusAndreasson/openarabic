@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BottomControls from '@/components/BottomControls';
 import EmptyState from '@/components/EmptyState';
+import ListSeparator from '@/components/ListSeparator';
 import { ThemedView } from '@/components/ThemedView';
 import { ListenListItemCard } from '@/components/listen/ListenListItemCard';
 import { useToast } from '@/components/providers/ToastProvider';
@@ -19,7 +20,9 @@ import { STRINGS } from '@/constants/strings';
 import { useListenScreen, useListenUI } from '@/hooks/listen';
 import { useColors } from '@/hooks/theme/useColors';
 import { useEditMode } from '@/hooks/ui/useEditMode';
+import { useStableBoolean } from '@/hooks/ui/useStableBoolean';
 import type { ReadingListItem } from '@/types/readingList.types';
+import { overrideFixedHeight } from '@/utils/list';
 
 const styles = StyleSheet.create({
   container: {
@@ -28,16 +31,14 @@ const styles = StyleSheet.create({
   flexOne: {
     flex: 1,
   },
-  separator: {
-    height: LAYOUT.SPACING.MEDIUM,
-  },
+  separator: {},
 });
 
 // Use responsive height calculation instead of hardcoded value
 const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.AUDIO_ITEM;
 
 // Memoized separator component for both DraggableFlatList and FlashList
-const ItemSeparator = memo(() => <View style={styles.separator} />);
+const ItemSeparator = memo(() => <ListSeparator height={LAYOUT.SPACING.MEDIUM} />);
 
 // Memoized key extractor to prevent inline function creation
 const keyExtractor = (item: ReadingListItem) => `${item.article_id}`;
@@ -157,8 +158,8 @@ export default function ListenScreen(): JSX.Element {
   const playAllTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // STABILIZATION: Debounced button state to prevent flickering
-  const [stableHasArticles, setStableHasArticles] = useState(false);
-  const hasArticlesTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasArticles = sortedReadingList.length > 0;
+  const stableHasArticles = useStableBoolean(hasArticles, 100);
 
   useEffect(() => {
     if (enhancedTracksError) {
@@ -166,29 +167,7 @@ export default function ListenScreen(): JSX.Element {
     }
   }, [enhancedTracksError, showToast]);
 
-  // STABILIZATION: Debounce hasArticles state changes to prevent button flickering
-  useEffect(() => {
-    const hasArticles = sortedReadingList.length > 0;
-
-    // Clear existing timeout
-    if (hasArticlesTimeoutRef.current) {
-      clearTimeout(hasArticlesTimeoutRef.current);
-    }
-
-    // Only update if state actually changes
-    if (hasArticles !== stableHasArticles) {
-      // Add small delay to prevent rapid state changes
-      hasArticlesTimeoutRef.current = setTimeout(() => {
-        setStableHasArticles(hasArticles);
-      }, 100);
-    }
-
-    return () => {
-      if (hasArticlesTimeoutRef.current) {
-        clearTimeout(hasArticlesTimeoutRef.current);
-      }
-    };
-  }, [sortedReadingList.length, stableHasArticles]);
+  // STABILIZATION: handled by useStableBoolean
 
   // STABILIZATION: Enhanced handlePlayAll with loading state and debouncing
   const handlePlayAllStable = useCallback(async () => {
@@ -349,9 +328,7 @@ export default function ListenScreen(): JSX.Element {
             ItemSeparatorComponent={ItemSeparator}
             ListEmptyComponent={EmptyStateComponent}
             ListHeaderComponent={null}
-            overrideItemLayout={layout => {
-              layout.size = ITEM_HEIGHT;
-            }}
+            overrideItemLayout={overrideFixedHeight(ITEM_HEIGHT)}
             renderItem={renderItem}
           />
         )}

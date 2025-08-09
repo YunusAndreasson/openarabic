@@ -15,6 +15,7 @@ import { STRINGS } from '@/constants/strings';
 import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import { difficultyLevelToLabel } from '@/utils/articles/difficulty';
 
 // Playlist thumbnail size for elegant music app aesthetic
 const PLAYLIST_IMAGE_SIZE = 48;
@@ -87,11 +88,7 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
     );
 
     // Helper function to get difficulty text
-    const getDifficultyText = (level: number): string => {
-      if (level <= 2) return STRINGS.BEGINNER;
-      if (level === 3) return STRINGS.INTERMEDIATE;
-      return STRINGS.ADVANCED;
-    };
+    const getDifficultyText = (level: number): string => difficultyLevelToLabel(level, STRINGS);
 
     return (
       <Animated.View style={[styles.cardContainer, animatedStyle]}>

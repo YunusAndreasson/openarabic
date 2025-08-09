@@ -10,6 +10,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectionFeedback } from '@/utils/haptics';
+import { formatSecondsToClock, safePercent } from '@/utils/time';
 
 export interface MiniPlayerProps {
   /** Current article being played */
@@ -74,24 +75,15 @@ const MiniPlayerComponent = ({
   );
 
   // Calculate progress percentage with safety checks
-  const progressPercentage = React.useMemo(() => {
-    if (!duration || duration <= 0 || !isFinite(duration)) return 0;
-    if (!position || position < 0 || !isFinite(position)) return 0;
-    const progress = Math.min(100, (position / duration) * 100);
-    return isFinite(progress) ? progress : 0;
-  }, [position, duration]);
+  const progressPercentage = React.useMemo(
+    () => safePercent(position, duration),
+    [position, duration]
+  );
 
   // Format time display with safety checks
   const timeDisplay = React.useMemo(() => {
-    const formatTime = (seconds: number) => {
-      if (!isFinite(seconds) || seconds < 0) return '0:00';
-      const mins = Math.floor(seconds / 60);
-      const secs = Math.floor(seconds % 60);
-      return `${mins}:${secs.toString().padStart(2, '0')}`;
-    };
-
-    if (!duration || !isFinite(duration)) return '';
-    return `${formatTime(position)} / ${formatTime(duration)}`;
+    if (!Number.isFinite(duration) || duration <= 0) return '';
+    return `${formatSecondsToClock(position)} / ${formatSecondsToClock(duration)}`;
   }, [position, duration]);
 
   return (

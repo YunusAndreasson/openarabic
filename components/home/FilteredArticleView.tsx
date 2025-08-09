@@ -6,6 +6,7 @@ import DraggableFlatList from 'react-native-draggable-flatlist';
 
 import EmptyState from '@/components/EmptyState';
 import FilterSummary from '@/components/FilterSummary';
+import ListSeparator from '@/components/ListSeparator';
 import SortingHeader from '@/components/SortingHeader';
 import { ThemedView } from '@/components/ThemedView';
 import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
@@ -14,6 +15,7 @@ import { STRINGS } from '@/constants/strings';
 import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
+import { overrideFixedHeight } from '@/utils/list';
 
 import ListArticleItem from './ListArticleItem';
 
@@ -21,7 +23,7 @@ import ListArticleItem from './ListArticleItem';
 const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM;
 const DRAW_DISTANCE_MULTIPLIER = LIST_DRAW_DISTANCE_MULTIPLIER;
 
-const SeparatorComponent = () => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />;
+const SeparatorComponent = () => <ListSeparator height={LAYOUT.SPACING.MEDIUM} />;
 
 const STATIC_STYLES = StyleSheet.create({
   container: {
@@ -230,9 +232,7 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
 
   const keyExtractor = useCallback((item: Article) => item.id.toString(), []);
 
-  const overrideItemLayout = useCallback((layout: { span?: number; size?: number }) => {
-    layout.size = ITEM_HEIGHT;
-  }, []);
+  const overrideItemLayout = useCallback(overrideFixedHeight(ITEM_HEIGHT), []);
 
   // Memoize empty state props - only shows when filters eliminate all results
   const emptyStateProps = useMemo(

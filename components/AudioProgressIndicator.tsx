@@ -7,6 +7,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import { formatSecondsToClock } from '@/utils/time';
 
 interface AudioProgressIndicatorProps {
   /** Current position in seconds */
@@ -43,15 +44,8 @@ const AudioProgressIndicator = ({
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
-  // Format time as MM:SS
-  const formatTime = (timeInSeconds: number): string => {
-    const minutes = Math.floor(timeInSeconds / 60);
-    const seconds = Math.floor(timeInSeconds % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
-
-  const currentTime = useMemo(() => formatTime(position || 0), [position]);
-  const totalTime = useMemo(() => formatTime(duration || 0), [duration]);
+  const currentTime = useMemo(() => formatSecondsToClock(position || 0), [position]);
+  const totalTime = useMemo(() => formatSecondsToClock(duration || 0), [duration]);
 
   // Determine colors based on props and theme
   const timeTextColor = useMemo(() => {
