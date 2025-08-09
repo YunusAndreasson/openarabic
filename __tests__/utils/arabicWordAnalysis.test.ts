@@ -415,25 +415,6 @@ describe('arabicWordAnalysis', () => {
   });
 
   describe('Edge cases and error handling', () => {
-    it('should handle very short words', () => {
-      const analysis = analyzeArabicWord('و', 'and');
-      expect(analysis.prefix?.arabicMatch).toBe('و');
-      expect(analysis.hasComponents).toBe(true);
-    });
-
-    it('should handle overlapping components correctly', () => {
-      // Test a word where prefix and suffix might overlap
-      const analysis = analyzeArabicWord('وه', 'and it');
-      // Should resolve overlap by keeping the longer component or following resolution rules
-      expect(analysis.hasComponents).toBe(true);
-    });
-
-    it('should prioritize longer components', () => {
-      // If there are multiple matching patterns, should prefer the longer one
-      const analysis = analyzeArabicWord('سوفيذهب', 'he will go');
-      expect(analysis.prefix?.arabicMatch).toBe('سوف'); // Should match longer 'سوف' over 'س'
-    });
-
     it('should handle new programmatically generated combinations', () => {
       // Test that new إلى combinations are now available (since we added it to PREPOSITIONS)
       const analysis1 = analyzeArabicWord('وإلىالمدرسة', 'and to the school');

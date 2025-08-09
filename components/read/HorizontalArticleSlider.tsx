@@ -7,7 +7,7 @@ import ArticleCard from '@read/ArticleCard';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
-import { lightFeedback } from '@/utils/haptics';
+// Haptics for scroll position changes are non-semantic; avoid to reduce noise
 
 interface HorizontalArticleSliderProps {
   articles: Article[];
@@ -116,7 +116,7 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
             first !== lastVisibleCardIndex.current &&
             lastVisibleCardIndex.current !== -1
           ) {
-            lightFeedback();
+            // intentionally no haptic here; scrolling is non-semantic
           }
           lastVisibleCardIndex.current = first;
         }}

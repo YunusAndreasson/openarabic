@@ -98,8 +98,6 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId }) =
   // Handle photo selection
   const handlePhotoSelect = useCallback(async () => {
     try {
-      selectionFeedback();
-
       // Request permissions - this will show the system permission dialog
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -132,7 +130,10 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId }) =
         // Update state
         setProfilePhotoUri(selectedUri);
 
-        // Success feedback
+        // Success feedback after selection completed
+        // Using selection-like subtle feedback is fine here, but we keep a single call
+        // Consider mediumFeedback in future if we want stronger confirmation
+        // Keep as selectionFeedback to align with subtle action
         selectionFeedback();
       }
     } catch (error) {

@@ -70,7 +70,7 @@ function ThemedButtonComponent({
   size = 'medium',
   textWeight = 'bold',
   disablePressAnimation = false,
-  hapticFeedback = true,
+  hapticFeedback = false,
   ...props
 }: ThemedButtonProps): JSX.Element {
   const colors = useColors();

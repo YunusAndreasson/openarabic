@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { articlesService } from '@/services/articles';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { Article } from '@/types/articles.types';
@@ -36,6 +36,9 @@ export function useArticlesByDueWords(
         onlyDue: true,
         limit: 200, // Increased from 100 to support larger vocabularies
         forStats: false, // We need root data for matching
+        // Align due words with practice cooldown so freshly reviewed words
+        // do not appear in recommendations immediately after a session
+        sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
       });
     },
     enabled: !!userId,

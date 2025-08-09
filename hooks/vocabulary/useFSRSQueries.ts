@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { CACHE_TIMES } from '@/constants/queryConfig';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -45,7 +45,13 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
     queryKey: userId ? FSRS_QUERY_KEYS.due(userId) : FSRS_QUERY_KEYS.FALLBACK.due,
     queryFn: () => {
       if (!userId) throw new Error('User ID is required');
-      return studyWordsFSRSService.getFSRSWords(userId, { onlyDue: true, limit });
+      // Apply the same session cooldown as the practice session so freshly reviewed
+      // words do not appear as still due on the Practice screen
+      return studyWordsFSRSService.getFSRSWords(userId, {
+        onlyDue: true,
+        limit,
+        sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
+      });
     },
     enabled: !!userId,
     ...CACHE_TIMES.SHORT, // 1 minute - due words change frequently
@@ -54,8 +60,20 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
       if (!userId) return undefined;
       const allWords = queryClient.getQueryData<StudyWord[]>(FSRS_QUERY_KEYS.all(userId));
       if (allWords) {
-        const now = new Date().toISOString();
-        return allWords.filter(word => (word.fsrs_due ?? '9999-12-31') <= now).slice(0, limit);
+        const now = new Date();
+        const nowIso = now.toISOString();
+        const cutoff = new Date(now.getTime() - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000);
+        const cutoffIso = cutoff.toISOString();
+
+        // Filter to only include words due now AND not reviewed within the cooldown window
+        const filtered = allWords.filter(word => {
+          const isDue = (word.fsrs_due ?? '9999-12-31') <= nowIso;
+          const lastReview = word.fsrs_last_review ?? '1970-01-01T00:00:00.000Z';
+          const isRecentlyReviewed = lastReview >= cutoffIso;
+          return isDue && !isRecentlyReviewed;
+        });
+
+        return filtered.slice(0, limit);
       }
       return undefined;
     },

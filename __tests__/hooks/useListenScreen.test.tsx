@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, renderHook } from '@testing-library/react-native';
 import React, { type ReactNode } from 'react';
 
-import { useListenScreen } from '../../hooks/listen/useListenScreen';
+// NOTE: We'll require the hook after setting up jest mocks to ensure proper module mocking
 
 const readingListItems = [
   {
@@ -101,6 +101,8 @@ jest.mock('@/hooks/audio/useSleepTimer', () => {
   };
 });
 
+// Note: useListenScreen uses simpleAudioService internally. We focus on UI state behavior here.
+
 const mockState = { listen: { customOrder: [2, 1] } };
 const mockDispatch = jest.fn();
 jest.mock('@/store/hooks', () => ({
@@ -148,6 +150,9 @@ jest.mock('@/services/enhancedAudioService', () => ({
 jest.mock('expo-router', () => ({
   useFocusEffect: (cb: () => void) => cb(),
 }));
+
+// Now import the hook after mocks are set up
+const { useListenScreen } = require('../../hooks/listen/useListenScreen');
 
 const Wrapper = ({ children }: { children: ReactNode }) => <>{children}</>;
 

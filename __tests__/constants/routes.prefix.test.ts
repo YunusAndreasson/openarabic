@@ -1,0 +1,21 @@
+import { ROUTE_PATHS, getArticleRoute, getPracticeReviewRoute } from '@/constants/routes';
+
+describe('ROUTE_PATHS - /(tabs) prefix', () => {
+  it('ensures tab routes include /(tabs) prefix', () => {
+    expect(ROUTE_PATHS.TABS.startsWith('/(tabs)')).toBe(true);
+    expect(ROUTE_PATHS.READ_TAB.startsWith('/(tabs)/')).toBe(true);
+    expect(ROUTE_PATHS.PRACTICE_TAB.startsWith('/(tabs)/')).toBe(true);
+    expect(ROUTE_PATHS.LISTEN_TAB.startsWith('/(tabs)/')).toBe(true);
+    expect(ROUTE_PATHS.ACCOUNT.startsWith('/(tabs)/')).toBe(true);
+    expect(ROUTE_PATHS.NOW_PLAYING.startsWith('/(tabs)/')).toBe(true);
+    expect(ROUTE_PATHS.PRACTICE_DICTIONARY.startsWith('/(tabs)/')).toBe(true);
+  });
+
+  it('getArticleRoute returns /(tabs)/read/article/:id', () => {
+    expect(getArticleRoute(5)).toBe('/(tabs)/read/article/5');
+  });
+
+  it('getPracticeReviewRoute keeps path without /(tabs) (modal route)', () => {
+    expect(getPracticeReviewRoute()).toBe('/practice/review');
+  });
+});
