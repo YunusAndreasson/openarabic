@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useCallback, type ComponentProps, type FC } from 'react';
-import { StyleSheet, TouchableOpacity, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ICON_BUTTON_PRESS_SCALE } from '@/constants/animation';
@@ -26,14 +26,14 @@ const DeleteButton: FC<
   }, [disabled, onPress]);
 
   return (
-    <TouchableOpacity
+    <Pressable
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       disabled={disabled}
-      activeOpacity={LAYOUT.OPACITY.HOVER}
       style={styles.touchable}
       hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+      android_ripple={{ color: colors.navigationRipple, radius: MIN_TOUCH_TARGET.MEDIUM / 2 }}
     >
       <Animated.View
         style={[
@@ -51,7 +51,7 @@ const DeleteButton: FC<
           color={colors.white} // Using white color from Colors.ts
         />
       </Animated.View>
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 

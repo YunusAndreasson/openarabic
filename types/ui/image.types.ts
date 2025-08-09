@@ -36,4 +36,10 @@ export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressabl
 
   /** Loading priority */
   priority?: 'high' | 'low' | 'normal';
+
+  /** Cross-fade duration in ms; set 0 for instant */
+  transition?: number;
+
+  /** Hint for texture reuse when the same URL is shown in different places */
+  recyclingKey?: string;
 }

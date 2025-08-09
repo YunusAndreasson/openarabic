@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useEffect, useMemo, type ComponentProps, type FC } from 'react';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -54,10 +54,11 @@ const RepeatButton: FC<RepeatButtonProps> = ({ enabled, onToggle, ...rest }) => 
   );
 
   return (
-    <TouchableOpacity
+    <Pressable
       style={[styles.container, containerStyle]}
       onPress={handlePress}
       hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+      android_ripple={{ color: colors.navigationRipple, radius: MIN_TOUCH_TARGET.MEDIUM / 2 }}
       {...rest}
     >
       <Animated.View style={[styles.iconContainer, iconRotationStyle]}>
@@ -75,7 +76,7 @@ const RepeatButton: FC<RepeatButtonProps> = ({ enabled, onToggle, ...rest }) => 
       >
         {STRINGS.REPEAT}
       </ThemedText>
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 

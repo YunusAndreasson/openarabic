@@ -25,6 +25,7 @@ export const enhancedAudioService = {
         articleId,
         audioUrl: article.audio_url,
         title: article.title,
+        imageUrl: String(article.image_url),
       };
     } catch (error) {
       await handleError(error instanceof Error ? error : new Error(String(error)), {
@@ -55,6 +56,7 @@ export const enhancedAudioService = {
           articleId: item.article_id,
           audioUrl: article.audio_url,
           title: article.title,
+          imageUrl: String(article.image_url),
         });
       }
 

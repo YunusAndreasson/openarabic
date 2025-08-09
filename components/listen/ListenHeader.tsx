@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { FC } from 'react';
 import { useCallback } from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ProgressBar } from '@/components/ProgressBar';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
@@ -50,35 +50,37 @@ const ListenHeader: FC<ListenHeaderProps> = ({
 
       {/* Close button */}
       {onClose && (
-        <TouchableOpacity
+        <Pressable
           style={[styles.closeButton, { backgroundColor: colors.elevation1 }]}
           onPress={handleClose}
           hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
           accessibilityRole="button"
           accessibilityLabel="Close practice session"
+          android_ripple={{ color: colors.navigationRipple, radius: MIN_TOUCH_TARGET.MEDIUM / 2 }}
         >
           <Ionicons
             name="close"
             size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
             color={colors.textTertiary}
           />
-        </TouchableOpacity>
+        </Pressable>
       )}
 
       {/* Word Management Icon */}
       {hasCurrentWord && (
-        <TouchableOpacity
+        <Pressable
           style={[styles.manageButton, { backgroundColor: colors.elevation1 }]}
           onPress={handleManagePress}
           hitSlop={LAYOUT.HIT_SLOP.SMALL}
           testID="manage-word-button"
+          android_ripple={{ color: colors.navigationRipple, radius: MIN_TOUCH_TARGET.SMALL / 2 }}
         >
           <Ionicons
             name="ellipsis-horizontal"
             size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
             color={colors.secondaryText}
           />
-        </TouchableOpacity>
+        </Pressable>
       )}
     </View>
   );

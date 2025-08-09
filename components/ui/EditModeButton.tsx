@@ -1,6 +1,6 @@
 import { memo, useCallback, type FC } from 'react';
 import type { ViewStyle } from 'react-native';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -13,7 +13,7 @@ import { useEditMode } from '@/hooks/ui/useEditMode';
 import type { EditModeType } from '@/store/editModeSlice';
 import { selectionFeedback } from '@/utils/haptics';
 
-const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface EditModeButtonProps {
   /**
@@ -55,7 +55,7 @@ const EditModeButton: FC<EditModeButtonProps> = ({ type, onEditModeChange, style
     : STRINGS.EDIT;
 
   return (
-    <AnimatedTouchable
+    <AnimatedPressable
       style={[
         styles.button,
         {
@@ -67,7 +67,7 @@ const EditModeButton: FC<EditModeButtonProps> = ({ type, onEditModeChange, style
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      activeOpacity={LAYOUT.OPACITY.PRESSED}
+      android_ripple={{ color: colors.navigationRipple, radius: MIN_TOUCH_TARGET.MEDIUM / 2 }}
     >
       <ThemedText
         type="body"
@@ -82,7 +82,7 @@ const EditModeButton: FC<EditModeButtonProps> = ({ type, onEditModeChange, style
       >
         {buttonText}
       </ThemedText>
-    </AnimatedTouchable>
+    </AnimatedPressable>
   );
 };
 

@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AUDIO_STATES } from '@/constants/audio';
@@ -6,6 +7,8 @@ import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useListenScreen } from '@/hooks/listen/useListenScreen';
+import type { Article } from '@/types/articles.types';
+import type { ReadingListItem } from '@/types/readingList.types';
 import { openNowPlayingModal } from '@/utils/navigationHelpers';
 
 export interface GlobalAudioState {
@@ -58,6 +61,7 @@ export interface GlobalAudioState {
 export function useGlobalAudioState(): GlobalAudioState {
   const { user } = useAuth();
   const audioPlayer = useSimpleAudioPlayer();
+  const queryClient = useQueryClient();
 
   // Sleep timer modal state
   const [showSleepTimerModal, setShowSleepTimerModal] = useState(false);
@@ -104,29 +108,48 @@ export function useGlobalAudioState(): GlobalAudioState {
     };
   }, [currentArticleId, sortedEnhancedTracks]);
 
-  // Format current article for mini-player
+  // Format current article for mini-player with cache fallbacks (no waiting for fetch)
   const currentArticle = useMemo(() => {
-    // Return immediately if no articleId
     if (!currentArticleId) return null;
 
-    // If we have full article data, use it - images are guaranteed to be available
-    if (articleData) {
+    const cachedArticle = queryClient.getQueryData<Article>(['article', currentArticleId]) ?? null;
+    const readingList = user?.id
+      ? queryClient.getQueryData<ReadingListItem[]>(['readingList', user.id]) ?? null
+      : null;
+    const readingListArticle =
+      readingList?.find(i => i.article_id === currentArticleId)?.articles ?? null;
+
+    const title =
+      articleData?.title || cachedArticle?.title || audioPlayer.currentTrack?.title || '';
+    const author =
+      articleData?.author?.name ||
+      cachedArticle?.author?.name ||
+      readingListArticle?.author?.name ||
+      '';
+    const imageUrl = String(
+      articleData?.image_url ||
+        cachedArticle?.image_url ||
+        readingListArticle?.image_url ||
+        audioPlayer.currentTrack?.imageUrl ||
+        ''
+    );
+
+    if (title || imageUrl) {
       return {
         id: currentArticleId,
-        title: articleData.title,
-        author: articleData.author.name,
-        image_url: String(articleData.image_url),
+        title: title || ' ',
+        author,
+        image_url: imageUrl || ' ',
       };
     }
 
-    // INSTANT MINI-PLAYER: Use fallback data from audio metadata while article loads
-    // This eliminates the 500ms delay by showing mini-player immediately when audio starts
+    // Last resort: metadata-only fallback while loading
     if (audioPlayer.currentTrack?.title && (audioPlayer.isPlaying || audioPlayer.isLoading)) {
       return {
         id: currentArticleId,
         title: audioPlayer.currentTrack.title,
         author: 'Loading...',
-        image_url: 'https://via.placeholder.com/400x300/5B7F68/FFFFFF?text=Audio',
+        image_url: ' ',
       };
     }
 
@@ -134,6 +157,8 @@ export function useGlobalAudioState(): GlobalAudioState {
   }, [
     articleData,
     currentArticleId,
+    queryClient,
+    user?.id,
     audioPlayer.currentTrack?.title,
     audioPlayer.isPlaying,
     audioPlayer.isLoading,

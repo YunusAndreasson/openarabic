@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback } from 'react';
 import type { ViewStyle } from 'react-native';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -13,7 +13,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import type { StudyWord } from '@/types/vocabulary.types';
 
-const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface DictionaryButtonProps {
   /** Optional custom styling */
@@ -31,7 +31,7 @@ export default function DictionaryButton({ style }: DictionaryButtonProps = {}):
   }, []);
 
   return (
-    <AnimatedTouchable
+    <AnimatedPressable
       style={[
         styles.button,
         {
@@ -43,7 +43,7 @@ export default function DictionaryButton({ style }: DictionaryButtonProps = {}):
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      activeOpacity={LAYOUT.OPACITY.PRESSED}
+      android_ripple={{ color: colors.navigationRipple, radius: MIN_TOUCH_TARGET.MEDIUM / 2 }}
     >
       <ThemedText
         type="body"
@@ -58,7 +58,7 @@ export default function DictionaryButton({ style }: DictionaryButtonProps = {}):
       >
         Dictionary
       </ThemedText>
-    </AnimatedTouchable>
+    </AnimatedPressable>
   );
 }
 

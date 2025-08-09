@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo } from 'react';
@@ -18,6 +19,8 @@ import { useCurrentSentence } from '@/hooks/audio/useCurrentSentence';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
+import type { Article } from '@/types/articles.types';
+import type { ReadingListItem } from '@/types/readingList.types';
 import { withOpacity } from '@/utils/colorUtils';
 import { createAudioOverlayColors, createAudioOverlayGradient } from '@/utils/gradientUtils';
 
@@ -42,6 +45,7 @@ export default function NowPlayingModal() {
   const { user } = useAuth();
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
 
   // Get router params for article ID fallback and audio state
   const params = useLocalSearchParams<{
@@ -78,6 +82,36 @@ export default function NowPlayingModal() {
     : undefined;
 
   const { article, sortedSentences, sentenceWordsMap } = useArticleData(articleId, user?.id);
+  // Immediate fallbacks using cached data and current track metadata to avoid "Loading..." UI
+  const cachedArticle = useMemo(() => {
+    if (!articleId) return null;
+    return queryClient.getQueryData<Article>(['article', articleId]) ?? null;
+  }, [queryClient, articleId]);
+
+  const readingListArticle = useMemo(() => {
+    if (!user?.id || !articleId) return null;
+    const rl = queryClient.getQueryData<ReadingListItem[]>(['readingList', user.id]);
+    const match = rl?.find(item => item.article_id === articleId);
+    return match?.articles ?? null;
+  }, [queryClient, user?.id, articleId]);
+
+  const backgroundImageUrl = useMemo(() => {
+    return String(
+      article?.image_url || cachedArticle?.image_url || readingListArticle?.image_url || ''
+    );
+  }, [article?.image_url, cachedArticle?.image_url, readingListArticle?.image_url]);
+
+  const fallbackTitle = useMemo(() => {
+    return (
+      article?.title || cachedArticle?.title || audioPlayer.currentTrack?.title || STRINGS.LOADING
+    );
+  }, [article?.title, cachedArticle?.title, audioPlayer.currentTrack?.title]);
+
+  const fallbackAuthor = useMemo(() => {
+    return (
+      article?.author?.name || cachedArticle?.author?.name || readingListArticle?.author?.name || ''
+    );
+  }, [article?.author?.name, cachedArticle?.author?.name, readingListArticle?.author?.name]);
 
   const { currentSentence, currentSentenceIndex, sentenceProgress } = useCurrentSentence({
     position,
@@ -157,7 +191,12 @@ export default function NowPlayingModal() {
     <ThemedView style={styles.container}>
       {/* Background Image */}
       <View style={styles.backgroundContainer}>
-        <EnhancedImage source={String(article?.image_url || '')} style={styles.backgroundImage} />
+        <EnhancedImage
+          source={backgroundImageUrl}
+          style={styles.backgroundImage}
+          contentFit="cover"
+          priority="high"
+        />
 
         {/* Audio-Reactive Gradient Overlay */}
         <Animated.View style={[styles.gradientContainer, gradientAnimation.animatedStyle]}>
@@ -187,7 +226,7 @@ export default function NowPlayingModal() {
             ]}
             numberOfLines={2}
           >
-            {isActuallyLoading ? STRINGS.PREPARING_AUDIO : article?.title || STRINGS.LOADING}
+            {isActuallyLoading ? STRINGS.PREPARING_AUDIO : fallbackTitle}
           </ThemedText>
           <ThemedText
             type="body"
@@ -200,7 +239,7 @@ export default function NowPlayingModal() {
               },
             ]}
           >
-            {article?.author?.name || ''}
+            {fallbackAuthor}
           </ThemedText>
         </View>
       </View>

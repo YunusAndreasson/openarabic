@@ -65,6 +65,8 @@ function EnhancedImageInternal({
   onError,
   cachePolicy = DEFAULT_CACHE_POLICY,
   priority = DEFAULT_PRIORITY,
+  transition,
+  recyclingKey,
   testID,
 }: EnhancedImageProps) {
   const colors = useColors();
@@ -82,11 +84,13 @@ function EnhancedImageInternal({
       contentFit,
       contentPosition,
       priority,
+      transition,
+      recyclingKey,
       source,
       style: styles.image,
       ...(testID ? { testID } : {}),
     }),
-    [cachePolicy, contentFit, contentPosition, priority, source, testID]
+    [cachePolicy, contentFit, contentPosition, priority, transition, recyclingKey, source, testID]
   );
 
   // Memoize callback props separately to avoid recreating imageProps

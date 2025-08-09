@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useCallback, type ComponentProps, type FC } from 'react';
 import type { ViewStyle } from 'react-native';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ICON_BUTTON_PRESS_SCALE } from '@/constants/animation';
@@ -49,14 +49,14 @@ const PlayButton: FC<PlayButtonProps> = ({
     iconColor || (colors.background === colors.elevation0 ? colors.text : colors.black);
 
   return (
-    <TouchableOpacity
-      activeOpacity={LAYOUT.OPACITY.HIGH}
+    <Pressable
       style={[styles.button, { backgroundColor: colors.tint }]}
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       disabled={disabled}
       hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+      android_ripple={{ color: colors.navigationRipple, radius: MIN_TOUCH_TARGET.MEDIUM / 2 }}
     >
       <Animated.View
         style={[
@@ -75,7 +75,7 @@ const PlayButton: FC<PlayButtonProps> = ({
           style={styles.icon}
         />
       </Animated.View>
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 

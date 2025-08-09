@@ -114,7 +114,9 @@ export const ArticleCard: FC<ArticleCardProps> = memo(
                   <EnhancedImage
                     source={imageUrl}
                     style={styles.thumbnailImage}
-                    cachePolicy="disk"
+                    cachePolicy="memory-disk"
+                    transition={0}
+                    recyclingKey={imageUrl}
                   />
                 </View>
               )}

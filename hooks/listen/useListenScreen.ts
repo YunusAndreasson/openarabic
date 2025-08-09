@@ -1,7 +1,9 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Image } from 'expo-image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AUDIO_STATES } from '@/constants/audio';
+import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -17,6 +19,7 @@ export const useListenScreen = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const dispatch = useAppDispatch();
+  const { prefetchArticle } = useAppPreloader();
 
   const customOrder = useAppSelector(state => state.listen.customOrder);
 
@@ -181,6 +184,28 @@ export const useListenScreen = () => {
           return;
         }
 
+        // PREFETCH: warm article data and image so NowPlaying shows artwork instantly
+        const articleIdToPrefetch = firstTrack.articleId;
+        if (articleIdToPrefetch) {
+          // Fire-and-forget
+          queryClient
+            .prefetchQuery({
+              queryKey: ['article', articleIdToPrefetch],
+              queryFn: () => articlesService.getArticleById(articleIdToPrefetch),
+            })
+            .catch(() => {});
+
+          // Try to fetch image URL from cache immediately if present
+          const articleInCache = queryClient.getQueryData<any>(['article', articleIdToPrefetch]);
+          const imageUrl = String(firstTrack.imageUrl || articleInCache?.image_url || '');
+          if (imageUrl) {
+            Image.prefetch(imageUrl).catch(() => {});
+          } else {
+            // As a fallback, use preloader helper which will also prefetch details
+            prefetchArticle(articleIdToPrefetch).catch(() => {});
+          }
+        }
+
         // Start playing immediately without loading states
         const success = await audioPlayer.play(firstTrack);
         if (!success) {
@@ -264,6 +289,22 @@ export const useListenScreen = () => {
         try {
           selectionFeedback();
           setPlaybackMode('all');
+
+          // PREFETCH: warm article data and image for this specific article
+          queryClient
+            .prefetchQuery({
+              queryKey: ['article', articleId],
+              queryFn: () => articlesService.getArticleById(articleId),
+            })
+            .catch(() => {});
+          const cached = queryClient.getQueryData<any>(['article', articleId]);
+          const img = String(trackToPlay.imageUrl || cached?.image_url || '');
+          if (img) {
+            Image.prefetch(img).catch(() => {});
+          } else {
+            prefetchArticle(articleId).catch(() => {});
+          }
+
           const success = await audioPlayer.play(trackToPlay);
           if (!success) {
             playbackModeTimeoutRef.current = setTimeout(() => {
@@ -281,6 +322,21 @@ export const useListenScreen = () => {
         try {
           selectionFeedback();
           setPlaybackMode('all');
+
+          // PREFETCH: ensure article details and artwork are warmed
+          queryClient
+            .prefetchQuery({
+              queryKey: ['article', articleId],
+              queryFn: () => articlesService.getArticleById(articleId),
+            })
+            .catch(() => {});
+          const cachedArticle = queryClient.getQueryData<any>(['article', articleId]);
+          const cachedImg = String(cachedArticle?.image_url || '');
+          if (cachedImg) {
+            Image.prefetch(cachedImg).catch(() => {});
+          } else {
+            prefetchArticle(articleId).catch(() => {});
+          }
 
           const track = await enhancedAudioService.generateEnhancedAudioTrack(articleId);
           if (track) {
