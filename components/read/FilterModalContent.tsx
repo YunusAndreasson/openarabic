@@ -82,7 +82,6 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Active Filters Summary */}
         {activeFiltersCount > 0 && (
           <BaseCard shadowSize="small" style={styles.summaryCard}>
             <View style={styles.summaryHeader}>
@@ -103,9 +102,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
           </BaseCard>
         )}
 
-        {/* Filter Sections */}
         <BaseCard shadowSize="small" style={styles.card}>
-          {/* Authors Filter */}
           <View style={styles.filterSection}>
             <Pressable
               style={[
@@ -171,7 +168,6 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
             )}
           </View>
 
-          {/* Difficulty Filter */}
           <View style={styles.filterSection}>
             <Pressable
               style={[
@@ -236,7 +232,6 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
             )}
           </View>
 
-          {/* Date Range Filter */}
           <View style={styles.filterSection}>
             <Pressable
               style={[
@@ -304,27 +299,11 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingBottom: LAYOUT.SPACING.XLARGE,
-  },
-
-  // Active Filters Summary
-  summaryCard: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    padding: LAYOUT.SPACING.LARGE,
-  },
-  summaryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.SMALL,
-  },
+  container: { flex: 1 },
+  scrollView: { flex: 1 },
+  scrollContent: { padding: LAYOUT.SCREEN_EDGE_PADDING, paddingBottom: LAYOUT.SPACING.XLARGE },
+  summaryCard: { marginBottom: LAYOUT.SPACING.MEDIUM, padding: LAYOUT.SPACING.LARGE },
+  summaryHeader: { flexDirection: 'row', alignItems: 'center', gap: LAYOUT.SPACING.SMALL },
   summaryBadge: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     width: LAYOUT.BUTTON.ICON_SIZE.LARGE,
@@ -340,28 +319,15 @@ const styles = StyleSheet.create({
     minHeight: MIN_TOUCH_TARGET.MEDIUM,
     justifyContent: 'center',
   },
-
-  // Section Cards
-  card: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    padding: LAYOUT.SPACING.LARGE,
-  },
-
-  // Filter Sections
-  filterSection: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
+  card: { marginBottom: LAYOUT.SPACING.MEDIUM, padding: LAYOUT.SPACING.LARGE },
+  filterSection: { marginBottom: LAYOUT.SPACING.MEDIUM },
   filterRow: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     minHeight: MIN_TOUCH_TARGET.LARGE,
     paddingVertical: LAYOUT.SPACING.SMALL,
   },
-  filterRowExpanded: {
-    // Background color applied via colors.elevation2 in component
-  },
-  lastFilterRow: {
-    borderBottomWidth: 0,
-  },
+  filterRowExpanded: {},
+  lastFilterRow: { borderBottomWidth: 0 },
   filterRowContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -381,32 +347,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  filterTextContainer: {
-    flex: 1,
-    gap: LAYOUT.SPACING.TINY,
-  },
+  filterTextContainer: { flex: 1, gap: LAYOUT.SPACING.TINY },
   expandIndicator: {
     width: MIN_TOUCH_TARGET.MEDIUM,
     height: MIN_TOUCH_TARGET.MEDIUM,
     justifyContent: 'center',
     alignItems: 'center',
   },
-
-  // Expanded Content
   expandedContent: {
     paddingTop: LAYOUT.SPACING.LARGE,
     paddingBottom: LAYOUT.SPACING.XLARGE,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
-  pillGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: LAYOUT.SPACING.SMALL,
-  },
-  filterPill: {
-    marginBottom: 0,
-    marginRight: 0,
-  },
+  pillGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: LAYOUT.SPACING.SMALL },
+  filterPill: { marginBottom: 0, marginRight: 0 },
   authorChunk: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -416,10 +370,7 @@ const styles = StyleSheet.create({
 });
 
 const areEqual = (prevProps: FilterModalProps, nextProps: FilterModalProps) => {
-  if (prevProps.availableAuthors.length !== nextProps.availableAuthors.length) {
-    return false;
-  }
-
+  if (prevProps.availableAuthors.length !== nextProps.availableAuthors.length) return false;
   return prevProps.availableAuthors.every((a, i) => a?.id === nextProps.availableAuthors[i]?.id);
 };
 

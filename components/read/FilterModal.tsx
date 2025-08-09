@@ -1,1 +1,1 @@
-export { default } from '../FilterModal';
+export { default } from '@/components/read/FilterModalContent';
