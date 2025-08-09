@@ -1,14 +1,15 @@
 import { Skia } from '@shopify/react-native-skia';
 import { useMemo } from 'react';
 
-import { useChartColors } from '@/components/vocabulary/shared/chartColors';
+import { useChartColors } from '@charts/chartColors';
 import {
   calculateDataPointPositions,
   DAYS_7,
   GRAPH_HEIGHT_LARGE,
   useGraphWidth,
-} from '@/components/vocabulary/shared/constants';
-import { createStandardizedPerformanceZones } from '@/components/vocabulary/shared/utils';
+} from '@charts/constants';
+import { createStandardizedPerformanceZones } from '@charts/utils';
+
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
   calculateRetrievabilityForecast,

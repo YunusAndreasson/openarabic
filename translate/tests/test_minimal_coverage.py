@@ -226,16 +226,14 @@ class TestErrorHandling:
         result = safe_execute(success_operation, "test operation")
         assert result == "success"
 
-    def test_safe_execute_with_fallback(self):
-        """Test safe_execute with fallback value."""
+    def test_safe_execute_raises(self):
+        """safe_execute should raise on failure (no fallback)."""
 
         def failing_operation():
             raise ValueError("test error")
 
-        result = safe_execute(
-            failing_operation, "test operation", fallback_value="fallback"
-        )
-        assert result == "fallback"
+        with pytest.raises(ValueError):
+            safe_execute(failing_operation, "test operation")
 
     def test_safe_execute_with_reraise(self):
         """Test safe_execute with reraise enabled."""
@@ -244,7 +242,7 @@ class TestErrorHandling:
             raise ValueError("test error")
 
         with pytest.raises(ValueError, match="test error"):
-            safe_execute(failing_operation, "test operation", reraise=True)
+            safe_execute(failing_operation, "test operation")
 
     def test_safe_execute_without_logging(self):
         """Test safe_execute without error logging."""
@@ -252,8 +250,8 @@ class TestErrorHandling:
         def failing_operation():
             raise ValueError("test error")
 
-        result = safe_execute(failing_operation, "test operation", log_error=False)
-        assert result is None
+        with pytest.raises(ValueError):
+            safe_execute(failing_operation, "test operation", log_error=False)
 
     def test_safe_audio_operation(self):
         """Test safe_audio_operation wrapper."""
@@ -283,16 +281,14 @@ class TestErrorHandling:
         assert result == "file_result"
 
     def test_handle_import_error_default(self):
-        """Test handle_import_error with default message."""
-        result = handle_import_error("test_module", fallback_value="fallback")
-        assert result == "fallback"
+        """handle_import_error should raise; previously returned fallback."""
+        with pytest.raises(ImportError):
+            handle_import_error("test_module")
 
     def test_handle_import_error_custom_message(self):
         """Test handle_import_error with custom message."""
-        result = handle_import_error(
-            "test_module", fallback_value="fallback", warning_message="Custom warning"
-        )
-        assert result == "fallback"
+        with pytest.raises(ImportError):
+            handle_import_error("test_module", warning_message="Custom warning")
 
 
 # Removed TestAudioCommon: utils.audio_common was deleted as unused in production
@@ -342,12 +338,11 @@ class TestStorageUtils:
         assert result == 2
 
     def test_get_word_type_id_invalid(self):
-        """Test get_word_type_id with invalid POS."""
+        """Test get_word_type_id with invalid POS now raises."""
         from utils.storage_utils import get_word_type_id
 
-        # Test with invalid POS - should default to NOUN
-        result = get_word_type_id("invalid_pos")
-        assert result == 2  # Default to NOUN
+        with pytest.raises(ValueError):
+            get_word_type_id("invalid_pos")
 
     def test_get_word_type_id_case_insensitive(self):
         """Test get_word_type_id with different cases."""

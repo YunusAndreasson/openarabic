@@ -33,12 +33,14 @@ def review_file_with_preview(
         return False
 
     # Load JSON data using safe file operation
-    data = safe_file_operation(
-        lambda: read_json_file(file_path),
-        file_path,
-        "reading",
-        fallback_value=None,
-    )
+    try:
+        data = safe_file_operation(
+            lambda: read_json_file(file_path),
+            file_path,
+            "reading",
+        )
+    except Exception:
+        data = None
 
     if data is None:
         logger.error(f"❌ Failed to load {file_type.lower()} file: {file_path}")

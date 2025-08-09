@@ -1,20 +1,18 @@
 import { Skia } from '@shopify/react-native-skia';
 import { useMemo } from 'react';
 
-import type { DataPoint } from '@/components/vocabulary/shared';
-import { useChartColors } from '@/components/vocabulary/shared/chartColors';
-import { generateChartSubtitle } from '@/components/vocabulary/shared/chartMessages';
+import type { DataPoint } from '@charts';
+import { useChartColors } from '@charts/chartColors';
+import { generateChartSubtitle } from '@charts/chartMessages';
 import {
   calculateDataPointPositions,
   CHART_VISUAL,
   DAYS_7,
   GRAPH_HEIGHT_LARGE,
   useGraphWidth,
-} from '@/components/vocabulary/shared/constants';
-import {
-  createStandardizedPerformanceZones,
-  generateDateRange,
-} from '@/components/vocabulary/shared/utils';
+} from '@charts/constants';
+import { createStandardizedPerformanceZones, generateDateRange } from '@charts/utils';
+
 import { MASTERY_MILESTONES, MASTERY_TREND_THRESHOLD } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
 

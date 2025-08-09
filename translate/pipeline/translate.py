@@ -67,12 +67,14 @@ def create_batches(
 
 def load_split_data(input_file: str) -> SplitResult | None:
     """Load split data from JSON file."""
-    data = safe_file_operation(
-        lambda: read_json_file(input_file),
-        input_file,
-        "reading",
-        fallback_value=None,
-    )
+    try:
+        data = safe_file_operation(
+            lambda: read_json_file(input_file),
+            input_file,
+            "reading",
+        )
+    except Exception:
+        return None
 
     if data is None:
         return None

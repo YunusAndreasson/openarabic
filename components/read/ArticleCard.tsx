@@ -3,17 +3,17 @@ import type { JSX } from 'react';
 import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import BaseCard from '@common/BaseCard';
+
+import { EnhancedImage } from '@/components/EnhancedImage';
+import { ThemedText } from '@/components/ThemedText';
+import Pill from '@/components/ui/Pill';
 import { getEnhancedOpacity, LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { ArticleCardProps as BaseArticleCardProps } from '@/types/ui/card.types';
 import { withOpacity } from '@/utils/colorUtils';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
-
-import BaseCard from './BaseCard';
-import { EnhancedImage } from './EnhancedImage';
-import Pill from './Pill';
-import { ThemedText } from './ThemedText';
 
 // Extract constants outside component for better performance
 const GOLDEN_RATIO = 1.618; // True golden ratio for optimal image-to-content proportions

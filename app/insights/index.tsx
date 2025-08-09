@@ -4,7 +4,8 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import SectionTitle from '@/components/SectionTitle';
+import SectionTitle from '@common/SectionTitle';
+
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { EfficiencyChart, MasteryChart, RetrievabilityChart } from '@/components/vocabulary/charts';

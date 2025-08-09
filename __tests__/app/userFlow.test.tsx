@@ -3,8 +3,8 @@ import type { ReactNode } from 'react';
 import React from 'react';
 
 import { TouchableOpacity } from 'react-native';
-import ArticleCard from '../../components/ArticleCard';
 import { ArabicWord } from '../../components/article/ArabicWord';
+import ArticleCard from '../../components/read/ArticleCard';
 import CompletionScreen from '../../components/review/CompletionScreen';
 import ErrorMessage from '../../components/vocabulary/ErrorMessage';
 import { VocabularyStatCards } from '../../components/vocabulary/VocabularyStatCards';
@@ -40,7 +40,7 @@ jest.mock('../../components/ThemedButton', () => {
   return { __esModule: true, ThemedButton };
 });
 
-jest.mock('../../components/ArticleCard', () => {
+jest.mock('../../components/read/ArticleCard', () => {
   const React = require('react');
   const { TouchableOpacity } = require('react-native');
   return {

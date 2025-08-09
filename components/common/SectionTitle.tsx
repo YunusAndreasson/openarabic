@@ -2,9 +2,8 @@ import { memo, useMemo, type FC } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
+import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
-
-import { ThemedText } from './ThemedText';
 
 interface SectionTitleProps {
   title: string;

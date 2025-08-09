@@ -1,12 +1,11 @@
 import { memo, useCallback, useMemo } from 'react';
 import { Pressable, View, type TextStyle } from 'react-native';
 
+import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { PillProps } from '@/types/ui/pill.types';
-
-import { ThemedText } from './ThemedText';
 
 /**
  * A simple pill component for filters and categories

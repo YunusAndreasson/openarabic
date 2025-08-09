@@ -2,8 +2,9 @@ import { Stack, router } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback } from 'react';
 
-import FilterButton from '@/components/FilterButton';
-import DoneButton from '@/components/ui/DoneButton';
+import FilterButton from '@read/FilterButton';
+import DoneButton from '@ui/DoneButton';
+
 import { createNavigationOptions } from '@/constants/modal';
 import { getFilterModalRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';

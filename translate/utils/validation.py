@@ -380,13 +380,10 @@ def validate_no_placeholder_data(translation: SentenceTranslation) -> None:
     placeholder_patterns = [
         "[Translation failed]",
         "[Error]",
-        "[Fallback]",
-        "[Missing]",
         "[API Error]",
         "[BATCH PROCESSING ERROR]",
         "[Format Error]",
         "[Validation Error]",
-        "[Fallback Error]",
     ]
 
     for pattern in placeholder_patterns:

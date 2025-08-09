@@ -108,16 +108,13 @@ def get_author_id(name: str = "Ibn Kathir") -> int:
 
 
 def get_word_type_id(pos: str | None) -> int:
-    """Get word type ID from POS."""
+    """Get word type ID from POS. Fail loudly when POS is invalid."""
     if pos is None or pos.lower() in ["unknown", "none", ""]:
-        # Default to noun for unknown POS values
-        return WORD_TYPE_MAPPING[PartOfSpeech.NOUN.value]
+        raise ValueError("POS must be provided and valid; received empty/unknown")
 
     word_type_id = WORD_TYPE_MAPPING.get(pos.lower())
     if word_type_id is None:
-        # Log unknown POS for debugging
-        logger.warning(f"Unknown POS value: '{pos}', defaulting to noun")
-        return WORD_TYPE_MAPPING[PartOfSpeech.NOUN.value]
+        raise ValueError(f"Unknown POS value: '{pos}'")
     return word_type_id
 
 

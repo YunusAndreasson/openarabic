@@ -1,12 +1,11 @@
 import { memo, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { errorFeedback } from '@/utils/haptics';
-
-import { ThemedButton } from './ThemedButton';
-import { ThemedText } from './ThemedText';
 
 // Define ErrorStateProps inline
 interface ErrorStateProps {
@@ -32,11 +31,7 @@ const ErrorState = memo(({ message, onRetry }: ErrorStateProps) => {
       </View>
       {onRetry ? (
         <View style={styles.buttonContainer}>
-          <ThemedButton
-            title={STRINGS.REFRESH}
-            variant="filled"
-            onPress={onRetry}
-          />
+          <ThemedButton title={STRINGS.REFRESH} variant="filled" onPress={onRetry} />
         </View>
       ) : null}
     </View>

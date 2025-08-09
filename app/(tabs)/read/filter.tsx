@@ -3,8 +3,9 @@ import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
 import React from 'react';
 
-import ErrorState from '@/components/ErrorState';
-import FilteredArticleView from '@/components/home/FilteredArticleView';
+import ErrorState from '@common/ErrorState';
+import FilteredArticleView from '@read/FilteredArticleView';
+
 import { STRINGS } from '@/constants/strings';
 import { articlesService } from '@/services/articles';
 import type { Article } from '@/types/articles.types';

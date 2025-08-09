@@ -322,14 +322,8 @@ def batch_translate_full_sentences(
             )
             individual_data = _extract_response_data(individual_response)
             if individual_data is not None:
-                results.append(
-                    TranslationResult(
-                        translation=individual_data.get("translation", ""),
-                        notes=individual_data.get("notes", ""),
-                        uncertainties=individual_data.get("uncertainties", []),
-                        word_by_word=individual_data.get("word_by_word", []),
-                    )
-                )
+                # Enforce model fields; let Pydantic raise on invalid data
+                results.append(TranslationResult(**individual_data))
             else:
                 raise RuntimeError(f"Failed to translate sentence {i}")
         return results
@@ -346,14 +340,7 @@ def batch_translate_full_sentences(
             raise RuntimeError(f"Translation failed: {error_msg}")
     elif len(sentences) == 1:
         # Single sentence - use the response directly
-        results.append(
-            TranslationResult(
-                translation=data["translation"],
-                notes=data["notes"],
-                uncertainties=data["uncertainties"],
-                word_by_word=data["word_by_word"],
-            )
-        )
+        results.append(TranslationResult(**data))
     else:
         # Multiple sentences - process each sentence individually
         for i, sentence in enumerate(sentences):
@@ -362,14 +349,7 @@ def batch_translate_full_sentences(
             )
             individual_data = _extract_response_data(individual_response)
             if individual_data is not None:
-                results.append(
-                    TranslationResult(
-                        translation=individual_data.get("translation", ""),
-                        notes=individual_data.get("notes", ""),
-                        uncertainties=individual_data.get("uncertainties", []),
-                        word_by_word=individual_data.get("word_by_word", []),
-                    )
-                )
+                results.append(TranslationResult(**individual_data))
             else:
                 raise RuntimeError(f"Failed to translate sentence {i}")
 
@@ -642,23 +622,39 @@ def batch_translate_words(
                     )
                 else:
                     for word_data in raw_word_translations:
-                        if not isinstance(word_data, dict):
-                            continue
-                        validated_data = _validate_word_data(word_data)
-                        word_option = WordTranslation(
-                            arabic=validated_data["arabic"],
-                            english=validated_data["english_options"],
-                            pos=validated_data["pos"],
-                            essential=validated_data["essential"],
-                            essential_translation=validated_data[
-                                "essential_translation_options"
-                            ],
-                            notes=validated_data["notes"],
-                            uncertainties=_validate_uncertainties(
-                                validated_data["uncertainties"]
-                            ),
-                        )
-                        word_translations_options.append(word_option)
+                        if isinstance(word_data, dict):
+                            # Build model directly; let it raise if invalid
+                            # Support both final and options formats via WordTranslation model
+                            if "english_options" in word_data:
+                                english_value = word_data["english_options"]
+                            else:
+                                english_value = word_data["english"]
+
+                            if "essential_translation_options" in word_data:
+                                essential_translation_value = word_data[
+                                    "essential_translation_options"
+                                ]
+                            else:
+                                essential_translation_value = word_data.get(
+                                    "essential_translation", "unknown"
+                                )
+
+                            uncertainties_value = _validate_uncertainties(
+                                word_data.get("uncertainties", [])
+                            )
+
+                            word_option = WordTranslation(
+                                arabic=word_data["arabic"],
+                                english=english_value,
+                                pos=word_data["pos"],
+                                essential=word_data.get(
+                                    "essential", word_data.get("arabic", "unknown")
+                                ),
+                                essential_translation=essential_translation_value,
+                                notes=word_data.get("notes", ""),
+                                uncertainties=uncertainties_value,
+                            )
+                            word_translations_options.append(word_option)
 
                 # Require valid word translations - no fallbacks allowed
                 if word_translations_options:

@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { memo, useCallback } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import BaseCard from '@/components/BaseCard';
+import BaseCard from '@common/BaseCard';
+
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useColors } from '@/hooks/theme/useColors';

@@ -1,9 +1,9 @@
-import { Path, LinearGradient, vec } from '@shopify/react-native-skia';
+import { LinearGradient, Path, vec } from '@shopify/react-native-skia';
 import { memo } from 'react';
 
-import { useChartColors } from '@/components/vocabulary/shared/chartColors';
-import { GRAPH_HEIGHT_LARGE } from '@/components/vocabulary/shared/constants';
-import { createAreaFillPath } from '@/components/vocabulary/shared/utils';
+import { useChartColors } from '@charts/chartColors';
+import { GRAPH_HEIGHT_LARGE } from '@charts/constants';
+import { createAreaFillPath } from '@charts/utils';
 
 interface ChartAreaFillProps {
   path: string;

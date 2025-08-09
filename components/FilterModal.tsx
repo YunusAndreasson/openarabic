@@ -2,8 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { memo, useCallback, type FC } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import BaseCard from '@/components/BaseCard';
-import Pill from '@/components/Pill';
+import BaseCard from '@common/BaseCard';
+import Pill from '@ui/Pill';
+
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';

@@ -333,13 +333,7 @@ function AppContent() {
                 headerShown: false,
               })}
             />
-            <Stack.Screen
-              name="NowPlaying"
-              options={createNavigationOptions(colors, {
-                headerShown: false, // Full-screen modal without header
-                gestureEnabled: true,
-              })}
-            />
+            {/* NowPlaying is nested at /(tabs)/listen/now-playing; no root-level screen needed */}
           </Stack>
 
           {/* Mini-player always above tab bar, but below modals */}

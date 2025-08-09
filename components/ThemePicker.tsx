@@ -7,7 +7,8 @@ import BottomSheet, {
 import { memo, useCallback, useEffect, useMemo, useRef, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import BaseCard from '@/components/BaseCard';
+import BaseCard from '@common/BaseCard';
+
 import { ThemedText } from '@/components/ThemedText';
 import { Theme } from '@/constants/Colors';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';

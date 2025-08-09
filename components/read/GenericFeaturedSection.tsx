@@ -1,6 +1,7 @@
 import React, { memo, type JSX } from 'react';
 
-import FeaturedSection from '@/components/home/FeaturedSection';
+import FeaturedSection from '@read/FeaturedSection';
+
 import { useFeaturedArticleSelection } from '@/hooks/articles/useFeaturedArticleSelection';
 import type { Article } from '@/types/articles.types';
 

@@ -1,7 +1,8 @@
 import { memo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import BaseCard from '@/components/BaseCard';
+import BaseCard from '@common/BaseCard';
+
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';

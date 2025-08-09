@@ -2,9 +2,10 @@ import { Canvas, Circle, Group, LinearGradient, Path, vec } from '@shopify/react
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { BaseChart } from '@charts/BaseChart';
+import { useChartColors } from '@charts/chartColors';
+
 import { ThemedText } from '@/components/ThemedText';
-import { BaseChart } from '@/components/vocabulary/shared/BaseChart';
-import { useChartColors } from '@/components/vocabulary/shared/chartColors';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';

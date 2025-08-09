@@ -1,15 +1,9 @@
 import { memo, useMemo } from 'react';
 
-import { VocabularyChart, type DataPoint } from '@/components/vocabulary/shared';
-import {
-  CHART_LABELS,
-  EMPTY_STATE_MESSAGES,
-  generateChartSubtitle,
-} from '@/components/vocabulary/shared/chartMessages';
-import {
-  calculateDataPointPositions,
-  useGraphWidth,
-} from '@/components/vocabulary/shared/constants';
+import { VocabularyChart, type DataPoint } from '@charts';
+import { CHART_LABELS, EMPTY_STATE_MESSAGES, generateChartSubtitle } from '@charts/chartMessages';
+import { calculateDataPointPositions, useGraphWidth } from '@charts/constants';
+
 import { STRINGS } from '@/constants/strings';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import type { StudyWord } from '@/types/vocabulary.types';

@@ -1,7 +1,8 @@
 import type { JSX } from 'react';
 import { memo, useCallback, useMemo } from 'react';
 
-import HorizontalArticleSlider from '@/components/home/HorizontalArticleSlider';
+import HorizontalArticleSlider from '@read/HorizontalArticleSlider';
+
 import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeaturedArticles';
 import type { Article } from '@/types/articles.types';
 

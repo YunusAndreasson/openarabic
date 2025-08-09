@@ -1,19 +1,20 @@
 import { Skia } from '@shopify/react-native-skia';
 import { useMemo } from 'react';
 
-import { useChartColors } from '@/components/vocabulary/shared/chartColors';
+import { useChartColors } from '@charts/chartColors';
 import {
   calculateDataPointPositions,
   DAYS_7,
   GRAPH_HEIGHT_LARGE,
   useGraphWidth,
-} from '@/components/vocabulary/shared/constants';
+} from '@charts/constants';
 import {
   calculateEfficiencyScore,
   createStandardizedPerformanceZones,
   generateDateRange,
   isSameDay,
-} from '@/components/vocabulary/shared/utils';
+} from '@charts/utils';
+
 import { TREND_CHANGE_THRESHOLD } from '@/constants/fsrs';
 import type { StudyWord } from '@/types/vocabulary.types';
 

@@ -4,7 +4,8 @@ import React, { memo, useCallback, useState, type FC } from 'react';
 import { LayoutAnimation, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import SectionTitle from '@/components/SectionTitle';
+import SectionTitle from '@common/SectionTitle';
+
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { FAQ_DATA, type FAQItem } from '@/constants/faq';

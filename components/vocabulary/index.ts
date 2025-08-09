@@ -5,5 +5,4 @@ export { VocabularyStatCards } from './VocabularyStatCards';
 
 export { EfficiencyChart, MasteryChart, RetrievabilityChart } from './charts';
 
-// Shared components
-export * from './shared';
+// Shared moved to @charts

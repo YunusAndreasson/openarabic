@@ -6,8 +6,9 @@ import type { JSX } from 'react';
 import React, { Fragment, memo, useCallback, useEffect } from 'react';
 import { Platform, StyleSheet } from 'react-native';
 
+import { StreakHistoryBottomSheet } from '@read/StreakHistoryBottomSheet';
+
 import HeaderProfile from '@/components/HeaderProfile';
-import { StreakHistoryBottomSheet } from '@/components/home/StreakHistoryBottomSheet';
 import DictionaryButton from '@/components/ui/DictionaryButton';
 import EditModeButton from '@/components/ui/EditModeButton';
 import { LAYOUT } from '@/constants/layout';

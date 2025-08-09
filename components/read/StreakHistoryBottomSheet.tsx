@@ -6,9 +6,10 @@ import BottomSheet, {
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { StreakChart } from '@read/StreakChart';
+import { StreakMetrics } from '@read/StreakMetrics';
+
 import { ThemedText } from '@/components/ThemedText';
-import { StreakChart } from '@/components/home/StreakChart';
-import { StreakMetrics } from '@/components/home/StreakMetrics';
 import { LAYOUT } from '@/constants/layout';
 import { useStreakHistory } from '@/hooks/articles/useStreakHistory';
 import { useColors } from '@/hooks/theme/useColors';

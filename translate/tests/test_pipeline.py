@@ -5,6 +5,8 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from data.enums import DifficultyLevel
 from pipeline.split_file import split_file
 from pipeline.translate import translate_file
@@ -63,7 +65,7 @@ class TestSplitFile:
             Path(output_file).unlink(missing_ok=True)
 
     def test_split_file_handles_empty_input(self):
-        """Test split_file with empty input."""
+        """Test split_file with empty input (now fails fast)."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write("")
             input_file = f.name
@@ -87,9 +89,8 @@ class TestSplitFile:
                     "success": True,
                 }
 
-                split_file(input_file, output_file)
-
-                assert Path(output_file).exists()
+                with pytest.raises(RuntimeError):
+                    split_file(input_file, output_file)
 
         finally:
             Path(input_file).unlink(missing_ok=True)

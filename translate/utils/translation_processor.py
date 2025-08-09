@@ -105,7 +105,7 @@ def translate_words(
         batch_indices,
         conversation_manager,
     )
-    # Validate word translation results
+    # Validate word translation results strictly via existing validator
     validate_translation_results(
         batch_sentences,
         word_results,
@@ -266,11 +266,10 @@ def create_sentence_translation(
                 essential = word_opts.get("essential", word_opts.get("arabic", ""))
                 notes = word_opts.get("notes") or ""
             else:
-                # Fallback for unknown format
-                arabic = str(word_opts) if word_opts else ""
-                pos = None
-                essential = arabic
-                notes = ""
+                # Enforce correct type – only dict or model instances allowed
+                raise TypeError(
+                    f"Invalid word translation option type: {type(word_opts)}"
+                )
 
             # Preserve uncertainties from the original word translation
             word_uncertainties = []

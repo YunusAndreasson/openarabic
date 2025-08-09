@@ -8,7 +8,8 @@ import { useCallback, useMemo } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import EmptyState from '@/components/EmptyState';
+import EmptyState from '@common/EmptyState';
+
 import { ThemedView } from '@/components/ThemedView';
 import EditModeButton from '@/components/ui/EditModeButton';
 import { DictionarySortingHeader, DictionaryWordCard } from '@/components/vocabulary';

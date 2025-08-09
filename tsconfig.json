@@ -4,7 +4,16 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@read/*": ["components/read/*"],
+      "@listen/*": ["components/listen/*"],
+      "@practice/*": ["components/practice/*"],
+      "@insights/*": ["components/insights/*"],
+      "@account/*": ["components/account/*"],
+      "@article/*": ["components/article/*"],
+      "@common/*": ["components/common/*"],
+      "@ui/*": ["components/ui/*"],
+      "@charts/*": ["components/common/charts/*"]
     },
     "noImplicitAny": true,
     "noImplicitThis": true,

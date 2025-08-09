@@ -1,8 +1,9 @@
 import { Circle, Group } from '@shopify/react-native-skia';
 import { memo } from 'react';
 
-import { useChartColors } from '@/components/vocabulary/shared/chartColors';
-import { CHART_VISUAL } from '@/components/vocabulary/shared/constants';
+import { useChartColors } from '@charts/chartColors';
+import { CHART_VISUAL } from '@charts/constants';
+
 import { useColors } from '@/hooks/theme/useColors';
 
 interface ChartDataPointProps {

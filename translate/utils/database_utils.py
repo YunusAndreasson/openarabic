@@ -87,9 +87,8 @@ def get_or_create_root(
         _generate_root_audio(root_id, letters, english_translation, meaning)
         return root_id
 
-    # Fallback: create without audio
-    logger.error(f"Failed to create root for '{letters}'")
-    return 0
+    # Fail loudly – cannot proceed without a valid root
+    raise RuntimeError(f"Failed to create root for '{letters}'")
 
 
 def _generate_root_audio(

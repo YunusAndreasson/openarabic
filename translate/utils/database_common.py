@@ -12,16 +12,15 @@ logger = logging.getLogger(__name__)
 def safe_database_operation(
     operation: Callable[[], Any],
     error_context: str,
-    fallback_value: Any = None,
     log_error: bool = True,
 ) -> Any:
-    """Common wrapper for database operations with error handling."""
+    """Database operations must fail loudly; no fallbacks."""
     try:
         return operation()
     except Exception as e:
         if log_error:
             logger.error(f"Database operation failed for {error_context}: {str(e)}")
-        return fallback_value
+        raise
 
 
 def update_table_record(
@@ -52,7 +51,7 @@ def insert_table_record(
         result = get_supabase_client().table(table_name).insert(data).execute()
         return result.data[0] if result.data else None
 
-    result = safe_database_operation(operation, error_context, None)
+    result = safe_database_operation(operation, error_context, True)
     return result if isinstance(result, dict) else None
 
 
@@ -71,7 +70,7 @@ def get_table_record(
         result = query.execute()
         return result.data[0] if result.data else None
 
-    result = safe_database_operation(operation, error_context, None)
+    result = safe_database_operation(operation, error_context, True)
     return result if isinstance(result, dict) else None
 
 
@@ -101,7 +100,7 @@ def get_table_records(
         result = query.execute()
         return result.data or []
 
-    result = safe_database_operation(operation, error_context, [])
+    result = safe_database_operation(operation, error_context, True)
     return result if isinstance(result, list) else []
 
 
@@ -117,5 +116,5 @@ def check_record_exists(
         result = query.execute()
         return len(result.data) > 0
 
-    result = safe_database_operation(operation, error_context, False)
+    result = safe_database_operation(operation, error_context, True)
     return bool(result)

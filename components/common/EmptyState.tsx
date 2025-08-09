@@ -4,12 +4,11 @@ import { memo, type ComponentProps, type ComponentType, type ReactNode } from 'r
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
+import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
-
-import { ThemedButton } from './ThemedButton';
-import { ThemedText } from './ThemedText';
 
 // Define EmptyStateProps inline
 interface EmptyStateProps {

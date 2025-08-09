@@ -11,7 +11,7 @@ jest.mock('../../../hooks/theme/useColors', () => ({
   }),
 }));
 
-jest.mock('../../../components/vocabulary/shared/chartColors', () => ({
+jest.mock('@charts/chartColors', () => ({
   useChartColors: () => ({
     performance: {
       excellent: '#e',

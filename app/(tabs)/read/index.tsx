@@ -6,11 +6,12 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { InteractionManager, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import ArticleList from '@read/ArticleList';
+import FilterSection from '@read/FilterSection';
+import { HijriDateFooter } from '@read/HijriDateFooter';
+import IntelligentArticleSection from '@read/IntelligentArticleSection';
+
 import { ThemedView } from '@/components/ThemedView';
-import ArticleList from '@/components/home/ArticleList';
-import FilterSection from '@/components/home/FilterSection';
-import { HijriDateFooter } from '@/components/home/HijriDateFooter';
-import IntelligentArticleSection from '@/components/home/IntelligentArticleSection';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { CACHE_TIMES } from '@/constants/queryConfig';

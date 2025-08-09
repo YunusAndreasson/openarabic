@@ -60,6 +60,15 @@ module.exports = {
 
     // Path aliases for cleaner imports
     '^@/(.*)$': '<rootDir>/$1',
+    '^@read/(.*)$': '<rootDir>/components/read/$1',
+    '^@listen/(.*)$': '<rootDir>/components/listen/$1',
+    '^@practice/(.*)$': '<rootDir>/components/practice/$1',
+    '^@insights/(.*)$': '<rootDir>/components/insights/$1',
+    '^@account/(.*)$': '<rootDir>/components/account/$1',
+    '^@article/(.*)$': '<rootDir>/components/article/$1',
+    '^@common/(.*)$': '<rootDir>/components/common/$1',
+    '^@ui/(.*)$': '<rootDir>/components/ui/$1',
+    '^@charts/(.*)$': '<rootDir>/components/common/charts/$1',
   },
 
   // Comprehensive coverage for AI analysis

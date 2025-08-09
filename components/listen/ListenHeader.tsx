@@ -3,7 +3,8 @@ import type { FC } from 'react';
 import { useCallback } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { ProgressBar } from '@/components/ProgressBar';
+import { ProgressBar } from '@common/ProgressBar';
+
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { selectionFeedback } from '@/utils/haptics';

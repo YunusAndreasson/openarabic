@@ -2,15 +2,16 @@ import { Group } from '@shopify/react-native-skia';
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { BaseChart } from '@/components/vocabulary/shared/BaseChart';
-import { ChartAreaFill } from '@/components/vocabulary/shared/ChartAreaFill';
-import { ChartAxes, Y_AXIS_WIDTH } from '@/components/vocabulary/shared/ChartAxes';
-import { ChartCanvas, type DataPoint } from '@/components/vocabulary/shared/ChartCanvas';
-import { ChartDataPoint } from '@/components/vocabulary/shared/ChartDataPoint';
-import { ChartGrid } from '@/components/vocabulary/shared/ChartGrid';
-import { ChartMainLine } from '@/components/vocabulary/shared/ChartMainLine';
-import { ChartPerformanceZones } from '@/components/vocabulary/shared/ChartPerformanceZones';
-import { GRAPH_HEIGHT_LARGE } from '@/components/vocabulary/shared/constants';
+import { BaseChart } from '@charts/BaseChart';
+import { ChartAreaFill } from '@charts/ChartAreaFill';
+import { ChartAxes, Y_AXIS_WIDTH } from '@charts/ChartAxes';
+import { ChartCanvas, type DataPoint } from '@charts/ChartCanvas';
+import { ChartDataPoint } from '@charts/ChartDataPoint';
+import { ChartGrid } from '@charts/ChartGrid';
+import { ChartMainLine } from '@charts/ChartMainLine';
+import { ChartPerformanceZones } from '@charts/ChartPerformanceZones';
+import { GRAPH_HEIGHT_LARGE } from '@charts/constants';
+
 import type { PerformanceZone } from '@/types/ui/chart.types';
 import { generateDataPointKeys, generateMilestoneKeys, type ChartPoint } from '@/utils/chartUtils';
 

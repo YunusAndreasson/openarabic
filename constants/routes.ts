@@ -26,7 +26,7 @@ export const ROUTE_PATHS = {
   ACCOUNT_ISLAMIC_CALENDAR: '/(tabs)/read/account/islamicCalendar',
   INSIGHTS: '/insights',
   PRACTICE_REVIEW: '/practice/review',
-  NOW_PLAYING: '/NowPlaying',
+  NOW_PLAYING: '/(tabs)/listen/now-playing',
 } as const;
 
 export type StaticRoutePath = (typeof ROUTE_PATHS)[keyof typeof ROUTE_PATHS];

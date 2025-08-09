@@ -20,7 +20,8 @@
 import { Skia } from '@shopify/react-native-skia';
 import { useMemo } from 'react';
 
-import { useChartColors } from '@/components/vocabulary/shared/chartColors';
+import { useChartColors } from '@charts/chartColors';
+
 import { CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';

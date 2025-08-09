@@ -8,13 +8,12 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
+import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { formatDateTo12hClock } from '@/utils/time';
-
-import { ThemedButton } from './ThemedButton';
-import { ThemedText } from './ThemedText';
 
 export interface TimePickerProps {
   isVisible: boolean;

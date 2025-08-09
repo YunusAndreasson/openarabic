@@ -6,13 +6,14 @@ import React, { Fragment, memo, useCallback, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import BaseCard from '@/components/BaseCard';
+import BaseCard from '@common/BaseCard';
+import { TimePicker } from '@ui/TimePicker';
+import { Toggle } from '@ui/Toggle';
+
 import { THEME_OPTIONS, ThemePicker } from '@/components/ThemePicker';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { TimePicker } from '@/components/TimePicker';
-import { Toggle } from '@/components/Toggle';
 import { AccountBadge } from '@/components/account';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';

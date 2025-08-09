@@ -2,7 +2,7 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { render } from '@testing-library/react-native';
 import React from 'react';
 
-import GenericFeaturedSection from '../../components/home/GenericFeaturedSection';
+import GenericFeaturedSection from '../../components/read/GenericFeaturedSection';
 import type { Article } from '../../types/articles.types';
 
 // Mock the useFeaturedArticleSelection hook
@@ -12,7 +12,7 @@ jest.mock('@/hooks/articles/useFeaturedArticleSelection', () => ({
 }));
 
 // Mock the FeaturedSection component
-jest.mock('@/components/home/FeaturedSection', () => {
+jest.mock('@read/FeaturedSection', () => {
   const { Text } = require('react-native');
   return function MockFeaturedSection({ article }: { article: Article }) {
     return <Text testID="featured-section">{article.title}</Text>;

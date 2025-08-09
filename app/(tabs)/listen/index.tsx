@@ -8,9 +8,10 @@ import type { RenderItemParams } from 'react-native-draggable-flatlist';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import BottomControls from '@/components/BottomControls';
-import EmptyState from '@/components/EmptyState';
-import ListSeparator from '@/components/ListSeparator';
+import EmptyState from '@common/EmptyState';
+import ListSeparator from '@common/ListSeparator';
+import BottomControls from '@listen/BottomControls';
+
 import { ThemedView } from '@/components/ThemedView';
 import { ListenListItemCard } from '@/components/listen/ListenListItemCard';
 import { useToast } from '@/components/providers/ToastProvider';

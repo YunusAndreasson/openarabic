@@ -2,11 +2,11 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { render } from '@testing-library/react-native';
 import React from 'react';
 
-import IntelligentArticleSection from '../../components/home/IntelligentArticleSection';
+import IntelligentArticleSection from '../../components/read/IntelligentArticleSection';
 import type { Article } from '../../types/articles.types';
 
 // Mock the HorizontalFeaturedSection since that's what IntelligentArticleSection uses
-jest.mock('@/components/home/HorizontalFeaturedSection', () => {
+jest.mock('@read/HorizontalFeaturedSection', () => {
   const { Text } = require('react-native');
   return function MockHorizontalFeaturedSection({
     scope,
@@ -26,7 +26,7 @@ jest.mock('@/components/home/HorizontalFeaturedSection', () => {
 });
 
 // Mock the GenericFeaturedSection since IntelligentArticleSection is just a wrapper
-jest.mock('@/components/home/GenericFeaturedSection', () => {
+jest.mock('@read/GenericFeaturedSection', () => {
   const { Text } = require('react-native');
   return function MockGenericFeaturedSection({
     scope,

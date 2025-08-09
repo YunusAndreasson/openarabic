@@ -52,27 +52,21 @@ def parse_split_response(response: dict[str, Any]) -> SplitResult:
         # Legacy format: direct data
         data = response
 
+    # Validate via Pydantic; require unit_types to be present and correct
     return SplitResult(
         units=data["units"],
         title=data["title"],
         summary=data["summary"],
         difficulty_level=data["difficulty_level"],
         total_units=len(data["units"]),
-        unit_types=data.get("unit_types", "unknown"),
+        unit_types=data["unit_types"],
     )
 
 
 def split_text_into_sentences(text: str) -> SplitResult:
     """Use GPT-4.1 to intelligently split text into learner-friendly units and analyze content"""
     if not text or len(text.strip()) == 0:
-        return SplitResult(
-            units=[],
-            title="Empty Text",
-            summary="No content",
-            difficulty_level=DifficultyLevel.BASIC.value,
-            total_units=0,
-            unit_types="unknown",
-        )
+        raise ValueError("Input text is empty; cannot split into sentences")
 
     messages = build_split_messages(text)
 

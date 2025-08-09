@@ -2,7 +2,8 @@ import type { JSX } from 'react';
 import { memo, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import BaseCard from '@/components/BaseCard';
+import BaseCard from '@common/BaseCard';
+
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';

@@ -2,10 +2,9 @@ import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ThemedButton } from '@/components/ThemedButton';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-
-import { ThemedButton } from './ThemedButton';
 
 export type BottomControlsProps = {
   primaryLabel: string;

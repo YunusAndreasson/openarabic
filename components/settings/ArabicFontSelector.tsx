@@ -2,7 +2,8 @@ import Slider from '@react-native-community/slider';
 import { memo, useCallback, type FC } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import BaseCard from '@/components/BaseCard';
+import BaseCard from '@common/BaseCard';
+
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import {

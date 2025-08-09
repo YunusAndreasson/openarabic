@@ -1,8 +1,9 @@
 import { memo, useMemo } from 'react';
 
-import { VocabularyChart } from '@/components/vocabulary/shared';
-import { CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/components/vocabulary/shared/chartMessages';
-import { CHART_VISUAL, useGraphWidth } from '@/components/vocabulary/shared/constants';
+import { VocabularyChart } from '@charts';
+import { CHART_LABELS, EMPTY_STATE_MESSAGES } from '@charts/chartMessages';
+import { CHART_VISUAL, useGraphWidth } from '@charts/constants';
+
 import { useMasteryChart } from '@/hooks/vocabulary/useMasteryChart';
 import type { StudyWord } from '@/types/vocabulary.types';
 

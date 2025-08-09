@@ -201,11 +201,10 @@ def detect_author_from_file_path(file_path: str) -> tuple[str, int]:
             logger.error(f"Author not found in database: {author_name}")
             raise
 
-    # Fallback to default author if not found
-    logger.warning("Could not detect author from file path, using default")
-    default_author = "Ibn Kathir"
-    author_id = get_author_id(default_author)
-    return default_author, author_id
+    # Fail loudly – author mapping must be correct
+    raise ValueError(
+        f"Could not detect author from file path '{file_path}'. Ensure filename starts with known author number."
+    )
 
 
 def process_json_file(file_path: str, category_id: int = None) -> int:

@@ -2,9 +2,10 @@ import { memo, useEffect, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import BaseCard from '@/components/BaseCard';
+import BaseCard from '@common/BaseCard';
+import { ProgressCircle } from '@common/ProgressCircle';
+
 import { EnhancedImage } from '@/components/EnhancedImage';
-import { ProgressCircle } from '@/components/ProgressCircle';
 import { ThemedText } from '@/components/ThemedText';
 import DeleteButton from '@/components/listen/DeleteButton';
 import DragHandle, { type DragHandleProps } from '@/components/listen/DragHandle';

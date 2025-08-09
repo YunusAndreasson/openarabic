@@ -1,3 +1,9 @@
+from constants.error_markers import (
+    CRITICAL_ERROR_MARKERS,
+    FALLBACK_ERROR_MARKERS,
+    TRANSLATION_ERROR_MARKERS,
+)
+
 from .config import (
     ARABIC_VOICE_ID,
     ARABIC_WORD_VOICE_ID,
@@ -36,39 +42,6 @@ from .schemas import (
     TASHKEEL_USER_PROMPT,
     WORD_BY_WORD_USER_PROMPT,
 )
-
-# Import error markers from constants
-try:
-    from constants.error_markers import (
-        CRITICAL_ERROR_MARKERS,
-        FALLBACK_ERROR_MARKERS,
-        TRANSLATION_ERROR_MARKERS,
-    )
-except ImportError:
-    # Fallback if constants module is not available
-    TRANSLATION_ERROR_MARKERS = [
-        "[Translation failed]",
-        "[Translation Error]",
-        "[Fallback Error]",
-        "[API Error]",
-        "[Validation Error]",
-        "[Format Error]",
-        "[BATCH PROCESSING ERROR]",
-        "[Error]",
-        "[Fallback]",
-        "[Missing]",
-    ]
-    CRITICAL_ERROR_MARKERS = [
-        "[Translation failed]",
-        "[Translation Error]",
-        "[API Error]",
-        "[BATCH PROCESSING ERROR]",
-    ]
-    FALLBACK_ERROR_MARKERS = [
-        "[Fallback Error]",
-        "[Fallback]",
-        "[Missing]",
-    ]
 
 __all__ = [
     "DEFAULT_BATCH_SIZE",

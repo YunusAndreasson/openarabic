@@ -1,7 +1,8 @@
 import type { JSX } from 'react';
 import { memo } from 'react';
 
-import HorizontalFeaturedSection from '@/components/home/HorizontalFeaturedSection';
+import HorizontalFeaturedSection from '@read/HorizontalFeaturedSection';
+
 import type { Article } from '@/types/articles.types';
 
 interface IntelligentArticleSectionProps {

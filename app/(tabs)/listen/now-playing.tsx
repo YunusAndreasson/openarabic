@@ -1,3 +1,5 @@
+// Placeholder to keep route valid after removing app/NowPlaying.tsx
+import AudioProgressIndicator from '@listen/AudioProgressIndicator';
 import { useQueryClient } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams } from 'expo-router';
@@ -6,7 +8,6 @@ import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import AudioProgressIndicator from '@/components/AudioProgressIndicator';
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -24,7 +25,6 @@ import type { ReadingListItem } from '@/types/readingList.types';
 import { withOpacity } from '@/utils/colorUtils';
 import { createAudioOverlayColors, createAudioOverlayGradient } from '@/utils/gradientUtils';
 
-// Modal drag indicator component positioned over background image
 const ModalDragIndicator = () => {
   const colors = useColors();
   return (
@@ -33,7 +33,7 @@ const ModalDragIndicator = () => {
         style={[
           styles.dragIndicatorBar,
           {
-            backgroundColor: withOpacity(colors.white, 0.7), // Use theme-aware white for visibility
+            backgroundColor: withOpacity(colors.white, 0.7),
           },
         ]}
       />
@@ -47,7 +47,6 @@ export default function NowPlayingModal() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
 
-  // Get router params for article ID fallback and audio state
   const params = useLocalSearchParams<{
     articleId?: string;
     position?: string;
@@ -55,26 +54,22 @@ export default function NowPlayingModal() {
     audioState?: string;
   }>();
 
-  // Audio player
   const audioPlayer = useSimpleAudioPlayer();
 
-  // Get current position from audio player or params
   const position = useMemo(() => {
     if (params.position) {
-      return parseFloat(params.position) / 1000; // Convert ms to seconds
+      return parseFloat(params.position) / 1000;
     }
     return audioPlayer.currentTime || 0;
   }, [audioPlayer.currentTime, params.position]);
 
-  // Get duration from audio player or params
   const duration = useMemo(() => {
     if (params.duration) {
-      return parseFloat(params.duration) / 1000; // Convert ms to seconds
+      return parseFloat(params.duration) / 1000;
     }
     return audioPlayer.duration || 0;
   }, [audioPlayer.duration, params.duration]);
 
-  // Get article ID from audio player or params
   const articleId = audioPlayer.currentTrack?.articleId
     ? parseInt(audioPlayer.currentTrack.articleId.toString(), 10)
     : params.articleId
@@ -82,7 +77,6 @@ export default function NowPlayingModal() {
     : undefined;
 
   const { article, sortedSentences, sentenceWordsMap } = useArticleData(articleId, user?.id);
-  // Immediate fallbacks using cached data and current track metadata to avoid "Loading..." UI
   const cachedArticle = useMemo(() => {
     if (!articleId) return null;
     return queryClient.getQueryData<Article>(['article', articleId]) ?? null;
@@ -119,12 +113,10 @@ export default function NowPlayingModal() {
     sentenceWordsMap,
   });
 
-  // Calculate bottom position with safe area
   const bottomPosition = useMemo(() => {
     return Math.max(insets.bottom + LAYOUT.SPACING.SMALL, LAYOUT.SPACING.LARGE);
   }, [insets.bottom]);
 
-  // Optimized animations using hooks
   const gradientAnimation = useTransformAnimation({
     type: 'scale',
     initialValue: 1,
@@ -139,14 +131,11 @@ export default function NowPlayingModal() {
     autoStart: false,
   });
 
-  // Update gradient animation based on sentence progress
   useEffect(() => {
-    // Interpolate sentence progress to scale animation
     const scaleValue = sentenceProgress === 0 ? 1 : 1 + sentenceProgress * 0.02;
     gradientAnimation.setValue(scaleValue);
   }, [sentenceProgress, gradientAnimation]);
 
-  // Fade in/out sentence text
   useEffect(() => {
     if (currentSentence) {
       sentenceAnimation.fadeIn();
@@ -155,26 +144,21 @@ export default function NowPlayingModal() {
     }
   }, [currentSentence, sentenceAnimation]);
 
-  // Calculate progress percentage
   const progressPercentage = duration > 0 ? Math.min(100, (position / duration) * 100) : 0;
 
-  // Enhanced gradient system using proper dark overlay for text contrast
   const gradientColors = useMemo(() => {
     return createAudioOverlayGradient(colors.shadow);
   }, [colors.shadow]);
 
-  // Semantic overlay colors following design system
   const overlayColors = useMemo(() => {
     return createAudioOverlayColors(colors);
   }, [colors]);
 
-  // Calculate sentence progress for display
   const sentenceProgressText =
     sortedSentences.length > 0
       ? `Sentence ${Math.max(0, currentSentenceIndex) + 1} of ${sortedSentences.length}`
       : '';
 
-  // Determine if we're actually loading (more reliable)
   const isActuallyLoading = useMemo(() => {
     const hasValidAudio = duration > 0 || position > 0 || audioPlayer.isPlaying;
     const hasValidMetadata = !!audioPlayer.currentTrack?.articleId;
@@ -189,7 +173,6 @@ export default function NowPlayingModal() {
 
   return (
     <ThemedView style={styles.container}>
-      {/* Background Image */}
       <View style={styles.backgroundContainer}>
         <EnhancedImage
           source={backgroundImageUrl}
@@ -197,8 +180,6 @@ export default function NowPlayingModal() {
           contentFit="cover"
           priority="high"
         />
-
-        {/* Audio-Reactive Gradient Overlay */}
         <Animated.View style={[styles.gradientContainer, gradientAnimation.animatedStyle]}>
           <LinearGradient
             colors={gradientColors}
@@ -209,20 +190,15 @@ export default function NowPlayingModal() {
         </Animated.View>
       </View>
 
-      {/* Modal drag indicator */}
       <ModalDragIndicator />
 
-      {/* Header with Title and Author */}
       <View style={[styles.header, { paddingTop: insets.top + LAYOUT.SPACING.MEDIUM }]}>
         <View style={styles.headerInfo}>
           <ThemedText
             type="heading3"
             style={[
               styles.title,
-              {
-                color: overlayColors.textPrimary,
-                textShadowColor: colors.textShadowDark,
-              },
+              { color: overlayColors.textPrimary, textShadowColor: colors.textShadowDark },
             ]}
             numberOfLines={2}
           >
@@ -233,10 +209,7 @@ export default function NowPlayingModal() {
             variant="secondary"
             style={[
               styles.author,
-              {
-                color: overlayColors.textSecondary,
-                textShadowColor: colors.textShadowDark,
-              },
+              { color: overlayColors.textSecondary, textShadowColor: colors.textShadowDark },
             ]}
           >
             {fallbackAuthor}
@@ -244,17 +217,13 @@ export default function NowPlayingModal() {
         </View>
       </View>
 
-      {/* Current Sentence Display with Progress */}
       <View style={styles.sentenceSection}>
         {sentenceProgressText && (
           <ThemedText
             type="caption"
             style={[
               styles.progressText,
-              {
-                color: overlayColors.textTertiary,
-                textShadowColor: colors.textShadowDark,
-              },
+              { color: overlayColors.textTertiary, textShadowColor: colors.textShadowDark },
             ]}
           >
             {sentenceProgressText}
@@ -276,10 +245,8 @@ export default function NowPlayingModal() {
         </Animated.View>
       </View>
 
-      {/* Audio Controls and Progress at Bottom */}
       <View style={[styles.bottomControlsContainer, { bottom: bottomPosition }]}>
         <View style={styles.bottomControls}>
-          {/* Audio Progress */}
           <View style={styles.progressSection}>
             <AudioProgressIndicator
               position={position}
@@ -298,53 +265,30 @@ export default function NowPlayingModal() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-
-  backgroundContainer: {
-    ...StyleSheet.absoluteFillObject,
-  },
-
-  backgroundImage: {
-    width: '100%',
-    height: '100%',
-  },
-
-  gradientContainer: {
-    ...StyleSheet.absoluteFillObject,
-  },
-
-  gradient: {
-    flex: 1,
-  },
-
+  container: { flex: 1 },
+  backgroundContainer: { ...StyleSheet.absoluteFillObject },
+  backgroundImage: { width: '100%', height: '100%' },
+  gradientContainer: { ...StyleSheet.absoluteFillObject },
+  gradient: { flex: 1 },
   header: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
   },
-
-  headerInfo: {
-    alignItems: 'center',
-    maxWidth: '90%',
-  },
-
+  headerInfo: { alignItems: 'center', maxWidth: '90%' },
   title: {
     textAlign: 'center',
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
-
   author: {
     textAlign: 'center',
     marginTop: LAYOUT.SPACING.TINY,
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
-
   progressText: {
     textAlign: 'center',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
@@ -353,21 +297,14 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
-
   sentenceSection: {
-    paddingTop: LAYOUT.SPACING.XXXLARGE * 2, // Large gap below header
+    paddingTop: LAYOUT.SPACING.XXXLARGE * 2,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING * 1.5,
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
   },
-
-  sentenceContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-  },
-
+  sentenceContainer: { alignItems: 'center', justifyContent: 'center', width: '100%' },
   englishText: {
     textAlign: 'center',
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
@@ -376,22 +313,13 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
-
   bottomControlsContainer: {
     position: 'absolute',
     left: LAYOUT.SPACING.LARGE,
     right: LAYOUT.SPACING.LARGE,
   },
-
-  bottomControls: {
-    paddingHorizontal: 0,
-    paddingVertical: 0,
-  },
-
-  progressSection: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-
+  bottomControls: { paddingHorizontal: 0, paddingVertical: 0 },
+  progressSection: { marginBottom: LAYOUT.SPACING.MEDIUM },
   modalDragIndicator: {
     position: 'absolute',
     top: LAYOUT.SPACING.SMALL,
@@ -402,7 +330,6 @@ const styles = StyleSheet.create({
     paddingTop: LAYOUT.SPACING.SMALL,
     paddingBottom: LAYOUT.SPACING.TINY,
   },
-
   dragIndicatorBar: {
     width: LAYOUT.SPACING.XXXLARGE,
     height: LAYOUT.SPACING.TINY,

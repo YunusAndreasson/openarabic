@@ -323,7 +323,13 @@ Examples:
 
                 with open(translation_file, encoding="utf-8") as f:
                     data = json.load(f)
-                    total_sentences += len(data.get("translations", []))
+                    if "translations" not in data or not isinstance(
+                        data["translations"], list
+                    ):
+                        raise ValueError(
+                            f"Invalid translation file structure: missing 'translations' array in {translation_file}"
+                        )
+                    total_sentences += len(data["translations"])
             except Exception as e:
                 logger.debug(
                     f"Could not read sentence count from {translation_file}: {e}"
@@ -346,9 +352,17 @@ Examples:
 
                 with open(translation_file, encoding="utf-8") as f:
                     data = json.load(f)
-                    sentence_count = len(data.get("translations", []))
-            except Exception:
-                sentence_count = 0
+                    if "translations" not in data or not isinstance(
+                        data["translations"], list
+                    ):
+                        raise ValueError(
+                            f"Invalid translation file structure: missing 'translations' array in {translation_file}"
+                        )
+                    sentence_count = len(data["translations"])
+            except Exception as e:
+                raise RuntimeError(
+                    f"Failed to read sentence count from {translation_file}: {e}"
+                ) from e
 
             # Run the insertion step for this specific file
             run_pipeline_step(
