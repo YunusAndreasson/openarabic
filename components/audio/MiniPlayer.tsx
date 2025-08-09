@@ -29,9 +29,8 @@ export interface MiniPlayerProps {
   /** Playback controls */
   onPlayPause: () => void;
   onTimerPress: () => void;
-  onExpandPress: () => void;
-  /** Optional tap to expand entire mini-player */
-  onMiniPlayerPress?: () => void;
+  /** Single handler to expand the now-playing modal */
+  onExpand: () => void;
 }
 
 // Layout constants using proper LAYOUT system from layout.ts
@@ -54,21 +53,15 @@ const MiniPlayerComponent = ({
   duration,
   onPlayPause,
   onTimerPress,
-  onExpandPress,
-  onMiniPlayerPress,
+  onExpand,
 }: MiniPlayerProps): JSX.Element => {
   const colors = useColors();
 
   // Simplified mini-player press handler without animations
   const handleMiniPlayerPress = useCallback(() => {
     selectionFeedback();
-
-    if (onMiniPlayerPress) {
-      onMiniPlayerPress();
-    } else {
-      onExpandPress();
-    }
-  }, [onMiniPlayerPress, onExpandPress]);
+    onExpand();
+  }, [onExpand]);
 
   // Handle play/pause with haptic feedback
   const handlePlayPause = useCallback(

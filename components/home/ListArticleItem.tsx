@@ -1,9 +1,8 @@
 import type { JSX } from 'react';
 import { memo, useCallback } from 'react';
 
+import { ListenListItemCard } from '@/components/listen/ListenListItemCard';
 import type { Article } from '@/types/articles.types';
-
-import { ArticleCard } from './ArticleCard';
 
 interface ListArticleItemProps {
   article: Article;
@@ -33,7 +32,7 @@ const ListArticleItem = memo(
     const handlePress = useCallback(() => onPress?.(article), [onPress, article]);
 
     return (
-      <ArticleCard
+      <ListenListItemCard
         author={article.author.name}
         title={article.title}
         difficultyLevel={article.difficulty_level}

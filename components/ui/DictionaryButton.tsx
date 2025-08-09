@@ -7,6 +7,7 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { usePressAnimation } from '@/hooks/animations';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
@@ -18,13 +19,32 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 interface DictionaryButtonProps {
   /** Optional custom styling */
   style?: ViewStyle;
+  /** If provided, hides the button when count is 0 */
+  itemCount?: number;
+  /** Convenience flag to hide when empty without passing count explicitly */
+  hideWhenEmpty?: boolean;
 }
 
-export default function DictionaryButton({ style }: DictionaryButtonProps = {}): JSX.Element {
+export default function DictionaryButton({
+  style,
+  itemCount,
+  hideWhenEmpty,
+}: DictionaryButtonProps = {}): JSX.Element | null {
   const colors = useColors();
+  const { user } = useAuth();
+  const { allWords } = useFSRSQueries({ userId: user?.id });
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     includeOpacity: true,
   });
+
+  const computedCount =
+    itemCount ??
+    allWords?.filter((word: StudyWord) => word != null && word.root_id != null).length ??
+    0;
+
+  if ((hideWhenEmpty || itemCount !== undefined) && computedCount <= 0) {
+    return null;
+  }
 
   const handlePress = useCallback(() => {
     router.push('/(tabs)/practice/dictionary');
@@ -56,7 +76,7 @@ export default function DictionaryButton({ style }: DictionaryButtonProps = {}):
         ]}
         numberOfLines={1}
       >
-        Dictionary
+        {STRINGS.DICTIONARY}
       </ThemedText>
     </AnimatedPressable>
   );
@@ -82,17 +102,7 @@ const styles = StyleSheet.create({
  * Wrapper component specifically for the Practice tab that automatically
  * hides the Dictionary button when there are no study words
  */
-export function PracticeDictionaryButton({
-  style,
-}: { style?: ViewStyle } = {}): JSX.Element | null {
-  const { user } = useAuth();
-  const { allWords } = useFSRSQueries({ userId: user?.id });
-
-  // Filter study words similar to practice screen logic
-  const filteredStudyWords =
-    allWords?.filter((word: StudyWord) => word != null && word.root_id != null) ?? [];
-
-  if (filteredStudyWords.length === 0) return null;
-
-  return <DictionaryButton style={style} />;
+export function PracticeDictionaryButton(): JSX.Element | null {
+  // Deprecated wrapper left as no-op for compatibility if imported elsewhere
+  return null;
 }

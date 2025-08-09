@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import React, { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ArticleCard } from '@/components/home/ArticleCard';
+import { ListenListItemCard } from '@/components/listen/ListenListItemCard';
 import { LAYOUT } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeaturedArticles';
@@ -76,7 +76,7 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
     const articleCards = useMemo(() => {
       return relatedArticles.map((article, index) => (
         <View key={article.id} style={index > 0 ? styles.articleSpacing : undefined}>
-          <ArticleCard
+          <ListenListItemCard
             title={article.title}
             author={article.author.name}
             difficultyLevel={article.difficulty_level}

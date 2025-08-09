@@ -30,11 +30,29 @@ interface EditModeButtonProps {
    * Optional custom styling
    */
   style?: ViewStyle;
+  /** If provided, hides the button when count is 0 */
+  itemCount?: number;
+  /** Convenience flag to hide when empty without passing count explicitly */
+  hideWhenEmpty?: boolean;
 }
 
-const EditModeButton: FC<EditModeButtonProps> = ({ type, onEditModeChange, style }) => {
+const EditModeButton: FC<EditModeButtonProps> = ({
+  type,
+  onEditModeChange,
+  style,
+  itemCount,
+  hideWhenEmpty,
+}) => {
   const colors = useColors();
   const { editMode, toggle } = useEditMode(type);
+  // Derive count internally for listen type when not provided
+  const { sortedReadingList } = useListenScreen();
+  const derivedCount = type === 'listen' ? sortedReadingList.length : undefined;
+  const effectiveCount = itemCount ?? derivedCount ?? undefined;
+
+  if (hideWhenEmpty && (effectiveCount ?? 0) <= 0) {
+    return null;
+  }
 
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     includeOpacity: true,
@@ -94,13 +112,10 @@ export const ListenEditModeButton: FC<{
   onEditModeChange?: (editMode: boolean) => void;
   style?: ViewStyle;
 }> = ({ onEditModeChange, style }) => {
-  const { sortedReadingList } = useListenScreen();
-
-  if (sortedReadingList.length === 0) {
-    return null;
-  }
-
-  return <EditModeButton type="listen" onEditModeChange={onEditModeChange} style={style} />;
+  // Deprecated wrapper; prefer using EditModeButton with hideWhenEmpty
+  return (
+    <EditModeButton type="listen" hideWhenEmpty onEditModeChange={onEditModeChange} style={style} />
+  );
 };
 
 const styles = StyleSheet.create({

@@ -8,8 +8,8 @@ import { Platform, StyleSheet } from 'react-native';
 
 import HeaderProfile from '@/components/HeaderProfile';
 import { StreakHistoryBottomSheet } from '@/components/home/StreakHistoryBottomSheet';
-import { PracticeDictionaryButton } from '@/components/ui/DictionaryButton';
-import { ListenEditModeButton } from '@/components/ui/EditModeButton';
+import DictionaryButton from '@/components/ui/DictionaryButton';
+import EditModeButton from '@/components/ui/EditModeButton';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -160,10 +160,10 @@ export default function TabLayout(): JSX.Element {
                 headerRight: () => <HeaderProfile />,
               }),
               ...(screen.name === 'listen' && {
-                headerRight: () => <ListenEditModeButton />,
+                headerRight: () => <EditModeButton type="listen" hideWhenEmpty />,
               }),
               ...(screen.name === 'practice' && {
-                headerRight: () => <PracticeDictionaryButton />,
+                headerRight: () => <DictionaryButton hideWhenEmpty />,
               }),
             }}
           />

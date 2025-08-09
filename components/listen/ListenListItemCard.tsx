@@ -19,7 +19,7 @@ import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 // Playlist thumbnail size for elegant music app aesthetic
 const PLAYLIST_IMAGE_SIZE = 48;
 
-interface ArticleCardProps {
+interface ListenListItemCardProps {
   title: string;
   author: string;
   difficultyLevel?: number;
@@ -37,7 +37,7 @@ interface ArticleCardProps {
   hasStartedReading?: boolean;
 }
 
-export const ArticleCard: FC<ArticleCardProps> = memo(
+export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
   ({
     title,
     author,
@@ -194,7 +194,7 @@ export const ArticleCard: FC<ArticleCardProps> = memo(
   }
 );
 
-ArticleCard.displayName = 'ArticleCard';
+ListenListItemCard.displayName = 'ListenListItemCard';
 
 const styles = StyleSheet.create({
   cardContainer: {

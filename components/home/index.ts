@@ -1,4 +1,4 @@
-export { ArticleCard } from './ArticleCard';
+// ArticleCard removed in favor of ListenListItemCard
 export { default as ArticleList } from './ArticleList';
 export { default as FeaturedSection } from './FeaturedSection';
 export { default as FilteredArticleView } from './FilteredArticleView';

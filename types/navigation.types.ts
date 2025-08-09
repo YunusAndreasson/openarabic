@@ -41,6 +41,7 @@ export type RouteParams = {
   '/(tabs)/read/article/[id]': ArticleParams;
   '/(tabs)/read/filterModal': FiltersParams;
   '/practice/review': ReviewParams;
+  '/NowPlaying': NowPlayingModalParams;
   '/': Record<string, never>;
   '/(tabs)': Record<string, never>;
   '/(tabs)/practice': Record<string, never>;

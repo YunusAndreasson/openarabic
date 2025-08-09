@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BottomControls from '@/components/BottomControls';
 import EmptyState from '@/components/EmptyState';
 import { ThemedView } from '@/components/ThemedView';
-import { ArticleCard } from '@/components/home/ArticleCard';
+import { ListenListItemCard } from '@/components/listen/ListenListItemCard';
 import { useToast } from '@/components/providers/ToastProvider';
 import { AUDIO_STATES, type AudioState } from '@/constants/audio';
 import { LAYOUT } from '@/constants/layout';
@@ -88,7 +88,7 @@ const ListenListItem = memo(
     }, [drag]);
 
     return (
-      <ArticleCard
+      <ListenListItemCard
         author={item.articles.author.name}
         title={item.articles.title}
         editMode={editMode}

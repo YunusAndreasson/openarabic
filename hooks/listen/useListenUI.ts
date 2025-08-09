@@ -2,12 +2,11 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { InteractionManager } from 'react-native';
 
-import { getArticleRoute } from '@/constants/routes';
+import { getArticleRoute, ROUTE_PATHS } from '@/constants/routes';
 import { useAppDispatch } from '@/store/hooks';
 import { setCustomOrder } from '@/store/listenSlice';
 import type { ReadingListItem } from '@/types/readingList.types';
 import { selectionFeedback } from '@/utils/haptics';
-import { openNowPlayingModal } from '@/utils/navigationHelpers';
 
 import { useAppPreloader } from '../app/useAppPreloader';
 
@@ -43,8 +42,8 @@ export const useListenUI = ({ sortedReadingList, editMode }: ListenUIParams) => 
   );
 
   const handleNowPlayingPress = useCallback(() => {
-    // Use the reusable hook to open the now playing modal
-    openNowPlayingModal();
+    // Open the now playing modal directly
+    router.push({ pathname: ROUTE_PATHS.NOW_PLAYING });
   }, []);
 
   const handleDragEnd = useCallback(

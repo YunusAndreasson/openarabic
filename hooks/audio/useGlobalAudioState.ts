@@ -1,7 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AUDIO_STATES } from '@/constants/audio';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
@@ -9,7 +11,6 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useListenScreen } from '@/hooks/listen/useListenScreen';
 import type { Article } from '@/types/articles.types';
 import type { ReadingListItem } from '@/types/readingList.types';
-import { openNowPlayingModal } from '@/utils/navigationHelpers';
 
 export interface GlobalAudioState {
   // Audio state
@@ -45,8 +46,7 @@ export interface GlobalAudioState {
   // Action handlers
   onPlayPause: () => void;
   onTimerPress: () => void;
-  onExpandPress: () => void;
-  onMiniPlayerPress: () => void;
+  onExpand: () => void;
 
   // Sleep timer handlers
   onSleepTimerSet: (minutes: number) => void;
@@ -186,8 +186,11 @@ export function useGlobalAudioState(): GlobalAudioState {
         hasNavigatedToModalRef.current = true;
         lastNavigationTimeRef.current = Date.now();
 
-        // Navigate to modal
-        openNowPlayingModal({ articleId: currentArticleId.toString() });
+        // Navigate to modal directly
+        router.push({
+          pathname: ROUTE_PATHS.NOW_PLAYING,
+          params: { articleId: currentArticleId.toString() },
+        });
       }
     }, 100);
   }, [currentArticleId]);
@@ -206,14 +209,11 @@ export function useGlobalAudioState(): GlobalAudioState {
     setShowSleepTimerModal(true);
   }, []);
 
-  const handleExpandPress = useCallback(() => {
+  const handleExpand = useCallback(() => {
     navigateToModal();
   }, [navigateToModal]);
 
-  const handleMiniPlayerPress = useCallback(() => {
-    // Tap entire mini-player to expand - same as expand button
-    navigateToModal();
-  }, [navigateToModal]);
+  // Single expand handler is sufficient for mini-player and expand button
 
   // Sleep timer handlers
   const handleSleepTimerSet = useCallback(
@@ -274,8 +274,7 @@ export function useGlobalAudioState(): GlobalAudioState {
     shouldHideMiniPlayer,
     onPlayPause: handlePlayPause,
     onTimerPress: handleTimerPress,
-    onExpandPress: handleExpandPress,
-    onMiniPlayerPress: handleMiniPlayerPress,
+    onExpand: handleExpand,
     onSleepTimerSet: handleSleepTimerSet,
     onSleepTimerCancel: handleSleepTimerCancel,
     onSleepTimerClose: handleSleepTimerClose,

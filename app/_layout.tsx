@@ -338,8 +338,7 @@ function AppContent() {
               duration={globalAudioState.duration}
               onPlayPause={globalAudioState.onPlayPause}
               onTimerPress={globalAudioState.onTimerPress}
-              onExpandPress={globalAudioState.onExpandPress}
-              onMiniPlayerPress={globalAudioState.onMiniPlayerPress}
+              onExpand={globalAudioState.onExpand}
             />
           )}
         {/* SleepTimer rendered last to ensure it overlays everything */}
