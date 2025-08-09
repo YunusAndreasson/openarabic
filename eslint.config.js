@@ -164,6 +164,34 @@ module.exports = [
       'react/no-namespace': 'warn',
       'react/jsx-no-duplicate-props': ['error', { ignoreCase: true }],
       'react/display-name': 'off',
+      // Migration guards: prevent regressions to legacy paths and generic tabs
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            'components/home/*',
+            'components/settings/*',
+            'components/vocabulary/*',
+            'components/vocabulary/shared/*',
+            '@/components/ArticleCard',
+            '@/components/FilterModal',
+            '@/components/BottomControls',
+            '@/components/AudioProgressIndicator',
+            '@/components/EmptyState',
+            '@/components/ErrorState',
+            '@/components/Pill',
+            '@/components/Toggle',
+            '@/components/TimePicker',
+          ],
+        },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "MemberExpression[object.name='ROUTE_PATHS'][property.name='TABS']",
+          message: 'Use READ_TAB/LISTEN_TAB/PRACTICE_TAB instead of ROUTE_PATHS.TABS',
+        },
+      ],
     },
   },
   {

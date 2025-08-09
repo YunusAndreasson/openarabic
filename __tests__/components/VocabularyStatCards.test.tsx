@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react-native';
 import React from 'react';
 
-import { VocabularyStatCards } from '../../components/vocabulary/VocabularyStatCards';
+import VocabularyStatCards from '../../components/practice/VocabularyStatCards';
 import type { StudyWord } from '../../types/vocabulary.types';
 
 // Mock expo-router
@@ -55,7 +55,7 @@ jest.mock('@/hooks/vocabulary/useMemoryCapacityGauge', () => ({
   }),
 }));
 
-jest.mock('@/components/vocabulary/charts/MemoryCapacityGauge', () => ({
+jest.mock('@/components/practice/charts/MemoryCapacityGauge', () => ({
   MemoryCapacityGauge: () => null,
 }));
 

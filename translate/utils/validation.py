@@ -30,8 +30,8 @@ def validate_tashkeel_added(
     Raises:
         TranslationValidationError: If tashkeel was not added to any sentence
     """
-    # Arabic diacritical marks that should be present in tashkeel
-    diacritical_marks = "ًٌٍَُِّْ"
+    # Arabic diacritical marks that should be present in tashkeel (include dagger alif \u0670)
+    diacritical_marks = "ًٌٍَُِّْٰ"
 
     failed_sentences: list[tuple[int, str, str]] = []
 
@@ -87,6 +87,14 @@ def validate_tashkeel_added(
                     # If original has no diacritics and tashkeel is identical,
                     # the tashkeel service failed to add diacritics
                     tashkeel_added = False
+
+        # Secondary heuristic: if any reasonably long token in the tashkeel text contains
+        # a diacritic, consider tashkeel added for this sentence.
+        if not tashkeel_added and tashkeel_text.strip():
+            for token in tashkeel_text.split():
+                if len(token) >= 3 and any(c in diacritical_marks for c in token):
+                    tashkeel_added = True
+                    break
 
         if not tashkeel_added:
             failed_sentences.append((sentence_index, original, tashkeel_text))

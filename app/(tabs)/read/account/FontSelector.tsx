@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 
 import { ThemedView } from '@/components/ThemedView';
-import ArabicFontSelector from '@/components/settings/ArabicFontSelector';
+import ArabicFontSelector from '@/components/account/ArabicFontSelector';
 import { LAYOUT } from '@/constants/layout';
 
 const FLEX_ONE_STYLE = { flex: 1 } as const;

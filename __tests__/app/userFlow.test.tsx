@@ -4,10 +4,10 @@ import React from 'react';
 
 import { TouchableOpacity } from 'react-native';
 import { ArabicWord } from '../../components/article/ArabicWord';
+import ErrorMessage from '../../components/practice/ErrorMessage';
+import { VocabularyStatCards } from '../../components/practice/VocabularyStatCards';
 import ArticleCard from '../../components/read/ArticleCard';
 import CompletionScreen from '../../components/review/CompletionScreen';
-import ErrorMessage from '../../components/vocabulary/ErrorMessage';
-import { VocabularyStatCards } from '../../components/vocabulary/VocabularyStatCards';
 import { useReview } from '../../hooks/review';
 
 jest.mock('expo-router', () => {
@@ -69,7 +69,7 @@ jest.mock('../../components/review/CompletionScreen', () => {
   };
 });
 
-jest.mock('../../components/vocabulary/VocabularyStatCards', () => {
+jest.mock('../../components/practice/VocabularyStatCards', () => {
   const React = require('react');
   const { TouchableOpacity } = require('react-native');
   return {

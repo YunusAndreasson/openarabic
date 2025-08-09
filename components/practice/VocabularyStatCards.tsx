@@ -3,25 +3,7 @@
  *
  * Displays practice session options using a scientifically-grounded 3-phase color system
  * that coordinates with the Memory Capacity Gauge to guide optimal learning behavior.
- *
- * 3-PHASE COLOR SYSTEM:
- * 🔴 RED PHASE (Due Words): Urgent memory preservation - highest priority for retention
- * 🟡 YELLOW PHASE (Challenging Words): Effortful retrieval for memory consolidation
- * 🟢 GREEN PHASE (All Words): Mixed practice when capacity allows
- *
- * SCIENTIFIC FOUNDATION:
- * - Based on FSRS algorithm's stability, difficulty, and retrievability metrics
- * - Follows spacing effect principles for optimal memory retention
- * - Implements desirable difficulty theory for enhanced learning
- * - Uses traffic light metaphor for intuitive UX (Jakob's Law)
- *
- * DESIGN PRINCIPLES:
- * - Faint opacity for disabled states preserves visual language
- * - Color coordination with Memory Capacity Gauge state
- * - Follows Hick's Law with 3 clear, distinct choices
- * - Implements Fitts' Law with large touch targets
  */
-
 import { useRouter } from 'expo-router';
 import { memo, useCallback, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
@@ -73,14 +55,10 @@ export const VocabularyStatCards = memo(
       type: 'card',
     });
 
-    // Handle navigation to insights modal
     const handleInfoPress = () => {
       router.push(ROUTE_PATHS.INSIGHTS);
     };
 
-    // Memory capacity coordination is handled by MemoryCapacityGauge component
-
-    // Validate input data
     const validatedInput = useMemo(
       () => ({
         masteredWords: Math.max(0, masteredWords),
@@ -91,45 +69,35 @@ export const VocabularyStatCards = memo(
       [masteredWords, learningWords, dueWords, studyWords]
     );
 
-    // Calculate word categories using utility functions
     const wordCategories = useMemo(() => {
       return calculateWordCategories(validatedInput.studyWords, validatedInput.dueWords);
     }, [validatedInput.studyWords, validatedInput.dueWords]);
 
-    // Create scientifically-grounded practice session cards coordinated with Memory Capacity Gauge
     const totalWords = validatedInput.studyWords.length;
     const categories: WordCategoryConfig[] = useMemo(() => {
-      const cards = [];
+      const cards = [] as WordCategoryConfig[];
       const hasDueWords = wordCategories.dueWords > 0;
 
-      // Coordinate with Memory Capacity Gauge state (75% = green phase)
-      // The gauge determines the overall capacity state, buttons follow that guidance
-
-      // RED PHASE: Due words (urgent memory preservation)
-      // Always show due words card - highest priority for memory retention
       cards.push({
         value: wordCategories.dueWords,
         label: STRINGS.URGENT_PRESERVATION,
-        iconColor: colors.error, // Use semantic error color for consistency with tab badges
+        iconColor: colors.error,
         bgColor: colors.card,
         category: 'due' as StatCategory,
         description: STRINGS.URGENT_MEMORY_PRESERVATION,
         capacityPhase: 'red' as const,
-        // Due words disabled only when there are none to practice
         disabled: wordCategories.dueWords === 0,
         disabledMessage: wordCategories.dueWords === 0 ? 'No words due for review' : undefined,
       });
 
-      // YELLOW PHASE: Struggling words (effortful retrieval for memory consolidation)
       cards.push({
         value: wordCategories.strugglingWords,
         label: STRINGS.EFFORTFUL_RETRIEVAL,
-        iconColor: colors.warning, // Use semantic warning color for consistency with tab badges
+        iconColor: colors.warning,
         bgColor: colors.card,
         category: 'struggling' as StatCategory,
         description: STRINGS.EFFORTFUL_RETRIEVAL_PRACTICE,
         capacityPhase: 'yellow' as const,
-        // Struggling words disabled when due words take priority OR when none exist
         disabled: hasDueWords || wordCategories.strugglingWords === 0,
         disabledMessage: hasDueWords
           ? STRINGS.COMPLETE_DUE_FIRST
@@ -138,16 +106,14 @@ export const VocabularyStatCards = memo(
           : undefined,
       });
 
-      // GREEN PHASE: Mixed practice (interleaved review for robust learning)
       cards.push({
         value: totalWords,
         label: STRINGS.INTERLEAVED_REVIEW,
-        iconColor: colors.success, // Use semantic success color for consistency with tab badges
+        iconColor: colors.success,
         bgColor: colors.card,
         category: 'total' as StatCategory,
         description: STRINGS.INTERLEAVED_REVIEW_DESCRIPTION,
         capacityPhase: 'green' as const,
-        // All words disabled when due words OR struggling words take priority, OR no words exist
         disabled: hasDueWords || wordCategories.strugglingWords > 0 || totalWords === 0,
         disabledMessage: hasDueWords
           ? STRINGS.COMPLETE_DUE_FIRST
@@ -161,29 +127,21 @@ export const VocabularyStatCards = memo(
       return cards;
     }, [wordCategories, colors, totalWords]);
 
-    // Get color-coordinated background for button state
     const getButtonBackground = (config: WordCategoryConfig) => {
-      // Always use the standard elevation background for the card
-      // Color coordination is only applied to the badge/circle
       return config.bgColor;
     };
 
-    // Get badge color with proper disabled state and color coordination
     const getBadgeColor = (config: WordCategoryConfig) => {
       if (config.disabled) {
-        // Use consistent opacity system for disabled state
-        return `${config.iconColor}4D`; // 30% opacity in hex (4D = 77/255 ≈ 30%)
+        return `${config.iconColor}4D`;
       }
       return config.iconColor;
     };
 
-    // Get badge content - show count to help user understand current state
     const getBadgeContent = (config: WordCategoryConfig) => {
-      // Always show the actual count - helps user understand their progress
       return config.value.toString();
     };
 
-    // Memoize the category press handler to prevent inline function creation
     const createCategoryPressHandler = useCallback(
       (category: StatCategory) => {
         return () => {
@@ -196,7 +154,6 @@ export const VocabularyStatCards = memo(
 
     return (
       <View style={styles.container}>
-        {/* Memory Capacity Gauge - scientifically grounded with color coordination */}
         <MemoryCapacityGauge studyWords={validatedInput.studyWords} onInfoPress={handleInfoPress} />
 
         {categories.map(config => (
@@ -214,17 +171,15 @@ export const VocabularyStatCards = memo(
                 styles.categoryCard,
                 { backgroundColor: getButtonBackground(config) },
                 !config.disabled && (animatedStyle as ViewStyle),
-                config.disabled && { opacity: 0.7 }, // Slightly reduced opacity for disabled state
+                config.disabled && { opacity: 0.7 },
               ]}
             >
-              {/* Color-coordinated number badge */}
               <View style={[styles.numberBadge, { backgroundColor: getBadgeColor(config) }]}>
                 <ThemedText style={[styles.numberText, { color: colors.background }]}>
                   {getBadgeContent(config)}
                 </ThemedText>
               </View>
 
-              {/* Content with proper disabled styling */}
               <View style={styles.categoryContent}>
                 <ThemedText style={styles.categoryLabel}>{config.label}</ThemedText>
                 <ThemedText
@@ -255,12 +210,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM, // Match BaseCard border radius
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   numberBadge: {
     width: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
     height: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
-    borderRadius: (MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL) / 2, // Perfect circle
+    borderRadius: (MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL) / 2,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
@@ -281,7 +236,7 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
   },
-  disabledCard: {
-    // Empty style object for disabled state
-  },
+  disabledCard: {},
 });
+
+export default VocabularyStatCards;

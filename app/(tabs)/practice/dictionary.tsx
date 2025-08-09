@@ -9,10 +9,10 @@ import { StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import EmptyState from '@common/EmptyState';
+import { DictionarySortingHeader, DictionaryWordCard } from '@practice';
 
 import { ThemedView } from '@/components/ThemedView';
 import EditModeButton from '@/components/ui/EditModeButton';
-import { DictionarySortingHeader, DictionaryWordCard } from '@/components/vocabulary';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';

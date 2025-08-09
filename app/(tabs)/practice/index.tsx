@@ -7,9 +7,10 @@ import { useCallback, useMemo, useRef } from 'react';
 import { ActivityIndicator, InteractionManager, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import ErrorMessage from '@practice/ErrorMessage';
+import VocabularyStatCards from '@practice/VocabularyStatCards';
+
 import { ThemedView } from '@/components/ThemedView';
-import ErrorMessage from '@/components/vocabulary/ErrorMessage';
-import { VocabularyStatCards } from '@/components/vocabulary/VocabularyStatCards';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { getPracticeReviewRoute } from '@/constants/routes';

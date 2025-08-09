@@ -63,7 +63,9 @@ class CamelToolsService:
             return word
 
         except Exception as e:
-            logger.warning(f"Error generating tashkeel for '{word}': {e}")
+            # Suppress noisy warnings from reinflector (e.g. invalid feature values)
+            # and fall back to returning the original word without diacritics.
+            logger.debug(f"Tashkeel generation skipped for '{word}': {e}")
             return word
 
     def generate_tashkeel_suggestions_batch(self, words: list[str]) -> dict[str, str]:

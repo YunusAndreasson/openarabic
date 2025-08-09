@@ -5,10 +5,10 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import SectionTitle from '@common/SectionTitle';
+import { EfficiencyChart, MasteryChart, RetrievabilityChart } from '@practice/charts';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { EfficiencyChart, MasteryChart, RetrievabilityChart } from '@/components/vocabulary/charts';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';

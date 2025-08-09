@@ -4,7 +4,7 @@ import type { JSX } from 'react';
 
 import ErrorState from '@common/ErrorState';
 
-import FilterModal from '@/components/FilterModal';
+import FilterModal from '@/components/read/FilterModal';
 import { STRINGS } from '@/constants/strings';
 import { authorsService } from '@/services/authors';
 

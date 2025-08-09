@@ -296,85 +296,14 @@ Examples:
 
     # Only run insert phase if specifically requested
     if args.insert:
-        # Find all translation files in the translate directory
-        translation_files = []
-        if os.path.exists(TRANSLATE_DIR):
-            for file_name in os.listdir(TRANSLATE_DIR):
-                if file_name.endswith("_translated.json"):
-                    translation_file = os.path.join(TRANSLATE_DIR, file_name)
-                    # Extract author number from filename
-                    author_number = file_name.split("_")[0]
-                    author_name = AUTHOR_NUMBER_MAPPING.get(author_number, "Unknown")
-                    translation_files.append(
-                        (translation_file, author_number, author_name)
-                    )
-
-        if not translation_files:
-            logger.error(f"No translation files found in: {TRANSLATE_DIR}")
-            raise FileNotFoundError(f"No translation files found in: {TRANSLATE_DIR}")
-
-        # Phase start is now handled by progress bars
-
-        # Calculate total sentences for progress tracking
-        total_sentences = 0
-        for translation_file, _, _ in translation_files:
-            try:
-                import json
-
-                with open(translation_file, encoding="utf-8") as f:
-                    data = json.load(f)
-                    if "translations" not in data or not isinstance(
-                        data["translations"], list
-                    ):
-                        raise ValueError(
-                            f"Invalid translation file structure: missing 'translations' array in {translation_file}"
-                        )
-                    total_sentences += len(data["translations"])
-            except Exception as e:
-                logger.debug(
-                    f"Could not read sentence count from {translation_file}: {e}"
-                )
-
-        # Start progress tracking for insert phase
-        progress_tracker.start_phase(
-            "Insert",
-            total_sentences,
-            "Processing sentences through ElevenLabs and database",
+        # Delegate insertion of all files to the insert script in a single run.
+        # Note: The insert script discovers and processes all files in TRANSLATE_DIR
+        # and archives them. Calling it once avoids double-processing and missing-file races.
+        run_pipeline_step(
+            script_path="pipeline/insert.py",
+            description="database insertion",
+            cwd=os.path.dirname(os.path.abspath(__file__)),
         )
-
-        # Process each translation file
-        for _i, (translation_file, _author_number, author_name) in enumerate(
-            translation_files
-        ):
-            # Get sentence count for progress tracking
-            try:
-                import json
-
-                with open(translation_file, encoding="utf-8") as f:
-                    data = json.load(f)
-                    if "translations" not in data or not isinstance(
-                        data["translations"], list
-                    ):
-                        raise ValueError(
-                            f"Invalid translation file structure: missing 'translations' array in {translation_file}"
-                        )
-                    sentence_count = len(data["translations"])
-            except Exception as e:
-                raise RuntimeError(
-                    f"Failed to read sentence count from {translation_file}: {e}"
-                ) from e
-
-            # Run the insertion step for this specific file
-            run_pipeline_step(
-                script_path="pipeline/insert.py",
-                description=f"database insertion for {author_name}",
-                cwd=os.path.dirname(os.path.abspath(__file__)),
-            )
-
-            # Update progress for all sentences in this file
-            progress_tracker.update(sentence_count)
-
-        progress_tracker.finish_phase()
 
     # Report token usage statistics
     if token_tracker.api_calls > 0:

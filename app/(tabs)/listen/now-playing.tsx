@@ -1,5 +1,4 @@
 // Placeholder to keep route valid after removing app/NowPlaying.tsx
-import AudioProgressIndicator from '@listen/AudioProgressIndicator';
 import { useQueryClient } from '@tanstack/react-query';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams } from 'expo-router';
@@ -7,6 +6,8 @@ import { useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import AudioProgressIndicator from '@listen/AudioProgressIndicator';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
