@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useMemo, useRef } from 'react';
-import { ActivityIndicator, InteractionManager, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, InteractionManager, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
@@ -157,8 +157,10 @@ export default function VocabularyScreen(): JSX.Element {
       safeAreaEdges={['left', 'right']}
       style={styles.container}
     >
-      <ScrollView
-        showsVerticalScrollIndicator={false}
+      <ThemedView
+        scrollable={true}
+        useSafeArea={false}
+        includeBottomInset={false}
         contentContainerStyle={[
           styles.contentContainer,
           {
@@ -166,6 +168,10 @@ export default function VocabularyScreen(): JSX.Element {
             paddingBottom: insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY,
           },
         ]}
+        scrollViewProps={{
+          showsVerticalScrollIndicator: false,
+          contentInsetAdjustmentBehavior: 'never',
+        }}
       >
         {/* Subtle loading indicator */}
         {showLoadingIndicator && (
@@ -188,7 +194,7 @@ export default function VocabularyScreen(): JSX.Element {
             />
           </View>
         )}
-      </ScrollView>
+      </ThemedView>
     </ThemedView>
   );
 }

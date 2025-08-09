@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 import { useMemo } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -47,16 +47,21 @@ export default function InsightsScreen(): JSX.Element {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView
+      <ThemedView
+        scrollable={true}
+        useSafeArea={false}
+        includeBottomInset={false}
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingBottom: insets.bottom + LAYOUT.SPACING.XXLARGE,
+            paddingBottom: insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY,
           },
         ]}
-        showsVerticalScrollIndicator={false}
-        overScrollMode="never"
-        bounces={true}
+        scrollViewProps={{
+          showsVerticalScrollIndicator: false,
+          overScrollMode: 'never',
+          bounces: true,
+        }}
       >
         {/* Introductory context */}
         <View style={styles.introSection}>
@@ -92,7 +97,7 @@ export default function InsightsScreen(): JSX.Element {
           />
           <RetrievabilityChart studyWords={validStudyWords} hideTitle={true} />
         </View>
-      </ScrollView>
+      </ThemedView>
     </ThemedView>
   );
 }

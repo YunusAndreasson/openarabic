@@ -266,7 +266,7 @@ const FloatingActionButtons = memo<{
           style={buttonStyle}
           onPress={onClose}
           android_ripple={{
-            color: colors.tint,
+            color: colors.navigationRipple,
             radius: MIN_TOUCH_TARGET.MEDIUM / 2,
           }}
           accessibilityRole="button"
@@ -287,7 +287,7 @@ const FloatingActionButtons = memo<{
           style={isInReadingList ? activeButtonStyle : buttonStyle}
           onPress={onToggleReadingList}
           android_ripple={{
-            color: colors.tint,
+            color: colors.navigationRipple,
             radius: MIN_TOUCH_TARGET.MEDIUM / 2,
           }}
           accessibilityRole="button"
@@ -307,7 +307,7 @@ const FloatingActionButtons = memo<{
           style={isPlaying ? activeButtonStyle : buttonStyle}
           onPress={onPlayPress}
           android_ripple={{
-            color: colors.tint,
+            color: colors.navigationRipple,
             radius: MIN_TOUCH_TARGET.MEDIUM / 2,
           }}
           accessibilityRole="button"

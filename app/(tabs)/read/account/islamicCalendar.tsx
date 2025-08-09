@@ -35,7 +35,7 @@ export default function IslamicCalendarScreen(): JSX.Element {
         style={styles.container}
       >
         <ScrollView
-          showsVerticalScrollIndicator={true}
+          showsVerticalScrollIndicator={false}
           style={styles.scrollView}
           contentContainerStyle={[
             styles.scrollContent,

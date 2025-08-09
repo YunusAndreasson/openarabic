@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { FC } from 'react';
-import { StyleSheet, TouchableOpacity, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
 import { QUICK_ANIMATION_DURATION } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
@@ -20,18 +20,18 @@ const DragHandle: FC<DragHandleProps> = ({
   const colors = useColors();
 
   return (
-    <TouchableOpacity
+    <Pressable
       style={[styles.container, style]}
       onLongPress={onLongPress}
       delayLongPress={delayLongPress}
-      activeOpacity={LAYOUT.OPACITY.PRESSED}
+      android_ripple={{ color: colors.navigationRipple, radius: MIN_TOUCH_TARGET.MEDIUM / 2 }}
     >
       <Ionicons
-        name="reorder-three-outline"
+        name="reorder-three"
         size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
         color={colors.secondaryText}
       />
-    </TouchableOpacity>
+    </Pressable>
   );
 };
 
