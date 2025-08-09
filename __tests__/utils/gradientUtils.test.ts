@@ -84,8 +84,8 @@ describe('gradientUtils', () => {
 
       expect(result).toHaveLength(7);
       expect(result[0]).toBe('transparent');
-      expect(result[1]).toBe('rgba(0, 0, 0, 0.1)');
-      expect(result[6]).toBe('rgba(0, 0, 0, 0.95)');
+      expect(result[1]).toBe('rgba(0,0,0,0.1)');
+      expect(result[6]).toBe('rgba(0,0,0,0.95)');
     });
   });
 

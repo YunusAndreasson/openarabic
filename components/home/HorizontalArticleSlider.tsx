@@ -1,5 +1,5 @@
 import { FlashList } from '@shopify/flash-list';
-import { memo, useCallback, useMemo, useRef, type FC } from 'react';
+import { memo, useCallback, useRef, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import ArticleCard from '@/components/ArticleCard';
@@ -53,46 +53,11 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
   );
 
   // Memoize the article cards to prevent unnecessary re-renders
-  const articleCards = useMemo(() => {
-    return displayArticles.map((article, index) => (
-      <View
-        key={article.id}
-        style={[
-          styles.cardContainer,
-          {
-            height: getContentAwareHeight(String(article.summary)), // Dynamic height based on content
-            marginLeft: index === 0 ? 0 : CARD_SPACING, // No extra padding on first card - parent provides padding
-          },
-        ]}
-      >
-        <ArticleCard
-          author={article.author.name}
-          category={article.category.name}
-          categoryForDisplay={article.category.name}
-          imageUrl={String(article.image_url)}
-          style={[
-            styles.card,
-            { backgroundColor: colors.card },
-            { shadowColor: colors.shadow, ...LAYOUT.ELEVATION.SUBTLE },
-          ]}
-          summary={String(article.summary)}
-          title={article.title}
-          onPress={() => handleArticlePress(article)}
-        />
-      </View>
-    ));
-  }, [displayArticles, colors.card, colors.shadow, handleArticlePress]);
+  // Note: precomputed JSX list removed to avoid unused variable
 
   const keyExtractor = useCallback((item: Article) => `featured-${item.id}`, []);
 
-  const getItemLayout = useCallback(
-    (_: Article[] | null | undefined, index: number) => ({
-      length: CARD_WIDTH + CARD_SPACING,
-      offset: (CARD_WIDTH + CARD_SPACING) * index,
-      index,
-    }),
-    []
-  );
+  // getItemLayout is not supported by FlashList types; rely on estimatedItemSize and snap props
 
   const renderItem = useCallback(
     ({ item, index }: { item: Article; index: number }) => (
@@ -137,9 +102,7 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContainer}
         estimatedItemSize={CARD_WIDTH}
-        getItemLayout={getItemLayout as any}
-        initialNumToRender={2}
-        windowSize={3}
+        // Rely on FlashList defaults for render/window sizes
         decelerationRate="fast"
         snapToAlignment="start"
         snapToInterval={CARD_WIDTH + CARD_SPACING}

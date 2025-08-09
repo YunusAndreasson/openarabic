@@ -65,7 +65,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
       if (Array.isArray(_articles) && _articles.length > 0) {
         InteractionManager.runAfterInteractions(() => {
           try {
-            const featured: Article[] = _articles.slice(0, 5);
+            const featured: Article[] = (_articles as Article[]).slice(0, 5);
             const imagePrefetches = featured
               .map(a => String(a.image_url))
               .filter(Boolean)

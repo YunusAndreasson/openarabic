@@ -50,19 +50,20 @@ const EditModeButton: FC<EditModeButtonProps> = ({
   const derivedCount = type === 'listen' ? sortedReadingList.length : undefined;
   const effectiveCount = itemCount ?? derivedCount ?? undefined;
 
-  if (hideWhenEmpty && (effectiveCount ?? 0) <= 0) {
-    return null;
-  }
-
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     includeOpacity: true,
   });
 
-  const handlePress = useCallback(() => {
+  const handlePress = useCallback((): void => {
     selectionFeedback();
     toggle();
     onEditModeChange?.(!editMode);
   }, [toggle, editMode, onEditModeChange]);
+
+  // Guard early return only after all hooks and callbacks above have been created
+  if (hideWhenEmpty && (effectiveCount ?? 0) <= 0) {
+    return null;
+  }
 
   const buttonText = editMode
     ? STRINGS.DONE

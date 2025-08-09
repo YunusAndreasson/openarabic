@@ -1,10 +1,38 @@
 import { act, render } from '@testing-library/react-native';
 import React from 'react';
 
+// Mock expo-router to avoid pulling in native stack view
+jest.mock('expo-router', () => ({
+  router: {
+    replace: jest.fn(),
+    back: jest.fn(),
+  },
+}));
+
 import { useReview } from '../../../hooks/review';
 
 // Use modern fake timers to ensure timers are controlled
 jest.useFakeTimers();
+// Mock FSRS hook to avoid data dependencies; only expose the methods used in this test
+jest.mock('../../../hooks/vocabulary/useFSRS', () => ({
+  useFSRS: () => ({
+    currentWord: null,
+    isComplete: false,
+    progress: 0,
+    updateWord: jest.fn(),
+    invalidateQueries: jest.fn(),
+  }),
+}));
+
+// Minimal react-query mock for this isolated hook test
+jest.mock('@tanstack/react-query', () => ({
+  useQuery: jest.fn().mockReturnValue({ data: [], isLoading: false }),
+  useQueryClient: jest.fn().mockReturnValue({
+    invalidateQueries: jest.fn(),
+    setQueryData: jest.fn(),
+    getQueryData: jest.fn(),
+  }),
+}));
 
 // Mock audio player to avoid real native calls
 jest.mock('../../../hooks/audio/useSimpleAudioPlayer', () => ({
@@ -13,6 +41,11 @@ jest.mock('../../../hooks/audio/useSimpleAudioPlayer', () => ({
     stop: jest.fn().mockResolvedValue(undefined),
     pause: jest.fn().mockResolvedValue(undefined),
   }),
+}));
+
+// Mock auth to avoid requiring AuthProvider
+jest.mock('../../../hooks/auth/useAuth', () => ({
+  useAuth: () => ({ user: { id: 'user-1' }, isLoading: false }),
 }));
 
 // Minimal component that mounts/unmounts review to exercise cleanup

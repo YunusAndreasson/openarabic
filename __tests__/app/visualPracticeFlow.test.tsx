@@ -32,7 +32,6 @@ jest.mock('../../components/review/CompletionScreen', () => {
 
 jest.mock('../../components/review/ReviewHeader', () => () => null);
 jest.mock('../../components/review/MeaningOverlay', () => () => null);
-jest.mock('../../components/review/InstructionFooter', () => () => null);
 jest.mock('../../components/ThemedView', () => {
   const React = require('react');
   const { View } = require('react-native');

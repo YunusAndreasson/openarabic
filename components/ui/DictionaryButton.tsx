@@ -33,9 +33,14 @@ export default function DictionaryButton({
   const colors = useColors();
   const { user } = useAuth();
   const { allWords } = useFSRSQueries({ userId: user?.id });
+  // Hooks must be called unconditionally; derive visibility after hooks
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     includeOpacity: true,
   });
+
+  const handlePress = useCallback(() => {
+    router.push('/(tabs)/practice/dictionary');
+  }, []);
 
   const computedCount =
     itemCount ??
@@ -45,10 +50,6 @@ export default function DictionaryButton({
   if ((hideWhenEmpty || itemCount !== undefined) && computedCount <= 0) {
     return null;
   }
-
-  const handlePress = useCallback(() => {
-    router.push('/(tabs)/practice/dictionary');
-  }, []);
 
   return (
     <AnimatedPressable

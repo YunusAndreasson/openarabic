@@ -10,10 +10,10 @@ import * as Sentry from '@sentry/react-native';
 import { QueryClient, onlineManager } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { useFonts } from 'expo-font';
-import { Stack, useNavigationContainerRef, useRouter } from 'expo-router';
+import { Stack, useNavigationContainerRef, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, Platform, StyleSheet, UIManager, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
@@ -48,7 +48,16 @@ import type { RootState } from '@/store/store';
 import { persistor, store } from '@/store/store';
 import { setTheme } from '@/store/themeSlice';
 import { handleError } from '@/utils/errorHandling';
+import { onProfilerRender } from '@/utils/perf/enableRerenderLogging';
+import { registerNavigationContainer as registerPerfNavigationContainer } from '@/utils/perf/routeTracker';
 import { PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
+// Enable dev-only rerender logging early in app startup without creating a route
+let __didInitPerf = false;
+if (__DEV__ && !__didInitPerf) {
+  __didInitPerf = true;
+  // Dynamically import to avoid bundling into production
+  import('./_bootstrap.dev').catch(() => {});
+}
 
 const analytics = {
   identify: async (_userId: string, _properties?: Record<string, unknown>) => {},
@@ -120,6 +129,11 @@ function AppContent() {
   const navigationRef = useNavigationContainerRef();
   const [hasAttemptedRedirect, setHasAttemptedRedirect] = useState(false);
   const router = useRouter();
+  const segments = useSegments();
+  const routeLabel = useMemo(
+    () => (Array.isArray(segments) && segments.length ? `/${segments.join('/')}` : '__root'),
+    [segments]
+  );
 
   // Configure splash screen fade animation
   useEffect(() => {
@@ -155,6 +169,8 @@ function AppContent() {
   useEffect(() => {
     if (navigationRef?.current) {
       navigationIntegration.registerNavigationContainer(navigationRef);
+      // Also register for performance route tracking used by rerender logger
+      registerPerfNavigationContainer(navigationRef);
     }
   }, [navigationRef]);
 
@@ -286,73 +302,75 @@ function AppContent() {
 
   return (
     <NavigationThemeProvider value={navigationTheme}>
-      <View style={styles.container}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen
-            name="(tabs)"
-            options={{
-              headerShown: false,
-              animation: 'fade',
-            }}
-          />
-          <Stack.Screen
-            name="auth"
-            options={{
-              headerShown: false,
-              animation: 'fade',
-            }}
-          />
-          <Stack.Screen
-            name="practice"
-            options={createNavigationOptions(colors, {
-              headerShown: false,
-              presentation: 'fullScreenModal',
-              gestureEnabled: true,
-            })}
-          />
-          <Stack.Screen
-            name="insights"
-            options={createNavigationOptions(colors, {
-              headerShown: false,
-            })}
-          />
-          <Stack.Screen
-            name="NowPlaying"
-            options={createNavigationOptions(colors, {
-              headerShown: false, // Full-screen modal without header
-              gestureEnabled: true,
-            })}
-          />
-        </Stack>
-
-        {/* Mini-player always above tab bar, but below modals */}
-        {globalAudioState.currentArticle &&
-          (globalAudioState.isPlaying || globalAudioState.audioState === 'loading') &&
-          !globalAudioState.showSleepTimerModal &&
-          !globalAudioState.shouldHideMiniPlayer && (
-            <MiniPlayer
-              article={globalAudioState.currentArticle}
-              isPlaying={globalAudioState.isPlaying}
-              isTimerActive={globalAudioState.isTimerActive}
-              position={globalAudioState.position}
-              duration={globalAudioState.duration}
-              onPlayPause={globalAudioState.onPlayPause}
-              onTimerPress={globalAudioState.onTimerPress}
-              onExpand={globalAudioState.onExpand}
+      <React.Profiler id={`Screen:${routeLabel}`} onRender={onProfilerRender}>
+        <View style={styles.container}>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen
+              name="(tabs)"
+              options={{
+                headerShown: false,
+                animation: 'fade',
+              }}
             />
-          )}
-        {/* SleepTimer rendered last to ensure it overlays everything */}
-        <SleepTimer
-          isVisible={globalAudioState.showSleepTimerModal}
-          isActive={globalAudioState.isTimerActive}
-          remainingTime={globalAudioState.sleepTimerRemainingTime}
-          onClose={globalAudioState.onSleepTimerClose}
-          onTimerSet={globalAudioState.onSleepTimerSet}
-          onTimerCancel={globalAudioState.onSleepTimerCancel}
-        />
+            <Stack.Screen
+              name="auth"
+              options={{
+                headerShown: false,
+                animation: 'fade',
+              }}
+            />
+            <Stack.Screen
+              name="practice"
+              options={createNavigationOptions(colors, {
+                headerShown: false,
+                presentation: 'fullScreenModal',
+                gestureEnabled: true,
+              })}
+            />
+            <Stack.Screen
+              name="insights"
+              options={createNavigationOptions(colors, {
+                headerShown: false,
+              })}
+            />
+            <Stack.Screen
+              name="NowPlaying"
+              options={createNavigationOptions(colors, {
+                headerShown: false, // Full-screen modal without header
+                gestureEnabled: true,
+              })}
+            />
+          </Stack>
 
-        <StatusBar style={isDark ? 'light' : 'dark'} />
-      </View>
+          {/* Mini-player always above tab bar, but below modals */}
+          {globalAudioState.currentArticle &&
+            (globalAudioState.isPlaying || globalAudioState.audioState === 'loading') &&
+            !globalAudioState.showSleepTimerModal &&
+            !globalAudioState.shouldHideMiniPlayer && (
+              <MiniPlayer
+                article={globalAudioState.currentArticle}
+                isPlaying={globalAudioState.isPlaying}
+                isTimerActive={globalAudioState.isTimerActive}
+                position={globalAudioState.position}
+                duration={globalAudioState.duration}
+                onPlayPause={globalAudioState.onPlayPause}
+                onTimerPress={globalAudioState.onTimerPress}
+                onExpand={globalAudioState.onExpand}
+              />
+            )}
+          {/* SleepTimer rendered last to ensure it overlays everything */}
+          <SleepTimer
+            isVisible={globalAudioState.showSleepTimerModal}
+            isActive={globalAudioState.isTimerActive}
+            remainingTime={globalAudioState.sleepTimerRemainingTime}
+            onClose={globalAudioState.onSleepTimerClose}
+            onTimerSet={globalAudioState.onSleepTimerSet}
+            onTimerCancel={globalAudioState.onSleepTimerCancel}
+          />
+
+          <StatusBar style={isDark ? 'light' : 'dark'} />
+        </View>
+      </React.Profiler>
     </NavigationThemeProvider>
   );
 }
@@ -411,7 +429,13 @@ export default Sentry.wrap(function RootLayout() {
                 <BottomSheetModalProvider>
                   <ToastProvider>
                     <Sentry.ErrorBoundary fallback={({ error }) => <ErrorFallback error={error} />}>
-                      <AppContent />
+                      {__DEV__ ? (
+                        <React.Profiler id="App" onRender={onProfilerRender}>
+                          <AppContent />
+                        </React.Profiler>
+                      ) : (
+                        <AppContent />
+                      )}
                     </Sentry.ErrorBoundary>
                   </ToastProvider>
                 </BottomSheetModalProvider>

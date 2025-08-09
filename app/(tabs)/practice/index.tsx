@@ -142,7 +142,7 @@ export default function VocabularyScreen(): JSX.Element {
   const showLoadingIndicator = (isDataLoading || isFetching) && !isDataCached;
 
   // Do not show an empty state; keep the screen clean when no words
-  const shouldShowEmpty = false;
+  // (kept for clarity previously, but not used)
 
   // Check if we should show the main content (vocabulary stat cards)
   // Only show when we're not loading AND we have words OR when we're still loading with cached data

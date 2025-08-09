@@ -118,6 +118,8 @@ jest.mock('react-native-reanimated', () => {
   const React = require('react');
 
   return {
+    // Cancellation
+    cancelAnimation: jest.fn(() => undefined),
     // Core animation values
     useSharedValue: (initialValue = 0) => ({
       value: initialValue,
@@ -228,6 +230,16 @@ jest.mock('react-native-reanimated', () => {
 // Enhanced React Native mock with comprehensive API coverage
 jest.mock('react-native', () => {
   return {
+    // Interaction manager
+    InteractionManager: {
+      runAfterInteractions: jest.fn(cb => {
+        try {
+          if (typeof cb === 'function') cb();
+        } catch {
+          // ignore
+        }
+      }),
+    },
     // App state management
     AppState: {
       addEventListener: jest.fn((_event, _callback) => ({

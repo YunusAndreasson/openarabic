@@ -8,6 +8,7 @@ import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useScreenFocusRefresh } from '@/hooks/utils/useScreenFocusRefresh';
+import { articlesService } from '@/services/articles';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { readingListService } from '@/services/readingList';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';

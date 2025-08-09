@@ -395,9 +395,7 @@ export const ArticleContent = memo<ArticleContentProps>(
 
     // Get articles from cache for recommendations (avoid re-querying here)
     const queryClient = useQueryClient();
-    const articlesData =
-      (queryClient.getQueryData<Article[]>({ queryKey: ['articles'] }) as Article[] | undefined) ||
-      [];
+    const articlesData = queryClient.getQueryData<Article[]>(['articles']) || [];
 
     // Memoized footer component with stable references
     const footerComponent = useMemo(
@@ -448,7 +446,6 @@ export const ArticleContent = memo<ArticleContentProps>(
           alwaysBounceVertical: false,
           bounces: true,
           overScrollMode: 'auto',
-          persistentScrollbar: false,
           extraData: '',
           initialScrollIndex: 0,
         }),

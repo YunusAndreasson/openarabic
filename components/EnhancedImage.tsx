@@ -9,7 +9,8 @@ import type { EnhancedImageProps } from '@/types/ui/image.types';
 // Extract constants outside component for better performance
 const DEFAULT_CONTENT_FIT = 'cover';
 const DEFAULT_CONTENT_POSITION = 'center';
-const DEFAULT_CACHE_POLICY = 'immutable';
+// Use supported cache policy values per expo-image types
+const DEFAULT_CACHE_POLICY: EnhancedImageProps['cachePolicy'] = 'memory-disk';
 const DEFAULT_PRIORITY = 'normal';
 const IMAGE_SIZE = '100%' as const;
 

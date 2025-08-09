@@ -1,11 +1,24 @@
 import { PERSISTENCE_OPTIONS, queryPersister } from '@/utils/queryPersistence';
 
-// Mock AsyncStorage
-jest.mock('@react-native-async-storage/async-storage', () => ({
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
+// Capture options passed into the persister factory
+const captured: { lastOptions?: any } = {};
+
+// Mock the persister factory to capture configuration
+jest.mock('@tanstack/query-async-storage-persister', () => ({
+  __esModule: true,
+  createAsyncStoragePersister: (opts: any) => {
+    captured.lastOptions = opts;
+    return {
+      persistClient: jest.fn(),
+      restoreClient: jest.fn(),
+      removeClient: jest.fn(),
+    };
+  },
+}));
+
+// Ensure we control the storage reference returned by our helper
+jest.mock('@/utils/safeAsyncStorage', () => ({
+  getSafeStorage: () => 'MOCK_STORAGE',
 }));
 
 describe('Query Persistence', () => {
@@ -14,11 +27,19 @@ describe('Query Persistence', () => {
   });
 
   describe('queryPersister', () => {
-    it('should be configured with correct options', () => {
-      expect(queryPersister).toBeDefined();
-      expect(queryPersister.storage).toBeDefined();
-      expect(queryPersister.key).toBe('REACT_QUERY_OFFLINE_CACHE');
-      expect(queryPersister.throttleTime).toBe(1000);
+    it('should expose public API and be configured with correct options', () => {
+      // Public API shape
+      expect(typeof (queryPersister as any).persistClient).toBe('function');
+      expect(typeof (queryPersister as any).restoreClient).toBe('function');
+      expect(typeof (queryPersister as any).removeClient).toBe('function');
+
+      // Captured config from factory
+      expect(captured.lastOptions).toBeDefined();
+      expect(captured.lastOptions.key).toBe('REACT_QUERY_OFFLINE_CACHE');
+      expect(captured.lastOptions.throttleTime).toBe(1000);
+      expect(captured.lastOptions.storage).toBe('MOCK_STORAGE');
+      expect(typeof captured.lastOptions.serialize).toBe('function');
+      expect(typeof captured.lastOptions.deserialize).toBe('function');
     });
   });
 

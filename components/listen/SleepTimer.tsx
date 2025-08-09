@@ -11,6 +11,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import { formatSecondsToClock } from '@/utils/time';
 
 export interface SleepTimerProps {
   isVisible: boolean;
@@ -128,7 +129,7 @@ const SleepTimerComponent = ({
             <View style={styles.activeTimerContainer}>
               <View style={styles.timeDisplay}>
                 <ThemedText colorName="tint" style={styles.timeText} type="heading1">
-                  {formatTime(remainingTime)}
+                  {formatSecondsToClock(remainingTime)}
                 </ThemedText>
               </View>
               <ThemedText style={styles.activeDescription} type="body" variant="secondary">

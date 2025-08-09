@@ -31,7 +31,6 @@ const styles = StyleSheet.create({
   flexOne: {
     flex: 1,
   },
-  separator: {},
 });
 
 // Use responsive height calculation instead of hardcoded value
@@ -195,9 +194,6 @@ export default function ListenScreen(): JSX.Element {
     return () => {
       if (playAllTimeoutRef.current) {
         clearTimeout(playAllTimeoutRef.current);
-      }
-      if (hasArticlesTimeoutRef.current) {
-        clearTimeout(hasArticlesTimeoutRef.current);
       }
     };
   }, []);
