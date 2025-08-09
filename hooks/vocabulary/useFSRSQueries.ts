@@ -27,7 +27,7 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
 
   // Base query for all words - used as a foundation for other queries
   const allWordsQuery = useQuery({
-    queryKey: userId ? FSRS_QUERY_KEYS.all(userId) : ['fsrs-words'],
+    queryKey: userId ? FSRS_QUERY_KEYS.all(userId) : FSRS_QUERY_KEYS.FALLBACK.all,
     queryFn: () => {
       if (!userId) throw new Error('User ID is required');
       return studyWordsFSRSService.getFSRSWords(userId, { forStats: false });
@@ -42,7 +42,7 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
 
   // Query for due words - uses shorter stale time since it's more time-sensitive
   const dueWordsQuery = useQuery({
-    queryKey: userId ? FSRS_QUERY_KEYS.due(userId) : ['fsrs-words', 'due'],
+    queryKey: userId ? FSRS_QUERY_KEYS.due(userId) : FSRS_QUERY_KEYS.FALLBACK.due,
     queryFn: () => {
       if (!userId) throw new Error('User ID is required');
       return studyWordsFSRSService.getFSRSWords(userId, { onlyDue: true, limit });
@@ -63,7 +63,7 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
 
   // Query for stats - can use longer cache times since stats update less frequently
   const statsQuery = useQuery({
-    queryKey: userId ? FSRS_QUERY_KEYS.stats(userId) : ['fsrs-words', 'stats'],
+    queryKey: userId ? FSRS_QUERY_KEYS.stats(userId) : FSRS_QUERY_KEYS.FALLBACK.stats,
     queryFn: () => {
       if (!userId) throw new Error('User ID is required');
       return studyWordsFSRSService.getFSRSWords(userId, { forStats: true });

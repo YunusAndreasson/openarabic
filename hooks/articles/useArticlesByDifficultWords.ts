@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { articlesService } from '@/services/articles';
 import { strugglingWordsService } from '@/services/strugglingWords';
 import type { Article } from '@/types/articles.types';
@@ -27,10 +28,10 @@ export function useArticlesByDifficultWords(
 ): UseArticlesByDifficultWordsResult {
   // Fetch difficult words for the current user with optimized query
   const { data: difficultWords = [], isLoading: isLoadingDifficultWords } = useQuery({
-    queryKey: ['struggling-words', userId, 20], // Use consistent key with strugglingWords service
+    queryKey: userId ? FSRS_QUERY_KEYS.struggling(userId, 50) : ['struggling-words'],
     queryFn: () => {
       if (!userId) return Promise.resolve([]);
-      return strugglingWordsService.getStrugglingWords(userId, 50); // Increased from 20 to support larger vocabularies
+      return strugglingWordsService.getStrugglingWords(userId, 50);
     },
     enabled: !!userId,
     staleTime: 180000, // 3 minutes - struggling words change less frequently than due words

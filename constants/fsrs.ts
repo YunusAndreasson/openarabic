@@ -10,13 +10,24 @@ export const SESSION_CONFIG = {
   MIN_SESSION_SIZE: 1, // was 5
 } as const;
 
+// Base keys for consistent cache management
+export const FSRS_BASE_KEY = 'fsrs-words';
+export const STRUGGLING_WORDS_KEY = 'struggling-words';
+
 // Query keys for consistent cache management
 export const FSRS_QUERY_KEYS = {
-  all: (userId: string) => ['fsrs-words', userId] as const,
-  due: (userId: string) => ['fsrs-words', userId, 'due'] as const,
-  stats: (userId: string) => ['fsrs-words', userId, 'stats'] as const,
+  all: (userId: string) => [FSRS_BASE_KEY, userId] as const,
+  due: (userId: string) => [FSRS_BASE_KEY, userId, 'due'] as const,
+  stats: (userId: string) => [FSRS_BASE_KEY, userId, 'stats'] as const,
+  struggling: (userId: string, limit: number) => [STRUGGLING_WORDS_KEY, userId, limit] as const,
   filtered: (userId: string, category: string) =>
-    ['fsrs-words', userId, 'filtered', category] as const,
+    [FSRS_BASE_KEY, userId, 'filtered', category] as const,
+  // Fallback keys when userId is not available (unauthenticated state)
+  FALLBACK: {
+    all: [FSRS_BASE_KEY] as const,
+    due: [FSRS_BASE_KEY, 'due'] as const,
+    stats: [FSRS_BASE_KEY, 'stats'] as const,
+  },
   DUE_WORDS: 'fsrs-words-due',
   STUDY_WORDS: 'fsrs-words-study',
   USER_WORDS: 'fsrs-words-user',

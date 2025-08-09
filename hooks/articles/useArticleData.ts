@@ -61,7 +61,7 @@ export const useArticleData = (
     refetch: refetchStudyWords,
     isLoading: isLoadingStudyWords,
   } = useQuery<StudyWord[]>({
-    queryKey: userId ? FSRS_QUERY_KEYS.all(userId) : ['fsrs-words'],
+    queryKey: userId ? FSRS_QUERY_KEYS.all(userId) : FSRS_QUERY_KEYS.FALLBACK.all,
     queryFn: async () => {
       if (!userId) return [];
       return studyWordsFSRSService.getFSRSWords(userId);

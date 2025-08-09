@@ -1,6 +1,8 @@
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import type { Query } from '@tanstack/react-query';
 
+import { FSRS_BASE_KEY, STRUGGLING_WORDS_KEY } from '@/constants/fsrs';
+
 import { getSafeStorage } from './safeAsyncStorage';
 
 // Constants for better performance and maintainability
@@ -12,9 +14,9 @@ const MAX_AGE = 1000 * 60 * 60 * 24 * 7; // 7 days
 const STATIC_DATA_KEYS = new Set(['categories', 'authors', 'articles']);
 const FILTERED_ARTICLE_KEYS = new Set(['filtered-articles']);
 const USER_DATA_KEYS = new Set(['readingList']);
-const VOCABULARY_KEYS = new Set(['fsrs-words']);
+const VOCABULARY_KEYS = new Set([FSRS_BASE_KEY]);
 const READING_PROGRESS_KEYS = new Set(['reading-progress', 'reading-progress-bulk']);
-const EXCLUDED_KEYS = new Set(['isInReadingList', 'enhancedAudioTracks', 'struggling-words']);
+const EXCLUDED_KEYS = new Set(['isInReadingList', 'enhancedAudioTracks', STRUGGLING_WORDS_KEY]);
 const EXCLUDED_PATTERNS = new Set(['due', 'live']);
 
 // Create the persister using AsyncStorage when available

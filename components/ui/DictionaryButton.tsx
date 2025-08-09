@@ -7,6 +7,7 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { usePressAnimation } from '@/hooks/animations';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -39,7 +40,7 @@ export default function DictionaryButton({
   });
 
   const handlePress = useCallback(() => {
-    router.push('/(tabs)/practice/dictionary');
+    router.push(ROUTE_PATHS.PRACTICE_DICTIONARY);
   }, []);
 
   const computedCount =

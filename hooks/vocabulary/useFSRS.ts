@@ -90,11 +90,11 @@ export function useFSRS({
   const { data: dueWords, isLoading } = useQuery({
     queryKey: userId
       ? mode === 'spaced'
-        ? ['struggling-words', userId, 50] // Use struggling words key for spaced mode
+        ? FSRS_QUERY_KEYS.struggling(userId, 50) // Consistent key helper
         : useAllWords
         ? FSRS_QUERY_KEYS.all(userId)
         : FSRS_QUERY_KEYS.due(userId)
-      : ['fsrs-words', mode === 'spaced' ? 'struggling' : useAllWords ? 'all' : 'due'],
+      : FSRS_QUERY_KEYS.FALLBACK[mode === 'spaced' ? 'due' : useAllWords ? 'all' : 'due'],
     queryFn: async () => {
       if (!userId) return [];
 

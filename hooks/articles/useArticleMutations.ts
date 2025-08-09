@@ -197,7 +197,7 @@ export const useArticleMutations = (
       },
       onSuccess: async (_: boolean, { userId }: { userId: string }) => {
         // Batch invalidate related queries
-        [...RELATED_QUERY_KEYS(userId), ['fsrs-words', userId] as const].forEach(queryKey => {
+        RELATED_QUERY_KEYS(userId).forEach(queryKey => {
           queryClient.invalidateQueries({ queryKey });
         });
 

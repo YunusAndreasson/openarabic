@@ -16,6 +16,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { AccountBadge } from '@/components/account';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAccountScreen } from '@/hooks/account';
 import { useColors } from '@/hooks/theme/useColors';
@@ -222,7 +223,7 @@ const AccountScreen: FC = () => {
               includePressAnimation={true}
               shadowSize="none"
               style={styles.interactiveCard}
-              onPress={() => router.push('/(tabs)/read/account/help')}
+              onPress={() => router.push(ROUTE_PATHS.ACCOUNT_HELP)}
             >
               <View style={styles.cardContent}>
                 <View style={styles.cardLeft}>
