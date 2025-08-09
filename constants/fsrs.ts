@@ -98,11 +98,5 @@ export const OPTIMIZED_FSRS_CONFIG = {
   enable_fuzz: true,
   enable_short_term: true,
   timeout: 120000,
-  w: [
-    0.4872, 1.4003, 3.7145, 13.8206, 5.1618, 1.2298, 0.8975, 0.031, 1.6474, 0.1367, 1.0461, 2.1072,
-    0.0793, 0.3246, 2.0481, 0.2753, 2.4909, 0.5272, 0.8755,
-  ],
-  requestRetention: 0.9,
-  maximumInterval: 36500,
-  enableFuzz: true,
+  // Use library defaults for weights and derived options to avoid version drift
 } as const;

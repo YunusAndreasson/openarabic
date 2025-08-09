@@ -69,6 +69,9 @@ module.exports = {
     '^@common/(.*)$': '<rootDir>/components/common/$1',
     '^@ui/(.*)$': '<rootDir>/components/ui/$1',
     '^@charts/(.*)$': '<rootDir>/components/common/charts/$1',
+    // Bypass strict peer check in @testing-library/react-native so renderer upgrades don't break tests
+    '^@testing-library/react-native/src/helpers/ensure-peer-deps$':
+      '<rootDir>/__mocks__/@testing-library/react-native-ensure-peer-deps.js',
   },
 
   // Comprehensive coverage for AI analysis
