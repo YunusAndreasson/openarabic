@@ -3,8 +3,9 @@ const { View } = require('react-native');
 
 function createChainableMock() {
   const chain = {};
-  chain.springify = () => () => chain;
+  chain.springify = () => chain;
   chain.delay = () => chain;
+  chain.duration = () => chain;
   return chain;
 }
 
@@ -19,6 +20,10 @@ module.exports = {
   },
   ZoomIn: { duration },
   ZoomOut: { duration },
+  SlideInRight: { duration },
+  SlideInLeft: { duration },
+  SlideOutRight: { duration },
+  SlideOutLeft: { duration },
   Easing: {
     out: () => ({}),
     quad: {},

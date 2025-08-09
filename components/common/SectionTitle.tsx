@@ -3,7 +3,7 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 
 interface SectionTitleProps {
   title: string;
@@ -21,20 +21,13 @@ const SectionTitle: FC<SectionTitleProps> = ({
   const titleStyle = useMemo(
     () => ({
       marginBottom: 0,
-      fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
-      lineHeight:
-        LAYOUT.TYPOGRAPHY.SCALE.XXLARGE *
-        TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.SECTION_HEADER.lineHeightMultiplier,
     }),
     []
   );
 
   const subtitleStyle = useMemo(
     () => ({
-      lineHeight:
-        LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
       marginTop: LAYOUT.SPACING.TINY,
-      opacity: LAYOUT.OPACITY.HIGH,
     }),
     []
   );
@@ -46,7 +39,7 @@ const SectionTitle: FC<SectionTitleProps> = ({
           {title}
         </ThemedText>
         {subtitle && (
-          <ThemedText colorName="subtitleText" style={subtitleStyle} type="body">
+          <ThemedText variant="secondary" style={subtitleStyle} type="body">
             {subtitle}
           </ThemedText>
         )}

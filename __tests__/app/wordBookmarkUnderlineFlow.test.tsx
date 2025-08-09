@@ -136,6 +136,9 @@ jest.mock('@shopify/flash-list', () => ({
   FlashList: ({ data, renderItem }: any) => <>{data.map((item: any) => renderItem({ item }))}</>,
 }));
 
+// Avoid reanimated usage in PlayButton used by MiniPlayer
+jest.mock('@/components/listen/PlayButton', () => () => null);
+
 // Mock react-native-svg used indirectly by ProgressCircle
 jest.mock('react-native-svg', () => {
   const View = 'Svg';
@@ -146,7 +149,7 @@ jest.mock('react-native-svg', () => {
 describe('Word bookmark underline flow', () => {
   it('adds and removes underline when toggling study list via bookmark', async () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    const { getByTestId } = render(
+    const { getByTestId, getAllByTestId } = render(
       <QueryClientProvider client={client}>
         <ArticleScreen />
       </QueryClientProvider>
@@ -160,7 +163,8 @@ describe('Word bookmark underline flow', () => {
 
     // Toggle bookmark in tooltip
     // TouchableIcon renders a mock Ionicons text with testID mock-icon-Ionicons in this repo
-    const icon = getByTestId('mock-icon-Ionicons');
+    const icons = getAllByTestId('mock-icon-Ionicons');
+    const icon = Array.isArray(icons) && icons.length > 0 ? icons[icons.length - 1] : icons[0];
     await act(async () => {
       fireEvent.press(icon);
     });
@@ -186,13 +190,11 @@ describe('Word bookmark underline flow', () => {
       fireEvent.press(word);
     });
 
-    // Underline is applied via borderBottomWidth on the word container
+    // Underline is indicated by borderBottomColor change (width is always reserved)
     const updatedWord = getByTestId('word-100');
     const style = (updatedWord.props.style || []).flat?.() || updatedWord.props.style;
-    const hasUnderline = Array.isArray(style)
-      ? style.some((s: any) => s && s.borderBottomWidth === 1)
-      : style?.borderBottomWidth === 1;
-    expect(hasUnderline).toBe(true);
+    const merged = Array.isArray(style) ? Object.assign({}, ...style.filter(Boolean)) : style;
+    expect(merged.borderBottomColor).toBe('#0a0');
 
     // Now simulate removal from study list (empty set) and re-render
     newUseArticleData.useArticleData = () => ({
@@ -214,9 +216,7 @@ describe('Word bookmark underline flow', () => {
 
     const updatedWord2 = getByTestId('word-100');
     const style2 = (updatedWord2.props.style || []).flat?.() || updatedWord2.props.style;
-    const hasUnderline2 = Array.isArray(style2)
-      ? style2.some((s: any) => s && s.borderBottomWidth === 1)
-      : style2?.borderBottomWidth === 1;
-    expect(hasUnderline2).toBe(false);
+    const merged2 = Array.isArray(style2) ? Object.assign({}, ...style2.filter(Boolean)) : style2;
+    expect(merged2.borderBottomColor).toBe('transparent');
   });
 });

@@ -8,7 +8,7 @@ import BaseCard from '@common/BaseCard';
 import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import Pill from '@/components/ui/Pill';
-import { getEnhancedOpacity, LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { ArticleCardProps as BaseArticleCardProps } from '@/types/ui/card.types';
@@ -107,28 +107,17 @@ const styles = StyleSheet.create({
 });
 
 // Memoized static typography styles
-const createTitleStyle = (isDarkMode: boolean) => ({
-  fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-  fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
+const createTitleStyle = () => ({
+  // Defer to ThemedText heading3 for card titles; keep micro letter-spacing only
   letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
-  lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
-  opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.PRIMARY, isDarkMode),
 });
 
-const createAuthorStyle = (isDarkMode: boolean) => ({
-  fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-  fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
+const createAuthorStyle = () => ({
   letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.AUTHOR_BYLINE.letterSpacing,
-  lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
-  opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.ACCENT, isDarkMode),
 });
 
-const createSummaryStyle = (isDarkMode: boolean) => ({
-  fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-  fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.REGULAR,
+const createSummaryStyle = () => ({
   letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.NORMAL,
-  lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
-  opacity: getEnhancedOpacity(TYPOGRAPHY_HIERARCHY.COLOR_HIERARCHY.SECONDARY, isDarkMode),
 });
 
 /**
@@ -169,9 +158,9 @@ function ArticleCardComponent({
     return [TRANSPARENT_COLOR, TRANSPARENT_COLOR, TRANSPARENT_COLOR, TRANSPARENT_COLOR] as const;
   }, [colors.background, colors.card, isDarkMode]);
 
-  const titleStyle = useMemo(() => createTitleStyle(isDarkMode), [isDarkMode]);
-  const authorStyle = useMemo(() => createAuthorStyle(isDarkMode), [isDarkMode]);
-  const summaryStyle = useMemo(() => createSummaryStyle(isDarkMode), [isDarkMode]);
+  const titleStyle = useMemo(() => createTitleStyle(), []);
+  const authorStyle = useMemo(() => createAuthorStyle(), []);
+  const summaryStyle = useMemo(() => createSummaryStyle(), []);
 
   // Memoize computed values for child components
   const imageContainerStyle = useMemo(
@@ -219,7 +208,7 @@ function ArticleCardComponent({
             colorName="headingText"
             numberOfLines={MAX_TITLE_LINES}
             style={titleStyle}
-            type="heading2"
+            type="heading3"
           >
             {title}
           </ThemedText>

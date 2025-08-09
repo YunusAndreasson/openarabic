@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
@@ -9,6 +9,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
+import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { SCRUBBER_CONSTANTS } from '@/utils/gestureUtils';
@@ -204,9 +205,9 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
         {/* Tooltip positioned ABOVE thumb (Jakob's Law) */}
         <Animated.View style={[styles.tooltip, tooltipStyle]}>
           <View style={tooltipBubbleStyle}>
-            <Text style={tooltipTextStyle}>
+            <ThemedText type="caption" style={tooltipTextStyle}>
               {currentSentence + 1} / {totalSentences}
-            </Text>
+            </ThemedText>
           </View>
         </Animated.View>
 

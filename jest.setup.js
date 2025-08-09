@@ -176,21 +176,62 @@ jest.mock('react-native-reanimated', () => {
       stiffness: value => ({ stiffness: value }),
     },
 
-    // Entering animations
+    // Entering animations with springify chain to mirror builder API
     FadeIn: {
-      duration: ms => ({ duration: ms, delay: ms => ({ delay: ms }) }),
+      duration: ms => ({
+        duration: ms,
+        delay: _ms => ({ delay: _ms, springify: () => ({}) }),
+        springify: () => ({}),
+      }),
     },
     FadeOut: {
-      duration: ms => ({ duration: ms, delay: ms => ({ delay: ms }) }),
+      duration: ms => ({
+        duration: ms,
+        delay: _ms => ({ delay: _ms, springify: () => ({}) }),
+        springify: () => ({}),
+      }),
     },
     SlideInRight: {
-      duration: ms => ({ duration: ms, delay: ms => ({ delay: ms }) }),
+      duration: ms => ({
+        duration: ms,
+        delay: _ms => ({ delay: _ms, springify: () => ({}) }),
+        springify: () => ({}),
+      }),
     },
     SlideInLeft: {
-      duration: ms => ({ duration: ms, delay: ms => ({ delay: ms }) }),
+      duration: ms => ({
+        duration: ms,
+        delay: _ms => ({ delay: _ms, springify: () => ({}) }),
+        springify: () => ({}),
+      }),
     },
     ZoomIn: {
-      duration: ms => ({ duration: ms, delay: ms => ({ delay: ms }) }),
+      duration: ms => ({
+        duration: ms,
+        delay: _ms => ({ delay: _ms, springify: () => ({}) }),
+        springify: () => ({}),
+      }),
+    },
+    ZoomOut: {
+      duration: ms => ({
+        duration: ms,
+        delay: _ms => ({ delay: _ms, springify: () => ({}) }),
+        springify: () => ({}),
+      }),
+    },
+    SlideOutRight: {
+      duration: ms => ({
+        duration: ms,
+        delay: _ms => ({ delay: _ms, springify: () => ({}) }),
+        springify: () => ({}),
+      }),
+    },
+    SlideOutLeft: {
+      duration: ms => ({
+        duration: ms,
+        delay: _ms => ({ delay: _ms, springify: () => ({}) }),
+        springify: () => ({}),
+      }),
     },
 
     // Easing functions

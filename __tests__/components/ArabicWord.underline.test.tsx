@@ -16,6 +16,7 @@ jest.mock('@/hooks/theme/useColors', () => ({
     arabicText: '#000',
     wordDueUnderline: '#f00',
     wordSelectionUnderline: '#0a0',
+    transparent: 'transparent',
   }),
 }));
 
@@ -33,14 +34,15 @@ describe('ArabicWord underline behavior', () => {
       />
     );
 
-    const getBorderWidth = () => {
+    const getUnderlineColor = () => {
       const el = getByTestId('word-under-test');
       const style: any[] = Array.isArray(el.props.style) ? el.props.style.flat() : [el.props.style];
       const merged = Object.assign({}, ...style.filter(Boolean));
-      return merged.borderBottomWidth ?? 0;
+      return merged.borderBottomColor;
     };
 
-    expect(getBorderWidth()).toBe(0);
+    // Baseline transparent underline is always present to prevent layout jump
+    expect(getUnderlineColor()).toBe('transparent');
 
     // Simulate bookmarking (selection becomes true)
     mockIsSelected = true;
@@ -55,7 +57,8 @@ describe('ArabicWord underline behavior', () => {
       );
     });
 
-    expect(getBorderWidth()).toBe(1);
+    // When selected, underline color should change from transparent to selection color
+    expect(getUnderlineColor()).toBe('#0a0');
 
     // Simulate unbookmarking (selection becomes false)
     mockIsSelected = false;
@@ -70,6 +73,7 @@ describe('ArabicWord underline behavior', () => {
       );
     });
 
-    expect(getBorderWidth()).toBe(0);
+    // When unselected again, it should go back to transparent baseline color
+    expect(getUnderlineColor()).toBe('transparent');
   });
 });

@@ -31,8 +31,20 @@ const ESTIMATED_LIST_SIZE = { height: ITEM_HEIGHT * 10, width: SCREEN_WIDTH };
 // Static key extractor for better performance
 const articleKeyExtractor = (item: Article) => `article-${item.id}`;
 
-// Static separator component
-const SeparatorComponent = () => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />;
+// Static separator component with StyleSheet to avoid recreating inline style objects
+const styles = StyleSheet.create({
+  articleCard: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+  },
+  pendingCard: {
+    opacity: LAYOUT.OPACITY.HIGH,
+  },
+  separator: {
+    height: LAYOUT.SPACING.MEDIUM,
+  },
+});
+
+const SeparatorComponent = () => <View style={styles.separator} />;
 
 interface ArticleItemProps {
   item: Article;
@@ -197,13 +209,6 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
 
 ArticleList.displayName = 'ArticleList';
 
-const styles = StyleSheet.create({
-  articleCard: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
-  pendingCard: {
-    opacity: LAYOUT.OPACITY.HIGH,
-  },
-});
+// styles moved above to share separator style
 
 export default ArticleList;

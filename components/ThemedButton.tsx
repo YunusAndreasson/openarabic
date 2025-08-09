@@ -179,14 +179,17 @@ const styles = StyleSheet.create({
   button: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
+    minHeight: LAYOUT.BUTTON.HEIGHT.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
   buttonLarge: {
+    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE,
     paddingHorizontal: LAYOUT.SPACING.XLARGE,
     paddingVertical: LAYOUT.SPACING.LARGE,
   },
   buttonSmall: {
+    minHeight: LAYOUT.BUTTON.HEIGHT.SMALL,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.SMALL,
   },

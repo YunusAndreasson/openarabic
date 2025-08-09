@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
@@ -31,9 +32,9 @@ export function useArabicWord({
   // Check if this word is due for review
   const isDueWord = word.root_id != null && dueWordRootIds.has(word.root_id);
 
-  // Fetch the user's study words
+  // Fetch the user's study words using unified FSRS query keys so mutations invalidate consistently
   const { data: studyWords = [] } = useQuery({
-    queryKey: ['study-words', user?.id],
+    queryKey: user?.id ? FSRS_QUERY_KEYS.all(user.id) : FSRS_QUERY_KEYS.FALLBACK.all,
     queryFn: async () => {
       if (!user?.id) return [];
       try {

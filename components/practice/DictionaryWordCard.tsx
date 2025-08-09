@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { memo, useCallback } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import BaseCard from '@common/BaseCard';
 
+import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useColors } from '@/hooks/theme/useColors';
@@ -87,18 +88,30 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
           <View style={styles.content}>
             {/* Word Information */}
             <View style={styles.wordInfo}>
-              <Text style={[styles.arabicText, { color: colors.text }]}>{arabicText}</Text>
-              <Text style={[styles.englishText, { color: colors.secondaryText }]}>
+              {/* Keep Arabic overrides within practice section while using ThemedText */}
+              <ThemedText
+                type="arabic"
+                skipDefaultColor
+                style={[styles.arabicText, { color: colors.text }]}
+              >
+                {arabicText}
+              </ThemedText>
+              <ThemedText type="body" variant="secondary" style={styles.englishText}>
                 {englishText}
-              </Text>
+              </ThemedText>
             </View>
 
             {/* Right Section: Difficulty Badge */}
             <View style={styles.rightSection}>
               <View style={[styles.difficultyBadge, { backgroundColor: difficultyColor }]}>
-                <Text style={[styles.difficultyText, { color: colors.white }]}>
+                <ThemedText
+                  type="caption"
+                  weight="bold"
+                  skipDefaultColor
+                  style={[styles.difficultyText, { color: colors.white }]}
+                >
                   {difficultyLabel}
-                </Text>
+                </ThemedText>
               </View>
             </View>
           </View>

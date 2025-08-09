@@ -61,32 +61,38 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
   // getItemLayout is not supported by FlashList types; rely on estimatedItemSize and snap props
 
   const renderItem = useCallback(
-    (info: { item: Article; index: number }) => (
-      <View
-        style={[
-          styles.cardContainer,
-          {
-            height: getContentAwareHeight(String(info.item.summary)),
-            marginLeft: info.index === 0 ? 0 : CARD_SPACING,
-          },
-        ]}
-      >
-        <ArticleCard
-          author={info.item.author.name}
-          category={info.item.category.name}
-          categoryForDisplay={info.item.category.name}
-          imageUrl={String(info.item.image_url)}
-          style={[
-            styles.card,
-            { backgroundColor: colors.card },
-            { shadowColor: colors.shadow, ...LAYOUT.ELEVATION.SUBTLE },
-          ]}
-          summary={String(info.item.summary)}
-          title={info.item.title}
-          onPress={() => handleArticlePress(info.item)}
-        />
-      </View>
-    ),
+    (info: { item: Article; index: number }) => {
+      const containerStyle = [
+        styles.cardContainer,
+        {
+          height: getContentAwareHeight(String(info.item.summary)),
+          marginLeft: info.index === 0 ? 0 : CARD_SPACING,
+        },
+      ];
+
+      const cardStyle = [
+        styles.card,
+        { backgroundColor: colors.card },
+        { shadowColor: colors.shadow, ...LAYOUT.ELEVATION.SUBTLE },
+      ];
+
+      const onPress = () => handleArticlePress(info.item);
+
+      return (
+        <View style={containerStyle}>
+          <ArticleCard
+            author={info.item.author.name}
+            category={info.item.category.name}
+            categoryForDisplay={info.item.category.name}
+            imageUrl={String(info.item.image_url)}
+            style={cardStyle}
+            summary={String(info.item.summary)}
+            title={info.item.title}
+            onPress={onPress}
+          />
+        </View>
+      );
+    },
     [colors.card, colors.shadow, handleArticlePress]
   );
 
@@ -103,6 +109,7 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContainer}
         estimatedItemSize={CARD_WIDTH}
+        removeClippedSubviews={true}
         // Rely on FlashList defaults for render/window sizes
         decelerationRate="fast"
         snapToAlignment="start"

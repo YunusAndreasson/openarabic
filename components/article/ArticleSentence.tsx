@@ -2,9 +2,10 @@ import { useLocalSearchParams } from 'expo-router';
 import type { ComponentRef, ReactNode, RefObject } from 'react';
 import { createRef, useEffect, useMemo, useRef } from 'react';
 import type { LayoutRectangle, StyleProp, TouchableOpacity, ViewStyle } from 'react-native';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { type AnimatedStyleProp } from 'react-native-reanimated';
 
+import { ThemedText } from '@/components/ThemedText';
 import { ArabicWord } from '@/components/article/ArabicWord';
 import { FONTS, LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
@@ -61,6 +62,7 @@ function renderWordWithProps(
       wordRef={wordRefs[index]}
       position={index}
       isDueWord={isDueWord}
+      testID={(word as any).testID}
     />
   );
 }
@@ -141,11 +143,16 @@ function ArticleSentenceComponent({
     );
   }, [renderWord, words, sentence.id, settings, onWordPress, dueWordRootIds]);
 
+  // Fallback for test environments where Animated.View might be undefined
+  const AnimatedView: any = (Animated as any)?.View ?? View;
+
   return (
     <View style={[styles.container, containerStyle]}>
-      <Animated.View style={backgroundStyle} />
+      <AnimatedView style={backgroundStyle} />
       {settings.showEnglish && sentence.english && (
-        <Text style={englishTextStyle as any}>{sentence.english}</Text>
+        <ThemedText type="body" style={englishTextStyle as any}>
+          {sentence.english}
+        </ThemedText>
       )}
       <View style={styles.wordsContainer}>{renderedWords}</View>
     </View>

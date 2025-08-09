@@ -233,7 +233,8 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
     [editMode, onArticlePress, createDeleteHandler, createDragHandleProps, progressMap]
   );
 
-  const renderSeparator = useCallback(() => SeparatorComponent(), []);
+  // Use stable reference to the separator component without recreating a function each render
+  const renderSeparator = SeparatorComponent;
 
   const keyExtractor = useCallback((item: Article) => item.id.toString(), []);
 

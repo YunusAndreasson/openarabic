@@ -138,9 +138,19 @@ function ArabicWordComponent({
   );
 
   // Compute final styles for the word container
+  // Always reserve underline space to avoid layout jump by using a transparent baseline underline
+  const baseUnderlineStyle = useMemo(
+    () => ({ borderBottomWidth: 1, borderBottomColor: colors.transparent }),
+    [colors.transparent]
+  );
+
   const containerStyle = useMemo(
-    () => [styles.wordContainer, getSelectedStyle(isSelected, isDueWord, batchedColors)],
-    [isSelected, isDueWord, batchedColors]
+    () => [
+      styles.wordContainer,
+      baseUnderlineStyle,
+      getSelectedStyle(isSelected, isDueWord, batchedColors),
+    ],
+    [isSelected, isDueWord, batchedColors, baseUnderlineStyle]
   );
 
   // Render colored segments or single word

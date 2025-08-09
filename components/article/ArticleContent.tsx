@@ -18,7 +18,7 @@ import { RelatedArticlesSection } from '@/components/article/RelatedArticlesSect
 import { SentenceScrubber } from '@/components/article/SentenceScrubber';
 import PlayButton from '@/components/listen/PlayButton';
 import { SCROLL_EVENT_THROTTLE, SENTENCE_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
-import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
@@ -157,39 +157,34 @@ const ArticleTitle = memo<ArticleTitleProps>(({ title, author }) => {
   const colors = useColors();
 
   // Memoize dynamic styles for better performance
+  // Use default heading1 typography without overriding size/line-height
   const titleStyle = useMemo(
     () => ({
-      fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-      fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
-      color: colors.headingText,
-      lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
       textAlign: 'left' as const,
     }),
-    [colors.headingText]
+    []
   );
 
+  // Author style now relies on ThemedText tokens
   const authorStyle = useMemo(
     () => ({
-      fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-      fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
-      color: colors.authorText,
       textAlign: 'left' as const,
     }),
-    [colors.authorText]
+    []
   );
 
   return (
     <>
       {/* Title gets full width without button interference */}
       <View style={styles.titleContainer}>
-        <ThemedText type="heading1" style={[styles.titleText, titleStyle]}>
+        <ThemedText type="heading1" colorName="headingText" style={[styles.titleText, titleStyle]}>
           {title}
         </ThemedText>
       </View>
 
       {/* Author information */}
       <View style={styles.authorContainer}>
-        <ThemedText type="caption" style={authorStyle}>
+        <ThemedText type="body" weight="medium" colorName="authorText" style={authorStyle}>
           {STRINGS.BY} {author.name}
         </ThemedText>
       </View>
