@@ -83,7 +83,7 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: QUERY_DEFAULTS.STALE_TIME,
       gcTime: QUERY_DEFAULTS.GC_TIME,
-      refetchOnMount: 'always', // Always refetch on mount for fresh data
+      refetchOnMount: false,
       refetchOnReconnect: true,
       refetchOnWindowFocus: false, // Disable for mobile
       networkMode: 'online',

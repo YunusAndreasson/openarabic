@@ -8,6 +8,13 @@ export const getArticleRoute = (id: number, headerTitle?: string): string => {
 export const getFilterModalRoute = (categoryId: number): string =>
   `/(tabs)/read/filterModal?categoryId=${categoryId}`;
 
+export const getCategoryFilterRoute = (categoryId: number, name?: string): string => {
+  const base = `/(tabs)/read/filter`;
+  const params = new URLSearchParams({ type: 'category', id: String(categoryId) });
+  if (name) params.append('name', encodeURIComponent(name));
+  return `${base}?${params.toString()}`;
+};
+
 export const ROUTE_PATHS = {
   AUTH: '/auth',
   TABS: '/(tabs)',

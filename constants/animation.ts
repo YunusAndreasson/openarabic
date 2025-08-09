@@ -118,7 +118,7 @@ export const TOAST_SPRING = {
 export const HEADER_SCROLL_THRESHOLD = 50;
 
 /** Multiplier applied to list item height for overscroll draw distance */
-export const LIST_DRAW_DISTANCE_MULTIPLIER = 5;
+export const LIST_DRAW_DISTANCE_MULTIPLIER = 3;
 
 /** Larger multiplier used for sentence lists */
 export const SENTENCE_DRAW_DISTANCE_MULTIPLIER = 12;

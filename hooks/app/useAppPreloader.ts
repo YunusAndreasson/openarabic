@@ -1,6 +1,8 @@
 import * as Sentry from '@sentry/react-native';
 import { useQueryClient } from '@tanstack/react-query';
+import { Image } from 'expo-image';
 import { useCallback, useRef, useState } from 'react';
+import { InteractionManager } from 'react-native';
 
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { CACHE_TIMES } from '@/constants/queryConfig';
@@ -10,6 +12,7 @@ import { authorsService } from '@/services/authors';
 import { categoriesService } from '@/services/categories';
 import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
+import type { Article } from '@/types/articles.types';
 import { handleError } from '@/utils/errorHandling';
 
 interface AppPreloaderResult {
@@ -57,6 +60,31 @@ export const useAppPreloader = (): AppPreloaderResult => {
 
       const [_categories, _articles] = await Promise.all(criticalPromises);
       setPreloadProgress(25);
+
+      // Prefetch featured slider assets (images + article details) without blocking UI
+      if (Array.isArray(_articles) && _articles.length > 0) {
+        InteractionManager.runAfterInteractions(() => {
+          try {
+            const featured: Article[] = _articles.slice(0, 5);
+            const imagePrefetches = featured
+              .map(a => String(a.image_url))
+              .filter(Boolean)
+              .map(url => Image.prefetch(url));
+            const detailPrefetches = featured.map(a =>
+              queryClient.prefetchQuery({
+                queryKey: ['article', a.id],
+                queryFn: () => articlesService.getArticleById(a.id),
+                ...CACHE_TIMES.ARTICLES,
+                retry: 2,
+              })
+            );
+            // Fire-and-forget; do not block loader
+            Promise.allSettled([...imagePrefetches, ...detailPrefetches]).catch(() => {});
+          } catch {
+            // ignore prefetch errors
+          }
+        });
+      }
 
       // Preload user's FSRS data if available
       if (user?.id) {

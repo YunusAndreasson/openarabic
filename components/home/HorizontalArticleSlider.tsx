@@ -1,11 +1,6 @@
+import { FlashList } from '@shopify/flash-list';
 import { memo, useCallback, useMemo, useRef, type FC } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  View,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-} from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import ArticleCard from '@/components/ArticleCard';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
@@ -88,28 +83,45 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
     ));
   }, [displayArticles, colors.card, colors.shadow, handleArticlePress]);
 
-  /**
-   * Handle scroll events to detect when cards come into view
-   */
-  const handleScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const { contentOffset } = event.nativeEvent;
-      const scrollX = contentOffset.x;
+  const keyExtractor = useCallback((item: Article) => `featured-${item.id}`, []);
 
-      // Calculate which card is currently most visible
-      const currentCardIndex = Math.round(scrollX / (CARD_WIDTH + CARD_SPACING));
+  const getItemLayout = useCallback(
+    (_: Article[] | null | undefined, index: number) => ({
+      length: CARD_WIDTH + CARD_SPACING,
+      offset: (CARD_WIDTH + CARD_SPACING) * index,
+      index,
+    }),
+    []
+  );
 
-      // Ensure index is within bounds
-      const clampedIndex = Math.max(0, Math.min(currentCardIndex, displayArticles.length - 1));
-
-      // Trigger haptic feedback when a new card comes into view
-      if (clampedIndex !== lastVisibleCardIndex.current && lastVisibleCardIndex.current !== -1) {
-        lightFeedback();
-      }
-
-      lastVisibleCardIndex.current = clampedIndex;
-    },
-    [displayArticles.length]
+  const renderItem = useCallback(
+    ({ item, index }: { item: Article; index: number }) => (
+      <View
+        style={[
+          styles.cardContainer,
+          {
+            height: getContentAwareHeight(String(item.summary)),
+            marginLeft: index === 0 ? 0 : CARD_SPACING,
+          },
+        ]}
+      >
+        <ArticleCard
+          author={item.author.name}
+          category={item.category.name}
+          categoryForDisplay={item.category.name}
+          imageUrl={String(item.image_url)}
+          style={[
+            styles.card,
+            { backgroundColor: colors.card },
+            { shadowColor: colors.shadow, ...LAYOUT.ELEVATION.SUBTLE },
+          ]}
+          summary={String(item.summary)}
+          title={item.title}
+          onPress={() => handleArticlePress(item)}
+        />
+      </View>
+    ),
+    [colors.card, colors.shadow, handleArticlePress]
   );
 
   // Skip rendering if no articles
@@ -117,21 +129,34 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Horizontal scroll view */}
-      <ScrollView
+      <FlashList
         horizontal
+        data={displayArticles}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContainer}
-        snapToInterval={CARD_WIDTH + CARD_SPACING}
-        snapToAlignment="start"
+        estimatedItemSize={CARD_WIDTH}
+        getItemLayout={getItemLayout as any}
+        initialNumToRender={2}
+        windowSize={3}
         decelerationRate="fast"
+        snapToAlignment="start"
+        snapToInterval={CARD_WIDTH + CARD_SPACING}
         bounces={false}
         overScrollMode="never"
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-      >
-        {articleCards}
-      </ScrollView>
+        onViewableItemsChanged={({ viewableItems }) => {
+          const first = viewableItems[0]?.index ?? -1;
+          if (
+            first !== -1 &&
+            first !== lastVisibleCardIndex.current &&
+            lastVisibleCardIndex.current !== -1
+          ) {
+            lightFeedback();
+          }
+          lastVisibleCardIndex.current = first;
+        }}
+      />
     </View>
   );
 };

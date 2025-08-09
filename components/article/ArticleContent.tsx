@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { FlashListProps } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
-import { useQuery } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import React, { Fragment, memo, useCallback, useMemo, type ReactElement } from 'react';
 import type {
   NativeScrollEvent,
@@ -21,7 +21,6 @@ import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layo
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import { articlesService } from '@/services/articles';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
@@ -394,13 +393,11 @@ export const ArticleContent = memo<ArticleContentProps>(
       [article.id, article.title, article.author.id, article.author.name, colors]
     );
 
-    // Get all articles for recommendations - moved here to be part of main component
-    const { data: articlesData = [] } = useQuery({
-      queryKey: ['articles'],
-      queryFn: () => articlesService.getArticles(),
-      staleTime: 3600000, // 1 hour
-      gcTime: 7200000, // 2 hours
-    });
+    // Get articles from cache for recommendations (avoid re-querying here)
+    const queryClient = useQueryClient();
+    const articlesData =
+      (queryClient.getQueryData<Article[]>({ queryKey: ['articles'] }) as Article[] | undefined) ||
+      [];
 
     // Memoized footer component with stable references
     const footerComponent = useMemo(
