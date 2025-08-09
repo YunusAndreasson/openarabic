@@ -13,6 +13,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
+import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
 import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
@@ -132,14 +133,17 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
 }) => {
   const colors = useColors();
 
+  // Apply global filters/sorting state to incoming articles
+  const visibleArticles = useFilteredArticles(articles);
+
   // Fetch bulk reading progress for all articles
-  const articleIds = useMemo(() => articles.map(article => article.id), [articles]);
+  const articleIds = useMemo(() => visibleArticles.map(article => article.id), [visibleArticles]);
   const { data: progressMapRaw = new Map() } = useSafeBulkReadingProgress(articleIds);
   // Ensure progressMap is always a Map to prevent runtime errors
   const progressMap = progressMapRaw instanceof Map ? progressMapRaw : new Map();
 
   // Memoize expensive computations
-  const articlesLength = useMemo(() => articles.length, [articles.length]);
+  const articlesLength = useMemo(() => visibleArticles.length, [visibleArticles.length]);
   const hasArticles = useMemo(() => articlesLength > 0, [articlesLength]);
   const shouldShowEmpty = useMemo(() => !loading && !hasArticles, [loading, hasArticles]);
 
@@ -271,7 +275,7 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
       {editMode ? (
         // Use DraggableFlatList in edit mode
         <DraggableFlatList<Article>
-          data={articles}
+          data={visibleArticles}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
           onDragEnd={handleDragEnd}
@@ -284,7 +288,7 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
       ) : (
         // Use FlashList in normal mode
         <FlashList<Article>
-          data={articles}
+          data={visibleArticles}
           drawDistance={ITEM_HEIGHT * DRAW_DISTANCE_MULTIPLIER}
           estimatedItemSize={ITEM_HEIGHT}
           keyExtractor={keyExtractor}
