@@ -10,6 +10,14 @@ export default function ListenLayout(): JSX.Element {
           headerShown: false, // Use tab header for main screen
         }}
       />
+      <Stack.Screen
+        name="now-playing"
+        options={{
+          headerShown: false,
+          presentation: 'modal',
+          animation: 'fade',
+        }}
+      />
     </Stack>
   );
 }
