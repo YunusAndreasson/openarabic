@@ -172,16 +172,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   difficultyBadge: {
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.TINY,
-    minWidth: 48,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
+    minWidth: 56,
     alignItems: 'center',
     justifyContent: 'center',
   },
   difficultyText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    fontWeight: '600',
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontWeight: '700',
   },
   deleteButton: {
     width: MIN_TOUCH_TARGET.SMALL,

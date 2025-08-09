@@ -16,6 +16,7 @@ import { ThemedText } from '@/components/ThemedText';
 import ParallaxHeader from '@/components/article/ParallaxHeader';
 import { RelatedArticlesSection } from '@/components/article/RelatedArticlesSection';
 import { SentenceScrubber } from '@/components/article/SentenceScrubber';
+import PlayButton from '@/components/listen/PlayButton';
 import { SCROLL_EVENT_THROTTLE, SENTENCE_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -302,24 +303,10 @@ const FloatingActionButtons = memo<{
           />
         </Pressable>
 
-        {/* Play button */}
-        <Pressable
-          style={isPlaying ? activeButtonStyle : buttonStyle}
-          onPress={onPlayPress}
-          android_ripple={{
-            color: colors.navigationRipple,
-            radius: MIN_TOUCH_TARGET.MEDIUM / 2,
-          }}
-          accessibilityRole="button"
-          accessibilityLabel={isPlaying ? 'Stop audio playback' : 'Start audio playback'}
-        >
-          <Ionicons
-            name={isPlaying ? 'stop' : 'play'}
-            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-            color={isPlaying ? colors.tint : colors.secondaryText}
-            style={!isPlaying && styles.playIconOffset}
-          />
-        </Pressable>
+        {/* Play/Pause button - unified with playlist and mini-player */}
+        <View style={isPlaying ? activeButtonStyle : buttonStyle}>
+          <PlayButton isPlaying={isPlaying} onPress={onPlayPress} />
+        </View>
       </View>
     </>
   );

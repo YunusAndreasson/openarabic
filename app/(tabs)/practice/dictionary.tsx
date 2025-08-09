@@ -1,11 +1,10 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import type { JSX } from 'react';
 import { useCallback, useMemo } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import EmptyState from '@common/EmptyState';
@@ -62,18 +61,12 @@ export default function DictionaryScreen(): JSX.Element {
     }
   );
 
-  // Filter and sort words
-  const { sortedWords, sortOption, sortDirection, setSorting, searchQuery, setSearchQuery } =
-    useDictionaryModal({ studyWords: studyWords || [] });
+  // Filter and sort words (search removed)
+  const { sortedWords, sortOption, sortDirection, setSorting } = useDictionaryModal({
+    studyWords: studyWords || [],
+  });
 
-  // Show search input when there are 20+ words (progressive disclosure)
-  // Use total words count, not filtered results, to prevent search disappearing while typing
-  const showSearch = (studyWords || []).length >= 20;
-
-  // Check if we have search results vs no words at all
   const hasWords = sortedWords.length > 0;
-  const hasSearchQuery = searchQuery.trim().length > 0;
-  const showNoResultsMessage = !hasWords && hasSearchQuery && (studyWords || []).length > 0;
 
   // Handle word deletion
   const handleDeleteWord = useCallback(
@@ -125,7 +118,7 @@ export default function DictionaryScreen(): JSX.Element {
   // Stable object identity to avoid list-wide rerenders
   const listExtraData = useMemo(() => ({ editMode }), [editMode]);
 
-  if (!hasWords && !isLoading && !showNoResultsMessage) {
+  if (!hasWords && !isLoading) {
     return (
       <ThemedView style={styles.container}>
         <EmptyState
@@ -155,53 +148,18 @@ export default function DictionaryScreen(): JSX.Element {
         onSortChange={setSorting}
       />
 
-      {/* Conditional Search Input */}
-      {showSearch && (
-        <ThemedView style={styles.searchContainer}>
-          <ThemedView style={[styles.searchInputContainer, { borderColor: colors.border }]}>
-            <Ionicons
-              name="search"
-              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              color={colors.icon}
-              style={styles.searchIcon}
-            />
-            <TextInput
-              placeholder={STRINGS.SEARCH_WORDS_PLACEHOLDER}
-              placeholderTextColor={colors.textTertiary}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              style={[styles.searchInput, { color: colors.text }]}
-              clearButtonMode="while-editing"
-            />
-          </ThemedView>
-        </ThemedView>
-      )}
-
-      {/* Show no results message when search returns nothing */}
-      {showNoResultsMessage ? (
-        <EmptyState
-          colors={colors}
-          description={STRINGS.TRY_DIFFERENT_SEARCH}
-          icon="search"
-          iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
-          title={STRINGS.NO_MATCHES_FOUND}
-          containerStyle={contentContainerStyle}
-          hideArticlesButton={true}
-        />
-      ) : (
-        <FlashList<StudyWord>
-          data={sortedWords}
-          renderItem={renderItem}
-          keyExtractor={keyExtractor}
-          estimatedItemSize={64}
-          drawDistance={320}
-          removeClippedSubviews={true}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={contentContainerStyle}
-          ItemSeparatorComponent={ItemSeparator}
-          extraData={listExtraData}
-        />
-      )}
+      <FlashList<StudyWord>
+        data={sortedWords}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        estimatedItemSize={64}
+        drawDistance={320}
+        removeClippedSubviews={true}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={contentContainerStyle}
+        ItemSeparatorComponent={ItemSeparator}
+        extraData={listExtraData}
+      />
     </ThemedView>
   );
 }
@@ -209,26 +167,5 @@ export default function DictionaryScreen(): JSX.Element {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  searchContainer: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingBottom: LAYOUT.SPACING.SMALL,
-  },
-  searchInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: 1,
-    minHeight: 44, // Match sort button height
-  },
-  searchIcon: {
-    marginRight: LAYOUT.SPACING.SMALL,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    padding: 0, // Remove default padding
   },
 });

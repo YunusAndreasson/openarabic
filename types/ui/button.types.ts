@@ -25,6 +25,8 @@ export interface BaseButtonProps
     BaseAnimatedStyleProps {
   /** Text displayed on the button */
   title: string;
+  /** Whether to render the title in uppercase. Defaults to false. */
+  uppercase?: boolean;
   /** Whether the button is in a loading state */
   loading?: boolean;
   /** Size of the icon in pixels */

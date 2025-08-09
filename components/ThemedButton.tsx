@@ -70,6 +70,7 @@ function ThemedButtonComponent({
   size = 'medium',
   textWeight = 'bold',
   disablePressAnimation = false,
+  uppercase = true,
   hapticFeedback = false,
   ...props
 }: ThemedButtonProps): JSX.Element {
@@ -165,7 +166,7 @@ function ThemedButtonComponent({
               style={[buttonTextStyle, loading && !icon && { opacity: 0 }]}
               type={getTextType(size, textWeight)}
             >
-              {textWeight === 'normal' ? title : title?.toUpperCase()}
+              {uppercase ? title?.toUpperCase() : title}
             </ThemedText>
           )}
         </View>
@@ -190,16 +191,17 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.SMALL,
   },
   buttonText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE, // bump medium button text from 15 -> 17 for uppercase legibility
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.HEAVY,
     letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.EXTRA_WIDE,
     textAlign: 'center',
   },
   buttonTextLarge: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE, // bump large button text from 17 -> 20
     letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.EXTRA_WIDE,
   },
   buttonTextSmall: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // bump small button text from 13 -> 15
     letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
   },
   contentContainer: {

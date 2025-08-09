@@ -83,6 +83,7 @@ const EditModeButton: FC<EditModeButtonProps> = ({
         animatedStyle as ViewStyle,
         style,
       ]}
+      hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
