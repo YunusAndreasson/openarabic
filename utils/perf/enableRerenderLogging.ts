@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /*
   Dev-only rerender logging using why-did-you-render with AI-friendly JSONL output.
   Writes two files in app sandbox:
@@ -160,6 +161,7 @@ function updateConsoleWindow(entry: LogEntry): void {
   for (const ch of entry.render.changes) {
     const p = ch.path || '';
     agg.propPathCounts.set(p, (agg.propPathCounts.get(p) ?? 0) + 1);
+
     if (/^on[A-Z]/.test(p)) agg.catCallbacks! += 1;
     else if (/style/i.test(p)) agg.catStyles! += 1;
     else if (/(^|\.)renderItem|keyExtractor|getItemLayout/.test(p)) agg.catRenderer! += 1;

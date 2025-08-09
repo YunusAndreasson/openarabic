@@ -60,29 +60,29 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
   // getItemLayout is not supported by FlashList types; rely on estimatedItemSize and snap props
 
   const renderItem = useCallback(
-    ({ item, index }: { item: Article; index: number }) => (
+    (info: { item: Article; index: number }) => (
       <View
         style={[
           styles.cardContainer,
           {
-            height: getContentAwareHeight(String(item.summary)),
-            marginLeft: index === 0 ? 0 : CARD_SPACING,
+            height: getContentAwareHeight(String(info.item.summary)),
+            marginLeft: info.index === 0 ? 0 : CARD_SPACING,
           },
         ]}
       >
         <ArticleCard
-          author={item.author.name}
-          category={item.category.name}
-          categoryForDisplay={item.category.name}
-          imageUrl={String(item.image_url)}
+          author={info.item.author.name}
+          category={info.item.category.name}
+          categoryForDisplay={info.item.category.name}
+          imageUrl={String(info.item.image_url)}
           style={[
             styles.card,
             { backgroundColor: colors.card },
             { shadowColor: colors.shadow, ...LAYOUT.ELEVATION.SUBTLE },
           ]}
-          summary={String(item.summary)}
-          title={item.title}
-          onPress={() => handleArticlePress(item)}
+          summary={String(info.item.summary)}
+          title={info.item.title}
+          onPress={() => handleArticlePress(info.item)}
         />
       </View>
     ),
