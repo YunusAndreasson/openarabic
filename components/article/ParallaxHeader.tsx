@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { memo, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EnhancedImage } from '@/components/EnhancedImage';
@@ -17,7 +18,12 @@ const GRADIENT_HEIGHT_PERCENTAGE = '60%';
 
 // Static styles to prevent recreation
 const STATIC_STYLES = StyleSheet.create({
-  container: {},
+  container: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+  },
   imageSection: {
     width: '100%',
     position: 'relative',
@@ -46,6 +52,8 @@ const STATIC_STYLES = StyleSheet.create({
 interface ParallaxHeaderProps {
   article: Article;
   colors: ThemeColors;
+  // Shared scroll value from the list to drive parallax/stretch
+  scrollY: Animated.SharedValue<number>;
 }
 
 /**
@@ -73,7 +81,7 @@ const ParallaxHeaderComparison = (
 /**
  * Optimized ParallaxHeader component with performance enhancements
  */
-const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors }) => {
+const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scrollY }) => {
   const insets = useSafeAreaInsets();
   const isDarkMode = useIsDarkMode();
 
@@ -81,6 +89,15 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors }) =
   const headerHeight = useMemo(() => {
     return calculateHeaderHeight(insets.top);
   }, [insets.top]);
+
+  // Container with absolute positioning and fixed height
+  const containerStyle = useMemo(
+    () => ({
+      ...STATIC_STYLES.container,
+      height: headerHeight,
+    }),
+    [headerHeight]
+  );
 
   // Memoize image section style with dynamic height
   const imageSectionStyle = useMemo(
@@ -104,6 +121,17 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors }) =
     return createBackgroundGradientColors(colors, isDarkMode);
   }, [colors, isDarkMode]);
 
+  // Animated parallax and pull-to-stretch effect
+  const animatedImageStyle = useAnimatedStyle(() => {
+    const y = scrollY.value;
+    const translateY = y > 0 ? -y * 0.6 : 0; // slower upward movement for parallax
+    const maxExtraScale = 0.08; // cap stretch at +8%
+    const scale = y < 0 ? 1 + Math.min(-y / headerHeight, maxExtraScale) : 1;
+    return {
+      transform: [{ translateY }, { scale }],
+    };
+  }, [headerHeight]);
+
   // Memoize EnhancedImage props to prevent unnecessary re-renders
   const imageProps = useMemo(
     () => ({
@@ -118,9 +146,9 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors }) =
   );
 
   return (
-    <View style={STATIC_STYLES.container}>
+    <Animated.View style={containerStyle}>
       {/* Background Image Section with safe area height */}
-      <View style={imageSectionStyle}>
+      <Animated.View style={[imageSectionStyle, animatedImageStyle]}>
         <EnhancedImage {...imageProps} />
 
         {/* Enhanced image gradient for summary overlay */}
@@ -136,8 +164,8 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors }) =
           style={STATIC_STYLES.backgroundGradientOverlay}
           pointerEvents="none"
         />
-      </View>
-    </View>
+      </Animated.View>
+    </Animated.View>
   );
 }, ParallaxHeaderComparison);
 

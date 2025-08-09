@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { FlashListProps } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
-import React, { Fragment, memo, useCallback, useMemo, type ReactElement } from 'react';
+import React, { memo, useCallback, useMemo, type ReactElement } from 'react';
 import type {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -10,6 +10,7 @@ import type {
   ViewabilityConfig,
 } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -25,6 +26,7 @@ import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
+import { calculateHeaderHeight } from '@/utils/gradientUtils';
 
 // Inline utility functions since they're only used in this component
 const createViewabilityConfig = () => ({
@@ -32,8 +34,8 @@ const createViewabilityConfig = () => ({
   minimumViewTime: 100, // Minimum time item must be visible before triggering
 });
 
-const createContentContainerStyle = (bottomInset: number) => ({
-  paddingTop: 0,
+const createContentContainerStyle = (bottomInset: number, topPadding: number) => ({
+  paddingTop: topPadding,
   paddingBottom: bottomInset + 48, // Safe area + comfortable reading space
 });
 
@@ -124,6 +126,7 @@ const styles = StyleSheet.create({
   listContainer: {
     flex: 1,
     height: '100%',
+    position: 'relative',
   },
   titleContainer: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
@@ -154,8 +157,6 @@ interface ArticleTitleProps {
 }
 
 const ArticleTitle = memo<ArticleTitleProps>(({ title, author }) => {
-  const colors = useColors();
-
   // Memoize dynamic styles for better performance
   // Use default heading1 typography without overriding size/line-height
   const titleStyle = useMemo(
@@ -356,23 +357,25 @@ export const ArticleContent = memo<ArticleContentProps>(
   }) => {
     const insets = useSafeAreaInsets();
 
+    // Compute header height once per safe-area change
+    const headerHeight = useMemo(() => calculateHeaderHeight(insets.top), [insets.top]);
+
+    // Shared scroll value for parallax header
+    const scrollY = useSharedValue(0);
+
     // Optimized scroll handler with stable reference
     const handleAnimatedScroll = useCallback(
       (event: NativeSyntheticEvent<NativeScrollEvent>) => {
         handleScroll(event);
+        scrollY.value = event.nativeEvent.contentOffset.y;
       },
-      [handleScroll]
+      [handleScroll, scrollY]
     );
 
-    // Memoized header component with stable references
+    // Render title/author below the hero image but above content
     const headerComponent = useMemo(
-      () => (
-        <Fragment>
-          <ParallaxHeader article={article} colors={colors} />
-          <ArticleTitle title={article.title} author={article.author} />
-        </Fragment>
-      ),
-      [article.id, article.title, article.author.id, article.author.name, colors]
+      () => <ArticleTitle title={article.title} author={article.author} />,
+      [article.title, article.author]
     );
 
     // Get articles from cache for recommendations (avoid re-querying here)
@@ -387,8 +390,8 @@ export const ArticleContent = memo<ArticleContentProps>(
 
     // Memoized content container style
     const contentContainerStyle = useMemo(
-      () => createContentContainerStyle(insets.bottom),
-      [insets.bottom]
+      () => createContentContainerStyle(insets.bottom, headerHeight),
+      [insets.bottom, headerHeight]
     );
 
     // Memoized list container style
@@ -427,7 +430,7 @@ export const ArticleContent = memo<ArticleContentProps>(
           removeClippedSubviews: true,
           alwaysBounceVertical: false,
           bounces: true,
-          overScrollMode: 'auto',
+          overScrollMode: 'always',
           extraData: '',
           initialScrollIndex: 0,
         }),
@@ -449,6 +452,8 @@ export const ArticleContent = memo<ArticleContentProps>(
       <View style={styles.flexOne}>
         {sortedSentences && sortedSentences.length > 0 ? (
           <View style={listContainerStyle}>
+            {/* Sticky Parallax Header behind content */}
+            <ParallaxHeader article={article} colors={colors} scrollY={scrollY} />
             <FlashList ref={scrollViewRef} key={`article-${id}`} {...flashListConfig} />
 
             {/* Custom sentence scrubber */}
