@@ -389,10 +389,44 @@ export const ArticleContent = memo<ArticleContentProps>(
       },
     });
 
+    // Reserve right-side space so text never sits under floating action buttons
+    const rightOverlayPadding = useMemo(
+      () => MIN_TOUCH_TARGET.MEDIUM * 2 + LAYOUT.SPACING.LARGE * 2,
+      []
+    );
+
     // Render title/author below the hero image but above content
     const headerComponent = useMemo(
-      () => <ArticleTitle title={article.title} author={article.author} />,
-      [article.title, article.author]
+      () => (
+        <View>
+          <View style={[styles.titleContainer, { paddingRight: rightOverlayPadding }]}>
+            <ThemedText
+              type="heading1"
+              colorName="headingText"
+              style={[styles.titleText, { textAlign: 'left' }]}
+            >
+              {article.title}
+            </ThemedText>
+          </View>
+
+          <View
+            style={[
+              styles.authorContainer,
+              { paddingRight: rightOverlayPadding, zIndex: LAYOUT.Z_INDEX.OVERLAY },
+            ]}
+          >
+            <ThemedText
+              type="body"
+              weight="medium"
+              colorName="authorText"
+              style={{ textAlign: 'left' }}
+            >
+              {STRINGS.BY} {article.author.name}
+            </ThemedText>
+          </View>
+        </View>
+      ),
+      [article.title, article.author, rightOverlayPadding]
     );
 
     // Get articles from cache for recommendations (avoid re-querying here)
