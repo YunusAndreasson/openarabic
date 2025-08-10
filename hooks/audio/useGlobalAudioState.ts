@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AUDIO_STATES } from '@/constants/audio';
 import { ROUTE_PATHS } from '@/constants/routes';
-import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -85,8 +84,7 @@ export function useGlobalAudioState(): GlobalAudioState {
     return articleIdString ? parseInt(articleIdString, 10) : null;
   }, [audioPlayer.currentTrack?.articleId]);
 
-  // Get current article data
-  const { article: articleData } = useArticleData(currentArticleId || undefined, user?.id);
+  // Avoid refetching current article here; rely on cache and track metadata for mini-player
 
   // Calculate queue position
   const queuePosition = useMemo(() => {
@@ -119,16 +117,10 @@ export function useGlobalAudioState(): GlobalAudioState {
     const readingListArticle =
       readingList?.find(i => i.article_id === currentArticleId)?.articles ?? null;
 
-    const title =
-      articleData?.title || cachedArticle?.title || audioPlayer.currentTrack?.title || '';
-    const author =
-      articleData?.author?.name ||
-      cachedArticle?.author?.name ||
-      readingListArticle?.author?.name ||
-      '';
+    const title = cachedArticle?.title || audioPlayer.currentTrack?.title || '';
+    const author = cachedArticle?.author?.name || readingListArticle?.author?.name || '';
     const imageUrl = String(
-      articleData?.image_url ||
-        cachedArticle?.image_url ||
+      cachedArticle?.image_url ||
         readingListArticle?.image_url ||
         audioPlayer.currentTrack?.imageUrl ||
         ''
@@ -155,7 +147,6 @@ export function useGlobalAudioState(): GlobalAudioState {
 
     return null;
   }, [
-    articleData,
     currentArticleId,
     queryClient,
     user?.id,

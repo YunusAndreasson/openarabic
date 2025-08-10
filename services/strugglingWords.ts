@@ -16,11 +16,12 @@ export const strugglingWordsService = {
     await checkAuthentication(userId);
 
     // Fetch reviewed words sorted by difficulty and stability
-    // We fetch more than the limit to filter for struggling words
+    // Important: do not apply a hard limit here, otherwise a valid struggling word
+    // that isn't in the top-N by difficulty/stability could be missed
     const candidateWords = await studyWordsFSRSService.getFSRSWords(userId, {
       reviewedOnly: true,
       sortByDifficultyAndStability: true,
-      limit: limit * 5, // Fetch more candidates to ensure we can find enough struggling words
+      // no limit: fetch all reviewed words, we will slice after filtering
     });
 
     // Filter to only include words that actually meet the struggling criteria

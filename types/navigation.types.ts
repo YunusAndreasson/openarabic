@@ -5,7 +5,6 @@ export interface ReviewParams {
   rootId?: number;
   mode?: 'new' | 'random' | 'spaced';
   count?: number;
-  fromVocabulary?: string;
   fromRemember?: string;
 }
 

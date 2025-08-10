@@ -40,7 +40,6 @@ export const getPracticeReviewRoute = (
     rootId: number;
     mode: 'new' | 'random' | 'spaced';
     count: number;
-    fromVocabulary: string;
     fromRemember: string;
   }>
 ): string => {
@@ -48,7 +47,6 @@ export const getPracticeReviewRoute = (
   if (params?.rootId) search.append('rootId', String(params.rootId));
   if (params?.mode) search.append('mode', params.mode);
   if (params?.count) search.append('count', String(params.count));
-  if (params?.fromVocabulary) search.append('fromVocabulary', params.fromVocabulary);
   if (params?.fromRemember) search.append('fromRemember', params.fromRemember);
   const query = search.toString().replace(/\(/g, '%28').replace(/\)/g, '%29');
   return query ? `${ROUTE_PATHS.PRACTICE_REVIEW}?${query}` : ROUTE_PATHS.PRACTICE_REVIEW;

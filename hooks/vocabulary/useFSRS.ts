@@ -420,8 +420,15 @@ export function useFSRS({
     if (!userId) return;
 
     // Invalidate the specific query type we're using
-    const currentQueryKey = useAllWords ? FSRS_QUERY_KEYS.all(userId) : FSRS_QUERY_KEYS.due(userId);
-    queryClient.invalidateQueries({ queryKey: currentQueryKey });
+    if (mode === 'spaced') {
+      // Struggling words session
+      queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.struggling(userId, 50) });
+    } else {
+      const currentQueryKey = useAllWords
+        ? FSRS_QUERY_KEYS.all(userId)
+        : FSRS_QUERY_KEYS.due(userId);
+      queryClient.invalidateQueries({ queryKey: currentQueryKey });
+    }
 
     // Also invalidate related queries
     queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.stats(userId) });
@@ -429,7 +436,7 @@ export function useFSRS({
     stateTrackingRef.current.queueInitialized = false;
     queueRef.current = new PriorityQueue<StudyWord>();
     spacingQueueRef.current = createSpacingState();
-  }, [queryClient, userId, useAllWords]);
+  }, [queryClient, userId, useAllWords, mode]);
 
   return {
     currentWord,

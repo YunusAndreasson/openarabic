@@ -306,6 +306,11 @@ export default function ListenScreen(): JSX.Element {
             keyExtractor={memoizedKeyExtractor}
             renderItem={renderItem}
             onDragEnd={handleDragEnd}
+            // Match study view pull behavior: no bounce/overscroll
+            bounces={false}
+            alwaysBounceVertical={false}
+            overScrollMode="never"
+            contentInsetAdjustmentBehavior="never"
             showsVerticalScrollIndicator={false}
             contentContainerStyle={listContainerStyle}
             ItemSeparatorComponent={ItemSeparator}
@@ -318,6 +323,11 @@ export default function ListenScreen(): JSX.Element {
             estimatedItemSize={ITEM_HEIGHT}
             keyExtractor={memoizedKeyExtractor}
             removeClippedSubviews={true}
+            // Match study view pull behavior: no bounce/overscroll
+            bounces={false}
+            alwaysBounceVertical={false}
+            overScrollMode="never"
+            contentInsetAdjustmentBehavior="never"
             showsVerticalScrollIndicator={false}
             contentContainerStyle={listContainerStyle}
             ItemSeparatorComponent={ItemSeparator}

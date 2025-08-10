@@ -1,4 +1,5 @@
 import type { FlashList } from '@shopify/flash-list';
+import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -10,16 +11,13 @@ import {
   type NativeSyntheticEvent,
 } from 'react-native';
 
-import { ArticleSentence, WordTooltip } from '@/components/article';
+import { ArticleSentence, SentenceScrubber, WordTooltip } from '@/components/article';
 import { ArticleContent } from '@/components/article/ArticleContent';
 import { MiniPlayer } from '@/components/audio';
 import { ToastProvider, useToast } from '@/components/providers';
-import { TIMING_CONFIG } from '@/constants/animation';
-import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
+import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
-import { useArticleRenderers } from '@/hooks/articles/useArticleRenderers';
-import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { useReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useSentenceScrubber } from '@/hooks/articles/useSentenceScrubber';
 import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
@@ -30,7 +28,7 @@ import { useHeaderVisibility } from '@/hooks/ui/useHeaderVisibility';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { useAppSelectorMemo } from '@/store/hooks';
 import type { Tables } from '@/types/database.types';
-import type { SentenceWord } from '@/types/vocabulary.types';
+import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
 
@@ -45,15 +43,9 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
 
   const audioPlayer = useSimpleAudioPlayer();
   const globalAudioState = useGlobalAudioState();
+  const queryClient = useQueryClient();
 
   const { handleScroll: handleHeaderScroll } = useHeaderVisibility();
-
-  // Add fade-in animation for smooth content appearance
-  const { fadeIn } = useOpacityAnimation({
-    initialOpacity: 0,
-    duration: TIMING_CONFIG.GENTLE.duration,
-    autoStart: false,
-  });
 
   const articleId = useMemo(() => {
     if (!id) return undefined;
@@ -97,16 +89,21 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     hasHandledInitialResumeRef.current = false;
   }, [articleId]);
 
-  // Handle scroll to close tooltip and hide header
+  // Keep a ref to avoid handleScroll identity changes when tooltip toggles
+  const activeTooltipRef = useRef<typeof activeTooltip>(null);
+  useEffect(() => {
+    activeTooltipRef.current = activeTooltip;
+  }, [activeTooltip]);
+
+  // Handle scroll to close tooltip and hide header with stable identity
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       handleHeaderScroll(event);
-      // Close tooltip when user scrolls
-      if (activeTooltip) {
+      if (activeTooltipRef.current) {
         setActiveTooltip(null);
       }
     },
-    [handleHeaderScroll, activeTooltip]
+    [handleHeaderScroll]
   );
 
   // Article mutations for reading list and word management
@@ -118,7 +115,12 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     }
   );
 
-  const { dueWordRootIds = new Set<number>() } = useArticlesByDueWords(user?.id, 0);
+  // Lightweight due word roots from cache only (no extra fetching)
+  const dueWordRootIds = useMemo(() => {
+    if (!user?.id) return new Set<number>();
+    const cachedDue = queryClient.getQueryData<StudyWord[]>(FSRS_QUERY_KEYS.due(user.id)) ?? [];
+    return new Set<number>(cachedDue.map(w => w.root_id));
+  }, [queryClient, user?.id]);
 
   const handleToggleReadingListWithFeedback = useCallback(async () => {
     if (!articleId) return;
@@ -210,12 +212,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     return () => subscription.remove();
   }, [user?.id, refetchStudyWords]);
 
-  // Trigger fade-in when article content is ready
-  useEffect(() => {
-    if (article && sortedSentences && sortedSentences.length > 0 && !isLoadingArticle) {
-      fadeIn();
-    }
-  }, [article, sortedSentences, isLoadingArticle, fadeIn]);
+  // Removed unused fade-in animation to avoid extra work on ready state
 
   // Limit resume behavior to a short window right after content becomes ready
   const resumeWindowActiveRef = useRef(false);
@@ -302,12 +299,10 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     [handleWordPress]
   );
 
-  const { getWordsForSentence } = useArticleRenderers(
-    { fontScale },
-    selectedWordIds,
-    sentenceWordsMap,
-    handleWordPressForRenderer,
-    handleRootPress
+  // Lightweight sentence words accessor without extra routing logic
+  const getWordsForSentence = useCallback(
+    (sentenceId: number) => sentenceWordsMap.get(sentenceId) ?? [],
+    [sentenceWordsMap]
   );
 
   const renderSentenceItem = useCallback(
@@ -387,6 +382,15 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
         }
         onStudyListToggle={handleStudyListToggle}
         wordRootId={activeTooltip?.word.root_id}
+      />
+
+      {/* Scrubber moved out of ArticleContent to avoid ArticleContent rerenders */}
+      <SentenceScrubber
+        currentSentence={currentSentenceIndex}
+        totalSentences={sortedSentences?.length ?? 0}
+        onSentenceChange={handleSentenceChange}
+        onScrubStart={handleScrubStart}
+        onScrubEnd={handleScrubEnd}
       />
     </View>
   );

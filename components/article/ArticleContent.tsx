@@ -20,7 +20,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/ThemedText';
 import ParallaxHeader from '@/components/article/ParallaxHeader';
 import { RelatedArticlesSection } from '@/components/article/RelatedArticlesSection';
-import { SentenceScrubber } from '@/components/article/SentenceScrubber';
 import PlayButton from '@/components/listen/PlayButton';
 import { SCROLL_EVENT_THROTTLE, SENTENCE_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
@@ -328,11 +327,6 @@ interface ArticleContentProps {
   handleScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   handleViewableItemsChanged: (info: { viewableItems: ViewToken[] }) => void;
   colors: ThemeColors;
-  currentSentenceIndex: number;
-  totalSentences: number;
-  onSentenceChange: (sentenceIndex: number) => void;
-  onScrubStart: () => void;
-  onScrubEnd: () => void;
   scrollViewRef: React.RefObject<FlashList<Tables<'article_sentences'>>>;
   // Reading list (playlist/listening) functionality
   isInReadingList: boolean;
@@ -353,11 +347,6 @@ export const ArticleContent = memo<ArticleContentProps>(
     handleScroll,
     handleViewableItemsChanged,
     colors,
-    currentSentenceIndex,
-    totalSentences,
-    onSentenceChange,
-    onScrubStart,
-    onScrubEnd,
     scrollViewRef,
     isInReadingList,
     onToggleReadingList,
@@ -490,15 +479,6 @@ export const ArticleContent = memo<ArticleContentProps>(
               {...flashListConfig}
             />
 
-            {/* Custom sentence scrubber */}
-            <SentenceScrubber
-              currentSentence={currentSentenceIndex}
-              totalSentences={totalSentences}
-              onSentenceChange={onSentenceChange}
-              onScrubStart={onScrubStart}
-              onScrubEnd={onScrubEnd}
-            />
-
             {/* Floating action buttons */}
             <FloatingActionButtons
               isInReadingList={isInReadingList}
@@ -517,8 +497,6 @@ export const ArticleContent = memo<ArticleContentProps>(
     // Check primitive values first for early return
     if (
       prevProps.id !== nextProps.id ||
-      prevProps.currentSentenceIndex !== nextProps.currentSentenceIndex ||
-      prevProps.totalSentences !== nextProps.totalSentences ||
       prevProps.isInReadingList !== nextProps.isInReadingList ||
       prevProps.isPlaying !== nextProps.isPlaying
     ) {

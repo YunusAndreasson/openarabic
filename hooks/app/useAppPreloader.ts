@@ -94,6 +94,8 @@ export const useAppPreloader = (): AppPreloaderResult => {
             queryFn: () =>
               studyWordsFSRSService.getFSRSWords(user.id, {
                 onlyDue: true,
+                // Align with session cooldown to avoid showing words that were just reviewed
+                sessionCooldownHours: 1,
                 limit: 100,
               }),
             ...CACHE_TIMES.CRITICAL,
@@ -199,6 +201,8 @@ export const useAppPreloader = (): AppPreloaderResult => {
           queryFn: () =>
             studyWordsFSRSService.getFSRSWords(user.id, {
               onlyDue: true,
+              // Align with session cooldown to avoid flicker
+              sessionCooldownHours: 1,
               limit: 100,
             }),
           ...CACHE_TIMES.MEDIUM,

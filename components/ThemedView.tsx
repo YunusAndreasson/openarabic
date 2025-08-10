@@ -57,9 +57,9 @@ function ThemedViewComponent({
   const scrollableContent = useMemo(
     () => (
       <ScrollView
-        alwaysBounceVertical={true}
+        alwaysBounceVertical={false}
         automaticallyAdjustContentInsets={false}
-        bounces={true}
+        bounces={false}
         contentContainerStyle={contentContainerStyle}
         contentInsetAdjustmentBehavior="never"
         removeClippedSubviews={true}
