@@ -89,11 +89,7 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
             {/* Word Information */}
             <View style={styles.wordInfo}>
               {/* Keep Arabic overrides within practice section while using ThemedText */}
-              <ThemedText
-                type="arabic"
-                skipDefaultColor
-                style={[styles.arabicText, { color: colors.text }]}
-              >
+              <ThemedText type="arabic" style={styles.arabicText}>
                 {arabicText}
               </ThemedText>
               <ThemedText type="body" variant="secondary" style={styles.englishText}>
@@ -165,20 +161,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     flex: 1,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.TINY,
+    paddingTop: LAYOUT.SPACING.TINY,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
   wordInfo: {
     flex: 1,
     marginRight: LAYOUT.SPACING.MEDIUM,
+    alignItems: 'flex-start',
   },
   arabicText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     fontWeight: '600',
     marginBottom: 1,
+    textAlign: 'auto',
   },
   englishText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '400',
+    textAlign: 'left',
   },
   rightSection: {
     flexDirection: 'row',

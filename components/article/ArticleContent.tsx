@@ -10,7 +10,11 @@ import type {
   ViewabilityConfig,
 } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { useSharedValue } from 'react-native-reanimated';
+import Animated, {
+  runOnJS,
+  useAnimatedScrollHandler,
+  useSharedValue,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -28,6 +32,11 @@ import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { calculateHeaderHeight } from '@/utils/gradientUtils';
 
+// Animated version of FlashList for UI-thread scroll handling
+const AnimatedFlashList = Animated.createAnimatedComponent(
+  FlashList as unknown as React.ComponentType<any>
+);
+
 // Inline utility functions since they're only used in this component
 const createViewabilityConfig = () => ({
   itemVisiblePercentThreshold: 50, // Consider item visible when 50% is visible
@@ -41,8 +50,9 @@ const createContentContainerStyle = (bottomInset: number, topPadding: number) =>
 
 const createListContainerStyle = (backgroundColor: string) => ({
   flex: 1,
-  height: 100,
+  height: '100%',
   backgroundColor,
+  position: 'relative' as const,
 });
 
 const createOverrideItemLayout =
@@ -362,15 +372,33 @@ export const ArticleContent = memo<ArticleContentProps>(
 
     // Shared scroll value for parallax header
     const scrollY = useSharedValue(0);
+    // Reduce cross-thread calls by emitting JS updates only when change is meaningful
+    const lastEmittedY = useSharedValue(0);
 
-    // Optimized scroll handler with stable reference
-    const handleAnimatedScroll = useCallback(
-      (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-        handleScroll(event);
-        scrollY.value = event.nativeEvent.contentOffset.y;
+    // Forward JS scroll needs from UI thread
+    const handleScrollJS = useCallback(
+      (y: number) => {
+        const evt = {
+          nativeEvent: { contentOffset: { y } },
+        } as NativeSyntheticEvent<NativeScrollEvent>;
+        handleScroll(evt);
       },
-      [handleScroll, scrollY]
+      [handleScroll]
     );
+
+    // UI-thread scroll handler for smoothness
+    const onScrollAnimated = useAnimatedScrollHandler({
+      onScroll: event => {
+        const y = event.contentOffset.y;
+        scrollY.value = y;
+        // Emit to JS only if scrolled enough to matter to header/tooltip logic
+        const dy = Math.abs(y - lastEmittedY.value);
+        if (dy >= 8 || y === 0) {
+          lastEmittedY.value = y;
+          runOnJS(handleScrollJS)(y);
+        }
+      },
+    });
 
     // Render title/author below the hero image but above content
     const headerComponent = useMemo(
@@ -420,7 +448,9 @@ export const ArticleContent = memo<ArticleContentProps>(
           contentContainerStyle,
           ListHeaderComponent: headerComponent,
           ListFooterComponent: footerComponent,
-          onScroll: handleAnimatedScroll,
+          onScroll: onScrollAnimated as unknown as (
+            event: NativeSyntheticEvent<NativeScrollEvent>
+          ) => void,
           onViewableItemsChanged: handleViewableItemsChanged,
           viewabilityConfig,
           overrideItemLayout,
@@ -441,7 +471,7 @@ export const ArticleContent = memo<ArticleContentProps>(
         contentContainerStyle,
         headerComponent,
         footerComponent,
-        handleAnimatedScroll,
+        onScrollAnimated,
         handleViewableItemsChanged,
         viewabilityConfig,
         overrideItemLayout,
@@ -454,7 +484,11 @@ export const ArticleContent = memo<ArticleContentProps>(
           <View style={listContainerStyle}>
             {/* Sticky Parallax Header behind content */}
             <ParallaxHeader article={article} colors={colors} scrollY={scrollY} />
-            <FlashList ref={scrollViewRef} key={`article-${id}`} {...flashListConfig} />
+            <AnimatedFlashList
+              ref={scrollViewRef as unknown as React.RefObject<any>}
+              key={`article-${id}`}
+              {...flashListConfig}
+            />
 
             {/* Custom sentence scrubber */}
             <SentenceScrubber

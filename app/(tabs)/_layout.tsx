@@ -118,7 +118,7 @@ export default function TabLayout(): JSX.Element {
           tabBarInactiveTintColor: colors.tabIconDefault,
           tabBarShowLabel: false, // Clean icon-only design with 3 tabs and clear nav titles
           tabBarIconStyle: {
-            marginTop: 8, // Standard centering for icons when labels are hidden
+            marginTop: LAYOUT.SPACING.SMALL, // Standard centering using spacing constant
           },
           tabBarStyle: Platform.select({
             ios: {

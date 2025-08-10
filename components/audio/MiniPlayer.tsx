@@ -172,7 +172,7 @@ const MiniPlayerComponent = ({
             >
               <Ionicons
                 name="timer"
-                size={14} // Increased from 12px back to 14px for better visibility
+                size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
                 color={isTimerActive ? colors.background : colors.secondaryText}
               />
             </Pressable>

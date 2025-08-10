@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   secondaryButton: {
-    backgroundColor: 'transparent',
+    // Intentionally empty – backgroundColor provided via theme at render time
   },
 });
 

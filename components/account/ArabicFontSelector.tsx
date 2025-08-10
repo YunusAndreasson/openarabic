@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   },
   slider: {
     width: '100%',
-    height: 40,
+    height: LAYOUT.BUTTON.HEIGHT.LARGE - LAYOUT.SPACING.SMALL,
   },
   scrollView: {
     flex: 1,
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
   fontDescription: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
     textAlign: 'center',
-    opacity: 0.8,
+    opacity: LAYOUT.OPACITY.HOVER,
   },
   previewText: {
     textAlign: 'center',

@@ -42,11 +42,11 @@ const STATIC_STYLES = StyleSheet.create({
   },
   tooltip: {
     position: 'absolute',
-    borderRadius: 8,
-    borderWidth: 1,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     paddingHorizontal: TOOLTIP_CONSTANTS.MIN_PADDING,
-    paddingVertical: 8,
-    minWidth: 80,
+    paddingVertical: LAYOUT.SPACING.SMALL,
+    minWidth: LAYOUT.CARD.HEIGHT.LIST_ITEM,
     maxWidth: SCREEN_WIDTH * 0.85,
     justifyContent: 'center',
     alignItems: 'center',
@@ -70,7 +70,7 @@ const STATIC_STYLES = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: LAYOUT.SPACING.SMALL,
     height: '100%',
   },
   textContainer: {
@@ -79,7 +79,7 @@ const STATIC_STYLES = StyleSheet.create({
     justifyContent: 'center',
   },
   bookmarkButton: {
-    marginLeft: 4,
+    marginLeft: LAYOUT.SPACING.TINY,
   },
 });
 
@@ -274,7 +274,7 @@ export const WordTooltip = memo(
           <View style={STATIC_STYLES.textContainer}>{renderColorCodedEnglish}</View>
           <TouchableIcon
             icon={'school'}
-            size={20}
+            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
             touchSize="small"
             color={isInStudyList ? colors.tint : colors.secondaryText}
             onPress={handleStudyListPress}

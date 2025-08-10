@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: 1,
+    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     minHeight: MIN_TOUCH_TARGET.SMALL,
     gap: LAYOUT.SPACING.TINY,
   },

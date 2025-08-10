@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: LAYOUT.SPACING.SMALL,
-    opacity: 0.8,
+    opacity: LAYOUT.OPACITY.HOVER,
   },
   manageButton: {
     width: MIN_TOUCH_TARGET.SMALL,
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: LAYOUT.SPACING.SMALL,
-    opacity: 0.8,
+    opacity: LAYOUT.OPACITY.HOVER,
   },
 });
 

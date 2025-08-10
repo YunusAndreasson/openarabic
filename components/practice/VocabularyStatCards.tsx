@@ -171,7 +171,7 @@ export const VocabularyStatCards = memo(
                 styles.categoryCard,
                 { backgroundColor: getButtonBackground(config) },
                 !config.disabled && (animatedStyle as ViewStyle),
-                config.disabled && { opacity: 0.7 },
+                config.disabled && { opacity: LAYOUT.OPACITY.HIGH },
               ]}
             >
               <View style={[styles.numberBadge, { backgroundColor: getBadgeColor(config) }]}>

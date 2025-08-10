@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
     letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
-    opacity: 0.9,
+    opacity: LAYOUT.OPACITY.HOVER,
   },
 
   progressBar: {

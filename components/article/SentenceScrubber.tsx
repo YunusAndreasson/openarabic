@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   tooltipBubble: {
     paddingHorizontal: LAYOUT.SPACING.SMALL,
     paddingVertical: LAYOUT.SPACING.TINY,
-    borderRadius: 6,
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
     ...LAYOUT.ELEVATION.SMALL,
   },
   tooltipText: {

@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: 1,
+    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     flexDirection: 'row',
     justifyContent: 'center',
     minHeight: MIN_TOUCH_TARGET.MEDIUM,

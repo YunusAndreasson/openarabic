@@ -146,7 +146,7 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
   );
 
   return (
-    <Animated.View style={containerStyle}>
+    <Animated.View style={containerStyle} pointerEvents="none">
       {/* Background Image Section with safe area height */}
       <Animated.View style={[imageSectionStyle, animatedImageStyle]}>
         <EnhancedImage {...imageProps} />

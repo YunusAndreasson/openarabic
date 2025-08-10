@@ -69,7 +69,7 @@ export default function IslamicCalendarScreen(): JSX.Element {
                         borderLeftColor: colors.warning,
                         backgroundColor: colors.elevation2,
                       },
-                      isPast && { opacity: 0.7 },
+                      isPast && { opacity: LAYOUT.OPACITY.HIGH },
                     ]}
                   >
                     <View style={styles.eventContent}>
@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
   separator: {
     backgroundColor: 'transparent',
     marginHorizontal: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.TINY,
-    opacity: 0.2,
+    opacity: LAYOUT.OPACITY.SUBTLE,
     width: LAYOUT.SPACING.MICRO,
   },
   timingRow: {

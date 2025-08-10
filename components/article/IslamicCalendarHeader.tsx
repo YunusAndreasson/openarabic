@@ -14,7 +14,7 @@ import {
 } from '@/utils/gradientUtils';
 
 const GOLDEN_RATIO = 1.618;
-const HEADER_HEIGHT = 400;
+const HEADER_HEIGHT = LAYOUT.HEADER.HEIGHT.EXPANDED; // use standardized header height
 const ADJUSTED_HEADER_HEIGHT = HEADER_HEIGHT / GOLDEN_RATIO;
 
 const styles = StyleSheet.create({
@@ -69,8 +69,8 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
     textAlign: 'center',
     // Strong text shadow for excellent readability
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
+    textShadowOffset: { width: 0, height: LAYOUT.BORDER.WIDTH.NORMAL },
+    textShadowRadius: LAYOUT.SPACING.MEDIUM, // ~12
     marginBottom: LAYOUT.SPACING.TINY,
   },
   englishDate: {
@@ -78,8 +78,8 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
     textAlign: 'center',
     // Strong text shadow for excellent readability
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
+    textShadowOffset: { width: 0, height: LAYOUT.BORDER.WIDTH.NORMAL },
+    textShadowRadius: LAYOUT.SPACING.LARGE, // ~16 (slightly stronger for legibility)
     marginBottom: LAYOUT.SPACING.TINY,
   },
   activeCount: {
@@ -88,8 +88,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     opacity: LAYOUT.OPACITY.MEDIUM,
     // Strong text shadow for excellent readability
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    textShadowOffset: { width: 0, height: LAYOUT.BORDER.WIDTH.NORMAL },
+    textShadowRadius: LAYOUT.SPACING.SMALL, // ~8
   },
 });
 

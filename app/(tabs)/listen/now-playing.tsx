@@ -281,22 +281,22 @@ const styles = StyleSheet.create({
   title: {
     textAlign: 'center',
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.BOLD,
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    textShadowOffset: { width: 0, height: LAYOUT.BORDER.WIDTH.NORMAL },
+    textShadowRadius: LAYOUT.SPACING.TINY, // ~4
   },
   author: {
     textAlign: 'center',
     marginTop: LAYOUT.SPACING.TINY,
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowOffset: { width: 0, height: LAYOUT.BORDER.WIDTH.NORMAL },
+    textShadowRadius: LAYOUT.SPACING.HALF_TINY, // ~2
   },
   progressText: {
     textAlign: 'center',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
     marginBottom: LAYOUT.SPACING.MEDIUM,
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowOffset: { width: 0, height: LAYOUT.BORDER.WIDTH.NORMAL },
+    textShadowRadius: LAYOUT.SPACING.HALF_TINY, // ~2
   },
   sentenceSection: {
     paddingTop: LAYOUT.SPACING.XXXLARGE * 2,
@@ -311,8 +311,8 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    textShadowOffset: { width: 0, height: LAYOUT.BORDER.WIDTH.NORMAL },
+    textShadowRadius: LAYOUT.SPACING.TINY, // ~4
   },
   bottomControlsContainer: {
     position: 'absolute',

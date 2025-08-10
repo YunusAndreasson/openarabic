@@ -13,8 +13,8 @@ interface StreakChartProps {
 }
 
 const CHART_HEIGHT = 60;
-const BAR_HEIGHT = 24;
-const BAR_RADIUS = 4;
+const BAR_HEIGHT = LAYOUT.BUTTON.HEIGHT.LARGE / 2; // ~24 via constants
+const BAR_RADIUS = LAYOUT.BORDER_RADIUS.SMALL; // ~8
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export const StreakChart = memo<StreakChartProps>(
@@ -181,6 +181,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     textAlign: 'center',
-    width: 24,
+    width: LAYOUT.BUTTON.ICON_SIZE.XLARGE,
   },
 });

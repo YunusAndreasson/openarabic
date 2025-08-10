@@ -343,10 +343,13 @@ const AccountScreen: FC = () => {
                     <ThemedText type="body" weight="medium" style={{ color: colors.error }}>
                       {STRINGS.SIGN_OUT}
                     </ThemedText>
-                    <ThemedText
-                      style={[styles.userEmailText, { color: colors.error, opacity: 0.6 }]}
-                      type="caption"
-                    >
+                      <ThemedText
+                        style={[
+                          styles.userEmailText,
+                          { color: colors.error, opacity: LAYOUT.OPACITY.MEDIUM },
+                        ]}
+                        type="caption"
+                      >
                       {user?.email || STRINGS.NO_EMAIL}
                     </ThemedText>
                   </View>
