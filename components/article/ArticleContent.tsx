@@ -23,7 +23,6 @@ import { RelatedArticlesSection } from '@/components/article/RelatedArticlesSect
 import PlayButton from '@/components/listen/PlayButton';
 import { SCROLL_EVENT_THROTTLE, SENTENCE_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
-import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { Article } from '@/types/articles.types';
@@ -49,7 +48,6 @@ const createContentContainerStyle = (bottomInset: number, topPadding: number) =>
 
 const createListContainerStyle = (backgroundColor: string) => ({
   flex: 1,
-  height: '100%',
   backgroundColor,
   position: 'relative' as const,
 });
@@ -134,7 +132,6 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     flex: 1,
-    height: '100%',
     position: 'relative',
   },
   titleContainer: {
@@ -160,49 +157,9 @@ const SENTENCE_ITEM_HEIGHT = LAYOUT.SENTENCE_ITEM.HEIGHT;
 const SCROLL_THROTTLE = SCROLL_EVENT_THROTTLE;
 const DRAW_DISTANCE_MULTIPLIER = SENTENCE_DRAW_DISTANCE_MULTIPLIER;
 
-interface ArticleTitleProps {
-  title: string;
-  author: { id: number; name: string };
-}
+// Removed unused ArticleTitleProps
 
-const ArticleTitle = memo<ArticleTitleProps>(({ title, author }) => {
-  // Memoize dynamic styles for better performance
-  // Use default heading1 typography without overriding size/line-height
-  const titleStyle = useMemo(
-    () => ({
-      textAlign: 'left' as const,
-    }),
-    []
-  );
-
-  // Author style now relies on ThemedText tokens
-  const authorStyle = useMemo(
-    () => ({
-      textAlign: 'left' as const,
-    }),
-    []
-  );
-
-  return (
-    <>
-      {/* Title gets full width without button interference */}
-      <View style={styles.titleContainer}>
-        <ThemedText type="heading1" colorName="headingText" style={[styles.titleText, titleStyle]}>
-          {title}
-        </ThemedText>
-      </View>
-
-      {/* Author information */}
-      <View style={styles.authorContainer}>
-        <ThemedText type="body" weight="medium" colorName="authorText" style={authorStyle}>
-          {STRINGS.BY} {author.name}
-        </ThemedText>
-      </View>
-    </>
-  );
-});
-
-ArticleTitle.displayName = 'ArticleTitle';
+// Removed unused ArticleTitle component to simplify file
 
 // Floating action buttons component positioned over parallax header
 const FloatingActionButtons = memo<{
@@ -421,7 +378,7 @@ export const ArticleContent = memo<ArticleContentProps>(
               colorName="authorText"
               style={{ textAlign: 'left' }}
             >
-              {STRINGS.BY} {article.author.name}
+              {article.author.name}
             </ThemedText>
           </View>
         </View>

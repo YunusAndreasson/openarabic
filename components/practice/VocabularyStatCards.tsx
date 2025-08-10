@@ -55,9 +55,9 @@ export const VocabularyStatCards = memo(
       type: 'card',
     });
 
-    const handleInfoPress = () => {
+    const handleInfoPress = useCallback(() => {
       router.push(ROUTE_PATHS.INSIGHTS);
-    };
+    }, [router]);
 
     const validatedInput = useMemo(
       () => ({

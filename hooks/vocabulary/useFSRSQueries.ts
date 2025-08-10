@@ -50,6 +50,7 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
       return studyWordsFSRSService.getFSRSWords(userId, {
         onlyDue: true,
         limit,
+        // Use the session cooldown so Practice indicator and session match
         sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
       });
     },
@@ -60,16 +61,22 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
       if (!userId) return undefined;
       const allWords = queryClient.getQueryData<StudyWord[]>(FSRS_QUERY_KEYS.all(userId));
       if (allWords) {
-        const now = new Date();
-        const nowIso = now.toISOString();
-        const cutoff = new Date(now.getTime() - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000);
-        const cutoffIso = cutoff.toISOString();
+        const nowMs = Date.now();
+        const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
+
+        const normalizeTs = (ts: string | null | undefined) =>
+          ts ? ts.replace(' ', 'T') : undefined;
 
         // Filter to only include words due now AND not reviewed within the cooldown window
         const filtered = allWords.filter(word => {
-          const isDue = (word.fsrs_due ?? '9999-12-31') <= nowIso;
-          const lastReview = word.fsrs_last_review ?? '1970-01-01T00:00:00.000Z';
-          const isRecentlyReviewed = lastReview >= cutoffIso;
+          const dueStr = normalizeTs(word.fsrs_due);
+          const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
+          const isDue = Number.isFinite(dueMs) && dueMs <= nowMs;
+
+          const lastStr = normalizeTs(word.fsrs_last_review);
+          const lastMs = lastStr ? Date.parse(lastStr) : 0;
+          const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
+
           return isDue && !isRecentlyReviewed;
         });
 

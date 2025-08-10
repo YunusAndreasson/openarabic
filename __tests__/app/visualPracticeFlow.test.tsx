@@ -228,4 +228,29 @@ describe('visual practice session flow', () => {
     state.queue = originalQueue;
     state.isComplete = originalIsComplete;
   });
+
+  it('does not complete immediately when exactly one word is due', () => {
+    const originalWords = [...words];
+    const originalQueue = [...state.queue];
+    const originalIsComplete = state.isComplete;
+
+    // Simulate exactly one due word
+    words.splice(0, words.length, 'only-word');
+    state.queue = ['only-word'];
+    state.isComplete = false;
+
+    const { getByTestId, queryByTestId, rerender } = render(<PracticeFlow />);
+
+    expect(getByTestId('due-count').props.children).toBe(1);
+
+    // Start session: should show the word, not completion
+    fireEvent.press(getByTestId('start'));
+    rerender(<PracticeFlow />);
+    expect(queryByTestId('completion-screen')).toBeNull();
+
+    // Restore
+    words.splice(0, words.length, ...originalWords);
+    state.queue = originalQueue;
+    state.isComplete = originalIsComplete;
+  });
 });

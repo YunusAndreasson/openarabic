@@ -11,7 +11,11 @@ export const strugglingWordsService = {
    * This fetches words that meet the isStrugglingWord() criteria AND have been reviewed,
    * ensuring consistency between the display count and actual session content.
    */
-  async getStrugglingWords(userId: string, limit: number = 10): Promise<StudyWord[]> {
+  async getStrugglingWords(
+    userId: string,
+    limit: number = 10,
+    sessionCooldownHours: number = 1
+  ): Promise<StudyWord[]> {
     // First ensure user is authenticated
     await checkAuthentication(userId);
 
@@ -21,6 +25,7 @@ export const strugglingWordsService = {
     const candidateWords = await studyWordsFSRSService.getFSRSWords(userId, {
       reviewedOnly: true,
       sortByDifficultyAndStability: true,
+      sessionCooldownHours,
       // no limit: fetch all reviewed words, we will slice after filtering
     });
 

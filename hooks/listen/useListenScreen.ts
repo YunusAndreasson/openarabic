@@ -52,7 +52,7 @@ export const useListenScreen = () => {
   }, []);
 
   const sleepTimer = useSleepTimer(() => {
-    audioPlayer.stop();
+    simpleAudioService.stop().catch(() => {});
     setPlaybackMode('none');
   });
 

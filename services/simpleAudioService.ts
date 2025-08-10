@@ -50,7 +50,9 @@ class SimpleAudioService {
       // Ensure audio is active at the OS level
       try {
         await setIsAudioActiveAsync(true);
-      } catch {}
+      } catch {
+        // no-op
+      }
 
       await setAudioModeAsync({
         // Common
@@ -332,7 +334,9 @@ class SimpleAudioService {
     // Best-effort to release audio session
     try {
       await setIsAudioActiveAsync(false);
-    } catch {}
+    } catch {
+      // no-op
+    }
   }
 }
 

@@ -8,9 +8,10 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import EmptyState from '@common/EmptyState';
-import { DictionarySortingHeader, DictionaryWordCard } from '@practice';
 
 import { ThemedView } from '@/components/ThemedView';
+import DictionarySortingHeader from '@/components/practice/DictionarySortingHeader';
+import { DictionaryWordCard } from '@/components/practice/DictionaryWordCard';
 import EditModeButton from '@/components/ui/EditModeButton';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';

@@ -47,7 +47,7 @@ export function useFSRS({
   onComplete,
   useAllWords = false,
   mode,
-  sessionCooldownHours = DEFAULT_SESSION_COOLDOWN_HOURS,
+  sessionCooldownHours: _sessionCooldownHours = DEFAULT_SESSION_COOLDOWN_HOURS,
 }: UseFSRSOptions): UseFSRSResult {
   const [wordQueue, setWordQueue] = useState<StudyWord[]>([]);
   const [currentWord, setCurrentWord] = useState<StudyWord | null>(null);
@@ -103,14 +103,19 @@ export function useFSRS({
 
       // Use struggling words service for spaced mode
       if (mode === 'spaced') {
-        return strugglingWordsService.getStrugglingWords(userId, 50);
+        return strugglingWordsService.getStrugglingWords(
+          userId,
+          50,
+          DEFAULT_SESSION_COOLDOWN_HOURS
+        );
       }
 
       // Use regular FSRS service for other modes
       return studyWordsFSRSService.getFSRSWords(userId, {
         onlyDue: !useAllWords,
-        forStats: false, // We need full data with root relationships
-        sessionCooldownHours: sessionCooldownHours, // Apply session cooldown
+        forStats: false,
+        // Use cooldown so session and indicator both hide words for one hour
+        sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
       });
     },
     enabled: !!userId,
@@ -133,8 +138,10 @@ export function useFSRS({
   useEffect(() => {
     if (isLoading || !dueWords) return;
 
+    const effectiveDueWords: StudyWord[] = Array.isArray(dueWords) ? dueWords : [];
+
     // Build a stable signature of the current due words
-    const signature = dueWords
+    const signature = effectiveDueWords
       .map(w => w.root_id)
       .filter((id): id is number => id != null)
       .sort((a, b) => a - b)
@@ -161,9 +168,9 @@ export function useFSRS({
 
     // Initialize queue based on current due words
     initTimeoutRef.current = setTimeout(() => {
-      if (dueWords.length > 0) {
-        countersRef.current.totalWords = dueWords.length;
-        countersRef.current.uniqueWords = new Set(dueWords.map(word => word.root_id));
+      if (effectiveDueWords.length > 0) {
+        countersRef.current.totalWords = effectiveDueWords.length;
+        countersRef.current.uniqueWords = new Set(effectiveDueWords.map(word => word.root_id));
         countersRef.current.processedWords = 0;
         countersRef.current.knownWords = 0;
 
@@ -179,8 +186,8 @@ export function useFSRS({
         queueRef.current = new PriorityQueue<StudyWord>();
 
         // Prioritize words by due date and FSRS metrics using heapify
-        const items = dueWords;
-        const priorities = dueWords.map(w => calculateWordPriority(w));
+        const items = effectiveDueWords;
+        const priorities = effectiveDueWords.map(w => calculateWordPriority(w));
         queueRef.current.heapify(items, priorities);
         const ordered = queueRef.current.toArray();
         setWordQueue(ordered);

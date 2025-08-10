@@ -75,14 +75,6 @@ const styles = StyleSheet.create({
   filterText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
   },
-  dot: {
-    position: 'absolute',
-    top: LAYOUT.SPACING.TINY,
-    right: LAYOUT.SPACING.TINY,
-    width: LAYOUT.SPACING.SMALL,
-    height: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.SPACING.TINY,
-  },
   badge: {
     position: 'absolute',
     top: LAYOUT.SPACING.TINY / 2,

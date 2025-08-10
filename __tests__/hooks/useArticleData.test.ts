@@ -3,11 +3,12 @@ import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import * as ReactQuery from '@tanstack/react-query';
 
-const useQueryMock = ReactQuery.useQuery as jest.Mock;
+const useQueryMock = jest.spyOn(ReactQuery, 'useQuery');
 
 describe('useArticleData', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    useQueryMock.mockReset();
   });
 
   it('returns processed article data', () => {

@@ -292,12 +292,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     setActiveTooltip(null);
   }, []);
 
-  const handleWordPressForRenderer = useCallback(
-    (word: SentenceWord) => {
-      handleWordPress(word);
-    },
-    [handleWordPress]
-  );
+  // removed unused handleWordPressForRenderer
 
   // Lightweight sentence words accessor without extra routing logic
   const getWordsForSentence = useCallback(
@@ -340,11 +335,6 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
           handleScroll={handleScroll}
           handleViewableItemsChanged={handleViewableItemsChanged}
           colors={colors}
-          currentSentenceIndex={currentSentenceIndex}
-          totalSentences={sortedSentences.length}
-          onSentenceChange={handleSentenceChange}
-          onScrubStart={handleScrubStart}
-          onScrubEnd={handleScrubEnd}
           scrollViewRef={scrollViewRef as React.RefObject<FlashList<Tables<'article_sentences'>>>}
           isInReadingList={isInReadingList}
           onToggleReadingList={handleToggleReadingListWithFeedback}

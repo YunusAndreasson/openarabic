@@ -7,10 +7,9 @@ import { useCallback, useMemo, useRef } from 'react';
 import { ActivityIndicator, InteractionManager, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import ErrorMessage from '@practice/ErrorMessage';
-import VocabularyStatCards from '@practice/VocabularyStatCards';
-
 import { ThemedView } from '@/components/ThemedView';
+import ErrorMessage from '@/components/practice/ErrorMessage';
+import VocabularyStatCards from '@/components/practice/VocabularyStatCards';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { getPracticeReviewRoute } from '@/constants/routes';
@@ -48,10 +47,14 @@ export default function VocabularyScreen(): JSX.Element {
         hasPrefetchedRef.current = true;
         InteractionManager.runAfterInteractions(() => {
           prefetchVocabularyData();
+          // Ensure due words are fresh when screen gains focus
+          queryClient.refetchQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
         });
       } else {
         // Mark as prefetched even if data exists to prevent future calls
         hasPrefetchedRef.current = true;
+        // Still force a lightweight refresh of due counts to avoid stale UI after app restarts
+        queryClient.refetchQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
       }
     }, [user?.id, prefetchVocabularyData, queryClient])
   );
@@ -102,7 +105,9 @@ export default function VocabularyScreen(): JSX.Element {
   const dueWordsCount = dueWordsData?.length ?? 0;
 
   // Filter study words for memory capacity gauge (needs all words, not just due)
-  const filteredStudyWords = studyWords?.filter(word => word != null && word.root_id != null) ?? [];
+  const filteredStudyWords = useMemo(() => {
+    return studyWords?.filter(word => word != null && word.root_id != null) ?? [];
+  }, [studyWords]);
 
   // FIXED: Calculate learning and mastered words from actual data instead of database view
   // This ensures consistency between display and session logic for all word types
@@ -171,7 +176,7 @@ export default function VocabularyScreen(): JSX.Element {
         ]}
         scrollViewProps={{
           showsVerticalScrollIndicator: false,
-          contentInsetAdjustmentBehavior: 'never',
+          contentInsetAdjustmentBehavior: 'never' as const,
         }}
       >
         {/* Subtle loading indicator */}

@@ -1,9 +1,12 @@
 import { memo, useMemo } from 'react';
 
-import { VocabularyChart, type DataPoint } from '@charts';
-import { CHART_LABELS, EMPTY_STATE_MESSAGES, generateChartSubtitle } from '@charts/chartMessages';
-import { calculateDataPointPositions, useGraphWidth } from '@charts/constants';
-
+import { VocabularyChart, type DataPoint } from '@/components/common/charts';
+import {
+  CHART_LABELS,
+  EMPTY_STATE_MESSAGES,
+  generateChartSubtitle,
+} from '@/components/common/charts/chartMessages';
+import { calculateDataPointPositions, useGraphWidth } from '@/components/common/charts/constants';
 import { STRINGS } from '@/constants/strings';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import type { StudyWord } from '@/types/vocabulary.types';

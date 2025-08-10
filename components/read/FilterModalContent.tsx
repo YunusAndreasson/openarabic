@@ -90,9 +90,6 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                   {activeFiltersCount}
                 </ThemedText>
               </View>
-              <ThemedText type="body" weight="semibold" colorName="tint">
-                {activeFiltersCount === 1 ? 'Active Filter' : 'Active Filters'}
-              </ThemedText>
               <Pressable onPress={handleClearAll} style={styles.clearAllButton}>
                 <ThemedText type="label" colorName="warning" weight="semibold">
                   {STRINGS.RESET_FILTERS}

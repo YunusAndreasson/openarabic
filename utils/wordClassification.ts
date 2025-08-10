@@ -1,5 +1,6 @@
 import {
   DEFAULT_FSRS_DIFFICULTY,
+  DEFAULT_SESSION_COOLDOWN_HOURS,
   STRUGGLING_DIFFICULTY_THRESHOLD,
   STRUGGLING_LAPSES_THRESHOLD,
   UNSTABLE_DIFFICULTY_THRESHOLD,
@@ -70,10 +71,25 @@ export function calculateMasteredWords(studyWords: StudyWord[]): number {
  * This ensures the display count matches what users will actually practice
  */
 export function calculateStrugglingWords(studyWords: StudyWord[]): number {
+  const nowMs = Date.now();
+  const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
+  const normalizeTs = (ts: unknown) => {
+    if (typeof ts === 'string') return ts.replace(' ', 'T');
+    if (ts instanceof Date) return ts.toISOString();
+    return undefined;
+  };
+
   return studyWords.filter(word => {
-    // Must have been reviewed at least once (matching session's reviewedOnly: true)
     const hasBeenReviewed = word.fsrs_last_review != null && (word.fsrs_reps ?? 0) > 0;
-    return hasBeenReviewed && isStrugglingWord(word);
+    if (!hasBeenReviewed) return false;
+
+    // Apply the same cooldown as the session so indicators match session content
+    const lastStr = normalizeTs(word.fsrs_last_review as unknown);
+    const lastMs = lastStr ? Date.parse(lastStr) : 0;
+    const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
+    if (isRecentlyReviewed) return false;
+
+    return isStrugglingWord(word);
   }).length;
 }
 
@@ -123,6 +139,22 @@ export const getStrugglingWordsCount = (studyWords: StudyWord[]): number => {
     return 0;
   }
 
-  return studyWords.filter(word => word != null && word.root_id != null && isStrugglingWord(word))
-    .length;
+  const nowMs = Date.now();
+  const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
+  const normalizeTs = (ts: unknown) => {
+    if (typeof ts === 'string') return ts.replace(' ', 'T');
+    if (ts instanceof Date) return ts.toISOString();
+    return undefined;
+  };
+
+  return studyWords.filter(word => {
+    if (!word || word.root_id == null) return false;
+    const hasBeenReviewed = word.fsrs_last_review != null && (word.fsrs_reps ?? 0) > 0;
+    if (!hasBeenReviewed) return false;
+    const lastStr = normalizeTs(word.fsrs_last_review as unknown);
+    const lastMs = lastStr ? Date.parse(lastStr) : 0;
+    const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
+    if (isRecentlyReviewed) return false;
+    return isStrugglingWord(word);
+  }).length;
 };

@@ -3,11 +3,13 @@ import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { useArticlesByDifficultWords } from '@/hooks/articles/useArticlesByDifficultWords';
 import * as ReactQuery from '@tanstack/react-query';
 
-const useQueryMock = ReactQuery.useQuery as jest.Mock;
+let useQueryMock: jest.SpyInstance;
 
 describe('useArticlesByDifficultWords', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    useQueryMock = jest.spyOn(ReactQuery, 'useQuery');
+    useQueryMock.mockReset();
   });
 
   it('sorts articles by difficult word count', () => {

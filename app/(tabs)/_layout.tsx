@@ -16,7 +16,7 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth';
 import { useColors, useIsDarkMode } from '@/hooks/theme';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import { closeStreakBottomSheet } from '@/store/streakSlice';
 
 const TAB_SCREENS = [
@@ -71,7 +71,9 @@ export default function TabLayout(): JSX.Element {
   const { session, isLoading } = useAuth();
   const colors = useColors();
   const dispatch = useAppDispatch();
-  const isStreakBottomSheetVisible = useAppSelector(state => state.streak.isBottomSheetVisible);
+  const isStreakBottomSheetVisible = useAppSelectorMemo(
+    state => state.streak.isBottomSheetVisible
+  );
 
   useEffect(() => {
     if (!isLoading && !session?.user) {

@@ -104,13 +104,14 @@ describe('wordClassification', () => {
   });
 
   describe('calculateStrugglingWords', () => {
-    it('should count struggling words that have been reviewed', () => {
-      const now = new Date().toISOString();
+    it('should count struggling words that have been reviewed (outside cooldown)', () => {
+      const now = new Date();
+      const pastBeyondCooldown = new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString();
       const words = [
         createStudyWord({
           fsrs_difficulty: 8.5,
           fsrs_lapses: 2,
-          fsrs_last_review: now,
+          fsrs_last_review: pastBeyondCooldown,
           fsrs_reps: 3,
         }), // Struggling and reviewed
         createStudyWord({
@@ -132,9 +133,10 @@ describe('wordClassification', () => {
   });
 
   describe('calculateWordCategories', () => {
-    it('should calculate all categories correctly', () => {
+    it('should calculate all categories correctly (respecting struggling cooldown)', () => {
       const now = new Date();
       const pastDate = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+      const pastBeyondCooldown = new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString();
       const words = [
         createStudyWord({ fsrs_due: pastDate }), // Due
         createStudyWord({ fsrs_state: 0 }), // Learning
@@ -143,7 +145,7 @@ describe('wordClassification', () => {
           fsrs_state: 1, // Learning state
           fsrs_difficulty: 8.5,
           fsrs_lapses: 2,
-          fsrs_last_review: now.toISOString(),
+          fsrs_last_review: pastBeyondCooldown,
           fsrs_reps: 3,
         }), // Struggling
       ];
