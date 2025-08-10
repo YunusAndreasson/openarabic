@@ -189,7 +189,7 @@ const createWrapper = () => {
 };
 
 describe('Tab navigation', () => {
-  it('renders default Read tab and navigates between tabs', () => {
+  it('renders default Library tab and navigates between tabs', () => {
     const { getByText } = render(<TabLayout />, { wrapper: createWrapper() });
 
     expect(getByText('READ_MOCK')).toBeTruthy();

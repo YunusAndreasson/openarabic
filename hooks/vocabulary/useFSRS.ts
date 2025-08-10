@@ -311,18 +311,22 @@ export function useFSRS({
         item => item.remainingSpacing <= 0
       );
 
-      // Do not prematurely pick from spacedWords if none are ready. If there are no
-      // available words yet (all spaced), we will complete the session below.
-
-      if (!nextItem && (!spacingQueueRef.current.spacedWords.length || !hasAvailableSpacedWords)) {
-        if (!stateTrackingRef.current.completionTriggered) {
-          stateTrackingRef.current.completionTriggered = true;
-          setTimeout(() => {
-            if (stateTrackingRef.current.completionTriggered) {
-              setIsComplete(true);
-              if (onComplete) onComplete();
-            }
-          }, 0);
+      if (!nextItem) {
+        if (hasAvailableSpacedWords) {
+          // Try once more after moving ready spaced words back into the queue
+          nextItem = getNextWordWithSpacing();
+        }
+        // If still no item and no spaced words are ready, complete session
+        if (!nextItem && !hasAvailableSpacedWords) {
+          if (!stateTrackingRef.current.completionTriggered) {
+            stateTrackingRef.current.completionTriggered = true;
+            setTimeout(() => {
+              if (stateTrackingRef.current.completionTriggered) {
+                setIsComplete(true);
+                if (onComplete) onComplete();
+              }
+            }, 0);
+          }
         }
       }
 
@@ -339,7 +343,11 @@ export function useFSRS({
           newCard.learning_steps
         );
       } catch (error) {
-        handleError(error instanceof Error ? error : new Error(String(error)));
+        const errObj =
+          error instanceof Error
+            ? error
+            : new Error((error as { message?: string })?.message ?? JSON.stringify(error));
+        handleError(errObj, { toastType: 'important' });
       }
 
       stateTrackingRef.current.isProcessingUpdate = false;

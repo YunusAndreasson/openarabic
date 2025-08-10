@@ -148,7 +148,7 @@ export function useGlobalAudioState(): GlobalAudioState {
       return {
         id: currentArticleId,
         title: audioPlayer.currentTrack.title,
-        author: 'Loading...',
+        author: 'Loading',
         image_url: ' ',
       };
     }

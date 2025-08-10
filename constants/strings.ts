@@ -26,7 +26,7 @@ export const STRINGS = {
 
   SOMETHING_WENT_WRONG: 'Something went wrong',
   PLEASE_TRY_AGAIN: tryAgain,
-  LOADING: 'Loading...',
+  LOADING: 'Loading',
   LOADING_ARTICLES: 'Loading articles',
   LOADING_CHART: 'Loading chart',
   PREPARING_AUDIO: 'Preparing audio',
@@ -105,7 +105,7 @@ export const STRINGS = {
 
   // Practice tab empty state - user-centric and study-focused
   STUDY_LIST_EMPTY_TITLE: 'No words to study',
-  STUDY_LIST_EMPTY_DESCRIPTION: 'Add words from articles to start practicing',
+  STUDY_LIST_EMPTY_DESCRIPTION: 'Add words from articles to start studying',
 
   // Dictionary
   DICTIONARY: 'Dictionary',
@@ -140,11 +140,11 @@ export const STRINGS = {
   YOUR_EMAIL: 'Email',
   YOUR_PASSWORD: 'Password',
   PASSWORD_REQUIREMENTS_HINT:
-    'At least {minLength} characters with uppercase, lowercase, and number',
+    'At least {minLength} characters with uppercase, lowercase, and a number',
   ARE_YOU_SURE_SIGN_OUT: 'Sign out?',
   ENTER_VALID_EMAIL: 'Enter a valid email',
   ENTER_PASSWORD: 'Enter your password',
-  PASSWORD_ADD_CHARACTER_TYPES: 'Add uppercase, lowercase and number',
+  PASSWORD_ADD_CHARACTER_TYPES: 'Add uppercase, lowercase and a number',
   PASSWORD_USE_AT_LEAST_TEMPLATE: 'Use at least {minLength} characters',
 
   // Word management actions - shortened
@@ -154,7 +154,7 @@ export const STRINGS = {
   START_OVER_WITH_THIS_WORD: 'Start over',
   STOP_STUDYING: 'Stop studying',
   REMOVE_FROM_VOCABULARY_LIST: 'Remove from list',
-  MAKE_EASIER: 'Make easier',
+  MAKE_EASIER: 'Reduce difficulty',
   REDUCE_DIFFICULTY_LEVEL: 'Reduce difficulty',
   NEEDS_PRACTICE: 'Needs study',
   SHOW_MORE_OFTEN: 'Show more',
@@ -165,7 +165,7 @@ export const STRINGS = {
   // Practice session labels - concise and scientifically grounded
   // 3-Phase FSRS Practice System - scientifically grounded labels
   URGENT_PRESERVATION: 'Review due words', // RED PHASE: Clear action verb + object
-  EFFORTFUL_RETRIEVAL: 'Practice struggling words', // YELLOW PHASE: Clear action verb + object
+  EFFORTFUL_RETRIEVAL: 'Study struggling words', // YELLOW PHASE: Clear action verb + object
   INTERLEAVED_REVIEW: 'Study all words', // GREEN PHASE: Clear action verb + object
 
   // Practice button descriptions - streamlined and action-oriented
@@ -249,7 +249,7 @@ export const STRINGS = {
   DAY_OF_TEMPLATE: 'Day {day} of {duration}',
 
   // Learning capacity & guidance - more actionable
-  ADD_WORDS_TO_SEE_CAPACITY: 'Browse articles in the Read tab to add words',
+  ADD_WORDS_TO_SEE_CAPACITY: 'Browse articles in the Library tab to add words',
 
   STUDY_WORDS_TO_SEE_PROGRESS: 'Study words to track progress',
   REVIEW_WORDS_TO_BUILD_MEMORY_STRENGTH: 'Study to strengthen memory',
@@ -304,7 +304,7 @@ export const STRINGS = {
   WORD_OF_LABEL: 'of',
   BY: 'by',
   RECOMMENDED: 'Recommended',
-  CONTINUE_READING: 'Continue Reading',
+  CONTINUE_READING: 'Continue reading',
   ACTIVE: 'active',
 
   // Learning science content - Remove redundant section titles (benefits, concerns, research are obvious from content)
@@ -328,7 +328,7 @@ export const STRINGS = {
 
   // Error messages - actionable with next steps
   ERROR: 'Error',
-  UNKNOWN_ERROR_OCCURRED: 'Something unexpected happened',
+  UNKNOWN_ERROR_OCCURRED: 'Something went wrong',
   SIGN_IN_FAILED: 'Sign in failed',
   ACCOUNT_CREATION_FAILED: 'Account creation failed',
   REFRESH_FAILED: 'Refresh failed',
@@ -348,7 +348,7 @@ export const STRINGS = {
   FAILED_TO_START_AUDIO_PLAYBACK: "Couldn't start audio. " + tryAgain,
   FAILED_TO_GENERATE_AUDIO_TRACK: "Couldn't generate track. " + tryAgain,
   FAILED_TO_GET_ENHANCED_AUDIO_TRACKS: "Couldn't get tracks. " + tryAgain,
-  FAILED_TO_LOAD_AUDIO_TRACKS: 'Failed to load audio tracks',
+  FAILED_TO_LOAD_AUDIO_TRACKS: "Couldn't load audio tracks. " + tryAgain,
   FAILED_TO_INITIALIZE_AUDIO_SESSION: "Couldn't start audio. " + tryAgain,
   FAILED_TO_STOP_AUDIO: "Couldn't stop audio. " + tryAgain,
   FAILED_TO_LOAD_AUDIO: "Couldn't load audio. " + tryAgain,
@@ -419,13 +419,13 @@ export const STRINGS = {
   // Practice button disabled messages - concise guidance
   COMPLETE_DUE_FIRST: 'Review due words first',
   FOCUS_ON_STRUGGLING_FIRST: 'Strengthen struggling words first',
-  NO_PRACTICE_NEEDED: 'All caught up! Add new words to continue learning',
-  GET_STARTED_MESSAGE: 'Browse articles in the Read tab to add words you want to learn',
+  NO_PRACTICE_NEEDED: 'All caught up. Add new words to continue learning',
+  GET_STARTED_MESSAGE: 'Browse articles in the Library tab to add words you want to learn',
   PRACTICE_OPTIONS: 'Study options',
 
   // Learning method content
   LEARNING_METHOD_INTRO:
-    'Language acquisition occurs through understanding meaningful messages, not grammar instruction. According to Krashens Input Hypothesis, the brain naturally identifies patterns through exposure to comprehensible input.',
+    "Language acquisition occurs through understanding meaningful messages, not grammar instruction. According to Krashen's Input Hypothesis, the brain naturally identifies patterns through exposure to comprehensible input.",
   TRANSLATIONS_EXPOSE_STRUCTURES:
     'Translations provide meaning context while exposing you to Arabic structures just beyond your current level.',
   BRAIN_AUTOMATICALLY_IDENTIFIES:
@@ -441,7 +441,7 @@ export const STRINGS = {
   FAMILIAR_CONCEPTS_CREATE_I_PLUS_ONE:
     'Familiar concepts in Arabic with translation support create ideal i+1 conditions for acquisition.',
   KRASHEN_INPUT_HYPOTHESIS:
-    'Krashens Input Hypothesis demonstrates that comprehensible input is the primary mechanism for language acquisition. Research shows optimal learning occurs when learners understand 90-95% of content.',
+    "Krashen's Input Hypothesis demonstrates that comprehensible input is the primary mechanism for language acquisition. Research shows optimal learning occurs when learners understand 90-95% of content.",
   LANGUAGE_DEVELOPS_THROUGH_UNDERSTANDING:
     'Language develops through understanding, not memorization',
   UNDERSTANDING_MESSAGES_DRIVES_DEVELOPMENT: 'Understanding messages drives language development',
@@ -464,7 +464,7 @@ export const STRINGS = {
   CLASSICAL_TEXTS_INTRO:
     'Classical Islamic texts with translations provide optimal conditions for Arabic acquisition through comprehensible input.',
   TRANSLATIONS_PROVIDE_COMPREHENSION:
-    'Translations provide comprehensible input while exposing you to authentic structures. Krashens research shows grammar is acquired, not learned.',
+    "Translations provide comprehensible input while exposing you to authentic structures. Krashen's research shows grammar is acquired, not learned.",
   RICH_VOCABULARY_INPUT_DESC: 'Thousands of words in meaningful, comprehensible contexts',
   AUTHENTIC_LANGUAGE_PATTERNS_DESC: 'Arabic as actually written and used by native speakers',
   PERSONAL_INTEREST_LOWERS_AFFECTIVE_FILTER:
@@ -513,15 +513,15 @@ export const STRINGS = {
   // FAQ Questions and Answers
   FAQ_HOW_TO_ADD_WORDS_Q: 'How do I add words to study?',
   FAQ_HOW_TO_ADD_WORDS_A:
-    'Browse articles in the Read tab and tap on any Arabic word to add it to your vocabulary list. The app uses spaced repetition to help you learn effectively.',
+    'Browse articles in the Library tab and tap on any Arabic word to add it to your vocabulary list. The app uses spaced repetition to help you learn effectively.',
 
   FAQ_HOW_SPACED_REPETITION_WORKS_Q: 'How does spaced repetition work?',
   FAQ_HOW_SPACED_REPETITION_WORKS_A:
     "The app shows you words just before you're likely to forget them. Words you find easy appear less often, while challenging words appear more frequently until you master them.",
 
-  FAQ_READ_VS_LISTEN_Q: "What's the difference between Read and Listen?",
+  FAQ_READ_VS_LISTEN_Q: "What's the difference between Library and Playlist?",
   FAQ_READ_VS_LISTEN_A:
-    'Read lets you browse articles and add vocabulary. Listen creates audio playlists from saved articles so you can practice while multitasking.',
+    'Library lets you browse articles and add vocabulary. Playlist creates audio playlists from saved articles so you can study while multitasking.',
 
   FAQ_CHANGE_STUDY_REMINDERS_Q: 'How do I change my study reminders?',
   FAQ_CHANGE_STUDY_REMINDERS_A:

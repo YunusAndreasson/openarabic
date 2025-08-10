@@ -5,7 +5,7 @@ import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
 import { useAuth } from '@/hooks/auth/useAuth';
 
 /**
- * Comprehensive validation for all data needed to show the Read tab properly.
+ * Comprehensive validation for all data needed to show the Library tab properly.
  * Checks for:
  * - Categories loaded
  * - Authors loaded
@@ -31,7 +31,7 @@ export function useReadTabDataLoaded(): boolean {
     articlesQueryState?.status === 'success' || articlesQueryState?.status === 'error';
 
   // Check if we have some per-category data loaded (for filter functionality)
-  // We don't need ALL categories to have data, just some to show the Read tab
+  // We don't need ALL categories to have data, just some to show the Library tab
   const allQueries = queryClient.getQueryCache().getAll();
   const categoryArticleQueries = allQueries.filter(
     query =>
