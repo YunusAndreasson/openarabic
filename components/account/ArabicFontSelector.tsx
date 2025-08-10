@@ -1,5 +1,5 @@
 import Slider from '@react-native-community/slider';
-import { memo, useCallback, type FC } from 'react';
+import { memo, useCallback, useEffect, useState, type FC } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import BaseCard from '@common/BaseCard';
@@ -70,12 +70,19 @@ const ArabicFontSelector: FC = () => {
   const { selectedFont, selectedFontSize, fontOptions, selectFont, setFontSize, fontSizeRange } =
     useArabicFontSelector();
 
-  const handleFontSizeChange = useCallback(
-    (value: number) => {
-      setFontSize(value);
-    },
-    [setFontSize]
-  );
+  // Local UI state to avoid dispatching on every slider tick
+  const [localFontSize, setLocalFontSize] = useState<number>(selectedFontSize);
+
+  // Keep local state in sync when global value changes externally
+  useEffect(() => {
+    if (localFontSize !== selectedFontSize) {
+      setLocalFontSize(selectedFontSize);
+    }
+  }, [selectedFontSize, localFontSize]);
+
+  const handleFontSizeChange = useCallback((value: number) => {
+    setLocalFontSize(value);
+  }, []);
 
   const handleSlidingComplete = useCallback(
     (value: number) => {
@@ -93,7 +100,7 @@ const ArabicFontSelector: FC = () => {
           minimumValue={fontSizeRange.MIN}
           maximumValue={fontSizeRange.MAX}
           step={fontSizeRange.STEP}
-          value={selectedFontSize}
+          value={localFontSize}
           onValueChange={handleFontSizeChange}
           onSlidingComplete={handleSlidingComplete}
           minimumTrackTintColor={colors.tint}
@@ -111,7 +118,7 @@ const ArabicFontSelector: FC = () => {
           <FontPreviewCard
             key={option.name}
             isSelected={selectedFont === option.name}
-            fontSize={selectedFontSize}
+            fontSize={localFontSize}
             option={option}
             onSelect={selectFont}
           />

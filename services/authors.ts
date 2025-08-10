@@ -66,8 +66,11 @@ export const authorsService = {
       throw error;
     }
 
-    return (data ?? [])
-      .map(item => item.author)
-      .sort((a, b) => a.name.localeCompare(b.name));
+    // Deduplicate authors by id to avoid repeating the same author per article
+    const uniqueAuthorsMap = new Map<number, AuthorRow>();
+    for (const row of data ?? []) {
+      uniqueAuthorsMap.set(row.author.id, row.author);
+    }
+    return Array.from(uniqueAuthorsMap.values()).sort((a, b) => a.name.localeCompare(b.name));
   },
 };

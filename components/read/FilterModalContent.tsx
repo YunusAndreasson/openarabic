@@ -301,9 +301,9 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollView: { flex: 1 },
-  scrollContent: { padding: LAYOUT.SCREEN_EDGE_PADDING, paddingBottom: LAYOUT.SPACING.XLARGE },
-  summaryCard: { marginBottom: LAYOUT.SPACING.MEDIUM, padding: LAYOUT.SPACING.LARGE },
-  summaryHeader: { flexDirection: 'row', alignItems: 'center', gap: LAYOUT.SPACING.SMALL },
+  scrollContent: { padding: LAYOUT.SCREEN_EDGE_PADDING, paddingBottom: LAYOUT.SPACING.LARGE },
+  summaryCard: { marginBottom: LAYOUT.SPACING.SMALL, padding: LAYOUT.SPACING.MEDIUM },
+  summaryHeader: { flexDirection: 'row', alignItems: 'center', gap: LAYOUT.SPACING.TINY },
   summaryBadge: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     width: LAYOUT.BUTTON.ICON_SIZE.LARGE,
@@ -319,19 +319,19 @@ const styles = StyleSheet.create({
     minHeight: MIN_TOUCH_TARGET.MEDIUM,
     justifyContent: 'center',
   },
-  card: { marginBottom: LAYOUT.SPACING.MEDIUM, padding: LAYOUT.SPACING.LARGE },
-  filterSection: { marginBottom: LAYOUT.SPACING.MEDIUM },
+  card: { marginBottom: LAYOUT.SPACING.MEDIUM, padding: LAYOUT.SPACING.MEDIUM },
+  filterSection: { marginBottom: LAYOUT.SPACING.SMALL },
   filterRow: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     minHeight: MIN_TOUCH_TARGET.LARGE,
-    paddingVertical: LAYOUT.SPACING.SMALL,
+    // Remove extra vertical padding here; use content padding instead
   },
   filterRowExpanded: {},
   lastFilterRow: { borderBottomWidth: 0 },
   filterRowContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   filterRowLeft: {
@@ -355,8 +355,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   expandedContent: {
-    paddingTop: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.XLARGE,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   pillGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: LAYOUT.SPACING.SMALL },
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: LAYOUT.SPACING.SMALL,
-    marginBottom: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.HALF_TINY,
   },
 });
 

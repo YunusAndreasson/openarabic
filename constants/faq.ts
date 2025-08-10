@@ -23,6 +23,13 @@ export const FAQ_DATA: FAQCategory[] = [
         category: 'Getting Started',
       },
       {
+        id: 'is-this-a-course',
+        question: 'Is OpenArabic a course?',
+        answer:
+          'No. OpenArabic is not a start‑to‑finish course. It is a bilingual reading and listening tool that complements your studies—use it alongside a course or after completing one.',
+        category: 'Getting Started',
+      },
+      {
         id: 'is-free',
         question: 'Is it free?',
         answer:
@@ -33,7 +40,21 @@ export const FAQ_DATA: FAQCategory[] = [
         id: 'who-is-this-for',
         question: 'Who is this for?',
         answer:
-          'Learners who can decode Arabic and want to read real texts efficiently. You tap unknown words to add them, then the app schedules optimal reviews to convert them into long‑term memory.',
+          'Learners who can decode Arabic and want to read real texts efficiently—especially those studying with a course or who just finished one and need vocabulary to read independently.',
+        category: 'Getting Started',
+      },
+      {
+        id: 'using-with-course',
+        question: 'How should I use this with a course?',
+        answer:
+          'Pair your coursework with short authentic texts. Keep sessions light and regular to build reading stamina. After classes, continue reading to maintain momentum and grow vocabulary.',
+        category: 'Getting Started',
+      },
+      {
+        id: 'after-course-gap',
+        question: "I finished a course but can't read books—what now?",
+        answer:
+          'OpenArabic bridges the post‑course vocabulary gap. Read longer texts with bilingual support, add missing words as you meet them, and gradually progress to more challenging material.',
         category: 'Getting Started',
       },
       {
@@ -87,7 +108,7 @@ export const FAQ_DATA: FAQCategory[] = [
         id: 'audio-features',
         question: 'What audio features are available?',
         answer:
-          'A focused now‑playing experience with sleep timer, playlist management, and progress tracking. Audio caches automatically for offline playback once downloaded. Controls emphasize Play/Stop for clarity.',
+          'A focused now‑playing experience with sleep timer, playlist management, and progress tracking. Includes bilingual short‑sentence audio that mixes Arabic with English to aid comprehension. Audio caches automatically for offline playback once downloaded. Controls emphasize Play/Stop for clarity.',
         category: 'Features',
       },
       {

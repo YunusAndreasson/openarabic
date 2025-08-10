@@ -20,6 +20,12 @@ export default function FilterModalScreen(): JSX.Element {
   } = useQuery({
     queryKey: ['category-authors', numericCategoryId],
     queryFn: () => authorsService.getAuthorsByCategory(numericCategoryId),
+    // Ensure deduplication even for cached data
+    select: authors => {
+      const map = new Map<number, (typeof authors)[number]>();
+      for (const a of authors ?? []) map.set(a.id, a);
+      return Array.from(map.values());
+    },
     enabled: numericCategoryId > 0,
     staleTime: 86400000,
     gcTime: 172800000,

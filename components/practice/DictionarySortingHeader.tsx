@@ -63,7 +63,8 @@ const DictionarySortingHeader: FC<DictionarySortingHeaderProps> = ({
               <ThemedText
                 type="label"
                 weight={isActive ? 'semibold' : 'medium'}
-                colorName={isActive ? 'tint' : 'text'}
+                colorName={isActive ? 'text' : 'secondaryText'}
+                style={styles.optionText}
               >
                 {option.label}
               </ThemedText>
@@ -105,6 +106,11 @@ const styles = StyleSheet.create({
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     minHeight: MIN_TOUCH_TARGET.SMALL,
     gap: LAYOUT.SPACING.TINY,
+  },
+  optionText: {
+    // Tighten vertical alignment with the chevron icon
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   directionIcon: {
     marginLeft: LAYOUT.SPACING.TINY,

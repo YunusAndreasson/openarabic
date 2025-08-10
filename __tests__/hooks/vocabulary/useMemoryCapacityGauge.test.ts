@@ -212,4 +212,128 @@ describe('useMemoryCapacityGauge', () => {
       expect(result.current.getCapacityColor()).toBe('#p');
     });
   });
+
+  describe('dynamic phase-based scoring', () => {
+    const oldDate = '2000-01-01T00:00:00.000Z';
+    const futureDate = '2999-01-01T00:00:00.000Z';
+
+    function buildWord(overrides: Partial<any> = {}): any {
+      return {
+        root_id: Math.floor(Math.random() * 100000),
+        user_id: 'u',
+        created_at: new Date().toISOString(),
+        fsrs_due: futureDate,
+        fsrs_stability: 10,
+        fsrs_difficulty: 5,
+        fsrs_elapsed_days: 0,
+        fsrs_scheduled_days: 0,
+        fsrs_learning_steps: 0,
+        fsrs_reps: 2,
+        fsrs_lapses: 0,
+        fsrs_state: 2,
+        fsrs_last_review: new Date().toISOString(),
+        ...overrides,
+      };
+    }
+
+    function buildDataset({
+      total,
+      due,
+      struggling,
+      reviewedDenomUsesReviewed = true,
+    }: {
+      total: number;
+      due: number;
+      struggling: number;
+      reviewedDenomUsesReviewed?: boolean;
+    }): any[] {
+      const words: any[] = [];
+      // Due words
+      for (let i = 0; i < due; i++) {
+        words.push(
+          buildWord({ fsrs_due: oldDate, fsrs_last_review: new Date().toISOString(), fsrs_reps: 2 })
+        );
+      }
+      // Struggling words (reviewed + difficult + unstable + lapses)
+      for (let i = 0; i < struggling; i++) {
+        words.push(
+          buildWord({
+            fsrs_due: futureDate,
+            fsrs_last_review: new Date().toISOString(),
+            fsrs_reps: 3,
+            fsrs_lapses: 2,
+            fsrs_state: 2,
+            fsrs_stability: 3,
+            fsrs_difficulty: 9,
+          })
+        );
+      }
+      // Fill the rest
+      while (words.length < total) {
+        // Optionally add non-reviewed to make reviewed denominator smaller
+        const reviewed = reviewedDenomUsesReviewed ? Math.random() > 0.2 : false;
+        words.push(
+          buildWord({
+            fsrs_due: futureDate,
+            fsrs_last_review: reviewed ? new Date().toISOString() : null,
+            fsrs_reps: reviewed ? 1 : 0,
+            fsrs_stability: 10,
+            fsrs_difficulty: 5,
+            fsrs_lapses: 0,
+          })
+        );
+      }
+      return words;
+    }
+
+    it('RED: score is in [15,39] and decreases as due increases', () => {
+      const scenarios = [
+        { total: 20, due: 1 },
+        { total: 20, due: 5 },
+        { total: 20, due: 10 },
+        { total: 20, due: 19 },
+      ];
+      let prevScore = Number.POSITIVE_INFINITY;
+      for (const s of scenarios) {
+        const studyWords = buildDataset({ total: s.total, due: s.due, struggling: 0 });
+        const { result } = renderHook(() => useMemoryCapacityGauge({ ...baseProps, studyWords }));
+        const score = result.current.getDisplayScore();
+        expect(result.current.getCapacityColor()).toBe('#p');
+        expect(score).toBeGreaterThanOrEqual(15);
+        expect(score).toBeLessThanOrEqual(39);
+        expect(score).toBeLessThanOrEqual(prevScore);
+        prevScore = score;
+      }
+    });
+
+    it('YELLOW: score is in [40,69] and decreases as struggling increases', () => {
+      const scenarios = [
+        { total: 20, struggling: 1 },
+        { total: 20, struggling: 5 },
+        { total: 20, struggling: 10 },
+        { total: 20, struggling: 19 },
+      ];
+      let prevScore = Number.POSITIVE_INFINITY;
+      for (const s of scenarios) {
+        const studyWords = buildDataset({ total: s.total, due: 0, struggling: s.struggling });
+        const { result } = renderHook(() => useMemoryCapacityGauge({ ...baseProps, studyWords }));
+        const score = result.current.getDisplayScore();
+        expect(result.current.getCapacityColor()).toBe('#m');
+        expect(score).toBeGreaterThanOrEqual(40);
+        expect(score).toBeLessThanOrEqual(69);
+        expect(score).toBeLessThanOrEqual(prevScore);
+        prevScore = score;
+      }
+    });
+
+    it('GREEN: score is >= 70 and equals clamped capacityScore when no due/struggling', () => {
+      const studyWords = buildDataset({ total: 30, due: 0, struggling: 0 });
+      const { result } = renderHook(() => useMemoryCapacityGauge({ ...baseProps, studyWords }));
+      const score = result.current.getDisplayScore();
+      expect(result.current.getCapacityColor()).toBe('#e');
+      expect(score).toBeGreaterThanOrEqual(70);
+      // capacityScore taken from memoryMetrics (and clamped to >= 70 for display in green)
+      expect(score).toBeGreaterThanOrEqual(result.current.memoryMetrics.capacityScore);
+    });
+  });
 });

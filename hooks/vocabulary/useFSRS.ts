@@ -75,6 +75,9 @@ export function useFSRS({
     queueInitialized: false,
   });
 
+  // Track the last initialized set of due words (by root_id signature)
+  const lastQueueSignatureRef = useRef<string | null>(null);
+
   // Timeouts for queue initialization and completion callbacks
   const initTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const completionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -126,12 +129,25 @@ export function useFSRS({
     updateSpacingState(spacingQueueRef.current, processedWordId);
   }, []);
 
-  // Initialize queue when due words are fetched
+  // Initialize queue when due words are fetched (after loading) and re-init if the set changes
   useEffect(() => {
-    if (!dueWords || stateTrackingRef.current.queueInitialized) return;
+    if (isLoading || !dueWords) return;
 
-    // Set initialized flag first to prevent multiple initializations
+    // Build a stable signature of the current due words
+    const signature = dueWords
+      .map(w => w.root_id)
+      .filter((id): id is number => id != null)
+      .sort((a, b) => a - b)
+      .join(',');
+
+    // If we've already initialized with the same set, skip re-initialization
+    if (stateTrackingRef.current.queueInitialized && lastQueueSignatureRef.current === signature) {
+      return;
+    }
+
+    // Mark as initialized for this signature
     stateTrackingRef.current.queueInitialized = true;
+    lastQueueSignatureRef.current = signature;
 
     // Clear any existing timeouts before setting new ones
     if (initTimeoutRef.current) {
@@ -143,7 +159,7 @@ export function useFSRS({
       completionTimeoutRef.current = null;
     }
 
-    // Initialize queue when due words are fetched
+    // Initialize queue based on current due words
     initTimeoutRef.current = setTimeout(() => {
       if (dueWords.length > 0) {
         countersRef.current.totalWords = dueWords.length;

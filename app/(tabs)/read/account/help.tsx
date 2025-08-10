@@ -37,11 +37,15 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(({ item, isExpanded, on
           borderWidth: LAYOUT.BORDER.WIDTH.THIN,
           borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
           paddingHorizontal: LAYOUT.SPACING.LARGE,
-          paddingVertical: LAYOUT.SPACING.LARGE,
-          minHeight: LAYOUT.BUTTON.HEIGHT.MEDIUM, // Proper touch target following Fitts' Law
+          paddingVertical: LAYOUT.SPACING.MEDIUM,
+          minHeight: LAYOUT.BUTTON.HEIGHT.LARGE, // 48dp minimum per Fitts' Law
           ...LAYOUT.ELEVATION.SUBTLE, // Consistent elevation
         }}
         onPress={handlePress}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: isExpanded }}
+        accessibilityLabel={item.question}
+        accessibilityHint={isExpanded ? 'Collapses the answer' : 'Expands to show the answer'}
         android_ripple={{ color: colors.navigationRipple, borderless: false }}
       >
         <View
@@ -70,7 +74,7 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(({ item, isExpanded, on
             borderWidth: LAYOUT.BORDER.WIDTH.THIN,
             borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
             paddingHorizontal: LAYOUT.SPACING.LARGE,
-            paddingVertical: LAYOUT.SPACING.LARGE,
+            paddingVertical: LAYOUT.SPACING.MEDIUM,
             marginTop: LAYOUT.SPACING.SMALL,
             ...LAYOUT.ELEVATION.SUBTLE, // Consistent elevation for expanded content
           }}
@@ -160,10 +164,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   categoryContainer: {
-    gap: LAYOUT.SPACING.MEDIUM,
+    gap: LAYOUT.SPACING.SMALL,
   },
   categorySpacing: {
-    marginTop: LAYOUT.SPACING.XLARGE,
+    marginTop: LAYOUT.SPACING.LARGE,
   },
 });
 

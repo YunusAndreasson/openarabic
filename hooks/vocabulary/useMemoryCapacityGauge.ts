@@ -74,22 +74,41 @@ export function useMemoryCapacityGauge({
 
   // Helper function for visual score calculation (used by both gauge and indicator)
   const getVisualScore = useMemo(() => {
-    // 3-PHASE SYSTEM: Use phase-based scoring for intuitive UX
+    const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
+    const totalWords = Array.isArray(studyWords) ? studyWords.length : 0;
+
+    // 3-PHASE SYSTEM: Use phase-based scoring for intuitive UX with dynamic scaling
     // GREEN PHASE: No urgent words - show high capacity (70-100%)
     if (wordStates.dueWords === 0 && wordStates.strugglingWords === 0) {
-      // Use actual capacity score but ensure it's in the green range
       const baseScore = memoryMetrics.capacityScore;
       return Math.max(CAPACITY_THRESHOLDS.READY, Math.min(100, baseScore));
     }
 
     // YELLOW PHASE: Struggling words present - show medium capacity (40-69%)
     if (wordStates.dueWords === 0 && wordStates.strugglingWords > 0) {
-      return Math.max(CAPACITY_THRESHOLDS.CAUTION, Math.min(CAPACITY_THRESHOLDS.READY - 1, 60));
+      // Scale within [40, 69] by proportion of struggling words among reviewed words
+      const totalReviewed =
+        studyWords?.filter(w => w.fsrs_last_review != null && (w.fsrs_reps ?? 0) > 0).length ?? 0;
+      const denom = Math.max(1, totalReviewed || totalWords);
+      const strugglingRatio = clamp01(wordStates.strugglingWords / denom);
+      const minY = CAPACITY_THRESHOLDS.CAUTION; // 40
+      const maxY = CAPACITY_THRESHOLDS.READY - 1; // 69
+      // More struggling => lower score within the band
+      const score = Math.round(maxY - (maxY - minY) * strugglingRatio);
+      return Math.max(minY, Math.min(maxY, score));
     }
 
     // RED PHASE: Due words present - show low capacity (15-39%)
-    return Math.max(15, Math.min(CAPACITY_THRESHOLDS.CAUTION - 1, 35));
-  }, [memoryMetrics.capacityScore, wordStates.dueWords, wordStates.strugglingWords]);
+    {
+      const denom = Math.max(1, totalWords);
+      const dueRatio = clamp01(wordStates.dueWords / denom);
+      const minR = 15;
+      const maxR = CAPACITY_THRESHOLDS.CAUTION - 1; // 39
+      // More due => closer to minR
+      const score = Math.round(maxR - (maxR - minR) * dueRatio);
+      return Math.max(minR, Math.min(maxR, score));
+    }
+  }, [memoryMetrics.capacityScore, wordStates.dueWords, wordStates.strugglingWords, studyWords]);
 
   const gaugePaths = useMemo<GaugePaths>(() => {
     const centerX = width / 2;

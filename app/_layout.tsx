@@ -11,7 +11,6 @@ import { QueryClient, onlineManager } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { useFonts } from 'expo-font';
 import { Stack, useNavigationContainerRef, useRouter, useSegments } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, Platform, StyleSheet, UIManager, View } from 'react-native';
@@ -135,17 +134,11 @@ function AppContent() {
     [segments]
   );
 
-  // Configure splash screen fade animation
+  // Enable LayoutAnimation on Android for FAQ expand/collapse
   useEffect(() => {
-    // Enable LayoutAnimation on Android for FAQ expand/collapse
     if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
       UIManager.setLayoutAnimationEnabledExperimental(true);
     }
-
-    SplashScreen.setOptions({
-      duration: 1000, // 1 second fade animation duration
-      fade: true, // Use fade animation
-    });
   }, []);
 
   // Centralized system UI theme management
@@ -319,7 +312,7 @@ function AppContent() {
               }}
             />
             <Stack.Screen
-              name="practice"
+              name="practice/review"
               options={createNavigationOptions(colors, {
                 headerShown: false,
                 presentation: 'fullScreenModal',
@@ -377,7 +370,7 @@ const AudioOverlays = memo(function AudioOverlays() {
     <>
       {shouldShowMiniPlayer && (
         <MiniPlayer
-          article={globalAudioState.currentArticle}
+          article={globalAudioState.currentArticle!}
           isPlaying={globalAudioState.isPlaying}
           isTimerActive={globalAudioState.isTimerActive}
           position={globalAudioState.position}

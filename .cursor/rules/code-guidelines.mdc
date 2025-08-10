@@ -10,10 +10,10 @@ You are a senior React Native developer tasked with writing performant, reliable
 
 ## App Features
 
-- [app/(tabs)/read/index.tsx](<mdc:<mdc:app/(tabs)/read/index.tsx>>) Main screen with list of articles
-- [app/(tabs)/practice/index.tsx](<mdc:<mdc:app/(tabs)/practice/index.tsx>>) Entry screen for practicing words using Spaced Repetition
-- [app/(tabs)/listen/index.tsx](<mdc:<mdc:app/(tabs)/listen/index.tsx>>) Audio playback for saved articles and listening practice
-- [app/(tabs)/read/account/](<mdc:<mdc:app/(tabs)/read/account/>>) Settings and account management
+- [app/(tabs)/read/index.tsx](<mdc:app/(tabs)/read/index.tsx>) Main screen with list of articles
+- [app/(tabs)/practice/index.tsx](<mdc:app/(tabs)/practice/index.tsx>) Entry screen for practicing words using Spaced Repetition
+- [app/(tabs)/listen/index.tsx](<mdc:app/(tabs)/listen/index.tsx>) Audio playback for saved articles and listening practice
+- [app/(tabs)/read/account/](<mdc:app/(tabs)/read/account/>) Settings and account management
 
 ## Core Principles
 
@@ -51,14 +51,14 @@ Before making changes, always:
 
 ### Essential Constants Usage:
 
-- **Typography**: Use `TYPOGRAPHY_HIERARCHY` from layout.ts for consistent text styling
-- **Shadow system**: Use `LAYOUT.SHADOW.SUBTLE/SMALL/MEDIUM/LARGE` constants for consistent elevation
+- **Typography**: Use `TYPOGRAPHY_HIERARCHY` and `LAYOUT.TYPOGRAPHY.SCALE` from `layout.ts` for consistent text styling
+- **Elevation system**: Use `LAYOUT.ELEVATION.SUBTLE/SMALL/MEDIUM/LARGE` constants for consistent elevation
 - **Spacing system**: Use `LAYOUT.SPACING` scale (TINY=4px, SMALL=8px, MEDIUM=12px, etc.)
-- **Colors**: Use semantic color names from Colors.ts (avoid hardcoded hex values)
+- **Colors**: Use semantic color names from `Colors.ts` (avoid hardcoded hex values)
 - **Strings**: Use `STRINGS.*` constants for all user-facing text (no hardcoded strings)
 - **Animations**: Use `TIMING_CONFIG` and `SPRING_CONFIG` presets from animation.ts
-- **Routes**: Use `ROUTE_PATHS` constants and helper functions from routes.ts
-- **FSRS keys**: Use `FSRS_QUERY_KEYS` for all vocabulary-related query cache management
+- **Routes**: Use `ROUTE_PATHS` constants and helper functions from `routes.ts`
+- **FSRS keys**: Use `FSRS_QUERY_KEYS` for all vocabulary-related query cache management (keys start with `'fsrs-words'`)
 
 ## MCP Servers
 
@@ -66,19 +66,19 @@ Before making changes, always:
 
 ## Technical Stack
 
-- **React Native**: 0.79.3 with React 19.0.0
+- **React Native**: 0.79.5 with React 19.0.0
 - **Expo SDK**: 53 with New Architecture enabled
-- **Navigation**: Expo Router v5.1.0 with typed routes and modal presentation
+- **Navigation**: Expo Router v5.1.4 with typed routes and modal presentation
 - **State Management**: Redux Toolkit with Redux Persist
 - **Data Fetching**: TanStack Query v5 (React Query) with persistence
 - **UI Performance**: @shopify/flash-list for optimized lists
 - **Animation**: react-native-reanimated v3.17.4 and @shopify/react-native-skia v2.0.0
-- **Audio**: expo-audio v0.4.6 for playback and audio controls
-- **Spaced Repetition**: ts-fsrs v5.1.0 for vocabulary learning algorithms
+- **Audio**: expo-audio v0.4.8 for playback and audio controls
+- **Spaced Repetition**: ts-fsrs v5.2.1 for vocabulary learning algorithms
 - **Error Tracking**: Sentry v6.14.0 for error logging
 - **Analytics**: Currently mocked (Mixpanel integration disabled)
-- **Backend**: Supabase v2.50.0 for database, storage and auth
-- **Notifications**: expo-notifications v0.31.3 for push notifications
+- **Backend**: Supabase JS client v2.54.0 for database, storage and auth
+- **Notifications**: expo-notifications v0.31.4 for push notifications
 - **Haptics**: expo-haptics v14.1.4 for tactile feedback
 - **Testing**: Jest v29.7.0 with React Native Testing Library
 
@@ -86,7 +86,8 @@ Before making changes, always:
 
 - `app/(tabs)` - Main tab screen components
 - `app/auth` - Authentication screens
-- `app/practice` - Standalone practice screens (renamed from vocabulary)
+- `app/(tabs)/practice` - Practice tab entry and dictionary
+- `app/practice` - Standalone review flow screens
 - `app/insights` - Analytics and insights screens
 - `hooks/` - Custom React hooks for shared logic
 - `components/` - Reusable UI components
@@ -100,9 +101,9 @@ Before making changes, always:
 
 - Use Expo Router with modal presentation for overlays
 - Modal screens hide tab headers completely
-- **CRITICAL**: Always use correct route paths: `/(tabs)/read/article/[id]` not `/article/[id]`
+- **CRITICAL**: Always use correct route paths with the `/(tabs)` prefix: `/(tabs)/read/article/[id]` not `/article/[id]`
 - Navigation hierarchy: Read → Account (renamed from Settings)
-- Practice tab (renamed from Vocabulary) for spaced repetition
+- Practice tab (renamed from Vocabulary) for spaced repetition; visual review screen lives at `ROUTE_PATHS.PRACTICE_REVIEW` (`/practice/review`)
 - Avoid navigation parameter bleed between screens
 
 ## Best Practices
@@ -178,7 +179,7 @@ When optimizing components (especially those >50ms render time):
 - Extract static constants outside component scope
 - Use `React.memo` with custom comparison functions when appropriate
 - Memoize expensive calculations with `useMemo`
-- Cache style objects to prevent recreation
+- Cache style objects to prevent recreation (prefer `StyleSheet.create` for static styles)
 - Batch style updates and color calculations
 - Use `useCallback` for event handlers passed to children
 - Consider component splitting for better granular updates
@@ -187,10 +188,10 @@ When optimizing components (especially those >50ms render time):
 
 - Use `StyleSheet.create()` for static styles, inline for dynamic
 - Follow design system from Colors.ts and layout.ts
-- **REQUIRED**: Use standardized shadow system: `LAYOUT.SHADOW.SUBTLE/SMALL/MEDIUM/LARGE`
+- **REQUIRED**: Use standardized elevation system: `LAYOUT.ELEVATION.SUBTLE/SMALL/MEDIUM/LARGE`
 - **REQUIRED**: Use spacing scale: `LAYOUT.SPACING.TINY/SMALL/MEDIUM/LARGE/XLARGE`
 - Typography: Use `TYPOGRAPHY_HIERARCHY` constants for consistent text styling
-- Touch targets: Minimum 48dp for accessibility (use `TOUCH_TARGETS` constants)
+- Touch targets: Minimum 48dp for accessibility (use `MIN_TOUCH_TARGET` constants)
 - Prefer filled icons over outlined for visual harmony
 
 ### Data Management
@@ -211,7 +212,7 @@ When optimizing components (especially those >50ms render time):
 
 ### Audio & Media
 
-- Use expo-audio for all audio playbook
+- Use expo-audio for all audio playback
 - Handle background audio with proper session configuration
 - Implement proper cleanup for audio resources
 - Use enhanced audio service for playlist management
@@ -241,7 +242,7 @@ When optimizing components (especially those >50ms render time):
 
 ### Navigation Issues
 
-- Always use full route paths with `/(tabs)` prefix
+- Always use full route paths with `/(tabs)` prefix and helpers from `constants/routes.ts`
 - Modal screens should use Expo Router modal system, not React Native Modal
 - Avoid navigation parameter bleed between screens
 
@@ -295,9 +296,9 @@ Always run these commands before completing longer development sessions:
 
 ## Version Management
 
-- Use semantic versioning with build numbers
-- Format: `major.minor.patch-buildNumber` (e.g., "1.2.3-18") using dash separator
-- Build numbers increment for each release
+- Uses Islamic Calendar versioning as documented in `docs/versioning.md`
+- Format: `YEAR.MONTH.RELEASE` (e.g., `1447.2.2`)
+- Build numbers/codes are maintained per platform (e.g., iOS `buildNumber`, Android `versionCode`) and may be reflected as build metadata in `package.json` (e.g., `1447.2.2+41`)
 
 ## Design Guidelines
 

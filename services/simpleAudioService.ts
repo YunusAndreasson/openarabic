@@ -1,4 +1,4 @@
-import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import { createAudioPlayer, setAudioModeAsync, setIsAudioActiveAsync } from 'expo-audio';
 
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import { handleError } from '@/utils/errorHandling';
@@ -47,16 +47,22 @@ class SimpleAudioService {
     if (this.audioSessionConfigured) return;
 
     try {
+      // Ensure audio is active at the OS level
+      try {
+        await setIsAudioActiveAsync(true);
+      } catch {}
+
       await setAudioModeAsync({
+        // Common
+        shouldPlayInBackground: false,
         // iOS
-        playsInSilentModeIOS: true,
-        allowsRecordingIOS: false,
-        // Background behavior
-        staysActiveInBackground: false,
+        playsInSilentMode: true,
+        allowsRecording: false,
+        interruptionMode: 'duckOthers',
         // Android
-        shouldDuckAndroid: true,
-        playThroughEarpieceAndroid: false,
-      } as unknown as Record<string, unknown>);
+        interruptionModeAndroid: 'duckOthers',
+        shouldRouteThroughEarpiece: false,
+      });
       this.audioSessionConfigured = true;
     } catch {
       // Audio session configuration failed - handle silently
@@ -323,6 +329,10 @@ class SimpleAudioService {
   async destroy(): Promise<void> {
     await this.stopInternal();
     this.listeners.clear();
+    // Best-effort to release audio session
+    try {
+      await setIsAudioActiveAsync(false);
+    } catch {}
   }
 }
 

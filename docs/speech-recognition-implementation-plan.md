@@ -265,7 +265,7 @@ export const useVocabularyPreload = (userId?: string): string[] => {
 
 ### 3.2 Review Screen Integration
 
-**Location:** `app/practice/review/index.tsx`
+**Location:** `app/practice/review.tsx`
 
 Add speech recognition integration to existing review flow:
 

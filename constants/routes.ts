@@ -2,7 +2,8 @@ export const getArticleRoute = (id: number, headerTitle?: string): string => {
   const base = `/(tabs)/read/article/${id}`;
   if (!headerTitle) return base;
   const search = new URLSearchParams({ headerTitle });
-  return `${base}?${search.toString()}`;
+  const query = search.toString().replace(/\(/g, '%28').replace(/\)/g, '%29');
+  return `${base}?${query}`;
 };
 
 export const getFilterModalRoute = (categoryId: number): string =>
@@ -11,8 +12,9 @@ export const getFilterModalRoute = (categoryId: number): string =>
 export const getCategoryFilterRoute = (categoryId: number, name?: string): string => {
   const base = `/(tabs)/read/filter`;
   const params = new URLSearchParams({ type: 'category', id: String(categoryId) });
-  if (name) params.append('name', encodeURIComponent(name));
-  return `${base}?${params.toString()}`;
+  if (name) params.append('name', name);
+  const query = params.toString().replace(/\(/g, '%28').replace(/\)/g, '%29');
+  return `${base}?${query}`;
 };
 
 export const ROUTE_PATHS = {
@@ -48,6 +50,6 @@ export const getPracticeReviewRoute = (
   if (params?.count) search.append('count', String(params.count));
   if (params?.fromVocabulary) search.append('fromVocabulary', params.fromVocabulary);
   if (params?.fromRemember) search.append('fromRemember', params.fromRemember);
-  const query = search.toString();
+  const query = search.toString().replace(/\(/g, '%28').replace(/\)/g, '%29');
   return query ? `${ROUTE_PATHS.PRACTICE_REVIEW}?${query}` : ROUTE_PATHS.PRACTICE_REVIEW;
 };
