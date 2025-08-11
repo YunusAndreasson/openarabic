@@ -95,22 +95,42 @@ const MiniPlayerComponent = ({
     >
       <Pressable
         onPress={handleMiniPlayerPress}
-        style={[
+        android_ripple={{ color: colors.navigationRipple }}
+        style={({ pressed }) => [
           styles.card,
           {
             backgroundColor: colors.elevation2,
             borderColor: colors.border,
             ...LAYOUT.ELEVATION.MEDIUM,
+            opacity: pressed ? 0.98 : 1,
           },
         ]}
       >
+        {/* Subtle inner hairline at top for grab affordance */}
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: LAYOUT.BORDER.WIDTH.HAIRLINE,
+            backgroundColor: colors.border,
+          }}
+          pointerEvents="none"
+        />
         {/* Main Content Row */}
         <View style={styles.contentRow}>
           {/* Artwork */}
           <View style={styles.artworkContainer}>
             <EnhancedImage
               source={article.image_url}
-              style={styles.artwork}
+              style={[
+                styles.artwork,
+                {
+                  borderWidth: LAYOUT.BORDER.WIDTH.HAIRLINE,
+                  borderColor: colors.border,
+                },
+              ]}
               contentFit="cover"
               priority="high"
               transition={0}
@@ -163,10 +183,13 @@ const MiniPlayerComponent = ({
                 selectionFeedback();
                 onTimerPress();
               }}
+              android_ripple={{ color: colors.navigationRipple }}
               style={[
                 styles.timerButton,
                 {
-                  backgroundColor: isTimerActive ? colors.warning : colors.elevation3, // Subtle background when inactive
+                  backgroundColor: isTimerActive ? colors.warning : colors.elevation3,
+                  borderWidth: isTimerActive ? 0 : LAYOUT.BORDER.WIDTH.HAIRLINE,
+                  borderColor: isTimerActive ? 'transparent' : colors.border,
                 },
               ]}
             >
@@ -180,12 +203,13 @@ const MiniPlayerComponent = ({
             {/* Play/Pause button */}
             <Pressable
               onPress={handlePlayPause}
+              android_ripple={{ color: colors.navigationRipple }}
               style={[styles.playButton, { backgroundColor: colors.tint }]}
             >
               <Ionicons
                 name={isPlaying ? 'pause' : 'play'}
                 size={18}
-                color={colors.background}
+                color={colors.black}
                 style={!isPlaying && styles.playIconOffset}
               />
             </Pressable>
@@ -193,7 +217,7 @@ const MiniPlayerComponent = ({
         </View>
 
         {/* Progress Bar - at bottom like Apple Music */}
-        <View style={styles.progressContainer}>
+        <View style={styles.progressContainer} pointerEvents="none">
           <ProgressBar
             progress={progressPercentage}
             height={PROGRESS_HEIGHT}
@@ -289,6 +313,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: LAYOUT.SPACING.SMALL,
     paddingLeft: LAYOUT.SPACING.SMALL,
+    paddingRight: LAYOUT.SPACING.MEDIUM,
   },
 
   timerButton: {

@@ -142,7 +142,7 @@ DictionaryWordCard.displayName = 'DictionaryWordCard';
 
 const styles = StyleSheet.create({
   container: {
-    height: 64,
+    height: LAYOUT.CARD.HEIGHT.VOCABULARY_ITEM,
     marginBottom: LAYOUT.SPACING.TINY,
     flexDirection: 'row',
     alignItems: 'center',
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     marginRight: LAYOUT.SPACING.SMALL,
   },
   cardContent: {
-    minHeight: 64,
+    minHeight: LAYOUT.CARD.HEIGHT.VOCABULARY_ITEM,
     overflow: 'visible',
   },
   content: {
@@ -162,22 +162,26 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingTop: LAYOUT.SPACING.TINY,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.TINY,
   },
   wordInfo: {
     flex: 1,
     marginRight: LAYOUT.SPACING.MEDIUM,
     alignItems: 'flex-start',
+    justifyContent: 'center',
   },
   arabicText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     fontWeight: '600',
-    marginBottom: 1,
+    // Tighter line-height to avoid excessive leading on single-word Arabic
+    lineHeight: Math.round(LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.6),
+    marginBottom: LAYOUT.SPACING.TINY,
     textAlign: 'auto',
   },
   englishText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '400',
+    marginTop: 0,
     textAlign: 'left',
   },
   rightSection: {

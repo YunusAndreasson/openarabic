@@ -22,7 +22,7 @@ import ParallaxHeader from '@/components/article/ParallaxHeader';
 import { RelatedArticlesSection } from '@/components/article/RelatedArticlesSection';
 import PlayButton from '@/components/listen/PlayButton';
 import { SCROLL_EVENT_THROTTLE, SENTENCE_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, SCREEN_WIDTH } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { Article } from '@/types/articles.types';
@@ -439,7 +439,7 @@ export const ArticleContent = memo<ArticleContentProps>(
           alwaysBounceVertical: false,
           bounces: true,
           overScrollMode: 'always',
-          extraData: '',
+          estimatedListSize: { height: SENTENCE_ITEM_HEIGHT * 12, width: SCREEN_WIDTH },
           initialScrollIndex: 0,
         }),
       [

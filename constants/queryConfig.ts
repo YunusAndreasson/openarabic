@@ -41,7 +41,7 @@ export const CACHE_TIMES = {
   },
   // For categories and authors (never change)
   STATIC: {
-    staleTime: 86400000, // 24 hours
+    staleTime: Infinity, // Static data does not change; prevent re-fetches
     gcTime: 172800000, // 48 hours
   },
 } as const;

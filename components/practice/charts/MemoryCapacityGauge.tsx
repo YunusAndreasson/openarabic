@@ -1,11 +1,13 @@
-import { Canvas, Circle, Group, LinearGradient, Path, vec } from '@shopify/react-native-skia';
-import { memo } from 'react';
+import { Canvas, Circle, Group, LinearGradient, Path, Skia, vec } from '@shopify/react-native-skia';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { runOnJS, useAnimatedReaction, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { BaseChart } from '@charts/BaseChart';
 import { useChartColors } from '@charts/chartColors';
 
 import { ThemedText } from '@/components/ThemedText';
+import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
@@ -25,6 +27,8 @@ const GAUGE_RADIUS = Math.round(GAUGE_HEIGHT * 0.7); // Proportional radius base
 const GAUGE_STROKE_WIDTH = 20;
 const INDICATOR_SIZE = 12;
 const INDICATOR_GLOW_SIZE = 24;
+const START_ANGLE = 185;
+const TOTAL_SWEEP = 170;
 
 export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
   ({ studyWords = [], onInfoPress }) => {
@@ -35,7 +39,6 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
       gaugePaths,
       getFilledGradientColors,
       getFilledGradientPositions,
-      indicatorPosition,
       getCapacityColor,
       getReadinessMessage,
       getActionCardBackground,
@@ -50,6 +53,59 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
 
     // Get the score that should be displayed (matches visual gauge)
     const displayScore = getDisplayScore();
+
+    // Animated score value using Reanimated (fallback for environments where Skia useValue is unavailable)
+    const scoreShared = useSharedValue(0);
+    const [animatedScore, setAnimatedScore] = useState(0);
+
+    useEffect(() => {
+      const next = Math.max(0, Math.min(100, displayScore));
+      const delta = Math.abs(scoreShared.value - next);
+      if (delta < 0.5) return;
+      scoreShared.value = withTiming(next, {
+        duration: TIMING_CONFIG.GENTLE.duration,
+        easing: TIMING_CONFIG.GENTLE.easing,
+      });
+    }, [displayScore, scoreShared]);
+
+    // Push only rounded values to JS to limit re-renders (max 100 updates)
+    useAnimatedReaction(
+      () => Math.round(scoreShared.value),
+      (rounded, prev) => {
+        if (rounded !== prev) {
+          runOnJS(setAnimatedScore)(rounded);
+        }
+      }
+    );
+
+    // Static geometry values
+    const centerX = GAUGE_WIDTH / 2;
+    const centerY = GAUGE_HEIGHT - 15;
+    const indicatorRadius = GAUGE_RADIUS - GAUGE_STROKE_WIDTH / 2;
+    const sweep = (animatedScore / 100) * TOTAL_SWEEP;
+    const animatedFilledPath = useMemo(() => {
+      const p = Skia.Path.Make();
+      p.addArc(
+        {
+          x: centerX - GAUGE_RADIUS,
+          y: centerY - GAUGE_RADIUS,
+          width: GAUGE_RADIUS * 2,
+          height: GAUGE_RADIUS * 2,
+        },
+        START_ANGLE,
+        sweep
+      );
+      return p;
+    }, [centerX, centerY, sweep]);
+
+    const angle = START_ANGLE - (animatedScore / 100) * TOTAL_SWEEP;
+    const angleRad = (angle * Math.PI) / 180;
+    const indicatorX = centerX + Math.cos(angleRad) * indicatorRadius;
+    const indicatorY = centerY + Math.sin(angleRad) * indicatorRadius;
+    const gradientEnd = vec(
+      GAUGE_WIDTH * 0.05 + (GAUGE_WIDTH * 0.9 * sweep) / TOTAL_SWEEP,
+      GAUGE_HEIGHT / 2
+    );
 
     return (
       <BaseChart
@@ -103,7 +159,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
 
                 {/* Filled portion */}
                 <Path
-                  path={gaugePaths.filledPath}
+                  path={animatedFilledPath}
                   strokeCap="round"
                   strokeWidth={GAUGE_STROKE_WIDTH}
                   style="stroke"
@@ -112,39 +168,36 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
                     colors={getFilledGradientColors()}
                     positions={getFilledGradientPositions()}
                     start={vec(GAUGE_WIDTH * 0.05, GAUGE_HEIGHT / 2)}
-                    end={vec(
-                      GAUGE_WIDTH * 0.05 + (GAUGE_WIDTH * 0.9 * gaugePaths.filledSweep) / 170,
-                      GAUGE_HEIGHT / 2
-                    )}
+                    end={gradientEnd}
                   />
                 </Path>
 
                 {/* Indicator with glow */}
                 <Circle
                   color={chartColors.withOpacity(getCapacityColor(), 0.15)}
-                  cx={indicatorPosition.x}
-                  cy={indicatorPosition.y}
+                  cx={indicatorX}
+                  cy={indicatorY}
                   r={INDICATOR_GLOW_SIZE}
                   style="fill"
                 />
                 <Circle
                   color={colors.background}
-                  cx={indicatorPosition.x}
-                  cy={indicatorPosition.y}
+                  cx={indicatorX}
+                  cy={indicatorY}
                   r={INDICATOR_SIZE + 2}
                   style="fill"
                 />
                 <Circle
                   color={getCapacityColor()}
-                  cx={indicatorPosition.x}
-                  cy={indicatorPosition.y}
+                  cx={indicatorX}
+                  cy={indicatorY}
                   r={INDICATOR_SIZE}
                   style="fill"
                 />
                 <Circle
                   color={chartColors.withOpacity(colors.background, 0.4)}
-                  cx={indicatorPosition.x - 1}
-                  cy={indicatorPosition.y - 1}
+                  cx={indicatorX - 1}
+                  cy={indicatorY - 1}
                   r={INDICATOR_SIZE - 3}
                   style="fill"
                 />
@@ -154,7 +207,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
             {/* Center percentage */}
             <View style={styles.centerSection}>
               <ThemedText style={[styles.capacityText, { color: getCapacityColor() }]}>
-                {displayScore}%
+                {Math.round(animatedScore)}%
               </ThemedText>
             </View>
           </View>

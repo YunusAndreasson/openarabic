@@ -16,7 +16,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { ListenListItemCard } from '@/components/listen/ListenListItemCard';
 import { useToast } from '@/components/providers/ToastProvider';
 import { AUDIO_STATES, type AudioState } from '@/constants/audio';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useListenScreen, useListenUI } from '@/hooks/listen';
 import { useColors } from '@/hooks/theme/useColors';
@@ -315,12 +315,16 @@ export default function ListenScreen(): JSX.Element {
             contentContainerStyle={listContainerStyle}
             ItemSeparatorComponent={ItemSeparator}
             ListEmptyComponent={EmptyStateComponent}
+            removeClippedSubviews
+            initialNumToRender={6}
+            windowSize={7}
           />
         ) : (
           <FlashList<ReadingListItem>
             data={sortedReadingList}
-            drawDistance={ITEM_HEIGHT * 5}
+            drawDistance={ITEM_HEIGHT * 3}
             estimatedItemSize={ITEM_HEIGHT}
+            estimatedListSize={{ height: ITEM_HEIGHT * 10, width: SCREEN_WIDTH }}
             keyExtractor={memoizedKeyExtractor}
             removeClippedSubviews={true}
             // Match study view pull behavior: no bounce/overscroll

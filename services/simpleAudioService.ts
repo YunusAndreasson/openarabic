@@ -29,7 +29,7 @@ class SimpleAudioService {
 
   // STABILIZATION: Add state transition smoothing
   private lastStatusUpdate = 0;
-  private statusUpdateThrottle = 300; // Minimum 300ms between status updates for smoother UI
+  private statusUpdateThrottle = 400; // Slightly coarser to reduce UI churn without hurting UX
 
   // Current audio status
   private status: AudioStatus = {
@@ -250,7 +250,7 @@ class SimpleAudioService {
           this.updateStatus({ isPlaying: false, isLoading: false });
         }
       }
-    }, 500);
+    }, 600);
   }
 
   /**

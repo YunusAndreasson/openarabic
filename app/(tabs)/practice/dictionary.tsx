@@ -14,7 +14,7 @@ import DictionarySortingHeader from '@/components/practice/DictionarySortingHead
 import { DictionaryWordCard } from '@/components/practice/DictionaryWordCard';
 import EditModeButton from '@/components/ui/EditModeButton';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -153,8 +153,15 @@ export default function DictionaryScreen(): JSX.Element {
         data={sortedWords}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
-        estimatedItemSize={64}
-        drawDistance={320}
+        estimatedItemSize={LAYOUT.CARD.HEIGHT.VOCABULARY_ITEM}
+        estimatedListSize={{
+          height: LAYOUT.CARD.HEIGHT.VOCABULARY_ITEM * 12,
+          width: SCREEN_WIDTH,
+        }}
+        overrideItemLayout={(layout: { span?: number; size?: number }) => {
+          layout.size = LAYOUT.CARD.HEIGHT.VOCABULARY_ITEM;
+        }}
+        drawDistance={LAYOUT.CARD.HEIGHT.VOCABULARY_ITEM * 3}
         removeClippedSubviews={true}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={contentContainerStyle}
