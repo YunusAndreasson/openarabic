@@ -90,7 +90,12 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                   {activeFiltersCount}
                 </ThemedText>
               </View>
-              <Pressable onPress={handleClearAll} style={styles.clearAllButton}>
+              <Pressable
+                onPress={handleClearAll}
+                style={styles.clearAllButton}
+                accessibilityRole="button"
+                accessibilityLabel={STRINGS.RESET_FILTERS}
+              >
                 <ThemedText type="label" colorName="warning" weight="semibold">
                   {STRINGS.RESET_FILTERS}
                 </ThemedText>
@@ -111,6 +116,8 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                 { borderBottomColor: colors.borderOverlay },
               ]}
               onPress={handleToggleAuthors}
+              accessibilityRole="button"
+              accessibilityLabel={STRINGS.AUTHORS}
             >
               <View style={styles.filterRowContent}>
                 <View style={styles.filterRowLeft}>
@@ -136,7 +143,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                   <Ionicons
                     name={expandedSections.authors ? 'chevron-up' : 'chevron-down'}
                     size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    color={colors.tint}
+                    color={expandedSections.authors ? colors.tint : colors.secondaryText}
                   />
                 </View>
               </View>
@@ -146,7 +153,10 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
               <View style={[styles.expandedContent, { backgroundColor: colors.elevation2 }]}>
                 <View style={styles.pillGrid}>
                   {authorChunks.map(chunk => (
-                    <View key={chunk[0]?.id || chunk.length} style={styles.authorChunk}>
+                    <View
+                      key={`authors-${chunk[0]?.id ?? 0}-${chunk[chunk.length - 1]?.id ?? 0}`}
+                      style={styles.authorChunk}
+                    >
                       {chunk.map(author => (
                         <Pill
                           key={author.id}
@@ -176,6 +186,8 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                 { borderBottomColor: colors.borderOverlay },
               ]}
               onPress={handleToggleDifficulty}
+              accessibilityRole="button"
+              accessibilityLabel={STRINGS.DIFFICULTY}
             >
               <View style={styles.filterRowContent}>
                 <View style={styles.filterRowLeft}>
@@ -201,7 +213,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                   <Ionicons
                     name={expandedSections.difficulty ? 'chevron-up' : 'chevron-down'}
                     size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    color={colors.tint}
+                    color={expandedSections.difficulty ? colors.tint : colors.secondaryText}
                   />
                 </View>
               </View>
@@ -240,6 +252,8 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                 ],
               ]}
               onPress={handleToggleDateRange}
+              accessibilityRole="button"
+              accessibilityLabel={STRINGS.DATE_RANGE}
             >
               <View style={styles.filterRowContent}>
                 <View style={styles.filterRowLeft}>
@@ -265,7 +279,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                   <Ionicons
                     name={expandedSections.dateRange ? 'chevron-up' : 'chevron-down'}
                     size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    color={colors.tint}
+                    color={expandedSections.dateRange ? colors.tint : colors.secondaryText}
                   />
                 </View>
               </View>
