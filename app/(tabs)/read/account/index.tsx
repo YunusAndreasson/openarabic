@@ -105,7 +105,7 @@ const AccountScreen: FC = () => {
               <View style={styles.settingLabelContainer}>
                 <View style={styles.cardIconContainer}>
                   <Ionicons
-                    color={colors.text}
+                    color={colors.interactiveSecondary}
                     name="notifications"
                     size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                   />
@@ -129,7 +129,7 @@ const AccountScreen: FC = () => {
                     <View style={styles.settingLabelContainer}>
                       <View style={styles.cardIconContainer}>
                         <Ionicons
-                          color={colors.text}
+                          color={colors.interactiveSecondary}
                           name="time"
                           size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                         />
@@ -158,7 +158,7 @@ const AccountScreen: FC = () => {
                 <View style={styles.settingLabelContainer}>
                   <View style={styles.cardIconContainer}>
                     <Ionicons
-                      color={colors.text}
+                      color={colors.interactiveSecondary}
                       name="color-palette"
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
@@ -192,7 +192,7 @@ const AccountScreen: FC = () => {
                 <View style={styles.cardLeft}>
                   <View style={styles.cardIconContainer}>
                     <Ionicons
-                      color={colors.text}
+                      color={colors.interactiveSecondary}
                       name="text"
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
@@ -229,13 +229,13 @@ const AccountScreen: FC = () => {
                 <View style={styles.cardLeft}>
                   <View style={styles.cardIconContainer}>
                     <Ionicons
-                      color={colors.text}
+                      color={colors.interactiveSecondary}
                       name="help-circle"
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
                   </View>
                   <ThemedText style={styles.cardText} type="body" weight="medium">
-                    Help
+                    {STRINGS.HELP}
                   </ThemedText>
                 </View>
                 <Ionicons
@@ -259,7 +259,7 @@ const AccountScreen: FC = () => {
                 <View style={styles.cardLeft}>
                   <View style={styles.cardIconContainer}>
                     <Ionicons
-                      color={colors.text}
+                      color={colors.interactiveSecondary}
                       name="mail"
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
@@ -296,7 +296,7 @@ const AccountScreen: FC = () => {
                 <View style={styles.cardLeft}>
                   <View style={styles.cardIconContainer}>
                     <Ionicons
-                      color={colors.text}
+                      color={colors.interactiveSecondary}
                       name="archive"
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
@@ -343,13 +343,11 @@ const AccountScreen: FC = () => {
                     <ThemedText type="body" weight="medium" style={{ color: colors.error }}>
                       {STRINGS.SIGN_OUT}
                     </ThemedText>
-                      <ThemedText
-                        style={[
-                          styles.userEmailText,
-                          { color: colors.error, opacity: LAYOUT.OPACITY.MEDIUM },
-                        ]}
-                        type="caption"
-                      >
+                    <ThemedText
+                      type="caption"
+                      colorName="metadataText"
+                      style={styles.userEmailText}
+                    >
                       {user?.email || STRINGS.NO_EMAIL}
                     </ThemedText>
                   </View>
@@ -368,10 +366,10 @@ const AccountScreen: FC = () => {
         {/* App Footer */}
         <View style={styles.appFooterWrapper}>
           <View style={styles.appFooterContent}>
-            <ThemedText colorName="tabIconDefault" style={styles.versionText} type="caption">
+            <ThemedText colorName="captionText" style={styles.versionText} type="caption">
               {STRINGS.APP_VERSION_LABEL} {Constants.expoConfig?.version || appVersion || '0.0.0'}
             </ThemedText>
-            <ThemedText colorName="tabIconDefault" style={styles.copyrightText} type="caption">
+            <ThemedText colorName="captionText" style={styles.copyrightText} type="caption">
               {STRINGS.COPYRIGHT_SYMBOL} {currentYear} {pkg.name}
             </ThemedText>
           </View>
