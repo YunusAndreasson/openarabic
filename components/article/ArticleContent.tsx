@@ -22,9 +22,9 @@ import ParallaxHeader from '@/components/article/ParallaxHeader';
 import { RelatedArticlesSection } from '@/components/article/RelatedArticlesSection';
 import PlayButton from '@/components/listen/PlayButton';
 import { SCROLL_EVENT_THROTTLE, SENTENCE_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
-import { LAYOUT, MIN_TOUCH_TARGET, SCREEN_WIDTH } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+// Removed unused useIsDarkMode import
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
@@ -171,7 +171,7 @@ const FloatingActionButtons = memo<{
 }>(({ isInReadingList, onToggleReadingList, onPlayPress, isPlaying, onClose }) => {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const isDarkMode = useIsDarkMode();
+  // No dark mode specific styling needed here
 
   const buttonStyle = useMemo(
     () => ({
@@ -439,7 +439,6 @@ export const ArticleContent = memo<ArticleContentProps>(
           alwaysBounceVertical: false,
           bounces: true,
           overScrollMode: 'always',
-          estimatedListSize: { height: SENTENCE_ITEM_HEIGHT * 12, width: SCREEN_WIDTH },
           initialScrollIndex: 0,
         }),
       [

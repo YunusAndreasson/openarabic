@@ -113,7 +113,7 @@ const MiniPlayerComponent = ({
             top: 0,
             left: 0,
             right: 0,
-            height: LAYOUT.BORDER.WIDTH.HAIRLINE,
+            height: LAYOUT.BORDER.WIDTH.THIN,
             backgroundColor: colors.border,
           }}
           pointerEvents="none"
@@ -127,7 +127,7 @@ const MiniPlayerComponent = ({
               style={[
                 styles.artwork,
                 {
-                  borderWidth: LAYOUT.BORDER.WIDTH.HAIRLINE,
+                  borderWidth: LAYOUT.BORDER.WIDTH.THIN,
                   borderColor: colors.border,
                 },
               ]}
@@ -188,7 +188,7 @@ const MiniPlayerComponent = ({
                 styles.timerButton,
                 {
                   backgroundColor: isTimerActive ? colors.warning : colors.elevation3,
-                  borderWidth: isTimerActive ? 0 : LAYOUT.BORDER.WIDTH.HAIRLINE,
+                  borderWidth: isTimerActive ? 0 : LAYOUT.BORDER.WIDTH.THIN,
                   borderColor: isTimerActive ? 'transparent' : colors.border,
                 },
               ]}

@@ -112,18 +112,20 @@ export const generateChartSubtitle = {
       return `${STRINGS.ON_TRACK_WITH_USUAL_SPEED} (last 7 days)`;
     }
 
-    const comparison = currentEfficiency > weeklyAverage
-      ? STRINGS.FASTER_THAN_USUAL
-      : STRINGS.SLOWER_THAN_USUAL;
+    const comparison =
+      currentEfficiency > weeklyAverage ? STRINGS.FASTER_THAN_USUAL : STRINGS.SLOWER_THAN_USUAL;
     return `${comparison} (last 7 days)`;
   },
 
-  retrievability: (currentRetention: number, criticalWords: number, totalWords: number): string => {
+  retrievability: (
+    _currentRetention: number,
+    criticalWords: number,
+    totalWords: number
+  ): string => {
     if (totalWords === 0) {
       return STRINGS.STUDY_TO_MONITOR_REVIEW_TIMING;
     }
 
-    const performance = getPerformanceLevel(currentRetention);
     const criticalPercentage = (criticalWords / totalWords) * 100;
 
     if (criticalWords === 0) {

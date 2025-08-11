@@ -15,17 +15,18 @@ interface ChartAreaFillProps {
  * Shared area fill component for all vocabulary charts
  * Renders the consistent gradient area fill under the main line
  */
-const GRADIENT_STOPS = [0, 0.3, 0.7, 1] as const;
+// Skia LinearGradient positions expect a mutable number[] type in our TS setup
+const GRADIENT_STOPS: number[] = [0, 0.3, 0.7, 1];
 
 export const ChartAreaFill = memo<ChartAreaFillProps>(({ path, graphWidth, topPadding = 0 }) => {
   const chartColors = useChartColors();
 
-  if (!path) return null;
-
   const areaPath = useMemo(
-    () => createAreaFillPath(path, graphWidth, GRAPH_HEIGHT_LARGE),
+    () => (path ? createAreaFillPath(path, graphWidth, GRAPH_HEIGHT_LARGE) : ''),
     [path, graphWidth]
   );
+
+  if (!path || !areaPath) return null;
 
   return (
     <Path path={areaPath}>

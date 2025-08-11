@@ -23,12 +23,12 @@ export const ChartPerformanceZones = memo<ChartPerformanceZonesProps>(
     const colors = useColors();
     const chartColors = useChartColors();
 
-    if (!maskPath || zones.length === 0) return null;
-
     const areaPath = useMemo(
-      () => createAreaFillPath(maskPath, graphWidth, GRAPH_HEIGHT_LARGE),
+      () => (maskPath ? createAreaFillPath(maskPath, graphWidth, GRAPH_HEIGHT_LARGE) : ''),
       [maskPath, graphWidth]
     );
+
+    if (!maskPath || zones.length === 0 || !areaPath) return null;
 
     return (
       <Mask mask={<Path color={colors.white} path={areaPath} />}>

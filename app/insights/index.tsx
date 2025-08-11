@@ -144,11 +144,6 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.HALF_TINY,
     opacity: LAYOUT.OPACITY.HIGH,
   },
-  scaleCaption: {
-    marginTop: -LAYOUT.SPACING.TINY,
-    marginBottom: LAYOUT.SPACING.HALF_TINY,
-    opacity: LAYOUT.OPACITY.HIGH,
-  },
   errorContainer: {
     alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
