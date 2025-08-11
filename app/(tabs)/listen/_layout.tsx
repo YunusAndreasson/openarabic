@@ -1,7 +1,12 @@
 import { Stack } from 'expo-router';
 import type { JSX } from 'react';
 
+import { createNavigationOptions } from '@/constants/modal';
+import { useColors } from '@/hooks/theme/useColors';
+
 export default function ListenLayout(): JSX.Element {
+  const colors = useColors();
+
   return (
     <Stack>
       <Stack.Screen
@@ -12,11 +17,11 @@ export default function ListenLayout(): JSX.Element {
       />
       <Stack.Screen
         name="now-playing"
-        options={{
+        options={createNavigationOptions(colors, {
           headerShown: false,
           presentation: 'modal',
           animation: 'fade',
-        }}
+        })}
       />
     </Stack>
   );

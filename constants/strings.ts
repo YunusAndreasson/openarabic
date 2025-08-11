@@ -504,6 +504,11 @@ export const STRINGS = {
   WORDS_REVIEWED_DEDICATION_TEMPLATE: '{count} words reviewed - dedication pays off',
   WORDS_REVIEWED_GREAT_TEMPLATE: '{count} words reviewed - great effort',
 
+  // Efficiency (units)
+  WORDS_PER_DAY: 'words/day',
+  WORDS_PER_DAY_SHORT: 'words/day',
+  LAST_7_DAYS_AVG: 'avg {value}/day (last 7 days)',
+
   // Memory Capacity Labels - Simple capacity indicators
   MEMORY_CAPACITY_LOW: 'Low Memory Capacity',
   MEMORY_CAPACITY_MEDIUM: 'Medium Memory Capacity',

@@ -13,7 +13,10 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
+import { useEfficiencyChart } from '@/hooks/vocabulary/useEfficiencyChart';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
+import { useMasteryChart } from '@/hooks/vocabulary/useMasteryChart';
+import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 
 import { INFO_TITLES } from './_layout';
 
@@ -32,6 +35,11 @@ export default function InsightsScreen(): JSX.Element {
     () => studyWords?.filter(word => word != null && word.root_id != null) ?? [],
     [studyWords]
   );
+
+  // Derive current efficiency for a concise numeric caption
+  const { chartData: efficiencyChartData } = useEfficiencyChart(validStudyWords);
+  const mastery = useMasteryChart(validStudyWords);
+  const retrievability = useRetrievabilityChart(validStudyWords);
 
   if (error) {
     return (
@@ -79,6 +87,11 @@ export default function InsightsScreen(): JSX.Element {
             subtitle={STRINGS.MEMORY_STRENGTH_ACROSS_VOCABULARY}
             isFirstSection={true}
           />
+          {mastery?.insights?.currentRate ? (
+            <ThemedText type="caption" variant="secondary" style={styles.metricCaption}>
+              {mastery.insights.currentRate}%
+            </ThemedText>
+          ) : null}
           <MasteryChart studyWords={validStudyWords} hideTitle={true} />
         </View>
 
@@ -88,6 +101,12 @@ export default function InsightsScreen(): JSX.Element {
             title={INFO_TITLES.efficiency}
             subtitle={STRINGS.VOCABULARY_ACQUISITION_VELOCITY}
           />
+          {/* Compact numeric summary to avoid truncation in subtitles */}
+          {efficiencyChartData?.insights?.currentEfficiency ? (
+            <ThemedText type="caption" variant="secondary" style={styles.metricCaption}>
+              {efficiencyChartData.insights.currentEfficiency} {STRINGS.WORDS_PER_DAY}
+            </ThemedText>
+          ) : null}
           <EfficiencyChart studyWords={validStudyWords} hideTitle={true} />
         </View>
 
@@ -97,6 +116,11 @@ export default function InsightsScreen(): JSX.Element {
             title={INFO_TITLES.retrievability}
             subtitle={STRINGS.MEMORY_RETENTION_OPTIMAL_TIMING}
           />
+          {retrievability?.chartData?.insights?.currentRetrievability ? (
+            <ThemedText type="caption" variant="secondary" style={styles.metricCaption}>
+              {retrievability.chartData.insights.currentRetrievability}%
+            </ThemedText>
+          ) : null}
           <RetrievabilityChart studyWords={validStudyWords} hideTitle={true} />
         </View>
       </ThemedView>
@@ -114,6 +138,11 @@ const styles = StyleSheet.create({
   },
   chartSection: {
     marginBottom: LAYOUT.SPACING.LARGE,
+  },
+  metricCaption: {
+    marginTop: -LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.HALF_TINY,
+    opacity: LAYOUT.OPACITY.HIGH,
   },
   scaleCaption: {
     marginTop: -LAYOUT.SPACING.TINY,

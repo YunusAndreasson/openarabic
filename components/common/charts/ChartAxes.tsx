@@ -20,6 +20,7 @@ interface AxisLabelsProps {
   yAxisLines?: number; // Number of y-axis labels (default 5 for 0%, 25%, 50%, 75%, 100%)
   topPadding?: number; // Top padding used by the chart for proper y-axis alignment
   todayIndex?: number; // Index of the label that represents "today" (default: last label)
+  yLabelFormatter?: (value: number) => string; // Optional custom formatter (defaults to percentage)
 }
 
 /**
@@ -41,6 +42,7 @@ export const ChartAxes = memo(
     yAxisLines = 5,
     topPadding = 0,
     todayIndex = xLabels.length - 1,
+    yLabelFormatter,
   }: AxisLabelsProps) => {
     const isDarkMode = useIsDarkMode();
     const colors = useColors();
@@ -124,7 +126,7 @@ export const ChartAxes = memo(
                     },
                   ]}
                 >
-                  {label.value}%
+                  {yLabelFormatter ? yLabelFormatter(label.value) : `${label.value}%`}
                 </ThemedText>
               </View>
             ))}

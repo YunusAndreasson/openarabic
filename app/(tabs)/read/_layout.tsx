@@ -69,11 +69,11 @@ export default function ReadLayout(): JSX.Element {
       />
       <Stack.Screen
         name="article"
-        options={{
+        options={createNavigationOptions(colors, {
           headerShown: false, // Full-screen modal without header
           presentation: 'fullScreenModal',
           gestureEnabled: true,
-        }}
+        })}
       />
       <Stack.Screen
         name="filter"

@@ -37,6 +37,7 @@ interface VocabularyChartProps<T> {
   topPadding?: number;
   graphWidth: number;
   todayIndex?: number; // Index of the label that represents "today"
+  yLabelFormatter?: (value: number) => string;
 
   // BaseChart props
   title: string;
@@ -123,6 +124,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
     hideTitle = false,
     hasData,
     emptyStateText,
+    yLabelFormatter,
   }) => {
     // Memoized chart data calculations for better performance
     const contentHeight = useMemo(() => GRAPH_HEIGHT_LARGE + CONTENT_HEIGHT_OFFSET, []);
@@ -240,9 +242,10 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
           yMax={yMax}
           xLabels={xLabels}
           todayIndex={todayIndex}
+          yLabelFormatter={yLabelFormatter}
         />
       ),
-      [topPadding, graphWidth, xLabelPositions, yMax, xLabels, todayIndex]
+      [topPadding, graphWidth, xLabelPositions, yMax, xLabels, todayIndex, yLabelFormatter]
     );
 
     return (

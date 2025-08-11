@@ -1,11 +1,7 @@
 import { memo, useMemo } from 'react';
 
 import { VocabularyChart, type DataPoint } from '@/components/common/charts';
-import {
-  CHART_LABELS,
-  EMPTY_STATE_MESSAGES,
-  generateChartSubtitle,
-} from '@/components/common/charts/chartMessages';
+import { CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/components/common/charts/chartMessages';
 import { calculateDataPointPositions, useGraphWidth } from '@/components/common/charts/constants';
 import { STRINGS } from '@/constants/strings';
 import { useEfficiencyChart, type EfficiencyRecord } from '@/hooks/vocabulary/useEfficiencyChart';
@@ -22,30 +18,25 @@ export const EfficiencyChart = memo<EfficiencyChartProps>(
     const graphWidth = useGraphWidth();
     const { efficiencyData, chartData } = useEfficiencyChart(studyWords);
 
-    // Generate subtitle using standardized messaging system
+    // Use real units (words/day) for clarity instead of percentages
     const subtitle = useMemo(() => {
-      const { currentEfficiency, weeklyAverage } = chartData.insights;
-
-      if (currentEfficiency === 0) {
-        return STRINGS.PRACTICE_TO_TRACK_LEARNING_SPEED;
-      }
-
-      // Use standardized subtitle generator
-      return generateChartSubtitle.efficiency(currentEfficiency, weeklyAverage);
+      const { currentEfficiency } = chartData.insights;
+      if (currentEfficiency === 0) return STRINGS.START_PRACTICING_TO_SEE_SPEED;
+      // Keep it short to avoid truncation: just the current value with unit
+      return `${currentEfficiency} ${STRINGS.WORDS_PER_DAY}`;
     }, [chartData.insights]);
 
-    // Prepare data points for interactive tooltips
+    // Prepare data points in words/day for interactivity
     const dataPoints: DataPoint<EfficiencyRecord>[] = useMemo(() => {
-      // chartData.dataPoints only contains days with data, so we map directly
       return chartData.dataPoints.map(point => ({
         x: point.x,
         y: point.y,
-        value: `${Math.round(point.efficiency)}%`,
+        value: `${Math.round(point.efficiency)} ${STRINGS.WORDS_PER_DAY_SHORT}`,
         label: point.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         data: {
           date: point.date,
           averageEfficiency: point.efficiency,
-          wordCount: 1, // Days with data always have wordCount > 0
+          wordCount: 1,
         },
       }));
     }, [chartData.dataPoints]);
@@ -70,7 +61,11 @@ export const EfficiencyChart = memo<EfficiencyChartProps>(
         tooltipDataPoints={dataPoints}
         xLabels={xLabels}
         xLabelPositions={xLabelPositions}
-        yMax={100}
+        yMax={
+          chartData.insights.weeklyAverage > 20
+            ? Math.max(40, chartData.insights.weeklyAverage * 1.5)
+            : 40
+        }
         topPadding={0}
         graphWidth={graphWidth}
         title={CHART_LABELS.SPEED}
@@ -79,6 +74,7 @@ export const EfficiencyChart = memo<EfficiencyChartProps>(
         hideTitle={hideTitle}
         hasData={chartData.hasData}
         emptyStateText={EMPTY_STATE_MESSAGES.efficiency}
+        yLabelFormatter={(v: number) => `${Math.round(v)} ${STRINGS.WORDS_PER_DAY_SHORT}`}
       />
     );
   }
