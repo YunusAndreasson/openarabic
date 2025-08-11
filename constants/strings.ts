@@ -255,7 +255,10 @@ export const STRINGS = {
   STUDY_WORDS_TO_SEE_PROGRESS: 'Study words to track progress',
   REVIEW_WORDS_TO_BUILD_MEMORY_STRENGTH: 'Study to strengthen memory',
   PRACTICE_TO_SEE_LEARNING_SPEED: 'Study to see learning speed',
+  START_REVIEWING_TO_BUILD_STRENGTH: 'Study some words to see memory strength',
+  START_PRACTICING_TO_SEE_SPEED: 'Study some words to see your learning speed',
   REVIEW_WORDS_TO_TRACK_RETENTION: 'Study to improve retention',
+  STUDY_TO_MONITOR_REVIEW_TIMING: 'Study some words to see review schedule',
   REVIEW_WORDS_TO_TRACK_MEMORY_STRENGTH: 'Study to build memory',
   PRACTICE_TO_SEE_YOUR_LEARNING_SPEED: 'Study to see your speed',
   STUDY_WORDS_TO_MONITOR_RETENTION: 'Study to monitor retention',
@@ -297,7 +300,11 @@ export const STRINGS = {
   TRENDING_DOWNWARD: 'trending downward',
   STEADY_PERFORMANCE: 'steady performance',
   ALL_WORDS_RETAINED_WELL: 'all words retained well',
+  ALL_WORDS_LOOK_STABLE: 'All words look stable',
   CONSISTENT_PRACTICE: 'consistent pace',
+  ON_TRACK_WITH_USUAL_SPEED: 'On track with your usual speed',
+  FASTER_THAN_USUAL: 'Faster than usual',
+  SLOWER_THAN_USUAL: 'Slower than usual',
 
   // Labels
   ARTICLES_LABEL_SINGULAR: 'article',
@@ -505,6 +512,12 @@ export const STRINGS = {
   // Insights screen explanation
   INSIGHTS_EXPLANATION:
     'These charts show detailed stats about your memory capacity and learning progress. Use them to understand how your vocabulary retention works and track improvement over time.',
+
+  // Chart scale captions (concise, intuitive mappings)
+  SCALE: 'Scale',
+  SCALE_WEAK_TO_STRONG: 'Weak → Strong',
+  SCALE_SLOW_TO_FAST: 'Slow → Fast',
+  SCALE_DUE_NOW_TO_SAFE: 'Due now → Safe',
 
   // Help content
   HELP_GETTING_STARTED: 'Getting Started',

@@ -64,7 +64,7 @@ export const ChartAxes = memo(
 
     // Intelligent label positioning that prevents cutoff while maintaining visual balance
     const labelPositions = useMemo(() => {
-      const labelWidth = MIN_TOUCH_TARGET.SMALL;
+      const labelWidth = MIN_TOUCH_TARGET.LARGE; // widen to avoid clipping wide weekday labels
       const halfLabelWidth = labelWidth / 2;
 
       return xLabelPositions.map((position, index) => {

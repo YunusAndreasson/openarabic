@@ -55,7 +55,8 @@ export default function InsightsScreen(): JSX.Element {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingBottom: insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY,
+            // Reduce excessive bottom space: only safe area + small spacing
+            paddingBottom: insets.bottom + LAYOUT.SPACING.SMALL,
           },
         ]}
         scrollViewProps={{
@@ -114,6 +115,11 @@ const styles = StyleSheet.create({
   chartSection: {
     marginBottom: LAYOUT.SPACING.LARGE,
   },
+  scaleCaption: {
+    marginTop: -LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.HALF_TINY,
+    opacity: LAYOUT.OPACITY.HIGH,
+  },
   errorContainer: {
     alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
@@ -126,7 +132,7 @@ const styles = StyleSheet.create({
   },
   introSection: {
     marginBottom: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: 0,
   },
   introText: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.5, // Better readability

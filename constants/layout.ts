@@ -273,7 +273,7 @@ export const LAYOUT = {
   },
 
   CHART: {
-    Y_AXIS_WIDTH: BASE_UNIT * 6, // 24 - optimized for percentage labels
+    Y_AXIS_WIDTH: BASE_UNIT * 9, // 36 - ample room so '100%' isn't clipped across fonts
   },
 
   /** Standard height for thin progress bars */

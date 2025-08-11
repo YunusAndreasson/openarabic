@@ -12,9 +12,9 @@ import { PERFORMANCE_THRESHOLDS } from './constants';
 // Standardized terminology
 export const CHART_LABELS = {
   // Performance metrics - with clear time indicators for zero confusion
-  STRENGTH: '📈 Memory Strength', // Past performance indicator
-  RETENTION: '🔮 Review Timing', // Future prediction indicator
-  SPEED: '⚡ Learning Progress', // Past performance indicator
+  STRENGTH: '📈 Memory strength', // How strong your memory is (last 7 days)
+  RETENTION: '⏰ Review schedule', // When words will need review (next 7 days)
+  SPEED: '⚡ Learning speed', // How fast you are learning (last 7 days)
 
   // Word categories
   MASTERED: 'mastered',
@@ -87,53 +87,54 @@ export const generateChartSubtitle = {
     weeklyChange: number
   ): string => {
     if (currentRate === 0) {
-      return STRINGS.REVIEW_WORDS_TO_BUILD_MEMORY_STRENGTH;
+      return STRINGS.START_REVIEWING_TO_BUILD_STRENGTH;
     }
 
     const performance = getPerformanceLevel(currentRate);
-    const baseMessage = PERFORMANCE_DESCRIPTORS[performance].medium;
+    const baseMessage = PERFORMANCE_DESCRIPTORS[performance].short;
 
     if (Math.abs(weeklyChange) >= 5) {
-      return `${baseMessage} - ${TREND_MESSAGES[trend].description} (past 7 days)`;
+      return `${baseMessage} • ${TREND_MESSAGES[trend].description} (last 7 days)`;
     }
 
-    return `${baseMessage} (past 7 days)`;
+    return `${baseMessage} (last 7 days)`;
   },
 
   efficiency: (currentEfficiency: number, weeklyAverage: number): string => {
     if (currentEfficiency === 0) {
-      return STRINGS.PRACTICE_TO_SEE_LEARNING_SPEED;
+      return STRINGS.START_PRACTICING_TO_SEE_SPEED;
     }
 
     const performance = getPerformanceLevel(currentEfficiency);
     const avgPerformance = getPerformanceLevel(weeklyAverage);
 
     if (performance === avgPerformance) {
-      return `${PERFORMANCE_DESCRIPTORS[performance].medium} - ${STRINGS.CONSISTENT_PRACTICE} (past 7 days)`;
+      return `${STRINGS.ON_TRACK_WITH_USUAL_SPEED} (last 7 days)`;
     }
 
-    const comparison =
-      currentEfficiency > weeklyAverage ? 'faster than usual' : 'slower than usual';
-    return `${PERFORMANCE_DESCRIPTORS[performance].short} pace - ${comparison} (past 7 days)`;
+    const comparison = currentEfficiency > weeklyAverage
+      ? STRINGS.FASTER_THAN_USUAL
+      : STRINGS.SLOWER_THAN_USUAL;
+    return `${comparison} (last 7 days)`;
   },
 
   retrievability: (currentRetention: number, criticalWords: number, totalWords: number): string => {
     if (totalWords === 0) {
-      return STRINGS.REVIEW_WORDS_TO_TRACK_RETENTION;
+      return STRINGS.STUDY_TO_MONITOR_REVIEW_TIMING;
     }
 
     const performance = getPerformanceLevel(currentRetention);
     const criticalPercentage = (criticalWords / totalWords) * 100;
 
     if (criticalWords === 0) {
-      return `${PERFORMANCE_DESCRIPTORS[performance].medium} - ${STRINGS.ALL_WORDS_RETAINED_WELL} (next 7 days)`;
+      return `${STRINGS.ALL_WORDS_LOOK_STABLE} (next 7 days)`;
     }
 
     if (criticalPercentage > 30) {
-      return `${Math.round(criticalPercentage)}% words need urgent review (next 7 days)`;
+      return `${Math.round(criticalPercentage)}% of words need urgent review (next 7 days)`;
     }
 
-    return `${PERFORMANCE_DESCRIPTORS[performance].medium} - ${criticalWords} words fading (next 7 days)`;
+    return `${criticalWords} words likely to be forgotten soon (next 7 days)`;
   },
 } as const;
 

@@ -1,6 +1,7 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Canvas, Circle, Group, LinearGradient, Path, Skia, vec } from '@shopify/react-native-skia';
 import { memo, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { runOnJS, useAnimatedReaction, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { BaseChart } from '@charts/BaseChart';
@@ -116,6 +117,21 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
         onCardPress={onInfoPress}
       >
         <View style={styles.container}>
+          {/* Top-right info indicator to signal pressable card */}
+          {onInfoPress ? (
+            <Pressable
+              accessibilityLabel={STRINGS.INFO}
+              hitSlop={8}
+              onPress={onInfoPress}
+              style={styles.infoIndicator}
+            >
+              <Ionicons
+                name="information-circle"
+                size={LAYOUT.BUTTON.ICON_SIZE.XLARGE}
+                color={chartColors.withOpacity(colors.secondaryText, 0.55)}
+              />
+            </Pressable>
+          ) : null}
           <View style={styles.gaugeContainer}>
             <Canvas style={styles.canvas}>
               <Group>
@@ -278,5 +294,15 @@ const styles = StyleSheet.create({
   },
   container: {
     position: 'relative',
+  },
+  infoIndicator: {
+    position: 'absolute',
+    top: LAYOUT.SPACING.TINY,
+    right: LAYOUT.SPACING.TINY,
+    width: MIN_TOUCH_TARGET.SMALL,
+    height: MIN_TOUCH_TARGET.SMALL,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
   },
 });
