@@ -181,21 +181,17 @@ const FloatingActionButtons = memo<{
       backgroundColor: colors.elevation1,
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
-      // Reduce prominence in light mode where light colors are more visible
-      opacity: isDarkMode ? 0.7 : 0.45, // More subtle in light mode, more visible in dark mode
       ...LAYOUT.ELEVATION.SUBTLE,
     }),
-    [colors.elevation1, isDarkMode]
+    [colors.elevation1]
   );
 
   const activeButtonStyle = useMemo(
     () => ({
       ...buttonStyle,
       backgroundColor: colors.elevation2,
-      // Slightly higher opacity for active state but still more subtle in light mode
-      opacity: isDarkMode ? 0.85 : 0.6,
     }),
-    [buttonStyle, colors.elevation2, isDarkMode]
+    [buttonStyle, colors.elevation2]
   );
 
   // Memoize button positions with safe area insets
@@ -265,11 +261,8 @@ const FloatingActionButtons = memo<{
           />
         </Pressable>
 
-        {/* Play/Pause button - unified with playlist and mini-player */}
-        <View style={isPlaying ? activeButtonStyle : buttonStyle}>
-          {/* Ensure consistent dark icon color like Listen screen */}
-          <PlayButton isPlaying={isPlaying} onPress={onPlayPress} />
-        </View>
+        {/* Play/Pause button - prominent filled tint, no wrapper dimming */}
+        <PlayButton isPlaying={isPlaying} onPress={onPlayPress} />
       </View>
     </>
   );
@@ -380,6 +373,10 @@ export const ArticleContent = memo<ArticleContentProps>(
               style={{ textAlign: 'left' }}
             >
               {article.author.name}
+              {' \u00B7 '}
+              {article.category.name
+                ? article.category.name.charAt(0).toUpperCase() + article.category.name.slice(1)
+                : ''}
             </ThemedText>
           </View>
         </View>
