@@ -106,7 +106,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
     const headerHeight = useHeaderHeight();
     const [, startTransition] = useTransition();
 
-    useImperativeHandle(ref, () => listRef.current as FlashList<Article>, []);
+    useImperativeHandle(ref, () => listRef.current, []);
 
     // Optimized render item with stable reference
     const renderItem: ListRenderItem<Article> = useCallback(
@@ -211,4 +211,4 @@ ArticleList.displayName = 'ArticleList';
 
 // styles moved above to share separator style
 
-export default ArticleList;
+export default memo(ArticleList);

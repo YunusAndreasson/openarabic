@@ -244,14 +244,25 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
 
       // Show resume toast
       selectionFeedback();
-      showToast(`Resumed at ${progressPercent}%`, 3000, 'success');
+      showToast(`Resumed at ${progressPercent}%`, 3000, 'info');
 
-      // Jump to last read position if progress is 15% or more
-      if (progressPercent >= 15) {
-        setTimeout(() => {
-          jumpToLastReadPosition();
-        }, 500);
-      }
+      // Attempt jump once on resume
+      setTimeout(() => {
+        // Primary: delegate to hook (handles measurement and safety flags)
+        jumpToLastReadPosition();
+        // Fallback: if progress was below threshold, force a direct scroll to ensure UX expectation
+        if (progressPercent < 15 && scrollViewRef.current) {
+          try {
+            scrollViewRef.current.scrollToIndex({
+              index: (initialLastSentenceRead ?? 0) + 1,
+              animated: true,
+              viewPosition: 0.1,
+            });
+          } catch {
+            // ignore
+          }
+        }
+      }, 500);
 
       // Mark as handled - this prevents any further resume logic
       hasHandledInitialResumeRef.current = true;

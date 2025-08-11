@@ -213,8 +213,9 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   numberBadge: {
-    width: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
-    height: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
+    minWidth: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
+    minHeight: MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.TINY,
     borderRadius: (MIN_TOUCH_TARGET.LARGE - LAYOUT.SPACING.SMALL) / 2,
     alignItems: 'center',
     justifyContent: 'center',

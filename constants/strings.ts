@@ -222,6 +222,7 @@ export const STRINGS = {
   // Notifications
   ENABLE_NOTIFICATIONS: 'Enable notifications',
   TURN_ON_NOTIFICATIONS: 'Get daily study reminders',
+  OPEN_SETTINGS: 'Open Settings',
   NOTIFICATIONS_DISABLED: 'Notifications disabled',
   NOTIFICATION_REMINDER_TITLE: 'Time to study Arabic!',
   NOTIFICATION_REMINDER_BODY: 'Continue your Arabic learning journey',

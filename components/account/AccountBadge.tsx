@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import React, { memo, useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -99,15 +99,39 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId }) =
   const handlePhotoSelect = useCallback(async () => {
     try {
       // Request permissions - this will show the system permission dialog
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status, canAskAgain, granted } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permission Required',
-          'We need camera roll permissions to select a profile photo.',
-          [{ text: 'OK' }]
-        );
-        return;
+      if (!granted || status !== 'granted') {
+        // If we can ask again, prompt once more to surface the system dialog
+        if (canAskAgain) {
+          const retry = await ImagePicker.requestMediaLibraryPermissionsAsync();
+          if (retry.status !== 'granted') {
+            Alert.alert(
+              'Permission Required',
+              'We need photo library permission to select a profile photo.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Open Settings',
+                  onPress: () => Linking.openSettings(),
+                },
+              ]
+            );
+            return;
+          }
+        } else {
+          // Cannot ask again: guide user to settings
+          Alert.alert(
+            'Permission Required',
+            'Photo library access is disabled. Please enable it in system settings.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Open Settings', onPress: () => Linking.openSettings() },
+            ]
+          );
+          return;
+        }
       }
 
       // Launch image picker
@@ -171,7 +195,8 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId }) =
           ...LAYOUT.ELEVATION.SMALL,
         },
       ],
-      initialsContainer: [styles.initialsContainer, { backgroundColor: colors.tint }],
+      // Use elevation color so the inner badge harmonizes with dark mode without white fill
+      initialsContainer: [styles.initialsContainer, { backgroundColor: colors.elevation2 }],
       photoRing: [styles.photoRing, { borderColor: colors.tint }],
       editIconContainer: [styles.editIconContainer, { backgroundColor: colors.tint }],
     }),
@@ -210,7 +235,8 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId }) =
                   <ThemedText
                     type="heading2"
                     weight="bold"
-                    style={[styles.initialsText, { color: colors.white }]}
+                    // Use dark text to be legible on elevation background in dark mode
+                    style={[styles.initialsText, { color: colors.text }]}
                   >
                     {initials}
                   </ThemedText>

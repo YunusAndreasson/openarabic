@@ -170,16 +170,33 @@ export const useAccountScreen = () => {
   const handleReminderToggle = useCallback(
     async (enabled: boolean) => {
       if (enabled && !notificationPermissions) {
-        Alert.alert(STRINGS.ENABLE_NOTIFICATIONS, STRINGS.TURN_ON_NOTIFICATIONS, [
-          { text: STRINGS.CANCEL, style: 'cancel' },
-          {
-            text: STRINGS.ACCOUNT,
-            onPress: () => {
-              Linking.openSettings();
-            },
-          },
-        ]);
-        return;
+        try {
+          // Try requesting permissions directly first to surface the system dialog
+          const { default: Notifications } = await import('expo-notifications');
+          const existing = await Notifications.getPermissionsAsync();
+          let finalStatus = existing.status;
+          if (existing.status !== 'granted') {
+            const request = await Notifications.requestPermissionsAsync();
+            finalStatus = request.status;
+          }
+
+          const granted = finalStatus === 'granted';
+          setNotificationPermissions(granted);
+          if (!granted) {
+            Alert.alert(STRINGS.ENABLE_NOTIFICATIONS, STRINGS.TURN_ON_NOTIFICATIONS, [
+              { text: STRINGS.CANCEL, style: 'cancel' },
+              { text: STRINGS.OPEN_SETTINGS, onPress: () => Linking.openSettings() },
+            ]);
+            return;
+          }
+        } catch (error) {
+          handleError(error as Error, { showToast: false });
+          Alert.alert(STRINGS.ENABLE_NOTIFICATIONS, STRINGS.TURN_ON_NOTIFICATIONS, [
+            { text: STRINGS.CANCEL, style: 'cancel' },
+            { text: STRINGS.OPEN_SETTINGS, onPress: () => Linking.openSettings() },
+          ]);
+          return;
+        }
       }
 
       const newReminderTime = { ...reminderTime, enabled };

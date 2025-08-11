@@ -8,6 +8,7 @@ import { ICON_BUTTON_PRESS_SCALE } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { BaseIconButtonProps } from '@/types/ui/button.types';
 import { selectionFeedback } from '@/utils/haptics';
 
@@ -31,6 +32,7 @@ const PlayButton: FC<PlayButtonProps> = ({
   hapticFeedback = true,
 }) => {
   const colors = useColors();
+  const isDarkMode = useIsDarkMode();
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     scaleAmount: ICON_BUTTON_PRESS_SCALE,
   });
@@ -44,9 +46,8 @@ const PlayButton: FC<PlayButtonProps> = ({
   }, [disabled, onPress, hapticFeedback]);
 
   const backgroundColor = colors.tint;
-  // Play icon should be dark in both light and dark modes for consistent design contrast
-  const resolvedIconColor =
-    iconColor || (colors.background === colors.elevation0 ? colors.text : colors.black);
+  // Use dark icon in dark mode per design preference, otherwise default to theme text
+  const resolvedIconColor = iconColor || (isDarkMode ? colors.black : colors.text);
 
   return (
     <Pressable

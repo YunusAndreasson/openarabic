@@ -1,4 +1,5 @@
 import { useHeaderHeight } from '@react-navigation/elements';
+import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import type { JSX } from 'react';
@@ -145,20 +146,20 @@ export default function ReadScreen(): JSX.Element {
   );
 
   // Simplified header component - categories are guaranteed to have articles
-  const ListHeaderComponent = useMemo(
-    () => (
+  const ListHeaderComponent = useMemo(() => {
+    // Split header into two stable subtrees to minimize diffing cost
+    return (
       <View style={styles.headerContainer}>
         <IntelligentArticleSection
           articlesData={articlesData}
           refreshKey={refreshKey}
           onArticlePress={handleArticlePress}
         />
-
+        {/* Keep FilterSection isolated so changes in articlesData don't cause extra work */}
         <FilterSection items={categoriesWithArticles} onSelect={handleSelectCategory} />
       </View>
-    ),
-    [articlesData, refreshKey, handleArticlePress, categoriesWithArticles, handleSelectCategory]
-  );
+    );
+  }, [articlesData, refreshKey, handleArticlePress, categoriesWithArticles, handleSelectCategory]);
 
   // Static footer component - no props needed
   const ListFooterComponent = useMemo(() => <HijriDateFooter />, []);
@@ -199,3 +200,8 @@ export default function ReadScreen(): JSX.Element {
     </ThemedView>
   );
 }
+
+// Let parent _layout.tsx stack handle header; no local options needed.
+export const options: NativeStackNavigationOptions = {
+  headerShown: false,
+};

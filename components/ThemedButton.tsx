@@ -8,6 +8,7 @@ import { DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { ButtonSize, ButtonTextWeight, ThemedButtonProps } from '@/types/ui/button.types';
 import { selectionFeedback } from '@/utils/haptics';
 
@@ -75,6 +76,7 @@ function ThemedButtonComponent({
   ...props
 }: ThemedButtonProps): JSX.Element {
   const colors = useColors();
+  const isDarkMode = useIsDarkMode();
 
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     type: 'card',
@@ -93,7 +95,7 @@ function ThemedButtonComponent({
     [onPress, disabled, loading, hapticFeedback]
   );
 
-  const textColor = variant === 'filled' ? colors.background : colors.tint;
+  const textColor = variant === 'filled' ? (isDarkMode ? colors.black : colors.text) : colors.tint;
   const iconSize = useMemo(() => getIconSize(size, customIconSize), [size, customIconSize]);
 
   // Button styles
@@ -162,7 +164,15 @@ function ThemedButtonComponent({
           ) : (
             <ThemedText
               skipDefaultColor
-              colorName={disabled ? 'disabled' : variant === 'filled' ? 'background' : 'tint'}
+              colorName={
+                disabled
+                  ? 'disabled'
+                  : variant === 'filled'
+                  ? isDarkMode
+                    ? 'black'
+                    : 'text'
+                  : 'tint'
+              }
               style={[buttonTextStyle, loading && !icon && { opacity: 0 }]}
               type={getTextType(size, textWeight)}
             >

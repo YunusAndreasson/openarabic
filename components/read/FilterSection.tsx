@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import BaseCard from '@common/BaseCard';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
@@ -71,14 +71,15 @@ const compactCardStyles = StyleSheet.create({
   },
   countBadge: {
     alignItems: 'center',
-    borderRadius: LAYOUT.BUTTON.ICON_SIZE.LARGE / 2,
-    height: LAYOUT.BUTTON.ICON_SIZE.LARGE,
+    borderRadius: MIN_TOUCH_TARGET.SMALL / 2,
+    minHeight: MIN_TOUCH_TARGET.SMALL,
+    minWidth: MIN_TOUCH_TARGET.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     marginLeft: LAYOUT.SPACING.SMALL,
-    width: LAYOUT.BUTTON.ICON_SIZE.LARGE,
   },
   countText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '600',
     textAlign: 'center',
   },

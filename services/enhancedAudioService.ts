@@ -4,6 +4,7 @@ import type { EnhancedAudioTrack } from '@/types/audio.types';
 import { handleError } from '@/utils/errorHandling';
 
 import { articlesService } from './articles';
+import { audioCache } from './audioCache';
 import { readingListService } from './readingList';
 
 // Helper function to generate composite ID
@@ -19,11 +20,13 @@ export const enhancedAudioService = {
     try {
       // Fetch article details - audio is guaranteed to be available
       const article = await articlesService.getArticleById(articleId);
+      // Use cached audio path when possible for offline support and cache accounting
+      const cachedAudioUrl = await audioCache.getAudio(article.audio_url);
 
       return {
         id: generateTrackId(articleId),
         articleId,
-        audioUrl: article.audio_url,
+        audioUrl: cachedAudioUrl,
         title: article.title,
         imageUrl: String(article.image_url),
       };
@@ -51,10 +54,11 @@ export const enhancedAudioService = {
       for (const item of readingList) {
         const article = item.articles;
 
+        const cachedAudioUrl = await audioCache.getAudio(article.audio_url);
         allTracks.push({
           id: generateTrackId(item.article_id),
           articleId: item.article_id,
-          audioUrl: article.audio_url,
+          audioUrl: cachedAudioUrl,
           title: article.title,
           imageUrl: String(article.image_url),
         });

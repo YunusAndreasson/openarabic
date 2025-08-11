@@ -180,13 +180,13 @@ export const Toast = memo(
     }, [type, colors]);
 
     const textColor = useMemo(() => {
-      // For important and error, use white text for better contrast
-      if (type === 'important' || type === 'error') {
+      // IMPORTANT: Use dark text by default for consistency across the app
+      // Only use white text on strong/colored backgrounds
+      if (type === 'important' || type === 'error' || type === 'success') {
         return colors.white;
       }
-      // Default variant uses elevation3 background; choose contrasting text color
-      return isDarkMode ? colors.text : colors.text;
-    }, [type, isDarkMode, colors.text, colors.white]);
+      return colors.text;
+    }, [type, colors.text, colors.white]);
 
     // For mobile-only apps, use constant screen width
     const screenWidth = SCREEN_WIDTH;

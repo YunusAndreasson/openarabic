@@ -48,7 +48,8 @@ const DeleteButton: FC<
         <Ionicons
           name="trash"
           size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-          color={colors.white} // Using white color from Colors.ts
+          // Icons should be dark for consistency across modes
+          color={colors.black}
         />
       </Animated.View>
     </Pressable>

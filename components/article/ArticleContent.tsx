@@ -267,6 +267,7 @@ const FloatingActionButtons = memo<{
 
         {/* Play/Pause button - unified with playlist and mini-player */}
         <View style={isPlaying ? activeButtonStyle : buttonStyle}>
+          {/* Ensure consistent dark icon color like Listen screen */}
           <PlayButton isPlaying={isPlaying} onPress={onPlayPress} />
         </View>
       </View>

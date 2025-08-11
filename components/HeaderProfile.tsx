@@ -10,6 +10,7 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { useReadingStreak } from '@/hooks/articles/useReadingStreak';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
+import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useAppDispatch } from '@/store/hooks';
 import { openStreakBottomSheet } from '@/store/streakSlice';
 import { handleError } from '@/utils/errorHandling';
@@ -33,6 +34,7 @@ interface HeaderProfileProps {
 
 const HeaderProfile = memo(({ size = 28 }: HeaderProfileProps) => {
   const colors = useColors();
+  const isDarkMode = useIsDarkMode();
   const dispatch = useAppDispatch();
   const { user } = useAuth();
   const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(null);
@@ -116,7 +118,10 @@ const HeaderProfile = memo(({ size = 28 }: HeaderProfileProps) => {
             <ThemedText
               type="label"
               weight="bold"
-              style={[styles.initialsText, { fontSize: size * 0.4, color: colors.white }]}
+              style={[
+                styles.initialsText,
+                { fontSize: size * 0.4, color: isDarkMode ? colors.black : colors.white },
+              ]}
             >
               {initials}
             </ThemedText>
