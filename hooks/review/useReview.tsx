@@ -553,6 +553,31 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     };
   }, [currentWord, isComplete, isTransitioningToCompletion, playAudio]);
 
+  // Safety watchdog: if no current word and not transitioning, force completion
+  useEffect(() => {
+    if (
+      !isComplete &&
+      !isTransitioningToCompletion &&
+      !stateRefs.current.completionTriggered &&
+      !stateRefs.current.isUpdatingWord &&
+      !currentWord
+    ) {
+      const timer = setTimeout(() => {
+        if (
+          !isComplete &&
+          !isTransitioningToCompletion &&
+          !stateRefs.current.completionTriggered &&
+          !stateRefs.current.isUpdatingWord &&
+          !currentWord
+        ) {
+          triggerCompletionTransition();
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [currentWord, isComplete, isTransitioningToCompletion, triggerCompletionTransition]);
+
   const handleSwipeLeft = useCallback(() => {
     if (isComplete || stateRefs.current.isUpdatingWord || !currentWord) return;
     handleKnowledgeResponse('unknown');
