@@ -1,5 +1,5 @@
 import { Mask, Path, Rect } from '@shopify/react-native-skia';
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 
 import { useChartColors } from '@charts/chartColors';
 import { GRAPH_HEIGHT_LARGE } from '@charts/constants';
@@ -25,15 +25,13 @@ export const ChartPerformanceZones = memo<ChartPerformanceZonesProps>(
 
     if (!maskPath || zones.length === 0) return null;
 
+    const areaPath = useMemo(
+      () => createAreaFillPath(maskPath, graphWidth, GRAPH_HEIGHT_LARGE),
+      [maskPath, graphWidth]
+    );
+
     return (
-      <Mask
-        mask={
-          <Path
-            color={colors.white}
-            path={createAreaFillPath(maskPath, graphWidth, GRAPH_HEIGHT_LARGE)}
-          />
-        }
-      >
+      <Mask mask={<Path color={colors.white} path={areaPath} />}>
         {zones.map(zone => (
           <Rect
             key={`performance-zone-${zone.color}-${zone.y}-${zone.height}`}

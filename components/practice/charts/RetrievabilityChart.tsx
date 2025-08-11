@@ -60,6 +60,18 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
       }));
     }, [chartData.dataPoints]);
 
+    // Stabilize x labels and positions to maximize memoization effectiveness
+    const xLabels = useMemo(
+      () =>
+        retrievabilityData.map(data => data.date.toLocaleDateString('en-US', { weekday: 'short' })),
+      [retrievabilityData]
+    );
+
+    const xLabelPositions = useMemo(() => {
+      const allDayPositions = calculateDataPointPositions(retrievabilityData.length);
+      return retrievabilityData.map((_, index) => allDayPositions[index] || 0);
+    }, [retrievabilityData.length]);
+
     // 🚀 Unified chart with perfect grid system and danger zones:
     return (
       <VocabularyChart
@@ -67,14 +79,8 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
         dataPoints={chartData.dataPoints}
         performanceZones={chartData.dangerZones} // Danger zones for retrievability
         tooltipDataPoints={dataPoints}
-        xLabels={retrievabilityData.map(data =>
-          data.date.toLocaleDateString('en-US', { weekday: 'short' })
-        )} // Show all 7 days including days with no data
-        xLabelPositions={(() => {
-          const allDayPositions = calculateDataPointPositions(retrievabilityData.length);
-          // Calculate positions for all 7 days for proper label alignment
-          return retrievabilityData.map((_, index) => allDayPositions[index] || 0);
-        })()}
+        xLabels={xLabels} // Show all 7 days including days with no data
+        xLabelPositions={xLabelPositions}
         yMax={100}
         topPadding={0}
         graphWidth={graphWidth}

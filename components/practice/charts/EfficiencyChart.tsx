@@ -50,6 +50,17 @@ export const EfficiencyChart = memo<EfficiencyChartProps>(
       }));
     }, [chartData.dataPoints]);
 
+    // Stabilize x labels and positions to maximize memoization effectiveness
+    const xLabels = useMemo(
+      () => efficiencyData.map(data => data.date.toLocaleDateString('en-US', { weekday: 'short' })),
+      [efficiencyData]
+    );
+
+    const xLabelPositions = useMemo(() => {
+      const allDayPositions = calculateDataPointPositions(efficiencyData.length);
+      return efficiencyData.map((_, index) => allDayPositions[index] || 0);
+    }, [efficiencyData.length]);
+
     // 🚀 Unified chart with perfect grid system and performance zones:
     return (
       <VocabularyChart
@@ -57,13 +68,8 @@ export const EfficiencyChart = memo<EfficiencyChartProps>(
         dataPoints={chartData.dataPoints}
         performanceZones={chartData.performanceZones}
         tooltipDataPoints={dataPoints}
-        xLabels={efficiencyData.map(data =>
-          data.date.toLocaleDateString('en-US', { weekday: 'short' })
-        )}
-        xLabelPositions={(() => {
-          const allDayPositions = calculateDataPointPositions(efficiencyData.length);
-          return efficiencyData.map((_, index) => allDayPositions[index] || 0);
-        })()}
+        xLabels={xLabels}
+        xLabelPositions={xLabelPositions}
         yMax={100}
         topPadding={0}
         graphWidth={graphWidth}
