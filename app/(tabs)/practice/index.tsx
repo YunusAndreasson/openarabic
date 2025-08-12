@@ -134,7 +134,7 @@ export default function VocabularyScreen(): JSX.Element {
     return { learningWords, masteredWords };
   }, [filteredStudyWords]);
 
-  // (empty state container style removed)
+  //
 
   // Show error message if there was an error loading data
   if (error) {
@@ -145,17 +145,16 @@ export default function VocabularyScreen(): JSX.Element {
     );
   }
 
-  // Check if data is cached and show loading indicator
+  // Check if data is cached and derive simple UI state flags
   const isDataCached = !!(user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id)));
-  const showLoadingIndicator = (isDataLoading || isFetching) && !isDataCached;
+  const isLoadingState = isDataLoading || isFetching;
+  const hasWords = filteredStudyWords.length > 0;
+  const showLoadingIndicator = isLoadingState && !isDataCached;
 
   // Show an empty state when there are no study words
 
-  // Check if we should show the main content (vocabulary stat cards)
-  // Only show when we're not loading AND we have words OR when we're still loading with cached data
-  const shouldShowMainContent =
-    (!isDataLoading && !isFetching && filteredStudyWords.length > 0) ||
-    ((isDataLoading || isFetching) && isDataCached && filteredStudyWords.length > 0);
+  // Determine when to show the main content (vocabulary stat cards)
+  const shouldShowMainContent = hasWords && (!isLoadingState || (isLoadingState && isDataCached));
 
   // Main content
   return (
