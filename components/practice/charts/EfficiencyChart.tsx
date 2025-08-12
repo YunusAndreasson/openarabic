@@ -43,7 +43,10 @@ export const EfficiencyChart = memo<EfficiencyChartProps>(
 
     // Stabilize x labels and positions to maximize memoization effectiveness
     const xLabels = useMemo(
-      () => efficiencyData.map(data => data.date.toLocaleDateString('en-US', { weekday: 'short' })),
+      () =>
+        efficiencyData.map(data =>
+          data.date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })
+        ),
       [efficiencyData]
     );
 
@@ -75,6 +78,27 @@ export const EfficiencyChart = memo<EfficiencyChartProps>(
         hasData={chartData.hasData}
         emptyStateText={EMPTY_STATE_MESSAGES.efficiency}
         yLabelFormatter={(v: number) => `${Math.round(v)} ${STRINGS.WORDS_PER_DAY_SHORT}`}
+        todayIndex={xLabels.length - 1}
+        bottomSummary={
+          chartData.hasData
+            ? [
+                {
+                  label: STRINGS.LATEST,
+                  value: `${chartData.insights.currentEfficiency} ${STRINGS.WORDS_PER_DAY_SHORT}`,
+                },
+                {
+                  label: STRINGS.AVERAGE,
+                  value: `${chartData.insights.weeklyAverage} ${STRINGS.WORDS_PER_DAY_SHORT}`,
+                },
+                {
+                  label: STRINGS.MAX,
+                  value: `${Math.round(
+                    Math.max(0, ...efficiencyData.map(d => d.averageEfficiency))
+                  )} ${STRINGS.WORDS_PER_DAY_SHORT}`,
+                },
+              ]
+            : []
+        }
       />
     );
   }

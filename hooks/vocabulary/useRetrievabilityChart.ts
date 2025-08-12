@@ -102,7 +102,7 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
     const trend = calculateRetrievabilityTrend(retrievabilityData);
 
     // Get today's data for insights
-    const todayData = retrievabilityData[0]; // Today (leftmost)
+    const todayData = retrievabilityData[0]; // Today (leftmost, in UTC)
     const currentRetrievability = todayData?.averageRetrievability || 0;
     const criticalWords = todayData?.criticalWords || 0;
 

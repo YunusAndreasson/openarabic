@@ -77,8 +77,20 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
   const parsedWords = useMemo(
     () =>
       studyWords.map(word => ({
-        createdAt: new Date(word.created_at),
-        lastReview: word.fsrs_last_review ? new Date(word.fsrs_last_review) : null,
+        createdAt: (() => {
+          const s = (word.created_at || '').replace(' ', 'T');
+          const d = new Date(/Z$/.test(s) ? s : s + 'Z');
+          return isNaN(d.getTime()) ? new Date() : d;
+        })(),
+        lastReview: word.fsrs_last_review
+          ? (() => {
+              let s = word.fsrs_last_review.replace(' ', 'T');
+              s = s.replace(/\+00$/, 'Z');
+              if (!/[Zz]|[\+\-]\d{2}:?\d{2}$/.test(s)) s = s + 'Z';
+              const d = new Date(s);
+              return isNaN(d.getTime()) ? null : d;
+            })()
+          : null,
         state: word.fsrs_state,
         stability: word.fsrs_stability ?? 0,
       })),
@@ -239,7 +251,10 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
   }, [chartData.points, masteryData]);
 
   const xLabels = useMemo(
-    () => masteryData.map(d => d.date.toLocaleDateString('en-US', { weekday: 'short' })),
+    () =>
+      masteryData.map(d =>
+        d.date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })
+      ),
     [masteryData]
   );
   const xLabelPositions = useMemo(() => chartData.points.map(p => p.x), [chartData.points]);

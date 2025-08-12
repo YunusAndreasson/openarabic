@@ -30,7 +30,8 @@ export interface WordAnalysis {
 }
 
 // Pre-compiled regex patterns for better performance
-const DIACRITIC_REGEX = /[\u064B-\u065F\u0670\u06D6-\u06ED\u06EE-\u06EF\u06FA-\u06FF]/g;
+// Only include Arabic combining marks and superscript alef; exclude letter ranges (e.g., 06EE-06EF, 06FA-06FF)
+const DIACRITIC_REGEX = /[\u064B-\u065F\u0670\u06D6-\u06ED]/g;
 const NON_WORD_REGEX = /[^\w\s]/g;
 const WHITESPACE_REGEX = /\s+/;
 
@@ -82,11 +83,77 @@ function normalizeEnglish(text: string): string {
  * Optimized function to check if English contains any patterns
  */
 function hasEnglishMatch(english: string, patterns: string[]): string[] {
-  const normalized = normalizeEnglish(english);
-  const words = normalized.split(WHITESPACE_REGEX);
-  const wordSet = new Set(words); // Use Set for O(1) lookup
+  const norm = normalizeEnglish(english);
+  const tokens = norm.split(WHITESPACE_REGEX).filter(Boolean);
 
-  return patterns.filter(pattern => wordSet.has(normalizeEnglish(pattern)));
+  // Build unigram, bigram, trigram sets for fast membership checks
+  const unigrams = new Set(tokens);
+  const bigrams = new Set(
+    tokens
+      .map((_, i) => (i + 1 < tokens.length ? `${tokens[i]} ${tokens[i + 1]}` : ''))
+      .filter(Boolean)
+  );
+  const trigrams = new Set(
+    tokens
+      .map((_, i) =>
+        i + 2 < tokens.length ? `${tokens[i]} ${tokens[i + 1]} ${tokens[i + 2]}` : ''
+      )
+      .filter(Boolean)
+  );
+
+  // Simple contraction/variant expansion for common English phrases
+  const expand = (phrase: string): string[] => {
+    const mapping: Record<string, string> = {
+      "won't": 'will not',
+      "can't": 'cannot',
+      "don't": 'do not',
+      "doesn't": 'does not',
+      "didn't": 'did not',
+      // common "will" contractions
+      "i'll": 'i will',
+      "you'll": 'you will',
+      "he'll": 'he will',
+      "she'll": 'she will',
+      "it'll": 'it will',
+      "we'll": 'we will',
+      "they'll": 'they will',
+      // be verb contractions
+      "i'm": 'i am',
+      "you're": 'you are',
+      "he's": 'he is',
+      "she's": 'she is',
+      "it's": 'it is',
+      "we're": 'we are',
+      "they're": 'they are',
+    };
+    const p = normalizeEnglish(phrase);
+    const variants = [p];
+    // Look up in mapping using the original lowercased phrase
+    const lowerOriginal = phrase.toLowerCase();
+    if (mapping[lowerOriginal]) {
+      variants.push(normalizeEnglish(mapping[lowerOriginal]));
+    }
+    return variants;
+  };
+
+  const matches: string[] = [];
+  for (const raw of patterns) {
+    const candidates = expand(raw);
+    for (const candidate of candidates) {
+      if (candidate.includes(' ')) {
+        if (bigrams.has(candidate) || trigrams.has(candidate)) {
+          matches.push(raw);
+          break;
+        }
+      } else {
+        if (unigrams.has(candidate)) {
+          matches.push(raw);
+          break;
+        }
+      }
+    }
+  }
+  return matches;
 }
 
 /**
@@ -114,9 +181,29 @@ function findComponent(
       // For infixes, check if pattern exists within the word (not at start/end)
       const index = arabic.indexOf(pattern);
       matches = index > 0 && index < arabic.length - pattern.length;
+      // Additional precision for Form X seeking/requesting infix "ست": require preceding 'ا'
+      if (matches && pattern === 'ست') {
+        const preceding = index > 0 ? arabic[index - 1] : '';
+        if (preceding !== 'ا') {
+          matches = false;
+        }
+      }
     } else if (type === ComponentType.DIACRITIC) {
       // For diacritics, work with original text (not normalized) and check for pattern at end
       matches = arabic.trim().endsWith(pattern);
+    }
+
+    // Heuristic disambiguation for very short subject markers to avoid false positives
+    if (matches && type === ComponentType.PREFIX) {
+      if (pattern === 'ي' || pattern === 'ت' || pattern === 'أ' || pattern === 'ن') {
+        const remaining = arabic.slice(pattern.length);
+        const minLengthSatisfied = remaining.length >= 3;
+        const consonants = remaining.split('').filter(ch => !['ا', 'و', 'ي'].includes(ch));
+        const hasTwoConsonants = consonants.length >= 2;
+        if (!minLengthSatisfied || !hasTwoConsonants) {
+          matches = false;
+        }
+      }
     }
 
     if (matches) {

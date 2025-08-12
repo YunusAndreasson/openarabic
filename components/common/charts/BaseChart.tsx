@@ -1,6 +1,7 @@
 import { memo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { Y_AXIS_WIDTH } from '@charts/ChartAxes';
 import BaseCard from '@common/BaseCard';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -17,6 +18,7 @@ interface BaseChartProps {
   // Content props
   children: ReactNode;
   hasData: boolean;
+  bottomSummary?: { label: string; value: string }[];
 
   // Layout props
   contentHeight?: number;
@@ -37,6 +39,7 @@ export const BaseChart = memo(
     hasData,
     contentHeight = 176, // Optimized to match GRAPH_HEIGHT_LARGE
     emptyStateText = 'Add your first words to start tracking your progress',
+    bottomSummary,
   }: BaseChartProps) => {
     const colors = useColors();
 
@@ -85,6 +88,26 @@ export const BaseChart = memo(
 
           {/* Chart Content */}
           <View style={[styles.chartSection, { minHeight: contentHeight }]}>{children}</View>
+
+          {hasData && bottomSummary && bottomSummary.length > 0 ? (
+            <View style={styles.summaryRow}>
+              {bottomSummary.map(item => (
+                <View key={item.label} style={styles.summaryItem}>
+                  <ThemedText
+                    type="caption"
+                    variant="secondary"
+                    weight="bold"
+                    style={styles.summaryLabel}
+                  >
+                    {item.label}
+                  </ThemedText>
+                  <ThemedText type="caption" style={styles.summaryValue}>
+                    {item.value}
+                  </ThemedText>
+                </View>
+              ))}
+            </View>
+          ) : null}
         </View>
       </BaseCard>
     );
@@ -104,6 +127,27 @@ const styles = StyleSheet.create({
     paddingTop: LAYOUT.SPACING.MEDIUM - LAYOUT.SPACING.HALF_TINY, // Top padding for content
     paddingBottom: LAYOUT.SPACING.TINY, // Minimal bottom padding for tight layout
     paddingHorizontal: LAYOUT.SPACING.TINY, // Minimal horizontal padding for charts
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.SMALL,
+    marginLeft: Y_AXIS_WIDTH,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  summaryItem: {
+    flex: 1,
+    minWidth: 0,
+  },
+  summaryLabel: {
+    marginBottom: 2,
+    fontWeight: '600',
+  },
+  summaryValue: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
+    fontWeight: '400',
   },
   emptyContainer: {
     alignItems: 'center',

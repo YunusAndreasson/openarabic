@@ -7,16 +7,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SectionTitle from '@common/SectionTitle';
 import { EfficiencyChart, MasteryChart, RetrievabilityChart } from '@practice/charts';
 
-import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
-import { useEfficiencyChart } from '@/hooks/vocabulary/useEfficiencyChart';
+// import { useEfficiencyChart } from '@/hooks/vocabulary/useEfficiencyChart';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
-import { useMasteryChart } from '@/hooks/vocabulary/useMasteryChart';
-import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
+// import { useMasteryChart } from '@/hooks/vocabulary/useMasteryChart';
+// import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 
 import { INFO_TITLES } from './_layout';
 
@@ -36,10 +35,7 @@ export default function InsightsScreen(): JSX.Element {
     [studyWords]
   );
 
-  // Derive current efficiency for a concise numeric caption
-  const { chartData: efficiencyChartData } = useEfficiencyChart(validStudyWords);
-  const mastery = useMasteryChart(validStudyWords);
-  const retrievability = useRetrievabilityChart(validStudyWords);
+  // Chart components now show their own inline current values
 
   if (error) {
     return (
@@ -73,12 +69,7 @@ export default function InsightsScreen(): JSX.Element {
           bounces: true,
         }}
       >
-        {/* Introductory context */}
-        <View style={styles.introSection}>
-          <ThemedText style={styles.introText} type="caption" variant="secondary">
-            {STRINGS.INSIGHTS_EXPLANATION}
-          </ThemedText>
-        </View>
+        {/* Introductory context removed for cleaner, faster comprehension */}
 
         {/* Word Mastery Chart */}
         <View style={styles.chartSection}>
@@ -87,11 +78,7 @@ export default function InsightsScreen(): JSX.Element {
             subtitle={STRINGS.MEMORY_STRENGTH_ACROSS_VOCABULARY}
             isFirstSection={true}
           />
-          {mastery?.insights?.currentRate ? (
-            <ThemedText type="caption" variant="secondary" style={styles.metricCaption}>
-              {mastery.insights.currentRate}%
-            </ThemedText>
-          ) : null}
+          {/* Metric caption removed; inline badge inside chart shows current value */}
           <MasteryChart studyWords={validStudyWords} hideTitle={true} />
         </View>
 
@@ -101,12 +88,7 @@ export default function InsightsScreen(): JSX.Element {
             title={INFO_TITLES.efficiency}
             subtitle={STRINGS.VOCABULARY_ACQUISITION_VELOCITY}
           />
-          {/* Compact numeric summary to avoid truncation in subtitles */}
-          {efficiencyChartData?.insights?.currentEfficiency ? (
-            <ThemedText type="caption" variant="secondary" style={styles.metricCaption}>
-              {efficiencyChartData.insights.currentEfficiency} {STRINGS.WORDS_PER_DAY}
-            </ThemedText>
-          ) : null}
+          {/* Numeric summary moved into chart as inline last-value badge */}
           <EfficiencyChart studyWords={validStudyWords} hideTitle={true} />
         </View>
 
@@ -116,11 +98,7 @@ export default function InsightsScreen(): JSX.Element {
             title={INFO_TITLES.retrievability}
             subtitle={STRINGS.MEMORY_RETENTION_OPTIMAL_TIMING}
           />
-          {retrievability?.chartData?.insights?.currentRetrievability ? (
-            <ThemedText type="caption" variant="secondary" style={styles.metricCaption}>
-              {retrievability.chartData.insights.currentRetrievability}%
-            </ThemedText>
-          ) : null}
+          {/* Current retrievability shown inline on chart */}
           <RetrievabilityChart studyWords={validStudyWords} hideTitle={true} />
         </View>
       </ThemedView>
@@ -139,11 +117,6 @@ const styles = StyleSheet.create({
   chartSection: {
     marginBottom: LAYOUT.SPACING.LARGE,
   },
-  metricCaption: {
-    marginTop: -LAYOUT.SPACING.TINY,
-    marginBottom: LAYOUT.SPACING.HALF_TINY,
-    opacity: LAYOUT.OPACITY.HIGH,
-  },
   errorContainer: {
     alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
@@ -153,12 +126,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingVertical: LAYOUT.SPACING.XXLARGE,
     ...LAYOUT.ELEVATION.SMALL,
-  },
-  introSection: {
-    marginBottom: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: 0,
-  },
-  introText: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.5, // Better readability
   },
 });

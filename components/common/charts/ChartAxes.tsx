@@ -64,31 +64,16 @@ export const ChartAxes = memo(
       return labels;
     }, [height, topPadding, yAxisLines, yMax]);
 
-    // Intelligent label positioning that prevents cutoff while maintaining visual balance
+    // Center each weekday exactly under its tick (no edge constraints to avoid misalignment)
     const labelPositions = useMemo(() => {
-      const labelWidth = MIN_TOUCH_TARGET.LARGE; // widen to avoid clipping wide weekday labels
+      const labelWidth = MIN_TOUCH_TARGET.MEDIUM; // consistent width
       const halfLabelWidth = labelWidth / 2;
 
-      return xLabelPositions.map((position, index) => {
-        // Calculate ideal centered position
-        let labelLeft = position - halfLabelWidth;
-
-        // Apply boundary constraints to prevent cutoff
-        if (index === 0) {
-          // First label: ensure it doesn't go beyond left edge
-          labelLeft = Math.max(0, labelLeft);
-        } else if (index === xLabelPositions.length - 1) {
-          // Last label: ensure it doesn't go beyond right edge
-          labelLeft = Math.min(width - labelWidth, labelLeft);
-        }
-
-        return {
-          left: labelLeft,
-          width: labelWidth,
-          isEdgeLabel: index === 0 || index === xLabelPositions.length - 1,
-        };
-      });
-    }, [xLabelPositions, width]);
+      return xLabelPositions.map(position => ({
+        left: position - halfLabelWidth,
+        width: labelWidth,
+      }));
+    }, [xLabelPositions]);
 
     return (
       <View
@@ -170,14 +155,8 @@ export const ChartAxes = memo(
                     {
                       color: textColor,
                       fontWeight: isToday ? '600' : '500',
-                      textDecorationLine: isToday ? 'underline' : 'none', // Underline today
-                      // Adjust text alignment for edge labels to improve visual balance
-                      textAlign:
-                        labelConfig.isEdgeLabel && index === 0
-                          ? 'left'
-                          : labelConfig.isEdgeLabel && index === xLabelPositions.length - 1
-                          ? 'right'
-                          : 'center',
+                      textDecorationLine: isToday ? 'underline' : 'none',
+                      textAlign: 'center',
                     },
                   ]}
                 >

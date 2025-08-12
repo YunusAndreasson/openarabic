@@ -53,12 +53,27 @@ export function useEfficiencyChart(studyWords: StudyWord[]): UseEfficiencyChartR
   const efficiencyData = useMemo<EfficiencyRecord[]>(() => {
     const dates = generateDateRange(DAYS_7);
 
+    const parseSupabaseTimestamp = (ts: string): Date | null => {
+      if (!ts) return null;
+      let s = ts.replace(' ', 'T');
+      // Normalize timezone: convert trailing "+00" to "Z"; if missing tz, assume Z
+      s = s.replace(/\+00$/, 'Z');
+      if (!/[Zz]|[\+\-]\d{2}:?\d{2}$/.test(s)) {
+        s = s + 'Z';
+      }
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? null : d;
+    };
+
     return dates.map(date => {
       let totalEfficiency = 0;
       let wordCount = 0;
 
       studyWords.forEach(word => {
-        const lastReview = word.fsrs_last_review ? new Date(word.fsrs_last_review) : null;
+        // Robust normalization for Supabase timestamp (Hermes-friendly)
+        const lastReview = word.fsrs_last_review
+          ? parseSupabaseTimestamp(word.fsrs_last_review)
+          : null;
 
         // Count words reviewed on this specific day
         if (lastReview && isSameDay(lastReview, date) && (word.fsrs_reps ?? 0) > 0) {

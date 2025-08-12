@@ -46,6 +46,7 @@ interface VocabularyChartProps<T> {
   hideTitle?: boolean;
   hasData: boolean;
   emptyStateText: string;
+  bottomSummary?: { label: string; value: string }[];
 }
 
 // Optimized comparison function with shallow array checks and stable references
@@ -125,6 +126,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
     hasData,
     emptyStateText,
     yLabelFormatter,
+    bottomSummary,
   }) => {
     // Memoized chart data calculations for better performance
     const contentHeight = useMemo(() => GRAPH_HEIGHT_LARGE + CONTENT_HEIGHT_OFFSET, []);
@@ -157,6 +159,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
           width={graphWidth}
           xLabelPositions={xLabelPositions}
           yMax={yMax}
+          todayIndex={todayIndex}
         />
       );
 
@@ -257,6 +260,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
         subtitle={subtitle}
         title={title}
         onCardPress={onCardPress}
+        bottomSummary={bottomSummary}
       >
         <View style={styles.container}>
           <View style={styles.chartContainer}>

@@ -63,7 +63,9 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
     // Stabilize x labels and positions to maximize memoization effectiveness
     const xLabels = useMemo(
       () =>
-        retrievabilityData.map(data => data.date.toLocaleDateString('en-US', { weekday: 'short' })),
+        retrievabilityData.map(data =>
+          data.date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })
+        ),
       [retrievabilityData]
     );
 
@@ -91,6 +93,28 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
         hideTitle={hideTitle}
         hasData={chartData.hasData}
         emptyStateText={EMPTY_STATE_MESSAGES.retrievability}
+        bottomSummary={
+          chartData.hasData
+            ? [
+                { label: STRINGS.LATEST, value: `${chartData.insights.currentRetrievability}%` },
+                {
+                  label: STRINGS.AVERAGE,
+                  value: `${Math.round(
+                    chartData.dataPoints.length > 0
+                      ? chartData.dataPoints.reduce((s, p) => s + p.retrievability, 0) /
+                          chartData.dataPoints.length
+                      : 0
+                  )}%`,
+                },
+                {
+                  label: STRINGS.MAX,
+                  value: `${Math.round(
+                    Math.max(0, ...chartData.dataPoints.map(p => p.retrievability))
+                  )}%`,
+                },
+              ]
+            : []
+        }
       />
     );
   }

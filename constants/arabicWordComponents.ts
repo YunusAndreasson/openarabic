@@ -65,10 +65,10 @@ const OTHER_PREFIXES = [
   { arabic: 'لن', english: ['will not', 'shall not', 'never', "won't"] },
   { arabic: 'بل', english: ['but', 'rather', 'instead'] },
   // Verbal subject markers (present tense)
-  { arabic: 'ي', english: ['he', 'it', 'was'] }, // Fixed: removed diacritic
-  { arabic: 'ت', english: ['you', 'she'] },
-  { arabic: 'أ', english: ['I'] },
-  { arabic: 'ن', english: ['we'] },
+  { arabic: 'ي', english: ['he', 'it', 'was', 'is', 'does'] }, // broader auxiliaries for gating
+  { arabic: 'ت', english: ['you', 'she', 'does', 'is'] },
+  { arabic: 'أ', english: ['I', 'do', 'am'] },
+  { arabic: 'ن', english: ['we', 'are', 'do'] },
   // Aspect particles & common compounds
   { arabic: 'قد', english: ['already', 'indeed'] },
   { arabic: 'إن', english: ['indeed', 'verily', 'if'] },
@@ -164,13 +164,64 @@ function createFinalPrefixList(): WordComponent[] {
     type: ComponentType.PREFIX,
   };
 
-  return [
+  const baseList: WordComponent[] = [
     ...combinations,
     ...individualBasePrefixes,
     flexibleDefiniteArticle,
     // Add flexible 'في' for rare cases like 'والفيالبيت'
     { arabic: 'في', english: ['in'], type: ComponentType.PREFIX },
-  ].sort((a, b) => b.arabic.length - a.arabic.length); // Sort longest first
+  ];
+
+  // 4. Add preposition + definite article combinations without conjunction
+  const prepPlusAl: WordComponent[] = [
+    { arabic: '^بال', english: ['with the', 'in the', 'by the'], type: ComponentType.PREFIX },
+    { arabic: '^لل', english: ['for the', 'to the'], type: ComponentType.PREFIX },
+    { arabic: '^كال', english: ['like the', 'as the'], type: ComponentType.PREFIX },
+  ];
+
+  // 5. Add subject/future combined prefixes (double prefixes)
+  const subjectFutureCombos: WordComponent[] = [
+    // Conjunction + subject marker
+    { arabic: '^وي', english: ['and he', 'and it'], type: ComponentType.PREFIX },
+    // ف (then/so) + subject marker
+    {
+      arabic: '^في',
+      english: ['then he', 'so he', 'then it', 'so it'],
+      type: ComponentType.PREFIX,
+    },
+    // س (will) + subject marker
+    { arabic: '^سي', english: ['he will', 'it will'], type: ComponentType.PREFIX },
+    // ف + س + ي (then/so he will)
+    {
+      arabic: '^فسي',
+      english: ['then he will', 'so he will', 'then it will', 'so it will'],
+      type: ComponentType.PREFIX,
+    },
+    // و + سوف (and will)
+    {
+      arabic: '^وسوف',
+      english: ['and will', 'and he will', 'and it will'],
+      type: ComponentType.PREFIX,
+    },
+    // ف + سوف (then/so will)
+    {
+      arabic: '^فسوف',
+      english: ['then will', 'so will', 'then he will', 'so he will', 'then it will', 'so it will'],
+      type: ComponentType.PREFIX,
+    },
+    // و + لن (and will not)
+    { arabic: '^ولن', english: ['and will not', "and won't"], type: ComponentType.PREFIX },
+    // ف + لن (then/so will not)
+    {
+      arabic: '^فلن',
+      english: ['then will not', 'so will not', "then won't", "so won't"],
+      type: ComponentType.PREFIX,
+    },
+  ];
+
+  return [...baseList, ...prepPlusAl, ...subjectFutureCombos].sort(
+    (a, b) => b.arabic.length - a.arabic.length
+  ); // Sort longest first
 }
 
 /**
@@ -250,7 +301,7 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   },
   {
     arabic: 'ك$',
-    english: ['your', 'yours', 'of you'],
+    english: ['your', 'yours', 'of you', 'you'],
     type: ComponentType.SUFFIX,
   },
   {
@@ -258,11 +309,19 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
     english: ['his', 'its', 'it', 'of him', 'him', 'himself', 'he'],
     type: ComponentType.SUFFIX,
   },
+  // Object pronoun - me
   {
-    arabic: 'ها$',
-    english: ['her', 'hers', 'its', 'it', 'of her'],
+    arabic: 'ني$',
+    english: ['me', 'my', 'of me'],
     type: ComponentType.SUFFIX,
   },
+  {
+    arabic: 'ها$',
+    english: ['her', 'hers', 'its', 'it', 'of her', 'their'],
+    type: ComponentType.SUFFIX,
+  },
+  // Common transliteration-equivalent: final "هِ" often maps to "it/its"; we already catch via 'ه$'
+  // Keep 'it/its' present for 'ه$' to handle cases like "...هِ"
   {
     arabic: 'نا$',
     english: ['our', 'ours', 'of us', 'us'],
@@ -276,6 +335,17 @@ export const ARABIC_SUFFIXES: WordComponent[] = [
   {
     arabic: 'هم$',
     english: ['their', 'theirs', 'them'],
+    type: ComponentType.SUFFIX,
+  },
+  // Dual possessive/object pronouns
+  {
+    arabic: 'كما$',
+    english: ['you two', 'both of you', 'your (dual)'],
+    type: ComponentType.SUFFIX,
+  },
+  {
+    arabic: 'هما$',
+    english: ['both of them', 'their (dual)', 'them two'],
     type: ComponentType.SUFFIX,
   },
   {
@@ -372,7 +442,7 @@ export const ARABIC_DIACRITICS: WordComponent[] = [
   // Tanween Kasr (ــٍ) - nunation with kasra, indicates indefinite genitive
   {
     arabic: 'ٍ$',
-    english: ['of', 'in'],
+    english: ['of', 'in', 'at'],
     type: ComponentType.DIACRITIC,
   },
 

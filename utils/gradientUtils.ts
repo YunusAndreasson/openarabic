@@ -23,8 +23,8 @@ export function createImageGradientColors(
   if (isDarkMode) {
     // Dark mode - use dark overlay for light text visibility
     return [
-      colors.transparent,
-      colors.transparent,
+      'transparent',
+      'transparent',
       withOpacity(colors.black, 0.03),
       withOpacity(colors.black, 0.08),
       withOpacity(colors.black, 0.15),
@@ -35,8 +35,8 @@ export function createImageGradientColors(
     // Light/sepia mode - use background color overlay to provide contrast for dark text
     // This ensures sepia mode uses warm sepia tones instead of pure white
     return [
-      colors.transparent,
-      colors.transparent,
+      'transparent',
+      'transparent',
       withOpacity(colors.background, 0.03),
       withOpacity(colors.background, 0.08),
       withOpacity(colors.background, 0.15),
@@ -60,9 +60,9 @@ export function createBackgroundGradientColors(
   const overlayColor = isDarkMode ? colors.black : colors.background;
 
   return [
-    colors.transparent,
-    colors.transparent,
-    colors.transparent,
+    'transparent',
+    'transparent',
+    'transparent',
     withOpacity(overlayColor, 0.05),
     withOpacity(overlayColor, 0.15),
     withOpacity(overlayColor, 0.3),
@@ -80,7 +80,7 @@ export function createStrongDarkOverlayGradient(
   baseColor = '#000000'
 ): readonly [string, string, string, string, string, string, string] {
   return [
-    colors.transparent,
+    'transparent',
     withOpacity(baseColor, 0.1),
     withOpacity(baseColor, 0.3),
     withOpacity(baseColor, 0.5),
@@ -97,9 +97,9 @@ export function createThemeBackgroundGradient(
   backgroundColor: string
 ): readonly [string, string, string, string, string, string, string, string, string, string] {
   return [
-    colors.transparent,
-    colors.transparent,
-    colors.transparent,
+    'transparent',
+    'transparent',
+    'transparent',
     `${backgroundColor}15`, // 15% opacity
     `${backgroundColor}40`, // 40% opacity
     `${backgroundColor}66`, // 66% opacity

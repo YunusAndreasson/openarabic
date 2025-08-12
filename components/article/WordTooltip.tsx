@@ -207,33 +207,45 @@ export const WordTooltip = memo(
       for (const section of componentSections) {
         if (!section.englishPart) continue;
 
-        const match = section.englishPart.toLowerCase();
         const searchText = originalEnglish.toLowerCase();
-        const matchIndex = searchText.indexOf(match);
+        const colorKey = section.colorName as keyof typeof COLOR_MAP;
+        const colorValue = COLOR_MAP[colorKey] || 'tint';
+        const themeColorName: ColorName = colorValue;
+        const isNonLetter = (ch: string) => !/[a-z]/.test(ch);
 
-        if (matchIndex !== -1) {
-          // Word boundary check
-          const prevChar = matchIndex > 0 ? searchText[matchIndex - 1] ?? ' ' : ' ';
-          const nextChar =
-            matchIndex + match.length < searchText.length
-              ? searchText[matchIndex + match.length] ?? ' '
-              : ' ';
+        // Split possible multiple english matches like "his / its / it"
+        const candidates = section.englishPart
+          .toLowerCase()
+          .split('/')
+          .map(s => s.trim())
+          .filter(Boolean);
 
-          const isValidMatch =
-            matchIndex === 0 ||
-            /\s/.test(prevChar) ||
-            matchIndex + match.length === searchText.length ||
-            /\s/.test(nextChar);
+        for (const candidate of candidates) {
+          let fromIndex = 0;
+          while (fromIndex <= searchText.length) {
+            const idx = searchText.indexOf(candidate, fromIndex);
+            if (idx === -1) break;
 
-          if (isValidMatch) {
-            const colorKey = section.colorName as keyof typeof COLOR_MAP;
-            const colorValue = COLOR_MAP[colorKey] || 'tint';
-            const themeColorName: ColorName = colorValue;
-            matchPositions.push({
-              start: matchIndex,
-              end: matchIndex + match.length,
-              color: colors[themeColorName],
-            });
+            const prevChar = idx > 0 ? searchText[idx - 1] ?? ' ' : ' ';
+            const nextIdx = idx + candidate.length;
+            const nextChar = nextIdx < searchText.length ? searchText[nextIdx] ?? ' ' : ' ';
+            const isValidMatch =
+              idx === 0 ||
+              isNonLetter(prevChar) ||
+              nextIdx === searchText.length ||
+              isNonLetter(nextChar);
+
+            if (isValidMatch) {
+              matchPositions.push({
+                start: idx,
+                end: idx + candidate.length,
+                color: colors[themeColorName],
+              });
+              // Move past this match to find further non-overlapping matches
+              fromIndex = idx + candidate.length;
+            } else {
+              fromIndex = idx + 1;
+            }
           }
         }
       }

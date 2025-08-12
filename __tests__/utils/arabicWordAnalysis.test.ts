@@ -98,10 +98,11 @@ describe('arabicWordAnalysis', () => {
 
     it('should match common prefixes correctly', () => {
       const tests = [
-        { arabic: 'والكتاب', english: 'and the book', expectedPrefix: 'و' },
-        { arabic: 'بالكتاب', english: 'with the book', expectedPrefix: 'ب' },
-        { arabic: 'للكتاب', english: 'for the book', expectedPrefix: 'ل' },
-        { arabic: 'كالكتاب', english: 'like the book', expectedPrefix: 'ك' },
+        // With phrase-aware matching, the longest valid combination is preferred
+        { arabic: 'والكتاب', english: 'and the book', expectedPrefix: 'وال' },
+        { arabic: 'بالكتاب', english: 'with the book', expectedPrefix: 'بال' },
+        { arabic: 'للكتاب', english: 'for the book', expectedPrefix: 'لل' },
+        { arabic: 'كالكتاب', english: 'like the book', expectedPrefix: 'كال' },
         { arabic: 'فيالكتاب', english: 'in the book', expectedPrefix: 'في' },
       ];
 
@@ -123,7 +124,8 @@ describe('arabicWordAnalysis', () => {
     it('should handle definite article correctly', () => {
       const tests = [
         { arabic: 'الكتاب', english: 'the book', expectedPrefix: 'ال' },
-        { arabic: 'والكتاب', english: 'and the book', expectedPrefix: 'و' },
+        // With phrase-aware matching, 'وال' is a valid combined prefix when English has 'and the'
+        { arabic: 'والكتاب', english: 'and the book', expectedPrefix: 'وال' },
       ];
 
       tests.forEach(({ arabic, english, expectedPrefix }) => {
@@ -179,6 +181,39 @@ describe('arabicWordAnalysis', () => {
       expect(analysis.prefix).toBeUndefined();
       expect(analysis.hasComponents).toBe(false);
     });
+
+    it('should match preposition + al combinations directly when present', () => {
+      const tests = [
+        { arabic: 'بالكتاب', english: 'with the book', expectedPrefix: 'بال' },
+        { arabic: 'للقلم', english: 'for the pen', expectedPrefix: 'لل' },
+        { arabic: 'كالكتاب', english: 'like the book', expectedPrefix: 'كال' },
+      ];
+
+      tests.forEach(({ arabic, english, expectedPrefix }) => {
+        const analysis = analyzeArabicWord(arabic, english);
+        expect(analysis.prefix?.arabicMatch).toBe(expectedPrefix);
+        expect(analysis.hasComponents).toBe(true);
+      });
+    });
+
+    it('should match subject/future combined prefixes (double prefixes)', () => {
+      const tests = [
+        { arabic: 'ويكتب', english: 'and he writes', expectedPrefix: 'وي' },
+        { arabic: 'فيقول', english: 'then he says', expectedPrefix: 'في' },
+        { arabic: 'سيذهب', english: 'he will go', expectedPrefix: 'سي' },
+        { arabic: 'فسيقول', english: 'then he will say', expectedPrefix: 'فسي' },
+        { arabic: 'وسوفيكتب', english: 'and he will write', expectedPrefix: 'وسوف' },
+        { arabic: 'فسوفيذهب', english: 'then he will go', expectedPrefix: 'فسوف' },
+        { arabic: 'ولنيذهب', english: "and won't go", expectedPrefix: 'ولن' },
+        { arabic: 'فلنيفعل', english: 'then will not do', expectedPrefix: 'فلن' },
+      ];
+
+      tests.forEach(({ arabic, english, expectedPrefix }) => {
+        const analysis = analyzeArabicWord(arabic, english);
+        expect(analysis.prefix?.arabicMatch).toBe(expectedPrefix);
+        expect(analysis.hasComponents).toBe(true);
+      });
+    });
   });
 
   // Test edge cases and potential issues
@@ -200,6 +235,13 @@ describe('arabicWordAnalysis', () => {
       // If there are multiple matching patterns, should prefer the longer one
       const analysis = analyzeArabicWord('سوفيذهب', 'he will go');
       expect(analysis.prefix?.arabicMatch).toBe('سوف'); // Should match longer 'سوف' over 'س'
+    });
+
+    it('should prefer plural suffix over singular subject marker for person/number', () => {
+      // ويكتبون -> "they write"; ensure ي is not matched as "he" due to ون$ suffix
+      const analysis = analyzeArabicWord('ويكتبون', 'they write');
+      expect(analysis.suffix?.arabicMatch).toBe('ون');
+      expect(analysis.hasComponents).toBe(true);
     });
   });
 
@@ -362,7 +404,8 @@ describe('arabicWordAnalysis', () => {
       const analysis = analyzeArabicWord('وبكتابهِ', 'and with his book in'); // Prefix + suffix + diacritic
 
       expect(analysis.prefix).toBeDefined();
-      expect(analysis.prefix?.arabicMatch).toBe('و');
+      // Longest valid combined prefix 'وب' is expected with phrase-aware matching
+      expect(analysis.prefix?.arabicMatch).toBe('وب');
       expect(analysis.suffix).toBeDefined();
       expect(analysis.suffix?.arabicMatch).toBe('ه');
       expect(analysis.diacritic).toBeDefined();
@@ -442,6 +485,27 @@ describe('arabicWordAnalysis', () => {
         expect(analysis.suffix?.arabicMatch).toBe(expectedSuffix);
         expect(analysis.hasComponents).toBe(true);
       });
+    });
+  });
+
+  describe('New suffix coverage', () => {
+    it('should match object pronoun ني (me)', () => {
+      const analysis = analyzeArabicWord('أعطني', 'give me');
+      expect(analysis.suffix?.arabicMatch).toBe('ني');
+      expect(analysis.suffix?.englishMatches).toContain('me');
+      expect(analysis.hasComponents).toBe(true);
+    });
+
+    it('should match dual you كما', () => {
+      const analysis = analyzeArabicWord('كتابكما', 'your (dual) book');
+      expect(analysis.suffix?.arabicMatch).toBe('كما');
+      expect(analysis.hasComponents).toBe(true);
+    });
+
+    it('should match dual them هما', () => {
+      const analysis = analyzeArabicWord('كتابهما', 'their (dual) book');
+      expect(analysis.suffix?.arabicMatch).toBe('هما');
+      expect(analysis.hasComponents).toBe(true);
     });
   });
 

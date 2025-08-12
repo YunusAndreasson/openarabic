@@ -182,9 +182,9 @@ export const STRINGS = {
   WORD_MASTERY: 'Word mastery',
   LEARNING_PROGRESS: 'Learning progress',
   REVIEW_TIMING: 'Review timing',
-  MEMORY_STRENGTH_ACROSS_VOCABULARY: 'Track how words move from new learning to permanent memory',
-  VOCABULARY_ACQUISITION_VELOCITY: 'Measure how quickly you master new vocabulary',
-  MEMORY_RETENTION_OPTIMAL_TIMING: 'See when words need review for maximum retention',
+  MEMORY_STRENGTH_ACROSS_VOCABULARY: 'How much of your vocabulary is mastered',
+  VOCABULARY_ACQUISITION_VELOCITY: 'How many new words you master each day',
+  MEMORY_RETENTION_OPTIMAL_TIMING: 'How much you can recall today',
 
   // Account
   ACCOUNT: 'Account',
@@ -508,6 +508,11 @@ export const STRINGS = {
   WORDS_PER_DAY: 'words/day',
   WORDS_PER_DAY_SHORT: 'words/day',
   LAST_7_DAYS_AVG: 'avg {value}/day (last 7 days)',
+
+  // Chart summary labels
+  LATEST: 'Latest',
+  AVERAGE: 'Average',
+  MAX: 'Max',
 
   // Memory Capacity Labels - Simple capacity indicators
   MEMORY_CAPACITY_LOW: 'Low Memory Capacity',

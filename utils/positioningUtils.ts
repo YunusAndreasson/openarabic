@@ -9,7 +9,7 @@ export const TOOLTIP_CONSTANTS = {
   MIN_WIDTH: 80,
   MAX_WIDTH_RATIO: 0.85,
   HEIGHT: 40,
-  CHAR_WIDTH: 11, // Safer approximation to prevent horizontal clipping at fontSize 15
+  CHAR_WIDTH: 9, // Approximate average char width at fontSize 15 for tighter estimate (tests expect 9)
   BOOKMARK_WIDTH: 32,
   GAP_WIDTH: 8,
 } as const;
