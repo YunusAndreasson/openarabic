@@ -86,7 +86,7 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
           ? (() => {
               let s = word.fsrs_last_review.replace(' ', 'T');
               s = s.replace(/\+00$/, 'Z');
-              if (!/[Zz]|[\+\-]\d{2}:?\d{2}$/.test(s)) s = s + 'Z';
+              if (!/[Zz]|[-+]\d{2}:?\d{2}$/.test(s)) s = s + 'Z';
               const d = new Date(s);
               return isNaN(d.getTime()) ? null : d;
             })()

@@ -43,6 +43,7 @@ const ListArticleItem = memo(
         isBeingDragged={isBeingDragged}
         progressPercentage={progressPercentage}
         hasStartedReading={hasStartedReading}
+        shouldAnimateOnMount={false}
       />
     );
   }

@@ -328,7 +328,6 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
           settings={{ showEnglish: true, fontScale }}
           colors={colors}
           dueWordRootIds={dueWordRootIds}
-          activeWordId={activeTooltip?.word.id ?? null}
           onWordPress={handleWordPress}
         />
       );

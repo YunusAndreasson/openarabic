@@ -37,6 +37,8 @@ interface ListenListItemCardProps {
   // Reading progress
   progressPercentage?: number;
   hasStartedReading?: boolean;
+  // Avoid running mount animations when rendering many list items at once
+  shouldAnimateOnMount?: boolean;
 }
 
 export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
@@ -53,6 +55,7 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
     imageUrl,
     progressPercentage,
     hasStartedReading,
+    shouldAnimateOnMount = true,
   }) => {
     const isDarkMode = useIsDarkMode();
     const colors = useColors();
@@ -73,10 +76,13 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
         setValue(CARD_DRAG_SCALE);
       } else if (editMode) {
         setValue(WORD_PRESS_SCALE);
-      } else {
+      } else if (shouldAnimateOnMount) {
         startAnimation();
+      } else {
+        // Ensure we are at the target value without triggering an animation
+        setValue(1);
       }
-    }, [editMode, isBeingDragged, startAnimation, setValue]);
+    }, [editMode, isBeingDragged, shouldAnimateOnMount, startAnimation, setValue]);
 
     // Enhanced title and author styles with semantic colors
     const titleOpacity = getEnhancedOpacity(

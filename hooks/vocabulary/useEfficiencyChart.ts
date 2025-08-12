@@ -58,7 +58,7 @@ export function useEfficiencyChart(studyWords: StudyWord[]): UseEfficiencyChartR
       let s = ts.replace(' ', 'T');
       // Normalize timezone: convert trailing "+00" to "Z"; if missing tz, assume Z
       s = s.replace(/\+00$/, 'Z');
-      if (!/[Zz]|[\+\-]\d{2}:?\d{2}$/.test(s)) {
+      if (!/[Zz]|[-+]\d{2}:?\d{2}$/.test(s)) {
         s = s + 'Z';
       }
       const d = new Date(s);
