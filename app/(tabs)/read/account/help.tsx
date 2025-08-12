@@ -46,7 +46,11 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(({ item, isExpanded, on
         accessibilityState={{ expanded: isExpanded }}
         accessibilityLabel={item.question}
         accessibilityHint={isExpanded ? 'Collapses the answer' : 'Expands to show the answer'}
-        android_ripple={{ color: colors.navigationRipple, borderless: false }}
+        android_ripple={{
+          color: colors.navigationRipple,
+          borderless: false,
+          radius: LAYOUT.BUTTON.HEIGHT.LARGE / 2,
+        }}
       >
         <View
           style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}

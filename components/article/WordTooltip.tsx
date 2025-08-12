@@ -71,7 +71,6 @@ const STATIC_STYLES = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: LAYOUT.SPACING.SMALL,
-    height: '100%',
   },
   textContainer: {
     flex: 1,
@@ -143,7 +142,7 @@ export const WordTooltip = memo(
     const measureContainerOffset = useCallback(() => {
       if (containerRef.current?.measureInWindow) {
         try {
-          containerRef.current.measureInWindow((x /* y, w, h */) => {
+          containerRef.current.measureInWindow((x: number /* y, w, h */) => {
             if (typeof x === 'number') setContainerOffsetX(x);
           });
         } catch {

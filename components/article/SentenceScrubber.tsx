@@ -175,7 +175,7 @@ export const SentenceScrubber = React.memo<SentenceScrubberProps>(
         height,
         borderRadius: height / 2,
         backgroundColor: colors.secondaryText, // Use secondaryText for better visibility across themes
-        opacity: isDragging.value ? 0.8 : 0.5, // Higher opacity for better visibility
+        opacity: isDragging.value ? LAYOUT.OPACITY.HOVER : LAYOUT.OPACITY.MEDIUM, // Higher opacity for better visibility
       };
     }, [isDragging, colors.secondaryText]);
 
