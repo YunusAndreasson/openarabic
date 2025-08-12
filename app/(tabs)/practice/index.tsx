@@ -8,11 +8,13 @@ import { ActivityIndicator, InteractionManager, StyleSheet, View } from 'react-n
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
+import EmptyState from '@/components/common/EmptyState';
 import ErrorMessage from '@/components/practice/ErrorMessage';
-import VocabularyStatCards from '@/components/practice/VocabularyStatCards';
+import { VocabularyStatCards } from '@/components/practice/VocabularyStatCards';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { getPracticeReviewRoute } from '@/constants/routes';
+import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
@@ -147,8 +149,7 @@ export default function VocabularyScreen(): JSX.Element {
   const isDataCached = !!(user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id)));
   const showLoadingIndicator = (isDataLoading || isFetching) && !isDataCached;
 
-  // Do not show an empty state; keep the screen clean when no words
-  // (kept for clarity previously, but not used)
+  // Show an empty state when there are no study words
 
   // Check if we should show the main content (vocabulary stat cards)
   // Only show when we're not loading AND we have words OR when we're still loading with cached data
@@ -186,7 +187,15 @@ export default function VocabularyScreen(): JSX.Element {
           </ThemedView>
         )}
 
-        {/* No empty state when no study words */}
+        {/* Empty state when no study words */}
+        {!showLoadingIndicator && filteredStudyWords.length === 0 && (
+          <EmptyState
+            colors={{ tint: colors.tint }}
+            title={STRINGS.STUDY_LIST_EMPTY_TITLE}
+            description={STRINGS.STUDY_LIST_EMPTY_DESCRIPTION}
+            icon="school"
+          />
+        )}
 
         {/* PRIMARY SECTION: Learning Overview */}
         {shouldShowMainContent && (

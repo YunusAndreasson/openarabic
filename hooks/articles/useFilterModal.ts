@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { STRINGS } from '@/constants/strings';
 import {
   clearAllFilters,
+  clearAuthors,
   selectActiveFiltersCount,
   setDateRange,
   setDifficultyRange,
@@ -43,6 +44,7 @@ export interface UseFilterModalResult {
   handleAuthorToggle: (authorId: number) => void;
   handleDifficultySelect: (range: [number, number]) => void;
   handleDateRangeSelect: (range: FilterState['filters']['dateRange']) => void;
+  handleAuthorsAllSelect: () => void;
   handleClearAll: () => void;
   authorChunks: Author[][];
   selectedDifficultyOption: (typeof DIFFICULTY_OPTIONS)[number];
@@ -81,6 +83,11 @@ export function useFilterModal(availableAuthors: Author[]): UseFilterModalResult
     },
     [dispatch]
   );
+
+  const handleAuthorsAllSelect = useCallback(() => {
+    selectionFeedback();
+    dispatch(clearAuthors());
+  }, [dispatch]);
 
   const handleDifficultySelect = useCallback(
     (range: [number, number]) => {
@@ -153,6 +160,7 @@ export function useFilterModal(availableAuthors: Author[]): UseFilterModalResult
     expandedSections,
     toggleSection,
     handleAuthorToggle,
+    handleAuthorsAllSelect,
     handleDifficultySelect,
     handleDateRangeSelect,
     handleClearAll,

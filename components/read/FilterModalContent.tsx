@@ -29,6 +29,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
     expandedSections,
     toggleSection,
     handleAuthorToggle,
+    handleAuthorsAllSelect,
     handleDifficultySelect,
     handleDateRangeSelect,
     handleClearAll,
@@ -152,6 +153,14 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
             {expandedSections.authors && (
               <View style={[styles.expandedContent, { backgroundColor: colors.elevation2 }]}>
                 <View style={styles.pillGrid}>
+                  <Pill
+                    id={-1}
+                    label={STRINGS.ALL_AUTHORS}
+                    isSelected={filters.authorIds.length === 0}
+                    onSelect={handleAuthorsAllSelect}
+                    variant="filter"
+                    pillStyle={styles.filterPill}
+                  />
                   {authorChunks.map(chunk => (
                     <View
                       key={`authors-${chunk[0]?.id ?? 0}-${chunk[chunk.length - 1]?.id ?? 0}`}

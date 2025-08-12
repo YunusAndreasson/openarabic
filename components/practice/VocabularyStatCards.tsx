@@ -139,7 +139,8 @@ export const VocabularyStatCards = memo(
     };
 
     const getBadgeContent = (config: WordCategoryConfig) => {
-      return config.value.toString();
+      const displayValue = config.disabled ? 0 : config.value;
+      return displayValue.toString();
     };
 
     const createCategoryPressHandler = useCallback(

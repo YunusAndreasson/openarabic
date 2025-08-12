@@ -6,7 +6,6 @@ import DraggableFlatList from 'react-native-draggable-flatlist';
 
 import EmptyState from '@common/EmptyState';
 import ListSeparator from '@common/ListSeparator';
-import FilterSummary from '@read/FilterSummary';
 import SortingHeader from '@read/SortingHeader';
 
 import { ThemedView } from '@/components/ThemedView';
@@ -77,7 +76,7 @@ interface FilteredArticleViewProps {
   /**
    * Total count of articles before filtering (optional)
    */
-  totalCount?: number;
+  // totalCount?: number; // Removed: no longer displaying counts in header
 
   /**
    * Loading state when fetching articles
@@ -110,7 +109,7 @@ const FilteredArticleViewComparison = (
   if (prevProps.articles?.length !== nextProps.articles?.length) return false;
 
   // Optional props comparison
-  if (prevProps.totalCount !== nextProps.totalCount) return false;
+  // if (prevProps.totalCount !== nextProps.totalCount) return false; // Removed with prop
 
   return true;
 };
@@ -127,7 +126,6 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
   onArticleDelete = noop,
   onArticleReorder = noop,
   editMode = false,
-  totalCount,
   loading = false,
   HeaderComponent = null,
 }) => {
@@ -186,10 +184,9 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
           </>
         )}
         <SortingHeader />
-        <FilterSummary filteredCount={articlesLength} totalCount={totalCount} />
       </>
     );
-  }, [HeaderComponent, articlesLength, totalCount]);
+  }, [HeaderComponent, articlesLength]);
 
   // Render item for both FlashList and DraggableFlatList
   const renderItem: (

@@ -58,6 +58,10 @@ const filtersSlice = createSlice({
       }
     },
 
+    clearAuthors: state => {
+      state.filters.authorIds = [];
+    },
+
     setDifficultyRange: (state, action: PayloadAction<[number, number]>) => {
       state.filters.difficultyRange = action.payload;
     },
@@ -86,7 +90,13 @@ export const selectActiveFiltersCount = createSelector(
   }
 );
 
-export const { setSortField, toggleAuthor, setDifficultyRange, setDateRange, clearAllFilters } =
-  filtersSlice.actions;
+export const {
+  setSortField,
+  toggleAuthor,
+  clearAuthors,
+  setDifficultyRange,
+  setDateRange,
+  clearAllFilters,
+} = filtersSlice.actions;
 
 export default filtersSlice.reducer;
