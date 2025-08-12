@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   card: { marginBottom: LAYOUT.SPACING.MEDIUM, padding: LAYOUT.SPACING.MEDIUM },
   filterSection: { marginBottom: LAYOUT.SPACING.SMALL },
   filterRow: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
     minHeight: MIN_TOUCH_TARGET.LARGE,
     // Remove extra vertical padding here; use content padding instead
   },

@@ -71,9 +71,7 @@ export default function TabLayout(): JSX.Element {
   const { session, isLoading } = useAuth();
   const colors = useColors();
   const dispatch = useAppDispatch();
-  const isStreakBottomSheetVisible = useAppSelectorMemo(
-    state => state.streak.isBottomSheetVisible
-  );
+  const isStreakBottomSheetVisible = useAppSelectorMemo(state => state.streak.isBottomSheetVisible);
 
   useEffect(() => {
     if (!isLoading && !session?.user) {
@@ -129,7 +127,7 @@ export default function TabLayout(): JSX.Element {
               height: LAYOUT.BOTTOM_BAR.HEIGHT, // Standard iOS: 83px
             },
             android: {
-              borderTopWidth: StyleSheet.hairlineWidth,
+              borderTopWidth: LAYOUT.BORDER.WIDTH.THIN,
               borderTopColor: colors.border,
               height: LAYOUT.BOTTOM_BAR.HEIGHT, // Standard Android: 65px
               ...LAYOUT.ELEVATION.SMALL,

@@ -75,7 +75,7 @@ const SortingHeader: FC = () => {
 const styles = StyleSheet.create({
   container: {
     paddingVertical: LAYOUT.SPACING.MEDIUM,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
     marginBottom: LAYOUT.SPACING.TINY,
   },
   optionsContainer: {
