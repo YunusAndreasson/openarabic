@@ -181,10 +181,13 @@ export const STRINGS = {
 
   WORD_MASTERY: 'Word mastery',
   LEARNING_PROGRESS: 'Learning progress',
-  REVIEW_TIMING: 'Review timing',
-  MEMORY_STRENGTH_ACROSS_VOCABULARY: 'How much of your vocabulary is mastered',
-  VOCABULARY_ACQUISITION_VELOCITY: 'How many new words you master each day',
-  MEMORY_RETENTION_OPTIMAL_TIMING: 'How much you can recall today',
+  REVIEW_TIMING: 'Memory retention',
+  MEMORY_STRENGTH_ACROSS_VOCABULARY:
+    'Vocabulary knowledge strength, showing how much you have mastered.',
+  VOCABULARY_ACQUISITION_VELOCITY:
+    'Daily vocabulary advancement, tracking new words mastered over time.',
+  MEMORY_RETENTION_OPTIMAL_TIMING:
+    'Optimal review scheduling, indicating daily recall to guide retention.',
 
   // Account
   ACCOUNT: 'Account',

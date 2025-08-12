@@ -106,7 +106,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
     const headerHeight = useHeaderHeight();
     const [, startTransition] = useTransition();
 
-    useImperativeHandle(ref, () => listRef.current!, []);
+    useImperativeHandle(ref, () => listRef.current as FlashList<Article>, []);
 
     // Optimized render item with stable reference
     const renderItem: ListRenderItem<Article> = useCallback(
