@@ -3,6 +3,11 @@ import { memo, useMemo } from 'react';
 import { VocabularyChart, type DataPoint } from '@/components/common/charts';
 import { CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/components/common/charts/chartMessages';
 import { calculateDataPointPositions, useGraphWidth } from '@/components/common/charts/constants';
+import {
+  calculateSevenDayAverage,
+  formatMonthDayUTC,
+  formatWeekdayUTC,
+} from '@/components/common/charts/utils';
 import { STRINGS } from '@/constants/strings';
 import { useEfficiencyChart, type EfficiencyRecord } from '@/hooks/vocabulary/useEfficiencyChart';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -32,7 +37,7 @@ export const EfficiencyChart = memo<EfficiencyChartProps>(
         x: point.x,
         y: point.y,
         value: `${Math.round(point.efficiency)} ${STRINGS.WORDS_PER_DAY_SHORT}`,
-        label: point.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        label: formatMonthDayUTC(point.date),
         data: {
           date: point.date,
           averageEfficiency: point.efficiency,
@@ -43,10 +48,7 @@ export const EfficiencyChart = memo<EfficiencyChartProps>(
 
     // Stabilize x labels and positions to maximize memoization effectiveness
     const xLabels = useMemo(
-      () =>
-        efficiencyData.map(data =>
-          data.date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })
-        ),
+      () => efficiencyData.map(d => formatWeekdayUTC(d.date)),
       [efficiencyData]
     );
 
@@ -77,7 +79,7 @@ export const EfficiencyChart = memo<EfficiencyChartProps>(
         hideTitle={hideTitle}
         hasData={chartData.hasData}
         emptyStateText={EMPTY_STATE_MESSAGES.efficiency}
-        yLabelFormatter={(v: number) => `${Math.round(v)} ${STRINGS.WORDS_PER_DAY_SHORT}`}
+        yLabelFormatter={(v: number) => `${Math.round(v)}`}
         todayIndex={xLabels.length - 1}
         bottomSummary={
           chartData.hasData
@@ -88,7 +90,9 @@ export const EfficiencyChart = memo<EfficiencyChartProps>(
                 },
                 {
                   label: STRINGS.AVERAGE,
-                  value: `${chartData.insights.weeklyAverage} ${STRINGS.WORDS_PER_DAY_SHORT}`,
+                  value: `${Math.round(
+                    calculateSevenDayAverage(efficiencyData.map(d => d.averageEfficiency))
+                  )} ${STRINGS.WORDS_PER_DAY_SHORT}`,
                 },
                 {
                   label: STRINGS.MAX,

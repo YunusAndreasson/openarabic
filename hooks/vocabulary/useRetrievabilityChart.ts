@@ -75,11 +75,10 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
     const path = Skia.Path.Make();
     const points: { x: number; y: number; retrievability: number; date: Date }[] = [];
 
-    // Filter to only include days with actual data for rendering
-    const daysWithData = retrievabilityData.filter(data => data.wordCount > 0);
-    const dataPointPositions = calculateDataPointPositions(daysWithData.length);
+    // Render all 7 days for continuity (even if some days have 0 words)
+    const dataPointPositions = calculateDataPointPositions(retrievabilityData.length);
 
-    daysWithData.forEach((data, index) => {
+    retrievabilityData.forEach((data, index) => {
       const x = dataPointPositions[index] || 0;
       const y =
         GRAPH_HEIGHT_LARGE - (data.averageRetrievability / maxRetrievability) * GRAPH_HEIGHT_LARGE;

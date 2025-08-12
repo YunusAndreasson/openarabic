@@ -100,9 +100,10 @@ export function useEfficiencyChart(studyWords: StudyWord[]): UseEfficiencyChartR
       };
     }
 
-    const hasData = efficiencyData.some(d => d.wordCount > 0);
+    // We'll determine hasData based on computed points (more robust)
+    const prelimHasData = efficiencyData.some(d => d.wordCount > 0);
 
-    if (!hasData) {
+    if (!prelimHasData) {
       return {
         efficiencyPath: '',
         hasData: false,
@@ -118,11 +119,10 @@ export function useEfficiencyChart(studyWords: StudyWord[]): UseEfficiencyChartR
     const path = Skia.Path.Make();
     const points: { x: number; y: number; efficiency: number; date: Date }[] = [];
 
-    // Filter to only include days with actual data for rendering
-    const daysWithData = efficiencyData.filter(data => data.wordCount > 0);
-    const dataPointPositions = calculateDataPointPositions(daysWithData.length);
+    // Render all 7 days so the chart doesn't look empty when some days have no activity
+    const dataPointPositions = calculateDataPointPositions(efficiencyData.length);
 
-    daysWithData.forEach((data, index) => {
+    efficiencyData.forEach((data, index) => {
       const x = dataPointPositions[index] || 0;
       const y = GRAPH_HEIGHT_LARGE - (data.averageEfficiency / maxEfficiency) * GRAPH_HEIGHT_LARGE;
       points.push({ x, y, efficiency: data.averageEfficiency, date: data.date });
@@ -174,6 +174,8 @@ export function useEfficiencyChart(studyWords: StudyWord[]): UseEfficiencyChartR
         : change < -TREND_CHANGE_THRESHOLD
         ? 'declining'
         : 'stable';
+
+    const hasData = points.length > 0;
 
     return {
       efficiencyPath: path.toSVGString(),

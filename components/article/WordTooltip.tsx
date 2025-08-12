@@ -110,6 +110,10 @@ const WordTooltipComparison = (
   );
 };
 
+// Hoisted regex and helpers to avoid per-call allocations
+const LETTER_RE = /[a-z]/;
+const isNonLetter = (ch: string) => !LETTER_RE.test(ch);
+
 const COLOR_MAP = {
   tint: 'tint',
   primary: 'primary',
@@ -211,7 +215,7 @@ export const WordTooltip = memo(
         const colorKey = section.colorName as keyof typeof COLOR_MAP;
         const colorValue = COLOR_MAP[colorKey] || 'tint';
         const themeColorName: ColorName = colorValue;
-        const isNonLetter = (ch: string) => !/[a-z]/.test(ch);
+        // use hoisted isNonLetter
 
         // Split possible multiple english matches like "his / its / it"
         const candidates = section.englishPart
@@ -220,6 +224,8 @@ export const WordTooltip = memo(
           .map(s => s.trim())
           .filter(Boolean);
 
+        // Track duplicates (start:end) to avoid overlapping duplicates
+        const seen = new Set<string>();
         for (const candidate of candidates) {
           let fromIndex = 0;
           while (fromIndex <= searchText.length) {
@@ -236,11 +242,15 @@ export const WordTooltip = memo(
               isNonLetter(nextChar);
 
             if (isValidMatch) {
-              matchPositions.push({
-                start: idx,
-                end: idx + candidate.length,
-                color: colors[themeColorName],
-              });
+              const key = `${idx}:${idx + candidate.length}`;
+              if (!seen.has(key)) {
+                seen.add(key);
+                matchPositions.push({
+                  start: idx,
+                  end: idx + candidate.length,
+                  color: colors[themeColorName],
+                });
+              }
               // Move past this match to find further non-overlapping matches
               fromIndex = idx + candidate.length;
             } else {

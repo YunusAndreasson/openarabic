@@ -7,6 +7,11 @@ import {
   generateChartSubtitle,
 } from '@/components/common/charts/chartMessages';
 import { calculateDataPointPositions, useGraphWidth } from '@/components/common/charts/constants';
+import {
+  calculateSevenDayAverage,
+  formatMonthDayUTC,
+  formatWeekdayUTC,
+} from '@/components/common/charts/utils';
 import { STRINGS } from '@/constants/strings';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -44,28 +49,24 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
 
     // Prepare data points for interactive tooltips
     const dataPoints: DataPoint<RetrievabilityRecord>[] = useMemo(() => {
-      // chartData.dataPoints only contains days with data, so we map directly
       return chartData.dataPoints.map(point => ({
         x: point.x,
         y: point.y,
         value: `${Math.round(point.retrievability)}%`,
-        label: point.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        label: formatMonthDayUTC(point.date),
         data: {
           date: point.date,
           averageRetrievability: point.retrievability,
-          wordCount: 1, // Days with data always have wordCount > 0
-          criticalWords: 0, // Simplified for tooltip
-          urgentWords: 0, // Simplified for tooltip
+          wordCount: 1,
+          criticalWords: 0,
+          urgentWords: 0,
         },
       }));
     }, [chartData.dataPoints]);
 
     // Stabilize x labels and positions to maximize memoization effectiveness
     const xLabels = useMemo(
-      () =>
-        retrievabilityData.map(data =>
-          data.date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })
-        ),
+      () => retrievabilityData.map(d => formatWeekdayUTC(d.date)),
       [retrievabilityData]
     );
 
@@ -100,10 +101,7 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
                 {
                   label: STRINGS.AVERAGE,
                   value: `${Math.round(
-                    chartData.dataPoints.length > 0
-                      ? chartData.dataPoints.reduce((s, p) => s + p.retrievability, 0) /
-                          chartData.dataPoints.length
-                      : 0
+                    calculateSevenDayAverage(chartData.dataPoints.map(p => p.retrievability))
                   )}%`,
                 },
                 {

@@ -35,15 +35,41 @@ const DIACRITIC_REGEX = /[\u064B-\u065F\u0670\u06D6-\u06ED]/g;
 const NON_WORD_REGEX = /[^\w\s]/g;
 const WHITESPACE_REGEX = /\s+/;
 
-// Cache for normalized strings to avoid repeated calculations
-const normalizationCache = new Map<string, string>();
+// Separate caches for Arabic and English normalization to avoid contention
+const ARABIC_NORMALIZATION_CACHE = new Map<string, string>();
+const ENGLISH_NORMALIZATION_CACHE = new Map<string, string>();
 const CACHE_SIZE_LIMIT = 100;
+
+// Contraction map hoisted and lowercased once for reuse
+const CONTRACTION_MAP: Record<string, string> = {
+  "won't": 'will not',
+  "can't": 'cannot',
+  "don't": 'do not',
+  "doesn't": 'does not',
+  "didn't": 'did not',
+  // common "will" contractions
+  "i'll": 'i will',
+  "you'll": 'you will',
+  "he'll": 'he will',
+  "she'll": 'she will',
+  "it'll": 'it will',
+  "we'll": 'we will',
+  "they'll": 'they will',
+  // be verb contractions
+  "i'm": 'i am',
+  "you're": 'you are',
+  "he's": 'he is',
+  "she's": 'she is',
+  "it's": 'it is',
+  "we're": 'we are',
+  "they're": 'they are',
+};
 
 /**
  * Normalizes Arabic text by removing diacritics (with caching)
  */
 function normalizeArabic(text: string): string {
-  const cached = normalizationCache.get(text);
+  const cached = ARABIC_NORMALIZATION_CACHE.get(text);
   if (cached !== undefined) {
     return cached;
   }
@@ -51,10 +77,10 @@ function normalizeArabic(text: string): string {
   const normalized = text.replace(DIACRITIC_REGEX, '').trim();
 
   // Simple cache management - clear when too large
-  if (normalizationCache.size >= CACHE_SIZE_LIMIT) {
-    normalizationCache.clear();
+  if (ARABIC_NORMALIZATION_CACHE.size >= CACHE_SIZE_LIMIT) {
+    ARABIC_NORMALIZATION_CACHE.clear();
   }
-  normalizationCache.set(text, normalized);
+  ARABIC_NORMALIZATION_CACHE.set(text, normalized);
 
   return normalized;
 }
@@ -63,7 +89,7 @@ function normalizeArabic(text: string): string {
  * Normalizes English text for comparison (with caching)
  */
 function normalizeEnglish(text: string): string {
-  const cached = normalizationCache.get(text);
+  const cached = ENGLISH_NORMALIZATION_CACHE.get(text);
   if (cached !== undefined) {
     return cached;
   }
@@ -71,10 +97,10 @@ function normalizeEnglish(text: string): string {
   const normalized = text.toLowerCase().replace(NON_WORD_REGEX, '').trim();
 
   // Simple cache management - clear when too large
-  if (normalizationCache.size >= CACHE_SIZE_LIMIT) {
-    normalizationCache.clear();
+  if (ENGLISH_NORMALIZATION_CACHE.size >= CACHE_SIZE_LIMIT) {
+    ENGLISH_NORMALIZATION_CACHE.clear();
   }
-  normalizationCache.set(text, normalized);
+  ENGLISH_NORMALIZATION_CACHE.set(text, normalized);
 
   return normalized;
 }
@@ -86,52 +112,19 @@ function hasEnglishMatch(english: string, patterns: string[]): string[] {
   const norm = normalizeEnglish(english);
   const tokens = norm.split(WHITESPACE_REGEX).filter(Boolean);
 
-  // Build unigram, bigram, trigram sets for fast membership checks
+  // Build unigram set for fast membership checks
   const unigrams = new Set(tokens);
-  const bigrams = new Set(
-    tokens
-      .map((_, i) => (i + 1 < tokens.length ? `${tokens[i]} ${tokens[i + 1]}` : ''))
-      .filter(Boolean)
-  );
-  const trigrams = new Set(
-    tokens
-      .map((_, i) =>
-        i + 2 < tokens.length ? `${tokens[i]} ${tokens[i + 1]} ${tokens[i + 2]}` : ''
-      )
-      .filter(Boolean)
-  );
+  let bigrams: Set<string> | null = null;
+  let trigrams: Set<string> | null = null;
 
   // Simple contraction/variant expansion for common English phrases
   const expand = (phrase: string): string[] => {
-    const mapping: Record<string, string> = {
-      "won't": 'will not',
-      "can't": 'cannot',
-      "don't": 'do not',
-      "doesn't": 'does not',
-      "didn't": 'did not',
-      // common "will" contractions
-      "i'll": 'i will',
-      "you'll": 'you will',
-      "he'll": 'he will',
-      "she'll": 'she will',
-      "it'll": 'it will',
-      "we'll": 'we will',
-      "they'll": 'they will',
-      // be verb contractions
-      "i'm": 'i am',
-      "you're": 'you are',
-      "he's": 'he is',
-      "she's": 'she is',
-      "it's": 'it is',
-      "we're": 'we are',
-      "they're": 'they are',
-    };
     const p = normalizeEnglish(phrase);
     const variants = [p];
-    // Look up in mapping using the original lowercased phrase
+    // Look up in hoisted mapping using the original lowercased phrase
     const lowerOriginal = phrase.toLowerCase();
-    if (mapping[lowerOriginal]) {
-      variants.push(normalizeEnglish(mapping[lowerOriginal]));
+    if (CONTRACTION_MAP[lowerOriginal]) {
+      variants.push(normalizeEnglish(CONTRACTION_MAP[lowerOriginal]));
     }
     return variants;
   };
@@ -141,6 +134,21 @@ function hasEnglishMatch(english: string, patterns: string[]): string[] {
     const candidates = expand(raw);
     for (const candidate of candidates) {
       if (candidate.includes(' ')) {
+        // Lazily build bigrams/trigrams when needed
+        if (!bigrams || !trigrams) {
+          bigrams = new Set(
+            tokens
+              .map((_, i) => (i + 1 < tokens.length ? `${tokens[i]} ${tokens[i + 1]}` : ''))
+              .filter(Boolean)
+          );
+          trigrams = new Set(
+            tokens
+              .map((_, i) =>
+                i + 2 < tokens.length ? `${tokens[i]} ${tokens[i + 1]} ${tokens[i + 2]}` : ''
+              )
+              .filter(Boolean)
+          );
+        }
         if (bigrams.has(candidate) || trigrams.has(candidate)) {
           matches.push(raw);
           break;

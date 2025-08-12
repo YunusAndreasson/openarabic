@@ -180,3 +180,16 @@ export const createAreaFillPath = (
 ): string => {
   return `${smoothPath} L ${graphWidth} ${graphHeight} L 0 ${graphHeight} Z`;
 };
+
+// UTC date format helpers (DRY across charts)
+export const formatWeekdayUTC = (date: Date): string =>
+  date.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
+
+export const formatMonthDayUTC = (date: Date): string =>
+  date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+
+export const calculateSevenDayAverage = (values: number[]): number => {
+  if (values.length === 0) return 0;
+  const sum = values.reduce((s, v) => s + v, 0);
+  return sum / values.length;
+};
