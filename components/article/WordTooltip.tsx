@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -47,7 +47,7 @@ const STATIC_STYLES = StyleSheet.create({
     paddingHorizontal: TOOLTIP_CONSTANTS.MIN_PADDING,
     paddingVertical: LAYOUT.SPACING.SMALL,
     minWidth: LAYOUT.CARD.HEIGHT.LIST_ITEM,
-    maxWidth: SCREEN_WIDTH * 0.85,
+    maxWidth: SCREEN_WIDTH * TOOLTIP_CONSTANTS.MAX_WIDTH_RATIO,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -135,6 +135,28 @@ export const WordTooltip = memo(
     const { fadeIn, animatedStyle: opacityStyle } = useOpacityAnimation(ANIMATION_CONFIG);
     const { animatedStyle: scaleStyle, startAnimation: startScaleAnimation } =
       useTransformAnimation(SPRING_CONFIG);
+
+    // Convert window coordinates (from measureInWindow) to local overlay coordinates
+    const containerRef = useRef<View | null>(null);
+    const [containerOffsetX, setContainerOffsetX] = useState<number>(0);
+
+    const measureContainerOffset = useCallback(() => {
+      if (containerRef.current?.measureInWindow) {
+        try {
+          containerRef.current.measureInWindow((x /* y, w, h */) => {
+            if (typeof x === 'number') setContainerOffsetX(x);
+          });
+        } catch {
+          // ignore
+        }
+      }
+    }, []);
+
+    useEffect(() => {
+      if (visible) {
+        setTimeout(measureContainerOffset, 0);
+      }
+    }, [visible, measureContainerOffset]);
 
     // Arabic word analysis for English color-coding
     const { formattedAnalysis } = useArabicWordAnalysis(
@@ -305,8 +327,14 @@ export const WordTooltip = memo(
       }
 
       const hasBookmark = !!(onStudyListToggle && wordRootId);
-      return calculateTooltipDimensions(layout as TooltipLayout, text || '', hasBookmark);
-    }, [layout, text, onStudyListToggle, wordRootId]);
+      const adjustedLayout: TooltipLayout = {
+        x: (layout as TooltipLayout).x - (containerOffsetX || 0),
+        y: (layout as TooltipLayout).y,
+        width: (layout as TooltipLayout).width,
+        height: (layout as TooltipLayout).height,
+      } as TooltipLayout;
+      return calculateTooltipDimensions(adjustedLayout, text || '', hasBookmark);
+    }, [layout, text, onStudyListToggle, wordRootId, containerOffsetX]);
 
     // Memoized styles
     const containerStyle = useMemo(
@@ -366,7 +394,12 @@ export const WordTooltip = memo(
     if (!visible || !layout) return null;
 
     return (
-      <View style={containerStyle} pointerEvents="box-none">
+      <View
+        ref={containerRef}
+        style={containerStyle}
+        pointerEvents="box-none"
+        onLayout={measureContainerOffset}
+      >
         <Animated.View style={[tooltipStyle, opacityStyle, scaleStyle]} testID="word-tooltip">
           <View style={arrowStyle} />
           {tooltipContent}

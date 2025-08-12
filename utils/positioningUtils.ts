@@ -9,7 +9,7 @@ export const TOOLTIP_CONSTANTS = {
   MIN_WIDTH: 80,
   MAX_WIDTH_RATIO: 0.85,
   HEIGHT: 40,
-  CHAR_WIDTH: 9, // Approximate character width for fontSize 15
+  CHAR_WIDTH: 11, // Safer approximation to prevent horizontal clipping at fontSize 15
   BOOKMARK_WIDTH: 32,
   GAP_WIDTH: 8,
 } as const;
@@ -42,7 +42,8 @@ export interface TooltipDimensions {
 export const calculateTooltipDimensions = (
   layout: TooltipLayout,
   text: string,
-  hasBookmark: boolean
+  hasBookmark: boolean,
+  measuredWidth?: number
 ): TooltipDimensions => {
   const {
     ARROW_SIZE,
@@ -67,11 +68,14 @@ export const calculateTooltipDimensions = (
   const contentWidth = textWidth + bookmarkWidth + gapWidth;
 
   // Calculate tooltip width with padding
-  const tooltipWidth = Math.max(contentWidth + MIN_PADDING * 2, MIN_WIDTH);
+  const estimatedTooltipWidth = Math.max(contentWidth + MIN_PADDING * 2, MIN_WIDTH);
 
   // Apply maximum width constraint
   const maxWidth = SCREEN_WIDTH * MAX_WIDTH_RATIO;
-  const finalTooltipWidth = Math.min(tooltipWidth, maxWidth);
+
+  // Prefer the actual measured width when available to avoid clipping or overestimation
+  const baseWidth = measuredWidth && measuredWidth > 0 ? measuredWidth : estimatedTooltipWidth;
+  const finalTooltipWidth = Math.min(baseWidth, maxWidth);
 
   // Calculate tooltip height
   const tooltipHeight = HEIGHT;

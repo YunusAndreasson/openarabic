@@ -35,14 +35,14 @@ const SortingHeader: FC = () => {
               style={[
                 styles.sortOption,
                 {
-                  backgroundColor: isActive ? colors.tintBackground : 'transparent',
+                  backgroundColor: isActive ? colors.tintBackground : colors.transparent,
                   borderColor: isActive ? colors.tint : colors.borderOverlay,
                 },
               ]}
               onPress={handleSortPress(option.key)}
               android_ripple={{
                 color: colors.tint,
-                radius: LAYOUT.SPACING.MEDIUM,
+                radius: MIN_TOUCH_TARGET.MEDIUM / 2,
               }}
               accessibilityRole="button"
               accessibilityLabel={`Sort by ${option.label}`}

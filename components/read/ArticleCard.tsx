@@ -19,7 +19,7 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 const GOLDEN_RATIO = 1.618; // True golden ratio for optimal image-to-content proportions
 const GRADIENT_START_POINT = { x: 0, y: 0.1 };
 const GRADIENT_END_POINT = { x: 0, y: 1.0 };
-const TRANSPARENT_COLOR = 'transparent';
+// Use theme transparent explicitly for clarity in gradient construction
 const GRADIENT_HEIGHT_PERCENTAGE = '40%';
 const MAX_TITLE_LINES = 2;
 const MAX_AUTHOR_LINES = 1;
@@ -155,8 +155,13 @@ function ArticleCardComponent({
         colors.card,
       ] as const;
     }
-    return [TRANSPARENT_COLOR, TRANSPARENT_COLOR, TRANSPARENT_COLOR, TRANSPARENT_COLOR] as const;
-  }, [colors.background, colors.card, isDarkMode]);
+    return [
+      colors.transparent,
+      colors.transparent,
+      colors.transparent,
+      colors.transparent,
+    ] as const;
+  }, [colors.background, colors.card, colors.transparent, isDarkMode]);
 
   const titleStyle = useMemo(() => createTitleStyle(), []);
   const authorStyle = useMemo(() => createAuthorStyle(), []);

@@ -103,7 +103,7 @@ const ReviewCardInternal = ({
         backgroundColor: interpolateColor(t, [0, 1], [successStart, successEnd]),
       };
     }
-    return { backgroundColor: 'transparent' };
+    return { backgroundColor: colors.transparent };
   }, [errorStart, errorEnd, successStart, successEnd]);
 
   // ===== COMBINED ANIMATED STYLE (SINGLE ANIMATED VIEW) =====

@@ -160,7 +160,7 @@ export const VocabularyStatCards = memo(
         {categories.map(config => (
           <TouchableOpacity
             key={config.category}
-            activeOpacity={config.disabled ? 1 : 0.7}
+            activeOpacity={config.disabled ? 1 : LAYOUT.OPACITY.PRESSED}
             onPress={config.disabled ? undefined : createCategoryPressHandler(config.category)}
             onPressIn={config.disabled ? undefined : handlePressIn}
             onPressOut={config.disabled ? undefined : handlePressOut}

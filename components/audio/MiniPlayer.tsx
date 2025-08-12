@@ -102,7 +102,7 @@ const MiniPlayerComponent = ({
             backgroundColor: colors.elevation2,
             borderColor: colors.border,
             ...LAYOUT.ELEVATION.MEDIUM,
-            opacity: pressed ? 0.98 : 1,
+            opacity: pressed ? LAYOUT.OPACITY.HOVER : 1,
           },
         ]}
       >
@@ -189,7 +189,7 @@ const MiniPlayerComponent = ({
                 {
                   backgroundColor: isTimerActive ? colors.warning : colors.elevation3,
                   borderWidth: isTimerActive ? 0 : LAYOUT.BORDER.WIDTH.THIN,
-                  borderColor: isTimerActive ? 'transparent' : colors.border,
+                  borderColor: isTimerActive ? colors.transparent : colors.border,
                 },
               ]}
             >

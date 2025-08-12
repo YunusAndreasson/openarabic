@@ -41,7 +41,7 @@ const DeleteButton: FC<
           animatedStyle as ViewStyle,
           {
             backgroundColor: colors.error, // Using error color from Colors.ts
-            opacity: disabled ? 0.5 : 1,
+            opacity: disabled ? LAYOUT.OPACITY.MEDIUM : 1,
           },
         ]}
       >

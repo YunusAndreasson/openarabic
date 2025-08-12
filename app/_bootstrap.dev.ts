@@ -11,3 +11,9 @@ if (__DEV__) {
     }
   });
 }
+
+// Expo Router scans files in the app/ directory as routes. Provide a no-op default export
+// so this dev-only bootstrap file does not trigger a missing default export warning.
+export default function DevBootstrap(): null {
+  return null;
+}

@@ -51,7 +51,7 @@ const PlayButton: FC<PlayButtonProps> = ({
 
   return (
     <Pressable
-      style={[styles.button, { backgroundColor: colors.tint }]}
+      style={styles.button}
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
@@ -65,7 +65,7 @@ const PlayButton: FC<PlayButtonProps> = ({
           animatedStyle as ViewStyle,
           {
             backgroundColor,
-            opacity: disabled ? 0.5 : 1,
+            opacity: disabled ? LAYOUT.OPACITY.MEDIUM : 1,
           },
         ]}
       >

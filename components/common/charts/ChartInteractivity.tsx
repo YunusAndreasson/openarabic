@@ -87,14 +87,14 @@ export const DataPointOverlay = memo<DataPointOverlayProps>(({ x, y, value, labe
         height: touchTargetSize,
         borderRadius: touchTargetSize / 2,
         // Jakob's Law: Provide visual feedback that matches user expectations from analytics apps
-        backgroundColor: isPressed ? colors.tint + '20' : 'transparent', // 20% opacity when pressed
+        backgroundColor: isPressed ? colors.tint + '20' : colors.transparent, // 20% opacity when pressed
         borderWidth: isPressed ? 2 : 0,
-        borderColor: isPressed ? colors.tint : 'transparent',
+        borderColor: isPressed ? colors.tint : colors.transparent,
       }}
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      activeOpacity={0.7}
+      activeOpacity={LAYOUT.OPACITY.PRESSED}
     />
   );
 });
