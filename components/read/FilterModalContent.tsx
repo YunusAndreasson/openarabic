@@ -81,7 +81,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={true}
       >
         {activeFiltersCount > 0 && (
           <BaseCard shadowSize="small" style={styles.summaryCard}>

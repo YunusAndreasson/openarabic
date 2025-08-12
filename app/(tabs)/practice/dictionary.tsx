@@ -163,7 +163,7 @@ export default function DictionaryScreen(): JSX.Element {
         }}
         drawDistance={LAYOUT.CARD.HEIGHT.VOCABULARY_ITEM * 3}
         removeClippedSubviews={true}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={true}
         contentContainerStyle={contentContainerStyle}
         ItemSeparatorComponent={ItemSeparator}
         extraData={listExtraData}

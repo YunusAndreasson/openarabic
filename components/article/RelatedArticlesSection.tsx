@@ -7,7 +7,6 @@ import { LAYOUT } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeaturedArticles';
 import type { Article } from '@/types/articles.types';
-import { selectionFeedback } from '@/utils/haptics';
 
 interface RelatedArticlesSectionProps {
   /**
@@ -57,8 +56,8 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
     }, [selectedArticles, maxArticles]);
 
     // Default navigation handler using router.replace for smooth transitions
+    // Haptics intentionally disabled for related articles below sentences
     const defaultNavigationHandler = useCallback((article: Article) => {
-      selectionFeedback();
       router.replace(getArticleRoute(article.id, article.title));
     }, []);
 

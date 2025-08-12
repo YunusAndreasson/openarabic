@@ -86,18 +86,28 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
           contentStyle={styles.cardContent}
         >
           <View style={styles.content}>
-            {/* Word Information */}
-            <View style={styles.wordInfo}>
-              {/* Keep Arabic overrides within practice section while using ThemedText */}
-              <ThemedText type="arabic" style={styles.arabicText}>
-                {arabicText}
-              </ThemedText>
-              <ThemedText type="body" variant="secondary" style={styles.englishText}>
+            {/* Left: English (compact) */}
+            <View style={styles.leftSection}>
+              <ThemedText
+                type="body"
+                variant="secondary"
+                style={styles.englishText}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
                 {englishText}
               </ThemedText>
             </View>
 
-            {/* Right Section: Difficulty Badge */}
+            {/* Center: Arabic (prominent, centered) */}
+            <View style={styles.centerSection}>
+              {/* Keep Arabic overrides within practice section while using ThemedText */}
+              <ThemedText type="arabic" style={styles.arabicText} numberOfLines={1}>
+                {arabicText}
+              </ThemedText>
+            </View>
+
+            {/* Right: Difficulty Badge */}
             <View style={styles.rightSection}>
               <View style={[styles.difficultyBadge, { backgroundColor: difficultyColor }]}>
                 <ThemedText
@@ -161,37 +171,42 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     flex: 1,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingTop: LAYOUT.SPACING.TINY,
-    paddingBottom: LAYOUT.SPACING.TINY,
+    paddingVertical: LAYOUT.SPACING.TINY,
   },
-  wordInfo: {
-    flex: 1,
-    marginRight: LAYOUT.SPACING.MEDIUM,
-    alignItems: 'flex-start',
+  leftSection: {
+    width: 104, // fixed to stabilize layout
+    flexShrink: 0,
+    paddingRight: LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
+  },
+  centerSection: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   arabicText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     fontWeight: '600',
-    // Tighter line-height to avoid excessive leading on single-word Arabic
-    lineHeight: Math.round(LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.6),
-    marginBottom: LAYOUT.SPACING.TINY,
-    textAlign: 'auto',
+    lineHeight: Math.round(LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.4),
+    textAlign: 'center',
   },
   englishText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '400',
-    marginTop: 0,
+    fontWeight: '500',
     textAlign: 'left',
   },
   rightSection: {
+    width: 88, // fixed to stabilize layout
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginLeft: LAYOUT.SPACING.SMALL,
   },
   difficultyBadge: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.TINY,
     minWidth: 56,
     alignItems: 'center',
     justifyContent: 'center',
