@@ -124,7 +124,7 @@ describe('useMemoryCapacityGauge', () => {
       useMemoryCapacityGauge({ ...baseProps, studyWords: [greenWord] })
     ).result;
     expect(result.current.getCapacityColor()).toBe('#e');
-    expect(result.current.getReadinessMessage()).toBe('High Memory Capacity');
+    expect(result.current.getReadinessMessage()).toBe('High memory capacity');
     expect(result.current.getActionCardBackground()).toBeDefined();
 
     // Yellow
@@ -132,7 +132,7 @@ describe('useMemoryCapacityGauge', () => {
       useMemoryCapacityGauge({ ...baseProps, studyWords: [strugglingWord] })
     ).result;
     expect(result.current.getCapacityColor()).toBe('#m');
-    expect(result.current.getReadinessMessage()).toBe('Medium Memory Capacity');
+    expect(result.current.getReadinessMessage()).toBe('Medium memory capacity');
     expect(result.current.getActionCardBackground()).toBeDefined();
 
     // Red
@@ -140,7 +140,7 @@ describe('useMemoryCapacityGauge', () => {
       useMemoryCapacityGauge({ ...baseProps, studyWords: [dueWord] })
     ).result;
     expect(result.current.getCapacityColor()).toBe('#p');
-    expect(result.current.getReadinessMessage()).toBe('Low Memory Capacity');
+    expect(result.current.getReadinessMessage()).toBe('Low memory capacity');
     expect(result.current.getActionCardBackground()).toBeDefined();
   });
 

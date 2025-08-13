@@ -120,7 +120,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
           {/* Top-right info indicator; stays visible even without handler for future use */}
           {onInfoPress ? (
             <Pressable
-              accessibilityLabel={STRINGS.INFO}
+              accessibilityLabel={STRINGS.MEMORY_CAPACITY_INFO}
               hitSlop={8}
               onPress={onInfoPress}
               style={styles.infoIndicator}

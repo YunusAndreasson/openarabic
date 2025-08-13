@@ -66,8 +66,7 @@ def generate_article_audio(
 ) -> None:
     """Generate audio for all sentences in an article and create concatenated article audio."""
     if not AUDIO_AVAILABLE:
-        logger.warning("Audio generation not available")
-        return
+        raise RuntimeError("Audio generation not available - failing per strict mode")
 
     use_progress = progress_tracker is not None
     sentence_audio_files = []
@@ -86,8 +85,7 @@ def generate_article_audio(
             # Get the Arabic text (prefer tashkeel if available)
             arabic_text = translation.tashkeel or translation.original
             if not arabic_text:
-                logger.warning(f"Skipping sentence {i}: no Arabic text found")
-                continue
+                raise RuntimeError(f"No Arabic text found for sentence {i + 1}")
 
             # Generate unique filename
             audio_filename = generate_audio_filename()
@@ -123,15 +121,15 @@ def generate_article_audio(
                         sentence_audio_files.append(temp_audio_file)
 
                 except Exception as e:
-                    logger.error(
+                    raise RuntimeError(
                         f"Failed to update audio URL for sentence {i + 1}: {e}"
-                    )
+                    ) from e
             else:
-                logger.error(f"Failed to generate audio for sentence {i + 1}")
+                raise RuntimeError(f"Failed to generate audio for sentence {i + 1}")
 
         except Exception as e:
-            logger.error(f"Error generating audio for sentence {i + 1}: {e}")
-            # Continue with next sentence - don't fail the entire process
+            # Fail immediately on any sentence audio error
+            raise
 
     # Create concatenated article audio
     if sentence_audio_files:
@@ -140,7 +138,9 @@ def generate_article_audio(
                 sentence_audio_files, temp_dir, article_id
             )
         except Exception as e:
-            logger.error(f"Failed to create concatenated article audio: {e}")
+            raise RuntimeError(
+                f"Failed to create concatenated article audio: {e}"
+            ) from e
 
     # Clean up temporary files
     cleanup_temp_files(sentence_audio_files, temp_dir)
@@ -307,13 +307,9 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
 
     # Generate audio for sentences after they've been inserted
     if AUDIO_AVAILABLE:
-        try:
-            generate_article_audio(
-                article_id, translations, progress_tracker if use_progress else None
-            )
-        except Exception as e:
-            logger.error(f"Audio generation failed: {e}")
-            # Continue without audio - don't fail the entire pipeline
+        generate_article_audio(
+            article_id, translations, progress_tracker if use_progress else None
+        )
 
     archive_files(file_path, article_id)
 
@@ -325,14 +321,17 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
 def find_translation_files() -> list[str]:
     """Find all translation files in the translate directory."""
     translation_files: list[str] = []
+    import re
+
+    filename_re = re.compile(r"^\d+_.*_translated\.json$")
 
     if not os.path.exists(TRANSLATE_DIR):
         logger.warning(f"Translate directory not found: {TRANSLATE_DIR}")
         return translation_files
 
-    # Look for translated JSON files in flat directory
+    # Look for translated JSON files that match our author-number convention
     for file_name in os.listdir(TRANSLATE_DIR):
-        if file_name.endswith("_translated.json"):
+        if filename_re.match(file_name):
             translation_file = os.path.join(TRANSLATE_DIR, file_name)
             translation_files.append(translation_file)
 

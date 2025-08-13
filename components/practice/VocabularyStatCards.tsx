@@ -4,7 +4,6 @@
  * Displays practice session options using a scientifically-grounded 3-phase color system
  * that coordinates with the Memory Capacity Gauge to guide optimal learning behavior.
  */
-import { useRouter } from 'expo-router';
 import { memo, useCallback, useMemo, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -18,7 +17,7 @@ import type { StatCategory, StudyWord } from '@/types/vocabulary.types';
 import { selectionFeedback } from '@/utils/haptics';
 import { calculateWordCategories } from '@/utils/wordClassification';
 
-import MemoryCapacityBottomSheet from './MemoryCapacityBottomSheet';
+import { MemoryCapacityBottomSheet } from './MemoryCapacityBottomSheet';
 import { MemoryCapacityGauge } from './charts/MemoryCapacityGauge';
 
 interface VocabularyStatCardsProps {
@@ -50,7 +49,6 @@ export const VocabularyStatCards = memo(
     studyWords = [],
   }: VocabularyStatCardsProps) => {
     const colors = useColors();
-    const router = useRouter();
     const [isCapacitySheetVisible, setIsCapacitySheetVisible] = useState(false);
     const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
       type: 'card',

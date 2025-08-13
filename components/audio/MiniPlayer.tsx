@@ -96,7 +96,7 @@ const MiniPlayerComponent = ({
       <Pressable
         onPress={handleMiniPlayerPress}
         android_ripple={{ color: colors.navigationRipple }}
-        style={({ pressed }) => [
+        style={[
           styles.card,
           {
             backgroundColor: colors.elevation2,

@@ -97,7 +97,7 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
               <ThemedText
                 type="arabic"
                 arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.XXLARGE}
-                weight="600"
+                weight="semibold"
                 numberOfLines={1}
                 style={{ includeFontPadding: true }}
               >

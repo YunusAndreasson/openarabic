@@ -33,7 +33,6 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
     handleDifficultySelect,
     handleDateRangeSelect,
     handleClearAll,
-    authorChunks,
     selectedDifficultyOption,
     selectedDateRangeOption,
     selectedAuthorsText,
@@ -369,7 +368,7 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.TINY,
     paddingLeft: LAYOUT.SPACING.MEDIUM,
   },
-  summaryLine: { marginTop: LAYOUT.SPACING.SMALL },
+  // summaryLine: { marginTop: LAYOUT.SPACING.SMALL },
   summaryBadge: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     width: MIN_TOUCH_TARGET.MEDIUM,
@@ -390,7 +389,7 @@ const styles = StyleSheet.create({
   },
   card: { marginBottom: LAYOUT.SPACING.MEDIUM, padding: LAYOUT.SPACING.MEDIUM },
   filterSection: { marginBottom: LAYOUT.SPACING.SMALL },
-  sectionAlign: {},
+  // sectionAlign: {},
   filterRow: {
     borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
     minHeight: MIN_TOUCH_TARGET.LARGE,
@@ -438,10 +437,10 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: LAYOUT.SPACING.SMALL,
   },
-  authorList: {},
+  // authorList: {},
   filterPill: { marginBottom: 0, marginRight: 0 },
-  filterPillFullWidth: {},
-  authorChunk: {},
+  // filterPillFullWidth: {},
+  // authorChunk: {},
 });
 
 const areEqual = (prevProps: FilterModalProps, nextProps: FilterModalProps) => {

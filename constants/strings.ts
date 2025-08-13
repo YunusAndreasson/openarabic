@@ -175,7 +175,7 @@ export const STRINGS = {
   // Insights & analytics
   INSIGHTS: 'Insights',
   PROGRESS: 'Progress',
-  MEMORY_CAPACITY: 'Memory Capacity',
+  MEMORY_CAPACITY: 'Memory capacity',
   CAPACITY_SCORE: 'Memory capacity',
   DUE_WORDS: 'Due',
   STRUGGLING_WORDS: 'Struggling',
@@ -190,6 +190,7 @@ export const STRINGS = {
 
   INSIGHTS_UNAVAILABLE: 'Insights unavailable',
   INFO: 'Info',
+  MEMORY_CAPACITY_INFO: 'About memory capacity',
 
   WORD_MASTERY: 'Word mastery',
   LEARNING_PROGRESS: 'Learning progress',
@@ -533,10 +534,10 @@ export const STRINGS = {
   AVERAGE: 'Average',
   MAX: 'Max',
 
-  // Memory Capacity Labels - Simple capacity indicators
-  MEMORY_CAPACITY_LOW: 'Low Memory Capacity',
-  MEMORY_CAPACITY_MEDIUM: 'Medium Memory Capacity',
-  MEMORY_CAPACITY_HIGH: 'High Memory Capacity',
+  // Memory capacity labels - simple capacity indicators (sentence case)
+  MEMORY_CAPACITY_LOW: 'Low memory capacity',
+  MEMORY_CAPACITY_MEDIUM: 'Medium memory capacity',
+  MEMORY_CAPACITY_HIGH: 'High memory capacity',
 
   // Insights screen explanation
   INSIGHTS_EXPLANATION:

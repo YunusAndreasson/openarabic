@@ -14,7 +14,7 @@ import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { calculateMemoryCapacityMetrics, calculateWordStates } from '@/utils/memoryCapacityGauge';
+import { calculateWordStates } from '@/utils/memoryCapacityGauge';
 
 interface MemoryCapacityBottomSheetProps {
   isVisible: boolean;
@@ -34,16 +34,11 @@ export const MemoryCapacityBottomSheet = memo<MemoryCapacityBottomSheetProps>(
       () => calculateWordStates(studyWords),
       [studyWords]
     );
-    const { capacityScore } = useMemo(
-      () => calculateMemoryCapacityMetrics(studyWords),
-      [studyWords]
-    );
-
-    const totalWords = studyWords.length;
-    const reviewedWords = useMemo(
-      () => studyWords.filter(w => w.fsrs_last_review != null && (w.fsrs_reps ?? 0) > 0).length,
-      [studyWords]
-    );
+    // Compute capacity metrics only when needed
+    // const { capacityScore } = useMemo(
+    //   () => calculateMemoryCapacityMetrics(studyWords),
+    //   [studyWords]
+    // );
 
     // Phase determination
     const phase: 'red' | 'orange' | 'green' = useMemo(() => {
@@ -89,12 +84,12 @@ export const MemoryCapacityBottomSheet = memo<MemoryCapacityBottomSheetProps>(
         divider: [styles.divider, { backgroundColor: colors.cardBorder }],
         phaseDot: [styles.phaseDot, { backgroundColor: phaseColor }],
       }),
-      [colors.elevation1, colors.modalIndicator, colors.cardBorder, chartColors, phaseColor]
+      [colors.elevation1, colors.modalIndicator, colors.cardBorder, phaseColor]
     );
 
     if (!isVisible) return null;
 
-    const percent = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 100) : 0);
+    // Helper percent function removed as unused
 
     return (
       <BottomSheetModal
@@ -163,8 +158,8 @@ const styles = StyleSheet.create({
     paddingBottom: LAYOUT.SPACING.LARGE,
   },
   bottomSheet: {
-    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    borderTopRightRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   indicator: {
     width: 40,

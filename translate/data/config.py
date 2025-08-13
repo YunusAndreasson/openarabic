@@ -4,18 +4,12 @@ import os
 
 from elevenlabs import VoiceSettings
 
-# OpenAI model configuration - Optimized for Arabic processing based on research
-# gpt-4o: Proven Arabic handling, faster and more cost-effective for general structured outputs
-# o1-mini: Superior Arabic reasoning, fewer hallucinations, accuracy-critical verification
-# Trade-off: o1-mini is 16-30x slower but much better for Arabic verification
-MODEL_ANALYSIS = (
-    "gpt-4o"  # Fast, cost-effective text splitting (minimal Arabic complexity)
-)
-MODEL_TRANSLATION = (
-    "gpt-4o"  # Reliable Arabic translation with good structured output compliance
-)
-MODEL_OTHER = "gpt-4o"  # Solid Arabic tashkeel generation with schema enforcement
-MODEL_VERIFICATION = "o4-mini"  # Superior Arabic reasoning and verification - worth the cost for accuracy
+# OpenAI model configuration - Valid model names per project standards
+# Use gpt-4o-mini for high-volume phases and gpt-4o for verification
+MODEL_ANALYSIS = "gpt-5"  # Fast, cost-effective text splitting
+MODEL_TRANSLATION = "gpt-5"  # Reliable Arabic translation with structured output
+MODEL_OTHER = "gpt-4o"  # Tashkeel generation and other structured steps
+MODEL_VERIFICATION = "gpt-5"  # Quality-critical verification phase
 
 # Batch processing defaults
 DEFAULT_BATCH_SIZE = 12
@@ -42,12 +36,15 @@ DEFAULT_OUTPUT_FILE = os.path.join(ARTICLE_DIR, "output.json")
 DEFAULT_SPLIT_OUTPUT_FILE = os.path.join(ARTICLE_DIR, "input_split.json")
 
 # Voice configuration
-# Using multilingual voices that support Arabic text
-ARABIC_VOICE_ID = (
-    "21m00Tcm4TlvDq8ikWAM"  # Rachel - multilingual voice supporting Arabic
-)
-ARABIC_WORD_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"  # Rachel for Arabic words
-ENGLISH_WORD_VOICE_ID = "IKne3meq5aSn9XLyUdCD"  # Keep existing English voice
+# Switch to male Arabic-capable voices by default (no env overrides).
+# Common public male multilingual voice example (Arabic-capable): "yoZ06aMxZJJ28mfd3POQ" (Josh)
+ARABIC_VOICE_ID = "yoZ06aMxZJJ28mfd3POQ"
+ARABIC_WORD_VOICE_ID = ARABIC_VOICE_ID
+ENGLISH_WORD_VOICE_ID = "IKne3meq5aSn9XLyUdCD"
+
+# ElevenLabs TTS model (Multilingual v3)
+ELEVENLABS_TTS_MODEL_ID = "eleven_multilingual_v3"
+
 DEFAULT_VOICE_SETTINGS = VoiceSettings(use_speaker_boost=True)
 
 # External services

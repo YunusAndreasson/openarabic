@@ -4,6 +4,7 @@ Provides clean TQDM progress bars with phase information and minimal logging.
 """
 
 import logging
+import sys
 
 from tqdm import tqdm
 
@@ -35,6 +36,9 @@ class PipelineProgressTracker:
             ncols=100,
             colour="green",
             leave=False,
+            file=sys.stdout,
+            disable=not sys.stdout.isatty(),
+            dynamic_ncols=True,
         )
 
     def update(self, n: int = 1, description: str = None) -> None:
