@@ -5,13 +5,12 @@
  * that coordinates with the Memory Capacity Gauge to guide optimal learning behavior.
  */
 import { useRouter } from 'expo-router';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
-import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
@@ -19,6 +18,7 @@ import type { StatCategory, StudyWord } from '@/types/vocabulary.types';
 import { selectionFeedback } from '@/utils/haptics';
 import { calculateWordCategories } from '@/utils/wordClassification';
 
+import MemoryCapacityBottomSheet from './MemoryCapacityBottomSheet';
 import { MemoryCapacityGauge } from './charts/MemoryCapacityGauge';
 
 interface VocabularyStatCardsProps {
@@ -51,13 +51,19 @@ export const VocabularyStatCards = memo(
   }: VocabularyStatCardsProps) => {
     const colors = useColors();
     const router = useRouter();
+    const [isCapacitySheetVisible, setIsCapacitySheetVisible] = useState(false);
     const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
       type: 'card',
     });
 
     const handleInfoPress = useCallback(() => {
-      router.push(ROUTE_PATHS.INSIGHTS);
-    }, [router]);
+      setIsCapacitySheetVisible(true);
+    }, []);
+
+    const handleCapacitySheetClose = useCallback(() => {
+      // Defer state reset until after modal fully dismisses to avoid stale modal instance
+      setTimeout(() => setIsCapacitySheetVisible(false), 0);
+    }, []);
 
     const validatedInput = useMemo(
       () => ({
@@ -156,6 +162,12 @@ export const VocabularyStatCards = memo(
     return (
       <View style={styles.container}>
         <MemoryCapacityGauge studyWords={validatedInput.studyWords} onInfoPress={handleInfoPress} />
+
+        <MemoryCapacityBottomSheet
+          isVisible={isCapacitySheetVisible}
+          onClose={handleCapacitySheetClose}
+          studyWords={validatedInput.studyWords}
+        />
 
         {categories.map(config => (
           <TouchableOpacity

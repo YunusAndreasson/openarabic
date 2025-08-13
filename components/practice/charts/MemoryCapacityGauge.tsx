@@ -117,7 +117,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
         onCardPress={onInfoPress}
       >
         <View style={styles.container}>
-          {/* Top-right info indicator to signal pressable card */}
+          {/* Top-right info indicator; stays visible even without handler for future use */}
           {onInfoPress ? (
             <Pressable
               accessibilityLabel={STRINGS.INFO}
@@ -131,7 +131,15 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
                 color={chartColors.withOpacity(colors.secondaryText, 0.55)}
               />
             </Pressable>
-          ) : null}
+          ) : (
+            <View pointerEvents="none" style={styles.infoIndicator}>
+              <Ionicons
+                name="information-circle"
+                size={LAYOUT.BUTTON.ICON_SIZE.XLARGE}
+                color={chartColors.withOpacity(colors.secondaryText, 0.4)}
+              />
+            </View>
+          )}
           <View style={styles.gaugeContainer}>
             <Canvas style={styles.canvas}>
               <Group>

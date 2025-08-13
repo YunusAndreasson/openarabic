@@ -63,7 +63,6 @@ module.exports = {
     '^@read/(.*)$': '<rootDir>/components/read/$1',
     '^@listen/(.*)$': '<rootDir>/components/listen/$1',
     '^@practice/(.*)$': '<rootDir>/components/practice/$1',
-    '^@insights/(.*)$': '<rootDir>/components/insights/$1',
     '^@account/(.*)$': '<rootDir>/components/account/$1',
     '^@article/(.*)$': '<rootDir>/components/article/$1',
     '^@common/(.*)$': '<rootDir>/components/common/$1',

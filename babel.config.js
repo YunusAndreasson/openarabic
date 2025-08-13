@@ -13,7 +13,6 @@ module.exports = function (api) {
             '@read': './components/read',
             '@listen': './components/listen',
             '@practice': './components/practice',
-            '@insights': './components/insights',
             '@account': './components/account',
             '@article': './components/article',
             '@common': './components/common',

@@ -56,7 +56,6 @@ export const STRINGS = {
   // Sorting options
   DATE_ADDED: 'Date',
   AUTHOR_FILTER: 'Author',
-  PROGRESS: 'Progress',
   RESUMED_READING_TEMPLATE: 'Resumed at {percent}%',
 
   // Practice state labels
@@ -175,13 +174,31 @@ export const STRINGS = {
 
   // Insights & analytics
   INSIGHTS: 'Insights',
+  PROGRESS: 'Progress',
   MEMORY_CAPACITY: 'Memory Capacity',
+  CAPACITY_SCORE: 'Memory capacity',
+  DUE_WORDS: 'Due',
+  STRUGGLING_WORDS: 'Struggling',
+  RED_PHASE: 'Preserve memory',
+  ORANGE_PHASE: 'Consolidate',
+  GREEN_PHASE: 'Ready to add',
+  PHASE_RECOMMENDATION_RED:
+    'Low memory capacity means your review load is high. Clear due reviews before adding new words.',
+  PHASE_RECOMMENDATION_ORANGE:
+    'Medium memory capacity means some words need consolidation. Strengthen them first; add a few only if reviews stay steady.',
+  PHASE_RECOMMENDATION_GREEN:
+    'High memory capacity means your load is balanced. It’s a good time to add new words while keeping up daily reviews.',
+
   INSIGHTS_UNAVAILABLE: 'Insights unavailable',
   INFO: 'Info',
 
   WORD_MASTERY: 'Word mastery',
   LEARNING_PROGRESS: 'Learning progress',
   REVIEW_TIMING: 'Memory retention',
+  CAPACITY_SRS_EXPLAINER:
+    'Reviews are scheduled when recall drops. Clearing due words restores memory capacity; consolidating weak words moves you toward green.',
+  DUE_TODAY_LABEL: 'Due words today: {count}',
+  STRUGGLING_COUNT_LABEL: 'Struggling words: {count}',
   MEMORY_STRENGTH_ACROSS_VOCABULARY:
     'Vocabulary knowledge strength, showing how much you have mastered.',
   VOCABULARY_ACQUISITION_VELOCITY:

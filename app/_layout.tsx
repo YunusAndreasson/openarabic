@@ -319,12 +319,7 @@ function AppContent() {
                 gestureEnabled: true,
               })}
             />
-            <Stack.Screen
-              name="insights"
-              options={createNavigationOptions(colors, {
-                headerShown: false,
-              })}
-            />
+
             {/* NowPlaying is nested at /(tabs)/listen/now-playing; no root-level screen needed */}
           </Stack>
 

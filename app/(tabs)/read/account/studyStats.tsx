@@ -12,30 +12,28 @@ import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
-// import { useEfficiencyChart } from '@/hooks/vocabulary/useEfficiencyChart';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
-// import { useMasteryChart } from '@/hooks/vocabulary/useMasteryChart';
-// import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 
-import { INFO_TITLES } from './_layout';
+// Title mapping for charts
+const TITLES = {
+  mastery: STRINGS.WORD_MASTERY,
+  efficiency: STRINGS.LEARNING_PROGRESS,
+  retrievability: STRINGS.REVIEW_TIMING,
+} as const;
 
-export default function InsightsScreen(): JSX.Element {
+export default function StudyStatsScreen(): JSX.Element {
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const colors = useColors();
 
-  // Use the FSRS queries hook for data fetching
   const { allWords: studyWords, error } = useFSRSQueries({
     userId: user?.id,
   });
 
-  // Filter valid study words
   const validStudyWords = useMemo(
     () => studyWords?.filter(word => word != null && word.root_id != null) ?? [],
     [studyWords]
   );
-
-  // Chart components now show their own inline current values
 
   if (error) {
     return (
@@ -58,10 +56,7 @@ export default function InsightsScreen(): JSX.Element {
         includeBottomInset={false}
         contentContainerStyle={[
           styles.scrollContent,
-          {
-            // Reduce excessive bottom space: only safe area + small spacing
-            paddingBottom: insets.bottom + LAYOUT.SPACING.SMALL,
-          },
+          { paddingBottom: insets.bottom + LAYOUT.SPACING.SMALL },
         ]}
         scrollViewProps={{
           showsVerticalScrollIndicator: false,
@@ -69,36 +64,28 @@ export default function InsightsScreen(): JSX.Element {
           bounces: true,
         }}
       >
-        {/* Introductory context removed for cleaner, faster comprehension */}
-
-        {/* Word Mastery Chart */}
         <View style={styles.chartSection}>
           <SectionTitle
-            title={INFO_TITLES.mastery}
+            title={TITLES.mastery}
             subtitle={STRINGS.MEMORY_STRENGTH_ACROSS_VOCABULARY}
-            isFirstSection={true}
+            isFirstSection
           />
-          {/* Metric caption removed; inline badge inside chart shows current value */}
           <MasteryChart studyWords={validStudyWords} hideTitle={true} />
         </View>
 
-        {/* Learning Progress Chart */}
         <View style={styles.chartSection}>
           <SectionTitle
-            title={INFO_TITLES.efficiency}
+            title={TITLES.efficiency}
             subtitle={STRINGS.VOCABULARY_ACQUISITION_VELOCITY}
           />
-          {/* Numeric summary moved into chart as inline last-value badge */}
           <EfficiencyChart studyWords={validStudyWords} hideTitle={true} />
         </View>
 
-        {/* Review Timing Chart */}
         <View style={styles.chartSection}>
           <SectionTitle
-            title={INFO_TITLES.retrievability}
+            title={TITLES.retrievability}
             subtitle={STRINGS.MEMORY_RETENTION_OPTIMAL_TIMING}
           />
-          {/* Current retrievability shown inline on chart */}
           <RetrievabilityChart studyWords={validStudyWords} hideTitle={true} />
         </View>
       </ThemedView>

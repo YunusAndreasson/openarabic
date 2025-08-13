@@ -72,6 +72,10 @@ const AccountScreen: FC = () => {
   // Format cache size for display
   const formattedCacheSize = cacheSize > 0 ? formatBytes(cacheSize) : STRINGS.NO_CACHED_FILES;
 
+  const handleStudyStatsPress = useCallback(() => {
+    router.push(ROUTE_PATHS.ACCOUNT_PROGRESS);
+  }, []);
+
   return (
     <ThemedView
       includeBottomInset={false}
@@ -98,8 +102,49 @@ const AccountScreen: FC = () => {
         {/* Account Badge - Premium header section */}
         {user && <AccountBadge userEmail={user.email || 'user@example.com'} userId={user.id} />}
 
+        {/* Progress */}
+        <BaseCard
+          includePressAnimation={false}
+          shadowSize="small"
+          style={[styles.sectionContainer, styles.sectionSpacing]}
+        >
+          <View style={styles.linksContainer}>
+            <BaseCard
+              includePressAnimation={true}
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={handleStudyStatsPress}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons
+                      color={colors.interactiveSecondary}
+                      name="stats-chart"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
+                  </View>
+                  <ThemedText style={styles.cardText} type="body" weight="medium">
+                    {STRINGS.PROGRESS}
+                  </ThemedText>
+                </View>
+                <Ionicons
+                  color={colors.textTertiary}
+                  name="chevron-forward"
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                  style={styles.cardChevron}
+                />
+              </View>
+            </BaseCard>
+          </View>
+        </BaseCard>
+
         {/* App Preferences - Core settings users adjust frequently */}
-        <BaseCard includePressAnimation={false} shadowSize="small" style={styles.sectionContainer}>
+        <BaseCard
+          includePressAnimation={false}
+          shadowSize="small"
+          style={[styles.sectionContainer, styles.sectionSpacing]}
+        >
           <View style={styles.linksContainer}>
             <View style={styles.settingRow}>
               <View style={styles.settingLabelContainer}>
