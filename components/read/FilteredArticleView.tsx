@@ -13,7 +13,7 @@ import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
-import { useSafeBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
+import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 import { overrideFixedHeight } from '@/utils/list';
@@ -136,7 +136,7 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
 
   // Fetch bulk reading progress for all articles
   const articleIds = useMemo(() => visibleArticles.map(article => article.id), [visibleArticles]);
-  const { data: progressMapRaw = new Map() } = useSafeBulkReadingProgress(articleIds);
+  const { data: progressMapRaw = new Map() } = useBulkReadingProgress(articleIds);
   // Ensure progressMap is always a Map to prevent runtime errors
   const progressMap = progressMapRaw instanceof Map ? progressMapRaw : new Map();
 

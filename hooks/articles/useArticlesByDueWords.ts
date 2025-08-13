@@ -29,7 +29,7 @@ export function useArticlesByDueWords(
 ): UseArticlesByDueWordsResult {
   // Fetch due words for the current user with optimized query
   const { data: dueWords = [], isLoading: isLoadingDueWords } = useQuery({
-    queryKey: FSRS_QUERY_KEYS.due(userId || ''),
+    queryKey: userId ? FSRS_QUERY_KEYS.due(userId) : FSRS_QUERY_KEYS.FALLBACK.due,
     queryFn: () => {
       if (!userId) return Promise.resolve([]);
       return studyWordsFSRSService.getFSRSWords(userId, {
@@ -49,7 +49,7 @@ export function useArticlesByDueWords(
 
   // Fallback: fetch all study words if no due words (for better recommendations)
   const { data: allStudyWords = [], isLoading: isLoadingAllWords } = useQuery({
-    queryKey: FSRS_QUERY_KEYS.all(userId || ''),
+    queryKey: userId ? FSRS_QUERY_KEYS.all(userId) : FSRS_QUERY_KEYS.FALLBACK.all,
     queryFn: () => {
       if (!userId) return Promise.resolve([]);
       return studyWordsFSRSService.getFSRSWords(userId, {

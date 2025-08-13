@@ -1,5 +1,5 @@
 import type { StudyWord } from '@/types/vocabulary.types';
-import { isStrugglingWord } from '@/utils/wordClassification';
+import { calculateDueWords, calculateStrugglingWords } from '@/utils/wordClassification';
 
 export interface MemoryCapacityMetrics {
   capacityScore: number;
@@ -45,16 +45,10 @@ export function calculateMemoryCapacityMetrics(studyWords: StudyWord[]): MemoryC
 
   const capacityScore = Math.round(stabilityFactor + repsFactor + difficultyFactor);
 
-  // Trend calculation aligned with 3-phase system
-  // Only show "improving" in green phase when memory is actually in good state
-  const hasUrgentWords = studyWords.some(word => {
-    const now = new Date();
-    const dueDate = word.fsrs_due ? new Date(word.fsrs_due) : new Date('9999-12-31');
-    const isDue = dueDate <= now;
-    const hasBeenReviewed = word.fsrs_last_review != null && (word.fsrs_reps ?? 0) > 0;
-    const isStruggling = hasBeenReviewed && isStrugglingWord(word);
-    return isDue || isStruggling;
-  });
+  // Trend calculation aligned with 3-phase system using the SAME definitions
+  // used by UI gating (buttons) to keep behavior consistent across the app
+  const wordStates = calculateWordStates(studyWords);
+  const hasUrgentWords = wordStates.dueWords > 0 || wordStates.strugglingWords > 0;
 
   const trend = !hasUrgentWords && averageReps > 2 ? 'improving' : 'stable';
 
@@ -68,17 +62,10 @@ export function calculateMemoryCapacityMetrics(studyWords: StudyWord[]): MemoryC
  * Calculate word states for proper phase determination
  */
 export function calculateWordStates(studyWords: StudyWord[]): WordStates {
-  const now = new Date();
-
-  const dueWords = studyWords.filter(word => {
-    const dueDate = word.fsrs_due ? new Date(word.fsrs_due) : new Date('9999-12-31');
-    return dueDate <= now;
-  }).length;
-
-  const strugglingWords = studyWords.filter(word => {
-    const hasBeenReviewed = word.fsrs_last_review != null && (word.fsrs_reps ?? 0) > 0;
-    return hasBeenReviewed && isStrugglingWord(word);
-  }).length;
+  // IMPORTANT: Reuse the exact same calculations as VocabularyStatCards
+  // so the gauge color/phase matches button availability and counts
+  const dueWords = calculateDueWords(studyWords);
+  const strugglingWords = calculateStrugglingWords(studyWords);
 
   return { dueWords, strugglingWords };
 }

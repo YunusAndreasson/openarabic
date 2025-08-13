@@ -68,7 +68,7 @@ export const useArticleData = (
     },
     enabled: !!userId,
     ...CACHE_TIMES.MEDIUM, // 3 minutes - study words change moderately
-    networkMode: 'always',
+    networkMode: 'online',
     retry: 3,
     refetchOnMount: true, // Previously 'always', now true to respect staleTime
     refetchOnWindowFocus: false, // Mobile-only: no window focus concept

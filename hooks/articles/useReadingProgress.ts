@@ -44,7 +44,7 @@ export function useReadingProgress({
 
   // Query to get current reading progress
   const { data: progress, isLoading } = useQuery({
-    queryKey: user?.id ? READING_PROGRESS_QUERY_KEY(user.id, articleId) : [],
+    queryKey: READING_PROGRESS_QUERY_KEY(user?.id ?? '__guest__', articleId),
     queryFn: async () => {
       if (!user?.id) return null;
       const result = await readingProgressService.getProgress(user.id, articleId);
@@ -235,7 +235,11 @@ export function useBulkReadingProgress(articleIds: number[]) {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: user?.id ? ['reading-progress-bulk', user.id, articleIds.sort()] : [],
+    queryKey: [
+      'reading-progress-bulk',
+      user?.id ?? '__guest__',
+      [...articleIds].sort((a, b) => a - b),
+    ],
     queryFn: async () => {
       if (!user?.id || articleIds.length === 0) return new Map();
       return readingProgressService.getBulkProgress(user.id, articleIds);
