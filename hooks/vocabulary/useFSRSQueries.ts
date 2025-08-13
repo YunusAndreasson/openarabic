@@ -25,15 +25,15 @@ interface FSRSQueriesResult {
 export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQueriesResult {
   const queryClient = useQueryClient();
 
-  // Base query for all words - used as a foundation for other queries
+  // Base query for all words for charts (no cooldown so charts always have data)
   const allWordsQuery = useQuery({
     queryKey: userId ? FSRS_QUERY_KEYS.all(userId) : FSRS_QUERY_KEYS.FALLBACK.all,
-    queryFn: () => {
+    queryFn: async () => {
       if (!userId) throw new Error('User ID is required');
       return studyWordsFSRSService.getFSRSWords(userId, { forStats: false });
     },
     enabled: !!userId,
-    ...CACHE_TIMES.MEDIUM, // 3 minutes - study words change moderately
+    ...CACHE_TIMES.MEDIUM,
     initialData: () => {
       if (!userId) return undefined;
       return queryClient.getQueryData(FSRS_QUERY_KEYS.all(userId));
@@ -99,7 +99,9 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
     // Use data from allWordsQuery if available
     initialData: () => {
       if (!userId) return undefined;
-      return queryClient.getQueryData(FSRS_QUERY_KEYS.all(userId));
+      return queryClient.getQueryData(
+        FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS)
+      );
     },
   });
 

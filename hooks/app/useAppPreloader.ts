@@ -187,11 +187,12 @@ export const useAppPreloader = (): AppPreloaderResult => {
     try {
       await Promise.allSettled([
         queryClient.prefetchQuery({
-          queryKey: FSRS_QUERY_KEYS.all(user.id),
+          queryKey: FSRS_QUERY_KEYS.allWithCooldown(user.id, 1),
           queryFn: () =>
             studyWordsFSRSService.getFSRSWords(user.id, {
               forStats: true,
               limit: 1000,
+              sessionCooldownHours: 1,
             }),
           ...CACHE_TIMES.MEDIUM,
           retry: 2,

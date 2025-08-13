@@ -46,18 +46,8 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
   }, [studyWords]);
 
   const chartData = useMemo<RetrievabilityChartData>(() => {
+    // Always render a 7-day chart; show as zeros if there was no recent activity
     if (retrievabilityData.length === 0) {
-      return {
-        retrievabilityPath: '',
-        hasData: false,
-        insights: { currentRetrievability: 0, trend: 'stable', criticalWords: 0 },
-        dangerZones: [],
-        dataPoints: [],
-      };
-    }
-
-    const hasData = retrievabilityData.some(d => d.wordCount > 0);
-    if (!hasData) {
       return {
         retrievabilityPath: '',
         hasData: false,
@@ -107,7 +97,8 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
 
     return {
       retrievabilityPath: path.toSVGString(),
-      hasData,
+      // Show the chart whenever the user has any study words, regardless of due words
+      hasData: (studyWords?.length ?? 0) > 0,
       dangerZones: performanceZones,
       dataPoints: points,
       insights: {
@@ -116,7 +107,7 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
         criticalWords,
       },
     };
-  }, [retrievabilityData, chartColors, graphWidth]);
+  }, [retrievabilityData, chartColors, graphWidth, studyWords?.length]);
 
   return { retrievabilityData, chartData };
 }

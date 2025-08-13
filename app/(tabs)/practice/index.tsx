@@ -11,7 +11,7 @@ import { ThemedView } from '@/components/ThemedView';
 // Removed EmptyState for a simpler UX where gauge stays visible even with 0 words
 import ErrorMessage from '@/components/practice/ErrorMessage';
 import { VocabularyStatCards } from '@/components/practice/VocabularyStatCards';
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { getPracticeReviewRoute } from '@/constants/routes';
 // import { STRINGS } from '@/constants/strings';
@@ -41,7 +41,7 @@ export default function VocabularyScreen(): JSX.Element {
       // Prevent multiple prefetch calls
       if (hasPrefetchedRef.current) return;
 
-      const hasStudyWords = queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id));
+      const hasStudyWords = queryClient.getQueryData(FSRS_QUERY_KEYS.allWithCooldown(user.id, 1));
       const hasDueWords = queryClient.getQueryData(FSRS_QUERY_KEYS.due(user.id));
 
       // Only fetch if we're missing either data set
@@ -111,6 +111,19 @@ export default function VocabularyScreen(): JSX.Element {
     return studyWords?.filter(word => word != null && word.root_id != null) ?? [];
   }, [studyWords]);
 
+  // Compute eligible count for "Study all words" respecting cooldown
+  const eligibleAllWordsCount = useMemo(() => {
+    const nowMs = Date.now();
+    const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
+    const normalizeTs = (ts: string | null | undefined) => (ts ? ts.replace(' ', 'T') : undefined);
+    return filteredStudyWords.filter(w => {
+      const lastStr = normalizeTs(w.fsrs_last_review);
+      const lastMs = lastStr ? Date.parse(lastStr) : 0;
+      const recentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
+      return !recentlyReviewed;
+    }).length;
+  }, [filteredStudyWords]);
+
   // FIXED: Calculate learning and mastered words from actual data instead of database view
   // This ensures consistency between display and session logic for all word types
   const calculatedStats = useMemo(() => {
@@ -146,7 +159,9 @@ export default function VocabularyScreen(): JSX.Element {
   }
 
   // Check if data is cached and derive simple UI state flags
-  const isDataCached = !!(user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id)));
+  const isDataCached = !!(
+    user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.allWithCooldown(user.id, 1))
+  );
   const isLoadingState = isDataLoading || isFetching;
   // const hasWords = filteredStudyWords.length > 0;
   const showLoadingIndicator = isLoadingState && !isDataCached;
@@ -193,6 +208,7 @@ export default function VocabularyScreen(): JSX.Element {
               masteredWords={calculatedStats.masteredWords}
               studyWords={filteredStudyWords} // Use all study words for memory capacity gauge
               onStartReview={handleStartReview}
+              eligibleAllWordsCount={eligibleAllWordsCount}
             />
           </View>
         )}

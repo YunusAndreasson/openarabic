@@ -90,20 +90,8 @@ export function useEfficiencyChart(studyWords: StudyWord[]): UseEfficiencyChartR
 
   // Calculate chart data and insights
   const chartData = useMemo<EfficiencyChartData>(() => {
+    // Always render a 7-day chart; show as zeros if there was no recent activity
     if (efficiencyData.length === 0) {
-      return {
-        efficiencyPath: '',
-        hasData: false,
-        insights: { currentEfficiency: 0, trend: 'stable' as const, weeklyAverage: 0 },
-        performanceZones: [],
-        dataPoints: [],
-      };
-    }
-
-    // We'll determine hasData based on computed points (more robust)
-    const prelimHasData = efficiencyData.some(d => d.wordCount > 0);
-
-    if (!prelimHasData) {
       return {
         efficiencyPath: '',
         hasData: false,
@@ -175,7 +163,8 @@ export function useEfficiencyChart(studyWords: StudyWord[]): UseEfficiencyChartR
         ? 'declining'
         : 'stable';
 
-    const hasData = points.length > 0;
+    // Show the chart whenever the user has any study words, regardless of due words
+    const hasData = (studyWords?.length ?? 0) > 0;
 
     return {
       efficiencyPath: path.toSVGString(),
@@ -188,7 +177,7 @@ export function useEfficiencyChart(studyWords: StudyWord[]): UseEfficiencyChartR
         weeklyAverage: Math.round(recentAvg),
       },
     };
-  }, [efficiencyData, chartColors, graphWidth]);
+  }, [efficiencyData, chartColors, graphWidth, studyWords?.length]);
 
   return { efficiencyData, chartData };
 }

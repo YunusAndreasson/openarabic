@@ -177,7 +177,7 @@ export const STRINGS = {
   PROGRESS: 'Progress',
   MEMORY_CAPACITY: 'Memory capacity',
   MEMORY_CAPACITY_EXPLANATION:
-    'Memory capacity shows how much you can study comfortably right now based on recent reviews. First, clear due reviews and strengthen weak words; add new words when capacity is high.',
+    'Memory capacity shows how much you can study comfortably right now based on recent reviews. Clear due reviews and strengthen weak words to increase capacity for adding new words.',
   MEMORY_CAPACITY_TIP: 'Tip: Add new words when capacity is high',
   CAPACITY_SCORE: 'Memory capacity',
   DUE_WORDS: 'Due',

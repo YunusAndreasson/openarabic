@@ -55,7 +55,9 @@ export default function DictionaryScreen(): JSX.Element {
     async () => {
       // Invalidate FSRS queries to refresh the data
       if (user?.id) {
-        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) });
+        queryClient.invalidateQueries({
+          queryKey: FSRS_QUERY_KEYS.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
+        });
         queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
         queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.stats(user.id) });
       }

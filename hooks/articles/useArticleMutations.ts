@@ -4,7 +4,11 @@ import { useCallback, useMemo } from 'react';
 
 // Services
 import { useToast } from '@/components/providers/ToastProvider';
-import { CAPACITY_THRESHOLDS, DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import {
+  CAPACITY_THRESHOLDS,
+  DEFAULT_SESSION_COOLDOWN_HOURS,
+  FSRS_QUERY_KEYS,
+} from '@/constants/fsrs';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { readingListService } from '@/services/readingList';
@@ -15,7 +19,7 @@ import { handleError } from '@/utils/errorHandling';
 // Shared query keys used across mutation success handlers
 const RELATED_QUERY_KEYS = (userId: string) =>
   [
-    FSRS_QUERY_KEYS.all(userId),
+    FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
     FSRS_QUERY_KEYS.due(userId),
     ['enhancedAudioTracks', userId] as const,
     FSRS_QUERY_KEYS.stats(userId),
@@ -68,7 +72,9 @@ export const useArticleMutations = (
   // Lightweight capacity guard: prevent adding when capacity is low (red phase)
   const isCapacityLow = (userId: string | undefined): boolean => {
     if (!userId) return false;
-    const all = queryClient.getQueryData<unknown>(FSRS_QUERY_KEYS.all(userId));
+    const all = queryClient.getQueryData<unknown>(
+      FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS)
+    );
     if (Array.isArray(all)) {
       const words = all as {
         fsrs_due: string | null;
@@ -82,17 +88,22 @@ export const useArticleMutations = (
       let capacityScore: number;
       if (valid.length >= Math.max(1, Math.floor(words.length * 0.5))) {
         const avgStability = valid.reduce((s, w) => s + (w.fsrs_stability ?? 0), 0) / valid.length;
-        const avgDifficulty = valid.reduce((s, w) => s + (w.fsrs_difficulty ?? 5), 0) / valid.length;
+        const avgDifficulty =
+          valid.reduce((s, w) => s + (w.fsrs_difficulty ?? 5), 0) / valid.length;
         const avgReps = valid.reduce((s, w) => s + (w.fsrs_reps ?? 0), 0) / valid.length;
         const stabilityFactor = Math.min(avgStability / 30, 1) * 45;
         const repsFactor = Math.min(avgReps / 10, 1) * 30;
         const difficultyFactor = Math.max(0, (10 - avgDifficulty) / 10) * 25;
-        capacityScore = Math.max(15, Math.min(100, Math.round(stabilityFactor + repsFactor + difficultyFactor)));
+        capacityScore = Math.max(
+          15,
+          Math.min(100, Math.round(stabilityFactor + repsFactor + difficultyFactor))
+        );
       } else {
         // Fallback heuristic based on due words ratio with cooldown
         const nowMs = Date.now();
         const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
-        const normalizeTs = (ts: string | null | undefined) => (ts ? ts.replace(' ', 'T') : undefined);
+        const normalizeTs = (ts: string | null | undefined) =>
+          ts ? ts.replace(' ', 'T') : undefined;
         const dueCount = words.reduce((count, w) => {
           const dueStr = normalizeTs(w.fsrs_due);
           const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
@@ -175,25 +186,37 @@ export const useArticleMutations = (
         userId: string;
         wordId: number;
       }): Promise<StudyWordContext> => {
-        await queryClient.cancelQueries({ queryKey: FSRS_QUERY_KEYS.all(userId) });
-        const previousStudyWords = queryClient.getQueryData(FSRS_QUERY_KEYS.all(userId)) as {
+        await queryClient.cancelQueries({
+          queryKey: FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
+        });
+        const previousStudyWords = queryClient.getQueryData(
+          FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS)
+        ) as {
           root_id: number;
         }[];
 
-        queryClient.setQueryData(FSRS_QUERY_KEYS.all(userId), (old: { root_id: number }[] = []) => {
-          const exists = old.some(sw => sw.root_id === wordId);
-          return exists ? old.filter(sw => sw.root_id !== wordId) : [...old, { root_id: wordId }];
-        });
+        queryClient.setQueryData(
+          FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
+          (old: { root_id: number }[] = []) => {
+            const exists = old.some(sw => sw.root_id === wordId);
+            return exists ? old.filter(sw => sw.root_id !== wordId) : [...old, { root_id: wordId }];
+          }
+        );
 
         return { previousStudyWords };
       },
       onError: (error: Error, { userId }: { userId: string }, context?: StudyWordContext) => {
         if (context?.previousStudyWords) {
-          queryClient.setQueryData(FSRS_QUERY_KEYS.all(userId), context.previousStudyWords);
+          queryClient.setQueryData(
+            FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
+            context.previousStudyWords
+          );
         }
         handleError(error);
         showToast(STRINGS.ERROR_UPDATING_STUDY_LIST, undefined, 'error');
-        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(userId) });
+        queryClient.invalidateQueries({
+          queryKey: FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
+        });
       },
       onSuccess: async (_: boolean, { userId }: { userId: string }) => {
         // Batch invalidate related queries
@@ -220,25 +243,37 @@ export const useArticleMutations = (
         userId: string;
         rootId: number;
       }): Promise<StudyWordContext> => {
-        await queryClient.cancelQueries({ queryKey: FSRS_QUERY_KEYS.all(userId) });
-        const previousStudyWords = queryClient.getQueryData(FSRS_QUERY_KEYS.all(userId)) as {
+        await queryClient.cancelQueries({
+          queryKey: FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
+        });
+        const previousStudyWords = queryClient.getQueryData(
+          FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS)
+        ) as {
           root_id: number;
         }[];
 
-        queryClient.setQueryData(FSRS_QUERY_KEYS.all(userId), (old: { root_id: number }[] = []) => {
-          const exists = old.some(sw => sw.root_id === rootId);
-          return exists ? old.filter(sw => sw.root_id !== rootId) : [...old, { root_id: rootId }];
-        });
+        queryClient.setQueryData(
+          FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
+          (old: { root_id: number }[] = []) => {
+            const exists = old.some(sw => sw.root_id === rootId);
+            return exists ? old.filter(sw => sw.root_id !== rootId) : [...old, { root_id: rootId }];
+          }
+        );
 
         return { previousStudyWords };
       },
       onError: (error: Error, { userId }: { userId: string }, context?: StudyWordContext) => {
         if (context?.previousStudyWords) {
-          queryClient.setQueryData(FSRS_QUERY_KEYS.all(userId), context.previousStudyWords);
+          queryClient.setQueryData(
+            FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
+            context.previousStudyWords
+          );
         }
         handleError(error);
         showToast(STRINGS.ERROR_UPDATING_STUDY_LIST, undefined, 'error');
-        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(userId) });
+        queryClient.invalidateQueries({
+          queryKey: FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
+        });
       },
       onSuccess: async (_: boolean, { userId }: { userId: string }) => {
         // Batch invalidate related queries

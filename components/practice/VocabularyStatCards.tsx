@@ -26,6 +26,8 @@ interface VocabularyStatCardsProps {
   dueWords?: number;
   onStartReview?: (category: StatCategory) => void;
   studyWords?: StudyWord[];
+  // Number of words eligible for "Study all words" after cooldown filtering
+  eligibleAllWordsCount?: number;
 }
 
 interface WordCategoryConfig {
@@ -47,6 +49,7 @@ export const VocabularyStatCards = memo(
     dueWords = 0,
     onStartReview,
     studyWords = [],
+    eligibleAllWordsCount,
   }: VocabularyStatCardsProps) => {
     const colors = useColors();
     const [isCapacitySheetVisible, setIsCapacitySheetVisible] = useState(false);
@@ -81,6 +84,8 @@ export const VocabularyStatCards = memo(
     const categories: WordCategoryConfig[] = useMemo(() => {
       const cards = [] as WordCategoryConfig[];
       const hasDueWords = wordCategories.dueWords > 0;
+      const eligibleTotal =
+        typeof eligibleAllWordsCount === 'number' ? eligibleAllWordsCount : totalWords;
 
       cards.push({
         value: wordCategories.dueWords,
@@ -110,26 +115,27 @@ export const VocabularyStatCards = memo(
           : undefined,
       });
 
+      // Always show "Study all words"; disable when not eligible (recently reviewed) or blocked by other priorities
       cards.push({
-        value: totalWords,
+        value: eligibleTotal,
         label: STRINGS.INTERLEAVED_REVIEW,
         iconColor: colors.tint,
         bgColor: colors.card,
         category: 'total' as StatCategory,
         description: STRINGS.INTERLEAVED_REVIEW_DESCRIPTION,
         capacityPhase: 'green' as const,
-        disabled: hasDueWords || wordCategories.strugglingWords > 0 || totalWords === 0,
+        disabled: hasDueWords || wordCategories.strugglingWords > 0 || eligibleTotal === 0,
         disabledMessage: hasDueWords
           ? STRINGS.COMPLETE_DUE_FIRST
           : wordCategories.strugglingWords > 0
           ? STRINGS.FOCUS_ON_STRUGGLING_FIRST
-          : totalWords === 0
+          : eligibleTotal === 0
           ? 'No words to study'
           : undefined,
       });
 
       return cards;
-    }, [wordCategories, colors, totalWords]);
+    }, [wordCategories, colors, totalWords, eligibleAllWordsCount]);
 
     const getButtonBackground = (config: WordCategoryConfig) => {
       return config.bgColor;

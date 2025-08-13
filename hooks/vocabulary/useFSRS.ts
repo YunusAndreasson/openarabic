@@ -93,30 +93,48 @@ export function useFSRS({
   const { data: dueWords, isLoading } = useQuery({
     queryKey: userId
       ? mode === 'spaced'
-        ? FSRS_QUERY_KEYS.struggling(userId, 50) // Consistent key helper
+        ? FSRS_QUERY_KEYS.struggling(userId, 50)
         : useAllWords
-        ? FSRS_QUERY_KEYS.all(userId)
+        ? FSRS_QUERY_KEYS.allWithCooldown(userId, _sessionCooldownHours)
         : FSRS_QUERY_KEYS.due(userId)
-      : FSRS_QUERY_KEYS.FALLBACK[mode === 'spaced' ? 'due' : useAllWords ? 'all' : 'due'],
+      : mode === 'spaced'
+      ? FSRS_QUERY_KEYS.FALLBACK.due
+      : useAllWords
+      ? FSRS_QUERY_KEYS.FALLBACK.allWithCooldown(_sessionCooldownHours)
+      : FSRS_QUERY_KEYS.FALLBACK.due,
     queryFn: async () => {
       if (!userId) return [];
 
-      // Use struggling words service for spaced mode
+      // Spaced mode uses struggling words with cooldown
       if (mode === 'spaced') {
-        return strugglingWordsService.getStrugglingWords(
-          userId,
-          50,
-          DEFAULT_SESSION_COOLDOWN_HOURS
-        );
+        return strugglingWordsService.getStrugglingWords(userId, 50, _sessionCooldownHours);
       }
 
-      // Use regular FSRS service for other modes
-      return studyWordsFSRSService.getFSRSWords(userId, {
+      // Study all or due words; apply cooldown consistently
+      const words = await studyWordsFSRSService.getFSRSWords(userId, {
         onlyDue: !useAllWords,
         forStats: false,
-        // Use cooldown so session and indicator both hide words for one hour
-        sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
+        sessionCooldownHours: _sessionCooldownHours,
       });
+
+      // Defensive client-side cooldown filter to prevent recently reviewed words leaking in
+      if (useAllWords && _sessionCooldownHours > 0) {
+        const nowMs = Date.now();
+        const cutoffMs = nowMs - _sessionCooldownHours * 60 * 60 * 1000;
+        const normalizeTs = (ts: unknown) => {
+          if (typeof ts === 'string') return ts.replace(' ', 'T');
+          if (ts instanceof Date) return ts.toISOString();
+          return undefined;
+        };
+        return words.filter(w => {
+          const lastStr = normalizeTs(w.fsrs_last_review as unknown);
+          const lastMs = lastStr ? Date.parse(lastStr) : 0;
+          const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
+          return !isRecentlyReviewed;
+        });
+      }
+
+      return words;
     },
     enabled: !!userId,
     refetchOnMount: true,
@@ -432,7 +450,7 @@ export function useFSRS({
       queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.struggling(userId, 50) });
     } else {
       const currentQueryKey = useAllWords
-        ? FSRS_QUERY_KEYS.all(userId)
+        ? FSRS_QUERY_KEYS.allWithCooldown(userId, _sessionCooldownHours)
         : FSRS_QUERY_KEYS.due(userId);
       queryClient.invalidateQueries({ queryKey: currentQueryKey });
     }

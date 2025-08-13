@@ -34,7 +34,9 @@ export function useArabicWord({
 
   // Fetch the user's study words using unified FSRS query keys so mutations invalidate consistently
   const { data: studyWords = [] } = useQuery({
-    queryKey: user?.id ? FSRS_QUERY_KEYS.all(user.id) : FSRS_QUERY_KEYS.FALLBACK.all,
+    queryKey: user?.id
+      ? FSRS_QUERY_KEYS.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS)
+      : FSRS_QUERY_KEYS.FALLBACK.allWithCooldown(DEFAULT_SESSION_COOLDOWN_HOURS),
     queryFn: async () => {
       if (!user?.id) return [];
       try {

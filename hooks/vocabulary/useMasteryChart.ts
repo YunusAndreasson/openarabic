@@ -77,10 +77,22 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
   const parsedWords = useMemo(
     () =>
       studyWords.map(word => ({
+        // Robust normalization for Supabase timestamp (Hermes-friendly)
         createdAt: (() => {
-          const s = (word.created_at || '').replace(' ', 'T');
-          const d = new Date(/Z$/.test(s) ? s : s + 'Z');
-          return isNaN(d.getTime()) ? new Date() : d;
+          const parseSupabaseTimestamp = (ts: string | null | undefined): Date | null => {
+            if (!ts) return null;
+            let s = ts.replace(' ', 'T');
+            // Normalize timezone: convert trailing "+00" to "Z"; if missing tz, assume Z
+            s = s.replace(/\+00$/, 'Z');
+            if (!/[Zz]|[-+]\d{2}:?\d{2}$/.test(s)) {
+              s = s + 'Z';
+            }
+            const d = new Date(s);
+            return isNaN(d.getTime()) ? null : d;
+          };
+
+          // Fallback to epoch if parsing fails so words are counted historically
+          return parseSupabaseTimestamp(word.created_at) ?? new Date(0);
         })(),
         lastReview: word.fsrs_last_review
           ? (() => {
@@ -122,19 +134,8 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
   }, [parsedWords]);
 
   const chartData = useMemo<ChartData>(() => {
+    // Always render a 7-day chart; show as zeros if there was no recent activity
     if (masteryData.length === 0) {
-      return {
-        masteryPath: '',
-        hasData: false,
-        performanceZones: undefined,
-        milestones: [] as Milestone[],
-        points: [] as ChartPoint[],
-        insights: { currentRate: 0, trend: 'stable' as const, totalMastered: 0 },
-      };
-    }
-
-    const hasData = masteryData.some(d => d.totalCount > 0);
-    if (!hasData) {
       return {
         masteryPath: '',
         hasData: false,
@@ -210,7 +211,8 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
 
     return {
       masteryPath: path.toSVGString(),
-      hasData: true,
+      // Show the chart whenever the user has any study words, regardless of due words
+      hasData: (studyWords?.length ?? 0) > 0,
       performanceZones,
       milestones,
       points,
@@ -221,7 +223,7 @@ export function useMasteryChart(studyWords: StudyWord[] = []): UseMasteryChartRe
         weeklyChange: Math.round(change),
       },
     };
-  }, [masteryData, graphWidth, chartColors]);
+  }, [masteryData, graphWidth, chartColors, studyWords?.length]);
 
   const subtitle = useMemo(() => {
     const { currentRate, trend, weeklyChange } = chartData.insights;

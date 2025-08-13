@@ -49,11 +49,14 @@ export function useArticlesByDueWords(
 
   // Fallback: fetch all study words if no due words (for better recommendations)
   const { data: allStudyWords = [], isLoading: isLoadingAllWords } = useQuery({
-    queryKey: userId ? FSRS_QUERY_KEYS.all(userId) : FSRS_QUERY_KEYS.FALLBACK.all,
+    queryKey: userId
+      ? FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS)
+      : FSRS_QUERY_KEYS.FALLBACK.allWithCooldown(DEFAULT_SESSION_COOLDOWN_HOURS),
     queryFn: () => {
       if (!userId) return Promise.resolve([]);
       return studyWordsFSRSService.getFSRSWords(userId, {
         forStats: false, // We need root data for matching
+        sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
         limit: 100, // Reasonable limit for fallback
       });
     },

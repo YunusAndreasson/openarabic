@@ -93,7 +93,7 @@ export function useFeaturedArticleSelection(
     useArticlesByDifficultWords(user?.id, 10);
 
   const { data: allStudyWords = [] } = useQuery({
-    queryKey: FSRS_QUERY_KEYS.all(user?.id || ''),
+    queryKey: FSRS_QUERY_KEYS.allWithCooldown(user?.id || '', DEFAULT_SESSION_COOLDOWN_HOURS),
     queryFn: () => {
       if (!user?.id) return Promise.resolve([]);
       return studyWordsFSRSService.getFSRSWords(user.id, {

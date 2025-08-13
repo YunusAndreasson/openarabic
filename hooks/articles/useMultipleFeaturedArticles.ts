@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useRef } from 'react';
 
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { STRINGS } from '@/constants/strings';
 import { useArticlesByDifficultWords } from '@/hooks/articles/useArticlesByDifficultWords';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
@@ -70,7 +70,7 @@ export function useMultipleFeaturedArticles(
     useArticlesByDifficultWords(user?.id, 10);
 
   const { data: allStudyWords = [] } = useQuery({
-    queryKey: FSRS_QUERY_KEYS.all(user?.id || ''),
+    queryKey: FSRS_QUERY_KEYS.allWithCooldown(user?.id || '', DEFAULT_SESSION_COOLDOWN_HOURS),
     queryFn: () => {
       if (!user?.id) return Promise.resolve([]);
       return studyWordsFSRSService.getFSRSWords(user.id, {
