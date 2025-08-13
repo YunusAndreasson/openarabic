@@ -19,13 +19,6 @@ interface DictionaryWordCardProps {
   onDelete: () => void;
 }
 
-// Simple utility functions for difficulty
-const getDifficultyLabel = (difficulty: number): string => {
-  if (difficulty <= 1.5) return 'Easy';
-  if (difficulty <= 2.5) return 'Medium';
-  return 'Hard';
-};
-
 const getDifficultyColor = (difficulty: number, colors: ThemeColors): string => {
   if (difficulty <= 1.5) return colors.success;
   if (difficulty <= 2.5) return colors.warning;
@@ -69,7 +62,6 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
 
     const difficultyValue = word.fsrs_difficulty ?? 1.0;
     const difficultyColor = getDifficultyColor(difficultyValue, colors);
-    const difficultyLabel = getDifficultyLabel(difficultyValue);
 
     // Get Arabic and English text from root
     const arabicText = word.root?.letters || 'Unknown Arabic';
@@ -86,8 +78,9 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
           contentStyle={styles.cardContent}
         >
           <View style={styles.content}>
-            {/* Left: English (compact) */}
+            {/* Left: colored status dot + English */}
             <View style={styles.leftSection}>
+              <View style={[styles.statusDot, { backgroundColor: difficultyColor }]} />
               <ThemedText
                 type="body"
                 variant="secondary"
@@ -99,26 +92,17 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
               </ThemedText>
             </View>
 
-            {/* Center: Arabic (prominent, centered) */}
-            <View style={styles.centerSection}>
-              {/* Keep Arabic overrides within practice section while using ThemedText */}
-              <ThemedText type="arabic" style={styles.arabicText} numberOfLines={1}>
+            {/* Right: Arabic (prominent, right-aligned) */}
+            <View style={styles.rightSection}>
+              <ThemedText
+                type="arabic"
+                arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.XXLARGE}
+                weight="600"
+                numberOfLines={1}
+                style={{ includeFontPadding: true }}
+              >
                 {arabicText}
               </ThemedText>
-            </View>
-
-            {/* Right: Difficulty Badge */}
-            <View style={styles.rightSection}>
-              <View style={[styles.difficultyBadge, { backgroundColor: difficultyColor }]}>
-                <ThemedText
-                  type="caption"
-                  weight="bold"
-                  skipDefaultColor
-                  style={[styles.difficultyText, { color: colors.white }]}
-                >
-                  {difficultyLabel}
-                </ThemedText>
-              </View>
             </View>
           </View>
         </BaseCard>
@@ -171,49 +155,35 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     flex: 1,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.TINY,
+    paddingVertical: 0,
   },
   leftSection: {
-    width: 104, // fixed to stabilize layout
+    width: 96, // slightly reduced to give Arabic more room
     flexShrink: 0,
     paddingRight: LAYOUT.SPACING.SMALL,
-    justifyContent: 'center',
-  },
-  centerSection: {
-    flex: 1,
+    justifyContent: 'flex-start',
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
-  arabicText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '600',
-    lineHeight: Math.round(LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.4),
-    textAlign: 'center',
   },
   englishText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '500',
     textAlign: 'left',
+    includeFontPadding: false,
+    lineHeight: Math.round(LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.1),
   },
   rightSection: {
-    width: 88, // fixed to stabilize layout
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
     marginLeft: LAYOUT.SPACING.SMALL,
   },
-  difficultyBadge: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.TINY,
-    minWidth: 56,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  difficultyText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '700',
+  statusDot: {
+    width: LAYOUT.SPACING.SMALL,
+    height: LAYOUT.SPACING.SMALL,
+    borderRadius: LAYOUT.SPACING.SMALL / 2,
+    marginRight: LAYOUT.SPACING.TINY,
   },
   deleteButton: {
     width: MIN_TOUCH_TARGET.SMALL,
