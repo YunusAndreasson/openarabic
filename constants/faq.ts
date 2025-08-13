@@ -19,7 +19,7 @@ export const FAQ_DATA: FAQCategory[] = [
         id: 'what-is-app',
         question: 'What is OpenArabic?',
         answer:
-          'A free Arabic learning app focused on reading authentic classical texts with precise translations and science-backed spaced repetition (FSRS) for durable vocabulary growth.',
+          'A free Arabic learning app based on classical Islamic texts. You read bilingual sentence pairs (an Arabic sentence followed by an English sentence), tap words you don’t understand, and add them to a spaced repetition system (FSRS) to learn over time.',
         category: 'Getting Started',
       },
       {
@@ -27,13 +27,6 @@ export const FAQ_DATA: FAQCategory[] = [
         question: 'Is OpenArabic a course?',
         answer:
           'No. OpenArabic is not a start‑to‑finish course. It is a bilingual reading and listening tool that complements your studies—use it alongside a course or after completing one.',
-        category: 'Getting Started',
-      },
-      {
-        id: 'is-free',
-        question: 'Is it free?',
-        answer:
-          'Yes. No ads, no subscriptions. Built as a public good by Yûnus Andréasson (yunus@edenmind.com).',
         category: 'Getting Started',
       },
       {
@@ -58,13 +51,6 @@ export const FAQ_DATA: FAQCategory[] = [
         category: 'Getting Started',
       },
       {
-        id: 'how-to-start',
-        question: 'How do I get started?',
-        answer:
-          'Open Library, pick an article, tap words to see meanings, then add unfamiliar words to your study list. Use Study to review with FSRS. Add gradually; prioritize due reviews before adding more.',
-        category: 'Getting Started',
-      },
-      {
         id: 'learning-speed',
         question: 'How quickly will I learn?',
         answer:
@@ -84,38 +70,10 @@ export const FAQ_DATA: FAQCategory[] = [
         category: 'Features',
       },
       {
-        id: 'memory-gauge',
-        question: 'What is the Memory Gauge?',
-        answer:
-          'A quick capacity signal derived from your due load and weak items. Green: room for new words. Yellow: reinforce struggling words. Red: clear due reviews first to restore capacity.',
-        category: 'Features',
-      },
-      {
-        id: 'word-highlighting',
-        question: 'Why are some words highlighted together?',
-        answer:
-          'Arabic morphology can map to multi‑word English phrases. We color‑link Arabic components to English only when the English side has multiple words and exact matches. Single‑word translations are never color‑coded.',
-        category: 'Features',
-      },
-      {
-        id: 'study-reminders',
-        question: 'How do study reminders work?',
-        answer:
-          'Account → Study reminders → enable and set a time. Notifications are local to your device. You can disable them anytime.',
-        category: 'Features',
-      },
-      {
-        id: 'audio-features',
-        question: 'What audio features are available?',
-        answer:
-          'A focused now‑playing experience with sleep timer, playlist management, and progress tracking. Includes bilingual short‑sentence audio that mixes Arabic with English to aid comprehension. Audio caches automatically for offline playback once downloaded. Controls emphasize Play/Stop for clarity.',
-        category: 'Features',
-      },
-      {
         id: 'article-selection',
         question: 'How are recommended articles selected?',
         answer:
-          'We target i+1 difficulty: mostly known vocabulary with a small, meaningful challenge. Selection balances your study load (due words) with variety for sustained progress.',
+          'The Featured section surfaces articles with mostly known vocabulary and a small, meaningful challenge (i+1). This keeps reading smooth while steadily growing your knowledge and balancing your due reviews.',
         category: 'Features',
       },
       {
@@ -125,30 +83,23 @@ export const FAQ_DATA: FAQCategory[] = [
           'Difficulty emerges from your review history: response quality, stability, and elapsed time. FSRS uses these signals to adapt intervals; there are no arbitrary “levels.”',
         category: 'Features',
       },
+      {
+        id: 'audio-features',
+        question: 'What audio features are available?',
+        answer:
+          'A focused Now Playing screen with sleep timer, playlist, and progress tracking. Audio caches after you play an article the first time for offline listening. Controls emphasize Play and Stop for clarity.',
+        category: 'Features',
+      },
     ],
   },
   {
     name: 'Offline & storage',
     items: [
       {
-        id: 'audio-cache',
-        question: 'What is audio cache?',
-        answer:
-          'Downloaded audio stored locally for offline playback. Manage it in Account → Audio cache. Clearing it frees space; tracks re‑download on demand.',
-        category: 'Offline & storage',
-      },
-      {
         id: 'offline-mode',
         question: 'Does this work offline?',
         answer:
           'Partially. Cached audio and previously loaded content play offline; vocabulary reviews work offline as well. Sync (e.g., new words, progress) needs a connection.',
-        category: 'Offline & storage',
-      },
-      {
-        id: 'app-structure',
-        question: 'How is the app organized?',
-        answer:
-          'Library: read articles. Playlist: listen with timer and queue. Study: spaced‑repetition reviews. Account: fonts, theme, notifications, and cache management.',
         category: 'Offline & storage',
       },
     ],
@@ -157,66 +108,31 @@ export const FAQ_DATA: FAQCategory[] = [
     name: 'Learning approach',
     items: [
       {
-        id: 'why-classical-texts',
-        question: 'Why classical texts?',
+        id: 'how-learning-works',
+        question: 'How does learning work here?',
         answer:
-          'Classical Arabic underpins grammar, style, and core vocabulary. Reading source texts develops accurate patterns while connecting you to the Islamic literary tradition.',
-        category: 'Learning approach',
-      },
-      {
-        id: 'theology-disclaimer',
-        question: 'Is this for theology questions?',
-        answer:
-          'No. It is a language tool. For fiqh or creed questions, consult qualified scholars and reliable references.',
-        category: 'Learning approach',
-      },
-      {
-        id: 'comprehensible-input',
-        question: 'What is comprehensible input?',
-        answer:
-          'Input that is mostly understood with minimal effort, containing a manageable number of new items. This supports natural acquisition via context and repetition rather than explicit rule memorization.',
+          'You read bilingual sentence pairs that you mostly understand, with a few new items in each article. Tap unknown words to add them to spaced repetition. Steady reading builds patterns without memorizing rules.',
         category: 'Learning approach',
       },
       {
         id: 'i-plus-one',
         question: 'What does i+1 mean?',
         answer:
-          'Your current competence (i) plus a small incremental challenge (+1). Content stays readable while nudging growth; it should feel engaging, not exhausting.',
+          'Your current level (i) plus a small step (+1). Content stays readable while gently pushing growth.',
         category: 'Learning approach',
       },
       {
-        id: 'natural-acquisition',
-        question: 'How does natural acquisition work?',
+        id: 'why-classical-texts',
+        question: 'Why classical texts?',
         answer:
-          'Through meaningful exposure: your brain internalizes patterns from messages you understand. You need sustained input and well‑timed retrieval, not grammar drills alone.',
+          'They build accurate Arabic patterns and core vocabulary from the source, and make moving to modern formal Arabic straightforward.',
         category: 'Learning approach',
       },
       {
-        id: 'why-90-percent',
-        question: 'Why 90-95% familiar words?',
+        id: 'scope',
+        question: 'What’s the scope of this app?',
         answer:
-          'It maximizes comprehension while introducing just enough novelty to learn from context. Below ~90% becomes decoding practice; above ~95% slows growth.',
-        category: 'Learning approach',
-      },
-      {
-        id: 'affective-filter',
-        question: 'What is the affective filter?',
-        answer:
-          'Emotional state affects intake. Calm, focused sessions improve acquisition; stress reduces it. The design intentionally avoids pressure and interruption.',
-        category: 'Learning approach',
-      },
-      {
-        id: 'input-vs-output',
-        question: 'Why focus on reading/listening?',
-        answer:
-          'Acquisition is input‑driven: you build competence by understanding messages. Output stabilizes once the internal system is ready; forcing it early is inefficient.',
-        category: 'Learning approach',
-      },
-      {
-        id: 'natural-order',
-        question: 'How does the natural order work?',
-        answer:
-          'Features are internalized in a fairly robust sequence, independent of syllabus order. The app respects this by emphasizing abundant, level‑appropriate input.',
+          'It’s a language tool for reading and vocabulary. For theological guidance, consult qualified scholars and reliable references.',
         category: 'Learning approach',
       },
     ],

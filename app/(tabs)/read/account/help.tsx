@@ -130,7 +130,7 @@ const HelpScreen: FC = () => {
         ]}
         scrollViewProps={{
           style: styles.scrollView,
-          showsVerticalScrollIndicator: false,
+          showsVerticalScrollIndicator: true,
           removeClippedSubviews: false,
         }}
       >

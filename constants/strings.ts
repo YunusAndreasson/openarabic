@@ -182,12 +182,11 @@ export const STRINGS = {
   RED_PHASE: 'Preserve memory',
   ORANGE_PHASE: 'Consolidate',
   GREEN_PHASE: 'Ready to add',
-  PHASE_RECOMMENDATION_RED:
-    'Low memory capacity means your review load is high. Clear due reviews before adding new words.',
+  PHASE_RECOMMENDATION_RED: 'Your review load is high. Clear due reviews before adding new words.',
   PHASE_RECOMMENDATION_ORANGE:
-    'Medium memory capacity means some words need consolidation. Strengthen them first; add a few only if reviews stay steady.',
+    'Some words need consolidation. Strengthen them first; add a few only if reviews stay steady.',
   PHASE_RECOMMENDATION_GREEN:
-    'High memory capacity means your load is balanced. It’s a good time to add new words while keeping up daily reviews.',
+    'Your load is balanced. It’s a good time to add new words while keeping up daily reviews.',
 
   INSIGHTS_UNAVAILABLE: 'Insights unavailable',
   INFO: 'Info',
@@ -453,7 +452,7 @@ export const STRINGS = {
 
   // Learning method content
   LEARNING_METHOD_INTRO:
-    "Language acquisition occurs through understanding meaningful messages, not grammar instruction. According to Krashen's Input Hypothesis, the brain naturally identifies patterns through exposure to comprehensible input.",
+    "Language acquisition occurs through understanding bilingual sentences, not grammar instruction. According to Krashen's Input Hypothesis, the brain naturally identifies patterns through exposure to comprehensible input.",
   TRANSLATIONS_EXPOSE_STRUCTURES:
     'Translations provide meaning context while exposing you to Arabic structures just beyond your current level.',
   BRAIN_AUTOMATICALLY_IDENTIFIES:
@@ -472,7 +471,7 @@ export const STRINGS = {
     "Krashen's Input Hypothesis demonstrates that comprehensible input is the primary mechanism for language acquisition. Research shows optimal learning occurs when learners understand 90-95% of content.",
   LANGUAGE_DEVELOPS_THROUGH_UNDERSTANDING:
     'Language develops through understanding, not memorization',
-  UNDERSTANDING_MESSAGES_DRIVES_DEVELOPMENT: 'Understanding messages drives language development',
+  UNDERSTANDING_MESSAGES_DRIVES_DEVELOPMENT: 'Understanding sentences drives language development',
   ACQUISITION_OCCURS_AUTOMATICALLY:
     'Acquisition occurs automatically with sufficient comprehensible input',
   RESEARCH_REF_KRASHEN_1985:
@@ -565,7 +564,7 @@ export const STRINGS = {
 
   FAQ_READ_VS_LISTEN_Q: "What's the difference between Library and Playlist?",
   FAQ_READ_VS_LISTEN_A:
-    'Library lets you browse articles and add vocabulary. Playlist creates audio playlists from saved articles so you can study while multitasking.',
+    'Library lets you browse articles and add vocabulary. Playlist plays saved articles so you can listen while multitasking.',
 
   FAQ_CHANGE_STUDY_REMINDERS_Q: 'How do I change my study reminders?',
   FAQ_CHANGE_STUDY_REMINDERS_A:
@@ -589,7 +588,7 @@ export const STRINGS = {
 
   FAQ_PRACTICE_OFFLINE_Q: 'Can I practice without internet?',
   FAQ_PRACTICE_OFFLINE_A:
-    "Yes! Once you've added words and they've synced, you can practice vocabulary anywhere. Audio requires internet for first-time downloads.",
+    "Yes! Once you've added words and they've synced, you can study vocabulary anywhere. Audio requires internet for first-time downloads.",
 } as const;
 
 export type StringKey = keyof typeof STRINGS;
