@@ -59,6 +59,8 @@ const Pill = memo(
             : isDarkMode
             ? colors.elevation2
             : colors.elevation1,
+        borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+        borderColor: isSelected ? colors.tint : colors.borderOverlay,
         borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
         paddingHorizontal: LAYOUT.SPACING.LARGE,
         paddingVertical: LAYOUT.SPACING.SMALL,
@@ -97,6 +99,8 @@ const Pill = memo(
     return (
       <Pressable
         disabled={!onSelect}
+        accessibilityRole="button"
+        accessibilityState={{ selected: !!isSelected }}
         style={({ pressed }) => [containerStyle, pillStyle, pressed && !isSelected && pressedStyle]}
         onPress={handlePress}
       >

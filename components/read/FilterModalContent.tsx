@@ -39,6 +39,8 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
     selectedAuthorsText,
   } = useFilterModal(availableAuthors);
 
+  // Minimal summary handled by section subtitles; show only count and reset at top
+
   const handleToggleAuthors = useCallback(() => {
     toggleSection('authors');
   }, [toggleSection]);
@@ -83,27 +85,39 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={true}
       >
-        {activeFiltersCount > 0 && (
-          <BaseCard shadowSize="small" style={styles.summaryCard}>
-            <View style={styles.summaryHeader}>
-              <View style={[styles.summaryBadge, { backgroundColor: colors.tint }]}>
-                <ThemedText type="caption" weight="bold" colorName="background">
-                  {activeFiltersCount}
-                </ThemedText>
-              </View>
-              <Pressable
-                onPress={handleClearAll}
-                style={styles.clearAllButton}
-                accessibilityRole="button"
-                accessibilityLabel={STRINGS.RESET_FILTERS}
-              >
-                <ThemedText type="label" colorName="warning" weight="semibold">
-                  {STRINGS.RESET_FILTERS}
-                </ThemedText>
-              </Pressable>
+        <BaseCard shadowSize="small" style={styles.summaryCard}>
+          <View style={styles.summaryHeader}>
+            <View
+              style={[styles.summaryBadge, { backgroundColor: colors.tint }]}
+              accessible={true}
+              accessibilityLabel={`${STRINGS.FILTERS}: ${activeFiltersCount}`}
+            >
+              <ThemedText type="caption" weight="bold" colorName="background">
+                {activeFiltersCount}
+              </ThemedText>
             </View>
-          </BaseCard>
-        )}
+            <Pressable
+              onPress={handleClearAll}
+              disabled={activeFiltersCount === 0}
+              style={[
+                styles.clearAllButton,
+                activeFiltersCount === 0 && styles.clearAllButtonDisabled,
+              ]}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: activeFiltersCount === 0 }}
+              accessibilityLabel={STRINGS.RESET_FILTERS}
+            >
+              <ThemedText
+                type="label"
+                colorName={activeFiltersCount === 0 ? 'secondaryText' : 'warning'}
+                weight="semibold"
+              >
+                {STRINGS.RESET_FILTERS}
+              </ThemedText>
+            </Pressable>
+          </View>
+          {/* Intentionally empty: sections below display current selections */}
+        </BaseCard>
 
         <BaseCard shadowSize="small" style={styles.card}>
           <View style={styles.filterSection}>
@@ -135,7 +149,12 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                     <ThemedText type="body" weight="semibold">
                       {STRINGS.AUTHORS}
                     </ThemedText>
-                    <ThemedText type="caption" colorName="secondaryText">
+                    <ThemedText
+                      type="caption"
+                      colorName="secondaryText"
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
                       {selectedAuthorsText}
                     </ThemedText>
                   </View>
@@ -151,7 +170,13 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
             </Pressable>
 
             {expandedSections.authors && (
-              <View style={[styles.expandedContent, { backgroundColor: colors.elevation2 }]}>
+              <View
+                style={[
+                  styles.expandedContent,
+                  styles.expandedContentIndented,
+                  { backgroundColor: colors.elevation2 },
+                ]}
+              >
                 <View style={styles.pillGrid}>
                   <Pill
                     id={-1}
@@ -161,23 +186,16 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                     variant="filter"
                     pillStyle={styles.filterPill}
                   />
-                  {authorChunks.map(chunk => (
-                    <View
-                      key={`authors-${chunk[0]?.id ?? 0}-${chunk[chunk.length - 1]?.id ?? 0}`}
-                      style={styles.authorChunk}
-                    >
-                      {chunk.map(author => (
-                        <Pill
-                          key={author.id}
-                          id={author.id}
-                          label={author.name}
-                          isSelected={filters.authorIds.includes(author.id)}
-                          onSelect={selectAuthor(author.id)}
-                          variant="filter"
-                          pillStyle={styles.filterPill}
-                        />
-                      ))}
-                    </View>
+                  {availableAuthors.map(author => (
+                    <Pill
+                      key={author.id}
+                      id={author.id}
+                      label={author.name}
+                      isSelected={filters.authorIds.includes(author.id)}
+                      onSelect={selectAuthor(author.id)}
+                      variant="filter"
+                      pillStyle={styles.filterPill}
+                    />
                   ))}
                 </View>
               </View>
@@ -213,7 +231,12 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                     <ThemedText type="body" weight="semibold">
                       {STRINGS.DIFFICULTY}
                     </ThemedText>
-                    <ThemedText type="caption" colorName="secondaryText">
+                    <ThemedText
+                      type="caption"
+                      colorName="secondaryText"
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
                       {selectedDifficultyOption?.label}
                     </ThemedText>
                   </View>
@@ -229,7 +252,13 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
             </Pressable>
 
             {expandedSections.difficulty && (
-              <View style={[styles.expandedContent, { backgroundColor: colors.elevation2 }]}>
+              <View
+                style={[
+                  styles.expandedContent,
+                  styles.expandedContentIndented,
+                  { backgroundColor: colors.elevation2 },
+                ]}
+              >
                 <View style={styles.pillGrid}>
                   {DIFFICULTY_OPTIONS.map(option => (
                     <Pill
@@ -279,7 +308,12 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                     <ThemedText type="body" weight="semibold">
                       {STRINGS.DATE_RANGE}
                     </ThemedText>
-                    <ThemedText type="caption" colorName="secondaryText">
+                    <ThemedText
+                      type="caption"
+                      colorName="secondaryText"
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
                       {selectedDateRangeOption?.label}
                     </ThemedText>
                   </View>
@@ -295,7 +329,13 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
             </Pressable>
 
             {expandedSections.dateRange && (
-              <View style={[styles.expandedContent, { backgroundColor: colors.elevation2 }]}>
+              <View
+                style={[
+                  styles.expandedContent,
+                  styles.expandedContentIndented,
+                  { backgroundColor: colors.elevation2 },
+                ]}
+              >
                 <View style={styles.pillGrid}>
                   {DATE_RANGE_OPTIONS.map(option => (
                     <Pill
@@ -323,11 +363,17 @@ const styles = StyleSheet.create({
   scrollView: { flex: 1 },
   scrollContent: { padding: LAYOUT.SCREEN_EDGE_PADDING, paddingBottom: LAYOUT.SPACING.LARGE },
   summaryCard: { marginBottom: LAYOUT.SPACING.SMALL, padding: LAYOUT.SPACING.MEDIUM },
-  summaryHeader: { flexDirection: 'row', alignItems: 'center', gap: LAYOUT.SPACING.TINY },
+  summaryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.TINY,
+    paddingLeft: LAYOUT.SPACING.MEDIUM,
+  },
+  summaryLine: { marginTop: LAYOUT.SPACING.SMALL },
   summaryBadge: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    width: LAYOUT.BUTTON.ICON_SIZE.LARGE,
-    height: LAYOUT.BUTTON.ICON_SIZE.LARGE,
+    width: MIN_TOUCH_TARGET.MEDIUM,
+    height: MIN_TOUCH_TARGET.MEDIUM,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -339,8 +385,12 @@ const styles = StyleSheet.create({
     minHeight: MIN_TOUCH_TARGET.MEDIUM,
     justifyContent: 'center',
   },
+  clearAllButtonDisabled: {
+    opacity: 0.5,
+  },
   card: { marginBottom: LAYOUT.SPACING.MEDIUM, padding: LAYOUT.SPACING.MEDIUM },
   filterSection: { marginBottom: LAYOUT.SPACING.SMALL },
+  sectionAlign: {},
   filterRow: {
     borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
     minHeight: MIN_TOUCH_TARGET.LARGE,
@@ -379,14 +429,19 @@ const styles = StyleSheet.create({
     paddingBottom: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
-  pillGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: LAYOUT.SPACING.SMALL },
-  filterPill: { marginBottom: 0, marginRight: 0 },
-  authorChunk: {
+  expandedContentIndented: {
+    // Indent inner content to visually align pills with section text (after icon)
+    paddingLeft: MIN_TOUCH_TARGET.MEDIUM + LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.MEDIUM,
+  },
+  pillGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: LAYOUT.SPACING.SMALL,
-    marginBottom: LAYOUT.SPACING.HALF_TINY,
   },
+  authorList: {},
+  filterPill: { marginBottom: 0, marginRight: 0 },
+  filterPillFullWidth: {},
+  authorChunk: {},
 });
 
 const areEqual = (prevProps: FilterModalProps, nextProps: FilterModalProps) => {
