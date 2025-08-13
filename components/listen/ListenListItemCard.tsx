@@ -147,25 +147,27 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
                     {author}
                     {difficultyLevel && ` • ${getDifficultyText(difficultyLevel)}`}
                   </ThemedText>
-                  {hasStartedReading && progressPercentage !== undefined && (
-                    <View style={styles.progressContainer}>
-                      <ProgressCircle
-                        percentage={progressPercentage}
-                        size={28}
-                        strokeWidth={4}
-                        style={styles.progressCircle}
-                      />
-                    </View>
-                  )}
                 </View>
               </View>
 
-              {/* Right side content - play button only (no chevron) */}
-              {!editMode && onPlayPress && (
-                <View style={styles.playButtonContainer}>
-                  <PlayButton onPress={onPlayPress} isPlaying={false} iconColor={playIconColor} />
-                </View>
-              )}
+              {/* Right side content: play button (if available) and progress status */}
+              <View style={styles.rightSideContainer}>
+                {!editMode && onPlayPress && (
+                  <View style={styles.playButtonContainer}>
+                    <PlayButton onPress={onPlayPress} isPlaying={false} iconColor={playIconColor} />
+                  </View>
+                )}
+                {hasStartedReading && progressPercentage !== undefined && (
+                  <View style={styles.progressRightContainer}>
+                    <ProgressCircle
+                      percentage={progressPercentage}
+                      size={28}
+                      strokeWidth={4}
+                      style={styles.progressCircle}
+                    />
+                  </View>
+                )}
+              </View>
             </View>
           </BaseCard>
         </View>
@@ -240,6 +242,14 @@ const styles = StyleSheet.create({
   playButtonContainer: {
     marginLeft: LAYOUT.SPACING.SMALL,
   },
+  rightSideContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: LAYOUT.SPACING.SMALL,
+  },
+  progressRightContainer: {
+    marginLeft: LAYOUT.SPACING.SMALL,
+  },
   dragHandleContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -257,10 +267,6 @@ const styles = StyleSheet.create({
     height: PLAYLIST_IMAGE_SIZE,
     width: PLAYLIST_IMAGE_SIZE,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
-  progressContainer: {
-    // Add touch-friendly padding around the progress circle
-    padding: LAYOUT.SPACING.TINY,
   },
   progressCircle: {
     // Ensure perfect vertical centering with text using flexbox
