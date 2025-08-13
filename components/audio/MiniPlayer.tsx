@@ -102,7 +102,6 @@ const MiniPlayerComponent = ({
             backgroundColor: colors.elevation2,
             borderColor: colors.border,
             ...LAYOUT.ELEVATION.MEDIUM,
-            opacity: pressed ? LAYOUT.OPACITY.HOVER : 1,
           },
         ]}
       >
