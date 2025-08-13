@@ -176,6 +176,9 @@ export const STRINGS = {
   INSIGHTS: 'Insights',
   PROGRESS: 'Progress',
   MEMORY_CAPACITY: 'Memory capacity',
+  MEMORY_CAPACITY_EXPLANATION:
+    'Memory capacity shows how much you can study comfortably right now based on recent reviews. First, clear due reviews and strengthen weak words; add new words when capacity is high.',
+  MEMORY_CAPACITY_TIP: 'Tip: Add new words when capacity is high',
   CAPACITY_SCORE: 'Memory capacity',
   DUE_WORDS: 'Due',
   STRUGGLING_WORDS: 'Struggling',
@@ -199,6 +202,8 @@ export const STRINGS = {
     'Reviews are scheduled when recall drops. Clearing due words restores memory capacity; consolidating weak words moves you toward green.',
   DUE_TODAY_LABEL: 'Due words today: {count}',
   STRUGGLING_COUNT_LABEL: 'Struggling words: {count}',
+  DUE_FEW_RECOMMENDATION: 'You have a few reviews due. Clear them before adding new words.',
+  DUE_SEVERAL_RECOMMENDATION: 'You have several reviews due. Clear them before adding new words.',
   MEMORY_STRENGTH_ACROSS_VOCABULARY:
     'Vocabulary knowledge strength, showing how much you have mastered.',
   VOCABULARY_ACQUISITION_VELOCITY:

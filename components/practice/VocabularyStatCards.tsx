@@ -85,7 +85,7 @@ export const VocabularyStatCards = memo(
       cards.push({
         value: wordCategories.dueWords,
         label: STRINGS.URGENT_PRESERVATION,
-        iconColor: colors.error,
+        iconColor: colors.tint,
         bgColor: colors.card,
         category: 'due' as StatCategory,
         description: STRINGS.URGENT_MEMORY_PRESERVATION,
@@ -97,7 +97,7 @@ export const VocabularyStatCards = memo(
       cards.push({
         value: wordCategories.strugglingWords,
         label: STRINGS.EFFORTFUL_RETRIEVAL,
-        iconColor: colors.warning,
+        iconColor: colors.tint,
         bgColor: colors.card,
         category: 'struggling' as StatCategory,
         description: STRINGS.EFFORTFUL_RETRIEVAL_PRACTICE,
@@ -113,7 +113,7 @@ export const VocabularyStatCards = memo(
       cards.push({
         value: totalWords,
         label: STRINGS.INTERLEAVED_REVIEW,
-        iconColor: colors.success,
+        iconColor: colors.tint,
         bgColor: colors.card,
         category: 'total' as StatCategory,
         description: STRINGS.INTERLEAVED_REVIEW_DESCRIPTION,

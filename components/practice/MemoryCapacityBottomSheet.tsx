@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -106,40 +107,34 @@ export const MemoryCapacityBottomSheet = memo<MemoryCapacityBottomSheetProps>(
         backdropComponent={renderBackdrop}
       >
         <BottomSheetView style={styles.container}>
-          {/* Header - show current capacity label in phase color */}
+          {/* Header - neutral title */}
           <View style={styles.header}>
-            <ThemedText type="heading2" weight="bold" style={{ color: phaseColor }}>
-              {phase === 'red' && STRINGS.MEMORY_CAPACITY_LOW}
-              {phase === 'orange' && STRINGS.MEMORY_CAPACITY_MEDIUM}
-              {phase === 'green' && STRINGS.MEMORY_CAPACITY_HIGH}
+            <ThemedText type="heading2" weight="bold">
+              {STRINGS.MEMORY_CAPACITY}
             </ThemedText>
           </View>
 
-          {/* Explanation - concise, action-oriented */}
+          {/* Single, concise explanation */}
           <View style={styles.phaseSection}>
             <ThemedText type="body" style={[styles.phaseCopy, { color: colors.secondaryText }]}>
-              {phase === 'red' && STRINGS.PHASE_RECOMMENDATION_RED}
-              {phase === 'orange' && STRINGS.PHASE_RECOMMENDATION_ORANGE}
-              {phase === 'green' && STRINGS.PHASE_RECOMMENDATION_GREEN}
+              {STRINGS.MEMORY_CAPACITY_EXPLANATION}
             </ThemedText>
           </View>
 
-          {/* Single-line contextual stat when helpful */}
-          {phase !== 'green' && (
-            <View style={styles.statRow}>
+          {/* Subtle divider and tip for affordance */}
+          <View style={styles.divider} />
+          <View style={styles.tipRow}>
+            <View style={styles.tipContent}>
+              <Ionicons
+                name="bulb"
+                size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                color={colors.tint}
+                style={{ marginRight: LAYOUT.SPACING.TINY }}
+              />
               <ThemedText type="caption" colorName="textTertiary">
-                {phase === 'red'
-                  ? STRINGS.DUE_TODAY_LABEL.replace('{count}', String(dueWords))
-                  : STRINGS.STRUGGLING_COUNT_LABEL.replace('{count}', String(strugglingWords))}
+                {STRINGS.MEMORY_CAPACITY_TIP}
               </ThemedText>
             </View>
-          )}
-
-          {/* Brief FSRS context inside the sheet (no extra navigation) */}
-          <View style={styles.explainerRow}>
-            <ThemedText type="caption" colorName="textTertiary">
-              {STRINGS.CAPACITY_SRS_EXPLAINER}
-            </ThemedText>
           </View>
 
           {/* No extra bullets to keep copy concise */}
@@ -193,6 +188,13 @@ const styles = StyleSheet.create({
     opacity: LAYOUT.OPACITY.MEDIUM,
     width: '100%',
     marginVertical: LAYOUT.SPACING.SMALL,
+  },
+  tipRow: {
+    marginTop: LAYOUT.SPACING.TINY,
+  },
+  tipContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   phaseSection: {
     marginTop: LAYOUT.SPACING.SMALL,
