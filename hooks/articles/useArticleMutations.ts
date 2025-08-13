@@ -4,7 +4,7 @@ import { useCallback, useMemo } from 'react';
 
 // Services
 import { useToast } from '@/components/providers/ToastProvider';
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { CAPACITY_THRESHOLDS, DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { readingListService } from '@/services/readingList';
@@ -64,6 +64,51 @@ export const useArticleMutations = (
 ): ArticleMutationsResult => {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+
+  // Lightweight capacity guard: prevent adding when capacity is low (red phase)
+  const isCapacityLow = (userId: string | undefined): boolean => {
+    if (!userId) return false;
+    const all = queryClient.getQueryData<unknown>(FSRS_QUERY_KEYS.all(userId));
+    if (Array.isArray(all)) {
+      const words = all as {
+        fsrs_due: string | null;
+        fsrs_last_review?: string | null;
+        fsrs_stability?: number | null;
+        fsrs_difficulty?: number | null;
+        fsrs_reps?: number | null;
+      }[];
+      if (words.length === 0) return false;
+      const valid = words.filter(w => w.fsrs_stability != null && w.fsrs_difficulty != null);
+      let capacityScore: number;
+      if (valid.length >= Math.max(1, Math.floor(words.length * 0.5))) {
+        const avgStability = valid.reduce((s, w) => s + (w.fsrs_stability ?? 0), 0) / valid.length;
+        const avgDifficulty = valid.reduce((s, w) => s + (w.fsrs_difficulty ?? 5), 0) / valid.length;
+        const avgReps = valid.reduce((s, w) => s + (w.fsrs_reps ?? 0), 0) / valid.length;
+        const stabilityFactor = Math.min(avgStability / 30, 1) * 45;
+        const repsFactor = Math.min(avgReps / 10, 1) * 30;
+        const difficultyFactor = Math.max(0, (10 - avgDifficulty) / 10) * 25;
+        capacityScore = Math.max(15, Math.min(100, Math.round(stabilityFactor + repsFactor + difficultyFactor)));
+      } else {
+        // Fallback heuristic based on due words ratio with cooldown
+        const nowMs = Date.now();
+        const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
+        const normalizeTs = (ts: string | null | undefined) => (ts ? ts.replace(' ', 'T') : undefined);
+        const dueCount = words.reduce((count, w) => {
+          const dueStr = normalizeTs(w.fsrs_due);
+          const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
+          const isDue = Number.isFinite(dueMs) && dueMs <= nowMs;
+          const lastStr = normalizeTs(w.fsrs_last_review);
+          const lastMs = lastStr ? Date.parse(lastStr) : 0;
+          const recentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
+          return count + (isDue && !recentlyReviewed ? 1 : 0);
+        }, 0);
+        const ratio = dueCount / Math.max(1, words.length);
+        capacityScore = ratio > 0.25 ? 30 : ratio > 0.1 ? 50 : 75;
+      }
+      return capacityScore < CAPACITY_THRESHOLDS.CAUTION;
+    }
+    return false;
+  };
 
   // Memoize mutation options for reading list
   const addToReadingListOptions = useMemo(
@@ -295,8 +340,20 @@ export const useArticleMutations = (
             return;
           }
 
+          // Capacity guard
+          if (isCapacityLow(refreshData.session.user.id)) {
+            showToast(STRINGS.COMPLETE_DUE_FIRST, 3000, 'info');
+            return;
+          }
+
           // Use the refreshed session
           toggleWordMutation.mutate({ userId: refreshData.session.user.id, wordId });
+          return;
+        }
+
+        // Capacity guard
+        if (isCapacityLow(session.user.id)) {
+          showToast(STRINGS.COMPLETE_DUE_FIRST, 3000, 'info');
           return;
         }
 
@@ -328,8 +385,20 @@ export const useArticleMutations = (
             return;
           }
 
+          // Capacity guard
+          if (isCapacityLow(refreshData.session.user.id)) {
+            showToast(STRINGS.COMPLETE_DUE_FIRST, 3000, 'info');
+            return;
+          }
+
           // Use the refreshed session
           toggleRootMutation.mutate({ userId: refreshData.session.user.id, rootId });
+          return;
+        }
+
+        // Capacity guard
+        if (isCapacityLow(session.user.id)) {
+          showToast(STRINGS.COMPLETE_DUE_FIRST, 3000, 'info');
           return;
         }
 

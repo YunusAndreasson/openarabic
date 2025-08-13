@@ -106,7 +106,7 @@ export const VocabularyStatCards = memo(
         disabledMessage: hasDueWords
           ? STRINGS.COMPLETE_DUE_FIRST
           : wordCategories.strugglingWords === 0
-          ? 'Great! No struggling words to practice'
+          ? 'No struggling words'
           : undefined,
       });
 
@@ -124,7 +124,7 @@ export const VocabularyStatCards = memo(
           : wordCategories.strugglingWords > 0
           ? STRINGS.FOCUS_ON_STRUGGLING_FIRST
           : totalWords === 0
-          ? STRINGS.GET_STARTED_MESSAGE
+          ? 'No words to study'
           : undefined,
       });
 

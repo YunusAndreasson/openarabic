@@ -38,8 +38,27 @@ export function isStrugglingWord(word: StudyWord): boolean {
  * Uses FSRS due date logic to determine which words are currently due for review
  */
 export function calculateDueWords(studyWords: StudyWord[]): number {
-  const now = new Date().toISOString();
-  return studyWords.filter(word => (word.fsrs_due ?? '9999-12-31') <= now).length;
+  const nowMs = Date.now();
+  const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
+
+  const normalizeTs = (ts: unknown) => {
+    if (typeof ts === 'string') return ts.replace(' ', 'T');
+    if (ts instanceof Date) return ts.toISOString();
+    return undefined;
+  };
+
+  return studyWords.filter(word => {
+    const dueStr = normalizeTs(word.fsrs_due as unknown);
+    const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
+    const isDue = Number.isFinite(dueMs) && dueMs <= nowMs;
+
+    // Apply the same session cooldown so indicators match session content
+    const lastStr = normalizeTs(word.fsrs_last_review as unknown);
+    const lastMs = lastStr ? Date.parse(lastStr) : 0;
+    const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
+
+    return isDue && !isRecentlyReviewed;
+  }).length;
 }
 
 /**
@@ -112,8 +131,8 @@ export function calculateWordCategories(
   const strugglingWords = calculateStrugglingWords(studyWords);
 
   return {
-    // Prioritize dueWords prop over calculated value for consistency
-    dueWords: dueWordsProp && dueWordsProp > 0 ? dueWordsProp : calculatedDueWords,
+    // Prioritize the provided dueWords count (includes cooldown filtering) even when it's 0
+    dueWords: typeof dueWordsProp === 'number' ? dueWordsProp : calculatedDueWords,
     learningWords,
     masteredWords,
     strugglingWords,

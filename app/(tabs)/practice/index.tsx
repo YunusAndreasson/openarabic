@@ -8,13 +8,13 @@ import { ActivityIndicator, InteractionManager, StyleSheet, View } from 'react-n
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
-import EmptyState from '@/components/common/EmptyState';
+// Removed EmptyState for a simpler UX where gauge stays visible even with 0 words
 import ErrorMessage from '@/components/practice/ErrorMessage';
 import { VocabularyStatCards } from '@/components/practice/VocabularyStatCards';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { getPracticeReviewRoute } from '@/constants/routes';
-import { STRINGS } from '@/constants/strings';
+// import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
@@ -148,13 +148,11 @@ export default function VocabularyScreen(): JSX.Element {
   // Check if data is cached and derive simple UI state flags
   const isDataCached = !!(user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id)));
   const isLoadingState = isDataLoading || isFetching;
-  const hasWords = filteredStudyWords.length > 0;
+  // const hasWords = filteredStudyWords.length > 0;
   const showLoadingIndicator = isLoadingState && !isDataCached;
 
-  // Show an empty state when there are no study words
-
   // Determine when to show the main content (vocabulary stat cards)
-  const shouldShowMainContent = hasWords && (!isLoadingState || (isLoadingState && isDataCached));
+  const shouldShowMainContent = !isLoadingState || (isLoadingState && isDataCached);
 
   // Main content
   return (
@@ -184,16 +182,6 @@ export default function VocabularyScreen(): JSX.Element {
           <ThemedView style={styles.loadingContainer}>
             <ActivityIndicator color={colors.tint} size="small" />
           </ThemedView>
-        )}
-
-        {/* Empty state when no study words */}
-        {!showLoadingIndicator && filteredStudyWords.length === 0 && (
-          <EmptyState
-            colors={{ tint: colors.tint }}
-            title={STRINGS.STUDY_LIST_EMPTY_TITLE}
-            description={STRINGS.STUDY_LIST_EMPTY_DESCRIPTION}
-            icon="school"
-          />
         )}
 
         {/* PRIMARY SECTION: Learning Overview */}

@@ -187,7 +187,8 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     onComplete: triggerCompletionTransition,
     useAllWords: fromRemember, // When fromRemember is true, use all words instead of just due words
     mode, // Pass the mode for struggling words filtering
-    sessionCooldownHours: fromRemember ? 0 : DEFAULT_SESSION_COOLDOWN_HOURS,
+    // Apply cooldown even for "Study all words" so recently reviewed words don't reappear immediately
+    sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
   });
 
   const wordFontSize = useWordSizing(currentWord?.root?.letters, fontConfig);

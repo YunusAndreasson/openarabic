@@ -112,7 +112,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
       <BaseChart
         contentHeight={GAUGE_HEIGHT + 80}
         emptyStateText={STRINGS.ADD_WORDS_TO_SEE_CAPACITY}
-        hasData={studyWords.length > 0}
+        hasData={true}
         hideTitle={true}
         onCardPress={onInfoPress}
       >

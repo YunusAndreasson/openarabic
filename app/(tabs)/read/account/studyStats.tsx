@@ -30,10 +30,8 @@ export default function StudyStatsScreen(): JSX.Element {
     userId: user?.id,
   });
 
-  const validStudyWords = useMemo(
-    () => studyWords?.filter(word => word != null && word.root_id != null) ?? [],
-    [studyWords]
-  );
+  // Charts only require FSRS fields; do not exclude entries missing root relation
+  const validStudyWords = useMemo(() => studyWords ?? [], [studyWords]);
 
   if (error) {
     return (

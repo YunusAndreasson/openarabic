@@ -65,7 +65,7 @@ export const LEARNING_DIFFICULTY_MIN = 3;
 // Learning efficiency constants
 export const LEARNING_EFFICIENCY_MULTIPLIER = 10;
 
-export const DEFAULT_SESSION_COOLDOWN_HOURS = 1;
+export const DEFAULT_SESSION_COOLDOWN_HOURS = 12;
 
 // Spacing and scheduling constants
 export const SPACING_ITERATION_LIMIT = 20;
