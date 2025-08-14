@@ -13,7 +13,7 @@ import { ThemedView } from '@/components/ThemedView';
 import DictionarySortingHeader from '@/components/practice/DictionarySortingHeader';
 import { DictionaryWordCard } from '@/components/practice/DictionaryWordCard';
 import EditModeButton from '@/components/ui/EditModeButton';
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';

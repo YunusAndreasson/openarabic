@@ -106,7 +106,7 @@ describe('wordClassification', () => {
   describe('calculateStrugglingWords', () => {
     it('should count struggling words that have been reviewed (outside cooldown)', () => {
       const now = new Date();
-      const pastBeyondCooldown = new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString();
+      const pastBeyondCooldown = new Date(now.getTime() - 13 * 60 * 60 * 1000).toISOString(); // 13 hours ago (beyond 12-hour cooldown)
       const words = [
         createStudyWord({
           fsrs_difficulty: 8.5,
@@ -136,7 +136,7 @@ describe('wordClassification', () => {
     it('should calculate all categories correctly (respecting struggling cooldown)', () => {
       const now = new Date();
       const pastDate = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
-      const pastBeyondCooldown = new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString();
+      const pastBeyondCooldown = new Date(now.getTime() - 13 * 60 * 60 * 1000).toISOString(); // 13 hours ago (beyond 12-hour cooldown)
       const words = [
         createStudyWord({ fsrs_due: pastDate }), // Due
         createStudyWord({ fsrs_state: 0 }), // Learning

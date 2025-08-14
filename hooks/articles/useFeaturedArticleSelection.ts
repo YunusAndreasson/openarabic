@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo, useRef } from 'react';
 
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
-import { CACHE_SIZE } from '@/constants/performance';
+import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
+// CACHE_SIZE constant removed - using hardcoded value instead
 import { STRINGS } from '@/constants/strings';
 import { useArticlesByDifficultWords } from '@/hooks/articles/useArticlesByDifficultWords';
 import { useArticlesByDueWords } from '@/hooks/articles/useArticlesByDueWords';
@@ -27,7 +27,7 @@ interface CachedSelection {
 
 // Cache for article filtering to prevent repeated calculations
 const articleFilterCache = new Map<string, Article[]>();
-const CACHE_MAX_SIZE = CACHE_SIZE.LARGE;
+const CACHE_MAX_SIZE = 50; // Hardcoded value (was CACHE_SIZE.LARGE)
 
 /**
  * Helper function to create a cache key for article filtering

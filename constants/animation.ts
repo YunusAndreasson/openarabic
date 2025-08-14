@@ -87,12 +87,6 @@ export const WORD_PRESS_SCALE = 0.95;
 /** Scale value applied when dragging cards */
 export const CARD_DRAG_SCALE = 1.05;
 
-/** Threshold for skipping progress animations if change is tiny */
-export const PROGRESS_SKIP_THRESHOLD = 50;
-
-/** Maximum progress value representing 100% */
-export const PROGRESS_MAX_VALUE = 10000;
-
 /** Minimum progress value before triggering animations */
 export const REVIEW_MIN_PROGRESS_VALUE = 1;
 
@@ -125,15 +119,6 @@ export const SENTENCE_DRAW_DISTANCE_MULTIPLIER = 12;
 
 /** Default scroll event throttle for smooth animations */
 export const SCROLL_EVENT_THROTTLE = 16;
-
-/** Spring config for completion screen icon */
-export const COMPLETION_ICON_SPRING = {
-  damping: 12,
-  stiffness: 100,
-} as const;
-
-/** Delay before showing instruction footer */
-export const INSTRUCTION_ANIMATION_DELAY = 500;
 
 /** Spring config for ArticleCard scale animation */
 export const ARTICLE_CARD_SPRING = {

@@ -13,7 +13,7 @@ import { HijriDateFooter } from '@read/HijriDateFooter';
 import IntelligentArticleSection from '@read/IntelligentArticleSection';
 
 import { ThemedView } from '@/components/ThemedView';
-import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { CACHE_TIMES } from '@/constants/queryConfig';
 import { getArticleRoute, getCategoryFilterRoute } from '@/constants/routes';

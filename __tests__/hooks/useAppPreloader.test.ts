@@ -120,7 +120,7 @@ describe('useAppPreloader', () => {
       expect.objectContaining({ queryKey: FSRS_QUERY_KEYS.due('u2') })
     );
     expect(mockPrefetchQuery).toHaveBeenCalledWith(
-      expect.objectContaining({ queryKey: FSRS_QUERY_KEYS.all('u2') })
+      expect.objectContaining({ queryKey: FSRS_QUERY_KEYS.allWithCooldown('u2', 1) })
     );
   });
 

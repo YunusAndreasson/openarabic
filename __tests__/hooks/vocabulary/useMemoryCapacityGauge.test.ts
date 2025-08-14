@@ -14,10 +14,10 @@ jest.mock('../../../hooks/theme/useColors', () => ({
 jest.mock('@charts/chartColors', () => ({
   useChartColors: () => ({
     performance: {
-      excellent: '#e',
-      good: '#g',
-      moderate: '#m',
-      poor: '#p',
+      excellent: '#4C7F5A', // success color
+      good: '#0ff', // info color
+      moderate: '#B8954B', // warning color
+      poor: '#D32F2F', // error color
     },
     withOpacity: (color: string, opacity: number) => `${color}@${opacity}`, // Mock opacity function
   }),
@@ -84,7 +84,7 @@ describe('useMemoryCapacityGauge', () => {
       fsrs_reps: 2,
       fsrs_lapses: 0,
       fsrs_state: 0,
-      fsrs_last_review: new Date().toISOString(),
+      fsrs_last_review: '2000-01-01T00:00:00.000Z', // Outside cooldown
     };
     // Yellow phase: struggling word
     const strugglingWord = {
@@ -92,38 +92,38 @@ describe('useMemoryCapacityGauge', () => {
       user_id: 'u',
       created_at: new Date().toISOString(),
       fsrs_due: '2999-01-01T00:00:00.000Z',
-      fsrs_stability: 6,
-      fsrs_difficulty: 8.0,
+      fsrs_stability: 2, // Lower stability
+      fsrs_difficulty: 8.5, // Higher difficulty
       fsrs_elapsed_days: 0,
       fsrs_scheduled_days: 0,
       fsrs_learning_steps: 0,
-      fsrs_reps: 2,
-      fsrs_lapses: 2,
-      fsrs_state: 2,
-      fsrs_last_review: new Date().toISOString(),
+      fsrs_reps: 3, // More reps to ensure reviewed
+      fsrs_lapses: 2, // More lapses to meet struggling criteria
+      fsrs_state: 1, // Learning state
+      fsrs_last_review: '2000-01-01T00:00:00.000Z', // Outside cooldown
     };
     // Red phase: due word
     const dueWord = {
       root_id: 3,
       user_id: 'u',
       created_at: new Date().toISOString(),
-      fsrs_due: '2000-01-01T00:00:00.000Z',
+      fsrs_due: '2000-01-01T00:00:00.000Z', // Due in the past
       fsrs_stability: 10,
-      fsrs_difficulty: 5,
+      fsrs_difficulty: 5.0,
       fsrs_elapsed_days: 0,
       fsrs_scheduled_days: 0,
       fsrs_learning_steps: 0,
-      fsrs_reps: 2,
+      fsrs_reps: 5, // More reps to ensure reviewed
       fsrs_lapses: 0,
-      fsrs_state: 0,
-      fsrs_last_review: new Date().toISOString(),
+      fsrs_state: 2, // Mastered state
+      fsrs_last_review: '2000-01-01T00:00:00.000Z', // Outside cooldown
     };
 
     // Green
     let result = renderHook(() =>
       useMemoryCapacityGauge({ ...baseProps, studyWords: [greenWord] })
     ).result;
-    expect(result.current.getCapacityColor()).toBe('#e');
+    expect(result.current.getCapacityColor()).toBe('#4C7F5A'); // success color
     expect(result.current.getReadinessMessage()).toBe('High memory capacity');
     expect(result.current.getActionCardBackground()).toBeDefined();
 
@@ -131,7 +131,7 @@ describe('useMemoryCapacityGauge', () => {
     result = renderHook(() =>
       useMemoryCapacityGauge({ ...baseProps, studyWords: [strugglingWord] })
     ).result;
-    expect(result.current.getCapacityColor()).toBe('#m');
+    expect(result.current.getCapacityColor()).toBe('#B8954B'); // warning color
     expect(result.current.getReadinessMessage()).toBe('Medium memory capacity');
     expect(result.current.getActionCardBackground()).toBeDefined();
 
@@ -139,7 +139,7 @@ describe('useMemoryCapacityGauge', () => {
     result = renderHook(() =>
       useMemoryCapacityGauge({ ...baseProps, studyWords: [dueWord] })
     ).result;
-    expect(result.current.getCapacityColor()).toBe('#p');
+    expect(result.current.getCapacityColor()).toBe('#D32F2F'); // error color
     expect(result.current.getReadinessMessage()).toBe('Low memory capacity');
     expect(result.current.getActionCardBackground()).toBeDefined();
   });
@@ -160,7 +160,7 @@ describe('useMemoryCapacityGauge', () => {
         fsrs_reps: 2,
         fsrs_lapses: 0,
         fsrs_state: 0,
-        fsrs_last_review: new Date().toISOString(),
+        fsrs_last_review: '2000-01-01T00:00:00.000Z', // Outside cooldown
       };
       // Yellow
       const strugglingWord = {
@@ -168,15 +168,15 @@ describe('useMemoryCapacityGauge', () => {
         user_id: 'u',
         created_at: new Date().toISOString(),
         fsrs_due: '2999-01-01T00:00:00.000Z',
-        fsrs_stability: 6,
-        fsrs_difficulty: 8.0,
+        fsrs_stability: 2, // Lower stability
+        fsrs_difficulty: 8.5, // Higher difficulty
         fsrs_elapsed_days: 0,
         fsrs_scheduled_days: 0,
         fsrs_learning_steps: 0,
-        fsrs_reps: 2,
+        fsrs_reps: 3, // More reps to ensure reviewed
         fsrs_lapses: 2,
-        fsrs_state: 2,
-        fsrs_last_review: new Date().toISOString(),
+        fsrs_state: 1, // Learning state
+        fsrs_last_review: '2000-01-01T00:00:00.000Z', // Outside cooldown
       };
       // Red
       const dueWord = {
@@ -185,31 +185,31 @@ describe('useMemoryCapacityGauge', () => {
         created_at: new Date().toISOString(),
         fsrs_due: '2000-01-01T00:00:00.000Z',
         fsrs_stability: 10,
-        fsrs_difficulty: 5,
+        fsrs_difficulty: 5.0,
         fsrs_elapsed_days: 0,
         fsrs_scheduled_days: 0,
         fsrs_learning_steps: 0,
-        fsrs_reps: 2,
+        fsrs_reps: 5, // More reps to ensure reviewed
         fsrs_lapses: 0,
-        fsrs_state: 0,
-        fsrs_last_review: new Date().toISOString(),
+        fsrs_state: 2, // Mastered state
+        fsrs_last_review: '2000-01-01T00:00:00.000Z', // Outside cooldown
       };
 
       // Green
       let result = renderHook(() =>
         useMemoryCapacityGauge({ ...baseProps, studyWords: [greenWord] })
       ).result;
-      expect(result.current.getCapacityColor()).toBe('#e');
+      expect(result.current.getCapacityColor()).toBe('#4C7F5A'); // success color
       // Yellow
       result = renderHook(() =>
         useMemoryCapacityGauge({ ...baseProps, studyWords: [strugglingWord] })
       ).result;
-      expect(result.current.getCapacityColor()).toBe('#m');
+      expect(result.current.getCapacityColor()).toBe('#B8954B'); // warning color
       // Red
       result = renderHook(() =>
         useMemoryCapacityGauge({ ...baseProps, studyWords: [dueWord] })
       ).result;
-      expect(result.current.getCapacityColor()).toBe('#p');
+      expect(result.current.getCapacityColor()).toBe('#D32F2F'); // error color
     });
   });
 
@@ -231,7 +231,7 @@ describe('useMemoryCapacityGauge', () => {
         fsrs_reps: 2,
         fsrs_lapses: 0,
         fsrs_state: 2,
-        fsrs_last_review: new Date().toISOString(),
+        fsrs_last_review: oldDate, // Outside cooldown by default
         ...overrides,
       };
     }
@@ -250,21 +250,19 @@ describe('useMemoryCapacityGauge', () => {
       const words: any[] = [];
       // Due words
       for (let i = 0; i < due; i++) {
-        words.push(
-          buildWord({ fsrs_due: oldDate, fsrs_last_review: new Date().toISOString(), fsrs_reps: 2 })
-        );
+        words.push(buildWord({ fsrs_due: oldDate, fsrs_last_review: oldDate, fsrs_reps: 2 }));
       }
       // Struggling words (reviewed + difficult + unstable + lapses)
       for (let i = 0; i < struggling; i++) {
         words.push(
           buildWord({
             fsrs_due: futureDate,
-            fsrs_last_review: new Date().toISOString(),
+            fsrs_last_review: oldDate, // Outside cooldown
             fsrs_reps: 3,
             fsrs_lapses: 2,
-            fsrs_state: 2,
-            fsrs_stability: 3,
-            fsrs_difficulty: 9,
+            fsrs_state: 1, // Learning state for struggling
+            fsrs_stability: 2, // Lower stability
+            fsrs_difficulty: 8.5, // Higher difficulty
           })
         );
       }
@@ -298,7 +296,7 @@ describe('useMemoryCapacityGauge', () => {
         const studyWords = buildDataset({ total: s.total, due: s.due, struggling: 0 });
         const { result } = renderHook(() => useMemoryCapacityGauge({ ...baseProps, studyWords }));
         const score = result.current.getDisplayScore();
-        expect(result.current.getCapacityColor()).toBe('#p');
+        expect(result.current.getCapacityColor()).toBe('#D32F2F'); // error color
         expect(score).toBeGreaterThanOrEqual(15);
         expect(score).toBeLessThanOrEqual(39);
         expect(score).toBeLessThanOrEqual(prevScore);
@@ -318,7 +316,7 @@ describe('useMemoryCapacityGauge', () => {
         const studyWords = buildDataset({ total: s.total, due: 0, struggling: s.struggling });
         const { result } = renderHook(() => useMemoryCapacityGauge({ ...baseProps, studyWords }));
         const score = result.current.getDisplayScore();
-        expect(result.current.getCapacityColor()).toBe('#m');
+        expect(result.current.getCapacityColor()).toBe('#B8954B'); // warning color
         expect(score).toBeGreaterThanOrEqual(40);
         expect(score).toBeLessThanOrEqual(69);
         expect(score).toBeLessThanOrEqual(prevScore);
@@ -330,7 +328,7 @@ describe('useMemoryCapacityGauge', () => {
       const studyWords = buildDataset({ total: 30, due: 0, struggling: 0 });
       const { result } = renderHook(() => useMemoryCapacityGauge({ ...baseProps, studyWords }));
       const score = result.current.getDisplayScore();
-      expect(result.current.getCapacityColor()).toBe('#e');
+      expect(result.current.getCapacityColor()).toBe('#4C7F5A'); // success color
       expect(score).toBeGreaterThanOrEqual(70);
       // capacityScore taken from memoryMetrics (and clamped to >= 70 for display in green)
       expect(score).toBeGreaterThanOrEqual(result.current.memoryMetrics.capacityScore);
