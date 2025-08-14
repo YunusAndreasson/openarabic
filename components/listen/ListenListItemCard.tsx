@@ -1,4 +1,4 @@
-import { memo, useEffect, type FC } from 'react';
+import { memo, useEffect, useMemo, type FC } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -94,6 +94,17 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
       isDarkMode
     );
 
+    // Memoize dynamic styles for better performance
+    const titleTextStyle = useMemo(
+      () => [styles.titleText, { opacity: titleOpacity }],
+      [titleOpacity]
+    );
+
+    const authorTextStyle = useMemo(
+      () => [styles.authorText, { opacity: authorOpacity }],
+      [authorOpacity]
+    );
+
     // Helper function to get difficulty text
     const getDifficultyText = (level: number): string => difficultyLevelToLabel(level, STRINGS);
 
@@ -128,7 +139,7 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
               <View style={styles.textContent}>
                 <ThemedText
                   colorName="headingText"
-                  style={[styles.titleText, { opacity: titleOpacity }]}
+                  style={titleTextStyle}
                   type="heading3"
                   numberOfLines={2}
                   ellipsizeMode="tail"
@@ -141,7 +152,7 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
                     colorName="authorText"
                     numberOfLines={1}
                     ellipsizeMode="tail"
-                    style={[styles.authorText, { opacity: authorOpacity }]}
+                    style={authorTextStyle}
                     type="label"
                   >
                     {author}

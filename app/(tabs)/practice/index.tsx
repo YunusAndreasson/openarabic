@@ -201,7 +201,7 @@ export default function VocabularyScreen(): JSX.Element {
 
         {/* PRIMARY SECTION: Learning Overview */}
         {shouldShowMainContent && (
-          <View style={{ marginTop: LAYOUT.SPACING.MEDIUM }}>
+          <View style={styles.vocabularySection}>
             <VocabularyStatCards
               dueWords={dueWordsCount}
               learningWords={calculatedStats.learningWords}
@@ -229,5 +229,8 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.SMALL,
     opacity: LAYOUT.OPACITY.HIGH,
     paddingVertical: LAYOUT.SPACING.TINY, // Subtle loading indicator
+  },
+  vocabularySection: {
+    marginTop: LAYOUT.SPACING.MEDIUM,
   },
 });

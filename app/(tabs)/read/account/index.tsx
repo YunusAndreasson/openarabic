@@ -2,7 +2,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import React, { Fragment, memo, useCallback, type FC } from 'react';
+import React, { Fragment, memo, useCallback, type FC, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -55,6 +55,11 @@ const AccountScreen: FC = () => {
     isClearingCache,
     cacheSize,
   } = useAccountScreen();
+
+  // Memoize dynamic styles for better performance
+  const signOutTextStyle = useMemo(() => ({
+    color: colors.error,
+  }), [colors.error]);
 
   // Theme picker handlers
   const handleThemePickerOpen = useCallback(() => {
@@ -385,7 +390,7 @@ const AccountScreen: FC = () => {
                     />
                   </View>
                   <View style={styles.signOutTextContainer}>
-                    <ThemedText type="body" weight="medium" style={{ color: colors.error }}>
+                    <ThemedText type="body" weight="medium" style={signOutTextStyle}>
                       {STRINGS.SIGN_OUT}
                     </ThemedText>
                     <ThemedText

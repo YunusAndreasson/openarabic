@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -21,6 +21,19 @@ const FilterButton = memo(({ onPress }: FilterButtonProps) => {
   const activeFiltersCount = useAppSelectorMemo(selectActiveFiltersCount);
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation();
 
+  // Memoize dynamic styles for better performance
+  const buttonStyle = useMemo(
+    () => [styles.button, { backgroundColor: colors.transparent }, animatedStyle],
+    [colors.transparent, animatedStyle]
+  );
+
+  const badgeStyle = useMemo(() => [styles.badge, { backgroundColor: colors.tint }], [colors.tint]);
+
+  const badgeTextStyle = useMemo(
+    () => [styles.badgeText, { color: colors.background }],
+    [colors.background]
+  );
+
   const handlePress = useCallback(() => {
     onPress();
   }, [onPress]);
@@ -28,7 +41,7 @@ const FilterButton = memo(({ onPress }: FilterButtonProps) => {
   return (
     <View style={styles.container}>
       <AnimatedPressable
-        style={[styles.button, { backgroundColor: colors.transparent }, animatedStyle]}
+        style={buttonStyle}
         onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
@@ -39,13 +52,8 @@ const FilterButton = memo(({ onPress }: FilterButtonProps) => {
         </ThemedText>
 
         {activeFiltersCount > 0 && (
-          <View style={[styles.badge, { backgroundColor: colors.tint }]}>
-            <ThemedText
-              type="caption"
-              weight="bold"
-              skipDefaultColor
-              style={[styles.badgeText, { color: colors.background }]}
-            >
+          <View style={badgeStyle}>
+            <ThemedText type="caption" weight="bold" skipDefaultColor style={badgeTextStyle}>
               {activeFiltersCount}
             </ThemedText>
           </View>

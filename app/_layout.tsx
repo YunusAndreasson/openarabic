@@ -342,13 +342,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   errorContainer: {
-    alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
     padding: LAYOUT.SPACING.LARGE,
   },
   gestureRoot: {
     flex: 1,
+  },
+  errorTitle: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  errorMessage: {
+    marginBottom: LAYOUT.SPACING.XLARGE,
   },
 });
 
@@ -396,14 +402,11 @@ const ErrorFallback = memo(function ErrorFallback({ error }: FallbackProps) {
       <ThemedText
         type="heading3"
         variant="error"
-        style={{
-          fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-          marginBottom: LAYOUT.SPACING.SMALL,
-        }}
+        style={styles.errorTitle}
       >
         {STRINGS.SOMETHING_WENT_WRONG}
       </ThemedText>
-      <ThemedText style={{ marginBottom: LAYOUT.SPACING.XLARGE }} type="body">
+      <ThemedText style={styles.errorMessage} type="body">
         {STRINGS.PLEASE_TRY_AGAIN}
       </ThemedText>
       <ThemedText colorName="textTertiary" type="caption">

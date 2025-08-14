@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { JSX } from 'react';
 import { memo, useCallback, useMemo } from 'react';
 import { Platform, Pressable, StyleSheet, View, type GestureResponderEvent } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
@@ -40,181 +39,207 @@ const MINI_PLAYER_HEIGHT = LAYOUT.CARD.HEIGHT.MINI_PLAYER; // 72px (48 + 24) - r
 const ARTWORK_SIZE = LAYOUT.CARD.IMAGE.MINI_PLAYER; // 40px (48 - 8) - responsive to base unit
 const PROGRESS_HEIGHT = LAYOUT.PROGRESS_BAR.HEIGHT; // 4px - responsive to base unit
 
-const MiniPlayerComponent = ({
-  article,
-  isPlaying,
-  isTimerActive,
-  position,
-  duration,
-  onPlayPause,
-  onTimerPress,
-  onExpand,
-}: MiniPlayerProps): JSX.Element => {
-  const colors = useColors();
+export const MiniPlayer = memo<MiniPlayerProps>(
+  ({
+    article,
+    isPlaying,
+    isTimerActive,
+    position,
+    duration,
+    onPlayPause,
+    onTimerPress,
+    onExpand,
+  }) => {
+    const colors = useColors();
 
-  // Simplified mini-player press handler without animations
-  const handleMiniPlayerPress = useCallback(() => {
-    selectionFeedback();
-    onExpand();
-  }, [onExpand]);
+    // Memoize dynamic styles for better performance
+    const containerStyle = useMemo(
+      () => [styles.container, { bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY }],
+      []
+    );
 
-  // Handle play/pause with haptic feedback
-  const handlePlayPause = useCallback(
-    (event: GestureResponderEvent) => {
-      event.stopPropagation(); // Prevent card tap
+    const cardStyle = useMemo(
+      () => [
+        styles.card,
+        {
+          backgroundColor: colors.elevation2,
+          borderColor: colors.border,
+          ...LAYOUT.ELEVATION.MEDIUM,
+        },
+      ],
+      [colors.elevation2, colors.border]
+    );
+
+    const hairlineStyle = useMemo(
+      () => [styles.hairline, { backgroundColor: colors.border }],
+      [colors.border]
+    );
+
+    const artworkStyle = useMemo(
+      () => [
+        styles.artwork,
+        {
+          borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+          borderColor: colors.border,
+        },
+      ],
+      [colors.border]
+    );
+
+    const timerButtonStyle = useMemo(
+      () => [
+        styles.timerButton,
+        {
+          backgroundColor: isTimerActive ? colors.warning : colors.elevation3,
+          borderWidth: isTimerActive ? 0 : LAYOUT.BORDER.WIDTH.THIN,
+          borderColor: isTimerActive ? colors.transparent : colors.border,
+        },
+      ],
+      [isTimerActive, colors.warning, colors.elevation3, colors.border, colors.transparent]
+    );
+
+    const playButtonStyle = useMemo(
+      () => [styles.playButton, { backgroundColor: colors.tint }],
+      [colors.tint]
+    );
+
+    // Simplified mini-player press handler without animations
+    const handleMiniPlayerPress = useCallback(() => {
       selectionFeedback();
-      onPlayPause();
-    },
-    [onPlayPause]
-  );
+      onExpand();
+    }, [onExpand]);
 
-  // Calculate progress percentage with safety checks
-  const progressPercentage = useMemo(() => safePercent(position, duration), [position, duration]);
+    // Handle play/pause with haptic feedback
+    const handlePlayPause = useCallback(
+      (event: GestureResponderEvent) => {
+        event.stopPropagation(); // Prevent card tap
+        selectionFeedback();
+        onPlayPause();
+      },
+      [onPlayPause]
+    );
 
-  // Format time display with sensible defaults to prevent glitching
-  const timeDisplay = useMemo(() => {
-    // Always show time display to prevent layout shifts
-    const safePosition = Number.isFinite(position) && position >= 0 ? position : 0;
-    const safeDuration = Number.isFinite(duration) && duration > 0 ? duration : 0;
+    // Calculate progress percentage
+    const progressPercentage = useMemo(() => safePercent(position, duration), [position, duration]);
 
-    // Show "0:00 / 0:00" when duration is not yet available
-    if (safeDuration <= 0) {
-      return `${formatSecondsToClock(safePosition)} / 0:00`;
-    }
+    // Format time display
+    const timeDisplay = useMemo(() => formatSecondsToClock(position), [position]);
 
-    return `${formatSecondsToClock(safePosition)} / ${formatSecondsToClock(safeDuration)}`;
-  }, [position, duration]);
-
-  return (
-    <Animated.View
-      entering={FadeInUp.duration(350)}
-      exiting={FadeOutDown.duration(200)}
-      style={[styles.container, { bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY }]}
-    >
-      <Pressable
-        onPress={handleMiniPlayerPress}
-        android_ripple={{ color: colors.navigationRipple }}
-        style={[
-          styles.card,
-          {
-            backgroundColor: colors.elevation2,
-            borderColor: colors.border,
-            ...LAYOUT.ELEVATION.MEDIUM,
-          },
-        ]}
+    return (
+      <Animated.View
+        entering={FadeInUp.duration(350)}
+        exiting={FadeOutDown.duration(200)}
+        style={containerStyle}
       >
-        {/* Subtle inner hairline at top for grab affordance */}
-        <View style={[styles.hairline, { backgroundColor: colors.border }]} pointerEvents="none" />
-        {/* Main Content Row */}
-        <View style={styles.contentRow}>
-          {/* Artwork */}
-          <View style={styles.artworkContainer}>
-            <EnhancedImage
-              source={article.image_url}
-              style={[
-                styles.artwork,
-                {
-                  borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-                  borderColor: colors.border,
-                },
-              ]}
-              contentFit="cover"
-              priority="high"
-              transition={0}
-              recyclingKey={article.image_url}
-              cachePolicy="memory-disk"
-            />
-          </View>
+        <Pressable
+          onPress={handleMiniPlayerPress}
+          android_ripple={{ color: colors.navigationRipple }}
+          style={cardStyle}
+        >
+          {/* Subtle inner hairline at top for grab affordance */}
+          <View style={hairlineStyle} pointerEvents="none" />
+          {/* Main Content Row */}
+          <View style={styles.contentRow}>
+            {/* Artwork */}
+            <View style={styles.artworkContainer}>
+              <EnhancedImage
+                source={article.image_url}
+                style={artworkStyle}
+                contentFit="cover"
+                priority="high"
+                transition={0}
+                recyclingKey={article.image_url}
+                cachePolicy="memory-disk"
+              />
+            </View>
 
-          {/* Text Content and Time Display Column */}
-          <View style={styles.textColumn}>
-            {/* Text Content */}
-            <View style={styles.textContent}>
-              <ThemedText
-                colorName="headingText"
-                style={styles.title}
-                type="heading3"
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {article.title}
-              </ThemedText>
-
-              <View style={styles.metaRow}>
+            {/* Text Content and Time Display Column */}
+            <View style={styles.textColumn}>
+              {/* Text Content */}
+              <View style={styles.textContent}>
                 <ThemedText
-                  colorName="secondaryText"
-                  style={styles.artist}
-                  type="caption"
+                  colorName="headingText"
+                  style={styles.title}
+                  type="heading3"
                   numberOfLines={1}
                   ellipsizeMode="tail"
                 >
-                  {article.author}
+                  {article.title}
                 </ThemedText>
+
+                <View style={styles.metaRow}>
+                  <ThemedText
+                    colorName="secondaryText"
+                    style={styles.artist}
+                    type="caption"
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {article.author}
+                  </ThemedText>
+                </View>
               </View>
+
+              {/* Time display - aligned with text content left margin */}
+              <ThemedText colorName="secondaryText" style={styles.timeDisplay} type="caption">
+                {timeDisplay}
+              </ThemedText>
             </View>
 
-            {/* Time display - aligned with text content left margin */}
-            <ThemedText colorName="secondaryText" style={styles.timeDisplay} type="caption">
-              {timeDisplay}
-            </ThemedText>
+            {/* Controls */}
+            <View style={styles.controlsContainer}>
+              {/* Timer button - always visible with state indication */}
+              <Pressable
+                onPress={event => {
+                  event.stopPropagation();
+                  selectionFeedback();
+                  onTimerPress();
+                }}
+                android_ripple={{ color: colors.navigationRipple }}
+                style={timerButtonStyle}
+              >
+                <Ionicons
+                  name="timer"
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                  color={isTimerActive ? colors.background : colors.secondaryText}
+                />
+              </Pressable>
+
+              {/* Play/Pause button */}
+              <Pressable
+                onPress={handlePlayPause}
+                android_ripple={{ color: colors.navigationRipple }}
+                style={playButtonStyle}
+              >
+                <Ionicons
+                  name={isPlaying ? 'pause' : 'play'}
+                  size={18}
+                  color={colors.black}
+                  style={!isPlaying && styles.playIconOffset}
+                />
+              </Pressable>
+            </View>
           </View>
 
-          {/* Controls */}
-          <View style={styles.controlsContainer}>
-            {/* Timer button - always visible with state indication */}
-            <Pressable
-              onPress={event => {
-                event.stopPropagation();
-                selectionFeedback();
-                onTimerPress();
-              }}
-              android_ripple={{ color: colors.navigationRipple }}
-              style={[
-                styles.timerButton,
-                {
-                  backgroundColor: isTimerActive ? colors.warning : colors.elevation3,
-                  borderWidth: isTimerActive ? 0 : LAYOUT.BORDER.WIDTH.THIN,
-                  borderColor: isTimerActive ? colors.transparent : colors.border,
-                },
-              ]}
-            >
-              <Ionicons
-                name="timer"
-                size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                color={isTimerActive ? colors.background : colors.secondaryText}
-              />
-            </Pressable>
-
-            {/* Play/Pause button */}
-            <Pressable
-              onPress={handlePlayPause}
-              android_ripple={{ color: colors.navigationRipple }}
-              style={[styles.playButton, { backgroundColor: colors.tint }]}
-            >
-              <Ionicons
-                name={isPlaying ? 'pause' : 'play'}
-                size={18}
-                color={colors.black}
-                style={!isPlaying && styles.playIconOffset}
-              />
-            </Pressable>
+          {/* Progress Bar - at bottom like Apple Music */}
+          <View style={styles.progressContainer} pointerEvents="none">
+            <ProgressBar
+              progress={progressPercentage}
+              height={PROGRESS_HEIGHT}
+              style={styles.progressBar}
+              fillColor={colors.tint}
+              backgroundColor={colors.elevation3}
+            />
           </View>
-        </View>
+        </Pressable>
+      </Animated.View>
+    );
+  }
+);
 
-        {/* Progress Bar - at bottom like Apple Music */}
-        <View style={styles.progressContainer} pointerEvents="none">
-          <ProgressBar
-            progress={progressPercentage}
-            height={PROGRESS_HEIGHT}
-            style={styles.progressBar}
-            fillColor={colors.tint}
-            backgroundColor={colors.elevation3}
-          />
-        </View>
-      </Pressable>
-    </Animated.View>
-  );
-};
+MiniPlayer.displayName = 'MiniPlayer';
+
+export default MiniPlayer;
 
 const styles = StyleSheet.create({
   container: {
@@ -346,18 +371,3 @@ const styles = StyleSheet.create({
     borderRadius: 0,
   },
 });
-
-// Optimized memo comparison - only check essential props
-const MiniPlayer = memo(MiniPlayerComponent, (prevProps, nextProps) => {
-  return (
-    prevProps.article.id === nextProps.article.id &&
-    prevProps.isPlaying === nextProps.isPlaying &&
-    prevProps.isTimerActive === nextProps.isTimerActive &&
-    Math.floor(prevProps.position) === Math.floor(nextProps.position) && // Only check seconds, not milliseconds
-    prevProps.duration === nextProps.duration
-  );
-});
-
-MiniPlayer.displayName = 'MiniPlayer';
-
-export default MiniPlayer;

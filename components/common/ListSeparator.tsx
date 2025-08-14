@@ -7,9 +7,10 @@ interface ListSeparatorProps {
   height?: number;
 }
 
-const ListSeparator = memo(({ height = LAYOUT.SPACING.MEDIUM }: ListSeparatorProps) => (
-  <View style={{ height }} />
-));
+const ListSeparator = memo(({ height = LAYOUT.SPACING.MEDIUM }: ListSeparatorProps) => {
+  const separatorStyle = { height };
+  return <View style={separatorStyle} />;
+});
 
 ListSeparator.displayName = 'ListSeparator';
 

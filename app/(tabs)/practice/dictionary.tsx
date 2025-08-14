@@ -107,7 +107,7 @@ export default function DictionaryScreen(): JSX.Element {
   const keyExtractor = useCallback((item: StudyWord) => `word-${item.root_id}`, []);
 
   // Memoize the item separator to prevent inline function creation
-  const ItemSeparator = useCallback(() => <View style={{ height: LAYOUT.SPACING.TINY }} />, []);
+  const ItemSeparator = useCallback(() => <View style={styles.itemSeparator} />, []);
 
   const contentContainerStyle = useMemo(
     () => ({
@@ -177,5 +177,8 @@ export default function DictionaryScreen(): JSX.Element {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  itemSeparator: {
+    height: LAYOUT.SPACING.TINY,
   },
 });

@@ -106,7 +106,7 @@ const SleepTimerComponent = ({
       backgroundStyle={[styles.background, dynamicStyles.background]}
       handleIndicatorStyle={[styles.indicator, dynamicStyles.indicator]}
       backdropComponent={renderBackdrop}
-      style={{ zIndex: 99999 }}
+      style={styles.modalStyle}
     >
       <BottomSheetView style={styles.container}>
         {/* Header */}
@@ -196,13 +196,16 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
-
   indicator: {
     // Dynamic styling applied via colors.modalIndicator in component
   },
-
   container: {
-    flex: 1,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.LARGE,
+  },
+  modalStyle: {
+    zIndex: 99999,
   },
 
   header: {

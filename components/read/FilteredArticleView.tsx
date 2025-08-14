@@ -38,9 +38,11 @@ const STATIC_STYLES = StyleSheet.create({
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
-    paddingTop: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.LARGE,
+    alignItems: 'center',
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  },
+  headerSpacing: {
+    height: LAYOUT.SPACING.MEDIUM,
   },
   footerSpacer: {
     height: LAYOUT.SPACING.LARGE,
@@ -180,7 +182,7 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
         {HeaderComponent && (
           <>
             {typeof HeaderComponent === 'function' ? <HeaderComponent /> : HeaderComponent}
-            <View style={{ height: LAYOUT.SPACING.MEDIUM }} />
+            <View style={STATIC_STYLES.headerSpacing} />
           </>
         )}
         <SortingHeader />

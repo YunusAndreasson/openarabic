@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { FC } from 'react';
-import { useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ProgressBar } from '@common/ProgressBar';
@@ -18,74 +17,80 @@ interface ListenHeaderProps {
   hasCurrentWord?: boolean;
 }
 
-const ListenHeader: FC<ListenHeaderProps> = ({
-  progress,
-  maxProgress,
-  animationKey,
-  onClose,
-  onManageWord,
-  hasCurrentWord = false,
-}) => {
-  const colors = useColors();
+const ListenHeader = memo<ListenHeaderProps>(
+  ({ progress, maxProgress, animationKey, onClose, onManageWord, hasCurrentWord = false }) => {
+    const colors = useColors();
 
-  // Handle close with haptic feedback
-  const handleClose = useCallback(() => {
-    if (onClose) {
-      selectionFeedback();
-      onClose();
-    }
-  }, [onClose]);
+    // Memoize dynamic styles for better performance
+    const closeButtonStyle = useMemo(
+      () => [styles.closeButton, { backgroundColor: colors.elevation1 }],
+      [colors.elevation1]
+    );
 
-  const handleManagePress = () => {
-    if (onManageWord && hasCurrentWord) {
-      selectionFeedback();
-      onManageWord();
-    }
-  };
+    const manageButtonStyle = useMemo(
+      () => [styles.manageButton, { backgroundColor: colors.elevation1 }],
+      [colors.elevation1]
+    );
 
-  return (
-    <View style={styles.header}>
-      <View style={styles.progressContainer}>
-        <ProgressBar key={animationKey} progress={Math.max(progress, maxProgress)} />
+    // Handle close with haptic feedback
+    const handleClose = useCallback(() => {
+      if (onClose) {
+        selectionFeedback();
+        onClose();
+      }
+    }, [onClose]);
+
+    const handleManagePress = () => {
+      if (onManageWord && hasCurrentWord) {
+        selectionFeedback();
+        onManageWord();
+      }
+    };
+
+    return (
+      <View style={styles.header}>
+        <View style={styles.progressContainer}>
+          <ProgressBar key={animationKey} progress={Math.max(progress, maxProgress)} />
+        </View>
+
+        {/* Close button */}
+        {onClose && (
+          <Pressable
+            style={closeButtonStyle}
+            onPress={handleClose}
+            hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+            accessibilityRole="button"
+            accessibilityLabel="Close practice session"
+            android_ripple={{ color: colors.navigationRipple, radius: MIN_TOUCH_TARGET.MEDIUM / 2 }}
+          >
+            <Ionicons
+              name="close"
+              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+              color={colors.textTertiary}
+            />
+          </Pressable>
+        )}
+
+        {/* Word Management Icon */}
+        {hasCurrentWord && (
+          <Pressable
+            style={manageButtonStyle}
+            onPress={handleManagePress}
+            hitSlop={LAYOUT.HIT_SLOP.SMALL}
+            testID="manage-word-button"
+            android_ripple={{ color: colors.navigationRipple, radius: MIN_TOUCH_TARGET.SMALL / 2 }}
+          >
+            <Ionicons
+              name="ellipsis-horizontal"
+              size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+              color={colors.secondaryText}
+            />
+          </Pressable>
+        )}
       </View>
-
-      {/* Close button */}
-      {onClose && (
-        <Pressable
-          style={[styles.closeButton, { backgroundColor: colors.elevation1 }]}
-          onPress={handleClose}
-          hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
-          accessibilityRole="button"
-          accessibilityLabel="Close practice session"
-          android_ripple={{ color: colors.navigationRipple, radius: MIN_TOUCH_TARGET.MEDIUM / 2 }}
-        >
-          <Ionicons
-            name="close"
-            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-            color={colors.textTertiary}
-          />
-        </Pressable>
-      )}
-
-      {/* Word Management Icon */}
-      {hasCurrentWord && (
-        <Pressable
-          style={[styles.manageButton, { backgroundColor: colors.elevation1 }]}
-          onPress={handleManagePress}
-          hitSlop={LAYOUT.HIT_SLOP.SMALL}
-          testID="manage-word-button"
-          android_ripple={{ color: colors.navigationRipple, radius: MIN_TOUCH_TARGET.SMALL / 2 }}
-        >
-          <Ionicons
-            name="ellipsis-horizontal"
-            size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-            color={colors.secondaryText}
-          />
-        </Pressable>
-      )}
-    </View>
-  );
-};
+    );
+  }
+);
 
 const styles = StyleSheet.create({
   header: {

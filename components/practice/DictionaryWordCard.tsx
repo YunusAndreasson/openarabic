@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import BaseCard from '@common/BaseCard';
@@ -68,6 +68,17 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
     const englishText = word.root?.meaning || 'Unknown English';
     const hasAudio = !!word.root?.audio_url;
 
+    // Memoize dynamic styles for better performance
+    const statusDotStyle = useMemo(
+      () => [styles.statusDot, { backgroundColor: difficultyColor }],
+      [difficultyColor]
+    );
+
+    const deleteButtonStyle = useMemo(
+      () => [styles.deleteButton, { backgroundColor: colors.error }],
+      [colors.error]
+    );
+
     return (
       <View style={styles.container}>
         <BaseCard
@@ -80,7 +91,7 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
           <View style={styles.content}>
             {/* Left: colored status dot + English */}
             <View style={styles.leftSection}>
-              <View style={[styles.statusDot, { backgroundColor: difficultyColor }]} />
+              <View style={statusDotStyle} />
               <ThemedText
                 type="body"
                 variant="secondary"
@@ -99,7 +110,7 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
                 arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.XXLARGE}
                 weight="semibold"
                 numberOfLines={1}
-                style={{ includeFontPadding: true }}
+                style={styles.arabicText}
               >
                 {arabicText}
               </ThemedText>
@@ -110,7 +121,7 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
         {/* Delete Button (separate from card, only in edit mode) */}
         {editMode && (
           <TouchableOpacity
-            style={[styles.deleteButton, { backgroundColor: colors.error }]}
+            style={deleteButtonStyle}
             onPress={handleDeletePress}
             activeOpacity={LAYOUT.OPACITY.PRESSED}
           >
@@ -178,6 +189,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
     marginLeft: LAYOUT.SPACING.SMALL,
+  },
+  arabicText: {
+    includeFontPadding: true,
   },
   statusDot: {
     width: LAYOUT.SPACING.SMALL,

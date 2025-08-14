@@ -129,7 +129,7 @@ export const MemoryCapacityBottomSheet = memo<MemoryCapacityBottomSheetProps>(
                 name="bulb"
                 size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                 color={colors.tint}
-                style={{ marginRight: LAYOUT.SPACING.TINY }}
+                style={styles.tipIcon}
               />
               <ThemedText type="caption" colorName="textTertiary">
                 {STRINGS.MEMORY_CAPACITY_TIP}
@@ -195,6 +195,9 @@ const styles = StyleSheet.create({
   tipContent: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  tipIcon: {
+    marginRight: LAYOUT.SPACING.TINY,
   },
   phaseSection: {
     marginTop: LAYOUT.SPACING.SMALL,

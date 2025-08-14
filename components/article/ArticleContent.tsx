@@ -150,6 +150,9 @@ const styles = StyleSheet.create({
   playIconOffset: {
     marginLeft: LAYOUT.SPACING.TINY,
   },
+  authorText: {
+    textAlign: 'left',
+  },
 });
 
 // Static constants for better performance
@@ -370,7 +373,7 @@ export const ArticleContent = memo<ArticleContentProps>(
               type="body"
               weight="medium"
               colorName="authorText"
-              style={{ textAlign: 'left' }}
+              style={styles.authorText}
             >
               {article.author.name}
               {' \u00B7 '}

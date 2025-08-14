@@ -3,7 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { BlurView } from 'expo-blur';
 import { Tabs, router } from 'expo-router';
 import type { JSX } from 'react';
-import React, { Fragment, memo, useCallback, useEffect } from 'react';
+import React, { Fragment, memo, useCallback, useEffect, useMemo } from 'react';
 import { Platform, StyleSheet } from 'react-native';
 
 import { StreakHistoryBottomSheet } from '@read/StreakHistoryBottomSheet';
@@ -38,6 +38,28 @@ const TAB_SCREENS = [
 ] as const;
 
 const BLUR_INTENSITY = 55;
+
+// Static styles for better performance
+const styles = StyleSheet.create({
+  headerTitle: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
+    fontWeight: LAYOUT.HEADER.TITLE.SECONDARY.fontWeight,
+  },
+  tabBarIcon: {
+    marginTop: LAYOUT.SPACING.SMALL,
+  },
+  tabBarStyleIOS: {
+    position: 'absolute',
+    borderTopWidth: 0,
+    height: LAYOUT.BOTTOM_BAR.HEIGHT,
+  },
+  focusedIcon: {
+    opacity: 1,
+  },
+  unfocusedIcon: {
+    opacity: LAYOUT.OPACITY.HIGH,
+  },
+});
 
 // Simplified header background - works for both platforms
 const HeaderBackground = memo(() => {
@@ -95,6 +117,18 @@ export default function TabLayout(): JSX.Element {
     dispatch(closeStreakBottomSheet());
   }, [dispatch]);
 
+  // Memoize dynamic styles for better performance
+  const tabBarStyleAndroid = useMemo(
+    () => ({
+      position: 'absolute' as const,
+      borderTopWidth: LAYOUT.BORDER.WIDTH.THIN,
+      borderTopColor: colors.border,
+      height: LAYOUT.BOTTOM_BAR.HEIGHT,
+      ...LAYOUT.ELEVATION.SMALL,
+    }),
+    [colors.border]
+  );
+
   if (!session?.user) {
     return <Fragment />;
   }
@@ -105,10 +139,7 @@ export default function TabLayout(): JSX.Element {
         screenOptions={{
           headerShown: true,
           headerTitleAlign: 'left',
-          headerTitleStyle: {
-            fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-            fontWeight: LAYOUT.HEADER.TITLE.SECONDARY.fontWeight,
-          },
+          headerTitleStyle: styles.headerTitle,
           headerTransparent: true,
           headerBackground: () => <HeaderBackground />,
 
@@ -117,21 +148,10 @@ export default function TabLayout(): JSX.Element {
           tabBarActiveTintColor: colors.tint,
           tabBarInactiveTintColor: colors.tabIconDefault,
           tabBarShowLabel: false, // Clean icon-only design with 3 tabs and clear nav titles
-          tabBarIconStyle: {
-            marginTop: LAYOUT.SPACING.SMALL, // Standard centering using spacing constant
-          },
+          tabBarIconStyle: styles.tabBarIcon,
           tabBarStyle: Platform.select({
-            ios: {
-              position: 'absolute',
-              borderTopWidth: 0,
-              height: LAYOUT.BOTTOM_BAR.HEIGHT, // Standard iOS: 83px
-            },
-            android: {
-              borderTopWidth: LAYOUT.BORDER.WIDTH.THIN,
-              borderTopColor: colors.border,
-              height: LAYOUT.BOTTOM_BAR.HEIGHT, // Standard Android: 65px
-              ...LAYOUT.ELEVATION.SMALL,
-            },
+            ios: styles.tabBarStyleIOS,
+            android: tabBarStyleAndroid,
           }),
 
           // Performance optimizations
@@ -151,9 +171,7 @@ export default function TabLayout(): JSX.Element {
                   name={screen.iconFilled}
                   size={LAYOUT.BUTTON.ICON_SIZE.XLARGE}
                   color={color}
-                  style={{
-                    opacity: focused ? 1 : LAYOUT.OPACITY.HIGH,
-                  }}
+                  style={focused ? styles.focusedIcon : styles.unfocusedIcon}
                 />
               ),
               // Header customizations for specific screens

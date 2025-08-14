@@ -1,13 +1,12 @@
 // External Libraries
 import { Ionicons } from '@expo/vector-icons';
-import React, { memo, useCallback, useState, type FC } from 'react';
+import React, { memo, useCallback, useMemo, useState, type FC } from 'react';
 import { LayoutAnimation, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import SectionTitle from '@common/SectionTitle';
-
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import SectionTitle from '@/components/common/SectionTitle';
 import { FAQ_DATA, type FAQItem } from '@/constants/faq';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -28,19 +27,34 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(({ item, isExpanded, on
     onToggle(item.id);
   }, [item.id, onToggle]);
 
+  const buttonStyle = useMemo(
+    () => [
+      styles.faqButton,
+      {
+        backgroundColor: colors.card,
+        borderColor: isExpanded ? colors.tint : colors.cardBorder,
+        ...LAYOUT.ELEVATION.SUBTLE, // Consistent elevation
+      },
+    ],
+    [colors.card, colors.tint, colors.cardBorder, isExpanded]
+  );
+
+  const answerContainerStyle = useMemo(
+    () => [
+      styles.faqAnswerContainer,
+      {
+        backgroundColor: colors.background,
+        borderColor: colors.cardBorder,
+        ...LAYOUT.ELEVATION.SUBTLE, // Consistent elevation for expanded content
+      },
+    ],
+    [colors.background, colors.cardBorder]
+  );
+
   return (
-    <View style={{ marginBottom: LAYOUT.SPACING.MEDIUM }}>
+    <View style={styles.faqItemContainer}>
       <Pressable
-        style={{
-          backgroundColor: colors.card,
-          borderColor: isExpanded ? colors.tint : colors.cardBorder,
-          borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-          borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-          paddingHorizontal: LAYOUT.SPACING.LARGE,
-          paddingVertical: LAYOUT.SPACING.MEDIUM,
-          minHeight: LAYOUT.BUTTON.HEIGHT.LARGE, // 48dp minimum per Fitts' Law
-          ...LAYOUT.ELEVATION.SUBTLE, // Consistent elevation
-        }}
+        style={buttonStyle}
         onPress={handlePress}
         accessibilityRole="button"
         accessibilityState={{ expanded: isExpanded }}
@@ -52,14 +66,12 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(({ item, isExpanded, on
           radius: LAYOUT.BUTTON.HEIGHT.LARGE / 2,
         }}
       >
-        <View
-          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
-        >
+        <View style={styles.faqButtonContent}>
           <ThemedText
             type="body"
             weight="medium"
             colorName={isExpanded ? 'tint' : 'text'}
-            style={{ flex: 1, marginRight: LAYOUT.SPACING.MEDIUM }}
+            style={styles.faqQuestionText}
           >
             {item.question}
           </ThemedText>
@@ -71,18 +83,7 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(({ item, isExpanded, on
         </View>
       </Pressable>
       {isExpanded && (
-        <View
-          style={{
-            backgroundColor: colors.background,
-            borderColor: colors.cardBorder,
-            borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-            borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-            paddingHorizontal: LAYOUT.SPACING.LARGE,
-            paddingVertical: LAYOUT.SPACING.MEDIUM,
-            marginTop: LAYOUT.SPACING.SMALL,
-            ...LAYOUT.ELEVATION.SUBTLE, // Consistent elevation for expanded content
-          }}
-        >
+        <View style={answerContainerStyle}>
           <ThemedText type="body" variant="secondary">
             {item.answer}
           </ThemedText>
@@ -122,7 +123,7 @@ const HelpScreen: FC = () => {
         style={styles.flexOne}
         useSafeArea={false}
         contentContainerStyle={[
-          styles.scrollContent,
+          styles.scrollContentDynamic,
           {
             paddingTop: LAYOUT.SPACING.LARGE,
             paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE,
@@ -135,7 +136,10 @@ const HelpScreen: FC = () => {
         }}
       >
         {FAQ_DATA.map((category, categoryIndex) => (
-          <View key={category.name} style={categoryIndex > 0 ? styles.categorySpacing : undefined}>
+          <View
+            key={category.name}
+            style={categoryIndex > 0 ? styles.categorySpacingConditional : undefined}
+          >
             <SectionTitle title={category.name} isFirstSection={categoryIndex === 0} />
             <View style={styles.categoryContainer}>
               {category.items.map(item => (
@@ -161,7 +165,7 @@ const styles = StyleSheet.create({
   flexOne: {
     flex: 1,
   },
-  scrollContent: {
+  scrollContentDynamic: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   scrollView: {
@@ -170,8 +174,35 @@ const styles = StyleSheet.create({
   categoryContainer: {
     gap: LAYOUT.SPACING.SMALL,
   },
-  categorySpacing: {
+  categorySpacingConditional: {
     marginTop: LAYOUT.SPACING.LARGE,
+  },
+  // FAQ Item styles moved from inline for better performance
+  faqItemContainer: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  faqButton: {
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE, // 48dp minimum per Fitts' Law
+  },
+  faqButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  faqQuestionText: {
+    flex: 1,
+    marginRight: LAYOUT.SPACING.MEDIUM,
+  },
+  faqAnswerContainer: {
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.SMALL,
   },
 });
 
