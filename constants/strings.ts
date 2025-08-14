@@ -166,6 +166,7 @@ export const STRINGS = {
   URGENT_PRESERVATION: 'Review due words', // RED PHASE: Clear action verb + object
   EFFORTFUL_RETRIEVAL: 'Study struggling words', // YELLOW PHASE: Clear action verb + object
   INTERLEAVED_REVIEW: 'Study all words', // GREEN PHASE: Clear action verb + object
+  NO_WORDS_TO_STUDY: 'No words to study',
 
   // Practice button descriptions - streamlined and action-oriented
   URGENT_MEMORY_PRESERVATION: 'Restores memory capacity', // Clear capacity improvement
@@ -177,8 +178,8 @@ export const STRINGS = {
   PROGRESS: 'Progress',
   MEMORY_CAPACITY: 'Memory capacity',
   MEMORY_CAPACITY_EXPLANATION:
-    'Memory capacity shows how much you can study comfortably right now based on recent reviews. Clear due reviews and strengthen weak words to increase capacity for adding new words.',
-  MEMORY_CAPACITY_TIP: 'Tip: Add new words when capacity is high',
+    'Memory capacity shows how many new words you can add. Complete due reviews and strengthen weak words to increase capacity.',
+  MEMORY_CAPACITY_TIP: 'Add new words when capacity is high',
   CAPACITY_SCORE: 'Memory capacity',
   DUE_WORDS: 'Due',
   STRUGGLING_WORDS: 'Struggling',

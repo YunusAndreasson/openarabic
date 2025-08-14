@@ -87,11 +87,20 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
         <BaseCard shadowSize="small" style={styles.summaryCard}>
           <View style={styles.summaryHeader}>
             <View
-              style={[styles.summaryBadge, { backgroundColor: colors.tint }]}
+              style={[
+                styles.summaryBadge,
+                {
+                  backgroundColor: activeFiltersCount === 0 ? colors.disabled : colors.tint,
+                },
+              ]}
               accessible={true}
               accessibilityLabel={`${STRINGS.FILTERS}: ${activeFiltersCount}`}
             >
-              <ThemedText type="caption" weight="bold" colorName="background">
+              <ThemedText
+                type="body"
+                weight="bold"
+                colorName={activeFiltersCount === 0 ? 'secondaryText' : 'background'}
+              >
                 {activeFiltersCount}
               </ThemedText>
             </View>
@@ -100,6 +109,11 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
               disabled={activeFiltersCount === 0}
               style={[
                 styles.clearAllButton,
+                {
+                  borderWidth: 1,
+                  borderColor: activeFiltersCount === 0 ? colors.border : colors.warning,
+                  backgroundColor: 'transparent',
+                },
                 activeFiltersCount === 0 && styles.clearAllButtonDisabled,
               ]}
               accessibilityRole="button"
@@ -370,7 +384,7 @@ const styles = StyleSheet.create({
   },
   // summaryLine: { marginTop: LAYOUT.SPACING.SMALL },
   summaryBadge: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderRadius: MIN_TOUCH_TARGET.MEDIUM / 2,
     width: MIN_TOUCH_TARGET.MEDIUM,
     height: MIN_TOUCH_TARGET.MEDIUM,
     justifyContent: 'center',
@@ -383,6 +397,7 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     minHeight: MIN_TOUCH_TARGET.MEDIUM,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   clearAllButtonDisabled: {
     opacity: 0.5,

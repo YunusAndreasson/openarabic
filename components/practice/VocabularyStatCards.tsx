@@ -96,7 +96,7 @@ export const VocabularyStatCards = memo(
         description: STRINGS.URGENT_MEMORY_PRESERVATION,
         capacityPhase: 'red' as const,
         disabled: wordCategories.dueWords === 0,
-        disabledMessage: wordCategories.dueWords === 0 ? 'No words due for review' : undefined,
+        disabledMessage: wordCategories.dueWords === 0 ? STRINGS.NO_WORDS_TO_STUDY : undefined,
       });
 
       cards.push({
@@ -111,7 +111,7 @@ export const VocabularyStatCards = memo(
         disabledMessage: hasDueWords
           ? STRINGS.COMPLETE_DUE_FIRST
           : wordCategories.strugglingWords === 0
-          ? 'No struggling words'
+          ? STRINGS.NO_WORDS_TO_STUDY
           : undefined,
       });
 
@@ -130,7 +130,7 @@ export const VocabularyStatCards = memo(
           : wordCategories.strugglingWords > 0
           ? STRINGS.FOCUS_ON_STRUGGLING_FIRST
           : eligibleTotal === 0
-          ? 'No words to study'
+          ? STRINGS.NO_WORDS_TO_STUDY
           : undefined,
       });
 

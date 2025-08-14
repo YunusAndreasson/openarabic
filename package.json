@@ -36,7 +36,7 @@
     "ai:debug": "yarn test --verbose --no-coverage"
   },
   "dependencies": {
-    "@babel/runtime": "^7.28.2",
+    "@babel/runtime": "^7.28.3",
     "@expo/vector-icons": "^14.1.0",
     "@gorhom/bottom-sheet": "^5.1.8",
     "@react-native-async-storage/async-storage": "2.1.2",
@@ -51,9 +51,9 @@
     "@shopify/flash-list": "1.7.6",
     "@shopify/react-native-skia": "2.0.0-next.4",
     "@supabase/supabase-js": "^2.55.0",
-    "@tanstack/query-async-storage-persister": "^5.83.1",
-    "@tanstack/react-query": "^5.85.0",
-    "@tanstack/react-query-persist-client": "^5.85.0",
+    "@tanstack/query-async-storage-persister": "^5.85.3",
+    "@tanstack/react-query": "^5.85.3",
+    "@tanstack/react-query-persist-client": "^5.85.3",
     "expo-asset": "^11.1.7",
     "expo-audio": "~0.4.8",
     "expo-blur": "^14.1.5",
@@ -89,8 +89,8 @@
     "ts-fsrs": "^5.2.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.28.0",
-    "@babel/plugin-transform-runtime": "^7.28.0",
+    "@babel/core": "^7.28.3",
+    "@babel/plugin-transform-runtime": "^7.28.3",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.33.0",
     "@expo/metro-config": "^0.20.17",
@@ -103,7 +103,7 @@
     "@typescript-eslint/parser": "^8.39.1",
     "@welldone-software/why-did-you-render": "^10.0.1",
     "babel-plugin-module-resolver": "^5.0.2",
-    "babel-preset-expo": "^13.2.3",
+    "babel-preset-expo": "~13.0.0",
     "concurrently": "^9.2.0",
     "eslint": "9.33.0",
     "eslint-config-expo": "~9.2.0",
