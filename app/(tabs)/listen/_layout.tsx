@@ -19,8 +19,6 @@ export default function ListenLayout(): JSX.Element {
         name="now-playing"
         options={createNavigationOptions(colors, {
           headerShown: false,
-          presentation: 'modal',
-          animation: 'fade',
         })}
       />
     </Stack>

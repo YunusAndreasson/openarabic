@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { JSX } from 'react';
-import React, { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Platform, Pressable, StyleSheet, View, type GestureResponderEvent } from 'react-native';
 import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 
@@ -39,13 +39,6 @@ export interface MiniPlayerProps {
 const MINI_PLAYER_HEIGHT = LAYOUT.CARD.HEIGHT.MINI_PLAYER; // 72px (48 + 24) - responsive to base unit
 const ARTWORK_SIZE = LAYOUT.CARD.IMAGE.MINI_PLAYER; // 40px (48 - 8) - responsive to base unit
 const PROGRESS_HEIGHT = LAYOUT.PROGRESS_BAR.HEIGHT; // 4px - responsive to base unit
-const BUTTON_SIZE = LAYOUT.BUTTON.HEIGHT.MEDIUM; // 44px - responsive to touch targets
-
-// Simplified animation constants
-const ANIMATION_CONFIG = {
-  entering: 350,
-  exiting: 200,
-} as const;
 
 const MiniPlayerComponent = ({
   article,
@@ -76,21 +69,26 @@ const MiniPlayerComponent = ({
   );
 
   // Calculate progress percentage with safety checks
-  const progressPercentage = React.useMemo(
-    () => safePercent(position, duration),
-    [position, duration]
-  );
+  const progressPercentage = useMemo(() => safePercent(position, duration), [position, duration]);
 
-  // Format time display with safety checks
-  const timeDisplay = React.useMemo(() => {
-    if (!Number.isFinite(duration) || duration <= 0) return '';
-    return `${formatSecondsToClock(position)} / ${formatSecondsToClock(duration)}`;
+  // Format time display with sensible defaults to prevent glitching
+  const timeDisplay = useMemo(() => {
+    // Always show time display to prevent layout shifts
+    const safePosition = Number.isFinite(position) && position >= 0 ? position : 0;
+    const safeDuration = Number.isFinite(duration) && duration > 0 ? duration : 0;
+
+    // Show "0:00 / 0:00" when duration is not yet available
+    if (safeDuration <= 0) {
+      return `${formatSecondsToClock(safePosition)} / 0:00`;
+    }
+
+    return `${formatSecondsToClock(safePosition)} / ${formatSecondsToClock(safeDuration)}`;
   }, [position, duration]);
 
   return (
     <Animated.View
-      entering={FadeInUp.duration(ANIMATION_CONFIG.entering)}
-      exiting={FadeOutDown.duration(ANIMATION_CONFIG.exiting)}
+      entering={FadeInUp.duration(350)}
+      exiting={FadeOutDown.duration(200)}
       style={[styles.container, { bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY }]}
     >
       <Pressable
@@ -106,17 +104,7 @@ const MiniPlayerComponent = ({
         ]}
       >
         {/* Subtle inner hairline at top for grab affordance */}
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: LAYOUT.BORDER.WIDTH.THIN,
-            backgroundColor: colors.border,
-          }}
-          pointerEvents="none"
-        />
+        <View style={[styles.hairline, { backgroundColor: colors.border }]} pointerEvents="none" />
         {/* Main Content Row */}
         <View style={styles.contentRow}>
           {/* Artwork */}
@@ -166,11 +154,9 @@ const MiniPlayerComponent = ({
             </View>
 
             {/* Time display - aligned with text content left margin */}
-            {timeDisplay && (
-              <ThemedText colorName="secondaryText" style={styles.timeDisplay} type="caption">
-                {timeDisplay}
-              </ThemedText>
-            )}
+            <ThemedText colorName="secondaryText" style={styles.timeDisplay} type="caption">
+              {timeDisplay}
+            </ThemedText>
           </View>
 
           {/* Controls */}
@@ -245,6 +231,15 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
+  hairline: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: LAYOUT.BORDER.WIDTH.THIN,
+    backgroundColor: 'transparent', // Will be set dynamically
+  },
+
   contentRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -300,7 +295,7 @@ const styles = StyleSheet.create({
     opacity: LAYOUT.OPACITY.HIGH,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY + LAYOUT.SPACING.HALF_TINY,
     // Use monospace font to prevent jumping when numbers change
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontFamily: Platform.select({ ios: 'Courier', default: 'monospace' }),
     // Align with text content - no right alignment needed since it's in column
     textAlign: 'left',
     // Small top margin to separate from author
@@ -327,9 +322,9 @@ const styles = StyleSheet.create({
   },
 
   playButton: {
-    width: BUTTON_SIZE,
-    height: BUTTON_SIZE,
-    borderRadius: BUTTON_SIZE / 2,
+    width: LAYOUT.BUTTON.HEIGHT.MEDIUM,
+    height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
+    borderRadius: LAYOUT.BUTTON.HEIGHT.MEDIUM / 2,
     alignItems: 'center',
     justifyContent: 'center',
     ...LAYOUT.ELEVATION.SUBTLE,

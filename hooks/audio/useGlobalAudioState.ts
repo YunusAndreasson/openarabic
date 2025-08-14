@@ -229,11 +229,11 @@ export function useGlobalAudioState(): GlobalAudioState {
   // STABILIZATION: Enhanced cleanup logic for navigation state
   useEffect(() => {
     // Reset navigation state when audio stops completely
-    if (!audioPlayer.currentTrack && !audioPlayer.isLoading) {
+    if (!audioPlayer.isPlaying && !audioPlayer.isLoading) {
       hasNavigatedToModalRef.current = false;
       lastNavigationTimeRef.current = 0;
     }
-  }, [audioPlayer.currentTrack, audioPlayer.isLoading]);
+  }, [audioPlayer.isPlaying, audioPlayer.isLoading]);
 
   // Cleanup timeouts on unmount
   useEffect(() => {
