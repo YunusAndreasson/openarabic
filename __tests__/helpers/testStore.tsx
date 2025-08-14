@@ -1,18 +1,21 @@
-import { combineReducers, configureStore, type PreloadedState } from '@reduxjs/toolkit';
-import { useMemo, type ReactNode } from 'react';
+import { combineReducers, configureStore } from '@reduxjs/toolkit';
+import React, { useMemo, type ReactNode } from 'react';
 import { Provider } from 'react-redux';
 
-import filtersReducer from '@/store/filtersSlice';
-import listenReducer from '@/store/listenSlice';
-
-import settingsReducer from '@/store/settingsSlice';
-import themeReducer from '@/store/themeSlice';
+import editModeReducer from '../../store/editModeSlice';
+import filtersReducer from '../../store/filtersSlice';
+import listenReducer from '../../store/listenSlice';
+import settingsReducer from '../../store/settingsSlice';
+import streakReducer from '../../store/streakSlice';
+import themeReducer from '../../store/themeSlice';
 
 const rootReducer = combineReducers({
   theme: themeReducer,
   settings: settingsReducer,
   filters: filtersReducer,
   listen: listenReducer,
+  editMode: editModeReducer,
+  streak: streakReducer,
 });
 
 export type TestRootState = ReturnType<typeof rootReducer>;
@@ -22,21 +25,54 @@ export const defaultPreloadedState: TestRootState = rootReducer(undefined, {
 }) as TestRootState;
 
 export const setupTestStore = (
-  preloadedState: PreloadedState<TestRootState> = defaultPreloadedState
+  preloadedState?: Partial<TestRootState>
 ) =>
   configureStore({
     reducer: rootReducer,
-    preloadedState,
+    preloadedState: preloadedState ? { ...defaultPreloadedState, ...preloadedState } : defaultPreloadedState,
   });
 
 type Props = {
   children: ReactNode;
-  preloadedState?: PreloadedState<TestRootState>;
+  preloadedState?: Partial<TestRootState>;
 };
 
 export const TestStoreProvider = ({ children, preloadedState }: Props) => {
   const store = useMemo(() => setupTestStore(preloadedState), [preloadedState]);
   return <Provider store={store}>{children}</Provider>;
+};
+
+// Mock useAuth hook for tests that need authentication context
+const mockUseAuth = jest.fn(() => ({
+  user: { id: 'test-user-id', email: 'test@example.com' },
+  isLoading: false,
+  signIn: jest.fn(),
+  signUp: jest.fn(),
+  signOut: jest.fn(),
+  refreshSession: jest.fn(),
+}));
+
+// Mock AuthProvider for tests that need authentication context
+const MockAuthProvider = ({ children }: { children: ReactNode }) => {
+  // Mock the useAuth hook globally for this test
+  jest.doMock('../../hooks/auth/useAuth', () => ({
+    useAuth: mockUseAuth,
+  }));
+
+  return (
+    <div data-testid="mock-auth-provider" data-user-id="test-user-id">
+      {children}
+    </div>
+  );
+};
+
+// Combined provider that includes both Redux store and Auth context
+export const TestProviders = ({ children, preloadedState }: Props) => {
+  return (
+    <TestStoreProvider preloadedState={preloadedState}>
+      <MockAuthProvider>{children}</MockAuthProvider>
+    </TestStoreProvider>
+  );
 };
 
 export default TestStoreProvider;

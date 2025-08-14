@@ -209,17 +209,27 @@ export function useFSRS({
         queueRef.current.heapify(items, priorities);
         const ordered = queueRef.current.toArray();
         setWordQueue(ordered);
+
+        // FIXED: Check if any words are actually available (not in cooldown)
         const first = getNextWordWithSpacing();
 
-        setCurrentWord(first || null);
+        if (first) {
+          // We have available words, start session
+          setCurrentWord(first);
+        } else {
+          // FIXED: All words are in cooldown or spacing, complete session immediately
+          setIsComplete(true);
+          if (onComplete && !stateTrackingRef.current.completionTriggered) {
+            stateTrackingRef.current.completionTriggered = true;
+            onComplete();
+          }
+        }
       } else {
+        // FIXED: Only complete if there are truly no words available
         setIsComplete(true);
         if (onComplete && !stateTrackingRef.current.completionTriggered) {
           stateTrackingRef.current.completionTriggered = true;
-          // Further delay the completion callback
-          completionTimeoutRef.current = setTimeout(() => {
-            onComplete();
-          }, 50);
+          onComplete();
         }
       }
     }, 0);
@@ -361,12 +371,9 @@ export function useFSRS({
         if (!nextItem && !hasAvailableSpacedWords) {
           if (!stateTrackingRef.current.completionTriggered) {
             stateTrackingRef.current.completionTriggered = true;
-            setTimeout(() => {
-              if (stateTrackingRef.current.completionTriggered) {
-                setIsComplete(true);
-                if (onComplete) onComplete();
-              }
-            }, 0);
+            // FIXED: Set completion immediately instead of using setTimeout
+            setIsComplete(true);
+            if (onComplete) onComplete();
           }
         }
       }

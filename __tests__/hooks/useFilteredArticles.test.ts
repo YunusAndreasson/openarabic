@@ -3,6 +3,27 @@ import { renderHook } from '@testing-library/react-native';
 import { useFilteredArticles } from '../../hooks/articles/useFilteredArticles';
 import type { FilterState } from '../../store/filtersSlice';
 
+// Mock the useAuth hook that's used internally by useBulkReadingProgress
+jest.mock('../../hooks/auth/useAuth', () => ({
+  useAuth: () => ({
+    user: { id: 'test-user-id', email: 'test@example.com' },
+    isLoading: false,
+    signIn: jest.fn(),
+    signUp: jest.fn(),
+    signOut: jest.fn(),
+    refreshSession: jest.fn(),
+  }),
+}));
+
+// Mock the useBulkReadingProgress hook directly
+jest.mock('../../hooks/articles/useReadingProgress', () => ({
+  useBulkReadingProgress: () => ({
+    data: new Map(),
+    isLoading: false,
+    error: null,
+  }),
+}));
+
 jest.mock('../../store/hooks', () => ({
   useAppSelector: jest.fn(),
 }));

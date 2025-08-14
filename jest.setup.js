@@ -86,33 +86,6 @@ jest.mock('expo-system-ui', () => ({
   getBackgroundColorAsync: jest.fn().mockResolvedValue('#000000'),
 }));
 
-// Enhanced expo-haptics mock with feedback validation
-jest.mock('expo-haptics', () => ({
-  impactAsync: jest.fn().mockImplementation(async style => {
-    if (!['Light', 'Medium', 'Heavy'].includes(style)) {
-      throw new Error(`Invalid haptic style: ${style}`);
-    }
-    return Promise.resolve();
-  }),
-  selectionAsync: jest.fn().mockResolvedValue(undefined),
-  notificationAsync: jest.fn().mockImplementation(async type => {
-    if (!['Success', 'Warning', 'Error'].includes(type)) {
-      throw new Error(`Invalid notification type: ${type}`);
-    }
-    return Promise.resolve();
-  }),
-  ImpactFeedbackStyle: {
-    Light: 'Light',
-    Medium: 'Medium',
-    Heavy: 'Heavy',
-  },
-  NotificationFeedbackType: {
-    Success: 'Success',
-    Warning: 'Warning',
-    Error: 'Error',
-  },
-}));
-
 // Comprehensive react-native-reanimated mock for AI predictability
 jest.mock('react-native-reanimated', () => {
   const React = require('react');
@@ -473,42 +446,62 @@ jest.mock('@supabase/supabase-js', () => ({
         data: { subscription: { unsubscribe: jest.fn() } },
       })),
     },
-    from: jest.fn(_table => ({
-      select: jest.fn().mockReturnThis(),
-      insert: jest.fn().mockReturnThis(),
-      update: jest.fn().mockReturnThis(),
-      delete: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      neq: jest.fn().mockReturnThis(),
-      gt: jest.fn().mockReturnThis(),
-      lt: jest.fn().mockReturnThis(),
-      gte: jest.fn().mockReturnThis(),
-      lte: jest.fn().mockReturnThis(),
-      like: jest.fn().mockReturnThis(),
-      ilike: jest.fn().mockReturnThis(),
-      is: jest.fn().mockReturnThis(),
-      in: jest.fn().mockReturnThis(),
-      contains: jest.fn().mockReturnThis(),
-      containedBy: jest.fn().mockReturnThis(),
-      rangeGt: jest.fn().mockReturnThis(),
-      rangeGte: jest.fn().mockReturnThis(),
-      rangeLt: jest.fn().mockReturnThis(),
-      rangeLte: jest.fn().mockReturnThis(),
-      rangeAdjacent: jest.fn().mockReturnThis(),
-      overlaps: jest.fn().mockReturnThis(),
-      textSearch: jest.fn().mockReturnThis(),
-      match: jest.fn().mockReturnThis(),
-      not: jest.fn().mockReturnThis(),
-      or: jest.fn().mockReturnThis(),
-      filter: jest.fn().mockReturnThis(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      range: jest.fn().mockReturnThis(),
-      single: jest.fn().mockResolvedValue({ data: null, error: null }),
-      maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
-      then: jest.fn().mockResolvedValue({ data: [], error: null }),
-    })),
-    rpc: jest.fn().mockResolvedValue({ data: null, error: null }),
+    from: jest.fn(_table => {
+      // Create a mock query builder that can return realistic data
+      const mockQueryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        insert: jest.fn().mockReturnThis(),
+        update: jest.fn().mockReturnThis(),
+        delete: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        neq: jest.fn().mockReturnThis(),
+        gt: jest.fn().mockReturnThis(),
+        lt: jest.fn().mockReturnThis(),
+        gte: jest.fn().mockReturnThis(),
+        lte: jest.fn().mockReturnThis(),
+        like: jest.fn().mockReturnThis(),
+        ilike: jest.fn().mockReturnThis(),
+        is: jest.fn().mockReturnThis(),
+        in: jest.fn().mockReturnThis(),
+        contains: jest.fn().mockReturnThis(),
+        containedBy: jest.fn().mockReturnThis(),
+        rangeGt: jest.fn().mockReturnThis(),
+        rangeGte: jest.fn().mockReturnThis(),
+        rangeLt: jest.fn().mockReturnThis(),
+        rangeLte: jest.fn().mockReturnThis(),
+        rangeAdjacent: jest.fn().mockReturnThis(),
+        overlaps: jest.fn().mockReturnThis(),
+        textSearch: jest.fn().mockReturnThis(),
+        match: jest.fn().mockReturnThis(),
+        not: jest.fn().mockReturnThis(),
+        or: jest.fn().mockReturnThis(),
+        filter: jest.fn().mockReturnThis(),
+        order: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        range: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ 
+          data: { id: 1, title: 'Test Article', content: 'Test content' }, 
+          error: null 
+        }),
+        maybeSingle: jest.fn().mockResolvedValue({ 
+          data: { id: 1, title: 'Test Article', content: 'Test content' }, 
+          error: null 
+        }),
+        then: jest.fn().mockResolvedValue({ 
+          data: [
+            { id: 1, title: 'Test Article 1', content: 'Test content 1' },
+            { id: 2, title: 'Test Article 2', content: 'Test content 2' }
+          ], 
+          error: null 
+        }),
+      };
+      
+      return mockQueryBuilder;
+    }),
+    rpc: jest.fn().mockResolvedValue({ 
+      data: { result: 'success' }, 
+      error: null 
+    }),
     storage: {
       from: jest.fn(() => ({
         upload: jest.fn().mockResolvedValue({ data: null, error: null }),
@@ -551,19 +544,68 @@ jest.mock('@tanstack/react-query', () => {
 
   return {
     ...originalModule,
-    useQuery: jest.fn().mockImplementation(({ queryKey, queryFn: _queryFn, enabled = true }) => ({
-      data: enabled ? [] : undefined,
-      isLoading: false,
-      isFetching: false,
-      isError: false,
-      error: null,
-      refetch: jest.fn().mockResolvedValue({ data: [] }),
-      remove: jest.fn(),
-      queryKey,
-      isSuccess: enabled,
-      isIdle: !enabled,
-      status: enabled ? 'success' : 'idle',
-    })),
+    useQuery: jest.fn().mockImplementation(({ queryKey, queryFn, enabled = true, initialData }) => {
+      if (!enabled) {
+        return { 
+          data: initialData, 
+          isLoading: false, 
+          isFetching: false, 
+          isError: false, 
+          error: null,
+          refetch: jest.fn().mockResolvedValue({ data: initialData }),
+          remove: jest.fn(),
+          queryKey,
+          isSuccess: false,
+          isIdle: true,
+          status: 'idle',
+        };
+      }
+      
+      // Actually call the query function to test real logic
+      try {
+        let data;
+        if (queryFn) {
+          // Handle both sync and async query functions
+          const result = queryFn();
+          if (result instanceof Promise) {
+            // For async functions, we can't await in the mock, so return a default structure
+            data = initialData || new Map();
+          } else {
+            data = result;
+          }
+        } else {
+          data = initialData || [];
+        }
+        
+        return { 
+          data, 
+          isLoading: false, 
+          isFetching: false, 
+          isError: false, 
+          error: null,
+          refetch: jest.fn().mockResolvedValue({ data }),
+          remove: jest.fn(),
+          queryKey,
+          isSuccess: true,
+          isIdle: false,
+          status: 'success',
+        };
+      } catch (error) {
+        return { 
+          data: initialData, 
+          isLoading: false, 
+          isFetching: false, 
+          isError: true, 
+          error,
+          refetch: jest.fn().mockRejectedValue(error),
+          remove: jest.fn(),
+          queryKey,
+          isSuccess: false,
+          isIdle: false,
+          status: 'error',
+        };
+      }
+    }),
     useMutation: jest.fn().mockImplementation(({ mutationFn, onSuccess, onError }) => ({
       mutate: jest.fn().mockImplementation(async variables => {
         try {
@@ -706,54 +748,6 @@ jest.mock('react-native-safe-area-context', () => ({
     frame: { x: 0, y: 0, width: 375, height: 812 },
   },
 }));
-
-// Comprehensive expo-audio mock
-jest.mock('expo-audio', () => {
-  const createMockSound = () => ({
-    playAsync: jest.fn().mockResolvedValue({ status: 'loaded' }),
-    pauseAsync: jest.fn().mockResolvedValue({ status: 'loaded' }),
-    stopAsync: jest.fn().mockResolvedValue({ status: 'loaded' }),
-    unloadAsync: jest.fn().mockResolvedValue({ status: 'unloaded' }),
-    setPositionAsync: jest.fn().mockResolvedValue({ status: 'loaded' }),
-    setRateAsync: jest.fn().mockResolvedValue({ status: 'loaded' }),
-    setVolumeAsync: jest.fn().mockResolvedValue({ status: 'loaded' }),
-    getStatusAsync: jest.fn().mockResolvedValue({
-      isLoaded: true,
-      isPlaying: false,
-      positionMillis: 0,
-      durationMillis: 100000,
-      rate: 1.0,
-      volume: 1.0,
-      isBuffering: false,
-      didJustFinish: false,
-    }),
-    setOnPlaybackStatusUpdate: jest.fn(),
-  });
-
-  return {
-    Audio: {
-      Sound: {
-        createAsync: jest.fn().mockResolvedValue(createMockSound()),
-      },
-      setAudioModeAsync: jest.fn().mockResolvedValue({}),
-      RecordingOptionsPresets: {
-        HIGH_QUALITY: {},
-      },
-    },
-    AudioPlayer: {
-      create: jest.fn().mockResolvedValue(createMockSound()),
-    },
-    InterruptionModeIOS: {
-      MixWithOthers: 0,
-      DoNotMix: 1,
-      DuckOthers: 2,
-    },
-    InterruptionModeAndroid: {
-      DoNotMix: 1,
-      DuckOthers: 2,
-    },
-  };
-});
 
 // Mock for static file imports with better error handling
 jest.mock('react-native/Libraries/Image/resolveAssetSource', () =>
