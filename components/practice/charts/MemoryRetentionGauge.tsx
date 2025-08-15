@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Canvas, Circle, Group, LinearGradient, Path, Skia, vec } from '@shopify/react-native-skia';
+import { Canvas, Group, LinearGradient, Path, Skia, vec } from '@shopify/react-native-skia';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { runOnJS, useAnimatedReaction, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -26,8 +26,6 @@ const GAUGE_WIDTH = 320;
 const GAUGE_HEIGHT = Math.round(GAUGE_WIDTH / GOLDEN_RATIO); // ~198, following golden ratio
 const GAUGE_RADIUS = Math.round(GAUGE_HEIGHT * 0.7); // Proportional radius based on height
 const GAUGE_STROKE_WIDTH = 20;
-const INDICATOR_SIZE = 12;
-const INDICATOR_GLOW_SIZE = 24;
 const START_ANGLE = 185;
 const TOTAL_SWEEP = 170;
 
@@ -74,7 +72,7 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
     // Static geometry values
     const centerX = GAUGE_WIDTH / 2;
     const centerY = GAUGE_HEIGHT - 15;
-    const indicatorRadius = GAUGE_RADIUS - GAUGE_STROKE_WIDTH / 2;
+
     const sweep = (animatedRetention / 100) * TOTAL_SWEEP;
 
     const animatedFilledPath = useMemo(() => {
@@ -92,10 +90,6 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
       return p;
     }, [centerX, centerY, sweep]);
 
-    const angle = START_ANGLE - (animatedRetention / 100) * TOTAL_SWEEP;
-    const angleRad = (angle * Math.PI) / 180;
-    const indicatorX = centerX + Math.cos(angleRad) * indicatorRadius;
-    const indicatorY = centerY + Math.sin(angleRad) * indicatorRadius;
     const gradientEnd = vec(
       GAUGE_WIDTH * 0.05 + (GAUGE_WIDTH * 0.9 * sweep) / TOTAL_SWEEP,
       GAUGE_HEIGHT / 2
@@ -223,36 +217,6 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
                     end={gradientEnd}
                   />
                 </Path>
-
-                {/* Indicator with glow */}
-                <Circle
-                  color={chartColors.withOpacity(retentionColor, 0.15)}
-                  cx={indicatorX}
-                  cy={indicatorY}
-                  r={INDICATOR_GLOW_SIZE}
-                  style="fill"
-                />
-                <Circle
-                  color={colors.background}
-                  cx={indicatorX}
-                  cy={indicatorY}
-                  r={INDICATOR_SIZE + 2}
-                  style="fill"
-                />
-                <Circle
-                  color={retentionColor}
-                  cx={indicatorX}
-                  cy={indicatorY}
-                  r={INDICATOR_SIZE}
-                  style="fill"
-                />
-                <Circle
-                  color={chartColors.withOpacity(colors.background, 0.4)}
-                  cx={indicatorX - 1}
-                  cy={indicatorY - 1}
-                  r={INDICATOR_SIZE - 3}
-                  style="fill"
-                />
               </Group>
             </Canvas>
 

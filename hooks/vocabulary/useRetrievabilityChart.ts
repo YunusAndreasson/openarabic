@@ -70,8 +70,11 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
 
     retrievabilityData.forEach((data, index) => {
       const x = dataPointPositions[index] || 0;
+      // Add padding to prevent data points from being clipped at chart edges
+      const padding = 8; // 8px padding from top and bottom
+      const chartHeight = GRAPH_HEIGHT_LARGE - padding * 2;
       const y =
-        GRAPH_HEIGHT_LARGE - (data.averageRetrievability / maxRetrievability) * GRAPH_HEIGHT_LARGE;
+        padding + chartHeight - (data.averageRetrievability / maxRetrievability) * chartHeight;
       points.push({ x, y, retrievability: data.averageRetrievability, date: data.date });
 
       if (index === 0) {
