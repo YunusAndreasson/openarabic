@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import React, { Fragment, memo, useCallback, useMemo, type FC } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BaseCard from '@common/BaseCard';
@@ -11,7 +11,6 @@ import { TimePicker } from '@ui/TimePicker';
 import { Toggle } from '@ui/Toggle';
 
 import { THEME_OPTIONS, ThemePicker } from '@/components/ThemePicker';
-import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { AccountBadge } from '@/components/account';
@@ -110,7 +109,11 @@ const AccountScreen: FC = () => {
         <BaseCard
           includePressAnimation={false}
           shadowSize="small"
-          style={[styles.sectionContainer, styles.sectionSpacing]}
+          style={[
+            styles.sectionContainer,
+            styles.sectionSpacing,
+            { marginTop: LAYOUT.SPACING.LARGE },
+          ]}
         >
           <View style={styles.linksContainer}>
             <View style={styles.settingRow}>
@@ -322,15 +325,22 @@ const AccountScreen: FC = () => {
                     </ThemedText>
                   </View>
                 </View>
-                <ThemedButton
-                  disabled={cacheSize === 0 || isClearingCache}
-                  loading={isClearingCache}
-                  size="small"
-                  style={styles.clearButton}
-                  title={STRINGS.CLEAR}
-                  variant="outlined"
-                  onPress={handleClearCache}
-                />
+                {isClearingCache ? (
+                  <View style={styles.clearButton}>
+                    <ActivityIndicator size="small" color={colors.tint} />
+                  </View>
+                ) : (
+                  <ThemedText
+                    type="label"
+                    weight="medium"
+                    colorName="tint"
+                    style={styles.clearButton}
+                    onPress={cacheSize > 0 ? handleClearCache : undefined}
+                    disabled={cacheSize === 0}
+                  >
+                    CLEAR
+                  </ThemedText>
+                )}
               </View>
             </BaseCard>
 
@@ -357,8 +367,8 @@ const AccountScreen: FC = () => {
                     </ThemedText>
                     <ThemedText
                       type="caption"
-                      colorName="metadataText"
-                      style={styles.userEmailText}
+                      colorName="error"
+                      style={[styles.userEmailText, { opacity: 0.7 }]}
                     >
                       {user?.email || STRINGS.NO_EMAIL}
                     </ThemedText>
@@ -548,10 +558,10 @@ const styles = StyleSheet.create({
   },
 
   clearButton: {
-    alignSelf: 'flex-end',
-    maxWidth: MIN_TOUCH_TARGET.LARGE * 2,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.TINY,
+    minWidth: MIN_TOUCH_TARGET.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
+    textAlign: 'center',
   },
 });
 

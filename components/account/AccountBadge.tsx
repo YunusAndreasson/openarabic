@@ -215,13 +215,13 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId }) =
         position: 'absolute' as const,
         bottom: -2,
         right: -2,
-        width: 20,
-        height: 20,
-        borderRadius: 10,
+        width: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
+        height: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
+        borderRadius: LAYOUT.BUTTON.ICON_SIZE.MEDIUM / 2,
         backgroundColor: colors.tint,
         justifyContent: 'center' as const,
         alignItems: 'center' as const,
-        borderWidth: 2,
+        borderWidth: LAYOUT.BORDER.WIDTH.THICK,
         borderColor: colors.background,
       },
       initialsText: { color: colors.background },
@@ -243,7 +243,7 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId }) =
   }
 
   return (
-    <Animated.View style={[dynamicStyles.profileCard, containerAnimatedStyle]}>
+    <Animated.View style={[styles.profileCard, dynamicStyles.profileCard, containerAnimatedStyle]}>
       <View style={styles.profileContent}>
         {/* Profile Photo */}
         <Pressable onPress={handlePhotoPress} style={styles.photoContainer}>
@@ -321,20 +321,19 @@ const styles = StyleSheet.create({
     borderRadius: PROFILE_PHOTO_SIZE / 2,
   },
   initialsText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     lineHeight:
-      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
+      LAYOUT.TYPOGRAPHY.SCALE.XLARGE * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
   },
   editIconContainer: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: LAYOUT.BUTTON.ICON_SIZE.XLARGE,
-    height: LAYOUT.BUTTON.ICON_SIZE.XLARGE,
-    borderRadius: LAYOUT.BUTTON.ICON_SIZE.XLARGE / 2,
+    bottom: -2,
+    right: -2,
+    width: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
+    height: LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
+    borderRadius: LAYOUT.BUTTON.ICON_SIZE.MEDIUM / 2,
     justifyContent: 'center',
     alignItems: 'center',
-    ...LAYOUT.ELEVATION.SMALL,
   },
   userInfo: {
     flex: 1,
