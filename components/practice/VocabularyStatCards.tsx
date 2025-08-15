@@ -57,6 +57,14 @@ export const VocabularyStatCards = memo(
       type: 'card',
     });
 
+    const dynamicStyles = useMemo(
+      () => ({
+        numberBadge: (config: WordCategoryConfig) => ({ backgroundColor: getBadgeColor(config) }),
+        numberText: { color: colors.background },
+      }),
+      [colors.background]
+    );
+
     const handleInfoPress = useCallback(() => {
       setIsCapacitySheetVisible(true);
     }, []);
@@ -191,8 +199,8 @@ export const VocabularyStatCards = memo(
                 config.disabled && { opacity: LAYOUT.OPACITY.HIGH },
               ]}
             >
-              <View style={[styles.numberBadge, { backgroundColor: getBadgeColor(config) }]}>
-                <ThemedText style={[styles.numberText, { color: colors.background }]}>
+              <View style={[styles.numberBadge, dynamicStyles.numberBadge(config)]}>
+                <ThemedText style={[styles.numberText, dynamicStyles.numberText]}>
                   {getBadgeContent(config)}
                 </ThemedText>
               </View>

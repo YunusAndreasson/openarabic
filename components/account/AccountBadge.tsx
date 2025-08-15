@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import React, { memo, useCallback, useEffect, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Linking, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -186,19 +186,45 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId }) =
   }));
 
   // Memoized styles
-  const dynamicStyles = React.useMemo(
+  const dynamicStyles = useMemo(
     () => ({
-      profileCard: [
-        styles.profileCard,
-        {
-          backgroundColor: colors.card,
-          ...LAYOUT.ELEVATION.SMALL,
-        },
-      ],
-      // Use elevation color so the inner badge harmonizes with dark mode without white fill
-      initialsContainer: [styles.initialsContainer, { backgroundColor: colors.elevation2 }],
-      photoRing: [styles.photoRing, { borderColor: colors.tint }],
-      editIconContainer: [styles.editIconContainer, { backgroundColor: colors.tint }],
+      profileCard: {
+        backgroundColor: colors.elevation1,
+        shadowColor: colors.shadow,
+        ...LAYOUT.ELEVATION.SMALL,
+      },
+      photoRing: {
+        width: PROFILE_PHOTO_SIZE + 4,
+        height: PROFILE_PHOTO_SIZE + 4,
+        borderRadius: (PROFILE_PHOTO_SIZE + 4) / 2,
+        borderWidth: LAYOUT.BORDER.WIDTH.THICK,
+        borderColor: colors.tint,
+        justifyContent: 'center' as const,
+        alignItems: 'center' as const,
+        position: 'relative' as const,
+      },
+      initialsContainer: {
+        width: PROFILE_PHOTO_SIZE,
+        height: PROFILE_PHOTO_SIZE,
+        borderRadius: PROFILE_PHOTO_SIZE / 2,
+        backgroundColor: colors.tint,
+        justifyContent: 'center' as const,
+        alignItems: 'center' as const,
+      },
+      editIconContainer: {
+        position: 'absolute' as const,
+        bottom: -2,
+        right: -2,
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        backgroundColor: colors.tint,
+        justifyContent: 'center' as const,
+        alignItems: 'center' as const,
+        borderWidth: 2,
+        borderColor: colors.background,
+      },
+      initialsText: { color: colors.background },
     }),
     [colors]
   );
@@ -236,7 +262,7 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId }) =
                     type="heading2"
                     weight="bold"
                     // Use dark text to be legible on elevation background in dark mode
-                    style={[styles.initialsText, { color: colors.text }]}
+                    style={[styles.initialsText, dynamicStyles.initialsText]}
                   >
                     {initials}
                   </ThemedText>
@@ -289,26 +315,10 @@ const styles = StyleSheet.create({
   photoWrapper: {
     position: 'relative',
   },
-  photoRing: {
-    width: PROFILE_PHOTO_SIZE + 4,
-    height: PROFILE_PHOTO_SIZE + 4,
-    borderRadius: (PROFILE_PHOTO_SIZE + 4) / 2,
-    borderWidth: LAYOUT.BORDER.WIDTH.THICK,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
   profilePhoto: {
     width: PROFILE_PHOTO_SIZE,
     height: PROFILE_PHOTO_SIZE,
     borderRadius: PROFILE_PHOTO_SIZE / 2,
-  },
-  initialsContainer: {
-    width: PROFILE_PHOTO_SIZE,
-    height: PROFILE_PHOTO_SIZE,
-    borderRadius: PROFILE_PHOTO_SIZE / 2,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   initialsText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,

@@ -99,26 +99,33 @@ function ThemedButtonComponent({
   const iconSize = useMemo(() => getIconSize(size, customIconSize), [size, customIconSize]);
 
   // Button styles
-  const buttonStyle = [
-    styles.button,
-    variant === 'filled'
-      ? { backgroundColor: disabled ? colors.disabled : colors.tint }
-      : {
-          backgroundColor: colors.transparent,
-          borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-          borderColor: disabled ? colors.disabled : colors.tint,
-        },
-    size === 'small' && styles.buttonSmall,
-    size === 'large' && styles.buttonLarge,
-    style,
-  ];
+  const buttonStyle = useMemo(
+    () => [
+      styles.button,
+      size === 'large' && styles.buttonLarge,
+      size === 'small' && styles.buttonSmall,
+      variant === 'filled' && { backgroundColor: colors.tint },
+      variant === 'outlined' && { borderWidth: LAYOUT.BORDER.WIDTH.THIN, borderColor: colors.tint },
+      disabled && { opacity: LAYOUT.OPACITY.MEDIUM },
+    ],
+    [size, variant, colors.tint, disabled]
+  );
 
-  const buttonTextStyle = [
-    styles.buttonText,
-    size === 'small' && styles.buttonTextSmall,
-    size === 'large' && styles.buttonTextLarge,
-    textWeight === 'normal' && styles.normalText,
-  ];
+  const buttonTextStyle = useMemo(
+    () => [
+      styles.buttonText,
+      size === 'large' && styles.buttonTextLarge,
+      size === 'small' && styles.buttonTextSmall,
+    ],
+    [size]
+  );
+
+  const iconContainerStyle = useMemo(
+    () => [styles.iconContainer, size === 'small' && styles.iconContainerSmall],
+    [size]
+  );
+
+  const textOpacityStyle = useMemo(() => (loading && !icon ? { opacity: 0 } : {}), [loading, icon]);
 
   // Accessibility properties
   const accessibilityLabel = props.accessibilityLabel || title;
@@ -143,7 +150,7 @@ function ThemedButtonComponent({
     >
       <View style={styles.innerContainer}>
         {icon && (
-          <View style={[styles.iconContainer, size === 'small' && styles.iconContainerSmall]}>
+          <View style={iconContainerStyle}>
             {loading ? (
               <ActivityIndicator color={textColor} size="small" />
             ) : (
@@ -173,7 +180,7 @@ function ThemedButtonComponent({
                     : 'text'
                   : 'tint'
               }
-              style={[buttonTextStyle, loading && !icon && { opacity: 0 }]}
+              style={[buttonTextStyle, textOpacityStyle]}
               type={getTextType(size, textWeight)}
             >
               {uppercase ? title?.toUpperCase() : title}
@@ -235,11 +242,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     width: '100%',
-  },
-  normalText: {
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.REGULAR,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.RELAXED,
-    textTransform: 'none',
   },
 });
 

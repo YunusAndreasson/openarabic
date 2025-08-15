@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState, useEffect, forwardRef, useMemo, useCallback } from 'react';
 import type { ComponentProps } from 'react';
+import { forwardRef, useCallback, useEffect, useMemo, useState } from 'react';
 import type {
-  TextInputProps,
+  GestureResponderEvent,
   NativeSyntheticEvent,
   TextInputFocusEventData,
-  GestureResponderEvent,
+  TextInputProps,
 } from 'react-native';
 import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -85,11 +85,16 @@ export const ThemedInput = forwardRef<TextInput, ThemedInputProps>(
         styles.container,
         {
           backgroundColor: colors.elevation1,
-          borderColor: error ? colors.tabIconSelected : isFocused ? colors.tint : colors.icon,
+          borderColor: error ? colors.icon : isFocused ? colors.tabIconSelected : colors.tint,
         },
         isFocused && styles.containerFocused,
       ],
       [colors.elevation1, colors.icon, colors.tabIconSelected, colors.tint, error, isFocused]
+    );
+
+    const inputStyle = useMemo(
+      () => [styles.input, { color: colors.text }, style],
+      [colors.text, style]
     );
 
     const handleFocus = useCallback(
@@ -120,7 +125,7 @@ export const ThemedInput = forwardRef<TextInput, ThemedInputProps>(
             autoCorrect={false}
             placeholderTextColor={colors.textTertiary}
             selectionColor={colors.tint}
-            style={[styles.input, { color: colors.text }, style]}
+            style={inputStyle}
             textAlignVertical="center"
             onBlur={handleBlur}
             onFocus={handleFocus}

@@ -172,6 +172,16 @@ export default function NowPlayingModal() {
     audioPlayer.currentTrack?.articleId,
   ]);
 
+  const headerStyle = useMemo(
+    () => [styles.header, { paddingTop: insets.top + LAYOUT.SPACING.MEDIUM }],
+    [insets.top]
+  );
+
+  const bottomControlsStyle = useMemo(
+    () => [styles.bottomControlsContainer, { bottom: bottomPosition }],
+    [bottomPosition]
+  );
+
   return (
     <ThemedView style={styles.container}>
       <View style={styles.backgroundContainer}>
@@ -193,7 +203,7 @@ export default function NowPlayingModal() {
 
       <ModalDragIndicator />
 
-      <View style={[styles.header, { paddingTop: insets.top + LAYOUT.SPACING.MEDIUM }]}>
+      <View style={headerStyle}>
         <View style={styles.headerInfo}>
           <ThemedText
             type="heading3"
@@ -246,7 +256,7 @@ export default function NowPlayingModal() {
         </Animated.View>
       </View>
 
-      <View style={[styles.bottomControlsContainer, { bottom: bottomPosition }]}>
+      <View style={bottomControlsStyle}>
         <View style={styles.bottomControls}>
           <View style={styles.progressSection}>
             <AudioProgressIndicator

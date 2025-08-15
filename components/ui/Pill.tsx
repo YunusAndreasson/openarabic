@@ -78,6 +78,15 @@ const Pill = memo(
       [isDarkMode, colors]
     );
 
+    const getPressableStyle = useCallback(
+      ({ pressed }: { pressed: boolean }) => [
+        containerStyle,
+        pillStyle,
+        pressed && !isSelected && pressedStyle,
+      ],
+      [containerStyle, pillStyle, isSelected, pressedStyle]
+    );
+
     // Non-interactive category pill
     if (isCategory && !onSelect) {
       return (
@@ -101,7 +110,7 @@ const Pill = memo(
         disabled={!onSelect}
         accessibilityRole="button"
         accessibilityState={{ selected: !!isSelected }}
-        style={({ pressed }) => [containerStyle, pillStyle, pressed && !isSelected && pressedStyle]}
+        style={getPressableStyle}
         onPress={handlePress}
       >
         <ThemedText

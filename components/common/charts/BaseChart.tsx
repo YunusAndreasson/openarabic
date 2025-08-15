@@ -1,4 +1,4 @@
-import { memo, type ReactNode } from 'react';
+import { memo, type ReactNode, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Y_AXIS_WIDTH } from '@charts/ChartAxes';
@@ -43,6 +43,16 @@ export const BaseChart = memo(
   }: BaseChartProps) => {
     const colors = useColors();
 
+    const emptyContainerStyle = useMemo(
+      () => [styles.emptyContainer, { backgroundColor: colors.elevation2 }],
+      [colors.elevation2]
+    );
+
+    const chartSectionStyle = useMemo(
+      () => [styles.chartSection, { minHeight: contentHeight }],
+      [contentHeight]
+    );
+
     // Empty state
     if (!hasData) {
       return (
@@ -58,7 +68,7 @@ export const BaseChart = memo(
                 </ThemedText>
               </View>
             )}
-            <View style={[styles.emptyContainer, { backgroundColor: colors.elevation2 }]}>
+            <View style={emptyContainerStyle}>
               <ThemedText colorName="secondaryText" style={styles.emptyText}>
                 {emptyStateText}
               </ThemedText>
@@ -87,7 +97,7 @@ export const BaseChart = memo(
           )}
 
           {/* Chart Content */}
-          <View style={[styles.chartSection, { minHeight: contentHeight }]}>{children}</View>
+          <View style={chartSectionStyle}>{children}</View>
 
           {hasData && bottomSummary && bottomSummary.length > 0 ? (
             <View style={styles.summaryRow}>

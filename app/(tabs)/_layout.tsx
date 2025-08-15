@@ -16,8 +16,10 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth';
 import { useColors, useIsDarkMode } from '@/hooks/theme';
+import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import { closeStreakBottomSheet } from '@/store/streakSlice';
+import { calculateWordStates } from '@/utils/memoryCapacityGauge';
 
 const TAB_SCREENS = [
   {
@@ -94,6 +96,20 @@ export default function TabLayout(): JSX.Element {
   const colors = useColors();
   const dispatch = useAppDispatch();
   const isStreakBottomSheetVisible = useAppSelectorMemo(state => state.streak.isBottomSheetVisible);
+
+  // Get study words data for memory capacity badge
+  const { allWords: studyWords } = useFSRSQueries({
+    userId: session?.user?.id,
+  });
+
+  // Calculate if memory capacity is low (red dot should show)
+  const shouldShowMemoryBadge = useMemo(() => {
+    if (!studyWords?.length) return false;
+ 
+    const { dueWords } = calculateWordStates(studyWords);
+    // Show red dot only when there are due words (red phase) - not for struggling words (orange phase)
+    return dueWords > 0;
+  }, [studyWords]);
 
   useEffect(() => {
     if (!isLoading && !session?.user) {
@@ -174,6 +190,18 @@ export default function TabLayout(): JSX.Element {
                   style={focused ? styles.focusedIcon : styles.unfocusedIcon}
                 />
               ),
+              // Add red dot badge for practice tab when memory capacity is low
+              ...(screen.name === 'practice' && {
+                tabBarBadge: shouldShowMemoryBadge ? '' : undefined,
+                tabBarBadgeStyle: {
+                  backgroundColor: colors.error,
+                  minWidth: 8,
+                  height: 8,
+                  borderRadius: 4,
+                  top: 4,
+                  right: 4,
+                },
+              }),
               // Header customizations for specific screens
               ...(screen.name === 'read' && {
                 headerRight: () => <HeaderProfile />,

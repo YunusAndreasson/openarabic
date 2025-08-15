@@ -1,4 +1,4 @@
-import { memo, useMemo, type FC } from 'react';
+import { memo, useCallback, useMemo, type FC } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
@@ -49,6 +49,15 @@ const BaseCard: FC<BaseCardProps> = memo(
 
     const combinedContentStyle = useMemo(() => [styles.content, contentStyle], [contentStyle]);
 
+    const getPressableStyle = useCallback(
+      ({ pressed }: { pressed: boolean }) => [
+        combinedCardStyle,
+        pressed && !disabled && includePressAnimation && { opacity: LAYOUT.OPACITY.PRESSED },
+        disabled && { opacity: LAYOUT.OPACITY.MEDIUM },
+      ],
+      [combinedCardStyle, disabled, includePressAnimation]
+    );
+
     if (isLoading) {
       return (
         <View style={combinedCardStyle} testID={testID}>
@@ -74,11 +83,7 @@ const BaseCard: FC<BaseCardProps> = memo(
           borderless: false,
           foreground: true,
         }}
-        style={({ pressed }: { pressed: boolean }) => [
-          combinedCardStyle,
-          pressed && !disabled && includePressAnimation && { opacity: LAYOUT.OPACITY.PRESSED },
-          disabled && { opacity: LAYOUT.OPACITY.MEDIUM },
-        ]}
+        style={getPressableStyle}
         onPress={onPress}
         onLongPress={onLongPress}
       >

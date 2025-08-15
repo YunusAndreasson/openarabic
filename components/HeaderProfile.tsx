@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import React, { memo, useCallback, useEffect, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -52,6 +52,16 @@ const HeaderProfile = memo(({ size = 28 }: HeaderProfileProps) => {
     dispatch(openStreakBottomSheet());
   }, [dispatch]);
 
+  const profilePhotoStyle = useMemo(
+    () => [styles.profilePhoto, { width: size, height: size, borderRadius: size / 2 }],
+    [size]
+  );
+
+  const streakTextStyle = useMemo(
+    () => [styles.streakText, { color: hasStreak ? colors.warning : colors.textTertiary }],
+    [hasStreak, colors.warning, colors.textTertiary]
+  );
+
   // Load saved profile photo
   useEffect(() => {
     if (!user?.id) return;
@@ -85,11 +95,7 @@ const HeaderProfile = memo(({ size = 28 }: HeaderProfileProps) => {
         hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
       >
         <Ionicons name="flame" size={16} color={hasStreak ? colors.warning : colors.textTertiary} />
-        <ThemedText
-          type="caption"
-          weight="semibold"
-          style={[styles.streakText, { color: hasStreak ? colors.warning : colors.textTertiary }]}
-        >
+        <ThemedText type="caption" style={streakTextStyle} numberOfLines={1}>
           {currentStreak}
         </ThemedText>
       </Pressable>
@@ -99,7 +105,7 @@ const HeaderProfile = memo(({ size = 28 }: HeaderProfileProps) => {
         {profilePhotoUri ? (
           <Image
             source={{ uri: profilePhotoUri }}
-            style={[styles.profilePhoto, { width: size, height: size, borderRadius: size / 2 }]}
+            style={profilePhotoStyle}
             contentFit="cover"
             cachePolicy="memory-disk"
           />

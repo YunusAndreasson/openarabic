@@ -108,6 +108,15 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
       GAUGE_HEIGHT / 2
     );
 
+    const dynamicStyles = useMemo(
+      () => ({
+        capacityText: { color: getCapacityColor() },
+        actionCard: { backgroundColor: getActionCardBackground() },
+        actionText: { color: getCapacityColor() },
+      }),
+      [getCapacityColor, getActionCardBackground]
+    );
+
     return (
       <BaseChart
         contentHeight={GAUGE_HEIGHT + 80}
@@ -230,7 +239,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
 
             {/* Center percentage */}
             <View style={styles.centerSection}>
-              <ThemedText style={[styles.capacityText, { color: getCapacityColor() }]}>
+              <ThemedText style={[styles.capacityText, dynamicStyles.capacityText]}>
                 {Math.round(animatedScore)}%
               </ThemedText>
             </View>
@@ -238,8 +247,8 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
 
           {/* Bottom readiness/status */}
           <View style={styles.bottomSection}>
-            <View style={[styles.actionCard, { backgroundColor: getActionCardBackground() }]}>
-              <ThemedText style={[styles.actionText, { color: getCapacityColor() }]}>
+            <View style={[styles.actionCard, dynamicStyles.actionCard]}>
+              <ThemedText style={[styles.actionText, dynamicStyles.actionText]}>
                 {getReadinessMessage()}
               </ThemedText>
             </View>
