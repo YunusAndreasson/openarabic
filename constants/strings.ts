@@ -168,11 +168,6 @@ export const STRINGS = {
   INTERLEAVED_REVIEW: 'Study all words', // GREEN PHASE: Clear action verb + object
   NO_WORDS_TO_STUDY: 'No words to study',
 
-  // Practice button descriptions - streamlined and action-oriented
-  URGENT_MEMORY_PRESERVATION: 'Restores memory capacity', // Clear capacity improvement
-  EFFORTFUL_RETRIEVAL_PRACTICE: 'Strengthen memory capacity from weak spots', // Clear capacity building
-  INTERLEAVED_REVIEW_DESCRIPTION: 'Maximize memory capacity for new words', // Clear capacity optimization
-
   // Insights & analytics
   INSIGHTS: 'Insights',
   PROGRESS: 'Progress',
