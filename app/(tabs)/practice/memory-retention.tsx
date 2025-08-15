@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   },
   tipIcon: {
     marginRight: LAYOUT.SPACING.SMALL,
-    marginTop: 2,
+    marginTop: LAYOUT.SPACING.TINY,
   },
   tipText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
