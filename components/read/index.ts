@@ -9,5 +9,5 @@ export { default as HorizontalFeaturedSection } from './HorizontalFeaturedSectio
 export { default as IntelligentArticleSection } from './IntelligentArticleSection';
 export { default as ListArticleItem } from './ListArticleItem';
 export { StreakChart } from './StreakChart';
-export { StreakHistoryBottomSheet } from './StreakHistoryBottomSheet';
+
 export { StreakMetrics } from './StreakMetrics';

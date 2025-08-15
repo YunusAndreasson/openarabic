@@ -6,7 +6,7 @@ import editModeReducer from '../../store/editModeSlice';
 import filtersReducer from '../../store/filtersSlice';
 import listenReducer from '../../store/listenSlice';
 import settingsReducer from '../../store/settingsSlice';
-import streakReducer from '../../store/streakSlice';
+
 import themeReducer from '../../store/themeSlice';
 
 const rootReducer = combineReducers({
@@ -15,7 +15,6 @@ const rootReducer = combineReducers({
   filters: filtersReducer,
   listen: listenReducer,
   editMode: editModeReducer,
-  streak: streakReducer,
 });
 
 export type TestRootState = ReturnType<typeof rootReducer>;
@@ -24,12 +23,12 @@ export const defaultPreloadedState: TestRootState = rootReducer(undefined, {
   type: '@@INIT',
 }) as TestRootState;
 
-export const setupTestStore = (
-  preloadedState?: Partial<TestRootState>
-) =>
+export const setupTestStore = (preloadedState?: Partial<TestRootState>) =>
   configureStore({
     reducer: rootReducer,
-    preloadedState: preloadedState ? { ...defaultPreloadedState, ...preloadedState } : defaultPreloadedState,
+    preloadedState: preloadedState
+      ? { ...defaultPreloadedState, ...preloadedState }
+      : defaultPreloadedState,
   });
 
 type Props = {

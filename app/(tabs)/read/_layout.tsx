@@ -88,6 +88,13 @@ export default function ReadLayout(): JSX.Element {
           });
         }}
       />
+      <Stack.Screen
+        name="progress-modal"
+        options={createNavigationOptions(colors, {
+          title: STRINGS.PROGRESS,
+          headerLeft: () => <DoneButton />,
+        })}
+      />
     </Stack>
   );
 }

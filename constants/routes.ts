@@ -27,7 +27,7 @@ export const ROUTE_PATHS = {
   ACCOUNT_HELP: '/(tabs)/read/account/help',
   ACCOUNT_FONT_SELECTOR: '/(tabs)/read/account/FontSelector',
   ACCOUNT_ISLAMIC_CALENDAR: '/(tabs)/read/account/islamicCalendar',
-  ACCOUNT_PROGRESS: '/(tabs)/read/account/studyStats',
+
   PRACTICE_REVIEW: '/practice/review',
   PRACTICE_DICTIONARY: '/(tabs)/practice/dictionary',
   NOW_PLAYING: '/(tabs)/listen/now-playing',

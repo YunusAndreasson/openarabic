@@ -41,22 +41,8 @@ jest.mock('@charts/chartColors', () => ({
   }),
 }));
 
-jest.mock('@/hooks/vocabulary/useMemoryCapacityGauge', () => ({
-  useMemoryCapacityGauge: () => ({
-    memoryMetrics: {
-      capacityScore: 75,
-      dueWords: 0,
-      strugglingWords: 0,
-      masteredWords: 0,
-    },
-    getCapacityColor: () => '#00ff00',
-    getReadinessMessage: () => 'Ready to add words',
-    getActionCardBackground: () => '#f0fff0',
-  }),
-}));
-
-jest.mock('@/components/practice/charts/MemoryCapacityGauge', () => ({
-  MemoryCapacityGauge: () => null,
+jest.mock('@/components/practice/charts/MemoryRetentionGauge', () => ({
+  MemoryRetentionGauge: () => null,
 }));
 
 jest.mock('@/hooks/animations', () => ({

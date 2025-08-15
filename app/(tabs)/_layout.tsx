@@ -1,12 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
 import { BlurView } from 'expo-blur';
 import { Tabs, router } from 'expo-router';
 import type { JSX } from 'react';
-import React, { Fragment, memo, useCallback, useEffect, useMemo } from 'react';
+import React, { Fragment, memo, useEffect, useMemo } from 'react';
 import { Platform, StyleSheet } from 'react-native';
-
-import { StreakHistoryBottomSheet } from '@read/StreakHistoryBottomSheet';
 
 import HeaderProfile from '@/components/HeaderProfile';
 import DictionaryButton from '@/components/ui/DictionaryButton';
@@ -17,8 +14,6 @@ import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth';
 import { useColors, useIsDarkMode } from '@/hooks/theme';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
-import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
-import { closeStreakBottomSheet } from '@/store/streakSlice';
 
 const TAB_SCREENS = [
   {
@@ -93,8 +88,6 @@ TabBarBackground.displayName = 'TabBarBackground';
 export default function TabLayout(): JSX.Element {
   const { session, isLoading } = useAuth();
   const colors = useColors();
-  const dispatch = useAppDispatch();
-  const isStreakBottomSheetVisible = useAppSelectorMemo(state => state.streak.isBottomSheetVisible);
 
   // Get study words data for memory capacity badge
   const { allWords: studyWords } = useFSRSQueries({
@@ -107,7 +100,7 @@ export default function TabLayout(): JSX.Element {
 
     // Calculate current memory retention using the same logic as the gauge
     const wordsWithReviews = studyWords.filter(word => word.fsrs_last_review !== null);
-    
+
     if (wordsWithReviews.length === 0) return false;
 
     // Calculate average retention based on FSRS state and stability
@@ -130,7 +123,7 @@ export default function TabLayout(): JSX.Element {
     if (validWords === 0) return false;
 
     const averageRetention = totalRetention / validWords;
-    
+
     // Show red dot when retention is below 40% (poor threshold)
     return averageRetention < 40;
   }, [studyWords]);
@@ -140,22 +133,6 @@ export default function TabLayout(): JSX.Element {
       router.replace(ROUTE_PATHS.AUTH);
     }
   }, [session, isLoading]);
-
-  // Close streak modal when tab loses focus
-  useFocusEffect(
-    useCallback(() => {
-      return () => {
-        // Cleanup function - close streak modal when leaving tab
-        if (isStreakBottomSheetVisible) {
-          dispatch(closeStreakBottomSheet());
-        }
-      };
-    }, [dispatch, isStreakBottomSheetVisible])
-  );
-
-  const handleCloseStreakBottomSheet = useCallback(() => {
-    dispatch(closeStreakBottomSheet());
-  }, [dispatch]);
 
   // Memoize dynamic styles for better performance
   const tabBarStyleAndroid = useMemo(
@@ -240,12 +217,6 @@ export default function TabLayout(): JSX.Element {
           />
         ))}
       </Tabs>
-
-      {/* Global Streak History Bottom Sheet */}
-      <StreakHistoryBottomSheet
-        isVisible={isStreakBottomSheetVisible}
-        onClose={handleCloseStreakBottomSheet}
-      />
     </>
   );
 }

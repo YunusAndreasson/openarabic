@@ -232,14 +232,6 @@ describe('Tab navigation', () => {
       }),
     }));
 
-    // Mock the calculateWordStates utility
-    jest.doMock('@/utils/memoryCapacityGauge', () => ({
-      calculateWordStates: () => ({
-        dueWords: 1,
-        strugglingWords: 0,
-      }),
-    }));
-
     const { getByTestId } = render(
       <TestStoreProvider>
         <TabLayout />
@@ -285,14 +277,6 @@ describe('Tab navigation', () => {
         isLoading: false,
         isFetching: false,
         error: null,
-      }),
-    }));
-
-    // Mock the calculateWordStates utility - no due words, only struggling
-    jest.doMock('@/utils/memoryCapacityGauge', () => ({
-      calculateWordStates: () => ({
-        dueWords: 0,
-        strugglingWords: 1,
       }),
     }));
 

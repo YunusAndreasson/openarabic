@@ -11,8 +11,6 @@ import { useReadingStreak } from '@/hooks/articles/useReadingStreak';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
-import { useAppDispatch } from '@/store/hooks';
-import { openStreakBottomSheet } from '@/store/streakSlice';
 import { handleError } from '@/utils/errorHandling';
 import { getSafeStorage } from '@/utils/safeAsyncStorage';
 import { getFirstNameFromEmail } from '@/utils/stringUtils';
@@ -35,7 +33,6 @@ interface HeaderProfileProps {
 const HeaderProfile = memo(({ size = 28 }: HeaderProfileProps) => {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
-  const dispatch = useAppDispatch();
   const { user } = useAuth();
   const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(null);
 
@@ -49,8 +46,8 @@ const HeaderProfile = memo(({ size = 28 }: HeaderProfileProps) => {
   }, []);
 
   const handleStreakPress = useCallback(() => {
-    dispatch(openStreakBottomSheet());
-  }, [dispatch]);
+    router.push('/(tabs)/read/progress-modal');
+  }, []);
 
   const profilePhotoStyle = useMemo(
     () => [styles.profilePhoto, { width: size, height: size, borderRadius: size / 2 }],

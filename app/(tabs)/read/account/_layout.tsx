@@ -25,13 +25,7 @@ export default function AccountLayout(): JSX.Element {
           headerLeft: () => <DoneButton />,
         })}
       />
-      <Stack.Screen
-        name="studyStats"
-        options={createNavigationOptions(colors, {
-          title: STRINGS.PROGRESS,
-          headerLeft: () => <DoneButton />,
-        })}
-      />
+
       <Stack.Screen
         name="help"
         options={createNavigationOptions(colors, {

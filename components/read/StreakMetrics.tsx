@@ -96,7 +96,6 @@ StreakMetrics.displayName = 'StreakMetrics';
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
   metricsRow: {
