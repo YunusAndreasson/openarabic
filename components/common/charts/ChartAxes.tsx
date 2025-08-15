@@ -155,12 +155,11 @@ export const ChartAxes = memo(
                     {
                       color: textColor,
                       fontWeight: isToday ? '600' : '500',
-                      textDecorationLine: isToday ? 'underline' : 'none',
                       textAlign: 'center',
                     },
                   ]}
                 >
-                  {label}
+                  {isToday ? 'Today' : label}
                 </ThemedText>
               </View>
             );

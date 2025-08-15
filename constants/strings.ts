@@ -172,8 +172,9 @@ export const STRINGS = {
   INSIGHTS: 'Insights',
   PROGRESS: 'Progress',
   MEMORY_CAPACITY: 'Memory capacity',
+  MEMORY_CAPACITY_EXPLANATION_TITLE: 'Memory capacity',
   MEMORY_CAPACITY_EXPLANATION:
-    'Memory capacity shows how many new words you can add. Complete due reviews and strengthen weak words to increase capacity.',
+    'Memory capacity shows your current retention percentage. At 100%, you are expected to be able to recall 100% of your vocabulary words.',
   MEMORY_CAPACITY_TIP: 'Add new words when capacity is high',
   CAPACITY_SCORE: 'Memory capacity',
   DUE_WORDS: 'Due',

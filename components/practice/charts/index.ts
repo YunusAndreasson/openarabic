@@ -1,4 +1,4 @@
 export { EfficiencyChart } from './EfficiencyChart';
 export { MasteryChart } from './MasteryChart';
-export { MemoryCapacityGauge } from './MemoryCapacityGauge';
+export { MemoryRetentionGauge } from './MemoryRetentionGauge';
 export { RetrievabilityChart } from './RetrievabilityChart';

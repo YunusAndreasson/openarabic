@@ -11,7 +11,6 @@ interface ChartGridProps {
   topPadding?: number;
   xLabelPositions?: number[]; // X positions for vertical grid lines (daily positions)
   yMax?: number; // Maximum value for y-axis (default 100 for percentages)
-  todayIndex?: number; // Optional: highlight today's vertical line
 }
 
 /**
@@ -19,14 +18,7 @@ interface ChartGridProps {
  * without overwhelming the data visualization
  */
 export const ChartGrid = memo(
-  ({
-    width,
-    height,
-    topPadding = 0,
-    xLabelPositions = [],
-    yMax = 100,
-    todayIndex,
-  }: ChartGridProps) => {
+  ({ width, height, topPadding = 0, xLabelPositions = [], yMax = 100 }: ChartGridProps) => {
     const isDarkMode = useIsDarkMode();
     const colors = useColors();
 
@@ -54,7 +46,7 @@ export const ChartGrid = memo(
 
     // Vertical lines at daily positions for temporal reference
     const verticalLines = useMemo(() => {
-      return xLabelPositions.map((x, idx) => ({ x, idx })).filter(v => v.x !== undefined);
+      return xLabelPositions.map(x => ({ x })).filter(v => v.x !== undefined);
     }, [xLabelPositions]);
 
     return (
@@ -72,21 +64,16 @@ export const ChartGrid = memo(
         ))}
 
         {/* Vertical grid lines for daily reference */}
-        {verticalLines.map(({ x, idx }) => {
-          const isToday = todayIndex != null && idx === todayIndex;
-          const lineColor = isToday ? borderColor : gridColor;
-          const stroke = isToday ? 1.25 : 0.75;
-          return (
-            <Line
-              key={`vertical-grid-line-${x}`}
-              color={lineColor}
-              p1={{ x, y: topPadding }}
-              p2={{ x, y: height }}
-              strokeWidth={stroke}
-              style="stroke"
-            />
-          );
-        })}
+        {verticalLines.map(({ x }) => (
+          <Line
+            key={`vertical-grid-line-${x}`}
+            color={gridColor}
+            p1={{ x, y: topPadding }}
+            p2={{ x, y: height }}
+            strokeWidth={0.75}
+            style="stroke"
+          />
+        ))}
 
         {/* Perfect chart borders for professional definition */}
         {/* Bottom border (x-axis) - clean baseline */}

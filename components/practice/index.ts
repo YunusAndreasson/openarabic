@@ -1,3 +1,4 @@
+export { default as MemoryRetentionGauge } from './charts/MemoryRetentionGauge';
 export { default as DictionarySortingHeader } from './DictionarySortingHeader';
 export { DictionaryWordCard } from './DictionaryWordCard';
 export { default as ErrorMessage } from './ErrorMessage';

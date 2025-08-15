@@ -102,6 +102,11 @@ export default function VocabularyScreen(): JSX.Element {
     [user, router]
   );
 
+  // Handle memory retention gauge info press
+  const handleMemoryRetentionInfo = useCallback(() => {
+    router.push('/(tabs)/practice/memory-retention');
+  }, [router]);
+
   // Fix: Use the actual due words data count instead of database view
   // This ensures consistency between display and practice session
   const dueWordsCount = dueWordsData?.length ?? 0;
@@ -206,8 +211,9 @@ export default function VocabularyScreen(): JSX.Element {
               dueWords={dueWordsCount}
               learningWords={calculatedStats.learningWords}
               masteredWords={calculatedStats.masteredWords}
-              studyWords={filteredStudyWords} // Use all study words for memory capacity gauge
+              studyWords={filteredStudyWords} // Use all study words for memory retention gauge
               onStartReview={handleStartReview}
+              onInfoPress={handleMemoryRetentionInfo}
               eligibleAllWordsCount={eligibleAllWordsCount}
             />
           </View>

@@ -19,7 +19,6 @@ import { useColors, useIsDarkMode } from '@/hooks/theme';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import { closeStreakBottomSheet } from '@/store/streakSlice';
-import { calculateWordStates } from '@/utils/memoryCapacityGauge';
 
 const TAB_SCREENS = [
   {
@@ -102,13 +101,38 @@ export default function TabLayout(): JSX.Element {
     userId: session?.user?.id,
   });
 
-  // Calculate if memory capacity is low (red dot should show)
+  // Calculate if memory retention is poor (red dot should show)
   const shouldShowMemoryBadge = useMemo(() => {
     if (!studyWords?.length) return false;
- 
-    const { dueWords } = calculateWordStates(studyWords);
-    // Show red dot only when there are due words (red phase) - not for struggling words (orange phase)
-    return dueWords > 0;
+
+    // Calculate current memory retention using the same logic as the gauge
+    const wordsWithReviews = studyWords.filter(word => word.fsrs_last_review !== null);
+    
+    if (wordsWithReviews.length === 0) return false;
+
+    // Calculate average retention based on FSRS state and stability
+    let totalRetention = 0;
+    let validWords = 0;
+
+    wordsWithReviews.forEach(word => {
+      if (word.fsrs_state === 2 && word.fsrs_stability !== null) {
+        // Mastered words: retention based on stability
+        const retention = Math.min(100, Math.max(0, word.fsrs_stability * 10));
+        totalRetention += retention;
+        validWords++;
+      } else if (word.fsrs_state === 0 || word.fsrs_state === 1 || word.fsrs_state === 3) {
+        // Learning words: lower retention
+        totalRetention += 30; // Learning words have lower retention
+        validWords++;
+      }
+    });
+
+    if (validWords === 0) return false;
+
+    const averageRetention = totalRetention / validWords;
+    
+    // Show red dot when retention is below 40% (poor threshold)
+    return averageRetention < 40;
   }, [studyWords]);
 
   useEffect(() => {

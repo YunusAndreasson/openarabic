@@ -6,6 +6,6 @@ export * from './useFSRSQueries';
 
 export * from './useEfficiencyChart';
 export * from './useMasteryChart';
-export * from './useMemoryCapacityGauge';
+
 export * from './useRetrievabilityChart';
 export * from './useWordSizing';

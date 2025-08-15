@@ -4,7 +4,7 @@
  * Displays practice session options using a scientifically-grounded 3-phase color system
  * that coordinates with the Memory Capacity Gauge to guide optimal learning behavior.
  */
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
@@ -12,15 +12,15 @@ import { STRINGS } from '@/constants/strings';
 import type { StatCategory, StudyWord } from '@/types/vocabulary.types';
 import { calculateWordCategories } from '@/utils/wordClassification';
 
-import { MemoryCapacityBottomSheet } from './MemoryCapacityBottomSheet';
 import { StatCard } from './StatCard';
-import { MemoryCapacityGauge } from './charts/MemoryCapacityGauge';
+import { MemoryRetentionGauge } from './charts/MemoryRetentionGauge';
 
 interface VocabularyStatCardsProps {
   masteredWords?: number;
   learningWords?: number;
   dueWords?: number;
   onStartReview?: (category: StatCategory) => void;
+  onInfoPress?: () => void;
   studyWords?: StudyWord[];
   // Number of words eligible for "Study all words" after cooldown filtering
   eligibleAllWordsCount?: number;
@@ -41,20 +41,10 @@ export const VocabularyStatCards = memo(
     learningWords = 0,
     dueWords = 0,
     onStartReview,
+    onInfoPress,
     studyWords = [],
     eligibleAllWordsCount,
   }: VocabularyStatCardsProps) => {
-    const [isCapacitySheetVisible, setIsCapacitySheetVisible] = useState(false);
-
-    const handleInfoPress = useCallback(() => {
-      setIsCapacitySheetVisible(true);
-    }, []);
-
-    const handleCapacitySheetClose = useCallback(() => {
-      // Defer state reset until after modal fully dismisses to avoid stale modal instance
-      setTimeout(() => setIsCapacitySheetVisible(false), 0);
-    }, []);
-
     const validatedInput = {
       masteredWords: Math.max(0, masteredWords),
       learningWords: Math.max(0, learningWords),
@@ -122,13 +112,7 @@ export const VocabularyStatCards = memo(
 
     return (
       <View style={styles.container}>
-        <MemoryCapacityGauge studyWords={validatedInput.studyWords} onInfoPress={handleInfoPress} />
-
-        <MemoryCapacityBottomSheet
-          isVisible={isCapacitySheetVisible}
-          onClose={handleCapacitySheetClose}
-          studyWords={validatedInput.studyWords}
-        />
+        <MemoryRetentionGauge studyWords={validatedInput.studyWords} onInfoPress={onInfoPress} />
 
         {categories.map(config => (
           <StatCard

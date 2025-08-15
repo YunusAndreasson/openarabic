@@ -12,10 +12,10 @@ import { TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
-import { useMemoryCapacityGauge } from '@/hooks/vocabulary';
+import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import type { StudyWord } from '@/types/vocabulary.types';
 
-interface MemoryCapacityGaugeProps {
+interface MemoryRetentionGaugeProps {
   studyWords: StudyWord[];
   onInfoPress?: () => void;
 }
@@ -31,50 +31,42 @@ const INDICATOR_GLOW_SIZE = 24;
 const START_ANGLE = 185;
 const TOTAL_SWEEP = 170;
 
-export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
+// Memory retention thresholds for color coding
+const RETENTION_THRESHOLDS = {
+  POOR: 40, // Red: <40% - urgent practice needed
+  MODERATE: 70, // Orange: 40-69% - needs attention
+  GOOD: 70, // Green: 70%+ - good retention
+} as const;
+
+export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
   ({ studyWords = [], onInfoPress }) => {
     const colors = useColors();
     const chartColors = useChartColors();
+    const { chartData } = useRetrievabilityChart(studyWords);
 
-    const {
-      gaugePaths,
-      getFilledGradientColors,
-      getFilledGradientPositions,
-      getCapacityColor,
-      getReadinessMessage,
-      getActionCardBackground,
-      getDisplayScore,
-    } = useMemoryCapacityGauge({
-      studyWords,
-      width: GAUGE_WIDTH,
-      height: GAUGE_HEIGHT,
-      radius: GAUGE_RADIUS,
-      strokeWidth: GAUGE_STROKE_WIDTH,
-    });
+    // Get current retention value from the chart data
+    const currentRetention = chartData.insights.currentRetrievability;
 
-    // Get the score that should be displayed (matches visual gauge)
-    const displayScore = getDisplayScore();
-
-    // Animated score value using Reanimated (fallback for environments where Skia useValue is unavailable)
-    const scoreShared = useSharedValue(0);
-    const [animatedScore, setAnimatedScore] = useState(0);
+    // Animated retention value using Reanimated
+    const retentionShared = useSharedValue(0);
+    const [animatedRetention, setAnimatedRetention] = useState(0);
 
     useEffect(() => {
-      const next = Math.max(0, Math.min(100, displayScore));
-      const delta = Math.abs(scoreShared.value - next);
+      const next = Math.max(0, Math.min(100, currentRetention));
+      const delta = Math.abs(retentionShared.value - next);
       if (delta < 0.5) return;
-      scoreShared.value = withTiming(next, {
+      retentionShared.value = withTiming(next, {
         duration: TIMING_CONFIG.GENTLE.duration,
         easing: TIMING_CONFIG.GENTLE.easing,
       });
-    }, [displayScore, scoreShared]);
+    }, [currentRetention, retentionShared]);
 
-    // Push only rounded values to JS to limit re-renders (max 100 updates)
+    // Push only rounded values to JS to limit re-renders
     useAnimatedReaction(
-      () => Math.round(scoreShared.value),
+      () => Math.round(retentionShared.value),
       (rounded, prev) => {
         if (rounded !== prev) {
-          runOnJS(setAnimatedScore)(rounded);
+          runOnJS(setAnimatedRetention)(rounded);
         }
       }
     );
@@ -83,7 +75,8 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
     const centerX = GAUGE_WIDTH / 2;
     const centerY = GAUGE_HEIGHT - 15;
     const indicatorRadius = GAUGE_RADIUS - GAUGE_STROKE_WIDTH / 2;
-    const sweep = (animatedScore / 100) * TOTAL_SWEEP;
+    const sweep = (animatedRetention / 100) * TOTAL_SWEEP;
+
     const animatedFilledPath = useMemo(() => {
       const p = Skia.Path.Make();
       p.addArc(
@@ -99,7 +92,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
       return p;
     }, [centerX, centerY, sweep]);
 
-    const angle = START_ANGLE - (animatedScore / 100) * TOTAL_SWEEP;
+    const angle = START_ANGLE - (animatedRetention / 100) * TOTAL_SWEEP;
     const angleRad = (angle * Math.PI) / 180;
     const indicatorX = centerX + Math.cos(angleRad) * indicatorRadius;
     const indicatorY = centerY + Math.sin(angleRad) * indicatorRadius;
@@ -108,25 +101,50 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
       GAUGE_HEIGHT / 2
     );
 
+    // Determine color based on retention thresholds
+    const getRetentionColor = () => {
+      if (animatedRetention < RETENTION_THRESHOLDS.POOR) {
+        return chartColors.performance.poor; // Red
+      } else if (animatedRetention < RETENTION_THRESHOLDS.MODERATE) {
+        return chartColors.performance.moderate; // Orange
+      } else {
+        return chartColors.performance.excellent; // Green
+      }
+    };
+
+    // Get retention status message
+    const getRetentionMessage = () => {
+      if (animatedRetention < RETENTION_THRESHOLDS.POOR) {
+        return STRINGS.MEMORY_CAPACITY_LOW; // "Low retention - practice needed"
+      } else if (animatedRetention < RETENTION_THRESHOLDS.MODERATE) {
+        return STRINGS.MEMORY_CAPACITY_MEDIUM; // "Moderate retention - keep practicing"
+      } else {
+        return STRINGS.MEMORY_CAPACITY_HIGH; // "Good retention - well done!"
+      }
+    };
+
+    const retentionColor = getRetentionColor();
+    const retentionMessage = getRetentionMessage();
+
     const dynamicStyles = useMemo(
       () => ({
-        capacityText: { color: getCapacityColor() },
-        actionCard: { backgroundColor: getActionCardBackground() },
-        actionText: { color: getCapacityColor() },
+        retentionText: { color: retentionColor },
+        actionCard: { backgroundColor: chartColors.withOpacity(retentionColor, 0.1) },
+        actionText: { color: retentionColor },
       }),
-      [getCapacityColor, getActionCardBackground]
+      [retentionColor, chartColors]
     );
 
     return (
       <BaseChart
         contentHeight={GAUGE_HEIGHT + 80}
-        emptyStateText={STRINGS.ADD_WORDS_TO_SEE_CAPACITY}
-        hasData={true}
+        emptyStateText={STRINGS.STUDY_WORDS_TO_TRACK_MEMORY_RETENTION}
+        hasData={chartData.hasData}
         hideTitle={true}
         onCardPress={onInfoPress}
       >
         <View style={styles.container}>
-          {/* Top-right info indicator; stays visible even without handler for future use */}
+          {/* Top-right info indicator */}
           {onInfoPress ? (
             <Pressable
               accessibilityLabel={STRINGS.MEMORY_CAPACITY_INFO}
@@ -137,7 +155,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
               <Ionicons
                 name="information-circle"
                 size={LAYOUT.BUTTON.ICON_SIZE.XLARGE}
-                color={chartColors.withOpacity(colors.secondaryText, 0.55)}
+                color={chartColors.withOpacity(colors.text, 0.6)}
               />
             </Pressable>
           ) : (
@@ -145,17 +163,18 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
               <Ionicons
                 name="information-circle"
                 size={LAYOUT.BUTTON.ICON_SIZE.XLARGE}
-                color={chartColors.withOpacity(colors.secondaryText, 0.4)}
+                color={chartColors.withOpacity(colors.text, 0.6)}
               />
             </View>
           )}
+
           <View style={styles.gaugeContainer}>
             <Canvas style={styles.canvas}>
               <Group>
                 {/* Background track */}
                 <Path
                   color={chartColors.withOpacity(colors.card, 0.6)}
-                  path={gaugePaths.fullPath}
+                  path={animatedFilledPath}
                   strokeCap="round"
                   strokeWidth={GAUGE_STROKE_WIDTH}
                   style="stroke"
@@ -163,7 +182,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
 
                 <Path
                   color={chartColors.withOpacity(chartColors.ui.border, 0.08)}
-                  path={gaugePaths.fullPath}
+                  path={animatedFilledPath}
                   strokeCap="round"
                   strokeWidth={GAUGE_STROKE_WIDTH}
                   style="stroke"
@@ -172,7 +191,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
                 {/* Unfilled portion with low opacity gradient */}
                 <Path
                   opacity={0.2}
-                  path={gaugePaths.fullPath}
+                  path={animatedFilledPath}
                   strokeCap="round"
                   strokeWidth={GAUGE_STROKE_WIDTH}
                   style="stroke"
@@ -198,8 +217,8 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
                   style="stroke"
                 >
                   <LinearGradient
-                    colors={getFilledGradientColors()}
-                    positions={getFilledGradientPositions()}
+                    colors={[retentionColor, retentionColor]}
+                    positions={[0, 1]}
                     start={vec(GAUGE_WIDTH * 0.05, GAUGE_HEIGHT / 2)}
                     end={gradientEnd}
                   />
@@ -207,7 +226,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
 
                 {/* Indicator with glow */}
                 <Circle
-                  color={chartColors.withOpacity(getCapacityColor(), 0.15)}
+                  color={chartColors.withOpacity(retentionColor, 0.15)}
                   cx={indicatorX}
                   cy={indicatorY}
                   r={INDICATOR_GLOW_SIZE}
@@ -221,7 +240,7 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
                   style="fill"
                 />
                 <Circle
-                  color={getCapacityColor()}
+                  color={retentionColor}
                   cx={indicatorX}
                   cy={indicatorY}
                   r={INDICATOR_SIZE}
@@ -239,17 +258,17 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
 
             {/* Center percentage */}
             <View style={styles.centerSection}>
-              <ThemedText style={[styles.capacityText, dynamicStyles.capacityText]}>
-                {Math.round(animatedScore)}%
+              <ThemedText style={[styles.retentionText, dynamicStyles.retentionText]}>
+                {Math.round(animatedRetention)}%
               </ThemedText>
             </View>
           </View>
 
-          {/* Bottom readiness/status */}
+          {/* Bottom retention status */}
           <View style={styles.bottomSection}>
             <View style={[styles.actionCard, dynamicStyles.actionCard]}>
               <ThemedText style={[styles.actionText, dynamicStyles.actionText]}>
-                {getReadinessMessage()}
+                {retentionMessage}
               </ThemedText>
             </View>
           </View>
@@ -259,14 +278,14 @@ export const MemoryCapacityGauge = memo<MemoryCapacityGaugeProps>(
   }
 );
 
-MemoryCapacityGauge.displayName = 'MemoryCapacityGauge';
+MemoryRetentionGauge.displayName = 'MemoryRetentionGauge';
 
 const styles = StyleSheet.create({
   canvas: {
     height: GAUGE_HEIGHT,
     width: GAUGE_WIDTH,
   },
-  capacityText: {
+  retentionText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE + LAYOUT.SPACING.MEDIUM,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.HEAVY,
     includeFontPadding: false,
@@ -323,3 +342,5 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
 });
+
+export default MemoryRetentionGauge;

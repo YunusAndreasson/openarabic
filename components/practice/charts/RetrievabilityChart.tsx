@@ -7,11 +7,7 @@ import {
   generateChartSubtitle,
 } from '@/components/common/charts/chartMessages';
 import { calculateDataPointPositions, useGraphWidth } from '@/components/common/charts/constants';
-import {
-  calculateSevenDayAverage,
-  formatMonthDayUTC,
-  formatWeekdayUTC,
-} from '@/components/common/charts/utils';
+import { formatMonthDayUTC, formatWeekdayUTC } from '@/components/common/charts/utils';
 import { STRINGS } from '@/constants/strings';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -94,25 +90,6 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
         hideTitle={hideTitle}
         hasData={chartData.hasData}
         emptyStateText={EMPTY_STATE_MESSAGES.retrievability}
-        bottomSummary={
-          chartData.hasData
-            ? [
-                { label: STRINGS.LATEST, value: `${chartData.insights.currentRetrievability}%` },
-                {
-                  label: STRINGS.AVERAGE,
-                  value: `${Math.round(
-                    calculateSevenDayAverage(chartData.dataPoints.map(p => p.retrievability))
-                  )}%`,
-                },
-                {
-                  label: STRINGS.MAX,
-                  value: `${Math.round(
-                    Math.max(0, ...chartData.dataPoints.map(p => p.retrievability))
-                  )}%`,
-                },
-              ]
-            : []
-        }
       />
     );
   }

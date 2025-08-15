@@ -159,7 +159,6 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
           width={graphWidth}
           xLabelPositions={xLabelPositions}
           yMax={yMax}
-          todayIndex={todayIndex}
         />
       );
 
