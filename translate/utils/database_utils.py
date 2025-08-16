@@ -38,10 +38,11 @@ logger = logging.getLogger(__name__)
 def extract_root_info(word: WordData) -> tuple[str, str | None, str | None]:
     """Extract root information from a word."""
     if word.get("root"):
-        return word["root"], word.get("notes"), word.get("english", "")
+        return word["root"], word.get("notes"), word["english"]
 
-    letters = word.get("essential", word.get("arabic"))
-    english = word.get("english", "")
+    # Since arabic and english are non-nullable, we can access them directly
+    letters = word.get("essential", word["arabic"])
+    english = word["english"]
     meaning = word.get("essential_translation") or f"Auto-generated root for: {english}"
     english_translation = word.get("essential_translation", "") or english
 
@@ -73,8 +74,8 @@ def get_or_create_root(
 
     if root:
         root_id = root["id"]
-        # Generate missing audio if needed
-        if not root.get("audio_url") or not root.get("audio_url_en"):
+        # Generate missing audio if needed - since fields are non-nullable, we can be more direct
+        if not root["audio_url"] or not root["audio_url_en"]:
             _generate_root_audio(root_id, letters, english_translation, meaning)
         return root_id
 
@@ -111,9 +112,10 @@ def _generate_root_audio(
 
         if audio_urls:
             update_data = {}
-            if audio_urls.get("audio_url"):
+            # Since audio_url and audio_url_en are non-nullable, we can access them directly
+            if audio_urls["audio_url"]:
                 update_data["audio_url"] = audio_urls["audio_url"]
-            if audio_urls.get("audio_url_en"):
+            if audio_urls["audio_url_en"]:
                 update_data["audio_url_en"] = audio_urls["audio_url_en"]
 
             if update_data:
@@ -158,7 +160,7 @@ def insert_sentence_words(
                 root_meaning,
                 english_translation,
             )
-            word_type_id = get_word_type_id(word.get("pos", "unknown"))
+            word_type_id = get_word_type_id(word["pos"])
 
             original_word = clean_arabic_text(word["arabic"])
 
@@ -174,8 +176,8 @@ def insert_sentence_words(
                 match_method = "position"
                 timing_position += 1
 
-                start_time = float(timing_info.get("start_time", 0))
-                end_time = float(timing_info.get("end_time", 0))
+                start_time = float(timing_info["start_time"])
+                end_time = float(timing_info["end_time"])
 
                 if start_time < last_end_time:
                     start_time = last_end_time
@@ -213,7 +215,7 @@ def insert_sentence_words(
                 root_meaning,
                 english_translation,
             )
-            word_type_id = get_word_type_id(word.get("pos", "unknown"))
+            word_type_id = get_word_type_id(word["pos"])
 
             original_word = clean_arabic_text(word["arabic"])
 
@@ -375,8 +377,8 @@ def insert_article_sentences(
                 )
 
             if audio_result is not None:
-                storage_url = audio_result.get("url", None)
-                word_timings = audio_result.get("word_timings", [])
+                storage_url = audio_result.url
+                word_timings = audio_result.word_timings
                 timing_stats["sentences_with_audio"] += 1
 
                 if download_audio_for_concat(audio_filename, temp_audio_file):

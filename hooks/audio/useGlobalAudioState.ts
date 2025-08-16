@@ -122,16 +122,15 @@ export function useGlobalAudioState(): GlobalAudioState {
     const imageUrl = String(
       cachedArticle?.image_url ||
         readingListArticle?.image_url ||
-        audioPlayer.currentTrack?.imageUrl ||
-        ''
+        audioPlayer.currentTrack?.imageUrl
     );
 
     if (title || imageUrl) {
       return {
         id: currentArticleId,
-        title: title || ' ',
+        title,
         author,
-        image_url: imageUrl || ' ',
+        image_url: imageUrl,
       };
     }
 
@@ -141,7 +140,7 @@ export function useGlobalAudioState(): GlobalAudioState {
         id: currentArticleId,
         title: audioPlayer.currentTrack.title,
         author: 'Loading',
-        image_url: ' ',
+        image_url: '',
       };
     }
 

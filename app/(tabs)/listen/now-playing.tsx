@@ -91,9 +91,7 @@ export default function NowPlayingModal() {
   }, [queryClient, user?.id, articleId]);
 
   const backgroundImageUrl = useMemo(() => {
-    return String(
-      article?.image_url || cachedArticle?.image_url || readingListArticle?.image_url || ''
-    );
+    return String(article?.image_url || cachedArticle?.image_url || readingListArticle?.image_url);
   }, [article?.image_url, cachedArticle?.image_url, readingListArticle?.image_url]);
 
   const fallbackTitle = useMemo(() => {
@@ -103,9 +101,7 @@ export default function NowPlayingModal() {
   }, [article?.title, cachedArticle?.title, audioPlayer.currentTrack?.title]);
 
   const fallbackAuthor = useMemo(() => {
-    return (
-      article?.author?.name || cachedArticle?.author?.name || readingListArticle?.author?.name || ''
-    );
+    return article?.author?.name || cachedArticle?.author?.name || readingListArticle?.author?.name;
   }, [article?.author?.name, cachedArticle?.author?.name, readingListArticle?.author?.name]);
 
   const { currentSentence, currentSentenceIndex, sentenceProgress } = useCurrentSentence({

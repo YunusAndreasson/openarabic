@@ -113,20 +113,6 @@ export const useArticleData = (
           sentence.sentence_words
             .slice() // Create a new array to avoid mutating the original
             .sort((a, b) => a.position - b.position)
-            .map(word => ({
-              ...word,
-              root: {
-                id: word.root_id,
-                letters: '',
-                meaning: null,
-                audio_url: null,
-                audio_url_en: null,
-              },
-              word_type: {
-                id: word.word_type_id,
-                name: '',
-              },
-            }))
         );
       }
       return acc;

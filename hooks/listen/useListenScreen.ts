@@ -207,7 +207,7 @@ export const useListenScreen = () => {
 
           // Try to fetch image URL from cache immediately if present
           const articleInCache = queryClient.getQueryData<any>(['article', articleIdToPrefetch]);
-          const imageUrl = String(firstTrack.imageUrl || articleInCache?.image_url || '');
+          const imageUrl = String(firstTrack.imageUrl || articleInCache?.image_url);
           if (imageUrl) {
             Image.prefetch(imageUrl).catch(() => {});
           } else {
@@ -311,7 +311,7 @@ export const useListenScreen = () => {
             })
             .catch(() => {});
           const cached = queryClient.getQueryData<any>(['article', articleId]);
-          const img = String(trackToPlay.imageUrl || cached?.image_url || '');
+          const img = String(trackToPlay.imageUrl || cached?.image_url);
           if (img) {
             Image.prefetch(img).catch(() => {});
           } else {
@@ -344,7 +344,7 @@ export const useListenScreen = () => {
             })
             .catch(() => {});
           const cachedArticle = queryClient.getQueryData<any>(['article', articleId]);
-          const cachedImg = String(cachedArticle?.image_url || '');
+          const cachedImg = String(cachedArticle?.image_url);
           if (cachedImg) {
             Image.prefetch(cachedImg).catch(() => {});
           } else {

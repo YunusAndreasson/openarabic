@@ -6,6 +6,15 @@ import TabLayout from '../../app/(tabs)/_layout';
 import Auth from '../../components/auth';
 import TestStoreProvider from '../helpers/testStore';
 
+// Mock the FSRSDataProvider context to simplify tests
+jest.mock('@/hooks/vocabulary/FSRSDataProvider', () => ({
+  useFSRSData: () => ({
+    studyWords: [],
+    isLoading: false,
+    error: null,
+  }),
+}));
+
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: (props: any) => <props.name {...props} />,
 }));

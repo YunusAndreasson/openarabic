@@ -1,6 +1,5 @@
 import type { Tables } from './database.types';
 
-/** Raw author record returned from Supabase queries */
 export type AuthorRow = Tables<'authors'>;
 
 /** Raw sentence word with optional root and word type relations */
@@ -14,10 +13,24 @@ export interface ArticleSentenceRow extends Tables<'article_sentences'> {
   sentence_words?: SentenceWordRow[];
 }
 
-/** Raw article with related category, author and sentences */
+/** Raw article with optional relations */
 export interface ArticleRow extends Tables<'articles'> {
-  category: Tables<'categories'>;
-  author: AuthorRow;
-  article_sentences: ArticleSentenceRow[];
-  audio_url: string;
+  category?: Tables<'categories'> | null;
+  author?: Tables<'authors'> | null;
+  article_sentences?: ArticleSentenceRow[];
+}
+
+/** Raw study word with optional root relation */
+export interface StudyWordRow extends Tables<'study_words'> {
+  root?: Tables<'roots'> | null;
+}
+
+/** Raw reading list item with optional relations */
+export interface ReadingListItemRow extends Tables<'reading_list'> {
+  articles?: ArticleRow | null;
+}
+
+/** Raw reading progress with optional relations */
+export interface ReadingProgressRow extends Tables<'reading_progress'> {
+  articles?: ArticleRow | null;
 }

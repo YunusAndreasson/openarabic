@@ -271,7 +271,7 @@ class ArticleData(BaseModel):
         description="ISO format timestamp",
         pattern=r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(\+00:00|Z)?$",
     )
-    image_url: str | None = Field(description="URL to article image", default=None)
+    image_url: str = Field(description="URL to article image")
 
 
 class TranslationValidationError(Exception):

@@ -77,8 +77,8 @@ export const useDictionaryModal = ({
           break;
         }
         case 'dateAdded': {
-          const dateA = new Date(a.created_at || 0).getTime();
-          const dateB = new Date(b.created_at || 0).getTime();
+          const dateA = new Date(a.created_at).getTime();
+          const dateB = new Date(b.created_at).getTime();
           compareValue = dateA - dateB;
           break;
         }

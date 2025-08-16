@@ -31,6 +31,4 @@ export interface Article extends Tables<'articles'> {
   category: Category;
   /** Author information for the article */
   author: Author;
-  /** URL to the audio recording for the article */
-  audio_url: string;
 }

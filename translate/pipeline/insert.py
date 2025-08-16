@@ -127,7 +127,7 @@ def generate_article_audio(
             else:
                 raise RuntimeError(f"Failed to generate audio for sentence {i + 1}")
 
-        except Exception as e:
+        except Exception:
             # Fail immediately on any sentence audio error
             raise
 

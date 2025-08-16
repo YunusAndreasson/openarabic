@@ -9,8 +9,6 @@ function mapToSentenceWord(item: SentenceWordRow): SentenceWord {
     ...base,
     root: item.root ?? null,
     word_type: item.word_type ?? null,
-    audio_start: item.audio_start ?? null,
-    audio_end: item.audio_end ?? null,
   };
 }
 
@@ -27,6 +25,12 @@ function mapToArticleSentence(item: ArticleSentenceRow): ArticleSentence {
 
 export function mapToArticle(item: ArticleRow): Article {
   const base = item as Tables<'articles'>;
+
+  // Ensure we have the required relations
+  if (!item.category || !item.author) {
+    throw new Error('Article missing required category or author data');
+  }
+
   return {
     ...base,
     article_sentences: Array.isArray(item.article_sentences)
@@ -34,7 +38,6 @@ export function mapToArticle(item: ArticleRow): Article {
       : [],
     category: item.category,
     author: item.author,
-    audio_url: item.audio_url,
   };
 }
 

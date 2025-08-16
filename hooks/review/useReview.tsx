@@ -195,7 +195,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
 
   // Derive currentSentence directly from currentWord to avoid timing issues
   const currentSentence = useMemo(() => {
-    const wordForm = currentWord?.root?.letters || '';
+    const wordForm = currentWord?.root?.letters ?? '';
     return { wordForm };
   }, [currentWord]);
 
@@ -527,7 +527,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       return;
     }
 
-    const wordId = String(currentWord.root_id || 'unknown');
+    const wordId = String(currentWord.root_id);
     const audioUrl = currentWord.root.audio_url;
 
     // Use a ref to track if this effect is still valid
