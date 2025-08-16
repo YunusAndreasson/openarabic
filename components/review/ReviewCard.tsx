@@ -9,10 +9,10 @@ import Animated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
-  withTiming,
+  withSpring,
 } from 'react-native-reanimated';
 
-import { TIMING_CONFIG } from '@/constants/animation';
+import { SPRING_CONFIG, TIMING_CONFIG } from '@/constants/animation';
 import { LAYOUT, SCREEN_WIDTH, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
 import type { AnimatedStyleProp as AppAnimatedStyleProp } from '@/types/ui/base.types';
@@ -118,7 +118,7 @@ const ReviewCardInternal = ({
   const resetPosition = useCallback(() => {
     'worklet';
     isAnimatingRef.value = true;
-    translateX.value = withTiming(0, ANIMATION_CONFIG.TIMING, () => {
+    translateX.value = withSpring(0, SPRING_CONFIG.CARD, () => {
       isAnimatingRef.value = false;
     });
   }, [translateX, isAnimatingRef]);
@@ -174,9 +174,9 @@ const ReviewCardInternal = ({
               const isRight = translationX > 0;
               runOnJS(handleSwipeComplete)(isRight);
             } else {
-              // Simple reset on UI thread with optimized timing
+              // Simple reset on UI thread with spring animation
               isAnimatingRef.value = true;
-              translateX.value = withTiming(0, ANIMATION_CONFIG.TIMING, () => {
+              translateX.value = withSpring(0, SPRING_CONFIG.CARD, () => {
                 isAnimatingRef.value = false;
               });
             }
