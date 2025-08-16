@@ -70,6 +70,7 @@ export const useArticleMutations = (
   const { showToast } = useToast();
 
   // Lightweight capacity guard: prevent adding when capacity is low (red phase)
+  // Only applies when user has more than 100 words to avoid being annoying for new users
   const isCapacityLow = (userId: string | undefined): boolean => {
     if (!userId) return false;
     const all = queryClient.getQueryData<unknown>(
@@ -83,6 +84,10 @@ export const useArticleMutations = (
         fsrs_difficulty?: number | null;
         fsrs_reps?: number | null;
       }[];
+
+      // Don't apply capacity restrictions for users with 100 or fewer words
+      if (words.length <= 100) return false;
+
       if (words.length === 0) return false;
       const valid = words.filter(w => w.fsrs_stability != null && w.fsrs_difficulty != null);
       let capacityScore: number;
