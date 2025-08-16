@@ -7,7 +7,6 @@ from .enums import (
     DifficultyLevel,
     PartOfSpeech,
     UncertaintyType,
-    UnitType,
     VerificationStatus,
 )
 
@@ -226,9 +225,6 @@ class SplitResult(TextMetadata):
     """Complete result from text splitting phase"""
 
     units: list[str] = Field(description="Array of text units/sentences")
-    unit_types: list[UnitType] | Literal["unknown"] = Field(
-        description="Type of each unit (simple, compound, condition, quote, verse, phrase, etc.)"
-    )
 
 
 class WordTiming(BaseModel):
@@ -272,6 +268,9 @@ class ArticleData(BaseModel):
         pattern=r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(\+00:00|Z)?$",
     )
     image_url: str = Field(description="URL to article image")
+    audio_url: str = Field(
+        description="URL to article audio. Required for database insertion."
+    )
 
 
 class TranslationValidationError(Exception):

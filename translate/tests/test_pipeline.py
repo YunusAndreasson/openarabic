@@ -41,7 +41,6 @@ class TestSplitFile:
                             "هذا نص تجريبي.",
                             "لاختبار الترجمة.",
                         ],
-                        "unit_types": ["simple", "simple", "simple"],
                     },
                     "success": True,
                 }
@@ -84,7 +83,6 @@ class TestSplitFile:
                         "summary": "Empty content",
                         "difficulty_level": 1,
                         "units": [],
-                        "unit_types": [],
                     },
                     "success": True,
                 }
@@ -112,7 +110,6 @@ class TestTranslateFile:
                 "هذا نص تجريبي.",
             ],
             "total_units": 2,
-            "unit_types": "unknown",
         }
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:

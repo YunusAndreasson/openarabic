@@ -77,7 +77,7 @@ SENTENCE_SPLITTING_USER_PROMPT = (
     CONTENT_ANALYSIS_PROMPT
     + """
 
-Split the Islamic text into learner-friendly units (property: `units`) and identify their types (property: `unit_types`):
+Split the Islamic text into learner-friendly units (property: `units`):
 
 Rules:
 1. Create short learner-friendly units
@@ -92,8 +92,7 @@ Rules:
    - Keep brief prayers whole
    - Keep related phrases conveying single concepts together
    - Preserve ALL original punctuation and formatting
-4. Mark unit types: simple, compound, condition, quote, verse, phrase, hadith, commentary, etc.
-5. Example length: "ولا شك أن ما يصيب المسلم في هذه الدنيا من آفات ومحن ما هو إلا محض ابتلاء من الله،"
+4. Example length: "ولا شك أن ما يصيب المسلم في هذه الدنيا من آفات ومحن ما هو إلا محض ابتلاء من الله،"
 
 IMPORTANT:
 - AVOID units that are excessively short (e.g., 1-3 words) unless grammatically necessary (like single-word interjections).
@@ -105,7 +104,6 @@ Return results as JSON matching the SplitResult structure with fields:
 - summary: One-sentence summary of main content
 - difficulty_level: Difficulty rating (1-5)
 - total_units: Total number of units
-- unit_types: Type of each unit (optional)
 
 Return results as valid JSON.
 

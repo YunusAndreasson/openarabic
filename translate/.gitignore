@@ -165,7 +165,6 @@ cython_debug/
 article/
 archive/
 audio_cache/
-audio/
 reports/
 temp_audio/
 *.env

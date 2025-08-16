@@ -33,7 +33,6 @@ class SplitAPIResponse(TypedDict):
     summary: str
     difficulty_level: int
     units: list[str]
-    unit_types: list[str]
 
 
 class SplitErrorResponse(TypedDict):

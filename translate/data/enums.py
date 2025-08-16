@@ -33,21 +33,6 @@ class DifficultyLevel(int, Enum):
     EXPERT = 5
 
 
-class UnitType(str, Enum):
-    """Type of text unit for splitting"""
-
-    SIMPLE = "simple"
-    COMPOUND = "compound"
-    CONDITION = "condition"
-    QUOTE = "quote"
-    VERSE = "verse"
-    PHRASE = "phrase"
-    NARRATOR_CHAIN = "narrator_chain"
-    PRAYER = "prayer"
-    HADITH = "hadith"
-    COMMENTARY = "commentary"
-
-
 class PipelinePhase(Enum):
     """Phases of the translation pipeline."""
 

@@ -41,7 +41,6 @@ coverage/
 .venv/
 
 translate/set_keys.py
-translate/audio/
 translate/articles/
 translate/archive/
 translate/__pycache__/
@@ -74,7 +73,6 @@ translate/audio_cache/
 translate/reports/
 translate/article/
 translate/archive/
-translate/audio/
 translate/__pycache__/
 translate/.coverage
 translate/htmlcov/

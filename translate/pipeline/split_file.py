@@ -41,7 +41,6 @@ def parse_split_response(response: dict[str, Any]) -> SplitResult:
             summary=response["error"],
             difficulty_level=DifficultyLevel.BASIC.value,
             total_units=0,
-            unit_types="unknown",
         )
 
     # Extract data from new Response API format
@@ -52,14 +51,13 @@ def parse_split_response(response: dict[str, Any]) -> SplitResult:
         # Legacy format: direct data
         data = response
 
-    # Validate via Pydantic; require unit_types to be present and correct
+    # Validate via Pydantic
     return SplitResult(
         units=data["units"],
         title=data["title"],
         summary=data["summary"],
         difficulty_level=data["difficulty_level"],
         total_units=len(data["units"]),
-        unit_types=data["unit_types"],
     )
 
 

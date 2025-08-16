@@ -19,6 +19,7 @@ except (ImportError, OSError):
 # Import common database utilities
 from data.config import ARCHIVE_DIR, ROOT_DIR, SUPABASE_URL
 from data.enums import DifficultyLevel
+from data.models import WordTiming
 from data.pipeline_types import WordData
 from utils.arabic_text import clean_arabic_text
 from utils.database_common import (
@@ -76,63 +77,82 @@ def get_or_create_root(
         root_id = root["id"]
         # Generate missing audio if needed - since fields are non-nullable, we can be more direct
         if not root["audio_url"] or not root["audio_url_en"]:
-            _generate_root_audio(root_id, letters, english_translation, meaning)
+            # For existing roots with missing audio, we need to regenerate
+            try:
+                audio_urls = get_or_generate_root_audio(letters, english_translation)
+                if (
+                    audio_urls
+                    and audio_urls.get("audio_url")
+                    and audio_urls.get("audio_url_en")
+                ):
+                    update_data = {
+                        "audio_url": audio_urls["audio_url"],
+                        "audio_url_en": audio_urls["audio_url_en"],
+                    }
+                    update_table_record(
+                        "roots",
+                        update_data,
+                        {"id": root_id},
+                        f"root audio update for '{letters}'",
+                    )
+                    logger.info(f"Updated missing audio for existing root '{letters}'")
+                else:
+                    logger.warning(
+                        f"Could not regenerate audio for existing root '{letters}'"
+                    )
+            except Exception as e:
+                logger.error(
+                    f"Failed to regenerate audio for existing root '{letters}': {e}"
+                )
         return root_id
 
-    # Create new root
-    root_data = {"letters": letters, "meaning": meaning}
+    # CRITICAL: Generate audio BEFORE creating the root to satisfy NOT NULL constraints
+    audio_urls = None
+    if get_or_generate_root_audio:
+        try:
+            audio_urls = get_or_generate_root_audio(letters, english_translation)
+        except Exception as e:
+            logger.error(f"Failed to generate root audio for '{letters}': {e}")
+            # Since audio generation is mandatory, we cannot proceed
+            raise RuntimeError(
+                f"Root audio generation failed for '{letters}': {e}"
+            ) from e
+
+    # Validate that we have both audio URLs
+    if (
+        not audio_urls
+        or not audio_urls.get("audio_url")
+        or not audio_urls.get("audio_url_en")
+    ):
+        raise RuntimeError(
+            f"Failed to generate required audio URLs for root '{letters}'"
+        )
+
+    # Create new root with audio URLs already populated
+    root_data = {
+        "letters": letters,
+        "meaning": meaning,
+        "audio_url": audio_urls["audio_url"],
+        "audio_url_en": audio_urls["audio_url_en"],
+    }
+
     new_root = insert_table_record("roots", root_data, f"root creation for '{letters}'")
 
     if new_root:
         root_id = new_root["id"]
-        _generate_root_audio(root_id, letters, english_translation, meaning)
+        logger.info(
+            f"Successfully created root '{letters}' with ID {root_id} and audio URLs"
+        )
         return root_id
 
     # Fail loudly – cannot proceed without a valid root
     raise RuntimeError(f"Failed to create root for '{letters}'")
 
 
-def _generate_root_audio(
-    root_id: int, letters: str, english_translation: str | None, meaning: str | None
-) -> None:
-    """Helper function to generate audio for a root."""
-    try:
-        english_audio_text = english_translation
-        if not english_audio_text and meaning:
-            if "Auto-generated root for:" in meaning:
-                english_audio_text = meaning.replace(
-                    "Auto-generated root for:", ""
-                ).strip()
-            else:
-                english_audio_text = meaning
-
-        audio_urls = None
-        if get_or_generate_root_audio:
-            audio_urls = get_or_generate_root_audio(letters)
-
-        if audio_urls:
-            update_data = {}
-            # Since audio_url and audio_url_en are non-nullable, we can access them directly
-            if audio_urls["audio_url"]:
-                update_data["audio_url"] = audio_urls["audio_url"]
-            if audio_urls["audio_url_en"]:
-                update_data["audio_url_en"] = audio_urls["audio_url_en"]
-
-            if update_data:
-                update_table_record(
-                    "roots",
-                    update_data,
-                    {"id": root_id},
-                    f"root audio update for '{letters}'",
-                )
-    except Exception as e:
-        logger.error(f"Error generating audio for root '{letters}': {e}")
-
-
 def insert_sentence_words(
     sentence_id: int,
     translation: dict[str, Any],
-    word_timings: list[dict[str, Any]] | None = None,
+    word_timings: list["WordTiming"] | None = None,
 ) -> dict[str, Any]:
     """
     Insert words from a sentence with their roots and relationships.
@@ -149,7 +169,7 @@ def insert_sentence_words(
     if word_timings:
         if len(word_timings) < len(word_by_word):
             pass
-        sorted_timings = sorted(word_timings, key=lambda x: float(x["start_time"]))
+        sorted_timings = sorted(word_timings, key=lambda x: float(x.start_time))
         timing_position = 0
         last_end_time = 0.0
 
@@ -170,8 +190,8 @@ def insert_sentence_words(
             if timing_position < len(sorted_timings):
                 timing_data = sorted_timings[timing_position]
                 timing_info = {
-                    "start_time": timing_data["start_time"],
-                    "end_time": timing_data["end_time"],
+                    "start_time": timing_data.start_time,
+                    "end_time": timing_data.end_time,
                 }
                 match_method = "position"
                 timing_position += 1

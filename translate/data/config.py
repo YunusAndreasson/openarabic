@@ -2,8 +2,6 @@
 
 import os
 
-from elevenlabs import VoiceSettings
-
 # OpenAI model configuration - Valid model names per project standards
 # Use gpt-4o-mini for high-volume phases and gpt-4o for verification
 MODEL_ANALYSIS = "gpt-5"  # Fast, cost-effective text splitting
@@ -22,7 +20,7 @@ ROOT_DIR = os.path.abspath(
 ARTICLE_DIR = os.path.join(ROOT_DIR, "article")
 ARCHIVE_DIR = os.path.join(ROOT_DIR, "archive")
 AUDIO_CACHE_DIR = os.path.join(ROOT_DIR, "audio_cache")
-AUDIO_TEMP_DIR = os.path.join(ROOT_DIR, "audio")
+AUDIO_TEMP_DIR = os.path.join(ROOT_DIR, "temp_audio")  # Use temp_audio instead of audio
 
 # Pipeline directory structure
 INBOX_DIR = os.path.join(ROOT_DIR, "0_inbox")
@@ -36,16 +34,18 @@ DEFAULT_OUTPUT_FILE = os.path.join(ARTICLE_DIR, "output.json")
 DEFAULT_SPLIT_OUTPUT_FILE = os.path.join(ARTICLE_DIR, "input_split.json")
 
 # Voice configuration
-# Switch to male Arabic-capable voices by default (no env overrides).
-# Common public male multilingual voice example (Arabic-capable): "yoZ06aMxZJJ28mfd3POQ" (Josh)
-ARABIC_VOICE_ID = "yoZ06aMxZJJ28mfd3POQ"
+# Use public voices that are guaranteed to work with ElevenLabs
+# Public male voice: "pNInz6obpgDQGcFmaJgB" (Adam)
+# Public female voice: "21m00Tcm4TlvDq8ikWAM" (Rachel)
+ARABIC_VOICE_ID = "pNInz6obpgDQGcFmaJgB"  # Adam - public male voice
 ARABIC_WORD_VOICE_ID = ARABIC_VOICE_ID
-ENGLISH_WORD_VOICE_ID = "IKne3meq5aSn9XLyUdCD"
+ENGLISH_WORD_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"  # Rachel - public female voice
 
-# ElevenLabs TTS model (Multilingual v3)
-ELEVENLABS_TTS_MODEL_ID = "eleven_multilingual_v3"
+# ElevenLabs TTS model (use a model that actually exists)
+ELEVENLABS_TTS_MODEL_ID = "eleven_monolingual_v1"  # Basic model that should work
 
-DEFAULT_VOICE_SETTINGS = VoiceSettings(use_speaker_boost=True)
+# Voice settings as dictionary for API compatibility
+DEFAULT_VOICE_SETTINGS = {"use_speaker_boost": True, "speed": 0.8}
 
 # External services
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")

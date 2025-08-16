@@ -1,7 +1,9 @@
 import json
 import logging
 import os
+import shutil
 import sys
+import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -18,7 +20,16 @@ except ImportError:
         "set_keys.py not found, using environment variables"
     )
 
-from data.config import AUTHOR_NUMBER_MAPPING, TRANSLATE_DIR
+from audio.audio_utils import (
+    concatenate_audio_files,
+    generate_audio_filename,
+    generate_sentence_audio,
+)
+from data.config import (
+    AUTHOR_NUMBER_MAPPING,
+    SUPABASE_URL,
+    TRANSLATE_DIR,
+)
 from data.models import ArticleData, SentenceTranslation
 from utils import load_api_keys
 from utils.cache_utils import ensure_valid_cache_files
@@ -44,7 +55,7 @@ from utils.validation import (
 # Import audio utilities for final phase
 try:
     from audio.audio_utils import (
-        generate_audio_filename,
+        concatenate_audio_files,
         generate_sentence_audio,
     )
 
@@ -144,6 +155,24 @@ def generate_article_audio(
 
     # Clean up temporary files
     cleanup_temp_files(sentence_audio_files, temp_dir)
+    if os.path.exists(temp_dir):
+        try:
+            # Add a small delay to ensure all file handles are closed
+            import time
+
+            time.sleep(0.1)
+            shutil.rmtree(temp_dir)
+        except OSError as e:
+            logger.warning(f"Could not remove temporary directory {temp_dir}: {e}")
+            # Try to remove individual files if directory removal fails
+            try:
+                for file_path in sentence_audio_files:
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+            except Exception as cleanup_error:
+                logger.warning(
+                    f"Could not clean up some temporary files: {cleanup_error}"
+                )
 
 
 def concatenate_and_upload_article_audio(
@@ -153,9 +182,6 @@ def concatenate_and_upload_article_audio(
 ) -> None:
     """Concatenate sentence audio files and upload as article audio."""
     try:
-        from audio.audio_utils import concatenate_audio_files
-        from data.config import SUPABASE_URL
-
         final_audio_filename = generate_audio_filename()
         final_audio_path = os.path.join(temp_dir, final_audio_filename)
 
@@ -250,7 +276,132 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
             "Failed to get random image for article - images bucket is empty or inaccessible"
         )
 
-    # Create ArticleData object
+    # Convert dict translations back to SentenceTranslation objects for validation
+    translations = [SentenceTranslation(**t) for t in data["translations"]]
+
+    # Validate translations before processing
+    try:
+        validate_batch_before_processing(translations)
+    except Exception as e:
+        logger.error(f"Validation failed: {e}")
+        raise
+
+    # CRITICAL: Final validation to prevent placeholder data insertion
+    try:
+        validate_batch_no_placeholder_data(translations)
+    except Exception as e:
+        logger.error(f"CRITICAL: Placeholder data detected - aborting insertion: {e}")
+        raise
+
+    # CRITICAL: Generate audio BEFORE inserting the article
+    # This ensures audio_url is available when the article is inserted
+    article_audio_url = None
+    if AUDIO_AVAILABLE:
+        try:
+            # Create temporary directory for audio processing
+            temp_dir = tempfile.mkdtemp()
+
+            # Generate audio for all sentences first
+            sentence_audio_files = []
+            for i, translation in enumerate(translations):
+                try:
+                    # Get the Arabic text (prefer tashkeel if available)
+                    arabic_text = translation.tashkeel or translation.original
+                    if not arabic_text:
+                        raise RuntimeError(f"No Arabic text found for sentence {i + 1}")
+
+                    # Generate unique filename
+                    audio_filename = generate_audio_filename()
+
+                    # Get context for better audio quality
+                    previous_text = None
+                    next_text = None
+                    if i > 0:
+                        prev_translation = translations[i - 1]
+                        previous_text = (
+                            prev_translation.tashkeel or prev_translation.original
+                        )
+                    if i < len(translations) - 1:
+                        next_translation = translations[i + 1]
+                        next_text = (
+                            next_translation.tashkeel or next_translation.original
+                        )
+
+                    # Generate audio
+                    audio_result = generate_sentence_audio(
+                        text=arabic_text,
+                        filename=audio_filename,
+                        previous_text=previous_text,
+                        next_text=next_text,
+                    )
+
+                    if audio_result and audio_result.url:
+                        # Download audio for concatenation
+                        temp_audio_file = os.path.join(temp_dir, f"sentence_{i}.mp3")
+                        if download_audio_for_concat(audio_filename, temp_audio_file):
+                            sentence_audio_files.append(temp_audio_file)
+                    else:
+                        raise RuntimeError(
+                            f"Failed to generate audio for sentence {i + 1}"
+                        )
+
+                except Exception as e:
+                    raise RuntimeError(
+                        f"Failed to generate audio for sentence {i + 1}: {e}"
+                    ) from e
+
+            # Create concatenated article audio
+            if sentence_audio_files:
+                try:
+                    final_audio_filename = generate_audio_filename()
+                    final_audio_path = os.path.join(temp_dir, final_audio_filename)
+
+                    if concatenate_audio_files(sentence_audio_files, final_audio_path):
+                        with open(final_audio_path, "rb") as f:
+                            get_supabase_client().storage.from_("audio").upload(
+                                final_audio_filename,
+                                f,
+                                file_options={"content-type": "audio/mpeg"},
+                            )
+
+                        article_audio_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{final_audio_filename}"
+                        logger.info(f"Generated article audio: {article_audio_url}")
+                    else:
+                        raise RuntimeError("Failed to concatenate audio files")
+
+                except Exception as e:
+                    raise RuntimeError(
+                        f"Failed to create concatenated article audio: {e}"
+                    ) from e
+
+            # Clean up temporary files
+            cleanup_temp_files(sentence_audio_files, temp_dir)
+            if os.path.exists(temp_dir):
+                try:
+                    # Add a small delay to ensure all file handles are closed
+                    import time
+
+                    time.sleep(0.1)
+                    shutil.rmtree(temp_dir)
+                except OSError as e:
+                    logger.warning(
+                        f"Could not remove temporary directory {temp_dir}: {e}"
+                    )
+                    # Try to remove individual files if directory removal fails
+                    try:
+                        for file_path in sentence_audio_files:
+                            if os.path.exists(file_path):
+                                os.remove(file_path)
+                    except Exception as cleanup_error:
+                        logger.warning(
+                            f"Could not clean up some temporary files: {cleanup_error}"
+                        )
+
+        except Exception as e:
+            logger.error(f"Audio generation failed: {e}")
+            raise RuntimeError(f"Audio generation is mandatory and failed: {e}") from e
+
+    # Create ArticleData object with audio_url
     article_data = ArticleData(
         title=data["metadata"]["title"],
         summary=data["metadata"]["summary"],
@@ -260,6 +411,7 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
         content_hash=content_hash,
         created_at=datetime.now(UTC).isoformat(),
         image_url=image_url,
+        audio_url=article_audio_url,  # This will be None if AUDIO_AVAILABLE is False
     )
 
     try:
@@ -274,25 +426,6 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
         logger.error(f"Failed to insert article: {e}")
         raise
 
-    # Convert dict translations back to SentenceTranslation objects for validation
-    translations = [SentenceTranslation(**t) for t in data["translations"]]
-
-    # Validate translations before processing
-    try:
-        validate_batch_before_processing(translations)
-
-    except Exception as e:
-        logger.error(f"Validation failed: {e}")
-        raise
-
-    # CRITICAL: Final validation to prevent placeholder data insertion
-    try:
-        validate_batch_no_placeholder_data(translations)
-
-    except Exception as e:
-        logger.error(f"CRITICAL: Placeholder data detected - aborting insertion: {e}")
-        raise
-
     # Use global progress tracker for sentence-level updates
     try:
         from utils.progress_tracker import progress_tracker
@@ -305,14 +438,36 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
         article_id, data["translations"], progress_tracker if use_progress else None
     )
 
-    # Generate audio for sentences after they've been inserted
-    if AUDIO_AVAILABLE:
-        generate_article_audio(
-            article_id, translations, progress_tracker if use_progress else None
-        )
+    # Update sentence audio URLs in the database
+    if AUDIO_AVAILABLE and article_audio_url:
+        for i, translation in enumerate(translations):
+            try:
+                # Get the Arabic text (prefer tashkeel if available)
+                arabic_text = translation.tashkeel or translation.original
+                if not arabic_text:
+                    continue
+
+                # Generate unique filename for this sentence
+                audio_filename = generate_audio_filename()
+
+                # Generate audio for this sentence
+                audio_result = generate_sentence_audio(
+                    text=arabic_text,
+                    filename=audio_filename,
+                    previous_text=None,  # No context needed for individual sentence storage
+                    next_text=None,
+                )
+
+                if audio_result and audio_result.url:
+                    # Update the database with the audio URL
+                    get_supabase_client().table("article_sentences").update(
+                        {"audio_url": audio_result.url}
+                    ).eq("article_id", article_id).eq("position", i).execute()
+
+            except Exception as e:
+                logger.warning(f"Failed to update audio URL for sentence {i + 1}: {e}")
 
     archive_files(file_path, article_id)
-
     save_timing_report(article_id, data["metadata"]["title"], timing_stats)
 
     return article_id
