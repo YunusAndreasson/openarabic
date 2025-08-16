@@ -115,77 +115,94 @@ AUTHOR_PATTERNS = {
         r"ابن\s+قَيِّم\s+الجوزية",
         r"ابن\s+القيم\s+الجوزية",
         r"ابن\s+قَيِّم\s+الجوزي",
+        r"ابن\s+قيم\s+الجوزية",
+        r"ابن\s+قيم\s+الجوزيَّة",
+        r"شيخ\s+الإسلام\s+ابن\s+القيم",
     ],
     Author.IBN_TAYMIYYAH: [
         r"ابن\s+تيمية",
         r"شيخ\s+الإسلام\s+ابن\s+تيمية",
         r"ابن\s+تيمية",
+        r"تقي\s+الدين\s+أحمد\s+بن\s+تيمية",
     ],
     Author.IBN_AL_JAWZI: [
         r"ابن\s+الجوزي",
         r"ابن\s+الجوزية",
         r"ابن\s+الجوزي",
+        r"أبو\s+الفرج\s+عبد\s+الرحمن\s+بن\s+علي\s+الجوزي",
     ],
     Author.IBN_HAJAR: [
         r"ابن\s+حجر",
         r"ابن\s+حجر\s+العسقلاني",
         r"ابن\s+حجر\s+العسقلاني",
+        r"الحافظ\s+ابن\s+حجر",
     ],
     Author.IBN_KATHIR: [
         r"ابن\s+كثير",
         r"ابن\s+كثير\s+الدمشقي",
         r"ابن\s+كثير",
+        r"إسماعيل\s+بن\s+عمر\s+بن\s+كثير",
     ],
     Author.AN_NAWAWI: [
         r"النووي",
         r"الإمام\s+النووي",
         r"النووي",
+        r"يحيى\s+بن\s+شرف\s+النووي",
     ],
     Author.AL_BUKHARI: [
         r"البخاري",
         r"الإمام\s+البخاري",
         r"البخاري",
+        r"محمد\s+بن\s+إسماعيل\s+البخاري",
     ],
     Author.MUSLIM: [
         r"مسلم",
         r"الإمام\s+مسلم",
         r"مسلم",
+        r"مسلم\s+بن\s+الحجاج",
     ],
     Author.MALIK: [
         r"مالك",
         r"الإمام\s+مالك",
         r"مالك",
+        r"مالك\s+بن\s+أنس",
     ],
     Author.ASH_SHAFII: [
         r"الشافعي",
         r"الإمام\s+الشافعي",
         r"الشافعي",
+        r"محمد\s+بن\s+إدريس\s+الشافعي",
     ],
     Author.AHMAD_IBN_HANBAL: [
         r"أحمد\s+بن\s+حنبل",
         r"أحمد\s+ابن\s+حنبل",
         r"أحمد\s+بن\s+حنبل",
         r"الإمام\s+أحمد",
+        r"أحمد\s+بن\s+محمد\s+بن\s+حنبل",
     ],
     Author.AT_TIRMIDHI: [
         r"الترمذي",
         r"الإمام\s+الترمذي",
         r"الترمذي",
+        r"محمد\s+بن\s+عيسى\s+الترمذي",
     ],
     Author.AS_SUYUTI: [
         r"السيوطي",
         r"الإمام\s+السيوطي",
         r"السيوطي",
+        r"جلال\s+الدين\s+عبد\s+الرحمن\s+السيوطي",
     ],
     Author.ADH_DHAHABI: [
         r"الذهبي",
         r"الإمام\s+الذهبي",
         r"الذهبي",
+        r"شمس\s+الدين\s+محمد\s+بن\s+أحمد\s+الذهبي",
     ],
     Author.AT_TABARI: [
         r"الطبري",
         r"ابن\s+جرير\s+الطبري",
         r"الطبري",
+        r"محمد\s+بن\s+جرير\s+الطبري",
     ],
 }
 
@@ -209,11 +226,19 @@ os.makedirs(SEEN_DIR, exist_ok=True)
 
 
 def setup_logging(verbose: bool):
-    logging.basicConfig(
-        level=logging.DEBUG if verbose else logging.INFO,
-        format="%(asctime)s %(levelname)s %(message)s",
-        handlers=[logging.StreamHandler(sys.stdout)],
-    )
+    if verbose:
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="%(asctime)s %(levelname)s %(message)s",
+            handlers=[logging.StreamHandler(sys.stdout)],
+        )
+    else:
+        # Minimal logging - only errors and warnings
+        logging.basicConfig(
+            level=logging.WARNING,
+            format="%(levelname)s: %(message)s",
+            handlers=[logging.StreamHandler(sys.stdout)],
+        )
 
 
 def canon_url(url: str) -> str:
@@ -313,7 +338,7 @@ async def llm_classify(
 
 Target authors: {", ".join(target_authors)}
 Page title: {title[:200]}
-Page text: {text[:4000]}
+Page text: {text[:3000]}
 
 Return JSON:
 {{
@@ -325,15 +350,20 @@ Return JSON:
 
 For mentioned_authors, only include exact matches from the Target authors list using their uppercase enum names, e.g., ['IBN_AL_QAYYIM']. Do not use full names or Arabic variants."""
 
-    resp = await ctx.oai.chat.completions.create(
-        model=ctx.model,
-        messages=[
-            {"role": "system", "content": system},
-            {"role": "user", "content": user},
-        ],
-        max_completion_tokens=1500,
-    )
-    return _safe_json(_response_text(resp))
+    try:
+        resp = await ctx.oai.chat.completions.create(
+            model=ctx.model,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            max_completion_tokens=1500,
+        )
+
+        result = _safe_json(_response_text(resp))
+        return result
+    except Exception:
+        return None
 
 
 async def llm_extract(
@@ -370,22 +400,26 @@ Return JSON in this exact format:
     ]
 }}"""
 
-    resp = await ctx.oai.chat.completions.create(
-        model=ctx.model,
-        messages=[
-            {"role": "system", "content": system},
-            {"role": "user", "content": user},
-        ],
-        max_completion_tokens=1200,
-    )
-    return _safe_json(_response_text(resp))
+    try:
+        resp = await ctx.oai.chat.completions.create(
+            model=ctx.model,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            max_completion_tokens=1200,
+        )
+        result = _safe_json(_response_text(resp))
+        return result
+    except Exception:
+        return None
 
 
 async def llm_classify_and_extract(
     ctx: CrawlerContext,
     title: str,
     url: str,
-    text: str,
+    context_text: str,  # Now this is targeted context, not full page text
     authors: List[Author],
     min_words: int,
     max_words: int,
@@ -394,78 +428,97 @@ async def llm_classify_and_extract(
     """Classify Arabic content and extract excerpts in a single LLM call."""
     target_authors = [a.name for a in authors if a != Author.ANY]
 
-    system = "You are a precise Arabic content classifier and excerpt extractor. Return strict JSON only."
-    user = f"""Classify this Arabic page and extract excerpts if it meets criteria.
+    system = "Classify Arabic content and extract excerpts. Return JSON only."
+    user = f"""Classify this page and extract excerpts if valid.
 
 Target authors: {", ".join(target_authors)}
-Page title: {title[:200]}
-Page URL: {url}
-Page text: {text[:8000]}
-
-First, classify the content:
-- is_arabic: true if text contains Arabic characters
-- contains_paragraph: true if text has coherent paragraph-length content
-- mentioned_authors: exact matches from Target authors using uppercase enum names, e.g., ['IBN_AL_QAYYIM']
-- cefr: estimated language level
-
-If classification passes (is_arabic=true AND contains_paragraph=true AND mentioned_authors contains target authors), extract 1 contiguous excerpt:
-- excerpt: Arabic text (50-300 words)
-- start_char: starting character position
-- end_char: ending character position
-- estimated_words: approximate word count
+Title: {title[:100]}
+Context text (around author mention): {context_text}
 
 Return JSON:
 {{
     "is_arabic": true/false,
     "contains_paragraph": true/false,
-    "mentioned_authors": ["author names"],
+    "mentioned_authors": ["enum names from Target authors"],
     "cefr": "level",
     "excerpts": [
         {{
-            "excerpt": "str",
-            "start_char": "int",
-            "end_char": "int",
-            "estimated_words": "int"
+            "excerpt": "Arabic text",
+            "start_char": 0,
+            "end_char": 0,
+            "estimated_words": 0
         }}
     ]
-}}
+}}"""
 
-For mentioned_authors, only include exact matches from the Target authors list using their uppercase enum names. If classification fails, return empty excerpts array."""
+    try:
+        resp = await ctx.oai.chat.completions.create(
+            model=ctx.model,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            max_completion_tokens=2000,
+        )
 
-    resp = await ctx.oai.chat.completions.create(
-        model=ctx.model,
-        messages=[
-            {"role": "system", "content": system},
-            {"role": "user", "content": user},
-        ],
-        max_completion_tokens=1500,
-    )
-    return _safe_json(_response_text(resp))
+        result = _safe_json(_response_text(resp))
+        return result
+    except Exception:
+        return None
 
 
 def _response_text(resp) -> str:
+    """Extract text content from OpenAI response with debugging."""
     try:
-        return resp.choices[0].message.content
+        content = resp.choices[0].message.content
+        if not content:
+            return ""
+        return content
     except Exception:
         try:
-            return resp.output_text
+            content = resp.output_text
+            return content or ""
         except Exception:
             try:
-                return resp.output[0].content[0].text
+                content = resp.output[0].content[0].text
+                return content or ""
             except Exception:
                 return str(resp)
 
 
-def _safe_json(s: str) -> Dict[str, Any]:
+def _safe_json(s: str) -> Optional[Dict[str, Any]]:
+    """Safely parse JSON response from LLM with better error handling."""
+    if not s or not s.strip():
+        return None
+
     s = s.strip()
+
+    # Try to extract JSON from markdown code blocks
+    if "```json" in s:
+        m = re.search(r"```json\s*([\s\S]*?)\s*```", s)
+        if m:
+            s = m.group(1).strip()
+    elif "```" in s:
+        m = re.search(r"```\s*([\s\S]*?)\s*```", s)
+        if m:
+            s = m.group(1).strip()
+
+    # Try to find JSON object at the end
     m = re.search(r"\{[\s\S]*\}\s*$", s)
     if m:
         s = m.group(0)
+
     try:
         return json.loads(s)
-    except Exception:
+    except json.JSONDecodeError:
+        # Try to clean up common issues
         s2 = re.sub(r"^```(json)?|```$", "", s).strip()
-        return json.loads(s2)
+        try:
+            return json.loads(s2)
+        except json.JSONDecodeError:
+            return None
+    except Exception:
+        return None
 
 
 async def llm_translate(ctx: CrawlerContext, arabic_text: str) -> str:
@@ -478,15 +531,18 @@ Arabic text:
 
 Provide only the English translation, no explanations or additional text."""
 
-    resp = await ctx.oai.chat.completions.create(
-        model=ctx.model,
-        messages=[
-            {"role": "system", "content": system},
-            {"role": "user", "content": user},
-        ],
-        max_completion_tokens=1000,
-    )
-    return _response_text(resp).strip()
+    try:
+        resp = await ctx.oai.chat.completions.create(
+            model=ctx.model,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            max_completion_tokens=1000,
+        )
+        return _response_text(resp).strip()
+    except Exception:
+        return ""
 
 
 # -------------
@@ -515,6 +571,43 @@ def count_words_ar(s: str) -> int:
     # Split on whitespace and filter out empty strings
     words = [word.strip() for word in cleaned.split() if word.strip()]
     return len(words)
+
+
+def find_author_contexts(
+    text: str,
+    target_authors: List[Author],
+    context_before: int = 50,
+    context_after: int = 800,
+) -> List[Tuple[int, int, str]]:
+    """Find context windows around author mentions in text.
+
+    Returns list of (start_pos, end_pos, context_text) tuples.
+    """
+    contexts = []
+
+    for author in target_authors:
+        if author == Author.ANY:
+            continue
+
+        for pattern in AUTHOR_PATTERNS.get(author, []):
+            for match in re.finditer(pattern, text):
+                start_pos = max(0, match.start() - context_before)
+                end_pos = min(len(text), match.end() + context_after)
+
+                context_text = text[start_pos:end_pos]
+                contexts.append((start_pos, end_pos, context_text))
+
+    # Remove overlapping contexts and sort by position
+    if contexts:
+        contexts.sort(key=lambda x: x[0])
+        # Simple deduplication - could be more sophisticated
+        unique_contexts = []
+        for ctx in contexts:
+            if not any(abs(ctx[0] - existing[0]) < 100 for existing in unique_contexts):
+                unique_contexts.append(ctx)
+        contexts = unique_contexts
+
+    return contexts
 
 
 # -------------
@@ -555,7 +648,6 @@ async def yield_arabic_urls_from_sitemaps(
 ) -> Iterable[str]:
     status, xml, _ = await fetch_text(ctx, SITEMAP_INDEX)
     if status != 200:
-        logging.warning("Couldn't fetch sitemap-index.xml (status %s)", status)
         return
     child_maps = [
         u for u in parse_sitemap_xml(xml) if "/ar/" in u or "/sitemaps/ar/" in u
@@ -672,19 +764,22 @@ async def process_url(
     max_words: int,
     output_md: Optional[str],
 ) -> Optional[ExcerptRecord]:
+    """Process a single URL to extract Arabic excerpts with targeted author context.
+
+    Uses targeted context windows (50 chars before + 800 chars after author mentions)
+    instead of sending large text chunks to the LLM for more efficient processing.
+    """
     c_url = canon_url(url)
     if c_url in SEEN_URLS:
         return None
     if AR_PATH_PREFIX not in urlparse.urlsplit(c_url).path:
         return None
     if not allowed_by_robots(c_url):
-        logging.debug("Blocked by robots: %s", c_url)
         return None
 
     try:
         status, html, headers = await fetch_page(ctx, c_url)
-    except Exception as e:
-        logging.warning("Fetch failed %s: %s", c_url, e)
+    except Exception:
         return None
 
     title = rough_title(html)
@@ -708,182 +803,148 @@ async def process_url(
         mark_seen(c_url, t_hash)
         return None
 
-    # Heuristic pre-filter: author regex hits only
+    # Find author contexts
+    author_contexts = find_author_contexts(text, target_authors)
 
-    author_hits: List[str] = []
-    if Author.ANY not in target_authors:
-        for a in target_authors:
-            for rx in AUTHOR_PATTERNS.get(a, []):
-                if re.search(rx, text):
-                    author_hits.append(a.name)
-                    break
-
-    # Skip pages without author regex hits to reduce LLM calls
-    if Author.ANY not in target_authors and not author_hits:
-        logging.info(f"Skipping {c_url} due to no author regex hits")
+    if Author.ANY not in target_authors and not author_contexts:
         mark_seen(c_url, t_hash)
         return None
 
-    # LLM classify and extract in one call
-    try:
-        result = await llm_classify_and_extract(
-            ctx,
-            title or "",
-            c_url,
-            text,
-            target_authors,
-            min_words,
-            max_words,
-            require_arabic=True,
-        )
-
-        # Check if result is None or empty
-        if not result:
-            logging.error(
-                f"Combined classification/extraction returned None or empty for {c_url}"
-            )
-            mark_seen(c_url, t_hash)
-            return None
-    except Exception as e:
-        logging.error(f"Combined classification/extraction failed for {c_url}: {e}")
-        mark_seen(c_url, t_hash)
-        return None
-
-    # Check basic fields
-    is_arabic = result.get("is_arabic")
-    contains_paragraph = result.get("contains_paragraph")
-
-    if not (is_arabic and contains_paragraph is True):
-        logging.warning(
-            f"Classification failed basic checks for {c_url}: is_arabic={is_arabic}, contains_paragraph={contains_paragraph}"
-        )
-        mark_seen(c_url, t_hash)
-        return None
-
-    mentioned = set(result.get("mentioned_authors", []))
-    target_author_names = set([a.name for a in target_authors if a != Author.ANY])
-
-    if target_author_names and not (mentioned & target_author_names):
-        logging.warning(
-            f"No target authors found for {c_url}: mentioned={mentioned}, target={target_author_names}"
-        )
-        mark_seen(c_url, t_hash)
-        return None
-
-    # Handle excerpts from combined result
-    excerpts_data = result.get("excerpts", [])
-    if not excerpts_data:
-        logging.warning(f"No excerpts extracted for {c_url}")
-        mark_seen(c_url, t_hash)
-        return None
-
-    # Process each excerpt
+    # Process each author context
     processed_excerpts = []
-    for i, excerpt_data in enumerate(excerpts_data):
-        excerpt = excerpt_data.get("excerpt", "").strip()
-        if not excerpt:
+    for i, (start_pos, end_pos, context_text) in enumerate(author_contexts):
+        try:
+            result = await llm_classify_and_extract(
+                ctx,
+                title or "",
+                c_url,
+                context_text,
+                target_authors,
+                min_words,
+                max_words,
+                require_arabic=True,
+            )
+
+            if not result:
+                continue
+        except Exception:
             continue
 
-        words = count_words_ar(excerpt)
+        # Check basic fields
+        is_arabic = result.get("is_arabic")
+        contains_paragraph = result.get("contains_paragraph")
 
-        if words < min_words or words > max_words:
-            logging.warning(
-                f"Word count {words} outside range [{min_words}, {max_words}] for excerpt {i + 1} from {c_url}"
+        if not (is_arabic and contains_paragraph is True):
+            continue
+
+        mentioned = set(result.get("mentioned_authors", []))
+        target_author_names = set([a.name for a in target_authors if a != Author.ANY])
+
+        if target_author_names and not (mentioned & target_author_names):
+            continue
+
+        # Handle excerpts
+        excerpts_data = result.get("excerpts", [])
+        if not excerpts_data:
+            continue
+
+        # Process each excerpt
+        for j, excerpt_data in enumerate(excerpts_data):
+            excerpt = excerpt_data.get("excerpt", "").strip()
+            if not excerpt:
+                continue
+
+            words = count_words_ar(excerpt)
+
+            if words < min_words or words > max_words:
+                continue
+
+            # Get next excerpt number
+            excerpt_number = (
+                len(load_seen_set(os.path.join(SEEN_DIR, "excerpt_numbers.txt"))) + 1
             )
-            continue  # skip this excerpt but continue with others
 
-        # Get next excerpt number
-        excerpt_number = (
-            len(load_seen_set(os.path.join(SEEN_DIR, "excerpt_numbers.txt"))) + 1
-        )
+            # Get primary author for filename
+            primary_author = None
+            if mentioned and target_author_names:
+                for author_name in mentioned:
+                    if author_name in target_author_names:
+                        for author_enum in target_authors:
+                            if author_enum.name == author_name:
+                                primary_author = author_enum.value
+                                break
+                        break
 
-        # Get primary author for filename (first mentioned author that matches target)
-        primary_author = None
-        if mentioned and target_author_names:
-            for author_name in mentioned:
-                if author_name in target_author_names:
-                    # Map enum name back to value for filename
-                    for author_enum in target_authors:
-                        if author_enum.name == author_name:
-                            primary_author = author_enum.value
-                            break
-                    break
+            # Create filename with author if available
+            if primary_author:
+                author_filename = (
+                    re.sub(r"[^\w\s-]", "", primary_author).strip().replace(" ", "_")
+                )
+                ar_file = os.path.join(
+                    DATA_DIR, f"{excerpt_number}_{author_filename}_ar.txt"
+                )
+                en_file = os.path.join(
+                    DATA_DIR, f"{excerpt_number}_{author_filename}_en.txt"
+                )
+            else:
+                ar_file = os.path.join(DATA_DIR, f"{excerpt_number}_ar.txt")
+                en_file = os.path.join(DATA_DIR, f"{excerpt_number}_en.txt")
 
-        # Create filename with author if available
-        if primary_author:
-            # Clean author name for filename (remove special chars, spaces to underscores)
-            author_filename = (
-                re.sub(r"[^\w\s-]", "", primary_author).strip().replace(" ", "_")
+            # Save Arabic text
+            with open(ar_file, "w", encoding="utf-8") as f:
+                f.write(excerpt.strip())
+
+            # Translate to English and save
+            try:
+                english_translation = await llm_translate(ctx, excerpt)
+                with open(en_file, "w", encoding="utf-8") as f:
+                    f.write(english_translation)
+            except Exception:
+                # Create empty English file if translation fails
+                with open(en_file, "w", encoding="utf-8") as f:
+                    f.write("[Translation failed]")
+
+            # Mark excerpt number as used
+            with open(
+                os.path.join(SEEN_DIR, "excerpt_numbers.txt"), "a", encoding="utf-8"
+            ) as f:
+                f.write(f"{excerpt_number}\n")
+
+            rec = ExcerptRecord(
+                url=c_url,
+                title=title or "",
+                site_author="IslamQA",
+                quoted_scholars=sorted(mentioned),
+                language="ar",
+                excerpt=excerpt,
+                cefr=result.get("cefr") or "",
+                estimated_words=words,
+                category_hits=[],
+                author_hits=sorted(list(mentioned & target_author_names)),
+                passage_hash=sha256(excerpt),
+                excerpt_number=excerpt_number,
             )
-            ar_file = os.path.join(
-                DATA_DIR, f"{excerpt_number}_{author_filename}_ar.txt"
-            )
-            en_file = os.path.join(
-                DATA_DIR, f"{excerpt_number}_{author_filename}_en.txt"
-            )
-        else:
-            ar_file = os.path.join(DATA_DIR, f"{excerpt_number}_ar.txt")
-            en_file = os.path.join(DATA_DIR, f"{excerpt_number}_en.txt")
+            append_jsonl(EXCERPTS_PATH, asdict(rec))
+            processed_excerpts.append(rec)
 
-        # Save Arabic text
-        with open(ar_file, "w", encoding="utf-8") as f:
-            f.write(excerpt.strip())
-
-        # Translate to English and save
-        try:
-            english_translation = await llm_translate(ctx, excerpt)
-            with open(en_file, "w", encoding="utf-8") as f:
-                f.write(english_translation)
-        except Exception as e:
-            logging.warning(f"Translation failed for excerpt {excerpt_number}: {e}")
-            # Create empty English file if translation fails
-            with open(en_file, "w", encoding="utf-8") as f:
-                f.write(f"[Translation failed: {e}]")
-
-        # Mark excerpt number as used
-        with open(
-            os.path.join(SEEN_DIR, "excerpt_numbers.txt"), "a", encoding="utf-8"
-        ) as f:
-            f.write(f"{excerpt_number}\n")
-
-        rec = ExcerptRecord(
-            url=c_url,
-            title=title or "",
-            site_author="IslamQA",
-            quoted_scholars=sorted(mentioned),
-            language="ar",
-            excerpt=excerpt,
-            cefr=result.get("cefr") or "",
-            estimated_words=words,
-            category_hits=[],
-            author_hits=sorted(
-                set(author_hits + list(mentioned & target_author_names))
-            ),
-            passage_hash=sha256(excerpt),
-            excerpt_number=excerpt_number,
-        )
-        append_jsonl(EXCERPTS_PATH, asdict(rec))
-        processed_excerpts.append(rec)
-
-        if output_md:
-            with open(output_md, "a", encoding="utf-8") as f:
-                f.write(f"\n\n## {excerpt_number}. {rec.title}\n\n")
-                f.write(f"[Source]({c_url})  ")
-                if rec.quoted_scholars:
-                    f.write(f"Quoted: {', '.join(rec.quoted_scholars)}  ")
-                if rec.cefr:
-                    f.write(f"CEFR: {rec.cefr}  ")
-                f.write("\n\n")
-                f.write(f"**Arabic:**\n{rec.excerpt.strip()}\n\n")
-                f.write(f"**English:**\n{english_translation}\n")
+            if output_md:
+                with open(output_md, "a", encoding="utf-8") as f:
+                    f.write(f"\n\n## {excerpt_number}. {rec.title}\n\n")
+                    f.write(f"[Source]({c_url})  ")
+                    if rec.quoted_scholars:
+                        f.write(f"Quoted: {', '.join(rec.quoted_scholars)}  ")
+                    if rec.cefr:
+                        f.write(f"CEFR: {rec.cefr}  ")
+                    f.write("\n\n")
+                    f.write(f"**Arabic:**\n{rec.excerpt.strip()}\n\n")
+                    f.write(f"**English:**\n{english_translation}\n")
 
     if not processed_excerpts:
-        logging.warning(f"No valid excerpts processed for {c_url}")
         mark_seen(c_url, t_hash)
         return None
 
     mark_seen(c_url, t_hash)
-    return processed_excerpts[0]  # Return first processed excerpt for compatibility
+    return processed_excerpts[0]
 
 
 async def discover_and_process(
@@ -902,7 +963,6 @@ async def discover_and_process(
     headers = {"User-Agent": USER_AGENT, "Accept": "*/*"}
 
     # Build reusable clients once
-
     oai = init_openai_client()
 
     async with httpx.AsyncClient(
