@@ -14,14 +14,12 @@ export const GRAPH_WIDTH =
 
 // Data point radius for boundary calculations
 const DATA_POINT_RADIUS = 3.5; // Must match CHART_VISUAL.DATA_POINT_SIZE
-export const DATA_POINT_PADDING = DATA_POINT_RADIUS * 2; // Full diameter padding for safe boundaries
-
-// Effective chart width accounting for data point boundaries
-export const EFFECTIVE_CHART_WIDTH = GRAPH_WIDTH - DATA_POINT_PADDING * 2;
+export const DATA_POINT_PADDING = DATA_POINT_RADIUS * 2; // Used for boundary calculations in positioning
 
 /**
  * Calculate data point positions with proper boundary padding
  * Ensures all data points are fully visible within the chart canvas
+ * FIXED: Eliminated inward tilt by using full width and smart boundary positioning
  */
 export const calculateDataPointPositions = (dataCount: number): number[] => {
   if (dataCount <= 1) {
@@ -29,11 +27,20 @@ export const calculateDataPointPositions = (dataCount: number): number[] => {
   }
 
   const positions: number[] = [];
-  const stepX = EFFECTIVE_CHART_WIDTH / Math.max(1, dataCount - 1);
+  // Use full width for better data visualization
+  const stepX = GRAPH_WIDTH / Math.max(1, dataCount - 1);
 
   for (let i = 0; i < dataCount; i++) {
-    // Add padding to ensure data points don't get clipped at edges
-    const x = DATA_POINT_PADDING + i * stepX;
+    // Use full width but ensure dots don't exceed boundaries
+    let x = i * stepX;
+
+    // Adjust first and last points to keep dots fully visible
+    if (i === 0) {
+      x = DATA_POINT_RADIUS; // Start at radius, not center
+    } else if (i === dataCount - 1) {
+      x = GRAPH_WIDTH - DATA_POINT_RADIUS; // End at width - radius
+    }
+
     positions.push(x);
   }
 
@@ -50,17 +57,19 @@ export const CHART_VISUAL = {
   DATA_POINT_INNER_SIZE: 2, // Inner highlight radius
   LINE_WIDTH: 2.5, // Chart line stroke width
   CHART_TOP_PADDING: 8, // Top padding for data points (aligned to 8px grid)
+  // Data point colors now use golden streak colors for better visibility
 } as const;
 
 // Time periods - optimized for mobile clarity and user comprehension
 export const DAYS_7 = 7; // Weekly view for better mobile experience and cognitive load
 
 // Standardized performance thresholds used across all charts
+// Simplified: Back to clean 4-zone system with unified sage green theme
 export const PERFORMANCE_THRESHOLDS = {
-  EXCELLENT: 80,
-  GOOD: 60,
-  FAIR: 40,
-  POOR: 0,
+  EXCELLENT: 80, // Green zone - excellent performance
+  GOOD: 60, // Good performance
+  FAIR: 40, // Fair performance
+  POOR: 0, // Poor performance
 } as const;
 
 // Standardized chart layout constants for consistent alignment

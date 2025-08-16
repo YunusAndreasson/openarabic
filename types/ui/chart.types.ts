@@ -48,6 +48,11 @@ export interface ChartColors {
     tooltip: string;
     threshold: string;
   };
+  /** Data point colors for chart dots */
+  dataPoint: {
+    primary: string;
+    inner: string;
+  };
   /** Opacity helper values */
   opacity: ChartOpacity;
   /** Helper to apply opacity to a color */

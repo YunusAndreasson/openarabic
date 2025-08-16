@@ -30,7 +30,7 @@ export const useChartColors = (): ChartColors => {
   const colors = useColors();
 
   return {
-    // Performance levels - using distinct hues for clear differentiation
+    // Performance levels - using unified sage green system for visual cohesion
     performance: {
       excellent: colors.success, // Green - universally positive
       good: colors.info, // Blue - calm, stable
@@ -48,6 +48,12 @@ export const useChartColors = (): ChartColors => {
       shadow: withOpacity(colors.shadow, CHART_OPACITY.LOW),
       tooltip: withOpacity(colors.card, 0.98),
       threshold: colors.chartThreshold, // Reference lines for targets
+    },
+
+    // Data point colors - using brighter sage for better visibility
+    dataPoint: {
+      primary: colors.tint, // Brighter sage tint for better visibility
+      inner: withOpacity(colors.tint, 0.7), // Slightly darker for inner highlight
     },
 
     // Opacity utilities

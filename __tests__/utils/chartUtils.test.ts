@@ -1,8 +1,9 @@
 import {
-  ChartPoint,
+  ensureUniqueKeys,
   generateDataPointKeys,
   generateMilestoneKeys,
   validateChartDataPoints,
+  type ChartPoint,
 } from '@/utils/chartUtils';
 
 describe('chartUtils', () => {
@@ -147,5 +148,24 @@ describe('chartUtils', () => {
         expect(xLabels[todayIndex]).toBe('Sun');
       }
     });
+  });
+});
+
+describe('ensureUniqueKeys', () => {
+  it('should ensure unique keys by appending counter if duplicates found', () => {
+    const keys = ['key1', 'key2', 'key1', 'key3', 'key1'];
+    const result = ensureUniqueKeys(keys);
+    expect(result).toEqual(['key1', 'key2', 'key1-1', 'key3', 'key1-2']);
+  });
+
+  it('should handle empty array', () => {
+    const result = ensureUniqueKeys([]);
+    expect(result).toEqual([]);
+  });
+
+  it('should handle array with no duplicates', () => {
+    const keys = ['key1', 'key2', 'key3'];
+    const result = ensureUniqueKeys(keys);
+    expect(result).toEqual(keys);
   });
 });

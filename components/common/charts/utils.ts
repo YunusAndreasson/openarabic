@@ -117,6 +117,7 @@ export const calculateEfficiencyScore = (word: StudyWord): number => {
 
 /**
  * Creates standardized performance zones for charts
+ * Simplified: Clean 4-zone system with unified sage green theme
  * @param chartHeight - Height of the chart area
  * @param topPadding - Top padding (default 0)
  * @param chartColors - Chart colors object
@@ -134,7 +135,7 @@ export const createStandardizedPerformanceZones = (
       name: 'Excellent',
       min: PERFORMANCE_THRESHOLDS.EXCELLENT,
       max: 100,
-      color: chartColors.performance.excellent,
+      color: chartColors.withOpacity(chartColors.performance.excellent, 0.15),
       y: topPadding,
       height: ((100 - PERFORMANCE_THRESHOLDS.EXCELLENT) / 100) * availableHeight,
     },
@@ -142,16 +143,15 @@ export const createStandardizedPerformanceZones = (
       name: 'Good',
       min: PERFORMANCE_THRESHOLDS.GOOD,
       max: PERFORMANCE_THRESHOLDS.EXCELLENT,
-      color: chartColors.performance.good,
+      color: chartColors.withOpacity(chartColors.performance.good, 0.15),
       y: topPadding + ((100 - PERFORMANCE_THRESHOLDS.EXCELLENT) / 100) * availableHeight,
-      height:
-        ((PERFORMANCE_THRESHOLDS.EXCELLENT - PERFORMANCE_THRESHOLDS.GOOD) / 100) * availableHeight,
+      height: ((PERFORMANCE_THRESHOLDS.EXCELLENT - PERFORMANCE_THRESHOLDS.GOOD) / 100) * availableHeight,
     },
     {
       name: 'Fair',
       min: PERFORMANCE_THRESHOLDS.FAIR,
       max: PERFORMANCE_THRESHOLDS.GOOD,
-      color: chartColors.performance.moderate,
+      color: chartColors.withOpacity(chartColors.performance.moderate, 0.15),
       y: topPadding + ((100 - PERFORMANCE_THRESHOLDS.GOOD) / 100) * availableHeight,
       height: ((PERFORMANCE_THRESHOLDS.GOOD - PERFORMANCE_THRESHOLDS.FAIR) / 100) * availableHeight,
     },
@@ -159,7 +159,7 @@ export const createStandardizedPerformanceZones = (
       name: 'Poor',
       min: PERFORMANCE_THRESHOLDS.POOR,
       max: PERFORMANCE_THRESHOLDS.FAIR,
-      color: chartColors.performance.poor,
+      color: chartColors.withOpacity(chartColors.performance.poor, 0.15),
       y: topPadding + ((100 - PERFORMANCE_THRESHOLDS.FAIR) / 100) * availableHeight,
       height: ((PERFORMANCE_THRESHOLDS.FAIR - PERFORMANCE_THRESHOLDS.POOR) / 100) * availableHeight,
     },
