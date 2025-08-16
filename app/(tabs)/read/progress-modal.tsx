@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EfficiencyChart, MasteryChart } from '@practice/charts';
+import { VocabularyMetrics } from '@practice/charts/VocabularyMetrics';
 import { StreakChart } from '@read/StreakChart';
 import { StreakMetrics } from '@read/StreakMetrics';
 
@@ -51,8 +52,8 @@ export default function ProgressModal(): JSX.Element {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: LAYOUT.SPACING.MEDIUM,
-            paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE,
+            paddingTop: LAYOUT.SPACING.LARGE,
+            paddingBottom: insets.bottom + LAYOUT.SPACING.XLARGE,
           },
         ]}
         showsVerticalScrollIndicator={false}
@@ -78,7 +79,7 @@ export default function ProgressModal(): JSX.Element {
               <>
                 <SectionTitle
                   title="Reading Streak"
-                  subtitle="Your daily reading journey over the past 30 days"
+                  subtitle="Your daily reading consistency over the past 30 days"
                 />
 
                 <View style={styles.streakMetricsContainer}>
@@ -86,13 +87,40 @@ export default function ProgressModal(): JSX.Element {
                 </View>
 
                 <View style={styles.chartSection}>
-                  <SectionTitle title="Daily Activity" subtitle="Orange bars show streak periods" />
+                  <SectionTitle title="Daily Activity" subtitle="Track your reading patterns" />
                   <StreakChart
                     dailyActivity={streakHistory.dailyActivity}
                     streakPeriods={streakHistory.streakPeriods}
                   />
                 </View>
               </>
+            ) : null}
+
+            {/* Vocabulary Progress Section */}
+            {validStudyWords.length > 0 ? (
+              <View style={styles.chartSection}>
+                <SectionTitle
+                  title="Vocabulary Status"
+                  subtitle="Current word counts and learning progress"
+                />
+                <VocabularyMetrics
+                  totalWords={validStudyWords.length}
+                  masteredWords={
+                    validStudyWords.filter(
+                      word => word.fsrs_state === 2 && (word.fsrs_stability ?? 0) >= 5
+                    ).length
+                  }
+                  learningWords={
+                    validStudyWords.filter(
+                      word =>
+                        word.fsrs_state === 0 ||
+                        word.fsrs_state === 1 ||
+                        word.fsrs_state === 3 ||
+                        (word.fsrs_state === 2 && (word.fsrs_stability ?? 0) < 5)
+                    ).length
+                  }
+                />
+              </View>
             ) : null}
 
             {/* Learning Progress Section */}
@@ -130,16 +158,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: LAYOUT.SPACING.LARGE,
   },
   streakMetricsContainer: {
     marginTop: LAYOUT.SPACING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.LARGE,
   },
   chartSection: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.XLARGE,
   },
   loadingContainer: {
     flex: 1,

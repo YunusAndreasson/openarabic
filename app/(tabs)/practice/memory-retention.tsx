@@ -1,12 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { JSX } from 'react';
-import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { RetrievabilityChart } from '@/components/practice/charts/RetrievabilityChart';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
@@ -18,25 +17,6 @@ export default function MemoryRetentionModal(): JSX.Element {
   const { allWords: studyWords } = useFSRSQueries({
     userId: user?.id,
   });
-
-  // Calculate vocabulary statistics
-  const vocabularyStats = useMemo(() => {
-    if (!studyWords) return null;
-
-    const totalWords = studyWords.length;
-    const masteredWords = studyWords.filter(
-      word => word.fsrs_state === 2 && (word.fsrs_stability ?? 0) >= 5
-    ).length;
-    const learningWords = studyWords.filter(
-      word =>
-        word.fsrs_state === 0 ||
-        word.fsrs_state === 1 ||
-        word.fsrs_state === 3 ||
-        (word.fsrs_state === 2 && (word.fsrs_stability ?? 0) < 5)
-    ).length;
-
-    return { totalWords, masteredWords, learningWords };
-  }, [studyWords]);
 
   return (
     <ThemedView style={styles.container}>
@@ -63,38 +43,6 @@ export default function MemoryRetentionModal(): JSX.Element {
           </ThemedText>
         </View>
       </View>
-
-      {/* Vocabulary Statistics */}
-      {vocabularyStats && (
-        <View style={styles.statsContainer}>
-          <View style={[styles.statCard, { backgroundColor: colors.elevation1 }]}>
-            <ThemedText style={styles.statValue} weight="semibold">
-              {vocabularyStats.totalWords}
-            </ThemedText>
-            <ThemedText style={styles.statLabel} variant="secondary">
-              Total Words
-            </ThemedText>
-          </View>
-
-          <View style={[styles.statCard, { backgroundColor: colors.elevation1 }]}>
-            <ThemedText style={styles.statValue} weight="semibold">
-              {vocabularyStats.masteredWords}
-            </ThemedText>
-            <ThemedText style={styles.statLabel} variant="secondary">
-              Mastered
-            </ThemedText>
-          </View>
-
-          <View style={[styles.statCard, { backgroundColor: colors.elevation1 }]}>
-            <ThemedText style={styles.statValue} weight="semibold">
-              {vocabularyStats.learningWords}
-            </ThemedText>
-            <ThemedText style={styles.statLabel} variant="secondary">
-              Learning
-            </ThemedText>
-          </View>
-        </View>
-      )}
     </ThemedView>
   );
 }
@@ -134,32 +82,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingTop: LAYOUT.SPACING.SMALL,
     paddingBottom: LAYOUT.SPACING.LARGE,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingVertical: LAYOUT.SPACING.LARGE,
-    gap: LAYOUT.SPACING.MEDIUM,
-  },
-  statCard: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    minHeight: MIN_TOUCH_TARGET.MEDIUM,
-  },
-  statValue: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.2,
-    textAlign: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  statLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.2,
-    textAlign: 'center',
   },
 });
