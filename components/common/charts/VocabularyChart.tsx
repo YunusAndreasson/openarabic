@@ -36,8 +36,8 @@ interface VocabularyChartProps<T> {
   yMax?: number;
   topPadding?: number;
   graphWidth: number;
-  todayIndex?: number; // Index of the label that represents "today"
   yLabelFormatter?: (value: number) => string;
+  isFuturePrediction?: boolean; // Whether this chart shows future predictions (today = index 0)
 
   // BaseChart props
   title: string;
@@ -66,8 +66,7 @@ const VocabularyChartComparison = <T,>(
     prevProps.yMax !== nextProps.yMax ||
     prevProps.topPadding !== nextProps.topPadding ||
     prevProps.graphWidth !== nextProps.graphWidth ||
-    prevProps.onCardPress !== nextProps.onCardPress ||
-    prevProps.todayIndex !== nextProps.todayIndex
+    prevProps.onCardPress !== nextProps.onCardPress
   ) {
     return false;
   }
@@ -119,17 +118,23 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
     yMax = DEFAULT_Y_MAX,
     topPadding = DEFAULT_TOP_PADDING,
     graphWidth,
-    todayIndex,
+    yLabelFormatter,
+    isFuturePrediction = false,
     title,
     subtitle,
     onCardPress,
     hideTitle = false,
     hasData,
     emptyStateText,
-    yLabelFormatter,
     bottomSummary,
-    showWarningLine,
-  }) => {
+    showWarningLine = false,
+  }: VocabularyChartProps<any>) => {
+    // Automatically set todayIndex based on chart type
+    // Future prediction charts (like RetrievabilityChart) have today at index 0
+    // Historical charts (like EfficiencyChart) have today at the last index
+    const todayIndex =
+      xLabels.length > 0 ? (isFuturePrediction ? 0 : xLabels.length - 1) : undefined;
+
     // Memoized chart data calculations for better performance
     const contentHeight = useMemo(() => GRAPH_HEIGHT_LARGE + CONTENT_HEIGHT_OFFSET, []);
 
@@ -198,6 +203,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
                 x={point.x}
                 y={point.y}
                 uniqueKey={dataPointKeys[index]}
+                isToday={todayIndex !== undefined && index === todayIndex}
               />
             ))}
           </Group>
@@ -214,6 +220,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
                 x={milestone.x}
                 y={milestone.y}
                 uniqueKey={milestoneKeys[index]}
+                isToday={false} // Milestones are never "today"
               />
             ))}
           </Group>
@@ -234,6 +241,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
       milestones,
       milestoneKeys,
       showWarningLine,
+      todayIndex,
     ]);
 
     // Memoized axes component
@@ -247,11 +255,11 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
           xLabelPositions={xLabelPositions}
           yMax={yMax}
           xLabels={xLabels}
-          todayIndex={todayIndex}
           yLabelFormatter={yLabelFormatter}
+          isFuturePrediction={isFuturePrediction}
         />
       ),
-      [topPadding, graphWidth, xLabelPositions, yMax, xLabels, todayIndex, yLabelFormatter]
+      [topPadding, graphWidth, xLabelPositions, yMax, xLabels, yLabelFormatter, isFuturePrediction]
     );
 
     return (

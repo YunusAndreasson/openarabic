@@ -11,16 +11,16 @@ import { withOpacity } from '@/utils/colorUtils';
 export const Y_AXIS_WIDTH = LAYOUT.CHART.Y_AXIS_WIDTH; // Consistent chart spacing
 
 interface AxisLabelsProps {
-  width: number;
   height: number;
+  width: number;
   xLabels: string[];
+  xLabelPositions: number[];
   yMax?: number; // Maximum value for y-axis (default 100 for percentages)
-  xLabelPositions: number[]; // X positions for each label
   showYAxis?: boolean;
-  yAxisLines?: number; // Number of y-axis labels (default 5 for 0%, 25%, 50%, 75%, 100%)
-  topPadding?: number; // Top padding used by the chart for proper y-axis alignment
-  todayIndex?: number; // Index of the label that represents "today" (default: last label)
-  yLabelFormatter?: (value: number) => string; // Optional custom formatter (defaults to percentage)
+  yAxisLines?: number;
+  topPadding?: number;
+  yLabelFormatter?: (value: number) => string;
+  isFuturePrediction?: boolean; // Whether this chart shows future predictions (today = index 0)
 }
 
 /**
@@ -31,21 +31,28 @@ interface AxisLabelsProps {
  * - Edge labels use appropriate text alignment (left/right) for visual balance
  * - Maintains centered positioning for middle labels while ensuring full visibility
  */
-export const ChartAxes = memo(
+export const ChartAxes = memo<AxisLabelsProps>(
   ({
-    width,
     height,
+    width,
     xLabels,
-    yMax = 100,
     xLabelPositions,
+    yMax = 100,
     showYAxis = true,
     yAxisLines = 5,
     topPadding = 0,
-    todayIndex = xLabels.length - 1,
     yLabelFormatter,
+    isFuturePrediction = false,
   }: AxisLabelsProps) => {
     const isDarkMode = useIsDarkMode();
     const colors = useColors();
+
+    // Today index depends on chart type
+    // Future prediction charts (like RetrievabilityChart) have today at index 0
+    // Historical charts (like EfficiencyChart) have today at the last index
+    const todayIndex =
+      xLabels.length > 0 ? (isFuturePrediction ? 0 : xLabels.length - 1) : undefined;
+
     const textColor = useMemo(
       () => (isDarkMode ? withOpacity(colors.white, 0.7) : withOpacity(colors.black, 0.7)),
       [isDarkMode, colors.white, colors.black]
@@ -153,8 +160,8 @@ export const ChartAxes = memo(
                   style={[
                     styles.xLabelText,
                     {
-                      color: textColor,
-                      fontWeight: isToday ? '600' : '500',
+                      color: isToday ? colors.tint : textColor, // Use tint color for Today label
+                      fontWeight: isToday ? '700' : '500', // Bolder for Today
                       textAlign: 'center',
                     },
                   ]}

@@ -28,7 +28,12 @@ interface RetrievabilityRecord {
 }
 
 export const RetrievabilityChart = memo<RetrievabilityChartProps>(
-  ({ studyWords = [], onInfoPress, hideTitle = false, showWarningLine = true }: RetrievabilityChartProps) => {
+  ({
+    studyWords = [],
+    onInfoPress,
+    hideTitle = false,
+    showWarningLine = true,
+  }: RetrievabilityChartProps) => {
     const graphWidth = useGraphWidth();
     const { retrievabilityData, chartData } = useRetrievabilityChart(studyWords);
 
@@ -84,7 +89,6 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
         yMax={100}
         topPadding={16}
         graphWidth={graphWidth}
-        todayIndex={0} // Today is leftmost for future predictions
         title={CHART_LABELS.RETENTION}
         subtitle={subtitle}
         onCardPress={onInfoPress}
@@ -92,6 +96,7 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
         hasData={chartData.hasData}
         emptyStateText={EMPTY_STATE_MESSAGES.retrievability}
         showWarningLine={showWarningLine}
+        isFuturePrediction={true} // Today is leftmost for future predictions
       />
     );
   }

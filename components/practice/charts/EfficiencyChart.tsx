@@ -76,7 +76,6 @@ export const EfficiencyChart = memo<EfficiencyChartProps>(
         hasData={chartData.hasData}
         emptyStateText={EMPTY_STATE_MESSAGES.efficiency}
         yLabelFormatter={(v: number) => `${Math.round(v)}`}
-        todayIndex={xLabels.length - 1}
       />
     );
   }
