@@ -145,7 +145,8 @@ export const createStandardizedPerformanceZones = (
       max: PERFORMANCE_THRESHOLDS.EXCELLENT,
       color: chartColors.withOpacity(chartColors.performance.good, 0.15),
       y: topPadding + ((100 - PERFORMANCE_THRESHOLDS.EXCELLENT) / 100) * availableHeight,
-      height: ((PERFORMANCE_THRESHOLDS.EXCELLENT - PERFORMANCE_THRESHOLDS.GOOD) / 100) * availableHeight,
+      height:
+        ((PERFORMANCE_THRESHOLDS.EXCELLENT - PERFORMANCE_THRESHOLDS.GOOD) / 100) * availableHeight,
     },
     {
       name: 'Fair',
