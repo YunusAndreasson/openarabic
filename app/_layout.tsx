@@ -42,6 +42,7 @@ import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
+import { FSRSDataProvider } from '@/hooks/vocabulary/FSRSDataProvider';
 import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import type { RootState } from '@/store/store';
 import { persistor, store } from '@/store/store';
@@ -294,41 +295,43 @@ function AppContent() {
 
   return (
     <NavigationThemeProvider value={navigationTheme}>
-      <React.Profiler id={`Screen:${routeLabel}`} onRender={onProfilerRender}>
-        <View style={styles.container}>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen
-              name="(tabs)"
-              options={{
-                headerShown: false,
-                animation: 'fade',
-              }}
-            />
-            <Stack.Screen
-              name="auth"
-              options={{
-                headerShown: false,
-                animation: 'fade',
-              }}
-            />
-            <Stack.Screen
-              name="practice/review"
-              options={createNavigationOptions(colors, {
-                headerShown: false,
-                presentation: 'fullScreenModal',
-                gestureEnabled: true,
-              })}
-            />
+      <FSRSDataProvider userId={session?.user?.id}>
+        <React.Profiler id={`Screen:${routeLabel}`} onRender={onProfilerRender}>
+          <View style={styles.container}>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen
+                name="(tabs)"
+                options={{
+                  headerShown: false,
+                  animation: 'fade',
+                }}
+              />
+              <Stack.Screen
+                name="auth"
+                options={{
+                  headerShown: false,
+                  animation: 'fade',
+                }}
+              />
+              <Stack.Screen
+                name="practice/review"
+                options={createNavigationOptions(colors, {
+                  headerShown: false,
+                  presentation: 'fullScreenModal',
+                  gestureEnabled: true,
+                })}
+              />
 
-            {/* NowPlaying is nested at /(tabs)/listen/now-playing; no root-level screen needed */}
-          </Stack>
+              {/* NowPlaying is nested at /(tabs)/listen/now-playing; no root-level screen needed */}
+            </Stack>
 
-          {/* Audio overlays are isolated to prevent root re-renders on audio ticks */}
-          <AudioOverlays />
+            {/* Audio overlays are isolated to prevent root re-renders on audio ticks */}
+            <AudioOverlays />
 
-          <StatusBar style={isDark ? 'light' : 'dark'} />
-        </View>
-      </React.Profiler>
+            <StatusBar style={isDark ? 'light' : 'dark'} />
+          </View>
+        </React.Profiler>
+      </FSRSDataProvider>
     </NavigationThemeProvider>
   );
 }
@@ -399,11 +402,7 @@ const ErrorFallback = memo(function ErrorFallback({ error }: FallbackProps) {
   const errorMessage = error instanceof Error ? error.toString() : STRINGS.UNKNOWN_ERROR_OCCURRED;
   return (
     <View style={styles.errorContainer}>
-      <ThemedText
-        type="heading3"
-        variant="error"
-        style={styles.errorTitle}
-      >
+      <ThemedText type="heading3" variant="error" style={styles.errorTitle}>
         {STRINGS.SOMETHING_WENT_WRONG}
       </ThemedText>
       <ThemedText style={styles.errorMessage} type="body">

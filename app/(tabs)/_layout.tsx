@@ -13,7 +13,8 @@ import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth';
 import { useColors, useIsDarkMode } from '@/hooks/theme';
-import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
+import { useFSRSData } from '@/hooks/vocabulary/FSRSDataProvider';
+import { useMemoryBadge } from '@/hooks/vocabulary/useMemoryBadge';
 
 const TAB_SCREENS = [
   {
@@ -89,44 +90,11 @@ export default function TabLayout(): JSX.Element {
   const { session, isLoading } = useAuth();
   const colors = useColors();
 
-  // Get study words data for memory capacity badge
-  const { allWords: studyWords } = useFSRSQueries({
-    userId: session?.user?.id,
+  // Get memory badge status from lightweight hook
+  const { studyWords } = useFSRSData();
+  const { shouldShowMemoryBadge } = useMemoryBadge({
+    studyWords,
   });
-
-  // Calculate if memory retention is poor (red dot should show)
-  const shouldShowMemoryBadge = useMemo(() => {
-    if (!studyWords?.length) return false;
-
-    // Calculate current memory retention using the same logic as the gauge
-    const wordsWithReviews = studyWords.filter(word => word.fsrs_last_review !== null);
-
-    if (wordsWithReviews.length === 0) return false;
-
-    // Calculate average retention based on FSRS state and stability
-    let totalRetention = 0;
-    let validWords = 0;
-
-    wordsWithReviews.forEach(word => {
-      if (word.fsrs_state === 2 && word.fsrs_stability !== null) {
-        // Mastered words: retention based on stability
-        const retention = Math.min(100, Math.max(0, word.fsrs_stability * 10));
-        totalRetention += retention;
-        validWords++;
-      } else if (word.fsrs_state === 0 || word.fsrs_state === 1 || word.fsrs_state === 3) {
-        // Learning words: lower retention
-        totalRetention += 30; // Learning words have lower retention
-        validWords++;
-      }
-    });
-
-    if (validWords === 0) return false;
-
-    const averageRetention = totalRetention / validWords;
-
-    // Show red dot when retention is below 40% (poor threshold)
-    return averageRetention < 40;
-  }, [studyWords]);
 
   useEffect(() => {
     if (!isLoading && !session?.user) {

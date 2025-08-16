@@ -1,19 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Canvas, Group, LinearGradient, Path, Skia, vec } from '@shopify/react-native-skia';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { runOnJS, useAnimatedReaction, useSharedValue, withTiming } from 'react-native-reanimated';
+import { runOnJS, useAnimatedReaction, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import { BaseChart } from '@charts/BaseChart';
 import { useChartColors } from '@charts/chartColors';
 
 import { ThemedText } from '@/components/ThemedText';
-import { TIMING_CONFIG } from '@/constants/animation';
+import { SPRING_CONFIG } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { mediumFeedback, successFeedback } from '@/utils/haptics';
 
 interface MemoryRetentionGaugeProps {
   studyWords: StudyWord[];
@@ -49,13 +50,38 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
     const retentionShared = useSharedValue(0);
     const [animatedRetention, setAnimatedRetention] = useState(0);
 
+    // Track previous retention to detect when entering green area
+    const prevRetentionRef = useRef(0);
+    const hasTriggeredGreenHapticRef = useRef(false);
+
     useEffect(() => {
       const next = Math.max(0, Math.min(100, currentRetention));
       const delta = Math.abs(retentionShared.value - next);
       if (delta < 0.5) return;
-      retentionShared.value = withTiming(next, {
-        duration: TIMING_CONFIG.GENTLE.duration,
-        easing: TIMING_CONFIG.GENTLE.easing,
+
+      // Check if we're entering the green area (70%+) for the first time
+      const wasBelowGreen = prevRetentionRef.current < 70;
+      const isNowGreen = next >= 70;
+
+      if (wasBelowGreen && isNowGreen && !hasTriggeredGreenHapticRef.current) {
+        // Trigger celebratory haptic feedback when entering green area
+        // Sequence: success + medium impact for a strong dopamine hit
+        successFeedback();
+        setTimeout(() => mediumFeedback(), 100); // Small delay for distinct feel
+        hasTriggeredGreenHapticRef.current = true;
+      }
+
+      // Reset haptic trigger if user drops below green area
+      if (next < 70) {
+        hasTriggeredGreenHapticRef.current = false;
+      }
+
+      // Update previous retention
+      prevRetentionRef.current = next;
+
+      retentionShared.value = withSpring(next, {
+        ...SPRING_CONFIG.CARD,
+        overshootClamping: true, // Prevent going beyond target value
       });
     }, [currentRetention, retentionShared]);
 
