@@ -11,6 +11,7 @@ interface ChartGridProps {
   topPadding?: number;
   xLabelPositions?: number[]; // X positions for vertical grid lines (daily positions)
   yMax?: number; // Maximum value for y-axis (default 100 for percentages)
+  showWarningLine?: boolean; // Whether to show the 70% threshold line
 }
 
 /**
@@ -18,7 +19,14 @@ interface ChartGridProps {
  * without overwhelming the data visualization
  */
 export const ChartGrid = memo(
-  ({ width, height, topPadding = 0, xLabelPositions = [], yMax = 100 }: ChartGridProps) => {
+  ({
+    width,
+    height,
+    topPadding = 0,
+    xLabelPositions = [],
+    yMax = 100,
+    showWarningLine = false,
+  }: ChartGridProps) => {
     const isDarkMode = useIsDarkMode();
     const colors = useColors();
 
@@ -34,6 +42,9 @@ export const ChartGrid = memo(
       [isDarkMode, colors.white, colors.black]
     );
 
+    // Threshold line color - orange for threshold warning
+    const thresholdLineColor = useMemo(() => colors.warning, [colors.warning]);
+
     // Horizontal lines at exact percentages (25%, 50%, 75%, 100%) for perfect value reading
     const horizontalLines = useMemo(() => {
       const chartHeight = height - topPadding;
@@ -43,6 +54,14 @@ export const ChartGrid = memo(
         return { y: yPosition, percentage };
       });
     }, [height, topPadding, yMax]);
+
+    // Threshold line at 70% - critical threshold for vocabulary retention
+    const thresholdLine = useMemo(() => {
+      if (!showWarningLine) return null;
+      const chartHeight = height - topPadding;
+      const yPosition = topPadding + chartHeight - (70 / yMax) * chartHeight;
+      return { y: yPosition, percentage: 70 };
+    }, [showWarningLine, height, topPadding, yMax]);
 
     // Vertical lines at daily positions for temporal reference
     const verticalLines = useMemo(() => {
@@ -62,6 +81,18 @@ export const ChartGrid = memo(
             style="stroke"
           />
         ))}
+
+        {/* Threshold line at 70% - critical retention level */}
+        {thresholdLine && (
+          <Line
+            key="threshold-line-70%"
+            color={thresholdLineColor}
+            p1={{ x: 0, y: thresholdLine.y }}
+            p2={{ x: width, y: thresholdLine.y }}
+            strokeWidth={2}
+            style="stroke"
+          />
+        )}
 
         {/* Vertical grid lines for daily reference */}
         {verticalLines.map(({ x }) => (

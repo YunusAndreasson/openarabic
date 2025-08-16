@@ -42,7 +42,11 @@ export default function MemoryRetentionModal(): JSX.Element {
     <ThemedView style={styles.container}>
       {/* Chart Content */}
       <View style={styles.chartContainer}>
-        <RetrievabilityChart studyWords={studyWords ?? []} hideTitle={true} />
+        <RetrievabilityChart
+          studyWords={studyWords ?? []}
+          hideTitle={true}
+          showWarningLine={true}
+        />
       </View>
 
       {/* Educational Explanation */}
@@ -53,10 +57,9 @@ export default function MemoryRetentionModal(): JSX.Element {
         </ThemedText>
 
         <View style={[styles.tipContainer, { backgroundColor: colors.elevation1 }]}>
-          <Ionicons name="bulb" size={16} color={colors.tint} style={styles.tipIcon} />
+          <Ionicons name="bulb" size={16} color={colors.warning} style={styles.tipIcon} />
           <ThemedText style={styles.tipText} variant="secondary">
-            If capacity drops below 70%, practice existing words before adding new ones to maintain
-            retention.
+            Stay above the 70% threshold line. Practice existing words before adding new ones.
           </ThemedText>
         </View>
       </View>
@@ -102,23 +105,23 @@ const styles = StyleSheet.create({
   },
   explanationContainer: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.LARGE,
   },
   explanationText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.4,
     textAlign: 'left',
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   tipContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   tipIcon: {
-    marginRight: LAYOUT.SPACING.SMALL,
+    marginRight: LAYOUT.SPACING.MEDIUM,
     marginTop: LAYOUT.SPACING.TINY,
   },
   tipText: {
@@ -129,22 +132,22 @@ const styles = StyleSheet.create({
   },
   chartContainer: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingTop: LAYOUT.SPACING.TINY,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.SMALL,
+    paddingBottom: LAYOUT.SPACING.LARGE,
   },
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    gap: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.LARGE,
+    gap: LAYOUT.SPACING.MEDIUM,
   },
   statCard: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     minHeight: MIN_TOUCH_TARGET.MEDIUM,
   },
@@ -152,7 +155,7 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.2,
     textAlign: 'center',
-    marginBottom: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   statLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,

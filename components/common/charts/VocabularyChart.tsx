@@ -47,6 +47,7 @@ interface VocabularyChartProps<T> {
   hasData: boolean;
   emptyStateText: string;
   bottomSummary?: { label: string; value: string }[];
+  showWarningLine?: boolean; // Whether to show the 70% warning line
 }
 
 // Optimized comparison function with shallow array checks and stable references
@@ -127,6 +128,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
     emptyStateText,
     yLabelFormatter,
     bottomSummary,
+    showWarningLine,
   }) => {
     // Memoized chart data calculations for better performance
     const contentHeight = useMemo(() => GRAPH_HEIGHT_LARGE + CONTENT_HEIGHT_OFFSET, []);
@@ -159,6 +161,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
           width={graphWidth}
           xLabelPositions={xLabelPositions}
           yMax={yMax}
+          showWarningLine={showWarningLine}
         />
       );
 
@@ -230,6 +233,7 @@ export const VocabularyChart = memo<VocabularyChartProps<any>>(
       dataPointKeys,
       milestones,
       milestoneKeys,
+      showWarningLine,
     ]);
 
     // Memoized axes component
