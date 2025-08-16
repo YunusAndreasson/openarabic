@@ -27,12 +27,12 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
 
   // Base query for all words for charts (no cooldown so charts always have data)
   const allWordsQuery = useQuery({
-    queryKey: userId ? FSRS_QUERY_KEYS.all(userId) : FSRS_QUERY_KEYS.FALLBACK.all,
+    queryKey: userId ? FSRS_QUERY_KEYS.all(userId) : ['no-user'],
     queryFn: async () => {
       if (!userId) throw new Error('User ID is required');
       return studyWordsFSRSService.getFSRSWords(userId, { forStats: false });
     },
-    enabled: !!userId,
+    enabled: !!userId, // Only enable when we have userId
     ...CACHE_TIMES.MEDIUM,
     initialData: () => {
       if (!userId) return undefined;
@@ -42,7 +42,7 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
 
   // Query for due words - uses shorter stale time since it's more time-sensitive
   const dueWordsQuery = useQuery({
-    queryKey: userId ? FSRS_QUERY_KEYS.due(userId) : FSRS_QUERY_KEYS.FALLBACK.due,
+    queryKey: userId ? FSRS_QUERY_KEYS.due(userId) : ['no-user', 'due'],
     queryFn: () => {
       if (!userId) throw new Error('User ID is required');
       // Apply the same session cooldown as the practice session so freshly reviewed
@@ -54,7 +54,7 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
         sessionCooldownHours: DEFAULT_SESSION_COOLDOWN_HOURS,
       });
     },
-    enabled: !!userId,
+    enabled: !!userId, // Only enable when we have userId
     ...CACHE_TIMES.SHORT, // 1 minute - due words change frequently
     // Use data from allWordsQuery if available and filter client-side
     initialData: () => {
@@ -88,20 +88,16 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
 
   // Query for stats - can use longer cache times since stats update less frequently
   const statsQuery = useQuery({
-    queryKey: userId ? FSRS_QUERY_KEYS.stats(userId) : FSRS_QUERY_KEYS.FALLBACK.stats,
-    queryFn: () => {
+    queryKey: userId ? FSRS_QUERY_KEYS.stats(userId) : ['no-user', 'stats'],
+    queryFn: async () => {
       if (!userId) throw new Error('User ID is required');
       return studyWordsFSRSService.getFSRSWords(userId, { forStats: true });
     },
-    enabled: !!userId,
+    enabled: !!userId, // Only enable when we have userId
     staleTime: 600000, // 10 minutes - stats update less frequently
     gcTime: 1800000, // 30 minutes
-    // Use data from allWordsQuery if available
-    initialData: () => {
-      if (!userId) return undefined;
-      return queryClient.getQueryData(
-        FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS)
-      );
+    retry: (failureCount, _error) => {
+      return failureCount < 3; // Retry up to 3 times
     },
   });
 
@@ -112,6 +108,19 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
       allWordsQuery?.isLoading || dueWordsQuery?.isLoading || statsQuery?.isLoading || false,
     isFetching:
       allWordsQuery?.isFetching || dueWordsQuery?.isFetching || statsQuery?.isFetching || false,
-    error: allWordsQuery?.error || dueWordsQuery?.error || statsQuery?.error,
+    // Fix: Clear empty error objects that React Query sometimes leaves behind
+    error: (() => {
+      const allWordsError = allWordsQuery?.error;
+      const dueWordsError = dueWordsQuery?.error;
+      const statsError = statsQuery?.error;
+      
+      // If any query has a real error, return it
+      if (allWordsError && Object.keys(allWordsError).length > 0) return allWordsError;
+      if (dueWordsError && Object.keys(dueWordsError).length > 0) return dueWordsError;
+      if (statsError && Object.keys(statsError).length > 0) return statsError;
+      
+      // If all queries succeeded (no real errors), return null
+      return null;
+    })(),
   };
 }

@@ -63,14 +63,18 @@ export default function VocabularyScreen(): JSX.Element {
 
   // Use the FSRS queries hook for data fetching
   const {
-    allWords: studyWords, // We need all words for memory capacity gauge
-    dueWords: dueWordsData,
+    allWords,
+    dueWords,
     isLoading: isDataLoading,
     isFetching,
     error,
   } = useFSRSQueries({
     userId: user?.id,
+    limit: 100,
   });
+
+  // Don't show error if user is not authenticated yet - this is expected during auth flow
+  const shouldShowError = error && user;
 
   // Handle starting review based on category type
   const handleStartReview = useCallback(
@@ -109,12 +113,12 @@ export default function VocabularyScreen(): JSX.Element {
 
   // Fix: Use the actual due words data count instead of database view
   // This ensures consistency between display and practice session
-  const dueWordsCount = dueWordsData?.length ?? 0;
+  const dueWordsCount = dueWords?.length ?? 0;
 
   // Filter study words for memory capacity gauge (needs all words, not just due)
   const filteredStudyWords = useMemo(() => {
-    return studyWords?.filter(word => word != null && word.root_id != null) ?? [];
-  }, [studyWords]);
+    return allWords?.filter(word => word != null && word.root_id != null) ?? [];
+  }, [allWords]);
 
   // Compute eligible count for "Study all words" respecting cooldown
   const eligibleAllWordsCount = useMemo(() => {
@@ -155,10 +159,16 @@ export default function VocabularyScreen(): JSX.Element {
   //
 
   // Show error message if there was an error loading data
-  if (error) {
+  if (shouldShowError) {
     return (
       <ThemedView style={styles.container}>
-        <ErrorMessage />
+        <ErrorMessage
+          customMessage={
+            error instanceof Error
+              ? error.message
+              : 'Failed to load practice data. Please try again.'
+          }
+        />
       </ThemedView>
     );
   }

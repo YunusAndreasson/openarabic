@@ -349,10 +349,22 @@ export function useFSRS({
       }
       const remaining = queueRef.current.toArray();
 
-      const uniqueWordCount = countersRef.current.uniqueWords.size;
-      const newProgress = uniqueWordCount
-        ? Math.min(Math.round((countersRef.current.knownWords / uniqueWordCount) * 100), 100)
-        : 100;
+      // FIXED: Use totalWords instead of uniqueWords for progress calculation
+      // Progress should always be available, so no need to check if totalWords exists
+      // But we need to ensure counters are properly initialized first
+      if (!stateTrackingRef.current.queueInitialized) {
+        setProgress(0); // Default to 0 when queue isn't initialized yet
+        return;
+      }
+
+      const totalWordsInSession = countersRef.current.totalWords;
+      const newProgress =
+        totalWordsInSession > 0
+          ? Math.min(
+              Math.round((countersRef.current.processedWords / totalWordsInSession) * 100),
+              100
+            )
+          : 0; // Default to 0 when no words are available
       setProgress(newProgress);
 
       // FIXED: Check for completion when no next word is available AND either:
