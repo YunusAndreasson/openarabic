@@ -72,11 +72,7 @@ const STATIC_STYLES = StyleSheet.create({
     justifyContent: 'center',
     gap: LAYOUT.SPACING.SMALL,
   },
-  textContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+
   bookmarkButton: {
     marginLeft: LAYOUT.SPACING.TINY,
   },
@@ -314,7 +310,7 @@ export const WordTooltip = memo(
 
       return (
         <View style={STATIC_STYLES.contentRow}>
-          <View style={STATIC_STYLES.textContainer}>{renderColorCodedEnglish}</View>
+          {renderColorCodedEnglish}
           <TouchableIcon
             icon={'school'}
             size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
