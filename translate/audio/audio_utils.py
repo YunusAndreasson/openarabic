@@ -19,13 +19,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from data.config import (
     ARABIC_VOICE_ID,
-    ARABIC_WORD_VOICE_ID,
     AUDIO_CACHE_DIR,
     AUDIO_TEMP_DIR,
     DEFAULT_VOICE_SETTINGS,
     ELEVENLABS_API_KEY,
     ELEVENLABS_TTS_MODEL_ID,
-    ENGLISH_WORD_VOICE_ID,
+    GOOGLE_CLOUD_CREDENTIALS_PATH,
     SUPABASE_URL,
 )
 from data.models import AudioResult, WordTiming
@@ -34,6 +33,7 @@ from utils.arabic_text import (
     wrap_in_arabic_ssml,
 )
 from utils.exceptions import AudioGenerationError
+from utils.google_tts_service import GoogleTTSService
 from utils.storage_utils import (
     check_file_exists,
     get_supabase_client,
@@ -448,7 +448,7 @@ def concatenate_audio_files(audio_files: list[str], output_file: str) -> str | N
 
 def generate_arabic_word_audio(word: str, filename: str) -> dict | None:
     """
-    Generate audio for an Arabic word.
+    Generate audio for an Arabic word using Google Cloud TTS.
 
     Args:
         word: The Arabic word to generate audio for
@@ -464,12 +464,11 @@ def generate_arabic_word_audio(word: str, filename: str) -> dict | None:
         if cached_url:
             return {"url": cached_url, "cached": True}
 
-        # Generate new audio
-        result = generate_speech(
-            text=word,
-            voice_id=ARABIC_WORD_VOICE_ID,
-            is_arabic=True,
-        )
+        # Initialize Google TTS service with same credentials as translation service
+        tts_service = GoogleTTSService(credentials_path=GOOGLE_CLOUD_CREDENTIALS_PATH)
+
+        # Generate new audio using Google TTS
+        result = tts_service.generate_arabic_word_audio(word)
 
         if not result or not result.get("audio"):
             logger.error(f"Failed to generate audio for word: {word}")
@@ -500,14 +499,9 @@ def generate_arabic_word_audio(word: str, filename: str) -> dict | None:
         return None
 
 
-def wrap_in_english_ssml(text: str) -> str:
-    """Wrap English text in SSML for better pronunciation."""
-    return f'<speak><prosody rate="0.8">{text}</prosody></speak>'
-
-
 def generate_english_word_audio(word: str, filename: str) -> dict | None:
     """
-    Generate audio for an English word.
+    Generate audio for an English word using Google Cloud TTS.
 
     Args:
         word: The English word to generate audio for
@@ -523,15 +517,11 @@ def generate_english_word_audio(word: str, filename: str) -> dict | None:
         if cached_url:
             return {"url": cached_url, "cached": True}
 
-        # Wrap in SSML for better pronunciation
-        ssml_text = wrap_in_english_ssml(word)
+        # Initialize Google TTS service with same credentials as translation service
+        tts_service = GoogleTTSService(credentials_path=GOOGLE_CLOUD_CREDENTIALS_PATH)
 
-        # Generate new audio
-        result = generate_speech(
-            text=ssml_text,
-            voice_id=ENGLISH_WORD_VOICE_ID,
-            is_arabic=False,
-        )
+        # Generate new audio using Google TTS
+        result = tts_service.generate_english_word_audio(word)
 
         if not result or not result.get("audio"):
             logger.error(f"Failed to generate audio for word: {word}")

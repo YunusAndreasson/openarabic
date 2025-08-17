@@ -144,8 +144,6 @@ uv run python main.py --insert
 uv run python main.py --split --translate --insert
 ```
 
-
-
 ## Command Line Interface
 
 The pipeline supports the following arguments:
@@ -258,8 +256,8 @@ Split units are classified into types:
   - GPT-4o-mini for high-volume phases (analysis, translation)
   - GPT-4o for quality-critical verification phase
 - **Voice Configuration**:
-  - Arabic: Rachel (21m00Tcm4TlvDq8ikWAM) - multilingual voice supporting Arabic
-  - English: Different voice (IKne3meq5aSn9XLyUdCD)
+  - **Sentences**: ElevenLabs Rachel (21m00Tcm4TlvDq8ikWAM) - multilingual voice supporting Arabic
+  - **Single Words**: Google Cloud TTS - ar-XA-Standard-A (Arabic) and en-US-Standard-A (English)
 - **Translation Settings**:
   - Root word batch size: 100
   - Retry attempts: 3
@@ -270,7 +268,7 @@ Split units are classified into types:
 
 - Python 3.12 or higher
 - UV package manager (version 0.8.0+)
-- Dependencies: openai, pydantic, tqdm, supabase, python-dotenv, elevenlabs, google-cloud-translate, camel-tools, and others
+- Dependencies: openai, pydantic, tqdm, supabase, python-dotenv, elevenlabs, google-cloud-translate, google-cloud-texttospeech, camel-tools, and others
 
 ## Environment Setup
 
@@ -339,14 +337,43 @@ For individual root word translation, set up Google Cloud Translate:
    - Click "Create Credentials" > "API Key"
    - Copy the API key
 
-4. **Set Environment Variables**:
+4. **Create Service Account Credentials**:
+
+   - Go to "APIs & Services" > "Credentials"
+   - Click "Create Credentials" > "Service Account"
+   - Fill in service account details and click "Create"
+   - Click "Create Key" > "JSON" and download the credentials file
+   - Save the JSON file securely (e.g., `~/google-credentials.json`)
+
+5. **Set Environment Variables**:
    ```bash
    export GOOGLE_CLOUD_PROJECT_ID="your_project_id_here"
+   export GOOGLE_CLOUD_CREDENTIALS_PATH="~/google-credentials.json"
    ```
+
+### Google Cloud Text-to-Speech API (Required for single word audio)
+
+For single word audio generation, set up Google Cloud TTS:
+
+1. **Enable the Text-to-Speech API**:
+
+   - In the Google Cloud Console, go to "APIs & Services" > "Library"
+   - Search for "Text-to-Speech API"
+   - Click "Enable"
+
+2. **Use Existing Credentials**:
+
+   - The same service account credentials used for Google Cloud Translate will work
+   - Ensure your JSON credentials file has access to the Text-to-Speech API
+   - The `GOOGLE_CLOUD_CREDENTIALS_PATH` environment variable should already be set
+
+3. **Voice Selection**:
+   - **Arabic**: ar-XA-Standard-A (Modern Standard Arabic)
+   - **English**: en-US-Standard-A (US English)
 
 ### ElevenLabs API (Optional)
 
-For audio generation, set your ElevenLabs API key:
+For sentence audio generation, set your ElevenLabs API key:
 
 ```bash
 export ELEVENLABS_API_KEY="your_elevenlabs_api_key_here"

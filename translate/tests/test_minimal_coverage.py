@@ -119,13 +119,9 @@ class TestConfigCommon:
         assert "voice_id" in arabic_sentence
         assert arabic_sentence["is_arabic"] is True
 
-        arabic_word = get_voice_config("arabic_word")
-        assert "voice_id" in arabic_word
-        assert arabic_word["is_arabic"] is True
-
-        english_word = get_voice_config("english_word")
-        assert "voice_id" in english_word
-        assert english_word["is_arabic"] is False
+        # Test fallback for unknown voice types
+        unknown_type = get_voice_config("unknown_type")
+        assert unknown_type == arabic_sentence
 
         # Test fallback
         default = get_voice_config("unknown_type")

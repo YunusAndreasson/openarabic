@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import * as MailComposer from 'expo-mail-composer';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -22,6 +23,7 @@ const analytics = {
 export const useAccountScreen = () => {
   const { reminderTime, updateReminderTime, formatReminderTime } = useReminders();
   const { clearCache, getCacheSize } = useAudioCache();
+  const queryClient = useQueryClient();
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [notificationPermissions, setNotificationPermissions] = useState(false);
   const [cacheSize, setCacheSize] = useState<number>(0);
@@ -131,6 +133,19 @@ export const useAccountScreen = () => {
       ),
     [createCacheClearHandler, cacheSize, clearCache]
   );
+
+  // React Query cache clearing function
+  const handleClearQueryCache = useCallback(async () => {
+    try {
+      // Clear all queries from React Query cache
+      queryClient.clear();
+      lightFeedback();
+      Alert.alert(STRINGS.SUCCESS, STRINGS.OFFLINE_DATA_CACHE_CLEARED_SUCCESSFULLY);
+    } catch (error) {
+      Alert.alert(STRINGS.ERROR, STRINGS.FAILED_TO_CLEAR_OFFLINE_CACHE);
+      handleError(error as Error, { showToast: false });
+    }
+  }, [queryClient]);
 
   const handleSignOut = useCallback(() => {
     Alert.alert(
@@ -303,6 +318,7 @@ export const useAccountScreen = () => {
       currentYear,
       user,
       handleClearCache,
+      handleClearQueryCache,
       isClearingCache,
       cacheSize,
     }),
@@ -321,6 +337,7 @@ export const useAccountScreen = () => {
       currentYear,
       user,
       handleClearCache,
+      handleClearQueryCache,
       isClearingCache,
       cacheSize,
     ]

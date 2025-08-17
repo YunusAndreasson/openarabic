@@ -13,6 +13,10 @@ os.environ["OPENAI_API_KEY"] = (
     "REDACTED_LEAKED_KEY"
 )
 
-# Google Cloud Translate configuration
+# Google Cloud configuration
 # Uses service account authentication with openarabic-3711db289212.json
 os.environ["GOOGLE_CLOUD_PROJECT_ID"] = "openarabic"
+os.environ["GOOGLE_CLOUD_CREDENTIALS_PATH"] = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "openarabic-3711db289212.json",
+)

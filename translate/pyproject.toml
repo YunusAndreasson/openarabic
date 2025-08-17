@@ -21,6 +21,7 @@ dependencies = [
     "setuptools>=80.9.0",
     "mutagen>=1.47.0",
     "google-cloud-translate>=3.21.1",
+    "google-cloud-texttospeech>=2.18.0",
     "google-auth>=2.40.3",
     "camel-tools>=1.5.6",
 ]

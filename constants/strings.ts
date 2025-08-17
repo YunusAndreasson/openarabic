@@ -233,6 +233,8 @@ export const STRINGS = {
   AUDIO_CACHE: 'Audio cache',
   CLEAR_AUDIO_CACHE: 'Clear audio',
   CLEAR_CACHE: 'Clear cache',
+  OFFLINE_DATA_CACHE: 'Offline data cache',
+  CLEAR_OFFLINE_DATA_CACHE: 'Clear offline data',
   NO_CACHE: 'No cache',
   NO_CACHED_AUDIO_FILES_TO_CLEAR: 'No cached audio to clear',
   NO_OFFLINE_DATA_CACHE_TO_CLEAR: 'No cached data to clear',

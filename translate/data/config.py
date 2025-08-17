@@ -34,9 +34,7 @@ DEFAULT_OUTPUT_FILE = os.path.join(ARTICLE_DIR, "output.json")
 DEFAULT_SPLIT_OUTPUT_FILE = os.path.join(ARTICLE_DIR, "input_split.json")
 
 # Voice configuration
-ARABIC_VOICE_ID = "R6nda3uM038xEEKi7GFl"
-ARABIC_WORD_VOICE_ID = "IES4nrmZdUBHByLBde0P"
-ENGLISH_WORD_VOICE_ID = "NFG5qt843uXKj4pFvR7C"
+ARABIC_VOICE_ID = "R6nda3uM038xEEKi7GFl"  # Keep for sentence audio only
 
 # ElevenLabs TTS
 ELEVENLABS_TTS_MODEL_ID = "eleven_multilingual_v2"
@@ -51,8 +49,9 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_ORG_ID = os.getenv("OPENAI_ORG_ID", "")
 
-# Google Cloud Translate configuration
+# Google Cloud configuration
 GOOGLE_CLOUD_PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT_ID", "")
+GOOGLE_CLOUD_CREDENTIALS_PATH = os.getenv("GOOGLE_CLOUD_CREDENTIALS_PATH", "")
 
 # Translation settings for individual root words
 TRANSLATION_BATCH_SIZE = 100  # Number of root words to process in a batch

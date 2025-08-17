@@ -6,7 +6,6 @@ from constants.error_markers import (
 
 from .config import (
     ARABIC_VOICE_ID,
-    ARABIC_WORD_VOICE_ID,
     ARCHIVE_DIR,
     AUDIO_CACHE_DIR,
     AUDIO_TEMP_DIR,
@@ -16,7 +15,6 @@ from .config import (
     DEFAULT_SPLIT_OUTPUT_FILE,
     DEFAULT_VOICE_SETTINGS,
     ELEVENLABS_API_KEY,
-    ENGLISH_WORD_VOICE_ID,
     MODEL_ANALYSIS,
     MODEL_OTHER,
     MODEL_TRANSLATION,
@@ -57,12 +55,10 @@ __all__ = [
     "SUPABASE_KEY",
     "SUPABASE_URL",
     "ARABIC_VOICE_ID",
-    "ARABIC_WORD_VOICE_ID",
     "AUDIO_CACHE_DIR",
     "AUDIO_TEMP_DIR",
     "DEFAULT_VOICE_SETTINGS",
     "ELEVENLABS_API_KEY",
-    "ENGLISH_WORD_VOICE_ID",
     "ROOT_DIR",
     "ARCHIVE_DIR",
     "SentenceTranslation",

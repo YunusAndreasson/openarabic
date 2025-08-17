@@ -5,6 +5,7 @@ import unicodedata
 from typing import Any, cast
 
 from data.config import (
+    GOOGLE_CLOUD_CREDENTIALS_PATH,
     MODEL_OTHER,
     MODEL_TRANSLATION,
     MODEL_VERIFICATION,
@@ -884,8 +885,8 @@ def batch_translate_root_words_with_google_cloud(
     sentences: list[str],
 ) -> WordTranslationResults:
     """Translate individual Arabic root words using Google Cloud Translate with context awareness."""
-    # Use environment variable for credentials path or default to None
-    credentials_path = os.getenv("GOOGLE_CLOUD_CREDENTIALS_PATH")
+    # Use credentials path from config
+    credentials_path = GOOGLE_CLOUD_CREDENTIALS_PATH
     service = GoogleTranslateService(credentials_path=credentials_path)
     results: WordTranslationResults = []
 

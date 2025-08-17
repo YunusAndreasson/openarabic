@@ -3,14 +3,11 @@
 import os
 from typing import Any
 
-from supabase import create_client
-
 from data.config import (
     ARABIC_VOICE_ID,
-    ARABIC_WORD_VOICE_ID,
-    ENGLISH_WORD_VOICE_ID,
     SUPABASE_URL,
 )
+from supabase import create_client
 
 
 def get_voice_config(voice_type: str) -> dict[str, Any]:
@@ -19,16 +16,6 @@ def get_voice_config(voice_type: str) -> dict[str, Any]:
         "arabic_sentence": {
             "voice_id": ARABIC_VOICE_ID,
             "is_arabic": True,
-            "speed": 0.8,
-        },
-        "arabic_word": {
-            "voice_id": ARABIC_WORD_VOICE_ID,
-            "is_arabic": True,
-            "speed": 0.8,
-        },
-        "english_word": {
-            "voice_id": ENGLISH_WORD_VOICE_ID,
-            "is_arabic": False,
             "speed": 0.8,
         },
     }
@@ -68,8 +55,6 @@ def get_audio_config() -> dict[str, Any]:
     return {
         "voice_configs": {
             "arabic_sentence": get_voice_config("arabic_sentence"),
-            "arabic_word": get_voice_config("arabic_word"),
-            "english_word": get_voice_config("english_word"),
         },
         "storage": {
             "bucket": "audio",
