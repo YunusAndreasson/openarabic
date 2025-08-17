@@ -20,11 +20,16 @@ class TestMainWorkflow:
     @patch("main.split_text")
     def test_run_split_file_success(self, mock_split_text):
         """Test run_split_file success."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
-            f.write("مرحبا بالعالم. هذا نص تجريبي.")
-            input_file = f.name
+        input_file = None
+        output_file = None
 
         try:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".txt", delete=False
+            ) as f:
+                f.write("مرحبا بالعالم. هذا نص تجريبي.")
+                input_file = f.name
+
             # Mock the split_text function to actually create the output file
             def mock_split_text_side_effect(input_file, output_file):
                 with open(output_file, "w") as f:
@@ -33,22 +38,32 @@ class TestMainWorkflow:
             mock_split_text.side_effect = mock_split_text_side_effect
 
             result = run_split_file(input_file, "test_author")
+            output_file = result
             assert result.endswith("_split.json")
             mock_split_text.assert_called_once()
 
         finally:
-            Path(input_file).unlink(missing_ok=True)
+            # Clean up all created files
+            if input_file and os.path.exists(input_file):
+                Path(input_file).unlink(missing_ok=True)
+            if output_file and os.path.exists(output_file):
+                Path(output_file).unlink(missing_ok=True)
 
     @patch("main.translate_text")
     def test_run_translation_success(self, mock_translate_text):
         """Test run_translation success."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-            f.write('{"units": []}')
-            input_file = f.name
-
-        output_file = input_file.replace("_split.json", "_translated.json")
+        input_file = None
+        output_file = None
 
         try:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".json", delete=False
+            ) as f:
+                f.write('{"units": []}')
+                input_file = f.name
+
+            output_file = input_file.replace("_split.json", "_translated.json")
+
             # Mock the translate_text function
             mock_translate_text.return_value = True
 
@@ -58,8 +73,11 @@ class TestMainWorkflow:
             )
 
         finally:
-            Path(input_file).unlink(missing_ok=True)
-            Path(output_file).unlink(missing_ok=True)
+            # Clean up all created files
+            if input_file and os.path.exists(input_file):
+                Path(input_file).unlink(missing_ok=True)
+            if output_file and os.path.exists(output_file):
+                Path(output_file).unlink(missing_ok=True)
 
 
 class TestEndToEndWorkflow:
@@ -69,15 +87,21 @@ class TestEndToEndWorkflow:
     @patch("main.translate_text")
     def test_full_workflow_mocked(self, mock_translate_text, mock_split_text):
         """Test full workflow with mocked components."""
-        # Create temporary files
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
-            f.write("مرحبا بالعالم. هذا نص تجريبي.")
-            input_file = f.name
-
-        split_file_path = input_file.replace(".txt", "_split.json")
-        output_file = input_file.replace(".txt", "_translated.json")
+        input_file = None
+        split_file_path = None
+        output_file = None
 
         try:
+            # Create temporary files
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".txt", delete=False
+            ) as f:
+                f.write("مرحبا بالعالم. هذا نص تجريبي.")
+                input_file = f.name
+
+            split_file_path = input_file.replace(".txt", "_split.json")
+            output_file = input_file.replace(".txt", "_translated.json")
+
             # Mock the functions to actually create output files
             def mock_split_text_side_effect(input_file, output_file):
                 with open(output_file, "w") as f:
@@ -95,6 +119,7 @@ class TestEndToEndWorkflow:
 
             # Test split phase
             result = run_split_file(input_file, "test_author")
+            split_file_path = result  # Update with actual path
             assert result.endswith("_split.json")
             mock_split_text.assert_called_once()
 
@@ -103,7 +128,10 @@ class TestEndToEndWorkflow:
             mock_translate_text.assert_called_once()
 
         finally:
-            # Cleanup
-            Path(input_file).unlink(missing_ok=True)
-            Path(split_file_path).unlink(missing_ok=True)
-            Path(output_file).unlink(missing_ok=True)
+            # Clean up all created files
+            if input_file and os.path.exists(input_file):
+                Path(input_file).unlink(missing_ok=True)
+            if split_file_path and os.path.exists(split_file_path):
+                Path(split_file_path).unlink(missing_ok=True)
+            if output_file and os.path.exists(output_file):
+                Path(output_file).unlink(missing_ok=True)
