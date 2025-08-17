@@ -41,6 +41,7 @@ class GoogleTTSService:
             # Configure premium audio output with high quality settings
             audio_config = texttospeech.AudioConfig(
                 audio_encoding=texttospeech.AudioEncoding.MP3,
+                speaking_rate=0.85,  # Slightly slower for clarity
             )
 
             # Create enhanced SSML for better Arabic pronunciation
@@ -83,12 +84,6 @@ class GoogleTTSService:
             audio_config = texttospeech.AudioConfig(
                 audio_encoding=texttospeech.AudioEncoding.MP3,
                 speaking_rate=0.85,  # Slightly slower for clarity
-                pitch=0.0,  # Natural pitch
-                volume_gain_db=0.0,  # Normal volume
-                # Premium audio effects for better quality
-                effects_profile_id=[
-                    "headphone-class-device"
-                ],  # Optimized for headphones
             )
 
             # Create enhanced SSML for better English pronunciation
