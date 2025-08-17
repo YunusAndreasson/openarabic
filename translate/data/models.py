@@ -235,22 +235,10 @@ class SplitResult(TextMetadata):
     )
 
 
-class WordTiming(BaseModel):
-    """Word-level timing information from audio generation"""
-
-    word: str = Field(description="Original Arabic word")
-    cleaned_word: str = Field(description="Cleaned word for matching")
-    start_time: str = Field(
-        description="Start time in seconds", pattern=r"^\d+(\.\d+)?$"
-    )
-    end_time: str = Field(description="End time in seconds", pattern=r"^\d+(\.\d+)?$")
-
-
 class AudioResult(BaseModel):
     """Result from audio generation"""
 
     url: str = Field(description="Audio file URL in storage")
-    word_timings: list[WordTiming] = Field(description="Word-level timing information")
     filename: str | Literal["unknown"] = Field(description="Generated filename")
     duration: float | Literal["unknown"] = Field(
         description="Audio duration in seconds"
@@ -270,10 +258,6 @@ class ArticleData(BaseModel):
     content_hash: str = Field(
         description="SHA-256 hash of content for deduplication",
         pattern=r"^[a-f0-9]{64}$",
-    )
-    created_at: str = Field(
-        description="ISO format timestamp",
-        pattern=r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(\+00:00|Z)?$",
     )
     image_url: str = Field(description="URL to article image")
     audio_url: str = Field(

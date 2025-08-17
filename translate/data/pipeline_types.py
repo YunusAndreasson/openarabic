@@ -50,20 +50,10 @@ class AudioAPIResponse(TypedDict):
     audio_base_64: str  # Required in schema
 
 
-class WordTimingData(TypedDict):
-    """Word timing data from audio alignment"""
-
-    word: str
-    cleaned_word: str
-    start_time: str
-    end_time: str
-
-
 class AudioGenerationResult(TypedDict):
-    """Result from audio generation with word timings"""
+    """Result from audio generation"""
 
     url: str
-    word_timings: list[WordTimingData]
     filename: str  # Required in schema
     duration: float  # Required in schema
 
@@ -78,17 +68,6 @@ class ArticleInsertData(TypedDict):
     category_id: int
     author_id: int
     content_hash: str
-    created_at: str
-
-
-# Performance tracking structures
-class TimingStats(TypedDict):
-    """Performance timing statistics"""
-
-    total_time: float
-    sentences_processed: int
-    average_time_per_sentence: float
-    errors: int
 
 
 # Generic API response structure

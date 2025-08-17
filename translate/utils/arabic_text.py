@@ -34,7 +34,7 @@ def wrap_in_arabic_ssml(text: str) -> str:
 @functools.cache
 def clean_word_for_matching(word: str) -> str:
     """
-    Clean and normalize a word for better timing matching.
+    Clean and normalize a word for better matching.
     Removes invisible characters, normalizes whitespace, and standardizes Arabic characters.
     """
     if not word:

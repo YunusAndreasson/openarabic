@@ -1,7 +1,6 @@
 import logging
 import os
 import shutil
-from datetime import UTC, datetime
 from typing import Any
 
 # Audio utilities - import real implementations (conditional to avoid import-time validation)
@@ -19,7 +18,6 @@ except (ImportError, OSError):
 # Import common database utilities
 from data.config import ARCHIVE_DIR, ROOT_DIR, SUPABASE_URL
 from data.enums import DifficultyLevel
-from data.models import WordTiming
 from data.pipeline_types import WordData
 from utils.arabic_text import clean_arabic_text
 from utils.database_common import (
@@ -152,7 +150,6 @@ def get_or_create_root(
 def insert_sentence_words(
     sentence_id: int,
     translation: dict[str, Any],
-    word_timings: list["WordTiming"] | None = None,
 ) -> dict[str, Any]:
     """
     Insert words from a sentence with their roots and relationships.
@@ -160,106 +157,39 @@ def insert_sentence_words(
     """
     word_by_word = translation["word_by_word"]
 
-    match_stats = {"exact": 0, "position": 0, "fuzzy": 0, "none": 0}
     total_words = len(word_by_word)
-    words_with_timing = 0
 
     words_data: list[dict[str, Any]] = []
 
-    if word_timings:
-        if len(word_timings) < len(word_by_word):
-            pass
-        sorted_timings = sorted(word_timings, key=lambda x: float(x.start_time))
-        timing_position = 0
-        last_end_time = 0.0
+    for position, word in enumerate(word_by_word):
+        root_letters, root_meaning, english_translation = extract_root_info(word)
+        root_id = get_or_create_root(
+            root_letters,
+            root_meaning,
+            english_translation,
+        )
+        word_type_id = get_word_type_id(word["pos"])
 
-        for position, word in enumerate(word_by_word):
-            root_letters, root_meaning, english_translation = extract_root_info(word)
-            root_id = get_or_create_root(
-                root_letters,
-                root_meaning,
-                english_translation,
-            )
-            word_type_id = get_word_type_id(word["pos"])
+        original_word = clean_arabic_text(word["arabic"])
 
-            original_word = clean_arabic_text(word["arabic"])
+        word_data = {
+            "sentence_id": sentence_id,
+            "position": position,
+            "word_form": original_word,
+            "english": word["english"],
+            "word_type_id": word_type_id,
+            "root_id": root_id,
+            "difficulty_level": DifficultyLevel.BASIC.value,
+            "grammar_note": word.get("notes"),
+        }
 
-            timing_info: dict[str, str] = {}
-            match_method = "none"
-
-            if timing_position < len(sorted_timings):
-                timing_data = sorted_timings[timing_position]
-                timing_info = {
-                    "start_time": timing_data.start_time,
-                    "end_time": timing_data.end_time,
-                }
-                match_method = "position"
-                timing_position += 1
-
-                start_time = float(timing_info["start_time"])
-                end_time = float(timing_info["end_time"])
-
-                if start_time < last_end_time:
-                    start_time = last_end_time
-                    timing_info["start_time"] = str(start_time)
-
-                    if end_time <= start_time:
-                        end_time = start_time + 0.3
-                        timing_info["end_time"] = str(end_time)
-
-                last_end_time = end_time
-
-            match_stats[match_method] += 1
-            if match_method != "none":
-                words_with_timing += 1
-
-            word_data = {
-                "sentence_id": sentence_id,
-                "position": position,
-                "word_form": original_word,
-                "english": word["english"],
-                "word_type_id": word_type_id,
-                "root_id": root_id,
-                "difficulty_level": DifficultyLevel.BASIC.value,
-                "grammar_note": word.get("notes"),
-                "audio_start": timing_info.get("start_time"),
-                "audio_end": timing_info.get("end_time"),
-            }
-
-            words_data.append(word_data)
-    else:
-        for position, word in enumerate(word_by_word):
-            root_letters, root_meaning, english_translation = extract_root_info(word)
-            root_id = get_or_create_root(
-                root_letters,
-                root_meaning,
-                english_translation,
-            )
-            word_type_id = get_word_type_id(word["pos"])
-
-            original_word = clean_arabic_text(word["arabic"])
-
-            word_data = {
-                "sentence_id": sentence_id,
-                "position": position,
-                "word_form": original_word,
-                "english": word["english"],
-                "word_type_id": word_type_id,
-                "root_id": root_id,
-                "difficulty_level": DifficultyLevel.BASIC.value,
-                "grammar_note": word.get("notes"),
-            }
-
-            words_data.append(word_data)
-            match_stats["none"] += 1
+        words_data.append(word_data)
 
     if words_data:
         get_supabase_client().table("sentence_words").insert(words_data).execute()
 
     return {
         "total_words": total_words,
-        "words_with_timing": words_with_timing,
-        "match_stats": match_stats,
     }
 
 
@@ -354,17 +284,8 @@ def concatenate_and_upload_audio(
 
 def insert_article_sentences(
     article_id: int, translations: list[dict], progress_tracker: Any = None
-) -> dict:
+) -> None:
     """Insert article sentences into the database."""
-    timing_stats = {
-        "total_sentences": len(translations),
-        "sentences_with_audio": 0,
-        "sentences_with_timings": 0,
-        "sentences_without_timings": 0,
-        "total_words": 0,
-        "words_with_timings": 0,
-    }
-
     sentence_audio_files = []
     temp_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "temp_audio")
     os.makedirs(temp_dir, exist_ok=True)
@@ -386,7 +307,6 @@ def insert_article_sentences(
 
             audio_result = None
             storage_url = None
-            word_timings = []
 
             if generate_sentence_audio:
                 audio_result = generate_sentence_audio(
@@ -398,16 +318,9 @@ def insert_article_sentences(
 
             if audio_result is not None:
                 storage_url = audio_result.url
-                word_timings = audio_result.word_timings
-                timing_stats["sentences_with_audio"] += 1
 
                 if download_audio_for_concat(audio_filename, temp_audio_file):
                     sentence_audio_files.append(temp_audio_file)
-
-                if word_timings:
-                    timing_stats["sentences_with_timings"] += 1
-                else:
-                    timing_stats["sentences_without_timings"] += 1
 
             cleaned_arabic = clean_arabic_text(translation["original"])
 
@@ -427,13 +340,10 @@ def insert_article_sentences(
             sentence_id = result.data[0]["id"]
 
             if translation.get("word_by_word"):
-                word_stats = insert_sentence_words(
+                insert_sentence_words(
                     sentence_id,
                     translation,
-                    word_timings,
                 )
-                timing_stats["total_words"] += word_stats["total_words"]
-                timing_stats["words_with_timings"] += word_stats["words_with_timing"]
 
         if sentence_audio_files:
             concatenate_and_upload_audio(sentence_audio_files, temp_dir, article_id)
@@ -444,62 +354,6 @@ def insert_article_sentences(
         logger.error(f"Error processing sentences: {str(e)}")
         cleanup_temp_files(sentence_audio_files, temp_dir)
         raise
-
-    return timing_stats
-
-
-def save_timing_report(
-    article_id: int,
-    title: str,
-    timing_stats: dict,
-) -> None:
-    """Save timing statistics to a CSV report file."""
-    os.path.dirname(os.path.abspath(__file__))
-    reports_dir = os.path.join(ROOT_DIR, "reports")
-    os.makedirs(reports_dir, exist_ok=True)
-
-    report_file = os.path.join(reports_dir, "timing_reports.csv")
-    file_exists = os.path.exists(report_file)
-
-    now = datetime.now(UTC).isoformat()
-
-    try:
-        words_with_timing_pct = 0
-        if timing_stats["total_words"] > 0:
-            words_with_timing_pct = (
-                timing_stats["words_with_timings"] / timing_stats["total_words"]
-            ) * 100
-
-        if words_with_timing_pct >= 90:
-            quality = "EXCELLENT"
-        elif words_with_timing_pct >= 75:
-            quality = "GOOD"
-        elif words_with_timing_pct >= 50:
-            quality = "FAIR"
-        else:
-            quality = "POOR"
-
-        with open(report_file, "a", encoding="utf-8", newline="") as f:
-            if not file_exists:
-                f.write(
-                    "article_id,title,timestamp,total_sentences,sentences_with_audio,sentences_with_timings,sentences_with_partial_timings,sentences_without_timings,total_words,words_with_timing,timing_percentage,quality\n",
-                )
-
-            title_escaped = title.replace('"', '""')
-            f.write(
-                f'{article_id},"{title_escaped}",{now},'
-                f"{timing_stats['total_sentences']},"
-                f"{timing_stats['sentences_with_audio']},"
-                f"{timing_stats['sentences_with_timings']},"
-                f"{timing_stats['sentences_without_timings']},"
-                f"{timing_stats['total_words']},"
-                f"{timing_stats['words_with_timings']},"
-                f"{words_with_timing_pct:.1f},"
-                f"{quality}\n",
-            )
-
-    except Exception as e:
-        logger.error(f"Failed to save timing report: {str(e)}")
 
 
 def archive_files(json_path: str, article_id: int) -> None:

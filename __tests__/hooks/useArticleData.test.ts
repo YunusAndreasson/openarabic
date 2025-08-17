@@ -1,7 +1,7 @@
-import { renderHook } from '@testing-library/react-native';
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { useArticleData } from '@/hooks/articles/useArticleData';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import * as ReactQuery from '@tanstack/react-query';
+import { renderHook } from '@testing-library/react-native';
 
 const useQueryMock = jest.spyOn(ReactQuery, 'useQuery');
 
@@ -43,10 +43,6 @@ describe('useArticleData', () => {
               root_id: 2,
               sentence_id: 2,
               word_type_id: 1,
-              audio_start: null,
-              audio_end: null,
-              root: { id: 2, letters: '', meaning: null, audio_url: null, audio_url_en: null },
-              word_type: { id: 1, name: '' },
             },
             {
               id: 21,
@@ -58,10 +54,6 @@ describe('useArticleData', () => {
               root_id: 1,
               sentence_id: 2,
               word_type_id: 1,
-              audio_start: null,
-              audio_end: null,
-              root: { id: 1, letters: '', meaning: null, audio_url: null, audio_url_en: null },
-              word_type: { id: 1, name: '' },
             },
           ],
         },
@@ -75,18 +67,36 @@ describe('useArticleData', () => {
           sentence_words: [
             {
               id: 10,
-              position: 1,
-              word_form: 'zero',
-              english: 'zero',
+              position: 0,
+              word_form: 'كَلِمَة',
+              english: 'word',
               difficulty_level: 1,
               grammar_note: null,
               root_id: 1,
               sentence_id: 1,
               word_type_id: 1,
-              audio_start: null,
-              audio_end: null,
-              root: { id: 1, letters: '', meaning: null, audio_url: null, audio_url_en: null },
-              word_type: { id: 1, name: '' },
+            },
+            {
+              id: 2,
+              position: 1,
+              word_form: 'جَدِيدَة',
+              english: 'new',
+              difficulty_level: 1,
+              grammar_note: null,
+              root_id: 2,
+              sentence_id: 1,
+              word_type_id: 1,
+            },
+            {
+              id: 3,
+              position: 2,
+              word_form: 'فِي',
+              english: 'in',
+              difficulty_level: 1,
+              grammar_note: null,
+              root_id: 3,
+              sentence_id: 1,
+              word_type_id: 1,
             },
           ],
         },
@@ -122,8 +132,15 @@ describe('useArticleData', () => {
     expect(words?.map(w => w.id)).toEqual([21, 20]);
     expect(words?.[0]).toEqual(
       expect.objectContaining({
-        root: { id: 1, letters: '', meaning: null, audio_url: null, audio_url_en: null },
-        word_type: { id: 1, name: '' },
+        id: 21,
+        position: 1,
+        word_form: 'one',
+        english: 'one',
+        difficulty_level: 1,
+        grammar_note: null,
+        root_id: 1,
+        sentence_id: 2,
+        word_type_id: 1,
       })
     );
   });
@@ -145,4 +162,3 @@ describe('useArticleData', () => {
     expect(result.current.isInReadingList).toBe(false);
   });
 });
-

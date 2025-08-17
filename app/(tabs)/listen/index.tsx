@@ -306,10 +306,10 @@ export default function ListenScreen(): JSX.Element {
             keyExtractor={memoizedKeyExtractor}
             renderItem={renderItem}
             onDragEnd={handleDragEnd}
-            // Match study view pull behavior: no bounce/overscroll
-            bounces={false}
-            alwaysBounceVertical={false}
-            overScrollMode="never"
+            // iOS best practice: Allow natural bounce behavior for tactile feedback
+            bounces={true}
+            alwaysBounceVertical={true}
+            overScrollMode="always"
             contentInsetAdjustmentBehavior="never"
             showsVerticalScrollIndicator={false}
             contentContainerStyle={listContainerStyle}
@@ -327,10 +327,10 @@ export default function ListenScreen(): JSX.Element {
             estimatedListSize={{ height: ITEM_HEIGHT * 10, width: SCREEN_WIDTH }}
             keyExtractor={memoizedKeyExtractor}
             removeClippedSubviews={true}
-            // Match study view pull behavior: no bounce/overscroll
-            bounces={false}
-            alwaysBounceVertical={false}
-            overScrollMode="never"
+            // iOS best practice: Allow natural bounce behavior for tactile feedback
+            bounces={true}
+            alwaysBounceVertical={true}
+            overScrollMode="always"
             contentInsetAdjustmentBehavior="never"
             showsVerticalScrollIndicator={false}
             contentContainerStyle={listContainerStyle}

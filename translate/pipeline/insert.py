@@ -4,7 +4,6 @@ import os
 import shutil
 import sys
 import tempfile
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -38,7 +37,6 @@ from utils.database_utils import (
     cleanup_temp_files,
     download_audio_for_concat,
     insert_article_sentences,
-    save_timing_report,
 )
 from utils.storage_utils import (
     check_article_exists,
@@ -409,7 +407,6 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
         category_id=category_id,
         author_id=author_id,
         content_hash=content_hash,
-        created_at=datetime.now(UTC).isoformat(),
         image_url=image_url,
         audio_url=article_audio_url,  # This will be None if AUDIO_AVAILABLE is False
     )
@@ -434,7 +431,7 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
     except ImportError:
         use_progress = False
 
-    timing_stats = insert_article_sentences(
+    insert_article_sentences(
         article_id, data["translations"], progress_tracker if use_progress else None
     )
 
@@ -468,7 +465,6 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
                 logger.warning(f"Failed to update audio URL for sentence {i + 1}: {e}")
 
     archive_files(file_path, article_id)
-    save_timing_report(article_id, data["metadata"]["title"], timing_stats)
 
     return article_id
 

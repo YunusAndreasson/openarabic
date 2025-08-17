@@ -22,7 +22,6 @@ from .database_utils import (
     get_or_create_root,
     get_or_generate_root_audio,
     insert_article_sentences,
-    save_timing_report,
     validate_article_data,
 )
 from .error_handling import (
@@ -83,7 +82,6 @@ __all__ = [
     "get_or_create_root",
     "get_or_generate_root_audio",
     "insert_article_sentences",
-    "save_timing_report",
     "validate_article_data",
     # Error handling utilities
     "handle_import_error",

@@ -118,8 +118,8 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
         decelerationRate="fast"
         snapToAlignment="start"
         snapToInterval={CARD_WIDTH + CARD_SPACING}
-        bounces={false}
-        overScrollMode="never"
+        bounces={true}
+        overScrollMode="always"
         onViewableItemsChanged={({ viewableItems }) => {
           const first = viewableItems[0]?.index ?? -1;
           if (

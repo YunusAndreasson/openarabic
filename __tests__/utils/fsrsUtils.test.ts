@@ -17,8 +17,6 @@ const createStudyWord = (overrides: Partial<StudyWord> = {}): StudyWord => ({
   english: 'test',
   difficulty_level: 5,
   grammar_note: null,
-  audio_start: 0,
-  audio_end: 1000,
   created_at: '2024-01-01T00:00:00Z',
   fsrs_state: 0,
   fsrs_difficulty: 6.5,

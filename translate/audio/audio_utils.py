@@ -27,7 +27,7 @@ from data.config import (
     GOOGLE_CLOUD_CREDENTIALS_PATH,
     SUPABASE_URL,
 )
-from data.models import AudioResult, WordTiming
+from data.models import AudioResult
 from utils.arabic_text import (
     preprocess_text_for_tts,
     wrap_in_arabic_ssml,
@@ -552,83 +552,6 @@ def generate_english_word_audio(word: str, filename: str) -> dict | None:
         return None
 
 
-def extract_word_timings_from_alignment(alignment: Any, text: str) -> list[WordTiming]:
-    """
-    Extract word-level timing information from ElevenLabs alignment data.
-
-    Args:
-        alignment: The alignment data from ElevenLabs API
-        text: The original text for word matching
-
-    Returns:
-        List of WordTiming objects with word-level timing information
-    """
-    word_timings: list[WordTiming] = []
-
-    try:
-        if not alignment or not hasattr(alignment, "characters"):
-            logger.warning("No alignment data available")
-            return word_timings
-
-        # Extract timing data for each character
-        start_times = []
-        end_times = []
-
-        for char_data in alignment.characters:
-            if hasattr(char_data, "start") and hasattr(char_data, "end"):
-                start_times.append(char_data.start)
-                end_times.append(char_data.end)
-            else:
-                # Fallback for different alignment format
-                start_times.append(0.0)
-                end_times.append(0.0)
-
-        # Clean the text for word matching
-        cleaned_str = re.sub(r"[^\w\s]", "", text)
-        word_regex = re.compile(r"\b\w+\b")
-
-        # Extract word timings
-        for match in word_regex.finditer(cleaned_str):
-            word = match.group()
-            start_char_idx = match.start()
-            end_char_idx = match.end() - 1  # inclusive
-            try:
-                word_start_time = start_times[start_char_idx]
-                word_end_time = end_times[end_char_idx]
-                # Clean the word for better matching later
-                try:
-                    from utils.arabic_text import clean_word_for_matching
-
-                    clean_word = clean_word_for_matching(word)
-                except ImportError:
-                    # Fallback if import fails
-                    clean_word = word
-
-                word_timings.append(
-                    WordTiming(
-                        word=word,
-                        cleaned_word=clean_word,
-                        start_time=str(word_start_time),
-                        end_time=str(word_end_time),
-                    )
-                )
-            except Exception as e:
-                logger.error(f"Failed to extract timings for word '{word}': {str(e)}")
-
-        if not word_timings:
-            logger.error("Failed to extract any word timings from the response")
-            raise ValueError("Failed to extract any word timings from the response")
-
-        # Sort word timings by start time to ensure proper sequencing
-        word_timings = sorted(word_timings, key=lambda x: float(x.start_time))
-
-        return word_timings
-
-    except Exception as e:
-        logger.error(f"Error extracting word timings: {str(e)}")
-        return []
-
-
 def generate_sentence_audio(
     text: str,
     filename: str,
@@ -638,7 +561,7 @@ def generate_sentence_audio(
 ) -> AudioResult | None:
     """
     Generate audio for a sentence using ElevenLabs, with optional tashkeel, SSML, and context.
-    Returns an AudioResult object with URL and word timings.
+    Returns an AudioResult object with URL.
     """
     try:
         # Prefer tashkeel text if available
@@ -647,6 +570,7 @@ def generate_sentence_audio(
         tts_text = wrap_in_arabic_ssml(tts_text)
         # Use the main voice for sentences
         voice_id = ARABIC_VOICE_ID
+
         # Generate audio with timestamps
         response = generate_speech_with_timestamps(
             text=tts_text,
@@ -654,9 +578,8 @@ def generate_sentence_audio(
             previous_text=previous_text,
             next_text=next_text,
         )
-        # Extract audio and timings
+        # Extract audio data
         audio_data = response.get("audio") if response else None
-        alignment = response.get("alignment") if response else None
         if not audio_data:
             logger.error("No audio data returned from TTS API")
             return None
@@ -677,14 +600,9 @@ def generate_sentence_audio(
             url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{filename}"
         if os.path.exists(temp_audio_path):
             os.remove(temp_audio_path)
-        # Extract word timings if available
-        word_timings = []
-        if alignment:
-            word_timings = extract_word_timings_from_alignment(alignment, tts_text)
 
         return AudioResult(
             url=url,
-            word_timings=word_timings,
             filename=filename,
             duration=response.get("duration") if response else "unknown",
         )

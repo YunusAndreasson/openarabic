@@ -71,6 +71,7 @@ const styles = StyleSheet.create({
   },
   firstSection: {
     marginTop: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.TINY,
   },
   titleGroup: {
     flex: 1,

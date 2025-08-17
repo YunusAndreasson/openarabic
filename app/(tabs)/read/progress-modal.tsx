@@ -80,6 +80,7 @@ export default function ProgressModal(): JSX.Element {
                 <SectionTitle
                   title="Reading Streak"
                   subtitle="Your daily reading consistency over the past 30 days"
+                  isFirstSection={true}
                 />
 
                 <View style={styles.streakMetricsContainer}>
@@ -162,11 +163,11 @@ const styles = StyleSheet.create({
     paddingTop: LAYOUT.SPACING.LARGE,
   },
   streakMetricsContainer: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.TINY,
     marginBottom: LAYOUT.SPACING.LARGE,
   },
   chartSection: {
-    marginTop: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.MEDIUM,
     marginBottom: LAYOUT.SPACING.XLARGE,
   },
   loadingContainer: {

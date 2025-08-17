@@ -11,10 +11,6 @@ describe('typeMappers', () => {
     root_id: 1,
     sentence_id: 1,
     word_type_id: 1,
-    audio_start: '0',
-    audio_end: '1',
-    root: { id: 1, letters: 'r', meaning: 'm' },
-    word_type: { id: 1, name: 'noun' },
   } as any;
 
   const rawSentence = {

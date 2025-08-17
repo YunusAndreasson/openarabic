@@ -20,7 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/ThemedText';
 import ParallaxHeader from '@/components/article/ParallaxHeader';
 import { RelatedArticlesSection } from '@/components/article/RelatedArticlesSection';
-import PlayButton from '@/components/listen/PlayButton';
+// Removed PlayButton import
 import { SCROLL_EVENT_THROTTLE, SENTENCE_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -73,9 +73,9 @@ const createFlashListConfig = <T,>({
   scrollEventThrottle = 16,
   showsVerticalScrollIndicator = false,
   removeClippedSubviews = true,
-  alwaysBounceVertical = false,
+  alwaysBounceVertical = true,
   bounces = true,
-  overScrollMode = 'never',
+  overScrollMode = 'always',
   extraData,
   initialScrollIndex = 0,
 }: {
@@ -146,6 +146,16 @@ const styles = StyleSheet.create({
   authorContainer: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.MEDIUM,
+    zIndex: LAYOUT.Z_INDEX.OVERLAY,
+  },
+  summaryContainer: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.LARGE,
+    zIndex: LAYOUT.Z_INDEX.OVERLAY,
+  },
+  summaryText: {
+    textAlign: 'left',
+    lineHeight: LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL * LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
   },
   playIconOffset: {
     marginLeft: LAYOUT.SPACING.TINY,
@@ -168,10 +178,9 @@ const DRAW_DISTANCE_MULTIPLIER = SENTENCE_DRAW_DISTANCE_MULTIPLIER;
 const FloatingActionButtons = memo<{
   isInReadingList: boolean;
   onToggleReadingList: () => void;
-  onPlayPress: () => void;
-  isPlaying: boolean;
+  // Removed onPlayPress and isPlaying props
   onClose: () => void;
-}>(({ isInReadingList, onToggleReadingList, onPlayPress, isPlaying, onClose }) => {
+}>(({ isInReadingList, onToggleReadingList, onClose }) => {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   // No dark mode specific styling needed here
@@ -264,8 +273,7 @@ const FloatingActionButtons = memo<{
           />
         </Pressable>
 
-        {/* Play/Pause button - prominent filled tint, no wrapper dimming */}
-        <PlayButton isPlaying={isPlaying} onPress={onPlayPress} />
+        {/* Removed Play/Pause button */}
       </View>
     </>
   );
@@ -285,9 +293,7 @@ interface ArticleContentProps {
   // Reading list (playlist/listening) functionality
   isInReadingList: boolean;
   onToggleReadingList: () => void;
-  // Audio playback functionality
-  onPlayPress: () => void;
-  isPlaying: boolean;
+  // Removed audio playback functionality props
   // Close functionality
   onClose: () => void;
 }
@@ -304,8 +310,7 @@ export const ArticleContent = memo<ArticleContentProps>(
     scrollViewRef,
     isInReadingList,
     onToggleReadingList,
-    onPlayPress,
-    isPlaying,
+    // Removed onPlayPress and isPlaying props
     onClose,
   }) => {
     const insets = useSafeAreaInsets();
@@ -344,10 +349,8 @@ export const ArticleContent = memo<ArticleContentProps>(
     });
 
     // Reserve right-side space so text never sits under floating action buttons
-    const rightOverlayPadding = useMemo(
-      () => MIN_TOUCH_TARGET.MEDIUM * 2 + LAYOUT.SPACING.LARGE * 2,
-      []
-    );
+    // Updated to account for only one button now (playlist button)
+    const rightOverlayPadding = useMemo(() => MIN_TOUCH_TARGET.MEDIUM + LAYOUT.SPACING.LARGE, []);
 
     // Render title/author below the hero image but above content
     const headerComponent = useMemo(
@@ -363,12 +366,7 @@ export const ArticleContent = memo<ArticleContentProps>(
             </ThemedText>
           </View>
 
-          <View
-            style={[
-              styles.authorContainer,
-              { paddingRight: rightOverlayPadding, zIndex: LAYOUT.Z_INDEX.OVERLAY },
-            ]}
-          >
+          <View style={[styles.authorContainer, { paddingRight: rightOverlayPadding }]}>
             <ThemedText
               type="body"
               weight="medium"
@@ -382,9 +380,23 @@ export const ArticleContent = memo<ArticleContentProps>(
                 : ''}
             </ThemedText>
           </View>
+
+          {/* Summary section - positioned between author and content for natural reading flow */}
+          {article.summary && (
+            <View style={[styles.summaryContainer, { paddingRight: rightOverlayPadding }]}>
+              <ThemedText
+                type="body"
+                weight="normal"
+                colorName="subtitleText"
+                style={styles.summaryText}
+              >
+                {article.summary}
+              </ThemedText>
+            </View>
+          )}
         </View>
       ),
-      [article.title, article.author, rightOverlayPadding]
+      [article.title, article.author, article.summary, rightOverlayPadding]
     );
 
     // Get articles from cache for recommendations (avoid re-querying here)
@@ -439,7 +451,7 @@ export const ArticleContent = memo<ArticleContentProps>(
           scrollEventThrottle: SCROLL_THROTTLE,
           showsVerticalScrollIndicator: false,
           removeClippedSubviews: true,
-          alwaysBounceVertical: false,
+          alwaysBounceVertical: true,
           bounces: true,
           overScrollMode: 'always',
           initialScrollIndex: 0,
@@ -474,8 +486,7 @@ export const ArticleContent = memo<ArticleContentProps>(
             <FloatingActionButtons
               isInReadingList={isInReadingList}
               onToggleReadingList={onToggleReadingList}
-              onPlayPress={onPlayPress}
-              isPlaying={isPlaying}
+              // Removed onPlayPress and isPlaying props
               onClose={onClose}
             />
           </View>
@@ -486,11 +497,7 @@ export const ArticleContent = memo<ArticleContentProps>(
   // Simplified memo comparison function - only check primitive values and stable references
   (prevProps, nextProps) => {
     // Check primitive values first for early return
-    if (
-      prevProps.id !== nextProps.id ||
-      prevProps.isInReadingList !== nextProps.isInReadingList ||
-      prevProps.isPlaying !== nextProps.isPlaying
-    ) {
+    if (prevProps.id !== nextProps.id || prevProps.isInReadingList !== nextProps.isInReadingList) {
       return false;
     }
 
@@ -505,7 +512,6 @@ export const ArticleContent = memo<ArticleContentProps>(
       prevProps.handleScroll !== nextProps.handleScroll ||
       prevProps.handleViewableItemsChanged !== nextProps.handleViewableItemsChanged ||
       prevProps.onToggleReadingList !== nextProps.onToggleReadingList ||
-      prevProps.onPlayPress !== nextProps.onPlayPress ||
       prevProps.onClose !== nextProps.onClose
     ) {
       return false;

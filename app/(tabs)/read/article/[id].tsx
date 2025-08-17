@@ -13,23 +13,23 @@ import {
 
 import { ArticleSentence, SentenceScrubber, WordTooltip } from '@/components/article';
 import { ArticleContent } from '@/components/article/ArticleContent';
-import { MiniPlayer } from '@/components/audio';
+// Removed MiniPlayer import
 import { ToastProvider, useToast } from '@/components/providers';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { STRINGS } from '@/constants/strings';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
 import { useReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useSentenceScrubber } from '@/hooks/articles/useSentenceScrubber';
-import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
-import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
+// Removed audio-related imports
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useHeaderVisibility } from '@/hooks/ui/useHeaderVisibility';
-import { enhancedAudioService } from '@/services/enhancedAudioService';
+// Removed enhancedAudioService import
 import { useAppSelectorMemo } from '@/store/hooks';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
-import { handleError } from '@/utils/errorHandling';
+// Removed handleError import
 import { selectionFeedback } from '@/utils/haptics';
 
 const FLEX_ONE_STYLE = { flex: 1 } as const;
@@ -41,8 +41,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
   const fontScale = useAppSelectorMemo(state => state.settings.fontScale);
   const { showToast } = useToast();
 
-  const audioPlayer = useSimpleAudioPlayer();
-  const globalAudioState = useGlobalAudioState();
+  // Removed audio-related hooks and state
   const queryClient = useQueryClient();
 
   const { handleScroll: handleHeaderScroll } = useHeaderVisibility();
@@ -64,14 +63,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     refetchReadingListStatus,
   } = useArticleData(articleId, user?.id);
 
-  // Simplified audio state check
-  const isCurrentArticlePlaying = useMemo(() => {
-    const currentArticleId = audioPlayer.currentTrack?.articleId
-      ? parseInt(audioPlayer.currentTrack.articleId.toString(), 10)
-      : null;
-    // Check both that it's the current article AND that it's actually playing
-    return currentArticleId === articleId && audioPlayer.isPlaying;
-  }, [audioPlayer.currentTrack?.articleId, audioPlayer.isPlaying, articleId]);
+  // Removed audio state check
 
   const [activeTooltip, setActiveTooltip] = useState<{
     word: SentenceWord;
@@ -127,36 +119,18 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
 
     selectionFeedback();
     await handleToggleReadingList(articleId, isInReadingList);
-    showToast(isInReadingList ? 'Removed from playlist' : 'Added to playlist', 3000, 'success');
+    showToast(
+      isInReadingList ? STRINGS.REMOVED_FROM_LISTENING_LIST : STRINGS.ADDED_TO_LISTENING_LIST,
+      3000,
+      'success'
+    );
   }, [articleId, isInReadingList, handleToggleReadingList, showToast]);
 
   const handleClose = useCallback(() => {
     router.back();
   }, []);
 
-  // Handle audio playback for single article
-  const handlePlayPress = useCallback(async () => {
-    if (!articleId) return;
-
-    try {
-      selectionFeedback();
-
-      if (isCurrentArticlePlaying) {
-        await audioPlayer.stop();
-        return;
-      }
-
-      const track = await enhancedAudioService.generateEnhancedAudioTrack(articleId);
-      if (track) {
-        const success = await audioPlayer.play(track);
-        if (success) {
-          globalAudioState.onSleepTimerClose();
-        }
-      }
-    } catch (error) {
-      handleError(error as Error);
-    }
-  }, [articleId, isCurrentArticlePlaying, audioPlayer, globalAudioState]);
+  // Removed audio playback handler
 
   // Track reading progress with proper initialization
   const isActive = !!article && !isLoadingArticle;
@@ -356,27 +330,12 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
           scrollViewRef={scrollViewRef as React.RefObject<FlashList<Tables<'article_sentences'>>>}
           isInReadingList={isInReadingList}
           onToggleReadingList={handleToggleReadingListWithFeedback}
-          onPlayPress={handlePlayPress}
-          isPlaying={isCurrentArticlePlaying}
+          // Removed onPlayPress and isPlaying props
           onClose={handleClose}
         />
       ) : null}
 
-      {/* Mini-player for article modal */}
-      {globalAudioState.currentArticle &&
-        (globalAudioState.isPlaying || globalAudioState.audioState === 'loading') &&
-        !globalAudioState.showSleepTimerModal &&
-        !globalAudioState.shouldHideMiniPlayer && (
-          <MiniPlayer
-            article={globalAudioState.currentArticle}
-            isPlaying={globalAudioState.isPlaying}
-            isTimerActive={globalAudioState.isTimerActive}
-            position={globalAudioState.position}
-            duration={globalAudioState.duration}
-            onPlayPause={globalAudioState.onPlayPause}
-            onTimerPress={globalAudioState.onTimerPress}
-          />
-        )}
+      {/* Removed mini-player for article modal */}
 
       <WordTooltip
         visible={!!activeTooltip}

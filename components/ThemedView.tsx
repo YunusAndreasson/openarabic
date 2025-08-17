@@ -57,13 +57,17 @@ function ThemedViewComponent({
   const scrollableContent = useMemo(
     () => (
       <ScrollView
-        alwaysBounceVertical={false}
+        // iOS best practice: Allow natural bounce behavior for tactile feedback
+        // Users expect to be able to "pull" the screen even when no refresh is needed
+        alwaysBounceVertical={true}
         automaticallyAdjustContentInsets={false}
-        bounces={false}
+        bounces={true}
         contentContainerStyle={contentContainerStyle}
         contentInsetAdjustmentBehavior="never"
         removeClippedSubviews={true}
         showsVerticalScrollIndicator={false}
+        // Allow natural overscroll behavior on Android for consistency
+        overScrollMode="always"
         {...scrollViewProps}
       >
         {children}
