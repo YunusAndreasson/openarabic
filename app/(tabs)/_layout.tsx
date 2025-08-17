@@ -8,13 +8,14 @@ import { Platform, StyleSheet } from 'react-native';
 import HeaderProfile from '@/components/HeaderProfile';
 import DictionaryButton from '@/components/ui/DictionaryButton';
 import EditModeButton from '@/components/ui/EditModeButton';
+import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth';
 import { useColors, useIsDarkMode } from '@/hooks/theme';
 import { useFSRSData } from '@/hooks/vocabulary/FSRSDataProvider';
-import { useMemoryBadge } from '@/hooks/vocabulary/useMemoryBadge';
+import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 
 const TAB_SCREENS = [
   {
@@ -92,9 +93,18 @@ export default function TabLayout(): JSX.Element {
 
   // Get memory badge status from lightweight hook
   const { studyWords } = useFSRSData();
-  const { shouldShowMemoryBadge } = useMemoryBadge({
-    studyWords,
-  });
+  const { chartData } = useRetrievabilityChart(studyWords ?? []);
+
+  // Calculate memory badge status using the same logic as the gauge
+  const shouldShowMemoryBadge = useMemo(() => {
+    if (!studyWords?.length) return false;
+
+    // Use the exact same currentRetrievability value that the MemoryRetentionGauge displays
+    const currentRetrievability = chartData.insights.currentRetrievability;
+
+    // Show red dot when retention is below 70% (same threshold as gauge)
+    return currentRetrievability < MEMORY_CAPACITY_THRESHOLDS.GOOD;
+  }, [studyWords, chartData.insights.currentRetrievability]);
 
   useEffect(() => {
     if (!isLoading && !session?.user) {

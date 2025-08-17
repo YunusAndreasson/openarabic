@@ -313,12 +313,12 @@ def generate_speech_with_timestamps(
             context_text += f"Next: {next_text}\n"
         context_text += f"Current: {text}"
 
-        # Generate speech with alignment
+        # Generate speech with alignment - Premium audio quality
         response = client.text_to_speech.convert_with_timestamps(
             text=text,
             voice_id=voice_id,
             voice_settings=VoiceSettings(**DEFAULT_VOICE_SETTINGS),
-            output_format="mp3_44100_128",
+            output_format="mp3_44100_192",  # Higher bitrate for premium quality
         )
 
         if not response:

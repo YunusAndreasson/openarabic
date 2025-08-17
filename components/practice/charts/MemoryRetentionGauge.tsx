@@ -9,6 +9,7 @@ import { useChartColors } from '@charts/chartColors';
 
 import { ThemedText } from '@/components/ThemedText';
 import { SPRING_CONFIG } from '@/constants/animation';
+import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
@@ -40,11 +41,11 @@ const GAUGE_BOUNDS = {
   height: GAUGE_RADIUS * 2,
 };
 
-// Memory retention thresholds for color coding
+// Memory retention thresholds for color coding - now using centralized constants
 const RETENTION_THRESHOLDS = {
-  POOR: 40, // Red: <40% - urgent practice needed
-  MODERATE: 70, // Orange: 40-69% - needs attention
-  GOOD: 70, // Green: 70%+ - good retention
+  POOR: MEMORY_CAPACITY_THRESHOLDS.POOR, // Red: <40% - urgent practice needed
+  MODERATE: MEMORY_CAPACITY_THRESHOLDS.MODERATE, // Orange: 40-69% - needs attention
+  GOOD: MEMORY_CAPACITY_THRESHOLDS.GOOD, // Green: 70%+ - good retention
 } as const;
 
 export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
@@ -70,8 +71,8 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
       if (delta < 0.5) return;
 
       // Check if we're entering the green area (70%+) for the first time
-      const wasBelowGreen = prevRetentionRef.current < 70;
-      const isNowGreen = next >= 70;
+      const wasBelowGreen = prevRetentionRef.current < MEMORY_CAPACITY_THRESHOLDS.GOOD;
+      const isNowGreen = next >= MEMORY_CAPACITY_THRESHOLDS.GOOD;
 
       if (wasBelowGreen && isNowGreen && !hasTriggeredGreenHapticRef.current) {
         // Trigger celebratory haptic feedback when entering green area
@@ -82,7 +83,7 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
       }
 
       // Reset haptic trigger if user drops below green area
-      if (next < 70) {
+      if (next < MEMORY_CAPACITY_THRESHOLDS.GOOD) {
         hasTriggeredGreenHapticRef.current = false;
       }
 
@@ -175,7 +176,7 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
               <Ionicons
                 name="information-circle"
                 size={LAYOUT.BUTTON.ICON_SIZE.XLARGE}
-                color={chartColors.withOpacity(colors.text, 0.6)}
+                color={colors.elevation3}
               />
             </Pressable>
           ) : (
@@ -193,7 +194,7 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
               <Group>
                 {/* Full background track - always shows complete arc from 0% to 100% */}
                 <Path
-                  color={chartColors.withOpacity(colors.text, 0.2)}
+                  color={colors.border}
                   path={backgroundTrackPath}
                   strokeCap="round"
                   strokeWidth={GAUGE_STROKE_WIDTH}
@@ -288,8 +289,8 @@ const styles = StyleSheet.create({
   },
   infoIndicator: {
     position: 'absolute',
-    top: LAYOUT.SPACING.TINY,
-    right: LAYOUT.SPACING.TINY,
+
+    right: LAYOUT.SPACING.MEDIUM,
     width: MIN_TOUCH_TARGET.SMALL,
     height: MIN_TOUCH_TARGET.SMALL,
     alignItems: 'center',

@@ -65,6 +65,19 @@ export const CAPACITY_THRESHOLDS = {
   // Below 40 is red zone - don't add
 } as const;
 
+/**
+ * Memory capacity thresholds for vocabulary retention
+ * These values determine when to show warnings and color coding
+ */
+export const MEMORY_CAPACITY_THRESHOLDS = {
+  /** Below this threshold shows red warning (poor retention) */
+  POOR: 40,
+  /** Below this threshold shows orange warning (moderate retention) */
+  MODERATE: 70,
+  /** Above this threshold shows green (good retention) */
+  GOOD: 70,
+} as const;
+
 // Optimized FSRS configuration
 export const OPTIMIZED_FSRS_CONFIG = {
   learning_steps: DEFAULT_LEARNING_STEPS,

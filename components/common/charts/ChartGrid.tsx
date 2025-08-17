@@ -1,6 +1,7 @@
 import { Group, Line } from '@shopify/react-native-skia';
 import { memo, useMemo } from 'react';
 
+import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { withOpacity } from '@/utils/colorUtils';
@@ -11,7 +12,7 @@ interface ChartGridProps {
   topPadding?: number;
   xLabelPositions?: number[]; // X positions for vertical grid lines (daily positions)
   yMax?: number; // Maximum value for y-axis (default 100 for percentages)
-  showWarningLine?: boolean; // Whether to show the 70% threshold line
+  showWarningLine?: boolean; // Whether to show the warning threshold line
 }
 
 /**
@@ -55,12 +56,13 @@ export const ChartGrid = memo(
       });
     }, [height, topPadding, yMax]);
 
-    // Threshold line at 70% - critical threshold for vocabulary retention
+    // Threshold line at warning threshold - critical threshold for vocabulary retention
     const thresholdLine = useMemo(() => {
       if (!showWarningLine) return null;
       const chartHeight = height - topPadding;
-      const yPosition = topPadding + chartHeight - (70 / yMax) * chartHeight;
-      return { y: yPosition, percentage: 70 };
+      const yPosition =
+        topPadding + chartHeight - (MEMORY_CAPACITY_THRESHOLDS.GOOD / yMax) * chartHeight;
+      return { y: yPosition, percentage: MEMORY_CAPACITY_THRESHOLDS.GOOD };
     }, [showWarningLine, height, topPadding, yMax]);
 
     // Vertical lines at daily positions for temporal reference
@@ -82,10 +84,10 @@ export const ChartGrid = memo(
           />
         ))}
 
-        {/* Threshold line at 70% - critical retention level */}
+        {/* Threshold line at warning threshold - critical retention level */}
         {thresholdLine && (
           <Line
-            key="threshold-line-70%"
+            key={`threshold-line-${thresholdLine.percentage}%`}
             color={thresholdLineColor}
             p1={{ x: 0, y: thresholdLine.y }}
             p2={{ x: width, y: thresholdLine.y }}

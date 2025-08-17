@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { RetrievabilityChart } from '@/components/practice/charts/RetrievabilityChart';
+import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
@@ -39,7 +40,8 @@ export default function MemoryRetentionModal(): JSX.Element {
         <View style={[styles.tipContainer, { backgroundColor: colors.elevation1 }]}>
           <Ionicons name="bulb" size={16} color={colors.warning} style={styles.tipIcon} />
           <ThemedText style={styles.tipText} variant="secondary">
-            Stay above the 70% threshold line. Practice existing words before adding new ones.
+            Stay above the {MEMORY_CAPACITY_THRESHOLDS.GOOD}% threshold line. Practice existing
+            words before adding new ones.
           </ThemedText>
         </View>
       </View>

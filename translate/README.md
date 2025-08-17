@@ -257,7 +257,7 @@ Split units are classified into types:
   - GPT-4o for quality-critical verification phase
 - **Voice Configuration**:
   - **Sentences**: ElevenLabs Rachel (21m00Tcm4TlvDq8ikWAM) - multilingual voice supporting Arabic
-  - **Single Words**: Google Cloud TTS - ar-XA-Standard-A (Arabic) and en-US-Standard-A (English)
+  - **Single Words**: Google Cloud TTS - ar-XA-Wavenet-A (Arabic) and en-US-Wavenet-A (English) - Premium Wavenet Voices
 - **Translation Settings**:
   - Root word batch size: 100
   - Retry attempts: 3
@@ -368,8 +368,8 @@ For single word audio generation, set up Google Cloud TTS:
    - The `GOOGLE_CLOUD_CREDENTIALS_PATH` environment variable should already be set
 
 3. **Voice Selection**:
-   - **Arabic**: ar-XA-Standard-A (Modern Standard Arabic)
-   - **English**: en-US-Standard-A (US English)
+   - **Arabic**: ar-XA-Wavenet-A (Premium Wavenet Arabic - Modern Standard Arabic)
+   - **English**: en-US-Wavenet-A (Premium Wavenet English - US English)
 
 ### ElevenLabs API (Optional)
 

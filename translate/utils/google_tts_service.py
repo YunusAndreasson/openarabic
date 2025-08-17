@@ -31,23 +31,27 @@ class GoogleTTSService:
     def generate_arabic_word_audio(self, word: str) -> dict[str, Any] | None:
         """Generate audio for an Arabic word using Google Cloud TTS."""
         try:
-            # Configure Arabic voice (Modern Standard Arabic)
+            # Configure Arabic voice (Modern Standard Arabic) - Premium Wavenet quality
             voice = texttospeech.VoiceSelectionParams(
                 language_code="ar-XA",
-                name="ar-XA-Standard-A",  # Best Arabic voice for single words
+                name="ar-XA-Wavenet-A",  # Premium Wavenet voice for best Arabic quality
                 ssml_gender=texttospeech.SsmlVoiceGender.MALE,
             )
 
-            # Configure audio output
+            # Configure premium audio output with high quality settings
             audio_config = texttospeech.AudioConfig(
                 audio_encoding=texttospeech.AudioEncoding.MP3,
-                speaking_rate=0.8,  # Slightly slower for clarity
+                speaking_rate=0.85,  # Slightly slower for clarity
                 pitch=0.0,  # Natural pitch
                 volume_gain_db=0.0,  # Normal volume
+                # Premium audio effects for better quality
+                effects_profile_id=[
+                    "headphone-class-device"
+                ],  # Optimized for headphones
             )
 
-            # Create SSML for better Arabic pronunciation
-            ssml_text = f'<speak><prosody rate="0.8">{word}</prosody></speak>'
+            # Create enhanced SSML for better Arabic pronunciation
+            ssml_text = f'<speak><prosody rate="0.85" pitch="0" volume="loud">{word}</prosody></speak>'
 
             # Synthesize speech
             synthesis_input = texttospeech.SynthesisInput(ssml=ssml_text)
@@ -64,7 +68,7 @@ class GoogleTTSService:
                 "audio": response.audio_content,
                 "format": "mp3",
                 "language": "ar-XA",
-                "voice": "ar-XA-Standard-A",
+                "voice": "ar-XA-Wavenet-A",  # Updated to verified Wavenet voice
                 "text": word,
             }
 
@@ -75,23 +79,27 @@ class GoogleTTSService:
     def generate_english_word_audio(self, word: str) -> dict[str, Any] | None:
         """Generate audio for an English word using Google Cloud TTS."""
         try:
-            # Configure English voice (US English)
+            # Configure English voice (US English) - Premium Wavenet quality
             voice = texttospeech.VoiceSelectionParams(
                 language_code="en-US",
-                name="en-US-Standard-A",  # Best English voice for single words
+                name="en-US-Wavenet-A",  # Premium Wavenet voice for best English quality
                 ssml_gender=texttospeech.SsmlVoiceGender.MALE,
             )
 
-            # Configure audio output
+            # Configure premium audio output with high quality settings
             audio_config = texttospeech.AudioConfig(
                 audio_encoding=texttospeech.AudioEncoding.MP3,
-                speaking_rate=0.8,  # Slightly slower for clarity
+                speaking_rate=0.85,  # Slightly slower for clarity
                 pitch=0.0,  # Natural pitch
                 volume_gain_db=0.0,  # Normal volume
+                # Premium audio effects for better quality
+                effects_profile_id=[
+                    "headphone-class-device"
+                ],  # Optimized for headphones
             )
 
-            # Create SSML for better English pronunciation
-            ssml_text = f'<speak><prosody rate="0.8">{word}</prosody></speak>'
+            # Create enhanced SSML for better English pronunciation
+            ssml_text = f'<speak><prosody rate="0.85" pitch="0" volume="loud">{word}</prosody></speak>'
 
             # Synthesize speech
             synthesis_input = texttospeech.SynthesisInput(ssml=ssml_text)
@@ -108,7 +116,7 @@ class GoogleTTSService:
                 "audio": response.audio_content,
                 "format": "mp3",
                 "language": "en-US",
-                "voice": "en-US-Standard-A",
+                "voice": "en-US-Wavenet-A",  # Updated to verified Wavenet voice
                 "text": word,
             }
 

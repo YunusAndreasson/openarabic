@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   optionButton: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM + 2,
     paddingVertical: LAYOUT.SPACING.MEDIUM + 2,
-    width: `${LAYOUT.WIDTH_RATIOS.THIRD * 100 - 3}%`,
+    width: '48%', // Fixed width for proper 2-column layout (48% allows for gap spacing)
   },
 
   fullWidthButton: {
