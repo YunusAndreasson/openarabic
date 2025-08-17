@@ -37,9 +37,9 @@ def parse_split_response(response: dict[str, Any]) -> SplitResult:
     if "error" in response:
         return SplitResult(
             units=[],
-            title="Error",
+            title="unknown",
             summary=response["error"],
-            difficulty_level=DifficultyLevel.BASIC.value,
+            difficulty_level="unknown",
             total_units=0,
         )
 
@@ -51,13 +51,24 @@ def parse_split_response(response: dict[str, Any]) -> SplitResult:
         # Legacy format: direct data
         data = response
 
-    # Validate via Pydantic
+    # Handle case where data doesn't have expected structure
+    if not isinstance(data, dict) or "units" not in data:
+        logger.warning("Unexpected response structure, creating default SplitResult")
+        return SplitResult(
+            units=[],
+            title="unknown",
+            summary="unknown",
+            difficulty_level="unknown",
+            total_units=0,
+        )
+
+    # Validate via Pydantic with safe defaults
     return SplitResult(
-        units=data["units"],
-        title=data["title"],
-        summary=data["summary"],
-        difficulty_level=data["difficulty_level"],
-        total_units=len(data["units"]),
+        units=data.get("units", []),
+        title=data.get("title", "unknown"),
+        summary=data.get("summary", "unknown"),
+        difficulty_level=data.get("difficulty_level", "unknown"),
+        total_units=len(data.get("units", [])),
     )
 
 

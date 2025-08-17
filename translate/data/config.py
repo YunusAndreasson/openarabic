@@ -34,15 +34,12 @@ DEFAULT_OUTPUT_FILE = os.path.join(ARTICLE_DIR, "output.json")
 DEFAULT_SPLIT_OUTPUT_FILE = os.path.join(ARTICLE_DIR, "input_split.json")
 
 # Voice configuration
-# Use public voices that are guaranteed to work with ElevenLabs
-# Public male voice: "pNInz6obpgDQGcFmaJgB" (Adam)
-# Public female voice: "21m00Tcm4TlvDq8ikWAM" (Rachel)
-ARABIC_VOICE_ID = "pNInz6obpgDQGcFmaJgB"  # Adam - public male voice
-ARABIC_WORD_VOICE_ID = ARABIC_VOICE_ID
-ENGLISH_WORD_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"  # Rachel - public female voice
+ARABIC_VOICE_ID = "R6nda3uM038xEEKi7GFl"
+ARABIC_WORD_VOICE_ID = "IES4nrmZdUBHByLBde0P"
+ENGLISH_WORD_VOICE_ID = "NFG5qt843uXKj4pFvR7C"
 
-# ElevenLabs TTS model (use a model that actually exists)
-ELEVENLABS_TTS_MODEL_ID = "eleven_monolingual_v1"  # Basic model that should work
+# ElevenLabs TTS
+ELEVENLABS_TTS_MODEL_ID = "eleven_multilingual_v2"
 
 # Voice settings as dictionary for API compatibility
 DEFAULT_VOICE_SETTINGS = {"use_speaker_boost": True, "speed": 0.8}

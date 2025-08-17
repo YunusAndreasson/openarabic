@@ -215,16 +215,24 @@ class TextMetadata(BaseModel):
 
     model_config = {"use_enum_values": True, "extra": "forbid"}
 
-    title: str = Field(description="Concise English title (3-7 words)")
-    summary: str = Field(description="One-sentence summary of main content")
-    difficulty_level: DifficultyLevel = Field(description="Difficulty rating (1-5)")
-    total_units: int = Field(description="Total number of units", ge=0)
+    title: str | Literal["unknown"] = Field(
+        default="unknown", description="Concise English title (3-7 words)"
+    )
+    summary: str | Literal["unknown"] = Field(
+        default="unknown", description="One-sentence summary of main content"
+    )
+    difficulty_level: DifficultyLevel | Literal["unknown"] = Field(
+        default="unknown", description="Difficulty rating (1-5)"
+    )
+    total_units: int = Field(default=0, description="Total number of units", ge=0)
 
 
 class SplitResult(TextMetadata):
     """Complete result from text splitting phase"""
 
-    units: list[str] = Field(description="Array of text units/sentences")
+    units: list[str] = Field(
+        default_factory=list, description="Array of text units/sentences"
+    )
 
 
 class WordTiming(BaseModel):
