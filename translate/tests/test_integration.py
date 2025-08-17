@@ -1,6 +1,5 @@
 """Integration tests for the main workflow."""
 
-import json
 import os
 import sys
 import tempfile
@@ -10,109 +9,13 @@ from unittest.mock import patch
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import (
-    review_split_file,
-    review_translation,
     run_split_file,
     run_translation,
 )
-from utils.review_helpers import confirm_step
 
 
 class TestMainWorkflow:
     """Test the main workflow functions."""
-
-    def test_confirm_step_yes(self, monkeypatch):
-        """Test confirm_step with yes response."""
-        monkeypatch.setattr("builtins.input", lambda prompt: "y")
-        result = confirm_step("Continue?")
-        assert result is True
-
-    def test_confirm_step_no(self, monkeypatch):
-        """Test confirm_step with no response."""
-        monkeypatch.setattr("builtins.input", lambda prompt: "n")
-        result = confirm_step("Continue?")
-        assert result is False
-
-    def test_confirm_step_invalid_then_valid(self, monkeypatch):
-        """Test confirm_step with invalid then valid response."""
-        responses = iter(["invalid", "y"])
-        monkeypatch.setattr("builtins.input", lambda prompt: next(responses))
-        result = confirm_step("Continue?")
-        assert result is True
-
-    def test_review_split_file_success(self, monkeypatch):
-        """Test review_split_file with valid data."""
-        # Create a temporary split file
-        split_data = {
-            "units": [
-                "مرحبا بالعالم.",
-                "هذا نص تجريبي.",
-                "نحن نختبر النظام.",
-            ],
-            "title": "Test Article",
-            "summary": "A test article for splitting",
-            "difficulty_level": 2,
-            "total_units": 3,
-        }
-
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-            json.dump(split_data, f)
-            split_file_path = f.name
-
-        try:
-            # Mock user input to continue
-            monkeypatch.setattr("builtins.input", lambda prompt: "y")
-
-            result = review_split_file(split_file_path, "Test Author")
-            assert result is True
-
-        finally:
-            Path(split_file_path).unlink(missing_ok=True)
-
-    def test_review_split_file_not_found(self):
-        """Test review_split_file with non-existent file."""
-        result = review_split_file("nonexistent_file.json", "Test Author")
-        assert result is False
-
-    def test_review_translation_success(self, monkeypatch):
-        """Test review_translation with valid data."""
-        # Create a temporary translation file
-        translation_data = {
-            "metadata": {
-                "title": "Test Article",
-                "summary": "A test article for translation",
-                "difficulty_level": "intermediate",
-            },
-            "translations": [
-                {
-                    "original": "مرحبا بالعالم.",
-                    "full_translation": "Hello world.",
-                },
-                {
-                    "original": "هذا نص تجريبي.",
-                    "full_translation": "This is a test text.",
-                },
-            ],
-        }
-
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-            json.dump(translation_data, f)
-            translation_file_path = f.name
-
-        try:
-            # Mock user input to continue
-            monkeypatch.setattr("builtins.input", lambda prompt: "y")
-
-            result = review_translation(translation_file_path, "Test Author")
-            assert result is True
-
-        finally:
-            Path(translation_file_path).unlink(missing_ok=True)
-
-    def test_review_translation_not_found(self):
-        """Test review_translation with non-existent file."""
-        result = review_translation("nonexistent_file.json", "Test Author")
-        assert result is False
 
     @patch("main.split_text")
     def test_run_split_file_success(self, mock_split_text):

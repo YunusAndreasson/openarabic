@@ -33,7 +33,6 @@ from utils.progress_tracker import (
     suppress_verbose_logging,
 )
 from utils.responses_api import load_api_keys, token_tracker
-from utils.review_helpers import review_file_with_preview
 from utils.subprocess_utils import run_pipeline_step
 
 logging.basicConfig(
@@ -96,19 +95,6 @@ def run_split_file(input_file: str, author_folder: str) -> str:
     return output_file
 
 
-def review_split_file(
-    split_file: str, author_name: str, force_yes: bool = False
-) -> bool:
-    """Review the split file and ask user if they want to continue."""
-    return review_file_with_preview(
-        file_path=split_file,
-        author_name=author_name,
-        file_type="Split",
-        force_yes=force_yes,
-        confirm_prompt="Review complete. Would you like to proceed with translation?",
-    )
-
-
 def run_translation(
     input_file: str,
     output_file: str,
@@ -121,19 +107,6 @@ def run_translation(
     ):
         logger.error("❌ Translation failed.")
         raise RuntimeError("Translation failed.")
-
-
-def review_translation(
-    output_file: str, author_name: str, force_yes: bool = False
-) -> bool:
-    """Review the translation output and ask user if they want to continue."""
-    return review_file_with_preview(
-        file_path=output_file,
-        author_name=author_name,
-        file_type="Translation",
-        force_yes=force_yes,
-        confirm_prompt="Review complete. Would you like to proceed with database insertion?",
-    )
 
 
 def run_insert_only() -> None:
@@ -163,26 +136,25 @@ Pipeline Phases:
   3. Insert: Process through ElevenLabs and insert into database
 
 Examples:
-  python main.py --split                    # Split all files from inbox and review
-  python main.py --translate                # Translate split files and review
+  python main.py --split                    # Split all files from inbox
+  python main.py --translate                # Translate split files
   python main.py --insert                   # Insert into database
   python main.py --split --translate        # Split then translate
   python main.py --translate --insert       # Translate then insert
   python main.py --split --translate --insert  # Full pipeline
-  python main.py --split --translate --insert --force-yes  # Full pipeline with auto-confirm
         """,
     )
 
     parser.add_argument(
         "--split",
         action="store_true",
-        help="Split input files from 0_inbox into sentences and review",
+        help="Split input files from 0_inbox into sentences",
     )
 
     parser.add_argument(
         "--translate",
         action="store_true",
-        help="Translate split files and review",
+        help="Translate split files",
     )
 
     parser.add_argument(
@@ -197,13 +169,6 @@ Examples:
         type=int,
         default=DEFAULT_BATCH_SIZE,
         help=f"Batch size for translation (default: {DEFAULT_BATCH_SIZE})",
-    )
-
-    parser.add_argument(
-        "--force-yes",
-        "-y",
-        action="store_true",
-        help="Automatically answer 'yes' to all confirmation questions",
     )
 
     args = parser.parse_args()
@@ -234,19 +199,12 @@ Examples:
             "Split", len(input_files), "Processing input files"
         )
 
-        split_files = []
         for _i, (input_file, author_folder, author_name) in enumerate(input_files):
             progress_tracker.set_description(f"Processing {author_name}")
-            split_file = run_split_file(input_file, author_folder)
-            split_files.append((split_file, author_name))
+            run_split_file(input_file, author_folder)
             progress_tracker.update(1)
 
         progress_tracker.finish_phase()
-
-        # Review all split files
-        for split_file, author_name in split_files:
-            if not review_split_file(split_file, author_name, args.force_yes):
-                return
 
     # Only run translate phase if specifically requested
     if args.translate:
@@ -286,10 +244,6 @@ Examples:
             os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
             run_translation(split_file, output_file, args.batch_size)
-
-            if not review_translation(output_file, author_name, args.force_yes):
-                return
-
             progress_tracker.update(1)
 
         progress_tracker.finish_phase()
@@ -315,8 +269,6 @@ Examples:
 __all__ = [
     "run_split_file",
     "run_translation",
-    "review_split_file",
-    "review_translation",
     "find_input_files_in_inbox",
 ]
 

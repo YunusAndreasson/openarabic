@@ -7,7 +7,6 @@ from data.config import (
     DEFAULT_SPLIT_OUTPUT_FILE,
     MODEL_ANALYSIS,
 )
-from data.enums import DifficultyLevel
 from data.models import SplitResult
 from data.schemas import (
     GENERAL_SYSTEM_PROMPT,

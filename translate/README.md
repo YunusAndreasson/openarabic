@@ -109,7 +109,7 @@ uv run python main.py --split
   - **Difficulty Level**: 1-5 rating (Basic to Expert)
   - **Unit Types**: Classification (simple, compound, condition, quote, verse, phrase)
 - Saves results to `1_split/` with author folder structure
-- Reviews split results before proceeding
+- Automatically proceeds to next phase when complete
 
 ### Phase 3: Translation
 
@@ -125,7 +125,7 @@ uv run python main.py --translate
   4. Google Cloud fallback translations
   5. Final verification with GPT-4o
 - Saves results to `2_translate/` with author folder structure
-- Reviews translation results before proceeding
+- Automatically proceeds to next phase when complete
 
 ### Phase 4: Database Insertion
 
@@ -144,21 +144,16 @@ uv run python main.py --insert
 uv run python main.py --split --translate --insert
 ```
 
-### Auto-Confirm Mode
 
-```bash
-uv run python main.py --split --translate --insert --force-yes
-```
 
 ## Command Line Interface
 
 The pipeline supports the following arguments:
 
-- `--split` - Split input files from 0_inbox into sentences and review
-- `--translate` - Translate split files and review
+- `--split` - Split input files from 0_inbox into sentences
+- `--translate` - Translate split files
 - `--insert` - Process through ElevenLabs and insert into database
 - `--batch-size` / `-b` - Batch size for translation (default: 12, max: 15)
-- `--force-yes` / `-y` - Automatically answer 'yes' to all confirmation questions
 
 ## Author Mapping
 
