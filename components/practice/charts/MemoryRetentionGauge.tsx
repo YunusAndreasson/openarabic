@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Canvas, Group, LinearGradient, Path, Skia, vec } from '@shopify/react-native-skia';
+import { Canvas, Group, Path, Skia } from '@shopify/react-native-skia';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { runOnJS, useAnimatedReaction, useSharedValue, withSpring } from 'react-native-reanimated';
@@ -29,6 +29,16 @@ const GAUGE_RADIUS = Math.round(GAUGE_HEIGHT * 0.7); // Proportional radius base
 const GAUGE_STROKE_WIDTH = 20;
 const START_ANGLE = 185;
 const TOTAL_SWEEP = 170;
+
+// Static geometry values - calculated once
+const CENTER_X = GAUGE_WIDTH / 2;
+const CENTER_Y = GAUGE_HEIGHT - 15;
+const GAUGE_BOUNDS = {
+  x: CENTER_X - GAUGE_RADIUS,
+  y: CENTER_Y - GAUGE_RADIUS,
+  width: GAUGE_RADIUS * 2,
+  height: GAUGE_RADIUS * 2,
+};
 
 // Memory retention thresholds for color coding
 const RETENTION_THRESHOLDS = {
@@ -96,30 +106,20 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
     );
 
     // Static geometry values
-    const centerX = GAUGE_WIDTH / 2;
-    const centerY = GAUGE_HEIGHT - 15;
-
     const sweep = (animatedRetention / 100) * TOTAL_SWEEP;
 
     const animatedFilledPath = useMemo(() => {
       const p = Skia.Path.Make();
-      p.addArc(
-        {
-          x: centerX - GAUGE_RADIUS,
-          y: centerY - GAUGE_RADIUS,
-          width: GAUGE_RADIUS * 2,
-          height: GAUGE_RADIUS * 2,
-        },
-        START_ANGLE,
-        sweep
-      );
+      p.addArc(GAUGE_BOUNDS, START_ANGLE, sweep);
       return p;
-    }, [centerX, centerY, sweep]);
+    }, [sweep]);
 
-    const gradientEnd = vec(
-      GAUGE_WIDTH * 0.05 + (GAUGE_WIDTH * 0.9 * sweep) / TOTAL_SWEEP,
-      GAUGE_HEIGHT / 2
-    );
+    // Create full background track path
+    const backgroundTrackPath = useMemo(() => {
+      const p = Skia.Path.Make();
+      p.addArc(GAUGE_BOUNDS, START_ANGLE, TOTAL_SWEEP);
+      return p;
+    }, []);
 
     // Determine color based on retention thresholds
     const getRetentionColor = () => {
@@ -191,58 +191,23 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
           <View style={styles.gaugeContainer}>
             <Canvas style={styles.canvas}>
               <Group>
-                {/* Background track */}
+                {/* Full background track - always shows complete arc from 0% to 100% */}
                 <Path
-                  color={chartColors.withOpacity(colors.card, 0.6)}
-                  path={animatedFilledPath}
+                  color={chartColors.withOpacity(colors.text, 0.2)}
+                  path={backgroundTrackPath}
                   strokeCap="round"
                   strokeWidth={GAUGE_STROKE_WIDTH}
                   style="stroke"
                 />
 
+                {/* Filled portion - shows current progress */}
                 <Path
-                  color={chartColors.withOpacity(chartColors.ui.border, 0.08)}
                   path={animatedFilledPath}
                   strokeCap="round"
                   strokeWidth={GAUGE_STROKE_WIDTH}
+                  color={retentionColor}
                   style="stroke"
                 />
-
-                {/* Unfilled portion with low opacity gradient */}
-                <Path
-                  opacity={0.2}
-                  path={animatedFilledPath}
-                  strokeCap="round"
-                  strokeWidth={GAUGE_STROKE_WIDTH}
-                  style="stroke"
-                >
-                  <LinearGradient
-                    end={vec(GAUGE_WIDTH * 0.95, GAUGE_HEIGHT / 2)}
-                    positions={[0, 0.3, 0.7, 1]}
-                    start={vec(GAUGE_WIDTH * 0.05, GAUGE_HEIGHT / 2)}
-                    colors={[
-                      chartColors.performance.poor,
-                      chartColors.performance.moderate,
-                      chartColors.performance.good,
-                      chartColors.performance.excellent,
-                    ]}
-                  />
-                </Path>
-
-                {/* Filled portion */}
-                <Path
-                  path={animatedFilledPath}
-                  strokeCap="round"
-                  strokeWidth={GAUGE_STROKE_WIDTH}
-                  style="stroke"
-                >
-                  <LinearGradient
-                    colors={[retentionColor, retentionColor]}
-                    positions={[0, 1]}
-                    start={vec(GAUGE_WIDTH * 0.05, GAUGE_HEIGHT / 2)}
-                    end={gradientEnd}
-                  />
-                </Path>
               </Group>
             </Canvas>
 
