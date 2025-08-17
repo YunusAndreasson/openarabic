@@ -87,7 +87,7 @@ export const FAQ_DATA: FAQCategory[] = [
         id: 'audio-features',
         question: 'What audio features are available?',
         answer:
-          'A focused Now Playing screen with sleep timer, playlist, and progress tracking. Audio caches after you play an article the first time for offline listening. Controls emphasize Play and Stop for clarity.',
+          'Audio playback with mini-player controls, sleep timer, and playlist management. Audio caches after you play an article the first time for offline listening. Controls emphasize Play and Stop for clarity.',
         category: 'Features',
       },
     ],

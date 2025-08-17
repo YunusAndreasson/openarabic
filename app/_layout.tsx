@@ -322,7 +322,7 @@ function AppContent() {
                 })}
               />
 
-              {/* NowPlaying is nested at /(tabs)/listen/now-playing; no root-level screen needed */}
+              {/* Audio overlays - mini-player and sleep timer */}
             </Stack>
 
             {/* Audio overlays are isolated to prevent root re-renders on audio ticks */}
@@ -381,7 +381,6 @@ const AudioOverlays = memo(function AudioOverlays() {
           duration={globalAudioState.duration}
           onPlayPause={globalAudioState.onPlayPause}
           onTimerPress={globalAudioState.onTimerPress}
-          onExpand={globalAudioState.onExpand}
         />
       )}
 

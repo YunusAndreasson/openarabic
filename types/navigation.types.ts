@@ -40,7 +40,6 @@ export type RouteParams = {
   '/(tabs)/read/article/[id]': ArticleParams;
   '/(tabs)/read/filterModal': FiltersParams;
   '/practice/review': ReviewParams;
-  '/(tabs)/listen/now-playing': NowPlayingModalParams;
   '/': Record<string, never>;
   '/(tabs)': Record<string, never>;
   '/(tabs)/practice': Record<string, never>;
@@ -66,12 +65,4 @@ export type Route<T extends RoutePath> = {
  */
 export interface ListenParams {
   fromRemember?: string;
-}
-
-/**
- * Parameters that can be passed to the NowPlaying modal
- */
-export interface NowPlayingModalParams {
-  articleId?: string;
-  [key: string]: string | undefined;
 }

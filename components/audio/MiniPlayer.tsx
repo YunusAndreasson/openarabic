@@ -30,8 +30,6 @@ export interface MiniPlayerProps {
   /** Playback controls */
   onPlayPause: () => void;
   onTimerPress: () => void;
-  /** Single handler to expand the now-playing modal */
-  onExpand: () => void;
 }
 
 // Layout constants using proper LAYOUT system from layout.ts
@@ -40,16 +38,7 @@ const ARTWORK_SIZE = LAYOUT.CARD.IMAGE.MINI_PLAYER; // 40px (48 - 8) - responsiv
 const PROGRESS_HEIGHT = LAYOUT.PROGRESS_BAR.HEIGHT; // 4px - responsive to base unit
 
 export const MiniPlayer = memo<MiniPlayerProps>(
-  ({
-    article,
-    isPlaying,
-    isTimerActive,
-    position,
-    duration,
-    onPlayPause,
-    onTimerPress,
-    onExpand,
-  }) => {
+  ({ article, isPlaying, isTimerActive, position, duration, onPlayPause, onTimerPress }) => {
     const colors = useColors();
 
     // Memoize dynamic styles for better performance
@@ -106,8 +95,7 @@ export const MiniPlayer = memo<MiniPlayerProps>(
     // Simplified mini-player press handler without animations
     const handleMiniPlayerPress = useCallback(() => {
       selectionFeedback();
-      onExpand();
-    }, [onExpand]);
+    }, []);
 
     // Handle play/pause with haptic feedback
     const handlePlayPause = useCallback(
@@ -175,7 +163,7 @@ export const MiniPlayer = memo<MiniPlayerProps>(
                     numberOfLines={1}
                     ellipsizeMode="tail"
                   >
-                    {article.author}
+                    {article.author || 'Unknown Author'}
                   </ThemedText>
                 </View>
               </View>

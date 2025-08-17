@@ -194,7 +194,7 @@ export const useListenScreen = () => {
           return;
         }
 
-        // PREFETCH: warm article data and image so NowPlaying shows artwork instantly
+        // PREFETCH: warm article data and image so audio components show artwork instantly
         const articleIdToPrefetch = firstTrack.articleId;
         if (articleIdToPrefetch) {
           // Fire-and-forget

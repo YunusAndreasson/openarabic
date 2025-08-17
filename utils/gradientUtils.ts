@@ -111,7 +111,7 @@ export function createThemeBackgroundGradient(
 }
 
 /**
- * Create simple overlay gradient for audio player (used in NowPlaying)
+ * Create simple overlay gradient for audio player (used in audio components)
  */
 export function createAudioOverlayGradient(shadowColor: string): readonly [string, string, string] {
   return [

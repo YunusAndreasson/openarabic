@@ -7,7 +7,6 @@ describe('ROUTE_PATHS - /(tabs) prefix', () => {
     expect(ROUTE_PATHS.PRACTICE_TAB.startsWith('/(tabs)/')).toBe(true);
     expect(ROUTE_PATHS.LISTEN_TAB.startsWith('/(tabs)/')).toBe(true);
     expect(ROUTE_PATHS.ACCOUNT.startsWith('/(tabs)/')).toBe(true);
-    expect(ROUTE_PATHS.NOW_PLAYING.startsWith('/(tabs)/')).toBe(true);
     expect(ROUTE_PATHS.PRACTICE_DICTIONARY.startsWith('/(tabs)/')).toBe(true);
   });
 

@@ -41,17 +41,10 @@ class GoogleTTSService:
             # Configure premium audio output with high quality settings
             audio_config = texttospeech.AudioConfig(
                 audio_encoding=texttospeech.AudioEncoding.MP3,
-                speaking_rate=0.85,  # Slightly slower for clarity
-                pitch=0.0,  # Natural pitch
-                volume_gain_db=0.0,  # Normal volume
-                # Premium audio effects for better quality
-                effects_profile_id=[
-                    "headphone-class-device"
-                ],  # Optimized for headphones
             )
 
             # Create enhanced SSML for better Arabic pronunciation
-            ssml_text = f'<speak><prosody rate="0.85" pitch="0" volume="loud">{word}</prosody></speak>'
+            ssml_text = f"<speak>{word}</speak>"
 
             # Synthesize speech
             synthesis_input = texttospeech.SynthesisInput(ssml=ssml_text)
@@ -68,7 +61,7 @@ class GoogleTTSService:
                 "audio": response.audio_content,
                 "format": "mp3",
                 "language": "ar-XA",
-                "voice": "ar-XA-Wavenet-A",  # Updated to verified Wavenet voice
+                "voice": "ar-XA-Wavenet-B",  # Updated to verified Wavenet voice
                 "text": word,
             }
 
@@ -99,7 +92,7 @@ class GoogleTTSService:
             )
 
             # Create enhanced SSML for better English pronunciation
-            ssml_text = f'<speak><prosody rate="0.85" pitch="0" volume="loud">{word}</prosody></speak>'
+            ssml_text = f"<speak>{word}</speak>"
 
             # Synthesize speech
             synthesis_input = texttospeech.SynthesisInput(ssml=ssml_text)

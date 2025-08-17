@@ -375,7 +375,6 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
             duration={globalAudioState.duration}
             onPlayPause={globalAudioState.onPlayPause}
             onTimerPress={globalAudioState.onTimerPress}
-            onExpand={globalAudioState.onExpand}
           />
         )}
 

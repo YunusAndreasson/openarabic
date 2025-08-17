@@ -30,7 +30,6 @@ export const ROUTE_PATHS = {
 
   PRACTICE_REVIEW: '/practice/review',
   PRACTICE_DICTIONARY: '/(tabs)/practice/dictionary',
-  NOW_PLAYING: '/(tabs)/listen/now-playing',
 } as const;
 
 export type StaticRoutePath = (typeof ROUTE_PATHS)[keyof typeof ROUTE_PATHS];

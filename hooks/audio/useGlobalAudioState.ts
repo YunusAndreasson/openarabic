@@ -1,9 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { router } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { AUDIO_STATES } from '@/constants/audio';
-import { ROUTE_PATHS } from '@/constants/routes';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
@@ -11,18 +9,22 @@ import { useListenScreen } from '@/hooks/listen/useListenScreen';
 import type { Article } from '@/types/articles.types';
 import type { ReadingListItem } from '@/types/readingList.types';
 
+// MiniPlayer-compatible article interface
+interface MiniPlayerArticle {
+  id: number;
+  title: string;
+  author: string;
+  image_url: string;
+}
+
 export interface GlobalAudioState {
   // Audio state
   isPlaying: boolean;
   audioState: string;
-
-  // Current article info
-  currentArticle: {
-    id: number;
-    title: string;
-    author: string;
-    image_url: string;
-  } | null;
+  isLoading: boolean;
+  currentArticle: MiniPlayerArticle | null;
+  position: number;
+  duration: number;
 
   // Queue information
   queuePosition: {
@@ -30,24 +32,17 @@ export interface GlobalAudioState {
     total: number;
   };
 
-  // Audio progress
-  position: number;
-  duration: number;
-
   // Sleep timer state
-  isTimerActive: boolean;
   showSleepTimerModal: boolean;
+  isTimerActive: boolean;
   sleepTimerRemainingTime: number;
 
-  // Navigation state
+  // Mini-player visibility
   shouldHideMiniPlayer: boolean;
 
-  // Action handlers
+  // Actions
   onPlayPause: () => void;
   onTimerPress: () => void;
-  onExpand: () => void;
-
-  // Sleep timer handlers
   onSleepTimerSet: (minutes: number) => void;
   onSleepTimerCancel: () => void;
   onSleepTimerClose: () => void;
@@ -64,11 +59,6 @@ export function useGlobalAudioState(): GlobalAudioState {
 
   // Sleep timer modal state
   const [showSleepTimerModal, setShowSleepTimerModal] = useState(false);
-
-  // STABILIZATION: Enhanced navigation state tracking
-  const hasNavigatedToModalRef = useRef(false);
-  const navigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastNavigationTimeRef = useRef(0);
 
   // Get reading list for queue tracking
   const { sortedEnhancedTracks } = useListenScreen();
@@ -154,37 +144,6 @@ export function useGlobalAudioState(): GlobalAudioState {
     audioPlayer.isLoading,
   ]);
 
-  // STABILIZATION: Debounced navigation function to prevent rapid modal open/close
-  const navigateToModal = useCallback(() => {
-    const now = Date.now();
-    const timeSinceLastNavigation = now - lastNavigationTimeRef.current;
-
-    // Prevent navigation if it's been less than 1 second since last navigation
-    if (timeSinceLastNavigation < 1000) {
-      return;
-    }
-
-    // Clear existing timeout
-    if (navigationTimeoutRef.current) {
-      clearTimeout(navigationTimeoutRef.current);
-    }
-
-    // Add small delay to prevent rapid navigation
-    navigationTimeoutRef.current = setTimeout(() => {
-      if (currentArticleId) {
-        // Mark that we've navigated to modal
-        hasNavigatedToModalRef.current = true;
-        lastNavigationTimeRef.current = Date.now();
-
-        // Navigate to modal directly
-        router.push({
-          pathname: ROUTE_PATHS.NOW_PLAYING,
-          params: { articleId: currentArticleId.toString() },
-        });
-      }
-    }, 100);
-  }, [currentArticleId]);
-
   // Action handlers
   const handlePlayPause = useCallback(async () => {
     if (audioPlayer.isPlaying) {
@@ -200,12 +159,6 @@ export function useGlobalAudioState(): GlobalAudioState {
   const handleTimerPress = useCallback(() => {
     setShowSleepTimerModal(true);
   }, []);
-
-  const handleExpand = useCallback(() => {
-    navigateToModal();
-  }, [navigateToModal]);
-
-  // Single expand handler is sufficient for mini-player and expand button
 
   // Sleep timer handlers
   const handleSleepTimerSet = useCallback(
@@ -225,28 +178,10 @@ export function useGlobalAudioState(): GlobalAudioState {
     setShowSleepTimerModal(false);
   }, []);
 
-  // STABILIZATION: Enhanced cleanup logic for navigation state
-  useEffect(() => {
-    // Reset navigation state when audio stops completely
-    if (!audioPlayer.isPlaying && !audioPlayer.isLoading) {
-      hasNavigatedToModalRef.current = false;
-      lastNavigationTimeRef.current = 0;
-    }
-  }, [audioPlayer.isPlaying, audioPlayer.isLoading]);
-
-  // Cleanup timeouts on unmount
-  useEffect(() => {
-    return () => {
-      if (navigationTimeoutRef.current) {
-        clearTimeout(navigationTimeoutRef.current);
-      }
-    };
-  }, []);
-
   // STABILIZATION: Simplified mini-player visibility logic
   const shouldHideMiniPlayer = useMemo(() => {
     // Hide mini-player if we've navigated to modal and audio is still playing/loading
-    return hasNavigatedToModalRef.current && (audioPlayer.isPlaying || audioPlayer.isLoading);
+    return false; // No longer navigated to modal, so always show
   }, [audioPlayer.isPlaying, audioPlayer.isLoading]);
 
   return {
@@ -256,6 +191,7 @@ export function useGlobalAudioState(): GlobalAudioState {
       : audioPlayer.isLoading
       ? AUDIO_STATES.LOADING
       : AUDIO_STATES.IDLE,
+    isLoading: audioPlayer.isLoading,
     currentArticle,
     queuePosition,
     position: audioPlayer.currentTime,
@@ -266,7 +202,6 @@ export function useGlobalAudioState(): GlobalAudioState {
     shouldHideMiniPlayer,
     onPlayPause: handlePlayPause,
     onTimerPress: handleTimerPress,
-    onExpand: handleExpand,
     onSleepTimerSet: handleSleepTimerSet,
     onSleepTimerCancel: handleSleepTimerCancel,
     onSleepTimerClose: handleSleepTimerClose,

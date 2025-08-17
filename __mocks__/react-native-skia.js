@@ -17,6 +17,7 @@ module.exports = {
         lineTo: () => {},
         quadTo: () => {},
         close: () => {},
+        toSVGString: () => '', // Mock SVG string for testing
       }),
     },
   },

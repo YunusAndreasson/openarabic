@@ -41,18 +41,11 @@ ELEVENLABS_TTS_MODEL_ID = (
     "eleven_multilingual_v2"  # Latest multilingual model for best quality
 )
 
-# Premium voice settings for enhanced audio quality
+# Voice settings for ElevenLabs API compatibility
 DEFAULT_VOICE_SETTINGS = {
     "use_speaker_boost": True,  # Enhanced speaker clarity
     "speed": 0.8,  # Optimal speed for Arabic pronunciation
-    "stability": 0.5,  # Balanced stability for natural variation
-    "similarity_boost": 0.75,  # Enhanced voice consistency
-    "style": 0.0,  # Natural speaking style
-    "use_semantic_similarity": True,  # Enable semantic understanding for better pronunciation
 }
-
-# Voice settings as dictionary for API compatibility
-DEFAULT_VOICE_SETTINGS = {"use_speaker_boost": True, "speed": 0.8}
 
 # External services
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
