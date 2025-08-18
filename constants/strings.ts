@@ -164,19 +164,17 @@ export const STRINGS = {
   // Practice session labels - concise and scientifically grounded
   // 3-Phase FSRS Practice System - scientifically grounded labels
   URGENT_PRESERVATION: 'Review due words', // RED PHASE: Clear action verb + object
-  EFFORTFUL_RETRIEVAL: 'Study struggling words', // YELLOW PHASE: Clear action verb + object
-  INTERLEAVED_REVIEW: 'Study all words', // GREEN PHASE: Clear action verb + object
   NO_WORDS_TO_STUDY: 'No words to study',
 
   // Insights & analytics
   INSIGHTS: 'Insights',
   PROGRESS: 'Progress',
-  MEMORY_CAPACITY: 'Memory capacity',
-  MEMORY_CAPACITY_EXPLANATION_TITLE: 'Memory capacity',
-  MEMORY_CAPACITY_EXPLANATION:
-    'Memory capacity shows your current retention percentage. At 100%, you are expected to be able to recall 100% of your vocabulary words.',
-  MEMORY_CAPACITY_TIP: 'Add new words when capacity is high',
-  CAPACITY_SCORE: 'Memory capacity',
+  MEMORY_STRENGTH: 'Memory strength',
+  MEMORY_STRENGTH_EXPLANATION_TITLE: 'Memory strength',
+  MEMORY_STRENGTH_EXPLANATION:
+    'Memory strength shows your current retention percentage. At 100%, you are expected to be able to recall 100% of your vocabulary words.',
+  MEMORY_STRENGTH_TIP: 'Add new words when strength is high',
+  STRENGTH_SCORE: 'Memory strength',
   DUE_WORDS: 'Due',
   STRUGGLING_WORDS: 'Struggling',
   RED_PHASE: 'Preserve memory',
@@ -186,17 +184,25 @@ export const STRINGS = {
   PHASE_RECOMMENDATION_ORANGE:
     'Some words need consolidation. Strengthen them first; add a few only if reviews stay steady.',
   PHASE_RECOMMENDATION_GREEN:
-    'Your load is balanced. It’s a good time to add new words while keeping up daily reviews.',
+    "Your load is balanced. It's a good time to add new words while keeping up daily reviews.",
 
   INSIGHTS_UNAVAILABLE: 'Insights unavailable',
   INFO: 'Info',
-  MEMORY_CAPACITY_INFO: 'About memory capacity',
+  MEMORY_STRENGTH_INFO: 'About memory strength',
 
   WORD_MASTERY: 'Word mastery',
   LEARNING_PROGRESS: 'Learning progress',
-  REVIEW_TIMING: 'Memory retention',
-  CAPACITY_SRS_EXPLAINER:
-    'Reviews are scheduled when recall drops. Clearing due words restores memory capacity; consolidating weak words moves you toward green.',
+  REVIEW_TIMING: 'Memory strength',
+  REVIEW_TIMING_EXPLANATION:
+    'Reviews are scheduled when recall drops. Clearing due words restores memory strength; consolidating weak words moves you toward green.',
+  MEMORY_STRENGTH_OPTIMAL_TIMING: 'Optimal timing for reviews based on your memory strength',
+  STUDY_WORDS_TO_TRACK_MEMORY_STRENGTH: 'Study to build strength',
+  // Memory strength labels - simple strength indicators (sentence case)
+  MEMORY_STRENGTH_LOW: 'Low memory strength',
+  MEMORY_STRENGTH_MEDIUM: 'Medium memory strength',
+  MEMORY_STRENGTH_HIGH: 'High memory strength',
+  MEMORY_STRENGTH_CHARTS_DESCRIPTION:
+    'These charts show detailed stats about your memory strength and learning progress. Use them to understand how your vocabulary retention works and track improvement over time.',
   DUE_TODAY_LABEL: 'Due words today: {count}',
   STRUGGLING_COUNT_LABEL: 'Struggling words: {count}',
   DUE_FEW_RECOMMENDATION: 'You have a few reviews due. Clear them before adding new words.',
@@ -530,14 +536,9 @@ export const STRINGS = {
   AVERAGE: 'Average',
   MAX: 'Max',
 
-  // Memory capacity labels - simple capacity indicators (sentence case)
-  MEMORY_CAPACITY_LOW: 'Low memory capacity',
-  MEMORY_CAPACITY_MEDIUM: 'Medium memory capacity',
-  MEMORY_CAPACITY_HIGH: 'High memory capacity',
-
   // Insights screen explanation
   INSIGHTS_EXPLANATION:
-    'These charts show detailed stats about your memory capacity and learning progress. Use them to understand how your vocabulary retention works and track improvement over time.',
+    'These charts show detailed stats about your memory strength and learning progress. Use them to understand how your vocabulary retention works and track improvement over time.',
 
   // Chart scale captions (concise, intuitive mappings)
   SCALE: 'Scale',

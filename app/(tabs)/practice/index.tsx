@@ -8,18 +8,18 @@ import { ActivityIndicator, InteractionManager, StyleSheet, View } from 'react-n
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
+import BottomControls from '@/components/listen/BottomControls';
 // Removed EmptyState for a simpler UX where gauge stays visible even with 0 words
 import ErrorMessage from '@/components/practice/ErrorMessage';
 import { VocabularyStatCards } from '@/components/practice/VocabularyStatCards';
-import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { getPracticeReviewRoute } from '@/constants/routes';
-// import { STRINGS } from '@/constants/strings';
+import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
-import type { StatCategory } from '@/types/vocabulary.types';
 
 export default function VocabularyScreen(): JSX.Element {
   const { user } = useAuth();
@@ -76,38 +76,14 @@ export default function VocabularyScreen(): JSX.Element {
   // Don't show error if user is not authenticated yet - this is expected during auth flow
   const shouldShowError = error && user;
 
-  // Handle starting review based on category type
-  const handleStartReview = useCallback(
-    (category: StatCategory) => {
-      if (!user) return;
+  // Handle starting review - only for due words now
+  const handleStartReview = useCallback(() => {
+    if (!user) return;
+    router.push(getPracticeReviewRoute());
+  }, [user, router]);
 
-      switch (category) {
-        case 'due':
-          // Practice only due words (no fromRemember parameter)
-          router.push(getPracticeReviewRoute());
-          break;
-        case 'needsAttention':
-        case 'struggling': {
-          // Practice challenging/struggling words
-          const route = getPracticeReviewRoute({ mode: 'spaced' });
-          router.push(route);
-          break;
-        }
-        case 'total':
-          // Practice all words (using fromRemember for all words)
-          router.push(getPracticeReviewRoute({ fromRemember: 'true' }));
-          break;
-        default:
-          // Default to due words
-          router.push(getPracticeReviewRoute());
-          break;
-      }
-    },
-    [user, router]
-  );
-
-  // Handle memory retention gauge info press
-  const handleMemoryRetentionInfo = useCallback(() => {
+  // Handle memory strength gauge info press
+  const handleMemoryStrengthInfo = useCallback(() => {
     router.push('/(tabs)/practice/memory-retention');
   }, [router]);
 
@@ -119,19 +95,6 @@ export default function VocabularyScreen(): JSX.Element {
   const filteredStudyWords = useMemo(() => {
     return allWords?.filter(word => word != null && word.root_id != null) ?? [];
   }, [allWords]);
-
-  // Compute eligible count for "Study all words" respecting cooldown
-  const eligibleAllWordsCount = useMemo(() => {
-    const nowMs = Date.now();
-    const cutoffMs = nowMs - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
-    const normalizeTs = (ts: string | null | undefined) => (ts ? ts.replace(' ', 'T') : undefined);
-    return filteredStudyWords.filter(w => {
-      const lastStr = normalizeTs(w.fsrs_last_review);
-      const lastMs = lastStr ? Date.parse(lastStr) : 0;
-      const recentlyReviewed = Number.isFinite(lastMs) && lastMs >= cutoffMs;
-      return !recentlyReviewed;
-    }).length;
-  }, [filteredStudyWords]);
 
   // FIXED: Calculate learning and mastered words from actual data instead of database view
   // This ensures consistency between display and session logic for all word types
@@ -157,6 +120,10 @@ export default function VocabularyScreen(): JSX.Element {
   }, [filteredStudyWords]);
 
   //
+
+  const listContentPaddingBottom = useMemo(() => {
+    return insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.SMALL;
+  }, [insets.bottom]);
 
   // Show error message if there was an error loading data
   if (shouldShowError) {
@@ -199,7 +166,7 @@ export default function VocabularyScreen(): JSX.Element {
           styles.contentContainer,
           {
             paddingTop: headerHeight,
-            paddingBottom: insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY,
+            paddingBottom: listContentPaddingBottom,
           },
         ]}
         scrollViewProps={{
@@ -221,14 +188,28 @@ export default function VocabularyScreen(): JSX.Element {
               dueWords={dueWordsCount}
               learningWords={calculatedStats.learningWords}
               masteredWords={calculatedStats.masteredWords}
-              studyWords={filteredStudyWords} // Use all study words for memory retention gauge
-              onStartReview={handleStartReview}
-              onInfoPress={handleMemoryRetentionInfo}
-              eligibleAllWordsCount={eligibleAllWordsCount}
+              studyWords={filteredStudyWords}
+              onInfoPress={handleMemoryStrengthInfo}
             />
           </View>
         )}
       </ThemedView>
+
+      {/* Bottom fixed action button, identical pattern to Listen */}
+      <View
+        style={{
+          position: 'absolute',
+          bottom:
+            LAYOUT.BOTTOM_BAR.HEIGHT +
+            LAYOUT.SPACING.TINY -
+            LAYOUT.SPACING.MEDIUM -
+            LAYOUT.SPACING.SMALL,
+          left: 0,
+          right: 0,
+        }}
+      >
+        <BottomControls primaryLabel={STRINGS.PRACTICE} onPrimaryPress={handleStartReview} />
+      </View>
     </ThemedView>
   );
 }

@@ -23,6 +23,12 @@ jest.mock('@/hooks/theme/useColors', () => ({
     elevation1: '#fff',
     white: '#fff',
     secondaryText: '#666',
+    text: '#000',
+    tint: '#0f0',
+    primary: '#00f',
+    textTertiary: '#666',
+    card: '#fff',
+    borderOverlay: '#ccc',
   }),
 }));
 
@@ -54,8 +60,6 @@ jest.mock('@/hooks/animations', () => ({
 }));
 
 describe('VocabularyStatCards - Basic Functionality', () => {
-  const mockOnStartReview = jest.fn();
-
   // Helper function to create test study words
   const createStudyWord = (overrides: Partial<StudyWord> = {}): StudyWord => ({
     root_id: 1,
@@ -71,6 +75,7 @@ describe('VocabularyStatCards - Basic Functionality', () => {
     fsrs_state: 2,
     fsrs_last_review: new Date().toISOString(),
     created_at: new Date().toISOString(),
+    success_streak: 0,
     ...overrides,
   });
 
@@ -82,9 +87,7 @@ describe('VocabularyStatCards - Basic Functionality', () => {
     it('renders without crashing with basic props', () => {
       const words = [createStudyWord()];
 
-      const { UNSAFE_root } = render(
-        <VocabularyStatCards studyWords={words} onStartReview={mockOnStartReview} />
-      );
+      const { UNSAFE_root } = render(<VocabularyStatCards studyWords={words} />);
 
       expect(UNSAFE_root).toBeTruthy();
     });
@@ -92,87 +95,60 @@ describe('VocabularyStatCards - Basic Functionality', () => {
     it('shows memory capacity gauge integration', () => {
       const words = [createStudyWord()];
 
-      const { UNSAFE_root } = render(
-        <VocabularyStatCards studyWords={words} onStartReview={mockOnStartReview} />
-      );
+      const { UNSAFE_root } = render(<VocabularyStatCards studyWords={words} />);
 
       // Should render with memory capacity integration
       expect(UNSAFE_root).toBeTruthy();
     });
 
     it('handles empty study words gracefully', () => {
-      const { UNSAFE_root } = render(
-        <VocabularyStatCards studyWords={[]} onStartReview={mockOnStartReview} />
-      );
+      const { UNSAFE_root } = render(<VocabularyStatCards studyWords={[]} />);
 
       // Should render without crashing
       expect(UNSAFE_root).toBeTruthy();
     });
 
     it('handles invalid study words data gracefully', () => {
-      const { UNSAFE_root } = render(
-        <VocabularyStatCards studyWords={undefined as any} onStartReview={mockOnStartReview} />
-      );
+      const { UNSAFE_root } = render(<VocabularyStatCards studyWords={undefined as any} />);
 
       // Should render without crashing
       expect(UNSAFE_root).toBeTruthy();
     });
   });
 
-  describe('Button Rendering', () => {
-    it('renders practice buttons with proper test IDs', () => {
-      const words = [createStudyWord()];
+  describe('Stats Display', () => {
+    it('displays all three stat categories', () => {
+      const words = [createStudyWord(), createStudyWord({ root_id: 2 })];
 
-      const { queryByTestId } = render(
-        <VocabularyStatCards studyWords={words} dueWords={1} onStartReview={mockOnStartReview} />
+      const { getByText } = render(
+        <VocabularyStatCards studyWords={words} dueWords={1} learningWords={1} masteredWords={0} />
       );
 
-      // Should have at least the total words button
-      const totalButton = queryByTestId('start-review-total');
-      expect(totalButton).toBeTruthy();
+      // Should show all stat labels
+      expect(getByText('Due')).toBeTruthy();
+      expect(getByText('Learning')).toBeTruthy();
+      expect(getByText('Mastered')).toBeTruthy();
     });
 
-    it('shows appropriate buttons based on word categories', () => {
-      const words = [
-        createStudyWord({
-          fsrs_difficulty: 8.5,
-          fsrs_lapses: 2,
-          fsrs_last_review: new Date().toISOString(),
-          fsrs_reps: 3,
-        }),
-      ];
-
-      const { queryByTestId } = render(
-        <VocabularyStatCards studyWords={words} dueWords={0} onStartReview={mockOnStartReview} />
-      );
-
-      // Should show at least total words button
-      const totalButton = queryByTestId('start-review-total');
-      expect(totalButton).toBeTruthy();
-    });
-  });
-
-  describe('Text Content', () => {
-    it('displays word count numbers', () => {
+    it('displays correct stat values', () => {
       const words = [createStudyWord(), createStudyWord({ root_id: 2 })];
 
       const { getAllByText } = render(
-        <VocabularyStatCards studyWords={words} dueWords={0} onStartReview={mockOnStartReview} />
+        <VocabularyStatCards studyWords={words} dueWords={1} learningWords={1} masteredWords={0} />
       );
 
-      // Should show the word count (might appear multiple times)
-      expect(getAllByText('2').length).toBeGreaterThan(0);
+      // Should show correct values
+      expect(getAllByText('1').length).toBeGreaterThan(0); // Due and Learning
+      expect(getAllByText('0').length).toBeGreaterThan(0); // Mastered
     });
 
-    it('displays all words label', () => {
-      const words = [createStudyWord()];
-
-      const { getByText } = render(
-        <VocabularyStatCards studyWords={words} dueWords={0} onStartReview={mockOnStartReview} />
+    it('handles zero values correctly', () => {
+      const { getAllByText } = render(
+        <VocabularyStatCards studyWords={[]} dueWords={0} learningWords={0} masteredWords={0} />
       );
 
-      // Should show all words label
-      expect(getByText('Study all words')).toBeTruthy();
+      // Should show all zeros
+      expect(getAllByText('0').length).toBeGreaterThanOrEqual(3);
     });
   });
 });

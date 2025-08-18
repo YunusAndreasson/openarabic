@@ -33,7 +33,7 @@ export default function MemoryRetentionModal(): JSX.Element {
       {/* Educational Explanation */}
       <View style={styles.explanationContainer}>
         <ThemedText style={styles.explanationText} variant="secondary">
-          Memory capacity shows your retention percentage. At 100%, you can recall all vocabulary
+          Memory strength shows your retention percentage. At 100%, you can recall all vocabulary
           words.
         </ThemedText>
 

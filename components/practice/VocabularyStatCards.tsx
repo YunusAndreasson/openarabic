@@ -4,47 +4,71 @@
  * Displays practice session options using a scientifically-grounded 3-phase color system
  * that coordinates with the Memory Capacity Gauge to guide optimal learning behavior.
  */
-import { memo, useCallback } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { LAYOUT } from '@/constants/layout';
-import { STRINGS } from '@/constants/strings';
-import type { StatCategory, StudyWord } from '@/types/vocabulary.types';
-import { calculateWordCategories } from '@/utils/wordClassification';
+import { ThemedText } from '@/components/ThemedText';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { useColors } from '@/hooks/theme/useColors';
+import type { StudyWord } from '@/types/vocabulary.types';
 
-import { StatCard } from './StatCard';
 import { MemoryRetentionGauge } from './charts/MemoryRetentionGauge';
 
 interface VocabularyStatCardsProps {
   masteredWords?: number;
   learningWords?: number;
   dueWords?: number;
-  onStartReview?: (category: StatCategory) => void;
   onInfoPress?: () => void;
   studyWords?: StudyWord[];
-  // Number of words eligible for "Study all words" after cooldown filtering
-  eligibleAllWordsCount?: number;
 }
 
-interface WordCategoryConfig {
-  value: number;
+interface StatCardProps {
   label: string;
-  category: StatCategory;
-  disabled?: boolean;
-  disabledMessage?: string;
-  capacityPhase: 'red' | 'yellow' | 'green';
+  value: number;
+  color: string;
+  icon: keyof typeof Ionicons.glyphMap;
 }
+
+const StatCard = memo<StatCardProps>(({ label, value, color, icon }) => {
+  const colors = useColors();
+
+  return (
+    <View
+      style={[
+        styles.statCard,
+        {
+          backgroundColor: colors.card,
+          borderColor: colors.borderOverlay,
+          borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+        },
+      ]}
+    >
+      <View style={[styles.iconContainer, { backgroundColor: color + '14' }]}>
+        <Ionicons name={icon} size={16} color={color} />
+      </View>
+      <ThemedText type="heading2" weight="bold" style={[styles.statValue, { color }]}>
+        {value}
+      </ThemedText>
+      <ThemedText type="caption" colorName="textTertiary" style={styles.statLabel}>
+        {label}
+      </ThemedText>
+    </View>
+  );
+});
+
+StatCard.displayName = 'StatCard';
 
 export const VocabularyStatCards = memo(
   ({
     masteredWords = 0,
     learningWords = 0,
     dueWords = 0,
-    onStartReview,
     onInfoPress,
     studyWords = [],
-    eligibleAllWordsCount,
   }: VocabularyStatCardsProps) => {
+    const colors = useColors();
+
     const validatedInput = {
       masteredWords: Math.max(0, masteredWords),
       learningWords: Math.max(0, learningWords),
@@ -52,78 +76,44 @@ export const VocabularyStatCards = memo(
       studyWords: Array.isArray(studyWords) ? studyWords : [],
     };
 
-    const wordCategories = calculateWordCategories(
-      validatedInput.studyWords,
-      validatedInput.dueWords
-    );
-
-    const totalWords = validatedInput.studyWords.length;
-    const categories: WordCategoryConfig[] = [
+    // Memoize stats array to prevent recreation
+    const stats = [
       {
-        value: wordCategories.dueWords,
-        label: STRINGS.URGENT_PRESERVATION,
-        category: 'due' as StatCategory,
-        disabled: wordCategories.dueWords === 0,
-        disabledMessage: wordCategories.dueWords === 0 ? STRINGS.NO_WORDS_TO_STUDY : undefined,
-        capacityPhase: 'red' as const,
+        label: 'Due',
+        value: validatedInput.dueWords,
+        color: colors.error,
+        icon: 'alert-circle' as const,
       },
       {
-        value: wordCategories.strugglingWords,
-        label: STRINGS.EFFORTFUL_RETRIEVAL,
-        category: 'struggling' as StatCategory,
-        disabled: wordCategories.dueWords > 0 || wordCategories.strugglingWords === 0,
-        disabledMessage:
-          wordCategories.dueWords > 0
-            ? STRINGS.COMPLETE_DUE_FIRST
-            : wordCategories.strugglingWords === 0
-            ? STRINGS.NO_WORDS_TO_STUDY
-            : undefined,
-        capacityPhase: 'yellow' as const,
+        label: 'Learning',
+        value: validatedInput.learningWords,
+        color: colors.warning,
+        icon: 'school' as const,
       },
-      // Always show "Study all words"; disable when not eligible (recently reviewed) or blocked by other priorities
       {
-        value: typeof eligibleAllWordsCount === 'number' ? eligibleAllWordsCount : totalWords,
-        label: STRINGS.INTERLEAVED_REVIEW,
-        category: 'total' as StatCategory,
-        disabled:
-          wordCategories.dueWords > 0 ||
-          wordCategories.strugglingWords > 0 ||
-          (typeof eligibleAllWordsCount === 'number' ? eligibleAllWordsCount : totalWords) === 0,
-        disabledMessage:
-          wordCategories.dueWords > 0
-            ? STRINGS.COMPLETE_DUE_FIRST
-            : wordCategories.strugglingWords > 0
-            ? STRINGS.FOCUS_ON_STRUGGLING_FIRST
-            : (typeof eligibleAllWordsCount === 'number' ? eligibleAllWordsCount : totalWords) === 0
-            ? STRINGS.NO_WORDS_TO_STUDY
-            : undefined,
-        capacityPhase: 'green' as const,
+        label: 'Mastered',
+        value: validatedInput.masteredWords,
+        color: colors.success,
+        icon: 'checkmark-circle' as const,
       },
     ];
-
-    const createCategoryPressHandler = useCallback(
-      (category: StatCategory) => {
-        return () => {
-          onStartReview?.(category);
-        };
-      },
-      [onStartReview]
-    );
 
     return (
       <View style={styles.container}>
         <MemoryRetentionGauge studyWords={validatedInput.studyWords} onInfoPress={onInfoPress} />
 
-        {categories.map(config => (
-          <StatCard
-            key={config.category}
-            title={config.label}
-            count={config.disabled ? 0 : config.value}
-            onPress={config.disabled ? () => {} : createCategoryPressHandler(config.category)}
-            disabled={config.disabled}
-            testID={`start-review-${config.category}`}
-          />
-        ))}
+        {/* Stats row below gauge */}
+        <View style={styles.statsRow}>
+          {stats.map(stat => (
+            <StatCard
+              key={stat.label}
+              label={stat.label}
+              value={stat.value}
+              color={stat.color}
+              icon={stat.icon}
+            />
+          ))}
+        </View>
       </View>
     );
   }
@@ -133,7 +123,37 @@ VocabularyStatCards.displayName = 'VocabularyStatCards';
 
 const styles = StyleSheet.create({
   container: {
-    gap: LAYOUT.SPACING.MEDIUM,
+    gap: LAYOUT.SPACING.LARGE,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: LAYOUT.SPACING.SMALL,
+  },
+  statCard: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    ...LAYOUT.ELEVATION.SMALL,
+  },
+  iconContainer: {
+    width: MIN_TOUCH_TARGET.SMALL,
+    height: MIN_TOUCH_TARGET.SMALL,
+    borderRadius: MIN_TOUCH_TARGET.SMALL / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  statValue: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+    marginBottom: LAYOUT.SPACING.TINY,
+    textAlign: 'center',
+  },
+  statLabel: {
+    textAlign: 'center',
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
   },
 });
 

@@ -136,11 +136,11 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
     // Get retention status message
     const getRetentionMessage = () => {
       if (animatedRetention < RETENTION_THRESHOLDS.POOR) {
-        return STRINGS.MEMORY_CAPACITY_LOW; // "Low retention - practice needed"
+        return STRINGS.MEMORY_STRENGTH_LOW; // "Low memory strength"
       } else if (animatedRetention < RETENTION_THRESHOLDS.MODERATE) {
-        return STRINGS.MEMORY_CAPACITY_MEDIUM; // "Moderate retention - keep practicing"
+        return STRINGS.MEMORY_STRENGTH_MEDIUM; // "Medium memory strength"
       } else {
-        return STRINGS.MEMORY_CAPACITY_HIGH; // "Good retention - well done!"
+        return STRINGS.MEMORY_STRENGTH_HIGH; // "High memory strength"
       }
     };
 
@@ -159,7 +159,7 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
     return (
       <BaseChart
         contentHeight={GAUGE_HEIGHT + 80}
-        emptyStateText={STRINGS.STUDY_WORDS_TO_TRACK_MEMORY_RETENTION}
+        emptyStateText={STRINGS.STUDY_WORDS_TO_TRACK_MEMORY_STRENGTH}
         hasData={chartData.hasData}
         hideTitle={true}
         onCardPress={onInfoPress}
@@ -168,7 +168,7 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
           {/* Top-right info indicator */}
           {onInfoPress ? (
             <Pressable
-              accessibilityLabel={STRINGS.MEMORY_CAPACITY_INFO}
+              accessibilityLabel={STRINGS.MEMORY_STRENGTH_INFO}
               hitSlop={8}
               onPress={onInfoPress}
               style={styles.infoIndicator}

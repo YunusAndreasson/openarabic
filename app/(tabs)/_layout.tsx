@@ -8,14 +8,12 @@ import { Platform, StyleSheet } from 'react-native';
 import HeaderProfile from '@/components/HeaderProfile';
 import DictionaryButton from '@/components/ui/DictionaryButton';
 import EditModeButton from '@/components/ui/EditModeButton';
-import { MEMORY_CAPACITY_THRESHOLDS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth';
 import { useColors, useIsDarkMode } from '@/hooks/theme';
-import { useFSRSData } from '@/hooks/vocabulary/FSRSDataProvider';
-import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
+import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 
 const TAB_SCREENS = [
   {
@@ -91,20 +89,17 @@ export default function TabLayout(): JSX.Element {
   const { session, isLoading } = useAuth();
   const colors = useColors();
 
-  // Get memory badge status from lightweight hook
-  const { studyWords } = useFSRSData();
-  const { chartData } = useRetrievabilityChart(studyWords ?? []);
+  // Get due words count using the same hook as the practice screen
+  const { dueWords } = useFSRSQueries({ userId: session?.user?.id });
+  const dueWordsCount = dueWords?.length ?? 0;
 
-  // Calculate memory badge status using the same logic as the gauge
-  const shouldShowMemoryBadge = useMemo(() => {
-    if (!studyWords?.length) return false;
-
-    // Use the exact same currentRetrievability value that the MemoryRetentionGauge displays
-    const currentRetrievability = chartData.insights.currentRetrievability;
-
-    // Show red dot when retention is below 70% (same threshold as gauge)
-    return currentRetrievability < MEMORY_CAPACITY_THRESHOLDS.GOOD;
-  }, [studyWords, chartData.insights.currentRetrievability]);
+  // Debug: log session and due words data
+  console.log('TabLayout Debug:', {
+    hasSession: !!session,
+    userId: session?.user?.id,
+    dueWordsLength: dueWords?.length,
+    dueWordsCount
+  });
 
   useEffect(() => {
     if (!isLoading && !session?.user) {
@@ -169,14 +164,14 @@ export default function TabLayout(): JSX.Element {
                   style={focused ? styles.focusedIcon : styles.unfocusedIcon}
                 />
               ),
-              // Add red dot badge for practice tab when memory capacity is low
+              // Add badge for practice tab showing due words count
               ...(screen.name === 'practice' && {
-                tabBarBadge: shouldShowMemoryBadge ? '' : undefined,
+                tabBarBadge: dueWordsCount > 0 ? dueWordsCount : undefined,
                 tabBarBadgeStyle: {
                   backgroundColor: colors.error,
-                  minWidth: 8,
-                  height: 8,
-                  borderRadius: 4,
+                  minWidth: 20,
+                  height: 20,
+                  borderRadius: 10,
                   top: 4,
                   right: 4,
                 },

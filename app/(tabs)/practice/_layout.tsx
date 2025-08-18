@@ -27,7 +27,7 @@ export default function VocabularyLayout(): JSX.Element {
       <Stack.Screen
         name="memory-retention"
         options={createNavigationOptions(colors, {
-          title: STRINGS.MEMORY_CAPACITY,
+          title: STRINGS.MEMORY_STRENGTH,
           headerLeft: () => <DoneButton />,
         })}
       />

@@ -1,11 +1,7 @@
 import { memo, useMemo } from 'react';
 
 import { VocabularyChart, type DataPoint } from '@/components/common/charts';
-import {
-  CHART_LABELS,
-  EMPTY_STATE_MESSAGES,
-  generateChartSubtitle,
-} from '@/components/common/charts/chartMessages';
+import { CHART_LABELS, generateChartSubtitle } from '@/components/common/charts/chartMessages';
 import { calculateDataPointPositions, useGraphWidth } from '@/components/common/charts/constants';
 import { formatMonthDayUTC, formatWeekdayUTC } from '@/components/common/charts/utils';
 import { STRINGS } from '@/constants/strings';
@@ -94,7 +90,7 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
         onCardPress={onInfoPress}
         hideTitle={hideTitle}
         hasData={chartData.hasData}
-        emptyStateText={EMPTY_STATE_MESSAGES.retrievability}
+        emptyStateText={STRINGS.STUDY_WORDS_TO_TRACK_MEMORY_STRENGTH}
         showWarningLine={showWarningLine}
         isFuturePrediction={true} // Today is leftmost for future predictions
       />
