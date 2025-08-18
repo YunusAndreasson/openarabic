@@ -26,7 +26,7 @@ jest.mock('@/hooks/account', () => {
       currentYear: 2024,
       user: { email: 'user@test.com' },
       handleClearCache: jest.fn(),
-      handleClearQueryCache: jest.fn(),
+
       isClearingCache: false,
       cacheSize: 0,
     }),

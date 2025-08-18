@@ -51,101 +51,49 @@ export const useAccountScreen = () => {
     };
   }, [getCacheSize]);
 
-  // Consolidated cache clearing logic
-  const createCacheClearHandler = useCallback(
-    (
-      type: 'audio' | 'query',
-      size: number,
-      clearFunction: () => Promise<void>,
-      setSizeFunction: (size: number) => void,
-      title: string,
-      description: string
-    ) => {
-      return () => {
-        if (size === 0) {
-          Alert.alert(
-            STRINGS.NO_CACHE,
-            type === 'audio'
-              ? STRINGS.NO_CACHED_AUDIO_FILES_TO_CLEAR
-              : STRINGS.NO_OFFLINE_DATA_CACHE_TO_CLEAR
-          );
-          return;
-        }
-
-        Alert.alert(
-          title,
-          `${description} ${formatBytes(size)} of cached data. ${
-            type === 'audio' ? STRINGS.AUDIO_REDOWNLOAD_REQUIRED : STRINGS.DATA_RELOAD_REQUIRED
-          }`,
-          [
-            {
-              text: STRINGS.CANCEL,
-              style: 'cancel',
-            },
-            {
-              text: STRINGS.CLEAR_CACHE,
-              style: 'destructive',
-              onPress: async () => {
-                setIsClearingCache(true);
-                try {
-                  await clearFunction();
-                  setSizeFunction(0);
-                  lightFeedback();
-                  Alert.alert(
-                    STRINGS.SUCCESS,
-                    `${
-                      type === 'audio'
-                        ? STRINGS.AUDIO_CACHE_CLEARED_SUCCESSFULLY
-                        : STRINGS.OFFLINE_DATA_CACHE_CLEARED_SUCCESSFULLY
-                    }`
-                  );
-                } catch (error) {
-                  Alert.alert(
-                    STRINGS.ERROR,
-                    `${
-                      type === 'audio'
-                        ? STRINGS.FAILED_TO_CLEAR_AUDIO_CACHE
-                        : STRINGS.FAILED_TO_CLEAR_OFFLINE_CACHE
-                    }`
-                  );
-                  handleError(error as Error, { showToast: false });
-                } finally {
-                  setIsClearingCache(false);
-                }
-              },
-            },
-          ]
-        );
-      };
-    },
-    []
-  );
-
-  const handleClearCache = useMemo(
-    () =>
-      createCacheClearHandler(
-        'audio',
-        cacheSize,
-        clearCache,
-        setCacheSize,
-        STRINGS.CLEAR_AUDIO_CACHE,
-        STRINGS.THIS_WILL_DELETE
-      ),
-    [createCacheClearHandler, cacheSize, clearCache]
-  );
-
-  // React Query cache clearing function
-  const handleClearQueryCache = useCallback(async () => {
-    try {
-      // Clear all queries from React Query cache
-      queryClient.clear();
-      lightFeedback();
-      Alert.alert(STRINGS.SUCCESS, STRINGS.OFFLINE_DATA_CACHE_CLEARED_SUCCESSFULLY);
-    } catch (error) {
-      Alert.alert(STRINGS.ERROR, STRINGS.FAILED_TO_CLEAR_OFFLINE_CACHE);
-      handleError(error as Error, { showToast: false });
+  // Generic cache clearing function that clears both audio and query caches
+  const handleClearCache = useCallback(async () => {
+    if (cacheSize === 0) {
+      Alert.alert(STRINGS.NO_CACHE, STRINGS.NO_CACHED_FILES);
+      return;
     }
-  }, [queryClient]);
+
+    Alert.alert(
+      STRINGS.CLEAR_CACHE,
+      `${STRINGS.THIS_WILL_DELETE} ${formatBytes(cacheSize)} of cached data. ${
+        STRINGS.AUDIO_REDOWNLOAD_REQUIRED
+      } ${STRINGS.DATA_RELOAD_REQUIRED}`,
+      [
+        {
+          text: STRINGS.CANCEL,
+          style: 'cancel',
+        },
+        {
+          text: STRINGS.CLEAR_CACHE,
+          style: 'destructive',
+          onPress: async () => {
+            setIsClearingCache(true);
+            try {
+              // Clear audio cache
+              await clearCache();
+              setCacheSize(0);
+
+              // Clear React Query cache
+              queryClient.clear();
+
+              lightFeedback();
+              Alert.alert(STRINGS.SUCCESS, STRINGS.CACHE_CLEARED_SUCCESSFULLY);
+            } catch (error) {
+              Alert.alert(STRINGS.ERROR, STRINGS.FAILED_TO_CLEAR_OFFLINE_CACHE);
+              handleError(error as Error, { showToast: false });
+            } finally {
+              setIsClearingCache(false);
+            }
+          },
+        },
+      ]
+    );
+  }, [cacheSize, clearCache, queryClient]);
 
   const handleSignOut = useCallback(() => {
     Alert.alert(
@@ -318,7 +266,6 @@ export const useAccountScreen = () => {
       currentYear,
       user,
       handleClearCache,
-      handleClearQueryCache,
       isClearingCache,
       cacheSize,
     }),
@@ -337,7 +284,6 @@ export const useAccountScreen = () => {
       currentYear,
       user,
       handleClearCache,
-      handleClearQueryCache,
       isClearingCache,
       cacheSize,
     ]

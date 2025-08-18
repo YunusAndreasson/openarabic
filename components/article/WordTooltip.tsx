@@ -1,9 +1,9 @@
+import { Ionicons } from '@expo/vector-icons';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import TouchableIcon from '@/components/TouchableIcon';
 import type { ColorName } from '@/constants/Colors';
 import { LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
@@ -71,10 +71,6 @@ const STATIC_STYLES = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: LAYOUT.SPACING.SMALL,
-  },
-
-  bookmarkButton: {
-    marginLeft: LAYOUT.SPACING.TINY,
   },
 });
 
@@ -165,9 +161,11 @@ export const WordTooltip = memo(
     );
 
     // Stable handlers
-    const handleStudyListPress = useCallback(() => {
-      onStudyListToggle?.();
-    }, [onStudyListToggle]);
+    const handleTooltipPress = useCallback(() => {
+      if (onStudyListToggle && wordRootId) {
+        onStudyListToggle();
+      }
+    }, [onStudyListToggle, wordRootId]);
 
     // Render color-coded English text
     const renderColorCodedEnglish = useMemo(() => {
@@ -302,7 +300,7 @@ export const WordTooltip = memo(
       );
     }, [formattedAnalysis, text, colors]);
 
-    // Tooltip content
+    // Tooltip content - simplified since entire tooltip is now tappable
     const tooltipContent = useMemo(() => {
       if (!onStudyListToggle || !wordRootId) {
         return renderColorCodedEnglish;
@@ -311,13 +309,10 @@ export const WordTooltip = memo(
       return (
         <View style={STATIC_STYLES.contentRow}>
           {renderColorCodedEnglish}
-          <TouchableIcon
-            icon={'school'}
+          <Ionicons
+            name="school"
             size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-            touchSize="small"
             color={isInStudyList ? colors.tint : colors.secondaryText}
-            onPress={handleStudyListPress}
-            style={STATIC_STYLES.bookmarkButton}
           />
         </View>
       );
@@ -328,7 +323,6 @@ export const WordTooltip = memo(
       isInStudyList,
       colors.tint,
       colors.secondaryText,
-      handleStudyListPress,
     ]);
 
     // Calculate tooltip dimensions
@@ -417,10 +411,16 @@ export const WordTooltip = memo(
         pointerEvents="box-none"
         onLayout={measureContainerOffset}
       >
-        <Animated.View style={[tooltipStyle, opacityStyle, scaleStyle]} testID="word-tooltip">
-          <View style={arrowStyle} />
-          {tooltipContent}
-        </Animated.View>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={handleTooltipPress}
+          disabled={!onStudyListToggle || !wordRootId}
+        >
+          <Animated.View style={[tooltipStyle, opacityStyle, scaleStyle]} testID="word-tooltip">
+            <View style={arrowStyle} />
+            {tooltipContent}
+          </Animated.View>
+        </TouchableOpacity>
       </View>
     );
   },

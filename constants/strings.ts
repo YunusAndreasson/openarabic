@@ -230,14 +230,8 @@ export const STRINGS = {
   ERROR_PRIORITY_QUEUE_LENGTH_MISMATCH: 'Items and priorities arrays must have the same length',
 
   // Cache management - clearer and more actionable
-  AUDIO_CACHE: 'Audio cache',
-  CLEAR_AUDIO_CACHE: 'Clear audio',
-  CLEAR_CACHE: 'Clear cache',
-  OFFLINE_DATA_CACHE: 'Offline data cache',
-  CLEAR_OFFLINE_DATA_CACHE: 'Clear offline data',
+  CLEAR_CACHE: 'Local cache',
   NO_CACHE: 'No cache',
-  NO_CACHED_AUDIO_FILES_TO_CLEAR: 'No cached audio to clear',
-  NO_OFFLINE_DATA_CACHE_TO_CLEAR: 'No cached data to clear',
   NO_CACHED_FILES: 'No cached files',
   THIS_WILL_DELETE: 'This deletes',
   AUDIO_REDOWNLOAD_REQUIRED: 'Audio will re-download when needed',
@@ -417,8 +411,6 @@ export const STRINGS = {
   PLEASE_SIGN_IN_TO_ADD_ROOTS: 'Sign in to add roots',
 
   // Success messages for cache clearing
-  AUDIO_CACHE_CLEARED_SUCCESSFULLY: cleared('Audio cache'),
-  OFFLINE_DATA_CACHE_CLEARED_SUCCESSFULLY: cleared('Data cache'),
   CACHE_CLEARED_SUCCESSFULLY: cleared('Cache'),
 
   // Filter validation errors
@@ -574,10 +566,6 @@ export const STRINGS = {
   FAQ_CHANGE_STUDY_REMINDERS_Q: 'How do I change my study reminders?',
   FAQ_CHANGE_STUDY_REMINDERS_A:
     "Go to Account, toggle study reminders on, then tap Time to set when you'd like to be reminded to practice.",
-
-  FAQ_CLEAR_AUDIO_CACHE_Q: 'How do I clear audio cache?',
-  FAQ_CLEAR_AUDIO_CACHE_A:
-    'In Account, find Audio cache and tap Clear. This frees up storage space and audio will re-download when needed.',
 
   FAQ_CHANGE_THEMES_Q: 'How do I change themes?',
   FAQ_CHANGE_THEMES_A:

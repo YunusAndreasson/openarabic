@@ -51,7 +51,6 @@ const AccountScreen: FC = () => {
     currentYear,
     user,
     handleClearCache,
-    handleClearQueryCache,
     isClearingCache,
     cacheSize,
   } = useAccountScreen();
@@ -313,13 +312,13 @@ const AccountScreen: FC = () => {
                   <View style={styles.cardIconContainer}>
                     <Ionicons
                       color={colors.interactiveSecondary}
-                      name="archive"
+                      name="folder"
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
                   </View>
                   <View style={styles.cacheTextContainer}>
                     <ThemedText type="body" weight="medium">
-                      {STRINGS.AUDIO_CACHE}
+                      {STRINGS.CLEAR_CACHE}
                     </ThemedText>
                     <ThemedText colorName="textTertiary" style={styles.cacheSubtext} type="caption">
                       {formattedCacheSize}
@@ -342,43 +341,6 @@ const AccountScreen: FC = () => {
                     CLEAR
                   </ThemedText>
                 )}
-              </View>
-            </BaseCard>
-
-            <Divider />
-
-            <BaseCard
-              includePressAnimation={true}
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={handleClearQueryCache}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.interactiveSecondary}
-                      name="refresh"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <View style={styles.cacheTextContainer}>
-                    <ThemedText type="body" weight="medium">
-                      {STRINGS.OFFLINE_DATA_CACHE}
-                    </ThemedText>
-                    <ThemedText colorName="textTertiary" style={styles.cacheSubtext} type="caption">
-                      Articles, words, and app data
-                    </ThemedText>
-                  </View>
-                </View>
-                <ThemedText
-                  type="label"
-                  weight="medium"
-                  colorName="tint"
-                  style={styles.clearButton}
-                >
-                  CLEAR
-                </ThemedText>
               </View>
             </BaseCard>
 
