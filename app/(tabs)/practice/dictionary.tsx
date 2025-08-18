@@ -127,6 +127,7 @@ export default function DictionaryScreen(): JSX.Element {
         <EmptyState
           colors={colors}
           description={STRINGS.ADD_WORDS_TO_STUDY_LIST}
+          hideArticlesButton={true}
           icon="book"
           iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
           title={STRINGS.NO_STUDY_WORDS}
