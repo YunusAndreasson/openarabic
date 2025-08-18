@@ -12,16 +12,35 @@ const generateTrackId = (articleId: number): string => {
   return `article-${articleId}`;
 };
 
+// Helper function to get the appropriate audio URL based on preference
+const getAudioUrlForPreference = (
+  article: { audio_url: string; audio_url_bilingual?: string | null },
+  preference: 'arabic' | 'bilingual'
+): string => {
+  if (preference === 'bilingual' && article.audio_url_bilingual) {
+    return article.audio_url_bilingual;
+  }
+  // Fall back to Arabic audio if bilingual is not available or preference is Arabic
+  return article.audio_url;
+};
+
 export const enhancedAudioService = {
   /**
    * Generates enhanced audio track for an article
    */
-  async generateEnhancedAudioTrack(articleId: number): Promise<EnhancedAudioTrack | null> {
+  async generateEnhancedAudioTrack(
+    articleId: number,
+    audioPreference: 'arabic' | 'bilingual' = 'bilingual'
+  ): Promise<EnhancedAudioTrack | null> {
     try {
       // Fetch article details - audio is guaranteed to be available
       const article = await articlesService.getArticleById(articleId);
+
+      // Select audio URL based on preference
+      const audioUrl = getAudioUrlForPreference(article, audioPreference);
+
       // Use cached audio path when possible for offline support and cache accounting
-      const cachedAudioUrl = await audioCache.getAudio(article.audio_url);
+      const cachedAudioUrl = await audioCache.getAudio(audioUrl);
 
       return {
         id: generateTrackId(articleId),
@@ -43,7 +62,10 @@ export const enhancedAudioService = {
   /**
    * Gets enhanced audio tracks for all reading list items
    */
-  async getReadingListEnhancedTracks(userId: string): Promise<EnhancedAudioTrack[]> {
+  async getReadingListEnhancedTracks(
+    userId: string,
+    audioPreference: 'arabic' | 'bilingual' = 'bilingual'
+  ): Promise<EnhancedAudioTrack[]> {
     try {
       // Fetch user's reading list - all articles guaranteed to have audio
       const readingList = await readingListService.getReadingList(userId);
@@ -54,7 +76,10 @@ export const enhancedAudioService = {
       for (const item of readingList) {
         const article = item.articles;
 
-        const cachedAudioUrl = await audioCache.getAudio(article.audio_url);
+        // Select audio URL based on preference
+        const audioUrl = getAudioUrlForPreference(article, audioPreference);
+        const cachedAudioUrl = await audioCache.getAudio(audioUrl);
+
         allTracks.push({
           id: generateTrackId(item.article_id),
           articleId: item.article_id,

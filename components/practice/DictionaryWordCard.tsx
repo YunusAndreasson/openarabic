@@ -148,7 +148,7 @@ DictionaryWordCard.displayName = 'DictionaryWordCard';
 const styles = StyleSheet.create({
   container: {
     height: LAYOUT.CARD.HEIGHT.VOCABULARY_ITEM,
-    marginBottom: 0,
+    marginBottom: LAYOUT.SPACING.SMALL,
     flexDirection: 'row',
     alignItems: 'center',
   },

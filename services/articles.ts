@@ -17,6 +17,7 @@ const LIST_VIEW_COLUMNS = `
   author_id,
   summary,
   audio_url,
+  audio_url_bilingual,
   category:categories(id, name),
   author:authors(id, name)
 `;
@@ -37,6 +38,8 @@ const DETAIL_VIEW_COLUMNS = `
     english,
     article_id,
     audio_url,
+    audio_url_bilingual,
+    audio_url_english,
     sentence_words(
       id,
       position,
@@ -64,6 +67,7 @@ const ARTICLES_WITH_WORD_STATS = `
   author_id,
   summary,
   audio_url,
+  audio_url_bilingual,
   category:categories(id, name),
   author:authors(id, name),
   article_sentences(

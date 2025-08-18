@@ -20,6 +20,9 @@ export const STRINGS = {
   THEME: 'Theme',
   DARK_MODE: 'Dark mode',
   ARABIC_FONT: 'Arabic font',
+  AUDIO_LANGUAGE: 'Audio language',
+  AUDIO_LANGUAGE_ARABIC: 'Arabic only',
+  AUDIO_LANGUAGE_BILINGUAL: 'English + Arabic',
 
   // Content states
   LOADING_PLAYLIST: 'Loading playlist',
@@ -72,6 +75,7 @@ export const STRINGS = {
   READ: 'Library',
   LISTEN: 'Playlist',
   PRACTICE: 'Study',
+  STUDY_DUE_WORDS: 'Review Now',
 
   // Audio controls - shortened button text
   REPEAT: 'Repeat',
@@ -172,7 +176,7 @@ export const STRINGS = {
   MEMORY_STRENGTH: 'Memory strength',
   MEMORY_STRENGTH_EXPLANATION_TITLE: 'Memory strength',
   MEMORY_STRENGTH_EXPLANATION:
-    'Memory strength shows your current retention percentage. At 100%, you are expected to be able to recall 100% of your vocabulary words.',
+    'Memory strength shows how many words you still remember. At 100%, you remember all your vocabulary.',
   MEMORY_STRENGTH_TIP: 'Add new words when strength is high',
   STRENGTH_SCORE: 'Memory strength',
   DUE_WORDS: 'Due',
@@ -196,7 +200,6 @@ export const STRINGS = {
   REVIEW_TIMING_EXPLANATION:
     'Reviews are scheduled when recall drops. Clearing due words restores memory strength; consolidating weak words moves you toward green.',
   MEMORY_STRENGTH_OPTIMAL_TIMING: 'Optimal timing for reviews based on your memory strength',
-  STUDY_WORDS_TO_TRACK_MEMORY_STRENGTH: 'Study to build strength',
   // Memory strength labels - simple strength indicators (sentence case)
   MEMORY_STRENGTH_LOW: 'Low memory strength',
   MEMORY_STRENGTH_MEDIUM: 'Medium memory strength',
@@ -213,6 +216,12 @@ export const STRINGS = {
     'Daily vocabulary advancement, tracking new words mastered over time.',
   MEMORY_RETENTION_OPTIMAL_TIMING:
     'Optimal review scheduling, indicating daily recall to guide retention.',
+
+  // Memory retention modal
+  MEMORY_RETENTION_EXPLANATION:
+    'Memory strength shows how many words you still remember. At 100%, you remember all your vocabulary.',
+  MEMORY_RETENTION_TIP:
+    'Stay above the {threshold}% threshold line. Practice existing words before adding new ones.',
 
   // Account
   ACCOUNT: 'Account',
@@ -452,6 +461,14 @@ export const STRINGS = {
   NO_PRACTICE_NEEDED: 'All caught up. Add new words to continue learning',
   GET_STARTED_MESSAGE: 'Browse articles in the Library tab to add words you want to learn',
   PRACTICE_OPTIONS: 'Study options',
+
+  // Vocabulary stat card labels and messages
+  VOCAB_STAT_DUE: 'Due',
+  VOCAB_STAT_LEARNING: 'Learning',
+  VOCAB_STAT_MASTERED: 'Mastered',
+  VOCAB_STAT_NO_DUE_WORDS: 'No due words to practice.',
+  VOCAB_STAT_NO_LEARNING_WORDS: 'No learning words to practice.',
+  VOCAB_STAT_NO_MASTERED_WORDS: 'No mastered words yet.',
 
   // Learning method content
   LEARNING_METHOD_INTRO:

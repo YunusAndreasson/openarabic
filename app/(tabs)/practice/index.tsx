@@ -8,8 +8,8 @@ import { ActivityIndicator, InteractionManager, StyleSheet, View } from 'react-n
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
+import EmptyState from '@/components/common/EmptyState';
 import BottomControls from '@/components/listen/BottomControls';
-// Removed EmptyState for a simpler UX where gauge stays visible even with 0 words
 import ErrorMessage from '@/components/practice/ErrorMessage';
 import { VocabularyStatCards } from '@/components/practice/VocabularyStatCards';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
@@ -96,6 +96,11 @@ export default function VocabularyScreen(): JSX.Element {
     return allWords?.filter(word => word != null && word.root_id != null) ?? [];
   }, [allWords]);
 
+  // Show main UI if there are any words available in either query source
+  // - allWords may lag if mutations only invalidate 'due' keys
+  // - dueWords reflects immediate availability for study
+  const hasAnyStudyWords = (allWords?.length ?? 0) > 0 || (dueWords?.length ?? 0) > 0;
+
   // FIXED: Calculate learning and mastered words from actual data instead of database view
   // This ensures consistency between display and session logic for all word types
   const calculatedStats = useMemo(() => {
@@ -119,11 +124,9 @@ export default function VocabularyScreen(): JSX.Element {
     return { learningWords, masteredWords };
   }, [filteredStudyWords]);
 
-  //
-
-  const listContentPaddingBottom = useMemo(() => {
-    return insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.SMALL;
-  }, [insets.bottom]);
+  // Calculate bottom padding for content container
+  const contentPaddingBottom =
+    insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.SMALL;
 
   // Show error message if there was an error loading data
   if (shouldShowError) {
@@ -140,13 +143,9 @@ export default function VocabularyScreen(): JSX.Element {
     );
   }
 
-  // Check if data is cached and derive simple UI state flags
-  const isDataCached = !!(
-    user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.allWithCooldown(user.id, 1))
-  );
   const isLoadingState = isDataLoading || isFetching;
-  // const hasWords = filteredStudyWords.length > 0;
-  const showLoadingIndicator = isLoadingState && !isDataCached;
+  // Use the same key as allWords query for cache detection
+  const isDataCached = !!(user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id)));
 
   // Determine when to show the main content (vocabulary stat cards)
   const shouldShowMainContent = !isLoadingState || (isLoadingState && isDataCached);
@@ -165,8 +164,8 @@ export default function VocabularyScreen(): JSX.Element {
         contentContainerStyle={[
           styles.contentContainer,
           {
-            paddingTop: headerHeight,
-            paddingBottom: listContentPaddingBottom,
+            paddingTop: headerHeight + LAYOUT.SPACING.MEDIUM,
+            paddingBottom: contentPaddingBottom,
           },
         ]}
         scrollViewProps={{
@@ -175,41 +174,62 @@ export default function VocabularyScreen(): JSX.Element {
         }}
       >
         {/* Subtle loading indicator */}
-        {showLoadingIndicator && (
-          <ThemedView style={styles.loadingContainer}>
+        {isLoadingState && !isDataCached && (
+          <View style={styles.loadingContainer}>
             <ActivityIndicator color={colors.tint} size="small" />
-          </ThemedView>
+          </View>
         )}
 
         {/* PRIMARY SECTION: Learning Overview */}
         {shouldShowMainContent && (
           <View style={styles.vocabularySection}>
-            <VocabularyStatCards
-              dueWords={dueWordsCount}
-              learningWords={calculatedStats.learningWords}
-              masteredWords={calculatedStats.masteredWords}
-              studyWords={filteredStudyWords}
-              onInfoPress={handleMemoryStrengthInfo}
-            />
+            {hasAnyStudyWords ? (
+              <VocabularyStatCards
+                dueWords={dueWordsCount}
+                learningWords={calculatedStats.learningWords}
+                masteredWords={calculatedStats.masteredWords}
+                studyWords={filteredStudyWords}
+                onInfoPress={handleMemoryStrengthInfo}
+              />
+            ) : (
+              <EmptyState
+                colors={colors}
+                title={STRINGS.STUDY_LIST_EMPTY_TITLE}
+                description={STRINGS.STUDY_LIST_EMPTY_DESCRIPTION}
+                icon="school"
+                iconSize={LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE}
+                hideArticlesButton={true}
+                containerStyle={{
+                  paddingTop: LAYOUT.SPACING.XLARGE,
+                  paddingBottom: LAYOUT.SPACING.LARGE,
+                }}
+              />
+            )}
           </View>
         )}
       </ThemedView>
 
-      {/* Bottom fixed action button, identical pattern to Listen */}
-      <View
-        style={{
-          position: 'absolute',
-          bottom:
-            LAYOUT.BOTTOM_BAR.HEIGHT +
-            LAYOUT.SPACING.TINY -
-            LAYOUT.SPACING.MEDIUM -
-            LAYOUT.SPACING.SMALL,
-          left: 0,
-          right: 0,
-        }}
-      >
-        <BottomControls primaryLabel={STRINGS.PRACTICE} onPrimaryPress={handleStartReview} />
-      </View>
+      {/* Bottom fixed action button, hidden when there are no study words */}
+      {hasAnyStudyWords && (
+        <View
+          style={{
+            position: 'absolute',
+            bottom:
+              LAYOUT.BOTTOM_BAR.HEIGHT +
+              LAYOUT.SPACING.TINY -
+              LAYOUT.SPACING.MEDIUM -
+              LAYOUT.SPACING.SMALL,
+            left: 0,
+            right: 0,
+          }}
+        >
+          <BottomControls
+            primaryLabel={STRINGS.STUDY_DUE_WORDS}
+            onPrimaryPress={handleStartReview}
+            primaryDisabled={dueWordsCount === 0}
+          />
+        </View>
+      )}
     </ThemedView>
   );
 }
@@ -228,6 +248,6 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.TINY, // Subtle loading indicator
   },
   vocabularySection: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
+    // No margin needed - spacing handled by contentContainer
   },
 });

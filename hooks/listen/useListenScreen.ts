@@ -24,6 +24,7 @@ export const useListenScreen = () => {
   const { prefetchArticle } = useAppPreloader();
 
   const customOrder = useAppSelector(state => state.listen.customOrder);
+  const audioPreference = useAppSelector(state => state.settings.audioLanguagePreference);
 
   // STABILIZATION: Add debouncing for playback mode changes
   const [playbackMode, setPlaybackMode] = useState<'all' | 'none'>('none');
@@ -114,10 +115,10 @@ export const useListenScreen = () => {
   }, [user?.id, queryClient]);
 
   const enhancedTracksQuery = useQuery({
-    queryKey: ['enhancedAudioTracks', user?.id],
+    queryKey: ['enhancedAudioTracks', user?.id, audioPreference],
     queryFn: () => {
       if (!user?.id) return Promise.resolve([]);
-      return enhancedAudioService.getReadingListEnhancedTracks(user.id);
+      return enhancedAudioService.getReadingListEnhancedTracks(user.id, audioPreference);
     },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,

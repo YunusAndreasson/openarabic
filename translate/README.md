@@ -441,3 +441,95 @@ The `validate.sh` script runs comprehensive checks:
 - Type checking (mypy)
 - Dead code detection (vulture)
 - Test execution
+
+## Audio Generation
+
+The pipeline generates high-quality audio for Arabic text using ElevenLabs TTS API:
+
+- **Voice**: Premium Arabic voice optimized for Islamic texts
+- **Quality**: High-fidelity MP3 output with proper Arabic pronunciation
+- **Context**: Uses surrounding text for better pronunciation accuracy
+- **Caching**: Intelligent caching to avoid regenerating existing audio
+
+### Bilingual TTS Features
+
+The pipeline now supports comprehensive bilingual audio generation for language learners:
+
+#### Audio Types Generated
+
+1. **Arabic-Only Audio** (`audio_url`)
+
+   - Traditional Arabic TTS using ElevenLabs
+   - Optimized for native Arabic speakers
+   - Uses tashkeel (diacritical marks) when available
+
+2. **English-Only Audio** (`audio_url_english`)
+
+   - Clear English pronunciation using ElevenLabs
+   - Natural English voice (Rachel) for clarity
+   - Perfect for English-only learners
+
+3. **Bilingual Audio** (`audio_url_bilingual`)
+   - **English First**: English sentence plays first
+   - **Pause**: 500ms pause for cognitive processing
+   - **Arabic Second**: Arabic sentence follows
+   - **Language Learning**: Ideal for comprehension practice
+
+#### Audio Structure
+
+```
+[English Sentence] → [500ms Pause] → [Arabic Sentence]
+```
+
+#### Database Schema
+
+```sql
+-- Article sentences now include all three audio types
+ALTER TABLE article_sentences
+ADD COLUMN audio_url_english text,
+ADD COLUMN audio_url_bilingual text;
+
+-- Articles include bilingual audio option
+ALTER TABLE articles
+ADD COLUMN audio_url_bilingual text;
+```
+
+#### Configuration
+
+```python
+# English voice settings
+ENGLISH_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"  # Rachel - Clear English voice
+ENGLISH_VOICE_SETTINGS = {
+    "use_speaker_boost": True,
+    "speed": 0.9,  # Slightly faster for natural English
+}
+
+# Bilingual audio pause configuration
+BILINGUAL_AUDIO_PAUSE_MS = 500  # 500ms pause between languages
+```
+
+#### Usage Examples
+
+```python
+# Generate English-only audio
+english_result = generate_english_sentence_audio(
+    english_text="The Prophet said...",
+    filename="sentence_001.mp3"
+)
+
+# Generate bilingual audio
+bilingual_result = generate_bilingual_sentence_audio(
+    english_text="The Prophet said...",
+    arabic_text="قال النبي...",
+    filename="sentence_001_bilingual.mp3",
+    tashkeel_text="قَالَ النَّبِيُّ..."
+)
+```
+
+#### Benefits for Language Learners
+
+- **Comprehension**: Hear English first to understand meaning
+- **Pronunciation**: Practice Arabic with clear audio
+- **Timing**: Natural pause allows cognitive processing
+- **Flexibility**: Choose audio type based on learning needs
+- **Progressive Learning**: Start with English, advance to Arabic-only

@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { articlesService } from '../../services/articles';
-import { handleError } from '../../utils/errorHandling';
 import { supabase } from '../../services/supabase';
-import { mapToArticles, mapToArticle } from '../../utils/typeMappers';
+import { handleError } from '../../utils/errorHandling';
+import { mapToArticle, mapToArticles } from '../../utils/typeMappers';
 
 jest.mock('../../services/supabase', () => ({
   supabase: { from: jest.fn() },
@@ -76,6 +76,7 @@ describe('articlesService', () => {
         author_id,
         summary,
         audio_url,
+        audio_url_bilingual,
         category:categories(id,name),
         author:authors(id,name)
       `.replace(/\s/g, '');
@@ -107,6 +108,7 @@ describe('articlesService', () => {
         author_id,
         summary,
         audio_url,
+        audio_url_bilingual,
         category:categories(id,name),
         author:authors(id,name),
         article_sentences(
@@ -157,6 +159,7 @@ describe('articlesService', () => {
         author_id,
         summary,
         audio_url,
+        audio_url_bilingual,
         category:categories(id,name),
         author:authors(id,name),
         article_sentences(

@@ -159,8 +159,7 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
     return (
       <BaseChart
         contentHeight={GAUGE_HEIGHT + 80}
-        emptyStateText={STRINGS.STUDY_WORDS_TO_TRACK_MEMORY_STRENGTH}
-        hasData={chartData.hasData}
+        hasData={true}
         hideTitle={true}
         onCardPress={onInfoPress}
       >

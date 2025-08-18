@@ -95,7 +95,13 @@ function ThemedButtonComponent({
     [onPress, disabled, loading, hapticFeedback]
   );
 
-  const textColor = variant === 'filled' ? (isDarkMode ? colors.black : colors.text) : colors.tint;
+  const textColor = disabled
+    ? colors.secondaryText
+    : variant === 'filled'
+    ? isDarkMode
+      ? colors.black
+      : colors.text
+    : colors.tint;
   const iconSize = useMemo(() => getIconSize(size, customIconSize), [size, customIconSize]);
 
   // Button styles
@@ -104,11 +110,15 @@ function ThemedButtonComponent({
       styles.button,
       size === 'large' && styles.buttonLarge,
       size === 'small' && styles.buttonSmall,
-      variant === 'filled' && { backgroundColor: colors.tint },
-      variant === 'outlined' && { borderWidth: LAYOUT.BORDER.WIDTH.THIN, borderColor: colors.tint },
-      disabled && { opacity: LAYOUT.OPACITY.MEDIUM },
+      variant === 'filled' && {
+        backgroundColor: disabled ? colors.cardBorder : colors.tint,
+      },
+      variant === 'outlined' && {
+        borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+        borderColor: disabled ? colors.border : colors.tint,
+      },
     ],
-    [size, variant, colors.tint, disabled]
+    [size, variant, colors.tint, colors.cardBorder, disabled]
   );
 
   const buttonTextStyle = useMemo(
@@ -172,13 +182,7 @@ function ThemedButtonComponent({
             <ThemedText
               skipDefaultColor
               colorName={
-                disabled
-                  ? 'disabled'
-                  : variant === 'filled'
-                  ? isDarkMode
-                    ? 'black'
-                    : 'text'
-                  : 'tint'
+                disabled ? 'black' : variant === 'filled' ? (isDarkMode ? 'black' : 'text') : 'tint'
               }
               style={[buttonTextStyle, textOpacityStyle]}
               type={getTextType(size, textWeight)}

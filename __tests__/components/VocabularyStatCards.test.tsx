@@ -29,8 +29,30 @@ jest.mock('@/hooks/theme/useColors', () => ({
     textTertiary: '#666',
     card: '#fff',
     borderOverlay: '#ccc',
+    navigationRipple: '#ccc',
   }),
 }));
+
+// Mock FlashList
+jest.mock('@shopify/flash-list', () => ({
+  FlashList: ({ data, renderItem }: any) => {
+    const React = require('react');
+    return React.createElement(
+      'View',
+      {},
+      data?.map((item: any, index: number) => renderItem({ item, index }))
+    );
+  },
+}));
+
+// Mock Modal
+jest.mock('react-native', () => {
+  const RN = jest.requireActual('react-native');
+  return {
+    ...RN,
+    Modal: ({ children, visible }: any) => (visible ? children : null),
+  };
+});
 
 jest.mock('@charts/chartColors', () => ({
   useChartColors: () => ({
@@ -56,6 +78,21 @@ jest.mock('@/hooks/animations', () => ({
     animatedStyle: {},
     handlePressIn: jest.fn(),
     handlePressOut: jest.fn(),
+  }),
+}));
+
+jest.mock('@/hooks/vocabulary', () => ({
+  useDictionaryModal: () => ({
+    sortedWords: [],
+    sortOption: 'difficulty',
+    sortDirection: 'asc',
+    setSorting: jest.fn(),
+  }),
+}));
+
+jest.mock('@/components/providers/ToastProvider', () => ({
+  useToast: () => ({
+    showToast: jest.fn(),
   }),
 }));
 

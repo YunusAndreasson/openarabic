@@ -13,6 +13,8 @@ export type Database = {
           arabic: string;
           article_id: number;
           audio_url: string;
+          audio_url_bilingual: string | null;
+          audio_url_english: string | null;
           english: string;
           id: number;
           position: number;
@@ -21,6 +23,8 @@ export type Database = {
           arabic: string;
           article_id: number;
           audio_url: string;
+          audio_url_bilingual?: string | null;
+          audio_url_english?: string | null;
           english: string;
           id?: number;
           position: number;
@@ -29,6 +33,8 @@ export type Database = {
           arabic?: string;
           article_id?: number;
           audio_url?: string;
+          audio_url_bilingual?: string | null;
+          audio_url_english?: string | null;
           english?: string;
           id?: number;
           position?: number;
@@ -46,6 +52,7 @@ export type Database = {
       articles: {
         Row: {
           audio_url: string;
+          audio_url_bilingual: string | null;
           author_id: number;
           category_id: number;
           content_hash: string;
@@ -58,6 +65,7 @@ export type Database = {
         };
         Insert: {
           audio_url: string;
+          audio_url_bilingual?: string | null;
           author_id: number;
           category_id: number;
           content_hash: string;
@@ -70,6 +78,7 @@ export type Database = {
         };
         Update: {
           audio_url?: string;
+          audio_url_bilingual?: string | null;
           author_id?: number;
           category_id?: number;
           content_hash?: string;

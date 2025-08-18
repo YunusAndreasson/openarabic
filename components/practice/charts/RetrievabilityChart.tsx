@@ -90,9 +90,9 @@ export const RetrievabilityChart = memo<RetrievabilityChartProps>(
         onCardPress={onInfoPress}
         hideTitle={hideTitle}
         hasData={chartData.hasData}
-        emptyStateText={STRINGS.STUDY_WORDS_TO_TRACK_MEMORY_STRENGTH}
         showWarningLine={showWarningLine}
         isFuturePrediction={true} // Today is leftmost for future predictions
+        emptyStateText=""
       />
     );
   }

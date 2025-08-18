@@ -41,6 +41,10 @@ const migrations: { 0: (state: RootStateShape) => RootStateShape } = {
     if (state.settings && !state.settings.arabicFontSize) {
       state.settings.arabicFontSize = 17; // LAYOUT.TYPOGRAPHY.SCALE.LARGE
     }
+    // Ensure settings has audioLanguagePreference property
+    if (state.settings && !state.settings.audioLanguagePreference) {
+      state.settings.audioLanguagePreference = 'bilingual';
+    }
     return state;
   },
 };
@@ -57,14 +61,15 @@ const persistConfig: PersistConfig<RootStateShape> = {
       typedState.settings &&
       (!typedState.settings.reminderTime ||
         !typedState.settings.arabicFont ||
-        !typedState.settings.arabicFontSize)
+        !typedState.settings.arabicFontSize ||
+        !typedState.settings.audioLanguagePreference)
     ) {
       const migrated = migrations[0](typedState);
       return Promise.resolve({ ...state, ...migrated } as PersistedState);
     }
     return Promise.resolve(state);
   },
-  whitelist: ['theme', 'settings', 'filters', 'listen'],
+  whitelist: ['theme', 'settings', 'filters', 'listen', 'editMode'],
 };
 
 const persistedReducer = persistReducer<RootStateShape>(persistConfig, rootReducer);

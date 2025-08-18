@@ -7,16 +7,24 @@ from typing import Any
 try:
     from audio.audio_utils import (
         concatenate_audio_files,
+        download_audio_for_concat,
+        generate_audio_filename,
+        generate_bilingual_sentence_audio,
+        generate_english_sentence_audio,
         generate_sentence_audio,
     )
     from audio.root_audio import get_or_generate_root_audio
 except (ImportError, OSError):
     # Import failed, but we'll handle this gracefully in the functions
-    concatenate_audio_files = None
     generate_sentence_audio = None
+    generate_english_sentence_audio = None
+    generate_bilingual_sentence_audio = None
+    generate_audio_filename = None
+    download_audio_for_concat = None
+    concatenate_audio_files = None
     get_or_generate_root_audio = None
 # Import common database utilities
-from data.config import ARCHIVE_DIR, ROOT_DIR, SUPABASE_URL
+from data.config import ARCHIVE_DIR, SUPABASE_URL
 from data.enums import DifficultyLevel
 from data.pipeline_types import WordData
 from utils.arabic_text import clean_arabic_text
@@ -209,19 +217,6 @@ def get_adjacent_texts(
     return prev_text, next_text
 
 
-def download_audio_for_concat(filename: str, dest_path: str) -> bool:
-    """Download an audio file from storage for concatenation."""
-    try:
-        response = get_supabase_client().storage.from_("audio").download(filename)
-        if response:
-            with open(dest_path, "wb") as f:
-                f.write(response)
-            return True
-    except Exception as e:
-        logger.error(f"Error downloading audio file: {str(e)}")
-    return False
-
-
 def cleanup_temp_files(files: list[str], temp_dir: str) -> None:
     """Remove temporary files and directory if possible."""
     for file in files:
@@ -257,8 +252,10 @@ def concatenate_and_upload_audio(
     final_audio_filename = generate_audio_filename()
     final_audio_path = os.path.join(temp_dir, final_audio_filename)
 
-    if concatenate_audio_files and concatenate_audio_files(files, final_audio_path):
-        try:
+    if files:  # Only concatenate if there are files to concatenate
+        if download_audio_for_concat(
+            files[0], final_audio_path
+        ):  # Download the first file to get its content type
             with open(final_audio_path, "rb") as f:
                 get_supabase_client().storage.from_("audio").upload(
                     final_audio_filename,
@@ -276,10 +273,9 @@ def concatenate_and_upload_audio(
                 article_id,
             ).execute()
 
-        except Exception as e:
-            logger.error(f"Error uploading concatenated audio: {str(e)}")
-
-    cleanup_temp_files(files + [final_audio_path], temp_dir)
+        cleanup_temp_files(files + [final_audio_path], temp_dir)
+    else:
+        cleanup_temp_files([], temp_dir)
 
 
 def insert_article_sentences(
@@ -287,6 +283,8 @@ def insert_article_sentences(
 ) -> None:
     """Insert article sentences into the database."""
     sentence_audio_files = []
+    sentence_english_audio_files = []
+    sentence_bilingual_audio_files = []
     temp_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "temp_audio")
     os.makedirs(temp_dir, exist_ok=True)
 
@@ -302,25 +300,72 @@ def insert_article_sentences(
                 progress_tracker.update(1)
             previous_text, next_text = get_adjacent_texts(translations, idx)
 
-            temp_audio_file = os.path.join(temp_dir, f"sentence_{idx}.mp3")
-            audio_filename = generate_audio_filename()
+            temp_audio_file = os.path.join(temp_dir, f"sentence_arabic_{idx}.mp3")
+            temp_english_audio_file = os.path.join(
+                temp_dir, f"sentence_english_{idx}.mp3"
+            )
+            temp_bilingual_audio_file = os.path.join(
+                temp_dir, f"sentence_bilingual_{idx}.mp3"
+            )
 
-            audio_result = None
+            arabic_audio_filename = generate_audio_filename()
+            english_audio_filename = generate_audio_filename()
+            bilingual_audio_filename = generate_audio_filename()
+
+            arabic_audio_result = None
+            english_audio_result = None
+            bilingual_audio_result = None
             storage_url = None
+            storage_url_english = None
+            storage_url_bilingual = None
 
             if generate_sentence_audio:
-                audio_result = generate_sentence_audio(
+                # Generate Arabic-only audio
+                arabic_audio_result = generate_sentence_audio(
                     text=translation["original"],
-                    filename=audio_filename,
+                    filename=arabic_audio_filename,
                     previous_text=previous_text,
                     next_text=next_text,
                 )
 
-            if audio_result is not None:
-                storage_url = audio_result.url
+                if arabic_audio_result is not None:
+                    storage_url = arabic_audio_result.url
+                    if download_audio_for_concat(
+                        arabic_audio_filename, temp_audio_file
+                    ):
+                        sentence_audio_files.append(temp_audio_file)
 
-                if download_audio_for_concat(audio_filename, temp_audio_file):
-                    sentence_audio_files.append(temp_audio_file)
+            if generate_english_sentence_audio:
+                # Generate English-only audio
+                english_audio_result = generate_english_sentence_audio(
+                    english_text=translation["full_translation"],
+                    filename=english_audio_filename,
+                )
+
+                if english_audio_result is not None:
+                    storage_url_english = english_audio_result.url
+                    if download_audio_for_concat(
+                        english_audio_filename, temp_english_audio_file
+                    ):
+                        sentence_english_audio_files.append(temp_english_audio_file)
+
+            if generate_bilingual_sentence_audio:
+                # Generate bilingual audio
+                bilingual_audio_result = generate_bilingual_sentence_audio(
+                    english_text=translation["full_translation"],
+                    arabic_text=translation["original"],
+                    filename=bilingual_audio_filename,
+                    tashkeel_text=translation.get("tashkeel"),
+                    previous_text=previous_text,
+                    next_text=next_text,
+                )
+
+                if bilingual_audio_result is not None:
+                    storage_url_bilingual = bilingual_audio_result.url
+                    if download_audio_for_concat(
+                        bilingual_audio_filename, temp_bilingual_audio_file
+                    ):
+                        sentence_bilingual_audio_files.append(temp_bilingual_audio_file)
 
             cleaned_arabic = clean_arabic_text(translation["original"])
 
@@ -330,6 +375,8 @@ def insert_article_sentences(
                 "arabic": cleaned_arabic,
                 "english": translation["full_translation"],
                 "audio_url": storage_url,
+                "audio_url_english": storage_url_english,
+                "audio_url_bilingual": storage_url_bilingual,
             }
             result = (
                 get_supabase_client()
@@ -345,10 +392,65 @@ def insert_article_sentences(
                     translation,
                 )
 
+        # Create concatenated article audio files
         if sentence_audio_files:
-            concatenate_and_upload_audio(sentence_audio_files, temp_dir, article_id)
-        else:
-            cleanup_temp_files([], temp_dir)
+            # Arabic-only article audio
+            arabic_article_filename = generate_audio_filename()
+            arabic_article_path = os.path.join(temp_dir, arabic_article_filename)
+
+            if concatenate_audio_files(sentence_audio_files, arabic_article_path):
+                try:
+                    with open(arabic_article_path, "rb") as f:
+                        get_supabase_client().storage.from_("audio").upload(
+                            arabic_article_filename,
+                            f,
+                            file_options={"content-type": "audio/mpeg"},
+                        )
+
+                    article_audio_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{arabic_article_filename}"
+                    get_supabase_client().table("articles").update(
+                        {"audio_url": article_audio_url}
+                    ).eq("id", article_id).execute()
+
+                except Exception as e:
+                    logger.error(f"Error uploading Arabic article audio: {str(e)}")
+
+        if sentence_bilingual_audio_files:
+            # Bilingual article audio
+            bilingual_article_filename = generate_audio_filename()
+            bilingual_article_path = os.path.join(temp_dir, bilingual_article_filename)
+
+            if concatenate_audio_files(
+                sentence_bilingual_audio_files, bilingual_article_path
+            ):
+                try:
+                    with open(bilingual_article_path, "rb") as f:
+                        get_supabase_client().storage.from_("audio").upload(
+                            bilingual_article_filename,
+                            f,
+                            file_options={"content-type": "audio/mpeg"},
+                        )
+
+                    bilingual_article_audio_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{bilingual_article_filename}"
+                    get_supabase_client().table("articles").update(
+                        {"audio_url_bilingual": bilingual_article_audio_url}
+                    ).eq("id", article_id).execute()
+
+                except Exception as e:
+                    logger.error(f"Error uploading bilingual article audio: {str(e)}")
+
+        # Clean up temporary files
+        all_temp_files = (
+            sentence_audio_files
+            + sentence_english_audio_files
+            + sentence_bilingual_audio_files
+        )
+        if sentence_audio_files:
+            all_temp_files.append(os.path.join(temp_dir, arabic_article_filename))
+        if sentence_bilingual_audio_files:
+            all_temp_files.append(os.path.join(temp_dir, bilingual_article_filename))
+
+        cleanup_temp_files(all_temp_files, temp_dir)
 
     except Exception as e:
         logger.error(f"Error processing sentences: {str(e)}")

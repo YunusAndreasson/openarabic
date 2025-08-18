@@ -14,6 +14,7 @@ import { THEME_OPTIONS, ThemePicker } from '@/components/ThemePicker';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { AccountBadge } from '@/components/account';
+import AudioLanguageSelector from '@/components/account/AudioLanguageSelector';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -223,6 +224,16 @@ const AccountScreen: FC = () => {
                   style={styles.cardChevron}
                 />
               </View>
+            </BaseCard>
+
+            <Divider />
+
+            <BaseCard
+              includePressAnimation={false}
+              shadowSize="none"
+              style={styles.interactiveCard}
+            >
+              <AudioLanguageSelector />
             </BaseCard>
           </View>
         </BaseCard>

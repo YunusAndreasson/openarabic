@@ -245,6 +245,25 @@ class AudioResult(BaseModel):
     )
 
 
+class BilingualAudioResult(BaseModel):
+    """Result from bilingual audio generation (English + Arabic)"""
+
+    url: str = Field(description="Bilingual audio file URL in storage")
+    filename: str | Literal["unknown"] = Field(description="Generated filename")
+    duration: float | Literal["unknown"] = Field(
+        description="Total audio duration in seconds"
+    )
+    english_duration: float | Literal["unknown"] = Field(
+        description="English audio duration in seconds"
+    )
+    arabic_duration: float | Literal["unknown"] = Field(
+        description="Arabic audio duration in seconds"
+    )
+    pause_duration: float = Field(
+        description="Pause duration between English and Arabic in seconds", default=0.5
+    )
+
+
 class ArticleData(BaseModel):
     """Data structure for article insertion"""
 

@@ -80,7 +80,7 @@ def get_or_generate_root_audio(
             if audio_url_en:
                 logger.info(f"Generated English audio URL: {audio_url_en}")
                 temp_path_en = os.path.join(AUDIO_TEMP_DIR, cache_key_en)
-                if os.path.exists(temp_path_en):
+                if os.path.exists(temp_path_en) and cache_path_en:
                     try:
                         import shutil
 

@@ -103,7 +103,10 @@ jest.mock('@/hooks/audio/useSleepTimer', () => {
 
 // Note: useListenScreen uses simpleAudioService internally. We focus on UI state behavior here.
 
-const mockState = { listen: { customOrder: [2, 1] } };
+const mockState = {
+  listen: { customOrder: [2, 1] },
+  settings: { audioLanguagePreference: 'bilingual' },
+};
 const mockDispatch = jest.fn();
 jest.mock('@/store/hooks', () => ({
   useAppDispatch: () => mockDispatch,

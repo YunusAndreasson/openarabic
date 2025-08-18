@@ -3,7 +3,6 @@ import hashlib
 import io
 import logging
 import os
-import re
 import subprocess
 import sys
 import time
@@ -21,13 +20,17 @@ from data.config import (
     ARABIC_VOICE_ID,
     AUDIO_CACHE_DIR,
     AUDIO_TEMP_DIR,
+    BILINGUAL_AUDIO_PAUSE_MS,
     DEFAULT_VOICE_SETTINGS,
     ELEVENLABS_API_KEY,
     ELEVENLABS_TTS_MODEL_ID,
+    ENGLISH_VOICE_ID,
+    ENGLISH_VOICE_ID_FALLBACK,
+    ENGLISH_VOICE_SETTINGS,
     GOOGLE_CLOUD_CREDENTIALS_PATH,
     SUPABASE_URL,
 )
-from data.models import AudioResult
+from data.models import AudioResult, BilingualAudioResult
 from utils.arabic_text import (
     preprocess_text_for_tts,
     wrap_in_arabic_ssml,
@@ -609,3 +612,441 @@ def generate_sentence_audio(
     except Exception as e:
         logger.error(f"Error generating sentence audio: {str(e)}")
         return None
+
+
+@retry_operation(max_attempts=3, delay=1, backoff=2)
+def generate_english_speech(
+    text: str,
+    voice_settings: VoiceSettings | None = None,
+) -> dict[str, Any] | None:
+    """
+    Generate English speech using ElevenLabs API with fallback voice support.
+
+    Args:
+        text: The English text to convert to speech
+        voice_settings: Optional voice settings
+
+    Returns:
+        Dictionary with audio data and metadata, or None if failed
+    """
+    try:
+        client = _get_eleven_labs_client()
+
+        # Use English voice settings if none provided
+        if voice_settings is None:
+            voice_settings = VoiceSettings(**ENGLISH_VOICE_SETTINGS)
+        elif isinstance(voice_settings, dict):
+            voice_settings = VoiceSettings(**voice_settings)
+
+        # Try primary English voice first
+        voice_id = ENGLISH_VOICE_ID
+        logger.info(f"Attempting English speech generation with voice ID: {voice_id}")
+
+        try:
+            # Generate speech with primary voice
+            response = client.text_to_speech.convert(
+                text=text,
+                voice_id=voice_id,
+                model_id=ELEVENLABS_TTS_MODEL_ID,
+                voice_settings=voice_settings,
+            )
+            logger.info(
+                f"Successfully generated English speech with primary voice: {voice_id}"
+            )
+
+        except Exception as primary_error:
+            logger.warning(f"Primary English voice {voice_id} failed: {primary_error}")
+
+            # Try fallback voice
+            try:
+                fallback_voice_id = ENGLISH_VOICE_ID_FALLBACK
+                logger.info(f"Trying fallback English voice: {fallback_voice_id}")
+
+                response = client.text_to_speech.convert(
+                    text=text,
+                    voice_id=fallback_voice_id,
+                    model_id=ELEVENLABS_TTS_MODEL_ID,
+                    voice_settings=voice_settings,
+                )
+                voice_id = fallback_voice_id
+                logger.info(
+                    f"Successfully generated English speech with fallback voice: {voice_id}"
+                )
+
+            except Exception as fallback_error:
+                logger.error(
+                    f"Fallback voice {ENGLISH_VOICE_ID_FALLBACK} also failed: {fallback_error}"
+                )
+
+                # Last resort: try to find any available English voice
+                try:
+                    if hasattr(client, "voices") and hasattr(client.voices, "get_all"):
+                        available_voices = client.voices.get_all()
+                        english_voices = [
+                            v
+                            for v in available_voices
+                            if v.labels.get("language") == "en"
+                        ]
+
+                        if english_voices:
+                            last_resort_voice = english_voices[0]
+                            voice_id = last_resort_voice.voice_id
+                            logger.info(
+                                f"Using last resort English voice: {voice_id} ({last_resort_voice.name})"
+                            )
+
+                            response = client.text_to_speech.convert(
+                                text=text,
+                                voice_id=voice_id,
+                                model_id=ELEVENLABS_TTS_MODEL_ID,
+                                voice_settings=voice_settings,
+                            )
+                            logger.info(
+                                f"Successfully generated English speech with last resort voice: {voice_id}"
+                            )
+                        else:
+                            logger.error("No English voices available in account")
+                            return None
+                    else:
+                        logger.error("Cannot access voices API for last resort")
+                        return None
+
+                except Exception as last_resort_error:
+                    logger.error(f"All voice attempts failed: {last_resort_error}")
+                    return None
+
+        # Handle generator response (new ElevenLabs API format)
+        if hasattr(response, "__iter__") and not isinstance(response, str | bytes):
+            logger.debug("Response is a generator, iterating to get audio data")
+            try:
+                # Get the first (and usually only) chunk from the generator
+                audio_chunk = next(response)
+
+                # Check for audio data in the chunk
+                if hasattr(audio_chunk, "audio") and audio_chunk.audio:
+                    audio_data = audio_chunk.audio
+                    logger.debug(f"Found audio data: {len(audio_data)} bytes")
+                elif hasattr(audio_chunk, "data") and audio_chunk.data:
+                    audio_data = audio_chunk.data
+                    logger.debug(f"Found data attribute: {len(audio_chunk.data)} bytes")
+                elif hasattr(audio_chunk, "content") and audio_chunk.content:
+                    audio_data = audio_chunk.content
+                    logger.debug(
+                        f"Found content attribute: {len(audio_chunk.content)} bytes"
+                    )
+                elif isinstance(audio_chunk, bytes):
+                    # The chunk is raw audio data
+                    audio_data = audio_chunk
+                    logger.debug(f"Found raw audio data: {len(audio_chunk)} bytes")
+                else:
+                    logger.error(
+                        f"No audio data found in chunk. Available attributes: {[attr for attr in dir(audio_chunk) if not attr.startswith('_')]}"
+                    )
+                    return None
+
+            except StopIteration:
+                logger.error("Generator response was empty")
+                return None
+            except Exception as e:
+                logger.error(f"Error processing generator response: {e}")
+                return None
+        else:
+            # Handle direct response format
+            if hasattr(response, "audio") and response.audio:
+                audio_data = response.audio
+            elif hasattr(response, "data") and response.data:
+                audio_data = response.data
+            elif hasattr(response, "content") and response.content:
+                audio_data = response.content
+            else:
+                logger.error(f"No audio data found in response: {response}")
+                return None
+
+        # Validate audio data length
+        if len(audio_data) < 1000:  # Less than 1KB is suspicious
+            logger.warning(
+                f"Generated English audio seems very short: {len(audio_data)} bytes"
+            )
+
+        logger.info(
+            f"English speech generation successful: {len(audio_data)} bytes, voice: {voice_id}"
+        )
+
+        return {
+            "audio": audio_data,
+            "duration": getattr(response, "duration", "unknown"),
+            "voice_id": voice_id,
+            "text": text,
+        }
+
+    except Exception as e:
+        logger.error(f"English speech generation failed: {e}")
+        return None
+
+
+def create_bilingual_audio(
+    english_audio: bytes,
+    arabic_audio: bytes,
+    pause_duration_ms: int = BILINGUAL_AUDIO_PAUSE_MS,
+) -> bytes:
+    """
+    Create bilingual audio by combining English and Arabic audio with a pause.
+
+    Args:
+        english_audio: English audio data
+        arabic_audio: Arabic audio data
+        pause_duration_ms: Pause duration in milliseconds
+
+    Returns:
+        Combined bilingual audio data
+    """
+    try:
+        import io
+
+        from pydub import AudioSegment
+
+        # Load audio segments
+        english_segment = AudioSegment.from_mp3(io.BytesIO(english_audio))
+        arabic_segment = AudioSegment.from_mp3(io.BytesIO(arabic_audio))
+
+        # Create pause segment
+        pause_segment = AudioSegment.silent(duration=pause_duration_ms)
+
+        # Combine: English + Pause + Arabic
+        bilingual_audio = english_segment + pause_segment + arabic_segment
+
+        # Export as MP3
+        output = io.BytesIO()
+        bilingual_audio.export(output, format="mp3")
+        output.seek(0)
+
+        return output.read()
+
+    except ImportError:
+        logger.error("pydub not available for audio concatenation")
+        # Fallback: simple concatenation without pause
+        return english_audio + arabic_audio
+    except Exception as e:
+        logger.error(f"Error creating bilingual audio: {e}")
+        # Fallback: simple concatenation
+        return english_audio + arabic_audio
+
+
+def generate_bilingual_sentence_audio(
+    english_text: str,
+    arabic_text: str,
+    filename: str,
+    tashkeel_text: str | None = None,
+    previous_text: str | None = None,
+    next_text: str | None = None,
+) -> BilingualAudioResult | None:
+    """
+    Generate bilingual audio for a sentence (English + Arabic).
+
+    Args:
+        english_text: English translation text
+        arabic_text: Arabic text
+        filename: Output filename
+        tashkeel_text: Arabic text with diacritics (preferred)
+        previous_text: Previous text for context
+        next_text: Next text for context
+
+    Returns:
+        BilingualAudioResult with URL and timing information
+    """
+    try:
+        logger.info(
+            f"Starting bilingual audio generation for: '{english_text[:50]}...' + '{arabic_text[:50]}...'"
+        )
+
+        # Generate English audio
+        logger.info("Generating English audio...")
+        english_response = generate_english_speech(english_text)
+        if not english_response or not english_response.get("audio"):
+            logger.error("Failed to generate English audio")
+            return None
+
+        english_audio = english_response["audio"]
+        english_duration = english_response.get("duration", "unknown")
+        logger.info(
+            f"English audio generated: {len(english_audio)} bytes, duration: {english_duration}"
+        )
+
+        # Generate Arabic audio
+        logger.info("Generating Arabic audio...")
+        arabic_response = generate_speech_with_timestamps(
+            text=tashkeel_text if tashkeel_text else arabic_text,
+            voice_id=ARABIC_VOICE_ID,
+            previous_text=previous_text,
+            next_text=next_text,
+        )
+        if not arabic_response or not arabic_response.get("audio"):
+            logger.error("Failed to generate Arabic audio")
+            return None
+
+        arabic_audio = arabic_response["audio"]
+        arabic_duration = arabic_response.get("duration", "unknown")
+        logger.info(
+            f"Arabic audio generated: {len(arabic_audio)} bytes, duration: {arabic_duration}"
+        )
+
+        # Validate audio lengths before combining
+        if len(english_audio) < 1000:
+            logger.warning(
+                f"English audio seems very short: {len(english_audio)} bytes"
+            )
+        if len(arabic_audio) < 1000:
+            logger.warning(f"Arabic audio seems very short: {len(arabic_audio)} bytes")
+
+        # Create bilingual audio
+        logger.info(f"Combining audio with {BILINGUAL_AUDIO_PAUSE_MS}ms pause...")
+        bilingual_audio_data = create_bilingual_audio(
+            english_audio,
+            arabic_audio,
+            BILINGUAL_AUDIO_PAUSE_MS,
+        )
+
+        # Validate and save audio
+        if not validate_mp3(bilingual_audio_data):
+            logger.error("Invalid MP3 data for bilingual audio")
+            return None
+
+        logger.info(f"Bilingual audio created: {len(bilingual_audio_data)} bytes")
+
+        # Save to temporary file
+        temp_audio_path = os.path.join(AUDIO_TEMP_DIR, filename)
+        with open(temp_audio_path, "wb") as f:
+            f.write(bilingual_audio_data)
+
+        # Upload to Supabase storage
+        with open(temp_audio_path, "rb") as f:
+            get_supabase_client().storage.from_("audio").upload(
+                filename,
+                f,
+                file_options={"content-type": "audio/mpeg"},
+            )
+            url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{filename}"
+
+        # Clean up temporary file
+        if os.path.exists(temp_audio_path):
+            os.remove(temp_audio_path)
+
+        # Calculate durations
+        pause_duration = BILINGUAL_AUDIO_PAUSE_MS / 1000.0  # Convert to seconds
+
+        # Total duration (approximate)
+        total_duration = "unknown"
+        if english_duration != "unknown" and arabic_duration != "unknown":
+            try:
+                total_duration = (
+                    float(english_duration) + float(arabic_duration) + pause_duration
+                )
+                logger.info(
+                    f"Calculated total duration: {total_duration:.2f}s (English: {english_duration}s + Arabic: {arabic_duration}s + Pause: {pause_duration:.2f}s)"
+                )
+            except (ValueError, TypeError):
+                total_duration = "unknown"
+                logger.warning(
+                    "Could not calculate total duration from individual durations"
+                )
+
+        logger.info(f"Bilingual audio generation completed successfully: {filename}")
+
+        return BilingualAudioResult(
+            url=url,
+            filename=filename,
+            duration=total_duration,
+            english_duration=english_duration,
+            arabic_duration=arabic_duration,
+            pause_duration=pause_duration,
+        )
+
+    except Exception as e:
+        logger.error(f"Error generating bilingual sentence audio: {str(e)}")
+        return None
+
+
+def generate_english_sentence_audio(
+    english_text: str,
+    filename: str,
+) -> AudioResult | None:
+    """
+    Generate English-only audio for a sentence.
+
+    Args:
+        english_text: English text to convert to speech
+        filename: Output filename
+
+    Returns:
+        AudioResult with URL and duration
+    """
+    try:
+        # Generate English audio
+        response = generate_english_speech(english_text)
+        if not response or not response.get("audio"):
+            logger.error("Failed to generate English audio")
+            return None
+
+        audio_data = response["audio"]
+
+        # Validate and save audio
+        if not validate_mp3(audio_data):
+            logger.error("Invalid MP3 data for English audio")
+            return None
+
+        # Save to temporary file
+        temp_audio_path = os.path.join(AUDIO_TEMP_DIR, filename)
+        with open(temp_audio_path, "wb") as f:
+            f.write(audio_data)
+
+        # Upload to Supabase storage
+        with open(temp_audio_path, "rb") as f:
+            get_supabase_client().storage.from_("audio").upload(
+                filename,
+                f,
+                file_options={"content-type": "audio/mpeg"},
+            )
+            url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{filename}"
+
+        # Clean up temporary file
+        if os.path.exists(temp_audio_path):
+            os.remove(temp_audio_path)
+
+        return AudioResult(
+            url=url,
+            filename=filename,
+            duration=response.get("duration", "unknown"),
+        )
+
+    except Exception as e:
+        logger.error(f"Error generating English sentence audio: {str(e)}")
+        return None
+
+
+def download_audio_for_concat(filename: str, dest_path: str) -> bool:
+    """
+    Download audio file from Supabase storage for concatenation.
+
+    Args:
+        filename: Audio filename in storage
+        dest_path: Local destination path
+
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        # Download audio from Supabase storage
+        response = get_supabase_client().storage.from_("audio").download(filename)
+
+        if response:
+            # Save to local file
+            with open(dest_path, "wb") as f:
+                f.write(response)
+            return True
+        else:
+            logger.error(f"Failed to download audio file: {filename}")
+            return False
+
+    except Exception as e:
+        logger.error(f"Error downloading audio file {filename}: {e}")
+        return False

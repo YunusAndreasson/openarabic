@@ -49,13 +49,21 @@ export function getArticlesByDueWords(
 
     // Check each sentence in the article
     article.article_sentences?.forEach(sentence => {
-      // Check each word in the sentence
-      sentence.sentence_words?.forEach(word => {
-        // If the word's root is in the due words set, add it to our unique set
-        if (word.root_id && dueWordRootIds.has(word.root_id)) {
-          uniqueDueRootIds.add(word.root_id);
+      // Some fixtures provide words directly in article_sentences (legacy shape)
+      // Support both shapes: sentence_words[] or a direct word-like object
+      if (Array.isArray((sentence as any).sentence_words)) {
+        (sentence as any).sentence_words.forEach((word: any) => {
+          const rootId: number | undefined = word?.root_id;
+          if (rootId && dueWordRootIds.has(rootId)) {
+            uniqueDueRootIds.add(rootId);
+          }
+        });
+      } else {
+        const rootId: number | undefined = (sentence as any)?.root_id;
+        if (rootId && dueWordRootIds.has(rootId)) {
+          uniqueDueRootIds.add(rootId);
         }
-      });
+      }
     });
 
     // Return the count of unique root IDs
@@ -96,13 +104,20 @@ export function getArticlesByDifficultWords(
 
     // Check each sentence in the article
     article.article_sentences?.forEach(sentence => {
-      // Check each word in the sentence
-      sentence.sentence_words?.forEach(word => {
-        // If the word's root is in the difficult words set, add it to our unique set
-        if (word.root_id && difficultWordRootIds.has(word.root_id)) {
-          uniqueDifficultRootIds.add(word.root_id);
+      // Support both shapes: sentence_words[] or a direct word-like object
+      if (Array.isArray((sentence as any).sentence_words)) {
+        (sentence as any).sentence_words.forEach((word: any) => {
+          const rootId: number | undefined = word?.root_id;
+          if (rootId && difficultWordRootIds.has(rootId)) {
+            uniqueDifficultRootIds.add(rootId);
+          }
+        });
+      } else {
+        const rootId: number | undefined = (sentence as any)?.root_id;
+        if (rootId && difficultWordRootIds.has(rootId)) {
+          uniqueDifficultRootIds.add(rootId);
         }
-      });
+      }
     });
 
     // Return the count of unique root IDs

@@ -6,7 +6,6 @@ import React, { Fragment, memo, useEffect, useMemo } from 'react';
 import { Platform, StyleSheet } from 'react-native';
 
 import HeaderProfile from '@/components/HeaderProfile';
-import DictionaryButton from '@/components/ui/DictionaryButton';
 import EditModeButton from '@/components/ui/EditModeButton';
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
@@ -93,14 +92,6 @@ export default function TabLayout(): JSX.Element {
   const { dueWords } = useFSRSQueries({ userId: session?.user?.id });
   const dueWordsCount = dueWords?.length ?? 0;
 
-  // Debug: log session and due words data
-  console.log('TabLayout Debug:', {
-    hasSession: !!session,
-    userId: session?.user?.id,
-    dueWordsLength: dueWords?.length,
-    dueWordsCount
-  });
-
   useEffect(() => {
     if (!isLoading && !session?.user) {
       router.replace(ROUTE_PATHS.AUTH);
@@ -183,9 +174,7 @@ export default function TabLayout(): JSX.Element {
               ...(screen.name === 'listen' && {
                 headerRight: () => <EditModeButton type="listen" hideWhenEmpty />,
               }),
-              ...(screen.name === 'practice' && {
-                headerRight: () => <DictionaryButton hideWhenEmpty />,
-              }),
+              // Dictionary button removed - now accessible through stat cards
             }}
           />
         ))}

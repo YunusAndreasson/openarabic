@@ -1,5 +1,4 @@
 import logging
-import os
 import time
 import unicodedata
 from typing import Any, cast
