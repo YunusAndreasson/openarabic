@@ -1,30 +1,16 @@
 import type { JSX } from 'react';
-import { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { EfficiencyChart, MasteryChart } from '@practice/charts';
-import { VocabularyMetrics } from '@practice/charts/VocabularyMetrics';
 import { StreakChart } from '@read/StreakChart';
 import { StreakMetrics } from '@read/StreakMetrics';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import SectionTitle from '@/components/common/SectionTitle';
 import { LAYOUT } from '@/constants/layout';
-import { STRINGS } from '@/constants/strings';
 import { useStreakHistory } from '@/hooks/articles/useStreakHistory';
-import { useAuth } from '@/hooks/auth/useAuth';
-import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
-
-// Title mapping for charts
-const TITLES = {
-  mastery: STRINGS.WORD_MASTERY,
-  efficiency: STRINGS.LEARNING_PROGRESS,
-} as const;
 
 export default function ProgressModal(): JSX.Element {
-  const { user } = useAuth();
   const insets = useSafeAreaInsets();
 
   const {
@@ -35,14 +21,7 @@ export default function ProgressModal(): JSX.Element {
     enabled: true,
   });
 
-  const { allWords: studyWords, error: fsrsError } = useFSRSQueries({
-    userId: user?.id,
-  });
-
-  // Charts only require FSRS fields; do not exclude entries missing root relation
-  const validStudyWords = useMemo(() => studyWords ?? [], [studyWords]);
-
-  const hasError = isStreakError || fsrsError;
+  const hasError = isStreakError;
   const isLoading = isStreakLoading;
 
   return (
@@ -74,73 +53,36 @@ export default function ProgressModal(): JSX.Element {
           </View>
         ) : (
           <>
-            {/* Streak Section */}
+            {/* Streak Section - Condensed without section titles */}
             {streakHistory ? (
               <>
-                <SectionTitle
-                  title="Reading Streak"
-                  subtitle="Your daily reading consistency over the past 30 days"
-                  isFirstSection={true}
-                />
+                {/* Header */}
+                <View style={styles.headerContainer}>
+                  <ThemedText type="heading1" weight="bold" style={styles.mainTitle}>
+                    Reading Progress
+                  </ThemedText>
+                  <ThemedText type="body" colorName="textTertiary" style={styles.subtitle}>
+                    Your daily reading consistency over the past 30 days
+                  </ThemedText>
+                </View>
 
+                {/* Streak Metrics */}
                 <View style={styles.streakMetricsContainer}>
                   <StreakMetrics metrics={streakHistory.metrics} />
                 </View>
 
-                <View style={styles.chartSection}>
-                  <SectionTitle title="Daily Activity" subtitle="Track your reading patterns" />
+                {/* Streak Chart */}
+                <View style={styles.chartContainer}>
+                  <ThemedText type="heading3" weight="semibold" style={styles.chartTitle}>
+                    Daily Activity
+                  </ThemedText>
+                  <ThemedText type="caption" colorName="textTertiary" style={styles.chartSubtitle}>
+                    Track your reading patterns
+                  </ThemedText>
                   <StreakChart
                     dailyActivity={streakHistory.dailyActivity}
                     streakPeriods={streakHistory.streakPeriods}
                   />
-                </View>
-              </>
-            ) : null}
-
-            {/* Vocabulary Progress Section */}
-            {validStudyWords.length > 0 ? (
-              <View style={styles.chartSection}>
-                <SectionTitle
-                  title="Vocabulary Status"
-                  subtitle="Current word counts and learning progress"
-                />
-                <VocabularyMetrics
-                  totalWords={validStudyWords.length}
-                  masteredWords={
-                    validStudyWords.filter(
-                      word => word.fsrs_state === 2 && (word.fsrs_stability ?? 0) >= 5
-                    ).length
-                  }
-                  learningWords={
-                    validStudyWords.filter(
-                      word =>
-                        word.fsrs_state === 0 ||
-                        word.fsrs_state === 1 ||
-                        word.fsrs_state === 3 ||
-                        (word.fsrs_state === 2 && (word.fsrs_stability ?? 0) < 5)
-                    ).length
-                  }
-                />
-              </View>
-            ) : null}
-
-            {/* Learning Progress Section */}
-            {validStudyWords.length > 0 ? (
-              <>
-                <View style={styles.chartSection}>
-                  <SectionTitle
-                    title={TITLES.mastery}
-                    subtitle={STRINGS.MEMORY_STRENGTH_ACROSS_VOCABULARY}
-                  />
-                  <MasteryChart studyWords={validStudyWords} hideTitle={true} />
-                </View>
-
-                <View style={styles.chartSection}>
-                  <SectionTitle
-                    title={TITLES.efficiency}
-                    subtitle={STRINGS.VOCABULARY_ACQUISITION_VELOCITY}
-                  />
-                  <EfficiencyChart studyWords={validStudyWords} hideTitle={true} />
                 </View>
               </>
             ) : null}
@@ -162,13 +104,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.LARGE,
   },
+  headerContainer: {
+    marginBottom: LAYOUT.SPACING.LARGE,
+    alignItems: 'center',
+  },
+  mainTitle: {
+    marginBottom: LAYOUT.SPACING.TINY,
+    textAlign: 'center',
+  },
+  subtitle: {
+    textAlign: 'center',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
+  },
   streakMetricsContainer: {
-    marginTop: LAYOUT.SPACING.TINY,
     marginBottom: LAYOUT.SPACING.LARGE,
   },
-  chartSection: {
+  chartContainer: {
     marginTop: LAYOUT.SPACING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.XLARGE,
+  },
+  chartTitle: {
+    marginBottom: LAYOUT.SPACING.TINY,
+    textAlign: 'center',
+  },
+  chartSubtitle: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    textAlign: 'center',
   },
   loadingContainer: {
     flex: 1,

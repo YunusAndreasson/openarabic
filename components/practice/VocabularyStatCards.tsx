@@ -5,7 +5,6 @@
  * that coordinates with the Memory Capacity Gauge to guide optimal learning behavior.
  */
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -13,14 +12,11 @@ import Animated from 'react-native-reanimated';
 import BaseCard from '@common/BaseCard';
 
 import { ThemedText } from '@/components/ThemedText';
-import { useToast } from '@/components/providers/ToastProvider';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
-import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { selectionFeedback } from '@/utils/haptics';
 
 import { MemoryRetentionGauge } from './charts/MemoryRetentionGauge';
 
@@ -29,6 +25,9 @@ interface VocabularyStatCardsProps {
   learningWords?: number;
   dueWords?: number;
   onInfoPress?: () => void;
+  onDuePress?: () => void;
+  onLearningPress?: () => void;
+  onMasteredPress?: () => void;
   studyWords?: StudyWord[];
 }
 
@@ -96,42 +95,18 @@ export const VocabularyStatCards = memo(
     learningWords = 0,
     dueWords = 0,
     onInfoPress,
+    onDuePress,
+    onLearningPress,
+    onMasteredPress,
     studyWords = [],
   }: VocabularyStatCardsProps) => {
     const colors = useColors();
-    const { showToast } = useToast();
 
     const validatedInput = {
       masteredWords: Math.max(0, masteredWords),
       learningWords: Math.max(0, learningWords),
       dueWords: Math.max(0, dueWords),
       studyWords: Array.isArray(studyWords) ? studyWords : [],
-    };
-
-    // Navigation handlers to existing dictionary modal with filter param
-    const handleDuePress = () => {
-      if (validatedInput.dueWords === 0) {
-        selectionFeedback();
-        showToast(STRINGS.VOCAB_STAT_NO_DUE_WORDS, 3000, 'info');
-      } else {
-        router.push(`${ROUTE_PATHS.PRACTICE_DICTIONARY}?filter=due`);
-      }
-    };
-    const handleLearningPress = () => {
-      if (validatedInput.learningWords === 0) {
-        selectionFeedback();
-        showToast(STRINGS.VOCAB_STAT_NO_LEARNING_WORDS, 3000, 'info');
-      } else {
-        router.push(`${ROUTE_PATHS.PRACTICE_DICTIONARY}?filter=learning`);
-      }
-    };
-    const handleMasteredPress = () => {
-      if (validatedInput.masteredWords === 0) {
-        selectionFeedback();
-        showToast(STRINGS.VOCAB_STAT_NO_MASTERED_WORDS, 3000, 'info');
-      } else {
-        router.push(`${ROUTE_PATHS.PRACTICE_DICTIONARY}?filter=mastered`);
-      }
     };
 
     // Memoize stats array to prevent recreation
@@ -141,21 +116,21 @@ export const VocabularyStatCards = memo(
         value: validatedInput.dueWords,
         color: colors.error,
         icon: 'alert-circle' as const,
-        onPress: handleDuePress,
+        onPress: onDuePress, // Due words now open prognosis chart
       },
       {
         label: STRINGS.VOCAB_STAT_LEARNING,
         value: validatedInput.learningWords,
         color: colors.warning,
         icon: 'school' as const,
-        onPress: handleLearningPress,
+        onPress: onLearningPress,
       },
       {
         label: STRINGS.VOCAB_STAT_MASTERED,
         value: validatedInput.masteredWords,
         color: colors.success,
         icon: 'checkmark-circle' as const,
-        onPress: handleMasteredPress,
+        onPress: onMasteredPress,
       },
     ];
 
@@ -195,13 +170,10 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
-  pressableContent: {
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   iconContainer: {
     width: MIN_TOUCH_TARGET.SMALL,
@@ -210,6 +182,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: LAYOUT.SPACING.SMALL,
+    // Ensure perfect horizontal centering
+    alignSelf: 'center',
   },
   statValue: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
@@ -219,6 +193,10 @@ const styles = StyleSheet.create({
   statLabel: {
     textAlign: 'center',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+  },
+  pressableContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

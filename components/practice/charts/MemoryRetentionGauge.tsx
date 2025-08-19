@@ -1,7 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Canvas, Group, Path, Skia } from '@shopify/react-native-skia';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { runOnJS, useAnimatedReaction, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import { BaseChart } from '@charts/BaseChart';
@@ -133,61 +132,23 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
       }
     };
 
-    // Get retention status message
-    const getRetentionMessage = () => {
-      if (animatedRetention < RETENTION_THRESHOLDS.POOR) {
-        return STRINGS.MEMORY_STRENGTH_LOW; // "Low memory strength"
-      } else if (animatedRetention < RETENTION_THRESHOLDS.MODERATE) {
-        return STRINGS.MEMORY_STRENGTH_MEDIUM; // "Medium memory strength"
-      } else {
-        return STRINGS.MEMORY_STRENGTH_HIGH; // "High memory strength"
-      }
-    };
-
     const retentionColor = getRetentionColor();
-    const retentionMessage = getRetentionMessage();
 
     const dynamicStyles = useMemo(
       () => ({
         retentionText: { color: retentionColor },
-        actionCard: { backgroundColor: chartColors.withOpacity(retentionColor, 0.1) },
-        actionText: { color: retentionColor },
       }),
-      [retentionColor, chartColors]
+      [retentionColor]
     );
 
     return (
       <BaseChart
-        contentHeight={GAUGE_HEIGHT + 80}
+        contentHeight={GAUGE_HEIGHT + 20}
         hasData={true}
         hideTitle={true}
         onCardPress={onInfoPress}
       >
         <View style={styles.container}>
-          {/* Top-right info indicator */}
-          {onInfoPress ? (
-            <Pressable
-              accessibilityLabel={STRINGS.MEMORY_STRENGTH_INFO}
-              hitSlop={8}
-              onPress={onInfoPress}
-              style={styles.infoIndicator}
-            >
-              <Ionicons
-                name="information-circle"
-                size={LAYOUT.BUTTON.ICON_SIZE.XLARGE}
-                color={colors.elevation3}
-              />
-            </Pressable>
-          ) : (
-            <View pointerEvents="none" style={styles.infoIndicator}>
-              <Ionicons
-                name="information-circle"
-                size={LAYOUT.BUTTON.ICON_SIZE.XLARGE}
-                color={chartColors.withOpacity(colors.text, 0.6)}
-              />
-            </View>
-          )}
-
           <View style={styles.gaugeContainer}>
             <Canvas style={styles.canvas}>
               <Group>
@@ -219,14 +180,10 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
             </View>
           </View>
 
-          {/* Bottom retention status */}
-          <View style={styles.bottomSection}>
-            <View style={[styles.actionCard, dynamicStyles.actionCard]}>
-              <ThemedText style={[styles.actionText, dynamicStyles.actionText]}>
-                {retentionMessage}
-              </ThemedText>
-            </View>
-          </View>
+          {/* Memory Strength label below gauge */}
+          <ThemedText type="caption" colorName="textTertiary" style={styles.memoryStrengthLabel}>
+            {STRINGS.MEMORY_STRENGTH}
+          </ThemedText>
         </View>
       </BaseChart>
     );
@@ -261,40 +218,14 @@ const styles = StyleSheet.create({
     position: 'relative',
     marginBottom: LAYOUT.SPACING.TINY,
   },
-  bottomSection: {
-    alignItems: 'center',
-    marginTop: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.SMALL,
-  },
-  actionCard: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    minHeight: MIN_TOUCH_TARGET.MEDIUM,
-  },
-  actionText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    fontWeight: '600',
-    includeFontPadding: false,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.NORMAL,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.2,
-    textAlign: 'center',
-  },
+
   container: {
     position: 'relative',
   },
-  infoIndicator: {
-    position: 'absolute',
-
-    right: LAYOUT.SPACING.MEDIUM,
-    width: MIN_TOUCH_TARGET.SMALL,
-    height: MIN_TOUCH_TARGET.SMALL,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
+  memoryStrengthLabel: {
+    textAlign: 'center',
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    marginTop: LAYOUT.SPACING.SMALL,
   },
 });
 

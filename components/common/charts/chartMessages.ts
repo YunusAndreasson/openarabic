@@ -15,6 +15,7 @@ export const CHART_LABELS = {
   STRENGTH: '📈 Memory strength', // How strong your memory is (last 7 days)
   RETENTION: '⏰ Review schedule', // When words will need review (next 7 days)
   SPEED: '⚡ Learning speed', // How fast you are learning (last 7 days)
+  DUE_WORDS_PROGNOSIS: '📋 Due words forecast', // Projected due words (next 7 days)
 
   // Word categories
   MASTERED: 'mastered',
@@ -146,5 +147,6 @@ export const EMPTY_STATE_MESSAGES = {
   mastery: 'Complete your first 5 reviews to see your memory strength trend',
   efficiency: 'Practice 10 words to track your learning speed progress',
   retrievability: 'Study 5 words to monitor which ones need review timing',
+  dueWords: 'Add words to see due forecast',
   general: 'Add your first words to start tracking your progress',
 } as const;

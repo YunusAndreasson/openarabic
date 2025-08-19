@@ -70,7 +70,7 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
         <MetricCard
           icon="flame"
           value={metrics.currentStreak.toString()}
-          label="Current streak"
+          label="Current"
           color={currentStreakColor}
         />
 

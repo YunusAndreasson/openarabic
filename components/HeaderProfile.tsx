@@ -1,43 +1,42 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
+import { useStreaks } from '@/contexts/StreaksContext';
 import { useReadingStreak } from '@/hooks/articles/useReadingStreak';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { handleError } from '@/utils/errorHandling';
 import { getSafeStorage } from '@/utils/safeAsyncStorage';
-import { getFirstNameFromEmail } from '@/utils/stringUtils';
-
-// Helper functions from AccountBadge for consistency
-const getInitials = (name: string): string => {
-  const words = name.trim().split(/\s+/);
-  if (words.length === 1) {
-    return words[0]?.charAt(0).toUpperCase() || 'U';
-  }
-  return (
-    ((words[0]?.charAt(0) || '') + (words[words.length - 1]?.charAt(0) || '')).toUpperCase() || 'U'
-  );
-};
 
 interface HeaderProfileProps {
   size?: number;
 }
 
-const HeaderProfile = memo(({ size = 28 }: HeaderProfileProps) => {
+const getFirstNameFromEmail = (email: string): string => {
+  const name = email.split('@')[0];
+  if (!name) return 'U';
+  return name.charAt(0).toUpperCase() + name.slice(1);
+};
+
+const getInitials = (name: string): string => {
+  return name.charAt(0).toUpperCase();
+};
+
+export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
   const { user } = useAuth();
+  const { streak: streakData } = useReadingStreak();
+  const { openStreaks } = useStreaks();
   const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(null);
 
-  // Get reading streak data
-  const { streak: streakData } = useReadingStreak();
   const currentStreak = streakData?.currentStreak ?? 0;
   const hasStreak = currentStreak > 0;
 
@@ -46,8 +45,9 @@ const HeaderProfile = memo(({ size = 28 }: HeaderProfileProps) => {
   }, []);
 
   const handleStreakPress = useCallback(() => {
-    router.push('/(tabs)/read/progress-modal');
-  }, []);
+    console.log('🔥 STREAK BUTTON PRESSED');
+    openStreaks();
+  }, [openStreaks]);
 
   const profilePhotoStyle = useMemo(
     () => [styles.profilePhoto, { width: size, height: size, borderRadius: size / 2 }],

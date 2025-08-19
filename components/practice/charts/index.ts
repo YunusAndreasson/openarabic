@@ -1,3 +1,4 @@
+export { DueWordsPrognosisChart } from './DueWordsPrognosisChart';
 export { EfficiencyChart } from './EfficiencyChart';
 export { MasteryChart } from './MasteryChart';
 export { MemoryRetentionGauge } from './MemoryRetentionGauge';

@@ -33,9 +33,9 @@ export interface MiniPlayerProps {
 }
 
 // Layout constants using proper LAYOUT system from layout.ts
-const MINI_PLAYER_HEIGHT = LAYOUT.CARD.HEIGHT.MINI_PLAYER; // 72px (48 + 24) - responsive to base unit
-const ARTWORK_SIZE = LAYOUT.CARD.IMAGE.MINI_PLAYER; // 40px (48 - 8) - responsive to base unit
-const PROGRESS_HEIGHT = LAYOUT.PROGRESS_BAR.HEIGHT; // 4px - responsive to base unit
+const MINI_PLAYER_HEIGHT = LAYOUT.CARD.HEIGHT.MINI_PLAYER; // 96px
+const ARTWORK_SIZE = LAYOUT.CARD.IMAGE.MINI_PLAYER; // 56px
+const PROGRESS_HEIGHT = LAYOUT.PROGRESS_BAR.HEIGHT; // 4px
 
 export const MiniPlayer = memo<MiniPlayerProps>(
   ({ article, isPlaying, isTimerActive, position, duration, onPlayPause, onTimerPress }) => {
@@ -110,8 +110,12 @@ export const MiniPlayer = memo<MiniPlayerProps>(
     // Calculate progress percentage
     const progressPercentage = useMemo(() => safePercent(position, duration), [position, duration]);
 
-    // Format time display
-    const timeDisplay = useMemo(() => formatSecondsToClock(position), [position]);
+    // Format time display with current position and total duration
+    const timeDisplay = useMemo(() => {
+      const currentTime = formatSecondsToClock(position);
+      const totalTime = formatSecondsToClock(duration);
+      return `${currentTime} / ${totalTime}`;
+    }, [position, duration]);
 
     return (
       <Animated.View
@@ -257,14 +261,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     height: MINI_PLAYER_HEIGHT - PROGRESS_HEIGHT,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
     paddingVertical: LAYOUT.SPACING.SMALL,
   },
 
   artworkContainer: {
     borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
     overflow: 'hidden',
-    marginRight: LAYOUT.SPACING.MEDIUM,
+    marginRight: LAYOUT.SPACING.SMALL,
   },
 
   artwork: {
@@ -276,7 +280,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     minWidth: 0,
-    marginRight: LAYOUT.SPACING.SMALL,
+    marginRight: LAYOUT.SPACING.TINY,
   },
 
   textContent: {
@@ -311,7 +315,6 @@ const styles = StyleSheet.create({
     fontFamily: Platform.select({ ios: 'Courier', default: 'monospace' }),
     // Align with text content - no right alignment needed since it's in column
     textAlign: 'left',
-    // Small top margin to separate from author
     marginTop: LAYOUT.SPACING.HALF_TINY,
   },
 

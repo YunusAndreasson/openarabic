@@ -216,6 +216,9 @@ export const STRINGS = {
     'Daily vocabulary advancement, tracking new words mastered over time.',
   MEMORY_RETENTION_OPTIMAL_TIMING:
     'Optimal review scheduling, indicating daily recall to guide retention.',
+  DUE_WORDS_FORECAST: 'Due Words Forecast',
+  DUE_WORDS_FORECAST_EXPLANATION:
+    'Projected due words over the next 7 days, helping you plan study sessions and manage review workload.',
 
   // Memory retention modal
   MEMORY_RETENTION_EXPLANATION:
@@ -466,9 +469,6 @@ export const STRINGS = {
   VOCAB_STAT_DUE: 'Due',
   VOCAB_STAT_LEARNING: 'Learning',
   VOCAB_STAT_MASTERED: 'Mastered',
-  VOCAB_STAT_NO_DUE_WORDS: 'No due words to practice.',
-  VOCAB_STAT_NO_LEARNING_WORDS: 'No learning words to practice.',
-  VOCAB_STAT_NO_MASTERED_WORDS: 'No mastered words yet.',
 
   // Learning method content
   LEARNING_METHOD_INTRO:

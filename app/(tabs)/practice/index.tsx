@@ -3,15 +3,19 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import type { JSX } from 'react';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, InteractionManager, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
 import EmptyState from '@/components/common/EmptyState';
 import BottomControls from '@/components/listen/BottomControls';
+import { DueWordsBottomSheet } from '@/components/practice/DueWordsBottomSheet';
 import ErrorMessage from '@/components/practice/ErrorMessage';
+import { LearningRateBottomSheet } from '@/components/practice/LearningRateBottomSheet';
+import { MemoryRetentionBottomSheet } from '@/components/practice/MemoryRetentionBottomSheet';
 import { VocabularyStatCards } from '@/components/practice/VocabularyStatCards';
+import { WordsMasteredBottomSheet } from '@/components/practice/WordsMasteredBottomSheet';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { getPracticeReviewRoute } from '@/constants/routes';
@@ -29,6 +33,12 @@ export default function VocabularyScreen(): JSX.Element {
   const { prefetchVocabularyData } = useAppPreloader();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
+
+  // Add state for bottom sheet visibility
+  const [isMemoryRetentionVisible, setIsMemoryRetentionVisible] = useState(false);
+  const [isDueWordsVisible, setIsDueWordsVisible] = useState(false);
+  const [isLearningRateVisible, setIsLearningRateVisible] = useState(false);
+  const [isWordsMasteredVisible, setIsWordsMasteredVisible] = useState(false);
 
   // Add ref to prevent infinite re-renders
   const hasPrefetchedRef = useRef(false);
@@ -82,10 +92,27 @@ export default function VocabularyScreen(): JSX.Element {
     router.push(getPracticeReviewRoute());
   }, [user, router]);
 
-  // Handle memory strength gauge info press
+  // Handle memory strength gauge info press - now opens bottom sheet
   const handleMemoryStrengthInfo = useCallback(() => {
-    router.push('/(tabs)/practice/memory-retention');
-  }, [router]);
+    setIsMemoryRetentionVisible(true);
+  }, []);
+
+  // Handle closing the bottom sheets
+  const handleCloseMemoryRetention = useCallback(() => {
+    setIsMemoryRetentionVisible(false);
+  }, []);
+
+  const handleCloseDueWords = useCallback(() => {
+    setIsDueWordsVisible(false);
+  }, []);
+
+  const handleCloseLearningRate = useCallback(() => {
+    setIsLearningRateVisible(false);
+  }, []);
+
+  const handleCloseWordsMastered = useCallback(() => {
+    setIsWordsMasteredVisible(false);
+  }, []);
 
   // Fix: Use the actual due words data count instead of database view
   // This ensures consistency between display and practice session
@@ -190,6 +217,9 @@ export default function VocabularyScreen(): JSX.Element {
                 masteredWords={calculatedStats.masteredWords}
                 studyWords={filteredStudyWords}
                 onInfoPress={handleMemoryStrengthInfo}
+                onDuePress={() => setIsDueWordsVisible(true)}
+                onLearningPress={() => setIsLearningRateVisible(true)}
+                onMasteredPress={() => setIsWordsMasteredVisible(true)}
               />
             ) : (
               <EmptyState
@@ -230,6 +260,27 @@ export default function VocabularyScreen(): JSX.Element {
           />
         </View>
       )}
+
+      {/* Memory Retention Bottom Sheet */}
+      <MemoryRetentionBottomSheet
+        isVisible={isMemoryRetentionVisible}
+        onClose={handleCloseMemoryRetention}
+      />
+
+      {/* Due Words Bottom Sheet */}
+      <DueWordsBottomSheet isVisible={isDueWordsVisible} onClose={handleCloseDueWords} />
+
+      {/* Learning Rate Bottom Sheet */}
+      <LearningRateBottomSheet
+        isVisible={isLearningRateVisible}
+        onClose={handleCloseLearningRate}
+      />
+
+      {/* Words Mastered Bottom Sheet */}
+      <WordsMasteredBottomSheet
+        isVisible={isWordsMasteredVisible}
+        onClose={handleCloseWordsMastered}
+      />
     </ThemedView>
   );
 }

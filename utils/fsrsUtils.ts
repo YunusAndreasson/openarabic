@@ -1,5 +1,6 @@
 import {
   CRITICAL_RETRIEVABILITY_THRESHOLD,
+  DEFAULT_SESSION_COOLDOWN_HOURS,
   TREND_CHANGE_THRESHOLD,
   URGENT_RETRIEVABILITY_THRESHOLD,
 } from '@/constants/fsrs';
@@ -11,6 +12,13 @@ export interface RetrievabilityForecast {
   wordCount: number;
   criticalWords: number;
   urgentWords: number;
+}
+
+export interface DueWordsForecast {
+  date: Date;
+  dueWords: number;
+  newlyDue: number;
+  totalWords: number;
 }
 
 /**
@@ -138,4 +146,83 @@ export function calculateRetrievabilityTrend(
     : change < -TREND_CHANGE_THRESHOLD
     ? 'declining' // Expected for memory decay
     : 'stable';
+}
+
+/**
+ * Check if a word is due on a specific date
+ */
+function isWordDueOnDate(word: StudyWord, targetDate: Date): boolean {
+  const normalizeTs = (ts: unknown) => {
+    if (typeof ts === 'string') return ts.replace(' ', 'T');
+    if (ts instanceof Date) return ts.toISOString();
+    return undefined;
+  };
+
+  const dueStr = normalizeTs(word.fsrs_due as unknown);
+  const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
+  const isDue = Number.isFinite(dueMs) && dueMs <= targetDate.getTime();
+
+  // Apply the same session cooldown so indicators match session content
+  const lastStr = normalizeTs(word.fsrs_last_review as unknown);
+  const lastMs = lastStr ? Date.parse(lastStr) : 0;
+  const cooldownMs = targetDate.getTime() - DEFAULT_SESSION_COOLDOWN_HOURS * 60 * 60 * 1000;
+  const isRecentlyReviewed = Number.isFinite(lastMs) && lastMs >= cooldownMs;
+
+  return isDue && !isRecentlyReviewed;
+}
+
+/**
+ * Calculate due words forecast for the next 7 days
+ */
+export function calculateDueWordsForecast(
+  studyWords: StudyWord[],
+  days: number = 7
+): DueWordsForecast[] {
+  // Filter to only include words that have FSRS data
+  const validWords = studyWords.filter(w => w.fsrs_due != null);
+
+  // Generate future dates for forecasting
+  const dates = generateForecastDates(days);
+
+  return dates.map((date, index) => {
+    const dueWords = validWords.filter(word => isWordDueOnDate(word, date)).length;
+
+    // Calculate newly due words (due on this day but not the previous day)
+    let newlyDue = dueWords;
+    if (index > 0) {
+      const previousDate = dates[index - 1];
+      if (previousDate) {
+        const previouslyDue = validWords.filter(word => isWordDueOnDate(word, previousDate)).length;
+        newlyDue = Math.max(0, dueWords - previouslyDue);
+      }
+    }
+
+    return {
+      date,
+      dueWords,
+      newlyDue,
+      totalWords: validWords.length,
+    };
+  });
+}
+
+/**
+ * Calculate trend for due words forecast
+ */
+export function calculateDueWordsTrend(
+  dueWordsData: DueWordsForecast[]
+): 'increasing' | 'decreasing' | 'stable' {
+  if (dueWordsData.length < 2) return 'stable';
+
+  const todayData = dueWordsData[0]; // Today (leftmost)
+  const futureData = dueWordsData.slice(1);
+
+  const currentDue = todayData?.dueWords || 0;
+  const peakDue = Math.max(...futureData.map(d => d.dueWords));
+
+  // Calculate trend based on whether due words will increase significantly
+  const change = peakDue - currentDue;
+  const threshold = Math.max(5, currentDue * 0.2); // At least 5 words or 20% increase
+
+  return change > threshold ? 'increasing' : change < -threshold ? 'decreasing' : 'stable';
 }

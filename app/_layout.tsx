@@ -30,12 +30,14 @@ import { ThemedText } from '@/components/ThemedText';
 import { MiniPlayer } from '@/components/audio';
 import { SleepTimer } from '@/components/listen';
 import { AuthProvider, ToastProvider } from '@/components/providers';
+import { StreaksBottomSheet } from '@/components/read/StreaksBottomSheet';
 import { Theme } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
 import { createNavigationOptions } from '@/constants/modal';
 import { QUERY_DEFAULTS } from '@/constants/queryConfig';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
+import { StreaksProvider, useStreaks } from '@/contexts/StreaksContext';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useReadTabDataLoaded } from '@/hooks/app/useArticlesAndDueWordsLoaded';
 import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
@@ -129,6 +131,9 @@ function AppContent() {
   const navigationRef = useNavigationContainerRef();
   const [hasAttemptedRedirect, setHasAttemptedRedirect] = useState(false);
   const router = useRouter();
+
+  // Use streaks context
+  const { isStreaksVisible, closeStreaks } = useStreaks();
   const segments = useSegments();
   const routeLabel = useMemo(
     () => (Array.isArray(segments) && segments.length ? `/${segments.join('/')}` : '__root'),
@@ -188,6 +193,7 @@ function AppContent() {
   }, [session, appReady, isAuthLoading]);
 
   const colors = useColors();
+
   const navigationTheme = useMemo(() => {
     const baseTheme = isDark ? DarkTheme : DefaultTheme;
     // On iOS, ensure the native back button uses our tint color by deriving a theme object
@@ -328,6 +334,9 @@ function AppContent() {
             {/* Audio overlays are isolated to prevent root re-renders on audio ticks */}
             <AudioOverlays />
 
+            {/* Streaks Bottom Sheet - rendered at root level for proper z-index */}
+            <StreaksBottomSheet isVisible={isStreaksVisible} onClose={closeStreaks} />
+
             <StatusBar style={isDark ? 'light' : 'dark'} />
           </View>
         </React.Profiler>
@@ -424,15 +433,19 @@ export default Sentry.wrap(function RootLayout() {
               <SafeAreaProvider>
                 <BottomSheetModalProvider>
                   <ToastProvider>
-                    <Sentry.ErrorBoundary fallback={({ error }) => <ErrorFallback error={error} />}>
-                      {__DEV__ ? (
-                        <React.Profiler id="App" onRender={onProfilerRender}>
+                    <StreaksProvider>
+                      <Sentry.ErrorBoundary
+                        fallback={({ error }) => <ErrorFallback error={error} />}
+                      >
+                        {__DEV__ ? (
+                          <React.Profiler id="App" onRender={onProfilerRender}>
+                            <AppContent />
+                          </React.Profiler>
+                        ) : (
                           <AppContent />
-                        </React.Profiler>
-                      ) : (
-                        <AppContent />
-                      )}
-                    </Sentry.ErrorBoundary>
+                        )}
+                      </Sentry.ErrorBoundary>
+                    </StreaksProvider>
                   </ToastProvider>
                 </BottomSheetModalProvider>
               </SafeAreaProvider>

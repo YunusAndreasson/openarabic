@@ -2,17 +2,58 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { Tabs, router } from 'expo-router';
 import type { JSX } from 'react';
-import React, { Fragment, memo, useEffect, useMemo } from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import React, { Fragment, memo, useCallback, useEffect, useMemo } from 'react';
+import { Platform, Pressable, StyleSheet } from 'react-native';
 
-import HeaderProfile from '@/components/HeaderProfile';
+import { HeaderProfile } from '@/components/HeaderProfile';
+import { ThemedText } from '@/components/ThemedText';
 import EditModeButton from '@/components/ui/EditModeButton';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth';
 import { useColors, useIsDarkMode } from '@/hooks/theme';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
+import { selectionFeedback } from '@/utils/haptics';
+
+const DictionaryButton = memo((): JSX.Element => {
+  const colors = useColors();
+
+  const handlePress = useCallback((): void => {
+    selectionFeedback();
+    router.push(ROUTE_PATHS.PRACTICE_DICTIONARY);
+  }, []);
+
+  return (
+    <Pressable
+      style={[
+        dictionaryButtonStyles.button,
+        {
+          backgroundColor: colors.transparent,
+        },
+      ]}
+      hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+      onPress={handlePress}
+      android_ripple={{ color: colors.navigationRipple, radius: MIN_TOUCH_TARGET.MEDIUM / 2 }}
+    >
+      <ThemedText
+        type="body"
+        weight="semibold"
+        style={[
+          dictionaryButtonStyles.buttonText,
+          {
+            color: colors.tint,
+          },
+        ]}
+        numberOfLines={1}
+      >
+        {STRINGS.DICTIONARY}
+      </ThemedText>
+    </Pressable>
+  );
+});
+
+DictionaryButton.displayName = 'DictionaryButton';
 
 const TAB_SCREENS = [
   {
@@ -84,10 +125,25 @@ const TabBarBackground = memo(() => {
 });
 TabBarBackground.displayName = 'TabBarBackground';
 
+const dictionaryButtonStyles = StyleSheet.create({
+  button: {
+    alignItems: 'center',
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    justifyContent: 'center',
+    minHeight: MIN_TOUCH_TARGET.MEDIUM,
+    minWidth: 70,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
+  },
+  buttonText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.TIGHT,
+  },
+});
+
 export default function TabLayout(): JSX.Element {
   const { session, isLoading } = useAuth();
   const colors = useColors();
-
   // Get due words count using the same hook as the practice screen
   const { dueWords } = useFSRSQueries({ userId: session?.user?.id });
   const dueWordsCount = dueWords?.length ?? 0;
@@ -174,7 +230,10 @@ export default function TabLayout(): JSX.Element {
               ...(screen.name === 'listen' && {
                 headerRight: () => <EditModeButton type="listen" hideWhenEmpty />,
               }),
-              // Dictionary button removed - now accessible through stat cards
+              ...(screen.name === 'practice' && {
+                headerRight: () => <DictionaryButton />,
+              }),
+              // Dictionary button for practice tab
             }}
           />
         ))}
