@@ -479,28 +479,28 @@ jest.mock('@supabase/supabase-js', () => ({
         order: jest.fn().mockReturnThis(),
         limit: jest.fn().mockReturnThis(),
         range: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({ 
-          data: { id: 1, title: 'Test Article', content: 'Test content' }, 
-          error: null 
+        single: jest.fn().mockResolvedValue({
+          data: { id: 1, title: 'Test Article', content: 'Test content' },
+          error: null,
         }),
-        maybeSingle: jest.fn().mockResolvedValue({ 
-          data: { id: 1, title: 'Test Article', content: 'Test content' }, 
-          error: null 
+        maybeSingle: jest.fn().mockResolvedValue({
+          data: { id: 1, title: 'Test Article', content: 'Test content' },
+          error: null,
         }),
-        then: jest.fn().mockResolvedValue({ 
+        then: jest.fn().mockResolvedValue({
           data: [
             { id: 1, title: 'Test Article 1', content: 'Test content 1' },
-            { id: 2, title: 'Test Article 2', content: 'Test content 2' }
-          ], 
-          error: null 
+            { id: 2, title: 'Test Article 2', content: 'Test content 2' },
+          ],
+          error: null,
         }),
       };
-      
+
       return mockQueryBuilder;
     }),
-    rpc: jest.fn().mockResolvedValue({ 
-      data: { result: 'success' }, 
-      error: null 
+    rpc: jest.fn().mockResolvedValue({
+      data: { result: 'success' },
+      error: null,
     }),
     storage: {
       from: jest.fn(() => ({
@@ -546,11 +546,11 @@ jest.mock('@tanstack/react-query', () => {
     ...originalModule,
     useQuery: jest.fn().mockImplementation(({ queryKey, queryFn, enabled = true, initialData }) => {
       if (!enabled) {
-        return { 
-          data: initialData, 
-          isLoading: false, 
-          isFetching: false, 
-          isError: false, 
+        return {
+          data: initialData,
+          isLoading: false,
+          isFetching: false,
+          isError: false,
           error: null,
           refetch: jest.fn().mockResolvedValue({ data: initialData }),
           remove: jest.fn(),
@@ -560,7 +560,7 @@ jest.mock('@tanstack/react-query', () => {
           status: 'idle',
         };
       }
-      
+
       // Actually call the query function to test real logic
       try {
         let data;
@@ -576,12 +576,12 @@ jest.mock('@tanstack/react-query', () => {
         } else {
           data = initialData || [];
         }
-        
-        return { 
-          data, 
-          isLoading: false, 
-          isFetching: false, 
-          isError: false, 
+
+        return {
+          data,
+          isLoading: false,
+          isFetching: false,
+          isError: false,
           error: null,
           refetch: jest.fn().mockResolvedValue({ data }),
           remove: jest.fn(),
@@ -591,11 +591,11 @@ jest.mock('@tanstack/react-query', () => {
           status: 'success',
         };
       } catch (error) {
-        return { 
-          data: initialData, 
-          isLoading: false, 
-          isFetching: false, 
-          isError: true, 
+        return {
+          data: initialData,
+          isLoading: false,
+          isFetching: false,
+          isError: true,
           error,
           refetch: jest.fn().mockRejectedValue(error),
           remove: jest.fn(),
@@ -769,6 +769,9 @@ process.on('unhandledRejection', (reason, promise) => {
 
 // Optimized test timeout for AI efficiency
 jest.setTimeout(15000); // Reduced from default
+
+// React 19 + react-test-renderer compatibility fixes
+global.IS_REACT_ACT_ENVIRONMENT = true;
 
 if (typeof TextEncoder === 'undefined') {
   global.TextEncoder = TextEncoder;

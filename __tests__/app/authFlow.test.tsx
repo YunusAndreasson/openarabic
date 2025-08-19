@@ -165,25 +165,25 @@ jest.mock('expo-blur', () => {
   };
 });
 
-jest.mock('../../app/(tabs)/read/index.tsx', () => {
+jest.mock('@/app/(tabs)/read/index.tsx', () => {
   const React = require('react');
   const { Text } = require('react-native');
   return () => <Text>READ_MOCK</Text>;
 });
 
-jest.mock('../../app/(tabs)/listen/index.tsx', () => {
+jest.mock('@/app/(tabs)/listen/index.tsx', () => {
   const React = require('react');
   const { Text } = require('react-native');
   return () => <Text>LISTEN_MOCK</Text>;
 });
 
-jest.mock('../../app/(tabs)/practice/index.tsx', () => {
+jest.mock('@/app/(tabs)/practice/index.tsx', () => {
   const React = require('react');
   const { Text } = require('react-native');
   return () => <Text>PRACTICE_MOCK</Text>;
 });
 
-jest.mock('../../components/HeaderProfile', () => {
+jest.mock('@/components/HeaderProfile', () => {
   const React = require('react');
   const { TouchableOpacity, Text } = require('react-native');
   const { router } = require('expo-router');
@@ -194,15 +194,15 @@ jest.mock('../../components/HeaderProfile', () => {
   );
 });
 
-jest.mock('../../components/ui/EditModeButton', () => () => null);
+jest.mock('@/components/ui/EditModeButton', () => () => null);
 
 // Mock notification service to prevent expo-notifications import error
-jest.mock('../../services/notificationService', () => ({
+jest.mock('@/services/notificationService', () => ({
   updateAppIconBadge: jest.fn(),
 }));
 
 // Mock reading streak service
-jest.mock('../../services/readingStreak', () => ({
+jest.mock('@/services/readingStreak', () => ({
   ReadingStreakService: {
     getStreakHistory: jest.fn().mockResolvedValue({
       currentStreak: 0,
@@ -214,7 +214,7 @@ jest.mock('../../services/readingStreak', () => ({
 }));
 
 // Mock streak history hook
-jest.mock('../../hooks/articles/useStreakHistory', () => ({
+jest.mock('@/hooks/articles/useStreakHistory', () => ({
   useStreakHistory: () => ({
     streakHistory: {
       currentStreak: 0,
@@ -229,7 +229,7 @@ jest.mock('../../hooks/articles/useStreakHistory', () => ({
   }),
 }));
 
-jest.mock('../../app/(tabs)/read/account/index.tsx', () => {
+jest.mock('@/app/(tabs)/read/account/index.tsx', () => {
   const React = require('react');
   const { TouchableOpacity, Text } = require('react-native');
   const { useAccountScreen } = require('@/hooks/account');

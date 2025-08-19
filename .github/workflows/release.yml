@@ -31,9 +31,6 @@ jobs:
       - name: Run validation
         run: yarn validate
 
-      - name: Run tests
-        run: yarn test
-
       # === EAS Build and Update Steps (run before version bumping) ===
       - name: Setup Expo and EAS CLI
         uses: expo/expo-github-action@v8

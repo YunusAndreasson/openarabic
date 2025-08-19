@@ -27,7 +27,7 @@ interface StreaksProviderProps {
   children: ReactNode;
 }
 
-export const StreaksProvider = ({ children }: StreaksProviderProps): React.JSX.Element => {
+export const StreaksProvider = ({ children }: StreaksProviderProps): React.ReactElement => {
   const [isStreaksVisible, setIsStreaksVisible] = useState(false);
 
   const openStreaks = useCallback(() => {
