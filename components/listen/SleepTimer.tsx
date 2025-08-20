@@ -8,9 +8,9 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
-import { STRINGS } from '@/constants/strings';
+import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { lightFeedback, successFeedback } from '@/utils/haptics';
 import { formatSecondsToClock } from '@/utils/time';
 
 export interface SleepTimerProps {
@@ -18,40 +18,45 @@ export interface SleepTimerProps {
   onClose: () => void;
   onTimerSet: (minutes: number) => void;
   onTimerCancel: () => void;
-  remainingTime?: number; // in seconds
-  isActive?: boolean;
+  isTimerActive?: boolean;
+  remainingTime?: number;
 }
 
 const timerOptions = [5, 10, 15, 30, 45, 60]; // minutes
 const DEFAULT_SELECTED_MINUTES = 15; // Pre-select 15 minutes
-
-// Use shared formatter
 
 const SleepTimerComponent = ({
   isVisible,
   onClose,
   onTimerSet,
   onTimerCancel,
+  isTimerActive = false,
   remainingTime = 0,
-  isActive = false,
 }: SleepTimerProps) => {
-  const colors = useColors();
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const colors = useColors();
 
   // Pre-select 15 minutes as default
   const [selectedMinutes, setSelectedMinutes] = useState<number>(DEFAULT_SELECTED_MINUTES);
 
-  // Configure snap points - dynamic based on active state
+  // Configure snap points - dynamic based on timer state
   const snapPoints = useMemo(() => {
-    // Base height for header + content + padding
-    const baseHeight = 120;
-    const gridHeight = isActive ? 100 : 180; // Less height when showing active timer
-    const buttonHeight = 60;
-    const totalHeight = baseHeight + gridHeight + buttonHeight;
-    return [Math.min(totalHeight, 450)];
-  }, [isActive]);
+    if (isTimerActive) {
+      const baseHeight = 120;
+      const timeDisplayHeight = 100;
+      const buttonHeight = 70;
+      const totalHeight = baseHeight + timeDisplayHeight + buttonHeight;
+      return [Math.min(totalHeight, 300)];
+    } else {
+      const baseHeight = 120;
+      const gridHeight = 200;
+      const buttonHeight = 70;
+      const totalHeight = baseHeight + gridHeight + buttonHeight;
+      return [Math.min(totalHeight, 400)];
+    }
+  }, [isTimerActive]);
 
-  // Handle visibility changes - use expand/close like TimePicker
+  // Handle visibility changes
   useEffect(() => {
     if (isVisible) {
       bottomSheetRef.current?.expand();
@@ -61,11 +66,13 @@ const SleepTimerComponent = ({
   }, [isVisible]);
 
   const handleSetTimer = useCallback(() => {
+    successFeedback();
     onTimerSet(selectedMinutes);
     onClose();
   }, [selectedMinutes, onTimerSet, onClose]);
 
   const handleCancelTimer = useCallback(() => {
+    lightFeedback();
     onTimerCancel();
     onClose();
   }, [onTimerCancel, onClose]);
@@ -83,112 +90,78 @@ const SleepTimerComponent = ({
     [onClose]
   );
 
-  // Memoize dynamic styles to prevent recalculation
-  const dynamicStyles = useMemo(
-    () => ({
-      background: { backgroundColor: colors.elevation1 },
-      indicator: { backgroundColor: colors.modalIndicator },
-      header: { borderBottomColor: colors.borderOverlay },
-    }),
-    [colors.elevation1, colors.modalIndicator, colors.borderOverlay]
-  );
+  // Don't render anything if not visible
+  if (!isVisible) {
+    return null;
+  }
 
   return (
     <BottomSheet
       ref={bottomSheetRef}
-      index={isVisible ? 0 : -1}
       snapPoints={snapPoints}
-      enablePanDownToClose
-      enableOverDrag={false}
-      enableDynamicSizing={false}
-      activeOffsetY={[-10, 10]}
+      index={0}
+      enablePanDownToClose={true}
       onClose={onClose}
-      backgroundStyle={[styles.background, dynamicStyles.background]}
-      handleIndicatorStyle={[styles.indicator, dynamicStyles.indicator]}
       backdropComponent={renderBackdrop}
       style={styles.modalStyle}
+      backgroundStyle={[styles.background, { backgroundColor: colors.elevation1 }]}
+      handleIndicatorStyle={[styles.indicator, { backgroundColor: colors.modalIndicator }]}
     >
       <BottomSheetView style={styles.container}>
-        {/* Header */}
-        <View style={[styles.header, dynamicStyles.header]}>
-          <View style={styles.headerContent}>
-            <ThemedText style={styles.title} type="heading2" weight="bold">
-              {STRINGS.SLEEP_TIMER_TITLE}
-            </ThemedText>
-            <ThemedText style={styles.subtitle} type="body" variant="secondary">
-              {isActive && remainingTime > 0
-                ? STRINGS.SLEEP_TIMER_AUTOMATIC
-                : STRINGS.SLEEP_TIMER_CHOOSE_WHEN}
-            </ThemedText>
-          </View>
-        </View>
+        {/* Header - always show title */}
+        <ThemedText style={styles.title} type="heading1" weight="bold">
+          Sleep Timer
+        </ThemedText>
 
-        {/* Content */}
-        <View style={styles.content}>
-          {isActive && remainingTime > 0 ? (
-            <View style={styles.activeTimerContainer}>
-              <View style={styles.timeDisplay}>
-                <ThemedText colorName="tint" style={styles.timeText} type="heading1">
-                  {formatSecondsToClock(remainingTime)}
-                </ThemedText>
-              </View>
-              <ThemedText style={styles.activeDescription} type="body" variant="secondary">
-                {STRINGS.REMAINING}
-              </ThemedText>
-              <ThemedButton
-                style={[styles.fullWidthButton, { borderColor: colors.borderOverlay }]}
-                title={STRINGS.CANCEL_TIMER}
-                variant="outlined"
-                onPress={handleCancelTimer}
-              />
-            </View>
-          ) : (
-            <>
-              <View style={styles.optionsGrid}>
-                {timerOptions.map(minutes => (
+        {!isTimerActive ? (
+          <>
+            <View style={styles.optionsGrid}>
+              {timerOptions.map(minutes => (
+                <View key={minutes} style={styles.optionContainer}>
                   <ThemedButton
-                    key={minutes}
-                    title={STRINGS.MINUTES.replace('{minutes}', minutes.toString())}
+                    title={`${minutes}m`}
                     variant={selectedMinutes === minutes ? 'filled' : 'outlined'}
-                    style={[
-                      styles.optionButton,
-                      selectedMinutes === minutes
-                        ? {
-                            backgroundColor: colors.tint,
-                            borderColor: colors.tint,
-                          }
-                        : {
-                            borderColor: colors.borderOverlay,
-                            backgroundColor: colors.elevation2,
-                          },
-                    ]}
                     onPress={handleOptionSelect(minutes)}
+                    style={styles.optionButton}
                   />
-                ))}
-              </View>
+                </View>
+              ))}
+            </View>
 
+            <View style={styles.buttonContainer}>
               <ThemedButton
                 style={styles.fullWidthButton}
-                title={STRINGS.START_TIMER}
+                title="Start timer"
                 variant="filled"
                 onPress={handleSetTimer}
               />
-            </>
-          )}
-        </View>
+            </View>
+          </>
+        ) : (
+          <View style={styles.activeTimerContainer}>
+            <View style={styles.timeDisplay}>
+              <ThemedText colorName="tint" style={styles.timeText} type="heading1">
+                {formatSecondsToClock(remainingTime)}
+              </ThemedText>
+            </View>
+            <ThemedText style={styles.activeDescription} type="body" variant="secondary">
+              Time remaining
+            </ThemedText>
+            <View style={styles.buttonContainer}>
+              <ThemedButton title="Stop timer" variant="filled" onPress={handleCancelTimer} />
+            </View>
+          </View>
+        )}
       </BottomSheetView>
     </BottomSheet>
   );
 };
 
-// Simplified memo comparison
-const arePropsEqual = (prevProps: SleepTimerProps, nextProps: SleepTimerProps): boolean => {
-  return (
-    prevProps.isVisible === nextProps.isVisible &&
-    prevProps.isActive === nextProps.isActive &&
-    Math.abs((prevProps.remainingTime ?? 0) - (nextProps.remainingTime ?? 0)) <= 1
-  );
-};
+// Memo comparison - include timer state for proper re-rendering
+const arePropsEqual = (prevProps: SleepTimerProps, nextProps: SleepTimerProps): boolean =>
+  prevProps.isVisible === nextProps.isVisible &&
+  prevProps.isTimerActive === nextProps.isTimerActive &&
+  prevProps.remainingTime === nextProps.remainingTime;
 
 const styles = StyleSheet.create({
   background: {
@@ -208,71 +181,55 @@ const styles = StyleSheet.create({
     zIndex: 99999,
   },
 
-  header: {
-    alignItems: 'flex-start',
-    borderBottomWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-  },
-
-  headerContent: {
-    flex: 1,
-  },
-
   title: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.2,
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-
-  subtitle: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
-  },
-
-  content: {
-    padding: LAYOUT.SPACING.LARGE,
-  },
-
-  activeTimerContainer: {
-    alignItems: 'center',
-  },
-
-  timeDisplay: {
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-  },
-
-  timeText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE + LAYOUT.SPACING.MEDIUM, // 28 + 12 = 40px - consistent display size
-    fontVariant: ['tabular-nums'],
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.REGULAR,
-    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.EXTRA_TIGHT,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE + LAYOUT.SPACING.XXXLARGE, // 28 + 32 = 60px - proportional
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
+    marginBottom: LAYOUT.SPACING.TINY,
     textAlign: 'center',
-  },
-
-  activeDescription: {
-    marginBottom: LAYOUT.SPACING.SMALL,
   },
 
   optionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: LAYOUT.SPACING.SMALL + 2,
-    justifyContent: 'space-between',
     marginBottom: LAYOUT.SPACING.XLARGE,
+  },
+
+  optionContainer: {
+    width: '50%',
+    paddingHorizontal: LAYOUT.SPACING.TINY,
+    paddingVertical: LAYOUT.SPACING.TINY,
   },
 
   optionButton: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM + 2,
     paddingVertical: LAYOUT.SPACING.MEDIUM + 2,
-    width: '48%', // Fixed width for proper 2-column layout (48% allows for gap spacing)
+    width: '100%',
   },
 
   fullWidthButton: {
     width: '100%',
+  },
+
+  activeTimerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+  },
+
+  timeDisplay: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+
+  timeText: {
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.5,
+  },
+
+  activeDescription: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+
+  buttonContainer: {
+    alignSelf: 'center',
+    paddingBottom: LAYOUT.SPACING.XLARGE,
   },
 });
 

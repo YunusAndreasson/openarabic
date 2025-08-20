@@ -396,7 +396,7 @@ const AudioOverlays = memo(function AudioOverlays() {
       {/* SleepTimer rendered last to ensure it overlays everything */}
       <SleepTimer
         isVisible={globalAudioState.showSleepTimerModal}
-        isActive={globalAudioState.isTimerActive}
+        isTimerActive={globalAudioState.isTimerActive}
         remainingTime={globalAudioState.sleepTimerRemainingTime}
         onClose={globalAudioState.onSleepTimerClose}
         onTimerSet={globalAudioState.onSleepTimerSet}

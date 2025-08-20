@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useListenScreen } from '@/hooks/listen/useListenScreen';
 import type { Article } from '@/types/articles.types';
 import type { ReadingListItem } from '@/types/readingList.types';
+import { successFeedback } from '@/utils/haptics';
 
 // MiniPlayer-compatible article interface
 interface MiniPlayerArticle {
@@ -65,7 +66,9 @@ export function useGlobalAudioState(): GlobalAudioState {
 
   // Sleep timer integration
   const sleepTimer = useSleepTimer(() => {
+    successFeedback(); // Haptic feedback when timer completes
     audioPlayer.stop();
+    setShowSleepTimerModal(false); // Close modal when timer completes
   });
 
   // Get current article ID from audio player
@@ -164,7 +167,7 @@ export function useGlobalAudioState(): GlobalAudioState {
   const handleSleepTimerSet = useCallback(
     (minutes: number) => {
       sleepTimer.actions.startTimer(minutes);
-      setShowSleepTimerModal(false);
+      // Don't close modal immediately - let it stay open to show countdown
     },
     [sleepTimer.actions]
   );
