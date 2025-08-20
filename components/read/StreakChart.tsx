@@ -41,7 +41,8 @@ export const StreakChart = memo<StreakChartProps>(
       return map;
     }, [streakPeriods]);
 
-    // Calculate bar width based on available space (matching StreakMetrics padding)
+    // Calculate bar width based on available space (matching parent container width exactly)
+    // Container uses LAYOUT.SPACING.LARGE * 2 (16px * 2 = 32px total)
     const chartWidth = SCREEN_WIDTH - LAYOUT.SPACING.LARGE * 2;
     const barWidth = Math.max(
       8,
@@ -155,7 +156,7 @@ StreakChart.displayName = 'StreakChart';
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: LAYOUT.SPACING.LARGE, // Match StreakMetrics padding
+    // Remove paddingHorizontal since it's handled by parent chartContainer
     paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
   chartArea: {

@@ -80,23 +80,17 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
       handleIndicatorStyle={dynamicStyles.indicator}
       backdropComponent={renderBackdrop}
     >
-      <BottomSheetView
-        style={[styles.container, { minHeight: 450, padding: 20 }]}
-        onLayout={event => {
-          const { height, width } = event.nativeEvent.layout;
-          console.log('🔥 BottomSheetView layout:', { height, width });
-        }}
-      >
+      <BottomSheetView style={styles.container}>
         {isStreakLoading ? (
           <View style={styles.loadingContainer}>
             <ThemedText type="body" colorName="textTertiary">
-              Loading streaks...
+              Loading your streak
             </ThemedText>
           </View>
         ) : isStreakError ? (
           <View style={styles.errorContainer}>
             <ThemedText type="body" colorName="error">
-              Failed to load streaks
+              Can&apos;t load streak data. Try again
             </ThemedText>
           </View>
         ) : streakHistory ? (
@@ -104,10 +98,10 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
             {/* Header */}
             <View style={styles.header}>
               <ThemedText type="heading1" weight="bold" style={styles.mainTitle}>
-                Reading Progress
+                Your reading streak
               </ThemedText>
               <ThemedText type="body" colorName="textTertiary" style={styles.subtitle}>
-                Your daily reading consistency over the past 30 days
+                Keep up the great momentum
               </ThemedText>
             </View>
 
@@ -119,10 +113,10 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
             {/* Streak Chart */}
             <View style={styles.chartContainer}>
               <ThemedText type="heading3" weight="semibold" style={styles.chartTitle}>
-                Daily Activity
+                Last 30 days
               </ThemedText>
               <ThemedText type="caption" colorName="textTertiary" style={styles.chartSubtitle}>
-                Track your reading patterns
+                Each bar shows a reading day
               </ThemedText>
               <StreakChart
                 dailyActivity={streakHistory.dailyActivity}
@@ -133,7 +127,7 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
         ) : (
           <View style={styles.emptyContainer}>
             <ThemedText type="body" colorName="textTertiary">
-              No streak data available
+              Start reading to build your streak
             </ThemedText>
           </View>
         )}
@@ -153,60 +147,60 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
   },
+  // Perfect visual hierarchy container structure
   container: {
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.LARGE, // 16px - consistent horizontal padding
+    paddingTop: LAYOUT.SPACING.MEDIUM, // 12px - breathing room from indicator
+    paddingBottom: LAYOUT.SPACING.XLARGE, // 24px - extra bottom space for comfortable gesture
   },
+  // Section 1: Header (highest hierarchy)
   header: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.SMALL,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.XLARGE, // 24px - major section separation
     alignItems: 'center',
   },
   mainTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-    marginBottom: LAYOUT.SPACING.TINY,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE, // 28px - primary modal title (1.27x ratio from 22px)
+    marginBottom: LAYOUT.SPACING.TINY, // 4px - tight coupling with subtitle
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // 15px - secondary descriptive text (1.87x ratio from 28px)
     textAlign: 'center',
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
   },
+  // Section 2: Streak Metrics (secondary hierarchy)
   streakMetricsContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.LARGE, // 16px - moderate section separation
   },
+  // Section 3: Chart (tertiary hierarchy)
   chartContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    // No bottom margin - last section
   },
   chartTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    marginBottom: LAYOUT.SPACING.TINY,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE, // 20px - section title (1.4x ratio from 15px subtitle)
+    marginBottom: LAYOUT.SPACING.TINY, // 4px - tight coupling with subtitle
     textAlign: 'center',
   },
   chartSubtitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // 13px - tertiary descriptive text (1.54x ratio from 20px)
     textAlign: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.MEDIUM, // 12px - moderate space before chart
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.4,
   },
+  // State containers
   loadingContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.XLARGE,
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
   },
   errorContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.XLARGE,
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
   },
   emptyContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.XLARGE,
     alignItems: 'center',
     justifyContent: 'center',

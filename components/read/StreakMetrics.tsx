@@ -58,10 +58,6 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
     return colors.tint;
   };
 
-  const formatDaysLabel = (count: number) => {
-    return count === 1 ? 'day' : 'days';
-  };
-
   const currentStreakColor = getStreakColor(metrics.currentStreak);
 
   return (
@@ -77,14 +73,14 @@ export const StreakMetrics = memo<StreakMetricsProps>(({ metrics }) => {
         <MetricCard
           icon="trophy"
           value={metrics.longestStreak.toString()}
-          label="Best streak"
+          label="Best ever"
           color={colors.warning}
         />
 
         <MetricCard
           icon="calendar"
           value={metrics.totalReadingDays.toString()}
-          label={`Total ${formatDaysLabel(metrics.totalReadingDays)}`}
+          label={`${metrics.totalReadingDays === 1 ? 'Day' : 'Days'} read`}
           color={colors.tint}
         />
       </View>
@@ -96,36 +92,36 @@ StreakMetrics.displayName = 'StreakMetrics';
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    // No padding - handled by parent container for perfect alignment
   },
   metricsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: LAYOUT.SPACING.SMALL,
+    gap: LAYOUT.SPACING.SMALL, // 8px - balanced card separation
   },
   metricCard: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.LARGE, // 16px - generous internal breathing room
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM, // 12px - comfortable internal padding
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     ...LAYOUT.ELEVATION.SMALL,
   },
   iconContainer: {
-    width: MIN_TOUCH_TARGET.SMALL,
+    width: MIN_TOUCH_TARGET.SMALL, // 32px - proper touch target
     height: MIN_TOUCH_TARGET.SMALL,
     borderRadius: MIN_TOUCH_TARGET.SMALL / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.SMALL, // 8px - visual hierarchy spacing
   },
   metricValue: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    marginBottom: LAYOUT.SPACING.TINY,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE, // Primary metric value
+    marginBottom: LAYOUT.SPACING.TINY, // 4px - tight coupling with label
     textAlign: 'center',
   },
   metricLabel: {
     textAlign: 'center',
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // Secondary label text
   },
 });
