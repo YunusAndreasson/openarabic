@@ -12,7 +12,7 @@ interface RetrievabilityChartProps {
   studyWords: StudyWord[];
   onInfoPress?: () => void;
   hideTitle?: boolean;
-  showWarningLine?: boolean; // Whether to show the 70% warning line
+  showWarningLine?: boolean; // Whether to show the 75% warning line
 }
 
 interface RetrievabilityRecord {

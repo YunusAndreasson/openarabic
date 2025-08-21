@@ -44,7 +44,7 @@ const GAUGE_BOUNDS = {
 const RETENTION_THRESHOLDS = {
   POOR: MEMORY_CAPACITY_THRESHOLDS.POOR, // Red: <40% - urgent practice needed
   MODERATE: MEMORY_CAPACITY_THRESHOLDS.MODERATE, // Orange: 40-69% - needs attention
-  GOOD: MEMORY_CAPACITY_THRESHOLDS.GOOD, // Green: 70%+ - good retention
+  GOOD: MEMORY_CAPACITY_THRESHOLDS.GOOD, // Green: 75%+ - good retention
 } as const;
 
 export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
@@ -69,7 +69,7 @@ export const MemoryRetentionGauge = memo<MemoryRetentionGaugeProps>(
       const delta = Math.abs(retentionShared.value - next);
       if (delta < 0.5) return;
 
-      // Check if we're entering the green area (70%+) for the first time
+      // Check if we're entering the green area (75%+) for the first time
       const wasBelowGreen = prevRetentionRef.current < MEMORY_CAPACITY_THRESHOLDS.GOOD;
       const isNowGreen = next >= MEMORY_CAPACITY_THRESHOLDS.GOOD;
 

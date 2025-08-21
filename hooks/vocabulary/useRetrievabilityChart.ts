@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { useChartColors } from '@charts/chartColors';
 import {
   calculateDataPointPositions,
+  CHART_VISUAL,
   DAYS_7,
   GRAPH_HEIGHT_LARGE,
   useGraphWidth,
@@ -70,11 +71,12 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
 
     retrievabilityData.forEach((data, index) => {
       const x = dataPointPositions[index] || 0;
-      // Add padding to prevent data points from being clipped at chart edges
-      const padding = 8; // 8px padding from top and bottom
-      const chartHeight = GRAPH_HEIGHT_LARGE - padding * 2;
+      // Use consistent padding approach like MasteryChart
+      const TOP_PADDING = CHART_VISUAL.CHART_TOP_PADDING;
+      const chartHeight = GRAPH_HEIGHT_LARGE - TOP_PADDING;
       const y =
-        padding + chartHeight - (data.averageRetrievability / maxRetrievability) * chartHeight;
+        TOP_PADDING +
+        (chartHeight - (data.averageRetrievability / maxRetrievability) * chartHeight);
       points.push({ x, y, retrievability: data.averageRetrievability, date: data.date });
 
       if (index === 0) {
@@ -82,8 +84,13 @@ export function useRetrievabilityChart(studyWords: StudyWord[]): UseRetrievabili
       } else {
         const prevPoint = points[index - 1];
         if (prevPoint) {
-          const controlX = (prevPoint.x + x) / 2;
-          path.quadTo(controlX, prevPoint.y, x, y);
+          // Create smooth curves using cubic bezier (like MasteryChart)
+          // This creates much more natural-looking curves instead of sharp angles
+          const controlX1 = prevPoint.x + (x - prevPoint.x) * 0.3;
+          const controlY1 = prevPoint.y;
+          const controlX2 = prevPoint.x + (x - prevPoint.x) * 0.7;
+          const controlY2 = y;
+          path.cubicTo(controlX1, controlY1, controlX2, controlY2, x, y);
         }
       }
     });

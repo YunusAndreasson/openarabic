@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { useChartColors } from '@charts/chartColors';
 import {
   calculateDataPointPositions,
+  CHART_VISUAL,
   DAYS_7,
   GRAPH_HEIGHT_LARGE,
   useGraphWidth,
@@ -67,10 +68,13 @@ export function useDueWordsChart(studyWords: StudyWord[]): UseDueWordsChartResul
 
     dueWordsData.forEach((data, index) => {
       const x = dataPointPositions[index] || 0;
-      // Add padding to prevent data points from being clipped at chart edges
-      const padding = 8; // 8px padding from top and bottom
-      const chartHeight = GRAPH_HEIGHT_LARGE - padding * 2;
-      const y = padding + chartHeight - (data.dueWords / maxDueWords) * chartHeight;
+      // Use consistent padding approach like MasteryChart
+      const TOP_PADDING = CHART_VISUAL.CHART_TOP_PADDING;
+      const chartHeight = GRAPH_HEIGHT_LARGE - TOP_PADDING;
+      // Fix Y-coordinate calculation: higher due words should be at top (more concerning)
+      // When dueWords = 0, y = TOP_PADDING + chartHeight (bottom)
+      // When dueWords = maxDueWords, y = TOP_PADDING (top)
+      const y = TOP_PADDING + (chartHeight - (data.dueWords / maxDueWords) * chartHeight);
       points.push({ x, y, dueWords: data.dueWords, date: data.date });
 
       if (index === 0) {
@@ -78,8 +82,13 @@ export function useDueWordsChart(studyWords: StudyWord[]): UseDueWordsChartResul
       } else {
         const prevPoint = points[index - 1];
         if (prevPoint) {
-          const controlX = (prevPoint.x + x) / 2;
-          path.quadTo(controlX, prevPoint.y, x, y);
+          // Create smooth curves using cubic bezier (like MasteryChart)
+          // This creates much more natural-looking curves
+          const controlX1 = prevPoint.x + (x - prevPoint.x) * 0.3;
+          const controlY1 = prevPoint.y;
+          const controlX2 = prevPoint.x + (x - prevPoint.x) * 0.7;
+          const controlY2 = y;
+          path.cubicTo(controlX1, controlY1, controlX2, controlY2, x, y);
         }
       }
     });

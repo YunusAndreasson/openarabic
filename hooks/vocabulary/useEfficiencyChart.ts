@@ -118,11 +118,15 @@ export function useEfficiencyChart(studyWords: StudyWord[]): UseEfficiencyChartR
       if (index === 0) {
         path.moveTo(x, y);
       } else {
-        // Create smooth curves using quadratic bezier
+        // Create smooth curves using cubic bezier (like MasteryChart)
+        // This creates much more natural-looking curves instead of sharp angles
         const prevPoint = points[index - 1];
         if (prevPoint) {
-          const controlX = (prevPoint.x + x) / 2;
-          path.quadTo(controlX, prevPoint.y, x, y);
+          const controlX1 = prevPoint.x + (x - prevPoint.x) * 0.3;
+          const controlY1 = prevPoint.y;
+          const controlX2 = prevPoint.x + (x - prevPoint.x) * 0.7;
+          const controlY2 = y;
+          path.cubicTo(controlX1, controlY1, controlX2, controlY2, x, y);
         }
       }
     });

@@ -75,7 +75,7 @@ export const MEMORY_CAPACITY_THRESHOLDS = {
   /** Below this threshold shows orange warning (moderate retention) */
   MODERATE: 70,
   /** Above this threshold shows green (good retention) */
-  GOOD: 70,
+  GOOD: 75,
 } as const;
 
 // Optimized FSRS configuration

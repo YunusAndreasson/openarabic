@@ -222,7 +222,7 @@ export const STRINGS = {
 
   // Memory retention modal
   MEMORY_RETENTION_EXPLANATION:
-    'Memory strength shows how many words you still remember. At 100%, you remember all your vocabulary.',
+    'Memory strength shows how many words you still remember. At 100%, you remember all your vocabulary. Try to to stay over 75% before you add new words.',
   MEMORY_RETENTION_TIP:
     'Stay above the {threshold}% threshold line. Practice existing words before adding new ones.',
 

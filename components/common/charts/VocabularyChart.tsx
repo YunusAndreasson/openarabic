@@ -47,7 +47,7 @@ interface VocabularyChartProps<T> {
   hasData: boolean;
   emptyStateText: string;
   bottomSummary?: { label: string; value: string }[];
-  showWarningLine?: boolean; // Whether to show the 70% warning line
+  showWarningLine?: boolean; // Whether to show the 75% warning line
 }
 
 // Optimized comparison function with shallow array checks and stable references
