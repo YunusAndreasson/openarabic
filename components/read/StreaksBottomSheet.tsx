@@ -97,7 +97,7 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
           <>
             {/* Header */}
             <View style={styles.header}>
-              <ThemedText type="heading1" weight="bold" style={styles.mainTitle}>
+              <ThemedText type="heading3" weight="bold">
                 Your reading streak
               </ThemedText>
               <ThemedText type="body" colorName="textTertiary" style={styles.subtitle}>
@@ -139,14 +139,8 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
 StreaksBottomSheet.displayName = 'StreaksBottomSheet';
 
 const styles = StyleSheet.create({
-  bottomSheet: {
-    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
-  indicator: {
-    width: 40,
-    height: 4,
-  },
+  bottomSheet: LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet,
+  indicator: LAYOUT.BOTTOM_SHEET.STYLES.indicator,
   // Perfect visual hierarchy container structure
   container: {
     paddingHorizontal: LAYOUT.SPACING.LARGE, // 16px - consistent horizontal padding
@@ -155,16 +149,15 @@ const styles = StyleSheet.create({
   },
   // Section 1: Header (highest hierarchy)
   header: {
+    ...LAYOUT.BOTTOM_SHEET.HEADER,
     marginBottom: LAYOUT.SPACING.XLARGE, // 24px - major section separation
-    alignItems: 'center',
   },
   mainTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE, // 28px - primary modal title (1.27x ratio from 22px)
     marginBottom: LAYOUT.SPACING.TINY, // 4px - tight coupling with subtitle
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // 15px - secondary descriptive text (1.87x ratio from 28px)
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // 15px - secondary descriptive text
     textAlign: 'center',
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
   },

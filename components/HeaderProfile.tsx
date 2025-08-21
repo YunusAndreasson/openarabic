@@ -45,7 +45,6 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
   }, []);
 
   const handleStreakPress = useCallback(() => {
-    console.log('🔥 STREAK BUTTON PRESSED');
     openStreaks();
   }, [openStreaks]);
 

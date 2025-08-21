@@ -109,9 +109,11 @@ const SleepTimerComponent = ({
     >
       <BottomSheetView style={styles.container}>
         {/* Header - always show title */}
-        <ThemedText style={styles.title} type="heading1" weight="bold">
-          Sleep Timer
-        </ThemedText>
+        <View style={styles.header}>
+          <ThemedText type="heading3" weight="bold">
+            Sleep Timer
+          </ThemedText>
+        </View>
 
         {!isTimerActive ? (
           <>
@@ -181,11 +183,7 @@ const styles = StyleSheet.create({
     zIndex: 99999,
   },
 
-  title: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
-    marginBottom: LAYOUT.SPACING.TINY,
-    textAlign: 'center',
-  },
+  header: LAYOUT.BOTTOM_SHEET.HEADER,
 
   optionsGrid: {
     flexDirection: 'row',

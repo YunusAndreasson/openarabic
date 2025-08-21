@@ -112,23 +112,12 @@ export const WordsMasteredBottomSheet = memo<WordsMasteredBottomSheetProps>(
 WordsMasteredBottomSheet.displayName = 'WordsMasteredBottomSheet';
 
 const styles = StyleSheet.create({
-  bottomSheet: {
-    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
-  indicator: {
-    width: 40,
-    height: 4,
-  },
+  bottomSheet: LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet,
+  indicator: LAYOUT.BOTTOM_SHEET.STYLES.indicator,
   container: {
     paddingBottom: LAYOUT.SPACING.MEDIUM, // Reduced bottom padding
   },
-  header: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.TINY,
-    marginBottom: LAYOUT.SPACING.TINY,
-    alignItems: 'center', // Center the title
-  },
+  header: LAYOUT.BOTTOM_SHEET.HEADER,
   chartContainer: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM, // Reduced padding
     paddingBottom: LAYOUT.SPACING.TINY, // Minimal space after chart

@@ -192,8 +192,7 @@ const styles = StyleSheet.create({
     paddingBottom: LAYOUT.SPACING.XLARGE, // Use larger static padding like TimePicker
   },
   header: {
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    ...LAYOUT.BOTTOM_SHEET.HEADER,
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
 

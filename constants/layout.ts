@@ -287,6 +287,22 @@ export const LAYOUT = {
       WIDTH: BASE_UNIT * 9, // 36 - responsive to base unit
       HEIGHT: BASE_UNIT, // 4 - responsive to base unit
     },
+    HEADER: {
+      paddingHorizontal: SPACING_SCALE.MEDIUM, // 12 - consistent with practice bottom sheets
+      paddingBottom: SPACING_SCALE.TINY, // 4 - consistent with practice bottom sheets
+      marginBottom: SPACING_SCALE.TINY, // 4 - consistent with practice bottom sheets
+      alignItems: 'center' as const, // Center the title
+    },
+    STYLES: {
+      bottomSheet: {
+        borderTopLeftRadius: SPACING_SCALE.MEDIUM, // 12 - consistent border radius
+        borderTopRightRadius: SPACING_SCALE.MEDIUM, // 12 - consistent border radius
+      },
+      indicator: {
+        width: BASE_UNIT * 9, // 36 - consistent indicator width
+        height: BASE_UNIT, // 4 - consistent indicator height
+      },
+    },
   },
 
   /** Height for individual sentence items */

@@ -24,6 +24,7 @@ import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
+import { mediumFeedback } from '@/utils/haptics';
 
 export default function VocabularyScreen(): JSX.Element {
   const { user } = useAuth();
@@ -89,6 +90,7 @@ export default function VocabularyScreen(): JSX.Element {
   // Handle starting review - only for due words now
   const handleStartReview = useCallback(() => {
     if (!user) return;
+    mediumFeedback();
     router.push(getPracticeReviewRoute());
   }, [user, router]);
 

@@ -1,9 +1,5 @@
-import BottomSheet, {
-  BottomSheetBackdrop,
-  type BottomSheetBackdropProps,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import { memo, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -13,6 +9,7 @@ import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
+import { COMMON_BOTTOM_SHEET_PROPS, useBottomSheetBackdrop } from '@/utils/bottomSheetUtils';
 
 interface DueWordsBottomSheetProps {
   isVisible: boolean;
@@ -50,12 +47,7 @@ export const DueWordsBottomSheet = memo<DueWordsBottomSheetProps>(({ isVisible, 
   }, [isVisible]);
 
   // Backdrop component
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} onPress={onClose} />
-    ),
-    [onClose]
-  );
+  const renderBackdrop = useBottomSheetBackdrop(onClose);
 
   const dynamicStyles = useMemo(
     () => ({
@@ -73,17 +65,12 @@ export const DueWordsBottomSheet = memo<DueWordsBottomSheetProps>(({ isVisible, 
   return (
     <BottomSheet
       ref={bottomSheetRef}
-      index={0}
       snapPoints={snapPoints}
-      enablePanDownToClose
-      enableOverDrag={false}
-      enableDynamicSizing={false}
-      animateOnMount={true}
-      activeOffsetY={[-10, 10]}
       onClose={onClose}
       backgroundStyle={dynamicStyles.bottomSheet}
       handleIndicatorStyle={dynamicStyles.indicator}
       backdropComponent={renderBackdrop}
+      {...COMMON_BOTTOM_SHEET_PROPS}
     >
       <BottomSheetView style={styles.container}>
         {/* Header */}
@@ -112,23 +99,12 @@ export const DueWordsBottomSheet = memo<DueWordsBottomSheetProps>(({ isVisible, 
 DueWordsBottomSheet.displayName = 'DueWordsBottomSheet';
 
 const styles = StyleSheet.create({
-  bottomSheet: {
-    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
-  indicator: {
-    width: 40,
-    height: 4,
-  },
+  bottomSheet: LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet,
+  indicator: LAYOUT.BOTTOM_SHEET.STYLES.indicator,
   container: {
     paddingBottom: LAYOUT.SPACING.MEDIUM, // Reduced bottom padding
   },
-  header: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.TINY,
-    marginBottom: LAYOUT.SPACING.TINY,
-    alignItems: 'center', // Center the title
-  },
+  header: LAYOUT.BOTTOM_SHEET.HEADER,
   chartContainer: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM, // Reduced padding
     paddingBottom: LAYOUT.SPACING.TINY, // Minimal space after chart
