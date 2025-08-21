@@ -90,12 +90,12 @@ class SimpleAudioService {
 
       // IMMEDIATE FEEDBACK: Update status to loading right away
       // RESET: Ensure progress starts from 0 for new tracks
-      this.updateStatus({ 
-        isLoading: true, 
-        isPlaying: false, 
+      this.updateStatus({
+        isLoading: true,
+        isPlaying: false,
         currentTrack: this.currentTrack,
         currentTime: 0,
-        duration: 0
+        duration: 0,
       });
 
       // Start playback
@@ -111,11 +111,11 @@ class SimpleAudioService {
       this.loadingTimeout = setTimeout(() => {
         if (this.status.isLoading) {
           // RESET: Clear progress on loading timeout
-          this.updateStatus({ 
-            isLoading: false, 
+          this.updateStatus({
+            isLoading: false,
             isPlaying: false,
             currentTime: 0,
-            duration: 0
+            duration: 0,
           });
           this.stopStatusPolling();
         }
@@ -124,11 +124,11 @@ class SimpleAudioService {
       return true;
     } catch (error) {
       // RESET: Clear progress on play error
-      this.updateStatus({ 
-        isLoading: false, 
+      this.updateStatus({
+        isLoading: false,
         isPlaying: false,
         currentTime: 0,
-        duration: 0
+        duration: 0,
       });
 
       if (this.currentPlayer) {
@@ -154,21 +154,21 @@ class SimpleAudioService {
 
       await this.stopInternal();
       // RESET: Clear all progress and track data when stopping
-      this.updateStatus({ 
-        isPlaying: false, 
-        isLoading: false, 
+      this.updateStatus({
+        isPlaying: false,
+        isLoading: false,
         currentTrack: null,
         currentTime: 0,
-        duration: 0
+        duration: 0,
       });
     } catch {
       // RESET: Even on error, ensure all progress is cleared
-      this.updateStatus({ 
-        isPlaying: false, 
-        isLoading: false, 
+      this.updateStatus({
+        isPlaying: false,
+        isLoading: false,
         currentTrack: null,
         currentTime: 0,
-        duration: 0
+        duration: 0,
       });
     }
   }
@@ -281,11 +281,11 @@ class SimpleAudioService {
           // Stop polling on error
           this.stopStatusPolling();
           // RESET: Clear progress on polling error
-          this.updateStatus({ 
-            isPlaying: false, 
+          this.updateStatus({
+            isPlaying: false,
             isLoading: false,
             currentTime: 0,
-            duration: 0
+            duration: 0,
           });
         }
       }
@@ -353,13 +353,10 @@ class SimpleAudioService {
     listenersCopy.forEach(listener => {
       try {
         listener(this.status);
-      } catch (error) {
-        // Remove problematic listeners and log error for debugging
+      } catch {
+        // Remove problematic listeners - error handled silently
         this.listeners.delete(listener);
-        // Only log in development to avoid console noise in production
-        if (__DEV__) {
-          console.warn('Removed problematic audio listener:', error);
-        }
+        // Problematic audio listener removed due to error
       }
     });
   }

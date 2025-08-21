@@ -150,13 +150,6 @@ describe('wordClassification', () => {
 
       const result = calculateWordCategories(words);
 
-      // Debug: log the actual results
-      console.log('Actual results:', result);
-      console.log(
-        'Words:',
-        words.map(w => ({ state: w.fsrs_state, due: w.fsrs_due }))
-      );
-
       expect(result.dueWords).toBe(1);
       expect(result.learningWords).toBe(3); // Due word (state 0) + learning word (state 0) + struggling word (state 1)
       expect(result.masteredWords).toBe(1);

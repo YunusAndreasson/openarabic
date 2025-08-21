@@ -11,9 +11,18 @@ import { QueryClient, onlineManager } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { useFonts } from 'expo-font';
 import { Stack, useNavigationContainerRef, useRouter, useSegments } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState, Platform, StyleSheet, UIManager, View } from 'react-native';
+import {
+  ActivityIndicator,
+  AppState,
+  Image,
+  Platform,
+  StyleSheet,
+  UIManager,
+  View,
+} from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -45,6 +54,7 @@ import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
 import { FSRSDataProvider } from '@/hooks/vocabulary/FSRSDataProvider';
+import { cleanupNotifications, initializeNotifications } from '@/services/notificationService';
 import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import type { RootState } from '@/store/store';
 import { persistor, store } from '@/store/store';
@@ -66,8 +76,8 @@ const analytics = {
   reset: async () => {},
 };
 
-// Let expo-router handle splash screen initialization through app.json configuration
-// This prevents conflicts with expo-router's internal splash screen management
+// Splash screen is now managed by expo-router v5's internal system
+// No manual preventAutoHideAsync needed - expo-router handles this automatically
 
 // Sync React Query online status with device connectivity
 onlineManager.setEventListener(setOnline => {
@@ -238,8 +248,32 @@ function AppContent() {
     // Only proceed when fonts are ready AND (auth is ready OR we have content)
     if (fontsAreReady && (authIsReady || contentIsReady)) {
       setAppReady(true);
+
+      // Hide splash screen with animation when app is ready
+      setTimeout(() => {
+        SplashScreen.hideAsync().catch(() => {
+          // Silently handle splash screen hide errors
+        });
+      }, 100); // Small delay to ensure smooth transition
     }
   }, [fontsLoaded, isAuthLoading, session, isLoaded, readTabDataLoaded]);
+
+  // Initialize notifications when app is ready (Expo best practice)
+  useEffect(() => {
+    if (appReady) {
+      initializeNotifications().catch(() => {
+        // Silently handle notification initialization errors
+        // Error is already handled in the notification service
+      });
+    }
+  }, [appReady]);
+
+  // Cleanup notifications on unmount
+  useEffect(() => {
+    return () => {
+      cleanupNotifications();
+    };
+  }, []);
 
   // Fallback timeout so the app doesn't remain stuck on the splash screen
   useEffect(() => {
@@ -290,11 +324,26 @@ function AppContent() {
     }
   }, [appReady, isAuthLoading, hasAttemptedRedirect, session, router]);
 
-  // Show loading screen until the app is ready
+  // Show branded loading screen until the app is ready
   if (!appReady) {
     return (
-      <View style={[styles.container, styles.errorContainer]}>
+      <View style={[styles.container, styles.loadingContainer]}>
         <StatusBar style={isDark ? 'light' : 'dark'} />
+
+        {/* App Logo */}
+        <Image
+          source={require('@/assets/images/oaLogo.png')}
+          style={styles.loadingLogo}
+          resizeMode="contain"
+        />
+
+        {/* Loading Text */}
+        <ThemedText type="body" style={styles.loadingText}>
+          {STRINGS.LOADING}
+        </ThemedText>
+
+        {/* Loading Indicator */}
+        <ActivityIndicator size="large" color={colors.tint} style={styles.loadingIndicator} />
       </View>
     );
   }
@@ -352,6 +401,25 @@ interface FallbackProps {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: LAYOUT.SPACING.LARGE,
+    backgroundColor: '#0F1311', // Match splash screen background
+  },
+  loadingLogo: {
+    width: 120,
+    height: 120,
+    marginBottom: LAYOUT.SPACING.LARGE,
+  },
+  loadingText: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    color: '#5B7F68', // Use tint color for consistency
+  },
+  loadingIndicator: {
+    marginTop: LAYOUT.SPACING.SMALL,
   },
   errorContainer: {
     flex: 1,

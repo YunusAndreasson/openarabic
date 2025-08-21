@@ -43,7 +43,7 @@ interface CompletionScreenProps {
 const CompletionScreen: FC<CompletionScreenProps> = ({
   onClose,
   title = STRINGS.SESSION_COMPLETE,
-  subtitle = STRINGS.ALL_WORDS_PRACTICED,
+  subtitle,
   buttonText = STRINGS.CONTINUE,
   iconName = 'checkmark-circle',
   iconSize = LAYOUT.REVIEW.COMPLETION.ICON_DEFAULT_SIZE,

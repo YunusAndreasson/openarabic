@@ -121,7 +121,7 @@ export const STRINGS = {
 
   // Success messages - encouraging and celebration-focused
   SESSION_COMPLETE: 'Session complete!',
-  ALL_WORDS_PRACTICED: 'Great work on your study session',
+
   ADDED_TO_LISTENING_LIST: 'Saved to playlist',
   REMOVED_FROM_LISTENING_LIST: 'Removed from playlist',
 
@@ -222,7 +222,7 @@ export const STRINGS = {
 
   // Memory retention modal
   MEMORY_RETENTION_EXPLANATION:
-    'Memory strength shows how many words you still remember. At 100%, you remember all your vocabulary. Try to to stay over 75% before you add new words.',
+    'Memory strength shows how many words you still remember. Try to stay over 75% before you add new words.',
   MEMORY_RETENTION_TIP:
     'Stay above the {threshold}% threshold line. Practice existing words before adding new ones.',
 

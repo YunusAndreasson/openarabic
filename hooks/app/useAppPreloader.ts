@@ -52,7 +52,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
         }),
         queryClient.fetchQuery({
           queryKey: ['articles'],
-          queryFn: () => articlesService.getArticles(), // Load all articles
+          queryFn: () => articlesService.getArticles({ limit: 20 }), // Load fewer articles initially for faster startup
           ...CACHE_TIMES.ARTICLES,
           retry: 3,
         }),
@@ -65,7 +65,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
       if (Array.isArray(_articles) && _articles.length > 0) {
         InteractionManager.runAfterInteractions(() => {
           try {
-            const featured: Article[] = (_articles as Article[]).slice(0, 5);
+            const featured: Article[] = (_articles as Article[]).slice(0, 3); // Reduced from 5 to 3 for faster startup
             const imagePrefetches = featured
               .map(a => String(a.image_url))
               .filter(Boolean)
@@ -110,23 +110,26 @@ export const useAppPreloader = (): AppPreloaderResult => {
 
       // Load user-specific background data asynchronously
       if (user?.id) {
-        const backgroundPromises = [
-          queryClient.prefetchQuery({
-            queryKey: ['authors'],
-            queryFn: () => authorsService.getAuthors(),
-            ...CACHE_TIMES.STATIC,
-            retry: 2,
-          }),
-          queryClient.prefetchQuery({
-            queryKey: ['readingList', user.id],
-            queryFn: () => readingListService.getReadingList(user.id),
-            ...CACHE_TIMES.MEDIUM,
-            retry: 2,
-          }),
-        ];
+        // Use setTimeout to defer background loading slightly, allowing UI to become responsive first
+        setTimeout(() => {
+          const backgroundPromises = [
+            queryClient.prefetchQuery({
+              queryKey: ['authors'],
+              queryFn: () => authorsService.getAuthors(),
+              ...CACHE_TIMES.STATIC,
+              retry: 2,
+            }),
+            queryClient.prefetchQuery({
+              queryKey: ['readingList', user.id],
+              queryFn: () => readingListService.getReadingList(user.id),
+              ...CACHE_TIMES.MEDIUM,
+              retry: 2,
+            }),
+          ];
 
-        // Don't await - let these load in background
-        Promise.allSettled(backgroundPromises).catch(() => {});
+          // Don't await - let these load in background
+          Promise.allSettled(backgroundPromises).catch(() => {});
+        }, 500); // Delay background loading by 500ms to prioritize initial UI responsiveness
       }
 
       setPreloadProgress(80);

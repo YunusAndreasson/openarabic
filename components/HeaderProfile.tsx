@@ -122,7 +122,7 @@ export const HeaderProfile = memo<HeaderProfileProps>(({ size = 32 }) => {
               weight="bold"
               style={[
                 styles.initialsText,
-                { fontSize: size * 0.4, color: isDarkMode ? colors.black : colors.white },
+                { fontSize: size * 0.45, color: isDarkMode ? colors.black : colors.white },
               ]}
             >
               {initials}

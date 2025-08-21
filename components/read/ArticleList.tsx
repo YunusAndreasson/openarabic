@@ -106,6 +106,18 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
     const headerHeight = useHeaderHeight();
     const [, startTransition] = useTransition();
 
+    // Use refs to store stable values and only update when significantly changed
+    const stableHeaderHeightRef = useRef(headerHeight);
+    const stableInsetsBottomRef = useRef(insets.bottom);
+
+    // Update refs only when values change significantly (reduce noise from small changes)
+    if (Math.abs(stableHeaderHeightRef.current - headerHeight) > 5) {
+      stableHeaderHeightRef.current = headerHeight;
+    }
+    if (Math.abs(stableInsetsBottomRef.current - insets.bottom) > 5) {
+      stableInsetsBottomRef.current = insets.bottom;
+    }
+
     useImperativeHandle(ref, () => listRef.current as FlashList<Article>, []);
 
     // Optimized render item with stable reference
@@ -123,7 +135,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
       }
     }, [onRefresh]);
 
-    // Memoized refresh control
+    // Memoized refresh control - extract colors to avoid re-creation
     const refreshControl = useMemo(
       () => (
         <RefreshControl
@@ -136,7 +148,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
           progressViewOffset={
             progressViewOffset !== undefined
               ? progressViewOffset
-              : headerHeight + LAYOUT.SPACING.XXLARGE
+              : stableHeaderHeightRef.current + LAYOUT.SPACING.XXLARGE
           }
           onRefresh={handleRefreshWithTransition}
         />
@@ -144,21 +156,20 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
       [
         isRefreshing,
         handleRefreshWithTransition,
-        colors.tint,
-        colors.background,
-        colors.secondaryText,
-        headerHeight,
+        colors, // Use entire colors object as dependency
+        stableHeaderHeightRef.current,
         progressViewOffset,
       ]
     );
 
-    // Optimized content container style
+    // Optimized content container style - cache the base style and only update when necessary
     const safeContentContainerStyle = useMemo(
       () => ({
         ...(contentContainerStyle as ContentStyle),
-        paddingBottom: insets.bottom + LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
+        paddingBottom:
+          stableInsetsBottomRef.current + LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
       }),
-      [contentContainerStyle, insets.bottom]
+      [contentContainerStyle, stableInsetsBottomRef.current]
     );
 
     // Simplified FlashList configuration - removed empty data array

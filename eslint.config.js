@@ -170,9 +170,6 @@ module.exports = [
         {
           patterns: [
             'components/home/*',
-            'components/settings/*',
-            'components/vocabulary/*',
-            'components/vocabulary/shared/*',
             '@/components/ArticleCard',
             '@/components/FilterModal',
             '@/components/BottomControls',

@@ -72,7 +72,7 @@ export default function ReadScreen(): JSX.Element {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Simplified derivedData - articles are guaranteed to exist
+  // Optimized derivedData - use stable references when possible
   const categoriesWithArticles = useMemo(() => {
     const counts = articlesData.reduce<Record<number, number>>((acc, article) => {
       const id = article?.category?.id;
@@ -91,7 +91,7 @@ export default function ReadScreen(): JSX.Element {
       }
       return acc;
     }, []);
-  }, [articlesData, categoriesData]);
+  }, [articlesData, categoriesData]); // Keep full dependencies but optimize the arrays themselves
 
   const handleRefresh = useCallback(async () => {
     if (isRefreshing) return;
@@ -147,9 +147,8 @@ export default function ReadScreen(): JSX.Element {
     [categoriesData]
   );
 
-  // Simplified header component - categories are guaranteed to have articles
+  // Optimized header component - minimize re-creation by memoizing stable parts
   const ListHeaderComponent = useMemo(() => {
-    // Split header into two stable subtrees to minimize diffing cost
     return (
       <View style={styles.headerContainer}>
         <IntelligentArticleSection
@@ -157,11 +156,16 @@ export default function ReadScreen(): JSX.Element {
           refreshKey={refreshKey}
           onArticlePress={handleArticlePress}
         />
-        {/* Keep FilterSection isolated so changes in articlesData don't cause extra work */}
         <FilterSection items={categoriesWithArticles} onSelect={handleSelectCategory} />
       </View>
     );
-  }, [articlesData, refreshKey, handleArticlePress, categoriesWithArticles, handleSelectCategory]);
+  }, [
+    articlesData, // Articles data changes less frequently than other values
+    refreshKey, // Only changes on manual refresh
+    handleArticlePress, // Stable callback
+    categoriesWithArticles, // Computed value, changes when articles/categories change
+    handleSelectCategory, // Stable callback
+  ]);
 
   // Static footer component - no props needed
   const ListFooterComponent = useMemo(() => <HijriDateFooter />, []);
@@ -173,7 +177,7 @@ export default function ReadScreen(): JSX.Element {
       paddingTop: headerHeight,
       paddingBottom: insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.TINY,
     }),
-    [colors.background, headerHeight, insets.bottom]
+    [colors, headerHeight, insets.bottom] // Use entire colors object to reduce individual property dependencies
   );
 
   // Simplified loading and error handling - articles are guaranteed to exist

@@ -25,7 +25,7 @@ export const useAccountScreen = () => {
   const { clearCache, getCacheSize } = useAudioCache();
   const queryClient = useQueryClient();
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [notificationPermissions, setNotificationPermissions] = useState(false);
+  const [, setNotificationPermissions] = useState(false);
   const [cacheSize, setCacheSize] = useState<number>(0);
   const [isClearingCache, setIsClearingCache] = useState(false);
   const { user } = useAuth();
@@ -132,19 +132,13 @@ export const useAccountScreen = () => {
 
   const handleReminderToggle = useCallback(
     async (enabled: boolean) => {
-      if (enabled && !notificationPermissions) {
+      if (enabled) {
         try {
-          // Try requesting permissions directly first to surface the system dialog
-          const { default: Notifications } = await import('expo-notifications');
-          const existing = await Notifications.getPermissionsAsync();
-          let finalStatus = existing.status;
-          if (existing.status !== 'granted') {
-            const request = await Notifications.requestPermissionsAsync();
-            finalStatus = request.status;
-          }
-
-          const granted = finalStatus === 'granted';
+          // Ensure we have notification permissions when enabling notifications
+          const { ensurePermissions } = await import('@/services/notificationService');
+          const granted = await ensurePermissions();
           setNotificationPermissions(granted);
+
           if (!granted) {
             Alert.alert(STRINGS.ENABLE_NOTIFICATIONS, STRINGS.TURN_ON_NOTIFICATIONS, [
               { text: STRINGS.CANCEL, style: 'cancel' },
@@ -166,14 +160,15 @@ export const useAccountScreen = () => {
       await updateReminderTime(newReminderTime);
       lightFeedback();
     },
-    [reminderTime, updateReminderTime, notificationPermissions]
+    [reminderTime, updateReminderTime]
   );
 
   useEffect(() => {
     const checkNotificationPermissions = async () => {
       try {
-        const { hasPermissions } = await import('@/services/notificationService');
-        const permissionsGranted = await hasPermissions();
+        const { default: Notifications } = await import('expo-notifications');
+        const { status } = await Notifications.getPermissionsAsync();
+        const permissionsGranted = status === 'granted';
         if (isMounted.current) {
           setNotificationPermissions(permissionsGranted);
         }

@@ -321,9 +321,8 @@ const styles = StyleSheet.create({
     borderRadius: PROFILE_PHOTO_SIZE / 2,
   },
   initialsText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    lineHeight:
-      LAYOUT.TYPOGRAPHY.SCALE.XLARGE * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
   },
   editIconContainer: {
     position: 'absolute',

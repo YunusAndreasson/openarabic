@@ -12,19 +12,13 @@
     "primaryColor": "#5B7F68",
     "newArchEnabled": true,
     "jsEngine": "hermes",
-    "platforms": [
-      "ios",
-      "android"
-    ],
+    "platforms": ["ios", "android"],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "openarabic",
       "buildNumber": "50",
       "infoPlist": {
-        "UIBackgroundModes": [
-          "audio",
-          "processing"
-        ],
+        "UIBackgroundModes": ["audio", "processing"],
         "ITSAppUsesNonExemptEncryption": false,
         "BGTaskSchedulerPermittedIdentifiers": [
           "openarabic.backgroundtask",
@@ -33,7 +27,8 @@
         "NSUserTrackingUsageDescription": "This app uses tracking to provide personalized learning analytics and improve your Arabic learning experience.",
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to let you select a profile photo for your account.",
         "NSCameraUsageDescription": "This app needs access to your camera to let you take a profile photo for your account.",
-        "NSMicrophoneUsageDescription": "This app needs access to your microphone for audio recording features."
+        "NSMicrophoneUsageDescription": "This app needs access to your microphone for audio recording features.",
+        "NSUserNotificationsUsageDescription": "This app sends study reminders to help you practice Arabic vocabulary at your scheduled times."
       }
     },
     "android": {
@@ -50,10 +45,7 @@
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE"
       ],
-      "blockedPermissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
-      ]
+      "blockedPermissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"]
     },
     "notification": {
       "icon": "./assets/images/oaLogo-square.png",
