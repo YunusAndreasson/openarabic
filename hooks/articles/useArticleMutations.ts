@@ -19,6 +19,7 @@ import { handleError } from '@/utils/errorHandling';
 // Shared query keys used across mutation success handlers
 const RELATED_QUERY_KEYS = (userId: string) =>
   [
+    FSRS_QUERY_KEYS.all(userId),
     FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
     FSRS_QUERY_KEYS.due(userId),
     ['enhancedAudioTracks', userId] as const,
