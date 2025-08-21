@@ -6,15 +6,13 @@
  */
 import { Ionicons } from '@expo/vector-icons';
 import { memo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import { StyleSheet, View } from 'react-native';
 
 import BaseCard from '@common/BaseCard';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
-import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -40,13 +38,6 @@ interface StatCardProps {
 }
 
 const StatCard = memo<StatCardProps>(({ label, value, color, icon, onPress }) => {
-  const colors = useColors();
-  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
-    includeOpacity: true,
-  });
-
-  const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
   if (!onPress) {
     return (
       <BaseCard shadowSize="small" style={styles.statCard}>
@@ -64,25 +55,21 @@ const StatCard = memo<StatCardProps>(({ label, value, color, icon, onPress }) =>
   }
 
   return (
-    <BaseCard shadowSize="small" style={styles.statCard}>
-      <AnimatedPressable
-        style={[styles.pressableContent, animatedStyle]}
-        onPress={onPress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        hitSlop={LAYOUT.HIT_SLOP.SMALL}
-        android_ripple={{ color: colors.navigationRipple, radius: MIN_TOUCH_TARGET.SMALL / 2 }}
-      >
-        <View style={[styles.iconContainer, { backgroundColor: color + '14' }]}>
-          <Ionicons name={icon} size={16} color={color} />
-        </View>
-        <ThemedText type="heading2" weight="bold" style={[styles.statValue, { color }]}>
-          {value}
-        </ThemedText>
-        <ThemedText type="caption" colorName="textTertiary" style={styles.statLabel}>
-          {label}
-        </ThemedText>
-      </AnimatedPressable>
+    <BaseCard
+      shadowSize="small"
+      style={styles.statCard}
+      onPress={onPress}
+      includePressAnimation={true}
+    >
+      <View style={[styles.iconContainer, { backgroundColor: color + '14' }]}>
+        <Ionicons name={icon} size={16} color={color} />
+      </View>
+      <ThemedText type="heading2" weight="bold" style={[styles.statValue, { color }]}>
+        {value}
+      </ThemedText>
+      <ThemedText type="caption" colorName="textTertiary" style={styles.statLabel}>
+        {label}
+      </ThemedText>
     </BaseCard>
   );
 });
@@ -176,9 +163,9 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   iconContainer: {
-    width: MIN_TOUCH_TARGET.SMALL,
-    height: MIN_TOUCH_TARGET.SMALL,
-    borderRadius: MIN_TOUCH_TARGET.SMALL / 2,
+    width: 32, // Fixed size instead of MIN_TOUCH_TARGET.SMALL
+    height: 32, // Fixed size instead of MIN_TOUCH_TARGET.SMALL
+    borderRadius: 16, // Fixed size instead of MIN_TOUCH_TARGET.SMALL / 2
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: LAYOUT.SPACING.SMALL,
@@ -193,10 +180,6 @@ const styles = StyleSheet.create({
   statLabel: {
     textAlign: 'center',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-  },
-  pressableContent: {
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
 
