@@ -93,6 +93,7 @@ export const DueWordsPrognosisChart = memo<DueWordsPrognosisChartProps>(
         showWarningLine={false} // No warning line for due words
         isFuturePrediction={true} // Today is leftmost for future predictions
         emptyStateText=""
+        yLabelFormatter={(value: number) => `${value}`}
       />
     );
   }

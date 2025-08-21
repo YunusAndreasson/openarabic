@@ -106,11 +106,11 @@ const styles = StyleSheet.create({
   },
   header: LAYOUT.BOTTOM_SHEET.HEADER,
   chartContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM, // Reduced padding
+    paddingHorizontal: LAYOUT.SPACING.SMALL, // Reduced from MEDIUM for better alignment
     paddingBottom: LAYOUT.SPACING.TINY, // Minimal space after chart
   },
   explanationContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM, // Reduced padding
+    paddingHorizontal: LAYOUT.SPACING.SMALL, // Reduced from MEDIUM for better alignment
     paddingTop: LAYOUT.SPACING.TINY, // Minimal space before text
     paddingBottom: 0, // Remove bottom padding, handled by container
   },
