@@ -24,6 +24,9 @@ import {
 } from '@/utils/fsrsSpacing';
 import { PriorityQueue } from '@/utils/priorityQueue';
 
+// FIXED: Add constant for completion delay to prevent race conditions
+const COMPLETION_DELAY_MS = 300;
+
 // Consolidated counters and tracking data
 interface FSRSCounters {
   totalWords: number;
@@ -379,13 +382,18 @@ export function useFSRS({
           // Try once more after moving ready spaced words back into the queue
           nextItem = getNextWordWithSpacing();
         }
-        // If still no item and no spaced words are ready, complete session
+        // If still no item and no spaced words are ready, mark for completion
         if (!nextItem && !hasAvailableSpacedWords) {
+          // FIXED: Mark completion needed but don't complete yet
+          // The review hook will check this flag and complete when ready
           if (!stateTrackingRef.current.completionTriggered) {
             stateTrackingRef.current.completionTriggered = true;
-            // FIXED: Set completion immediately instead of using setTimeout
-            setIsComplete(true);
-            if (onComplete) onComplete();
+            // Use a longer delay to ensure word processing completes
+            // This prevents the race condition while ensuring completion happens
+            setTimeout(() => {
+              setIsComplete(true);
+              if (onComplete) onComplete();
+            }, COMPLETION_DELAY_MS); // 300ms delay to ensure proper timing
           }
         }
       }
@@ -490,5 +498,6 @@ export function useFSRS({
     progress,
     updateWord,
     invalidateQueries,
+    resetQueue,
   };
 }

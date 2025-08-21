@@ -275,7 +275,15 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
 
         if (!stateRefs.current.isUpdatingWord) return;
 
-        setTimeout(() => fadeIn(), TIMING_CONFIG.FAST.duration);
+        // FIXED: Check if completion is needed after word processing
+        // This ensures completion happens at the right time
+        if (isComplete) {
+          // Session is already complete, trigger completion transition
+          triggerCompletionTransition();
+        } else {
+          // Continue with normal flow
+          setTimeout(() => fadeIn(), TIMING_CONFIG.FAST.duration);
+        }
       } catch (error) {
         handleError(error instanceof Error ? error : new Error(String(error)));
         if (!stateRefs.current.isUpdatingWord) return;
@@ -289,7 +297,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
         }
       }
     },
-    [currentWord?.root_id, updateWord, fadeIn]
+    [currentWord?.root_id, updateWord, fadeIn, isComplete, triggerCompletionTransition]
   );
 
   // Enhanced audio playback function for single audio files

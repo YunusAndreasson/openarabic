@@ -22,6 +22,7 @@ export type UseFSRSResult = {
   progress: number;
   updateWord: (rootId: number, confidence: WordConfidence) => Promise<void>;
   invalidateQueries: () => void;
+  resetQueue: () => void;
 };
 
 export type FSRSStateTracking = {

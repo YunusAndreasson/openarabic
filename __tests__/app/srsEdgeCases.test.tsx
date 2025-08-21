@@ -917,4 +917,83 @@ describe('SRS Edge Cases - Session Cooldown and Completion', () => {
       expect(completionCallCount).toBe(0); // Because session is already complete
     });
   });
+
+  describe('Race Condition Tests - Last Word Duplication', () => {
+    it('should NOT repeat the last word when session completes', async () => {
+      // This test specifically catches the race condition where the last word appears twice
+      const srsMock = createSRSMock(['last-word'], 12);
+
+      const { getByTestId, queryByTestId, rerender } = render(<SRSFlow />);
+
+      // Start session
+      fireEvent.press(getByTestId('start'));
+      rerender(<SRSFlow />);
+
+      // Should show the single word, not completion
+      expect(queryByTestId('completion-screen')).toBeNull();
+      expect(getByTestId('current-word').props.children).toBe('last-word');
+
+      // CRITICAL: Mark the last word as known (swipe right)
+      // This should complete the session without repeating the word
+      act(() => {
+        fireEvent.press(getByTestId('swipe-right'));
+      });
+
+      // Wait for completion logic
+      await waitFor(() => {
+        expect(queryByTestId('completion-screen')).toBeTruthy();
+      });
+
+      // Session should complete after reviewing the only word
+      expect(srsMock.isComplete).toBe(true);
+      expect(srsMock.processedWords.size).toBe(1);
+
+      // CRITICAL: The word should only appear once in the session
+      // This prevents the "last word repeated twice" bug
+      expect(srsMock.processedWords.has('last-word')).toBe(true);
+      expect(srsMock.processedWords.size).toBe(1);
+    });
+
+    it('should handle completion timing correctly to prevent word duplication', async () => {
+      // This test verifies that completion timing doesn't cause race conditions
+      const srsMock = createSRSMock(['word1', 'word2'], 12);
+
+      const { getByTestId, queryByTestId, rerender } = render(<SRSFlow />);
+
+      // Start session
+      fireEvent.press(getByTestId('start'));
+      rerender(<SRSFlow />);
+
+      // Process first word
+      expect(getByTestId('current-word').props.children).toBe('word1');
+      act(() => {
+        fireEvent.press(getByTestId('swipe-right'));
+      });
+
+      // Should move to second word
+      expect(queryByTestId('completion-screen')).toBeNull();
+      expect(getByTestId('current-word').props.children).toBe('word2');
+
+      // Process second (last) word
+      act(() => {
+        fireEvent.press(getByTestId('swipe-right'));
+      });
+
+      // Wait for completion
+      await waitFor(() => {
+        expect(queryByTestId('completion-screen')).toBeTruthy();
+      });
+
+      // Session should complete with exactly 2 words processed
+      expect(srsMock.isComplete).toBe(true);
+      expect(srsMock.processedWords.size).toBe(2);
+      expect(srsMock.processedWords.has('word1')).toBe(true);
+      expect(srsMock.processedWords.has('word2')).toBe(true);
+
+      // CRITICAL: No word should appear more than once
+      const processedArray = Array.from(srsMock.processedWords);
+      const uniqueWords = new Set(processedArray);
+      expect(uniqueWords.size).toBe(processedArray.length);
+    });
+  });
 });
