@@ -1,12 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import { StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import type { ColorName } from '@/constants/Colors';
 import { LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
-import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import { useArabicWordAnalysis } from '@/hooks/vocabulary';
 import type { WordTooltipProps } from '@/types/ui/modal.types';
@@ -15,20 +13,6 @@ import {
   calculateTooltipDimensions,
   type TooltipLayout,
 } from '@/utils/positioningUtils';
-
-const ANIMATION_CONFIG = {
-  initialOpacity: 0,
-  duration: 200,
-} as const;
-
-const SPRING_CONFIG = {
-  type: 'scale' as const,
-  initialValue: 0.85,
-  targetValue: 1,
-  useSpring: true,
-  damping: 12,
-  stiffness: 200,
-} as const;
 
 const STATIC_STYLES = StyleSheet.create({
   overlay: {
@@ -125,11 +109,6 @@ export const WordTooltip = memo(
     wordRootId,
   }: WordTooltipProps) => {
     const colors = useColors();
-
-    // Animations
-    const { fadeIn, animatedStyle: opacityStyle } = useOpacityAnimation(ANIMATION_CONFIG);
-    const { animatedStyle: scaleStyle, startAnimation: startScaleAnimation } =
-      useTransformAnimation(SPRING_CONFIG);
 
     // Convert window coordinates (from measureInWindow) to local overlay coordinates
     const containerRef = useRef<View | null>(null);
@@ -395,13 +374,6 @@ export const WordTooltip = memo(
       [dimensions.arrowLeft, dimensions.tooltipHeight, colors.elevation1, colors.transparent]
     );
 
-    useEffect(() => {
-      if (visible) {
-        fadeIn();
-        startScaleAnimation();
-      }
-    }, [visible, fadeIn, startScaleAnimation]);
-
     if (!visible || !layout) return null;
 
     return (
@@ -411,16 +383,15 @@ export const WordTooltip = memo(
         pointerEvents="box-none"
         onLayout={measureContainerOffset}
       >
-        <TouchableOpacity
-          activeOpacity={0.8}
+        <TouchableWithoutFeedback
           onPress={handleTooltipPress}
           disabled={!onStudyListToggle || !wordRootId}
         >
-          <Animated.View style={[tooltipStyle, opacityStyle, scaleStyle]} testID="word-tooltip">
+          <View style={tooltipStyle} testID="word-tooltip">
             <View style={arrowStyle} />
             {tooltipContent}
-          </Animated.View>
-        </TouchableOpacity>
+          </View>
+        </TouchableWithoutFeedback>
       </View>
     );
   },
