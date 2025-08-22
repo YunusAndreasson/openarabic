@@ -40,6 +40,12 @@ export const useListenScreen = () => {
       : AUDIO_STATES.IDLE;
   });
 
+  const sleepTimer = useSleepTimer(() => {
+    simpleAudioService.stop().catch(() => {});
+    setPlaybackMode('none');
+  });
+
+  // Monitor audio state and auto-cancel sleep timer when audio stops
   useEffect(() => {
     const unsubscribe = simpleAudioService.subscribe(status => {
       const nextState = status.isPlaying
@@ -47,15 +53,16 @@ export const useListenScreen = () => {
         : status.isLoading
         ? AUDIO_STATES.LOADING
         : AUDIO_STATES.IDLE;
+
+      // Auto-cancel sleep timer when audio stops
+      if (nextState === AUDIO_STATES.IDLE && audioState !== AUDIO_STATES.IDLE) {
+        sleepTimer.actions.autoCancel();
+      }
+
       setAudioState(prev => (prev !== nextState ? nextState : prev));
     });
     return unsubscribe;
-  }, []);
-
-  const sleepTimer = useSleepTimer(() => {
-    simpleAudioService.stop().catch(() => {});
-    setPlaybackMode('none');
-  });
+  }, [audioState, sleepTimer.actions]);
 
   const readingListQuery = useQuery({
     queryKey: ['readingList', user?.id],

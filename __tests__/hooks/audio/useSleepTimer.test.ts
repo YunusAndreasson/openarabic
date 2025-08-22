@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react-native';
+import { act, renderHook } from '@testing-library/react-native';
 import { useSleepTimer } from '../../../hooks/audio/useSleepTimer';
 import { handleError } from '../../../utils/errorHandling';
 
@@ -64,6 +64,36 @@ describe('useSleepTimer', () => {
     });
 
     expect(onComplete).not.toHaveBeenCalled();
+  });
+
+  it('auto-cancels an active timer', () => {
+    const { result } = renderHook(() => useSleepTimer());
+
+    act(() => {
+      result.current.actions.startTimer(5);
+    });
+
+    expect(result.current.state.isActive).toBe(true);
+
+    act(() => {
+      result.current.actions.autoCancel();
+    });
+
+    expect(result.current.state.isActive).toBe(false);
+    expect(result.current.state.remainingTime).toBe(0);
+  });
+
+  it('auto-cancel does nothing when timer is not active', () => {
+    const { result } = renderHook(() => useSleepTimer());
+
+    expect(result.current.state.isActive).toBe(false);
+
+    act(() => {
+      result.current.actions.autoCancel();
+    });
+
+    expect(result.current.state.isActive).toBe(false);
+    expect(result.current.state.remainingTime).toBe(0);
   });
 
   it('handles invalid duration', () => {

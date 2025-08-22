@@ -176,6 +176,47 @@ export function useReadingProgress({
     return () => clearTimeout(timeoutId);
   }, [currentSentenceIndex, isActive, updateProgress, user?.id]);
 
+  // NEW: Track article opens to ensure daily activity is recorded
+  useEffect(() => {
+    if (!isActive || !user?.id || articleId <= 0) return;
+
+    // Record that the user opened this article today
+    // This ensures daily activity is tracked even if they don't read new sentences
+    const recordArticleOpen = async () => {
+      try {
+        // Get current progress to see if we need to create/update a record
+        const currentProgress = await readingProgressService.getProgress(user.id, articleId);
+
+        if (currentProgress) {
+          // If progress exists, update it to refresh the updated_at timestamp
+          // This counts as daily activity even if no new sentences were read
+          await readingProgressService.updateProgress({
+            userId: user.id,
+            articleId,
+            lastSentenceRead: currentProgress.last_sentence_read,
+            totalSentences: currentProgress.total_sentences,
+          });
+        } else {
+          // If no progress exists, create initial progress record
+          await readingProgressService.updateProgress({
+            userId: user.id,
+            articleId,
+            lastSentenceRead: 0,
+            totalSentences,
+          });
+        }
+      } catch (error) {
+        // Silent error - article open tracking failed but shouldn't break reading
+        console.warn('Failed to record article open:', error);
+      }
+    };
+
+    // Record article open after a short delay to avoid immediate updates
+    const openTimeoutId = setTimeout(recordArticleOpen, 1000);
+
+    return () => clearTimeout(openTimeoutId);
+  }, [isActive, user?.id, articleId, totalSentences]); // Only run when article opens
+
   // Also save progress immediately when component unmounts (article closed)
   useEffect(() => {
     return () => {

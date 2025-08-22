@@ -1,11 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AUDIO_STATES } from '@/constants/audio';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useSleepTimer } from '@/hooks/audio/useSleepTimer';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useListenScreen } from '@/hooks/listen/useListenScreen';
+import { simpleAudioService } from '@/services/simpleAudioService';
 import type { Article } from '@/types/articles.types';
 import type { ReadingListItem } from '@/types/readingList.types';
 import { successFeedback } from '@/utils/haptics';
@@ -70,6 +71,17 @@ export function useGlobalAudioState(): GlobalAudioState {
     audioPlayer.stop();
     setShowSleepTimerModal(false); // Close modal when timer completes
   });
+
+  // Auto-cancel sleep timer when audio stops
+  useEffect(() => {
+    const unsubscribe = simpleAudioService.subscribe(status => {
+      // Auto-cancel sleep timer when audio stops
+      if (!status.isPlaying && !status.isLoading && sleepTimer.state.isActive) {
+        sleepTimer.actions.autoCancel();
+      }
+    });
+    return unsubscribe;
+  }, [sleepTimer.state.isActive, sleepTimer.actions]);
 
   // Get current article ID from audio player
   const currentArticleId = useMemo(() => {

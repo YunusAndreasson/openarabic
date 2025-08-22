@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { STRINGS } from '@/constants/strings';
 import { handleError } from '@/utils/errorHandling';
@@ -11,6 +11,7 @@ export interface SleepTimerState {
 export interface SleepTimerActions {
   startTimer: (minutes: number) => void;
   cancelTimer: () => void;
+  autoCancel: () => void; // Automatically cancel when audio stops
 }
 
 export interface UseSleepTimerResult {
@@ -91,6 +92,13 @@ export function useSleepTimer(onTimerComplete?: () => void): UseSleepTimerResult
     }
   }, [clearTimerInterval]);
 
+  // Auto-cancel timer when audio stops (no user feedback needed)
+  const autoCancel = useCallback(() => {
+    if (isActive) {
+      cancelTimer();
+    }
+  }, [isActive, cancelTimer]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -106,6 +114,7 @@ export function useSleepTimer(onTimerComplete?: () => void): UseSleepTimerResult
   const actions: SleepTimerActions = {
     startTimer,
     cancelTimer,
+    autoCancel,
   };
 
   const result = useMemo(
