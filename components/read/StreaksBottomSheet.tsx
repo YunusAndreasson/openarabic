@@ -42,7 +42,7 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
     }
   }, [isVisible]);
 
-  // Backdrop component
+  // Memoize backdrop component to prevent recreation
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
       <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} onPress={onClose} />
@@ -50,6 +50,7 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
     [onClose]
   );
 
+  // Memoize dynamic styles
   const dynamicStyles = useMemo(
     () => ({
       bottomSheet: [styles.bottomSheet, { backgroundColor: colors.elevation1 }],
@@ -57,6 +58,72 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
     }),
     [colors.elevation1, colors.modalIndicator]
   );
+
+  // Memoize content to prevent unnecessary re-renders
+  const content = useMemo(() => {
+    if (isStreakLoading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ThemedText type="body" colorName="textTertiary">
+            Loading your streak
+          </ThemedText>
+        </View>
+      );
+    }
+
+    if (isStreakError) {
+      return (
+        <View style={styles.errorContainer}>
+          <ThemedText type="body" colorName="error">
+            Can&apos;t load streak data. Try again
+          </ThemedText>
+        </View>
+      );
+    }
+
+    if (streakHistory) {
+      return (
+        <>
+          {/* Header */}
+          <View style={styles.header}>
+            <ThemedText type="heading3" weight="bold">
+              Your reading streak
+            </ThemedText>
+            <ThemedText type="body" colorName="textTertiary" style={styles.subtitle}>
+              Keep up the great momentum
+            </ThemedText>
+          </View>
+
+          {/* Streak Metrics */}
+          <View style={styles.streakMetricsContainer}>
+            <StreakMetrics metrics={streakHistory.metrics} />
+          </View>
+
+          {/* Streak Chart */}
+          <View style={styles.chartContainer}>
+            <ThemedText type="heading3" weight="semibold" style={styles.chartTitle}>
+              Last 30 days
+            </ThemedText>
+            <ThemedText type="caption" colorName="textTertiary" style={styles.chartSubtitle}>
+              Each bar shows a reading day
+            </ThemedText>
+            <StreakChart
+              dailyActivity={streakHistory.dailyActivity}
+              streakPeriods={streakHistory.streakPeriods}
+            />
+          </View>
+        </>
+      );
+    }
+
+    return (
+      <View style={styles.emptyContainer}>
+        <ThemedText type="body" colorName="textTertiary">
+          Start reading to build your streak
+        </ThemedText>
+      </View>
+    );
+  }, [isStreakLoading, isStreakError, streakHistory]);
 
   // Only render when visible (same pattern as other bottom sheets)
   if (!isVisible) {
@@ -79,58 +146,7 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
       handleIndicatorStyle={dynamicStyles.indicator}
       backdropComponent={renderBackdrop}
     >
-      <BottomSheetView style={styles.container}>
-        {isStreakLoading ? (
-          <View style={styles.loadingContainer}>
-            <ThemedText type="body" colorName="textTertiary">
-              Loading your streak
-            </ThemedText>
-          </View>
-        ) : isStreakError ? (
-          <View style={styles.errorContainer}>
-            <ThemedText type="body" colorName="error">
-              Can&apos;t load streak data. Try again
-            </ThemedText>
-          </View>
-        ) : streakHistory ? (
-          <>
-            {/* Header */}
-            <View style={styles.header}>
-              <ThemedText type="heading3" weight="bold">
-                Your reading streak
-              </ThemedText>
-              <ThemedText type="body" colorName="textTertiary" style={styles.subtitle}>
-                Keep up the great momentum
-              </ThemedText>
-            </View>
-
-            {/* Streak Metrics */}
-            <View style={styles.streakMetricsContainer}>
-              <StreakMetrics metrics={streakHistory.metrics} />
-            </View>
-
-            {/* Streak Chart */}
-            <View style={styles.chartContainer}>
-              <ThemedText type="heading3" weight="semibold" style={styles.chartTitle}>
-                Last 30 days
-              </ThemedText>
-              <ThemedText type="caption" colorName="textTertiary" style={styles.chartSubtitle}>
-                Each bar shows a reading day
-              </ThemedText>
-              <StreakChart
-                dailyActivity={streakHistory.dailyActivity}
-                streakPeriods={streakHistory.streakPeriods}
-              />
-            </View>
-          </>
-        ) : (
-          <View style={styles.emptyContainer}>
-            <ThemedText type="body" colorName="textTertiary">
-              Start reading to build your streak
-            </ThemedText>
-          </View>
-        )}
-      </BottomSheetView>
+      <BottomSheetView style={styles.container}>{content}</BottomSheetView>
     </BottomSheet>
   );
 });

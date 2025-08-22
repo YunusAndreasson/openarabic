@@ -17,41 +17,71 @@ const BAR_HEIGHT = LAYOUT.BUTTON.HEIGHT.LARGE / 2; // ~24 via constants
 const BAR_RADIUS = LAYOUT.BORDER_RADIUS.SMALL; // ~8
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
+// Extract expensive calculations outside component
+const createStreakMap = (streakPeriods: StreakPeriod[]): Map<string, StreakPeriod> => {
+  const map = new Map<string, StreakPeriod>();
+  streakPeriods.forEach(period => {
+    const start = new Date(period.startDate);
+    const end = new Date(period.endDate);
+
+    // Mark all dates in this period using UTC for consistent timezone handling
+    for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+      const dateStr = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
+        .toISOString()
+        .split('T')[0];
+      if (dateStr) {
+        map.set(dateStr, period);
+      }
+    }
+  });
+  return map;
+};
+
+const generateWeekLabels = (
+  dailyActivityLength: number,
+  chartWidth: number,
+  barWidth: number
+): { text: string; position: number }[] => {
+  const labels: { text: string; position: number }[] = [];
+  const daysAgo = dailyActivityLength - 1;
+  const barSpacing = 2;
+  const totalBarWidth = barWidth + barSpacing;
+
+  // Add week markers at regular intervals
+  for (let i = 7; i <= daysAgo; i += 7) {
+    const weeksAgo = Math.floor(i / 7);
+    const position = chartWidth - i * totalBarWidth - barWidth / 2;
+
+    // Only show if there's enough space
+    if (position >= 30 && position <= chartWidth - 30) {
+      labels.push({
+        text: `${weeksAgo}w`,
+        position,
+      });
+    }
+  }
+
+  return labels;
+};
+
 export const StreakChart = memo<StreakChartProps>(
   ({ dailyActivity, streakPeriods, height = CHART_HEIGHT }) => {
     const colors = useColors();
 
-    // Create a map of streak periods for efficient lookup
-    const streakMap = useMemo(() => {
-      const map = new Map<string, StreakPeriod>();
-      streakPeriods.forEach(period => {
-        const start = new Date(period.startDate);
-        const end = new Date(period.endDate);
+    // Memoize expensive calculations
+    const chartData = useMemo(() => {
+      // Calculate bar width based on available space
+      const chartWidth = SCREEN_WIDTH - LAYOUT.SPACING.LARGE * 2;
+      const barWidth = Math.max(
+        8,
+        (chartWidth - (dailyActivity.length - 1) * 2) / dailyActivity.length
+      );
 
-        // Mark all dates in this period using UTC for consistent timezone handling
-        for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
-          const dateStr = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
-            .toISOString()
-            .split('T')[0];
-          if (dateStr) {
-            map.set(dateStr, period);
-          }
-        }
-      });
-      return map;
-    }, [streakPeriods]);
+      // Create streak map
+      const streakMap = createStreakMap(streakPeriods);
 
-    // Calculate bar width based on available space (matching parent container width exactly)
-    // Container uses LAYOUT.SPACING.LARGE * 2 (16px * 2 = 32px total)
-    const chartWidth = SCREEN_WIDTH - LAYOUT.SPACING.LARGE * 2;
-    const barWidth = Math.max(
-      8,
-      (chartWidth - (dailyActivity.length - 1) * 2) / dailyActivity.length
-    );
-
-    // Generate bars for each day
-    const bars = useMemo(() => {
-      return dailyActivity.map(activity => {
+      // Generate bars for each day
+      const bars = dailyActivity.map(activity => {
         const hasActivity = activity.hasActivity;
         const streakPeriod = streakMap.get(activity.date);
         const isInStreak = !!streakPeriod;
@@ -80,44 +110,39 @@ export const StreakChart = memo<StreakChartProps>(
           barOpacity,
         };
       });
-    }, [dailyActivity, streakMap, colors.warning, colors.tint, colors.textTertiary]);
 
-    // Generate balanced week labels
-    const weekLabels = useMemo(() => {
-      const labels: { text: string; position: number }[] = [];
-      const daysAgo = dailyActivity.length - 1;
-      const barSpacing = 2;
-      const totalBarWidth = barWidth + barSpacing;
+      // Generate week labels
+      const weekLabels = generateWeekLabels(dailyActivity.length, chartWidth, barWidth);
 
-      // Add week markers at regular intervals
-      for (let i = 7; i <= daysAgo; i += 7) {
-        const weeksAgo = Math.floor(i / 7);
-        const position = chartWidth - i * totalBarWidth - barWidth / 2;
+      return {
+        chartWidth,
+        barWidth,
+        bars,
+        weekLabels,
+      };
+    }, [dailyActivity, streakPeriods, colors.warning, colors.tint, colors.textTertiary]);
 
-        // Only show if there's enough space
-        if (position >= 30 && position <= chartWidth - 30) {
-          labels.push({
-            text: `${weeksAgo}w`,
-            position,
-          });
-        }
-      }
-
-      return labels;
-    }, [dailyActivity.length, chartWidth, barWidth]);
+    // Memoize static styles
+    const staticStyles = useMemo(
+      () => ({
+        barsContainer: { width: chartData.chartWidth },
+        labelsContainer: { width: chartData.chartWidth },
+      }),
+      [chartData.chartWidth]
+    );
 
     return (
       <View style={[styles.container, { height }]}>
         {/* Chart area */}
         <View style={styles.chartArea}>
-          <View style={[styles.barsContainer, { width: chartWidth }]}>
-            {bars.map(bar => (
+          <View style={[styles.barsContainer, staticStyles.barsContainer]}>
+            {chartData.bars.map(bar => (
               <View
                 key={bar.key}
                 style={[
                   styles.bar,
                   {
-                    width: barWidth,
+                    width: chartData.barWidth,
                     height: BAR_HEIGHT,
                     backgroundColor: bar.barColor,
                     opacity: bar.barOpacity,
@@ -129,8 +154,8 @@ export const StreakChart = memo<StreakChartProps>(
         </View>
 
         {/* Week labels */}
-        <View style={[styles.labelsContainer, { width: chartWidth }]}>
-          {weekLabels.map(label => (
+        <View style={[styles.labelsContainer, staticStyles.labelsContainer]}>
+          {chartData.weekLabels.map(label => (
             <ThemedText
               key={`week-${label.text}-${label.position}`}
               type="caption"
