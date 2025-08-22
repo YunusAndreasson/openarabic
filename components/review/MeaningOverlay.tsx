@@ -12,7 +12,6 @@ import type { MeaningOverlayProps } from '@/types/ui/review.types';
 import {
   calculateFontSize,
   createMeaningOverlayTextStyle,
-  determineTextColor,
   type MeaningOverlayColors,
 } from '@/utils/textStyleUtils';
 
@@ -83,10 +82,14 @@ const MeaningOverlayInternal = (props: MeaningOverlayProps) => {
     [colors.warning, colors.error, colors.text]
   );
 
-  const textColor = useMemo(
-    () => determineTextColor(isWarning, isVague, isStruggling, batchedColors),
-    [isWarning, isVague, isStruggling, batchedColors]
-  );
+  const textColor = useMemo(() => {
+    // Use error color (red) for unknown responses to match left swipe indicator
+    if (isStruggling || isWarning) return batchedColors.error;
+    // Use warning color (orange/yellow) for vague responses
+    if (isVague) return batchedColors.warning;
+    // Default to text color
+    return batchedColors.text;
+  }, [isWarning, isVague, isStruggling, batchedColors]);
 
   const fontSize = useMemo(
     () => calculateFontSize(isWarning, isVague, isStruggling),

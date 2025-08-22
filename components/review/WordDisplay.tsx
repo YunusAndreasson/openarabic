@@ -91,8 +91,8 @@ const WordDisplayInternal = ({
   const containerStyle = useMemo(() => [STATIC_STYLES.container, style], [style]);
 
   const translationTextStyle = useMemo(
-    () => createTranslationTextStyle(fontSize, batchedColors.englishText),
-    [fontSize, batchedColors.englishText]
+    () => createTranslationTextStyle(fontSize, colors.error),
+    [fontSize, colors.error]
   );
 
   const arabicTextProps = useMemo(
@@ -109,7 +109,6 @@ const WordDisplayInternal = ({
   const translationTextProps = useMemo(
     () => ({
       skipDefaultColor: true,
-      colorName: 'englishText' as const,
       style: translationTextStyle,
       type: 'body' as const,
       children: translation,
