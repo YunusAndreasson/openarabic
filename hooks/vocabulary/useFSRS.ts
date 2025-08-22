@@ -338,7 +338,7 @@ export function useFSRS({
       }
 
       // Update spacing counters before selecting next word
-      updateSpacingCounters(rootId);
+      updateSpacingCounters(spacingQueueRef.current, rootId);
 
       // Select the next word optimistically
       let nextItem = getNextWordWithSpacing();
@@ -361,39 +361,57 @@ export function useFSRS({
       }
 
       const totalWordsInSession = countersRef.current.totalWords;
+
+      // Progress calculation: ONLY count words that are known (truly finished)
+      // Failed words that go to spacing queue should NOT increase progress
       const newProgress =
         totalWordsInSession > 0
-          ? Math.min(
-              Math.round((countersRef.current.processedWords / totalWordsInSession) * 100),
-              100
-            )
-          : 0; // Default to 0 when no words are available
+          ? Math.min(Math.round((countersRef.current.knownWords / totalWordsInSession) * 100), 100)
+          : 0;
       setProgress(newProgress);
 
-      // FIXED: Check for completion when no next word is available AND either:
-      // 1. No words in spacing queue, OR
-      // 2. All words in spacing queue have remainingSpacing > 0 (can't be shown yet)
-      const hasAvailableSpacedWords = spacingQueueRef.current.spacedWords.some(
-        item => item.remainingSpacing <= 0
-      );
-
+      // FIXED: Check for completion when no next word is available AND no words are ready in spacing queue
+      // The session should only complete when there are truly no more words to review
       if (!nextItem) {
-        if (hasAvailableSpacedWords) {
-          // Try once more after moving ready spaced words back into the queue
+        // Check if any words in spacing queue are ready to be shown again
+        const readySpacedWords = spacingQueueRef.current.spacedWords.filter(
+          item => item.remainingSpacing <= 0
+        );
+
+        if (readySpacedWords.length > 0) {
+          // Move ready words back to the main queue and try to get next word
+          readySpacedWords.forEach(item => {
+            const priority = calculateWordPriority(item.word);
+            queueRef.current.push(item.word, priority);
+          });
+
+          // Remove ready words from spacing queue
+          spacingQueueRef.current.spacedWords = spacingQueueRef.current.spacedWords.filter(
+            item => item.remainingSpacing > 0
+          );
+
+          // Try to get next word again
           nextItem = getNextWordWithSpacing();
         }
-        // If still no item and no spaced words are ready, mark for completion
-        if (!nextItem && !hasAvailableSpacedWords) {
-          // FIXED: Mark completion needed but don't complete yet
-          // The review hook will check this flag and complete when ready
-          if (!stateTrackingRef.current.completionTriggered) {
-            stateTrackingRef.current.completionTriggered = true;
-            // Use a longer delay to ensure word processing completes
-            // This prevents the race condition while ensuring completion happens
-            setTimeout(() => {
-              setIsComplete(true);
-              if (onComplete) onComplete();
-            }, COMPLETION_DELAY_MS); // 300ms delay to ensure proper timing
+
+        // If still no next word, check if we should complete the session
+        if (!nextItem) {
+          // Check if any words in spacing queue are ready to be shown soon
+          const wordsReadySoon = spacingQueueRef.current.spacedWords.filter(
+            item => item.remainingSpacing <= 1
+          );
+
+          // If no words are ready soon, complete the session
+          // This prevents infinite waiting when all words are in long-term spacing
+          if (wordsReadySoon.length === 0) {
+            if (!stateTrackingRef.current.completionTriggered) {
+              stateTrackingRef.current.completionTriggered = true;
+              // Use a delay to ensure word processing completes
+              setTimeout(() => {
+                setIsComplete(true);
+                if (onComplete) onComplete();
+              }, COMPLETION_DELAY_MS);
+            }
           }
         }
       }
