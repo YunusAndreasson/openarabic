@@ -30,9 +30,8 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
     enabled: isVisible, // Only fetch when visible
   });
 
-  // Snap points - same as other bottom sheets for consistency
-  const SNAP_POINTS = [450]; // Compact height with minimal spacing
-  const snapPoints = SNAP_POINTS;
+  // Use a much smaller height to eliminate bottom padding
+  const snapPoints = [400];
 
   // Show/hide modal based on isVisible prop (same pattern as other bottom sheets)
   useEffect(() => {
@@ -145,7 +144,6 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: LAYOUT.SPACING.LARGE, // 16px - consistent horizontal padding
     paddingTop: LAYOUT.SPACING.MEDIUM, // 12px - breathing room from indicator
-    paddingBottom: LAYOUT.SPACING.XLARGE, // 24px - extra bottom space for comfortable gesture
   },
   // Section 1: Header (highest hierarchy)
   header: {
@@ -177,7 +175,7 @@ const styles = StyleSheet.create({
   chartSubtitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // 13px - tertiary descriptive text (1.54x ratio from 20px)
     textAlign: 'center',
-    marginBottom: LAYOUT.SPACING.MEDIUM, // 12px - moderate space before chart
+    marginBottom: LAYOUT.SPACING.TINY, // 4px - minimal space before chart
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.4,
   },
   // State containers

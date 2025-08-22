@@ -157,7 +157,7 @@ StreakChart.displayName = 'StreakChart';
 const styles = StyleSheet.create({
   container: {
     // Remove paddingHorizontal since it's handled by parent chartContainer
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.TINY, // Minimal vertical padding for tight layout
   },
   chartArea: {
     flex: 1,
@@ -175,8 +175,8 @@ const styles = StyleSheet.create({
   },
   labelsContainer: {
     position: 'relative',
-    height: LAYOUT.SPACING.LARGE,
-    marginTop: LAYOUT.SPACING.SMALL,
+    height: LAYOUT.SPACING.MEDIUM, // Reduced from LARGE to minimize bottom space
+    marginTop: LAYOUT.SPACING.TINY, // Reduced from SMALL for tighter spacing
   },
   label: {
     position: 'absolute',
