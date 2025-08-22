@@ -338,7 +338,7 @@ export function useFSRS({
       }
 
       // Update spacing counters before selecting next word
-      updateSpacingCounters(spacingQueueRef.current, rootId);
+      updateSpacingCounters(rootId);
 
       // Select the next word optimistically
       let nextItem = getNextWordWithSpacing();

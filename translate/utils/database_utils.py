@@ -10,14 +10,12 @@ try:
         download_audio_for_concat,
         generate_audio_filename,
         generate_bilingual_sentence_audio,
-        generate_english_sentence_audio,
         generate_sentence_audio,
     )
     from audio.root_audio import get_or_generate_root_audio
 except (ImportError, OSError):
     # Import failed, but we'll handle this gracefully in the functions
     generate_sentence_audio = None
-    generate_english_sentence_audio = None
     generate_bilingual_sentence_audio = None
     generate_audio_filename = None
     download_audio_for_concat = None
@@ -313,7 +311,6 @@ def insert_article_sentences(
             bilingual_audio_filename = generate_audio_filename()
 
             arabic_audio_result = None
-            english_audio_result = None
             bilingual_audio_result = None
             storage_url = None
             storage_url_english = None
@@ -335,19 +332,56 @@ def insert_article_sentences(
                     ):
                         sentence_audio_files.append(temp_audio_file)
 
-            if generate_english_sentence_audio:
-                # Generate English-only audio
-                english_audio_result = generate_english_sentence_audio(
-                    english_text=translation["full_translation"],
-                    filename=english_audio_filename,
+            # Generate English-only audio using unified function
+            from elevenlabs import VoiceSettings
+
+            from audio.audio_utils import generate_speech, validate_mp3
+            from data.config import (
+                AUDIO_TEMP_DIR,
+                ENGLISH_VOICE_ID,
+                ENGLISH_VOICE_SETTINGS,
+                SUPABASE_URL,
+            )
+            from utils.storage_utils import get_supabase_client
+
+            try:
+                english_response = generate_speech(
+                    text=translation["full_translation"],
+                    voice_id=ENGLISH_VOICE_ID,
+                    voice_settings=VoiceSettings(**ENGLISH_VOICE_SETTINGS),
                 )
 
-                if english_audio_result is not None:
-                    storage_url_english = english_audio_result.url
-                    if download_audio_for_concat(
-                        english_audio_filename, temp_english_audio_file
-                    ):
-                        sentence_english_audio_files.append(temp_english_audio_file)
+                if english_response and english_response.get("audio"):
+                    english_audio_data = english_response["audio"]
+
+                    # Validate and save audio
+                    if validate_mp3(english_audio_data):
+                        # Save to temporary file
+                        temp_english_audio_path = os.path.join(
+                            AUDIO_TEMP_DIR, english_audio_filename
+                        )
+                        with open(temp_english_audio_path, "wb") as f:
+                            f.write(english_audio_data)
+
+                        # Upload to Supabase storage
+                        with open(temp_english_audio_path, "rb") as f:
+                            get_supabase_client().storage.from_("audio").upload(
+                                english_audio_filename,
+                                f,
+                                file_options={"content-type": "audio/mpeg"},
+                            )
+                            storage_url_english = f"{SUPABASE_URL}/storage/v1/object/public/audio/{english_audio_filename}"
+
+                        # Clean up temporary file
+                        if os.path.exists(temp_english_audio_path):
+                            os.remove(temp_english_audio_path)
+
+                        if download_audio_for_concat(
+                            english_audio_filename, temp_english_audio_file
+                        ):
+                            sentence_english_audio_files.append(temp_english_audio_file)
+            except Exception as e:
+                logger.warning(f"Failed to generate English audio: {e}")
 
             if generate_bilingual_sentence_audio:
                 # Generate bilingual audio

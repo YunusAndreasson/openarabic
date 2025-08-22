@@ -2,9 +2,7 @@ import { STRINGS } from '@/constants/strings';
 import type { ReadingListItem } from '@/types/readingList.types';
 import { handleError } from '@/utils/errorHandling';
 
-import { supabase, checkAuthentication } from './supabase';
-
-
+import { checkAuthentication, supabase } from './supabase';
 
 const errorConfig = {
   readingList: {
@@ -108,7 +106,6 @@ export const readingListService = {
         user_id,
         article_id,
         added_at,
-        category_id,
         articles!inner (
           id,
           title,

@@ -8,21 +8,18 @@ const readingListItems = [
   {
     user_id: 'user-1',
     article_id: 1,
-    category_id: null,
     added_at: '2024-04-01',
     articles: { title: 'A', author: { id: 1, name: 'Auth' }, image_url: '', placeholder: '' },
   },
   {
     user_id: 'user-1',
     article_id: 2,
-    category_id: null,
     added_at: '2024-04-02',
     articles: { title: 'B', author: { id: 2, name: 'Auth2' }, image_url: '', placeholder: '' },
   },
   {
     user_id: 'user-1',
     article_id: 1,
-    category_id: null,
     added_at: '2024-04-03',
     articles: { title: 'A', author: { id: 1, name: 'Auth' }, image_url: '', placeholder: '' },
   },

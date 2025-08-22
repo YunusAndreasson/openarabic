@@ -23,8 +23,8 @@ from audio.audio_utils import (
     download_audio_for_concat,
     generate_audio_filename,
     generate_bilingual_sentence_audio,
-    generate_english_sentence_audio,
     generate_sentence_audio,
+    generate_speech,
 )
 from data.config import (
     AUTHOR_NUMBER_MAPPING,
@@ -135,13 +135,59 @@ def generate_article_audio(
                     f"Failed to generate Arabic audio for sentence {i + 1}"
                 )
 
-            # Generate English-only audio
-            english_audio_result = generate_english_sentence_audio(
-                english_text=english_text,
-                filename=english_audio_filename,
+            # Generate English-only audio using unified function
+            from elevenlabs import VoiceSettings
+
+            from audio.audio_utils import validate_mp3
+            from data.config import (
+                AUDIO_TEMP_DIR,
+                ENGLISH_VOICE_ID,
+                ENGLISH_VOICE_SETTINGS,
+                SUPABASE_URL,
+            )
+            from utils.storage_utils import get_supabase_client
+
+            # Generate English audio
+            english_response = generate_speech(
+                text=english_text,
+                voice_id=ENGLISH_VOICE_ID,
+                voice_settings=VoiceSettings(**ENGLISH_VOICE_SETTINGS),
             )
 
-            if english_audio_result and english_audio_result.url:
+            if english_response and english_response.get("audio"):
+                english_audio_data = english_response["audio"]
+
+                # Validate and save audio
+                if not validate_mp3(english_audio_data):
+                    raise RuntimeError(
+                        f"Invalid MP3 data for English audio in sentence {i + 1}"
+                    )
+
+                # Save to temporary file
+                temp_english_audio_path = os.path.join(
+                    AUDIO_TEMP_DIR, english_audio_filename
+                )
+                with open(temp_english_audio_path, "wb") as f:
+                    f.write(english_audio_data)
+
+                # Upload to Supabase storage
+                with open(temp_english_audio_path, "rb") as f:
+                    get_supabase_client().storage.from_("audio").upload(
+                        english_audio_filename,
+                        f,
+                        file_options={"content-type": "audio/mpeg"},
+                    )
+
+                # Clean up temporary file
+                if os.path.exists(temp_english_audio_path):
+                    os.remove(temp_english_audio_path)
+
+                # Create english_audio_result object for compatibility
+                english_audio_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{english_audio_filename}"
+                english_audio_result = type(
+                    "AudioResult", (), {"url": english_audio_url}
+                )()
+
                 # Download audio for concatenation
                 temp_english_audio_file = os.path.join(
                     temp_dir, f"sentence_english_{i}.mp3"

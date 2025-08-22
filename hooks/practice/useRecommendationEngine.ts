@@ -50,7 +50,8 @@ function calculateUpcomingDueWords(studyWords: StudyWord[]): number {
     const dueDate = new Date(word.fsrs_due);
 
     for (let i = 0; i < dateRanges.length; i++) {
-      if (dueDate <= dateRanges[i]) {
+      const dateRange = dateRanges[i];
+      if (dateRange && dueDate <= dateRange) {
         upcomingDueWords++;
         break; // Word is due within this range, no need to check further dates
       }

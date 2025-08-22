@@ -53,8 +53,13 @@ import { useGlobalAudioState } from '@/hooks/audio/useGlobalAudioState';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
+import { useAppBadge } from '@/hooks/useAppBadge';
 import { FSRSDataProvider } from '@/hooks/vocabulary/FSRSDataProvider';
-import { cleanupNotifications, initializeNotifications } from '@/services/notificationService';
+import {
+  cleanupNotifications,
+  clearAppBadge,
+  initializeNotifications,
+} from '@/services/notificationService';
 import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import type { RootState } from '@/store/store';
 import { persistor, store } from '@/store/store';
@@ -159,6 +164,9 @@ function AppContent() {
 
   // Centralized system UI theme management
   useSystemUITheme();
+
+  // App badge management - monitors due words and updates app icon badge
+  useAppBadge();
 
   // Global audio state moved into AudioOverlays to avoid re-rendering the root
 
@@ -268,10 +276,15 @@ function AppContent() {
     }
   }, [appReady]);
 
-  // Cleanup notifications on unmount
+  // Cleanup notifications and app badge on unmount
   useEffect(() => {
     return () => {
       cleanupNotifications();
+      // Clear app badge when app is unmounted (async cleanup)
+      clearAppBadge().catch(error => {
+        // Silently handle badge cleanup errors during unmount
+        console.warn('Failed to clear app badge during cleanup:', error);
+      });
     };
   }, []);
 

@@ -11,15 +11,17 @@ Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
     shouldPlaySound: true,
-    shouldSetBadge: false,
+    shouldSetBadge: true,
     shouldShowBanner: true,
     shouldShowList: true,
   }),
-  handleSuccess: () => {
-    // Notification scheduled successfully
+  // Optimize for battery and performance
+  handleSuccess: (_notificationId: string) => {
+    // Notification scheduled successfully - minimal logging for performance
   },
-  handleError: () => {
-    // Notification scheduling failed - error handled by service
+  handleError: (notificationId: string, error: Error) => {
+    // Handle scheduling errors gracefully
+    console.warn('Notification scheduling failed:', notificationId, error.message);
   },
 });
 
@@ -52,7 +54,7 @@ export async function initializeNotifications(): Promise<boolean> {
         lightColor: Colors.light.tint,
         sound: 'default',
         enableVibrate: true,
-        showBadge: false,
+        showBadge: true,
       });
 
       // Also set up a default channel
@@ -63,7 +65,7 @@ export async function initializeNotifications(): Promise<boolean> {
         lightColor: Colors.light.tint,
         sound: 'default',
         enableVibrate: true,
-        showBadge: false,
+        showBadge: true,
       });
     }
 
@@ -217,6 +219,50 @@ export async function cancelReminder(): Promise<void> {
   }
 }
 
+// Optimized badge management functions using Expo best practices
+export async function setAppBadgeCount(count: number): Promise<boolean> {
+  try {
+    // Validate input
+    const validCount = Math.max(0, Math.floor(count));
+
+    // Use Expo's efficient API
+    await Notifications.setBadgeCountAsync(validCount);
+    return true;
+  } catch (error) {
+    handleError(error as Error, {
+      showToast: false,
+      analyticsEventName: 'Badge_Set_Error',
+    });
+    return false;
+  }
+}
+
+export async function clearAppBadge(): Promise<boolean> {
+  try {
+    await Notifications.setBadgeCountAsync(0);
+    return true;
+  } catch (error) {
+    handleError(error as Error, {
+      showToast: false,
+      analyticsEventName: 'Badge_Clear_Error',
+    });
+    return false;
+  }
+}
+
+export async function getAppBadgeCount(): Promise<number> {
+  try {
+    const count = await Notifications.getBadgeCountAsync();
+    return Math.max(0, count); // Ensure non-negative
+  } catch (error) {
+    handleError(error as Error, {
+      showToast: false,
+      analyticsEventName: 'Badge_Get_Error',
+    });
+    return 0;
+  }
+}
+
 export async function hasPermissions(): Promise<boolean> {
   try {
     const { status } = await Notifications.getPermissionsAsync();
@@ -239,28 +285,59 @@ export async function ensurePermissions(): Promise<boolean> {
     const request = await Notifications.requestPermissionsAsync({
       ios: {
         allowAlert: true,
-        allowBadge: false,
+        allowBadge: true,
+        allowSound: true,
+        // Use minimal interruption for better UX
+        allowCriticalAlerts: false,
+        allowProvisional: false,
+      },
+      android: {
+        allowAlert: true,
+        allowBadge: true,
         allowSound: true,
       },
     });
 
     // Handle different permission states properly
-    if (request.status === 'granted') {
-      return true;
+    switch (request.status) {
+      case 'granted':
+        return true;
+      case 'denied':
+        // User explicitly denied - respect their choice
+        return false;
+      case 'undetermined':
+        // User dismissed dialog - don't keep asking
+        return false;
+      default:
+        return false;
     }
-
-    if (request.status === 'denied') {
-      // Notification permissions denied by user
-      return false;
-    }
-
-    // Handle undetermined state (user dismissed dialog)
-    // Notification permissions undetermined
-    return false;
   } catch (error) {
     handleError(error as Error, {
       showToast: false,
       analyticsEventName: 'Notification_Permission_Error',
+    });
+    return false;
+  }
+}
+
+// Efficient permission check for badge-only access
+export async function canUseBadge(): Promise<boolean> {
+  try {
+    const { status, ios } = await Notifications.getPermissionsAsync();
+
+    if (status !== 'granted') return false;
+
+    // On iOS, we need specific badge permission
+    if (Platform.OS === 'ios') {
+      return ios?.allowsBadge ?? false;
+    }
+
+    // On Android, badge is controlled by notification permission
+    return true;
+  } catch (error) {
+    handleError(error as Error, {
+      showToast: false,
+      analyticsEventName: 'Badge_Permission_Check_Error',
     });
     return false;
   }

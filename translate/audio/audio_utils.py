@@ -25,16 +25,11 @@ from data.config import (
     ELEVENLABS_API_KEY,
     ELEVENLABS_TTS_MODEL_ID,
     ENGLISH_VOICE_ID,
-    ENGLISH_VOICE_ID_FALLBACK,
     ENGLISH_VOICE_SETTINGS,
     GOOGLE_CLOUD_CREDENTIALS_PATH,
     SUPABASE_URL,
 )
 from data.models import AudioResult, BilingualAudioResult
-from utils.arabic_text import (
-    preprocess_text_for_tts,
-    wrap_in_arabic_ssml,
-)
 from utils.exceptions import AudioGenerationError
 from utils.google_tts_service import GoogleTTSService
 from utils.storage_utils import (
@@ -173,7 +168,6 @@ def generate_speech(
     text: str,
     voice_id: str,
     voice_settings: VoiceSettings | None = None,
-    is_arabic: bool = True,
 ) -> dict[str, Any] | None:
     """
     Generate speech using ElevenLabs API.
@@ -182,21 +176,12 @@ def generate_speech(
         text: The text to convert to speech
         voice_id: The voice ID to use
         voice_settings: Optional voice settings
-        is_arabic: Whether the text is Arabic (for preprocessing)
 
     Returns:
         Dictionary with audio data and metadata, or None if failed
     """
     try:
         client = _get_eleven_labs_client()
-
-        # Preprocess text for TTS
-        if is_arabic:
-            logger.debug(f"Original Arabic text: '{text}'")
-            text = preprocess_text_for_tts(text)
-            logger.debug(f"After preprocessing: '{text}'")
-            text = wrap_in_arabic_ssml(text)
-            logger.debug(f"After SSML wrapping: '{text}'")
 
         # Use default voice settings if none provided
         if voice_settings is None:
@@ -219,34 +204,43 @@ def generate_speech(
         if hasattr(response, "__iter__") and not hasattr(response, "audio"):
             logger.debug("Response is a generator, iterating to get audio data")
             try:
-                # Get the first (and usually only) chunk from the generator
-                audio_chunk = next(response)
+                # Collect all chunks from the generator and concatenate them
+                audio_chunks = []
+                chunk_count = 0
 
-                # Check for audio data in the chunk
-                if hasattr(audio_chunk, "audio") and audio_chunk.audio:
-                    audio_data = audio_chunk.audio
-                    logger.debug(f"Found audio data: {len(audio_data)} bytes")
-                elif hasattr(audio_chunk, "data") and audio_chunk.data:
-                    audio_data = audio_chunk.data
-                    logger.debug(f"Found data attribute: {len(audio_chunk.data)} bytes")
-                elif hasattr(audio_chunk, "content") and audio_chunk.content:
-                    audio_data = audio_chunk.content
+                for audio_chunk in response:
+                    chunk_count += 1
+                    # Check for audio data in the chunk
+                    if hasattr(audio_chunk, "audio") and audio_chunk.audio:
+                        chunk_data = audio_chunk.audio
+                    elif hasattr(audio_chunk, "data") and audio_chunk.data:
+                        chunk_data = audio_chunk.data
+                    elif hasattr(audio_chunk, "content") and audio_chunk.content:
+                        chunk_data = audio_chunk.content
+                    elif isinstance(audio_chunk, bytes):
+                        # The chunk is raw audio data
+                        chunk_data = audio_chunk
+                    else:
+                        logger.error(
+                            f"No audio data found in chunk {chunk_count}. Available attributes: {[attr for attr in dir(audio_chunk) if not attr.startswith('_')]}"
+                        )
+                        return None
+
+                    audio_chunks.append(chunk_data)
                     logger.debug(
-                        f"Found content attribute: {len(audio_chunk.content)} bytes"
+                        f"Collected chunk {chunk_count}: {len(chunk_data)} bytes"
                     )
-                elif isinstance(audio_chunk, bytes):
-                    # The chunk is raw audio data
-                    audio_data = audio_chunk
-                    logger.debug(f"Found raw audio data: {len(audio_data)} bytes")
+
+                # Concatenate all chunks
+                if audio_chunks:
+                    audio_data = b"".join(audio_chunks)
+                    logger.debug(
+                        f"Concatenated {chunk_count} chunks into {len(audio_data)} bytes"
+                    )
                 else:
-                    logger.error(
-                        f"No audio data found in chunk. Available attributes: {[attr for attr in dir(audio_chunk) if not attr.startswith('_')]}"
-                    )
+                    logger.error("No audio chunks collected")
                     return None
 
-            except StopIteration:
-                logger.error("Generator response was empty")
-                return None
             except Exception as e:
                 logger.error(f"Error processing generator response: {e}")
                 return None
@@ -272,7 +266,7 @@ def generate_speech(
 
         return {
             "audio": audio_data,
-            "duration": getattr(response, "duration", None),
+            "duration": getattr(response, "duration", "unknown"),
             "voice_id": voice_id,
             "text": text,
         }
@@ -280,116 +274,6 @@ def generate_speech(
     except Exception as e:
         logger.error(f"Speech generation failed: {e}")
         return None
-
-
-@retry_operation(max_attempts=3, delay=1, backoff=2)
-def generate_speech_with_timestamps(
-    text: str,
-    voice_id: str,
-    previous_text: str | None = None,
-    next_text: str | None = None,
-) -> dict:
-    """
-    Generate speech with word-level timestamps using ElevenLabs API.
-
-    Args:
-        text: The text to convert to speech
-        voice_id: The voice ID to use
-        previous_text: Previous text for context
-        next_text: Next text for context
-
-    Returns:
-        Dictionary with audio data, timestamps, and metadata
-    """
-    try:
-        client = _get_eleven_labs_client()
-
-        # Preprocess text for TTS
-        text = preprocess_text_for_tts(text)
-        text = wrap_in_arabic_ssml(text)
-
-        # Build context for better pronunciation
-        context_text = ""
-        if previous_text:
-            context_text += f"Previous: {previous_text}\n"
-        if next_text:
-            context_text += f"Next: {next_text}\n"
-        context_text += f"Current: {text}"
-
-        # Generate speech with alignment - Premium audio quality
-        response = client.text_to_speech.convert_with_timestamps(
-            text=text,
-            voice_id=voice_id,
-            voice_settings=VoiceSettings(**DEFAULT_VOICE_SETTINGS),
-            output_format="mp3_44100_192",  # Higher bitrate for premium quality
-        )
-
-        if not response:
-            logger.error("No response from TTS API")
-            return {}
-
-        # Log response details for debugging
-        logger.debug(f"TTS Response type: {type(response)}")
-        logger.debug(f"TTS Response attributes: {dir(response)}")
-        if hasattr(response, "audio"):
-            logger.debug(f"Audio data present: {response.audio is not None}")
-            if response.audio:
-                logger.debug(f"Audio data length: {len(response.audio)} bytes")
-        else:
-            logger.debug("No 'audio' attribute in response")
-
-        # Handle both old and new response formats
-        audio_data = getattr(response, "audio", None)
-        audio_base64 = getattr(response, "audio_base_64", None)
-
-        # If we have base64 data but no audio bytes, decode it
-        if audio_base64 and not audio_data:
-            import base64
-
-            audio_data = base64.b64decode(audio_base64)
-
-        return {
-            "audio": audio_data,
-            "alignment": getattr(response, "alignment", None),
-            "audio_base_64": audio_base64,
-            "duration": getattr(response, "duration", "unknown"),
-            "voice_id": voice_id,
-            "text": text,
-        }
-
-    except Exception as e:
-        logger.error(f"Speech generation with timestamps failed: {e}")
-        # Fallback to basic convert method without timestamps
-        try:
-            logger.info("Attempting fallback to basic convert method")
-            fallback_client = _get_eleven_labs_client()
-            fallback_response = fallback_client.text_to_speech.convert(
-                text=text,
-                voice_id=voice_id,
-                model_id=ELEVENLABS_TTS_MODEL_ID,
-                voice_settings=VoiceSettings(**DEFAULT_VOICE_SETTINGS),
-            )
-
-            if (
-                fallback_response
-                and hasattr(fallback_response, "audio")
-                and fallback_response.audio
-            ):
-                logger.info("Fallback convert method succeeded")
-                return {
-                    "audio": fallback_response.audio,
-                    "alignment": None,  # No timestamps in fallback
-                    "audio_base_64": None,
-                    "duration": getattr(fallback_response, "duration", "unknown"),
-                    "voice_id": voice_id,
-                    "text": text,
-                }
-            else:
-                logger.error("Fallback convert method also failed")
-                return {}
-        except Exception as fallback_error:
-            logger.error(f"Fallback convert method failed: {fallback_error}")
-            return {}
 
 
 def concatenate_audio_files(audio_files: list[str], output_file: str) -> str | None:
@@ -569,17 +453,14 @@ def generate_sentence_audio(
     try:
         # Prefer tashkeel text if available
         tts_text = tashkeel_text if tashkeel_text else text
-        # Use SSML for better pronunciation
-        tts_text = wrap_in_arabic_ssml(tts_text)
         # Use the main voice for sentences
         voice_id = ARABIC_VOICE_ID
 
-        # Generate audio with timestamps
-        response = generate_speech_with_timestamps(
+        # Generate audio using unified function
+        response = generate_speech(
             text=tts_text,
             voice_id=voice_id,
-            previous_text=previous_text,
-            next_text=next_text,
+            voice_settings=VoiceSettings(**DEFAULT_VOICE_SETTINGS),
         )
         # Extract audio data
         audio_data = response.get("audio") if response else None
@@ -611,176 +492,6 @@ def generate_sentence_audio(
         )
     except Exception as e:
         logger.error(f"Error generating sentence audio: {str(e)}")
-        return None
-
-
-@retry_operation(max_attempts=3, delay=1, backoff=2)
-def generate_english_speech(
-    text: str,
-    voice_settings: VoiceSettings | None = None,
-) -> dict[str, Any] | None:
-    """
-    Generate English speech using ElevenLabs API with fallback voice support.
-
-    Args:
-        text: The English text to convert to speech
-        voice_settings: Optional voice settings
-
-    Returns:
-        Dictionary with audio data and metadata, or None if failed
-    """
-    try:
-        client = _get_eleven_labs_client()
-
-        # Use English voice settings if none provided
-        if voice_settings is None:
-            voice_settings = VoiceSettings(**ENGLISH_VOICE_SETTINGS)
-        elif isinstance(voice_settings, dict):
-            voice_settings = VoiceSettings(**voice_settings)
-
-        # Try primary English voice first
-        voice_id = ENGLISH_VOICE_ID
-        logger.info(f"Attempting English speech generation with voice ID: {voice_id}")
-
-        try:
-            # Generate speech with primary voice
-            response = client.text_to_speech.convert(
-                text=text,
-                voice_id=voice_id,
-                model_id=ELEVENLABS_TTS_MODEL_ID,
-                voice_settings=voice_settings,
-            )
-            logger.info(
-                f"Successfully generated English speech with primary voice: {voice_id}"
-            )
-
-        except Exception as primary_error:
-            logger.warning(f"Primary English voice {voice_id} failed: {primary_error}")
-
-            # Try fallback voice
-            try:
-                fallback_voice_id = ENGLISH_VOICE_ID_FALLBACK
-                logger.info(f"Trying fallback English voice: {fallback_voice_id}")
-
-                response = client.text_to_speech.convert(
-                    text=text,
-                    voice_id=fallback_voice_id,
-                    model_id=ELEVENLABS_TTS_MODEL_ID,
-                    voice_settings=voice_settings,
-                )
-                voice_id = fallback_voice_id
-                logger.info(
-                    f"Successfully generated English speech with fallback voice: {voice_id}"
-                )
-
-            except Exception as fallback_error:
-                logger.error(
-                    f"Fallback voice {ENGLISH_VOICE_ID_FALLBACK} also failed: {fallback_error}"
-                )
-
-                # Last resort: try to find any available English voice
-                try:
-                    if hasattr(client, "voices") and hasattr(client.voices, "get_all"):
-                        available_voices = client.voices.get_all()
-                        english_voices = [
-                            v
-                            for v in available_voices
-                            if v.labels.get("language") == "en"
-                        ]
-
-                        if english_voices:
-                            last_resort_voice = english_voices[0]
-                            voice_id = last_resort_voice.voice_id
-                            logger.info(
-                                f"Using last resort English voice: {voice_id} ({last_resort_voice.name})"
-                            )
-
-                            response = client.text_to_speech.convert(
-                                text=text,
-                                voice_id=voice_id,
-                                model_id=ELEVENLABS_TTS_MODEL_ID,
-                                voice_settings=voice_settings,
-                            )
-                            logger.info(
-                                f"Successfully generated English speech with last resort voice: {voice_id}"
-                            )
-                        else:
-                            logger.error("No English voices available in account")
-                            return None
-                    else:
-                        logger.error("Cannot access voices API for last resort")
-                        return None
-
-                except Exception as last_resort_error:
-                    logger.error(f"All voice attempts failed: {last_resort_error}")
-                    return None
-
-        # Handle generator response (new ElevenLabs API format)
-        if hasattr(response, "__iter__") and not isinstance(response, str | bytes):
-            logger.debug("Response is a generator, iterating to get audio data")
-            try:
-                # Get the first (and usually only) chunk from the generator
-                audio_chunk = next(response)
-
-                # Check for audio data in the chunk
-                if hasattr(audio_chunk, "audio") and audio_chunk.audio:
-                    audio_data = audio_chunk.audio
-                    logger.debug(f"Found audio data: {len(audio_data)} bytes")
-                elif hasattr(audio_chunk, "data") and audio_chunk.data:
-                    audio_data = audio_chunk.data
-                    logger.debug(f"Found data attribute: {len(audio_chunk.data)} bytes")
-                elif hasattr(audio_chunk, "content") and audio_chunk.content:
-                    audio_data = audio_chunk.content
-                    logger.debug(
-                        f"Found content attribute: {len(audio_chunk.content)} bytes"
-                    )
-                elif isinstance(audio_chunk, bytes):
-                    # The chunk is raw audio data
-                    audio_data = audio_chunk
-                    logger.debug(f"Found raw audio data: {len(audio_chunk)} bytes")
-                else:
-                    logger.error(
-                        f"No audio data found in chunk. Available attributes: {[attr for attr in dir(audio_chunk) if not attr.startswith('_')]}"
-                    )
-                    return None
-
-            except StopIteration:
-                logger.error("Generator response was empty")
-                return None
-            except Exception as e:
-                logger.error(f"Error processing generator response: {e}")
-                return None
-        else:
-            # Handle direct response format
-            if hasattr(response, "audio") and response.audio:
-                audio_data = response.audio
-            elif hasattr(response, "data") and response.data:
-                audio_data = response.data
-            elif hasattr(response, "content") and response.content:
-                audio_data = response.content
-            else:
-                logger.error(f"No audio data found in response: {response}")
-                return None
-
-        # Validate audio data length
-        if len(audio_data) < 1000:  # Less than 1KB is suspicious
-            logger.warning(
-                f"Generated English audio seems very short: {len(audio_data)} bytes"
-            )
-
-        logger.info(
-            f"English speech generation successful: {len(audio_data)} bytes, voice: {voice_id}"
-        )
-
-        return {
-            "audio": audio_data,
-            "duration": getattr(response, "duration", "unknown"),
-            "voice_id": voice_id,
-            "text": text,
-        }
-
-    except Exception as e:
-        logger.error(f"English speech generation failed: {e}")
         return None
 
 
@@ -832,21 +543,99 @@ def create_bilingual_audio(
         return english_audio + arabic_audio
 
 
+def create_multi_audio_with_delays(
+    audio_segments: list[bytes],
+    delay_ms: int = 1000,  # 1 second delay
+) -> bytes:
+    """
+    Create multi-segment audio with delays between each segment.
+
+    Args:
+        audio_segments: List of audio data segments
+        delay_ms: Delay duration in milliseconds between segments
+
+    Returns:
+        Combined audio data with delays
+    """
+    try:
+        import io
+
+        from pydub import AudioSegment
+
+        if not audio_segments:
+            logger.error("No audio segments provided")
+            return b""
+
+        if len(audio_segments) == 1:
+            return audio_segments[0]
+
+        # Load all audio segments
+        segments = []
+        for i, audio_data in enumerate(audio_segments):
+            if audio_data:
+                try:
+                    segment = AudioSegment.from_mp3(io.BytesIO(audio_data))
+                    segments.append(segment)
+                    logger.debug(f"Loaded segment {i + 1}: {len(audio_data)} bytes")
+                except Exception as e:
+                    logger.error(f"Failed to load segment {i + 1}: {e}")
+                    # Skip this segment
+                    continue
+            else:
+                logger.warning(f"Empty audio data for segment {i + 1}, skipping")
+
+        if not segments:
+            logger.error("No valid audio segments found")
+            return b""
+
+        # Create delay segment (1 second)
+        delay_segment = AudioSegment.silent(duration=delay_ms)
+
+        # Combine all segments with delays between them
+        combined = segments[0]
+        for i in range(1, len(segments)):
+            combined = combined + delay_segment + segments[i]
+            logger.debug(f"Added segment {i + 1} with {delay_ms}ms delay")
+
+        # Export as MP3
+        output = io.BytesIO()
+        combined.export(output, format="mp3")
+        output.seek(0)
+
+        logger.info(
+            f"Created multi-segment audio: {len(segments)} segments, {len(output.getvalue())} bytes"
+        )
+        return output.getvalue()
+
+    except ImportError:
+        logger.error("pydub not available for multi-segment audio creation")
+        # Fallback: simple concatenation without delays
+        return b"".join(audio_segments)
+    except Exception as e:
+        logger.error(f"Error creating multi-segment audio: {e}")
+        # Fallback: simple concatenation
+        return b"".join(audio_segments)
+
+
 def generate_bilingual_sentence_audio(
     english_text: str,
     arabic_text: str,
     filename: str,
+    title: str | None = None,
+    summary: str | None = None,
     tashkeel_text: str | None = None,
     previous_text: str | None = None,
     next_text: str | None = None,
 ) -> BilingualAudioResult | None:
     """
-    Generate bilingual audio for a sentence (English + Arabic).
+    Generate bilingual audio for a sentence with optional title and summary intro (English + Arabic).
 
     Args:
         english_text: English translation text
         arabic_text: Arabic text
         filename: Output filename
+        title: Optional title to read in English first
+        summary: Optional summary to read in English after title
         tashkeel_text: Arabic text with diacritics (preferred)
         previous_text: Previous text for context
         next_text: Next text for context
@@ -859,26 +648,69 @@ def generate_bilingual_sentence_audio(
             f"Starting bilingual audio generation for: '{english_text[:50]}...' + '{arabic_text[:50]}...'"
         )
 
-        # Generate English audio
-        logger.info("Generating English audio...")
-        english_response = generate_english_speech(english_text)
+        # Collect all audio segments
+        audio_segments = []
+        segment_info = []
+
+        # Generate title audio (if provided)
+        if title and title.strip():
+            logger.info(f"Generating title audio: '{title}'")
+            title_response = generate_speech(
+                text=title.strip(),
+                voice_id=ENGLISH_VOICE_ID,
+                voice_settings=VoiceSettings(**ENGLISH_VOICE_SETTINGS),
+            )
+            if title_response and title_response.get("audio"):
+                audio_segments.append(title_response["audio"])
+                segment_info.append(f"Title: {len(title_response['audio'])} bytes")
+                logger.info(
+                    f"Title audio generated: {len(title_response['audio'])} bytes"
+                )
+            else:
+                logger.warning("Failed to generate title audio")
+
+        # Generate summary audio (if provided)
+        if summary and summary.strip():
+            logger.info(f"Generating summary audio: '{summary[:50]}...'")
+            summary_response = generate_speech(
+                text=summary.strip(),
+                voice_id=ENGLISH_VOICE_ID,
+                voice_settings=VoiceSettings(**ENGLISH_VOICE_SETTINGS),
+            )
+            if summary_response and summary_response.get("audio"):
+                audio_segments.append(summary_response["audio"])
+                segment_info.append(f"Summary: {len(summary_response['audio'])} bytes")
+                logger.info(
+                    f"Summary audio generated: {len(summary_response['audio'])} bytes"
+                )
+            else:
+                logger.warning("Failed to generate summary audio")
+
+        # Generate main English audio
+        logger.info("Generating main English audio...")
+        english_response = generate_speech(
+            text=english_text,
+            voice_id=ENGLISH_VOICE_ID,
+            voice_settings=VoiceSettings(**ENGLISH_VOICE_SETTINGS),
+        )
         if not english_response or not english_response.get("audio"):
-            logger.error("Failed to generate English audio")
+            logger.error("Failed to generate main English audio")
             return None
 
         english_audio = english_response["audio"]
         english_duration = english_response.get("duration", "unknown")
+        audio_segments.append(english_audio)
+        segment_info.append(f"English: {len(english_audio)} bytes")
         logger.info(
-            f"English audio generated: {len(english_audio)} bytes, duration: {english_duration}"
+            f"Main English audio generated: {len(english_audio)} bytes, duration: {english_duration}"
         )
 
         # Generate Arabic audio
         logger.info("Generating Arabic audio...")
-        arabic_response = generate_speech_with_timestamps(
+        arabic_response = generate_speech(
             text=tashkeel_text if tashkeel_text else arabic_text,
             voice_id=ARABIC_VOICE_ID,
-            previous_text=previous_text,
-            next_text=next_text,
+            voice_settings=VoiceSettings(**DEFAULT_VOICE_SETTINGS),
         )
         if not arabic_response or not arabic_response.get("audio"):
             logger.error("Failed to generate Arabic audio")
@@ -886,37 +718,39 @@ def generate_bilingual_sentence_audio(
 
         arabic_audio = arabic_response["audio"]
         arabic_duration = arabic_response.get("duration", "unknown")
+        audio_segments.append(arabic_audio)
+        segment_info.append(f"Arabic: {len(arabic_audio)} bytes")
         logger.info(
             f"Arabic audio generated: {len(arabic_audio)} bytes, duration: {arabic_duration}"
         )
 
-        # Validate audio lengths before combining
-        if len(english_audio) < 1000:
-            logger.warning(
-                f"English audio seems very short: {len(english_audio)} bytes"
-            )
-        if len(arabic_audio) < 1000:
-            logger.warning(f"Arabic audio seems very short: {len(arabic_audio)} bytes")
+        # Validate audio lengths
+        for i, audio_data in enumerate(audio_segments):
+            if len(audio_data) < 1000:
+                logger.warning(
+                    f"Audio segment {i + 1} seems very short: {len(audio_data)} bytes"
+                )
 
-        # Create bilingual audio
-        logger.info(f"Combining audio with {BILINGUAL_AUDIO_PAUSE_MS}ms pause...")
-        bilingual_audio_data = create_bilingual_audio(
-            english_audio,
-            arabic_audio,
-            BILINGUAL_AUDIO_PAUSE_MS,
+        # Create multi-segment audio with 1-second delays
+        logger.info(
+            f"Creating multi-segment audio with {len(audio_segments)} segments: {segment_info}"
+        )
+        combined_audio_data = create_multi_audio_with_delays(
+            audio_segments,
+            delay_ms=1000,  # 1 second delay between segments
         )
 
         # Validate and save audio
-        if not validate_mp3(bilingual_audio_data):
-            logger.error("Invalid MP3 data for bilingual audio")
+        if not validate_mp3(combined_audio_data):
+            logger.error("Invalid MP3 data for multi-segment audio")
             return None
 
-        logger.info(f"Bilingual audio created: {len(bilingual_audio_data)} bytes")
+        logger.info(f"Multi-segment audio created: {len(combined_audio_data)} bytes")
 
         # Save to temporary file
         temp_audio_path = os.path.join(AUDIO_TEMP_DIR, filename)
         with open(temp_audio_path, "wb") as f:
-            f.write(bilingual_audio_data)
+            f.write(combined_audio_data)
 
         # Upload to Supabase storage
         with open(temp_audio_path, "rb") as f:
@@ -931,24 +765,22 @@ def generate_bilingual_sentence_audio(
         if os.path.exists(temp_audio_path):
             os.remove(temp_audio_path)
 
-        # Calculate durations
-        pause_duration = BILINGUAL_AUDIO_PAUSE_MS / 1000.0  # Convert to seconds
-
-        # Total duration (approximate)
+        # Calculate durations for multi-segment audio
+        total_segments = len(audio_segments)
         total_duration = "unknown"
-        if english_duration != "unknown" and arabic_duration != "unknown":
-            try:
-                total_duration = (
-                    float(english_duration) + float(arabic_duration) + pause_duration
-                )
-                logger.info(
-                    f"Calculated total duration: {total_duration:.2f}s (English: {english_duration}s + Arabic: {arabic_duration}s + Pause: {pause_duration:.2f}s)"
-                )
-            except (ValueError, TypeError):
-                total_duration = "unknown"
-                logger.warning(
-                    "Could not calculate total duration from individual durations"
-                )
+        try:
+            # Estimate total duration with delays (1 second per segment + 1 second delays)
+            estimated_duration = total_segments * 1.0  # Assume ~1 second per segment
+            estimated_duration += (
+                total_segments - 1
+            ) * 1.0  # Add 1 second delays between segments
+            total_duration = estimated_duration
+            logger.info(
+                f"Estimated total duration: {total_duration:.2f}s for {total_segments} segments with 1s delays"
+            )
+        except Exception:
+            total_duration = "unknown"
+            logger.warning("Could not estimate total duration")
 
         logger.info(f"Bilingual audio generation completed successfully: {filename}")
 
@@ -958,68 +790,11 @@ def generate_bilingual_sentence_audio(
             duration=total_duration,
             english_duration=english_duration,
             arabic_duration=arabic_duration,
-            pause_duration=pause_duration,
+            pause_duration=1.0,  # 1 second delays between segments
         )
 
     except Exception as e:
         logger.error(f"Error generating bilingual sentence audio: {str(e)}")
-        return None
-
-
-def generate_english_sentence_audio(
-    english_text: str,
-    filename: str,
-) -> AudioResult | None:
-    """
-    Generate English-only audio for a sentence.
-
-    Args:
-        english_text: English text to convert to speech
-        filename: Output filename
-
-    Returns:
-        AudioResult with URL and duration
-    """
-    try:
-        # Generate English audio
-        response = generate_english_speech(english_text)
-        if not response or not response.get("audio"):
-            logger.error("Failed to generate English audio")
-            return None
-
-        audio_data = response["audio"]
-
-        # Validate and save audio
-        if not validate_mp3(audio_data):
-            logger.error("Invalid MP3 data for English audio")
-            return None
-
-        # Save to temporary file
-        temp_audio_path = os.path.join(AUDIO_TEMP_DIR, filename)
-        with open(temp_audio_path, "wb") as f:
-            f.write(audio_data)
-
-        # Upload to Supabase storage
-        with open(temp_audio_path, "rb") as f:
-            get_supabase_client().storage.from_("audio").upload(
-                filename,
-                f,
-                file_options={"content-type": "audio/mpeg"},
-            )
-            url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{filename}"
-
-        # Clean up temporary file
-        if os.path.exists(temp_audio_path):
-            os.remove(temp_audio_path)
-
-        return AudioResult(
-            url=url,
-            filename=filename,
-            duration=response.get("duration", "unknown"),
-        )
-
-    except Exception as e:
-        logger.error(f"Error generating English sentence audio: {str(e)}")
         return None
 
 

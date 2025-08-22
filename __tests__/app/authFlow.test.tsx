@@ -82,6 +82,34 @@ jest.mock('@/hooks/theme/useThemeDetection', () => ({
   useIsDarkMode: () => false,
 }));
 
+jest.mock('@/hooks/articles/useReadingStreak', () => ({
+  useReadingStreak: () => ({
+    streak: { currentStreak: 5, longestStreak: 10, lastReadDate: '2024-01-01' },
+    isLoading: false,
+    error: null,
+  }),
+}));
+
+jest.mock('@/contexts/StreaksContext', () => ({
+  useStreaks: () => ({
+    openStreaks: jest.fn(),
+    isStreaksVisible: false,
+    closeStreaks: jest.fn(),
+  }),
+}));
+
+jest.mock('@/utils/errorHandling', () => ({
+  handleError: jest.fn(),
+}));
+
+jest.mock('@/utils/safeAsyncStorage', () => ({
+  getSafeStorage: () => ({
+    getItem: jest.fn().mockResolvedValue(null),
+    setItem: jest.fn().mockResolvedValue(undefined),
+    removeItem: jest.fn().mockResolvedValue(undefined),
+  }),
+}));
+
 jest.mock('@/services/supabase', () => {
   const signInMock = jest.fn();
   const signUpMock = jest.fn();
@@ -187,11 +215,12 @@ jest.mock('@/components/HeaderProfile', () => {
   const React = require('react');
   const { TouchableOpacity, Text } = require('react-native');
   const { router } = require('expo-router');
-  return () => (
+  const HeaderProfile = () => (
     <TouchableOpacity testID="profile-btn" onPress={() => router.push('/(tabs)/read/account')}>
       <Text>PROFILE</Text>
     </TouchableOpacity>
   );
+  return { HeaderProfile };
 });
 
 jest.mock('@/components/ui/EditModeButton', () => () => null);

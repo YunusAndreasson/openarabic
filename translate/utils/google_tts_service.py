@@ -16,9 +16,13 @@ class GoogleTTSService:
 
     def __init__(self, credentials_path: str | None = None):
         """Initialize the Google Cloud TTS service."""
-        # Use service account credentials if provided, otherwise use default credentials
-        if credentials_path and os.path.exists(credentials_path):
-            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
+        # Use service account credentials if provided, otherwise use environment variable
+        creds_path = credentials_path or os.getenv("GOOGLE_CLOUD_CREDENTIALS_PATH")
+        if creds_path and os.path.exists(creds_path):
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = creds_path
+            logger.debug(f"Set GOOGLE_APPLICATION_CREDENTIALS to: {creds_path}")
+        else:
+            logger.debug("Using default Google Cloud credentials")
 
         try:
             self.client = texttospeech.TextToSpeechClient()
@@ -34,7 +38,7 @@ class GoogleTTSService:
             # Configure Arabic voice (Modern Standard Arabic) - Premium Wavenet quality
             voice = texttospeech.VoiceSelectionParams(
                 language_code="ar-XA",
-                name="ar-XA-Wavenet-A",  # Premium Wavenet voice for best Arabic quality
+                name="ar-XA-Wavenet-B",  # Premium Wavenet voice for best Arabic quality
                 ssml_gender=texttospeech.SsmlVoiceGender.MALE,
             )
 
