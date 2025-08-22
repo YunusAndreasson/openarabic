@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import * as MailComposer from 'expo-mail-composer';
 import { router } from 'expo-router';
+import * as StoreReview from 'expo-store-review';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Linking } from 'react-native';
 
@@ -242,6 +243,16 @@ export const useAccountScreen = () => {
     router.push(ROUTE_PATHS.ACCOUNT_FONT_SELECTOR);
   }, []);
 
+  const handleRequestReview = useCallback(async () => {
+    try {
+      if (await StoreReview.hasAction()) {
+        await StoreReview.requestReview();
+      }
+    } catch (error) {
+      console.warn('Store review request failed:', error);
+    }
+  }, []);
+
   const appVersion = pkg.version;
   const currentYear = new Date().getFullYear();
 
@@ -257,6 +268,7 @@ export const useAccountScreen = () => {
       handleSignOut,
       handleSupportContact,
       handleFontSelectorPress,
+      handleRequestReview,
       appVersion,
       currentYear,
       user,
@@ -275,6 +287,7 @@ export const useAccountScreen = () => {
       handleSignOut,
       handleSupportContact,
       handleFontSelectorPress,
+      handleRequestReview,
       appVersion,
       currentYear,
       user,

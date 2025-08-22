@@ -24,6 +24,14 @@ export const STRINGS = {
   AUDIO_LANGUAGE_ARABIC: 'Arabic only',
   AUDIO_LANGUAGE_BILINGUAL: 'English + Arabic',
 
+  // Social Media
+  TWITTER_URL: 'https://x.com/openarabicio',
+  INSTAGRAM_URL: 'https://www.instagram.com/openarabic.io/',
+  FACEBOOK_URL: 'https://www.facebook.com/OpenArabic.io/',
+
+  // App Store Review
+  RATE_APP: 'Rate OpenArabic',
+
   // Content states
   LOADING_PLAYLIST: 'Loading playlist',
 

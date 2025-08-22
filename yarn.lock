@@ -4932,6 +4932,11 @@ expo-status-bar@^2.2.3:
     react-native-edge-to-edge "1.6.0"
     react-native-is-edge-to-edge "^1.1.6"
 
+expo-store-review@~8.1.5:
+  version "8.1.5"
+  resolved "https://registry.yarnpkg.com/expo-store-review/-/expo-store-review-8.1.5.tgz#d025baddfd306f8e52854e4eb168bfed0afa017b"
+  integrity sha512-PMNMIt6UrdMYyRzCCbmCmbIkwSgIXhGNQHsgmOgq9FgtYLW5Oo2FD3zwB0KU2u/MpTTt/XyuuADuFvxE+Vh9uw==
+
 expo-structured-headers@~4.1.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/expo-structured-headers/-/expo-structured-headers-4.1.0.tgz#5475fc3f9559701cc755fd2d50605f8817d42ad0"

@@ -13,7 +13,7 @@ import { Toggle } from '@ui/Toggle';
 import { THEME_OPTIONS, ThemePicker } from '@/components/ThemePicker';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { AccountBadge } from '@/components/account';
+import { AccountBadge, SocialMediaIcons } from '@/components/account';
 import AudioLanguageSelector from '@/components/account/AudioLanguageSelector';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
@@ -48,6 +48,7 @@ const AccountScreen: FC = () => {
     handleSignOut,
     handleSupportContact,
     handleFontSelectorPress,
+    handleRequestReview,
     appVersion,
     currentYear,
     user,
@@ -302,6 +303,36 @@ const AccountScreen: FC = () => {
                 />
               </View>
             </BaseCard>
+
+            <Divider />
+
+            <BaseCard
+              includePressAnimation={true}
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={handleRequestReview}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons
+                      color={colors.interactiveSecondary}
+                      name="star"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
+                  </View>
+                  <ThemedText style={styles.cardText} type="body" weight="medium">
+                    {STRINGS.RATE_APP}
+                  </ThemedText>
+                </View>
+                <Ionicons
+                  color={colors.textTertiary}
+                  name="chevron-forward"
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                  style={styles.cardChevron}
+                />
+              </View>
+            </BaseCard>
           </View>
         </BaseCard>
 
@@ -405,6 +436,7 @@ const AccountScreen: FC = () => {
             <ThemedText colorName="captionText" style={styles.copyrightText} type="caption">
               {STRINGS.COPYRIGHT_SYMBOL} {currentYear} {pkg.name}
             </ThemedText>
+            <SocialMediaIcons />
           </View>
         </View>
       </ThemedView>
