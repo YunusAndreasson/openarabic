@@ -14,6 +14,7 @@ import { DueWordsBottomSheet } from '@/components/practice/DueWordsBottomSheet';
 import ErrorMessage from '@/components/practice/ErrorMessage';
 import { LearningRateBottomSheet } from '@/components/practice/LearningRateBottomSheet';
 import { MemoryRetentionBottomSheet } from '@/components/practice/MemoryRetentionBottomSheet';
+import RecommendationCard from '@/components/practice/RecommendationCard';
 import { VocabularyStatCards } from '@/components/practice/VocabularyStatCards';
 import { WordsMasteredBottomSheet } from '@/components/practice/WordsMasteredBottomSheet';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
@@ -24,6 +25,7 @@ import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
+import { useRetrievabilityChart } from '@/hooks/vocabulary/useRetrievabilityChart';
 import { mediumFeedback } from '@/utils/haptics';
 
 export default function VocabularyScreen(): JSX.Element {
@@ -83,6 +85,9 @@ export default function VocabularyScreen(): JSX.Element {
     userId: user?.id,
     limit: 100,
   });
+
+  // Get chart data for recommendations
+  const { chartData } = useRetrievabilityChart(allWords || []);
 
   // Don't show error if user is not authenticated yet - this is expected during auth flow
   const shouldShowError = error && user;
@@ -213,16 +218,28 @@ export default function VocabularyScreen(): JSX.Element {
         {shouldShowMainContent && (
           <View style={styles.vocabularySection}>
             {hasAnyStudyWords ? (
-              <VocabularyStatCards
-                dueWords={dueWordsCount}
-                learningWords={calculatedStats.learningWords}
-                masteredWords={calculatedStats.masteredWords}
-                studyWords={filteredStudyWords}
-                onInfoPress={handleMemoryStrengthInfo}
-                onDuePress={() => setIsDueWordsVisible(true)}
-                onLearningPress={() => setIsLearningRateVisible(true)}
-                onMasteredPress={() => setIsWordsMasteredVisible(true)}
-              />
+              <>
+                <VocabularyStatCards
+                  dueWords={dueWordsCount}
+                  learningWords={calculatedStats.learningWords}
+                  masteredWords={calculatedStats.masteredWords}
+                  studyWords={filteredStudyWords}
+                  onInfoPress={handleMemoryStrengthInfo}
+                  onDuePress={() => setIsDueWordsVisible(true)}
+                  onLearningPress={() => setIsLearningRateVisible(true)}
+                  onMasteredPress={() => setIsWordsMasteredVisible(true)}
+                />
+
+                {/* Recommendation Card - placed below stat cards */}
+                <RecommendationCard
+                  studyWords={filteredStudyWords}
+                  dueWordsCount={dueWordsCount}
+                  currentRetention={chartData.insights.currentRetrievability}
+                  learningWords={calculatedStats.learningWords}
+                  masteredWords={calculatedStats.masteredWords}
+                  trend={chartData.insights.trend}
+                />
+              </>
             ) : (
               <EmptyState
                 colors={colors}
