@@ -373,19 +373,19 @@ class TestValidateFinalTranslation:
         assert any("essential" in issue.lower() for issue in issues)
 
     def test_validate_final_translation_missing_essential_field(self):
-        """Test validation with missing essential field."""
+        """Test validation with identical essential/arabic fields (AI fallback issue)."""
         translation = SentenceTranslation(
             index=0,
             original="مرحبا بالعالم",
             full_translation="Hello world",
             tashkeel="مَرْحَباً بِالْعَالَمِ",
-            notes="Missing essential field",
+            notes="Testing identical essential/arabic fields",
             word_by_word=[
                 WordTranslation(
                     arabic="مرحبا",
                     english="hello",
                     pos="interjection",
-                    essential="",  # This should fail validation - empty essential field
+                    essential="مرحبا",  # Same as arabic - should trigger validation warning
                     essential_translation="hello",
                     notes="Greeting word",
                     uncertainties=[],
@@ -395,10 +395,12 @@ class TestValidateFinalTranslation:
             verification_issues=[],
         )
 
-        # This should now fail validation due to our new essential field validation
+        # This should now fail validation due to identical essential/arabic fields
         issues = validate_final_translation(translation)
-        # The validation should catch that essential field is missing
-        assert any("missing essential letters" in issue.lower() for issue in issues)
+        # The validation should catch that essential field is identical to arabic field
+        assert any(
+            "Essential field identical to Arabic field" in issue for issue in issues
+        )
 
     def test_validate_final_translation_preposition_identical_fields(self):
         """Test validation allows prepositions to have identical essential/arabic fields."""

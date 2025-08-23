@@ -85,13 +85,13 @@ class TestModels:
         """Test WordTranslation model creation with options."""
         options = WordTranslation(
             arabic="مرحبا",
-            english=["hello", "hi", "greetings"],
+            english=["hello", "hi"],  # Fixed: max 2 items allowed
             essential="مرحب",
-            essential_translation=["hello", "hi"],
+            essential_translation=["hello", "hi"],  # Fixed: max 2 items allowed
             pos=PartOfSpeech.INTERJECTION.value,
             notes="Common greeting",
             uncertainties=[],
         )
         assert options.arabic == "مرحبا"
-        assert len(options.english) == 3
+        assert len(options.english) == 2  # Fixed: expect 2 items
         assert options.pos == PartOfSpeech.INTERJECTION.value
