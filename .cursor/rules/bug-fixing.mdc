@@ -1,0 +1,192 @@
+# Bug Fixing Methodology
+
+## Core Principles
+
+**CRITICAL**: Always fix the root cause, never implement workarounds or "fail safes" that mask the real issue. Every fix must address why the problem occurred, not just its symptoms.
+
+## Investigation Process
+
+### 1. Root Cause Analysis
+
+Before writing any code:
+
+- **Understand the problem completely** - what's happening vs. what should happen
+- **Trace the execution flow** - follow the code path from trigger to failure
+- **Identify the exact failure point** - where does the logic break down?
+- **Question assumptions** - what did we assume that's actually false?
+
+### 2. Code Investigation
+
+When bugs involve code logic or data flow:
+
+- **Read the relevant code** - understand the actual implementation
+- **Check related components/hooks** - verify data flow and dependencies
+- **Review TypeScript types** - ensure type safety and interfaces
+- **Examine error handling** - look for missing error cases
+- **Never assume** code behavior - verify with actual implementation
+
+### 3. Test Analysis
+
+**CRITICAL**: Understand why existing tests aren't catching the bug:
+
+- Review test coverage for the failing functionality
+- Check if tests are testing the right things
+- Verify test data matches real-world scenarios
+- Look for test isolation issues or flaky test patterns
+- Ensure tests validate the actual failure conditions
+
+## Implementation Requirements
+
+### 1. Minimal, Focused Fixes
+
+- **Fix only what's broken** - don't refactor unrelated code
+- **Use existing patterns** - follow established codebase conventions
+- **Avoid overengineering** - simple solutions are preferred over complex abstractions
+- **Preserve existing behavior** for working functionality
+
+### 2. Code Quality Standards
+
+- Follow existing linting rules and TypeScript strict mode
+- Use proper error handling without masking real issues
+- Maintain existing performance characteristics
+- Follow established naming conventions and file structure
+
+## Validation Process
+
+### 1. Primary Fix Validation
+
+After implementing the fix:
+
+- **Verify the specific bug is resolved** - test the exact failure scenario
+- **Check for regression** - ensure existing functionality still works
+- **Validate edge cases** - test boundary conditions and error states
+
+### 2. Secondary Effects Analysis
+
+**CRITICAL**: Every fix must be validated for secondary effects:
+
+- **Run only necessary tests** - focus on tests related to the fix
+- **Check related functionality** - verify changes don't break connected features
+- **Validate data integrity** - ensure operations remain consistent
+- **Test error conditions** - verify error handling still works correctly
+
+### 3. Final Validation
+
+**REQUIRED**: Before considering any fix complete:
+
+```bash
+# Only run tests that are necessary for the fix
+# Focus on specific test files or test suites related to the change
+
+# Final validation - TypeScript and linting only
+yarn validate
+```
+
+**IMPORTANT**: Do NOT run `yarn test` or `yarn knip` during development. Only run `yarn validate` at the very end to ensure code quality.
+
+## Common Investigation Patterns
+
+### Code-Related Bugs
+
+1. **Verify implementation assumptions**:
+
+   - Read the actual code implementation
+   - Check related components and hooks
+   - Verify TypeScript types and interfaces
+
+2. **Check data flow**:
+
+   - Trace how data moves through the system
+   - Verify component props and state
+   - Check for missing error handling
+
+3. **Examine dependencies**:
+   - Review imports and module dependencies
+   - Check for circular dependencies
+   - Verify hook dependencies in useEffect
+
+### Test Failures
+
+1. **Understand test intent** - what is the test actually validating?
+2. **Check test data** - does it represent real-world scenarios?
+3. **Verify test isolation** - are tests interfering with each other?
+4. **Check test environment** - are all dependencies properly mocked?
+
+### Performance Issues
+
+1. **Profile the bottleneck** - use React DevTools or performance monitoring
+2. **Check for unnecessary re-renders** - verify component optimization
+3. **Validate data fetching** - ensure queries are efficient and cached properly
+4. **Check for memory leaks** - verify proper cleanup in useEffect hooks
+
+## Fix Implementation Checklist
+
+- [ ] **Root cause identified** and understood
+- [ ] **Code investigation completed** - understand the actual implementation
+- [ ] **Test analysis completed** - understand why tests didn't catch the bug
+- [ ] **Minimal fix implemented** - addresses only the root cause
+- [ ] **Primary validation passed** - bug is resolved
+- [ ] **Secondary effects validated** - no regressions introduced
+- [ ] **Only necessary tests run** - focused testing on related functionality
+- [ ] **Final validation completed** - yarn validate passes
+
+## Anti-Patterns to Avoid
+
+❌ **Workarounds**: "Let's add a try-catch to handle this error"
+❌ **Fail safes**: "We'll add validation to prevent this from happening again"
+❌ **Overengineering**: "Let's refactor this entire system while we're here"
+❌ **Assumption-based fixes**: "This should work based on the documentation"
+❌ **Running all tests**: "Let's run yarn test to be safe"
+❌ **Running knip**: "Let's check for unused code while we're here"
+❌ **Early validation**: Running yarn validate before the fix is complete
+
+## Success Criteria
+
+A bug fix is successful when:
+
+1. **The specific bug is completely resolved**
+2. **No new bugs are introduced**
+3. **Only necessary tests are run** - no excessive testing
+4. **The fix addresses the root cause, not symptoms**
+5. **The solution is simple and maintainable**
+6. **Secondary effects are validated and safe**
+7. **Final yarn validate passes** - code quality ensured
+
+## Example Investigation Flow
+
+```typescript
+// 1. Understand the bug
+const bugDescription = "User can't save article to reading list";
+
+// 2. Investigate the code
+// - Read the relevant component/hook implementation
+// - Check related components and data flow
+// - Verify TypeScript types and interfaces
+// - Look for missing error handling
+
+// 3. Check related functionality
+// - Verify connected features still work
+// - Test edge cases and error conditions
+
+// 4. Implement focused fix
+// 5. Validate with only necessary tests
+// 6. Check secondary effects
+// 7. Final validation with yarn validate only
+```
+
+## Testing Guidelines
+
+### During Development
+
+- **DO NOT** run `yarn test` - this is too broad and slow
+- **DO NOT** run `yarn knip` - this is for final cleanup only
+- **Focus on specific tests** related to your fix
+- **Test only what's necessary** to validate the fix
+
+### Final Validation
+
+- **ONLY** run `yarn validate` at the very end
+- This ensures TypeScript compilation and linting pass
+- No other validation commands should be run
+
+Remember: **Every bug is an opportunity to improve the system's reliability, not just to patch a symptom. Focus on efficient testing and final validation only.**

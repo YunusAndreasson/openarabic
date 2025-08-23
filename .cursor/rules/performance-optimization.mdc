@@ -1,460 +1,345 @@
----
-description: 
-globs: 
-alwaysApply: false
----
-# Performance Optimization with Reassure Framework
+# Performance Optimization Rule
 
-This rule provides a systematic approach to identify, benchmark, and optimize React Native components using the Reassure testing framework. **Focus on meaningful performance improvements rather than arbitrary thresholds.**
+## AI Instructions
 
-## **IMPORTANT: One Component at a Time**
+**This rule is designed for AI agents to follow. Always:**
 
-**Work on only ONE component at a time from the priority list below. Once a component is successfully optimized and shows measurable performance improvement in Reassure benchmarks, remove it from this list before proceeding to the next component.**
+- Focus on LOW-EFFORT, HIGH-IMPACT changes only
+- Do NOT rewrite entire components
+- Apply proven optimization patterns in 1-5 minutes max
+- Only test the specific component being optimized
+- Run `yarn validate` once at the very end
+- **FOLLOW ALL CODE GUIDELINES** from @code-guidelines.mdc
 
-## **MANDATORY: Reassure Test First (With Mock Strategy)**
+## Code Guidelines Compliance
 
-**Before making any optimization changes, you MUST first create a Reassure performance test for the component. This test serves as the baseline benchmark to validate that optimizations actually provide measurable performance gains. No optimization work should begin without this baseline test in place.**
+**All optimizations MUST follow these established patterns:**
 
-### Common Testing Issues & Solutions
+- **TypeScript Strict Mode**: Always provide proper type annotations
+- **Constants Usage**: Use `LAYOUT.SPACING`, `LAYOUT.ELEVATION`, `TYPOGRAPHY_HIERARCHY` from constants
+- **Component Patterns**: Use `ThemedText`, `ThemedView`, `ThemedButton` for consistency
+- **Import Patterns**: Use `import type` for type-only imports
+- **Naming Conventions**: PascalCase for components, camelCase for functions
+- **ESLint Compliance**: No unused variables, proper dependency arrays, no implicit any
 
-#### Native Dependencies Issue
-If components fail due to native dependencies (Expo vector icons, Skia, react-native-reanimated, etc.), create a **MockComponent** that simulates the performance characteristics:
+## Performance Report Analysis
 
-```typescript
-// For components with complex dependencies, create performance-representative mocks
-const MockComplexComponent = React.memo(({ complexProp, dataArray, ...props }) => {
-  // Simulate expensive computations that would occur in real component
-  const expensiveCalculation = React.useMemo(() => {
-    return dataArray.map(item => processItem(item));
-  }, [dataArray]);
+When you receive a performance report like:
 
-  const memoizedStyles = React.useMemo(() => {
-    return createStylesFromProp(complexProp);
-  }, [complexProp]);
+```
+LOG [PerfReport] App@(tabs) avg=48.0ms r=1 w=0 keys= | Screen:__root@(tabs) avg=48.0ms r=1 w=0 keys= | App@[id] avg=16.9ms r=207 w=0 keys= → Suggest: split heavy work/useMemo | Screen:/(tabs)/read/article/[id]@[id] avg=16.7ms r=207 w=0 keys= → Suggest: split heavy work/useMemo
+```
 
-  return React.createElement('div', {
-    'data-testid': 'mock-component',
-    style: { width: 300, height: 200 }
-  });
+**Key Metrics to Analyze:**
+
+- `avg`: Average render time (target: <50ms for smooth 60fps)
+- `r`: Re-render count (high counts indicate unnecessary re-renders)
+- `w`: Write operations (should be minimal)
+- `keys`: Cache keys (helps identify data dependencies)
+
+## AI Investigation Process
+
+### 1. Identify High Re-render Components
+
+- Look for components with `r=207` (excessive re-renders)
+- Check parent-child re-render relationships
+- Identify components that re-render when parent re-renders
+
+### 2. Root Cause Analysis
+
+**Common Causes:**
+
+- Props changing on every render (new object/function creation)
+- Missing dependency arrays in useEffect/useCallback
+- State updates triggering unnecessary re-renders
+- Missing React.memo on expensive components
+- Inline styles/objects being recreated
+
+### 3. Check for Cascading Issues
+
+**Before implementing fixes, verify:**
+
+- No unintended side effects from previous optimizations
+- State management isn't causing circular updates
+- Redux selectors aren't creating new references
+- Query cache invalidation isn't excessive
+
+## AI Optimization Patterns (1-5 Minutes Each)
+
+**IMPORTANT: These are the ONLY optimizations you should apply. Do NOT create new patterns.**
+
+### 1. Quick React.memo Addition (5 seconds)
+
+```tsx
+// BEFORE: Component re-renders on every parent render
+const ExpensiveComponent = ({ data }: { data: string[] }) => {
+  return <ComplexChart data={data} />;
+};
+
+// AFTER: Simple memoization - just wrap in React.memo
+const ExpensiveComponent = React.memo(({ data }: { data: string[] }) => {
+  return <ComplexChart data={data} />;
 });
 ```
 
-#### React Version Conflicts
-- **Common Issue**: React 19.1.0 vs 19.0.0 expected in testing environment
-- **Solution**: Continue with optimization work when environment issues block Reassure tests
-- **Pattern**: Focus on proven optimization patterns when baseline cannot be established
+### 2. Extract Static Constants (2-3 minutes)
 
-#### Linter Error Management
-- **Allow up to 3 attempts** to fix TypeScript/linting errors in performance tests
-- Use `any` types judiciously in performance tests (not production code)
-- Add `// eslint-disable-next-line` for necessary workarounds
-- **If 3rd attempt fails**, proceed with optimization even with minor test linter warnings
-
-## Target Components for Performance Optimization
-
-Based on complexity analysis, here are components prioritized for optimization. **Remove each component from this list once optimized:**
-
-### Priority 1: Interactive Components
-
-### Priority 2: Practice Session Components  
-1. **[ReviewCard.tsx](mdc:components/review/ReviewCard.tsx)** - Used in practice sessions with frequent updates
-2. **[ArabicWord.tsx](mdc:components/article/ArabicWord.tsx)** - Complex Arabic text analysis and rendering
-
-## Reassure Testing Workflow
-
-### **Step 1: Create Performance Benchmark (MANDATORY FIRST STEP)**
-
-**Enhanced template with multiple scenarios and proven mock patterns:**
-
-```typescript
-import { jest, test } from '@jest/globals';
-import React from 'react';
-import { measureRenders } from 'reassure';
-
-// Mock complex dependencies that commonly cause issues
-jest.mock('react-native-reanimated', () => {
-  const mockReact = require('react');
-  return {
-    default: {
-      View: mockReact.forwardRef(({ style, children, ...props }: any, ref: any) =>
-        mockReact.createElement('div', {
-          ref,
-          'data-testid': 'animated-view',
-          style: style,
-          ...props,
-        }, children)
-      ),
+```tsx
+// BEFORE: Recreated on every render
+const MyComponent = () => {
+  const styles = StyleSheet.create({
+    container: {
+      padding: LAYOUT.SPACING.MEDIUM,
+      margin: LAYOUT.SPACING.SMALL,
     },
-  };
-});
+  });
 
-jest.mock('@/components/ThemedText', () => {
-  const mockReact = require('react');
-  return {
-    ThemedText: mockReact.forwardRef(({ children, style, numberOfLines, ...props }: any, ref: any) =>
-      mockReact.createElement('span', {
-        ref,
-        'data-testid': 'themed-text',
-        style: {
-          ...style,
-          WebkitLineClamp: numberOfLines,
-          display: numberOfLines ? '-webkit-box' : 'block',
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
-        },
-        ...props,
-      }, children)
-    ),
-  };
-});
-
-// Create realistic test scenarios with varying complexity
-const createProps = (complexity: 'minimal' | 'typical' | 'heavy' | 'edge-case') => {
-  const baseProps = { /* base props */ };
-  
-  switch (complexity) {
-    case 'minimal':
-      return { ...baseProps, data: smallDataSet };
-    case 'typical':
-      return { ...baseProps, data: mediumDataSet };
-    case 'heavy':
-      return { ...baseProps, data: largeDataSet };
-    case 'edge-case':
-      return { ...baseProps, data: edgeCaseDataSet };
-  }
+  return <View style={styles.container} />;
 };
 
-test('ComponentName performance - minimal scenario', async () => {
-  await measureRenders(<MockComponentName {...createProps('minimal')} />);
-});
-
-test('ComponentName performance - typical scenario', async () => {
-  await measureRenders(<MockComponentName {...createProps('typical')} />);
-});
-
-test('ComponentName performance - heavy scenario', async () => {
-  await measureRenders(<MockComponentName {...createProps('heavy')} />);
-});
-
-test('ComponentName performance - edge case scenario', async () => {
-  await measureRenders(<MockComponentName {...createProps('edge-case')} />);
-});
-```
-
-### **Step 2: Run Initial Benchmark (ESTABLISH BASELINE)**
-
-```bash
-# ALWAYS run baseline first - this is mandatory
-yarn reassure --baseline
-
-# If React version conflicts occur, document and proceed with optimization
-# The methodology has been proven to work when environment is stable
-```
-
-**Note: If environment issues prevent baseline establishment (React version conflicts), proceed with Step 3 using proven optimization patterns.**
-
-### Step 3: Proven Optimization Strategies
-
-Based on successful optimizations of **4 components** (FilteredArticleView, IntelligentArticleSection, ParallaxHeader, WordTooltip), prioritize these patterns:
-
-#### Universal Optimizations (Apply to ALL Components)
-1. **React.memo with custom comparison function**
-   ```typescript
-   const ComponentComparison = (prevProps, nextProps) => {
-     // Compare primitive values first (fastest)
-     if (prevProps.visible !== nextProps.visible) return false;
-     if (prevProps.text !== nextProps.text) return false;
-     if (prevProps.zIndex !== nextProps.zIndex) return false;
-     
-     // Array/object length checks before deep comparison
-     if (prevProps.items?.length !== nextProps.items?.length) return false;
-     
-     // Deep object comparisons (most expensive) - be specific
-     const prevLayout = prevProps.layout;
-     const nextLayout = nextProps.layout;
-     
-     if (prevLayout === null && nextLayout === null) return true;
-     if (prevLayout === null || nextLayout === null) return false;
-     
-     return (
-       prevLayout.x === nextLayout.x &&
-       prevLayout.y === nextLayout.y &&
-       prevLayout.width === nextLayout.width &&
-       prevLayout.height === nextLayout.height
-     );
-   };
-   
-   export const Component = memo(ComponentInternal, ComponentComparison);
-   ```
-
-2. **Static constants extraction (Critical for Performance)**
-   ```typescript
-   // Extract ALL constants outside component to prevent recreation
-   const COMPONENT_CONSTANTS = {
-     TIMEOUT: 300,
-     MAX_ITEMS: 50,
-     ANIMATION_DURATION: 200,
-     AUTO_CLOSE_DURATION: LAYOUT.ANIMATION.DURATION.SLOW * 3,
-   } as const;
-   
-   // Static animation configs
-   const ANIMATION_CONFIG = {
-     initialOpacity: 0,
-     duration: LAYOUT.ANIMATION.DURATION.FAST,
-   } as const;
-   
-   // Static styles using StyleSheet.create
-   const STATIC_STYLES = StyleSheet.create({
-     container: { /* styles */ },
-     tooltip: { /* styles */ },
-   });
-   ```
-
-3. **Advanced caching with Map-based solutions**
-   ```typescript
-   // Module-level caches for expensive operations
-   const positioningCache = new Map<string, CalculatedPosition>();
-   const styleCache = new Map<string, StyleObject>();
-   const CACHE_MAX_SIZE = 50; // LRU management
-   
-   // Helper function for cache key generation
-   const createCacheKey = (layout: Layout, text: string, screenWidth: number): string => 
-     `${layout.x}-${layout.y}-${layout.width}-${layout.height}-${text.length}-${screenWidth}`;
-   
-   // Expensive calculation with caching
-   const calculatePosition = (layout, text, screenWidth) => {
-     const cacheKey = createCacheKey(layout, text, screenWidth);
-     
-     if (positioningCache.has(cacheKey)) {
-       return positioningCache.get(cacheKey)!;
-     }
-   
-     const result = /* expensive calculation */;
-     
-     // Manage cache size (LRU-style)
-     if (positioningCache.size >= CACHE_MAX_SIZE) {
-       const firstKey = positioningCache.keys().next().value;
-       positioningCache.delete(firstKey);
-     }
-   
-     positioningCache.set(cacheKey, result);
-     return result;
-   };
-   ```
-
-4. **Color and theme optimization**
-   ```typescript
-   // Batch color calculations into single memoized object
-   const colors = useMemo(() => ({
-     backgroundColor: theme.elevation3,
-     textColor: theme.text,
-     borderColor: theme.border,
-     shadowColor: theme.shadow,
-     transparentColor: theme.transparent,
-   }), [theme.elevation3, theme.text, theme.border, theme.shadow, theme.transparent]);
-   ```
-
-5. **Style object memoization (Prevents child re-renders)**
-   ```typescript
-   // Memoize all dynamic styles with proper dependencies
-   const containerStyle = useMemo(() => ({
-     ...STATIC_STYLES.container,
-     top: positioning.tooltipTop,
-     zIndex: zIndex ?? DEFAULT_Z_INDEX,
-   }), [positioning.tooltipTop, zIndex]);
-   
-   const tooltipStyle = useMemo(() => ({
-     ...STATIC_STYLES.tooltip,
-     left: positioning.leftOffset,
-     width: positioning.width,
-     backgroundColor: colors.backgroundColor,
-     borderColor: colors.borderColor,
-   }), [
-     positioning.leftOffset,
-     positioning.width,
-     colors.backgroundColor,
-     colors.borderColor,
-   ]);
-   ```
-
-#### For List Components (FilteredArticleView Pattern)
-- **Extract constants outside**: `NOOP_ARTICLE_PRESS`, `ITEM_HEIGHT`, `DRAW_DISTANCE_MULTIPLIER`
-- **Memoize all callbacks**: `renderItemCallback`, `renderSeparator`, `keyExtractor`
-- **Cache computed values**: `articlesLength`, `hasArticles`, `shouldShowEmpty`
-- **Memoize FlashList props**: Prevent props object recreation
-
-#### For Intelligent/Algorithm Components (IntelligentArticleSection Pattern)
-- **Cache expensive filtering**: Map-based article filtering with LRU management
-- **Extract helper functions**: `createCacheKey`, `getAvailableArticles`
-- **Memoize algorithm results**: Cache complex selection calculations
-- **Static constants for algorithms**: Cache sizes, thresholds, multipliers
-
-#### For Animation/Visual Components (ParallaxHeader/WordTooltip Pattern)
-- **Static animation configs**: Prevent animation object recreation
-- **Gradient/color caching**: Cache expensive gradient calculations
-- **Positioning algorithms**: Cache complex layout calculations
-- **Style spreading optimization**: Use static styles as base, memoize dynamic parts
-
-#### For Complex Positioning (WordTooltip Specific)
-- **Cache positioning calculations**: String-based cache keys for layout algorithms
-- **Edge detection optimization**: Cache overflow calculations
-- **Text analysis caching**: Cache word splitting and analysis
-- **Arrow positioning**: Cache offset calculations
-
-### Step 4: Enhanced Implementation Patterns
-
-#### Proven Performance Patterns
-```typescript
-// 1. Props object memoization (prevents child re-renders)
-const childProps = useMemo(() => ({
-  data: processedData,
-  onPress: handlePress,
-  style: computedStyle,
-}), [processedData, handlePress, computedStyle]);
-
-// 2. Batched computed values (intelligent article pattern)
-const computedValues = useMemo(() => ({
-  articlesLength: articles.length,
-  hasArticles: articles.length > 0,
-  userId: user?.id,
-  cacheKey: createCacheKey(articles, filters, userId),
-}), [articles.length, user?.id, filters]);
-
-// 3. Advanced style memoization (tooltip pattern)
-const dynamicStyles = useMemo(() => ({
+// AFTER: Move outside component - cut and paste
+const STATIC_STYLES = StyleSheet.create({
   container: {
-    ...STATIC_STYLES.container,
-    top: positioning.top,
-    zIndex: zIndex ?? DEFAULT_Z_INDEX,
+    padding: LAYOUT.SPACING.MEDIUM,
+    margin: LAYOUT.SPACING.SMALL,
   },
-  content: {
-    ...STATIC_STYLES.content,
-    backgroundColor: colors.background,
-    width: positioning.width,
-  },
-}), [positioning.top, positioning.width, zIndex, colors.background]);
-```
+});
 
-#### Helper Function Extraction
-```typescript
-// Extract complex logic into pure functions outside component
-const calculateComplexPositioning = (layout, text, screenWidth) => {
-  // Complex algorithm implementation
-  return { /* calculated values */ };
-};
-
-const filterAvailableItems = (items, filters, cacheKey) => {
-  // Expensive filtering logic
-  return filteredItems;
+const MyComponent = () => {
+  return <View style={STATIC_STYLES.container} />;
 };
 ```
 
-### **Step 5: Performance Validation Approach**
+### 3. Simple useMemo for Expensive Operations (1-2 minutes)
 
-```bash
-# Run performance comparison (when environment allows)
-yarn reassure
+```tsx
+// BEFORE: Calculation runs on every render
+const MyComponent = ({ items }: { items: string[] }) => {
+  const processedData = items.map(item => expensiveProcessing(item)).filter(Boolean);
 
-# Environment-independent validation:
-# ✅ Code review for optimization patterns applied
-# ✅ Static analysis of memoization usage
-# ✅ Cache implementation verification
-# ✅ No React warnings in development
+  return <DataDisplay data={processedData} />;
+};
+
+// AFTER: Wrap existing calculation in useMemo
+const MyComponent = ({ items }: { items: string[] }) => {
+  const processedData = useMemo(
+    () => items.map(item => expensiveProcessing(item)).filter(Boolean),
+    [items]
+  );
+
+  return <DataDisplay data={processedData} />;
+};
 ```
 
-**Success Criteria - PROVEN FROM EXPERIENCE:**
+### 4. useCallback for Event Handlers (1 minute)
 
-### Step 6: Realistic Performance Metrics
+```tsx
+// BEFORE: New function created on every render
+const MyComponent = ({ onPress }: { onPress: () => void }) => {
+  const handlePress = () => {
+    onPress();
+  };
 
-Consider optimization successful based on **proven patterns applied**:
-- **React.memo with custom comparison** ✅ Applied
-- **Static constants extraction** ✅ All constants moved outside component
-- **Advanced caching system** ✅ Map-based caches with LRU management
-- **Style object memoization** ✅ All dynamic styles properly memoized
-- **Color batching** ✅ Batched color calculations
-- **Helper function extraction** ✅ Complex logic moved to pure functions
-- **Props object memoization** ✅ Child component props memoized
+  return <Button onPress={handlePress} />;
+};
 
-**Expected Performance Improvements** (based on successful optimizations):
-- **Re-render Prevention**: 70-90% improvement via React.memo with custom comparison
-- **Expensive Calculations**: 60-80% improvement via Map-based caching
-- **Style Recreation**: 50-70% improvement via static styles and memoization
-- **Color Calculations**: 40-60% improvement via batched color memoization
-- **Animation/Visual**: 30-50% improvement via static configs and cached calculations
+// AFTER: Wrap existing function in useCallback
+const MyComponent = ({ onPress }: { onPress: () => void }) => {
+  const handlePress = useCallback(() => {
+    onPress();
+  }, [onPress]);
 
-### **Step 7: Complete and Remove from List**
-
-After successful optimization:
-1. **Document applied optimizations** with specific pattern counts
-2. **Remove the component from the priority list above**
-3. **Update component numbering** 
-4. **Add to completed optimizations section**
-5. **Update this rule with new learnings**
-
-## Enhanced Testing Commands
-
-```bash
-# Full performance test suite (when environment stable)
-yarn reassure --baseline
-yarn reassure
-
-# Environment-independent validation
-yarn type-check    # Verify TypeScript optimizations
-yarn lint         # Check for React warnings
+  return <Button onPress={handlePress} />;
+};
 ```
 
-## Troubleshooting Common Issues
+### 5. Style Memoization (1-2 minutes)
 
-### React Version Conflicts
-- **Issue**: React 19.1.0 vs 19.0.0 expected in Reassure environment  
-- **Solution**: Document issue and proceed with proven optimization patterns
-- **Pattern**: Environment issues don't invalidate optimization methodology
+```tsx
+// BEFORE: Styles recalculated on every render
+const MyComponent = ({ isActive }: { isActive: boolean }) => {
+  const styles = StyleSheet.create({
+    container: {
+      backgroundColor: isActive ? colors.tint : colors.background,
+      padding: LAYOUT.SPACING.MEDIUM,
+      elevation: LAYOUT.ELEVATION.SMALL,
+    },
+  });
 
-### Native Dependencies
-- **Solution**: Create mock components that simulate performance characteristics
-- **Pattern**: Use `React.createElement` with performance-relevant computations
-- **Proven Mocks**: react-native-reanimated, @expo/vector-icons, ThemedText components
+  return <View style={styles.container} />;
+};
 
-### Linter Errors in Tests
-- **Allow 3 attempts** to fix TypeScript errors in performance tests
-- **Use `any` types** in test mocks when necessary  
-- **Focus on test functionality** over perfect typing
-- **Proceed with optimizations** even if test has minor linter issues
+// AFTER: Wrap StyleSheet.create in useMemo
+const MyComponent = ({ isActive }: { isActive: boolean }) => {
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          backgroundColor: isActive ? colors.tint : colors.background,
+          padding: LAYOUT.SPACING.MEDIUM,
+          elevation: LAYOUT.ELEVATION.SMALL,
+        },
+      }),
+    [isActive]
+  );
 
-### Complex Component Dependencies
-- **Pattern**: Create simplified MockComponent that represents performance characteristics
-- **Focus**: Simulate expensive operations (positioning, filtering, calculations)
-- **Avoid**: Perfect component recreation - focus on performance bottlenecks
+  return <View style={styles.container} />;
+};
+```
 
-## Completed Optimizations
+### 6. Memoize Expensive Calculations with Proper Types (1-2 minutes)
 
-### ✅ Successfully Optimized Components
-1. **FilteredArticleView.tsx** - List optimization with FlashList memoization
-2. **IntelligentArticleSection.tsx** - Algorithm caching with intelligent article selection
-3. **ParallaxHeader.tsx** - Visual/animation optimization with gradient caching
-4. **WordTooltip.tsx** - Complex positioning optimization with advanced caching
+```tsx
+// BEFORE: Expensive calculation without memoization
+const MyComponent = ({
+  items,
+  filterValue,
+}: {
+  items: Array<{ id: string; value: number }>;
+  filterValue: string;
+}) => {
+  const filteredItems = items
+    .filter(item => item.value > 0)
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 10);
 
-### Proven Optimization Patterns
-1. **Custom memo comparison functions** - Most impactful optimization across all components
-2. **Static constant extraction** - Universal easy wins with measurable impact  
-3. **Map-based caching with LRU** - Prevents expensive recalculations
-4. **Props object memoization** - Prevents unnecessary child re-renders
-5. **Style memoization** - Simple but effective for complex dynamic styles
-6. **Color batching** - Efficient theme-based calculations
-7. **Helper function extraction** - Clean separation of complex logic
+  return <ItemList items={filteredItems} />;
+};
 
-### Anti-Patterns to Avoid
-1. **Overly aggressive memoization** - Can make code harder to maintain
-2. **Perfect typing in test mocks** - Focus on functionality over perfect types
-3. **Environment dependency** - Continue optimization work despite test environment issues
-4. **Premature cache optimization** - Focus on React.memo and static extraction first
+// AFTER: Memoize with proper dependency array
+const MyComponent = ({
+  items,
+  filterValue,
+}: {
+  items: Array<{ id: string; value: number }>;
+  filterValue: string;
+}) => {
+  const filteredItems = useMemo(
+    () =>
+      items
+        .filter(item => item.value > 0)
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 10),
+    [items, filterValue]
+  );
 
-## Workflow Summary - BATTLE-TESTED
+  return <ItemList items={filteredItems} />;
+};
+```
 
-1. **Select ONE component from the priority list**
-2. **Create working Reassure test** (with mocks if needed, up to 3 linter fix attempts)
-3. **Attempt baseline benchmark** (proceed with Step 4 if environment issues)
-4. **Apply ALL proven optimization patterns** (memo, caching, static extraction, style memoization)
-5. **Validate optimization patterns applied** (code review approach)
-6. **Document specific optimizations and remove from priority list**
-7. **Update this rule with new learnings and move to next component**
+### 7. Optimize List Rendering with FlashList (2-3 minutes)
+
+```tsx
+// BEFORE: ScrollView re-renders all items
+const MyList = ({ items }: { items: Array<{ id: string; title: string }> }) => (
+  <ScrollView>
+    {items.map(item => (
+      <ListItem key={item.id} item={item} />
+    ))}
+  </ScrollView>
+);
+
+// AFTER: FlashList with memoized items
+const MyList = ({ items }: { items: Array<{ id: string; title: string }> }) => (
+  <FlashList
+    data={items}
+    renderItem={({ item }) => <ListItem item={item} />}
+    estimatedItemSize={100}
+    keyExtractor={item => item.id}
+  />
+);
+
+const ListItem = React.memo(({ item }: { item: { id: string; title: string } }) => (
+  <View style={STATIC_STYLES.listItem}>
+    <ThemedText style={TYPOGRAPHY_HIERARCHY.MEDIUM}>{item.title}</ThemedText>
+  </View>
+));
+```
+
+## AI Performance Thresholds
+
+**Target Metrics:**
+
+- **Render Time**: <50ms (16.67ms for 60fps)
+- **Re-render Count**: <10 for stable components
+- **Memory Usage**: Monitor for leaks during navigation
+
+**Priority Levels:**
+
+1. **Critical**: >100ms render time, >100 re-renders
+2. **High**: 50-100ms render time, 50-100 re-renders
+3. **Medium**: 30-50ms render time, 20-50 re-renders
+4. **Low**: <30ms render time, <20 re-renders
+
+## AI Validation Strategy
+
+**During Development (NO TESTING):**
+
+- [ ] **NEVER run individual component tests during optimization**
+- [ ] **NEVER run yarn test or yarn test --testNamePattern during development**
+- [ ] **NEVER run yarn test:coverage or any other test commands**
+- [ ] Focus on functionality, not comprehensive coverage
+- [ ] **ONLY run yarn validate at the very end**
+
+**Final Validation (Only Once):**
+
+- [ ] Run `yarn validate` at the very end
+- [ ] This includes TypeScript, ESLint, and Knip checks
+- [ ] **NO NEED to run individual validation commands during development**
+- [ ] **NO NEED to test individual components during optimization**
+
+## AI Anti-Patterns to Avoid
+
+**DO NOT:**
+
+- Rewrite entire components
+- Create new optimization patterns
+- Over-engineer solutions
+- Spend more than 5 minutes on any single optimization
+- **Run ANY tests during development (yarn test, yarn test:coverage, etc.)**
+- **Test individual components during optimization**
+- **Get stuck in testing loops**
+
+**DO:**
+
+- Apply proven patterns from this rule
+- Make minimal code changes
+- Focus on high-impact, low-effort fixes
+- Move quickly between components
+- **Only run yarn validate at the very end**
+
+## AI Optimization Flow
+
+1. **Identify**: Component with >50ms render time or >50 re-renders
+2. **Analyze**: Check if props/state are stable through code review
+3. **Implement**: Apply ONE optimization pattern (1-5 minutes max)
+4. **Move to Next**: Continue with next priority component
+5. **Final Validation**: Run `yarn validate` once at the end
+
+## AI Key Principles
+
+- **Low Effort**: Each optimization should take 1-5 minutes max
+- **High Impact**: Focus on components with >50ms render time or >50 re-renders
+- **Proven Patterns**: Use ONLY the patterns listed in this rule
+- **Final Validation**: Run full validation once at the end
+- **No Rewrites**: Apply optimizations to existing code, don't rewrite
+- **Code Guidelines**: ALWAYS follow @code-guidelines.mdc patterns and standards
+- **Constants First**: Use `LAYOUT.SPACING`, `LAYOUT.ELEVATION`, `TYPOGRAPHY_HIERARCHY` constants
+- **Type Safety**: Maintain strict TypeScript compliance with proper type annotations
+
+## AI Reminder
+
+**Remember: You are an AI agent. Follow this rule exactly:**
+
+- Use ONLY the optimization patterns listed above
+- Do NOT create new patterns
+- Do NOT rewrite components
+- Focus on speed and impact
+- Apply changes in 1-5 minutes max
+- **NEVER run tests during development (yarn test, yarn test:coverage, etc.)**
+- **NEVER test individual components during optimization**
+- **ONLY run yarn validate at the very end**
+- **ALWAYS follow @code-guidelines.mdc for code quality**
+- **Maintain TypeScript strict mode compliance**
+- **Use established constants and component patterns**
+- **Keep code DRY and avoid over-engineering**
