@@ -57,7 +57,7 @@ class SimpleAudioService {
 
       await setAudioModeAsync({
         // Common
-        shouldPlayInBackground: false,
+        shouldPlayInBackground: true,
         // iOS
         playsInSilentMode: true,
         allowsRecording: false,
