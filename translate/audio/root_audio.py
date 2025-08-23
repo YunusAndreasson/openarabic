@@ -11,7 +11,6 @@ from audio.audio_utils import (
     get_cache_key,
     get_cached_audio_url,
 )
-from data.config import AUDIO_CACHE_DIR, AUDIO_TEMP_DIR
 from utils.config_common import get_storage_url
 from utils.storage_utils import check_file_exists
 
@@ -39,10 +38,6 @@ def get_or_generate_root_audio(
     cache_key_ar = get_cache_key(arabic_word)
     cache_key_en = get_cache_key(english_translation) if english_translation else None
 
-    cache_path_ar = os.path.join(AUDIO_CACHE_DIR, cache_key_ar)
-    cache_path_en = (
-        os.path.join(AUDIO_CACHE_DIR, cache_key_en) if cache_key_en else None
-    )
     storage_url_ar = get_storage_url(cache_key_ar)
     storage_url_en = get_storage_url(cache_key_en) if cache_key_en else None
 
@@ -57,15 +52,6 @@ def get_or_generate_root_audio(
         audio_url = result.get("url") if result else None
         if audio_url:
             logger.info(f"Generated Arabic audio URL: {audio_url}")
-            temp_path = os.path.join(AUDIO_TEMP_DIR, cache_key_ar)
-            if os.path.exists(temp_path):
-                try:
-                    import shutil
-
-                    shutil.copy2(temp_path, cache_path_ar)
-                    os.remove(temp_path)
-                except Exception as e:
-                    logger.info(f"Error caching audio file for {arabic_word}: {e}")
 
     # Generate English audio if we have a valid English translation
     if english_translation:
@@ -78,17 +64,6 @@ def get_or_generate_root_audio(
             audio_url_en = result_en.get("url") if result_en else None
             if audio_url_en:
                 logger.info(f"Generated English audio URL: {audio_url_en}")
-                temp_path_en = os.path.join(AUDIO_TEMP_DIR, cache_key_en)
-                if os.path.exists(temp_path_en) and cache_path_en:
-                    try:
-                        import shutil
-
-                        shutil.copy2(temp_path_en, cache_path_en)
-                        os.remove(temp_path_en)
-                    except Exception as e:
-                        logger.info(
-                            f"Error caching English audio file for {english_translation}: {e}"
-                        )
 
     if not audio_url and check_file_exists("audio", cache_key_ar):
         audio_url = storage_url_ar

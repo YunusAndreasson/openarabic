@@ -1,6 +1,6 @@
 """Utility functions for the translation pipeline."""
 
-from .cache_utils import ensure_valid_cache_files
+# Cache utilities removed - using Supabase Storage as single source of truth
 from .config_common import (
     get_audio_config,
     get_environment_config,
@@ -61,8 +61,7 @@ __all__ = [
     "call_response_api",
     "load_api_keys",
     "token_tracker",
-    # Cache utilities
-    "ensure_valid_cache_files",
+    # Cache utilities removed - using Supabase Storage as single source of truth
     # Configuration common utilities
     "get_audio_config",
     "get_environment_config",

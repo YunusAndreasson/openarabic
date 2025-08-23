@@ -23,7 +23,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from data.config import (
     ARABIC_VOICE_ID,
-    AUDIO_CACHE_DIR,
     AUDIO_TEMP_DIR,
     BILINGUAL_AUDIO_PAUSE_MS,
     DEFAULT_VOICE_SETTINGS,
@@ -47,7 +46,6 @@ logger = logging.getLogger(__name__)
 # Initialize ElevenLabs client lazily to avoid import-time failures
 eleven_labs = None
 
-os.makedirs(AUDIO_CACHE_DIR, exist_ok=True)
 os.makedirs(AUDIO_TEMP_DIR, exist_ok=True)
 
 
@@ -271,7 +269,7 @@ def generate_speech(
 
         return {
             "audio": audio_data,
-            "duration": getattr(response, "duration", "unknown"),
+            "duration": getattr(response, "duration", 0.0),
             "voice_id": voice_id,
             "text": text,
         }
@@ -491,7 +489,7 @@ def generate_sentence_audio(
             return AudioResult(
                 url=url,
                 filename=filename,
-                duration="unknown",  # Duration not available without generating
+                duration=0.0,  # Duration not available without generating
             )
 
         # Prefer tashkeel text if available
@@ -539,7 +537,7 @@ def generate_sentence_audio(
         return AudioResult(
             url=url,
             filename=filename,
-            duration=response.get("duration") if response else "unknown",
+            duration=response.get("duration") if response else 0.0,
         )
     except Exception as e:
         logger.error(f"Error generating sentence audio: {str(e)}")
@@ -704,9 +702,9 @@ def generate_bilingual_sentence_audio(
             return BilingualAudioResult(
                 url=url,
                 filename=filename,
-                duration="unknown",
-                english_duration="unknown",
-                arabic_duration="unknown",
+                        duration=0.0,
+        english_duration=0.0,
+        arabic_duration=0.0,
             )
 
         logger.info(
@@ -763,7 +761,7 @@ def generate_bilingual_sentence_audio(
             return None
 
         english_audio = english_response["audio"]
-        english_duration = english_response.get("duration", "unknown")
+        english_duration = english_response.get("duration", 0.0)
         audio_segments.append(english_audio)
         segment_info.append(f"English: {len(english_audio)} bytes")
         logger.info(
@@ -782,7 +780,7 @@ def generate_bilingual_sentence_audio(
             return None
 
         arabic_audio = arabic_response["audio"]
-        arabic_duration = arabic_response.get("duration", "unknown")
+        arabic_duration = arabic_response.get("duration", 0.0)
         audio_segments.append(arabic_audio)
         segment_info.append(f"Arabic: {len(arabic_audio)} bytes")
         logger.info(
@@ -839,7 +837,7 @@ def generate_bilingual_sentence_audio(
 
         # Calculate durations for multi-segment audio
         total_segments = len(audio_segments)
-        total_duration = "unknown"
+        total_duration = 0.0
         try:
             # Estimate total duration with delays (1 second per segment + 1 second delays)
             estimated_duration = total_segments * 1.0  # Assume ~1 second per segment
@@ -851,7 +849,7 @@ def generate_bilingual_sentence_audio(
                 f"Estimated total duration: {total_duration:.2f}s for {total_segments} segments with 1s delays"
             )
         except Exception:
-            total_duration = "unknown"
+            total_duration = 0.0
             logger.warning("Could not estimate total duration")
 
         logger.info(f"Bilingual audio generation completed successfully: {filename}")

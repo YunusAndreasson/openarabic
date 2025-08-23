@@ -44,7 +44,7 @@ translate/set_keys.py
 translate/articles/
 translate/archive/
 translate/__pycache__/
-translate/audio_cache/
+# translate/audio_cache/ removed - using Supabase Storage as single source of truth
 .env.local
 .env
 translate/__pycache__/
@@ -69,7 +69,7 @@ translate/0_inbox/
 translate/1_split/
 translate/2_translate/
 translate/3_insert/
-translate/audio_cache/
+# translate/audio_cache/ removed - using Supabase Storage as single source of truth
 translate/reports/
 translate/article/
 translate/archive/

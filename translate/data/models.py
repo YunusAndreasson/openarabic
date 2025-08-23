@@ -1,5 +1,4 @@
-import re
-from typing import Literal
+# Literal import removed - no longer using "unknown" fallbacks
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -16,61 +15,44 @@ class Uncertainty(BaseModel):
 
     model_config = {"use_enum_values": True, "extra": "forbid"}
 
-    # Core uncertainty fields - using union with "unknown" instead of None
-    text: str | Literal["unknown"] = Field(
-        default="unknown",
+    # Core uncertainty fields - simplified since database handles constraints
+    text: str = Field(
         description="The uncertain text (for word/translation uncertainties)",
     )
-    word: str | Literal["unknown"] = Field(
-        default="unknown",
+    word: str = Field(
         description="Word with uncertain diacritics (for tashkeel uncertainties)",
     )
-    type: UncertaintyType | Literal["unknown"] = Field(
-        default="unknown",
-        description="Type of uncertainty (for remaining uncertainties)",
-    )
-    reason: str = Field(default="unknown", description="Reason for uncertainty")
+    type: UncertaintyType = Field(description="Type of uncertainty")
+    reason: str = Field(description="Reason for uncertainty")
 
-    # Resolution fields - using union with "unknown" instead of None
-    step: str | Literal["unknown"] = Field(
-        default="unknown",
-        description="Processing step where uncertainty was resolved",
-    )
-    resolution: str | Literal["unknown"] = Field(
-        default="unknown", description="How the uncertainty was resolved"
-    )
-    explanation: str | Literal["unknown"] = Field(
-        default="unknown", description="Explanation of the resolution"
-    )
+    # Resolution fields - simplified
+    step: str = Field(description="Processing step where uncertainty was resolved")
+    resolution: str = Field(description="How the uncertainty was resolved")
+    explanation: str = Field(description="Explanation of the resolution")
 
-    # Related fields - using union with "unknown" instead of None
-    related_translation_uncertainty: str | Literal["unknown"] = Field(
-        default="unknown",
-        description="Related translation uncertainty (for tashkeel uncertainties)",
+    # Related fields - simplified
+    related_translation_uncertainty: str = Field(
+        description="Related translation uncertainty"
     )
-    original_uncertainty: dict[str, str] | Literal["unknown"] = Field(
-        default="unknown",
-        description="Original uncertainty with text and reason (for resolved uncertainties)",
-    )
-    reason_unresolved: str | Literal["unknown"] = Field(
-        default="unknown",
-        description="Reason why uncertainty could not be resolved (for remaining uncertainties)",
+    original_uncertainty: str = Field(description="Original uncertainty data")
+    reason_unresolved: str = Field(
+        description="Reason why uncertainty could not be resolved"
     )
 
     @property
     def is_resolved(self) -> bool:
         """Check if this uncertainty has been resolved"""
-        return self.step != "unknown" and self.resolution != "unknown"
+        return bool(self.step and self.resolution)
 
     @property
     def is_tashkeel_uncertainty(self) -> bool:
         """Check if this is a tashkeel/diacritical uncertainty"""
-        return self.word != "unknown"
+        return bool(self.word)
 
     @property
     def is_word_uncertainty(self) -> bool:
         """Check if this is a word/translation uncertainty"""
-        return self.text != "unknown" and self.word == "unknown"
+        return bool(self.text and not self.word)
 
 
 # Legacy aliases for backward compatibility
@@ -103,9 +85,11 @@ class WordTranslation(BaseModel):
             " ordered by likelihood."
         )
     )
-    notes: str = Field(description="Grammar/translation notes. Never empty.")
+    notes: str | None = Field(
+        default=None, description="Grammar/translation notes. Optional."
+    )
     uncertainties: list[Uncertainty] = Field(
-        description="Uncertainties for this word. May be empty but must be present."
+        default_factory=list, description="Uncertainties for this word. May be empty."
     )
 
     @property
@@ -126,44 +110,43 @@ class WordTranslation(BaseModel):
     @field_validator("arabic")
     @classmethod
     def _strip_arabic(cls, v: str) -> str:
-        return v.strip()
+        v = v.strip()
+        if not v:
+            raise ValueError("arabic must be a non-empty string")
+        return v
 
     @field_validator("notes")
     @classmethod
-    def _strip_notes(cls, v: str) -> str:
+    def _strip_notes(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
         v = v.strip()
         if not v:
-            raise ValueError("notes must be a non-empty string")
+            return None  # Convert empty string to None
         return v
 
     @field_validator("english")
     @classmethod
     def _validate_english(cls, v: str | list[str]) -> str | list[str]:
         if isinstance(v, list):
-            if not (1 <= len(v) <= 3):
-                raise ValueError("english options must contain 1 to 3 items")
-            if any(not isinstance(item, str) or not item.strip() for item in v):
-                raise ValueError("english options must be non-empty strings")
-        else:
-            if not v.strip():
-                raise ValueError("english must be a non-empty string")
+            if not v:
+                raise ValueError("english options list cannot be empty")
+            return v
+        v = v.strip()
+        if not v:
+            raise ValueError("english must be a non-empty string")
         return v
 
     @field_validator("essential_translation")
     @classmethod
     def _validate_essential_translation(cls, v: str | list[str]) -> str | list[str]:
         if isinstance(v, list):
-            if not (1 <= len(v) <= 3):
-                raise ValueError(
-                    "essential_translation options must contain 1 to 3 items"
-                )
-            if any(not isinstance(item, str) or not item.strip() for item in v):
-                raise ValueError(
-                    "essential_translation options must be non-empty strings"
-                )
-        elif isinstance(v, str):
-            if not v.strip():
-                raise ValueError("essential_translation must be a non-empty string")
+            if not v:
+                raise ValueError("essential_translation options list cannot be empty")
+            return v
+        v = v.strip()
+        if not v:
+            raise ValueError("essential_translation must be a non-empty string")
         return v
 
     @field_validator("uncertainties")
@@ -203,18 +186,11 @@ class TashkeelResult(BaseModel):
     @field_validator("tashkeel")
     @classmethod
     def validate_arabic_text(cls, v: str) -> str:
-        """Validate that tashkeel text contains Arabic characters"""
-        if not v or not v.strip():
+        """Validate that tashkeel text is not empty"""
+        v = v.strip()
+        if not v:
             raise ValueError("Tashkeel text cannot be empty")
-
-        # Check for Arabic characters (including diacritics)
-        arabic_pattern = re.compile(
-            r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]"
-        )
-        if not arabic_pattern.search(v):
-            raise ValueError("Tashkeel text must contain Arabic characters")
-
-        return v.strip()
+        return v
 
 
 class WordTranslationResult(BaseModel):
@@ -229,7 +205,8 @@ class WordTranslationResult(BaseModel):
     def _validate_word_translations(
         cls, v: list[WordTranslation]
     ) -> list[WordTranslation]:
-        if len(v) == 0:
+        # Require at least one word translation
+        if not v:
             raise ValueError("word_translations must contain at least one item")
         return v
 
@@ -315,7 +292,7 @@ class AudioResult(BaseModel):
 
     url: str = Field(description="Audio file URL in storage")
     filename: str = Field(description="Generated filename")
-    duration: float | Literal["unknown"] = Field(
+    duration: float = Field(
         description="Audio duration in seconds", ge=0.0
     )
 
@@ -325,13 +302,13 @@ class BilingualAudioResult(BaseModel):
 
     url: str = Field(description="Bilingual audio file URL in storage")
     filename: str = Field(description="Generated filename")
-    duration: float | Literal["unknown"] = Field(
+    duration: float = Field(
         description="Total audio duration in seconds", ge=0.0
     )
-    english_duration: float | Literal["unknown"] = Field(
+    english_duration: float = Field(
         description="English audio duration in seconds", ge=0.0
     )
-    arabic_duration: float | Literal["unknown"] = Field(
+    arabic_duration: float = Field(
         description="Arabic audio duration in seconds", ge=0.0
     )
     pause_duration: float = Field(

@@ -78,6 +78,7 @@ Now split the text into learner‑friendly units:
 Guidelines:
 1. Create short units at natural boundaries:
    - Complete thoughts, distinct clauses, punctuation
+   - The sentences will later be converted to audio
 2. Special handling:
    - Keep Quran verses intact
    - Break long narrator chains
@@ -98,14 +99,13 @@ Focus on preserving Islamic terminology and classical Arabic meanings. Handle Ar
 
 For each sentence, provide:
 1. translation:
-   - Accessible English; preserve Arabic word order where reasonable
    - Simple vocabulary; English‑only output (used for audio)
    - Match register: solemn (supplications), precise (hadith)
    - Grammatically sound (conjugation, agreement, syntax)
 2. notes:
    - Brief context or grammar observations
 3. uncertainties:
-   - Only real uncertainties (e.g., diacritics), each with text and reason
+   - Uncertainties in translation each with text and reason
 
 Example:
 Arabic: وقال النبي صلى الله عليه وسلم
@@ -130,6 +130,7 @@ Requirements:
 - Use context and notes to resolve vowelization ambiguities
 - Pay attention to case endings, verb forms, tense/mood, and agreement
 - Preserve ALL original punctuation, formatting, and special characters
+- Use English translation for hints to resolve ambiguities
 
 If uncertain, include an uncertainty with: word, reason, and optionally related_translation_uncertainty.
 
@@ -146,6 +147,7 @@ Guidelines:
     + format_valid_pos()
     + """
 - `essential` must retain root letters + diacritics while removing only complex affixes/case endings
+- `essential` will be used for language learning flashcards so the form be based on that
 - Examples to KEEP diacritics as-is: "كَتَبَ", "مِنَ", "إِلَى"
 - Examples to MODIFY by removing complex affixes: "يَكْتُبُ" → "كَتَبَ", "الْكِتَابُ" → "كِتَابٌ", "كَاتِبًا" → "كَاتِبٌ", "تَكْتُبِينَ" → "كَتَبَ"
 

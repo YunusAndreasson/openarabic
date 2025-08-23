@@ -32,7 +32,8 @@ from data.config import (
 )
 from data.models import ArticleData, SentenceTranslation
 from utils import load_api_keys
-from utils.cache_utils import ensure_valid_cache_files
+
+# Cache utilities removed - using Supabase Storage as single source of truth
 from utils.config_common import get_storage_url
 from utils.database_utils import (
     archive_files,
@@ -623,7 +624,7 @@ def find_translation_files() -> list[str]:
 
 def main() -> int:
     """Main function to run the script."""
-    ensure_valid_cache_files()
+    # Cache validation removed - using Supabase Storage as single source of truth
 
     # Find all translation files
     translation_files = find_translation_files()

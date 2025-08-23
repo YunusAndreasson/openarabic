@@ -164,7 +164,7 @@ cython_debug/
 # Project specific
 article/
 archive/
-audio_cache/
+# Audio cache removed - using Supabase Storage as single source of truth
 reports/
 temp_audio/
 *.env

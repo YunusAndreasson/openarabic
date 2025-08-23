@@ -7,7 +7,6 @@ from constants.error_markers import (
 from .config import (
     ARABIC_VOICE_ID,
     ARCHIVE_DIR,
-    AUDIO_CACHE_DIR,
     AUDIO_TEMP_DIR,
     DEFAULT_BATCH_SIZE,
     DEFAULT_INPUT_FILE,
@@ -55,7 +54,6 @@ __all__ = [
     "SUPABASE_KEY",
     "SUPABASE_URL",
     "ARABIC_VOICE_ID",
-    "AUDIO_CACHE_DIR",
     "AUDIO_TEMP_DIR",
     "DEFAULT_VOICE_SETTINGS",
     "ELEVENLABS_API_KEY",

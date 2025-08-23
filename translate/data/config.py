@@ -3,11 +3,11 @@
 import os
 
 # OpenAI model configuration - Valid model names per project standards
-# Use gpt-4o-mini for high-volume phases and gpt-4o for verification
-MODEL_ANALYSIS = "gpt-5"  # Fast, cost-effective text splitting
-MODEL_TRANSLATION = "gpt-5"  # Reliable Arabic translation with structured output
-MODEL_OTHER = "gpt-4o"  # Tashkeel generation and other structured steps
-MODEL_VERIFICATION = "gpt-5"  # Quality-critical verification phase
+
+MODEL_ANALYSIS = "gpt-5"
+MODEL_TRANSLATION = "gpt-5"
+MODEL_OTHER = "gpt-4o"
+MODEL_VERIFICATION = "gpt-5"
 
 # Batch processing defaults
 DEFAULT_BATCH_SIZE = 12
@@ -19,8 +19,10 @@ ROOT_DIR = os.path.abspath(
 )
 ARTICLE_DIR = os.path.join(ROOT_DIR, "article")
 ARCHIVE_DIR = os.path.join(ROOT_DIR, "archive")
-AUDIO_CACHE_DIR = os.path.join(ROOT_DIR, "audio_cache")
-AUDIO_TEMP_DIR = os.path.join(ROOT_DIR, "temp_audio")  # Use temp_audio instead of audio
+# Audio directories - consolidated to use Supabase Storage as single source of truth
+AUDIO_TEMP_DIR = os.path.join(
+    ROOT_DIR, "temp_audio"
+)  # Temporary files during generation only
 
 # Pipeline directory structure
 INBOX_DIR = os.path.join(ROOT_DIR, "0_inbox")
@@ -71,7 +73,7 @@ GOOGLE_CLOUD_PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT_ID", "")
 GOOGLE_CLOUD_CREDENTIALS_PATH = os.getenv("GOOGLE_CLOUD_CREDENTIALS_PATH", "")
 
 # Translation settings for individual root words
-TRANSLATION_BATCH_SIZE = 100  # Number of root words to process in a batch
+TRANSLATION_BATCH_SIZE = 20  # Number of root words to process in a batch
 TRANSLATION_RETRY_ATTEMPTS = 3
 TRANSLATION_TIMEOUT = 30
 
