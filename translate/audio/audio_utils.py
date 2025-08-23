@@ -30,6 +30,7 @@ from data.config import (
     SUPABASE_URL,
 )
 from data.models import AudioResult, BilingualAudioResult
+from utils.config_common import get_storage_url
 from utils.exceptions import AudioGenerationError
 from utils.google_tts_service import GoogleTTSService
 from utils.storage_utils import (
@@ -134,7 +135,7 @@ def get_cached_audio_url(cache_key: str, label: str | None = None) -> str | None
 
         # Check if file exists in Supabase storage
         if check_file_exists("audio", filename):
-            return f"{SUPABASE_URL}/storage/v1/object/public/audio/{filename}"
+            return get_storage_url(filename)
         return None
     except Exception as e:
         logger.error(f"Error checking cached audio: {e}")
@@ -378,7 +379,7 @@ def generate_arabic_word_audio(word: str, filename: str) -> dict | None:
         if os.path.exists(temp_audio_path):
             os.remove(temp_audio_path)
 
-        url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{filename}"
+        url = get_storage_url(filename)
         return {"url": url, "cached": False}
 
     except Exception as e:
@@ -431,7 +432,7 @@ def generate_english_word_audio(word: str, filename: str) -> dict | None:
         if os.path.exists(temp_audio_path):
             os.remove(temp_audio_path)
 
-        url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{filename}"
+        url = get_storage_url(filename)
         return {"url": url, "cached": False}
 
     except Exception as e:
@@ -481,7 +482,7 @@ def generate_sentence_audio(
                 f,
                 file_options={"content-type": "audio/mpeg"},
             )
-            url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{filename}"
+            url = get_storage_url(filename)
         if os.path.exists(temp_audio_path):
             os.remove(temp_audio_path)
 
@@ -759,7 +760,7 @@ def generate_bilingual_sentence_audio(
                 f,
                 file_options={"content-type": "audio/mpeg"},
             )
-            url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{filename}"
+            url = get_storage_url(filename)
 
         # Clean up temporary file
         if os.path.exists(temp_audio_path):

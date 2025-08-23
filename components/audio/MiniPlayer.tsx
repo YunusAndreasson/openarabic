@@ -9,6 +9,7 @@ import { EnhancedImage } from '@/components/EnhancedImage';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { reconstructImageUrl } from '@/services/enhancedAudioService';
 import { selectionFeedback } from '@/utils/haptics';
 import { formatSecondsToClock, safePercent } from '@/utils/time';
 
@@ -135,12 +136,12 @@ export const MiniPlayer = memo<MiniPlayerProps>(
             {/* Artwork */}
             <View style={styles.artworkContainer}>
               <EnhancedImage
-                source={article.image_url}
+                source={reconstructImageUrl(article.image_url)}
                 style={artworkStyle}
                 contentFit="cover"
                 priority="high"
                 transition={0}
-                recyclingKey={article.image_url}
+                recyclingKey={reconstructImageUrl(article.image_url)}
                 cachePolicy="memory-disk"
               />
             </View>

@@ -1,4 +1,5 @@
 // Import the type from the central location
+import { SUPABASE_URL } from '@/constants/Supabase';
 import { STRINGS } from '@/constants/strings';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import { handleError } from '@/utils/errorHandling';
@@ -12,16 +13,31 @@ const generateTrackId = (articleId: number): string => {
   return `article-${articleId}`;
 };
 
+// Helper function to reconstruct full URL from filename
+export const reconstructFullUrl = (filename: string, bucket: string): string => {
+  return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${filename}`;
+};
+
+// Helper function to reconstruct audio URL from filename
+export const reconstructAudioUrl = (filename: string): string => {
+  return reconstructFullUrl(filename, 'audio');
+};
+
+// Helper function to reconstruct image URL from filename
+export const reconstructImageUrl = (filename: string): string => {
+  return reconstructFullUrl(filename, 'images');
+};
+
 // Helper function to get the appropriate audio URL based on preference
 const getAudioUrlForPreference = (
   article: { audio_url: string; audio_url_bilingual?: string | null },
   preference: 'arabic' | 'bilingual'
 ): string => {
   if (preference === 'bilingual' && article.audio_url_bilingual) {
-    return article.audio_url_bilingual;
+    return reconstructAudioUrl(article.audio_url_bilingual);
   }
   // Fall back to Arabic audio if bilingual is not available or preference is Arabic
-  return article.audio_url;
+  return reconstructAudioUrl(article.audio_url);
 };
 
 export const enhancedAudioService = {
@@ -47,7 +63,7 @@ export const enhancedAudioService = {
         articleId,
         audioUrl: cachedAudioUrl,
         title: article.title,
-        imageUrl: String(article.image_url),
+        imageUrl: reconstructImageUrl(String(article.image_url)),
       };
     } catch (error) {
       await handleError(error instanceof Error ? error : new Error(String(error)), {
@@ -85,7 +101,7 @@ export const enhancedAudioService = {
           articleId: item.article_id,
           audioUrl: cachedAudioUrl,
           title: article.title,
-          imageUrl: String(article.image_url),
+          imageUrl: reconstructImageUrl(String(article.image_url)),
         });
       }
 

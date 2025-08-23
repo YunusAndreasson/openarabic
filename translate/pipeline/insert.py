@@ -34,6 +34,7 @@ from data.config import (
 from data.models import ArticleData, SentenceTranslation
 from utils import load_api_keys
 from utils.cache_utils import ensure_valid_cache_files
+from utils.config_common import get_storage_url
 from utils.database_utils import (
     archive_files,
     cleanup_temp_files,
@@ -183,7 +184,7 @@ def generate_article_audio(
                     os.remove(temp_english_audio_path)
 
                 # Create english_audio_result object for compatibility
-                english_audio_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{english_audio_filename}"
+                english_audio_url = get_storage_url(english_audio_filename)
                 english_audio_result = type(
                     "AudioResult", (), {"url": english_audio_url}
                 )()
@@ -260,7 +261,7 @@ def generate_article_audio(
                         file_options={"content-type": "audio/mpeg"},
                     )
 
-                article_audio_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{arabic_article_filename}"
+                article_audio_url = get_storage_url(arabic_article_filename)
                 get_supabase_client().table("articles").update(
                     {"audio_url": article_audio_url}
                 ).eq("id", article_id).execute()
@@ -284,7 +285,9 @@ def generate_article_audio(
                         file_options={"content-type": "audio/mpeg"},
                     )
 
-                bilingual_article_audio_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{bilingual_article_filename}"
+                bilingual_article_audio_url = get_storage_url(
+                    bilingual_article_filename
+                )
                 get_supabase_client().table("articles").update(
                     {"audio_url_bilingual": bilingual_article_audio_url}
                 ).eq("id", article_id).execute()
@@ -324,9 +327,7 @@ def concatenate_and_upload_article_audio(
                     file_options={"content-type": "audio/mpeg"},
                 )
 
-            article_audio_url = (
-                f"{SUPABASE_URL}/storage/v1/object/public/audio/{final_audio_filename}"
-            )
+            article_audio_url = get_storage_url(final_audio_filename)
             get_supabase_client().table("articles").update(
                 {"audio_url": article_audio_url}
             ).eq("id", article_id).execute()
@@ -495,7 +496,7 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
                                 file_options={"content-type": "audio/mpeg"},
                             )
 
-                        article_audio_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{final_audio_filename}"
+                        article_audio_url = get_storage_url(final_audio_filename)
                         logger.info(f"Generated article audio: {article_audio_url}")
                     else:
                         raise RuntimeError("Failed to concatenate audio files")

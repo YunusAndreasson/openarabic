@@ -26,6 +26,7 @@ from data.config import ARCHIVE_DIR, SUPABASE_URL
 from data.enums import DifficultyLevel
 from data.pipeline_types import WordData
 from utils.arabic_text import clean_arabic_text
+from utils.config_common import get_storage_url
 from utils.database_common import (
     get_table_record,
     insert_table_record,
@@ -261,9 +262,7 @@ def concatenate_and_upload_audio(
                     file_options={"content-type": "audio/mpeg"},
                 )
 
-            article_audio_url = (
-                f"{SUPABASE_URL}/storage/v1/object/public/audio/{final_audio_filename}"
-            )
+            article_audio_url = get_storage_url(final_audio_filename)
             get_supabase_client().table("articles").update(
                 {"audio_url": article_audio_url}
             ).eq(
@@ -370,7 +369,9 @@ def insert_article_sentences(
                                 f,
                                 file_options={"content-type": "audio/mpeg"},
                             )
-                            storage_url_english = f"{SUPABASE_URL}/storage/v1/object/public/audio/{english_audio_filename}"
+                            storage_url_english = get_storage_url(
+                                english_audio_filename
+                            )
 
                         # Clean up temporary file
                         if os.path.exists(temp_english_audio_path):
@@ -441,7 +442,7 @@ def insert_article_sentences(
                             file_options={"content-type": "audio/mpeg"},
                         )
 
-                    article_audio_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{arabic_article_filename}"
+                    article_audio_url = get_storage_url(arabic_article_filename)
                     get_supabase_client().table("articles").update(
                         {"audio_url": article_audio_url}
                     ).eq("id", article_id).execute()
@@ -465,7 +466,9 @@ def insert_article_sentences(
                             file_options={"content-type": "audio/mpeg"},
                         )
 
-                    bilingual_article_audio_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{bilingual_article_filename}"
+                    bilingual_article_audio_url = get_storage_url(
+                        bilingual_article_filename
+                    )
                     get_supabase_client().table("articles").update(
                         {"audio_url_bilingual": bilingual_article_audio_url}
                     ).eq("id", article_id).execute()

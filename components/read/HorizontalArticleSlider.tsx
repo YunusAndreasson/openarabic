@@ -6,6 +6,7 @@ import ArticleCard from '@read/ArticleCard';
 
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
+import { reconstructImageUrl } from '@/services/enhancedAudioService';
 import type { Article } from '@/types/articles.types';
 // Haptics for scroll position changes are non-semantic; avoid to reduce noise
 
@@ -84,7 +85,7 @@ const HorizontalArticleSlider: FC<HorizontalArticleSliderProps> = ({
             author={info.item.author.name}
             category={info.item.category.name}
             categoryForDisplay={info.item.category.name}
-            imageUrl={String(info.item.image_url)}
+            imageUrl={reconstructImageUrl(String(info.item.image_url))}
             style={cardStyle}
             summary={String(info.item.summary)}
             title={info.item.title}

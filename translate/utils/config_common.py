@@ -24,8 +24,8 @@ def get_voice_config(voice_type: str) -> dict[str, Any]:
 
 
 def get_storage_url(filename: str, bucket: str = "audio") -> str:
-    """Generate consistent storage URLs."""
-    return f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{filename}"
+    """Return filename - we reconstruct full URLs in the mobile app."""
+    return filename
 
 
 def get_environment_config() -> dict[str, str]:

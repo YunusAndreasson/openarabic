@@ -6,7 +6,7 @@ from typing import Any
 
 from data.enums import PartOfSpeech
 
-from .config_common import get_supabase_client
+from .config_common import get_storage_url, get_supabase_client
 
 logger = logging.getLogger(__name__)
 
@@ -169,7 +169,7 @@ def get_random_image_url(
             random_image = secrets.choice(image_files)
             filename = random_image["name"]
             file_path = f"{folder}/{filename}" if folder else filename
-            public_url = f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{file_path}"
+            public_url = get_storage_url(file_path, bucket)
 
             logger.info(f"Selected random image: {filename}")
             return public_url

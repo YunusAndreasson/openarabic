@@ -12,6 +12,7 @@ from audio.audio_utils import (
     get_cached_audio_url,
 )
 from data.config import AUDIO_CACHE_DIR, AUDIO_TEMP_DIR, SUPABASE_URL
+from utils.config_common import get_storage_url
 from utils.storage_utils import check_file_exists
 
 logger = logging.getLogger(__name__)
@@ -42,12 +43,8 @@ def get_or_generate_root_audio(
     cache_path_en = (
         os.path.join(AUDIO_CACHE_DIR, cache_key_en) if cache_key_en else None
     )
-    storage_url_ar = f"{SUPABASE_URL}/storage/v1/object/public/audio/{cache_key_ar}"
-    storage_url_en = (
-        f"{SUPABASE_URL}/storage/v1/object/public/audio/{cache_key_en}"
-        if cache_key_en
-        else None
-    )
+    storage_url_ar = get_storage_url(cache_key_ar)
+    storage_url_en = get_storage_url(cache_key_en) if cache_key_en else None
 
     audio_url: str | None = None
     audio_url_en: str | None = None
