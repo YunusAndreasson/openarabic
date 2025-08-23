@@ -1,9 +1,10 @@
 import { useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
 import type { ViewStyle } from 'react-native';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ThemedText } from '@/components/ThemedText';
 import {
   CompletionScreen,
   MeaningOverlay,
@@ -64,6 +65,8 @@ export default function ReviewScreen(): JSX.Element {
     isUpdating,
     animatedStyle,
     sessionMetrics,
+    isAudioPreloading,
+    audioPreloadProgress,
   } = useReview({ fromRemember, mode });
 
   if (isComplete || isTransitioningToCompletion) {
@@ -73,6 +76,46 @@ export default function ReviewScreen(): JSX.Element {
         onClose={handleClose}
         testID="completion-screen"
       />
+    );
+  }
+
+  // Show audio preloading indicator
+  if (isAudioPreloading) {
+    return (
+      <View style={[baseStyles.container, { backgroundColor: colors.background }]}>
+        <View
+          style={[
+            baseStyles.contentContainer,
+            {
+              paddingTop: insets.top + LAYOUT.SPACING.MEDIUM,
+              paddingBottom: insets.bottom + LAYOUT.SPACING.MEDIUM,
+            },
+          ]}
+        >
+          <View style={baseStyles.wordArea}>
+            <ActivityIndicator size="large" color={colors.tint} />
+            <ThemedText
+              style={{
+                marginTop: LAYOUT.SPACING.MEDIUM,
+                fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+                textAlign: 'center',
+              }}
+            >
+              Loading audio files...
+            </ThemedText>
+            <ThemedText
+              style={{
+                marginTop: LAYOUT.SPACING.SMALL,
+                fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+                textAlign: 'center',
+                color: colors.secondaryText,
+              }}
+            >
+              {Math.round(audioPreloadProgress)}% complete
+            </ThemedText>
+          </View>
+        </View>
+      </View>
     );
   }
 
@@ -97,28 +140,26 @@ export default function ReviewScreen(): JSX.Element {
         <View style={baseStyles.wordArea}>
           <ReviewCard
             key={currentWordKey}
-            fontSize={wordFontSize}
-            isTransitioning={isTransitioningToCompletion}
-            isUpdating={isUpdating}
-            opacityStyle={animatedStyle}
-            testID="review-card"
             word={currentSentence.wordForm}
+            fontSize={wordFontSize}
             onSwipeLeft={handleSwipeLeft}
             onSwipeRight={handleSwipeRight}
-          />
-          <MeaningOverlay
-            isStruggling={isStruggling}
-            isVague={isVagueMeaning}
-            isWarning={!isVagueMeaning}
-            meaning={currentMeaning}
-            visible={showMeaningOverlay}
+            opacityStyle={animatedStyle}
+            isUpdating={isUpdating}
+            isTransitioning={isTransitioningToCompletion}
+            testID="review-card"
           />
         </View>
 
         <ReviewBottomActions />
+
+        <MeaningOverlay
+          visible={showMeaningOverlay}
+          meaning={currentMeaning}
+          isVague={isVagueMeaning}
+          isStruggling={isStruggling}
+        />
       </View>
     </View>
   );
 }
-
-

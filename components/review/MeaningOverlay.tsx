@@ -42,6 +42,12 @@ const STATIC_STYLES = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.XLARGE,
     position: 'absolute',
     right: 0,
+    top: '50%',
+    transform: [
+      {
+        translateY: (-LAYOUT.BUTTON.HEIGHT.LARGE * MEANING_OVERLAY_CONSTANTS.HEIGHT_MULTIPLIER) / 2,
+      },
+    ],
     zIndex: LAYOUT.Z_INDEX.POPUP,
   },
   text: {

@@ -11,11 +11,12 @@ import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsr
 import { LAYOUT } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { useOpacityAnimation } from '@/hooks/animations';
-import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
-import { useAuth } from '@/hooks/auth/useAuth';
-import { useFSRS } from '@/hooks/vocabulary/useFSRS';
-import { useWordSizing } from '@/hooks/vocabulary/useWordSizing';
+import { useSimpleAudioPlayer } from '@/hooks/audio';
+import { useAuth } from '@/hooks/auth';
+import { useFSRS, useWordSizing } from '@/hooks/vocabulary';
+import { audioCache } from '@/services/audioCache';
 import type { SessionMetrics } from '@/types/review.types';
+import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { generateAudioUrl } from '@/utils/imageUtils';
 
@@ -64,6 +65,9 @@ interface UseReviewReturn {
   handleClose: () => void;
   animatedStyle: AnimatedStyleProp<ViewStyle>;
   sessionMetrics: SessionMetrics;
+  // Add audio preloading state
+  isAudioPreloading: boolean;
+  audioPreloadProgress: number;
 }
 
 interface WordSizingConfig {
@@ -97,9 +101,6 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
   // Use enhanced audio player instead of local expo-av implementation
   const audioPlayer = useSimpleAudioPlayer();
 
-  // Use simple audio player for English feedback to avoid conflicts
-  // const simpleAudioPlayer = useSimpleAudioPlayer(); // This line is removed
-
   // Create stable refs for audio player methods to avoid dependency issues
   const audioPlayerRef = useRef(audioPlayer);
   audioPlayerRef.current = audioPlayer;
@@ -119,7 +120,13 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
   const [isStruggling, setIsStruggling] = useState(false);
   // Ensure UI re-renders when updating state changes so gestures re-enable
   const [isUpdatingUI, setIsUpdatingUI] = useState(false);
-  // No extra key needed; audio plays on currentWord changes
+  // Audio preloading state
+  const [isAudioPreloading, setIsAudioPreloading] = useState(false);
+  const [audioPreloadProgress, setAudioPreloadProgress] = useState(0);
+  // Track if audio has been preloaded to prevent infinite loops
+  const hasPreloadedAudioRef = useRef(false);
+  // Track the actual word content to prevent unnecessary preloading
+  const lastPreloadedWordsRef = useRef<string>('');
 
   // Consolidated time tracking refs
   const timeRefs = useRef<ReviewTimeRefs>({
@@ -183,7 +190,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     }, DEFAULT_ANIMATION_DURATION);
   }, []); // Remove fadeOut from dependencies
 
-  const { currentWord, isComplete, progress, updateWord, invalidateQueries } = useFSRS({
+  const { currentWord, isComplete, progress, updateWord, invalidateQueries, wordQueue } = useFSRS({
     userId: user?.id,
     onComplete: triggerCompletionTransition,
     useAllWords: fromRemember, // When fromRemember is true, use all words instead of just due words
@@ -238,7 +245,12 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       if (confidence === 'known') return null;
 
       const meaning = currentWord?.root?.meaning || 'No translation available';
-      return showMeaningWithTimeout(meaning, confidence === 'vague', isStruggling);
+      const shouldShowAsError = confidence === 'unknown';
+      return showMeaningWithTimeout(
+        meaning,
+        confidence === 'vague',
+        shouldShowAsError || isStruggling
+      );
     },
     [currentWord?.root?.meaning, showMeaningWithTimeout]
   );
@@ -313,22 +325,6 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     };
 
     return audioPlayerRef.current.play(track).catch((error: Error) => {
-      handleError(error instanceof Error ? error : new Error(String(error)));
-    });
-  }, []);
-
-  // Enhanced audio playback for English feedback (non-blocking)
-  const playEnglishFeedback = useCallback((url: string) => {
-    if (!url) return Promise.resolve();
-
-    const feedbackTrack = {
-      id: `feedback-${Date.now()}`,
-      audioUrl: url,
-      title: 'English Feedback', // Assuming a default title for now
-      duration: 0,
-    };
-
-    return audioPlayerRef.current.play(feedbackTrack).catch((error: Error) => {
       handleError(error instanceof Error ? error : new Error(String(error)));
     });
   }, []);
@@ -428,7 +424,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
           ) {
             const englishAudioUrl = generateAudioUrl(currentWord.root.audio_url_en);
             if (englishAudioUrl) {
-              playEnglishFeedback(englishAudioUrl);
+              playAudio(englishAudioUrl);
             }
           }
 
@@ -462,7 +458,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       checkIsStruggling,
       displayMeaning,
       processFeedback,
-      playEnglishFeedback,
+      playAudio,
       currentWord?.root?.audio_url_en,
       currentWord?.fsrs_stability,
       generateAudioUrl,
@@ -530,7 +526,103 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     }
   }, [isComplete, isTransitioningToCompletion]);
 
-  // Effect: Handle current word changes and preload audio
+  // Audio preloading function - loads all audio files at session start
+  const preloadSessionAudio = useCallback(
+    async (words: StudyWord[]) => {
+      if (!words.length) return;
+
+      setIsAudioPreloading(true);
+      setAudioPreloadProgress(0);
+
+      try {
+        const audioUrls: string[] = [];
+
+        // Collect all unique audio URLs from the session words
+        words.forEach(word => {
+          if (word.root?.audio_url) {
+            const audioUrl = generateAudioUrl(word.root.audio_url);
+            if (audioUrl && !audioUrls.includes(audioUrl)) {
+              audioUrls.push(audioUrl);
+            }
+          }
+          if (word.root?.audio_url_en) {
+            const englishAudioUrl = generateAudioUrl(word.root.audio_url_en);
+            if (englishAudioUrl && !audioUrls.includes(englishAudioUrl)) {
+              audioUrls.push(englishAudioUrl);
+            }
+          }
+        });
+
+        if (audioUrls.length === 0) {
+          setIsAudioPreloading(false);
+          return;
+        }
+
+        // Preload all audio files with progress tracking
+        const totalUrls = audioUrls.length;
+        let completedUrls = 0;
+
+        await Promise.allSettled(
+          audioUrls.map(async url => {
+            try {
+              // Use audioCache to download and cache the audio file
+              await audioCache.getAudio(url);
+              completedUrls++;
+              setAudioPreloadProgress((completedUrls / totalUrls) * 100);
+            } catch (error) {
+              console.warn(`Failed to preload audio: ${url}`, error);
+              // Continue with other audio files even if some fail
+            }
+          })
+        );
+      } catch (error) {
+        console.error('Audio preloading failed:', error);
+        // Don't block the session if audio preloading fails
+      } finally {
+        setIsAudioPreloading(false);
+        setAudioPreloadProgress(0);
+      }
+    },
+    [generateAudioUrl]
+  );
+
+  // Effect: Preload audio when session starts (ONCE)
+  useEffect(() => {
+    // Create a stable signature of the words to prevent unnecessary preloading
+    const wordsSignature = wordQueue?.map(w => w.root_id).join(',') || '';
+
+    // Only preload if we have words, haven't started preloading, haven't already preloaded, and session isn't complete
+    // AND the words have actually changed
+    if (
+      wordQueue &&
+      wordQueue.length > 0 &&
+      !isAudioPreloading &&
+      !hasPreloadedAudioRef.current &&
+      !isComplete &&
+      !isTransitioningToCompletion &&
+      wordsSignature !== lastPreloadedWordsRef.current
+    ) {
+      hasPreloadedAudioRef.current = true;
+      lastPreloadedWordsRef.current = wordsSignature;
+      preloadSessionAudio(wordQueue);
+    }
+  }, [
+    wordQueue?.length,
+    isAudioPreloading,
+    isComplete,
+    isTransitioningToCompletion,
+    preloadSessionAudio,
+  ]);
+
+  // Reset preload flag when session completes
+  useEffect(() => {
+    if (isComplete) {
+      hasPreloadedAudioRef.current = false;
+      lastPreloadedWordsRef.current = '';
+    }
+  }, [isComplete]);
+
+  // Effect: Handle current word changes and play audio (simplified - no more loading)
   useEffect(() => {
     if (stateRefs.current.completionTriggered || isComplete || isTransitioningToCompletion) {
       return;
@@ -540,32 +632,28 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       return;
     }
 
+    if (showMeaningOverlay) {
+      return;
+    }
+
     const wordId = String(currentWord.root_id);
     const audioUrl = generateAudioUrl(currentWord.root.audio_url);
 
-    // Use a ref to track if this effect is still valid
-    const effectRef = { current: true };
-
-    // ALWAYS play audio for Arabic words
+    // Play audio for Arabic words (now preloaded, so should be instant)
     if (audioUrl) {
-      playAudio(audioUrl)
-        .catch(handleError)
-        .finally(() => {
-          // Only update if the effect is still valid (word hasn't changed)
-          if (effectRef.current) {
-            timeRefs.current.lastProcessedWordId = wordId;
-          }
-        });
-    } else {
-      // Update the lastProcessedWordId even if no audio
-      timeRefs.current.lastProcessedWordId = wordId;
+      playAudio(audioUrl).catch(handleError);
     }
 
-    // Cleanup function to mark effect as invalid if word changes
-    return () => {
-      effectRef.current = false;
-    };
-  }, [currentWord, isComplete, isTransitioningToCompletion, playAudio, generateAudioUrl]);
+    // Update the lastProcessedWordId
+    timeRefs.current.lastProcessedWordId = wordId;
+  }, [
+    currentWord,
+    isComplete,
+    isTransitioningToCompletion,
+    showMeaningOverlay,
+    playAudio,
+    generateAudioUrl,
+  ]);
 
   // Safety watchdog: if no current word and not transitioning, force completion
   useEffect(() => {
@@ -736,5 +824,8 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     handleClose,
     animatedStyle,
     sessionMetrics: sessionMetricsRef.current,
+    // Add audio preloading state
+    isAudioPreloading,
+    audioPreloadProgress,
   };
 }
