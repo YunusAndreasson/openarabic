@@ -7,10 +7,6 @@ import { setReminderTime } from '@/store/settingsSlice';
 import type { ReminderTime } from '@/types/notifications.types';
 import { handleError } from '@/utils/errorHandling';
 
-const analytics = {
-  track: async (_event: string, _properties?: Record<string, unknown>) => {},
-};
-
 export interface UseRemindersResult {
   reminderTime: ReminderTime;
   updateReminderTime: (newReminderTime: ReminderTime) => Promise<void>;
@@ -29,13 +25,6 @@ export function useReminders(): UseRemindersResult {
 
         // Update the store
         dispatch(setReminderTime(newReminderTime));
-
-        // Track analytics
-        await analytics.track('SET_REMINDER_TIME', {
-          hour: newReminderTime.hour,
-          minute: newReminderTime.minute,
-          enabled: newReminderTime.enabled,
-        });
       } catch (error) {
         handleError(error as Error, { showToast: false });
       }

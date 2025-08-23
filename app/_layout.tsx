@@ -55,6 +55,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useSystemUITheme } from '@/hooks/theme/useSystemUITheme';
 import { useAppBadge } from '@/hooks/useAppBadge';
 import { FSRSDataProvider } from '@/hooks/vocabulary/FSRSDataProvider';
+import { analytics } from '@/services/analytics';
 import {
   cleanupNotifications,
   clearAppBadge,
@@ -68,6 +69,7 @@ import { handleError } from '@/utils/errorHandling';
 import { onProfilerRender } from '@/utils/perf/enableRerenderLogging';
 import { registerNavigationContainer as registerPerfNavigationContainer } from '@/utils/perf/routeTracker';
 import { PERSISTENCE_OPTIONS } from '@/utils/queryPersistence';
+
 // Enable dev-only rerender logging early in app startup without creating a route
 let __didInitPerf = false;
 if (__DEV__ && !__didInitPerf) {
@@ -75,11 +77,6 @@ if (__DEV__ && !__didInitPerf) {
   // Dynamically import to avoid bundling into production
   import('./_bootstrap.dev').catch(() => {});
 }
-
-const analytics = {
-  identify: async (_userId: string, _properties?: Record<string, unknown>) => {},
-  reset: async () => {},
-};
 
 // Splash screen is now managed by expo-router v5's internal system
 // No manual preventAutoHideAsync needed - expo-router handles this automatically

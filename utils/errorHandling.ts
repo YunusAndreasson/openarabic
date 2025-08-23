@@ -1,11 +1,11 @@
 import * as Sentry from '@sentry/react-native';
 
+import { analytics } from '@/services/analytics';
 import type { ToastType } from '@/types/ui/toast.types';
 
 // Store toast handler globally - updated to support types
-let globalToastHandler:
-  | ((message: string, duration?: number, type?: ToastType) => void)
-  | null = null;
+let globalToastHandler: ((message: string, duration?: number, type?: ToastType) => void) | null =
+  null;
 
 // Function to set the toast handler (call this in your ToastProvider)
 export const setGlobalToastHandler = (
@@ -67,6 +67,27 @@ const showToastMessage = (
   }
 };
 
+const trackErrorAnalytics = async (
+  errorObj: Error,
+  eventName?: string,
+  additionalProperties?: Record<string, boolean | number | string>
+): Promise<void> => {
+  try {
+    const analyticsProperties = {
+      errorMessage: errorObj.message,
+      errorName: errorObj.name,
+      errorStack: errorObj.stack?.substring(0, 500), // Limit stack trace length
+      timestamp: new Date().toISOString(),
+      ...additionalProperties,
+    };
+
+    await analytics.track(eventName || 'Error Occurred', analyticsProperties);
+  } catch (analyticsError) {
+    // Silently fail if analytics tracking fails
+    console.warn('Error analytics tracking failed:', analyticsError);
+  }
+};
+
 /**
  * Global error handler that combines Sentry logging, Mixpanel tracking, and user feedback via Toast
  * @param error The error object
@@ -82,6 +103,10 @@ export const handleError = async (
   try {
     if (opts.captureSentry) {
       captureInSentry(errorObj, opts.sentrySeverity);
+    }
+
+    if (opts.trackAnalytics) {
+      await trackErrorAnalytics(errorObj, opts.analyticsEventName, opts.analyticsProperties);
     }
 
     if (opts.showToast) {

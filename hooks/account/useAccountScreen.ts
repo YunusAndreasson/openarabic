@@ -11,15 +11,11 @@ import { useAudioCache } from '@/hooks/audio/useAudioCache';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useReminders } from '@/hooks/notifications/useReminders';
 import pkg from '@/package.json';
+import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
 import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
-
-const analytics = {
-  trackSignOut: async () => {},
-  reset: async () => {},
-};
 
 export const useAccountScreen = () => {
   const { reminderTime, updateReminderTime, formatReminderTime } = useReminders();

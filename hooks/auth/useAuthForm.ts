@@ -5,15 +5,10 @@ import { Alert } from 'react-native';
 
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
+import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 import { successFeedback } from '@/utils/haptics';
-
-const analytics = {
-  identify: async (_userId: string, _properties?: Record<string, unknown>) => {},
-  trackSignIn: async (_method?: string) => {},
-  trackSignUp: async (_method?: string) => {},
-};
 
 /**
  * Email validation regex and password requirements

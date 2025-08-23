@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
-import { Fragment, useEffect, type ComponentProps, type FC } from 'react';
+import { Fragment, useEffect, useMemo, type ComponentProps, type FC } from 'react';
 import { InteractionManager, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInUp, ZoomIn } from 'react-native-reanimated';
 
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { ANALYTICS_EVENTS } from '@/constants/analytics';
 import {
   COMPLETION_BUTTON_DELAY,
   COMPLETION_METRIC_BASE_DELAY,
@@ -23,6 +24,7 @@ import { STRINGS } from '@/constants/strings';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useEncouragingMetrics } from '@/hooks/review/useEncouragingMetrics';
 import { useColors } from '@/hooks/theme/useColors';
+import { analytics } from '@/services/analytics';
 import type { SessionMetrics } from '@/types/review.types';
 import { withOpacity } from '@/utils/colorUtils';
 import { successFeedback } from '@/utils/haptics';
@@ -84,6 +86,59 @@ const CompletionScreen: FC<CompletionScreenProps> = ({
   }, []);
 
   const encouragingMetrics = useEncouragingMetrics(sessionMetrics, colors);
+
+  // Memoize analytics data to prevent unnecessary recalculations
+  const analyticsData = useMemo(() => {
+    if (!sessionMetrics) return null;
+
+    const sessionDuration = Date.now() - sessionMetrics.startTime;
+    const wordsReviewed = sessionMetrics.wordsReviewed;
+
+    // Only calculate performance metrics if there are words to review
+    const performanceMetrics =
+      wordsReviewed > 0
+        ? {
+            accuracyRate: Math.round((sessionMetrics.wordsKnown / wordsReviewed) * 100),
+            struggleRate: Math.round((sessionMetrics.wordsVague / wordsReviewed) * 100),
+            unknownRate: Math.round((sessionMetrics.wordsUnknown / wordsReviewed) * 100),
+          }
+        : { accuracyRate: 0, struggleRate: 0, unknownRate: 0 };
+
+    return {
+      // Core session data
+      wordsReviewed,
+      wordsKnown: sessionMetrics.wordsKnown,
+      wordsVague: sessionMetrics.wordsVague,
+      wordsUnknown: sessionMetrics.wordsUnknown,
+      masteredWords: sessionMetrics.masteredWords,
+
+      // Performance metrics
+      ...performanceMetrics,
+
+      // Learning progress
+      averageStabilityIncrease: Math.round(sessionMetrics.averageStabilityIncrease * 100) / 100,
+      longestStreak: sessionMetrics.longestStreak,
+      currentStreak: sessionMetrics.currentStreak,
+
+      // Session metadata
+      sessionDurationMs: sessionDuration,
+      sessionDurationMinutes: Math.round(sessionDuration / 60000), // Convert ms to minutes
+      wordsPerMinute: wordsReviewed, // Simplified - just total words for now
+
+      // Session quality indicators
+      hadPerfectSession: sessionMetrics.wordsUnknown === 0 && sessionMetrics.wordsVague === 0,
+      hadStruggleWords: sessionMetrics.wordsVague > 0,
+      hadUnknownWords: sessionMetrics.wordsUnknown > 0,
+      hadMasteredWords: sessionMetrics.masteredWords > 0,
+    };
+  }, [sessionMetrics, useThemedView]);
+
+  // Track practice session completion analytics - runs only once when data is ready
+  useEffect(() => {
+    if (analyticsData) {
+      analytics.track(ANALYTICS_EVENTS.PRACTICE_SESSION_COMPLETE, analyticsData);
+    }
+  }, [analyticsData]);
 
   const Content = (
     <View style={[styles.contentContainer, contentStyle || {}]}>
