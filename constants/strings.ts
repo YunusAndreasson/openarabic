@@ -222,6 +222,12 @@ export const STRINGS = {
     'Vocabulary knowledge strength, showing how much you have mastered.',
   VOCABULARY_ACQUISITION_VELOCITY:
     'Daily vocabulary advancement, tracking new words mastered over time.',
+
+  // Practice bottom sheet subtitles (condensed for subtitle format)
+  MEMORY_STRENGTH_SUBTITLE: 'Track how well you remember your words',
+  WORD_MASTERY_SUBTITLE: 'See your vocabulary knowledge strength',
+  LEARNING_RATE_SUBTITLE: 'Monitor your daily vocabulary growth',
+  DUE_WORDS_FORECAST_SUBTITLE: 'Plan your review sessions ahead',
   MEMORY_RETENTION_OPTIMAL_TIMING:
     'Optimal review scheduling, indicating daily recall to guide retention.',
   DUE_WORDS_FORECAST: 'Due words forecast',

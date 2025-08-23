@@ -2,6 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { memo, useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import BaseCard from '@common/BaseCard';
+
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
@@ -26,7 +28,8 @@ const MetricCard = memo<MetricCardProps>(({ icon, value, label, color }) => {
     () => ({
       metricCard: {
         backgroundColor: colors.card,
-        borderColor: colors.borderOverlay,
+        ...LAYOUT.ELEVATION.MEDIUM,
+        shadowColor: colors.shadow,
       },
       iconContainer: {
         backgroundColor: color + '14',
@@ -35,19 +38,13 @@ const MetricCard = memo<MetricCardProps>(({ icon, value, label, color }) => {
         color,
       },
     }),
-    [colors.card, colors.borderOverlay, color]
+    [colors.card, colors.shadow, color]
   );
 
   return (
-    <View
-      style={[
-        styles.metricCard,
-        dynamicStyles.metricCard,
-        { borderWidth: LAYOUT.BORDER.WIDTH.THIN },
-      ]}
-    >
+    <BaseCard shadowSize="none" style={[styles.metricCard, dynamicStyles.metricCard]}>
       <View style={[styles.iconContainer, dynamicStyles.iconContainer]}>
-        <Ionicons name={icon} size={16} color={color} />
+        <Ionicons name={icon} size={LAYOUT.BUTTON.ICON_SIZE.SMALL} color={color} />
       </View>
       <ThemedText
         type="heading2"
@@ -59,7 +56,7 @@ const MetricCard = memo<MetricCardProps>(({ icon, value, label, color }) => {
       <ThemedText type="caption" colorName="textTertiary" style={styles.metricLabel}>
         {label}
       </ThemedText>
-    </View>
+    </BaseCard>
   );
 });
 
@@ -149,15 +146,15 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.LARGE, // 16px - generous internal breathing room
     paddingHorizontal: LAYOUT.SPACING.MEDIUM, // 12px - comfortable internal padding
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    ...LAYOUT.ELEVATION.SMALL,
   },
   iconContainer: {
-    width: MIN_TOUCH_TARGET.SMALL, // 32px - proper touch target
-    height: MIN_TOUCH_TARGET.SMALL,
-    borderRadius: MIN_TOUCH_TARGET.SMALL / 2,
+    width: MIN_TOUCH_TARGET.SMALL, // 32px - proper touch target size
+    height: MIN_TOUCH_TARGET.SMALL, // 32px - proper touch target size
+    borderRadius: MIN_TOUCH_TARGET.SMALL / 2, // 16px - half of touch target
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: LAYOUT.SPACING.SMALL, // 8px - visual hierarchy spacing
+    alignSelf: 'center', // Ensure perfect horizontal centering
   },
   metricValue: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE, // Primary metric value

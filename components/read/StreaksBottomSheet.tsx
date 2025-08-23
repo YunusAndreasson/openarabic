@@ -9,7 +9,7 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { StreakChart } from '@/components/read/StreakChart';
 import { StreakMetrics } from '@/components/read/StreakMetrics';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { useStreakHistory } from '@/hooks/articles/useStreakHistory';
 import { useColors } from '@/hooks/theme/useColors';
 
@@ -101,7 +101,7 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
 
           {/* Streak Chart */}
           <View style={styles.chartContainer}>
-            <ThemedText type="heading3" weight="semibold" style={styles.chartTitle}>
+            <ThemedText type="heading3" style={styles.chartTitle}>
               Last 30 days
             </ThemedText>
             <ThemedText type="caption" colorName="textTertiary" style={styles.chartSubtitle}>
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // 15px - secondary descriptive text
     textAlign: 'center',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
   },
   // Section 2: Streak Metrics (secondary hierarchy)
   streakMetricsContainer: {
@@ -184,7 +184,6 @@ const styles = StyleSheet.create({
     // No bottom margin - last section
   },
   chartTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE, // 20px - section title (1.4x ratio from 15px subtitle)
     marginBottom: LAYOUT.SPACING.TINY, // 4px - tight coupling with subtitle
     textAlign: 'center',
   },
@@ -192,7 +191,7 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // 13px - tertiary descriptive text (1.54x ratio from 20px)
     textAlign: 'center',
     marginBottom: LAYOUT.SPACING.TINY, // 4px - minimal space before chart
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.4,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
   },
   // State containers
   loadingContainer: {

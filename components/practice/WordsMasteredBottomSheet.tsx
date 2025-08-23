@@ -6,7 +6,7 @@ import BottomSheet, {
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
+import { BottomSheetHeader } from '@/components/common/BottomSheetHeader';
 import { MasteryChart } from '@/components/practice/charts/MasteryChart';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -85,23 +85,14 @@ export const WordsMasteredBottomSheet = memo<WordsMasteredBottomSheetProps>(
         backdropComponent={renderBackdrop}
       >
         <BottomSheetView style={styles.container}>
-          {/* Header */}
-          <View style={styles.header}>
-            <ThemedText type="heading3" weight="bold">
-              {STRINGS.WORD_MASTERY}
-            </ThemedText>
-          </View>
+          <BottomSheetHeader
+            title={STRINGS.WORD_MASTERY}
+            subtitle={STRINGS.WORD_MASTERY_SUBTITLE}
+          />
 
           {/* Chart Content */}
           <View style={styles.chartContainer}>
             <MasteryChart studyWords={studyWords ?? []} hideTitle={true} />
-          </View>
-
-          {/* Educational Explanation */}
-          <View style={styles.explanationContainer}>
-            <ThemedText style={styles.explanationText} variant="secondary">
-              {STRINGS.MEMORY_STRENGTH_ACROSS_VOCABULARY}
-            </ThemedText>
           </View>
         </BottomSheetView>
       </BottomSheet>
@@ -114,22 +105,12 @@ WordsMasteredBottomSheet.displayName = 'WordsMasteredBottomSheet';
 const styles = StyleSheet.create({
   bottomSheet: LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet,
   indicator: LAYOUT.BOTTOM_SHEET.STYLES.indicator,
+  // Perfect visual hierarchy container structure
   container: {
-    paddingBottom: LAYOUT.SPACING.MEDIUM, // Reduced bottom padding
+    paddingHorizontal: LAYOUT.SPACING.LARGE, // 16px - consistent horizontal padding
+    paddingTop: LAYOUT.SPACING.MEDIUM, // 12px - breathing room from indicator
   },
-  header: LAYOUT.BOTTOM_SHEET.HEADER,
   chartContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM, // Reduced padding
-    paddingBottom: LAYOUT.SPACING.TINY, // Minimal space after chart
-  },
-  explanationContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM, // Reduced padding
-    paddingTop: LAYOUT.SPACING.TINY, // Minimal space before text
-    paddingBottom: 0, // Remove bottom padding, handled by container
-  },
-  explanationText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.4,
-    textAlign: 'left',
+    // No bottom margin - last section
   },
 });

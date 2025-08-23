@@ -2,7 +2,7 @@ import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { memo, useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ThemedText } from '@/components/ThemedText';
+import { BottomSheetHeader } from '@/components/common/BottomSheetHeader';
 import { DueWordsPrognosisChart } from '@/components/practice/charts/DueWordsPrognosisChart';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -73,23 +73,14 @@ export const DueWordsBottomSheet = memo<DueWordsBottomSheetProps>(({ isVisible, 
       {...COMMON_BOTTOM_SHEET_PROPS}
     >
       <BottomSheetView style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <ThemedText type="heading3" weight="bold">
-            {STRINGS.DUE_WORDS_FORECAST}
-          </ThemedText>
-        </View>
+        <BottomSheetHeader
+          title={STRINGS.DUE_WORDS_FORECAST}
+          subtitle={STRINGS.DUE_WORDS_FORECAST_SUBTITLE}
+        />
 
         {/* Chart Content */}
         <View style={styles.chartContainer}>
           <DueWordsPrognosisChart studyWords={filteredStudyWords} hideTitle={true} />
-        </View>
-
-        {/* Educational Explanation */}
-        <View style={styles.explanationContainer}>
-          <ThemedText style={styles.explanationText} variant="secondary">
-            {STRINGS.DUE_WORDS_FORECAST_EXPLANATION}
-          </ThemedText>
         </View>
       </BottomSheetView>
     </BottomSheet>
@@ -101,22 +92,12 @@ DueWordsBottomSheet.displayName = 'DueWordsBottomSheet';
 const styles = StyleSheet.create({
   bottomSheet: LAYOUT.BOTTOM_SHEET.STYLES.bottomSheet,
   indicator: LAYOUT.BOTTOM_SHEET.STYLES.indicator,
+  // Perfect visual hierarchy container structure
   container: {
-    paddingBottom: LAYOUT.SPACING.MEDIUM, // Reduced bottom padding
+    paddingHorizontal: LAYOUT.SPACING.LARGE, // 16px - consistent horizontal padding
+    paddingTop: LAYOUT.SPACING.MEDIUM, // 12px - breathing room from indicator
   },
-  header: LAYOUT.BOTTOM_SHEET.HEADER,
   chartContainer: {
-    paddingHorizontal: LAYOUT.SPACING.SMALL, // Reduced from MEDIUM for better alignment
-    paddingBottom: LAYOUT.SPACING.TINY, // Minimal space after chart
-  },
-  explanationContainer: {
-    paddingHorizontal: LAYOUT.SPACING.SMALL, // Reduced from MEDIUM for better alignment
-    paddingTop: LAYOUT.SPACING.TINY, // Minimal space before text
-    paddingBottom: 0, // Remove bottom padding, handled by container
-  },
-  explanationText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.4,
-    textAlign: 'left',
+    // No bottom margin - last section
   },
 });
