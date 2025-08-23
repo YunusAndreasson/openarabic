@@ -18,10 +18,27 @@ interface RecommendationEngineParams {
   trend: 'improving' | 'declining' | 'stable';
 }
 
-// Constants for optimization
-const BEGINNER_THRESHOLD = 50;
-const ESTABLISHED_VOCABULARY_THRESHOLD = 100;
-const HEAVY_LEARNING_THRESHOLD = 0.4;
+// Constants for optimization - more nuanced progression thresholds
+const VOCABULARY_PROGRESSION_THRESHOLDS = {
+  ABSOLUTE_BEGINNER: 0, // 0 words: complete beginner
+  EARLY_LEARNER: 25, // 1-25 words: just getting started
+  BUILDING_FOUNDATION: 50, // 26-50 words: building vocabulary foundation
+  DEVELOPING_VOCABULARY: 100, // 51-100 words: developing substantial vocabulary
+  ESTABLISHED: 100, // 100+ words: established vocabulary
+} as const;
+
+const OPTIMAL_VOCABULARY_RANGES = {
+  BEGINNER_OPTIMAL: 30, // Optimal range for beginners: 15-30 words
+  INTERMEDIATE_OPTIMAL: 60, // Optimal range for intermediate: 45-60 words
+  ADVANCED_OPTIMAL: 120, // Optimal range for advanced: 90-120 words
+} as const;
+
+const LEARNING_LOAD_THRESHOLDS = {
+  LIGHT: 0.3, // 30% learning words - can safely add more
+  MODERATE: 0.5, // 50% learning words - add with some caution
+  HEAVY: 0.7, // 70% learning words - focus on consolidation
+} as const;
+
 const UPCOMING_DAYS_TO_CHECK = 3;
 const DUE_WORDS_BASE_THRESHOLD = 3;
 const UPCOMING_LOAD_BASE_THRESHOLD = 5;
@@ -62,10 +79,16 @@ function calculateUpcomingDueWords(studyWords: StudyWord[]): number {
 }
 
 interface UserState {
-  isBeginner: boolean;
   hasHighRetention: boolean;
   hasModerateRetention: boolean;
   hasLowRetention: boolean;
+  vocabularyStage:
+    | 'absolute_beginner'
+    | 'early_learner'
+    | 'building_foundation'
+    | 'developing_vocabulary'
+    | 'established';
+  isInOptimalRange: boolean;
 }
 
 interface ReviewState {
@@ -79,17 +102,48 @@ interface LearningState {
   isInHeavyLearningPhase: boolean;
   hasEstablishedVocabulary: boolean;
   learningProgressRatio: number;
+  learningLoadLevel: 'light' | 'moderate' | 'heavy';
+  canSafelyAddWords: boolean;
 }
 
 function getUserState(totalWords: number, currentRetention: number): UserState {
-  const isBeginner = totalWords < BEGINNER_THRESHOLD;
+  // Determine vocabulary stage based on progression thresholds
+  let vocabularyStage: UserState['vocabularyStage'];
+  let optimalRange: number;
+
+  if (totalWords === 0) {
+    vocabularyStage = 'absolute_beginner';
+    optimalRange = OPTIMAL_VOCABULARY_RANGES.BEGINNER_OPTIMAL;
+  } else if (totalWords <= VOCABULARY_PROGRESSION_THRESHOLDS.EARLY_LEARNER) {
+    vocabularyStage = 'early_learner';
+    optimalRange = OPTIMAL_VOCABULARY_RANGES.BEGINNER_OPTIMAL;
+  } else if (totalWords <= VOCABULARY_PROGRESSION_THRESHOLDS.BUILDING_FOUNDATION) {
+    vocabularyStage = 'building_foundation';
+    optimalRange = OPTIMAL_VOCABULARY_RANGES.INTERMEDIATE_OPTIMAL;
+  } else if (totalWords <= VOCABULARY_PROGRESSION_THRESHOLDS.DEVELOPING_VOCABULARY) {
+    vocabularyStage = 'developing_vocabulary';
+    optimalRange = OPTIMAL_VOCABULARY_RANGES.ADVANCED_OPTIMAL;
+  } else {
+    vocabularyStage = 'established';
+    optimalRange = OPTIMAL_VOCABULARY_RANGES.ADVANCED_OPTIMAL;
+  }
+
+  // Check if user is in optimal vocabulary range
+  const isInOptimalRange = Math.abs(totalWords - optimalRange) <= optimalRange * 0.25; // Within 25% of optimal
+
   const hasHighRetention = currentRetention >= MEMORY_CAPACITY_THRESHOLDS.GOOD;
   const hasModerateRetention =
     currentRetention >= MEMORY_CAPACITY_THRESHOLDS.POOR &&
     currentRetention < MEMORY_CAPACITY_THRESHOLDS.MODERATE;
   const hasLowRetention = currentRetention < MEMORY_CAPACITY_THRESHOLDS.POOR;
 
-  return { isBeginner, hasHighRetention, hasModerateRetention, hasLowRetention };
+  return {
+    hasHighRetention,
+    hasModerateRetention,
+    hasLowRetention,
+    vocabularyStage,
+    isInOptimalRange,
+  };
 }
 
 function getReviewState(
@@ -113,11 +167,55 @@ function getLearningState(
   learningWords: number,
   masteredWords: number
 ): LearningState {
-  const isInHeavyLearningPhase = learningWords > totalWords * HEAVY_LEARNING_THRESHOLD;
-  const hasEstablishedVocabulary = totalWords >= ESTABLISHED_VOCABULARY_THRESHOLD;
+  const learningRatio = totalWords > 0 ? learningWords / totalWords : 0;
   const learningProgressRatio = masteredWords / Math.max(1, totalWords);
 
-  return { isInHeavyLearningPhase, hasEstablishedVocabulary, learningProgressRatio };
+  // Determine learning load level based on flexible thresholds
+  let learningLoadLevel: LearningState['learningLoadLevel'];
+  if (learningRatio <= LEARNING_LOAD_THRESHOLDS.LIGHT) {
+    learningLoadLevel = 'light';
+  } else if (learningRatio <= LEARNING_LOAD_THRESHOLDS.MODERATE) {
+    learningLoadLevel = 'moderate';
+  } else {
+    learningLoadLevel = 'heavy';
+  }
+
+  // Legacy heavy learning check for backward compatibility
+  const isInHeavyLearningPhase = learningRatio > LEARNING_LOAD_THRESHOLDS.HEAVY;
+
+  // New logic: can safely add words based on learning load and vocabulary size
+  const canSafelyAddWords = (() => {
+    // Always allow adding words for very small vocabularies
+    if (totalWords < 10) return true;
+
+    // For very small vocabularies (10-20), be generous with learning load
+    if (totalWords <= 20) {
+      return learningRatio < LEARNING_LOAD_THRESHOLDS.HEAVY;
+    }
+
+    // For small vocabularies (21-30), allow moderate learning load
+    if (totalWords <= 30) {
+      return learningRatio < LEARNING_LOAD_THRESHOLDS.MODERATE;
+    }
+
+    // For medium vocabularies (31-60), be more cautious
+    if (totalWords <= 60) {
+      return learningRatio < LEARNING_LOAD_THRESHOLDS.LIGHT;
+    }
+
+    // For larger vocabularies, be more conservative
+    return learningRatio < LEARNING_LOAD_THRESHOLDS.LIGHT * 0.8;
+  })();
+
+  const hasEstablishedVocabulary = totalWords >= VOCABULARY_PROGRESSION_THRESHOLDS.ESTABLISHED;
+
+  return {
+    isInHeavyLearningPhase,
+    hasEstablishedVocabulary,
+    learningProgressRatio,
+    learningLoadLevel,
+    canSafelyAddWords,
+  };
 }
 
 // Pre-computed recommendation messages for better performance
@@ -132,15 +230,31 @@ const RECOMMENDATION_MESSAGES = {
   DUE_WORDS_SINGLE:
     'You have words due for review. Keep up with your practice sessions to maintain effective spaced repetition.',
 
-  // Learning phase messages
-  HEAVY_LEARNING_PHASE:
-    'You have many words in the learning phase. Focus on consolidating these before adding new vocabulary to avoid cognitive overload.',
+  // Absolute beginner messages (0 words)
+  ABSOLUTE_BEGINNER_READY:
+    'Welcome! Start by adding 10-15 words from articles you read to begin building your Arabic vocabulary foundation.',
 
-  // Beginner messages
-  BEGINNER_HIGH_RETENTION:
-    'Your retention is strong for a beginner. You can gradually add new words while maintaining regular review sessions.',
-  BEGINNER_DEFAULT:
-    'Building a solid foundation is key. Continue with regular practice sessions to help FSRS optimize your learning intervals.',
+  // Early learner messages (1-25 words) - more encouraging
+  EARLY_LEARNER_CAN_ADD:
+    'Great progress! You have a solid start. Keep adding words from articles to reach an optimal vocabulary size for better learning.',
+  EARLY_LEARNER_REVIEW_FIRST:
+    'You have some words ready for review. Complete those first, then continue adding new vocabulary to build momentum.',
+
+  // Building foundation messages (26-50 words) - balanced approach
+  BUILDING_FOUNDATION_CAN_ADD:
+    "You're building a strong foundation! With your current vocabulary size, you can safely add more words while maintaining regular review sessions.",
+  BUILDING_FOUNDATION_CONSOLIDATE:
+    'You have many words still learning. Focus on consolidating them through regular reviews before adding too many new ones.',
+  BUILDING_FOUNDATION_OPTIMAL:
+    "Perfect! You're in an optimal vocabulary range. Balance reviewing existing words with gradually adding new ones from articles.",
+
+  // Learning phase messages - more nuanced
+  LIGHT_LEARNING_LOAD:
+    'Your learning load is light. You can comfortably add new words while maintaining your review schedule.',
+  MODERATE_LEARNING_LOAD:
+    'You have a moderate learning load. Consider adding new words gradually and ensure you complete regular review sessions.',
+  HEAVY_LEARNING_LOAD:
+    'You have a heavy learning load. Focus on consolidating your current words through regular reviews before adding many new ones.',
 
   // Established learner messages
   ESTABLISHED_HIGH_RETENTION_NO_LOAD:
@@ -180,14 +294,7 @@ export function useRecommendationEngine({
   return useMemo(() => {
     const totalWords = studyWords.length;
 
-    // Early return if no words - getting started phase
-    if (totalWords === 0) {
-      return {
-        message: RECOMMENDATION_MESSAGES.GETTING_STARTED,
-        indicator: 'green' as const,
-        type: 'getting_started' as const,
-      };
-    }
+    // Note: Removed early return for 0 words to let new vocabulary progression logic handle it
 
     // Optimized calculations using helper functions
     const upcomingDueWords = calculateUpcomingDueWords(studyWords);
@@ -201,12 +308,23 @@ export function useRecommendationEngine({
     const learningState: LearningState = getLearningState(totalWords, learningWords, masteredWords);
 
     // Extract values for cleaner code
-    const { isBeginner, hasHighRetention, hasModerateRetention, hasLowRetention } = userState;
+    const {
+      hasHighRetention,
+      hasModerateRetention,
+      hasLowRetention,
+      vocabularyStage,
+      isInOptimalRange,
+    } = userState;
     const { hasDueWords, hasManyDueWords, hasUpcomingLoad, isDeclining } = reviewState;
-    const { isInHeavyLearningPhase, hasEstablishedVocabulary, learningProgressRatio } =
-      learningState;
+    const {
+      isInHeavyLearningPhase,
+      hasEstablishedVocabulary,
+      learningProgressRatio,
+      learningLoadLevel,
+      canSafelyAddWords,
+    } = learningState;
 
-    // Generate recommendation based on spaced repetition principles
+    // Generate recommendation based on vocabulary progression and spaced repetition principles
 
     // PRIORITY 1: Any due words require immediate attention (spaced repetition principle)
     if (hasDueWords) {
@@ -233,33 +351,83 @@ export function useRecommendationEngine({
       };
     }
 
-    // PRIORITY 2: Consider learning phase and cognitive load
-    if (isInHeavyLearningPhase) {
+    // PRIORITY 2: Absolute beginner (0 words) - special case
+    if (vocabularyStage === 'absolute_beginner') {
       return {
-        message: RECOMMENDATION_MESSAGES.HEAVY_LEARNING_PHASE,
+        message: RECOMMENDATION_MESSAGES.ABSOLUTE_BEGINNER_READY,
+        indicator: 'green' as const,
+        type: 'add_words' as const,
+      };
+    }
+
+    // PRIORITY 3: Early learner stage (1-25 words) - be encouraging and focus on growth
+    if (vocabularyStage === 'early_learner') {
+      if (canSafelyAddWords) {
+        return {
+          message: RECOMMENDATION_MESSAGES.EARLY_LEARNER_CAN_ADD,
+          indicator: 'green' as const,
+          type: 'add_words' as const,
+        };
+      }
+
+      return {
+        message: RECOMMENDATION_MESSAGES.EARLY_LEARNER_REVIEW_FIRST,
         indicator: 'orange' as const,
         type: 'review_focus' as const,
       };
     }
 
-    // PRIORITY 3: Beginner guidance (needs sufficient data for FSRS optimization)
-    if (isBeginner) {
-      if (hasHighRetention) {
+    // PRIORITY 4: Building foundation stage (26-50 words) - balance adding and consolidating
+    if (vocabularyStage === 'building_foundation') {
+      if (isInOptimalRange) {
         return {
-          message: RECOMMENDATION_MESSAGES.BEGINNER_HIGH_RETENTION,
+          message: RECOMMENDATION_MESSAGES.BUILDING_FOUNDATION_OPTIMAL,
           indicator: 'green' as const,
           type: 'balance' as const,
         };
       }
 
+      if (canSafelyAddWords) {
+        return {
+          message: RECOMMENDATION_MESSAGES.BUILDING_FOUNDATION_CAN_ADD,
+          indicator: 'green' as const,
+          type: 'add_words' as const,
+        };
+      }
+
       return {
-        message: RECOMMENDATION_MESSAGES.BEGINNER_DEFAULT,
-        indicator: 'green' as const,
+        message: RECOMMENDATION_MESSAGES.BUILDING_FOUNDATION_CONSOLIDATE,
+        indicator: 'orange' as const,
         type: 'review_focus' as const,
       };
     }
 
-    // PRIORITY 4: Established learners with good retention
+    // PRIORITY 5: Learning load based recommendations (all stages)
+    if (learningLoadLevel === 'heavy' || isInHeavyLearningPhase) {
+      return {
+        message: RECOMMENDATION_MESSAGES.HEAVY_LEARNING_LOAD,
+        indicator: 'orange' as const,
+        type: 'review_focus' as const,
+      };
+    }
+
+    if (learningLoadLevel === 'moderate') {
+      return {
+        message: RECOMMENDATION_MESSAGES.MODERATE_LEARNING_LOAD,
+        indicator: 'orange' as const,
+        type: 'balance' as const,
+      };
+    }
+
+    if (learningLoadLevel === 'light' && canSafelyAddWords) {
+      return {
+        message: RECOMMENDATION_MESSAGES.LIGHT_LEARNING_LOAD,
+        indicator: 'green' as const,
+        type: 'add_words' as const,
+      };
+    }
+
+    // PRIORITY 6: Established learners with good retention
     if (hasEstablishedVocabulary && hasHighRetention && !hasUpcomingLoad) {
       return {
         message: RECOMMENDATION_MESSAGES.ESTABLISHED_HIGH_RETENTION_NO_LOAD,
@@ -268,7 +436,7 @@ export function useRecommendationEngine({
       };
     }
 
-    // PRIORITY 5: High retention but upcoming review load
+    // PRIORITY 7: High retention but upcoming review load
     if (hasHighRetention && hasUpcomingLoad) {
       return {
         message: RECOMMENDATION_MESSAGES.ESTABLISHED_HIGH_RETENTION_WITH_LOAD,
@@ -277,7 +445,7 @@ export function useRecommendationEngine({
       };
     }
 
-    // PRIORITY 6: Moderate retention scenarios
+    // PRIORITY 8: Moderate retention scenarios
     if (hasModerateRetention) {
       if (learningProgressRatio > 0.5) {
         return {
@@ -294,7 +462,7 @@ export function useRecommendationEngine({
       };
     }
 
-    // PRIORITY 7: Low retention or declining trend
+    // PRIORITY 9: Low retention or declining trend
     if (hasLowRetention || isDeclining) {
       return {
         message: RECOMMENDATION_MESSAGES.LOW_RETENTION,

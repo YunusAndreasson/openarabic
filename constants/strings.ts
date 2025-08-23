@@ -152,7 +152,7 @@ export const STRINGS = {
   YOUR_PASSWORD: 'Password',
   PASSWORD_REQUIREMENTS_HINT:
     'At least {minLength} characters with uppercase, lowercase, and a number',
-  ARE_YOU_SURE_SIGN_OUT: 'Sign out?',
+  ARE_YOU_SURE_SIGN_OUT: 'Are you sure you want to sign out of your account?',
   ENTER_VALID_EMAIL: 'Enter a valid email',
   ENTER_PASSWORD: 'Enter your password',
   PASSWORD_ADD_CHARACTER_TYPES: 'Add uppercase, lowercase and a number',
@@ -262,7 +262,7 @@ export const STRINGS = {
   ERROR_PRIORITY_QUEUE_LENGTH_MISMATCH: 'Items and priorities arrays must have the same length',
 
   // Cache management - clearer and more actionable
-  CLEAR_CACHE: 'Local cache',
+  CLEAR_CACHE: 'Clear Cache',
   NO_CACHE: 'No cache',
   NO_CACHED_FILES: 'No cached files',
   THIS_WILL_DELETE: 'This deletes',

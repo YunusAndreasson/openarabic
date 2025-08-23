@@ -266,7 +266,7 @@ jest.mock('@/app/(tabs)/read/account/index.tsx', () => {
     const { handleSignOut } = useAccountScreen();
     return (
       <TouchableOpacity onPress={handleSignOut} testID="sign-out-button">
-        <Text>Sign Out</Text>
+        <Text>Sign out</Text>
       </TouchableOpacity>
     );
   };
