@@ -214,10 +214,33 @@ const styles = StyleSheet.create({
 });
 
 export const ArabicWord = memo(ArabicWordComponent, (prevProps, nextProps) => {
-  return (
-    prevProps.word.id === nextProps.word.id &&
-    prevProps.settings.fontScale === nextProps.settings.fontScale &&
-    prevProps.position === nextProps.position &&
-    prevProps.word.english === nextProps.word.english // Add this to detect translation changes
-  );
+  // Check primitive values first for early return
+  if (
+    prevProps.word.id !== nextProps.word.id ||
+    prevProps.settings.fontScale !== nextProps.settings.fontScale ||
+    prevProps.position !== nextProps.position ||
+    prevProps.isDueWord !== nextProps.isDueWord ||
+    prevProps.testID !== nextProps.testID
+  ) {
+    return false;
+  }
+
+  // Check word properties that affect rendering
+  if (
+    prevProps.word.english !== nextProps.word.english ||
+    prevProps.word.word_form !== nextProps.word.word_form ||
+    prevProps.word.root_id !== nextProps.word.root_id
+  ) {
+    return false;
+  }
+
+  // Check stable references
+  if (
+    prevProps.onTooltipOpen !== nextProps.onTooltipOpen ||
+    prevProps.wordRef !== nextProps.wordRef
+  ) {
+    return false;
+  }
+
+  return true;
 });

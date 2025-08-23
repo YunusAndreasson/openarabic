@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import type { ComponentRef, ReactNode, RefObject } from 'react';
-import { createRef, useEffect, useMemo, useRef } from 'react';
+import { createRef, memo, useEffect, useMemo, useRef } from 'react';
 import type { LayoutRectangle, StyleProp, TouchableOpacity, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated, { type AnimatedStyleProp } from 'react-native-reanimated';
@@ -13,6 +13,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 
+// Static constants to prevent recreation
 const EMPTY_DUE_WORDS_SET = new Set<number>();
 
 interface ArticleSentenceProps {
@@ -33,6 +34,53 @@ interface ArticleSentenceProps {
   containerStyle?: StyleProp<ViewStyle>;
   dueWordRootIds?: Set<number>;
 }
+
+// Custom comparison function for React.memo optimization
+const ArticleSentenceComparison = (
+  prevProps: ArticleSentenceProps,
+  nextProps: ArticleSentenceProps
+): boolean => {
+  // Check primitive values first for early return
+  if (
+    prevProps.sentence.id !== nextProps.sentence.id ||
+    prevProps.sentence.english !== nextProps.sentence.english ||
+    prevProps.settings.showEnglish !== nextProps.settings.showEnglish ||
+    prevProps.settings.fontScale !== nextProps.settings.fontScale ||
+    prevProps.words.length !== nextProps.words.length
+  ) {
+    return false;
+  }
+
+  // Check stable references
+  if (
+    prevProps.renderWord !== nextProps.renderWord ||
+    prevProps.onWordPress !== nextProps.onWordPress ||
+    prevProps.colors !== nextProps.colors ||
+    prevProps.containerStyle !== nextProps.containerStyle ||
+    prevProps.dueWordRootIds !== nextProps.dueWordRootIds
+  ) {
+    return false;
+  }
+
+  // Check if any word properties changed
+  for (let i = 0; i < prevProps.words.length; i++) {
+    const prevWord = prevProps.words[i];
+    const nextWord = nextProps.words[i];
+    if (
+      !prevWord ||
+      !nextWord ||
+      prevWord.id !== nextWord.id ||
+      prevWord.english !== nextWord.english ||
+      prevWord.word_form !== nextWord.word_form ||
+      prevWord.position !== nextWord.position ||
+      prevWord.root_id !== nextWord.root_id
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+};
 
 function renderWordWithProps(
   word: SentenceWord,
@@ -67,97 +115,102 @@ function renderWordWithProps(
   );
 }
 
-function ArticleSentenceComponent({
-  sentence,
-  words,
-  renderWord,
-  onWordPress,
-  settings,
-  colors: propColors,
-  containerStyle,
-  dueWordRootIds = EMPTY_DUE_WORDS_SET,
-}: ArticleSentenceProps) {
-  const defaultColors = useColors();
-  const colors = propColors || defaultColors;
-  const { highlightSentence } = useLocalSearchParams<{ highlightSentence?: string }>();
-  const isHighlighted = sentence.id != null && highlightSentence === sentence.id.toString();
+const ArticleSentenceComponent = memo(
+  ({
+    sentence,
+    words,
+    renderWord,
+    onWordPress,
+    settings,
+    colors: propColors,
+    containerStyle,
+    dueWordRootIds = EMPTY_DUE_WORDS_SET,
+  }: ArticleSentenceProps) => {
+    const defaultColors = useColors();
+    const colors = propColors || defaultColors;
+    const { highlightSentence } = useLocalSearchParams<{ highlightSentence?: string }>();
+    const isHighlighted = sentence.id != null && highlightSentence === sentence.id.toString();
 
-  const wordRefs = useRef<RefObject<ComponentRef<typeof TouchableOpacity>>[]>([]);
-  const {
-    animatedStyle: animatedHighlightStyle,
-    startAnimation,
-    reverseAnimation,
-  } = useOpacityAnimation({ initialOpacity: 0 });
+    const wordRefs = useRef<RefObject<ComponentRef<typeof TouchableOpacity>>[]>([]);
+    const {
+      animatedStyle: animatedHighlightStyle,
+      startAnimation,
+      reverseAnimation,
+    } = useOpacityAnimation({ initialOpacity: 0 });
 
-  useEffect(() => {
-    wordRefs.current = words.map(() =>
-      createRef<ComponentRef<typeof TouchableOpacity>>()
-    ) as RefObject<ComponentRef<typeof TouchableOpacity>>[];
-  }, [words]);
+    useEffect(() => {
+      wordRefs.current = words.map(() =>
+        createRef<ComponentRef<typeof TouchableOpacity>>()
+      ) as RefObject<ComponentRef<typeof TouchableOpacity>>[];
+    }, [words]);
 
-  useEffect(() => {
-    if (isHighlighted) {
-      startAnimation(0, reverseAnimation);
-    }
-  }, [isHighlighted, startAnimation, reverseAnimation]);
+    useEffect(() => {
+      if (isHighlighted) {
+        startAnimation(0, reverseAnimation);
+      }
+    }, [isHighlighted, startAnimation, reverseAnimation]);
 
-  const englishTextStyle = useMemo(
-    () => [
-      styles.englishText,
-      {
-        fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
-        color: colors.englishText,
-        lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6 * settings.fontScale,
-      },
-    ],
-    [colors.englishText, settings.fontScale]
-  );
-
-  const backgroundStyle = useMemo(() => {
-    const baseStyle = {
-      position: 'absolute' as const,
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-      backgroundColor: colors.tint ? `${colors.tint}40` : colors.transparent,
-    };
-
-    // Combine with animated style properties
-    return Object.assign(baseStyle, animatedHighlightStyle) as AnimatedStyleProp<ViewStyle>;
-  }, [colors.tint, colors.transparent, animatedHighlightStyle]);
-
-  const renderedWords = useMemo(() => {
-    return words.map((word, index) =>
-      renderWordWithProps(
-        word,
-        index,
-        wordRefs.current,
-        dueWordRootIds,
-        renderWord,
-        onWordPress,
-        settings,
-        sentence.id
-      )
+    // Memoize expensive style calculations
+    const englishTextStyle = useMemo(
+      () => [
+        styles.englishText,
+        {
+          fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
+          color: colors.englishText,
+          lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6 * settings.fontScale,
+        },
+      ],
+      [colors.englishText, settings.fontScale]
     );
-  }, [renderWord, words, sentence.id, settings, onWordPress, dueWordRootIds]);
 
-  // Fallback for test environments where Animated.View might be undefined
-  const AnimatedView: any = (Animated as any)?.View ?? View;
+    const backgroundStyle = useMemo(() => {
+      const baseStyle = {
+        position: 'absolute' as const,
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+        backgroundColor: colors.tint ? `${colors.tint}40` : colors.transparent,
+      };
 
-  return (
-    <View style={[styles.container, containerStyle]}>
-      <AnimatedView style={backgroundStyle} />
-      {settings.showEnglish && sentence.english && (
-        <ThemedText type="body" style={englishTextStyle as any}>
-          {sentence.english}
-        </ThemedText>
-      )}
-      <View style={styles.wordsContainer}>{renderedWords}</View>
-    </View>
-  );
-}
+      // Combine with animated style properties
+      return Object.assign(baseStyle, animatedHighlightStyle) as AnimatedStyleProp<ViewStyle>;
+    }, [colors.tint, colors.transparent, animatedHighlightStyle]);
+
+    // Memoize rendered words to prevent unnecessary recreations
+    const renderedWords = useMemo(() => {
+      return words.map((word, index) =>
+        renderWordWithProps(
+          word,
+          index,
+          wordRefs.current,
+          dueWordRootIds,
+          renderWord,
+          onWordPress,
+          settings,
+          sentence.id
+        )
+      );
+    }, [renderWord, words, sentence.id, settings, onWordPress, dueWordRootIds]);
+
+    // Fallback for test environments where Animated.View might be undefined
+    const AnimatedView: any = (Animated as any)?.View ?? View;
+
+    return (
+      <View style={[styles.container, containerStyle]}>
+        <AnimatedView style={backgroundStyle} />
+        {settings.showEnglish && sentence.english && (
+          <ThemedText type="body" style={englishTextStyle as any}>
+            {sentence.english}
+          </ThemedText>
+        )}
+        <View style={styles.wordsContainer}>{renderedWords}</View>
+      </View>
+    );
+  },
+  ArticleSentenceComparison
+);
 
 const styles = StyleSheet.create({
   container: {

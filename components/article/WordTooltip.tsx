@@ -14,6 +14,7 @@ import {
   type TooltipLayout,
 } from '@/utils/positioningUtils';
 
+// Static constants to prevent recreation
 const STATIC_STYLES = StyleSheet.create({
   overlay: {
     position: 'absolute',
@@ -58,6 +59,26 @@ const STATIC_STYLES = StyleSheet.create({
   },
 });
 
+// Hoisted regex and helpers to avoid per-call allocations
+const LETTER_RE = /[a-z]/;
+const isNonLetter = (ch: string) => !LETTER_RE.test(ch);
+
+const COLOR_MAP = {
+  tint: 'tint',
+  primary: 'primary',
+  warning: 'warning',
+  secondaryText: 'secondaryText',
+} as const;
+
+// Default dimensions for fallback
+const DEFAULT_DIMENSIONS = {
+  tooltipLeft: 0,
+  tooltipTop: 0,
+  tooltipWidth: 120,
+  tooltipHeight: 40,
+  arrowLeft: 60,
+} as const;
+
 const WordTooltipComparison = (
   prevProps: WordTooltipProps,
   nextProps: WordTooltipProps
@@ -85,17 +106,6 @@ const WordTooltipComparison = (
     prevLayout.height === nextLayout.height
   );
 };
-
-// Hoisted regex and helpers to avoid per-call allocations
-const LETTER_RE = /[a-z]/;
-const isNonLetter = (ch: string) => !LETTER_RE.test(ch);
-
-const COLOR_MAP = {
-  tint: 'tint',
-  primary: 'primary',
-  warning: 'warning',
-  secondaryText: 'secondaryText',
-} as const;
 
 export const WordTooltip = memo(
   ({
@@ -146,7 +156,19 @@ export const WordTooltip = memo(
       }
     }, [onStudyListToggle, wordRootId]);
 
-    // Render color-coded English text
+    // Memoize color mapping to prevent recreation
+    const colorMapping = useMemo(
+      () => ({
+        tint: colors.tint,
+        primary: colors.primary,
+        warning: colors.warning,
+        secondaryText: colors.secondaryText,
+        text: colors.text,
+      }),
+      [colors.tint, colors.primary, colors.warning, colors.secondaryText, colors.text]
+    );
+
+    // Render color-coded English text with optimized processing
     const renderColorCodedEnglish = useMemo(() => {
       // Single words should never have grammar color-coding
       const wordCount = text.trim().split(/\s+/).length;
@@ -188,7 +210,6 @@ export const WordTooltip = memo(
         const colorKey = section.colorName as keyof typeof COLOR_MAP;
         const colorValue = COLOR_MAP[colorKey] || 'tint';
         const themeColorName: ColorName = colorValue;
-        // use hoisted isNonLetter
 
         // Split possible multiple english matches like "his / its / it"
         const candidates = section.englishPart
@@ -221,7 +242,7 @@ export const WordTooltip = memo(
                 matchPositions.push({
                   start: idx,
                   end: idx + candidate.length,
-                  color: colors[themeColorName],
+                  color: colorMapping[themeColorName],
                 });
               }
               // Move past this match to find further non-overlapping matches
@@ -277,7 +298,7 @@ export const WordTooltip = memo(
           ))}
         </ThemedText>
       );
-    }, [formattedAnalysis, text, colors]);
+    }, [formattedAnalysis, text, colors.text, colorMapping]);
 
     // Tooltip content - simplified since entire tooltip is now tappable
     const tooltipContent = useMemo(() => {
@@ -304,16 +325,10 @@ export const WordTooltip = memo(
       colors.secondaryText,
     ]);
 
-    // Calculate tooltip dimensions
+    // Calculate tooltip dimensions with optimized processing
     const dimensions = useMemo(() => {
       if (!layout) {
-        return {
-          tooltipLeft: 0,
-          tooltipTop: 0,
-          tooltipWidth: 120,
-          tooltipHeight: 40,
-          arrowLeft: 60,
-        };
+        return DEFAULT_DIMENSIONS;
       }
 
       const hasBookmark = !!(onStudyListToggle && wordRootId);
@@ -326,7 +341,7 @@ export const WordTooltip = memo(
       return calculateTooltipDimensions(adjustedLayout, text || '', hasBookmark);
     }, [layout, text, onStudyListToggle, wordRootId, containerOffsetX]);
 
-    // Memoized styles
+    // Memoized styles with optimized dependencies
     const containerStyle = useMemo(
       () => ({
         ...STATIC_STYLES.overlay,

@@ -2,7 +2,7 @@ import type { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import type { JSX } from 'react';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AppState,
   View,
@@ -32,10 +32,22 @@ import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 // Removed handleError import
 import { selectionFeedback } from '@/utils/haptics';
 
+// Static constants to prevent recreation
 const FLEX_ONE_STYLE = { flex: 1 } as const;
+const RESUME_WINDOW_TIMEOUT = 1500;
+const RESUME_JUMP_DELAY = 500;
+const PROGRESS_THRESHOLD = 15;
 
-// Inner component with toast context access
-const ArticleScreenContent = ({ id }: { id: string }) => {
+// Custom comparison function for React.memo optimization
+const ArticleScreenContentComparison = (
+  prevProps: { id: string },
+  nextProps: { id: string }
+): boolean => {
+  return prevProps.id === nextProps.id;
+};
+
+// Inner component with toast context access - optimized with React.memo
+const ArticleScreenContent = memo(({ id }: { id: string }) => {
   const colors = useColors();
   const { user } = useAuth();
   const fontScale = useAppSelectorMemo(state => state.settings.fontScale);
@@ -46,6 +58,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
 
   const { handleScroll: handleHeaderScroll } = useHeaderVisibility();
 
+  // Memoize article ID parsing to prevent unnecessary recalculations
   const articleId = useMemo(() => {
     if (!id) return undefined;
     const parsed = parseInt(id ?? '', 10);
@@ -195,7 +208,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
       resumeWindowActiveRef.current = true;
       const timeoutId = setTimeout(() => {
         resumeWindowActiveRef.current = false;
-      }, 1500);
+      }, RESUME_WINDOW_TIMEOUT);
       return () => clearTimeout(timeoutId);
     }
     return () => {};
@@ -225,7 +238,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
         // Primary: delegate to hook (handles measurement and safety flags)
         jumpToLastReadPosition();
         // Fallback: if progress was below threshold, force a direct scroll to ensure UX expectation
-        if (progressPercent < 15 && scrollViewRef.current) {
+        if (progressPercent < PROGRESS_THRESHOLD && scrollViewRef.current) {
           try {
             scrollViewRef.current.scrollToIndex({
               index: (initialLastSentenceRead ?? 0) + 1,
@@ -236,7 +249,7 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
             // ignore
           }
         }
-      }, 500);
+      }, RESUME_JUMP_DELAY);
 
       // Mark as handled - this prevents any further resume logic
       hasHandledInitialResumeRef.current = true;
@@ -285,8 +298,8 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
     [sentenceWordsMap]
   );
 
+  // Memoize renderSentenceItem to prevent unnecessary recreations
   const renderSentenceItem = useCallback(
-    // eslint-disable-next-line react/no-unused-prop-types
     ({ item }: { item: Tables<'article_sentences'> }) => {
       const words = getWordsForSentence(item.id);
 
@@ -306,61 +319,89 @@ const ArticleScreenContent = ({ id }: { id: string }) => {
         />
       );
     },
+    [getWordsForSentence, fontScale, colors, dueWordRootIds, handleWordPress]
+  );
+
+  // Memoize expensive computations
+  const hasContent = useMemo(() => !!article && !!sortedSentences, [article, sortedSentences]);
+
+  const tooltipProps = useMemo(
+    () => ({
+      visible: !!activeTooltip,
+      text: activeTooltip?.word.english,
+      arabicWord: activeTooltip?.word.word_form,
+      layout: activeTooltip?.layout ?? null,
+      onClose: handleCloseTooltip,
+      isInStudyList: activeTooltip?.word.root_id
+        ? selectedWordIds.has(activeTooltip.word.root_id)
+        : false,
+      onStudyListToggle: handleStudyListToggle,
+      wordRootId: activeTooltip?.word.root_id,
+    }),
+    [activeTooltip, selectedWordIds, handleCloseTooltip, handleStudyListToggle]
+  );
+
+  const sentenceScrubberProps = useMemo(
+    () => ({
+      currentSentence: currentSentenceIndex,
+      totalSentences: sortedSentences?.length ?? 0,
+      onSentenceChange: handleSentenceChange,
+      onScrubStart: handleScrubStart,
+      onScrubEnd: handleScrubEnd,
+    }),
     [
-      getWordsForSentence,
-      fontScale,
-      colors,
-      dueWordRootIds,
-      handleWordPress,
-      activeTooltip?.word.id,
+      currentSentenceIndex,
+      sortedSentences?.length,
+      handleSentenceChange,
+      handleScrubStart,
+      handleScrubEnd,
     ]
   );
 
+  // Only create articleContentProps when article is defined to avoid TypeScript errors
+  const articleContentProps = useMemo(() => {
+    if (!article) return null;
+
+    return {
+      id,
+      article,
+      sortedSentences,
+      renderSentenceItem,
+      handleScroll,
+      handleViewableItemsChanged,
+      colors,
+      scrollViewRef: scrollViewRef as React.RefObject<FlashList<Tables<'article_sentences'>>>,
+      isInReadingList,
+      onToggleReadingList: handleToggleReadingListWithFeedback,
+      onClose: handleClose,
+    };
+  }, [
+    article,
+    id,
+    sortedSentences,
+    renderSentenceItem,
+    handleScroll,
+    handleViewableItemsChanged,
+    colors,
+    scrollViewRef,
+    isInReadingList,
+    handleToggleReadingListWithFeedback,
+    handleClose,
+  ]);
+
   return (
     <View style={FLEX_ONE_STYLE}>
-      {article && sortedSentences ? (
-        <ArticleContent
-          id={id}
-          article={article}
-          sortedSentences={sortedSentences}
-          renderSentenceItem={renderSentenceItem}
-          handleScroll={handleScroll}
-          handleViewableItemsChanged={handleViewableItemsChanged}
-          colors={colors}
-          scrollViewRef={scrollViewRef as React.RefObject<FlashList<Tables<'article_sentences'>>>}
-          isInReadingList={isInReadingList}
-          onToggleReadingList={handleToggleReadingListWithFeedback}
-          // Removed onPlayPress and isPlaying props
-          onClose={handleClose}
-        />
-      ) : null}
+      {hasContent && articleContentProps ? <ArticleContent {...articleContentProps} /> : null}
 
       {/* Removed mini-player for article modal */}
 
-      <WordTooltip
-        visible={!!activeTooltip}
-        text={activeTooltip?.word.english}
-        arabicWord={activeTooltip?.word.word_form}
-        layout={activeTooltip?.layout ?? null}
-        onClose={handleCloseTooltip}
-        isInStudyList={
-          activeTooltip?.word.root_id ? selectedWordIds.has(activeTooltip.word.root_id) : false
-        }
-        onStudyListToggle={handleStudyListToggle}
-        wordRootId={activeTooltip?.word.root_id}
-      />
+      <WordTooltip {...tooltipProps} />
 
       {/* Scrubber moved out of ArticleContent to avoid ArticleContent rerenders */}
-      <SentenceScrubber
-        currentSentence={currentSentenceIndex}
-        totalSentences={sortedSentences?.length ?? 0}
-        onSentenceChange={handleSentenceChange}
-        onScrubStart={handleScrubStart}
-        onScrubEnd={handleScrubEnd}
-      />
+      <SentenceScrubber {...sentenceScrubberProps} />
     </View>
   );
-};
+}, ArticleScreenContentComparison);
 
 export default function ArticleScreen(): JSX.Element {
   const { id } = useLocalSearchParams<{ id: string }>();
