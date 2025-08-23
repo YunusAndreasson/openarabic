@@ -23,7 +23,10 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(({ item, isExpanded, on
   const colors = useColors();
 
   const handlePress = useCallback(() => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    // Use LayoutAnimation only on native platforms for smooth expand/collapse
+    if (LayoutAnimation && typeof LayoutAnimation.configureNext === 'function') {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    }
     onToggle(item.id);
   }, [item.id, onToggle]);
 

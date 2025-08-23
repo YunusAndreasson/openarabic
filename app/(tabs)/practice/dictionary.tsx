@@ -16,13 +16,17 @@ import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
 import { useAuth } from '@/hooks/auth/useAuth';
+import { useColors } from '@/hooks/theme/useColors';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import { useDictionaryModal, useFSRSQueries } from '@/hooks/vocabulary';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 
+import { STRINGS } from '../../../constants/strings';
+
 export default function DictionaryScreen(): JSX.Element {
   const { user } = useAuth();
+  const colors = useColors();
   const { editMode, reset } = useEditMode('dictionary');
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
@@ -154,9 +158,9 @@ export default function DictionaryScreen(): JSX.Element {
       ) : (
         <View style={styles.emptyContainer}>
           <EmptyState
-            title="No words"
-            description="Add words from articles to start practicing"
-            colors={{ tint: '#999' }}
+            colors={colors}
+            title={STRINGS.STUDY_LIST_EMPTY_TITLE}
+            description={STRINGS.STUDY_LIST_EMPTY_DESCRIPTION}
             icon="school"
           />
         </View>

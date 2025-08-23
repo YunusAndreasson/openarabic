@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import * as MailComposer from 'expo-mail-composer';
+import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
 import * as StoreReview from 'expo-store-review';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -190,7 +191,6 @@ export const useAccountScreen = () => {
   useEffect(() => {
     const checkNotificationPermissions = async () => {
       try {
-        const { default: Notifications } = await import('expo-notifications');
         const { status } = await Notifications.getPermissionsAsync();
         const permissionsGranted = status === 'granted';
         if (isMounted.current) {
