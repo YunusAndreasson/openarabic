@@ -69,6 +69,12 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
 
         // Filter to only include words due now AND not reviewed within the cooldown window
         const filtered = allWords.filter(word => {
+          // New words (state 0) are always due for their first review
+          // AND are never excluded by cooldown since they haven't been reviewed
+          if (word.fsrs_state === 0) {
+            return true;
+          }
+
           const dueStr = normalizeTs(word.fsrs_due);
           const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
           const isDue = Number.isFinite(dueMs) && dueMs <= nowMs;
@@ -113,12 +119,12 @@ export function useFSRSQueries({ userId, limit }: UseFSRSQueriesOptions): FSRSQu
       const allWordsError = allWordsQuery?.error;
       const dueWordsError = dueWordsQuery?.error;
       const statsError = statsQuery?.error;
-      
+
       // If any query has a real error, return it
       if (allWordsError && Object.keys(allWordsError).length > 0) return allWordsError;
       if (dueWordsError && Object.keys(dueWordsError).length > 0) return dueWordsError;
       if (statsError && Object.keys(statsError).length > 0) return statsError;
-      
+
       // If all queries succeeded (no real errors), return null
       return null;
     })(),

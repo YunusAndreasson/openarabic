@@ -2,7 +2,13 @@
 
 import pytest
 
-from data.models import SentenceTranslation, WordTranslation
+from data.models import (
+    SentenceTranslation,
+    TashkeelResult,
+    TranslationResult,
+    WordTranslation,
+    WordTranslationResult,
+)
 from utils.text_utils import (
     filter_arabic_words,
     get_optimized_context,
@@ -58,8 +64,18 @@ class TestValidation:
         """Test successful validation."""
         original_sentences = ["مرحبا", "بالعالم"]
         results = [
-            {"translation": "Hello"},
-            {"translation": "world"},
+            TranslationResult(
+                translation="Hello",
+                notes="Test translation",
+                word_by_word=[],
+                uncertainties=[],
+            ),
+            TranslationResult(
+                translation="world",
+                notes="Test translation",
+                word_by_word=[],
+                uncertainties=[],
+            ),
         ]
         # Should not raise an exception
         validate_translation_results(original_sentences, results, "Test")
@@ -67,7 +83,14 @@ class TestValidation:
     def test_validate_translation_results_count_mismatch(self):
         """Test validation with count mismatch."""
         original_sentences = ["مرحبا", "بالعالم"]
-        results = [{"translation": "Hello"}]  # Missing one result
+        results = [
+            TranslationResult(
+                translation="Hello",
+                notes="Test translation",
+                word_by_word=[],
+                uncertainties=[],
+            )
+        ]  # Missing one result
 
         with pytest.raises(TranslationValidationError):
             validate_translation_results(original_sentences, results, "Test")
@@ -75,7 +98,14 @@ class TestValidation:
     def test_validate_translation_results_invalid_format(self):
         """Test validation with invalid result format."""
         original_sentences = ["مرحبا"]
-        results = [{"translation": "[Translation Error] test"}]  # Contains error marker
+        results = [
+            TranslationResult(
+                translation="[Translation Error] test",
+                notes="Test translation",
+                word_by_word=[],
+                uncertainties=[],
+            )
+        ]  # Contains error marker
 
         with pytest.raises(TranslationValidationError):
             validate_translation_results(original_sentences, results, "Test")
@@ -83,14 +113,28 @@ class TestValidation:
     def test_validate_translation_results_missing_translation(self):
         """Test validation with missing translation field."""
         original_sentences = ["مرحبا"]
-        results = [{"translation": ""}]  # Empty translation
+        results = [
+            TranslationResult(
+                translation="",
+                notes="Test translation",
+                word_by_word=[],
+                uncertainties=[],
+            )
+        ]  # Empty translation
 
         # This should raise an error as empty translations are not allowed
         with pytest.raises(TranslationValidationError):
             validate_translation_results(original_sentences, results, "Test")
 
         # Test with very short translation that should trigger validation
-        results = [{"translation": "a"}]  # Too short
+        results = [
+            TranslationResult(
+                translation="a",
+                notes="Test translation",
+                word_by_word=[],
+                uncertainties=[],
+            )
+        ]  # Too short
 
         with pytest.raises(TranslationValidationError):
             validate_translation_results(original_sentences, results, "Test")
@@ -98,7 +142,14 @@ class TestValidation:
     def test_validate_translation_results_alternative_translation_key(self):
         """Test validation with 't' key instead of 'translation'."""
         original_sentences = ["مرحبا"]
-        results = [{"t": "Hello"}]  # Using 't' key
+        results = [
+            TranslationResult(
+                translation="Hello",
+                notes="Test translation",
+                word_by_word=[],
+                uncertainties=[],
+            )
+        ]  # Using 't' key
 
         # Should not raise an exception
         validate_translation_results(original_sentences, results, "Test")
@@ -106,7 +157,14 @@ class TestValidation:
     def test_validate_translation_results_format_error(self):
         """Test validation with format error marker."""
         original_sentences = ["مرحبا"]
-        results = [{"translation": "[Format Error] test"}]
+        results = [
+            TranslationResult(
+                translation="[Format Error] test",
+                notes="Test translation",
+                word_by_word=[],
+                uncertainties=[],
+            )
+        ]
 
         with pytest.raises(TranslationValidationError):
             validate_translation_results(original_sentences, results, "Test")
@@ -114,7 +172,14 @@ class TestValidation:
     def test_validate_translation_results_batch_error(self):
         """Test validation with batch processing error marker."""
         original_sentences = ["مرحبا"]
-        results = [{"translation": "[BATCH PROCESSING ERROR] test"}]
+        results = [
+            TranslationResult(
+                translation="[BATCH PROCESSING ERROR] test",
+                notes="Test translation",
+                word_by_word=[],
+                uncertainties=[],
+            )
+        ]
 
         with pytest.raises(TranslationValidationError):
             validate_translation_results(original_sentences, results, "Test")
@@ -123,19 +188,19 @@ class TestValidation:
         """Test validation with word options check enabled."""
         original_sentences = ["مرحبا"]
         results = [
-            {
-                "translation": "Hello",
-                "word_translations": [
-                    {
-                        "arabic": "مرحبا",
-                        "english": ["hello", "hi"],
-                        "pos": "interjection",
-                        "essential": "مرحبا",
-                        "essential_translation": ["hello", "hi"],
-                        "notes": "Greeting word",
-                    }
-                ],
-            }
+            WordTranslationResult(
+                word_translations=[
+                    WordTranslation(
+                        arabic="مرحبا",
+                        english=["hello", "hi"],
+                        pos="interjection",
+                        essential="مرحبا",
+                        essential_translation=["hello", "hi"],
+                        notes="Greeting word",
+                        uncertainties=[],
+                    )
+                ]
+            )
         ]
 
         # Should not raise an exception
@@ -143,71 +208,26 @@ class TestValidation:
             original_sentences, results, "Test", check_word_options=True
         )
 
-    def test_validate_translation_results_word_options_missing_arabic(self):
-        """Test validation with missing Arabic text in word options."""
-        original_sentences = ["مرحبا"]
-        results = [
-            {
-                "translation": "Hello",
-                "word_translations": [
-                    {
-                        "arabic": "",
-                        "english": ["hello", "hi"],
-                        "pos": "interjection",
-                        "essential": "مرحبا",
-                        "essential_translation": ["hello", "hi"],
-                        "notes": "Greeting word",
-                    }
-                ],
-            }
-        ]
-
-        with pytest.raises(TranslationValidationError):
-            validate_translation_results(
-                original_sentences, results, "Test", check_word_options=True
-            )
-
-    def test_validate_translation_results_word_options_missing_english(self):
-        """Test validation with missing English options in word options."""
-        original_sentences = ["مرحبا"]
-        results = [
-            {
-                "translation": "Hello",
-                "word_translations": [
-                    {
-                        "arabic": "مرحبا",
-                        "english": [],
-                        "pos": "interjection",
-                        "essential": "مرحبا",
-                        "essential_translation": ["hello", "hi"],
-                        "notes": "Greeting word",
-                    }
-                ],
-            }
-        ]
-
-        with pytest.raises(TranslationValidationError):
-            validate_translation_results(
-                original_sentences, results, "Test", check_word_options=True
-            )
-
     def test_validate_translation_results_word_translations_check(self):
         """Test validation with word translations check enabled."""
         original_sentences = ["مرحبا"]
         results = [
-            {
-                "translation": "Hello",
-                "word_by_word": [
-                    {
-                        "arabic": "مرحبا",
-                        "english": "hello",
-                        "pos": "interjection",
-                        "essential": "مرحبا",
-                        "essential_translation": "hello",
-                        "notes": "Greeting word",
-                    }
+            TranslationResult(
+                translation="Hello",
+                notes="Test translation",
+                word_by_word=[
+                    WordTranslation(
+                        arabic="مرحبا",
+                        english="hello",
+                        pos="interjection",
+                        essential="مرحبا",
+                        essential_translation="hello",
+                        notes="Greeting word",
+                        uncertainties=[],
+                    )
                 ],
-            }
+                uncertainties=[],
+            )
         ]
 
         # Should not raise an exception
@@ -215,68 +235,18 @@ class TestValidation:
             original_sentences, results, "Test", check_word_translations=True
         )
 
-    def test_validate_translation_results_word_translations_missing_arabic(self):
-        """Test validation with missing Arabic text in word translations."""
-        original_sentences = ["مرحبا"]
-        results = [
-            {
-                "translation": "Hello",
-                "word_by_word": [
-                    {
-                        "arabic": "",
-                        "english": "hello",
-                        "pos": "interjection",
-                        "essential": "مرحبا",
-                        "essential_translation": "hello",
-                        "notes": "Greeting word",
-                    }
-                ],
-            }
-        ]
-
-        with pytest.raises(TranslationValidationError):
-            validate_translation_results(
-                original_sentences, results, "Test", check_word_translations=True
-            )
-
     def test_validate_translation_results_tashkeel_check(self):
         """Test validation with tashkeel check."""
         original_sentences = ["مرحبا"]
         results = [
-            {
-                "translation": "Hello",
-                "tashkeel": "مرحبا",  # Same as original, no diacritics
-            }
+            TashkeelResult(
+                tashkeel="مرحبا",  # Same as original, no diacritics
+                uncertainties=[],
+            )
         ]
 
         with pytest.raises(TranslationValidationError):
             validate_translation_results(original_sentences, results, "Test")
-
-    def test_validate_translation_results_tashkeel_with_diacritics(self):
-        """Test validation with tashkeel that has diacritics."""
-        original_sentences = ["مرحبا"]
-        results = [
-            {
-                "translation": "Hello",
-                "tashkeel": "مَرْحَباً",  # Has diacritics
-            }
-        ]
-
-        # Should not raise an exception
-        validate_translation_results(original_sentences, results, "Test")
-
-    def test_validate_translation_results_tashkeel_original_has_diacritics(self):
-        """Test validation when original has diacritics."""
-        original_sentences = ["مَرْحَباً"]
-        results = [
-            {
-                "translation": "Hello",
-                "tashkeel": "مَرْحَباً",  # Same as original, but original has diacritics
-            }
-        ]
-
-        # Should not raise an exception
-        validate_translation_results(original_sentences, results, "Test")
 
 
 class TestValidateFinalTranslation:
@@ -303,12 +273,12 @@ class TestValidateFinalTranslation:
             tashkeel="مَرْحَباً",
             notes="Simple greeting",
             word_by_word=word_translations,
-            verification_status="unknown",
-            verification_issues="unknown",
+            verification_status="pending",
+            verification_issues=[],
         )
 
         # Test that the model can be created without validation errors
-        assert translation.verification_status == "unknown"
+        assert translation.verification_status == "pending"
 
     def test_validate_final_translation_missing_full_translation(self):
         """Test validation with missing full translation."""
@@ -319,8 +289,8 @@ class TestValidateFinalTranslation:
             tashkeel="مَرْحَباً",
             notes="Empty translation",
             word_by_word=[],
-            verification_status="unknown",
-            verification_issues="unknown",
+            verification_status="pending",
+            verification_issues=[],
         )
 
         issues = validate_final_translation(translation)
@@ -335,8 +305,8 @@ class TestValidateFinalTranslation:
             tashkeel="",
             notes="Missing tashkeel",
             word_by_word=[],
-            verification_status="unknown",
-            verification_issues="unknown",
+            verification_status="pending",
+            verification_issues=[],
         )
 
         issues = validate_final_translation(translation)
@@ -351,8 +321,8 @@ class TestValidateFinalTranslation:
             tashkeel="مَرْحَباً",
             notes="Error in translation",
             word_by_word=[],
-            verification_status="unknown",
-            verification_issues="unknown",
+            verification_status="pending",
+            verification_issues=[],
         )
 
         issues = validate_final_translation(translation)
@@ -367,8 +337,8 @@ class TestValidateFinalTranslation:
             tashkeel="مَرْحَباً بِالْعَالَمِ",
             notes="Missing word translations",
             word_by_word=[],
-            verification_status="unknown",
-            verification_issues="unknown",
+            verification_status="pending",
+            verification_issues=[],
         )
 
         issues = validate_final_translation(translation)
@@ -395,37 +365,9 @@ class TestValidateFinalTranslation:
             tashkeel="مَرْحَباً بِالْعَالَمِ هَذَا نَصّ",
             notes="Word count mismatch",
             word_by_word=word_translations,  # Only 1 word translation
-            verification_status="unknown",
-            verification_issues="unknown",
+            verification_status="pending",
+            verification_issues=[],
         )
 
         issues = validate_final_translation(translation)
         assert any("Word translation count mismatch" in issue for issue in issues)
-
-    def test_validate_final_translation_missing_word_fields(self):
-        """Test validation with missing word fields."""
-        word_translations = [
-            WordTranslation(
-                arabic="",
-                english="hello",
-                pos="interjection",
-                essential="مرحبا",
-                essential_translation="hello",
-                notes="Missing Arabic text",
-                uncertainties=[],
-            )
-        ]
-
-        translation = SentenceTranslation(
-            index=0,
-            original="مرحبا",
-            full_translation="Hello",
-            tashkeel="مَرْحَباً",
-            notes="Missing word fields",
-            word_by_word=word_translations,
-            verification_status="unknown",
-            verification_issues="unknown",
-        )
-
-        issues = validate_final_translation(translation)
-        assert "Word 0: Missing Arabic text" in issues

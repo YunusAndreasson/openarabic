@@ -292,9 +292,7 @@ class AudioResult(BaseModel):
 
     url: str = Field(description="Audio file URL in storage")
     filename: str = Field(description="Generated filename")
-    duration: float = Field(
-        description="Audio duration in seconds", ge=0.0
-    )
+    duration: float = Field(description="Audio duration in seconds", ge=0.0)
 
 
 class BilingualAudioResult(BaseModel):
@@ -302,9 +300,7 @@ class BilingualAudioResult(BaseModel):
 
     url: str = Field(description="Bilingual audio file URL in storage")
     filename: str = Field(description="Generated filename")
-    duration: float = Field(
-        description="Total audio duration in seconds", ge=0.0
-    )
+    duration: float = Field(description="Total audio duration in seconds", ge=0.0)
     english_duration: float = Field(
         description="English audio duration in seconds", ge=0.0
     )

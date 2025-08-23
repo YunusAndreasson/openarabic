@@ -28,7 +28,7 @@ export interface StudyWord {
   fsrs_reps: number | null;
   fsrs_lapses: number | null;
   fsrs_state: number | null;
-  fsrs_last_review: string;
+  fsrs_last_review: string | null; // Match database schema - can be null
 
   created_at: string;
 }

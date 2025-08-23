@@ -74,7 +74,7 @@ class TestModels:
                 )
             ],
             verification_status="pending",
-            verification_issues="unknown",
+            verification_issues=[],
         )
         assert translation.original == "مرحبا بالعالم"
         assert translation.full_translation == "Hello world"

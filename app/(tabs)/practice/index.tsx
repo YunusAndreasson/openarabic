@@ -146,7 +146,9 @@ export default function VocabularyScreen(): JSX.Element {
     const learningWords = filteredStudyWords.filter(word => {
       const state = word.fsrs_state;
       const stability = word.fsrs_stability ?? 0;
-      return state === 0 || state === 1 || state === 3 || (state === 2 && stability < 5);
+      // State 0 (New) words are due for first review, not learning
+      // Only states 1, 3, or state 2 with low stability are learning
+      return state === 1 || state === 3 || (state === 2 && stability < 5);
     }).length;
 
     const masteredWords = filteredStudyWords.filter(word => {

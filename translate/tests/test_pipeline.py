@@ -149,8 +149,8 @@ class TestTranslateFile:
                     ],
                     full_translation="Hello world.",
                     notes="Test translation",
-                    verification_status="unknown",
-                    verification_issues="unknown",
+                    verification_status="pending",
+                    verification_issues=[],
                 )
 
                 mock_api.return_value = [mock_translation]

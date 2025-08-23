@@ -60,32 +60,37 @@ describe('wordClassification', () => {
       const futureDate = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString(); // Tomorrow
 
       const words = [
-        createStudyWord({ fsrs_due: pastDate }),
-        createStudyWord({ fsrs_due: futureDate }),
-        createStudyWord({ fsrs_due: pastDate }),
+        createStudyWord({ fsrs_due: pastDate, fsrs_state: 2 }), // Past due, review state
+        createStudyWord({ fsrs_due: futureDate, fsrs_state: 2 }), // Future due, review state
+        createStudyWord({ fsrs_due: pastDate, fsrs_state: 0 }), // Past due, new state (always due)
       ];
 
-      expect(calculateDueWords(words)).toBe(2);
+      expect(calculateDueWords(words)).toBe(2); // Past due words only
     });
 
     it('should handle null due dates', () => {
-      const words = [createStudyWord({ fsrs_due: null }), createStudyWord({ fsrs_due: null })];
+      const words = [
+        createStudyWord({ fsrs_due: null, fsrs_state: 2 }), // No due date, review state
+        createStudyWord({ fsrs_due: null, fsrs_state: 0 }), // No due date, new state (always due)
+      ];
 
-      expect(calculateDueWords(words)).toBe(0);
+      expect(calculateDueWords(words)).toBe(1); // Only new word (state 0) is due
     });
   });
 
   describe('calculateLearningWords', () => {
     it('should count learning words correctly', () => {
       const words = [
-        createStudyWord({ fsrs_state: 0 }), // New
+        createStudyWord({ fsrs_state: 0 }), // New - should NOT be counted as learning
         createStudyWord({ fsrs_state: 1 }), // Learning
         createStudyWord({ fsrs_state: 2, fsrs_stability: 3 }), // Review but unstable
         createStudyWord({ fsrs_state: 3 }), // Relearning
         createStudyWord({ fsrs_state: 2, fsrs_stability: 10 }), // Mastered
       ];
 
-      expect(calculateLearningWords(words)).toBe(4);
+      // State 0 (New) words are due for first review, not learning
+      // Only states 1, 3, or state 2 with low stability are learning
+      expect(calculateLearningWords(words)).toBe(3);
     });
   });
 
@@ -137,7 +142,7 @@ describe('wordClassification', () => {
       const pastBeyondCooldown = new Date(now.getTime() - 13 * 60 * 60 * 1000).toISOString(); // 13 hours ago (beyond 12-hour cooldown)
       const words = [
         createStudyWord({ fsrs_due: pastDate }), // Due
-        createStudyWord({ fsrs_state: 0 }), // Learning
+        createStudyWord({ fsrs_state: 0 }), // New - should be counted as due for first review
         createStudyWord({ fsrs_state: 2, fsrs_stability: 10 }), // Mastered
         createStudyWord({
           fsrs_state: 1, // Learning state
@@ -150,8 +155,8 @@ describe('wordClassification', () => {
 
       const result = calculateWordCategories(words);
 
-      expect(result.dueWords).toBe(1);
-      expect(result.learningWords).toBe(3); // Due word (state 0) + learning word (state 0) + struggling word (state 1)
+      expect(result.dueWords).toBe(2); // Past due + new word (state 0)
+      expect(result.learningWords).toBe(1); // Only struggling word (state 1)
       expect(result.masteredWords).toBe(1);
       expect(result.strugglingWords).toBe(1);
     });

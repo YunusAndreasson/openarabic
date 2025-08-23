@@ -149,9 +149,9 @@ describe('getFSRSWords', () => {
     await studyWordsFSRSService.getFSRSWords('u1', { onlyDue: true });
 
     expect(supabase.from).toHaveBeenCalledWith('study_words');
-    expect(builder.lte).toHaveBeenCalledWith(
-      'fsrs_due',
-      new Date('2024-01-01T00:00:00.000Z').toISOString()
+    // Now uses .or() to include both due words and new words (state 0)
+    expect(builder.or).toHaveBeenCalledWith(
+      `fsrs_due.lte.${new Date('2024-01-01T00:00:00.000Z').toISOString()},fsrs_state.eq.0`
     );
   });
 
@@ -194,8 +194,10 @@ describe('getFSRSWords', () => {
 
     await studyWordsFSRSService.getFSRSWords('u1', { category: 'learning' });
 
+    // State 0 (New) words are due for first review, not learning
+    // Only states 1, 3, or state 2 with low stability are learning
     expect(builder.or).toHaveBeenCalledWith(
-      'fsrs_state.in.(0,1,3),and(fsrs_state.eq.2,fsrs_stability.lt.5)'
+      'fsrs_state.in.(1,3),and(fsrs_state.eq.2,fsrs_stability.lt.5)'
     );
   });
 
@@ -258,8 +260,9 @@ describe('getFSRSWords', () => {
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual(recentWord);
 
-      // Verify that or() was not called (no cooldown filter applied)
-      expect(builder.or).not.toHaveBeenCalled();
+      // Verify that or() was called once for the due filter (includes new words)
+      expect(builder.or).toHaveBeenCalledTimes(1);
+      expect(builder.or).toHaveBeenCalledWith(expect.stringContaining('fsrs_due.lte.'));
     });
 
     it('should apply both due date and cooldown filters together', async () => {
@@ -283,9 +286,12 @@ describe('getFSRSWords', () => {
       expect(result[0]).toEqual(dueAndCoolWord);
 
       // Verify both filters were applied
-      expect(builder.lte).toHaveBeenCalledWith('fsrs_due', expect.any(String));
+      expect(builder.or).toHaveBeenCalledTimes(2); // Once for due filter, once for cooldown
       expect(builder.or).toHaveBeenCalledWith(
-        expect.stringContaining('fsrs_last_review.is.null,fsrs_last_review.lt.')
+        expect.stringContaining('fsrs_due.lte.') // Due filter includes new words
+      );
+      expect(builder.or).toHaveBeenCalledWith(
+        expect.stringContaining('fsrs_last_review.is.null,fsrs_last_review.lt.') // Cooldown filter
       );
     });
   });

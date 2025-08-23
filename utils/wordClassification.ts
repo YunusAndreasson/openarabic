@@ -48,6 +48,11 @@ export function calculateDueWords(studyWords: StudyWord[]): number {
   };
 
   return studyWords.filter(word => {
+    // New words (state 0) are always due for their first review
+    if (word.fsrs_state === 0) {
+      return true;
+    }
+
     const dueStr = normalizeTs(word.fsrs_due as unknown);
     const dueMs = dueStr ? Date.parse(dueStr) : Number.POSITIVE_INFINITY;
     const isDue = Number.isFinite(dueMs) && dueMs <= nowMs;
@@ -64,12 +69,17 @@ export function calculateDueWords(studyWords: StudyWord[]): number {
 /**
  * Calculate learning words using server-side logic (matching session logic)
  * Server: 'fsrs_state.in.(0,1,3),and(fsrs_state.eq.2,fsrs_stability.lt.5)'
+ *
+ * Note: State 0 (New) words are actually due for their first review, not learning.
+ * Only words in states 1 (Learning), 3 (Relearning), or state 2 with low stability are learning.
  */
 export function calculateLearningWords(studyWords: StudyWord[]): number {
   return studyWords.filter(word => {
     const state = word.fsrs_state;
     const stability = word.fsrs_stability ?? 0;
-    return state === 0 || state === 1 || state === 3 || (state === 2 && stability < 5);
+    // State 0 (New) words are due for first review, not learning
+    // Only states 1, 3, or state 2 with low stability are learning
+    return state === 1 || state === 3 || (state === 2 && stability < 5);
   }).length;
 }
 

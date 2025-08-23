@@ -10,6 +10,7 @@ from .models import (
     RefinementResult,
     TashkeelResult,
     TranslationResult,
+    WordTranslation,
     WordTranslationResult,
 )
 
@@ -27,7 +28,9 @@ class RefinementInput(TypedDict):
     original: str
     translation: TranslationResult  # Use actual Pydantic model
     tashkeel: TashkeelResult  # Use actual Pydantic model
-    word_translations_options: list[WordTranslationResult]  # Use actual Pydantic model
+    word_translations_options: list[
+        WordTranslation
+    ]  # List of individual word translations
     previous_uncertainties: dict[
         str, list[dict[str, Any]]
     ]  # Keep as dict for flexibility

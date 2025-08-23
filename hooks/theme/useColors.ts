@@ -20,25 +20,31 @@ function getCachedColors(theme: Theme): ThemeColors {
 }
 
 export function useColors(): ThemeColors {
-  const theme = useAppSelector(
-    state => state?.theme?.theme || Theme.Light,
-    (prev, next) => prev === next
-  );
-
-  // Use ref to track previous theme and colors
+  // Use ref to track previous theme and colors - must be at top level
   const prevThemeRef = useRef<Theme | null>(null);
   const prevColorsRef = useRef<ThemeColors | null>(null);
 
-  // Only recompute colors when theme actually changes
-  if (prevThemeRef.current !== theme) {
-    prevThemeRef.current = theme;
-    prevColorsRef.current = getCachedColors(theme);
-  }
+  try {
+    const theme = useAppSelector(
+      state => state?.theme?.theme || Theme.Light,
+      (prev, next) => prev === next
+    );
 
-  // Ensure we always return a valid colors object
-  if (!prevColorsRef.current) {
-    prevColorsRef.current = getCachedColors(theme);
-  }
+    // Only recompute colors when theme actually changes
+    if (prevThemeRef.current !== theme) {
+      prevThemeRef.current = theme;
+      prevColorsRef.current = getCachedColors(theme);
+    }
 
-  return prevColorsRef.current;
+    // Ensure we always return a valid colors object
+    if (!prevColorsRef.current) {
+      prevColorsRef.current = getCachedColors(theme);
+    }
+
+    return prevColorsRef.current;
+  } catch {
+    // Fallback to light theme if Redux context is not available yet
+    // This prevents errors during initial app bootstrap
+    return getCachedColors(Theme.Light);
+  }
 }

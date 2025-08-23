@@ -40,8 +40,8 @@ class TestGoogleTranslateIntegration:
         results = batch_translate_root_words_with_google_cloud(sentences)
 
         assert len(results) == 2
-        assert results[0]["word_translations"][0]["arabic"] == "مرحبا"
-        assert results[0]["word_translations"][0]["english"] == ["Hello"]
+        assert results[0].word_translations[0].arabic == "مرحبا"
+        assert results[0].word_translations[0].english == ["Hello"]
 
     @patch("pipeline.translation_engine.GoogleTranslateService")
     def test_batch_translate_root_words_with_google_cloud_translation_error(

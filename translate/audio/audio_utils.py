@@ -702,9 +702,9 @@ def generate_bilingual_sentence_audio(
             return BilingualAudioResult(
                 url=url,
                 filename=filename,
-                        duration=0.0,
-        english_duration=0.0,
-        arabic_duration=0.0,
+                duration=0.0,
+                english_duration=0.0,
+                arabic_duration=0.0,
             )
 
         logger.info(

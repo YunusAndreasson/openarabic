@@ -17,7 +17,7 @@ interface FSRSWordUpdate {
   fsrs_learning_steps: number;
   fsrs_lapses: number;
   fsrs_state: number;
-  fsrs_last_review: string;
+  fsrs_last_review: string; // Keep as non-null for RPC function compatibility
 }
 
 // Define options for fetching FSRS words
@@ -100,14 +100,18 @@ export const studyWordsFSRSService = {
     // Add due date filter if requested
     if (options.onlyDue) {
       const now = new Date().toISOString();
-      filteredQuery = filteredQuery.lte('fsrs_due', now);
+      // Include both:
+      // 1. Words with due date <= now
+      // 2. New words (state 0) which are always due for their first review
+      filteredQuery = filteredQuery.or(`fsrs_due.lte.${now},fsrs_state.eq.0`);
     }
 
     // Session cooldown: Exclude words reviewed within the specified hours
+    // BUT: New words (state 0) are never excluded by cooldown since they haven't been reviewed
     if (options.sessionCooldownHours && options.sessionCooldownHours > 0) {
       const cooldownTime = new Date(Date.now() - options.sessionCooldownHours * 60 * 60 * 1000);
       filteredQuery = filteredQuery.or(
-        `fsrs_last_review.is.null,fsrs_last_review.lt.${cooldownTime.toISOString()}`
+        `fsrs_state.eq.0,fsrs_last_review.is.null,fsrs_last_review.lt.${cooldownTime.toISOString()}`
       );
     }
 
@@ -115,8 +119,10 @@ export const studyWordsFSRSService = {
     if (options.category === 'mastered') {
       filteredQuery = filteredQuery.eq('fsrs_state', 2).gte('fsrs_stability', 5);
     } else if (options.category === 'learning') {
+      // State 0 (New) words are due for first review, not learning
+      // Only states 1, 3, or state 2 with low stability are learning
       filteredQuery = filteredQuery.or(
-        'fsrs_state.in.(0,1,3),and(fsrs_state.eq.2,fsrs_stability.lt.5)'
+        'fsrs_state.in.(1,3),and(fsrs_state.eq.2,fsrs_stability.lt.5)'
       );
     }
 
@@ -299,15 +305,16 @@ export const studyWordsFSRSService = {
     const now = new Date();
 
     // Use FSRS default values that comply with database constraints
-    const INITIAL_FSRS_DIFFICULTY = 1; // Must be between 1 and 10
+    const INITIAL_FSRS_DIFFICULTY = 6.5; // Must be between 1 and 10, use standard FSRS default
     const INITIAL_STABILITY = 0.4; // Default FSRS initial stability
 
     // Create entry matching the actual database schema columns
+    // Note: fsrs_last_review has default "now()" in database, but we set it explicitly for consistency
     const newEntry: TablesInsert<'study_words'> = {
       user_id: userId,
       root_id: rootId,
       created_at: now.toISOString(),
-      fsrs_due: now.toISOString(),
+      fsrs_due: now.toISOString(), // Due immediately for new words
       fsrs_stability: INITIAL_STABILITY,
       fsrs_difficulty: INITIAL_FSRS_DIFFICULTY,
       fsrs_elapsed_days: 0,
@@ -315,8 +322,8 @@ export const studyWordsFSRSService = {
       fsrs_learning_steps: 0,
       fsrs_reps: 0,
       fsrs_lapses: 0,
-      fsrs_state: 0, // New state
-      fsrs_last_review: now.toISOString(),
+      fsrs_state: 0, // New state - will show as "due" for first review
+      fsrs_last_review: now.toISOString(), // Explicitly set to ensure database constraint compliance
     };
 
     const { error: insertError } = await supabase.from('study_words').insert(newEntry);

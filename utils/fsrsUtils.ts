@@ -75,10 +75,17 @@ export function calculateRetrievabilityForecast(
   // Filter to only include words that have been reviewed
   const validWords = studyWords
     .filter(w => w.fsrs_last_review && (w.fsrs_reps ?? 0) > 0)
-    .map(w => ({
-      ...w,
-      lastReviewDate: new Date(w.fsrs_last_review),
-    }));
+    .map(w => {
+      // We know fsrs_last_review is not null here due to the filter above
+      const lastReview = w.fsrs_last_review;
+      if (!lastReview) return null; // This should never happen due to filter, but TypeScript safety
+
+      return {
+        ...w,
+        lastReviewDate: new Date(lastReview),
+      };
+    })
+    .filter((w): w is NonNullable<typeof w> => w !== null); // Remove any null entries
 
   // Generate future dates for forecasting
   const dates = generateForecastDates(days);
