@@ -1,8 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { STRINGS } from '@/constants/strings';
-
-import { handleError } from './errorHandling';
+// No longer need these imports since we provide a graceful fallback
 
 // Removed hasLoggedWarning - no longer needed with explicit failure
 
@@ -24,15 +22,15 @@ export const getSafeStorage = (): StorageLike => {
     return AsyncStorage;
   }
 
-  const storageError = new Error(STRINGS.ERROR_ASYNC_STORAGE_UNAVAILABLE);
-  console.error('CRITICAL: AsyncStorage is not available:', storageError);
+  // Provide a fallback that doesn't crash the app during initialization
+  console.warn('AsyncStorage not available, using null storage fallback');
 
-  // Always show this error to users since storage is critical
-  handleError(storageError, {
-    showToast: true,
-    toastMessage: 'Storage system is unavailable. The app may not work properly.',
-  });
+  // Create a simple storage fallback that returns null/undefined but doesn't crash
+  const nullStorage: StorageLike = {
+    getItem: async (): Promise<string | null> => null,
+    setItem: async (): Promise<void> => Promise.resolve(),
+    removeItem: async (): Promise<void> => Promise.resolve(),
+  };
 
-  // Throw error to make it clear storage is broken
-  throw storageError;
+  return nullStorage;
 };

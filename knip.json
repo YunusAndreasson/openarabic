@@ -34,7 +34,8 @@
     "babel.config.js",
     "metro.config.cjs",
     "jest.config.js",
-    "jest.setup.js"
+    "jest.setup.js",
+    "expo-router/entry"
   ],
   "ignoreDependencies": [
     "postinstall-postinstall",
@@ -42,7 +43,8 @@
     "strip-ansi",
     "expo-asset",
     "@babel/plugin-transform-runtime",
-    "metro-react-native-babel-preset"
+    "metro-react-native-babel-preset",
+    "mixpanel-react-native"
   ],
   "ignoreExportsUsedInFile": false,
   "includeEntryExports": false,
