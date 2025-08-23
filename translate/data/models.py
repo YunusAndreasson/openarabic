@@ -76,8 +76,10 @@ class WordTranslation(BaseModel):
     essential: str = Field(
         description=(
             "Essential letters with diacritics (kesra, fetha, damma, etc),"
-            " removing only complex affixes/case endings."
-        )
+            " removing only complex affixes/case endings. Must be one token"
+            " (no whitespace)."
+        ),
+        pattern=r"^\S+$",
     )
     essential_translation: str | list[str] = Field(
         description=(
@@ -131,7 +133,15 @@ class WordTranslation(BaseModel):
         if isinstance(v, list):
             if not v:
                 raise ValueError("english options list cannot be empty")
-            return v
+            if len(v) > 2:
+                raise ValueError(
+                    "english options must have at most 2 items (single alternative)"
+                )
+            # trim each option and ensure non-empty
+            cleaned = [s.strip() for s in v if isinstance(s, str)]
+            if len(cleaned) != len(v) or any(not s for s in cleaned):
+                raise ValueError("english options must be non-empty strings")
+            return cleaned
         v = v.strip()
         if not v:
             raise ValueError("english must be a non-empty string")
@@ -143,10 +153,31 @@ class WordTranslation(BaseModel):
         if isinstance(v, list):
             if not v:
                 raise ValueError("essential_translation options list cannot be empty")
-            return v
+            if len(v) > 2:
+                raise ValueError(
+                    "essential_translation options must have at most 2 items (single alternative)"
+                )
+            cleaned = [s.strip() for s in v if isinstance(s, str)]
+            if len(cleaned) != len(v) or any(not s for s in cleaned):
+                raise ValueError(
+                    "essential_translation options must be non-empty strings"
+                )
+            return cleaned
         v = v.strip()
         if not v:
             raise ValueError("essential_translation must be a non-empty string")
+        return v
+
+    @field_validator("essential")
+    @classmethod
+    def _validate_essential_token(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("essential must be a non-empty string")
+        # Enforce single token (no whitespace) — regex already applied via Field, double-safeguard here
+        if any(ch.isspace() for ch in v):
+            raise ValueError("essential must be exactly one token without whitespace")
+        # Diacritics are preferred but not enforced at this stage; enforced at refinement.
         return v
 
     @field_validator("uncertainties")
@@ -242,6 +273,15 @@ class RefinementResult(BaseModel):
             if wt.has_options or not wt.is_final:
                 raise ValueError(
                     "Each improved_word_translation must be finalized with single 'english' and 'essential_translation' values"
+                )
+            # Enforce essential token and presence of at least one diacritic at refinement stage
+            if any(ch.isspace() for ch in wt.essential):
+                raise ValueError(
+                    "Refined 'essential' must be one token (no whitespace)"
+                )
+            if not any(0x064B <= ord(ch) <= 0x0652 for ch in wt.essential):
+                raise ValueError(
+                    "Refined 'essential' must include at least one Arabic diacritic (e.g., ً ٌ ٍ َ ُ ِ ّ ْ)"
                 )
         return self
 

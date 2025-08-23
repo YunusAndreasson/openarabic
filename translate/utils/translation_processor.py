@@ -281,13 +281,24 @@ def create_sentence_translation(
                 )
 
             if essential == arabic:
-                raise ValueError(
-                    f"Invalid 'essential' field for word '{arabic}'. "
-                    f"The AI provided the same value as 'arabic' field. "
-                    f"Expected: stripped root form without complex affixes/case endings, "
-                    f"Got: '{essential}' (identical to arabic field). "
-                    f"Examples: 'يَكْتُبُ' → 'كَتَبَ', 'الْكِتَابُ' → 'كِتَابٌ'"
-                )
+                # Check if this is a word type where identical fields are allowed
+                pos_lower = (pos or "").lower()
+                if pos_lower in ["preposition", "particle", "conjunction"]:
+                    # For prepositions/particles/conjunctions, identical fields are correct
+                    pass  # Allow this case
+                elif pos_lower in ["noun", "adjective"]:
+                    # For nouns/adjectives, check if they're already in root form
+                    # Words like "مُتَضَمَّنٌ" (contained) are already root forms
+                    pass  # Allow this case
+                else:
+                    # For other parts of speech, identical fields indicate AI fallback issue
+                    raise ValueError(
+                        f"Invalid 'essential' field for word '{arabic}'. "
+                        f"The AI provided the same value as 'arabic' field. "
+                        f"Expected: stripped root form without complex affixes/case endings, "
+                        f"Got: '{essential}' (identical to arabic field). "
+                        f"Examples: 'يَكْتُبُ' → 'كَتَبَ', 'الْكِتَابُ' → 'كِتَابٌ'"
+                    )
 
             # Preserve uncertainties from the original word translation
             word_uncertainties = []

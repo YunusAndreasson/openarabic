@@ -7,6 +7,7 @@ import { LAYOUT } from '@/constants/layout';
 import { getArticleRoute } from '@/constants/routes';
 import { useMultipleFeaturedArticles } from '@/hooks/articles/useMultipleFeaturedArticles';
 import type { Article } from '@/types/articles.types';
+import { generateImageUrl } from '@/utils/imageUtils';
 
 interface RelatedArticlesSectionProps {
   /**
@@ -79,7 +80,7 @@ export const RelatedArticlesSection = memo<RelatedArticlesSectionProps>(
             title={article.title}
             author={article.author.name}
             difficultyLevel={article.difficulty_level}
-            imageUrl={article.image_url || undefined}
+            imageUrl={generateImageUrl(article.image_url)}
             onPress={createArticlePressHandler(article)}
           />
         </View>

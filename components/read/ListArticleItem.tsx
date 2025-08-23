@@ -3,6 +3,7 @@ import { memo, useCallback } from 'react';
 
 import { ListenListItemCard } from '@/components/listen/ListenListItemCard';
 import type { Article } from '@/types/articles.types';
+import { generateImageUrl } from '@/utils/imageUtils';
 
 interface ListArticleItemProps {
   article: Article;
@@ -44,6 +45,7 @@ const ListArticleItem = memo(
         progressPercentage={progressPercentage}
         hasStartedReading={hasStartedReading}
         shouldAnimateOnMount={false}
+        imageUrl={generateImageUrl(article.image_url)}
       />
     );
   }

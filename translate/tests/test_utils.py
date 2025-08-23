@@ -399,3 +399,83 @@ class TestValidateFinalTranslation:
         issues = validate_final_translation(translation)
         # The validation should catch that essential field is missing
         assert any("missing essential letters" in issue.lower() for issue in issues)
+
+    def test_validate_final_translation_preposition_identical_fields(self):
+        """Test validation allows prepositions to have identical essential/arabic fields."""
+        translation = SentenceTranslation(
+            index=0,
+            original="مِنْ بَيْنِ",
+            full_translation="From between",
+            tashkeel="مِنْ بَيْنِ",
+            notes="Preposition with identical essential fields",
+            word_by_word=[
+                WordTranslation(
+                    arabic="مِنْ",
+                    english="from",
+                    pos="preposition",
+                    essential="مِنْ",  # This should be allowed for prepositions
+                    essential_translation="from",
+                    notes="Preposition 'from'",
+                    uncertainties=[],
+                ),
+                WordTranslation(
+                    arabic="بَيْنِ",
+                    english="between",
+                    pos="noun",
+                    essential="بَيْنٌ",  # This should be stripped for nouns
+                    essential_translation="between",
+                    notes="Noun 'between'",
+                    uncertainties=[],
+                ),
+            ],
+            verification_status="pending",
+            verification_issues=[],
+        )
+
+        # This should pass validation since prepositions can have identical essential/arabic fields
+        issues = validate_final_translation(translation)
+        # Should only have word count mismatch issue, not essential field issues
+        essential_issues = [issue for issue in issues if "essential" in issue.lower()]
+        assert len(essential_issues) == 0, (
+            f"Unexpected essential field issues: {essential_issues}"
+        )
+
+    def test_validate_final_translation_root_noun_identical_fields(self):
+        """Test validation allows root nouns to have identical essential/arabic fields."""
+        translation = SentenceTranslation(
+            index=0,
+            original="مُتَضَمَّنٌ فِي",
+            full_translation="Contained in",
+            tashkeel="مُتَضَمَّنٌ فِي",
+            notes="Root noun with identical essential fields",
+            word_by_word=[
+                WordTranslation(
+                    arabic="مُتَضَمَّنٌ",
+                    english="contained",
+                    pos="noun",
+                    essential="مُتَضَمَّنٌ",  # This should be allowed for root nouns
+                    essential_translation="contained",
+                    notes="Root noun 'contained'",
+                    uncertainties=[],
+                ),
+                WordTranslation(
+                    arabic="فِي",
+                    english="in",
+                    pos="preposition",
+                    essential="فِي",  # This should also be allowed for prepositions
+                    essential_translation="in",
+                    notes="Preposition 'in'",
+                    uncertainties=[],
+                ),
+            ],
+            verification_status="pending",
+            verification_issues=[],
+        )
+
+        # This should pass validation since root nouns and prepositions can have identical essential/arabic fields
+        issues = validate_final_translation(translation)
+        # Should only have word count mismatch issue, not essential field issues
+        essential_issues = [issue for issue in issues if "essential" in issue.lower()]
+        assert len(essential_issues) == 0, (
+            f"Unexpected essential field issues: {essential_issues}"
+        )

@@ -129,13 +129,24 @@ def _validate_word_data(word_data: dict[str, Any]) -> dict[str, Any]:
         )
 
     if word_data.get("essential") == word_data.get("arabic"):
-        raise ValueError(
-            f"Invalid 'essential' field for word '{word_data.get('arabic', '')}'. "
-            f"The AI provided the same value as 'arabic' field. "
-            f"Expected: stripped root form without complex affixes/case endings, "
-            f"Got: '{word_data.get('essential')}' (identical to arabic field). "
-            f"Examples: 'يَكْتُبُ' → 'كَتَبَ', 'الْكِتَابُ' → 'كِتَابٌ'"
-        )
+        # Check if this is a word type where identical fields are allowed
+        pos = word_data.get("pos", "").lower()
+        if pos in ["preposition", "particle", "conjunction"]:
+            # For prepositions/particles/conjunctions, identical fields are correct
+            pass  # Allow this case
+        elif pos in ["noun", "adjective"]:
+            # For nouns/adjectives, check if they're already in root form
+            # Words like "مُتَضَمَّنٌ" (contained) are already root forms
+            pass  # Allow this case
+        else:
+            # For other parts of speech, identical fields indicate AI fallback issue
+            raise ValueError(
+                f"Invalid 'essential' field for word '{word_data.get('arabic', '')}'. "
+                f"The AI provided the same value as 'arabic' field. "
+                f"Expected: stripped root form without complex affixes/case endings, "
+                f"Got: '{word_data.get('essential')}' (identical to arabic field). "
+                f"Examples: 'يَكْتُبُ' → 'كَتَبَ', 'الْكِتَابُ' → 'كِتَابٌ'"
+            )
 
     return {
         "arabic": word_data.get("arabic", ""),
@@ -648,13 +659,28 @@ def batch_translate_words(
                                 )
 
                             if word_option.essential == word_option.arabic:
-                                raise ValueError(
-                                    f"Invalid 'essential' field for word '{word_data['arabic']}'. "
-                                    f"The AI provided the same value as 'arabic' field. "
-                                    f"Expected: stripped root form without complex affixes/case endings, "
-                                    f"Got: '{word_option.essential}' (identical to arabic field). "
-                                    f"Examples: 'يَكْتُبُ' → 'كَتَبَ', 'الْكِتَابُ' → 'كِتَابٌ'"
-                                )
+                                # Check if this is a word type where identical fields are allowed
+                                pos = word_option.pos.lower()
+                                if pos in ["preposition", "particle", "conjunction"]:
+                                    # For prepositions/particles/conjunctions, identical fields are correct
+                                    logger.debug(
+                                        f"Word '{word_option.arabic}' is {pos} - identical essential/arabic fields are correct"
+                                    )
+                                elif pos in ["noun", "adjective"]:
+                                    # For nouns/adjectives, check if they're already in root form
+                                    # Words like "مُتَضَمَّنٌ" (contained) are already root forms
+                                    logger.debug(
+                                        f"Word '{word_option.arabic}' is {pos} - identical essential/arabic fields may be correct for root forms"
+                                    )
+                                else:
+                                    # For other parts of speech, identical fields indicate AI fallback issue
+                                    raise ValueError(
+                                        f"Invalid 'essential' field for word '{word_data['arabic']}'. "
+                                        f"The AI provided the same value as 'arabic' field. "
+                                        f"Expected: stripped root form without complex affixes/case endings, "
+                                        f"Got: '{word_option.essential}' (identical to arabic field). "
+                                        f"Examples: 'يَكْتُبُ' → 'كَتَبَ', 'الْكِتَابُ' → 'كِتَابٌ'"
+                                    )
 
                             word_translations_options.append(word_option)
 

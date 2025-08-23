@@ -148,8 +148,50 @@ Guidelines:
     + """
 - `essential` must retain root letters + diacritics while removing only complex affixes/case endings
 - `essential` will be used for language learning flashcards so the form be based on that
-- Examples to KEEP diacritics as-is: "كَتَبَ", "مِنَ", "إِلَى"
-- Examples to MODIFY by removing complex affixes: "يَكْتُبُ" → "كَتَبَ", "الْكِتَابُ" → "كِتَابٌ", "كَاتِبًا" → "كَاتِبٌ", "تَكْتُبِينَ" → "كَتَبَ"
+
+**Rules for essential field:**
+1. **KEEP as-is** (no changes needed):
+   - Simple prepositions: "مِنْ" (from), "إِلَى" (to), "عَنْ" (about)
+   - Basic particles: "لَا" (no), "مَا" (what), "هَلْ" (is it?)
+   - Root forms: "كَتَبَ" (he wrote), "قَرَأَ" (he read)
+   - **Root nouns/adjectives**: "مُتَضَمَّنٌ" (contained), "كَاتِبٌ" (writer), "قَارِئٌ" (reader)
+   - **IMPORTANT**: For prepositions, particles, and root forms, the essential field CAN be identical to the arabic field
+
+2. **STRIP affixes** (remove complex grammatical endings):
+   - Verbs: "يَكْتُبُ" → "كَتَبَ" (remove ي prefix and ُ suffix)
+   - Nouns: "الْكِتَابُ" → "كِتَابٌ" (remove ال prefix and ُ suffix)
+   - Adjectives: "كَاتِبًا" → "كَاتِبٌ" (remove ً suffix)
+   - Complex forms: "تَكْتُبِينَ" → "كَتَبَ" (remove ت prefix + ين suffix)
+
+**Examples:**
+- "مِنْ" → "مِنْ" (keep as-is: simple preposition)
+- "يَكْتُبُ" → "كَتَبَ" (strip: ي prefix + ُ suffix)
+- "الْكِتَابُ" → "كِتَابٌ" (strip: ال prefix + ُ suffix)
+- "كَاتِبًا" → "كَاتِبٌ" (strip: ً suffix)
+- "تَكْتُبِينَ" → "كَتَبَ" (strip: ت prefix + ين suffix)
+
+**❌ INCORRECT Examples (what NOT to do):**
+- "مِنْ" → "من" (❌ Don't strip diacritics from prepositions)
+- "يَكْتُبُ" → "كتب" (❌ Don't strip ALL diacritics, only affixes)
+- "شَيْءٍ" → "شيء" (❌ Don't strip tanween ٍ from nouns)
+- "إِلَّا" → "إلا" (❌ Don't strip shadda ّ from particles)
+
+**IMPORTANT**: The essential field must preserve diacritics (fatha, kasra, damma, shadda) while only removing grammatical affixes (prefixes, suffixes, case endings).
+
+**Canonicalization rules (for essential):**
+- Verbs: return past tense, 3rd person masculine singular (e.g., "يَكْتُبُ" → "كَتَبَ") with correct vowels.
+- Nouns/adjectives: return indefinite singular nominative with proper tanwīn (e.g., "الْكِتَابُ" → "كِتَابٌ", "كَاتِبًا" → "كَاتِبٌ").
+- Do not strip core diacritics from the base form (e.g., don’t remove tanwīn from nouns or shadda from particles).
+- Only remove grammatical affixes: definite article "الـ", person/number verb affixes, and case/mood endings.
+
+**Form constraints:**
+- `essential` (Arabic) MUST be exactly one word/token (no whitespace).
+- Diacritics are mandatory in `essential`; do not remove them.
+
+**Ambiguity handling:**
+- If multiple plausible essentials exist, choose the simplest canonical base per the rules above and include a brief uncertainty note (why others were rejected).
+- When uncertain, prefer the tashkīl produced in the diacritics step rather than inventing a new pattern.
+- Never drop diacritics due to uncertainty; err on the side of preserving them.
 
 Return valid JSON matching the WordTranslationResult model schema.
 
@@ -164,7 +206,37 @@ Goals:
 - Ensure consistency across tashkeel, translation, and word translations
 - Address uncertainties when possible
 
+**CRITICAL**: Do NOT modify the essential field unless there are actual errors.
+- If the AI provided "مِنْ" for a preposition, keep it as "مِنْ" (with sukoon)
+- If the AI provided "كَتَبَ" for a verb, keep it as "كَتَبَ" (with diacritics)
+- If the AI provided "شَيْء" for a noun, keep it as "شَيْء" (with diacritics)
+- Only change essential fields if they are grammatically incorrect or missing
+
+- Prefer canonical forms: verbs as past 3ms; nouns/adjectives as indefinite singular nominative with tanwīn.
+
+**What NOT to do:**
+- ❌ Don't "clean up" diacritics from correct essential forms
+- ❌ Don't strip fatha, kasra, damma, shadda unless they're part of affixes
+- ❌ Don't change "مِنْ" to "من" (this removes necessary diacritics)
+- ❌ Don't change "كَتَبَ" to "كتب" (this removes necessary diacritics)
+
+**What TO do:**
+- ✅ Keep correct essential forms exactly as provided
+- ✅ Only fix actual grammatical errors
+- ✅ Preserve all diacritics that are part of the root form
+- ✅ Ensure consistency with tashkeel and translations
+
 Return valid JSON matching the RefinementResult model schema. Each improved_word_translation must be finalized (no option arrays).
+
+Hard output constraints (to satisfy schema validation):
+- improved_word_translation.english MUST be a single string (never an array). It may be a multi‑word phrase (e.g., "for him", "with force").
+- improved_word_translation.essential MUST be a single Arabic word/token (no whitespace).
+- improved_word_translation.essential_translation MUST be a single string (never an array). It may be multi‑word if needed.
+- Remove all alternative options; only keep the best single choice
+
+Bad → Good examples:
+- Bad: "english": ["thing", "an entity"], "essential_translation": ["thing"]
+- Good: "english": "for him", "essential_translation": "for him"
 
 Input components to refine:
 """
