@@ -35,6 +35,7 @@ export const getEnvVar = (
  * @returns The environment variable value
  */
 export const getRequiredEnvVar = (key: string, errorMessage?: string): string => {
+  // eslint-disable-next-line expo/no-dynamic-env-var
   const value = process.env[key];
 
   if (!value) {
@@ -52,6 +53,7 @@ export const getRequiredEnvVar = (key: string, errorMessage?: string): string =>
  * @returns True if variable exists and has a value
  */
 export const hasEnvVar = (key: string): boolean => {
+  // eslint-disable-next-line expo/no-dynamic-env-var
   const value = process.env[key];
   return Boolean(value && value.trim());
 };

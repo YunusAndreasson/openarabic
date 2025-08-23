@@ -1,5 +1,4 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
-import type { PersistedState } from 'redux-persist';
 import { persistReducer, persistStore } from 'redux-persist';
 import type { PersistConfig } from 'redux-persist/es/types';
 
@@ -20,55 +19,12 @@ const rootReducer = combineReducers({
   editMode: editModeReducer,
 });
 
-// Migration function for settings
 type RootStateShape = ReturnType<typeof rootReducer>;
 
-const migrations: { 0: (state: RootStateShape) => RootStateShape } = {
-  0: (state: RootStateShape): RootStateShape => {
-    // Ensure settings has reminderTime property
-    if (state.settings && !state.settings.reminderTime) {
-      state.settings.reminderTime = {
-        hour: 19,
-        minute: 0,
-        enabled: false,
-      };
-    }
-    // Ensure settings has arabicFont property
-    if (state.settings && !state.settings.arabicFont) {
-      state.settings.arabicFont = 'Madina';
-    }
-    // Ensure settings has arabicFontSize property
-    if (state.settings && !state.settings.arabicFontSize) {
-      state.settings.arabicFontSize = 17; // LAYOUT.TYPOGRAPHY.SCALE.LARGE
-    }
-    // Ensure settings has audioLanguagePreference property
-    if (state.settings && !state.settings.audioLanguagePreference) {
-      state.settings.audioLanguagePreference = 'bilingual';
-    }
-    return state;
-  },
-};
-
-// Configure redux-persist
+// Configure redux-persist - simplified for unreleased app
 const persistConfig: PersistConfig<RootStateShape> = {
-  key: 'root-v2', // Changed key to invalidate old persisted data for development
+  key: 'root-v3', // Fresh key for unreleased app
   storage: getSafeStorage(),
-  version: 0,
-  migrate: (state: PersistedState): Promise<PersistedState> => {
-    const typedState = state as (RootStateShape & PersistedState) | undefined;
-    if (
-      typedState &&
-      typedState.settings &&
-      (!typedState.settings.reminderTime ||
-        !typedState.settings.arabicFont ||
-        !typedState.settings.arabicFontSize ||
-        !typedState.settings.audioLanguagePreference)
-    ) {
-      const migrated = migrations[0](typedState);
-      return Promise.resolve({ ...state, ...migrated } as PersistedState);
-    }
-    return Promise.resolve(state);
-  },
   whitelist: ['theme', 'settings', 'filters', 'listen', 'editMode'],
 };
 

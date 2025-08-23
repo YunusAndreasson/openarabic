@@ -135,7 +135,20 @@ export const handleError = async (
     if (opts.showToast) {
       showToastMessage(errorObj, opts.toastMessage, opts.toastDuration, opts.toastType);
     }
-  } catch {
-    // Silent fail if error handling itself fails
+  } catch (errorHandlingError) {
+    // Error handling failed - this is a critical meta-failure
+    // Log the original error and the error handling failure
+    console.error('CRITICAL: Error handling failed:', errorHandlingError);
+    console.error('Original error that failed to be handled:', errorObj);
+
+    // In development, throw the error to make it visible
+    if (__DEV__) {
+      throw new Error(
+        `Error handling failed: ${errorHandlingError}. Original error: ${errorObj.message}`
+      );
+    }
+
+    // In production, at least log to console as a last resort
+    console.error('Error handling system failed - application may be in an inconsistent state');
   }
 };

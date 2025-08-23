@@ -50,8 +50,9 @@ class SimpleAudioService {
       // Ensure audio is active at the OS level
       try {
         await setIsAudioActiveAsync(true);
-      } catch {
-        // no-op
+      } catch (activeError) {
+        console.warn('Failed to set audio active state:', activeError);
+        // Continue with audio mode setup even if this fails
       }
 
       await setAudioModeAsync({
@@ -66,8 +67,10 @@ class SimpleAudioService {
         shouldRouteThroughEarpiece: false,
       });
       this.audioSessionConfigured = true;
-    } catch {
-      // Audio session configuration failed - handle silently
+    } catch (sessionError) {
+      console.error('CRITICAL: Audio session configuration failed:', sessionError);
+      // This is critical - audio may not work properly
+      throw new Error(`Audio session configuration failed: ${sessionError}`);
     }
   }
 
@@ -161,7 +164,8 @@ class SimpleAudioService {
         currentTime: 0,
         duration: 0,
       });
-    } catch {
+    } catch (stopError) {
+      console.error('CRITICAL: Failed to stop audio playback:', stopError);
       // RESET: Even on error, ensure all progress is cleared
       this.updateStatus({
         isPlaying: false,
@@ -170,6 +174,8 @@ class SimpleAudioService {
         currentTime: 0,
         duration: 0,
       });
+      // Re-throw to make the error visible
+      throw new Error(`Failed to stop audio playback: ${stopError}`);
     }
   }
 
@@ -182,8 +188,11 @@ class SimpleAudioService {
         await this.currentPlayer.pause();
         this.updateStatus({ isPlaying: false });
       }
-    } catch {
+    } catch (pauseError) {
+      console.error('CRITICAL: Failed to pause audio playback:', pauseError);
       this.updateStatus({ isPlaying: false });
+      // Re-throw to make the error visible
+      throw new Error(`Failed to pause audio playback: ${pauseError}`);
     }
   }
 
@@ -196,8 +205,11 @@ class SimpleAudioService {
         await this.currentPlayer.play();
         this.updateStatus({ isPlaying: true });
       }
-    } catch {
+    } catch (resumeError) {
+      console.error('CRITICAL: Failed to resume audio playback:', resumeError);
       this.updateStatus({ isPlaying: false });
+      // Re-throw to make the error visible
+      throw new Error(`Failed to resume audio playback: ${resumeError}`);
     }
   }
 
@@ -210,8 +222,10 @@ class SimpleAudioService {
         await this.currentPlayer.seekTo(position);
         this.updateStatus({ currentTime: position });
       }
-    } catch {
-      // Ignore seek errors
+    } catch (seekError) {
+      console.error('CRITICAL: Failed to seek audio playback:', seekError);
+      // Re-throw to make the error visible
+      throw new Error(`Failed to seek audio playback: ${seekError}`);
     }
   }
 
@@ -277,7 +291,8 @@ class SimpleAudioService {
               isLoading: false,
             });
           }
-        } catch {
+        } catch (pollingError) {
+          console.error('CRITICAL: Audio status polling failed:', pollingError);
           // Stop polling on error
           this.stopStatusPolling();
           // RESET: Clear progress on polling error
@@ -287,6 +302,8 @@ class SimpleAudioService {
             currentTime: 0,
             duration: 0,
           });
+          // Re-throw to make the error visible
+          throw new Error(`Audio status polling failed: ${pollingError}`);
         }
       }
     }, 600);
@@ -320,8 +337,10 @@ class SimpleAudioService {
         if (typeof this.currentPlayer.remove === 'function') {
           await this.currentPlayer.remove();
         }
-      } catch {
-        // Ignore cleanup errors
+      } catch (cleanupError) {
+        console.error('CRITICAL: Audio cleanup failed:', cleanupError);
+        // Re-throw to make the error visible
+        throw new Error(`Audio cleanup failed: ${cleanupError}`);
       }
       this.currentPlayer = null;
     }
@@ -353,10 +372,13 @@ class SimpleAudioService {
     listenersCopy.forEach(listener => {
       try {
         listener(this.status);
-      } catch {
-        // Remove problematic listeners - error handled silently
+      } catch (listenerError) {
+        console.error('CRITICAL: Audio status listener failed:', listenerError);
+        // Remove problematic listeners
         this.listeners.delete(listener);
-        // Problematic audio listener removed due to error
+        console.error('Removed problematic audio status listener due to error');
+        // Re-throw to make the error visible
+        throw new Error(`Audio status listener failed: ${listenerError}`);
       }
     });
   }
@@ -370,8 +392,10 @@ class SimpleAudioService {
     // Best-effort to release audio session
     try {
       await setIsAudioActiveAsync(false);
-    } catch {
-      // no-op
+    } catch (destroyError) {
+      console.error('CRITICAL: Failed to release audio session during destroy:', destroyError);
+      // Re-throw to make the error visible
+      throw new Error(`Failed to release audio session during destroy: ${destroyError}`);
     }
   }
 }

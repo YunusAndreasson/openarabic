@@ -109,9 +109,13 @@ export class AudioCacheManager {
       // If not cached, download and cache it
       return await this.cacheAudio(url);
     } catch (error) {
-      await handleError(error as Error, { showToast: false });
-      // Fallback to original URL if caching fails
-      return url;
+      console.error('CRITICAL: Audio caching failed:', error);
+      await handleError(error as Error, {
+        showToast: true,
+        toastMessage: 'Audio caching failed. The app may experience slower audio loading.',
+      });
+      // Re-throw the error instead of falling back
+      throw new Error(`Audio caching failed: ${error}`);
     }
   }
 
@@ -143,14 +147,12 @@ export class AudioCacheManager {
 
       const files = await FileSystem.readDirectoryAsync(this.cacheDir);
 
-      const infoPromises = files.map((file) =>
-        FileSystem.getInfoAsync(this.cacheDir + file)
-      );
+      const infoPromises = files.map(file => FileSystem.getInfoAsync(this.cacheDir + file));
       const fileInfos = await Promise.all(infoPromises);
 
       const totalSize = fileInfos.reduce((size, info) => {
         if (info.exists && 'size' in info) {
-          return size + (info.size);
+          return size + info.size;
         }
         return size;
       }, 0);
