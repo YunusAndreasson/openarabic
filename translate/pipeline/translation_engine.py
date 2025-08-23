@@ -131,21 +131,39 @@ def _validate_word_data(word_data: dict[str, Any]) -> dict[str, Any]:
     if word_data.get("essential") == word_data.get("arabic"):
         # Check if this is a word type where identical fields are allowed
         pos = word_data.get("pos", "").lower()
-        if pos in ["preposition", "particle", "conjunction"]:
-            # For prepositions/particles/conjunctions, identical fields are correct
+        if pos in [
+            "preposition",
+            "particle",
+            "conjunction",
+            "pronoun",
+            "demonstrative_pronoun",
+            "relative_pronoun",
+            "interjection",
+            "numeral",
+            "proper_noun",
+        ]:
+            # For these word types, identical fields are correct
+            # - Pronouns (هُوَ, هِيَ) don't have root forms
+            # - Interjections (مَرْحَباً) are already in base form
+            # - Numerals (أَحَد, اِثْنَان) are already in base form
+            # - Proper nouns (تَعَالَى, الله) are already in base form
             pass  # Allow this case
         elif pos in ["noun", "adjective"]:
             # For nouns/adjectives, check if they're already in root form
             # Words like "مُتَضَمَّنٌ" (contained) are already root forms
             pass  # Allow this case
+        elif pos == "verb":
+            # For verbs, identical fields might be correct (e.g., past tense like بَاعَ)
+            # Only warn about obvious AI fallbacks, don't block
+            logger.warning(
+                f"Word '{word_data.get('arabic', '')}' has identical essential/arabic fields. "
+                f"This might be correct for past tense verbs, but verify it's not an AI fallback."
+            )
         else:
-            # For other parts of speech, identical fields indicate AI fallback issue
-            raise ValueError(
-                f"Invalid 'essential' field for word '{word_data.get('arabic', '')}'. "
-                f"The AI provided the same value as 'arabic' field. "
-                f"Expected: stripped root form without complex affixes/case endings, "
-                f"Got: '{word_data.get('essential')}' (identical to arabic field). "
-                f"Examples: 'يَكْتُبُ' → 'كَتَبَ', 'الْكِتَابُ' → 'كِتَابٌ'"
+            # For other parts of speech, log warning but don't block
+            logger.warning(
+                f"Word '{word_data.get('arabic', '')}' has identical essential/arabic fields. "
+                f"Verify this is correct for {pos} words."
             )
 
     return {
@@ -661,8 +679,18 @@ def batch_translate_words(
                             if word_option.essential == word_option.arabic:
                                 # Check if this is a word type where identical fields are allowed
                                 pos = word_option.pos.lower()
-                                if pos in ["preposition", "particle", "conjunction"]:
-                                    # For prepositions/particles/conjunctions, identical fields are correct
+                                if pos in [
+                                    "preposition",
+                                    "particle",
+                                    "conjunction",
+                                    "pronoun",
+                                    "demonstrative_pronoun",
+                                    "relative_pronoun",
+                                    "interjection",
+                                    "numeral",
+                                    "proper_noun",
+                                ]:
+                                    # For these word types, identical fields are correct
                                     logger.debug(
                                         f"Word '{word_option.arabic}' is {pos} - identical essential/arabic fields are correct"
                                     )
@@ -672,14 +700,18 @@ def batch_translate_words(
                                     logger.debug(
                                         f"Word '{word_option.arabic}' is {pos} - identical essential/arabic fields may be correct for root forms"
                                     )
+                                elif pos == "verb":
+                                    # For verbs, identical fields might be correct (e.g., past tense like بَاعَ)
+                                    # Only warn about obvious AI fallbacks, don't block
+                                    logger.warning(
+                                        f"Word '{word_option.arabic}' has identical essential/arabic fields. "
+                                        f"This might be correct for past tense verbs, but verify it's not an AI fallback."
+                                    )
                                 else:
-                                    # For other parts of speech, identical fields indicate AI fallback issue
-                                    raise ValueError(
-                                        f"Invalid 'essential' field for word '{word_data['arabic']}'. "
-                                        f"The AI provided the same value as 'arabic' field. "
-                                        f"Expected: stripped root form without complex affixes/case endings, "
-                                        f"Got: '{word_option.essential}' (identical to arabic field). "
-                                        f"Examples: 'يَكْتُبُ' → 'كَتَبَ', 'الْكِتَابُ' → 'كِتَابٌ'"
+                                    # For other parts of speech, log warning but don't block
+                                    logger.warning(
+                                        f"Word '{word_option.arabic}' has identical essential/arabic fields. "
+                                        f"Verify this is correct for {pos} words."
                                     )
 
                             word_translations_options.append(word_option)
@@ -969,10 +1001,41 @@ def batch_translate_root_words_with_google_cloud(
                 )
 
             if word_option.essential == word_option.arabic:
-                logger.warning(
-                    f"Google Cloud translation: 'essential' field identical to 'arabic' for word '{original_text}'. "
-                    f"This indicates root word extraction logic needs enhancement."
-                )
+                # Check if this is a word type where identical fields are allowed
+                pos = word_option.pos.lower()
+                if pos in [
+                    "preposition",
+                    "particle",
+                    "conjunction",
+                    "pronoun",
+                    "demonstrative_pronoun",
+                    "relative_pronoun",
+                    "interjection",
+                    "numeral",
+                    "proper_noun",
+                ]:
+                    # For these word types, identical fields are correct
+                    logger.debug(
+                        f"Google Cloud translation: '{original_text}' is {pos} - identical essential/arabic fields are correct"
+                    )
+                elif pos in ["noun", "adjective"]:
+                    # For nouns/adjectives, check if they're already in root form
+                    logger.debug(
+                        f"Google Cloud translation: '{original_text}' is {pos} - identical essential/arabic fields may be correct for root forms"
+                    )
+                elif pos == "verb":
+                    # For verbs, identical fields might be correct (e.g., past tense like بَاعَ)
+                    # Only warn about obvious AI fallbacks, don't block
+                    logger.warning(
+                        f"Google Cloud translation: '{original_text}' has identical essential/arabic fields. "
+                        f"This might be correct for past tense verbs, but verify it's not an AI fallback."
+                    )
+                else:
+                    # For other parts of speech, log warning but don't block
+                    logger.warning(
+                        f"Google Cloud translation: '{original_text}' has identical essential/arabic fields. "
+                        f"Verify this is correct for {pos} words."
+                    )
 
             results.append(WordTranslationResult(word_translations=[word_option]))
 

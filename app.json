@@ -5,27 +5,21 @@
     "version": "1447.2.14",
     "description": "Learn Arabic through immersive reading, listening, and spaced repetition practice. Master vocabulary with authentic articles and audio content.",
     "orientation": "portrait",
-    "icon": "./assets/images/oaLogo-square.png",
+    "icon": "./assets/images/oaLogo.png",
     "scheme": "open-arabic",
     "userInterfaceStyle": "automatic",
-    "backgroundColor": "#0F1311",
+    "backgroundColor": "#1A211C",
     "primaryColor": "#5B7F68",
     "newArchEnabled": true,
     "jsEngine": "hermes",
-    "platforms": [
-      "ios",
-      "android"
-    ],
+    "platforms": ["ios", "android"],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "openarabic",
       "buildNumber": "53",
       "appStoreUrl": "https://apps.apple.com/app/openarabic/id1594031029",
       "infoPlist": {
-        "UIBackgroundModes": [
-          "audio",
-          "processing"
-        ],
+        "UIBackgroundModes": ["audio", "processing"],
         "ITSAppUsesNonExemptEncryption": false,
         "BGTaskSchedulerPermittedIdentifiers": [
           "openarabic.backgroundtask",
@@ -40,8 +34,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#0F1311",
-        "foregroundImage": "./assets/images/oaLogo-square.png"
+        "backgroundColor": "#1A211C",
+        "foregroundImage": "./assets/images/oaLogo.png"
       },
       "package": "com.edenmind.OpenArabic",
       "versionCode": 53,
@@ -52,13 +46,10 @@
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE"
       ],
-      "blockedPermissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
-      ]
+      "blockedPermissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO"]
     },
     "notification": {
-      "icon": "./assets/images/oaLogo-square.png",
+      "icon": "./assets/images/oaLogo.png",
       "color": "#5B7F68",
       "iosDisplayInForeground": true,
       "androidMode": "default"
@@ -68,7 +59,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#0F1311",
+          "backgroundColor": "#1A211C",
           "resizeMode": "contain",
           "image": "./assets/images/oaLogo.png"
         }
@@ -85,7 +76,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/oaLogo-square.png",
+          "icon": "./assets/images/oaLogo.png",
           "color": "#5B7F68",
           "defaultChannel": "default"
         }

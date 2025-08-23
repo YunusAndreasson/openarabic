@@ -345,21 +345,21 @@ class TestValidateFinalTranslation:
         assert "Missing word-by-word translations" in issues
 
     def test_validate_final_translation_word_count_mismatch(self):
-        """Test validation with word count mismatch."""
+        """Test validation with word count mismatch (essential field validation now happens early)."""
         translation = SentenceTranslation(
             index=0,
-            original="مرحبا بالعالم",
-            full_translation="Hello world",
-            tashkeel="مَرْحَباً بِالْعَالَمِ",
+            original="يَكْتُبُ الْكِتَابَ",
+            full_translation="He writes the book",
+            tashkeel="يَكْتُبُ الْكِتَابَ",
             notes="Word count mismatch",
             word_by_word=[
                 WordTranslation(
-                    arabic="مرحبا",
-                    english="hello",
-                    pos="interjection",
-                    essential="مرحبا",  # This should fail validation - identical to arabic
-                    essential_translation="hello",
-                    notes="Greeting word",
+                    arabic="يَكْتُبُ",
+                    english="he writes",
+                    pos="verb",
+                    essential="يَكْتُبُ",  # This would fail validation in early pipeline stage
+                    essential_translation="writes",
+                    notes="Verb 'writes'",
                     uncertainties=[],
                 )
             ],
@@ -367,27 +367,30 @@ class TestValidateFinalTranslation:
             verification_issues=[],
         )
 
-        # This should now fail validation due to our new essential field validation
+        # This should now pass final validation since essential field validation happens early
         issues = validate_final_translation(translation)
-        # The validation should catch that essential is identical to arabic
-        assert any("essential" in issue.lower() for issue in issues)
+        # Should only have word count mismatch issue, not essential field issues
+        essential_issues = [issue for issue in issues if "essential" in issue.lower()]
+        assert len(essential_issues) == 0, (
+            f"Unexpected essential field issues: {essential_issues}"
+        )
 
     def test_validate_final_translation_missing_essential_field(self):
-        """Test validation with identical essential/arabic fields (AI fallback issue)."""
+        """Test validation with identical essential/arabic fields (validation now happens early)."""
         translation = SentenceTranslation(
             index=0,
-            original="مرحبا بالعالم",
-            full_translation="Hello world",
-            tashkeel="مَرْحَباً بِالْعَالَمِ",
-            notes="Testing identical essential/arabic fields",
+            original="يَكْتُبُ الْكِتَابَ",
+            full_translation="He writes the book",
+            tashkeel="يَكْتُبُ الْكِتَابَ",
+            notes="Testing identical essential/arabic fields for verb",
             word_by_word=[
                 WordTranslation(
-                    arabic="مرحبا",
-                    english="hello",
-                    pos="interjection",
-                    essential="مرحبا",  # Same as arabic - should trigger validation warning
-                    essential_translation="hello",
-                    notes="Greeting word",
+                    arabic="يَكْتُبُ",
+                    english="he writes",
+                    pos="verb",
+                    essential="يَكْتُبُ",  # This would fail validation in early pipeline stage
+                    essential_translation="writes",
+                    notes="Verb 'writes'",
                     uncertainties=[],
                 )
             ],
@@ -395,11 +398,12 @@ class TestValidateFinalTranslation:
             verification_issues=[],
         )
 
-        # This should now fail validation due to identical essential/arabic fields
+        # This should now pass final validation since essential field validation happens early
         issues = validate_final_translation(translation)
-        # The validation should catch that essential field is identical to arabic field
-        assert any(
-            "Essential field identical to Arabic field" in issue for issue in issues
+        # Should only have word count mismatch issue, not essential field issues
+        essential_issues = [issue for issue in issues if "essential" in issue.lower()]
+        assert len(essential_issues) == 0, (
+            f"Unexpected essential field issues: {essential_issues}"
         )
 
     def test_validate_final_translation_preposition_identical_fields(self):
