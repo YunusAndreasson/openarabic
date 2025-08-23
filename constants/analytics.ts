@@ -3,9 +3,15 @@
  * Mixpanel configuration and event names
  */
 
-// Your Mixpanel project token - REPLACE THIS with your actual token
-export const MIXPANEL_TOKEN =
-  process.env['EXPO_PUBLIC_MIXPANEL_TOKEN'] || 'YOUR_MIXPANEL_TOKEN_HERE';
+import { getEnvVar } from '@/utils/env';
+
+// Your Mixpanel project token - required for analytics to work
+export const MIXPANEL_TOKEN = getEnvVar('EXPO_PUBLIC_MIXPANEL_TOKEN');
+
+// Log warning in development if missing
+if (!MIXPANEL_TOKEN && __DEV__) {
+  console.warn('⚠️  EXPO_PUBLIC_MIXPANEL_TOKEN not set. Analytics will be disabled.');
+}
 
 // Analytics event names - keep consistent across the app
 export const ANALYTICS_EVENTS = {

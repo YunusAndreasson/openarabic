@@ -5,6 +5,7 @@ import { Linking, StyleSheet, View } from 'react-native';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
+import { handleError } from '@/utils/errorHandling';
 
 export const SocialMediaIcons = memo(() => {
   const colors = useColors();
@@ -13,7 +14,13 @@ export const SocialMediaIcons = memo(() => {
     try {
       await Linking.openURL(url);
     } catch (error) {
-      console.warn('Failed to open social media link:', error);
+      handleError(error as Error, {
+        analyticsEventName: 'Social_Media_Link_Failed',
+        sentryTags: { location: 'account', action: 'social_media_link' },
+        sentryExtra: { url },
+        showToast: false, // Silent failure for social media links
+        sentrySeverity: 'info', // Not critical, just informational
+      });
     }
   }, []);
 

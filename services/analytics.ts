@@ -14,8 +14,8 @@ export const analytics = {
   // Identify user with properties
   identify: async (userId: string, properties?: Record<string, unknown>): Promise<void> => {
     try {
-      if (MIXPANEL_TOKEN === 'YOUR_MIXPANEL_TOKEN_HERE') {
-        console.log('🔍 ANALYTICS: identify()', { userId, properties });
+      if (!MIXPANEL_TOKEN) {
+        console.log('🔍 ANALYTICS DISABLED: identify()', { userId, properties });
         return;
       }
 
@@ -34,8 +34,8 @@ export const analytics = {
   // Track custom events
   track: async (event: string, properties?: Record<string, unknown>): Promise<void> => {
     try {
-      if (MIXPANEL_TOKEN === 'YOUR_MIXPANEL_TOKEN_HERE') {
-        console.log('🔍 ANALYTICS: track()', { event, properties });
+      if (!MIXPANEL_TOKEN) {
+        console.log('🔍 ANALYTICS DISABLED: track()', { event, properties });
         return;
       }
 

@@ -21,7 +21,13 @@ Notifications.setNotificationHandler({
   },
   handleError: (notificationId: string, error: Error) => {
     // Handle scheduling errors gracefully
-    console.warn('Notification scheduling failed:', notificationId, error.message);
+    handleError(error, {
+      analyticsEventName: 'Notification_Scheduling_Failed',
+      sentryTags: { location: 'notifications', notificationId },
+      sentryExtra: { notificationId },
+      showToast: false, // Silent failure for notifications
+      sentrySeverity: 'warning',
+    });
   },
 });
 

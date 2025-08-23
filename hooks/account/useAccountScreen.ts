@@ -245,7 +245,13 @@ export const useAccountScreen = () => {
         await StoreReview.requestReview();
       }
     } catch (error) {
-      console.warn('Store review request failed:', error);
+      handleError(error as Error, {
+        analyticsEventName: 'Store_Review_Request_Failed',
+        sentryTags: { location: 'account', action: 'store_review' },
+        sentryExtra: { hasAction: await StoreReview.hasAction() },
+        showToast: false, // Silent failure for store review
+        sentrySeverity: 'info', // Not critical, just informational
+      });
     }
   }, []);
 

@@ -33,6 +33,10 @@ interface ErrorOptions {
   captureSentry?: boolean;
   // Sentry severity level
   sentrySeverity?: 'debug' | 'error' | 'fatal' | 'info' | 'warning';
+  // Sentry tags for better categorization
+  sentryTags?: Record<string, string>;
+  // Sentry extra context
+  sentryExtra?: Record<string, unknown>;
 }
 
 const DEFAULT_OPTIONS: ErrorOptions = {
@@ -44,14 +48,33 @@ const DEFAULT_OPTIONS: ErrorOptions = {
 };
 
 // Helper functions to reduce complexity
-const captureInSentry = (errorObj: Error, sentrySeverity?: string): void => {
-  if (sentrySeverity) {
+const captureInSentry = (
+  errorObj: Error,
+  sentrySeverity?: string,
+  sentryTags?: Record<string, string>,
+  sentryExtra?: Record<string, unknown>
+): void => {
+  try {
     Sentry.withScope(scope => {
-      scope.setLevel(sentrySeverity as Sentry.SeverityLevel);
+      if (sentrySeverity) {
+        scope.setLevel(sentrySeverity as Sentry.SeverityLevel);
+      }
+      if (sentryTags) {
+        Object.entries(sentryTags).forEach(([key, value]) => {
+          scope.setTag(key, value);
+        });
+      }
+      if (sentryExtra) {
+        Object.entries(sentryExtra).forEach(([key, value]) => {
+          scope.setExtra(key, value);
+        });
+      }
       Sentry.captureException(errorObj);
     });
-  } else {
-    Sentry.captureException(errorObj);
+  } catch (sentryError) {
+    // If Sentry itself fails, log to console as last resort
+    console.error('Failed to capture error in Sentry:', sentryError);
+    console.error('Original error:', errorObj);
   }
 };
 
@@ -102,7 +125,7 @@ export const handleError = async (
 
   try {
     if (opts.captureSentry) {
-      captureInSentry(errorObj, opts.sentrySeverity);
+      captureInSentry(errorObj, opts.sentrySeverity, opts.sentryTags, opts.sentryExtra);
     }
 
     if (opts.trackAnalytics) {

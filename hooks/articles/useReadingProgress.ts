@@ -207,7 +207,13 @@ export function useReadingProgress({
         }
       } catch (error) {
         // Silent error - article open tracking failed but shouldn't break reading
-        console.warn('Failed to record article open:', error);
+        handleError(error as Error, {
+          analyticsEventName: 'Article_Open_Tracking_Failed',
+          sentryTags: { location: 'articles', action: 'record_open' },
+          sentryExtra: { articleId, userId: user?.id, totalSentences },
+          showToast: false, // Silent failure for tracking
+          sentrySeverity: 'info', // Not critical, just tracking failure
+        });
       }
     };
 

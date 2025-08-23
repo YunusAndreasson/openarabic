@@ -65,6 +65,7 @@ import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import type { RootState } from '@/store/store';
 import { persistor, store } from '@/store/store';
 import { setTheme } from '@/store/themeSlice';
+import { getEnvVar } from '@/utils/env';
 import { handleError } from '@/utils/errorHandling';
 import { onProfilerRender } from '@/utils/perf/enableRerenderLogging';
 import { registerNavigationContainer as registerPerfNavigationContainer } from '@/utils/perf/routeTracker';
@@ -124,10 +125,12 @@ const queryClient = new QueryClient({
 
 // Memoize navigation integration for Sentry
 const navigationIntegration = Sentry.reactNavigationIntegration();
+const sentryDsn = getEnvVar('EXPO_PUBLIC_SENTRY_DSN', undefined, true);
+
 Sentry.init({
-  dsn: 'https://5ca58a5811a094515e346b0241e6a3f7@o1414696.ingest.us.sentry.io/4509090539831296',
+  dsn: sentryDsn,
   integrations: [navigationIntegration],
-  enabled: true, // Enable in both dev and production
+  enabled: !!sentryDsn, // Only enable if DSN is available
   tracesSampleRate: 1.0, // Sample everything (100%)
   attachScreenshot: true, // Helps debug UI crashes
   debug: false, // Disable debug logging to reduce console noise
@@ -280,7 +283,12 @@ function AppContent() {
       // Clear app badge when app is unmounted (async cleanup)
       clearAppBadge().catch(error => {
         // Silently handle badge cleanup errors during unmount
-        console.warn('Failed to clear app badge during cleanup:', error);
+        handleError(error as Error, {
+          analyticsEventName: 'App_Badge_Cleanup_Failed',
+          sentryTags: { location: 'app', action: 'badge_cleanup' },
+          showToast: false, // Silent failure during cleanup
+          sentrySeverity: 'info', // Not critical, just cleanup failure
+        });
       });
     };
   }, []);
