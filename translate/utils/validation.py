@@ -39,11 +39,8 @@ def validate_tashkeel_added(
     for i, (original, tashkeel_result) in enumerate(
         zip(original_sentences, tashkeel_results, strict=False),
     ):
-        # Handle both TashkeelResult objects and dictionaries
-        if hasattr(tashkeel_result, "tashkeel"):
-            tashkeel_text = tashkeel_result.tashkeel
-        else:
-            tashkeel_text = tashkeel_result.get("tashkeel", "")
+        # Expect TashkeelResult Pydantic model
+        tashkeel_text = tashkeel_result.tashkeel
 
         sentence_index = sentence_indices[i] if sentence_indices else i
 
@@ -143,111 +140,101 @@ def validate_translation_results(
     for i, (original, result) in enumerate(
         zip(original_sentences, results, strict=False),
     ):
-        # Handle different result formats
-        if isinstance(result, dict) or hasattr(result, "model_dump"):
-            # Convert Pydantic model to dict if needed
-            if hasattr(result, "model_dump"):
-                result_dict = result.model_dump()
-            else:
-                result_dict = result
+        # Expect Pydantic model - convert to dict for validation
+        result_dict = result.model_dump()
 
-            # Handle different result types
-            if "word_translations" in result_dict:
-                # This is a word translation result - skip translation field validation
-                pass
-            else:
-                # This is a sentence translation result - validate translation field
-                translation = result_dict.get("translation", "") or result_dict.get(
-                    "t", ""
-                )
-
-                # Check for error markers in translation
-                if any(err in translation for err in TRANSLATION_ERROR_MARKERS):
-                    errors.append(f"Sentence {i}: Contains error marker in translation")
-
-                # Check for empty or very short translation
-                if not translation.strip():
-                    errors.append(f"Sentence {i}: Missing translation")
-                elif len(translation.strip()) < 3:
-                    errors.append(f"Sentence {i}: Suspiciously short translation")
-
-            # Check word options if requested
-            if check_word_options and "word_translations" in result_dict:
-                word_trans = result_dict["word_translations"]
-                if isinstance(word_trans, list) and all(
-                    isinstance(word, dict) for word in word_trans
-                ):
-                    for j, word in enumerate(word_trans):
-                        arabic = word.get("arabic", "")
-                        english = word.get("english", [])
-                        essential_translation = word.get("essential_translation", [])
-                        if not arabic:
-                            errors.append(
-                                f"Sentence {i}, Word {j}: Missing Arabic text",
-                            )
-                        if not english:
-                            errors.append(
-                                f"Sentence {i}, Word {j}: Missing English options",
-                            )
-                        if not word.get("essential"):
-                            errors.append(
-                                f"Sentence {i}, Word {j}: Missing essential letters",
-                            )
-                        if not essential_translation:
-                            errors.append(
-                                f"Sentence {i}, Word {j}: Missing essential translation options",
-                            )
-
-            # Check word translations if requested
-            if check_word_translations and "word_by_word" in result_dict:
-                word_trans = result_dict["word_by_word"]
-                if not word_trans:
-                    errors.append(f"Sentence {i}: Missing word-by-word translations")
-                elif isinstance(word_trans, list) and all(
-                    isinstance(word, dict) for word in word_trans
-                ):
-                    for j, word in enumerate(word_trans):
-                        arabic = word.get("arabic", "")
-                        english = word.get("english", "")
-                        essential = word.get("essential", "")
-                        essential_translation = word.get(
-                            "essential_translation",
-                            "",
-                        )
-                        if not arabic:
-                            errors.append(
-                                f"Sentence {i}, Word {j}: Missing final Arabic text",
-                            )
-                        if not english:
-                            errors.append(
-                                f"Sentence {i}, Word {j}: Missing final English text",
-                            )
-                        if not essential:
-                            errors.append(
-                                f"Sentence {i}, Word {j}: Missing final essential letters",
-                            )
-                        if not essential_translation:
-                            errors.append(
-                                f"Sentence {i}, Word {j}: Missing final essential translation",
-                            )
-                        pos = word.get("pos", "")
-                        if not pos:
-                            errors.append(
-                                f"Sentence {i}, Word {j}: Missing part of speech",
-                            )
-
-            # Check tashkeel
-            if "tashkeel" in result_dict:
-                tashkeel = result_dict["tashkeel"]
-                if not tashkeel.strip():
-                    errors.append(f"Sentence {i}: Missing tashkeel")
-                elif tashkeel == original and not any(c in original for c in "ًٌٍَُِّْ"):
-                    errors.append(
-                        f"Sentence {i}: Tashkeel appears to be missing (identical to input)",
-                    )
+        # Handle different result types
+        if "word_translations" in result_dict:
+            # This is a word translation result - skip translation field validation
+            pass
         else:
-            # Handle other result formats or unexpected structures
-            errors.append(f"Sentence {i}: Unexpected result format")
+            # This is a sentence translation result - validate translation field
+            translation = result_dict.get("translation", "") or result_dict.get("t", "")
+
+            # Check for error markers in translation
+            if any(err in translation for err in TRANSLATION_ERROR_MARKERS):
+                errors.append(f"Sentence {i}: Contains error marker in translation")
+
+            # Check for empty or very short translation
+            if not translation.strip():
+                errors.append(f"Sentence {i}: Missing translation")
+            elif len(translation.strip()) < 3:
+                errors.append(f"Sentence {i}: Suspiciously short translation")
+
+        # Check word options if requested
+        if check_word_options and "word_translations" in result_dict:
+            word_trans = result_dict["word_translations"]
+            if isinstance(word_trans, list) and all(
+                isinstance(word, dict) for word in word_trans
+            ):
+                for j, word in enumerate(word_trans):
+                    arabic = word.get("arabic", "")
+                    english = word.get("english", [])
+                    essential_translation = word.get("essential_translation", [])
+                    if not arabic:
+                        errors.append(
+                            f"Sentence {i}, Word {j}: Missing Arabic text",
+                        )
+                    if not english:
+                        errors.append(
+                            f"Sentence {i}, Word {j}: Missing English options",
+                        )
+                    if not word.get("essential"):
+                        errors.append(
+                            f"Sentence {i}, Word {j}: Missing essential letters",
+                        )
+                    if not essential_translation:
+                        errors.append(
+                            f"Sentence {i}, Word {j}: Missing essential translation options",
+                        )
+
+        # Check word translations if requested
+        if check_word_translations and "word_by_word" in result_dict:
+            word_trans = result_dict["word_by_word"]
+            if not word_trans:
+                errors.append(f"Sentence {i}: Missing word-by-word translations")
+            elif isinstance(word_trans, list) and all(
+                isinstance(word, dict) for word in word_trans
+            ):
+                for j, word in enumerate(word_trans):
+                    arabic = word.get("arabic", "")
+                    english = word.get("english", "")
+                    essential = word.get("essential", "")
+                    essential_translation = word.get(
+                        "essential_translation",
+                        "",
+                    )
+                    if not arabic:
+                        errors.append(
+                            f"Sentence {i}, Word {j}: Missing final Arabic text",
+                        )
+                    if not english:
+                        errors.append(
+                            f"Sentence {i}, Word {j}: Missing final English text",
+                        )
+                    if not essential:
+                        errors.append(
+                            f"Sentence {i}, Word {j}: Missing final essential letters",
+                        )
+                    if not essential_translation:
+                        errors.append(
+                            f"Sentence {i}, Word {j}: Missing final essential translation",
+                        )
+                    pos = word.get("pos", "")
+                    if not pos:
+                        errors.append(
+                            f"Sentence {i}, Word {j}: Missing part of speech",
+                        )
+
+        # Check tashkeel
+        if "tashkeel" in result_dict:
+            tashkeel = result_dict["tashkeel"]
+            if not tashkeel.strip():
+                errors.append(f"Sentence {i}: Missing tashkeel")
+            elif tashkeel == original and not any(c in original for c in "ًٌٍَُِّْ"):
+                errors.append(
+                    f"Sentence {i}: Tashkeel appears to be missing (identical to input)",
+                )
 
     if errors:
         raise TranslationValidationError(

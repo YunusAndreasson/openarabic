@@ -1,7 +1,7 @@
 import logging
 import time
 import unicodedata
-from typing import Any, cast
+from typing import Any
 
 from data.config import (
     GOOGLE_CLOUD_CREDENTIALS_PATH,
@@ -29,6 +29,8 @@ from data.schemas import (
     FINAL_VERIFICATION_USER_PROMPT,
     GENERAL_SYSTEM_PROMPT,
     SENTENCE_TRANSLATION_USER_PROMPT,
+    TASHKEEL_USER_PROMPT,
+    WORD_BY_WORD_USER_PROMPT,
 )
 from utils.camel_tools_service import (
     generate_tashkeel_suggestions_with_context,
@@ -235,26 +237,6 @@ def _validate_uncertainties(uncertainties: list[Any]) -> list[Uncertainty]:
     return validated
 
 
-def _build_word_prompt(
-    tashkeel: str,
-    translation: str,
-    arabic_words: list[str],
-    semantic_context: str,
-    tashkeel_notes: str,
-    translation_notes: str,
-) -> str:
-    """Generate the prompt payload for word translations."""
-    return (
-        "Set 1:\n"
-        f"Arabic words to translate:\n{' '.join(arabic_words)}\n"
-        f"Full context (with tashkeel): {tashkeel}\n"
-        f"Translation: {translation}"
-        f"{semantic_context}"
-        f"{tashkeel_notes}"
-        f"{translation_notes}"
-    )
-
-
 def batch_translate_full_sentences(
     sentences: list[str],
     contexts: list[str | None],
@@ -406,7 +388,7 @@ def batch_add_tashkeel(
                 context_info = f"\nContext from surrounding sentences: {context}"
 
             # Process this specific sentence with conversation manager
-            individual_message = f"Add complete diacritical marks to sentence {i + 1} from the uploaded document. CRITICAL: Process the EXACT sentence provided, do not generate generic responses.\n\nInput text: {enhanced_sentence}{context_info}"
+            individual_message = f"{TASHKEEL_USER_PROMPT}\n\nInput text: {enhanced_sentence}{context_info}"
             individual_response = conversation_manager.continue_with_stage(
                 individual_message, response_model=TashkeelResult
             )
@@ -456,24 +438,10 @@ def batch_add_tashkeel(
                 if context and context.strip():
                     context_info = f"\nContext from surrounding sentences: {context}"
 
-            # Use standard translation approach
-            individual_prompt = f"""Add complete diacritical marks (tashkīl) to this Islamic Arabic text. Return your response as valid JSON matching the TashkeelResult structure.
-
-CRITICAL: You MUST provide ALL required fields. The `uncertainties` array must be present, even if empty.
-
-Input text: {enhanced_sentence}
-
-CRITICAL INSTRUCTIONS:
-1. You MUST process the EXACT input text provided above
-2. Do NOT generate a different sentence or generic response
-3. Add diacritical marks to the EXACT words in the input text
-4. Preserve the original word order and structure
-
-Provide:
-1. `tashkeel` (string): Add ALL necessary marks: fatḥa (َ), kasra (ِ), ḍamma (ُ), sukūn (ْ), shadda (ّ), and tanwīn (ً ٍ ٌ). Ensure EVERY eligible letter has appropriate diacritics (full vocalization).
-2. `uncertainties` (array of objects, optional): List specific words where diacritics are uncertain.
-
-Return as JSON:"""
+            # Use the prompt from schemas.py
+            individual_prompt = (
+                f"{TASHKEEL_USER_PROMPT}\n\nInput text: {enhanced_sentence}"
+            )
 
             individual_messages = [
                 {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
@@ -510,9 +478,7 @@ def batch_translate_words(
     conversation_manager: ResponsesAPIManager | None = None,
 ) -> WordTranslationResults:
     """Translate individual words with context from full sentence translation."""
-    processed_results: WordTranslationResults = [
-        {"word_translations": []} for _ in range(len(sentences))
-    ]
+    processed_results: WordTranslationResults = []
 
     max_retries = 3
 
@@ -575,8 +541,9 @@ def batch_translate_words(
                             + "\n".join(f"- {u}" for u in translation_uncertainties)
                         )
 
-                    # Create comprehensive prompt for this sentence
-                    message = f"Analyze words in sentence {i + 1} from the uploaded document. CRITICAL: Process the EXACT sentence provided.\n\nTashkeel: {tashkeel}\nTranslation: {translation}{semantic_context}{tashkeel_notes}{translation_notes}"
+                    # Use the prompt from schemas.py with context
+                    context_info = f"\nTashkeel: {tashkeel}\nTranslation: {translation}{semantic_context}{tashkeel_notes}{translation_notes}"
+                    message = f"{WORD_BY_WORD_USER_PROMPT}\n\nInput for word‑by‑word translation: {context_info}"
                     response = conversation_manager.continue_with_stage(
                         message, response_model=WordTranslationResult
                     )
@@ -658,9 +625,12 @@ def batch_translate_words(
 
                 # Require valid word translations - no fallbacks allowed
                 if word_translations_options:
-                    processed_results[i] = {
-                        "word_translations": word_translations_options,
-                    }
+                    # Use the proper Pydantic model
+                    processed_results.append(
+                        WordTranslationResult(
+                            word_translations=word_translations_options
+                        )
+                    )
                     break
                 else:
                     # CRITICAL: Fail completely instead of creating placeholder data
@@ -682,7 +652,8 @@ def batch_translate_words(
     # Basic validation - ensure we have results for all sentences
     if len(processed_results) != len(sentences):
         raise RuntimeError(
-            f"Word translation result count mismatch - got {len(processed_results)} results for {len(sentences)} sentences"
+            f"Word translation result count mismatch - got {len(processed_results)} results for {len(sentences)} sentences. "
+            f"This may indicate that some sentences failed translation completely."
         )
 
     return processed_results
@@ -911,19 +882,16 @@ def batch_translate_root_words_with_google_cloud(
 
         # Convert batch results to WordTranslation format
         for translation_result in batch_translations:
-            word_option = cast(
-                "WordTranslation",
-                {
-                    "arabic": translation_result["original_text"],
-                    "english": [translation_result["translated_text"]],
-                    "pos": translation_result.get("pos", "noun"),
-                    "essential": translation_result["original_text"],
-                    "essential_translation": [translation_result["translated_text"]],
-                    "notes": translation_result.get("notes"),
-                    "uncertainties": translation_result.get("uncertainties", []),
-                },
+            word_option = WordTranslation(
+                arabic=translation_result["original_text"],
+                english=[translation_result["translated_text"]],
+                pos=translation_result.get("pos", "noun"),
+                essential=translation_result["original_text"],
+                essential_translation=[translation_result["translated_text"]],
+                notes=translation_result.get("notes", ""),
+                uncertainties=translation_result.get("uncertainties", []),
             )
-            results.append({"word_translations": [word_option]})
+            results.append(WordTranslationResult(word_translations=[word_option]))
 
     except Exception as e:
         # CRITICAL: Fail completely instead of creating fallback data

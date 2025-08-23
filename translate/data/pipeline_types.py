@@ -5,6 +5,14 @@ These match the existing schema structures exactly.
 
 from typing import Any, NotRequired, TypedDict
 
+# Import Pydantic models for type definitions
+from .models import (
+    RefinementResult,
+    TashkeelResult,
+    TranslationResult,
+    WordTranslationResult,
+)
+
 
 # Batch processing structure
 class TranslationBatch(TypedDict):
@@ -17,12 +25,12 @@ class TranslationBatch(TypedDict):
 # Refinement input structure
 class RefinementInput(TypedDict):
     original: str
-    translation: dict[str, Any]  # TranslationResult from models.py
-    tashkeel: dict[str, Any]  # TashkeelResult from models.py
-    word_translations_options: list[
-        dict[str, Any]
-    ]  # list[WordTranslationOption] from models.py
-    previous_uncertainties: dict[str, list[dict[str, Any]]]
+    translation: TranslationResult  # Use actual Pydantic model
+    tashkeel: TashkeelResult  # Use actual Pydantic model
+    word_translations_options: list[WordTranslationResult]  # Use actual Pydantic model
+    previous_uncertainties: dict[
+        str, list[dict[str, Any]]
+    ]  # Keep as dict for flexibility
 
 
 # Split phase structures
@@ -89,13 +97,11 @@ class WordData(TypedDict):
 
 
 # Type aliases for common collections
-# These are used for internal processing and can contain either Pydantic models or dict representations
-TranslationResults = list[dict[str, Any]]  # list[TranslationResult] from models.py
-TashkeelResults = list[dict[str, Any]]  # list[TashkeelResult] from models.py
-WordTranslationResults = list[
-    dict[str, Any]
-]  # list[WordTranslationResult] from models.py
-RefinementResults = list[dict[str, Any]]  # list[RefinementResult] from models.py
+# These are used for internal processing and MUST contain Pydantic models
+TranslationResults = list[TranslationResult]
+TashkeelResults = list[TashkeelResult]
+WordTranslationResults = list[WordTranslationResult]
+RefinementResults = list[RefinementResult]
 
 # Internal processing types (TypedDict for performance)
 RefinementInputs = list[RefinementInput]

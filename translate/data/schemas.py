@@ -33,7 +33,7 @@ def format_difficulty_levels() -> str:
     )
 
 
-# Prompt instructions
+# Prompt instructions (behavioral guidance only; structure/validation is defined in data/models.py)
 GENERAL_SYSTEM_PROMPT = """Expert translator specializing in Classical Arabic Islamic texts and teaching.
 
 Priorities:
@@ -45,29 +45,25 @@ Priorities:
 6. Consistency: Maintain consistent translations for Islamic concepts
 7. Accessibility: Use simple, clear English appropriate for Islamic context
 
-Apply these principles to all translation tasks: splitting, diacritics, word analysis, and verification."""
+Apply these principles to all translation tasks (splitting, diacritics, word analysis, verification)."""
 
 CONTENT_ANALYSIS_PROMPT = (
-    """Analyze this Islamic text to provide:
+    """Analyze this Islamic text and then split it for learning. In your analysis:
 
-1. Title (property: `title`):
-   - Clear, simple English (3-7 words)
-   - Captures main Islamic topic
-   - Uses appropriate Islamic terminology
+1. Title:
+   - Clear, simple English (3–7 words)
+   - Captures the main Islamic topic using appropriate terminology
 
-2. Summary (property: `summary`):
-   - Concise description of main Islamic content (one sentence)
-   - Includes key Islamic themes
-   - Uses clear, accessible language
-   - NO filler/weasel words (this, that, it, possibly, seems, might, could)
-   - Direct, precise statements only
+2. Summary:
+   - One concise sentence describing the main content and key Islamic themes
+   - Direct language only (no filler/weasel words)
 
-3. Difficulty Level (property: `difficulty_level`, 1-5):
+3. Difficulty Level (1–5):
 """
     + format_difficulty_levels()
     + """
 
-IMPORTANT: Preserve ALL original text formatting, punctuation, and special characters throughout the analysis.
+Important: Preserve ALL original formatting, punctuation, and special characters throughout.
 
 Proceed to text splitting after analysis.
 """
@@ -77,57 +73,39 @@ SENTENCE_SPLITTING_USER_PROMPT = (
     CONTENT_ANALYSIS_PROMPT
     + """
 
-Split the Islamic text into learner-friendly units (property: `units`):
+Now split the text into learner‑friendly units:
 
-Rules:
-1. Create short learner-friendly units
-2. Split at:
-   - Complete thoughts
-   - Distinct complete clauses
-   - Natural stops such as punctuation
-   - Learning friendly units
-3. Special handling:
+Guidelines:
+1. Create short units at natural boundaries:
+   - Complete thoughts, distinct clauses, punctuation
+2. Special handling:
    - Keep Quran verses intact
    - Break long narrator chains
    - Keep brief prayers whole
-   - Keep related phrases conveying single concepts together
-   - Preserve ALL original punctuation and formatting
-4. Example length: "ولا شك أن ما يصيب المسلم في هذه الدنيا من آفات ومحن ما هو إلا محض ابتلاء من الله،"
+   - Keep tightly related phrases together
+3. Avoid units that are too short (1–3 words) unless grammatically necessary.
+4. Always preserve original punctuation and formatting.
 
-IMPORTANT:
-- AVOID units that are excessively short (e.g., 1-3 words) unless grammatically necessary (like single-word interjections).
-- Preserve ALL original text formatting, punctuation, and special characters in each unit
-
-Return results as JSON matching the SplitResult structure with fields:
-- units: Array of text units/sentences
-- title: Concise English title (3-7 words)
-- summary: One-sentence summary of main content
-- difficulty_level: Difficulty rating (1-5)
-- total_units: Total number of units
-
-Return results as valid JSON.
+Return valid JSON matching the SplitResult model schema.
 
 Input text:
 """
 )
 
-SENTENCE_TRANSLATION_USER_PROMPT = """Translate Classical Arabic (fusha) sentences from Islamic texts to easy English with proper context and linguistic accuracy.
+SENTENCE_TRANSLATION_USER_PROMPT = """Translate Classical Arabic (fusha) to accessible English with contextual accuracy.
 
 Focus on preserving Islamic terminology and classical Arabic meanings. Handle Arabic script complexities carefully including proper tashkeel preservation.
 
 For each sentence, provide:
-1. `translation` (string):
-   - Use accessible English, preserving Arabic word order where possible.
-   - Use simple vocabulary appropriate for Islamic content (no obscure terms).
-   - Only use English words since this will be converted to audio later
-   - Match register: solemn for supplications, precise for hadith.
-   - Ensure grammatical accuracy (conjugations, agreement, basic syntax).
-2. `notes` (string, required):
-   - Additional context or explanations regarding the translation.
-3. `uncertainties` (array of objects, optional):
-   - List specific words where diacritics are uncertain.
-   - Each object should have `text` (the uncertain part) and `reason` (why it's uncertain).
-   - Only list actual uncertainties, not alternative translations.
+1. translation:
+   - Accessible English; preserve Arabic word order where reasonable
+   - Simple vocabulary; English‑only output (used for audio)
+   - Match register: solemn (supplications), precise (hadith)
+   - Grammatically sound (conjugation, agreement, syntax)
+2. notes:
+   - Brief context or grammar observations
+3. uncertainties:
+   - Only real uncertainties (e.g., diacritics), each with text and reason
 
 Example:
 Arabic: وقال النبي صلى الله عليه وسلم
@@ -138,105 +116,53 @@ Arabic: وقال النبي صلى الله عليه وسلم
 
 IMPORTANT: Do not modify, normalize, or clean any part of the original Arabic text. Preserve ALL formatting.
 
-VALIDATION CHECKLIST:
-- Every translation has a non-empty `translation` field
-- Every translation has an `uncertainties` array (even if empty)
-- Every translation has a `word_by_word` array with proper structure
-- All original text formatting is preserved
-- No fields are missing or null
-
-Provide a natural, accessible English translation that preserves the meaning and tone of the original Classical Arabic text.
+Provide a natural translation that preserves meaning and tone. Structure and validation are enforced by the TranslationResult/WordTranslation models.
 
 Input sentences:
 """
 
-TASHKEEL_USER_PROMPT = """Add complete diacritical marks (tashkīl) to Islamic Arabic text with full vocalization.
+TASHKEEL_USER_PROMPT = """Add complete diacritical marks (tashkīl) with full vocalization.
 
 Focus on grammatical accuracy and proper case endings. Handle Arabic script complexities carefully.
 
 Requirements:
-- Ensure EVERY eligible letter has appropriate diacritics (full vocalization).
-- Use translation context and provided grammatical notes to resolve vowelization ambiguities.
-- Pay special attention to case endings based on grammatical roles noted.
-- Consider verb forms, tenses, and moods indicated in the notes.
-- Ensure grammatical accuracy (case endings, conjugations).
-- Ensure full vocalization according to standard Classical Arabic rules, applying diacritics to all letters requiring them based on grammar and context.
-- Preserve ALL original punctuation, formatting, and special characters.
+- Ensure full vocalization; apply appropriate diacritics to every eligible letter
+- Use context and notes to resolve vowelization ambiguities
+- Pay attention to case endings, verb forms, tense/mood, and agreement
+- Preserve ALL original punctuation, formatting, and special characters
 
-For uncertain diacritics, include in uncertainties array with:
-- word: The specific word with uncertain diacritics
-- reason: Explanation of why the diacritics are uncertain
-- related_translation_uncertainty: Any related translation uncertainty (optional)
+If uncertain, include an uncertainty with: word, reason, and optionally related_translation_uncertainty.
 
 Input text:
 """
 
 WORD_BY_WORD_USER_PROMPT = (
-    """Translate Arabic words individually. Return JSON matching WordTranslationResult structure with fields:
-- word_translations: Array of WordTranslationOptions objects (REQUIRED)
+    """Translate Arabic words individually.
 
-Each WordTranslationOptions object must include ALL of these required fields:
-- arabic: Original Arabic word (REQUIRED - preserve exact formatting)
-- english: Array of English translation options (REQUIRED - 1-3 options, ordered most to least likely)
-- pos: Part of speech from valid options (REQUIRED - never null)
-- essential: Essential root letters (REQUIRED - never null, core letters without affixes)
-- essential_translation: Array of essential translation options (REQUIRED - 1-3 options)
-- notes: Translation notes (REQUIRED - never null, provide grammar context)
-- uncertainties: Array of uncertainty objects (REQUIRED - can be empty array)
-
-VALIDATION REQUIREMENTS:
-- ALL fields above are mandatory and must be present for every word
-- `pos` must be one of: """
+Guidelines:
+- Preserve exact Arabic formatting in arabic
+- Provide 1–3 concise options for english and essential_translation when not finalized
+- pos must be from the allowed set: """
     + format_valid_pos()
     + """
-- `essential` should contain core letters, stripped of affixes/suffixes and case/mood endings
-- CRITICAL: PRESERVE basic diacritics (kesra ِ, fetha اَ, damma ُ) in essential field
-- DO NOT remove diacritics - only remove complex morphological affixes
-- Examples of what to KEEP (basic diacritics):
-  * "كَتَبَ" → "كَتَبَ" (keep ALL diacritics - this is already essential)
-  * "مِنَ" → "مِنَ" (keep ALL diacritics - this is already essential)
-  * "إِلَى" → "إِلَى" (keep ALL diacritics - this is already essential)
-- Examples of what to MODIFY (remove complex affixes, keep basic diacritics):
-  * "يَكْتُبُ" → "كَتَبَ" (remove يَـ prefix and ـُ ending, keep root diacritics)
-  * "الْكِتَابُ" → "كِتَابٌ" (remove الـ prefix and ـُ ending, keep root diacritics)
-  * "كَاتِبًا" → "كَاتِبٌ" (remove complex case ending, keep basic diacritics)
-  * "تَكْتُبِينَ" → "كَتَبَ" (remove all affixes, keep root with basic diacritics)
-- FOR THE TEST CASE "مِنَ": essential should be "مِنَ" (keep diacritics, no changes needed)
-- FOR THE TEST CASE "إِلَى": essential should be "إِلَى" (keep diacritics, no changes needed)
-- Preserve ALL original text formatting, punctuation, and special characters in `arabic` field
-- Provide 1-3 options for `english` and `essential_translation`, ordered by likelihood
+- `essential` must retain root letters + diacritics while removing only complex affixes/case endings
+- Examples to KEEP diacritics as-is: "كَتَبَ", "مِنَ", "إِلَى"
+- Examples to MODIFY by removing complex affixes: "يَكْتُبُ" → "كَتَبَ", "الْكِتَابُ" → "كِتَابٌ", "كَاتِبًا" → "كَاتِبٌ", "تَكْتُبِينَ" → "كَتَبَ"
 
-CRITICAL: Return only valid JSON matching WordTranslationResult schema. Every word must have ALL required fields populated.
+Return valid JSON matching the WordTranslationResult model schema.
 
-Input for word-by-word translation:
+Input for word‑by‑word translation:
 """
 )
 
-FINAL_VERIFICATION_USER_PROMPT = """Review and refine the provided Islamic Arabic translation components. Return JSON matching RefinementResult structure with ALL required fields:
+FINAL_VERIFICATION_USER_PROMPT = """Review and refine the provided components.
 
-REQUIRED FIELDS:
-- improved_tashkeel: Refined diacritical marks (REQUIRED - string)
-- improved_translation: Refined translation (REQUIRED - string)
-- improved_word_translations: Array of final WordTranslation objects (REQUIRED - each must have: arabic, english, pos, essential, essential_translation, notes)
+Goals:
+- Resolve ambiguities; select single best options for words
+- Ensure consistency across tashkeel, translation, and word translations
+- Address uncertainties when possible
 
-OPTIONAL FIELDS (use 'unknown' or [] when not applicable):
-- resolved_uncertainties: Array of resolved uncertainty objects (OPTIONAL - 'unknown' or array)
-- remaining_uncertainties: Array of unresolved uncertainty objects (OPTIONAL - 'unknown' or array)
-- changes_made: Array of change descriptions (OPTIONAL - 'unknown' or array)
-
-PROCESSING REQUIREMENTS:
-- Resolve ambiguities and select the single best option for each word translation
-- Ensure consistency across all components (tashkeel, translation, word translations)
-- Address any uncertainties that can be resolved based on context
-- For `improved_word_translations`, each WordTranslation object must include ALL required fields:
-  * arabic: Original Arabic word
-  * english: Single best English translation (not array)
-  * pos: Part of speech from valid options
-  * essential: Essential root letters
-  * essential_translation: Single best root meaning (not array)
-  * notes: Grammar and translation notes
-
-CRITICAL: Return valid JSON with ALL required fields populated. Optional fields should use 'unknown' or [] when not applicable.
+Return valid JSON matching the RefinementResult model schema. Each improved_word_translation must be finalized (no option arrays).
 
 Input components to refine:
 """
