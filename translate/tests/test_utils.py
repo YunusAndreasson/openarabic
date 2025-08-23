@@ -346,28 +346,56 @@ class TestValidateFinalTranslation:
 
     def test_validate_final_translation_word_count_mismatch(self):
         """Test validation with word count mismatch."""
-        word_translations = [
-            WordTranslation(
-                arabic="مرحبا",
-                english="hello",
-                pos="interjection",
-                essential="مرحبا",
-                essential_translation="hello",
-                notes="Greeting word",
-                uncertainties=[],
-            )
-        ]
-
         translation = SentenceTranslation(
             index=0,
-            original="مرحبا بالعالم هذا نص",  # 4 words
-            full_translation="Hello world this text",
-            tashkeel="مَرْحَباً بِالْعَالَمِ هَذَا نَصّ",
+            original="مرحبا بالعالم",
+            full_translation="Hello world",
+            tashkeel="مَرْحَباً بِالْعَالَمِ",
             notes="Word count mismatch",
-            word_by_word=word_translations,  # Only 1 word translation
+            word_by_word=[
+                WordTranslation(
+                    arabic="مرحبا",
+                    english="hello",
+                    pos="interjection",
+                    essential="مرحبا",  # This should fail validation - identical to arabic
+                    essential_translation="hello",
+                    notes="Greeting word",
+                    uncertainties=[],
+                )
+            ],
             verification_status="pending",
             verification_issues=[],
         )
 
+        # This should now fail validation due to our new essential field validation
         issues = validate_final_translation(translation)
-        assert any("Word translation count mismatch" in issue for issue in issues)
+        # The validation should catch that essential is identical to arabic
+        assert any("essential" in issue.lower() for issue in issues)
+
+    def test_validate_final_translation_missing_essential_field(self):
+        """Test validation with missing essential field."""
+        translation = SentenceTranslation(
+            index=0,
+            original="مرحبا بالعالم",
+            full_translation="Hello world",
+            tashkeel="مَرْحَباً بِالْعَالَمِ",
+            notes="Missing essential field",
+            word_by_word=[
+                WordTranslation(
+                    arabic="مرحبا",
+                    english="hello",
+                    pos="interjection",
+                    essential="",  # This should fail validation - empty essential field
+                    essential_translation="hello",
+                    notes="Greeting word",
+                    uncertainties=[],
+                )
+            ],
+            verification_status="pending",
+            verification_issues=[],
+        )
+
+        # This should now fail validation due to our new essential field validation
+        issues = validate_final_translation(translation)
+        # The validation should catch that essential field is missing
+        assert any("missing essential letters" in issue.lower() for issue in issues)

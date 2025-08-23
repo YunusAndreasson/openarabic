@@ -263,12 +263,30 @@ def create_sentence_translation(
             elif isinstance(word_opts, dict):
                 arabic = word_opts.get("arabic", "")
                 pos = word_opts.get("pos")
-                essential = word_opts.get("essential", word_opts.get("arabic", ""))
+                essential = word_opts.get("essential")
                 notes = word_opts.get("notes") or ""
             else:
                 # Enforce correct type – only dict or model instances allowed
                 raise TypeError(
                     f"Invalid word translation option type: {type(word_opts)}"
+                )
+
+            # Validate essential field - must be present and different from arabic
+            if not essential:
+                raise ValueError(
+                    f"Missing 'essential' field for word '{arabic}'. "
+                    f"The AI must provide a stripped root form without complex affixes/case endings. "
+                    f"Expected: root form (e.g., 'كَتَبَ' from 'يَكْتُبُ'), "
+                    f"Got: missing field"
+                )
+
+            if essential == arabic:
+                raise ValueError(
+                    f"Invalid 'essential' field for word '{arabic}'. "
+                    f"The AI provided the same value as 'arabic' field. "
+                    f"Expected: stripped root form without complex affixes/case endings, "
+                    f"Got: '{essential}' (identical to arabic field). "
+                    f"Examples: 'يَكْتُبُ' → 'كَتَبَ', 'الْكِتَابُ' → 'كِتَابٌ'"
                 )
 
             # Preserve uncertainties from the original word translation

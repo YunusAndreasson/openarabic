@@ -281,6 +281,14 @@ def validate_final_translation(translation: SentenceTranslation) -> list[str]:
             if not word_trans.essential.strip():
                 issues.append(f"Word {i}: Missing essential letters")
 
+            # Validate that essential is not identical to arabic (indicates AI fallback issue)
+            if word_trans.essential.strip() == word_trans.arabic.strip():
+                issues.append(
+                    f"Word {i}: Essential field identical to Arabic field - AI failed to provide stripped root form. "
+                    f"Expected: root form without complex affixes (e.g., 'كَتَبَ' from 'يَكْتُبُ'), "
+                    f"Got: '{word_trans.essential}' (same as arabic field)"
+                )
+
             # Validate that essential words have appropriate diacritics
             is_valid_diacritics, diacritic_reason = validate_essential_has_diacritics(
                 word_trans.arabic, word_trans.essential

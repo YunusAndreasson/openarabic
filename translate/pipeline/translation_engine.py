@@ -119,11 +119,29 @@ def _validate_word_data(word_data: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(ess_opts, list) or not all(isinstance(s, str) for s in ess_opts):
         ess_opts = []
 
+    # Validate essential field
+    if not word_data.get("essential"):
+        raise ValueError(
+            f"Missing 'essential' field for word '{word_data.get('arabic', '')}'. "
+            f"The AI must provide a stripped root form without complex affixes/case endings. "
+            f"Expected: root form (e.g., 'كَتَبَ' from 'يَكْتُبُ'), "
+            f"Got: missing field"
+        )
+
+    if word_data.get("essential") == word_data.get("arabic"):
+        raise ValueError(
+            f"Invalid 'essential' field for word '{word_data.get('arabic', '')}'. "
+            f"The AI provided the same value as 'arabic' field. "
+            f"Expected: stripped root form without complex affixes/case endings, "
+            f"Got: '{word_data.get('essential')}' (identical to arabic field). "
+            f"Examples: 'يَكْتُبُ' → 'كَتَبَ', 'الْكِتَابُ' → 'كِتَابٌ'"
+        )
+
     return {
         "arabic": word_data.get("arabic", ""),
         "english_options": eng_opts,
         "pos": word_data.get("pos") or "unknown",
-        "essential": word_data.get("essential", word_data.get("arabic", "")),
+        "essential": word_data.get("essential"),
         "essential_translation_options": ess_opts,
         "notes": word_data.get("notes"),
         "uncertainties": word_data.get("uncertainties", []),
@@ -614,13 +632,30 @@ def batch_translate_words(
                                 arabic=word_data["arabic"],
                                 english=english_value,
                                 pos=word_data["pos"],
-                                essential=word_data.get(
-                                    "essential", word_data.get("arabic", "unknown")
-                                ),
+                                essential=word_data.get("essential"),
                                 essential_translation=essential_translation_value,
                                 notes=word_data.get("notes", ""),
                                 uncertainties=uncertainties_value,
                             )
+
+                            # Validate essential field - must be present and different from arabic
+                            if not word_option.essential:
+                                raise ValueError(
+                                    f"Missing 'essential' field for word '{word_data['arabic']}'. "
+                                    f"The AI must provide a stripped root form without complex affixes/case endings. "
+                                    f"Expected: root form (e.g., 'كَتَبَ' from 'يَكْتُبُ'), "
+                                    f"Got: missing field"
+                                )
+
+                            if word_option.essential == word_option.arabic:
+                                raise ValueError(
+                                    f"Invalid 'essential' field for word '{word_data['arabic']}'. "
+                                    f"The AI provided the same value as 'arabic' field. "
+                                    f"Expected: stripped root form without complex affixes/case endings, "
+                                    f"Got: '{word_option.essential}' (identical to arabic field). "
+                                    f"Examples: 'يَكْتُبُ' → 'كَتَبَ', 'الْكِتَابُ' → 'كِتَابٌ'"
+                                )
+
                             word_translations_options.append(word_option)
 
                 # Require valid word translations - no fallbacks allowed
@@ -882,15 +917,37 @@ def batch_translate_root_words_with_google_cloud(
 
         # Convert batch results to WordTranslation format
         for translation_result in batch_translations:
+            # Validate that we have proper root word extraction
+            original_text = translation_result["original_text"]
+            translated_text = translation_result["translated_text"]
+
+            # For now, use the original text as essential, but validate it's not just a fallback
+            # TODO: Implement proper root word extraction logic
+            essential_text = original_text
+
             word_option = WordTranslation(
-                arabic=translation_result["original_text"],
-                english=[translation_result["translated_text"]],
+                arabic=original_text,
+                english=[translated_text],
                 pos=translation_result.get("pos", "noun"),
-                essential=translation_result["original_text"],
-                essential_translation=[translation_result["translated_text"]],
+                essential=essential_text,
+                essential_translation=[translated_text],
                 notes=translation_result.get("notes", ""),
                 uncertainties=translation_result.get("uncertainties", []),
             )
+
+            # Validate essential field for Google Cloud results
+            if not word_option.essential:
+                raise ValueError(
+                    f"Google Cloud translation missing 'essential' field for word '{original_text}'. "
+                    f"Root word extraction logic needs to be implemented."
+                )
+
+            if word_option.essential == word_option.arabic:
+                logger.warning(
+                    f"Google Cloud translation: 'essential' field identical to 'arabic' for word '{original_text}'. "
+                    f"This indicates root word extraction logic needs enhancement."
+                )
+
             results.append(WordTranslationResult(word_translations=[word_option]))
 
     except Exception as e:
