@@ -11,6 +11,7 @@ from data.pipeline_types import (
     TranslationResults,
     WordTranslationResults,
 )
+from utils.arabic_text import validate_essential_has_diacritics
 
 logger = logging.getLogger(__name__)
 
@@ -292,6 +293,13 @@ def validate_final_translation(translation: SentenceTranslation) -> list[str]:
                 issues.append(f"Word {i}: Missing English translation")
             if not word_trans.essential.strip():
                 issues.append(f"Word {i}: Missing essential letters")
+
+            # Validate that essential words have appropriate diacritics
+            is_valid_diacritics, diacritic_reason = validate_essential_has_diacritics(
+                word_trans.arabic, word_trans.essential
+            )
+            if not is_valid_diacritics:
+                issues.append(f"Word {i}: {diacritic_reason}")
 
             # Check for error markers in word translations
             if any(err in word_trans.english for err in TRANSLATION_ERROR_MARKERS):

@@ -59,3 +59,50 @@ def clean_word_for_matching(word: str) -> str:
         word = word.replace(p, "")
 
     return word
+
+
+def has_arabic_diacritics(text: str) -> bool:
+    """
+    Check if Arabic text contains basic diacritics (kesra, fetha, damma).
+    This is used to validate that essential words have proper diacritics.
+
+    Args:
+        text: Arabic text to check
+
+    Returns:
+        True if text contains Arabic diacritics, False otherwise
+    """
+    if not text:
+        return False
+
+    # Basic Arabic diacritics: fetha (َ), damma (ُ), kesra (ِ)
+    diacritics = {"\u064e", "\u064f", "\u0650"}  # اَ , ُ , ِ
+
+    return any(char in diacritics for char in text)
+
+
+def validate_essential_has_diacritics(
+    arabic_word: str, essential_word: str
+) -> tuple[bool, str]:
+    """
+    Validate that an essential word has appropriate diacritics.
+
+    Args:
+        arabic_word: Original Arabic word with full tashkeel
+        essential_word: Essential form (should have basic diacritics)
+
+    Returns:
+        Tuple of (is_valid, reason)
+    """
+    if not essential_word:
+        return False, "Essential word is empty"
+
+    if not has_arabic_diacritics(essential_word):
+        # Check if the original word had diacritics that should be preserved
+        if has_arabic_diacritics(arabic_word):
+            return (
+                False,
+                f"Essential word '{essential_word}' missing diacritics (original: '{arabic_word}')",
+            )
+
+    return True, "Valid essential word with diacritics"

@@ -54,7 +54,6 @@ DEFAULT_VOICE_SETTINGS = {
 # English voice settings for bilingual audio
 ENGLISH_VOICE_SETTINGS = {
     "use_speaker_boost": True,  # Enhanced speaker clarity
-    "speed": 0.9,  # Slightly faster for English (more natural)
 }
 
 # Audio pause configuration for bilingual audio

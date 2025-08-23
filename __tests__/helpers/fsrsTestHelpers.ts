@@ -22,9 +22,8 @@ export const createTestWord = (overrides: Partial<StudyWord> = {}): StudyWord =>
     fsrs_reps: 0,
     fsrs_lapses: 0,
     fsrs_state: 0,
-    fsrs_last_review: null,
+    fsrs_last_review: new Date().toISOString(),
     difficulty: 0.65,
-    success_streak: 0,
     root: undefined,
     ...overrides,
   } as StudyWord;
@@ -89,14 +88,12 @@ export const studyWordArbitrary = fc.record({
   fsrs_reps: fsrsArbitraries.reps,
   fsrs_lapses: fsrsArbitraries.lapses,
   fsrs_state: fsrsArbitraries.state,
-  fsrs_last_review: fc.option(
-    fc
-      .date()
-      .filter(d => !isNaN(d.getTime()))
-      .map(d => d.toISOString())
-  ),
+  fsrs_last_review: fc
+    .date()
+    .filter(d => !isNaN(d.getTime()))
+    .map(d => d.toISOString()),
   difficulty: fc.float({ min: 0, max: 1, noDefaultInfinity: true, noNaN: true }),
-  success_streak: fc.integer({ min: 0, max: 100 }),
+
   root: fc.constant(undefined),
 }) as fc.Arbitrary<StudyWord>;
 
@@ -131,19 +128,17 @@ export const strugglingWordArbitrary = fc.record({
   fsrs_reps: fsrsArbitraries.reps,
   fsrs_lapses: fc.integer({ min: 1, max: 20 }), // At least 1 lapse
   fsrs_state: fc.integer({ min: 1, max: 3 }), // Learning, Review, or Relearning
-  fsrs_last_review: fc.option(
-    fc
-      .date()
-      .filter(d => !isNaN(d.getTime()))
-      .map(d => d.toISOString())
-  ),
+  fsrs_last_review: fc
+    .date()
+    .filter(d => !isNaN(d.getTime()))
+    .map(d => d.toISOString()),
   difficulty: fc.float({
     min: Math.fround(0.7),
     max: Math.fround(1),
     noDefaultInfinity: true,
     noNaN: true,
   }), // High difficulty
-  success_streak: fc.integer({ min: 0, max: 5 }), // Low success streak
+
   root: fc.constant(undefined),
 }) as fc.Arbitrary<StudyWord>;
 
@@ -167,14 +162,12 @@ export const dueWordArbitrary = fc.record({
   fsrs_reps: fsrsArbitraries.reps,
   fsrs_lapses: fsrsArbitraries.lapses,
   fsrs_state: fsrsArbitraries.state,
-  fsrs_last_review: fc.option(
-    fc
-      .date()
-      .filter(d => !isNaN(d.getTime()))
-      .map(d => d.toISOString())
-  ),
+  fsrs_last_review: fc
+    .date()
+    .filter(d => !isNaN(d.getTime()))
+    .map(d => d.toISOString()),
   difficulty: fc.float({ min: 0, max: 1, noDefaultInfinity: true, noNaN: true }),
-  success_streak: fc.integer({ min: 0, max: 100 }),
+
   root: fc.constant(undefined),
 }) as fc.Arbitrary<StudyWord>;
 

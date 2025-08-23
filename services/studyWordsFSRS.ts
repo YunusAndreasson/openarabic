@@ -18,7 +18,6 @@ interface FSRSWordUpdate {
   fsrs_lapses: number;
   fsrs_state: number;
   fsrs_last_review: string;
-  success_streak?: number;
 }
 
 // Define options for fetching FSRS words
@@ -51,12 +50,12 @@ export const studyWordsFSRSService = {
     // Build the query step by step with proper typing
     const query = supabase.from('study_words');
 
-      // Define the selection based on options
-      let selectQuery;
-      if (options.forStats) {
-        // For stats, we only need core fields, not all the relationships
-        selectQuery = query.select(
-          `
+    // Define the selection based on options
+    let selectQuery;
+    if (options.forStats) {
+      // For stats, we only need core fields, not all the relationships
+      selectQuery = query.select(
+        `
           fsrs_due,
           fsrs_stability,
           fsrs_difficulty,
@@ -69,13 +68,12 @@ export const studyWordsFSRSService = {
           fsrs_last_review,
           root_id,
           created_at`
-        );
-      } else {
-        // Get full data with relationships - root is the only relation we need
-        const columns = `
+      );
+    } else {
+      // Get full data with relationships - root is the only relation we need
+      const columns = `
           root_id,
           user_id,
-          success_streak,
           fsrs_due,
           fsrs_stability,
           fsrs_difficulty,
@@ -89,61 +87,61 @@ export const studyWordsFSRSService = {
           created_at,
           root:roots (id, letters, meaning, audio_url, audio_url_en)
         `;
-        selectQuery = query.select(columns);
-      }
+      selectQuery = query.select(columns);
+    }
 
-      // Add filters after the select
-      let filteredQuery = selectQuery.eq('user_id', userId);
+    // Add filters after the select
+    let filteredQuery = selectQuery.eq('user_id', userId);
 
-      if (options.reviewedOnly) {
-        filteredQuery = filteredQuery.not('fsrs_last_review', 'is', null).gt('fsrs_reps', 0);
-      }
+    if (options.reviewedOnly) {
+      filteredQuery = filteredQuery.not('fsrs_last_review', 'is', null).gt('fsrs_reps', 0);
+    }
 
-      // Add due date filter if requested
-      if (options.onlyDue) {
-        const now = new Date().toISOString();
-        filteredQuery = filteredQuery.lte('fsrs_due', now);
-      }
+    // Add due date filter if requested
+    if (options.onlyDue) {
+      const now = new Date().toISOString();
+      filteredQuery = filteredQuery.lte('fsrs_due', now);
+    }
 
-      // Session cooldown: Exclude words reviewed within the specified hours
-      if (options.sessionCooldownHours && options.sessionCooldownHours > 0) {
-        const cooldownTime = new Date(Date.now() - options.sessionCooldownHours * 60 * 60 * 1000);
-        filteredQuery = filteredQuery.or(
-          `fsrs_last_review.is.null,fsrs_last_review.lt.${cooldownTime.toISOString()}`
-        );
-      }
+    // Session cooldown: Exclude words reviewed within the specified hours
+    if (options.sessionCooldownHours && options.sessionCooldownHours > 0) {
+      const cooldownTime = new Date(Date.now() - options.sessionCooldownHours * 60 * 60 * 1000);
+      filteredQuery = filteredQuery.or(
+        `fsrs_last_review.is.null,fsrs_last_review.lt.${cooldownTime.toISOString()}`
+      );
+    }
 
-      // Apply category filters server-side to reduce payload
-      if (options.category === 'mastered') {
-        filteredQuery = filteredQuery.eq('fsrs_state', 2).gte('fsrs_stability', 5);
-      } else if (options.category === 'learning') {
-        filteredQuery = filteredQuery.or(
-          'fsrs_state.in.(0,1,3),and(fsrs_state.eq.2,fsrs_stability.lt.5)'
-        );
-      }
+    // Apply category filters server-side to reduce payload
+    if (options.category === 'mastered') {
+      filteredQuery = filteredQuery.eq('fsrs_state', 2).gte('fsrs_stability', 5);
+    } else if (options.category === 'learning') {
+      filteredQuery = filteredQuery.or(
+        'fsrs_state.in.(0,1,3),and(fsrs_state.eq.2,fsrs_stability.lt.5)'
+      );
+    }
 
-      if (options.sortByDifficultyAndStability) {
-        filteredQuery = filteredQuery
-          .order('fsrs_difficulty', { ascending: false })
-          .order('fsrs_stability', { ascending: true })
-          .order('fsrs_last_review', { ascending: false });
-      } else {
-        // Order by due date
-        filteredQuery = filteredQuery.order('fsrs_due', { ascending: true });
-      }
+    if (options.sortByDifficultyAndStability) {
+      filteredQuery = filteredQuery
+        .order('fsrs_difficulty', { ascending: false })
+        .order('fsrs_stability', { ascending: true })
+        .order('fsrs_last_review', { ascending: false });
+    } else {
+      // Order by due date
+      filteredQuery = filteredQuery.order('fsrs_due', { ascending: true });
+    }
 
-      // Apply limit if specified
-      if (options.limit) {
-        filteredQuery = filteredQuery.limit(options.limit);
-      }
+    // Apply limit if specified
+    if (options.limit) {
+      filteredQuery = filteredQuery.limit(options.limit);
+    }
 
-      const { data, error } = await filteredQuery;
+    const { data, error } = await filteredQuery;
 
-      if (error) {
-        throw error;
-      }
+    if (error) {
+      throw error;
+    }
 
-      return data as StudyWord[];
+    return data as StudyWord[];
   },
 
   // Update word with FSRS parameters
@@ -245,7 +243,6 @@ export const studyWordsFSRSService = {
         p_fsrs_last_review: update.fsrs_last_review,
         p_rating: rating,
         p_learning_steps: learningSteps,
-        p_success_streak: update.success_streak ?? undefined,
       });
 
       if (error) {
@@ -310,7 +307,6 @@ export const studyWordsFSRSService = {
       user_id: userId,
       root_id: rootId,
       created_at: now.toISOString(),
-      success_streak: 0,
       fsrs_due: now.toISOString(),
       fsrs_stability: INITIAL_STABILITY,
       fsrs_difficulty: INITIAL_FSRS_DIFFICULTY,
@@ -320,7 +316,7 @@ export const studyWordsFSRSService = {
       fsrs_reps: 0,
       fsrs_lapses: 0,
       fsrs_state: 0, // New state
-      fsrs_last_review: null,
+      fsrs_last_review: now.toISOString(),
     };
 
     const { error: insertError } = await supabase.from('study_words').insert(newEntry);

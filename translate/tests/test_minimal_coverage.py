@@ -129,11 +129,12 @@ class TestConfigCommon:
 
     def test_get_storage_url(self):
         """Test get_storage_url function."""
+        # The function returns just the filename (full URLs are reconstructed in mobile app)
         url = get_storage_url("test.mp3", "audio")
-        assert "storage/v1/object/public/audio/test.mp3" in url
+        assert url == "test.mp3"
 
         url = get_storage_url("file.txt", "documents")
-        assert "storage/v1/object/public/documents/file.txt" in url
+        assert url == "file.txt"
 
     @patch.dict(
         os.environ,

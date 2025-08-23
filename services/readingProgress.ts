@@ -14,6 +14,33 @@ export interface ReadingProgress {
   created_at: string | null;
 }
 
+// Helper type for safe reading progress data
+export interface SafeReadingProgress {
+  user_id: string;
+  article_id: number;
+  last_sentence_read: number;
+  total_sentences: number;
+  progress_percentage: number;
+  updated_at: string;
+  created_at: string;
+}
+
+/**
+ * Safely converts nullable ReadingProgress to SafeReadingProgress with defaults
+ */
+export function toSafeReadingProgress(
+  progress: ReadingProgress | null
+): SafeReadingProgress | null {
+  if (!progress) return null;
+
+  return {
+    ...progress,
+    progress_percentage: progress.progress_percentage ?? 0,
+    updated_at: progress.updated_at ?? progress.created_at ?? new Date().toISOString(),
+    created_at: progress.created_at ?? new Date().toISOString(),
+  };
+}
+
 interface UpdateReadingProgressParams {
   userId: string;
   articleId: number;
@@ -62,6 +89,17 @@ export class ReadingProgressService {
   }
 
   /**
+   * Get safe reading progress for a specific article (with nulls handled)
+   */
+  static async getSafeProgress(
+    userId: string,
+    articleId: number
+  ): Promise<SafeReadingProgress | null> {
+    const progress = await this.getProgress(userId, articleId);
+    return toSafeReadingProgress(progress);
+  }
+
+  /**
    * Get reading progress for multiple articles
    */
   static async getBulkProgress(
@@ -92,6 +130,26 @@ export class ReadingProgressService {
   }
 
   /**
+   * Get safe reading progress for multiple articles (with nulls handled)
+   */
+  static async getBulkSafeProgress(
+    userId: string,
+    articleIds: number[]
+  ): Promise<Map<number, SafeReadingProgress>> {
+    const progressMap = await this.getBulkProgress(userId, articleIds);
+    const safeProgressMap = new Map<number, SafeReadingProgress>();
+
+    progressMap.forEach((progress, articleId) => {
+      const safeProgress = toSafeReadingProgress(progress);
+      if (safeProgress) {
+        safeProgressMap.set(articleId, safeProgress);
+      }
+    });
+
+    return safeProgressMap;
+  }
+
+  /**
    * Get articles sorted by reading progress
    */
   static async getArticlesByProgress(
@@ -109,6 +167,19 @@ export class ReadingProgressService {
     }
 
     return (data as ReadingProgressRow[]).map(row => row as ReadingProgress);
+  }
+
+  /**
+   * Get articles sorted by reading progress (with nulls handled)
+   */
+  static async getArticlesBySafeProgress(
+    userId: string,
+    sortOrder: 'asc' | 'desc' = 'asc'
+  ): Promise<SafeReadingProgress[]> {
+    const progressData = await this.getArticlesByProgress(userId, sortOrder);
+    return progressData
+      .map(p => toSafeReadingProgress(p))
+      .filter((p): p is SafeReadingProgress => p !== null);
   }
 }
 

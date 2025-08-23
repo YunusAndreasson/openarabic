@@ -24,9 +24,8 @@ const createTestWord = (overrides: Partial<StudyWord> = {}): StudyWord => {
     fsrs_reps: 0,
     fsrs_lapses: 0,
     fsrs_state: 0,
-    fsrs_last_review: null,
+    fsrs_last_review: new Date().toISOString(),
     difficulty: 0.65,
-    success_streak: 0,
     root: { id: 1, letters: 'كتاب', meaning: 'book', audio_url: null, audio_url_en: null },
     ...overrides,
   } as StudyWord;

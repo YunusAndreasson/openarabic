@@ -147,8 +147,8 @@ export function createComparators(
     date: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
     difficulty: (a, b) => a.difficulty_level - b.difficulty_level,
     progress: (a, b) => {
-      const progressA = progressMap.get(a.id)?.progress_percentage ?? 0;
-      const progressB = progressMap.get(b.id)?.progress_percentage ?? 0;
+      const progressA = progressMap.get(a.id)?.progress_percentage || 0;
+      const progressB = progressMap.get(b.id)?.progress_percentage || 0;
       return progressA - progressB;
     },
   };

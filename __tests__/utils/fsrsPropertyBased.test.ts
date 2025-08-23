@@ -368,7 +368,6 @@ describe('FSRS Property-Based Tests', () => {
                   .map(d => d.toISOString())
               ),
               difficulty: fc.float({ min: 0, max: 0.5, noDefaultInfinity: true, noNaN: true }), // Low difficulty
-              success_streak: fc.integer({ min: 5, max: 20 }), // High success streak
               root: fc.constant(undefined),
             }) as fc.Arbitrary<StudyWord>,
           }),

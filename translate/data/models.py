@@ -92,7 +92,7 @@ class WordTranslation(BaseModel):
     )
     pos: PartOfSpeech | Literal["unknown"] = Field(description="Part of speech")
     essential: str | Literal["unknown"] = Field(
-        description="Essential letters for flashcards - core letters without affixes"
+        description="Essential letters for flashcards - core letters with diacritics such as kesra, fetha, damma without affixes"
     )
     essential_translation: str | list[str] | Literal["unknown"] = Field(
         description="Essential translation(s) - single string for final, list for options"

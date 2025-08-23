@@ -17,6 +17,7 @@ import { useFSRS } from '@/hooks/vocabulary/useFSRS';
 import { useWordSizing } from '@/hooks/vocabulary/useWordSizing';
 import type { SessionMetrics } from '@/types/review.types';
 import { handleError } from '@/utils/errorHandling';
+import { generateAudioUrl } from '@/utils/imageUtils';
 
 // Consolidated refs for easier state management
 interface ReviewTimeRefs {
@@ -425,7 +426,10 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
             (confidence === 'vague' || confidence === 'unknown') &&
             currentWord?.root?.audio_url_en
           ) {
-            playEnglishFeedback(currentWord.root.audio_url_en);
+            const englishAudioUrl = generateAudioUrl(currentWord.root.audio_url_en);
+            if (englishAudioUrl) {
+              playEnglishFeedback(englishAudioUrl);
+            }
           }
 
           // Track vague responses for future struggle detection
@@ -461,6 +465,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       playEnglishFeedback,
       currentWord?.root?.audio_url_en,
       currentWord?.fsrs_stability,
+      generateAudioUrl,
     ]
   );
 
@@ -536,7 +541,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     }
 
     const wordId = String(currentWord.root_id);
-    const audioUrl = currentWord.root.audio_url;
+    const audioUrl = generateAudioUrl(currentWord.root.audio_url);
 
     // Use a ref to track if this effect is still valid
     const effectRef = { current: true };
@@ -560,7 +565,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     return () => {
       effectRef.current = false;
     };
-  }, [currentWord, isComplete, isTransitioningToCompletion, playAudio]);
+  }, [currentWord, isComplete, isTransitioningToCompletion, playAudio, generateAudioUrl]);
 
   // Safety watchdog: if no current word and not transitioning, force completion
   useEffect(() => {

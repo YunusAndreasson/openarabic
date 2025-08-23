@@ -5,7 +5,6 @@ from typing import Any
 
 from data.config import (
     ARABIC_VOICE_ID,
-    SUPABASE_URL,
 )
 from supabase import create_client
 

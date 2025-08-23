@@ -298,7 +298,6 @@ export function useFSRS({
 
       // Prepare FSRS update payload
       const wordUpdateData = {
-        success_streak: confidence === 'known' ? (currentWord.success_streak || 0) + 1 : 0,
         fsrs_due: newCard.due.toISOString(),
         fsrs_stability: newCard.stability,
         fsrs_difficulty: newCard.difficulty,

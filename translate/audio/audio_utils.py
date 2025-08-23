@@ -14,6 +14,11 @@ from elevenlabs import VoiceSettings
 from elevenlabs.client import ElevenLabs
 from mutagen.mp3 import MP3
 
+# Audio generation optimization: Prevent duplicate generation and uploads
+# This addresses the issue where the system would try to generate audio for
+# words that already exist, causing "Duplicate resource" errors and wasting
+# API costs (ElevenLabs, Google TTS).
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from data.config import (
@@ -27,7 +32,6 @@ from data.config import (
     ENGLISH_VOICE_ID,
     ENGLISH_VOICE_SETTINGS,
     GOOGLE_CLOUD_CREDENTIALS_PATH,
-    SUPABASE_URL,
 )
 from data.models import AudioResult, BilingualAudioResult
 from utils.config_common import get_storage_url
@@ -346,7 +350,15 @@ def generate_arabic_word_audio(word: str, filename: str) -> dict | None:
         Dictionary with audio URL and metadata, or None if failed
     """
     try:
-        # Check cache first
+        # Check if audio already exists in storage using the actual filename
+        if check_file_exists("audio", filename):
+            logger.info(
+                f"Arabic audio file {filename} already exists, skipping generation"
+            )
+            url = get_storage_url(filename)
+            return {"url": url, "cached": True}
+
+        # Check cache first (fallback)
         cache_key = get_cache_key(word)
         cached_url = get_cached_audio_url(cache_key, "arabic")
         if cached_url:
@@ -367,12 +379,18 @@ def generate_arabic_word_audio(word: str, filename: str) -> dict | None:
         with open(temp_audio_path, "wb") as f:
             f.write(result["audio"])
 
-        # Upload to Supabase storage
-        with open(temp_audio_path, "rb") as f:
-            get_supabase_client().storage.from_("audio").upload(
-                filename,
-                f,
-                file_options={"content-type": "audio/mpeg"},
+        # Upload to Supabase storage (double-check existence)
+        if not check_file_exists("audio", filename):
+            with open(temp_audio_path, "rb") as f:
+                get_supabase_client().storage.from_("audio").upload(
+                    filename,
+                    f,
+                    file_options={"content-type": "audio/mpeg"},
+                )
+            logger.info(f"Uploaded new Arabic audio file: {filename}")
+        else:
+            logger.info(
+                f"Arabic audio file {filename} already exists in storage, skipping upload"
             )
 
         # Clean up temporary file
@@ -399,7 +417,15 @@ def generate_english_word_audio(word: str, filename: str) -> dict | None:
         Dictionary with audio URL and metadata, or None if failed
     """
     try:
-        # Check cache first
+        # Check if audio already exists in storage using the actual filename
+        if check_file_exists("audio", filename):
+            logger.info(
+                f"English audio file {filename} already exists, skipping generation"
+            )
+            url = get_storage_url(filename)
+            return {"url": url, "cached": True}
+
+        # Check cache first (fallback)
         cache_key = get_cache_key(word)
         cached_url = get_cached_audio_url(cache_key, "english")
         if cached_url:
@@ -420,12 +446,18 @@ def generate_english_word_audio(word: str, filename: str) -> dict | None:
         with open(temp_audio_path, "wb") as f:
             f.write(result["audio"])
 
-        # Upload to Supabase storage
-        with open(temp_audio_path, "rb") as f:
-            get_supabase_client().storage.from_("audio").upload(
-                filename,
-                f,
-                file_options={"content-type": "audio/mpeg"},
+        # Upload to Supabase storage (double-check existence)
+        if not check_file_exists("audio", filename):
+            with open(temp_audio_path, "rb") as f:
+                get_supabase_client().storage.from_("audio").upload(
+                    filename,
+                    f,
+                    file_options={"content-type": "audio/mpeg"},
+                )
+            logger.info(f"Uploaded new English audio file: {filename}")
+        else:
+            logger.info(
+                f"English audio file {filename} already exists in storage, skipping upload"
             )
 
         # Clean up temporary file
@@ -452,6 +484,16 @@ def generate_sentence_audio(
     Returns an AudioResult object with URL.
     """
     try:
+        # Check if audio already exists in storage to avoid duplicate generation
+        if check_file_exists("audio", filename):
+            logger.info(f"Audio file {filename} already exists, skipping generation")
+            url = get_storage_url(filename)
+            return AudioResult(
+                url=url,
+                filename=filename,
+                duration="unknown",  # Duration not available without generating
+            )
+
         # Prefer tashkeel text if available
         tts_text = tashkeel_text if tashkeel_text else text
         # Use the main voice for sentences
@@ -476,13 +518,21 @@ def generate_sentence_audio(
         with open(temp_audio_path, "wb") as f:
             f.write(audio_data)
 
-        with open(temp_audio_path, "rb") as f:
-            get_supabase_client().storage.from_("audio").upload(
-                filename,
-                f,
-                file_options={"content-type": "audio/mpeg"},
+        # Upload to Supabase storage (double-check existence to prevent duplicates)
+        if not check_file_exists("audio", filename):
+            with open(temp_audio_path, "rb") as f:
+                get_supabase_client().storage.from_("audio").upload(
+                    filename,
+                    f,
+                    file_options={"content-type": "audio/mpeg"},
+                )
+            logger.info(f"Uploaded new sentence audio file: {filename}")
+        else:
+            logger.info(
+                f"Sentence audio file {filename} already exists in storage, skipping upload"
             )
-            url = get_storage_url(filename)
+
+        url = get_storage_url(filename)
         if os.path.exists(temp_audio_path):
             os.remove(temp_audio_path)
 
@@ -645,6 +695,20 @@ def generate_bilingual_sentence_audio(
         BilingualAudioResult with URL and timing information
     """
     try:
+        # Check if audio already exists in storage to avoid duplicate generation
+        if check_file_exists("audio", filename):
+            logger.info(
+                f"Bilingual audio file {filename} already exists, skipping generation"
+            )
+            url = get_storage_url(filename)
+            return BilingualAudioResult(
+                url=url,
+                filename=filename,
+                duration="unknown",
+                english_duration="unknown",
+                arabic_duration="unknown",
+            )
+
         logger.info(
             f"Starting bilingual audio generation for: '{english_text[:50]}...' + '{arabic_text[:50]}...'"
         )
@@ -753,14 +817,21 @@ def generate_bilingual_sentence_audio(
         with open(temp_audio_path, "wb") as f:
             f.write(combined_audio_data)
 
-        # Upload to Supabase storage
-        with open(temp_audio_path, "rb") as f:
-            get_supabase_client().storage.from_("audio").upload(
-                filename,
-                f,
-                file_options={"content-type": "audio/mpeg"},
+        # Upload to Supabase storage (double-check existence to prevent duplicates)
+        if not check_file_exists("audio", filename):
+            with open(temp_audio_path, "rb") as f:
+                get_supabase_client().storage.from_("audio").upload(
+                    filename,
+                    f,
+                    file_options={"content-type": "audio/mpeg"},
+                )
+            logger.info(f"Uploaded new bilingual audio file: {filename}")
+        else:
+            logger.info(
+                f"Bilingual audio file {filename} already exists in storage, skipping upload"
             )
-            url = get_storage_url(filename)
+
+        url = get_storage_url(filename)
 
         # Clean up temporary file
         if os.path.exists(temp_audio_path):

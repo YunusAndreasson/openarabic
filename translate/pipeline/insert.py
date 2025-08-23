@@ -28,7 +28,6 @@ from audio.audio_utils import (
 )
 from data.config import (
     AUTHOR_NUMBER_MAPPING,
-    SUPABASE_URL,
     TRANSLATE_DIR,
 )
 from data.models import ArticleData, SentenceTranslation
@@ -144,7 +143,6 @@ def generate_article_audio(
                 AUDIO_TEMP_DIR,
                 ENGLISH_VOICE_ID,
                 ENGLISH_VOICE_SETTINGS,
-                SUPABASE_URL,
             )
             from utils.storage_utils import get_supabase_client
 

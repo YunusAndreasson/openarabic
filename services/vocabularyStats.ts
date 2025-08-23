@@ -34,10 +34,11 @@ export const vocabularyStatsService = {
       return (
         data?.map(d => ({
           date: d.date as string,
-          cumulativeWords: Number(d.cumulative_words ?? 0),
-          cumulativeMastered: Number(d.cumulative_mastered ?? 0),
+          cumulativeWords: Number((d as any).cumulative_words ?? 0),
+          cumulativeMastered: Number((d as any).cumulative_mastered ?? 0),
           masteryRate: Math.round(
-            (Number(d.cumulative_mastered ?? 0) / Math.max(1, Number(d.cumulative_words ?? 0))) *
+            (Number((d as any).cumulative_mastered ?? 0) /
+              Math.max(1, Number((d as any).cumulative_words ?? 0))) *
               100
           ),
         })) ?? []
@@ -56,7 +57,7 @@ export const vocabularyStatsService = {
         data?.map(d => ({
           date: d.date as string,
           wordsReviewed: Number(d.words_reviewed ?? 0),
-          avgEfficiency: Number(d.avg_efficiency ?? 0),
+          avgEfficiency: Number((d as any).avg_efficiency ?? 0),
         })) ?? []
       );
     } catch (err) {

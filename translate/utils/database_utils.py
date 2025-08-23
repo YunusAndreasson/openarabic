@@ -22,7 +22,7 @@ except (ImportError, OSError):
     concatenate_audio_files = None
     get_or_generate_root_audio = None
 # Import common database utilities
-from data.config import ARCHIVE_DIR, SUPABASE_URL
+from data.config import ARCHIVE_DIR
 from data.enums import DifficultyLevel
 from data.pipeline_types import WordData
 from utils.arabic_text import clean_arabic_text
@@ -47,7 +47,8 @@ def extract_root_info(word: WordData) -> tuple[str, str | None, str | None]:
         return word["root"], word.get("notes"), word["english"]
 
     # Since arabic and english are non-nullable, we can access them directly
-    letters = word.get("essential", word["arabic"])
+    # Use the arabic field (with tashkeel) for root audio generation, not essential (without tashkeel)
+    letters = word["arabic"]
     english = word["english"]
     meaning = word.get("essential_translation") or f"Auto-generated root for: {english}"
     english_translation = word.get("essential_translation", "") or english
@@ -339,7 +340,6 @@ def insert_article_sentences(
                 AUDIO_TEMP_DIR,
                 ENGLISH_VOICE_ID,
                 ENGLISH_VOICE_SETTINGS,
-                SUPABASE_URL,
             )
             from utils.storage_utils import get_supabase_client
 

@@ -112,7 +112,6 @@ describe('VocabularyStatCards - Basic Functionality', () => {
     fsrs_state: 2,
     fsrs_last_review: new Date().toISOString(),
     created_at: new Date().toISOString(),
-    success_streak: 0,
     ...overrides,
   });
 

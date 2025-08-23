@@ -134,8 +134,6 @@ def get_random_image_url(
     """
     import secrets
 
-    from .config_common import SUPABASE_URL
-
     for attempt in range(max_retries):
         try:
             # List all files in the bucket/folder

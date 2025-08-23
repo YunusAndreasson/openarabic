@@ -11,7 +11,7 @@ from audio.audio_utils import (
     get_cache_key,
     get_cached_audio_url,
 )
-from data.config import AUDIO_CACHE_DIR, AUDIO_TEMP_DIR, SUPABASE_URL
+from data.config import AUDIO_CACHE_DIR, AUDIO_TEMP_DIR
 from utils.config_common import get_storage_url
 from utils.storage_utils import check_file_exists
 
@@ -53,7 +53,7 @@ def get_or_generate_root_audio(
     audio_url = get_cached_audio_url(cache_key_ar, "arabic")
     if not audio_url:
         logger.info(f"Generating new audio for Arabic word: {arabic_word}")
-        result = generate_arabic_word_audio(arabic_word, cache_key_ar)
+        result = generate_arabic_word_audio(arabic_word, f"{cache_key_ar}.mp3")
         audio_url = result.get("url") if result else None
         if audio_url:
             logger.info(f"Generated Arabic audio URL: {audio_url}")
@@ -72,7 +72,9 @@ def get_or_generate_root_audio(
         audio_url_en = get_cached_audio_url(cache_key_en, "english")
         if not audio_url_en:
             logger.info(f"Generating new audio for English word: {english_translation}")
-            result_en = generate_english_word_audio(english_translation, cache_key_en)
+            result_en = generate_english_word_audio(
+                english_translation, f"{cache_key_en}.mp3"
+            )
             audio_url_en = result_en.get("url") if result_en else None
             if audio_url_en:
                 logger.info(f"Generated English audio URL: {audio_url_en}")

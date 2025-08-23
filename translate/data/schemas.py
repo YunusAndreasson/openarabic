@@ -111,7 +111,7 @@ Input text:
 """
 )
 
-SENTENCE_TRANSLATION_USER_PROMPT = """Translate Classical Arabic sentences from Islamic texts to English with proper context and linguistic accuracy.
+SENTENCE_TRANSLATION_USER_PROMPT = """Translate Classical Arabic (fusha) sentences from Islamic texts to easy English with proper context and linguistic accuracy.
 
 Focus on preserving Islamic terminology and classical Arabic meanings. Handle Arabic script complexities carefully including proper tashkeel preservation.
 
@@ -119,10 +119,9 @@ For each sentence, provide:
 1. `translation` (string):
    - Use accessible English, preserving Arabic word order where possible.
    - Use simple vocabulary appropriate for Islamic content (no obscure terms).
-   - Add bracketed words [like this] for clarity if needed but not present in the original text.
+   - Only use English words since this will be converted to audio later
    - Match register: solemn for supplications, precise for hadith.
-    - Ensure grammatical accuracy (conjugations, agreement, basic syntax).
-   - Preserve ALL original punctuation, formatting, and special characters.
+   - Ensure grammatical accuracy (conjugations, agreement, basic syntax).
 2. `notes` (string, required):
    - Additional context or explanations regarding the translation.
 3. `uncertainties` (array of objects, optional):
@@ -191,7 +190,19 @@ VALIDATION REQUIREMENTS:
     + format_valid_pos()
     + """
 - `essential` should contain core letters, stripped of affixes/suffixes and case/mood endings
-- Basic standard diacritics (like on فَعَلَ) are acceptable in `essential` field
+- CRITICAL: PRESERVE basic diacritics (kesra ِ, fetha اَ, damma ُ) in essential field
+- DO NOT remove diacritics - only remove complex morphological affixes
+- Examples of what to KEEP (basic diacritics):
+  * "كَتَبَ" → "كَتَبَ" (keep ALL diacritics - this is already essential)
+  * "مِنَ" → "مِنَ" (keep ALL diacritics - this is already essential)
+  * "إِلَى" → "إِلَى" (keep ALL diacritics - this is already essential)
+- Examples of what to MODIFY (remove complex affixes, keep basic diacritics):
+  * "يَكْتُبُ" → "كَتَبَ" (remove يَـ prefix and ـُ ending, keep root diacritics)
+  * "الْكِتَابُ" → "كِتَابٌ" (remove الـ prefix and ـُ ending, keep root diacritics)
+  * "كَاتِبًا" → "كَاتِبٌ" (remove complex case ending, keep basic diacritics)
+  * "تَكْتُبِينَ" → "كَتَبَ" (remove all affixes, keep root with basic diacritics)
+- FOR THE TEST CASE "مِنَ": essential should be "مِنَ" (keep diacritics, no changes needed)
+- FOR THE TEST CASE "إِلَى": essential should be "إِلَى" (keep diacritics, no changes needed)
 - Preserve ALL original text formatting, punctuation, and special characters in `arabic` field
 - Provide 1-3 options for `english` and `essential_translation`, ordered by likelihood
 
