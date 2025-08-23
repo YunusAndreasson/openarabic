@@ -1,8 +1,7 @@
-// Import the type from the central location
-import { SUPABASE_URL } from '@/constants/Supabase';
 import { STRINGS } from '@/constants/strings';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
 import { handleError } from '@/utils/errorHandling';
+import { generateAudioUrl, generateImageUrl } from '@/utils/imageUtils';
 
 import { articlesService } from './articles';
 import { audioCache } from './audioCache';
@@ -11,33 +10,6 @@ import { readingListService } from './readingList';
 // Helper function to generate composite ID
 const generateTrackId = (articleId: number): string => {
   return `article-${articleId}`;
-};
-
-// Helper function to reconstruct full URL from filename
-export const reconstructFullUrl = (filename: string, bucket: string): string => {
-  return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${filename}`;
-};
-
-// Helper function to reconstruct audio URL from filename
-export const reconstructAudioUrl = (filename: string): string => {
-  return reconstructFullUrl(filename, 'audio');
-};
-
-// Helper function to reconstruct image URL from filename
-export const reconstructImageUrl = (filename: string): string => {
-  return reconstructFullUrl(filename, 'images');
-};
-
-// Helper function to get the appropriate audio URL based on preference
-const getAudioUrlForPreference = (
-  article: { audio_url: string; audio_url_bilingual?: string | null },
-  preference: 'arabic' | 'bilingual'
-): string => {
-  if (preference === 'bilingual' && article.audio_url_bilingual) {
-    return reconstructAudioUrl(article.audio_url_bilingual);
-  }
-  // Fall back to Arabic audio if bilingual is not available or preference is Arabic
-  return reconstructAudioUrl(article.audio_url);
 };
 
 export const enhancedAudioService = {
@@ -52,18 +24,22 @@ export const enhancedAudioService = {
       // Fetch article details - audio is guaranteed to be available
       const article = await articlesService.getArticleById(articleId);
 
-      // Select audio URL based on preference
-      const audioUrl = getAudioUrlForPreference(article, audioPreference);
+      // Select the correct audio URL based on preference
+      const selectedAudioUrl =
+        audioPreference === 'bilingual' && article.audio_url_bilingual
+          ? article.audio_url_bilingual
+          : article.audio_url;
 
-      // Use cached audio path when possible for offline support and cache accounting
-      const cachedAudioUrl = await audioCache.getAudio(audioUrl);
+      // Use centralized URL generator
+      const fullAudioUrl = generateAudioUrl(selectedAudioUrl);
+      const cachedAudioUrl = await audioCache.getAudio(fullAudioUrl || selectedAudioUrl);
 
       return {
         id: generateTrackId(articleId),
         articleId,
         audioUrl: cachedAudioUrl,
         title: article.title,
-        imageUrl: reconstructImageUrl(String(article.image_url)),
+        imageUrl: generateImageUrl(article.image_url),
       };
     } catch (error) {
       await handleError(error instanceof Error ? error : new Error(String(error)), {
@@ -83,7 +59,7 @@ export const enhancedAudioService = {
     audioPreference: 'arabic' | 'bilingual' = 'bilingual'
   ): Promise<EnhancedAudioTrack[]> {
     try {
-      // Fetch user's reading list - all articles guaranteed to have audio
+      // Fetch user's reading list with the correct audio URL selected at database level
       const readingList = await readingListService.getReadingList(userId);
 
       // Build tracks directly from the reading list items
@@ -92,16 +68,22 @@ export const enhancedAudioService = {
       for (const item of readingList) {
         const article = item.articles;
 
-        // Select audio URL based on preference
-        const audioUrl = getAudioUrlForPreference(article, audioPreference);
-        const cachedAudioUrl = await audioCache.getAudio(audioUrl);
+        // Select the correct audio URL based on preference
+        const selectedAudioUrl =
+          audioPreference === 'bilingual' && article.audio_url_bilingual
+            ? article.audio_url_bilingual
+            : article.audio_url;
+
+        // Use centralized URL generator
+        const fullAudioUrl = generateAudioUrl(selectedAudioUrl);
+        const cachedAudioUrl = await audioCache.getAudio(fullAudioUrl || selectedAudioUrl);
 
         allTracks.push({
           id: generateTrackId(item.article_id),
           articleId: item.article_id,
           audioUrl: cachedAudioUrl,
           title: article.title,
-          imageUrl: reconstructImageUrl(String(article.image_url)),
+          imageUrl: generateImageUrl(article.image_url),
         });
       }
 

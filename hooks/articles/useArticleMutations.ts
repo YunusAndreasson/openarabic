@@ -14,15 +14,18 @@ import { STRINGS } from '@/constants/strings';
 import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { supabase } from '@/services/supabase';
+import { useAppSelector } from '@/store/hooks';
 import { handleError } from '@/utils/errorHandling';
 
 // Shared query keys used across mutation success handlers
-const RELATED_QUERY_KEYS = (userId: string) =>
+const RELATED_QUERY_KEYS = (userId: string, audioPreference?: 'arabic' | 'bilingual') =>
   [
     FSRS_QUERY_KEYS.all(userId),
     FSRS_QUERY_KEYS.allWithCooldown(userId, DEFAULT_SESSION_COOLDOWN_HOURS),
     FSRS_QUERY_KEYS.due(userId),
-    ['enhancedAudioTracks', userId] as const,
+    audioPreference
+      ? (['enhancedAudioTracks', userId, audioPreference] as const)
+      : (['enhancedAudioTracks', userId] as const),
     FSRS_QUERY_KEYS.stats(userId),
   ] as const;
 
@@ -69,6 +72,7 @@ export const useArticleMutations = (
 ): ArticleMutationsResult => {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const audioPreference = useAppSelector(state => state.settings.audioLanguagePreference);
 
   // Lightweight capacity guard: prevent adding when capacity is low (red phase)
   // Only applies when user has more than 100 words to avoid being annoying for new users
@@ -226,7 +230,7 @@ export const useArticleMutations = (
       },
       onSuccess: async (_: boolean, { userId }: { userId: string }) => {
         // Batch invalidate related queries
-        RELATED_QUERY_KEYS(userId).forEach(queryKey => {
+        RELATED_QUERY_KEYS(userId, audioPreference).forEach(queryKey => {
           queryClient.invalidateQueries({ queryKey });
         });
 
@@ -283,7 +287,7 @@ export const useArticleMutations = (
       },
       onSuccess: async (_: boolean, { userId }: { userId: string }) => {
         // Batch invalidate related queries
-        RELATED_QUERY_KEYS(userId).forEach(queryKey => {
+        RELATED_QUERY_KEYS(userId, audioPreference).forEach(queryKey => {
           queryClient.invalidateQueries({ queryKey });
         });
 

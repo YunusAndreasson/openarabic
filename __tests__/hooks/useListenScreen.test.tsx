@@ -48,6 +48,7 @@ jest.mock('@tanstack/react-query', () => {
       getQueryData: () => readingListItems,
       invalidateQueries,
       setQueryData,
+      refetchQueries: jest.fn(),
     }),
     __invalidateQueries: invalidateQueries,
     __setQueryData: setQueryData,
@@ -282,6 +283,8 @@ describe('useListenScreen', () => {
     expect(mockDispatch).toHaveBeenCalledWith(removeFromCustomOrder(1));
     expect(setQueryData).toHaveBeenCalledWith(['readingList', 'user-1', 1], false);
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['readingList', 'user-1'] });
-    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['enhancedAudioTracks', 'user-1'] });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: ['enhancedAudioTracks', 'user-1', 'bilingual'],
+    });
   });
 });

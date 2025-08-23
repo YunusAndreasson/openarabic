@@ -16,13 +16,30 @@ import { useColors, useIsDarkMode } from '@/hooks/theme';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { selectionFeedback } from '@/utils/haptics';
 
-const DictionaryButton = memo((): JSX.Element => {
+interface DictionaryButtonProps {
+  hideWhenEmpty?: boolean;
+  itemCount?: number;
+}
+
+const DictionaryButton = memo((props: DictionaryButtonProps): JSX.Element | null => {
+  const { hideWhenEmpty, itemCount } = props;
   const colors = useColors();
+  const { session } = useAuth();
+
+  // Get study words count to determine if button should be shown
+  const { allWords, dueWords } = useFSRSQueries({ userId: session?.user?.id });
+  const studyWordsCount = (allWords?.length ?? 0) + (dueWords?.length ?? 0);
+  const effectiveCount = itemCount ?? studyWordsCount;
 
   const handlePress = useCallback((): void => {
     selectionFeedback();
     router.push(ROUTE_PATHS.PRACTICE_DICTIONARY);
   }, []);
+
+  // Hide button when hideWhenEmpty is true and there are no study words
+  if (hideWhenEmpty && (effectiveCount ?? 0) <= 0) {
+    return null;
+  }
 
   return (
     <Pressable
@@ -231,7 +248,7 @@ export default function TabLayout(): JSX.Element {
                 headerRight: () => <EditModeButton type="listen" hideWhenEmpty />,
               }),
               ...(screen.name === 'practice' && {
-                headerRight: () => <DictionaryButton />,
+                headerRight: () => <DictionaryButton hideWhenEmpty />,
               }),
               // Dictionary button for practice tab
             }}

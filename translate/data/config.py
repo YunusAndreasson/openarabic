@@ -37,7 +37,7 @@ DEFAULT_SPLIT_OUTPUT_FILE = os.path.join(ARTICLE_DIR, "input_split.json")
 ARABIC_VOICE_ID = "R6nda3uM038xEEKi7GFl"  # Keep for sentence audio only
 
 # English voice IDs - Primary and fallback options
-ENGLISH_VOICE_ID = "pNInz6obpgDQGcFmaJgB"  # Adam - Clear, natural English voice
+ENGLISH_VOICE_ID = "NFG5qt843uXKj4pFvR7C"  # Adam - Clear, natural English voice
 ENGLISH_VOICE_ID_FALLBACK = "21m00Tcm4TlvDq8ikWAM"  # Rachel - Backup option
 
 # ElevenLabs TTS - Premium Configuration
@@ -55,8 +55,6 @@ DEFAULT_VOICE_SETTINGS = {
 ENGLISH_VOICE_SETTINGS = {
     "use_speaker_boost": True,  # Enhanced speaker clarity
     "speed": 0.9,  # Slightly faster for English (more natural)
-    "stability": 0.7,  # Balanced stability for natural speech
-    "similarity_boost": 0.75,  # Maintain voice consistency
 }
 
 # Audio pause configuration for bilingual audio

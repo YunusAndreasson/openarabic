@@ -23,6 +23,7 @@ import { useColors } from '@/hooks/theme/useColors';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import { useStableBoolean } from '@/hooks/ui/useStableBoolean';
 import type { ReadingListItem } from '@/types/readingList.types';
+import { generateImageUrl } from '@/utils/imageUtils';
 import { overrideFixedHeight } from '@/utils/list';
 
 const styles = StyleSheet.create({
@@ -100,7 +101,7 @@ const ListenListItem = memo(
         // Play button also triggers playback, hide when any audio is playing
         onPlayPress={!editMode && audioState !== AUDIO_STATES.PLAYING ? handlePlayPress : undefined}
         // Add article image for playlist-style appearance
-        imageUrl={String(item.articles.image_url)}
+        imageUrl={generateImageUrl(item.articles.image_url)}
         dragHandleProps={dragHandleProps}
       />
     );

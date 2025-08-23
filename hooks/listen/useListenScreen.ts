@@ -16,6 +16,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { removeFromCustomOrder } from '@/store/listenSlice';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
+import { generateImageUrl } from '@/utils/imageUtils';
 
 export const useListenScreen = () => {
   const { user } = useAuth();
@@ -128,7 +129,7 @@ export const useListenScreen = () => {
       return enhancedAudioService.getReadingListEnhancedTracks(user.id, audioPreference);
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, // Standard stale time is fine now
     gcTime: 10 * 60 * 1000,
     placeholderData: [],
   });
@@ -193,9 +194,9 @@ export const useListenScreen = () => {
         // STABILIZATION: Set playback mode immediately for UI feedback
         setPlaybackMode('all');
 
-        // SIMPLIFIED: Just play the first track (service handles one track at a time)
+        // Use the same logic as single article playback - generate fresh track with current preference
         const firstTrack = currentTracks[0];
-        if (!firstTrack) {
+        if (!firstTrack?.articleId) {
           playbackModeTimeoutRef.current = setTimeout(() => {
             setPlaybackMode('none');
           }, 100);
@@ -224,9 +225,20 @@ export const useListenScreen = () => {
           }
         }
 
-        // Start playing immediately without loading states
-        const success = await simpleAudioService.play(firstTrack);
-        if (!success) {
+        // Generate fresh track using same logic as single article playback
+        const freshTrack = await enhancedAudioService.generateEnhancedAudioTrack(
+          firstTrack.articleId,
+          audioPreference
+        );
+
+        if (freshTrack) {
+          const success = await simpleAudioService.play(freshTrack);
+          if (!success) {
+            playbackModeTimeoutRef.current = setTimeout(() => {
+              setPlaybackMode('none');
+            }, 100);
+          }
+        } else {
           playbackModeTimeoutRef.current = setTimeout(() => {
             setPlaybackMode('none');
           }, 100);
@@ -238,7 +250,7 @@ export const useListenScreen = () => {
         handleError(error as Error);
       }
     }
-  }, [playbackMode, sortedEnhancedTracks, audioState]);
+  }, [playbackMode, sortedEnhancedTracks, audioState, audioPreference]);
 
   const handleSleepTimerSet = useCallback(
     (minutes: number) => {
@@ -267,13 +279,13 @@ export const useListenScreen = () => {
           queryKey: ['readingList', user.id],
         });
         queryClient.invalidateQueries({
-          queryKey: ['enhancedAudioTracks', user.id],
+          queryKey: ['enhancedAudioTracks', user.id, audioPreference],
         });
       } catch (error) {
         handleError(error as Error);
       }
     },
-    [user?.id, dispatch, queryClient]
+    [user?.id, dispatch, queryClient, audioPreference]
   );
 
   const handleArticlePlay = useCallback(
@@ -295,92 +307,51 @@ export const useListenScreen = () => {
         return;
       }
 
-      const articleIndex = sortedEnhancedTracks.findIndex(track => track.articleId === articleId);
+      // Always generate fresh track to ensure correct audio preference
+      // Don't use pre-generated tracks as they might have stale preferences
+      try {
+        selectionFeedback();
+        setPlaybackMode('all');
 
-      if (articleIndex !== -1 && sortedEnhancedTracks.length) {
-        // Play the specific track from enhanced tracks
-        const trackToPlay = sortedEnhancedTracks[articleIndex];
-        if (!trackToPlay) {
-          playbackModeTimeoutRef.current = setTimeout(() => {
-            setPlaybackMode('none');
-          }, 100);
-          return;
+        // PREFETCH: warm article data and image so audio components show artwork instantly
+        queryClient
+          .prefetchQuery({
+            queryKey: ['article', articleId],
+            queryFn: () => articlesService.getArticleById(articleId),
+          })
+          .catch(() => {});
+        const cachedArticle = queryClient.getQueryData<any>(['article', articleId]);
+        const cachedImg = generateImageUrl(cachedArticle?.image_url);
+        if (cachedImg) {
+          Image.prefetch(cachedImg).catch(() => {});
+        } else {
+          prefetchArticle(articleId).catch(() => {});
         }
 
-        try {
-          selectionFeedback();
-          setPlaybackMode('all');
-
-          // PREFETCH: warm article data and image for this specific article
-          queryClient
-            .prefetchQuery({
-              queryKey: ['article', articleId],
-              queryFn: () => articlesService.getArticleById(articleId),
-            })
-            .catch(() => {});
-          const cached = queryClient.getQueryData<any>(['article', articleId]);
-          const img = String(trackToPlay.imageUrl || cached?.image_url);
-          if (img) {
-            Image.prefetch(img).catch(() => {});
-          } else {
-            prefetchArticle(articleId).catch(() => {});
-          }
-
-          const success = await simpleAudioService.play(trackToPlay);
+        const track = await enhancedAudioService.generateEnhancedAudioTrack(
+          articleId,
+          audioPreference
+        );
+        if (track) {
+          const success = await simpleAudioService.play(track);
           if (!success) {
             playbackModeTimeoutRef.current = setTimeout(() => {
               setPlaybackMode('none');
             }, 100);
           }
-        } catch (error) {
+        } else {
           playbackModeTimeoutRef.current = setTimeout(() => {
             setPlaybackMode('none');
           }, 100);
-          handleError(error as Error);
         }
-      } else {
-        // Generate single track for this article on-demand
-        try {
-          selectionFeedback();
-          setPlaybackMode('all');
-
-          // PREFETCH: ensure article details and artwork are warmed
-          queryClient
-            .prefetchQuery({
-              queryKey: ['article', articleId],
-              queryFn: () => articlesService.getArticleById(articleId),
-            })
-            .catch(() => {});
-          const cachedArticle = queryClient.getQueryData<any>(['article', articleId]);
-          const cachedImg = String(cachedArticle?.image_url);
-          if (cachedImg) {
-            Image.prefetch(cachedImg).catch(() => {});
-          } else {
-            prefetchArticle(articleId).catch(() => {});
-          }
-
-          const track = await enhancedAudioService.generateEnhancedAudioTrack(articleId);
-          if (track) {
-            const success = await simpleAudioService.play(track);
-            if (!success) {
-              playbackModeTimeoutRef.current = setTimeout(() => {
-                setPlaybackMode('none');
-              }, 100);
-            }
-          } else {
-            playbackModeTimeoutRef.current = setTimeout(() => {
-              setPlaybackMode('none');
-            }, 100);
-          }
-        } catch (error) {
-          playbackModeTimeoutRef.current = setTimeout(() => {
-            setPlaybackMode('none');
-          }, 100);
-          handleError(error as Error);
-        }
+      } catch (error) {
+        playbackModeTimeoutRef.current = setTimeout(() => {
+          setPlaybackMode('none');
+        }, 100);
+        handleError(error as Error);
       }
     },
-    [isCurrentlyPlaying, sortedEnhancedTracks]
+    [isCurrentlyPlaying, sortedEnhancedTracks, audioPreference]
   );
 
   // Cleanup timeouts on unmount

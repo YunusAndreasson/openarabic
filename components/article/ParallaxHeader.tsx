@@ -13,6 +13,7 @@ import {
   createBackgroundGradientColors,
   createImageGradientColors,
 } from '@/utils/gradientUtils';
+import { generateImageUrl } from '@/utils/imageUtils';
 
 const GRADIENT_HEIGHT_PERCENTAGE = '60%';
 
@@ -109,7 +110,7 @@ const ParallaxHeaderInternal = memo<ParallaxHeaderProps>(({ article, colors, scr
   );
 
   // Memoize image source - images are guaranteed to be available
-  const imageSource = useMemo(() => String(article.image_url), [article.image_url]);
+  const imageSource = useMemo(() => generateImageUrl(article.image_url), [article.image_url]);
 
   // Enhanced gradient for better text visibility - different approach for light vs dark mode
   const imageGradientColors = useMemo(() => {

@@ -21,8 +21,8 @@ import { LIST_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
-import { reconstructImageUrl } from '@/services/enhancedAudioService';
 import type { Article } from '@/types/articles.types';
+import { generateImageUrl } from '@/utils/imageUtils';
 
 // Optimized constants for better performance
 const ITEM_HEIGHT = LAYOUT.CARD.HEIGHT.LIST_ITEM + LAYOUT.SPACING.XXXLARGE * 8;
@@ -66,7 +66,7 @@ const ArticleItem = memo(({ item, onPress }: ArticleItemProps) => {
       author={item.author.name}
       category={item.category.name}
       categoryForDisplay={item.category.name}
-      imageUrl={reconstructImageUrl(String(item.image_url))}
+      imageUrl={generateImageUrl(item.image_url)}
       style={[styles.articleCard, isPending && styles.pendingCard]}
       summary={String(item.summary)}
       title={item.title}

@@ -6,6 +6,7 @@ import ArticleCard from '@read/ArticleCard';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import type { Article } from '@/types/articles.types';
+import { generateImageUrl } from '@/utils/imageUtils';
 
 interface FeaturedSectionProps {
   article: Article;
@@ -29,7 +30,7 @@ const FeaturedSection: FC<FeaturedSectionProps> = ({ article, onPress }) => {
         author={article.author.name}
         category={STRINGS.RECOMMENDED}
         categoryForDisplay={article.category.name}
-        imageUrl={String(article.image_url)}
+        imageUrl={generateImageUrl(article.image_url)}
         style={styles.cardStyle}
         summary={String(article.summary)}
         title={article.title}
