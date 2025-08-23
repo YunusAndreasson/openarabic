@@ -152,10 +152,15 @@ const MeaningOverlayInternal = (props: MeaningOverlayProps) => {
     duration,
   ]);
 
-  // ===== CLEANUP ON UNMOUNT =====
+  // ===== CLEANUP (PREVENT MEMORY LEAKS) =====
   useEffect(() => {
-    return cleanup;
-  }, [cleanup]);
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, []);
 
   if (!shouldRender) {
     return null;

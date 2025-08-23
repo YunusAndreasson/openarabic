@@ -197,13 +197,23 @@ const ReviewCardInternal = ({
   // ===== CLEANUP (PREVENT MEMORY LEAKS) =====
   useEffect(() => {
     return () => {
+      // Clear any pending reset timer
       if (resetTimerRef.current) {
         clearTimeout(resetTimerRef.current);
         resetTimerRef.current = null;
       }
-      cancelAnimation(translateX);
+
+      // Cancel any ongoing animations to prevent memory leaks
+      try {
+        cancelAnimation(translateX);
+        // Reset shared values to prevent stale references
+        translateX.value = 0;
+        isAnimatingRef.value = false;
+      } catch (error) {
+        console.warn('Animation cleanup error:', error);
+      }
     };
-  }, [translateX]);
+  }, [translateX, isAnimatingRef]);
 
   return (
     <View style={STATIC_STYLES.swipeContainer}>

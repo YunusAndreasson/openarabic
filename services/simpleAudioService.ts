@@ -388,7 +388,10 @@ class SimpleAudioService {
    */
   async destroy(): Promise<void> {
     await this.stopInternal();
+
+    // Clear all listeners to prevent memory leaks
     this.listeners.clear();
+
     // Best-effort to release audio session
     try {
       await setIsAudioActiveAsync(false);
@@ -397,6 +400,10 @@ class SimpleAudioService {
       // Re-throw to make the error visible
       throw new Error(`Failed to release audio session during destroy: ${destroyError}`);
     }
+
+    // Reset internal state to prevent stale references
+    this.audioSessionConfigured = false;
+    this.lastStatusUpdate = 0;
   }
 }
 

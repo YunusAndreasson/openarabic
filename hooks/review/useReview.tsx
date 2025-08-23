@@ -758,11 +758,22 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       // Explicitly reset UI state on unmount
       setIsTransitioningToCompletion(false);
       setShowMeaningOverlay(false);
-      fadeIn();
 
-      audioPlayerRef.current.stop().catch(() => {});
+      // Safely call fadeIn with error handling to prevent crashes
+      try {
+        fadeIn();
+      } catch (error) {
+        console.warn('Fade animation cleanup error:', error);
+      }
 
-      // Clean up all timers
+      // Ensure audio is stopped and cleaned up
+      try {
+        audioPlayerRef.current.stop().catch(() => {});
+      } catch (error) {
+        console.warn('Audio cleanup error:', error);
+      }
+
+      // Clean up all timers with null checks
       if (stateRefs.current.meaningTimeout) {
         clearTimeout(stateRefs.current.meaningTimeout);
         stateRefs.current.meaningTimeout = null;
@@ -788,10 +799,13 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
         navigationTimerRef.current = null;
       }
 
+      // Reset all state refs to prevent stale references
       stateRefs.current.isUpdatingWord = false;
       setIsUpdatingUI(false);
       stateRefs.current.maxProgress = 0;
       timeRefs.current.lastProcessedWordId = null;
+      timeRefs.current.lastVagueTime = null;
+      timeRefs.current.lastProgressUpdate = Date.now();
     };
   }, [fadeIn]);
 
