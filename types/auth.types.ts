@@ -2,6 +2,7 @@ export type UserSession = {
   user: {
     id: string;
     email?: string;
+    created_at?: string;
     app_metadata: Record<string, unknown>;
     user_metadata: Record<string, unknown>;
   } | null;

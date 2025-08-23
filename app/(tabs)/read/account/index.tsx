@@ -105,7 +105,13 @@ const AccountScreen: FC = () => {
         }}
       >
         {/* Account Badge - Premium header section */}
-        {user && <AccountBadge userEmail={user.email || 'user@example.com'} userId={user.id} />}
+        {user && (
+          <AccountBadge
+            userEmail={user.email || 'user@example.com'}
+            userId={user.id}
+            createdAt={user.created_at}
+          />
+        )}
 
         {/* App Preferences - Core settings users adjust frequently */}
         <BaseCard

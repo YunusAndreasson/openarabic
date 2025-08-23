@@ -30,6 +30,7 @@ const SPRING_CONFIG = {
 interface AccountBadgeProps {
   userEmail: string;
   userId: string;
+  createdAt?: string;
 }
 
 // Helper function to format member since date
@@ -53,12 +54,12 @@ const getInitials = (name: string): string => {
 };
 
 // Simple fallback for member since date - we'll use a reasonable default
-const getMemberSinceDate = () => {
-  // Use a date from when the app might have launched (adjust as needed)
-  return '2024-01-01T00:00:00.000Z';
+const getMemberSinceDate = (createdAt?: string) => {
+  // Use actual user creation date if available, otherwise use a reasonable default
+  return createdAt || '2024-01-01T00:00:00.000Z';
 };
 
-const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId }) => {
+const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId, createdAt }) => {
   const colors = useColors();
   const [profilePhotoUri, setProfilePhotoUri] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -70,7 +71,7 @@ const AccountBadge: React.FC<AccountBadgeProps> = memo(({ userEmail, userId }) =
 
   // Derived values
   const firstName = getFirstNameFromEmail(userEmail);
-  const memberSince = formatMemberSince(getMemberSinceDate());
+  const memberSince = formatMemberSince(getMemberSinceDate(createdAt));
   const initials = getInitials(firstName);
   const storageKey = `profile_photo_${userId}`;
 

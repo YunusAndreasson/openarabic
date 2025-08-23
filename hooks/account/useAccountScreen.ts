@@ -17,6 +17,33 @@ import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
 
+// Hook to fetch complete user data from Supabase Auth
+const useUserWithCreationDate = () => {
+  const { user } = useAuth();
+  const [userWithCreatedAt, setUserWithCreatedAt] = useState<typeof user>(user);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (user?.id) {
+        try {
+          const { data, error } = await supabase.auth.getUser();
+          if (error) {
+            handleError(error, { showToast: false });
+          } else if (data.user) {
+            setUserWithCreatedAt(data.user);
+          }
+        } catch (error) {
+          handleError(error as Error, { showToast: false });
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [user?.id]);
+
+  return userWithCreatedAt;
+};
+
 export const useAccountScreen = () => {
   const { reminderTime, updateReminderTime, formatReminderTime } = useReminders();
   const { clearCache, getCacheSize } = useAudioCache();
@@ -25,7 +52,7 @@ export const useAccountScreen = () => {
   const [, setNotificationPermissions] = useState(false);
   const [cacheSize, setCacheSize] = useState<number>(0);
   const [isClearingCache, setIsClearingCache] = useState(false);
-  const { user } = useAuth();
+  const user = useUserWithCreationDate();
   const isMounted = useRef(true);
 
   // Load cache size on component mount
