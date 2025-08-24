@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { memo, useCallback } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { Image, Linking, StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
@@ -26,26 +26,34 @@ export const SocialMediaIcons = memo(() => {
 
   return (
     <View style={styles.container}>
-      <Ionicons
-        name="logo-twitter"
-        size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-        color={colors.textTertiary}
-        style={styles.icon}
-        onPress={() => handleSocialMediaPress(STRINGS.TWITTER_URL)}
-      />
-      <Ionicons
-        name="logo-instagram"
-        size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-        color={colors.textTertiary}
-        style={styles.icon}
-        onPress={() => handleSocialMediaPress(STRINGS.INSTAGRAM_URL)}
-      />
-      <Ionicons
-        name="logo-facebook"
-        size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-        color={colors.textTertiary}
-        style={styles.icon}
-        onPress={() => handleSocialMediaPress(STRINGS.FACEBOOK_URL)}
+      <View style={styles.socialIconsContainer}>
+        <Ionicons
+          name="logo-twitter"
+          size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+          color={colors.textTertiary}
+          style={styles.icon}
+          onPress={() => handleSocialMediaPress(STRINGS.TWITTER_URL)}
+        />
+        <Ionicons
+          name="logo-instagram"
+          size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+          color={colors.textTertiary}
+          style={styles.icon}
+          onPress={() => handleSocialMediaPress(STRINGS.INSTAGRAM_URL)}
+        />
+        <Ionicons
+          name="logo-facebook"
+          size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+          color={colors.textTertiary}
+          style={styles.icon}
+          onPress={() => handleSocialMediaPress(STRINGS.FACEBOOK_URL)}
+        />
+      </View>
+
+      <Image
+        source={require('@/assets/images/oaLogo.png')}
+        style={styles.logo}
+        resizeMode="contain"
       />
     </View>
   );
@@ -55,13 +63,22 @@ SocialMediaIcons.displayName = 'SocialMediaIcons';
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
     gap: LAYOUT.SPACING.MEDIUM,
     marginTop: LAYOUT.SPACING.SMALL,
   },
+  socialIconsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.MEDIUM,
+  },
   icon: {
     opacity: 0.6,
+  },
+  logo: {
+    width: 80,
+    height: 40,
+    opacity: 0.3,
   },
 });
