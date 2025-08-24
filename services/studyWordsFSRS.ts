@@ -85,7 +85,7 @@ export const studyWordsFSRSService = {
           fsrs_state,
           fsrs_last_review,
           created_at,
-          root:roots (id, letters, meaning, audio_url, audio_url_en)
+          root:roots (letters, meaning, audio_url, audio_url_en)
         `;
       selectQuery = query.select(columns);
     }

@@ -7,7 +7,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/ThemedText';
 import {
   CompletionScreen,
-  MeaningOverlay,
   ReviewBottomActions,
   ReviewCard,
   ReviewHeader,
@@ -47,23 +46,20 @@ export default function ReviewScreen(): JSX.Element {
   const colors = useColors();
 
   const {
-    showMeaningOverlay,
-    currentMeaning,
     currentSentence,
+    currentMeaning,
+    showTranslation,
     isTransitioningToCompletion,
     isComplete,
     progress,
     maxProgress,
     progressAnimationKey,
-    wordFontSize,
     currentWordKey,
-    isVagueMeaning,
-    isStruggling,
     handleSwipeLeft,
     handleSwipeRight,
     handleClose,
     isUpdating,
-    animatedStyle,
+    transparentStyle,
     sessionMetrics,
     isAudioPreloading,
     audioPreloadProgress,
@@ -141,24 +137,18 @@ export default function ReviewScreen(): JSX.Element {
           <ReviewCard
             key={currentWordKey}
             word={currentSentence.wordForm}
-            fontSize={wordFontSize}
             onSwipeLeft={handleSwipeLeft}
             onSwipeRight={handleSwipeRight}
-            opacityStyle={animatedStyle}
+            opacityStyle={transparentStyle}
             isUpdating={isUpdating}
             isTransitioning={isTransitioningToCompletion}
             testID="review-card"
+            translation={currentMeaning}
+            showTranslation={showTranslation}
           />
         </View>
 
         <ReviewBottomActions />
-
-        <MeaningOverlay
-          visible={showMeaningOverlay}
-          meaning={currentMeaning}
-          isVague={isVagueMeaning}
-          isStruggling={isStruggling}
-        />
       </View>
     </View>
   );

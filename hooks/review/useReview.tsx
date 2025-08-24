@@ -45,9 +45,11 @@ interface UseReviewProps {
 }
 
 interface UseReviewReturn {
-  showMeaningOverlay: boolean;
-  currentMeaning: string;
   currentSentence: { wordForm: string };
+  currentMeaning: string;
+  showTranslation: boolean;
+  isVagueMeaning: boolean;
+  isStruggling: boolean;
   isTransitioningToCompletion: boolean;
   opacity: SharedValue<number>;
   isComplete: boolean;
@@ -57,13 +59,11 @@ interface UseReviewReturn {
   progressAnimationKey: number;
   wordFontSize: number;
   currentWordKey: string;
-  isVagueMeaning: boolean;
-  isStruggling: boolean;
   handleSwipeLeft: () => void;
   handleSwipeRight: () => void;
   handleLongPress: () => void;
   handleClose: () => void;
-  animatedStyle: AnimatedStyleProp<ViewStyle>;
+  transparentStyle: AnimatedStyleProp<ViewStyle>;
   sessionMetrics: SessionMetrics;
   // Add audio preloading state
   isAudioPreloading: boolean;
@@ -89,8 +89,8 @@ const TRANSITION_DELAYS = {
   initial: TIMING_CONFIG.FAST.duration, // Initial delay before animation
   fadeAnimation: DEFAULT_ANIMATION_DURATION, // Delay for fade animation
   meaningDisplay: {
-    normal: 1500, // Display time for meaning overlay (was 2000)
-    struggling: 2500, // Display time for struggling words (was 3000)
+    normal: 3000, // Display time for meaning overlay (increased from 1500)
+    struggling: 4000, // Display time for struggling words (increased from 2500)
   },
 };
 
@@ -112,7 +112,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
   });
 
   // UI state
-  const [showMeaningOverlay, setShowMeaningOverlay] = useState(false);
+  const [showTranslation, setShowTranslation] = useState(false);
   const [currentMeaning, setCurrentMeaning] = useState('');
   const [isTransitioningToCompletion, setIsTransitioningToCompletion] = useState(false);
   const [progressAnimationKey, setProgressAnimationKey] = useState(0);
@@ -218,17 +218,30 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     [currentWord]
   );
 
-  // Batch state updates for meaning overlay
-  const showMeaningWithTimeout = useCallback(
+  // Ensure translation is hidden when advancing to a new word
+  useEffect(() => {
+    // Clear any pending translation timers
+    if (stateRefs.current.meaningTimeout) {
+      clearTimeout(stateRefs.current.meaningTimeout);
+      stateRefs.current.meaningTimeout = null;
+    }
+    // Immediately hide translation and reset related flags
+    setShowTranslation(false);
+    setIsStruggling(false);
+    setCurrentMeaning('');
+  }, [currentWordKey]);
+
+  // Batch state updates for translation display
+  const showTranslationWithTimeout = useCallback(
     (meaning: string, isVague: boolean, isStruggling: boolean = false) => {
       setCurrentMeaning(meaning);
       setIsVagueMeaning(isVague);
-      setShowMeaningOverlay(true);
+      setShowTranslation(true);
       setIsStruggling(isStruggling);
 
       return setTimeout(
         () => {
-          setShowMeaningOverlay(false);
+          setShowTranslation(false);
           setIsStruggling(false);
         },
         isStruggling
@@ -239,20 +252,20 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     []
   );
 
-  // Shows meaning overlay if needed
+  // Shows translation if needed
   const displayMeaning = useCallback(
     (confidence: 'known' | 'vague' | 'unknown', isStruggling: boolean) => {
       if (confidence === 'known') return null;
 
       const meaning = currentWord?.root?.meaning || 'No translation available';
       const shouldShowAsError = confidence === 'unknown';
-      return showMeaningWithTimeout(
+      return showTranslationWithTimeout(
         meaning,
         confidence === 'vague',
         shouldShowAsError || isStruggling
       );
     },
-    [currentWord?.root?.meaning, showMeaningWithTimeout]
+    [currentWord?.root?.meaning, showTranslationWithTimeout]
   );
 
   // Determines if the user is struggling with this word
@@ -406,7 +419,12 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
 
         // Clean up any playing audio before proceeding
         audioPlayerRef.current.stop().catch(() => {});
-        fadeOut();
+
+        // Only fade out if we're moving to a new word (known response)
+        // For vague/unknown responses, we want to keep the Arabic word visible
+        if (confidence === 'known') {
+          fadeOut();
+        }
 
         stateRefs.current.fadeAnimationTimeout = setTimeout(() => {
           if (controller.signal.aborted) return;
@@ -632,7 +650,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       return;
     }
 
-    if (showMeaningOverlay) {
+    if (showTranslation) {
       return;
     }
 
@@ -650,7 +668,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     currentWord,
     isComplete,
     isTransitioningToCompletion,
-    showMeaningOverlay,
+    showTranslation,
     playAudio,
     generateAudioUrl,
   ]);
@@ -757,7 +775,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
 
       // Explicitly reset UI state on unmount
       setIsTransitioningToCompletion(false);
-      setShowMeaningOverlay(false);
+      setShowTranslation(false);
 
       // Safely call fadeIn with error handling to prevent crashes
       try {
@@ -809,18 +827,20 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     };
   }, [fadeIn]);
 
-  // Create animated style outside of render to avoid reanimated warnings
-  const animatedStyle = useAnimatedStyle(
+  // Create a transparent style for non-transitioning states
+  const transparentStyle = useAnimatedStyle(
     (): ViewStyle => ({
-      opacity: opacity.value,
+      opacity: 1,
     }),
-    [opacity]
+    []
   );
 
   return {
-    showMeaningOverlay,
-    currentMeaning,
     currentSentence,
+    currentMeaning,
+    showTranslation,
+    isVagueMeaning,
+    isStruggling,
     isTransitioningToCompletion,
     opacity,
     isComplete,
@@ -830,13 +850,11 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     progressAnimationKey,
     wordFontSize,
     currentWordKey,
-    isVagueMeaning,
-    isStruggling,
     handleSwipeLeft,
     handleSwipeRight,
     handleLongPress,
     handleClose,
-    animatedStyle,
+    transparentStyle,
     sessionMetrics: sessionMetricsRef.current,
     // Add audio preloading state
     isAudioPreloading,

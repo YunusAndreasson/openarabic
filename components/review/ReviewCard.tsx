@@ -58,24 +58,27 @@ const STATIC_STYLES = StyleSheet.create({
 
 interface ReviewCardProps {
   word: string;
-  fontSize: number;
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
   isUpdating: boolean;
   isTransitioning: boolean;
   opacityStyle: ReanimatedAnimatedStyleProp<ViewStyle> | AppAnimatedStyleProp<ViewStyle>;
   testID?: string;
+  // Translation props
+  translation?: string;
+  showTranslation?: boolean;
 }
 
 const ReviewCardInternal = ({
   word,
-  fontSize,
   onSwipeLeft,
   onSwipeRight,
   isUpdating,
   isTransitioning,
   opacityStyle,
   testID,
+  translation,
+  showTranslation = false,
 }: ReviewCardProps) => {
   const colors = useColors();
   const translateX = useSharedValue(0);
@@ -188,10 +191,10 @@ const ReviewCardInternal = ({
   // ===== MEMOIZED PROPS (PREVENT CHILD RE-RENDERS) =====
   const wordDisplayProps = useMemo(
     () => ({
-      fontSize,
       word,
+      translation: showTranslation ? translation : undefined,
     }),
-    [fontSize, word]
+    [word, showTranslation, translation]
   );
 
   // ===== CLEANUP (PREVENT MEMORY LEAKS) =====
@@ -235,13 +238,14 @@ const ReviewCardInternal = ({
 const ReviewCardComparison = (prevProps: ReviewCardProps, nextProps: ReviewCardProps): boolean => {
   return (
     prevProps.word === nextProps.word &&
-    prevProps.fontSize === nextProps.fontSize &&
     prevProps.onSwipeLeft === nextProps.onSwipeLeft &&
     prevProps.onSwipeRight === nextProps.onSwipeRight &&
     prevProps.isUpdating === nextProps.isUpdating &&
     prevProps.isTransitioning === nextProps.isTransitioning &&
     prevProps.opacityStyle === nextProps.opacityStyle &&
-    prevProps.testID === nextProps.testID
+    prevProps.testID === nextProps.testID &&
+    prevProps.translation === nextProps.translation &&
+    prevProps.showTranslation === nextProps.showTranslation
   );
 };
 

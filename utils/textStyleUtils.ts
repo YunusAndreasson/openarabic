@@ -1,6 +1,6 @@
 import type { TextStyle, ViewStyle } from 'react-native';
 
-import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
+import { LAYOUT, TYPOGRAPHY_HIERARCHY, getArabicTextStyle } from '@/constants/layout';
 
 // ===== TEXT STYLE CONSTANTS =====
 export const TEXT_STYLE_CONSTANTS = {
@@ -79,7 +79,10 @@ export const createTextStyle = (fontSize: number, colors: BatchedTextColors): Te
  * @returns Translation text style object
  */
 export const createTranslationTextStyle = (fontSize: number, color: string): TextStyle => ({
-  fontSize: fontSize * 1.1, // Translation font multiplier
+  // Use exact requested font size and ensure adequate lineHeight to prevent clipping
+  fontSize,
+  lineHeight: Math.round(fontSize * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL),
+  includeFontPadding: false,
   fontWeight: '400',
   opacity: LAYOUT.OPACITY.HIGH,
   textAlign: 'center',

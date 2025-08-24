@@ -15,9 +15,9 @@
 - [ ] Practice session can finish early unexpectedly
   - [ ] Investigate session state management
   - [ ] Check review completion logic
-- [ ] Long words in practice can be cut off
-  - [ ] Review WordDisplay component layout
-  - [ ] Check text wrapping and overflow handling
+- [x] Long words in practice can be cut off
+  - [x] Review WordDisplay component layout
+  - [x] Check text wrapping and overflow handling
 
 ## 🔧 Improvements
 
@@ -30,17 +30,13 @@
     - [ ] Check FSRS state calculations vs UI rendering
     - [ ] Document previous attempts in repository
 - [ ] Implement audio transition improvements
-  - [ ] Add title and summary
-  - [ ] Small beep when moving to new article
-  - [ ] Add pause before and after transitions
+  - [x] Add title and summary
   - [ ] Add word timestamps
-  - [ ] Add 500ms pause between sentences for arabic
-- [ ] Remove English
-- [ ] Add context to unknown words (swipe left in practice)
-  - [ ] Show example sentences from articles
+  - [x] Add 500ms pause between sentences for arabic
 - [ ] Improve the grammar rules system
   - [ ] Highlight tashkeel (diacritical marks) properly
   - [ ] Verify correctness of pattern matching
+  - [ ] Improve instructions to the AI
   - [ ] Add more rules based on discovered patterns
   - [ ] Create cursor rule for this
   - [ ] Integrate with existing Arabic word components
@@ -50,8 +46,7 @@
   - [ ] Integrate with existing word analysis pipeline
 - [x] Remove study icon and highlight border
 - [ ] Clean up
-  - [ ] Make sure all logic to timestamp is removed
-  - [ ] Remvoe creation of English words
+  - [x] Make sure all logic to timestamp is removed
 
 ## Resources
 

@@ -9,16 +9,15 @@ import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
 import type { WordDisplayProps } from '@/types/ui/review.types';
-import {
-  createTextStyle,
-  createTranslationTextStyle,
-  type BatchedTextColors,
-} from '@/utils/textStyleUtils';
+import { createTextStyle, type BatchedTextColors } from '@/utils/textStyleUtils';
 
 const WORD_DISPLAY_CONSTANTS = {
   DEFAULT_FONT_SIZE: LAYOUT.SPACING.XXLARGE,
-  TEXT_HEIGHT_MULTIPLIER: 9,
-  TRANSLATION_HEIGHT_MULTIPLIER: 2.5,
+  ARABIC_FONT_SIZE: LAYOUT.SPACING.XXLARGE * 2, // Very large for Arabic (64px)
+  ENGLISH_FONT_SIZE: LAYOUT.SPACING.XXLARGE, // Legacy constant (not used when using regular ThemedText)
+  ARABIC_TOP_POSITION: LAYOUT.SPACING.MEDIUM, // Arabic higher up but not at very top (12px)
+  ENGLISH_TOP_OFFSET: LAYOUT.SPACING.XXLARGE * 4, // Move slightly closer below Arabic (192px)
+  CONTAINER_HEIGHT: LAYOUT.SPACING.XXXLARGE * 7, // Much taller container (336px)
 } as const;
 
 // Static animation configuration
@@ -28,26 +27,30 @@ const ANIMATION_CONFIG = {
 
 const STATIC_STYLES = StyleSheet.create({
   container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE * WORD_DISPLAY_CONSTANTS.TEXT_HEIGHT_MULTIPLIER,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
     width: '100%',
+    height: WORD_DISPLAY_CONSTANTS.CONTAINER_HEIGHT,
+    position: 'relative',
   } as ViewStyle,
   arabicContainer: {
+    position: 'absolute',
+    top: WORD_DISPLAY_CONSTANTS.ARABIC_TOP_POSITION,
+    left: 0,
+    right: 0,
     alignItems: 'center',
-    flex: 1,
     justifyContent: 'center',
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    paddingTop: LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY,
-    paddingBottom: LAYOUT.SPACING.TINY,
+    zIndex: 1,
   } as ViewStyle,
   translationContainer: {
+    position: 'absolute',
+    top: WORD_DISPLAY_CONSTANTS.ENGLISH_TOP_OFFSET,
+    left: LAYOUT.SPACING.LARGE,
+    right: LAYOUT.SPACING.LARGE,
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    marginTop: -LAYOUT.SPACING.TINY,
-    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE * WORD_DISPLAY_CONSTANTS.TRANSLATION_HEIGHT_MULTIPLIER,
-    paddingTop: LAYOUT.SPACING.TINY,
+    justifyContent: 'center',
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.LARGE, // Extra top padding to ensure no overlap
+    zIndex: 9999, // Extremely high z-index to ensure it's above everything
+    minHeight: LAYOUT.SPACING.XXXLARGE * 2, // Ensure container has enough height for text
   } as ViewStyle,
 });
 
@@ -55,12 +58,7 @@ const STATIC_STYLES = StyleSheet.create({
  * Component to display a word with optimal styling and sizing
  * Uses React.memo with a custom comparison function to prevent unnecessary re-renders
  */
-const WordDisplayInternal = ({
-  word,
-  fontSize = WORD_DISPLAY_CONSTANTS.DEFAULT_FONT_SIZE,
-  style,
-  translation,
-}: WordDisplayProps) => {
+const WordDisplayInternal = ({ word, style, translation }: WordDisplayProps) => {
   const colors = useColors();
 
   // ===== COLOR BATCHING (PREVENTS MULTIPLE COLOR CALCULATIONS) =====
@@ -73,9 +71,10 @@ const WordDisplayInternal = ({
     [colors.arabicText, colors.shadow, colors.englishText]
   );
 
-  const textStyle = useMemo(
-    () => createTextStyle(fontSize, batchedColors),
-    [fontSize, batchedColors]
+  // Use larger font for Arabic, smaller for English
+  const arabicTextStyle = useMemo(
+    () => createTextStyle(WORD_DISPLAY_CONSTANTS.ARABIC_FONT_SIZE, batchedColors),
+    [batchedColors]
   );
 
   // ===== OPTIMIZED ANIMATION HANDLING =====
@@ -90,30 +89,26 @@ const WordDisplayInternal = ({
 
   const containerStyle = useMemo(() => [STATIC_STYLES.container, style], [style]);
 
-  const translationTextStyle = useMemo(
-    () => createTranslationTextStyle(fontSize, colors.error),
-    [fontSize, colors.error]
-  );
+  // Using regular ThemedText for translation; style handled by typography system
 
   const arabicTextProps = useMemo(
     () => ({
       skipDefaultColor: true,
-      arabicFontSize: fontSize,
-      style: textStyle,
+      arabicFontSize: WORD_DISPLAY_CONSTANTS.ARABIC_FONT_SIZE,
+      style: arabicTextStyle,
       type: 'arabic' as const,
       children: word,
     }),
-    [fontSize, textStyle, word]
+    [arabicTextStyle, word]
   );
 
   const translationTextProps = useMemo(
     () => ({
-      skipDefaultColor: true,
-      style: translationTextStyle,
-      type: 'body' as const,
+      variant: 'error' as const,
+      type: 'heading2' as const,
       children: translation,
     }),
-    [translationTextStyle, translation]
+    [translation]
   );
 
   return (
@@ -137,7 +132,6 @@ const WordDisplayComparison = (
 ): boolean => {
   return (
     prevProps.word === nextProps.word &&
-    prevProps.fontSize === nextProps.fontSize &&
     prevProps.translation === nextProps.translation &&
     prevProps.style === nextProps.style
   );
