@@ -52,23 +52,6 @@ class SplitErrorResponse(TypedDict):
     error: str
 
 
-# Audio phase structures
-class AudioAPIResponse(TypedDict):
-    """API response structure for audio generation"""
-
-    audio: bytes
-    alignment: dict[str, Any]  # Required in schema
-    audio_base_64: str  # Required in schema
-
-
-class AudioGenerationResult(TypedDict):
-    """Result from audio generation"""
-
-    url: str
-    filename: str  # Required in schema
-    duration: float  # Required in schema
-
-
 # Database insertion structures
 class ArticleInsertData(TypedDict):
     """Data structure for article insertion"""
@@ -109,4 +92,3 @@ RefinementResults = list[RefinementResult]
 # Internal processing types (TypedDict for performance)
 RefinementInputs = list[RefinementInput]
 SplitResults = list[str]  # List of split units
-AudioResults = list[AudioGenerationResult]
