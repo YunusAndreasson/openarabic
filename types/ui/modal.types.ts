@@ -19,8 +19,6 @@ export interface WordTooltipProps {
   onClose: () => void;
   /** Optional zIndex value to control tooltip stacking order */
   zIndex?: number;
-  /** Whether this word is currently in the study list */
-  isInStudyList?: boolean;
   /** Function to handle adding/removing word from study list */
   onStudyListToggle?: () => void;
   /** Optional word root ID for study list functionality */
@@ -33,8 +31,4 @@ export interface WordTooltipProps {
 export interface BaseModalProps {
   /** Whether the modal is visible */
   visible: boolean;
-  /** Function to close the modal */
-  onClose: () => void;
-  /** Optional children to render inside the modal */
-  children?: React.ReactNode;
 }

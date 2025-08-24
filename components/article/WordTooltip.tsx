@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
 
@@ -51,12 +50,6 @@ const STATIC_STYLES = StyleSheet.create({
     includeFontPadding: false,
     textAlignVertical: 'center',
   },
-  contentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: LAYOUT.SPACING.SMALL,
-  },
 });
 
 // Hoisted regex and helpers to avoid per-call allocations
@@ -86,9 +79,7 @@ const WordTooltipComparison = (
   if (
     prevProps.visible !== nextProps.visible ||
     prevProps.text !== nextProps.text ||
-    prevProps.arabicWord !== nextProps.arabicWord ||
-    prevProps.isInStudyList !== nextProps.isInStudyList ||
-    prevProps.wordRootId !== nextProps.wordRootId
+    prevProps.arabicWord !== nextProps.arabicWord
   ) {
     return false;
   }
@@ -114,7 +105,6 @@ export const WordTooltip = memo(
     arabicWord,
     layout,
     zIndex,
-    isInStudyList = false,
     onStudyListToggle,
     wordRootId,
   }: WordTooltipProps) => {
@@ -300,46 +290,20 @@ export const WordTooltip = memo(
       );
     }, [formattedAnalysis, text, colors.text, colorMapping]);
 
-    // Tooltip content - simplified since entire tooltip is now tappable
-    const tooltipContent = useMemo(() => {
-      if (!onStudyListToggle || !wordRootId) {
-        return renderColorCodedEnglish;
-      }
-
-      return (
-        <View style={STATIC_STYLES.contentRow}>
-          {renderColorCodedEnglish}
-          <Ionicons
-            name="school"
-            size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-            color={isInStudyList ? colors.tint : colors.secondaryText}
-          />
-        </View>
-      );
-    }, [
-      renderColorCodedEnglish,
-      onStudyListToggle,
-      wordRootId,
-      isInStudyList,
-      colors.tint,
-      colors.secondaryText,
-    ]);
-
     // Calculate tooltip dimensions with optimized processing
     const dimensions = useMemo(() => {
       if (!layout) {
         return DEFAULT_DIMENSIONS;
       }
 
-      const hasBookmark = !!(onStudyListToggle && wordRootId);
       const adjustedLayout: TooltipLayout = {
         x: (layout as TooltipLayout).x - (containerOffsetX || 0),
         y: (layout as TooltipLayout).y,
         width: (layout as TooltipLayout).width,
         height: (layout as TooltipLayout).height,
       } as TooltipLayout;
-      return calculateTooltipDimensions(adjustedLayout, text || '', hasBookmark);
-    }, [layout, text, onStudyListToggle, wordRootId, containerOffsetX]);
+      return calculateTooltipDimensions(adjustedLayout, text || '', false);
+    }, [layout, text, containerOffsetX]);
 
     // Memoized styles with optimized dependencies
     const containerStyle = useMemo(
@@ -404,7 +368,7 @@ export const WordTooltip = memo(
         >
           <View style={tooltipStyle} testID="word-tooltip">
             <View style={arrowStyle} />
-            {tooltipContent}
+            {renderColorCodedEnglish}
           </View>
         </TouchableWithoutFeedback>
       </View>

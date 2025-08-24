@@ -68,7 +68,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   const {
     article,
     isLoadingArticle,
-    selectedWordIds,
     sortedSentences,
     sentenceWordsMap,
     refetchStudyWords,
@@ -332,13 +331,10 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
       arabicWord: activeTooltip?.word.word_form,
       layout: activeTooltip?.layout ?? null,
       onClose: handleCloseTooltip,
-      isInStudyList: activeTooltip?.word.root_id
-        ? selectedWordIds.has(activeTooltip.word.root_id)
-        : false,
       onStudyListToggle: handleStudyListToggle,
       wordRootId: activeTooltip?.word.root_id,
     }),
-    [activeTooltip, selectedWordIds, handleCloseTooltip, handleStudyListToggle]
+    [activeTooltip, handleCloseTooltip, handleStudyListToggle]
   );
 
   const sentenceScrubberProps = useMemo(

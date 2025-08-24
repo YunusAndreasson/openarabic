@@ -132,9 +132,9 @@ function ArabicWordComponent({
   const batchedColors = useMemo(
     (): ArabicWordColors => ({
       wordDueUnderline: colors.wordDueUnderline,
-      wordSelectionUnderline: colors.wordSelectionUnderline,
+      wordSelectionUnderline: colors.tint, // Use tint color for study list words
     }),
-    [colors.wordDueUnderline, colors.wordSelectionUnderline]
+    [colors.wordDueUnderline, colors.tint]
   );
 
   // Compute final styles for the word container

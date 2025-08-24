@@ -15,7 +15,7 @@ jest.mock('@/hooks/theme/useColors', () => ({
   useColors: () => ({
     arabicText: '#000',
     wordDueUnderline: '#f00',
-    wordSelectionUnderline: '#0a0',
+    tint: '#5B7F68', // Updated to match the actual tint color used by the component
     transparent: 'transparent',
   }),
 }));
@@ -58,7 +58,7 @@ describe('ArabicWord underline behavior', () => {
     });
 
     // When selected, underline color should change from transparent to selection color
-    expect(getUnderlineColor()).toBe('#0a0');
+    expect(getUnderlineColor()).toBe('#5B7F68');
 
     // Simulate unbookmarking (selection becomes false)
     mockIsSelected = false;
