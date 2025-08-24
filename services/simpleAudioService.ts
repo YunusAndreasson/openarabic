@@ -31,6 +31,12 @@ class SimpleAudioService {
   private lastStatusUpdate = 0;
   private statusUpdateThrottle = 400; // Slightly coarser to reduce UI churn without hurting UX
 
+  // PLAYLIST SUPPORT: Add playlist state management
+  private playlist: EnhancedAudioTrack[] = [];
+  private currentPlaylistIndex = 0;
+  private isPlaylistMode = false;
+  private onPlaylistTrackComplete: ((nextTrack: EnhancedAudioTrack | null) => void) | null = null;
+
   // Current audio status
   private status: AudioStatus = {
     isPlaying: false,
@@ -148,12 +154,82 @@ class SimpleAudioService {
   }
 
   /**
+   * PLAYLIST SUPPORT: Start playing a playlist of tracks
+   */
+  async playPlaylist(
+    tracks: EnhancedAudioTrack[],
+    onTrackComplete?: (nextTrack: EnhancedAudioTrack | null) => void
+  ): Promise<boolean> {
+    if (!tracks.length) return false;
+
+    try {
+      this.playlist = [...tracks];
+      this.currentPlaylistIndex = 0;
+      this.isPlaylistMode = true;
+      this.onPlaylistTrackComplete = onTrackComplete || null;
+
+      // Start with the first track
+      const firstTrack = tracks[0];
+      if (!firstTrack) return false;
+
+      return await this.play(firstTrack);
+    } catch (error) {
+      this.isPlaylistMode = false;
+      this.playlist = [];
+      this.currentPlaylistIndex = 0;
+      this.onPlaylistTrackComplete = null;
+      throw error;
+    }
+  }
+
+  /**
+   * PLAYLIST SUPPORT: Advance to the next track in the playlist
+   */
+  private async advanceToNextTrack(): Promise<boolean> {
+    if (!this.isPlaylistMode || !this.playlist.length) {
+      return false;
+    }
+
+    this.currentPlaylistIndex++;
+
+    if (this.currentPlaylistIndex >= this.playlist.length) {
+      // Playlist is complete
+      this.isPlaylistMode = false;
+      this.playlist = [];
+      this.currentPlaylistIndex = 0;
+      this.onPlaylistTrackComplete = null;
+
+      // Stop playback and notify completion
+      await this.stop();
+      return false;
+    }
+
+    // Play the next track
+    const nextTrack = this.playlist[this.currentPlaylistIndex];
+    if (nextTrack) {
+      const success = await this.play(nextTrack);
+      if (success && this.onPlaylistTrackComplete) {
+        this.onPlaylistTrackComplete(nextTrack);
+      }
+      return success;
+    }
+
+    return false;
+  }
+
+  /**
    * Stop playback
    */
   async stop(): Promise<void> {
     try {
       // IMMEDIATE FEEDBACK: Update status immediately when stop is called
       this.updateStatus({ isPlaying: false, isLoading: false });
+
+      // PLAYLIST SUPPORT: Reset playlist state when stopping
+      this.isPlaylistMode = false;
+      this.playlist = [];
+      this.currentPlaylistIndex = 0;
+      this.onPlaylistTrackComplete = null;
 
       await this.stopInternal();
       // RESET: Clear all progress and track data when stopping
@@ -237,6 +313,17 @@ class SimpleAudioService {
   }
 
   /**
+   * PLAYLIST SUPPORT: Get playlist information
+   */
+  getPlaylistInfo(): { isPlaylistMode: boolean; currentIndex: number; totalTracks: number } {
+    return {
+      isPlaylistMode: this.isPlaylistMode,
+      currentIndex: this.currentPlaylistIndex,
+      totalTracks: this.playlist.length,
+    };
+  }
+
+  /**
    * Subscribe to status updates
    */
   subscribe(listener: (status: AudioStatus) => void): () => void {
@@ -276,6 +363,15 @@ class SimpleAudioService {
               : Math.max(0, currentTimeSeconds);
           const safeDuration =
             isNaN(durationSeconds) || !isFinite(durationSeconds) ? 0 : Math.max(0, durationSeconds);
+
+          // PLAYLIST SUPPORT: Check if current track has completed
+          if (this.isPlaylistMode && safeDuration > 0 && safeCurrentTime >= safeDuration - 0.5) {
+            // Track is within 0.5 seconds of completion, advance to next track
+            this.advanceToNextTrack().catch(error => {
+              console.error('Failed to advance to next track:', error);
+            });
+            return;
+          }
 
           // Only update if values have changed meaningfully (reduce UI churn but stay smooth)
           const hasChanged =
@@ -404,6 +500,10 @@ class SimpleAudioService {
     // Reset internal state to prevent stale references
     this.audioSessionConfigured = false;
     this.lastStatusUpdate = 0;
+    this.isPlaylistMode = false;
+    this.playlist = [];
+    this.currentPlaylistIndex = 0;
+    this.onPlaylistTrackComplete = null;
   }
 }
 

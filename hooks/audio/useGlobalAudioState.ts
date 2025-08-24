@@ -111,6 +111,22 @@ export function useGlobalAudioState(): GlobalAudioState {
     };
   }, [currentArticleId, sortedEnhancedTracks]);
 
+  // PLAYLIST SUPPORT: Get playlist information from the audio service
+  const playlistInfo = useMemo(() => {
+    return simpleAudioService.getPlaylistInfo();
+  }, []);
+
+  // Enhanced queue position that considers actual playlist state
+  const enhancedQueuePosition = useMemo(() => {
+    if (playlistInfo.isPlaylistMode) {
+      return {
+        current: playlistInfo.currentIndex + 1,
+        total: playlistInfo.totalTracks,
+      };
+    }
+    return queuePosition;
+  }, [playlistInfo, queuePosition]);
+
   // Format current article for mini-player with cache fallbacks (no waiting for fetch)
   const currentArticle = useMemo(() => {
     if (!currentArticleId) return null;
@@ -208,7 +224,7 @@ export function useGlobalAudioState(): GlobalAudioState {
       : AUDIO_STATES.IDLE,
     isLoading: audioPlayer.isLoading,
     currentArticle,
-    queuePosition,
+    queuePosition: enhancedQueuePosition,
     position: audioPlayer.currentTime,
     duration: audioPlayer.duration,
     isTimerActive: sleepTimer.state.isActive,

@@ -28,6 +28,11 @@ export interface MiniPlayerProps {
   /** Audio progress information */
   position: number;
   duration: number;
+  /** Queue position information for playlists */
+  queuePosition?: {
+    current: number;
+    total: number;
+  };
   /** Playback controls */
   onPlayPause: () => void;
   onTimerPress: () => void;
@@ -39,7 +44,16 @@ const ARTWORK_SIZE = LAYOUT.CARD.IMAGE.MINI_PLAYER; // 56px
 const PROGRESS_HEIGHT = LAYOUT.PROGRESS_BAR.HEIGHT; // 4px
 
 export const MiniPlayer = memo<MiniPlayerProps>(
-  ({ article, isPlaying, isTimerActive, position, duration, onPlayPause, onTimerPress }) => {
+  ({
+    article,
+    isPlaying,
+    isTimerActive,
+    position,
+    duration,
+    queuePosition,
+    onPlayPause,
+    onTimerPress,
+  }) => {
     const colors = useColors();
 
     // Memoize dynamic styles for better performance
@@ -118,6 +132,14 @@ export const MiniPlayer = memo<MiniPlayerProps>(
       return `${currentTime} / ${totalTime}`;
     }, [position, duration]);
 
+    // Format queue position display
+    const queueDisplay = useMemo(() => {
+      if (queuePosition && queuePosition.total > 1) {
+        return `${queuePosition.current} of ${queuePosition.total}`;
+      }
+      return null;
+    }, [queuePosition]);
+
     return (
       <Animated.View
         entering={FadeInUp.duration(350)}
@@ -173,10 +195,18 @@ export const MiniPlayer = memo<MiniPlayerProps>(
                 </View>
               </View>
 
-              {/* Time display - aligned with text content left margin */}
-              <ThemedText colorName="secondaryText" style={styles.timeDisplay} type="caption">
-                {timeDisplay}
-              </ThemedText>
+              {/* Time display and queue position - aligned with text content left margin */}
+              <View style={styles.timeAndQueueRow}>
+                <ThemedText colorName="secondaryText" style={styles.timeDisplay} type="caption">
+                  {timeDisplay}
+                </ThemedText>
+                {/* Queue position indicator - placed after duration */}
+                {queueDisplay && (
+                  <ThemedText colorName="tint" style={styles.queuePosition} type="caption">
+                    {queueDisplay}
+                  </ThemedText>
+                )}
+              </View>
             </View>
 
             {/* Controls */}
@@ -308,6 +338,12 @@ const styles = StyleSheet.create({
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL + LAYOUT.SPACING.HALF_TINY,
   },
 
+  queuePosition: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+    opacity: LAYOUT.OPACITY.HIGH,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY + LAYOUT.SPACING.HALF_TINY,
+  },
+
   timeDisplay: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     opacity: LAYOUT.OPACITY.HIGH,
@@ -316,7 +352,13 @@ const styles = StyleSheet.create({
     fontFamily: Platform.select({ ios: 'Courier', default: 'monospace' }),
     // Align with text content - no right alignment needed since it's in column
     textAlign: 'left',
+  },
+
+  timeAndQueueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginTop: LAYOUT.SPACING.HALF_TINY,
+    gap: LAYOUT.SPACING.SMALL,
   },
 
   controlsContainer: {

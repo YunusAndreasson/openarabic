@@ -194,51 +194,40 @@ export const useListenScreen = () => {
         // STABILIZATION: Set playback mode immediately for UI feedback
         setPlaybackMode('all');
 
-        // Use the same logic as single article playback - generate fresh track with current preference
-        const firstTrack = currentTracks[0];
-        if (!firstTrack?.articleId) {
-          playbackModeTimeoutRef.current = setTimeout(() => {
-            setPlaybackMode('none');
-          }, 100);
-          return;
-        }
+        // PLAYLIST SUPPORT: Use the new playlist functionality instead of just playing the first track
+        const success = await simpleAudioService.playPlaylist(currentTracks, nextTrack => {
+          // Callback when a track completes and the next one starts
+          if (nextTrack) {
+            // Prefetch the next article's data and image for smooth transitions
+            const articleIdToPrefetch = nextTrack.articleId;
+            if (articleIdToPrefetch) {
+              queryClient
+                .prefetchQuery({
+                  queryKey: ['article', articleIdToPrefetch],
+                  queryFn: () => articlesService.getArticleById(articleIdToPrefetch),
+                })
+                .catch(() => {});
 
-        // PREFETCH: warm article data and image so audio components show artwork instantly
-        const articleIdToPrefetch = firstTrack.articleId;
-        if (articleIdToPrefetch) {
-          // Fire-and-forget
-          queryClient
-            .prefetchQuery({
-              queryKey: ['article', articleIdToPrefetch],
-              queryFn: () => articlesService.getArticleById(articleIdToPrefetch),
-            })
-            .catch(() => {});
-
-          // Try to fetch image URL from cache immediately if present
-          const articleInCache = queryClient.getQueryData<any>(['article', articleIdToPrefetch]);
-          const imageUrl = String(firstTrack.imageUrl || articleInCache?.image_url);
-          if (imageUrl) {
-            Image.prefetch(imageUrl).catch(() => {});
+              const articleInCache = queryClient.getQueryData<any>([
+                'article',
+                articleIdToPrefetch,
+              ]);
+              const imageUrl = String(nextTrack.imageUrl || articleInCache?.image_url);
+              if (imageUrl) {
+                Image.prefetch(imageUrl).catch(() => {});
+              } else {
+                prefetchArticle(articleIdToPrefetch).catch(() => {});
+              }
+            }
           } else {
-            // As a fallback, use preloader helper which will also prefetch details
-            prefetchArticle(articleIdToPrefetch).catch(() => {});
-          }
-        }
-
-        // Generate fresh track using same logic as single article playback
-        const freshTrack = await enhancedAudioService.generateEnhancedAudioTrack(
-          firstTrack.articleId,
-          audioPreference
-        );
-
-        if (freshTrack) {
-          const success = await simpleAudioService.play(freshTrack);
-          if (!success) {
+            // Playlist is complete, reset playback mode
             playbackModeTimeoutRef.current = setTimeout(() => {
               setPlaybackMode('none');
             }, 100);
           }
-        } else {
+        });
+
+        if (!success) {
           playbackModeTimeoutRef.current = setTimeout(() => {
             setPlaybackMode('none');
           }, 100);

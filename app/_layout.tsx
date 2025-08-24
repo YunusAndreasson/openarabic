@@ -474,6 +474,7 @@ const AudioOverlays = memo(function AudioOverlays() {
           isTimerActive={globalAudioState.isTimerActive}
           position={globalAudioState.position}
           duration={globalAudioState.duration}
+          queuePosition={globalAudioState.queuePosition}
           onPlayPause={globalAudioState.onPlayPause}
           onTimerPress={globalAudioState.onTimerPress}
         />
