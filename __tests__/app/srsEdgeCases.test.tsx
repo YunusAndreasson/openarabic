@@ -220,7 +220,6 @@ jest.mock('../../components/review/CompletionScreen', () => {
 });
 
 jest.mock('../../components/review/ReviewHeader', () => () => null);
-jest.mock('../../components/review/MeaningOverlay', () => () => null);
 
 const { useReview, createSRSMock, getCurrentSRSMock } = require('../../hooks/review');
 

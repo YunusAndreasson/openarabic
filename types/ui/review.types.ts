@@ -15,28 +15,6 @@ export interface WordDisplayProps {
 }
 
 /**
- * Props for the MeaningOverlay component
- */
-export interface MeaningOverlayProps {
-  /** Whether the overlay is visible */
-  visible: boolean;
-  /** The meaning to show (translation) */
-  meaning: string;
-  /** Whether this is a warning message */
-  isWarning?: boolean;
-  /** Whether this is a vague knowledge indicator */
-  isVague?: boolean;
-  /** Whether this indicates a struggling state */
-  isStruggling?: boolean;
-  /** Animation duration in milliseconds */
-  duration?: number;
-  /** Whether to animate the overlay */
-  animate?: boolean;
-  /** Function to call when the overlay is closed */
-  onClose?: () => void;
-}
-
-/**
  * Props for the InstructionFooter component
  */
 export interface InstructionFooterProps {

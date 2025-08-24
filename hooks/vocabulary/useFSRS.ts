@@ -298,7 +298,8 @@ export function useFSRS({
 
       // Prepare FSRS update payload
       const wordUpdateData = {
-        fsrs_due: newCard.due.toISOString(),
+        // For unknown/vague, keep the word due immediately (do not postpone)
+        fsrs_due: confidence === 'known' ? newCard.due.toISOString() : new Date().toISOString(),
         fsrs_stability: newCard.stability,
         fsrs_difficulty: newCard.difficulty,
         fsrs_elapsed_days: newCard.elapsed_days,
@@ -400,12 +401,30 @@ export function useFSRS({
             item => item.remainingSpacing <= 1
           );
 
-          // If no words are ready soon, complete the session
-          // This prevents infinite waiting when all words are in long-term spacing
+          // If no words are ready soon, decide whether to continue or complete
           if (wordsReadySoon.length === 0) {
-            if (!stateTrackingRef.current.completionTriggered) {
+            const { knownWords, totalWords } = countersRef.current;
+            const allKnown = totalWords > 0 && knownWords >= totalWords;
+
+            if (!allKnown) {
+              // Keep the session going by re-queuing the word with the smallest remaining spacing
+              const candidate = spacingQueueRef.current.spacedWords.reduce(
+                (min, curr) => (!min || curr.remainingSpacing < min.remainingSpacing ? curr : min),
+                undefined as (typeof spacingQueueRef.current.spacedWords)[number] | undefined
+              );
+
+              if (candidate) {
+                const priority = calculateWordPriority(candidate.word);
+                queueRef.current.push(candidate.word, priority);
+                spacingQueueRef.current.spacedWords = spacingQueueRef.current.spacedWords.filter(
+                  w => w.word.root_id !== candidate.word.root_id
+                );
+                nextItem = getNextWordWithSpacing();
+              }
+            }
+
+            if ((allKnown || !nextItem) && !stateTrackingRef.current.completionTriggered) {
               stateTrackingRef.current.completionTriggered = true;
-              // Use a delay to ensure word processing completes
               setTimeout(() => {
                 setIsComplete(true);
                 if (onComplete) onComplete();

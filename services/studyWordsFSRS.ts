@@ -107,8 +107,9 @@ export const studyWordsFSRSService = {
     }
 
     // Session cooldown: Exclude words reviewed within the specified hours
-    // BUT: New words (state 0) are never excluded by cooldown since they haven't been reviewed
-    if (options.sessionCooldownHours && options.sessionCooldownHours > 0) {
+    // IMPORTANT: Do NOT apply cooldown when requesting onlyDue words
+    // Rationale: a left swipe should keep the word due immediately; cooldown would hide it
+    if (options.sessionCooldownHours && options.sessionCooldownHours > 0 && !options.onlyDue) {
       const cooldownTime = new Date(Date.now() - options.sessionCooldownHours * 60 * 60 * 1000);
       filteredQuery = filteredQuery.or(
         `fsrs_state.eq.0,fsrs_last_review.is.null,fsrs_last_review.lt.${cooldownTime.toISOString()}`

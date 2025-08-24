@@ -727,6 +727,8 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       invalidateQueries();
 
       if (user?.id) {
+        // Invalidate and refetch all relevant FSRS queries so counts update immediately
+        queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) });
         queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
         queryClient.invalidateQueries({
           queryKey: FSRS_QUERY_KEYS.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
@@ -734,6 +736,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
         queryClient.invalidateQueries({ queryKey: FSRS_QUERY_KEYS.stats(user.id) });
 
         // Eagerly refetch to avoid stale due counts right after session
+        queryClient.refetchQueries({ queryKey: FSRS_QUERY_KEYS.all(user.id) });
         queryClient.refetchQueries({ queryKey: FSRS_QUERY_KEYS.due(user.id) });
         queryClient.refetchQueries({
           queryKey: FSRS_QUERY_KEYS.allWithCooldown(user.id, DEFAULT_SESSION_COOLDOWN_HOURS),
