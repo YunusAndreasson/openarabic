@@ -17,8 +17,6 @@ from .database_common import (
 )
 from .database_utils import (
     archive_files,
-    concatenate_audio_files,
-    generate_sentence_audio,
     get_or_create_root,
     get_or_generate_root_audio,
     insert_article_sentences,
@@ -76,8 +74,6 @@ __all__ = [
     "update_table_record",
     # Database utilities
     "archive_files",
-    "concatenate_audio_files",
-    "generate_sentence_audio",
     "get_or_create_root",
     "get_or_generate_root_audio",
     "insert_article_sentences",

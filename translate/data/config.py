@@ -38,6 +38,12 @@ DEFAULT_SPLIT_OUTPUT_FILE = os.path.join(ARTICLE_DIR, "input_split.json")
 # Voice configuration
 ARABIC_VOICE_ID = "R6nda3uM038xEEKi7GFl"  # Keep for sentence audio only
 
+# Arabic voice settings for ElevenLabs API compatibility
+ARABIC_VOICE_SETTINGS = {
+    "use_speaker_boost": True,  # Enhanced speaker clarity
+    "speed": 0.8,  # Optimal speed for Arabic pronunciation
+}
+
 # English voice IDs - Primary and fallback options
 ENGLISH_VOICE_ID = "NFG5qt843uXKj4pFvR7C"  # Adam - Clear, natural English voice
 ENGLISH_VOICE_ID_FALLBACK = "21m00Tcm4TlvDq8ikWAM"  # Rachel - Backup option

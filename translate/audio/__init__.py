@@ -1,9 +1,8 @@
 from .audio_utils import (
-    concatenate_audio_files,
+    create_article_audio,
     generate_arabic_word_audio,
     generate_audio_filename,
     generate_english_word_audio,
-    generate_sentence_audio,
     generate_speech,
     get_cache_key,
     get_cached_audio_url,
@@ -15,9 +14,8 @@ __all__ = [
     "generate_audio_filename",
     "get_cached_audio_url",
     "generate_speech",
-    "concatenate_audio_files",
+    "create_article_audio",
     "generate_arabic_word_audio",
     "generate_english_word_audio",
-    "generate_sentence_audio",
     "get_or_generate_root_audio",
 ]

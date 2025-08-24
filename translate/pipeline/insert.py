@@ -20,10 +20,8 @@ except ImportError:
     )
 
 from audio.audio_utils import (
-    download_audio_for_concat,
+    create_article_audio,
     generate_audio_filename,
-    generate_bilingual_sentence_audio,
-    generate_sentence_audio,
     generate_speech,
 )
 from data.config import (
@@ -55,8 +53,7 @@ from utils.validation import (
 # Import audio utilities for final phase
 try:
     from audio.audio_utils import (
-        concatenate_audio_files,
-        generate_sentence_audio,
+        create_article_audio,
     )
 
     AUDIO_AVAILABLE = True
@@ -75,268 +72,87 @@ def generate_article_audio(
     translations: list[SentenceTranslation],
     progress_tracker: Any = None,
 ) -> None:
-    """Generate audio for all sentences in an article and create concatenated article audio."""
+    """Generate article-level audio files in one streamlined pass."""
     if not AUDIO_AVAILABLE:
         raise RuntimeError("Audio generation not available - failing per strict mode")
 
     use_progress = progress_tracker is not None
-    sentence_audio_files = []
-    sentence_english_audio_files = []
-    sentence_bilingual_audio_files = []
     temp_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "temp_audio")
     os.makedirs(temp_dir, exist_ok=True)
 
-    for i, translation in enumerate(translations):
-        try:
-            # Update progress for current sentence
+    try:
+        # Prepare sentence data for the new streamlined function
+        sentences = []
+        for i, translation in enumerate(translations):
             if use_progress:
                 progress_tracker.set_description(
-                    f"Generating audio for sentence {i + 1}/{len(translations)}"
+                    f"Preparing sentence {i + 1}/{len(translations)} for audio generation"
                 )
                 progress_tracker.update(1)
 
-            # Get the Arabic text (prefer tashkeel if available)
-            arabic_text = translation.tashkeel or translation.original
-            english_text = translation.full_translation
-            if not arabic_text:
-                raise RuntimeError(f"No Arabic text found for sentence {i + 1}")
-            if not english_text:
-                raise RuntimeError(f"No English text found for sentence {i + 1}")
-
-            # Generate unique filenames for different audio types
-            arabic_audio_filename = generate_audio_filename()
-            english_audio_filename = generate_audio_filename()
-            bilingual_audio_filename = generate_audio_filename()
-
-            # Get context for better audio quality
-            previous_text = None
-            next_text = None
-            if i > 0:
-                prev_translation = translations[i - 1]
-                previous_text = prev_translation.tashkeel or prev_translation.original
-            if i < len(translations) - 1:
-                next_translation = translations[i + 1]
-                next_text = next_translation.tashkeel or next_translation.original
-
-            # Generate Arabic-only audio
-            arabic_audio_result = generate_sentence_audio(
-                text=arabic_text,
-                filename=arabic_audio_filename,
-                previous_text=previous_text,
-                next_text=next_text,
+            sentences.append(
+                {
+                    "arabic_text": translation.tashkeel or translation.original,
+                    "english_text": translation.full_translation,
+                    "tashkeel": translation.tashkeel,
+                }
             )
 
-            if arabic_audio_result and arabic_audio_result.url:
-                # Download audio for concatenation
-                temp_audio_file = os.path.join(temp_dir, f"sentence_arabic_{i}.mp3")
-                if download_audio_for_concat(arabic_audio_filename, temp_audio_file):
-                    sentence_audio_files.append(temp_audio_file)
+        # Get article metadata for bilingual audio intro
+        try:
+            article_data = (
+                get_supabase_client()
+                .table("articles")
+                .select("title, summary")
+                .eq("id", article_id)
+                .execute()
+            )
+            if article_data.data:
+                article_title = article_data.data[0].get("title")
+                article_summary = article_data.data[0].get("summary")
             else:
-                raise RuntimeError(
-                    f"Failed to generate Arabic audio for sentence {i + 1}"
-                )
-
-            # Generate English-only audio using unified function
-            from elevenlabs import VoiceSettings
-
-            from audio.audio_utils import validate_mp3
-            from data.config import (
-                AUDIO_TEMP_DIR,
-                ENGLISH_VOICE_ID,
-                ENGLISH_VOICE_SETTINGS,
-            )
-            from utils.storage_utils import get_supabase_client
-
-            # Generate English audio
-            english_response = generate_speech(
-                text=english_text,
-                voice_id=ENGLISH_VOICE_ID,
-                voice_settings=VoiceSettings(**ENGLISH_VOICE_SETTINGS),
-            )
-
-            if english_response and english_response.get("audio"):
-                english_audio_data = english_response["audio"]
-
-                # Validate and save audio
-                if not validate_mp3(english_audio_data):
-                    raise RuntimeError(
-                        f"Invalid MP3 data for English audio in sentence {i + 1}"
-                    )
-
-                # Save to temporary file
-                temp_english_audio_path = os.path.join(
-                    AUDIO_TEMP_DIR, english_audio_filename
-                )
-                with open(temp_english_audio_path, "wb") as f:
-                    f.write(english_audio_data)
-
-                # Upload to Supabase storage
-                with open(temp_english_audio_path, "rb") as f:
-                    get_supabase_client().storage.from_("audio").upload(
-                        english_audio_filename,
-                        f,
-                        file_options={"content-type": "audio/mpeg"},
-                    )
-
-                # Clean up temporary file
-                if os.path.exists(temp_english_audio_path):
-                    os.remove(temp_english_audio_path)
-
-                # Create english_audio_result object for compatibility
-                english_audio_url = get_storage_url(english_audio_filename)
-                english_audio_result = type(
-                    "AudioResult", (), {"url": english_audio_url}
-                )()
-
-                # Download audio for concatenation
-                temp_english_audio_file = os.path.join(
-                    temp_dir, f"sentence_english_{i}.mp3"
-                )
-                if download_audio_for_concat(
-                    english_audio_filename, temp_english_audio_file
-                ):
-                    sentence_english_audio_files.append(temp_english_audio_file)
-            else:
-                raise RuntimeError(
-                    f"Failed to generate English audio for sentence {i + 1}"
-                )
-
-            # Generate bilingual audio
-            bilingual_audio_result = generate_bilingual_sentence_audio(
-                english_text=english_text,
-                arabic_text=arabic_text,
-                filename=bilingual_audio_filename,
-                tashkeel_text=translation.tashkeel,
-                previous_text=previous_text,
-                next_text=next_text,
-            )
-
-            if bilingual_audio_result and bilingual_audio_result.url:
-                # Download audio for concatenation
-                temp_bilingual_audio_file = os.path.join(
-                    temp_dir, f"sentence_bilingual_{i}.mp3"
-                )
-                if download_audio_for_concat(
-                    bilingual_audio_filename, temp_bilingual_audio_file
-                ):
-                    sentence_bilingual_audio_files.append(temp_bilingual_audio_file)
-            else:
-                raise RuntimeError(
-                    f"Failed to generate bilingual audio for sentence {i + 1}"
-                )
-
-            # Update the database with all audio URLs for this sentence
-            try:
-                get_supabase_client().table("article_sentences").update(
-                    {
-                        "audio_url": arabic_audio_result.url,
-                        "audio_url_english": english_audio_result.url,
-                        "audio_url_bilingual": bilingual_audio_result.url,
-                    }
-                ).eq("article_id", article_id).eq("position", i).execute()
-
-            except Exception as e:
-                raise RuntimeError(
-                    f"Failed to update audio URLs for sentence {i + 1}: {e}"
-                ) from e
-
+                article_title = None
+                article_summary = None
         except Exception as e:
-            raise RuntimeError(
-                f"Failed to generate audio for sentence {i + 1}: {e}"
-            ) from e
+            logger.warning(f"Could not fetch article metadata: {e}")
+            article_title = None
+            article_summary = None
 
-    # Create concatenated article audio files
-    if sentence_audio_files:
-        # Arabic-only article audio
-        arabic_article_filename = generate_audio_filename()
-        arabic_article_path = os.path.join(temp_dir, arabic_article_filename)
+        # Create article audio files in one pass
+        logger.info("Creating article audio files...")
+        audio_urls = create_article_audio(
+            sentences=sentences,
+            article_title=article_title,
+            article_summary=article_summary,
+            output_dir=temp_dir,
+        )
 
-        if concatenate_audio_files(sentence_audio_files, arabic_article_path):
-            try:
-                with open(arabic_article_path, "rb") as f:
-                    get_supabase_client().storage.from_("audio").upload(
-                        arabic_article_filename,
-                        f,
-                        file_options={"content-type": "audio/mpeg"},
-                    )
+        if not audio_urls:
+            raise RuntimeError("Failed to create article audio files")
 
-                article_audio_url = get_storage_url(arabic_article_filename)
-                get_supabase_client().table("articles").update(
-                    {"audio_url": article_audio_url}
-                ).eq("id", article_id).execute()
-
-            except Exception as e:
-                logger.error(f"Error uploading Arabic article audio: {str(e)}")
-
-    if sentence_bilingual_audio_files:
-        # Bilingual article audio
-        bilingual_article_filename = generate_audio_filename()
-        bilingual_article_path = os.path.join(temp_dir, bilingual_article_filename)
-
-        if concatenate_audio_files(
-            sentence_bilingual_audio_files, bilingual_article_path
-        ):
-            try:
-                with open(bilingual_article_path, "rb") as f:
-                    get_supabase_client().storage.from_("audio").upload(
-                        bilingual_article_filename,
-                        f,
-                        file_options={"content-type": "audio/mpeg"},
-                    )
-
-                bilingual_article_audio_url = get_storage_url(
-                    bilingual_article_filename
-                )
-                get_supabase_client().table("articles").update(
-                    {"audio_url_bilingual": bilingual_article_audio_url}
-                ).eq("id", article_id).execute()
-
-            except Exception as e:
-                logger.error(f"Error uploading bilingual article audio: {str(e)}")
-
-    # Clean up temporary files
-    all_temp_files = (
-        sentence_audio_files
-        + sentence_english_audio_files
-        + sentence_bilingual_audio_files
-    )
-    if sentence_audio_files:
-        all_temp_files.append(os.path.join(temp_dir, arabic_article_filename))
-    if sentence_bilingual_audio_files:
-        all_temp_files.append(os.path.join(temp_dir, bilingual_article_filename))
-
-    cleanup_temp_files(all_temp_files, temp_dir)
-
-
-def concatenate_and_upload_article_audio(
-    files: list[str],
-    temp_dir: str,
-    article_id: int,
-) -> None:
-    """Concatenate sentence audio files and upload as article audio."""
-    try:
-        final_audio_filename = generate_audio_filename()
-        final_audio_path = os.path.join(temp_dir, final_audio_filename)
-
-        if concatenate_audio_files and concatenate_audio_files(files, final_audio_path):
-            with open(final_audio_path, "rb") as f:
-                get_supabase_client().storage.from_("audio").upload(
-                    final_audio_filename,
-                    f,
-                    file_options={"content-type": "audio/mpeg"},
-                )
-
-            article_audio_url = get_storage_url(final_audio_filename)
+        # Update database with article-level audio URLs
+        try:
             get_supabase_client().table("articles").update(
-                {"audio_url": article_audio_url}
+                {
+                    "audio_url": audio_urls["arabic_url"],
+                    "audio_url_bilingual": audio_urls["bilingual_url"],
+                }
             ).eq("id", article_id).execute()
 
-            logger.info(f"Created concatenated article audio: {article_audio_url}")
-        else:
-            logger.warning("Failed to concatenate audio files")
+            logger.info("Article audio URLs updated in database successfully")
+
+        except Exception as e:
+            raise RuntimeError(f"Failed to update article audio URLs: {e}")
+
+        # Clean up temporary directory
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
 
     except Exception as e:
-        logger.error(f"Error creating concatenated article audio: {e}")
+        # Clean up on error
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
+        raise RuntimeError(f"Failed to generate article audio: {e}")
 
 
 def detect_author_from_file_path(file_path: str) -> tuple[str, int]:
@@ -432,101 +248,38 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
             # Create temporary directory for audio processing
             temp_dir = tempfile.mkdtemp()
 
-            # Generate audio for all sentences first
-            sentence_audio_files = []
-            for i, translation in enumerate(translations):
-                try:
-                    # Get the Arabic text (prefer tashkeel if available)
-                    arabic_text = translation.tashkeel or translation.original
-                    if not arabic_text:
-                        raise RuntimeError(f"No Arabic text found for sentence {i + 1}")
+            # Use the new streamlined audio generation function
+            logger.info("Generating streamlined article audio...")
 
-                    # Generate unique filename
-                    audio_filename = generate_audio_filename()
+            # Prepare sentence data for the new streamlined function
+            sentences = []
+            for translation in translations:
+                sentences.append(
+                    {
+                        "arabic_text": translation.tashkeel or translation.original,
+                        "english_text": translation.full_translation,
+                        "tashkeel": translation.tashkeel,
+                    }
+                )
 
-                    # Get context for better audio quality
-                    previous_text = None
-                    next_text = None
-                    if i > 0:
-                        prev_translation = translations[i - 1]
-                        previous_text = (
-                            prev_translation.tashkeel or prev_translation.original
-                        )
-                    if i < len(translations) - 1:
-                        next_translation = translations[i + 1]
-                        next_text = (
-                            next_translation.tashkeel or next_translation.original
-                        )
+            # Create article audio files in one pass
+            audio_urls = create_article_audio(
+                sentences=sentences,
+                article_title=data["metadata"]["title"],
+                article_summary=data["metadata"]["summary"],
+                output_dir=temp_dir,
+            )
 
-                    # Generate audio
-                    audio_result = generate_sentence_audio(
-                        text=arabic_text,
-                        filename=audio_filename,
-                        previous_text=previous_text,
-                        next_text=next_text,
-                    )
+            if audio_urls:
+                # Get the Arabic audio URL for the article
+                article_audio_url = audio_urls["arabic_url"]
+                logger.info(f"Generated article audio: {article_audio_url}")
+            else:
+                raise RuntimeError("Failed to create article audio files")
 
-                    if audio_result and audio_result.url:
-                        # Download audio for concatenation
-                        temp_audio_file = os.path.join(temp_dir, f"sentence_{i}.mp3")
-                        if download_audio_for_concat(audio_filename, temp_audio_file):
-                            sentence_audio_files.append(temp_audio_file)
-                    else:
-                        raise RuntimeError(
-                            f"Failed to generate audio for sentence {i + 1}"
-                        )
-
-                except Exception as e:
-                    raise RuntimeError(
-                        f"Failed to generate audio for sentence {i + 1}: {e}"
-                    ) from e
-
-            # Create concatenated article audio
-            if sentence_audio_files:
-                try:
-                    final_audio_filename = generate_audio_filename()
-                    final_audio_path = os.path.join(temp_dir, final_audio_filename)
-
-                    if concatenate_audio_files(sentence_audio_files, final_audio_path):
-                        with open(final_audio_path, "rb") as f:
-                            get_supabase_client().storage.from_("audio").upload(
-                                final_audio_filename,
-                                f,
-                                file_options={"content-type": "audio/mpeg"},
-                            )
-
-                        article_audio_url = get_storage_url(final_audio_filename)
-                        logger.info(f"Generated article audio: {article_audio_url}")
-                    else:
-                        raise RuntimeError("Failed to concatenate audio files")
-
-                except Exception as e:
-                    raise RuntimeError(
-                        f"Failed to create concatenated article audio: {e}"
-                    ) from e
-
-            # Clean up temporary files
-            cleanup_temp_files(sentence_audio_files, temp_dir)
+            # Clean up temporary directory
             if os.path.exists(temp_dir):
-                try:
-                    # Add a small delay to ensure all file handles are closed
-                    import time
-
-                    time.sleep(0.1)
-                    shutil.rmtree(temp_dir)
-                except OSError as e:
-                    logger.warning(
-                        f"Could not remove temporary directory {temp_dir}: {e}"
-                    )
-                    # Try to remove individual files if directory removal fails
-                    try:
-                        for file_path in sentence_audio_files:
-                            if os.path.exists(file_path):
-                                os.remove(file_path)
-                    except Exception as cleanup_error:
-                        logger.warning(
-                            f"Could not clean up some temporary files: {cleanup_error}"
-                        )
+                shutil.rmtree(temp_dir)
 
         except Exception as e:
             logger.error(f"Audio generation failed: {e}")
@@ -567,35 +320,6 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
     insert_article_sentences(
         article_id, data["translations"], progress_tracker if use_progress else None
     )
-
-    # Update sentence audio URLs in the database
-    if AUDIO_AVAILABLE and article_audio_url:
-        for i, translation in enumerate(translations):
-            try:
-                # Get the Arabic text (prefer tashkeel if available)
-                arabic_text = translation.tashkeel or translation.original
-                if not arabic_text:
-                    continue
-
-                # Generate unique filename for this sentence
-                audio_filename = generate_audio_filename()
-
-                # Generate audio for this sentence
-                audio_result = generate_sentence_audio(
-                    text=arabic_text,
-                    filename=audio_filename,
-                    previous_text=None,  # No context needed for individual sentence storage
-                    next_text=None,
-                )
-
-                if audio_result and audio_result.url:
-                    # Update the database with the audio URL
-                    get_supabase_client().table("article_sentences").update(
-                        {"audio_url": audio_result.url}
-                    ).eq("article_id", article_id).eq("position", i).execute()
-
-            except Exception as e:
-                logger.warning(f"Failed to update audio URL for sentence {i + 1}: {e}")
 
     archive_files(file_path, article_id)
 

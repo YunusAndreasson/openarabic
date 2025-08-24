@@ -279,63 +279,6 @@ def generate_speech(
         return None
 
 
-def concatenate_audio_files(audio_files: list[str], output_file: str) -> str | None:
-    """
-    Concatenate multiple audio files into a single file.
-
-    Args:
-        audio_files: List of audio file paths to concatenate
-        output_file: Output file path
-
-    Returns:
-        Path to the concatenated file, or None if failed
-    """
-    try:
-        if not audio_files:
-            logger.error("No audio files to concatenate")
-            return None
-
-        # Use ffmpeg to concatenate files
-        file_list_path = output_file + ".txt"
-        with open(file_list_path, "w", encoding="utf-8") as f:
-            for audio_file in audio_files:
-                if os.path.exists(audio_file):
-                    f.write(f"file '{audio_file}'\n")
-
-        cmd = [
-            "ffmpeg",
-            "-f",
-            "concat",
-            "-safe",
-            "0",
-            "-i",
-            file_list_path,
-            "-c",
-            "copy",
-            output_file,
-            "-y",  # Overwrite output file
-        ]
-
-        subprocess.run(cmd, capture_output=True, text=True, check=True)
-
-        # Clean up temporary file
-        if os.path.exists(file_list_path):
-            os.remove(file_list_path)
-
-        if os.path.exists(output_file):
-            return output_file
-        else:
-            logger.error("Concatenated file not created")
-            return None
-
-    except subprocess.CalledProcessError as e:
-        logger.error(f"FFmpeg concatenation failed: {e.stderr}")
-        return None
-    except Exception as e:
-        logger.error(f"Audio concatenation failed: {e}")
-        return None
-
-
 def generate_arabic_word_audio(word: str, filename: str) -> dict | None:
     """
     Generate audio for an Arabic word using Google Cloud TTS.
@@ -637,7 +580,7 @@ def create_multi_audio_with_delays(
             logger.error("No valid audio segments found")
             return b""
 
-        # Create delay segment (1 second)
+        # Create delay segment (500ms as per config)
         delay_segment = AudioSegment.silent(duration=delay_ms)
 
         # Combine all segments with delays between them
@@ -666,232 +609,193 @@ def create_multi_audio_with_delays(
         return b"".join(audio_segments)
 
 
-def generate_bilingual_sentence_audio(
-    english_text: str,
-    arabic_text: str,
-    filename: str,
-    title: str | None = None,
-    summary: str | None = None,
-    tashkeel_text: str | None = None,
-    previous_text: str | None = None,
-    next_text: str | None = None,
-) -> BilingualAudioResult | None:
+def create_article_audio(
+    sentences: list[dict],
+    article_title: str | None = None,
+    article_summary: str | None = None,
+    output_dir: str = AUDIO_TEMP_DIR,
+) -> dict[str, str] | None:
     """
-    Generate bilingual audio for a sentence with optional title and summary intro (English + Arabic).
+    Create article-level audio files in one pass:
+    1. Arabic-only MP3: all sentences concatenated with 500ms delays
+    2. Bilingual MP3: title + summary + English/Arabic mixed with 500ms delays
 
     Args:
-        english_text: English translation text
-        arabic_text: Arabic text
-        filename: Output filename
-        title: Optional title to read in English first
-        summary: Optional summary to read in English after title
-        tashkeel_text: Arabic text with diacritics (preferred)
-        previous_text: Previous text for context
-        next_text: Next text for context
+        sentences: List of sentence dictionaries with 'arabic_text', 'english_text', 'tashkeel'
+        article_title: Article title for bilingual audio intro
+        article_summary: Article summary for bilingual audio intro
+        output_dir: Directory to save temporary files
 
     Returns:
-        BilingualAudioResult with URL and timing information
+        Dictionary with 'arabic_url' and 'bilingual_url', or None if failed
     """
     try:
-        # Check if audio already exists in storage to avoid duplicate generation
-        if check_file_exists("audio", filename):
-            logger.info(
-                f"Bilingual audio file {filename} already exists, skipping generation"
-            )
-            url = get_storage_url(filename)
-            return BilingualAudioResult(
-                url=url,
-                filename=filename,
-                duration=0.0,
-                english_duration=0.0,
-                arabic_duration=0.0,
-            )
+        if not sentences:
+            logger.error("No sentences provided for article audio creation")
+            return None
 
-        logger.info(
-            f"Starting bilingual audio generation for: '{english_text[:50]}...' + '{arabic_text[:50]}...'"
-        )
+        logger.info(f"Creating article audio for {len(sentences)} sentences")
 
-        # Collect all audio segments
-        audio_segments = []
-        segment_info = []
+        # Generate all audio segments in one pass
+        arabic_segments = []
+        bilingual_segments = []
 
-        # Generate title audio (if provided)
-        if title and title.strip():
-            logger.info(f"Generating title audio: '{title}'")
+        # Add title and summary to bilingual audio if provided
+        if article_title and article_title.strip():
+            logger.info(f"Generating title audio: '{article_title}'")
             title_response = generate_speech(
-                text=title.strip(),
+                text=article_title.strip(),
                 voice_id=ENGLISH_VOICE_ID,
                 voice_settings=VoiceSettings(**ENGLISH_VOICE_SETTINGS),
             )
             if title_response and title_response.get("audio"):
-                audio_segments.append(title_response["audio"])
-                segment_info.append(f"Title: {len(title_response['audio'])} bytes")
-                logger.info(
-                    f"Title audio generated: {len(title_response['audio'])} bytes"
-                )
+                bilingual_segments.append(title_response["audio"])
+                logger.info("Title audio generated successfully")
             else:
                 logger.warning("Failed to generate title audio")
 
-        # Generate summary audio (if provided)
-        if summary and summary.strip():
-            logger.info(f"Generating summary audio: '{summary[:50]}...'")
+        if article_summary and article_summary.strip():
+            logger.info(f"Generating summary audio: '{article_summary[:50]}...'")
             summary_response = generate_speech(
-                text=summary.strip(),
+                text=article_summary.strip(),
                 voice_id=ENGLISH_VOICE_ID,
                 voice_settings=VoiceSettings(**ENGLISH_VOICE_SETTINGS),
             )
             if summary_response and summary_response.get("audio"):
-                audio_segments.append(summary_response["audio"])
-                segment_info.append(f"Summary: {len(summary_response['audio'])} bytes")
-                logger.info(
-                    f"Summary audio generated: {len(summary_response['audio'])} bytes"
-                )
+                bilingual_segments.append(summary_response["audio"])
+                logger.info("Summary audio generated successfully")
             else:
                 logger.warning("Failed to generate summary audio")
 
-        # Generate main English audio
-        logger.info("Generating main English audio...")
-        english_response = generate_speech(
-            text=english_text,
-            voice_id=ENGLISH_VOICE_ID,
-            voice_settings=VoiceSettings(**ENGLISH_VOICE_SETTINGS),
-        )
-        if not english_response or not english_response.get("audio"):
-            logger.error("Failed to generate main English audio")
+        # Process each sentence
+        for i, sentence in enumerate(sentences):
+            arabic_text = sentence.get("arabic_text", "")
+            english_text = sentence.get("english_text", "")
+            tashkeel_text = sentence.get("tashkeel", arabic_text)
+
+            if not arabic_text or not english_text:
+                logger.warning(f"Skipping sentence {i + 1} - missing text")
+                continue
+
+            logger.info(f"Processing sentence {i + 1}/{len(sentences)}")
+
+            # Generate Arabic audio for this sentence
+            arabic_response = generate_speech(
+                text=tashkeel_text,
+                voice_id=ARABIC_VOICE_ID,
+                voice_settings=VoiceSettings(**DEFAULT_VOICE_SETTINGS),
+            )
+            if not arabic_response or not arabic_response.get("audio"):
+                logger.error(f"Failed to generate Arabic audio for sentence {i + 1}")
+                continue
+
+            arabic_audio = arabic_response["audio"]
+            arabic_segments.append(arabic_audio)
+
+            # Generate English audio for bilingual version
+            english_response = generate_speech(
+                text=english_text,
+                voice_id=ENGLISH_VOICE_ID,
+                voice_settings=VoiceSettings(**ENGLISH_VOICE_SETTINGS),
+            )
+            if not english_response or not english_response.get("audio"):
+                logger.error(f"Failed to generate English audio for sentence {i + 1}")
+                continue
+
+            english_audio = english_response["audio"]
+
+            # Add English then Arabic to bilingual segments
+            bilingual_segments.append(english_audio)
+            bilingual_segments.append(arabic_audio)
+
+            logger.info(f"Sentence {i + 1} audio generated successfully")
+
+        if not arabic_segments:
+            logger.error("No Arabic audio segments generated")
             return None
 
-        english_audio = english_response["audio"]
-        english_duration = english_response.get("duration", 0.0)
-        audio_segments.append(english_audio)
-        segment_info.append(f"English: {len(english_audio)} bytes")
-        logger.info(
-            f"Main English audio generated: {len(english_audio)} bytes, duration: {english_duration}"
-        )
-
-        # Generate Arabic audio
-        logger.info("Generating Arabic audio...")
-        arabic_response = generate_speech(
-            text=tashkeel_text if tashkeel_text else arabic_text,
-            voice_id=ARABIC_VOICE_ID,
-            voice_settings=VoiceSettings(**DEFAULT_VOICE_SETTINGS),
-        )
-        if not arabic_response or not arabic_response.get("audio"):
-            logger.error("Failed to generate Arabic audio")
+        if not bilingual_segments:
+            logger.error("No bilingual audio segments generated")
             return None
 
-        arabic_audio = arabic_response["audio"]
-        arabic_duration = arabic_response.get("duration", 0.0)
-        audio_segments.append(arabic_audio)
-        segment_info.append(f"Arabic: {len(arabic_audio)} bytes")
-        logger.info(
-            f"Arabic audio generated: {len(arabic_audio)} bytes, duration: {arabic_duration}"
+        # Create final audio files with 500ms delays
+        logger.info("Creating final audio files with 500ms delays")
+
+        # 1. Arabic-only article audio
+        arabic_article_filename = generate_audio_filename()
+        arabic_article_path = os.path.join(output_dir, arabic_article_filename)
+
+        arabic_combined = create_multi_audio_with_delays(
+            arabic_segments,
+            delay_ms=BILINGUAL_AUDIO_PAUSE_MS,  # 500ms
         )
 
-        # Validate audio lengths
-        for i, audio_data in enumerate(audio_segments):
-            if len(audio_data) < 1000:
-                logger.warning(
-                    f"Audio segment {i + 1} seems very short: {len(audio_data)} bytes"
-                )
-
-        # Create multi-segment audio with 1-second delays
-        logger.info(
-            f"Creating multi-segment audio with {len(audio_segments)} segments: {segment_info}"
-        )
-        combined_audio_data = create_multi_audio_with_delays(
-            audio_segments,
-            delay_ms=1000,  # 1 second delay between segments
-        )
-
-        # Validate and save audio
-        if not validate_mp3(combined_audio_data):
-            logger.error("Invalid MP3 data for multi-segment audio")
+        if not arabic_combined:
+            logger.error("Failed to create Arabic article audio")
             return None
 
-        logger.info(f"Multi-segment audio created: {len(combined_audio_data)} bytes")
+        # Save Arabic article audio
+        with open(arabic_article_path, "wb") as f:
+            f.write(arabic_combined)
 
-        # Save to temporary file
-        temp_audio_path = os.path.join(AUDIO_TEMP_DIR, filename)
-        with open(temp_audio_path, "wb") as f:
-            f.write(combined_audio_data)
+        # 2. Bilingual article audio
+        bilingual_article_filename = generate_audio_filename()
+        bilingual_article_path = os.path.join(output_dir, bilingual_article_filename)
 
-        # Upload to Supabase storage (double-check existence to prevent duplicates)
-        if not check_file_exists("audio", filename):
-            with open(temp_audio_path, "rb") as f:
+        bilingual_combined = create_multi_audio_with_delays(
+            bilingual_segments,
+            delay_ms=BILINGUAL_AUDIO_PAUSE_MS,  # 500ms
+        )
+
+        if not bilingual_combined:
+            logger.error("Failed to create bilingual article audio")
+            return None
+
+        # Save bilingual article audio
+        with open(bilingual_article_path, "wb") as f:
+            f.write(bilingual_combined)
+
+        # Upload both files to Supabase storage
+        urls = {}
+
+        # Upload Arabic article audio
+        try:
+            with open(arabic_article_path, "rb") as f:
                 get_supabase_client().storage.from_("audio").upload(
-                    filename,
+                    arabic_article_filename,
                     f,
                     file_options={"content-type": "audio/mpeg"},
                 )
-            logger.info(f"Uploaded new bilingual audio file: {filename}")
-        else:
-            logger.info(
-                f"Bilingual audio file {filename} already exists in storage, skipping upload"
-            )
+            urls["arabic_url"] = get_storage_url(arabic_article_filename)
+            logger.info(f"Uploaded Arabic article audio: {arabic_article_filename}")
+        except Exception as e:
+            logger.error(f"Failed to upload Arabic article audio: {e}")
+            return None
 
-        url = get_storage_url(filename)
-
-        # Clean up temporary file
-        if os.path.exists(temp_audio_path):
-            os.remove(temp_audio_path)
-
-        # Calculate durations for multi-segment audio
-        total_segments = len(audio_segments)
-        total_duration = 0.0
+        # Upload bilingual article audio
         try:
-            # Estimate total duration with delays (1 second per segment + 1 second delays)
-            estimated_duration = total_segments * 1.0  # Assume ~1 second per segment
-            estimated_duration += (
-                total_segments - 1
-            ) * 1.0  # Add 1 second delays between segments
-            total_duration = estimated_duration
+            with open(bilingual_article_path, "rb") as f:
+                get_supabase_client().storage.from_("audio").upload(
+                    bilingual_article_filename,
+                    f,
+                    file_options={"content-type": "audio/mpeg"},
+                )
+            urls["bilingual_url"] = get_storage_url(bilingual_article_filename)
             logger.info(
-                f"Estimated total duration: {total_duration:.2f}s for {total_segments} segments with 1s delays"
+                f"Uploaded bilingual article audio: {bilingual_article_filename}"
             )
-        except Exception:
-            total_duration = 0.0
-            logger.warning("Could not estimate total duration")
+        except Exception as e:
+            logger.error(f"Failed to upload bilingual article audio: {e}")
+            return None
 
-        logger.info(f"Bilingual audio generation completed successfully: {filename}")
+        # Clean up temporary files
+        for temp_file in [arabic_article_path, bilingual_article_path]:
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
 
-        return BilingualAudioResult(
-            url=url,
-            filename=filename,
-            duration=total_duration,
-            english_duration=english_duration,
-            arabic_duration=arabic_duration,
-            pause_duration=1.0,  # 1 second delays between segments
-        )
+        logger.info("Article audio creation completed successfully")
+        return urls
 
     except Exception as e:
-        logger.error(f"Error generating bilingual sentence audio: {str(e)}")
+        logger.error(f"Error creating article audio: {str(e)}")
         return None
-
-
-def download_audio_for_concat(filename: str, dest_path: str) -> bool:
-    """
-    Download audio file from Supabase storage for concatenation.
-
-    Args:
-        filename: Audio filename in storage
-        dest_path: Local destination path
-
-    Returns:
-        True if successful, False otherwise
-    """
-    try:
-        # Download audio from Supabase storage
-        response = get_supabase_client().storage.from_("audio").download(filename)
-
-        if response:
-            # Save to local file
-            with open(dest_path, "wb") as f:
-                f.write(response)
-            return True
-        else:
-            logger.error(f"Failed to download audio file: {filename}")
-            return False
-
-    except Exception as e:
-        logger.error(f"Error downloading audio file {filename}: {e}")
-        return False
