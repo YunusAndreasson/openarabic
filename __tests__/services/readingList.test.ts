@@ -1,6 +1,6 @@
 import { readingListService } from '../../services/readingList';
+import { checkAuthentication, supabase } from '../../services/supabase';
 import { handleError } from '../../utils/errorHandling';
-import { supabase, checkAuthentication } from '../../services/supabase';
 
 type FromReturn = {
   upsert?: jest.Mock;
@@ -143,7 +143,6 @@ describe('readingListService', () => {
         user_id,
         article_id,
         added_at,
-        category_id,
         articles!inner (
           id,
           title,
@@ -151,6 +150,7 @@ describe('readingListService', () => {
           category_id,
           content_hash,
           audio_url,
+          audio_url_bilingual,
           image_url,
           summary,
           difficulty_level,

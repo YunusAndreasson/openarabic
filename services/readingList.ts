@@ -113,6 +113,7 @@ export const readingListService = {
           category_id,
           content_hash,
           audio_url,
+          audio_url_bilingual,
           image_url,
           summary,
           difficulty_level,
