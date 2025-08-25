@@ -14,7 +14,6 @@ import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useFilteredArticles } from '@/hooks/articles/useFilteredArticles';
 import { useBulkReadingProgress } from '@/hooks/articles/useReadingProgress';
-import { useColors } from '@/hooks/theme/useColors';
 import type { Article } from '@/types/articles.types';
 import { overrideFixedHeight } from '@/utils/list';
 
@@ -131,8 +130,6 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
   loading = false,
   HeaderComponent = null,
 }) => {
-  const colors = useColors();
-  
   // Apply global filters/sorting state to incoming articles
   const visibleArticles = useFilteredArticles(articles);
 

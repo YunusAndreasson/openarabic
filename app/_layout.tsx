@@ -1,4 +1,3 @@
-import '@/utils/splashPolyfill';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import NetInfo from '@react-native-community/netinfo';
 import {

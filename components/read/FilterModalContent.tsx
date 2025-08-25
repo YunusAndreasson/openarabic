@@ -197,7 +197,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                     isSelected={filters.authorIds.length === 0}
                     onSelect={handleAuthorsAllSelect}
                     variant="filter"
-                                      />
+                  />
                   {availableAuthors.map(author => (
                     <Pill
                       key={author.id}
@@ -206,7 +206,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                       isSelected={filters.authorIds.includes(author.id)}
                       onSelect={selectAuthor(author.id)}
                       variant="filter"
-                                          />
+                    />
                   ))}
                 </View>
               </View>
@@ -282,7 +282,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                       }
                       onSelect={selectDifficulty(option.range)}
                       variant="filter"
-                                          />
+                    />
                   ))}
                 </View>
               </View>
@@ -355,7 +355,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                       isSelected={filters.dateRange === option.key}
                       onSelect={selectDateRange(option.key)}
                       variant="filter"
-                                          />
+                    />
                   ))}
                 </View>
               </View>
@@ -449,7 +449,6 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.SMALL,
   },
   // authorList: {},
-  filterPill: { marginBottom: 0, marginRight: 0 },
   // filterPillFullWidth: {},
   // authorChunk: {},
 });
