@@ -463,10 +463,3 @@ export enum Theme {
 
 export type ColorName = keyof ThemeColors;
 
-// Simple validation helpers - Use these to verify critical color relationships
-export const colorValidation = {
-  // Critical text/background pairs that must maintain accessibility
-  criticalPairs: ['text on background', 'text on card', 'tint on background'] as const,
-  // Opacity levels that work well for interactive states
-  safeOpacityRange: { min: 0.08, max: 0.15 } as const,
-} as const;

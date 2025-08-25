@@ -1,5 +1,3 @@
-
-
 /**
  * Props for the Toggle component
  */
@@ -9,4 +7,3 @@ export interface ToggleProps {
   /** Callback function when the toggle state changes */
   onValueChange: (value: boolean) => void;
 }
-
