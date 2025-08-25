@@ -70,7 +70,11 @@ class WordTranslation(BaseModel):
 
     arabic: str = Field(description="Original Arabic word. Preserve exact formatting.")
     english: str | list[str] = Field(
-        description="English translation(s). For options, include 1–3 concise choices ordered by likelihood."
+        description=(
+            "English translation(s). May be multi-word phrases (e.g., 'for him', 'in it'). "
+            "Prefer explicit multi-word expansions that reflect Arabic morphology; avoid condensed forms like 'therein'. "
+            "For options, include 1–3 concise choices ordered by likelihood."
+        )
     )
     pos: PartOfSpeech = Field(description="Part of speech from the allowed set.")
     essential: str = Field(
@@ -83,8 +87,9 @@ class WordTranslation(BaseModel):
     )
     essential_translation: str | list[str] = Field(
         description=(
-            "Essential root meaning(s). For options, include 1–3 concise choices"
-            " ordered by likelihood."
+            "Essential root meaning(s). May be multi-word phrases when appropriate (e.g., 'for him', 'of it'). "
+            "Prefer explicit multi-word expansions that mirror Arabic morphology; avoid condensed/archaic forms like 'therein/thereof'. "
+            "For options, include 1–3 concise choices ordered by likelihood."
         )
     )
     notes: str | None = Field(

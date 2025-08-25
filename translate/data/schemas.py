@@ -53,17 +53,18 @@ CONTENT_ANALYSIS_PROMPT = (
 1. Title:
    - Clear, simple English (3–7 words)
    - Captures the main Islamic topic using appropriate terminology
+   - Make it interesting, still not a "click bait"
 
 2. Summary:
-   - One concise sentence describing the main content and key Islamic themes
-   - Direct language only (no filler/weasel words)
+   - Avoid "weasel words"
+   - Short and easy to understand
+   - Should be exciting like its "promoting" the content
+   - Example length: "It outlines six stations: tawhid, justice, mercy, wisdom, praise, and servitude, for how a servant should view a disliked divine decree (qadar)."
 
 3. Difficulty Level (1–5):
 """
     + format_difficulty_levels()
     + """
-
-Important: Preserve ALL original formatting, punctuation, and special characters throughout.
 
 Proceed to text splitting after analysis.
 """
@@ -107,11 +108,15 @@ For each sentence, provide:
 3. uncertainties:
    - Uncertainties in translation each with text and reason
 
+Explicit phrasing rule:
+- Always expand Arabic morphology into explicit English multi-word phrases. Avoid condensed/archaic forms like "therein/thereof/whereby". Prefer "in it", "of it", "by which", "for him", etc.
+- Do not omit functional words (prepositions, pronouns) encoded in Arabic; make them explicit in English.
+
 Example:
 Arabic: وقال النبي صلى الله عليه وسلم
-✓ `translation`: "And the Prophet [Muhammad], peace be upon him, said"
+✓ `translation`: "And the Prophet, peace be upon him, said"
   `notes`: "Grammatical structure: قَالَ (perfect tense verb) + النَّبِيُّ (subject in nominative case with definite article) + صَلَّى (perfect tense verb in invocation) + اللَّهُ (subject in nominative) + عَلَيْهِ (preposition with pronoun) + وَسَلَّمَ (coordinated perfect tense verb)"
-  `uncertainties`: []
+  `uncertainties`: ["The word قَالَ is not a perfect tense verb, it is a past tense verb"]
 ✗ `translation`: "And spoke the Prophet prayers and peace upon him"
 
 IMPORTANT: Do not modify, normalize, or clean any part of the original Arabic text. Preserve ALL formatting.
@@ -131,6 +136,7 @@ Requirements:
 - Pay attention to case endings, verb forms, tense/mood, and agreement
 - Preserve ALL original punctuation, formatting, and special characters
 - Use English translation for hints to resolve ambiguities
+- Use the provided suggestion produced by camel_tools
 
 If uncertain, include an uncertainty with: word, reason, and optionally related_translation_uncertainty.
 
@@ -146,16 +152,16 @@ Guidelines:
 - pos must be from the allowed set: """
     + format_valid_pos()
     + """
-- `essential` must retain root letters + diacritics while removing only complex affixes/case endings
-- `essential` will be used for language learning flashcards so the form be based on that
+- Prefer explicit multi-word English phrases that reflect Arabic morphology; avoid condensed/archaic forms like 'therein', 'thereof', 'whereby'. Use 'in it', 'of it', 'by which', 'for him', etc.
+- Never omit functional words; if the Arabic token encodes a preposition+pronoun (e.g., فيه، له، منهم), the english must include both parts (e.g., "in it", "for him", "from them").
 
-**Rules for essential field:**
+- `essential` will be used for language learning so remove prefixes and suffixes such as "الـ", "ـُ", "ـٍ"
+
+**Rules for `essential` field:**
 1. **KEEP as-is** (no changes needed):
    - Simple prepositions: "مِنْ" (from), "إِلَى" (to), "عَنْ" (about)
    - Basic particles: "لَا" (no), "مَا" (what), "هَلْ" (is it?)
    - Root forms: "كَتَبَ" (he wrote), "قَرَأَ" (he read)
-   - **Root nouns/adjectives**: "مُتَضَمَّنٌ" (contained), "كَاتِبٌ" (writer), "قَارِئٌ" (reader)
-   - **IMPORTANT**: For prepositions, particles, and root forms, the essential field CAN be identical to the arabic field
 
 2. **STRIP affixes** (remove complex grammatical endings):
    - Verbs: "يَكْتُبُ" → "كَتَبَ" (remove ي prefix and ُ suffix)
@@ -178,21 +184,6 @@ Guidelines:
 
 **IMPORTANT**: The essential field must preserve diacritics (fatha, kasra, damma, shadda) while only removing grammatical affixes (prefixes, suffixes, case endings).
 
-**Canonicalization rules (for essential):**
-- Verbs: return past tense, 3rd person masculine singular (e.g., "يَكْتُبُ" → "كَتَبَ") with correct vowels.
-- Nouns/adjectives: return indefinite singular nominative with proper tanwīn (e.g., "الْكِتَابُ" → "كِتَابٌ", "كَاتِبًا" → "كَاتِبٌ").
-- Do not strip core diacritics from the base form (e.g., don’t remove tanwīn from nouns or shadda from particles).
-- Only remove grammatical affixes: definite article "الـ", person/number verb affixes, and case/mood endings.
-
-**Form constraints:**
-- `essential` (Arabic) MUST be exactly one word/token (no whitespace).
-- Diacritics are mandatory in `essential`; do not remove them.
-
-**Ambiguity handling:**
-- If multiple plausible essentials exist, choose the simplest canonical base per the rules above and include a brief uncertainty note (why others were rejected).
-- When uncertain, prefer the tashkīl produced in the diacritics step rather than inventing a new pattern.
-- Never drop diacritics due to uncertainty; err on the side of preserving them.
-
 Return valid JSON matching the WordTranslationResult model schema.
 
 Input for word‑by‑word translation:
@@ -206,25 +197,20 @@ Goals:
 - Ensure consistency across tashkeel, translation, and word translations
 - Address uncertainties when possible
 
-**CRITICAL**: Do NOT modify the essential field unless there are actual errors.
-- If the AI provided "مِنْ" for a preposition, keep it as "مِنْ" (with sukoon)
-- If the AI provided "كَتَبَ" for a verb, keep it as "كَتَبَ" (with diacritics)
-- If the AI provided "شَيْء" for a noun, keep it as "شَيْء" (with diacritics)
-- Only change essential fields if they are grammatically incorrect or missing
-
-- Prefer canonical forms: verbs as past 3ms; nouns/adjectives as indefinite singular nominative with tanwīn.
-
 **What NOT to do:**
 - ❌ Don't "clean up" diacritics from correct essential forms
 - ❌ Don't strip fatha, kasra, damma, shadda unless they're part of affixes
 - ❌ Don't change "مِنْ" to "من" (this removes necessary diacritics)
 - ❌ Don't change "كَتَبَ" to "كتب" (this removes necessary diacritics)
+- ❌ Don't use condensed/archaic English compounds like "therein/thereof/whereby" when the Arabic encodes separate concepts (e.g., preposition + pronoun).
 
 **What TO do:**
 - ✅ Keep correct essential forms exactly as provided
 - ✅ Only fix actual grammatical errors
 - ✅ Preserve all diacritics that are part of the root form
 - ✅ Ensure consistency with tashkeel and translations
+- ✅ Expand condensed English into explicit phrases that mirror Arabic morphology (e.g., "therein" → "in it", "thereof" → "of it").
+- ✅ Ensure functional words are present; do not omit prepositions/pronouns encoded in Arabic tokens.
 
 Return valid JSON matching the RefinementResult model schema. Each improved_word_translation must be finalized (no option arrays).
 
