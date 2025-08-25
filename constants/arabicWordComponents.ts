@@ -62,6 +62,7 @@ const OTHER_PREFIXES = [
   { arabic: 'سوف', english: ['will', 'shall'] },
   // Negation particles
   { arabic: 'لا', english: ['not', 'no', "don't", "doesn't", "didn't"] },
+  { arabic: 'لم', english: ['did not', "didn't"] },
   { arabic: 'لن', english: ['will not', 'shall not', 'never', "won't"] },
   { arabic: 'بل', english: ['but', 'rather', 'instead'] },
   // Verbal subject markers (present tense)
@@ -135,6 +136,25 @@ function generatePrefixCombinations(): WordComponent[] {
       english: combineEnglish([conj.english[0] ?? ''], DEFINITE_ARTICLE.english),
       type: ComponentType.PREFIX,
     });
+  }
+
+  // Conjunction + Particle (common discourse particles)
+  const PARTICLES: { arabic: string; english: string[] }[] = [
+    { arabic: 'إن', english: ['if', 'indeed'] },
+    { arabic: 'قد', english: ['already', 'indeed'] },
+    { arabic: 'لا', english: ['not', 'no'] },
+    { arabic: 'ما', english: ['what', 'that which'] },
+    { arabic: 'أن', english: ['that', 'to'] },
+    { arabic: 'إذا', english: ['when', 'if'] },
+  ];
+  for (const conj of BASE_CONJUNCTIONS) {
+    for (const particle of PARTICLES) {
+      combinations.push({
+        arabic: `^${conj.arabic}${particle.arabic}`,
+        english: combineEnglish([conj.english[0] ?? ''], particle.english),
+        type: ComponentType.PREFIX,
+      });
+    }
   }
 
   return combinations;
