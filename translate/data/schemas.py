@@ -57,9 +57,8 @@ CONTENT_ANALYSIS_PROMPT = (
 
 2. Summary:
    - Avoid "weasel words"
-   - Short and easy to understand
+   - Short and easy to understand single sentence
    - Should be exciting like its "promoting" the content
-   - Example length: "It outlines six stations: tawhid, justice, mercy, wisdom, praise, and servitude, for how a servant should view a disliked divine decree (qadar)."
 
 3. Difficulty Level (1–5):
 """
@@ -100,7 +99,8 @@ Focus on preserving Islamic terminology and classical Arabic meanings. Handle Ar
 
 For each sentence, provide:
 1. translation:
-   - Simple vocabulary; English‑only output (used for audio)
+   - Simple vocabulary; English‑only output (used for audiobook and reading)
+   - Dont use Arabic words in translation (God instead of Allah, etc.)
    - Match register: solemn (supplications), precise (hadith)
    - Grammatically sound (conjugation, agreement, syntax)
 2. notes:
@@ -211,6 +211,8 @@ Goals:
 - ✅ Ensure consistency with tashkeel and translations
 - ✅ Expand condensed English into explicit phrases that mirror Arabic morphology (e.g., "therein" → "in it", "thereof" → "of it").
 - ✅ Ensure functional words are present; do not omit prepositions/pronouns encoded in Arabic tokens.
+- ✅ **CRITICAL**: Select only ONE final English translation from the alternatives provided in the previous phase
+- ✅ Remove all option arrays; each word must have a single, definitive English translation and no synonyms usch as "book/scripture"
 
 Return valid JSON matching the RefinementResult model schema. Each improved_word_translation must be finalized (no option arrays).
 
