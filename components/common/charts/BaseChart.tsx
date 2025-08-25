@@ -6,6 +6,7 @@ import BaseCard from '@common/BaseCard';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
 interface BaseChartProps {
@@ -38,7 +39,7 @@ export const BaseChart = memo(
     children,
     hasData,
     contentHeight = 176, // Optimized to match GRAPH_HEIGHT_LARGE
-    emptyStateText = 'Add your first words to start tracking your progress',
+    emptyStateText = STRINGS.CHART_EMPTY_STATE,
     bottomSummary,
   }: BaseChartProps) => {
     const colors = useColors();

@@ -9,6 +9,7 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import { lightFeedback, successFeedback } from '@/utils/haptics';
 import { formatSecondsToClock } from '@/utils/time';
@@ -119,7 +120,7 @@ const SleepTimerComponent = ({
             <View style={styles.buttonContainer}>
               <ThemedButton
                 style={styles.fullWidthButton}
-                title="Start timer"
+                title={STRINGS.START_TIMER}
                 variant="filled"
                 onPress={handleSetTimer}
               />
@@ -133,10 +134,14 @@ const SleepTimerComponent = ({
               </ThemedText>
             </View>
             <ThemedText style={styles.activeDescription} type="body" variant="secondary">
-              Time remaining
+              {STRINGS.TIME_REMAINING}
             </ThemedText>
             <View style={styles.buttonContainer}>
-              <ThemedButton title="Stop timer" variant="filled" onPress={handleCancelTimer} />
+              <ThemedButton
+                title={STRINGS.STOP_TIMER}
+                variant="filled"
+                onPress={handleCancelTimer}
+              />
             </View>
           </View>
         )}

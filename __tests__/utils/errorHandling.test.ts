@@ -1,12 +1,6 @@
-import Toast from 'react-native-toast-message';
-
-import { handleError } from '@/utils/errorHandling';
+import { handleError, setGlobalToastHandler } from '@/utils/errorHandling';
 
 // Mock dependencies
-jest.mock('react-native-toast-message', () => ({
-  show: jest.fn(),
-}));
-
 const mockAnalyticsTrack = jest.fn();
 jest.mock('@/services/analytics', () => ({
   analytics: {
@@ -30,12 +24,13 @@ jest.mock('@sentry/react-native', () => ({
   setLevel: mockSentrySetLevel,
 }));
 
-const mockToastShow = Toast.show as jest.MockedFunction<typeof Toast.show>;
+const mockToastHandler = jest.fn();
 
 describe('errorHandling', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockSentryWithScope.mockImplementation(callback => callback());
+    setGlobalToastHandler(mockToastHandler);
   });
 
   describe('handleError', () => {
@@ -46,31 +41,19 @@ describe('errorHandling', () => {
         toastMessage: 'Custom error message',
       });
 
-      expect(mockToastShow).toHaveBeenCalledWith({
-        type: 'error',
-        text1: 'Custom error message',
-        visibilityTime: 4000,
-        position: 'top',
-        topOffset: 60,
-      });
+      expect(mockToastHandler).toHaveBeenCalledWith('Custom error message', 2500, 'error');
     });
 
     it('shows toast with error message when no custom message provided', async () => {
       await handleError(testError, { showToast: true });
 
-      expect(mockToastShow).toHaveBeenCalledWith({
-        type: 'error',
-        text1: 'Test error message',
-        visibilityTime: 4000,
-        position: 'top',
-        topOffset: 60,
-      });
+      expect(mockToastHandler).toHaveBeenCalledWith('Test error message', 2500, 'error');
     });
 
     it('does not show toast when showToast is false', async () => {
       await handleError(testError, { showToast: false });
 
-      expect(mockToastShow).not.toHaveBeenCalled();
+      expect(mockToastHandler).not.toHaveBeenCalled();
     });
 
     it('tracks analytics event with custom name', async () => {

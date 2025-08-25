@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 
 // ===== INTERFACES =====
@@ -108,13 +109,13 @@ const ReviewBottomActionsInternal: FC = memo(() => {
       {/* Left indicator - Don't know */}
       <View style={STATIC_STYLES.indicatorContainer}>
         <View style={indicatorStyles.leftIndicator}>{iconComponents.left}</View>
-        <ThemedText style={textStyles.leftText}>Don&apos;t know</ThemedText>
+        <ThemedText style={textStyles.leftText}>{STRINGS.DONT_KNOW}</ThemedText>
       </View>
 
       {/* Right indicator - Know */}
       <View style={STATIC_STYLES.indicatorContainer}>
         <View style={indicatorStyles.rightIndicator}>{iconComponents.right}</View>
-        <ThemedText style={textStyles.rightText}>Know</ThemedText>
+        <ThemedText style={textStyles.rightText}>{STRINGS.KNOW}</ThemedText>
       </View>
     </View>
   );

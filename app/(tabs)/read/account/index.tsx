@@ -76,7 +76,7 @@ const AccountScreen: FC = () => {
 
   // Get current theme display text
   const currentThemeOption = THEME_OPTIONS.find(option => option.id === currentTheme);
-  const currentThemeText = currentThemeOption?.title || 'Birches in Spring';
+  const currentThemeText = currentThemeOption?.title || STRINGS.THEME_BIRCHES;
 
   // Format cache size for display
   const formattedCacheSize = cacheSize > 0 ? formatBytes(cacheSize) : STRINGS.NO_CACHED_FILES;

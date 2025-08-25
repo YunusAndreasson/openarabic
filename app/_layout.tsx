@@ -344,7 +344,9 @@ function AppContent() {
   // Show branded loading screen until the app is ready
   if (!appReady) {
     return (
-      <View style={[styles.container, styles.loadingContainer]}>
+      <View
+        style={[styles.container, styles.loadingContainer, { backgroundColor: colors.background }]}
+      >
         <StatusBar style={isDark ? 'light' : 'dark'} />
 
         {/* App Logo */}
@@ -355,7 +357,7 @@ function AppContent() {
         />
 
         {/* Loading Text */}
-        <ThemedText type="body" style={styles.loadingText}>
+        <ThemedText type="body" style={[styles.loadingText, { color: colors.tint }]}>
           {STRINGS.LOADING}
         </ThemedText>
 
@@ -424,7 +426,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: LAYOUT.SPACING.LARGE,
-    backgroundColor: '#0F1311', // Match splash screen background
   },
   loadingLogo: {
     width: 120,
@@ -433,7 +434,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
-    color: '#5B7F68', // Use tint color for consistency
   },
   loadingIndicator: {
     marginTop: LAYOUT.SPACING.SMALL,

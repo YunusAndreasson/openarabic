@@ -32,6 +32,11 @@ export const STRINGS = {
   // App Store Review
   RATE_APP: 'Rate OpenArabic',
 
+  // Theme names
+  THEME_BIRCHES: 'Birches in Spring',
+  THEME_MIDNIGHT: 'Midnight Summer',
+  THEME_AUTUMN: 'Autumn Leaves',
+
   // Content states
   LOADING_PLAYLIST: 'Loading playlist',
 
@@ -42,12 +47,17 @@ export const STRINGS = {
   LOADING_CHART: 'Loading chart',
   PREPARING_AUDIO: 'Preparing audio',
 
+  // Timer controls
+  STOP_TIMER: 'Stop timer',
+  TIME_REMAINING: 'Time remaining',
+
   // Welcome & onboarding
   WELCOME_TITLE: 'Welcome to OpenArabic',
   WELCOME_SUBTITLE: 'Sign in to continue learning Arabic',
 
   // Navigation & controls - shortened button text
   SORT_BY: 'Sort',
+  DICTIONARY: 'Dictionary',
   FILTERS: 'Filters',
   RESET_FILTERS: 'Reset',
   AUTHORS: 'Authors',
@@ -83,6 +93,10 @@ export const STRINGS = {
   READ: 'Library',
   LISTEN: 'Playlist',
   PRACTICE: 'Study',
+
+  // Review actions
+  DONT_KNOW: "Don't know",
+  KNOW: 'Know',
   STUDY_DUE_WORDS: 'Review Now',
 
   // Audio controls - shortened button text
@@ -119,7 +133,6 @@ export const STRINGS = {
   STUDY_LIST_EMPTY_DESCRIPTION: 'Add words from articles to start studying',
 
   // Dictionary
-  DICTIONARY: 'Dictionary',
   NO_STUDY_WORDS: 'No study words',
   ADD_WORDS_TO_STUDY_LIST: 'Add words to your study list to see them here',
   SEARCH_WORDS_PLACEHOLDER: 'Search words...',
@@ -337,6 +350,11 @@ export const STRINGS = {
 
   // Audio fallbacks
   ARABIC_TITLE_FALLBACK: 'Arabic',
+
+  // Dictionary fallbacks
+  ARABIC_PRONUNCIATION_FALLBACK: 'Arabic Pronunciation',
+  UNKNOWN_ARABIC: 'Unknown Arabic',
+  UNKNOWN_ENGLISH: 'Unknown English',
   ENGLISH_TITLE_FALLBACK: 'English',
   ENGLISH_FEEDBACK: 'English feedback',
   REVIEW_AUDIO: 'Review audio',
@@ -614,6 +632,9 @@ export const STRINGS = {
   FAQ_PRACTICE_OFFLINE_Q: 'Can I practice without internet?',
   FAQ_PRACTICE_OFFLINE_A:
     "Yes! Once you've added words and they've synced, you can study vocabulary anywhere. Audio requires internet for first-time downloads.",
+
+  // Chart empty states
+  CHART_EMPTY_STATE: 'Add your first words to start tracking your progress',
 } as const;
 
 export type StringKey = keyof typeof STRINGS;

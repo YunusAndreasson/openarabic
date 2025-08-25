@@ -183,6 +183,11 @@ export default function TabLayout(): JSX.Element {
     [colors.border]
   );
 
+  // Safety check: don't render until we have colors (Redux store is ready)
+  if (!colors) {
+    return <Fragment />;
+  }
+
   if (!session?.user) {
     return <Fragment />;
   }

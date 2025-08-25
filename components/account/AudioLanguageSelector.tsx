@@ -38,7 +38,10 @@ const AudioLanguageSelector: React.FC<AudioLanguageSelectorProps> = ({ style }) 
         style={[
           styles.option,
           isSelected && styles.optionSelected,
-          { borderColor: isSelected ? colors.tint : colors.border },
+          { 
+            borderColor: isSelected ? colors.tint : colors.border,
+            backgroundColor: isSelected ? colors.textOverlay : 'transparent'
+          },
         ]}
         onPress={() => handlePreferenceChange(value)}
         activeOpacity={0.7}
@@ -135,7 +138,7 @@ const styles = StyleSheet.create({
     minHeight: MIN_TOUCH_TARGET.LARGE,
   },
   optionSelected: {
-    backgroundColor: 'rgba(0, 0, 0, 0.02)',
+    // backgroundColor is applied dynamically in the component using colors.textOverlay
   },
   optionContent: {
     flexDirection: 'row',

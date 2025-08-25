@@ -6,6 +6,7 @@ import BaseCard from '@common/BaseCard';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
+import { STRINGS } from '@/constants/strings';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useColors } from '@/hooks/theme/useColors';
 import type { ThemeColors } from '@/types/ui/theme.types';
@@ -40,7 +41,7 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
         const track = {
           id: `word-${word.root_id}-ar`,
           audioUrl: word.root.audio_url,
-          title: word.root.letters || 'Arabic Pronunciation',
+          title: word.root.letters || STRINGS.ARABIC_PRONUNCIATION_FALLBACK,
         };
 
         await audioPlayer.play(track);
@@ -64,8 +65,8 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
     const difficultyColor = getDifficultyColor(difficultyValue, colors);
 
     // Get Arabic and English text from root
-    const arabicText = word.root?.letters || 'Unknown Arabic';
-    const englishText = word.root?.meaning || 'Unknown English';
+    const arabicText = word.root?.letters || STRINGS.UNKNOWN_ARABIC;
+    const englishText = word.root?.meaning || STRINGS.UNKNOWN_ENGLISH;
     const hasAudio = !!word.root?.audio_url;
 
     // Memoize dynamic styles for better performance

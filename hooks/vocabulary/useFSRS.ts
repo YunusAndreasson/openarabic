@@ -14,6 +14,7 @@ import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { FSRSStateTracking, UseFSRSOptions, UseFSRSResult } from '@/types/fsrs.types';
 import type { WordConfidence } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { devReviewLogger } from '@/utils/devReviewLogger';
 import { handleError } from '@/utils/errorHandling';
 import {
   calculateWordPriority,
@@ -177,6 +178,16 @@ export function useFSRS({
     stateTrackingRef.current.queueInitialized = true;
     lastQueueSignatureRef.current = signature;
 
+    // Dev logging: session start/context
+    devReviewLogger.startSession({
+      userId: userId ?? undefined,
+      mode,
+      useAllWords,
+      sessionCooldownHours: _sessionCooldownHours,
+      dueCount: effectiveDueWords.length,
+      signature,
+    });
+
     // Clear any existing timeouts before setting new ones
     if (initTimeoutRef.current) {
       clearTimeout(initTimeoutRef.current);
@@ -213,12 +224,26 @@ export function useFSRS({
         const ordered = queueRef.current.toArray();
         setWordQueue(ordered);
 
+        devReviewLogger.log('queue.initialized', {
+          totalWords: countersRef.current.totalWords,
+          orderedCount: ordered.length,
+          prioritiesPreview: ordered
+            .slice(0, 5)
+            .map(w => ({ id: w.root_id, stability: w.fsrs_stability, reps: w.fsrs_reps })),
+        });
+
         // FIXED: Check if any words are actually available (not in cooldown)
         const first = getNextWordWithSpacing();
 
         if (first) {
           // We have available words, start session
           setCurrentWord(first);
+          devReviewLogger.log('word.next', {
+            reason: 'first-available',
+            rootId: first.root_id,
+            stability: first.fsrs_stability,
+            reps: first.fsrs_reps,
+          });
         } else {
           // FIXED: All words are in cooldown or spacing, complete session immediately
           setIsComplete(true);
@@ -226,6 +251,9 @@ export function useFSRS({
             stateTrackingRef.current.completionTriggered = true;
             onComplete();
           }
+          devReviewLogger.warn('session.complete-immediate', {
+            reason: 'no-available-words-after-init',
+          });
         }
       } else {
         // FIXED: Only complete if there are truly no words available
@@ -234,6 +262,9 @@ export function useFSRS({
           stateTrackingRef.current.completionTriggered = true;
           onComplete();
         }
+        devReviewLogger.warn('session.complete-immediate', {
+          reason: 'no-due-words',
+        });
       }
     }, 0);
 
@@ -287,6 +318,20 @@ export function useFSRS({
       }
 
       stateTrackingRef.current.isProcessingUpdate = true;
+
+      devReviewLogger.ensureStarted({
+        userId: userId ?? undefined,
+        mode,
+        useAllWords,
+        sessionCooldownHours: _sessionCooldownHours,
+      });
+      devReviewLogger.log('word.update.begin', {
+        rootId,
+        confidence,
+        currentWordId: currentWord.root_id,
+        currentStability: currentWord.fsrs_stability,
+        currentReps: currentWord.fsrs_reps,
+      });
 
       const card = convertToFSRSCard(currentWord);
       const now = new Date();
@@ -370,6 +415,15 @@ export function useFSRS({
           : 0;
       setProgress(newProgress);
 
+      devReviewLogger.log('progress.updated', {
+        processedWords: countersRef.current.processedWords,
+        knownWords: countersRef.current.knownWords,
+        totalWords: totalWordsInSession,
+        progress: newProgress,
+        spacingQueueSize: spacingQueueRef.current.spacedWords.length,
+        remainingQueueSize: remaining.length,
+      });
+
       // FIXED: Check for completion when no next word is available AND no words are ready in spacing queue
       // The session should only complete when there are truly no more words to review
       if (!nextItem) {
@@ -392,6 +446,10 @@ export function useFSRS({
 
           // Try to get next word again
           nextItem = getNextWordWithSpacing();
+          devReviewLogger.log('word.next', {
+            reason: 'ready-spaced-words',
+            nextId: nextItem?.root_id ?? null,
+          });
         }
 
         // If still no next word, check if we should complete the session
@@ -420,6 +478,11 @@ export function useFSRS({
                   w => w.word.root_id !== candidate.word.root_id
                 );
                 nextItem = getNextWordWithSpacing();
+                devReviewLogger.log('word.next', {
+                  reason: 'requeue-smallest-spacing',
+                  candidateId: candidate.word.root_id,
+                  nextId: nextItem?.root_id ?? null,
+                });
               }
             }
 
@@ -429,6 +492,10 @@ export function useFSRS({
                 setIsComplete(true);
                 if (onComplete) onComplete();
               }, COMPLETION_DELAY_MS);
+              devReviewLogger.warn('session.completion-triggered', {
+                reason: allKnown ? 'all-known' : 'no-next-item',
+                wordsReadySoon: wordsReadySoon.length,
+              });
             }
           }
         }
@@ -436,6 +503,13 @@ export function useFSRS({
 
       setCurrentWord(nextItem || null);
       setWordQueue(remaining);
+
+      devReviewLogger.log('word.update.end', {
+        currentRootId: rootId,
+        nextRootId: nextItem?.root_id ?? null,
+        remainingQueueSize: remaining.length,
+        spacingQueueSize: spacingQueueRef.current.spacedWords.length,
+      });
 
       // Persist update; errors won't block UI progression
       try {
@@ -465,6 +539,9 @@ export function useFSRS({
       onComplete,
       getNextWordWithSpacing,
       updateSpacingCounters,
+      mode,
+      useAllWords,
+      _sessionCooldownHours,
     ]
   );
 
@@ -501,6 +578,8 @@ export function useFSRS({
 
       // Reset state
       resetQueue();
+
+      devReviewLogger.endSession('unmounted');
     };
   }, [resetQueue]);
 
