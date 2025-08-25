@@ -3,13 +3,13 @@ import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 // Graph dimensions - optimized for perfect alignment and space usage with golden ratio
 // For mobile-only apps, this can be a constant since screen doesn't rotate
 // Slightly increase to introduce subtle horizontal breathing room for the whole graph
-const X_AXIS_LABEL_PADDING = 12; // was 6
+const X_AXIS_LABEL_PADDING = 8; // Reduced from 12 for tighter spacing
 
 export const GRAPH_WIDTH =
   SCREEN_WIDTH -
   LAYOUT.SCREEN_EDGE_PADDING * 2 -
   LAYOUT.CARD.PADDING.MEDIUM * 2 -
-  24 - // Reduced from 32 for more graph space
+  16 - // Reduced from 24 for more graph space
   X_AXIS_LABEL_PADDING;
 
 // Data point radius for boundary calculations

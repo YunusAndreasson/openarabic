@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   indicator: LAYOUT.BOTTOM_SHEET.STYLES.indicator,
   // Perfect visual hierarchy container structure
   container: {
-    paddingHorizontal: LAYOUT.SPACING.LARGE, // 16px - consistent horizontal padding
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM, // Reduced from LARGE for tighter spacing
     paddingTop: LAYOUT.SPACING.MEDIUM, // 12px - breathing room from indicator
   },
   chartContainer: {

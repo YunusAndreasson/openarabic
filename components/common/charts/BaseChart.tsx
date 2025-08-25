@@ -56,7 +56,7 @@ export const BaseChart = memo(
     // Empty state
     if (!hasData) {
       return (
-        <BaseCard  shadowSize="small" onPress={onCardPress}>
+        <BaseCard shadowSize="small" onPress={onCardPress}>
           <View style={styles.content}>
             {!hideTitle && (
               <View style={styles.titleGroup}>
@@ -80,7 +80,7 @@ export const BaseChart = memo(
 
     // Main chart with data
     return (
-      <BaseCard  shadowSize="small" onPress={onCardPress}>
+      <BaseCard shadowSize="small" onPress={onCardPress}>
         <View style={styles.content}>
           {/* Header Section */}
           {!hideTitle && (
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   content: {
     paddingTop: LAYOUT.SPACING.MEDIUM - LAYOUT.SPACING.HALF_TINY, // Top padding for content
     paddingBottom: LAYOUT.SPACING.TINY, // Minimal bottom padding for tight layout
-    paddingHorizontal: LAYOUT.SPACING.TINY, // Minimal horizontal padding for charts
+    paddingHorizontal: LAYOUT.SPACING.HALF_TINY, // Reduced horizontal padding for charts
   },
   summaryRow: {
     flexDirection: 'row',
