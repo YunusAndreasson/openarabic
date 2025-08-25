@@ -13,26 +13,17 @@ import { selectionFeedback } from '@/utils/haptics';
 interface TouchableIconProps extends Omit<BaseIconButtonProps, 'icon'> {
   /** Icon name from Ionicons */
   icon: ComponentProps<typeof Ionicons>['name'];
-  /** Size variant for the touch target */
-  touchSize?: 'large' | 'medium' | 'small';
   /** Whether to use haptic feedback */
   hapticFeedback?: boolean;
-  /** Hit slop override */
-  hitSlop?: { top: number; right: number; bottom: number; left: number };
 }
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
-const getTouchTargetSize = (size: 'large' | 'medium' | 'small'): number => {
-  switch (size) {
-    case 'small':
-      return MIN_TOUCH_TARGET.SMALL;
-    case 'large':
-      return MIN_TOUCH_TARGET.LARGE;
-    case 'medium':
-    default:
-      return MIN_TOUCH_TARGET.MEDIUM;
-  }
+// Auto-calculate optimal touch target size based on icon size
+const getOptimalTouchTarget = (iconSize: number): number => {
+  if (iconSize <= 16) return MIN_TOUCH_TARGET.MEDIUM;
+  if (iconSize <= 24) return MIN_TOUCH_TARGET.MEDIUM; 
+  return MIN_TOUCH_TARGET.LARGE;
 };
 
 const TouchableIcon: FC<TouchableIconProps> = memo(
@@ -43,9 +34,7 @@ const TouchableIcon: FC<TouchableIconProps> = memo(
     onPress,
     disabled = false,
     style,
-    touchSize = 'medium',
     hapticFeedback = true,
-    hitSlop,
   }) => {
     const colors = useColors();
     const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation();
@@ -57,9 +46,9 @@ const TouchableIcon: FC<TouchableIconProps> = memo(
       onPress();
     }, [hapticFeedback, onPress]);
 
-    const touchTargetSize = getTouchTargetSize(touchSize);
+    const touchTargetSize = getOptimalTouchTarget(size);
 
-    const defaultHitSlop = (() => {
+    const hitSlop = (() => {
       const padding = enhanceTouchPadding(size);
       return {
         top: padding,
@@ -73,7 +62,7 @@ const TouchableIcon: FC<TouchableIconProps> = memo(
       <AnimatedTouchable
         activeOpacity={LAYOUT.OPACITY.PRESSED}
         disabled={disabled}
-        hitSlop={hitSlop || defaultHitSlop}
+        hitSlop={hitSlop}
         style={[
           styles.container,
           {

@@ -197,8 +197,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                     isSelected={filters.authorIds.length === 0}
                     onSelect={handleAuthorsAllSelect}
                     variant="filter"
-                    pillStyle={styles.filterPill}
-                  />
+                                      />
                   {availableAuthors.map(author => (
                     <Pill
                       key={author.id}
@@ -207,8 +206,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                       isSelected={filters.authorIds.includes(author.id)}
                       onSelect={selectAuthor(author.id)}
                       variant="filter"
-                      pillStyle={styles.filterPill}
-                    />
+                                          />
                   ))}
                 </View>
               </View>
@@ -284,8 +282,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                       }
                       onSelect={selectDifficulty(option.range)}
                       variant="filter"
-                      pillStyle={styles.filterPill}
-                    />
+                                          />
                   ))}
                 </View>
               </View>
@@ -358,8 +355,7 @@ const FilterModal: FC<FilterModalProps> = ({ availableAuthors }) => {
                       isSelected={filters.dateRange === option.key}
                       onSelect={selectDateRange(option.key)}
                       variant="filter"
-                      pillStyle={styles.filterPill}
-                    />
+                                          />
                   ))}
                 </View>
               </View>

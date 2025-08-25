@@ -19,7 +19,6 @@ import { AUDIO_STATES, type AudioState } from '@/constants/audio';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useListenScreen, useListenUI } from '@/hooks/listen';
-import { useColors } from '@/hooks/theme/useColors';
 import { useEditMode } from '@/hooks/ui/useEditMode';
 import { useStableBoolean } from '@/hooks/ui/useStableBoolean';
 import type { ReadingListItem } from '@/types/readingList.types';
@@ -118,7 +117,6 @@ const ListenListItem = memo(
 ListenListItem.displayName = 'ListenListItem';
 
 export default function ListenScreen(): JSX.Element {
-  const colors = useColors(); // Only used for EmptyState
   const { editMode, reset } = useEditMode('listen');
   const { showToast } = useToast();
 
@@ -242,7 +240,6 @@ export default function ListenScreen(): JSX.Element {
     () =>
       shouldShowEmpty ? (
         <EmptyState
-          colors={colors}
           description={STRINGS.PLAYLIST_EMPTY_DESCRIPTION}
           hideArticlesButton={true}
           icon="headset"
@@ -254,7 +251,7 @@ export default function ListenScreen(): JSX.Element {
           }}
         />
       ) : null,
-    [shouldShowEmpty, colors]
+    [shouldShowEmpty]
   );
 
   // Optimized render function - simplified logic

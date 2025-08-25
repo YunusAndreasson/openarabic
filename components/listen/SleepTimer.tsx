@@ -39,22 +39,8 @@ const SleepTimerComponent = ({
   // Pre-select 15 minutes as default
   const [selectedMinutes, setSelectedMinutes] = useState<number>(DEFAULT_SELECTED_MINUTES);
 
-  // Configure snap points - dynamic based on timer state
-  const snapPoints = useMemo(() => {
-    if (isTimerActive) {
-      const baseHeight = 120;
-      const timeDisplayHeight = 100;
-      const buttonHeight = 70;
-      const totalHeight = baseHeight + timeDisplayHeight + buttonHeight;
-      return [Math.min(totalHeight, 300)];
-    } else {
-      const baseHeight = 120;
-      const gridHeight = 200;
-      const buttonHeight = 70;
-      const totalHeight = baseHeight + gridHeight + buttonHeight;
-      return [Math.min(totalHeight, 400)];
-    }
-  }, [isTimerActive]);
+  // Configure snap points - fixed values for better performance
+  const snapPoints = useMemo(() => [isTimerActive ? 280 : 380], [isTimerActive]);
 
   // Handle visibility changes
   useEffect(() => {

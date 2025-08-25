@@ -29,13 +29,4 @@ export interface PillProps {
    */
   variant?: 'filter' | 'category';
 
-  /**
-   * Custom background color for the pill
-   */
-  pillBg?: string;
-
-  /**
-   * Custom style overrides for the pill container
-   */
-  pillStyle?: object;
 }

@@ -56,7 +56,7 @@ export const BaseChart = memo(
     // Empty state
     if (!hasData) {
       return (
-        <BaseCard includePressAnimation={!!onCardPress} shadowSize="small" onPress={onCardPress}>
+        <BaseCard  shadowSize="small" onPress={onCardPress}>
           <View style={styles.content}>
             {!hideTitle && (
               <View style={styles.titleGroup}>
@@ -80,7 +80,7 @@ export const BaseChart = memo(
 
     // Main chart with data
     return (
-      <BaseCard includePressAnimation={!!onCardPress} shadowSize="small" onPress={onCardPress}>
+      <BaseCard  shadowSize="small" onPress={onCardPress}>
         <View style={styles.content}>
           {/* Header Section */}
           {!hideTitle && (

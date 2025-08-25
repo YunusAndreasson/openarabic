@@ -59,8 +59,7 @@ const StatCard = memo<StatCardProps>(({ label, value, color, icon, onPress }) =>
       shadowSize="small"
       style={styles.statCard}
       onPress={onPress}
-      includePressAnimation={true}
-    >
+          >
       <View style={[styles.iconContainer, { backgroundColor: color + '14' }]}>
         <Ionicons name={icon} size={16} color={color} />
       </View>
@@ -89,32 +88,25 @@ export const VocabularyStatCards = memo(
   }: VocabularyStatCardsProps) => {
     const colors = useColors();
 
-    const validatedInput = {
-      masteredWords: Math.max(0, masteredWords),
-      learningWords: Math.max(0, learningWords),
-      dueWords: Math.max(0, dueWords),
-      studyWords: Array.isArray(studyWords) ? studyWords : [],
-    };
-
     // Memoize stats array to prevent recreation
     const stats = [
       {
         label: STRINGS.VOCAB_STAT_DUE,
-        value: validatedInput.dueWords,
+        value: dueWords,
         color: colors.error,
         icon: 'alert-circle' as const,
         onPress: onDuePress, // Due words now open prognosis chart
       },
       {
         label: STRINGS.VOCAB_STAT_LEARNING,
-        value: validatedInput.learningWords,
+        value: learningWords,
         color: colors.warning,
         icon: 'school' as const,
         onPress: onLearningPress,
       },
       {
         label: STRINGS.VOCAB_STAT_MASTERED,
-        value: validatedInput.masteredWords,
+        value: masteredWords,
         color: colors.success,
         icon: 'checkmark-circle' as const,
         onPress: onMasteredPress,
@@ -123,7 +115,7 @@ export const VocabularyStatCards = memo(
 
     return (
       <View style={styles.container}>
-        <MemoryRetentionGauge studyWords={validatedInput.studyWords} onInfoPress={onInfoPress} />
+        <MemoryRetentionGauge studyWords={studyWords} onInfoPress={onInfoPress} />
 
         {/* Stats row below gauge */}
         <View style={styles.statsRow}>

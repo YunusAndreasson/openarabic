@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { memo, type ComponentProps, type ComponentType, type ReactNode } from 'react';
+import { memo, type ComponentProps, type ReactNode } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
@@ -9,20 +9,19 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
+import { useColors } from '@/hooks/theme/useColors';
 
 // Define EmptyStateProps inline
 interface EmptyStateProps {
   title: string;
   description: string;
   actionText?: string;
-  icon?: string | ComponentType<ComponentProps<typeof Ionicons>>;
+  icon?: string; // Simplified: only string icon names
   onAction?: () => void;
   containerStyle?: StyleProp<ViewStyle>;
-  colors: { tint: string };
   submessage?: string;
   customActionButton?: ReactNode;
   iconSize?: number;
-  iconContainerStyle?: StyleProp<ViewStyle>;
   hideArticlesButton?: boolean;
 }
 
@@ -47,17 +46,12 @@ const EmptyState = memo(
     icon = 'book',
     onAction,
     containerStyle,
-    colors,
     submessage,
     customActionButton,
     iconSize = DEFAULT_ICON_SIZE,
-    iconContainerStyle,
     hideArticlesButton = false,
   }: EmptyStateProps) => {
-    const IconComponent: ComponentType<ComponentProps<typeof Ionicons>> =
-      icon && typeof icon !== 'string' ? icon : Ionicons;
-    const iconName: ComponentProps<typeof Ionicons>['name'] =
-      typeof icon === 'string' ? (icon as ComponentProps<typeof Ionicons>['name']) : 'alert-circle';
+    const colors = useColors(); // Source colors internally
 
     const defaultActionButton = !hideArticlesButton && (
       <ThemedButton
@@ -74,10 +68,10 @@ const EmptyState = memo(
       <View style={[styles.container, containerStyle]}>
         <View style={styles.contentContainer}>
           {icon && (
-            <View style={[styles.iconContainer, iconContainerStyle]}>
-              <IconComponent
-                color={colors?.tint}
-                name={iconName}
+            <View style={styles.iconContainer}>
+              <Ionicons
+                color={colors.tint}
+                name={icon as ComponentProps<typeof Ionicons>['name']}
                 size={iconSize}
                 style={styles.icon}
               />
@@ -114,7 +108,7 @@ const EmptyState = memo(
             defaultActionButton ||
             (actionText && onAction && (
               <ThemedButton
-                icon={typeof icon === 'string' ? icon : undefined}
+                icon={icon}
                 style={styles.customActionButton}
                 title={actionText}
                 onPress={onAction}

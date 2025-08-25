@@ -17,8 +17,6 @@ const Pill = memo(
     isSelected = false,
     onSelect,
     variant = 'filter',
-    pillBg,
-    pillStyle,
   }: PillProps) => {
     const colors = useColors();
     const isDarkMode = useIsDarkMode();
@@ -51,14 +49,11 @@ const Pill = memo(
 
       // Filter variant
       return {
-        backgroundColor:
-          pillBg !== undefined
-            ? pillBg
-            : isSelected
-            ? colors.tint
-            : isDarkMode
-            ? colors.elevation2
-            : colors.elevation1,
+        backgroundColor: isSelected
+          ? colors.tint
+          : isDarkMode
+          ? colors.elevation2
+          : colors.elevation1,
         borderWidth: LAYOUT.BORDER.WIDTH.THIN,
         borderColor: isSelected ? colors.tint : colors.borderOverlay,
         borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
@@ -69,7 +64,7 @@ const Pill = memo(
         shadowColor: colors.shadow,
         ...LAYOUT.ELEVATION.SUBTLE,
       };
-    }, [colors, isDarkMode, isSelected, isCategory, pillBg]);
+    }, [colors, isDarkMode, isSelected, isCategory]);
 
     const pressedStyle = useMemo(
       () => ({
@@ -81,10 +76,9 @@ const Pill = memo(
     const getPressableStyle = useCallback(
       ({ pressed }: { pressed: boolean }) => [
         containerStyle,
-        pillStyle,
         pressed && !isSelected && pressedStyle,
       ],
-      [containerStyle, pillStyle, isSelected, pressedStyle]
+      [containerStyle, isSelected, pressedStyle]
     );
 
     // Non-interactive category pill

@@ -132,7 +132,7 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
   HeaderComponent = null,
 }) => {
   const colors = useColors();
-
+  
   // Apply global filters/sorting state to incoming articles
   const visibleArticles = useFilteredArticles(articles);
 
@@ -242,14 +242,13 @@ const FilteredArticleViewInternal: FC<FilteredArticleViewProps> = ({
   // Memoize empty state props - only shows when filters eliminate all results
   const emptyStateProps = useMemo(
     () => ({
-      colors,
       description: STRINGS.TRY_ADJUSTING_FILTERS,
       icon: 'funnel' as const,
       title: STRINGS.NO_ARTICLES_FOUND,
       hideArticlesButton: true,
       containerStyle: STATIC_STYLES.emptyContainer,
     }),
-    [colors]
+    []
   );
 
   // Memoize ThemedView props

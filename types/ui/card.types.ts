@@ -16,8 +16,6 @@ export interface BaseCardProps extends BaseAnimatedStyleProps {
   onLongPress?: () => void;
   /** Shadow size for the card */
   shadowSize?: 'large' | 'medium' | 'none' | 'small';
-  /** Whether to include press animation */
-  includePressAnimation?: boolean;
   /** Custom loading component to use */
   loadingComponent?: React.ReactNode;
   /** Additional styling for the content container */

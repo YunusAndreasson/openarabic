@@ -130,8 +130,7 @@ export const ThemePicker: FC<ThemePickerProps> = memo(({ isVisible, onClose }) =
             return (
               <BaseCard
                 key={option.id}
-                includePressAnimation={true}
-                shadowSize="small"
+                                shadowSize="small"
                 style={[
                   styles.optionCard,
                   {

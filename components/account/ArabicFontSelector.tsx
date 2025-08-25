@@ -31,8 +31,7 @@ const FontPreviewCard = memo(({ option, isSelected, fontSize, onSelect }: FontPr
 
   return (
     <BaseCard
-      includePressAnimation={true}
-      shadowSize="small"
+            shadowSize="small"
       style={[
         styles.fontCard,
         {
@@ -94,7 +93,7 @@ const ArabicFontSelector: FC = () => {
 
   return (
     <View style={styles.container}>
-      <BaseCard includePressAnimation={false} shadowSize="small" style={styles.sliderCard}>
+      <BaseCard  shadowSize="small" style={styles.sliderCard}>
         <Slider
           style={styles.slider}
           minimumValue={fontSizeRange.MIN}

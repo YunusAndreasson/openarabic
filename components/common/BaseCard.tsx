@@ -13,7 +13,6 @@ const BaseCard: FC<BaseCardProps> = memo(
     onLongPress,
     isLoading = false,
     shadowSize = 'medium',
-    includePressAnimation = true,
     loadingComponent,
     contentStyle,
     disabled = false,
@@ -52,10 +51,10 @@ const BaseCard: FC<BaseCardProps> = memo(
     const getPressableStyle = useCallback(
       ({ pressed }: { pressed: boolean }) => [
         combinedCardStyle,
-        pressed && !disabled && includePressAnimation && { opacity: LAYOUT.OPACITY.PRESSED },
+        pressed && !disabled && { opacity: LAYOUT.OPACITY.PRESSED },
         disabled && { opacity: LAYOUT.OPACITY.MEDIUM },
       ],
-      [combinedCardStyle, disabled, includePressAnimation]
+      [combinedCardStyle, disabled]
     );
 
     if (isLoading) {

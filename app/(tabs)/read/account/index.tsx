@@ -115,7 +115,6 @@ const AccountScreen: FC = () => {
 
         {/* App Preferences - Core settings users adjust frequently */}
         <BaseCard
-          includePressAnimation={false}
           shadowSize="small"
           style={[
             styles.sectionContainer,
@@ -143,8 +142,7 @@ const AccountScreen: FC = () => {
               <Fragment>
                 <Divider />
                 <BaseCard
-                  includePressAnimation={true}
-                  shadowSize="none"
+                                    shadowSize="none"
                   style={styles.timePickerSettingRow}
                   onPress={handleTimePickerOpen}
                 >
@@ -172,8 +170,7 @@ const AccountScreen: FC = () => {
             <Divider />
 
             <BaseCard
-              includePressAnimation={true}
-              shadowSize="none"
+                            shadowSize="none"
               style={styles.timePickerSettingRow}
               onPress={handleThemePickerOpen}
             >
@@ -206,8 +203,7 @@ const AccountScreen: FC = () => {
             <Divider />
 
             <BaseCard
-              includePressAnimation={true}
-              shadowSize="none"
+                            shadowSize="none"
               style={styles.interactiveCard}
               onPress={handleFontSelectorPress}
             >
@@ -236,8 +232,7 @@ const AccountScreen: FC = () => {
             <Divider />
 
             <BaseCard
-              includePressAnimation={false}
-              shadowSize="none"
+                            shadowSize="none"
               style={styles.interactiveCard}
             >
               <AudioLanguageSelector />
@@ -247,14 +242,12 @@ const AccountScreen: FC = () => {
 
         {/* Help & Support - Assistance and contact */}
         <BaseCard
-          includePressAnimation={false}
-          shadowSize="small"
+                    shadowSize="small"
           style={[styles.sectionContainer, styles.sectionSpacing]}
         >
           <View style={styles.linksContainer}>
             <BaseCard
-              includePressAnimation={true}
-              shadowSize="none"
+                            shadowSize="none"
               style={styles.interactiveCard}
               onPress={() => router.push(ROUTE_PATHS.ACCOUNT_HELP)}
             >
@@ -283,8 +276,7 @@ const AccountScreen: FC = () => {
             <Divider />
 
             <BaseCard
-              includePressAnimation={true}
-              shadowSize="none"
+                            shadowSize="none"
               style={styles.interactiveCard}
               onPress={handleSupportContact}
             >
@@ -313,8 +305,7 @@ const AccountScreen: FC = () => {
             <Divider />
 
             <BaseCard
-              includePressAnimation={true}
-              shadowSize="none"
+                            shadowSize="none"
               style={styles.interactiveCard}
               onPress={handleRequestReview}
             >
@@ -344,14 +335,12 @@ const AccountScreen: FC = () => {
 
         {/* Account Management - Data and account actions */}
         <BaseCard
-          includePressAnimation={false}
-          shadowSize="small"
+                    shadowSize="small"
           style={[styles.sectionContainer, styles.sectionSpacing]}
         >
           <View style={styles.linksContainer}>
             <BaseCard
-              includePressAnimation={true}
-              shadowSize="none"
+                            shadowSize="none"
               style={styles.interactiveCard}
               onPress={handleClearCache}
             >
@@ -395,8 +384,7 @@ const AccountScreen: FC = () => {
             <Divider />
 
             <BaseCard
-              includePressAnimation={true}
-              shadowSize="none"
+                            shadowSize="none"
               style={styles.interactiveCard}
               onPress={handleSignOut}
             >

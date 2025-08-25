@@ -244,7 +244,6 @@ export default function VocabularyScreen(): JSX.Element {
               </>
             ) : (
               <EmptyState
-                colors={colors}
                 title={STRINGS.STUDY_LIST_EMPTY_TITLE}
                 description={STRINGS.STUDY_LIST_EMPTY_DESCRIPTION}
                 icon="school"
