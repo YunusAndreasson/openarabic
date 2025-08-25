@@ -2,8 +2,8 @@ import { Skia } from '@shopify/react-native-skia';
 import { useMemo } from 'react';
 
 import type { DataPoint } from '@/components/common/charts';
-import { useChartColors } from '@/components/common/charts/chartColors';
-import { generateChartSubtitle } from '@/components/common/charts/chartMessages';
+import { useChartColors } from '@/components/common/charts/ChartColors';
+import { generateChartSubtitle } from '@/components/common/charts/ChartMessages';
 import {
   calculateDataPointPositions,
   CHART_VISUAL,

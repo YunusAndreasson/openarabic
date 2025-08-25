@@ -82,7 +82,7 @@ jest.mock('@/hooks/auth/useAuth', () => ({
 
 // Basic colors hook for ThemedButton and other components
 jest.mock('@/hooks/theme/useColors', () => {
-  const { Colors } = require('@/constants/Colors');
+  const { Colors } = require('@/constants/colors');
   return { useColors: () => Colors.light };
 });
 

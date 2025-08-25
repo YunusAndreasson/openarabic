@@ -54,7 +54,7 @@ jest.mock('react-native', () => {
   };
 });
 
-jest.mock('@charts/chartColors', () => ({
+jest.mock('@charts/ChartColors', () => ({
   useChartColors: () => ({
     performance: {
       excellent: '#00ff00', // Green

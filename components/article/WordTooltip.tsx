@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
-import type { ColorName } from '@/constants/Colors';
+import type { ColorName } from '@/constants/colors';
 import { LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations/usePressAnimation';
 import { useColors } from '@/hooks/theme/useColors';

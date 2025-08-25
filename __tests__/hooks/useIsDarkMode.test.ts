@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react-native';
 
-import { Theme } from '@/constants/Colors';
+import { Theme } from '@/constants/colors';
 import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { useColorScheme } from 'react-native';
 

@@ -47,7 +47,6 @@ const AccountScreen: FC = () => {
     handleReminderToggle,
     handleSignOut,
     handleSupportContact,
-    handleFontSelectorPress,
     handleRequestReview,
     appVersion,
     currentYear,
@@ -142,7 +141,7 @@ const AccountScreen: FC = () => {
               <Fragment>
                 <Divider />
                 <BaseCard
-                                    shadowSize="none"
+                  shadowSize="none"
                   style={styles.timePickerSettingRow}
                   onPress={handleTimePickerOpen}
                 >
@@ -170,7 +169,7 @@ const AccountScreen: FC = () => {
             <Divider />
 
             <BaseCard
-                            shadowSize="none"
+              shadowSize="none"
               style={styles.timePickerSettingRow}
               onPress={handleThemePickerOpen}
             >
@@ -203,9 +202,9 @@ const AccountScreen: FC = () => {
             <Divider />
 
             <BaseCard
-                            shadowSize="none"
+              shadowSize="none"
               style={styles.interactiveCard}
-              onPress={handleFontSelectorPress}
+              onPress={() => router.push(ROUTE_PATHS.ACCOUNT_FONT_SELECTOR)}
             >
               <View style={styles.cardContent}>
                 <View style={styles.cardLeft}>
@@ -231,23 +230,17 @@ const AccountScreen: FC = () => {
 
             <Divider />
 
-            <BaseCard
-                            shadowSize="none"
-              style={styles.interactiveCard}
-            >
+            <BaseCard shadowSize="none" style={styles.interactiveCard}>
               <AudioLanguageSelector />
             </BaseCard>
           </View>
         </BaseCard>
 
         {/* Help & Support - Assistance and contact */}
-        <BaseCard
-                    shadowSize="small"
-          style={[styles.sectionContainer, styles.sectionSpacing]}
-        >
+        <BaseCard shadowSize="small" style={[styles.sectionContainer, styles.sectionSpacing]}>
           <View style={styles.linksContainer}>
             <BaseCard
-                            shadowSize="none"
+              shadowSize="none"
               style={styles.interactiveCard}
               onPress={() => router.push(ROUTE_PATHS.ACCOUNT_HELP)}
             >
@@ -276,7 +269,7 @@ const AccountScreen: FC = () => {
             <Divider />
 
             <BaseCard
-                            shadowSize="none"
+              shadowSize="none"
               style={styles.interactiveCard}
               onPress={handleSupportContact}
             >
@@ -305,7 +298,7 @@ const AccountScreen: FC = () => {
             <Divider />
 
             <BaseCard
-                            shadowSize="none"
+              shadowSize="none"
               style={styles.interactiveCard}
               onPress={handleRequestReview}
             >
@@ -334,16 +327,9 @@ const AccountScreen: FC = () => {
         </BaseCard>
 
         {/* Account Management - Data and account actions */}
-        <BaseCard
-                    shadowSize="small"
-          style={[styles.sectionContainer, styles.sectionSpacing]}
-        >
+        <BaseCard shadowSize="small" style={[styles.sectionContainer, styles.sectionSpacing]}>
           <View style={styles.linksContainer}>
-            <BaseCard
-                            shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={handleClearCache}
-            >
+            <BaseCard shadowSize="none" style={styles.interactiveCard} onPress={handleClearCache}>
               <View style={styles.cardContent}>
                 <View style={styles.cardLeft}>
                   <View style={styles.cardIconContainer}>
@@ -383,11 +369,7 @@ const AccountScreen: FC = () => {
 
             <Divider />
 
-            <BaseCard
-                            shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={handleSignOut}
-            >
+            <BaseCard shadowSize="none" style={styles.interactiveCard} onPress={handleSignOut}>
               <View style={styles.cardContent}>
                 <View style={styles.cardLeft}>
                   <View style={styles.cardIconContainer}>

@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { runOnJS, useAnimatedReaction, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import { BaseChart } from '@charts/BaseChart';
-import { useChartColors } from '@charts/chartColors';
+import { useChartColors } from '@charts/ChartColors';
 
 import { ThemedText } from '@/components/ThemedText';
 import { SPRING_CONFIG } from '@/constants/animation';

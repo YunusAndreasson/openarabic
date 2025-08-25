@@ -10,7 +10,7 @@ import { StyleSheet, View } from 'react-native';
 import BaseCard from '@common/BaseCard';
 
 import { ThemedText } from '@/components/ThemedText';
-import { Theme } from '@/constants/Colors';
+import { Theme } from '@/constants/colors';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';

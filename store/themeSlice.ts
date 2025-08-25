@@ -1,8 +1,8 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 
-import type { Theme } from '@/constants/Colors';
-import { Colors } from '@/constants/Colors';
+import type { Theme } from '@/constants/colors';
+import { Colors } from '@/constants/colors';
 
 type ThemeColors = (typeof Colors)[Theme];
 

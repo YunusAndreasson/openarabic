@@ -1,7 +1,7 @@
 import { memo, useMemo } from 'react';
 
 import { VocabularyChart, type DataPoint } from '@/components/common/charts';
-import { CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/components/common/charts/chartMessages';
+import { CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/components/common/charts/ChartMessages';
 import { calculateDataPointPositions, useGraphWidth } from '@/components/common/charts/constants';
 import { formatMonthDayUTC, formatWeekdayUTC } from '@/components/common/charts/utils';
 import { STRINGS } from '@/constants/strings';

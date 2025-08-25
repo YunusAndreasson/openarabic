@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 
-import { Colors, Theme } from '@/constants/Colors';
+import { Colors, Theme } from '@/constants/colors';
 import { useAppSelector } from '@/store/hooks';
 import type { ThemeColors } from '@/types/ui/theme.types';
 

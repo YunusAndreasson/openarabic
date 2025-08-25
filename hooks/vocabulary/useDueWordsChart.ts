@@ -1,7 +1,7 @@
 import { Skia } from '@shopify/react-native-skia';
 import { useMemo } from 'react';
 
-import { useChartColors } from '@charts/chartColors';
+import { useChartColors } from '@charts/ChartColors';
 import {
   calculateDataPointPositions,
   CHART_VISUAL,

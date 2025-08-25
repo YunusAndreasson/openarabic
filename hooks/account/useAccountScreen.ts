@@ -262,10 +262,6 @@ export const useAccountScreen = () => {
     }
   }, [user?.email]);
 
-  const handleFontSelectorPress = useCallback(() => {
-    router.push(ROUTE_PATHS.ACCOUNT_FONT_SELECTOR);
-  }, []);
-
   const handleRequestReview = useCallback(async () => {
     try {
       if (await StoreReview.hasAction()) {
@@ -296,7 +292,6 @@ export const useAccountScreen = () => {
       handleReminderToggle,
       handleSignOut,
       handleSupportContact,
-      handleFontSelectorPress,
       handleRequestReview,
       appVersion,
       currentYear,
@@ -315,7 +310,6 @@ export const useAccountScreen = () => {
       handleReminderToggle,
       handleSignOut,
       handleSupportContact,
-      handleFontSelectorPress,
       handleRequestReview,
       appVersion,
       currentYear,

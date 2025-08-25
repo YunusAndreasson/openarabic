@@ -1,7 +1,7 @@
 import { memo, useMemo } from 'react';
 
 import { VocabularyChart } from '@/components/common/charts';
-import { CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/components/common/charts/chartMessages';
+import { CHART_LABELS, EMPTY_STATE_MESSAGES } from '@/components/common/charts/ChartMessages';
 import { CHART_VISUAL, useGraphWidth } from '@/components/common/charts/constants';
 import { useMasteryChart } from '@/hooks/vocabulary/useMasteryChart';
 import type { StudyWord } from '@/types/vocabulary.types';

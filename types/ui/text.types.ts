@@ -1,6 +1,6 @@
 import type { TextProps, TextStyle, StyleProp } from 'react-native';
 
-import type { ColorName } from '@/constants/Colors';
+import type { ColorName } from '@/constants/colors';
 
 export type TextTypeName =
   | 'arabic'

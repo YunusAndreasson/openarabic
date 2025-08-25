@@ -1,6 +1,6 @@
 import { useColorScheme } from 'react-native';
 
-import { Theme } from '@/constants/Colors';
+import { Theme } from '@/constants/colors';
 import { useAppSelectorMemo } from '@/store/hooks';
 
 /**

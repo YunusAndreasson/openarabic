@@ -1,4 +1,4 @@
-import { SUPABASE_URL } from '@/constants/Supabase';
+import { SUPABASE_URL } from '@/constants/supabase';
 
 /**
  * Centralized image URL generator for consistent image handling across the app
