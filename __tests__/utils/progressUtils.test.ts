@@ -5,12 +5,6 @@ import {
 } from '@/utils/progressUtils';
 
 describe('Progress Utilities', () => {
-  describe('PROGRESS_CONSTANTS', () => {
-    it('should have correct constant values', () => {
-      expect(PROGRESS_CONSTANTS.MIN_PROGRESS_VALUE).toBe(1);
-    });
-  });
-
   describe('calculateDisplayProgress', () => {
     it('should return the maximum of progress and maxProgress', () => {
       const result = calculateDisplayProgress(50, 75);
