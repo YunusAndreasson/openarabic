@@ -1,9 +1,11 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import type { ColorName } from '@/constants/Colors';
 import { LAYOUT, SCREEN_WIDTH, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
+import { usePressAnimation } from '@/hooks/animations/usePressAnimation';
 import { useColors } from '@/hooks/theme/useColors';
 import { useArabicWordAnalysis } from '@/hooks/vocabulary';
 import type { WordTooltipProps } from '@/types/ui/modal.types';
@@ -109,6 +111,12 @@ export const WordTooltip = memo(
     wordRootId,
   }: WordTooltipProps) => {
     const colors = useColors();
+
+    // Press animation for better user feedback
+    const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
+      type: 'card',
+      scaleAmount: 0.95, // More apparent scale for better feedback
+    });
 
     // Convert window coordinates (from measureInWindow) to local overlay coordinates
     const containerRef = useRef<View | null>(null);
@@ -362,15 +370,17 @@ export const WordTooltip = memo(
         pointerEvents="box-none"
         onLayout={measureContainerOffset}
       >
-        <TouchableWithoutFeedback
+        <Pressable
           onPress={handleTooltipPress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
           disabled={!onStudyListToggle || !wordRootId}
         >
-          <View style={tooltipStyle} testID="word-tooltip">
+          <Animated.View style={[tooltipStyle, animatedStyle]} testID="word-tooltip">
             <View style={arrowStyle} />
             {renderColorCodedEnglish}
-          </View>
-        </TouchableWithoutFeedback>
+          </Animated.View>
+        </Pressable>
       </View>
     );
   },
