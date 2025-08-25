@@ -1,263 +1,151 @@
-# Repository Guide
+# OpenArabic - React Native Arabic Language Learning App
 
-This repo contains a React Native (Expo) app built with TypeScript. Core business logic lives in `hooks/` and components live in `components/`. Constants can be found in `constants/`, and common types in `types/`.
+**Version**: `1447.3.1+55` (Islamic Calendar Versioning)
 
-## Development Rules
+This repository contains a sophisticated React Native (Expo) app for Arabic language learning featuring spaced repetition vocabulary practice, intelligent article filtering, audio generation, and comprehensive Islamic text processing.
 
-- Follow the code patterns described in `.cursor/rules/`:
-  - `code-guidelines.mdc` – always investigate problems before coding, keep logic in hooks, reuse functionality and remove obsolete code.
-  - `design.mdc` – apply mobile UX principles (Tesler, Hicks, Fitts, Miller) and keep design consistent using values from `constants/Colors.ts` and `constants/layout.ts`.
-  - `copy.mdc` – keep UI text short, friendly and consistent.
-  - `cleanup.mdc`, `refactor.mdc`, `bug-fix.mdc`, `perform.mdc` – consult these when cleaning, refactoring or optimising code.
-  - `code-review.mdc` – checklist for reviewing pull requests.
+## Core Features & Architecture
 
-## Testing
+### Main Application Features
+- **[Read Tab](app/(tabs)/read/index.tsx)**: Article browsing with intelligent filtering, difficulty levels, featured sections
+- **[Practice Tab](app/(tabs)/practice/index.tsx)**: FSRS-based spaced repetition vocabulary learning with dictionary
+- **[Listen Tab](app/(tabs)/listen/index.tsx)**: Audio playback with playlist management, sleep timer, repeat controls
+- **[Account Settings](app/(tabs)/read/account/)**: Font selection, theme management, Islamic calendar integration
+- **[Review Flow](app/practice/review.tsx)**: Visual vocabulary practice with word display and translation
 
-- Tests use Jest with React Native Testing Library. See `docs/testing-guide.md` for full details and examples.
-- Test files live in `__tests__/` and may freely use mocks from `__mocks__/`.
-- Run tests with `yarn test`. Watch mode is available via `yarn test:watch`.
-- Test files are excluded from linting so any structure is allowed.
-
-## Validation
-
-- Run `yarn validate` before committing. It checks TypeScript and lint rules.
-- Optionally run `yarn knip:ci` to check for unused files.
-
-## Useful Docs
-
-- `docs/testing-guide.md` – in‑depth testing instructions.
-- `docs/versioning.md` – explains the Islamic calendar versioning scheme and release commands.
-
-Use this file as a quick reference when working on tasks in this repository.
-
-## AI Agent Optimizations
-
-### Quick Commands for AI Agents
-
-```bash
-# Pre-development validation
-yarn ai:check
-
-# Fast incremental validation
-yarn ai:validate:fast
-
-# Parallel development workflow
-yarn ai:parallel
-
-# Specific linting for components/hooks
-yarn ai:lint:component
-yarn ai:lint:hooks
-
-# Debug failing tests
-yarn ai:debug
-```
-
-### AI Development Workflow
-
-1. **Before starting**: Run `yarn ai:check` to ensure clean state
-2. **During development**: Use templates from `.vscode/snippets.code-snippets`
-3. **Performance focus**: Apply React.memo, useMemo, useCallback from start
-4. **Error handling**: Always use `handleError()` utility for async operations
-5. **Constants**: Never hardcode - use values from `constants/` directory
-6. **Types**: Import from `types/` directory, use `import type` for type-only imports
-7. **Testing**: Create comprehensive tests with each component/hook
-8. **Validation**: Run `yarn ai:validate:fast` before submitting
-
-### AI-Specific Documentation
-
-- **Comprehensive Guide**: `docs/ai-agent-guide.md` - Templates, patterns, decision trees
-- **Code Snippets**: `.vscode/snippets.code-snippets` - Ready-to-use templates
-- **Performance Patterns**: `.cursor/rules/performance-optimization.mdc`
-- **Linting Rules**: Enhanced ESLint config with AI-optimized patterns
-
-### Success Metrics for AI Agents
-
-- ✅ Zero TypeScript/ESLint errors
-- ✅ All tests pass with coverage
-- ✅ Performance optimizations applied (React.memo, memoization)
-- ✅ Constants used (no hardcoded values)
-- ✅ Proper error handling with handleError()
-- ✅ Type safety (no `any` types)
-
-# React Native App Code Guidelines
-
-You are a senior React Native developer tasked with writing performant, reliable and production ready code for a language learning app.
-
-## App Features
-
-- [app/(tabs)/read/index.tsx](<mdc:app/(tabs)/read/index.tsx>) Main screen with list of articles
-- [app/(tabs)/practice/index.tsx](<mdc:app/(tabs)/practice/index.tsx>) Entry screen for practicing words using Spaced Repetition
-- [app/(tabs)/listen/index.tsx](<mdc:app/(tabs)/listen/index.tsx>) Audio playback for bookmarked articles and listening practice
-- [app/(tabs)/read/account/](<mdc:app/(tabs)/read/account/>) Settings and account management
-
-## Core Principles
-
-- Always investigate issues before proposing fixes
-- Strive to reduce complexity (while maintaining reliability)
-- Focus on understanding root causes, not implementing workarounds
-- Reuse existing functionality before creating new functions
-- Place business logic in hooks, not components
-- The app is mobile-only
-- Remove obsolete code when introducing new features
-- Do not use legacy features or code
-- Only use modern React functional components
-
-## Important Files & Constants
-
-- Database structure: [database.types.ts](mdc:types/database.types.ts)
-- Colors & theming: [Colors.ts](mdc:constants/Colors.ts)
-- Layout constraints: [layout.ts](mdc:constants/layout.ts)
-- Typography system: Use `TYPOGRAPHY_HIERARCHY` from layout.ts
-- Shadow system: Use `LAYOUT.SHADOW` constants for consistent elevation
-- Spacing system: Use `LAYOUT.SPACING` scale (TINY=4px, SMALL=8px, MEDIUM=12px, etc.)
-
-## Documentation Reference
-
-For detailed development guidance, refer to these comprehensive documentation files:
-
-- **[Architecture Guide](.cursor/rules/architecture.mdc)** - App architecture, data flow patterns, and architectural decisions
-- **[Common Patterns](.cursor/rules/common-patterns.mdc)** - Frequently used code patterns, hooks, and implementations
-- **[Troubleshooting Guide](.cursor/rules/troubleshooting.mdc)** - Common issues, solutions, and debugging strategies
-- **[API Reference](.cursor/rules/api-reference.mdc)** - Complete reference for services, hooks, utilities, and types
-
-## Technical Stack
-
-- **React Native**: 0.79.3 with React 19.0.0
+### Technical Stack (Current)
+- **React Native**: 0.79.5 with React 19.0.0
 - **Expo SDK**: 53 with New Architecture enabled
-- **Navigation**: Expo Router v5.1.0 with typed routes and modal presentation
-- **State Management**: Redux Toolkit with Redux Persist
-- **Data Fetching**: TanStack Query v5 (React Query) with persistence
-- **UI Performance**: @shopify/flash-list for optimized lists
-- **Animation**: react-native-reanimated v3.17.4 and @shopify/react-native-skia v2.0.0
-- **Audio**: expo-audio v0.4.6 for playback and audio controls
-- **Spaced Repetition**: ts-fsrs v5.1.0 for vocabulary learning algorithms
-- **Error Tracking**: Sentry v6.14.0 for error logging
-- **Analytics**: Currently mocked (Mixpanel integration disabled)
-- **Backend**: Supabase v2.50.0 for database, storage and auth
-- **Notifications**: expo-notifications v0.31.3 for push notifications
-- **Haptics**: expo-haptics v14.1.4 for tactile feedback
-- **Testing**: Jest v29.7.0 with React Native Testing Library
+- **Navigation**: Expo Router v5.1.5 with typed routes
+- **State Management**: Redux Toolkit v2.8.2 with Redux Persist
+- **Data Fetching**: TanStack Query v5.85.5 with persistence
+- **Audio**: expo-audio v0.4.9, ElevenLabs API for generation
+- **Learning Algorithm**: ts-fsrs v5.2.2 for spaced repetition
+- **Backend**: Supabase JS v2.56.0 for database/auth
+- **Testing**: Jest v29.7.0 with React Native Testing Library v13.3.2
+
+## Development Rules & Guidelines
+
+### Code Quality Standards (Strict Mode)
+- **TypeScript**: Strict mode enabled, no `any` types allowed
+- **ESLint**: Flat config with comprehensive rules
+- **Import patterns**: Use `import type` for type-only imports
+- **Investigation First**: Search existing patterns before creating new code
+
+### Essential Rules from `.cursor/rules/`
+- **[code-guidelines.mdc](.cursor/rules/code-guidelines.mdc)**: Investigation-first approach, hooks for logic, constants usage
+- **[design.mdc](.cursor/rules/design.mdc)**: Mobile UX laws (Tesler, Hick, Fitts, Miller), minimalist aesthetic
+- **[performance-optimization.mdc](.cursor/rules/performance-optimization.mdc)**: React.memo, memoization patterns
+- **[bug-fixing.mdc](.cursor/rules/bug-fixing.mdc)**: Systematic debugging approach
 
 ## Directory Structure
 
-- `app/(tabs)` - Main tab screen components
-- `app/auth` - Authentication screens
-- `app/practice` - Standalone practice screens (renamed from vocabulary)
-- `app/insights` - Analytics and insights screens
-- `hooks/` - Custom React hooks for shared logic
-- `components/` - Reusable UI components
-- `constants/` - App constants, theme values, and configuration
-- `services/` - External API communication (primarily Supabase)
-- `store/` - Redux state management with persistence
-- `types/` - TypeScript type definitions
-- `utils/` - Helper functions and utilities
+### App Screens (Expo Router)
+```
+app/
+├── (tabs)/                     # Main tab navigation
+│   ├── listen/                 # Audio playback tab
+│   ├── practice/               # Vocabulary practice tab with dictionary
+│   └── read/                   # Reading tab with articles and account
+│       ├── account/            # Settings, fonts, themes, calendar
+│       ├── article/[id].tsx    # Individual article reader
+│       ├── filter.tsx          # Article filtering
+│       └── filterModal.tsx     # Filter modal overlay
+├── auth/                       # Authentication flow
+└── practice/review.tsx         # Standalone vocabulary review
+```
 
-## Navigation Patterns
+### Core Application Structure
+- **`hooks/`** - Business logic hooks organized by domain (articles, audio, auth, vocabulary)
+- **`components/`** - Reusable UI components with consistent theming
+- **`constants/`** - Configuration, theme values, strings, and system constants
+- **`services/`** - External API communication (Supabase, audio services)
+- **`store/`** - Redux slices for global state management
+- **`types/`** - TypeScript definitions for API responses, UI props, navigation
+- **`utils/`** - Helper functions, error handling, Arabic text analysis
 
-- Use Expo Router with modal presentation for overlays
-- Modal screens hide tab headers completely
-- Use correct route paths: `/(tabs)/read/article/[id]` not `/article/[id]`
-- Navigation hierarchy: Read → Account (renamed from Settings)
-- Practice tab (renamed from Vocabulary) for spaced repetition
+## Testing & Development
 
-## Best Practices
+### Testing Framework
+- **Framework**: Jest v29.7.0 with React Native Testing Library v13.3.2
+- **Location**: Test files in `__tests__/`, mocks in `__mocks__/`
+- **Commands**: `yarn test`, `yarn test:watch`, `yarn test:coverage`
+- **Timeout**: 10 seconds for async operations
 
-### Code Quality
+### Development Commands
+- **Validation**: `yarn validate` (TypeScript + ESLint + Knip)
+- **CI Pipeline**: `yarn ci` (validation + test coverage)
+- **Type Check**: `yarn typecheck` (TypeScript only)
+- **AI Commands**: `yarn ai:check`, `yarn ai:validate:fast`, `yarn ai:parallel`
 
-- Use types from `/types` directory for consistency
-- Never use `any` type - always use proper TypeScript types
-- Leverage Expo features when they provide value
-- Keep components focused on presentation, hooks on logic
-- Follow existing patterns for state management with Redux
-- Use consistent naming: PascalCase for components, camelCase for functions
+## Critical Constants & File References
 
-### Styling & Design
+### Essential Files (MANDATORY USAGE)
+- **[database.types.ts](types/database.types.ts)**: All Supabase table types and schemas
+- **[Colors.ts](constants/Colors.ts)**: Complete theme system with light/dark modes
+- **[layout.ts](constants/layout.ts)**: Typography, spacing, shadows, touch targets
+- **[fsrs.ts](constants/fsrs.ts)**: Spaced repetition system constants and query keys
+- **[routes.ts](constants/routes.ts)**: Navigation route paths with `/(tabs)` prefix
+- **[strings.ts](constants/strings.ts)**: All user-facing text and messages
 
-- Use `StyleSheet.create()` for static styles, inline for dynamic
-- Follow design system from Colors.ts and layout.ts
-- Use standardized shadow system: `LAYOUT.SHADOW.SUBTLE/SMALL/MEDIUM/LARGE`
-- Use spacing scale: `LAYOUT.SPACING.TINY/SMALL/MEDIUM/LARGE/XLARGE`
-- Typography: Use `TYPOGRAPHY_HIERARCHY` constants for consistent text styling
-- Touch targets: Minimum 48dp for accessibility (use `TOUCH_TARGETS` constants)
+### Required Usage Patterns
+- **Typography**: Use `TYPOGRAPHY_HIERARCHY` from `layout.ts`
+- **Spacing**: Use `LAYOUT.SPACING` scale (TINY=4px → XLARGE=24px)  
+- **Elevation**: Use `LAYOUT.ELEVATION.SUBTLE/SMALL/MEDIUM/LARGE`
+- **Colors**: Use semantic colors from `Colors.ts` (no hardcoded hex)
+- **Navigation**: Use `ROUTE_PATHS` constants with `/(tabs)` prefix
+- **FSRS Queries**: Use `FSRS_QUERY_KEYS` starting with `'fsrs-words'`
 
-### Performance
+## Arabic Text Handling (CRITICAL)
 
-- Use `@shopify/flash-list` for large lists instead of FlatList
-- Only suggest performance optimizations with measurable impact
-- Memoize expensive calculations and components appropriately
-- Use React Query for data fetching with proper cache invalidation
+### Single-Word Color-Coding Rule
+- **NEVER** apply grammar color-coding to single English words
+- Color-coding only for multi-word phrases showing Arabic component construction
+- **Always check**: `text.trim().split(/\s+/).length === 1` before color analysis
+- Single words display in standard text color regardless of Arabic analysis
 
-### Error Handling
+## AI Agent Guidelines
 
-- Use `handleError()` utility from `utils/errorHandling.ts`
-- Structure: try/catch in services, Sentry for logging
-- Analytics tracking is currently mocked (service disabled)
-- Provide user feedback via toast messages
+### Pre-Development Checklist
+1. **Investigation First**: Search existing implementations before coding
+2. **Constants Usage**: Never hardcode - use values from `constants/`
+3. **Type Safety**: Import from `types/`, use `import type`
+4. **Performance**: Apply React.memo, useMemo, useCallback from start
+5. **Error Handling**: Use `handleError()` utility for async operations
 
-### Data Management
+### End of Session Requirements (MANDATORY)
+1. `yarn test` - Ensure all tests pass
+2. `yarn validate` - Check types, linting, dependencies  
+3. Clean up temporary files
+4. Verify no console errors/warnings
 
-- Structure Supabase queries in `services/` with typed responses
-- Use database.types.ts for all database operations
-- Follow FSRS query key patterns for vocabulary data
-- Use consistent cache invalidation strategies
+### Success Metrics
+- ✅ Zero TypeScript/ESLint errors
+- ✅ All tests pass with coverage
+- ✅ Performance optimizations applied
+- ✅ Constants used (no hardcoded values)
+- ✅ Proper error handling
+- ✅ Type safety (no `any` types)
+- ✅ Arabic text handling follows single-word rules
 
-### Audio & Media
+## Key Implementation Notes
 
-- Use expo-audio for all audio playback
-- Handle background audio with proper session configuration
-- Implement proper cleanup for audio resources
-- Use enhanced audio service for playlist management
-
-## Critical Implementation Notes
-
-### Analytics Service
-
-- **IMPORTANT**: Analytics service is currently disabled/mocked
-- All analytics calls use temporary mock implementations
-- Do not implement new Mixpanel tracking until service is restored
+### Analytics Service Status
+- **Analytics**: Currently disabled/mocked (Mixpanel integration disabled)
+- Do not implement new tracking until service restoration
 - Error handling includes analytics properties but they're not sent
 
-### Navigation Issues
+### Performance Requirements
+- **Lists**: Use `@shopify/flash-list` v1.7.6 (not FlatList) for all large lists
+- **Memoization**: Apply React.memo, useMemo, useCallback proactively
+- **Audio Cleanup**: Proper resource cleanup on component unmount
+- **Cache Management**: Use proper query invalidation for FSRS vocabulary data
 
-- Always use full route paths with `/(tabs)` prefix
-- Modal screens should use Expo Router modal system, not React Native Modal
-- Avoid navigation parameter bleed between screens
-
-### Memory Management
-
-- Clean up audio resources on component unmount
-- Use proper query invalidation for FSRS vocabulary data
-- Clear persisted cache when needed via utility functions
-
-### Haptic Feedback
-
+### Haptic Feedback Rules
 - Avoid double haptic feedback from multiple components
-- Use appropriate feedback types: `selectionFeedback` for most interactions
+- Use `selectionFeedback` for most interactions
 - Import from `utils/haptics.ts`
 
-## Constraints
+---
 
-- Don't be overly strict about linting issues
-- Focus on mobile UX patterns, not responsive web design
-- App is portrait-only mobile application
-- No tablet support (iOS supportsTablet: false)
-
-## Version Management
-
-- Use semantic versioning with build numbers
-- Format: `major.minor.patch+buildNumber` (e.g., "1446.12.20+20")
-- Build numbers increment for each release
-
-## Testing
-
-- Use Jest with React Native Testing Library
-- Test timeout: 10 seconds for async operations
-- Coverage reports available via `yarn test:coverage`
-- Mock external services appropriately
-
-## Development Workflow
-
-- Use `yarn validate` for type checking, linting, and dependency analysis
-- Use `yarn ci` for full validation with test coverage
-- Knip for unused code detection
-- Patch-package for dependency modifications
+*This guide serves as a comprehensive reference for developing high-quality, performant React Native code in the OpenArabic language learning application. Always prioritize investigation-first development, strict type safety, and consistent use of the established design system.*
