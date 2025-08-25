@@ -348,13 +348,24 @@ function mapToOriginalPosition(
     }
   } else {
     // Count forwards from start
-    for (let i = 0; i < original.length && count < normalizedLength; i++) {
+    let i = 0;
+    for (; i < original.length && count < normalizedLength; i++) {
       const char = original[i];
       if (char && !DIACRITIC_REGEX.test(char)) {
         count++;
       }
-      position = i + 1;
     }
+    // After reaching the target number of base characters, include any
+    // immediately trailing diacritics so they stay attached to the segment
+    while (i < original.length) {
+      const nextChar = original[i];
+      if (nextChar && DIACRITIC_REGEX.test(nextChar)) {
+        i++;
+        continue;
+      }
+      break;
+    }
+    position = i;
   }
 
   return position;
