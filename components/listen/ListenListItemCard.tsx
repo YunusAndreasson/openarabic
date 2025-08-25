@@ -234,11 +234,7 @@ const styles = StyleSheet.create({
   },
   titleText: {
     marginBottom: LAYOUT.SPACING.TINY,
-    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
     letterSpacing: TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.letterSpacing,
-    lineHeight:
-      LAYOUT.TYPOGRAPHY.SCALE.LARGE *
-      TYPOGRAPHY_HIERARCHY.MICRO_ADJUSTMENTS.CONTENT_TYPES.CARD_TITLE.lineHeightMultiplier,
   },
   authorText: {
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.MEDIUM,
