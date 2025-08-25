@@ -93,6 +93,7 @@ export const STRINGS = {
   READ: 'Library',
   LISTEN: 'Playlist',
   PRACTICE: 'Study',
+  CONTINUE_READING: 'Continue Reading',
 
   // Review actions
   DONT_KNOW: "Don't know",
@@ -380,7 +381,7 @@ export const STRINGS = {
   WORD_OF_LABEL: 'of',
   BY: 'by',
   RECOMMENDED: 'Recommended',
-  CONTINUE_READING: 'Continue reading',
+
   ACTIVE: 'active',
 
   // Learning science content - Remove redundant section titles (benefits, concerns, research are obvious from content)

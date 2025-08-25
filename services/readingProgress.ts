@@ -181,6 +181,26 @@ export class ReadingProgressService {
       .map(p => toSafeReadingProgress(p))
       .filter((p): p is SafeReadingProgress => p !== null);
   }
+
+  /**
+   * Get the most recently read article for a user
+   */
+  static async getLastReadArticle(userId: string): Promise<ReadingProgress | null> {
+    const { data, error } = await supabase
+      .from('reading_progress')
+      .select('*')
+      .eq('user_id', userId)
+      .gt('last_sentence_read', 0) // Only articles with actual progress
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Failed to get last read article: ${error.message}`);
+    }
+
+    return data as ReadingProgress | null;
+  }
 }
 
 export const readingProgressService = ReadingProgressService;

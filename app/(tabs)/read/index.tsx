@@ -13,19 +13,21 @@ import { HijriDateFooter } from '@read/HijriDateFooter';
 import IntelligentArticleSection from '@read/IntelligentArticleSection';
 
 import { ThemedView } from '@/components/ThemedView';
+import BottomControls from '@/components/listen/BottomControls';
 import { DEFAULT_SESSION_COOLDOWN_HOURS, FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
 import { CACHE_TIMES } from '@/constants/queryConfig';
 import { getArticleRoute, getCategoryFilterRoute } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
+import { useLastReadArticle } from '@/hooks/articles/useLastReadArticle';
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
 import type { Article, Category } from '@/types/articles.types';
 import { handleError } from '@/utils/errorHandling';
-import { mediumFeedback } from '@/utils/haptics';
+import { mediumFeedback, selectionFeedback } from '@/utils/haptics';
 
 const styles = StyleSheet.create({
   container: {
@@ -47,6 +49,9 @@ export default function ReadScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { prefetchArticle } = useAppPreloader();
+
+  // Get last read article for continue reading button
+  const { lastReadArticle, hasLastReadArticle } = useLastReadArticle();
 
   const { data: categoriesData = [], isLoading: isCategoriesLoading } = useQuery({
     queryKey: ['categories'],
@@ -147,6 +152,17 @@ export default function ReadScreen(): JSX.Element {
     [categoriesData]
   );
 
+  const handleContinueReading = useCallback(() => {
+    if (!lastReadArticle) return;
+
+    selectionFeedback();
+    // Prefetch article data after navigation animation completes
+    InteractionManager.runAfterInteractions(() => {
+      prefetchArticle(lastReadArticle.id);
+    });
+    router.push(getArticleRoute(lastReadArticle.id, lastReadArticle.title));
+  }, [lastReadArticle, prefetchArticle]);
+
   // Optimized header component - minimize re-creation by memoizing stable parts
   const ListHeaderComponent = useMemo(() => {
     return (
@@ -203,6 +219,28 @@ export default function ReadScreen(): JSX.Element {
         onArticlePress={handleArticlePress}
         onRefresh={handleRefresh}
       />
+
+      {/* Bottom fixed CONTINUE READING button, hidden when there's no last read article */}
+      {hasLastReadArticle && (
+        <View
+          style={{
+            position: 'absolute',
+            bottom:
+              LAYOUT.BOTTOM_BAR.HEIGHT +
+              LAYOUT.SPACING.TINY -
+              LAYOUT.SPACING.MEDIUM -
+              LAYOUT.SPACING.SMALL,
+            left: 0,
+            right: 0,
+          }}
+        >
+          <BottomControls
+            primaryLabel={STRINGS.CONTINUE_READING}
+            onPrimaryPress={handleContinueReading}
+            primaryDisabled={false}
+          />
+        </View>
+      )}
     </ThemedView>
   );
 }
