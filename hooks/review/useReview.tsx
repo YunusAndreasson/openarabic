@@ -235,6 +235,12 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     setShowTranslation(false);
     setIsStruggling(false);
     setCurrentMeaning('');
+    // Reset stale completion flag if a new word/session appears
+    if (currentWordKey !== 'none' && stateRefs.current.completionTriggered) {
+      stateRefs.current.completionTriggered = false;
+      setIsTransitioningToCompletion(false);
+      devReviewLogger.log('ui.completion.reset', { reason: 'new-word', currentWordKey });
+    }
   }, [currentWordKey]);
 
   // Batch state updates for translation display

@@ -342,9 +342,13 @@ export function useFSRS({
       const { card: newCard } = fsrsInstance.next(card, now, rating);
 
       // Prepare FSRS update payload
+      // For unknown/vague, schedule a short cooldown so the word doesn't remain immediately due after session
+      const shortCooldownMs = 10 * 60 * 1000; // 10 minutes
+      const nextDueDate =
+        confidence === 'known' ? newCard.due : new Date(now.getTime() + shortCooldownMs);
+
       const wordUpdateData = {
-        // For unknown/vague, keep the word due immediately (do not postpone)
-        fsrs_due: confidence === 'known' ? newCard.due.toISOString() : new Date().toISOString(),
+        fsrs_due: nextDueDate.toISOString(),
         fsrs_stability: newCard.stability,
         fsrs_difficulty: newCard.difficulty,
         fsrs_elapsed_days: newCard.elapsed_days,
@@ -424,27 +428,24 @@ export function useFSRS({
         remainingQueueSize: remaining.length,
       });
 
-      // FIXED: Check for completion when no next word is available AND no words are ready in spacing queue
-      // The session should only complete when there are truly no more words to review
+      // FIXED: Ensure forward progress when only spaced words remain (avoid deadlock)
+      // If there's no next item, try to move any ready or nearly-ready spaced words back to the queue.
       if (!nextItem) {
-        // Check if any words in spacing queue are ready to be shown again
+        // First, move any fully ready spaced words
         const readySpacedWords = spacingQueueRef.current.spacedWords.filter(
           item => item.remainingSpacing <= 0
         );
 
         if (readySpacedWords.length > 0) {
-          // Move ready words back to the main queue and try to get next word
           readySpacedWords.forEach(item => {
             const priority = calculateWordPriority(item.word);
             queueRef.current.push(item.word, priority);
           });
 
-          // Remove ready words from spacing queue
           spacingQueueRef.current.spacedWords = spacingQueueRef.current.spacedWords.filter(
             item => item.remainingSpacing > 0
           );
 
-          // Try to get next word again
           nextItem = getNextWordWithSpacing();
           devReviewLogger.log('word.next', {
             reason: 'ready-spaced-words',
@@ -452,51 +453,46 @@ export function useFSRS({
           });
         }
 
-        // If still no next word, check if we should complete the session
+        // If still none, but the session isn't fully known yet, requeue the smallest spacing candidate
         if (!nextItem) {
-          // Check if any words in spacing queue are ready to be shown soon
-          const wordsReadySoon = spacingQueueRef.current.spacedWords.filter(
-            item => item.remainingSpacing <= 1
-          );
+          const { knownWords, totalWords } = countersRef.current;
+          const allKnown = totalWords > 0 && knownWords >= totalWords;
 
-          // If no words are ready soon, decide whether to continue or complete
-          if (wordsReadySoon.length === 0) {
-            const { knownWords, totalWords } = countersRef.current;
-            const allKnown = totalWords > 0 && knownWords >= totalWords;
+          if (!allKnown && spacingQueueRef.current.spacedWords.length > 0) {
+            const candidate = spacingQueueRef.current.spacedWords.reduce(
+              (min, curr) => (!min || curr.remainingSpacing < min.remainingSpacing ? curr : min),
+              undefined as (typeof spacingQueueRef.current.spacedWords)[number] | undefined
+            );
 
-            if (!allKnown) {
-              // Keep the session going by re-queuing the word with the smallest remaining spacing
-              const candidate = spacingQueueRef.current.spacedWords.reduce(
-                (min, curr) => (!min || curr.remainingSpacing < min.remainingSpacing ? curr : min),
-                undefined as (typeof spacingQueueRef.current.spacedWords)[number] | undefined
+            if (candidate) {
+              // FORCE OVERRIDE: allow immediate repeat of the smallest-spacing candidate
+              // Remove from spaced list and from recent guard to avoid skip
+              spacingQueueRef.current.spacedWords = spacingQueueRef.current.spacedWords.filter(
+                w => w.word.root_id !== candidate.word.root_id
               );
-
-              if (candidate) {
-                const priority = calculateWordPriority(candidate.word);
-                queueRef.current.push(candidate.word, priority);
-                spacingQueueRef.current.spacedWords = spacingQueueRef.current.spacedWords.filter(
-                  w => w.word.root_id !== candidate.word.root_id
-                );
-                nextItem = getNextWordWithSpacing();
-                devReviewLogger.log('word.next', {
-                  reason: 'requeue-smallest-spacing',
-                  candidateId: candidate.word.root_id,
-                  nextId: nextItem?.root_id ?? null,
-                });
-              }
-            }
-
-            if ((allKnown || !nextItem) && !stateTrackingRef.current.completionTriggered) {
-              stateTrackingRef.current.completionTriggered = true;
-              setTimeout(() => {
-                setIsComplete(true);
-                if (onComplete) onComplete();
-              }, COMPLETION_DELAY_MS);
-              devReviewLogger.warn('session.completion-triggered', {
-                reason: allKnown ? 'all-known' : 'no-next-item',
-                wordsReadySoon: wordsReadySoon.length,
+              spacingQueueRef.current.recentWords = spacingQueueRef.current.recentWords.filter(
+                id => id !== candidate.word.root_id
+              );
+              nextItem = candidate.word;
+              devReviewLogger.log('word.next', {
+                reason: 'force-repeat-override',
+                candidateId: candidate.word.root_id,
+                nextId: nextItem?.root_id ?? null,
               });
             }
+          }
+
+          // If we still have no next item, complete
+          if (!nextItem && !stateTrackingRef.current.completionTriggered) {
+            stateTrackingRef.current.completionTriggered = true;
+            setTimeout(() => {
+              setIsComplete(true);
+              if (onComplete) onComplete();
+            }, COMPLETION_DELAY_MS);
+            devReviewLogger.warn('session.completion-triggered', {
+              reason: allKnown ? 'all-known' : 'no-next-item',
+              spacingQueueSize: spacingQueueRef.current.spacedWords.length,
+            });
           }
         }
       }
