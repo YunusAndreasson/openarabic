@@ -56,8 +56,8 @@ def extract_root_info(word: WordData) -> tuple[str, str | None, str | None]:
         return word["root"], word.get("notes"), word["english"]
 
     # Since arabic and english are non-nullable, we can access them directly
-    # Use the arabic field (with tashkeel) for root audio generation, not essential (without tashkeel)
-    letters = word["arabic"]
+    # Use the essential field (stripped root form) for root audio generation, not arabic (with prefixes/suffixes)
+    letters = word["essential"]
     english = word["english"]
     meaning = word.get("essential_translation") or f"Auto-generated root for: {english}"
     english_translation = word.get("essential_translation", "") or english

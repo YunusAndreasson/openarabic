@@ -21,8 +21,6 @@ except ImportError:
 
 from audio.audio_utils import (
     create_article_audio,
-    generate_audio_filename,
-    generate_speech,
 )
 from data.config import (
     AUTHOR_NUMBER_MAPPING,
@@ -32,10 +30,8 @@ from data.models import ArticleData, SentenceTranslation
 from utils import load_api_keys
 
 # Cache utilities removed - using Supabase Storage as single source of truth
-from utils.config_common import get_storage_url
 from utils.database_utils import (
     archive_files,
-    cleanup_temp_files,
     insert_article_sentences,
 )
 from utils.storage_utils import (
@@ -142,7 +138,7 @@ def generate_article_audio(
             logger.info("Article audio URLs updated in database successfully")
 
         except Exception as e:
-            raise RuntimeError(f"Failed to update article audio URLs: {e}")
+            raise RuntimeError(f"Failed to update article audio URLs: {e}") from e
 
         # Clean up temporary directory
         if os.path.exists(temp_dir):
@@ -152,7 +148,7 @@ def generate_article_audio(
         # Clean up on error
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
-        raise RuntimeError(f"Failed to generate article audio: {e}")
+        raise RuntimeError(f"Failed to generate article audio: {e}") from e
 
 
 def detect_author_from_file_path(file_path: str) -> tuple[str, int]:

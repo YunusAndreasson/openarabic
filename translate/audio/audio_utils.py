@@ -3,7 +3,6 @@ import hashlib
 import io
 import logging
 import os
-import subprocess
 import sys
 import time
 import uuid
@@ -32,7 +31,7 @@ from data.config import (
     ENGLISH_VOICE_SETTINGS,
     GOOGLE_CLOUD_CREDENTIALS_PATH,
 )
-from data.models import AudioResult, BilingualAudioResult
+from data.models import AudioResult
 from utils.config_common import get_storage_url
 from utils.exceptions import AudioGenerationError
 from utils.google_tts_service import GoogleTTSService
@@ -417,11 +416,9 @@ def generate_sentence_audio(
     text: str,
     filename: str,
     tashkeel_text: str | None = None,
-    previous_text: str | None = None,
-    next_text: str | None = None,
 ) -> AudioResult | None:
     """
-    Generate audio for a sentence using ElevenLabs, with optional tashkeel, SSML, and context.
+    Generate audio for a sentence using ElevenLabs, with optional tashkeel.
     Returns an AudioResult object with URL.
     """
     try:

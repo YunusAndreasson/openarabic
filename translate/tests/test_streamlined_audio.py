@@ -1,8 +1,6 @@
 """Test the streamlined audio concatenation functionality."""
 
-from unittest.mock import MagicMock, Mock, patch
-
-import pytest
+from unittest.mock import Mock, patch
 
 from audio.audio_utils import create_article_audio
 
