@@ -69,6 +69,10 @@ interface UseReviewReturn {
   // Add audio preloading state
   isAudioPreloading: boolean;
   audioPreloadProgress: number;
+  // Add audio ready state
+  isCurrentWordAudioReady: boolean;
+  // Add audio preloading completion state
+  isAudioPreloadingComplete: boolean;
 }
 
 interface WordSizingConfig {
@@ -128,6 +132,10 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
   const hasPreloadedAudioRef = useRef(false);
   // Track the actual word content to prevent unnecessary preloading
   const lastPreloadedWordsRef = useRef<string>('');
+  // Track if current word audio is ready
+  const [isCurrentWordAudioReady, setIsCurrentWordAudioReady] = useState(false);
+  // Track if audio preloading is fully complete
+  const [isAudioPreloadingComplete, setIsAudioPreloadingComplete] = useState(false);
 
   // Consolidated time tracking refs
   const timeRefs = useRef<ReviewTimeRefs>({
@@ -355,7 +363,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
   );
 
   // Enhanced audio playback function for single audio files
-  const playAudio = useCallback((url: string) => {
+  const playAudio = useCallback(async (url: string) => {
     if (!url) return Promise.resolve();
 
     const track = {
@@ -365,10 +373,21 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       duration: 0,
     };
 
-    return audioPlayerRef.current.play(track).catch((error: Error) => {
+    try {
+      // Wait for audio to start playing (which means it's loaded)
+      const success = await audioPlayerRef.current.play(track);
+
+      if (success) {
+        // Wait a bit more to ensure audio is fully loaded and ready
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      return success;
+    } catch (error) {
       handleError(error instanceof Error ? error : new Error(String(error)));
       devReviewLogger.warn('audio.play.error', { url });
-    });
+      return false;
+    }
   }, []);
 
   const handleKnowledgeResponse = useCallback(
@@ -597,6 +616,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       if (!words.length) return;
 
       setIsAudioPreloading(true);
+      setIsAudioPreloadingComplete(false);
       setAudioPreloadProgress(0);
 
       try {
@@ -620,6 +640,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
 
         if (audioUrls.length === 0) {
           setIsAudioPreloading(false);
+          setIsAudioPreloadingComplete(true);
           return;
         }
 
@@ -627,22 +648,31 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
         const totalUrls = audioUrls.length;
         let completedUrls = 0;
 
-        await Promise.allSettled(
-          audioUrls.map(async url => {
-            try {
-              // Use audioCache to download and cache the audio file
-              await audioCache.getAudio(url);
-              completedUrls++;
-              setAudioPreloadProgress((completedUrls / totalUrls) * 100);
-            } catch (error) {
-              console.warn(`Failed to preload audio: ${url}`, error);
-              // Continue with other audio files even if some fail
-            }
-          })
-        );
+        // Use sequential loading to ensure each file is fully processed
+        for (const url of audioUrls) {
+          try {
+            // Use audioCache to download and cache the audio file
+            await audioCache.getAudio(url);
+            completedUrls++;
+            setAudioPreloadProgress((completedUrls / totalUrls) * 100);
+
+            // Small delay to ensure file system operations complete
+            await new Promise(resolve => setTimeout(resolve, 50));
+          } catch (error) {
+            console.warn(`Failed to preload audio: ${url}`, error);
+            // Continue with other audio files even if some fail
+          }
+        }
+
+        // Final delay to ensure all files are fully ready
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        // Mark preloading as complete
+        setIsAudioPreloadingComplete(true);
       } catch (error) {
         console.error('Audio preloading failed:', error);
         // Don't block the session if audio preloading fails
+        setIsAudioPreloadingComplete(true);
       } finally {
         setIsAudioPreloading(false);
         setAudioPreloadProgress(0);
@@ -684,6 +714,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     if (isComplete) {
       hasPreloadedAudioRef.current = false;
       lastPreloadedWordsRef.current = '';
+      setIsAudioPreloadingComplete(false);
     }
   }, [isComplete]);
 
@@ -701,12 +732,25 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       return;
     }
 
+    // CRITICAL FIX: Only play audio after preloading is complete
+    if (isAudioPreloading || !isAudioPreloadingComplete) {
+      return;
+    }
+
     const wordId = String(currentWord.root_id);
     const audioUrl = generateAudioUrl(currentWord.root.audio_url);
 
+    // Since audio is preloaded, mark as ready immediately
+    setIsCurrentWordAudioReady(true);
+
     // Play audio for Arabic words (now preloaded, so should be instant)
     if (audioUrl) {
-      playAudio(audioUrl).catch(handleError);
+      // Play audio immediately since it's already cached
+      playAudio(audioUrl)
+        .then(() => {
+          devReviewLogger.log('audio.ready', { wordId, audioUrl });
+        })
+        .catch(handleError);
     }
 
     // Update the lastProcessedWordId
@@ -718,6 +762,8 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     showTranslation,
     playAudio,
     generateAudioUrl,
+    isAudioPreloading,
+    isAudioPreloadingComplete,
   ]);
 
   // Safety watchdog: if no current word and not transitioning, force completion
@@ -749,7 +795,8 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
   }, [currentWord, isComplete, isTransitioningToCompletion, triggerCompletionTransition]);
 
   const handleSwipeLeft = useCallback(() => {
-    if (isComplete || stateRefs.current.isUpdatingWord || !currentWord) return;
+    if (isComplete || stateRefs.current.isUpdatingWord || !currentWord || !isCurrentWordAudioReady)
+      return;
     devReviewLogger.ensureStarted();
     devReviewLogger.log('gesture.swipe-left', {
       currentWordId: currentWord.root_id,
@@ -758,12 +805,14 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       isUpdatingWord: stateRefs.current.isUpdatingWord,
       completionTriggered: stateRefs.current.completionTriggered,
       isComplete,
+      isAudioReady: isCurrentWordAudioReady,
     });
     handleKnowledgeResponse('unknown');
-  }, [handleKnowledgeResponse, isComplete, currentWord]);
+  }, [handleKnowledgeResponse, isComplete, currentWord, isCurrentWordAudioReady]);
 
   const handleSwipeRight = useCallback(() => {
-    if (isComplete || stateRefs.current.isUpdatingWord || !currentWord) return;
+    if (isComplete || stateRefs.current.isUpdatingWord || !currentWord || !isCurrentWordAudioReady)
+      return;
     devReviewLogger.ensureStarted();
     devReviewLogger.log('gesture.swipe-right', {
       currentWordId: currentWord.root_id,
@@ -772,13 +821,15 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       isUpdatingWord: stateRefs.current.isUpdatingWord,
       completionTriggered: stateRefs.current.completionTriggered,
       isComplete,
+      isAudioReady: isCurrentWordAudioReady,
     });
     handleKnowledgeResponse('known');
-  }, [handleKnowledgeResponse, isComplete, currentWord]);
+  }, [handleKnowledgeResponse, isComplete, currentWord, isCurrentWordAudioReady]);
 
   const handleLongPress = useCallback(() => {
-    if (isComplete || stateRefs.current.isUpdatingWord || !currentWord) return;
-  }, [currentWord, isComplete]);
+    if (isComplete || stateRefs.current.isUpdatingWord || !currentWord || !isCurrentWordAudioReady)
+      return;
+  }, [currentWord, isComplete, isCurrentWordAudioReady]);
 
   const handleClose = useCallback(() => {
     const mounted = { current: true };
@@ -935,5 +986,9 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     // Add audio preloading state
     isAudioPreloading,
     audioPreloadProgress,
+    // Add audio ready state
+    isCurrentWordAudioReady,
+    // Add audio preloading completion state
+    isAudioPreloadingComplete,
   };
 }

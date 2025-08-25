@@ -63,6 +63,7 @@ export default function ReviewScreen(): JSX.Element {
     sessionMetrics,
     isAudioPreloading,
     audioPreloadProgress,
+    isAudioPreloadingComplete,
   } = useReview({ fromRemember, mode });
 
   if (isComplete || isTransitioningToCompletion) {
@@ -109,6 +110,18 @@ export default function ReviewScreen(): JSX.Element {
             >
               {Math.round(audioPreloadProgress)}% complete
             </ThemedText>
+            {isAudioPreloadingComplete && (
+              <ThemedText
+                style={{
+                  marginTop: LAYOUT.SPACING.MEDIUM,
+                  fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+                  textAlign: 'center',
+                  color: colors.success,
+                }}
+              >
+                Audio ready! Starting practice...
+              </ThemedText>
+            )}
           </View>
         </View>
       </View>
