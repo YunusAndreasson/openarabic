@@ -114,8 +114,8 @@ export class AudioCacheManager {
         showToast: true,
         toastMessage: 'Audio caching failed. The app may experience slower audio loading.',
       });
-      // Re-throw the error instead of falling back
-      throw new Error(`Audio caching failed: ${error}`);
+      // Return original URL on failed download as fallback
+      return url;
     }
   }
 
