@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { memo, useCallback } from 'react';
-import { Image, Linking, StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 
+import { EnhancedImage } from '@/components/EnhancedImage';
 import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
@@ -9,7 +10,6 @@ import { handleError } from '@/utils/errorHandling';
 
 export const SocialMediaIcons = memo(() => {
   const colors = useColors();
-
   const handleSocialMediaPress = useCallback(async (url: string) => {
     try {
       await Linking.openURL(url);
@@ -50,10 +50,10 @@ export const SocialMediaIcons = memo(() => {
         />
       </View>
 
-      <Image
+      <EnhancedImage
         source={require('@/assets/images/oaLogo.png')}
         style={styles.logo}
-        resizeMode="contain"
+        contentFit="contain"
       />
     </View>
   );
@@ -80,5 +80,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 40,
     opacity: 0.3,
+    backgroundColor: 'transparent', // Override EnhancedImage's default background
+    borderRadius: 0, // Remove border radius for clean logo display
   },
 });

@@ -53,6 +53,9 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   const colors = useColors();
   const { user } = useAuth();
   const fontScale = useAppSelectorMemo(state => state.settings.fontScale);
+  const displayLanguagePreference = useAppSelectorMemo(
+    state => state.settings.displayLanguagePreference
+  );
   const { showToast } = useToast();
 
   // Removed audio-related hooks and state
@@ -325,14 +328,24 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
           key={item.id}
           sentence={item}
           words={words}
-          settings={{ showEnglish: true, fontScale }}
+          settings={{
+            showEnglish: displayLanguagePreference === 'bilingual',
+            fontScale,
+          }}
           colors={colors}
           dueWordRootIds={dueWordRootIds}
           onWordPress={handleWordPress}
         />
       );
     },
-    [getWordsForSentence, fontScale, colors, dueWordRootIds, handleWordPress]
+    [
+      getWordsForSentence,
+      fontScale,
+      colors,
+      dueWordRootIds,
+      handleWordPress,
+      displayLanguagePreference,
+    ]
   );
 
   // Memoize expensive computations

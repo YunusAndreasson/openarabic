@@ -3,7 +3,7 @@ import { BlurView } from 'expo-blur';
 import { Tabs, router } from 'expo-router';
 import type { JSX } from 'react';
 import React, { Fragment, memo, useCallback, useEffect, useMemo } from 'react';
-import { Platform, Pressable, StyleSheet } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { HeaderProfile } from '@/components/HeaderProfile';
 import { ThemedText } from '@/components/ThemedText';
@@ -15,6 +15,64 @@ import { useAuth } from '@/hooks/auth';
 import { useColors, useIsDarkMode } from '@/hooks/theme';
 import { useFSRSQueries } from '@/hooks/vocabulary/useFSRSQueries';
 import { selectionFeedback } from '@/utils/haptics';
+
+// Custom IconWithBadge component for better badge positioning and consistent shape
+const IconWithBadge = memo(
+  ({
+    name,
+    badgeCount,
+    color,
+    size,
+    focused,
+    colors,
+  }: {
+    name: 'book' | 'headset' | 'school';
+    badgeCount: number;
+    color: string;
+    size: number;
+    focused: boolean;
+    colors: any;
+  }) => {
+    return (
+      <View style={{ width: size, height: size, margin: 5 }}>
+        <Ionicons
+          name={name}
+          size={size}
+          color={color}
+          style={focused ? styles.focusedIcon : styles.unfocusedIcon}
+        />
+        {badgeCount > 0 && (
+          <View
+            style={{
+              position: 'absolute',
+              right: -6,
+              top: -3,
+              backgroundColor: colors.error,
+              borderRadius: 10,
+              width: 20,
+              height: 20,
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 1000,
+            }}
+          >
+            <Text
+              style={{
+                color: colors.background,
+                fontSize: 12,
+                fontWeight: 'bold',
+                textAlign: 'center',
+              }}
+            >
+              {badgeCount > 99 ? '99+' : badgeCount}
+            </Text>
+          </View>
+        )}
+      </View>
+    );
+  }
+);
+IconWithBadge.displayName = 'IconWithBadge';
 
 interface DictionaryButtonProps {
   hideWhenEmpty?: boolean;
@@ -226,25 +284,16 @@ export default function TabLayout(): JSX.Element {
             options={{
               title: screen.title,
               tabBarIcon: ({ focused, color }) => (
-                <Ionicons
+                <IconWithBadge
                   name={screen.iconFilled}
-                  size={LAYOUT.BUTTON.ICON_SIZE.XLARGE}
+                  badgeCount={screen.name === 'practice' ? dueWordsCount : 0}
                   color={color}
-                  style={focused ? styles.focusedIcon : styles.unfocusedIcon}
+                  size={LAYOUT.BUTTON.ICON_SIZE.XLARGE}
+                  focused={focused}
+                  colors={colors}
                 />
               ),
-              // Add badge for practice tab showing due words count
-              ...(screen.name === 'practice' && {
-                tabBarBadge: dueWordsCount > 0 ? dueWordsCount : undefined,
-                tabBarBadgeStyle: {
-                  backgroundColor: colors.error,
-                  minWidth: 20,
-                  height: 20,
-                  borderRadius: 10,
-                  top: 4,
-                  right: 4,
-                },
-              }),
+              // Badge is now handled by the custom IconWithBadge component
               // Header customizations for specific screens
               ...(screen.name === 'read' && {
                 headerRight: () => <HeaderProfile />,

@@ -67,10 +67,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: LAYOUT.SPACING.SMALL,
-    marginTop: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.LARGE,
   },
   firstSection: {
-    marginTop: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.XLARGE,
     marginBottom: LAYOUT.SPACING.TINY,
   },
   titleGroup: {

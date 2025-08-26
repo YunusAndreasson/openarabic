@@ -23,6 +23,16 @@ export const STRINGS = {
   AUDIO_LANGUAGE: 'Audio language',
   AUDIO_LANGUAGE_ARABIC: 'Arabic only',
   AUDIO_LANGUAGE_BILINGUAL: 'English + Arabic',
+  AUDIO_SHUFFLE: 'Shuffle audio',
+  DISPLAY_LANGUAGE: 'Display language',
+  DISPLAY_LANGUAGE_ARABIC: 'Arabic only',
+  DISPLAY_LANGUAGE_BILINGUAL: 'Arabic + English',
+
+  // Account section titles
+  READING_EXPERIENCE: 'Reading experience',
+  AUDIO_AND_PLAYLIST: 'Audio & playlist',
+  APP_AND_ACCOUNT: 'App & account',
+  HELP_AND_SUPPORT: 'Help & support',
 
   // Social Media
   TWITTER_URL: 'https://x.com/openarabicio',

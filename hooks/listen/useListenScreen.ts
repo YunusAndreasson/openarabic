@@ -17,6 +17,7 @@ import { removeFromCustomOrder } from '@/store/listenSlice';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
 import { generateImageUrl } from '@/utils/imageUtils';
+import { shuffleArray } from '@/utils/list';
 
 export const useListenScreen = () => {
   const { user } = useAuth();
@@ -26,6 +27,7 @@ export const useListenScreen = () => {
 
   const customOrder = useAppSelector(state => state.listen.customOrder);
   const audioPreference = useAppSelector(state => state.settings.audioLanguagePreference);
+  const audioShuffleEnabled = useAppSelector(state => state.settings.audioShuffleEnabled);
 
   // STABILIZATION: Add debouncing for playback mode changes
   const [playbackMode, setPlaybackMode] = useState<'all' | 'none'>('none');
@@ -195,7 +197,9 @@ export const useListenScreen = () => {
         setPlaybackMode('all');
 
         // PLAYLIST SUPPORT: Use the new playlist functionality instead of just playing the first track
-        const success = await simpleAudioService.playPlaylist(currentTracks, nextTrack => {
+        const tracksToPlay = audioShuffleEnabled ? shuffleArray(currentTracks) : currentTracks;
+
+        const success = await simpleAudioService.playPlaylist(tracksToPlay, nextTrack => {
           // Callback when a track completes and the next one starts
           if (nextTrack) {
             // Prefetch the next article's data and image for smooth transitions
@@ -239,7 +243,7 @@ export const useListenScreen = () => {
         handleError(error as Error);
       }
     }
-  }, [playbackMode, sortedEnhancedTracks, audioState, audioPreference]);
+  }, [playbackMode, sortedEnhancedTracks, audioState, audioPreference, audioShuffleEnabled]);
 
   const handleSleepTimerSet = useCallback(
     (minutes: number) => {

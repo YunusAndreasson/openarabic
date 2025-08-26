@@ -7,6 +7,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BaseCard from '@common/BaseCard';
+import SectionTitle from '@common/SectionTitle';
 import { TimePicker } from '@ui/TimePicker';
 import { Toggle } from '@ui/Toggle';
 
@@ -15,6 +16,8 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { AccountBadge, SocialMediaIcons } from '@/components/account';
 import AudioLanguageSelector from '@/components/account/AudioLanguageSelector';
+import AudioShuffleToggle from '@/components/account/AudioShuffleToggle';
+import DisplayLanguageSelector from '@/components/account/DisplayLanguageSelector';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -112,15 +115,9 @@ const AccountScreen: FC = () => {
           />
         )}
 
-        {/* App Preferences - Core settings users adjust frequently */}
-        <BaseCard
-          shadowSize="small"
-          style={[
-            styles.sectionContainer,
-            styles.sectionSpacing,
-            { marginTop: LAYOUT.SPACING.LARGE },
-          ]}
-        >
+        {/* Reading Experience - Core reading and study settings */}
+        <SectionTitle title={STRINGS.READING_EXPERIENCE} isFirstSection={true} />
+        <BaseCard shadowSize="small" style={styles.sectionContainer}>
           <View style={styles.linksContainer}>
             <View style={styles.settingRow}>
               <View style={styles.settingLabelContainer}>
@@ -231,13 +228,30 @@ const AccountScreen: FC = () => {
             <Divider />
 
             <BaseCard shadowSize="none" style={styles.interactiveCard}>
+              <DisplayLanguageSelector />
+            </BaseCard>
+          </View>
+        </BaseCard>
+
+        {/* Audio & Playlist - Audio preferences and playlist settings */}
+        <SectionTitle title={STRINGS.AUDIO_AND_PLAYLIST} />
+        <BaseCard shadowSize="small" style={styles.sectionContainer}>
+          <View style={styles.linksContainer}>
+            <BaseCard shadowSize="none" style={styles.interactiveCard}>
               <AudioLanguageSelector />
+            </BaseCard>
+
+            <Divider />
+
+            <BaseCard shadowSize="none" style={styles.interactiveCard}>
+              <AudioShuffleToggle />
             </BaseCard>
           </View>
         </BaseCard>
 
         {/* Help & Support - Assistance and contact */}
-        <BaseCard shadowSize="small" style={[styles.sectionContainer, styles.sectionSpacing]}>
+        <SectionTitle title={STRINGS.HELP_AND_SUPPORT} />
+        <BaseCard shadowSize="small" style={styles.sectionContainer}>
           <View style={styles.linksContainer}>
             <BaseCard
               shadowSize="none"
@@ -326,8 +340,9 @@ const AccountScreen: FC = () => {
           </View>
         </BaseCard>
 
-        {/* Account Management - Data and account actions */}
-        <BaseCard shadowSize="small" style={[styles.sectionContainer, styles.sectionSpacing]}>
+        {/* App & Account - Data and account actions */}
+        <SectionTitle title={STRINGS.APP_AND_ACCOUNT} />
+        <BaseCard shadowSize="small" style={styles.sectionContainer}>
           <View style={styles.linksContainer}>
             <BaseCard shadowSize="none" style={styles.interactiveCard} onPress={handleClearCache}>
               <View style={styles.cardContent}>
@@ -438,11 +453,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  // Section spacing between cards
-  sectionSpacing: {
-    marginTop: LAYOUT.SPACING.LARGE,
-  },
-
   // Common Links Container Styles - Unified
   linksContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
@@ -468,7 +478,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     flex: 1,
-    paddingRight: LAYOUT.SPACING.SMALL,
   },
   cardIconContainer: {
     alignItems: 'center',
@@ -476,7 +485,7 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.SMALL,
   },
   cardText: {
-    marginLeft: LAYOUT.SPACING.SMALL,
+    marginLeft: LAYOUT.SPACING.MEDIUM, // Increased from SMALL for better visual balance
   },
   cardChevron: {
     marginRight: LAYOUT.SPACING.SMALL,
@@ -512,7 +521,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   settingLabelTextContainer: {
-    marginLeft: LAYOUT.SPACING.SMALL,
+    marginLeft: LAYOUT.SPACING.MEDIUM, // Increased from SMALL for consistency with cardText
   },
   settingValueContainer: {
     alignItems: 'center',
@@ -549,7 +558,7 @@ const styles = StyleSheet.create({
 
   signOutTextContainer: {
     flexDirection: 'column',
-    marginLeft: LAYOUT.SPACING.SMALL,
+    marginLeft: LAYOUT.SPACING.MEDIUM, // Increased from SMALL for consistency
   },
 
   // Time Picker Styles
@@ -569,7 +578,7 @@ const styles = StyleSheet.create({
 
   cacheTextContainer: {
     flexDirection: 'column',
-    marginLeft: LAYOUT.SPACING.SMALL,
+    marginLeft: LAYOUT.SPACING.MEDIUM, // Increased from SMALL for consistency
   },
 
   cacheSubtext: {

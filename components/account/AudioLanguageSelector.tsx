@@ -37,7 +37,7 @@ const AudioLanguageSelector: React.FC<AudioLanguageSelectorProps> = ({ style }) 
         key={value}
         style={[
           styles.option,
-          { 
+          {
             borderColor: isSelected ? colors.tint : colors.border,
             borderWidth: isSelected ? 2 : 1,
           },
@@ -45,11 +45,11 @@ const AudioLanguageSelector: React.FC<AudioLanguageSelectorProps> = ({ style }) 
         onPress={() => handlePreferenceChange(value)}
         activeOpacity={0.7}
       >
-        <ThemedText 
-          style={styles.optionLabel} 
-          type="body" 
+        <ThemedText
+          style={styles.optionLabel}
+          type="body"
           weight="medium"
-          colorName={isSelected ? "tint" : "text"}
+          colorName={isSelected ? 'tint' : 'text'}
         >
           {label}
         </ThemedText>
@@ -96,7 +96,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     flex: 1,
-    paddingRight: LAYOUT.SPACING.SMALL,
   },
   cardIconContainer: {
     alignItems: 'center',
@@ -104,7 +103,7 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.SMALL,
   },
   cardText: {
-    marginLeft: LAYOUT.SPACING.SMALL,
+    marginLeft: LAYOUT.SPACING.MEDIUM, // Increased from SMALL for consistency
   },
   optionsContainer: {
     gap: LAYOUT.SPACING.SMALL,

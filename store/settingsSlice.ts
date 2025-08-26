@@ -7,19 +7,20 @@ import type { ReminderTime } from '@/types/notifications.types';
 export type ArabicFontName = 'Madina' | 'Amiri' | 'Scheherazade' | 'Nastaliq' | 'NotoSans';
 
 export type AudioLanguagePreference = 'arabic' | 'bilingual';
+export type DisplayLanguagePreference = 'arabic' | 'bilingual';
 
 export interface SettingsState {
   fontScale: number;
-  showEnglish: boolean;
   reminderTime: ReminderTime;
   arabicFont: ArabicFontName;
   arabicFontSize: number;
   audioLanguagePreference: AudioLanguagePreference;
+  audioShuffleEnabled: boolean;
+  displayLanguagePreference: DisplayLanguagePreference;
 }
 
 const initialState: SettingsState = {
   fontScale: 1,
-  showEnglish: true,
   reminderTime: {
     hour: 19, // 7 PM default
     minute: 0,
@@ -28,6 +29,8 @@ const initialState: SettingsState = {
   arabicFont: 'NotoSans', // Default font
   arabicFontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE, // Default to 20px
   audioLanguagePreference: 'bilingual', // Default to English + Arabic
+  audioShuffleEnabled: false, // Default to sequential playback
+  displayLanguagePreference: 'bilingual', // Default to Arabic + English
 };
 
 const settingsSlice = createSlice({
@@ -46,9 +49,21 @@ const settingsSlice = createSlice({
     setAudioLanguagePreference: (state, action: PayloadAction<AudioLanguagePreference>) => {
       state.audioLanguagePreference = action.payload;
     },
+    setAudioShuffleEnabled: (state, action: PayloadAction<boolean>) => {
+      state.audioShuffleEnabled = action.payload;
+    },
+    setDisplayLanguagePreference: (state, action: PayloadAction<DisplayLanguagePreference>) => {
+      state.displayLanguagePreference = action.payload;
+    },
   },
 });
 
-export const { setReminderTime, setArabicFont, setArabicFontSize, setAudioLanguagePreference } =
-  settingsSlice.actions;
+export const {
+  setReminderTime,
+  setArabicFont,
+  setArabicFontSize,
+  setAudioLanguagePreference,
+  setAudioShuffleEnabled,
+  setDisplayLanguagePreference,
+} = settingsSlice.actions;
 export default settingsSlice.reducer;
