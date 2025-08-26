@@ -100,7 +100,7 @@ Focus on preserving Islamic terminology and classical Arabic meanings. Handle Ar
 For each sentence, provide:
 1. translation:
    - Simple vocabulary; English‑only output (used for audiobook and reading)
-   - Dont use Arabic words in translation (God instead of Allah, etc.)
+   - Don't use Arabic words in translation (God instead of Allah, etc.)
    - Match register: solemn (supplications), precise (hadith)
    - Grammatically sound (conjugation, agreement, syntax)
 2. notes:
@@ -109,8 +109,18 @@ For each sentence, provide:
    - Uncertainties in translation each with text and reason
 
 Explicit phrasing rule:
-- Always expand Arabic morphology into explicit English multi-word phrases. Avoid condensed/archaic forms like "therein/thereof/whereby". Prefer "in it", "of it", "by which", "for him", etc.
+- Always expand Arabic morphology into explicit English multi-word phrases. Avoid condensed/archaic compounds like "therein/thereof/whereby". Prefer "in it", "of it", "by which", "for him", etc.
 - Do not omit functional words (prepositions, pronouns) encoded in Arabic; make them explicit in English.
+
+Good / Bad examples (English phrasing):
+- Good: فيه → "in it", لهم → "for them", وبالبيت → "and in the house"
+- Bad: فيه → "therein", لهم → "theirs", وبالبيت → "withinhouse" or "andwithinhouse"
+
+Arabic→English alignment examples (english only, not essential):
+- فيه (prefix + root + suffix): english must be two words, e.g., "in it".
+- وبالبيت (conj + prep + definite article + noun): english → "and in the house".
+- منهم (prep + pronoun): english → "from them".
+- كالكتاب (prep + al + noun): english → "like the book".
 
 Example:
 Arabic: وقال النبي صلى الله عليه وسلم
@@ -169,7 +179,7 @@ Guidelines:
    - Adjectives: "كَاتِبًا" → "كَاتِبٌ" (remove ً suffix)
    - Complex forms: "تَكْتُبِينَ" → "كَتَبَ" (remove ت prefix + ين suffix)
 
-**Examples:**
+**Examples for `essential` only (strip affixes; keep diacritics on core):**
 - "مِنْ" → "مِنْ" (keep as-is: simple preposition)
 - "يَكْتُبُ" → "كَتَبَ" (strip: ي prefix + ُ suffix)
 - "الْكِتَابُ" → "كِتَابٌ" (strip: ال prefix + ُ suffix)
@@ -184,7 +194,7 @@ Guidelines:
 
 **IMPORTANT**: The essential field must preserve diacritics (fatha, kasra, damma, shadda) while only removing grammatical affixes (prefixes, suffixes, case endings).
 
-Return valid JSON matching the WordTranslationResult model schema.
+Return valid JSON matching the WordTranslationResult model schema. Ensure the `english` string uses explicit multi‑word phrasing whenever morphology encodes multiple concepts (e.g., preposition + pronoun).
 
 Input for word‑by‑word translation:
 """
@@ -212,7 +222,7 @@ Goals:
 - ✅ Expand condensed English into explicit phrases that mirror Arabic morphology (e.g., "therein" → "in it", "thereof" → "of it").
 - ✅ Ensure functional words are present; do not omit prepositions/pronouns encoded in Arabic tokens.
 - ✅ **CRITICAL**: Select only ONE final English translation from the alternatives provided in the previous phase
-- ✅ Remove all option arrays; each word must have a single, definitive English translation and no synonyms usch as "book/scripture"
+- ✅ Remove all option arrays; each word must have a single, definitive English translation and no synonyms such as "book/scripture"
 
 Return valid JSON matching the RefinementResult model schema. Each improved_word_translation must be finalized (no option arrays).
 
