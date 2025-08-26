@@ -37,41 +37,22 @@ const AudioLanguageSelector: React.FC<AudioLanguageSelectorProps> = ({ style }) 
         key={value}
         style={[
           styles.option,
-          isSelected && styles.optionSelected,
           { 
             borderColor: isSelected ? colors.tint : colors.border,
-            backgroundColor: isSelected ? colors.textOverlay : 'transparent'
+            borderWidth: isSelected ? 2 : 1,
           },
         ]}
         onPress={() => handlePreferenceChange(value)}
         activeOpacity={0.7}
       >
-        <View style={styles.optionContent}>
-          <View style={styles.optionLeft}>
-            <View
-              style={[
-                styles.radioButton,
-                { borderColor: isSelected ? colors.tint : colors.textTertiary },
-              ]}
-            >
-              {isSelected && (
-                <View style={[styles.radioButtonInner, { backgroundColor: colors.tint }]} />
-              )}
-            </View>
-            <View style={styles.optionText}>
-              <ThemedText style={styles.optionLabel} type="body" weight="medium">
-                {label}
-              </ThemedText>
-            </View>
-          </View>
-          {isSelected && (
-            <Ionicons
-              name="checkmark-circle"
-              size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-              color={colors.tint}
-            />
-          )}
-        </View>
+        <ThemedText 
+          style={styles.optionLabel} 
+          type="body" 
+          weight="medium"
+          colorName={isSelected ? "tint" : "text"}
+        >
+          {label}
+        </ThemedText>
       </TouchableOpacity>
     );
   };
@@ -136,39 +117,11 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     padding: LAYOUT.SPACING.MEDIUM,
     minHeight: MIN_TOUCH_TARGET.LARGE,
-  },
-  optionSelected: {
-    // backgroundColor is applied dynamically in the component using colors.textOverlay
-  },
-  optionContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  optionLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  radioButton: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: LAYOUT.SPACING.SMALL,
-  },
-  radioButtonInner: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  optionText: {
-    flex: 1,
   },
   optionLabel: {
-    marginBottom: LAYOUT.SPACING.TINY,
+    textAlign: 'center',
   },
 });
 
