@@ -644,30 +644,33 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
           return;
         }
 
-        // Preload all audio files with progress tracking
+        // Preload all audio files in parallel for better performance
         const totalUrls = audioUrls.length;
         let completedUrls = 0;
 
-        // Use sequential loading to ensure each file is fully processed
-        for (const url of audioUrls) {
-          try {
-            // Use audioCache to download and cache the audio file
-            await audioCache.getAudio(url);
-            completedUrls++;
-            setAudioPreloadProgress((completedUrls / totalUrls) * 100);
+        // Create progress tracking function
+        const trackProgress = () => {
+          completedUrls++;
+          setAudioPreloadProgress((completedUrls / totalUrls) * 100);
+        };
 
-            // Small delay to ensure file system operations complete
-            await new Promise(resolve => setTimeout(resolve, 50));
+        // Load all audio files in parallel
+        const preloadPromises = audioUrls.map(async url => {
+          try {
+            await audioCache.getAudio(url);
+            trackProgress();
+            return true;
           } catch (error) {
             console.warn(`Failed to preload audio: ${url}`, error);
-            // Continue with other audio files even if some fail
+            trackProgress(); // Still count as completed to avoid hanging
+            return false;
           }
-        }
+        });
 
-        // Final delay to ensure all files are fully ready
-        await new Promise(resolve => setTimeout(resolve, 200));
+        // Wait for all audio files to complete loading
+        await Promise.all(preloadPromises);
 
-        // Mark preloading as complete
+        // Mark preloading as complete immediately
         setIsAudioPreloadingComplete(true);
       } catch (error) {
         console.error('Audio preloading failed:', error);
@@ -717,6 +720,22 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       setIsAudioPreloadingComplete(false);
     }
   }, [isComplete]);
+
+  // Effect: Stop any existing audio when practice session starts
+  useEffect(() => {
+    // Stop any existing audio from other sessions (like listen tab) when practice starts
+    if (currentWord && !isComplete && !isTransitioningToCompletion) {
+      audioPlayerRef.current.stop().catch(() => {});
+    }
+  }, [currentWord, isComplete, isTransitioningToCompletion]);
+
+  // Effect: Stop any existing audio when practice session initializes
+  useEffect(() => {
+    // Stop any existing audio when the practice session first starts
+    if (wordQueue && wordQueue.length > 0 && !isComplete) {
+      audioPlayerRef.current.stop().catch(() => {});
+    }
+  }, [wordQueue?.length, isComplete]);
 
   // Effect: Handle current word changes and play audio (simplified - no more loading)
   useEffect(() => {

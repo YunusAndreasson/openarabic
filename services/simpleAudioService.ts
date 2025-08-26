@@ -81,6 +81,25 @@ class SimpleAudioService {
   }
 
   /**
+   * Create or reuse audio player for a track
+   */
+  private async createOrReusePlayer(audioUrl: string): Promise<BasicAudioPlayer> {
+    // If we have an existing player with the same audio URL, reuse it
+    if (this.currentPlayer && this.currentTrack?.audioUrl === audioUrl) {
+      return this.currentPlayer;
+    }
+
+    // Stop and remove existing player if it's different
+    if (this.currentPlayer) {
+      await this.stopInternal();
+    }
+
+    // Create new player
+    const newPlayer = createAudioPlayer(audioUrl);
+    return newPlayer;
+  }
+
+  /**
    * Start playing a track
    */
   async play(track: EnhancedAudioTrack): Promise<boolean> {
@@ -88,13 +107,8 @@ class SimpleAudioService {
       // Configure audio session first
       await this.configureAudioSession();
 
-      // Stop any existing player
-      if (this.currentPlayer) {
-        await this.stopInternal();
-      }
-
-      // Create player
-      this.currentPlayer = createAudioPlayer(track.audioUrl);
+      // Create or reuse player
+      this.currentPlayer = await this.createOrReusePlayer(track.audioUrl);
       this.currentTrack = track;
 
       // IMMEDIATE FEEDBACK: Update status to loading right away

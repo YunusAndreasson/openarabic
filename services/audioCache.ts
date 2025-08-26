@@ -7,6 +7,9 @@ import { handleError } from '@/utils/errorHandling';
 export class AudioCacheManager {
   private static instance: AudioCacheManager;
   private cacheDir = FileSystem.cacheDirectory + 'audio/';
+  // In-memory cache to reduce file system checks
+  private memoryCache = new Map<string, { path: string; timestamp: number }>();
+  private readonly MEMORY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   private constructor() {
     this.ensureCacheDirectoryExists();
@@ -53,8 +56,16 @@ export class AudioCacheManager {
       const cacheKey = await this.generateCacheKey(url);
       const cachedFilePath = this.cacheDir + cacheKey;
 
+      // Check memory cache first for better performance
+      const memoryEntry = this.memoryCache.get(cacheKey);
+      if (memoryEntry && Date.now() - memoryEntry.timestamp < this.MEMORY_CACHE_TTL) {
+        return memoryEntry.path;
+      }
+
       const fileInfo = await FileSystem.getInfoAsync(cachedFilePath);
       if (fileInfo.exists) {
+        // Update memory cache
+        this.memoryCache.set(cacheKey, { path: cachedFilePath, timestamp: Date.now() });
         return cachedFilePath;
       }
 
@@ -79,6 +90,8 @@ export class AudioCacheManager {
       const downloadResult = await FileSystem.downloadAsync(url, cachedFilePath);
 
       if (downloadResult.status === 200) {
+        // Update memory cache
+        this.memoryCache.set(cacheKey, { path: cachedFilePath, timestamp: Date.now() });
         return cachedFilePath;
       } else {
         throw new Error(`Download failed with status: ${downloadResult.status}`);
@@ -129,6 +142,8 @@ export class AudioCacheManager {
         await FileSystem.deleteAsync(this.cacheDir);
         await this.ensureCacheDirectoryExists();
       }
+      // Clear memory cache as well
+      this.memoryCache.clear();
     } catch (error) {
       await handleError(error as Error);
       throw error;
