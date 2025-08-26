@@ -5,11 +5,11 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import BaseCard from '@common/BaseCard';
 
 import { ThemedText } from '@/components/ThemedText';
+import { DifficultyBar } from '@/components/practice/DifficultyBar';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useSimpleAudioPlayer } from '@/hooks/audio/useSimpleAudioPlayer';
 import { useColors } from '@/hooks/theme/useColors';
-import type { ThemeColors } from '@/types/ui/theme.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
@@ -19,12 +19,6 @@ interface DictionaryWordCardProps {
   editMode: boolean;
   onDelete: () => void;
 }
-
-const getDifficultyColor = (difficulty: number, colors: ThemeColors): string => {
-  if (difficulty <= 1.5) return colors.success;
-  if (difficulty <= 2.5) return colors.warning;
-  return colors.error;
-};
 
 export const DictionaryWordCard = memo<DictionaryWordCardProps>(
   ({ word, editMode, onDelete }) => {
@@ -62,18 +56,11 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
     }, [editMode, onDelete]);
 
     const difficultyValue = word.fsrs_difficulty ?? 1.0;
-    const difficultyColor = getDifficultyColor(difficultyValue, colors);
 
     // Get Arabic and English text from root
     const arabicText = word.root?.letters || STRINGS.UNKNOWN_ARABIC;
     const englishText = word.root?.meaning || STRINGS.UNKNOWN_ENGLISH;
     const hasAudio = !!word.root?.audio_url;
-
-    // Memoize dynamic styles for better performance
-    const statusDotStyle = useMemo(
-      () => [styles.statusDot, { backgroundColor: difficultyColor }],
-      [difficultyColor]
-    );
 
     const deleteButtonStyle = useMemo(
       () => [styles.deleteButton, { backgroundColor: colors.error }],
@@ -90,18 +77,20 @@ export const DictionaryWordCard = memo<DictionaryWordCardProps>(
           contentStyle={styles.cardContent}
         >
           <View style={styles.content}>
-            {/* Left: colored status dot + English */}
+            {/* Left: English text with difficulty bar below */}
             <View style={styles.leftSection}>
-              <View style={statusDotStyle} />
-              <ThemedText
-                type="body"
-                variant="secondary"
-                style={styles.englishText}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {englishText}
-              </ThemedText>
+              <View style={styles.textContainer}>
+                <ThemedText
+                  type="body"
+                  variant="secondary"
+                  style={styles.englishText}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {englishText}
+                </ThemedText>
+                <DifficultyBar difficulty={difficultyValue} width={48} height={3} />
+              </View>
             </View>
 
             {/* Right: Arabic (prominent, right-aligned) */}
@@ -174,8 +163,12 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     paddingRight: LAYOUT.SPACING.SMALL,
     justifyContent: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+  },
+  textContainer: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: LAYOUT.SPACING.SMALL,
   },
   englishText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
@@ -194,12 +187,7 @@ const styles = StyleSheet.create({
   arabicText: {
     includeFontPadding: true,
   },
-  statusDot: {
-    width: LAYOUT.SPACING.SMALL,
-    height: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.SPACING.SMALL / 2,
-    marginRight: LAYOUT.SPACING.TINY,
-  },
+
   deleteButton: {
     width: MIN_TOUCH_TARGET.SMALL,
     height: MIN_TOUCH_TARGET.SMALL,
