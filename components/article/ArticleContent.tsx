@@ -52,10 +52,7 @@ const createListContainerStyle = (backgroundColor: string) => ({
   position: 'relative' as const,
 });
 
-const createOverrideItemLayout =
-  (itemHeight: number) => (layout: { span?: number; size?: number }) => {
-    layout.size = itemHeight;
-  };
+// Removed fixed overrideItemLayout to allow accurate measurement
 
 const createFlashListConfig = <T,>({
   data,
@@ -424,9 +421,6 @@ export const ArticleContent = memo<ArticleContentProps>(
     // Memoized viewability config
     const viewabilityConfig = useMemo(() => createViewabilityConfig(), []);
 
-    // Static override layout callback
-    const overrideItemLayout = useCallback(createOverrideItemLayout(SENTENCE_ITEM_HEIGHT), []);
-
     // Memoize the key extractor to prevent inline function creation
     const keyExtractor = useCallback((item: Tables<'article_sentences'>) => item.id.toString(), []);
 
@@ -446,7 +440,6 @@ export const ArticleContent = memo<ArticleContentProps>(
           ) => void,
           onViewableItemsChanged: handleViewableItemsChanged,
           viewabilityConfig,
-          overrideItemLayout,
           drawDistance: SENTENCE_ITEM_HEIGHT * DRAW_DISTANCE_MULTIPLIER,
           scrollEventThrottle: SCROLL_THROTTLE,
           showsVerticalScrollIndicator: false,
@@ -466,7 +459,6 @@ export const ArticleContent = memo<ArticleContentProps>(
         onScrollAnimated,
         handleViewableItemsChanged,
         viewabilityConfig,
-        overrideItemLayout,
       ]
     );
 
@@ -480,6 +472,21 @@ export const ArticleContent = memo<ArticleContentProps>(
               ref={scrollViewRef as unknown as React.RefObject<any>}
               key={`article-${id}`}
               {...flashListConfig}
+              onScrollToIndexFailed={({ index }: { index: number }) => {
+                // Fallback: estimate offset using fixed item height and account for header
+                const estimatedOffset = Math.max(
+                  0,
+                  (index - 1) * SENTENCE_ITEM_HEIGHT + headerHeight
+                );
+                try {
+                  scrollViewRef.current?.scrollToOffset({
+                    offset: estimatedOffset,
+                    animated: true,
+                  });
+                } catch {
+                  // noop
+                }
+              }}
             />
 
             {/* Floating action buttons */}

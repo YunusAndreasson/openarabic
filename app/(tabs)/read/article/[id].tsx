@@ -5,6 +5,7 @@ import type { JSX } from 'react';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AppState,
+  InteractionManager,
   View,
   type LayoutRectangle,
   type NativeScrollEvent,
@@ -16,6 +17,7 @@ import { ArticleContent } from '@/components/article/ArticleContent';
 // Removed MiniPlayer import
 import { ToastProvider, useToast } from '@/components/providers';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
+import { LAYOUT } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
@@ -234,20 +236,32 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
 
       // Attempt jump once on resume
       setTimeout(() => {
-        // Primary: delegate to hook (handles measurement and safety flags)
-        jumpToLastReadPosition();
-        // Fallback: if progress was below threshold, force a direct scroll to ensure UX expectation
-        if (progressPercent < PROGRESS_THRESHOLD && scrollViewRef.current) {
-          try {
-            scrollViewRef.current.scrollToIndex({
-              index: (initialLastSentenceRead ?? 0) + 1,
-              animated: true,
-              viewPosition: 0.1,
-            });
-          } catch {
-            // ignore
+        InteractionManager.runAfterInteractions(() => {
+          // Primary: delegate to hook (handles measurement and safety flags)
+          jumpToLastReadPosition();
+          // Fallback: if progress was below threshold, force a direct scroll to ensure UX expectation
+          if (progressPercent < PROGRESS_THRESHOLD && scrollViewRef.current) {
+            const targetIndex = (initialLastSentenceRead ?? 0) + 1; // +1 for header
+            try {
+              scrollViewRef.current.scrollToIndex({
+                index: targetIndex,
+                animated: true,
+                viewPosition: 0.1,
+              });
+            } catch {
+              // Offset fallback if index-based scroll fails due to measurement/virtualization
+              const estimatedOffset = Math.max(0, (targetIndex - 1) * LAYOUT.SENTENCE_ITEM.HEIGHT);
+              try {
+                scrollViewRef.current.scrollToOffset({
+                  offset: estimatedOffset,
+                  animated: true,
+                });
+              } catch {
+                // noop
+              }
+            }
           }
-        }
+        });
       }, RESUME_JUMP_DELAY);
 
       // Mark as handled - this prevents any further resume logic
