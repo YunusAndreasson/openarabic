@@ -115,8 +115,63 @@ const AccountScreen: FC = () => {
           />
         )}
 
-        {/* Reading Experience - Core reading and study settings */}
-        <SectionTitle title={STRINGS.READING_EXPERIENCE} isFirstSection={true} />
+        {/* Reading - Font and language settings */}
+        <SectionTitle title="Reading" textStyle={styles.sectionTitle} />
+        <BaseCard shadowSize="small" style={styles.sectionContainer}>
+          <View style={styles.linksContainer}>
+            <BaseCard
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={() => router.push(ROUTE_PATHS.ACCOUNT_FONT_SELECTOR)}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons
+                      color={colors.interactiveSecondary}
+                      name="text"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
+                  </View>
+                  <ThemedText style={styles.cardText} type="body" weight="medium">
+                    {STRINGS.ARABIC_FONT}
+                  </ThemedText>
+                </View>
+                <Ionicons
+                  color={colors.textTertiary}
+                  name="chevron-forward"
+                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                  style={styles.cardChevron}
+                />
+              </View>
+            </BaseCard>
+
+            <Divider />
+
+            <BaseCard shadowSize="none" style={styles.interactiveCard}>
+              <DisplayLanguageSelector />
+            </BaseCard>
+          </View>
+        </BaseCard>
+
+        {/* Audio - Audio preferences and playlist settings */}
+        <SectionTitle title="Audio" textStyle={styles.sectionTitle} />
+        <BaseCard shadowSize="small" style={styles.sectionContainer}>
+          <View style={styles.linksContainer}>
+            <BaseCard shadowSize="none" style={styles.interactiveCard}>
+              <AudioLanguageSelector />
+            </BaseCard>
+
+            <Divider />
+
+            <BaseCard shadowSize="none" style={styles.interactiveCard}>
+              <AudioShuffleToggle />
+            </BaseCard>
+          </View>
+        </BaseCard>
+
+        {/* Notifications - Study reminders and timing */}
+        <SectionTitle title="Notifications" textStyle={styles.sectionTitle} />
         <BaseCard shadowSize="small" style={styles.sectionContainer}>
           <View style={styles.linksContainer}>
             <View style={styles.settingRow}>
@@ -162,9 +217,13 @@ const AccountScreen: FC = () => {
                 </BaseCard>
               </Fragment>
             )}
+          </View>
+        </BaseCard>
 
-            <Divider />
-
+        {/* Appearance - Theme and visual settings */}
+        <SectionTitle title="Appearance" textStyle={styles.sectionTitle} />
+        <BaseCard shadowSize="small" style={styles.sectionContainer}>
+          <View style={styles.linksContainer}>
             <BaseCard
               shadowSize="none"
               style={styles.timePickerSettingRow}
@@ -195,62 +254,11 @@ const AccountScreen: FC = () => {
                 </View>
               </View>
             </BaseCard>
-
-            <Divider />
-
-            <BaseCard
-              shadowSize="none"
-              style={styles.interactiveCard}
-              onPress={() => router.push(ROUTE_PATHS.ACCOUNT_FONT_SELECTOR)}
-            >
-              <View style={styles.cardContent}>
-                <View style={styles.cardLeft}>
-                  <View style={styles.cardIconContainer}>
-                    <Ionicons
-                      color={colors.interactiveSecondary}
-                      name="text"
-                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
-                    />
-                  </View>
-                  <ThemedText style={styles.cardText} type="body" weight="medium">
-                    {STRINGS.ARABIC_FONT}
-                  </ThemedText>
-                </View>
-                <Ionicons
-                  color={colors.textTertiary}
-                  name="chevron-forward"
-                  size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
-                  style={styles.cardChevron}
-                />
-              </View>
-            </BaseCard>
-
-            <Divider />
-
-            <BaseCard shadowSize="none" style={styles.interactiveCard}>
-              <DisplayLanguageSelector />
-            </BaseCard>
           </View>
         </BaseCard>
 
-        {/* Audio & Playlist - Audio preferences and playlist settings */}
-        <SectionTitle title={STRINGS.AUDIO_AND_PLAYLIST} />
-        <BaseCard shadowSize="small" style={styles.sectionContainer}>
-          <View style={styles.linksContainer}>
-            <BaseCard shadowSize="none" style={styles.interactiveCard}>
-              <AudioLanguageSelector />
-            </BaseCard>
-
-            <Divider />
-
-            <BaseCard shadowSize="none" style={styles.interactiveCard}>
-              <AudioShuffleToggle />
-            </BaseCard>
-          </View>
-        </BaseCard>
-
-        {/* Help & Support - Assistance and contact */}
-        <SectionTitle title={STRINGS.HELP_AND_SUPPORT} />
+        {/* Support - Help and assistance */}
+        <SectionTitle title="Support" textStyle={styles.sectionTitle} />
         <BaseCard shadowSize="small" style={styles.sectionContainer}>
           <View style={styles.linksContainer}>
             <BaseCard
@@ -340,8 +348,8 @@ const AccountScreen: FC = () => {
           </View>
         </BaseCard>
 
-        {/* App & Account - Data and account actions */}
-        <SectionTitle title={STRINGS.APP_AND_ACCOUNT} />
+        {/* Account - Data and account actions */}
+        <SectionTitle title="Account" textStyle={styles.sectionTitle} />
         <BaseCard shadowSize="small" style={styles.sectionContainer}>
           <View style={styles.linksContainer}>
             <BaseCard shadowSize="none" style={styles.interactiveCard} onPress={handleClearCache}>
@@ -389,7 +397,7 @@ const AccountScreen: FC = () => {
                 <View style={styles.cardLeft}>
                   <View style={styles.cardIconContainer}>
                     <Ionicons
-                      color={colors.error}
+                      color={colors.interactiveSecondary}
                       name="log-out"
                       size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
                     />
@@ -398,11 +406,7 @@ const AccountScreen: FC = () => {
                     <ThemedText type="body" weight="medium" style={signOutTextStyle}>
                       {STRINGS.SIGN_OUT}
                     </ThemedText>
-                    <ThemedText
-                      type="caption"
-                      colorName="error"
-                      style={[styles.userEmailText, { opacity: 0.7 }]}
-                    >
+                    <ThemedText type="caption" colorName="error" style={styles.userEmailText}>
                       {user?.email || STRINGS.NO_EMAIL}
                     </ThemedText>
                   </View>
@@ -590,6 +594,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.SMALL,
     textAlign: 'center',
+  },
+
+  // Section Title Styles
+  sectionTitle: {
+    marginTop: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.SMALL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
+    letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,
+    opacity: LAYOUT.OPACITY.HIGH,
+    paddingLeft: LAYOUT.SCREEN_EDGE_PADDING,
   },
 });
 

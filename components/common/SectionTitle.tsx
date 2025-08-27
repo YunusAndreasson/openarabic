@@ -1,5 +1,5 @@
 import { memo, useMemo, type FC } from 'react';
-import type { StyleProp, ViewStyle } from 'react-native';
+import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -9,6 +9,7 @@ interface SectionTitleProps {
   title: string;
   subtitle?: string;
   containerStyle?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
   isFirstSection?: boolean;
 }
 
@@ -16,13 +17,15 @@ const SectionTitle: FC<SectionTitleProps> = ({
   title,
   subtitle,
   containerStyle,
+  textStyle,
   isFirstSection = false,
 }) => {
   const titleStyle = useMemo(
     () => ({
       marginBottom: 0,
+      ...(textStyle as TextStyle),
     }),
-    []
+    [textStyle]
   );
 
   const subtitleStyle = useMemo(
@@ -35,7 +38,7 @@ const SectionTitle: FC<SectionTitleProps> = ({
   return (
     <View style={[styles.container, isFirstSection && styles.firstSection, containerStyle]}>
       <View style={styles.titleGroup}>
-        <ThemedText colorName="headingText" style={titleStyle} type="heading2">
+        <ThemedText colorName="headingText" style={titleStyle} type="heading3">
           {title}
         </ThemedText>
         {subtitle && (
