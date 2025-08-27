@@ -15,9 +15,9 @@ import { THEME_OPTIONS, ThemePicker } from '@/components/ThemePicker';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { AccountBadge, SocialMediaIcons } from '@/components/account';
-import AudioLanguageSelector from '@/components/account/AudioLanguageSelector';
+import { AudioLanguagePicker } from '@/components/account/AudioLanguagePicker';
 import AudioShuffleToggle from '@/components/account/AudioShuffleToggle';
-import DisplayLanguageSelector from '@/components/account/DisplayLanguageSelector';
+import { LanguagePicker } from '@/components/account/LanguagePicker';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
@@ -38,7 +38,11 @@ const AccountScreen: FC = () => {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const currentTheme = useAppSelectorMemo(state => state.theme.theme);
+  const currentLanguage = useAppSelectorMemo(state => state.settings.displayLanguagePreference);
+  const currentAudioLanguage = useAppSelectorMemo(state => state.settings.audioLanguagePreference);
   const [showThemePicker, setShowThemePicker] = React.useState(false);
+  const [showLanguagePicker, setShowLanguagePicker] = React.useState(false);
+  const [showAudioLanguagePicker, setShowAudioLanguagePicker] = React.useState(false);
 
   const {
     reminderTime,
@@ -76,9 +80,39 @@ const AccountScreen: FC = () => {
     setShowThemePicker(false);
   }, []);
 
+  // Language picker handlers
+  const handleLanguagePickerOpen = useCallback(() => {
+    setShowLanguagePicker(true);
+  }, []);
+
+  const handleLanguagePickerClose = useCallback(() => {
+    setShowLanguagePicker(false);
+  }, []);
+
+  // Audio language picker handlers
+  const handleAudioLanguagePickerOpen = useCallback(() => {
+    setShowAudioLanguagePicker(true);
+  }, []);
+
+  const handleAudioLanguagePickerClose = useCallback(() => {
+    setShowAudioLanguagePicker(false);
+  }, []);
+
   // Get current theme display text
   const currentThemeOption = THEME_OPTIONS.find(option => option.id === currentTheme);
   const currentThemeText = currentThemeOption?.title || STRINGS.THEME_BIRCHES;
+
+  // Get current language display text
+  const currentLanguageText =
+    currentLanguage === 'arabic'
+      ? STRINGS.DISPLAY_LANGUAGE_ARABIC
+      : STRINGS.DISPLAY_LANGUAGE_BILINGUAL;
+
+  // Get current audio language display text
+  const currentAudioLanguageText =
+    currentAudioLanguage === 'arabic'
+      ? STRINGS.AUDIO_LANGUAGE_ARABIC
+      : STRINGS.AUDIO_LANGUAGE_BILINGUAL;
 
   // Format cache size for display
   const formattedCacheSize = cacheSize > 0 ? formatBytes(cacheSize) : STRINGS.NO_CACHED_FILES;
@@ -98,7 +132,7 @@ const AccountScreen: FC = () => {
           styles.scrollContent,
           {
             paddingTop: LAYOUT.SPACING.XLARGE, // Restore normal top padding
-            paddingBottom: insets.bottom + LAYOUT.SPACING.LARGE,
+            paddingBottom: insets.bottom + LAYOUT.SPACING.MEDIUM, // Reduced from LARGE to fix excessive padding
           },
         ]}
         scrollViewProps={{
@@ -148,8 +182,35 @@ const AccountScreen: FC = () => {
 
             <Divider />
 
-            <BaseCard shadowSize="none" style={styles.interactiveCard}>
-              <DisplayLanguageSelector />
+            <BaseCard
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={handleLanguagePickerOpen}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons
+                      color={colors.interactiveSecondary}
+                      name="language"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
+                  </View>
+                  <ThemedText style={styles.cardText} type="body" weight="medium">
+                    {STRINGS.DISPLAY_LANGUAGE}
+                  </ThemedText>
+                </View>
+                <View style={styles.settingValueContainer}>
+                  <ThemedText type="body" variant="secondary">
+                    {currentLanguageText}
+                  </ThemedText>
+                  <Ionicons
+                    color={colors.textTertiary}
+                    name="chevron-forward"
+                    size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                  />
+                </View>
+              </View>
             </BaseCard>
           </View>
         </BaseCard>
@@ -158,8 +219,35 @@ const AccountScreen: FC = () => {
         <SectionTitle title="Audio" textStyle={styles.sectionTitle} />
         <BaseCard shadowSize="small" style={styles.sectionContainer}>
           <View style={styles.linksContainer}>
-            <BaseCard shadowSize="none" style={styles.interactiveCard}>
-              <AudioLanguageSelector />
+            <BaseCard
+              shadowSize="none"
+              style={styles.interactiveCard}
+              onPress={handleAudioLanguagePickerOpen}
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardLeft}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons
+                      color={colors.interactiveSecondary}
+                      name="volume-high"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
+                  </View>
+                  <ThemedText style={styles.cardText} type="body" weight="medium">
+                    {STRINGS.AUDIO_LANGUAGE}
+                  </ThemedText>
+                </View>
+                <View style={styles.settingValueContainer}>
+                  <ThemedText type="body" variant="secondary">
+                    {currentAudioLanguageText}
+                  </ThemedText>
+                  <Ionicons
+                    color={colors.textTertiary}
+                    name="chevron-forward"
+                    size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                  />
+                </View>
+              </View>
             </BaseCard>
 
             <Divider />
@@ -447,6 +535,15 @@ const AccountScreen: FC = () => {
 
       {/* Theme Picker Modal */}
       <ThemePicker isVisible={showThemePicker} onClose={handleThemePickerClose} />
+
+      {/* Language Picker Modal */}
+      <LanguagePicker isVisible={showLanguagePicker} onClose={handleLanguagePickerClose} />
+
+      {/* Audio Language Picker Modal */}
+      <AudioLanguagePicker
+        isVisible={showAudioLanguagePicker}
+        onClose={handleAudioLanguagePickerClose}
+      />
     </ThemedView>
   );
 };

@@ -130,7 +130,7 @@ export const ThemePicker: FC<ThemePickerProps> = memo(({ isVisible, onClose }) =
             return (
               <BaseCard
                 key={option.id}
-                                shadowSize="small"
+                shadowSize="small"
                 style={[
                   styles.optionCard,
                   {
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     // Styling handled via dynamicStyles
   },
   container: {
-    paddingBottom: LAYOUT.SPACING.XLARGE, // Use larger static padding like TimePicker
+    paddingBottom: LAYOUT.SPACING.SMALL, // Significantly reduced to fix excessive padding
   },
   header: {
     ...LAYOUT.BOTTOM_SHEET.HEADER,
