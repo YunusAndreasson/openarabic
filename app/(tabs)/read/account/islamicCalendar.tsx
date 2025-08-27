@@ -167,7 +167,7 @@ export default function IslamicCalendarScreen(): JSX.Element {
                             name="calendar"
                             size={LAYOUT.SPACING.MEDIUM}
                           />
-                          <ThemedText style={styles.dateText} type="caption" variant="secondary">
+                          <ThemedText style={styles.dateText} type="caption" colorName="metadataText">
                             {event.gregorianDate.toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',
@@ -189,7 +189,7 @@ export default function IslamicCalendarScreen(): JSX.Element {
                 name="information-circle"
                 size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
               />
-              <ThemedText style={styles.noteText} type="caption" variant="secondary">
+              <ThemedText style={styles.noteText} type="caption" colorName="metadataText">
                 {STRINGS.DATE_VARIANCE_NOTE}
               </ThemedText>
             </View>

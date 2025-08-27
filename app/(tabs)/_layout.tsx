@@ -48,9 +48,9 @@ const IconWithBadge = memo(
               right: -6,
               top: -3,
               backgroundColor: colors.error,
-              borderRadius: 10,
-              width: 20,
-              height: 20,
+              borderRadius: 12,
+              width: 24,
+              height: 24,
               justifyContent: 'center',
               alignItems: 'center',
               zIndex: 1000,
@@ -59,7 +59,7 @@ const IconWithBadge = memo(
             <Text
               style={{
                 color: colors.background,
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: 'bold',
                 textAlign: 'center',
               }}

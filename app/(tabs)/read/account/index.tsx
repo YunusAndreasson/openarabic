@@ -201,11 +201,11 @@ const AccountScreen: FC = () => {
                   </ThemedText>
                 </View>
                 <View style={styles.settingValueContainer}>
-                  <ThemedText type="body" variant="secondary">
+                  <ThemedText type="body" colorName="metadataText">
                     {currentLanguageText}
                   </ThemedText>
                   <Ionicons
-                    color={colors.textTertiary}
+                    color={colors.metadataText}
                     name="chevron-forward"
                     size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
                   />
@@ -238,11 +238,11 @@ const AccountScreen: FC = () => {
                   </ThemedText>
                 </View>
                 <View style={styles.settingValueContainer}>
-                  <ThemedText type="body" variant="secondary">
+                  <ThemedText type="body" colorName="metadataText">
                     {currentAudioLanguageText}
                   </ThemedText>
                   <Ionicons
-                    color={colors.textTertiary}
+                    color={colors.metadataText}
                     name="chevron-forward"
                     size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
                   />
@@ -298,7 +298,7 @@ const AccountScreen: FC = () => {
                         <ThemedText type="body">{STRINGS.TIME}</ThemedText>
                       </View>
                     </View>
-                    <ThemedText type="body" variant="secondary">
+                    <ThemedText type="body" colorName="metadataText">
                       {formatReminderTime(reminderTime.hour, reminderTime.minute)}
                     </ThemedText>
                   </View>
@@ -331,11 +331,11 @@ const AccountScreen: FC = () => {
                   </View>
                 </View>
                 <View style={styles.settingValueContainer}>
-                  <ThemedText type="body" variant="secondary">
+                  <ThemedText type="body" colorName="metadataText">
                     {currentThemeText}
                   </ThemedText>
                   <Ionicons
-                    color={colors.textTertiary}
+                    color={colors.metadataText}
                     name="chevron-forward"
                     size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
                   />

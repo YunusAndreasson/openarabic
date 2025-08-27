@@ -87,7 +87,7 @@ const FAQItemComponent: FC<FAQItemComponentProps> = memo(({ item, isExpanded, on
       </Pressable>
       {isExpanded && (
         <View style={answerContainerStyle}>
-          <ThemedText type="body" variant="secondary">
+          <ThemedText type="body" colorName="metadataText">
             {item.answer}
           </ThemedText>
         </View>
