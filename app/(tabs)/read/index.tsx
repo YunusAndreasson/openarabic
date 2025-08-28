@@ -51,7 +51,12 @@ export default function ReadScreen(): JSX.Element {
   const { prefetchArticle } = useAppPreloader();
 
   // Get last read article for continue reading button
-  const { lastReadArticle, hasLastReadArticle } = useLastReadArticle();
+  const {
+    lastReadArticle,
+    hasLastReadArticle,
+    showButton,
+    isLoading: isLastReadLoading,
+  } = useLastReadArticle();
 
   const { data: categoriesData = [], isLoading: isCategoriesLoading } = useQuery({
     queryKey: ['categories'],
@@ -220,8 +225,8 @@ export default function ReadScreen(): JSX.Element {
         onRefresh={handleRefresh}
       />
 
-      {/* Bottom fixed CONTINUE READING button, hidden when there's no last read article */}
-      {hasLastReadArticle && (
+      {/* Bottom fixed CONTINUE READING button, shown immediately when progress loads */}
+      {showButton && (
         <View
           style={{
             position: 'absolute',
@@ -237,7 +242,8 @@ export default function ReadScreen(): JSX.Element {
           <BottomControls
             primaryLabel={STRINGS.CONTINUE_READING}
             onPrimaryPress={handleContinueReading}
-            primaryDisabled={false}
+            primaryDisabled={!hasLastReadArticle} // Disable until article data is fully loaded
+            primaryLoading={isLastReadLoading && !hasLastReadArticle} // Show loading while article data loads
           />
         </View>
       )}

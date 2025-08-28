@@ -32,6 +32,7 @@ export interface StreakHistoryData {
 export class ReadingStreakService {
   /**
    * Get daily reading activity for a user over a specified period
+   * Simplified: Any day where user creates a reading_progress entry counts as a reading day
    */
   static async getDailyReadingActivity(
     userId: string,
@@ -41,19 +42,19 @@ export class ReadingStreakService {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
+    // Check if user has any article activity on each date
     const { data, error } = await supabase
       .from('reading_progress')
-      .select('updated_at')
+      .select('created_at')
       .eq('user_id', userId)
-      .gte('updated_at', startDate.toISOString())
-      .lte('updated_at', endDate.toISOString())
-      .gt('last_sentence_read', 0);
+      .gte('created_at', startDate.toISOString())
+      .lte('created_at', endDate.toISOString());
 
     if (error) {
       throw new Error(`Failed to get reading activity: ${error.message}`);
     }
 
-    // Group by date
+    // Group by date - any activity on a date counts as reading
     const activityMap = new Map<string, boolean>();
 
     // Initialize all dates with no activity
@@ -66,15 +67,12 @@ export class ReadingStreakService {
       }
     }
 
-    // Mark dates with activity
+    // Mark dates with any activity (user opened articles)
     (data || []).forEach(record => {
-      if (record && typeof record === 'object' && 'updated_at' in record) {
-        const typedRecord = record as { updated_at: string | null };
-        if (typedRecord.updated_at) {
-          const date = new Date(typedRecord.updated_at).toISOString().split('T')[0];
-          if (date) {
-            activityMap.set(date, true);
-          }
+      if (record?.created_at) {
+        const date = new Date(record.created_at).toISOString().split('T')[0];
+        if (date) {
+          activityMap.set(date, true);
         }
       }
     });
@@ -88,7 +86,6 @@ export class ReadingStreakService {
    * Calculate reading streak from daily activity data
    */
   static calculateStreak(activities: DailyReadingActivity[]): ReadingStreak {
-    // Use UTC dates for consistent timezone handling
     const today = new Date();
     const todayStr = new Date(
       Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())
@@ -107,7 +104,7 @@ export class ReadingStreakService {
       };
     }
 
-    const sortedActiveDays = activeDays.sort((a, b) => b.date.localeCompare(a.date));
+    const sortedActiveDays = activeDays.sort((a, b) => a.date.localeCompare(b.date));
     const lastReadingDate = new Date(sortedActiveDays[0]?.date || '');
 
     // Calculate current streak
@@ -154,7 +151,7 @@ export class ReadingStreakService {
 
     for (let i = 0; i < allActivities.length; i++) {
       const activity = allActivities[i];
-      if (activity && activity.hasActivity) {
+      if (activity?.hasActivity) {
         const prevActivity = allActivities[i - 1];
         if (i === 0 || !prevActivity?.hasActivity) {
           tempStreak = 1;
@@ -211,7 +208,7 @@ export class ReadingStreakService {
             startDate: currentPeriod.start,
             endDate: currentPeriod.end,
             length: currentPeriod.dates.length,
-            isActive: false, // Will be set later
+            isActive: false,
           });
           currentPeriod = { start: day.date, end: day.date, dates: [day.date] };
         }
@@ -231,7 +228,6 @@ export class ReadingStreakService {
     // Mark the most recent period as active if it's current
     if (periods.length > 0) {
       const lastPeriod = periods[periods.length - 1];
-      // Use UTC dates for consistent timezone handling
       const today = new Date();
       const todayStr = new Date(
         Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())

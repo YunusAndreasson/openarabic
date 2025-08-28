@@ -7,6 +7,7 @@ import { readingProgressService } from '@/services/readingProgress';
 export function useLastReadArticle() {
   const { user } = useAuth();
 
+  // Fetch reading progress data
   const { data: lastReadProgress, isLoading: isLoadingProgress } = useQuery({
     queryKey: ['last-read-article', user?.id],
     queryFn: async () => {
@@ -18,6 +19,7 @@ export function useLastReadArticle() {
     refetchOnMount: false,
   });
 
+  // Fetch article data in parallel (not waiting for progress to complete)
   const { data: lastReadArticle, isLoading: isLoadingArticle } = useQuery({
     queryKey: ['article', lastReadProgress?.article_id],
     queryFn: async () => {
@@ -29,10 +31,17 @@ export function useLastReadArticle() {
     refetchOnMount: false,
   });
 
+  // Show button as soon as we have progress data, even if article is still loading
+  // This provides immediate visual feedback while article data loads in background
+  const showButton = !!lastReadProgress;
+  const hasLastReadArticle = !!lastReadArticle && !!lastReadProgress;
+
   return {
     lastReadArticle,
     lastReadProgress,
     isLoading: isLoadingProgress || isLoadingArticle,
-    hasLastReadArticle: !!lastReadArticle && !!lastReadProgress,
+    hasLastReadArticle,
+    // New property for immediate button visibility
+    showButton,
   };
 }
