@@ -135,7 +135,7 @@ function ThemedButtonComponent({
     [size]
   );
 
-  const textOpacityStyle = useMemo(() => (loading && !icon ? { opacity: 0 } : {}), [loading, icon]);
+  const textOpacityStyle = useMemo(() => (loading && !icon ? styles.hiddenText : null), [loading, icon]);
 
   // Accessibility properties
   const accessibilityLabel = props.accessibilityLabel || title;
@@ -147,7 +147,7 @@ function ThemedButtonComponent({
 
   return (
     <AnimatedTouchable
-      style={[buttonStyle, disablePressAnimation ? {} : animatedStyle]}
+      style={[buttonStyle, disablePressAnimation ? null : animatedStyle]}
       onPressIn={disablePressAnimation ? undefined : handlePressIn}
       onPressOut={disablePressAnimation ? undefined : handlePressOut}
       disabled={disabled || loading}
@@ -246,6 +246,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     width: '100%',
+  },
+  hiddenText: {
+    opacity: 0,
   },
 });
 

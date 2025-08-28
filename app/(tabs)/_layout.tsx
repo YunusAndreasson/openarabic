@@ -33,8 +33,23 @@ const IconWithBadge = memo(
     focused: boolean;
     colors: any;
   }) => {
+    const containerStyle = useMemo(
+      () => [styles.iconContainer, { width: size, height: size }],
+      [size]
+    );
+
+    const badgeContainerStyle = useMemo(
+      () => [styles.badgeContainer, { backgroundColor: colors.error }],
+      [colors.error]
+    );
+
+    const badgeTextStyle = useMemo(
+      () => [styles.badgeText, { color: colors.background }],
+      [colors.background]
+    );
+
     return (
-      <View style={{ width: size, height: size, margin: 5 }}>
+      <View style={containerStyle}>
         <Ionicons
           name={name}
           size={size}
@@ -42,28 +57,8 @@ const IconWithBadge = memo(
           style={focused ? styles.focusedIcon : styles.unfocusedIcon}
         />
         {badgeCount > 0 && (
-          <View
-            style={{
-              position: 'absolute',
-              right: -6,
-              top: -3,
-              backgroundColor: colors.error,
-              borderRadius: 12,
-              width: 24,
-              height: 24,
-              justifyContent: 'center',
-              alignItems: 'center',
-              zIndex: 1000,
-            }}
-          >
-            <Text
-              style={{
-                color: colors.background,
-                fontSize: 13,
-                fontWeight: 'bold',
-                textAlign: 'center',
-              }}
-            >
+          <View style={badgeContainerStyle}>
+            <Text style={badgeTextStyle}>
               {badgeCount > 99 ? '99+' : badgeCount}
             </Text>
           </View>
@@ -169,6 +164,25 @@ const styles = StyleSheet.create({
   },
   unfocusedIcon: {
     opacity: LAYOUT.OPACITY.HIGH,
+  },
+  iconContainer: {
+    margin: 5,
+  },
+  badgeContainer: {
+    position: 'absolute',
+    right: -6,
+    top: -3,
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  badgeText: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 

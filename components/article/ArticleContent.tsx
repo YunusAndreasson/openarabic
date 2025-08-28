@@ -140,6 +140,9 @@ const styles = StyleSheet.create({
   titleText: {
     width: '100%', // Full width for title without button interference
   },
+  leftAlign: {
+    textAlign: 'left',
+  },
   authorContainer: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.MEDIUM,
@@ -349,21 +352,36 @@ export const ArticleContent = memo<ArticleContentProps>(
     // Updated to account for only one button now (playlist button)
     const rightOverlayPadding = useMemo(() => MIN_TOUCH_TARGET.MEDIUM + LAYOUT.SPACING.LARGE, []);
 
+    const titleContainerStyle = useMemo(
+      () => [styles.titleContainer, { paddingRight: rightOverlayPadding }],
+      [rightOverlayPadding]
+    );
+
+    const authorContainerStyle = useMemo(
+      () => [styles.authorContainer, { paddingRight: rightOverlayPadding }],
+      [rightOverlayPadding]
+    );
+
+    const summaryContainerStyle = useMemo(
+      () => [styles.summaryContainer, { paddingRight: rightOverlayPadding }],
+      [rightOverlayPadding]
+    );
+
     // Render title/author below the hero image but above content
     const headerComponent = useMemo(
       () => (
         <View>
-          <View style={[styles.titleContainer, { paddingRight: rightOverlayPadding }]}>
+          <View style={titleContainerStyle}>
             <ThemedText
               type="heading1"
               colorName="headingText"
-              style={[styles.titleText, { textAlign: 'left' }]}
+              style={[styles.titleText, styles.leftAlign]}
             >
               {article.title}
             </ThemedText>
           </View>
 
-          <View style={[styles.authorContainer, { paddingRight: rightOverlayPadding }]}>
+          <View style={authorContainerStyle}>
             <ThemedText
               type="body"
               weight="medium"
@@ -380,7 +398,7 @@ export const ArticleContent = memo<ArticleContentProps>(
 
           {/* Summary section - positioned between author and content for natural reading flow */}
           {article.summary && (
-            <View style={[styles.summaryContainer, { paddingRight: rightOverlayPadding }]}>
+            <View style={summaryContainerStyle}>
               <ThemedText
                 type="body"
                 weight="normal"
@@ -393,7 +411,7 @@ export const ArticleContent = memo<ArticleContentProps>(
           )}
         </View>
       ),
-      [article.title, article.author, article.summary, rightOverlayPadding]
+      [article, titleContainerStyle, authorContainerStyle, summaryContainerStyle]
     );
 
     // Get articles from cache for recommendations (avoid re-querying here)

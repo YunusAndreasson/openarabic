@@ -1,4 +1,4 @@
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -77,20 +77,26 @@ export const DataPointOverlay = memo<DataPointOverlayProps>(({ x, y, value, labe
   const touchTargetSize = MIN_TOUCH_TARGET.LARGE;
   const offset = touchTargetSize / 2;
 
-  return (
-    <TouchableOpacity
-      style={{
-        position: 'absolute',
+  const touchableStyle = useMemo(
+    () => [
+      styles.touchable,
+      {
         left: x - offset,
         top: y - offset,
         width: touchTargetSize,
         height: touchTargetSize,
         borderRadius: touchTargetSize / 2,
-        // Jakob's Law: Provide visual feedback that matches user expectations from analytics apps
-        backgroundColor: isPressed ? colors.tint + '20' : colors.transparent, // 20% opacity when pressed
+        backgroundColor: isPressed ? colors.tint + '20' : colors.transparent,
         borderWidth: isPressed ? 2 : 0,
         borderColor: isPressed ? colors.tint : colors.transparent,
-      }}
+      },
+    ],
+    [x, y, offset, touchTargetSize, isPressed, colors.tint, colors.transparent]
+  );
+
+  return (
+    <TouchableOpacity
+      style={touchableStyle}
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
@@ -142,6 +148,9 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.INPUT.BORDER_RADIUS,
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     padding: LAYOUT.SPACING.SMALL,
+    position: 'absolute',
+  },
+  touchable: {
     position: 'absolute',
   },
   tooltipLabel: {
