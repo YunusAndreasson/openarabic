@@ -27,6 +27,8 @@ export const STRINGS = {
   DISPLAY_LANGUAGE: 'Display language',
   DISPLAY_LANGUAGE_ARABIC: 'Arabic only',
   DISPLAY_LANGUAGE_BILINGUAL: 'Arabic + English',
+  DAILY_WORD_LIMIT: 'Daily word limit',
+  DAILY_WORD_LIMIT_DESCRIPTION: 'Maximum words to add per day',
 
   // Account section titles
   READING_EXPERIENCE: 'Reading experience',
@@ -95,6 +97,20 @@ export const STRINGS = {
   UNSURE: 'Unsure',
   KNOWN: 'Known',
   NO_TRANSLATION_AVAILABLE: 'No translation available',
+
+  // Daily word limit options
+  DAILY_WORD_LIMIT_GETTING_STARTED: 'Getting Started',
+  DAILY_WORD_LIMIT_GETTING_STARTED_DESC: '10 words per day - Perfect for beginners',
+  DAILY_WORD_LIMIT_STEADY: 'Steady Progress',
+  DAILY_WORD_LIMIT_STEADY_DESC: '20 words per day - Balanced learning pace',
+  DAILY_WORD_LIMIT_ACTIVE: 'Active Learning',
+  DAILY_WORD_LIMIT_ACTIVE_DESC: '30 words per day - For dedicated learners',
+  DAILY_WORD_LIMIT_UNLIMITED: 'Unlimited',
+  DAILY_WORD_LIMIT_UNLIMITED_DESC: 'No daily limit - Review load may increase significantly',
+  DAILY_WORD_LIMIT_REACHED: 'Daily limit reached',
+  DAILY_WORD_LIMIT_REACHED_DESC: "Complete today's reviews before adding more words",
+  DAILY_WORD_LIMIT_APPROACHING: 'Approaching daily limit',
+  DAILY_WORD_LIMIT_APPROACHING_DESC: "You're close to your daily word limit",
 
   // Article & content actions - shortened and action-oriented
   BROWSE_ARTICLES: 'Browse articles',

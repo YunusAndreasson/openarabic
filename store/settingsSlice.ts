@@ -17,6 +17,7 @@ export interface SettingsState {
   audioLanguagePreference: AudioLanguagePreference;
   audioShuffleEnabled: boolean;
   displayLanguagePreference: DisplayLanguagePreference;
+  dailyWordLimit: number; // Number of words that can be added per day (0 = unlimited)
 }
 
 const initialState: SettingsState = {
@@ -31,6 +32,7 @@ const initialState: SettingsState = {
   audioLanguagePreference: 'bilingual', // Default to English + Arabic
   audioShuffleEnabled: false, // Default to sequential playback
   displayLanguagePreference: 'bilingual', // Default to Arabic + English
+  dailyWordLimit: 10, // Default to 10 words per day for getting started
 };
 
 const settingsSlice = createSlice({
@@ -55,6 +57,9 @@ const settingsSlice = createSlice({
     setDisplayLanguagePreference: (state, action: PayloadAction<DisplayLanguagePreference>) => {
       state.displayLanguagePreference = action.payload;
     },
+    setDailyWordLimit: (state, action: PayloadAction<number>) => {
+      state.dailyWordLimit = action.payload;
+    },
   },
 });
 
@@ -65,5 +70,6 @@ export const {
   setAudioLanguagePreference,
   setAudioShuffleEnabled,
   setDisplayLanguagePreference,
+  setDailyWordLimit,
 } = settingsSlice.actions;
 export default settingsSlice.reducer;

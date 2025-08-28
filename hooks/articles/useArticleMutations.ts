@@ -11,6 +11,7 @@ import {
 } from '@/constants/fsrs';
 import { ROUTE_PATHS } from '@/constants/routes';
 import { STRINGS } from '@/constants/strings';
+import { useDailyWordLimit } from '@/hooks/vocabulary';
 import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { supabase } from '@/services/supabase';
@@ -73,6 +74,7 @@ export const useArticleMutations = (
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const audioPreference = useAppSelector(state => state.settings.audioLanguagePreference);
+  const { canAddWord, incrementDailyWordCount } = useDailyWordLimit();
 
   // Lightweight capacity guard: prevent adding when capacity is low (red phase)
   // Only applies when user has more than 100 words to avoid being annoying for new users
@@ -370,6 +372,13 @@ export const useArticleMutations = (
   const handleWordPress = useCallback(
     async (wordId: number) => {
       try {
+        // Check daily word limit first
+        const canAdd = await canAddWord();
+        if (!canAdd) {
+          showToast(STRINGS.DAILY_WORD_LIMIT_REACHED, 3000, 'important');
+          return;
+        }
+
         // Always get fresh session from Supabase
         const {
           data: { session },
@@ -391,6 +400,13 @@ export const useArticleMutations = (
             return;
           }
 
+          // Increment daily word count and proceed
+          const incrementSuccess = await incrementDailyWordCount();
+          if (!incrementSuccess) {
+            showToast(STRINGS.DAILY_WORD_LIMIT_REACHED, 3000, 'important');
+            return;
+          }
+
           // Use the refreshed session
           toggleWordMutation.mutate({ userId: refreshData.session.user.id, wordId });
           return;
@@ -402,19 +418,33 @@ export const useArticleMutations = (
           return;
         }
 
+        // Increment daily word count and proceed
+        const incrementSuccess = await incrementDailyWordCount();
+        if (!incrementSuccess) {
+          showToast(STRINGS.DAILY_WORD_LIMIT_REACHED, 3000, 'important');
+          return;
+        }
+
         // Always use the user ID from the session directly
         toggleWordMutation.mutate({ userId: session.user.id, wordId });
       } catch (error) {
         handleError(error as Error);
       }
     },
-    [toggleWordMutation, showToast, router]
+    [toggleWordMutation, showToast, router, canAddWord, incrementDailyWordCount]
   );
 
   // Handle root press
   const handleRootPress = useCallback(
     async (rootId: number) => {
       try {
+        // Check daily word limit first
+        const canAdd = await canAddWord();
+        if (!canAdd) {
+          showToast(STRINGS.DAILY_WORD_LIMIT_REACHED, 3000, 'important');
+          return;
+        }
+
         // Always get fresh session from Supabase
         const {
           data: { session },
@@ -436,6 +466,13 @@ export const useArticleMutations = (
             return;
           }
 
+          // Increment daily word count and proceed
+          const incrementSuccess = await incrementDailyWordCount();
+          if (!incrementSuccess) {
+            showToast(STRINGS.DAILY_WORD_LIMIT_REACHED, 3000, 'important');
+            return;
+          }
+
           // Use the refreshed session
           toggleRootMutation.mutate({ userId: refreshData.session.user.id, rootId });
           return;
@@ -447,13 +484,20 @@ export const useArticleMutations = (
           return;
         }
 
+        // Increment daily word count and proceed
+        const incrementSuccess = await incrementDailyWordCount();
+        if (!incrementSuccess) {
+          showToast(STRINGS.DAILY_WORD_LIMIT_REACHED, 3000, 'important');
+          return;
+        }
+
         // Always use the user ID from the session directly
         toggleRootMutation.mutate({ userId: session.user.id, rootId });
       } catch (error) {
         handleError(error as Error);
       }
     },
-    [toggleRootMutation, showToast, router]
+    [toggleRootMutation, showToast, router, canAddWord, incrementDailyWordCount]
   );
 
   return {

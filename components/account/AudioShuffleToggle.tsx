@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   cardLeft: {

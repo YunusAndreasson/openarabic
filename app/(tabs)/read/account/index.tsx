@@ -17,6 +17,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { AccountBadge, SocialMediaIcons } from '@/components/account';
 import { AudioLanguagePicker } from '@/components/account/AudioLanguagePicker';
 import AudioShuffleToggle from '@/components/account/AudioShuffleToggle';
+import { DailyWordLimitPicker } from '@/components/account/DailyWordLimitPicker';
 import { LanguagePicker } from '@/components/account/LanguagePicker';
 import { LAYOUT, MIN_TOUCH_TARGET, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { ROUTE_PATHS } from '@/constants/routes';
@@ -43,6 +44,8 @@ const AccountScreen: FC = () => {
   const [showThemePicker, setShowThemePicker] = React.useState(false);
   const [showLanguagePicker, setShowLanguagePicker] = React.useState(false);
   const [showAudioLanguagePicker, setShowAudioLanguagePicker] = React.useState(false);
+  const [showDailyWordLimitPicker, setShowDailyWordLimitPicker] = React.useState(false);
+  const currentDailyWordLimit = useAppSelectorMemo(state => state.settings.dailyWordLimit);
 
   const {
     reminderTime,
@@ -62,6 +65,14 @@ const AccountScreen: FC = () => {
     isClearingCache,
     cacheSize,
   } = useAccountScreen();
+
+  const currentDailyWordLimitText = useMemo(() => {
+    if (currentDailyWordLimit === undefined || currentDailyWordLimit === null) {
+      return '10 words'; // Default fallback
+    }
+    if (currentDailyWordLimit === 0) return 'Unlimited';
+    return `${currentDailyWordLimit} words`;
+  }, [currentDailyWordLimit]);
 
   // Memoize dynamic styles for better performance
   const signOutTextStyle = useMemo(
@@ -98,9 +109,20 @@ const AccountScreen: FC = () => {
     setShowAudioLanguagePicker(false);
   }, []);
 
+  // Daily word limit picker handlers
+  const handleDailyWordLimitPickerOpen = useCallback(() => {
+    setShowDailyWordLimitPicker(true);
+  }, []);
+
+  const handleDailyWordLimitPickerClose = useCallback(() => {
+    setShowDailyWordLimitPicker(false);
+  }, []);
+
   // Get current theme display text
-  const currentThemeOption = THEME_OPTIONS.find(option => option.id === currentTheme);
-  const currentThemeText = currentThemeOption?.title || STRINGS.THEME_BIRCHES;
+  const currentThemeText = useMemo(() => {
+    const themeOption = THEME_OPTIONS.find(option => option.id === currentTheme);
+    return themeOption?.title || STRINGS.THEME_BIRCHES;
+  }, [currentTheme]);
 
   // Get current language display text
   const currentLanguageText =
@@ -258,8 +280,8 @@ const AccountScreen: FC = () => {
           </View>
         </BaseCard>
 
-        {/* Notifications - Study reminders and timing */}
-        <SectionTitle title="Notifications" textStyle={styles.sectionTitle} />
+        {/* Study - Study reminders and timing */}
+        <SectionTitle title="Study" textStyle={styles.sectionTitle} />
         <BaseCard shadowSize="small" style={styles.sectionContainer}>
           <View style={styles.linksContainer}>
             <View style={styles.settingRow}>
@@ -305,6 +327,39 @@ const AccountScreen: FC = () => {
                 </BaseCard>
               </Fragment>
             )}
+
+            <Divider />
+
+            <BaseCard
+              shadowSize="none"
+              style={styles.timePickerSettingRow}
+              onPress={handleDailyWordLimitPickerOpen}
+            >
+              <View style={styles.settingRow}>
+                <View style={styles.settingLabelContainer}>
+                  <View style={styles.cardIconContainer}>
+                    <Ionicons
+                      color={colors.interactiveSecondary}
+                      name="book"
+                      size={LAYOUT.BUTTON.ICON_SIZE.MEDIUM}
+                    />
+                  </View>
+                  <View style={styles.settingLabelTextContainer}>
+                    <ThemedText type="body">{STRINGS.DAILY_WORD_LIMIT}</ThemedText>
+                  </View>
+                </View>
+                <View style={styles.settingValueContainer}>
+                  <ThemedText type="body" colorName="metadataText">
+                    {currentDailyWordLimitText}
+                  </ThemedText>
+                  <Ionicons
+                    color={colors.metadataText}
+                    name="chevron-forward"
+                    size={LAYOUT.BUTTON.ICON_SIZE.SMALL}
+                  />
+                </View>
+              </View>
+            </BaseCard>
           </View>
         </BaseCard>
 
@@ -543,6 +598,13 @@ const AccountScreen: FC = () => {
       <AudioLanguagePicker
         isVisible={showAudioLanguagePicker}
         onClose={handleAudioLanguagePickerClose}
+      />
+
+      {/* Daily Word Limit Picker Modal */}
+      <DailyWordLimitPicker
+        key={showDailyWordLimitPicker ? 'open' : 'closed'}
+        isVisible={showDailyWordLimitPicker}
+        onClose={handleDailyWordLimitPickerClose}
       />
     </ThemedView>
   );
