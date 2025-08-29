@@ -262,21 +262,12 @@ When optimizing components (especially those >50ms render time):
 
 ## Development Workflow
 
-### During Development
-
-- Use `yarn validate` for type checking, linting, and dependency analysis
-- Use `yarn ci` for full validation with test coverage
-- Knip for unused code detection
-- Patch-package for dependency modifications
-
 ### End of Longer Sessions (REQUIRED)
 
 Always run these commands before completing longer development sessions:
 
-1. `yarn test` - Ensure all tests pass
-2. `yarn validate` - Check types, linting, and dependencies
-3. Review and clean up any temporary files created during development
-4. Verify no console errors or warnings remain
+1. `yarn validate` - Check types, linting, and dependencies
+2. Only run it at the very end
 
 ### Cleanup Checklist
 
