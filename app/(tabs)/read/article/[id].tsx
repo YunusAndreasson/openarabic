@@ -14,7 +14,6 @@ import {
 
 import { ArticleSentence, SentenceScrubber, WordTooltip } from '@/components/article';
 import { ArticleContent } from '@/components/article/ArticleContent';
-// Removed MiniPlayer import
 import { ToastProvider, useToast } from '@/components/providers';
 import { FSRS_QUERY_KEYS } from '@/constants/fsrs';
 import { LAYOUT } from '@/constants/layout';
@@ -23,15 +22,12 @@ import { useArticleData } from '@/hooks/articles/useArticleData';
 import { useArticleMutations } from '@/hooks/articles/useArticleMutations';
 import { useReadingProgress } from '@/hooks/articles/useReadingProgress';
 import { useSentenceScrubber } from '@/hooks/articles/useSentenceScrubber';
-// Removed audio-related imports
 import { useAuth } from '@/hooks/auth/useAuth';
 import { useColors } from '@/hooks/theme/useColors';
 import { useHeaderVisibility } from '@/hooks/ui/useHeaderVisibility';
-// Removed enhancedAudioService import
 import { useAppSelectorMemo } from '@/store/hooks';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
-// Removed handleError import
 import { selectionFeedback } from '@/utils/haptics';
 
 // Static constants to prevent recreation
@@ -79,8 +75,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
     isInReadingList,
     refetchReadingListStatus,
   } = useArticleData(articleId, user?.id);
-
-  // Removed audio state check
 
   const [activeTooltip, setActiveTooltip] = useState<{
     word: SentenceWord;
@@ -146,8 +140,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   const handleClose = useCallback(() => {
     router.back();
   }, []);
-
-  // Removed audio playback handler
 
   // Track reading progress with proper initialization
   const isActive = !!article && !isLoadingArticle;
@@ -305,8 +297,6 @@ const ArticleScreenContent = memo(({ id }: { id: string }) => {
   const handleCloseTooltip = useCallback(() => {
     setActiveTooltip(null);
   }, []);
-
-  // removed unused handleWordPressForRenderer
 
   // Lightweight sentence words accessor without extra routing logic
   const getWordsForSentence = useCallback(

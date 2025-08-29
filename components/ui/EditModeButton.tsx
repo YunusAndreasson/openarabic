@@ -106,20 +106,6 @@ const EditModeButton: FC<EditModeButtonProps> = ({
   );
 };
 
-/**
- * Wrapper component specifically for the Listen tab that automatically
- * hides the Edit/Manage button when there are no articles in the playlist
- */
-export const ListenEditModeButton: FC<{
-  onEditModeChange?: (editMode: boolean) => void;
-  style?: ViewStyle;
-}> = ({ onEditModeChange, style }) => {
-  // Deprecated wrapper; prefer using EditModeButton with hideWhenEmpty
-  return (
-    <EditModeButton type="listen" hideWhenEmpty onEditModeChange={onEditModeChange} style={style} />
-  );
-};
-
 const styles = StyleSheet.create({
   button: {
     alignItems: 'center',

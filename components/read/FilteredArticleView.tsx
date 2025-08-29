@@ -75,11 +75,6 @@ interface FilteredArticleViewProps {
   editMode?: boolean;
 
   /**
-   * Total count of articles before filtering (optional)
-   */
-  // totalCount?: number; // Removed: no longer displaying counts in header
-
-  /**
    * Loading state when fetching articles
    */
   loading?: boolean;
@@ -110,7 +105,6 @@ const FilteredArticleViewComparison = (
   if (prevProps.articles?.length !== nextProps.articles?.length) return false;
 
   // Optional props comparison
-  // if (prevProps.totalCount !== nextProps.totalCount) return false; // Removed with prop
 
   return true;
 };

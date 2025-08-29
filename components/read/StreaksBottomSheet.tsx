@@ -130,7 +130,6 @@ export const StreaksBottomSheet = memo<StreaksBottomSheetProps>(({ isVisible, on
     return null;
   }
 
-  // TEMPORARY: Simple test BottomSheet
   return (
     <BottomSheet
       ref={bottomSheetRef}
@@ -173,7 +172,8 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // 15px - secondary descriptive text
     textAlign: 'center',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
+    lineHeight:
+      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * TYPOGRAPHY_HIERARCHY.LINE_HEIGHT_MULTIPLIERS.NORMAL,
   },
   // Section 2: Streak Metrics (secondary hierarchy)
   streakMetricsContainer: {

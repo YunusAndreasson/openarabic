@@ -83,15 +83,6 @@ export const generateAudioUrl = (audioUrl: string | null | undefined): string | 
   return imageUrlGenerator.generateAudioUrl(audioUrl);
 };
 
-// Legacy compatibility functions
-export const reconstructImageUrl = (filename: string): string => {
-  return imageUrlGenerator.reconstructImageUrl(filename);
-};
-
-export const reconstructAudioUrl = (filename: string): string => {
-  return imageUrlGenerator.reconstructAudioUrl(filename);
-};
-
 export const reconstructFullUrl = (filename: string, bucket: string): string => {
   return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${filename}`;
 };

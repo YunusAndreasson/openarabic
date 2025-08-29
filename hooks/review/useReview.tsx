@@ -660,8 +660,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
             await audioCache.getAudio(url);
             trackProgress();
             return true;
-          } catch (error) {
-            console.warn(`Failed to preload audio: ${url}`, error);
+          } catch {
             trackProgress(); // Still count as completed to avoid hanging
             return false;
           }
@@ -672,8 +671,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
 
         // Mark preloading as complete immediately
         setIsAudioPreloadingComplete(true);
-      } catch (error) {
-        console.error('Audio preloading failed:', error);
+      } catch {
         // Don't block the session if audio preloading fails
         setIsAudioPreloadingComplete(true);
       } finally {
@@ -924,15 +922,15 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       // Safely call fadeIn with error handling to prevent crashes
       try {
         fadeIn();
-      } catch (error) {
-        console.warn('Fade animation cleanup error:', error);
+      } catch {
+        // Animation cleanup failed - continue
       }
 
       // Ensure audio is stopped and cleaned up
       try {
         audioPlayerRef.current.stop().catch(() => {});
-      } catch (error) {
-        console.warn('Audio cleanup error:', error);
+      } catch {
+        // Audio cleanup failed - continue
       }
 
       // Clean up all timers with null checks

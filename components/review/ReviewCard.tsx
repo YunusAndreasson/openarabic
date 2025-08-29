@@ -212,8 +212,8 @@ const ReviewCardInternal = ({
         // Reset shared values to prevent stale references
         translateX.value = 0;
         isAnimatingRef.value = false;
-      } catch (error) {
-        console.warn('Animation cleanup error:', error);
+      } catch {
+        // Animation cleanup failed - continue
       }
     };
   }, [translateX, isAnimatingRef]);

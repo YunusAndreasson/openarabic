@@ -120,7 +120,7 @@ export class ReadingStreakService {
     }
 
     const sortedActiveDays = activeDays.sort((a, b) => a.date.localeCompare(b.date));
-    const mostRecentDate = sortedActiveDays[sortedActiveDays.length - 1]?.date; // Get the most recent date
+    const mostRecentDate = sortedActiveDays[sortedActiveDays.length - 1]?.date;
     const lastReadingDate = new Date(mostRecentDate || '');
 
     // Calculate current streak

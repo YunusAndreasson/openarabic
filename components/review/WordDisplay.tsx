@@ -14,7 +14,7 @@ import { createTextStyle, type BatchedTextColors } from '@/utils/textStyleUtils'
 const WORD_DISPLAY_CONSTANTS = {
   DEFAULT_FONT_SIZE: LAYOUT.SPACING.XXLARGE,
   ARABIC_FONT_SIZE: LAYOUT.SPACING.XXLARGE * 2, // Very large for Arabic (64px)
-  ENGLISH_FONT_SIZE: LAYOUT.SPACING.XXLARGE, // Legacy constant (not used when using regular ThemedText)
+
   ARABIC_TOP_POSITION: LAYOUT.SPACING.MEDIUM, // Arabic higher up but not at very top (12px)
   ENGLISH_TOP_OFFSET: LAYOUT.SPACING.XXLARGE * 4, // Move slightly closer below Arabic (192px)
   CONTAINER_HEIGHT: LAYOUT.SPACING.XXXLARGE * 7, // Much taller container (336px)

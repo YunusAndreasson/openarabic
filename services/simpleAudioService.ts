@@ -56,8 +56,7 @@ class SimpleAudioService {
       // Ensure audio is active at the OS level
       try {
         await setIsAudioActiveAsync(true);
-      } catch (activeError) {
-        console.warn('Failed to set audio active state:', activeError);
+      } catch {
         // Continue with audio mode setup even if this fails
       }
 
@@ -74,7 +73,6 @@ class SimpleAudioService {
       });
       this.audioSessionConfigured = true;
     } catch (sessionError) {
-      console.error('CRITICAL: Audio session configuration failed:', sessionError);
       // This is critical - audio may not work properly
       throw new Error(`Audio session configuration failed: ${sessionError}`);
     }
@@ -255,7 +253,6 @@ class SimpleAudioService {
         duration: 0,
       });
     } catch (stopError) {
-      console.error('CRITICAL: Failed to stop audio playback:', stopError);
       // RESET: Even on error, ensure all progress is cleared
       this.updateStatus({
         isPlaying: false,
@@ -279,7 +276,6 @@ class SimpleAudioService {
         this.updateStatus({ isPlaying: false });
       }
     } catch (pauseError) {
-      console.error('CRITICAL: Failed to pause audio playback:', pauseError);
       this.updateStatus({ isPlaying: false });
       // Re-throw to make the error visible
       throw new Error(`Failed to pause audio playback: ${pauseError}`);
@@ -296,7 +292,6 @@ class SimpleAudioService {
         this.updateStatus({ isPlaying: true });
       }
     } catch (resumeError) {
-      console.error('CRITICAL: Failed to resume audio playback:', resumeError);
       this.updateStatus({ isPlaying: false });
       // Re-throw to make the error visible
       throw new Error(`Failed to resume audio playback: ${resumeError}`);
@@ -313,7 +308,6 @@ class SimpleAudioService {
         this.updateStatus({ currentTime: position });
       }
     } catch (seekError) {
-      console.error('CRITICAL: Failed to seek audio playback:', seekError);
       // Re-throw to make the error visible
       throw new Error(`Failed to seek audio playback: ${seekError}`);
     }
@@ -381,8 +375,8 @@ class SimpleAudioService {
           // PLAYLIST SUPPORT: Check if current track has completed
           if (this.isPlaylistMode && safeDuration > 0 && safeCurrentTime >= safeDuration - 0.5) {
             // Track is within 0.5 seconds of completion, advance to next track
-            this.advanceToNextTrack().catch(error => {
-              console.error('Failed to advance to next track:', error);
+            this.advanceToNextTrack().catch(() => {
+              // Track advancement failed - continue with current track
             });
             return;
           }
@@ -402,7 +396,6 @@ class SimpleAudioService {
             });
           }
         } catch (pollingError) {
-          console.error('CRITICAL: Audio status polling failed:', pollingError);
           // Stop polling on error
           this.stopStatusPolling();
           // RESET: Clear progress on polling error
@@ -448,7 +441,6 @@ class SimpleAudioService {
           await this.currentPlayer.remove();
         }
       } catch (cleanupError) {
-        console.error('CRITICAL: Audio cleanup failed:', cleanupError);
         // Re-throw to make the error visible
         throw new Error(`Audio cleanup failed: ${cleanupError}`);
       }
@@ -483,10 +475,8 @@ class SimpleAudioService {
       try {
         listener(this.status);
       } catch (listenerError) {
-        console.error('CRITICAL: Audio status listener failed:', listenerError);
         // Remove problematic listeners
         this.listeners.delete(listener);
-        console.error('Removed problematic audio status listener due to error');
         // Re-throw to make the error visible
         throw new Error(`Audio status listener failed: ${listenerError}`);
       }
@@ -506,7 +496,6 @@ class SimpleAudioService {
     try {
       await setIsAudioActiveAsync(false);
     } catch (destroyError) {
-      console.error('CRITICAL: Failed to release audio session during destroy:', destroyError);
       // Re-throw to make the error visible
       throw new Error(`Failed to release audio session during destroy: ${destroyError}`);
     }

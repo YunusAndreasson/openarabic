@@ -30,8 +30,7 @@ export const useDailyWordLimit = () => {
 
       const count = await AsyncStorage.getItem(DAILY_WORD_COUNT_KEY);
       return parseInt(count || '0', 10);
-    } catch (error) {
-      console.error('Error getting daily word count:', error);
+    } catch {
       return 0;
     }
   }, [getCurrentDateString]);
@@ -57,13 +56,11 @@ export const useDailyWordLimit = () => {
       // Verify the increment was successful
       const verifyCount = await AsyncStorage.getItem(DAILY_WORD_COUNT_KEY);
       if (parseInt(verifyCount || '0', 10) !== newCount) {
-        console.error('Failed to increment daily word count - verification failed');
         return false;
       }
 
       return true;
-    } catch (error) {
-      console.error('Error incrementing daily word count:', error);
+    } catch {
       return false;
     }
   }, [dailyWordLimit, getDailyWordCount]);
@@ -100,8 +97,8 @@ export const useDailyWordLimit = () => {
     try {
       await AsyncStorage.removeItem(DAILY_WORD_COUNT_KEY);
       await AsyncStorage.removeItem(DAILY_WORD_RESET_KEY);
-    } catch (error) {
-      console.error('Error resetting daily word count:', error);
+    } catch {
+      // Reset failed - continue silently
     }
   }, []);
 

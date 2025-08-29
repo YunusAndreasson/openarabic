@@ -2,8 +2,6 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, renderHook } from '@testing-library/react-native';
 import React, { type ReactNode } from 'react';
 
-// NOTE: We'll require the hook after setting up jest mocks to ensure proper module mocking
-
 const readingListItems = [
   {
     user_id: 'user-1',
@@ -114,7 +112,6 @@ jest.mock('@/store/hooks', () => ({
 // Extract mocked functions for assertions
 const { startTimer, cancelTimer } = require('@/hooks/audio/useSleepTimer');
 
-// Extract mocked functions for assertions
 const { mockPlay, mockStop } = require('@/hooks/audio/useSimpleAudioPlayer');
 
 // Additional mocked services and actions
@@ -204,7 +201,6 @@ describe('useListenScreen', () => {
   });
 
   it('plays all tracks and updates playbackMode', async () => {
-    // Ensure fresh mock setup for this test
     mockUseQuery.mockReset();
     mockUseQuery
       .mockReturnValueOnce({ data: readingListItems, isLoading: false, isFetching: false })
@@ -213,7 +209,6 @@ describe('useListenScreen', () => {
 
     const { result } = renderHook(() => useListenScreen(), { wrapper: Wrapper });
 
-    // First, verify the tracks are there
     expect(result.current.sortedEnhancedTracks).toHaveLength(2);
     expect(result.current.playbackMode).toBe('none');
 
@@ -226,7 +221,6 @@ describe('useListenScreen', () => {
   });
 
   it('plays selected article from existing track', async () => {
-    // Ensure fresh mock setup for this test
     mockUseQuery.mockReset();
     mockUseQuery
       .mockReturnValueOnce({ data: readingListItems, isLoading: false, isFetching: false })
@@ -236,7 +230,6 @@ describe('useListenScreen', () => {
     const { result } = renderHook(() => useListenScreen(), { wrapper: Wrapper });
     const trackToPlay = sortedEnhanced.find(t => t.articleId === 2);
 
-    // First, verify the tracks are there
     expect(result.current.sortedEnhancedTracks).toHaveLength(2);
     expect(result.current.playbackMode).toBe('none');
 
@@ -251,7 +244,6 @@ describe('useListenScreen', () => {
     const newTrack = { id: 'n', articleId: 3, audioUrl: 'u3', title: 'C' };
     enhancedAudioService.generateEnhancedAudioTrack.mockResolvedValueOnce(newTrack);
 
-    // Ensure fresh mock setup for this test
     mockUseQuery.mockReset();
     mockUseQuery
       .mockReturnValueOnce({ data: readingListItems, isLoading: false, isFetching: false })
@@ -260,7 +252,6 @@ describe('useListenScreen', () => {
 
     const { result } = renderHook(() => useListenScreen(), { wrapper: Wrapper });
 
-    // First, verify the initial state
     expect(result.current.sortedEnhancedTracks).toHaveLength(2);
     expect(result.current.playbackMode).toBe('none');
 

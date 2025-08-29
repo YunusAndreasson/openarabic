@@ -26,7 +26,7 @@ export default function IslamicCalendarScreen(): JSX.Element {
     <>
       <Stack.Screen
         options={{
-          headerShown: false, // Hide the header completely for seamless parallax
+          headerShown: false,
         }}
       />
 

@@ -122,13 +122,13 @@ function scheduleConsoleFlush(): void {
       if (FINAL_REPORT_ONLY) {
         // skip mid-run summaries when final-only mode is active
       } else if (top.length) {
-        const lines = top.map(
+        // Performance data collected but not logged in production
+        top.map(
           (it: any) =>
             `${it.name}@${it.route ?? 'unknown'} avg=${it.avgMs.toFixed(1)}ms r=${it.renders} w=${
               it.wasted
             } keys=${it.topPaths}`
         );
-        console.log('[Perf]', lines.join(' | '));
       }
     } catch {
       // ignore console errors
@@ -346,19 +346,7 @@ function printSessionReport(): void {
     items.sort((a, b) => b.avgMs - a.avgMs || b.renders - a.renders);
     const top = items.slice(0, 6);
     if (top.length) {
-      console.log(
-        '[PerfReport]',
-        top
-          .map(
-            it =>
-              `${it.name}@${it.route ?? 'unknown'} avg=${it.avgMs.toFixed(1)}ms r=${it.renders} w=${
-                it.wasted
-              } keys=${it.topPaths}${
-                it.suggestions.length ? ` → Suggest: ${it.suggestions.join('; ')}` : ''
-              }`
-          )
-          .join(' | ')
-      );
+      // Performance report generated but not logged in production
     }
   } catch {
     // ignore

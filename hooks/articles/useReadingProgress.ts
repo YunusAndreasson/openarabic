@@ -303,7 +303,6 @@ export function useReadingProgress({
   };
 }
 
-// Hook for bulk reading progress (for article lists)
 export function useBulkReadingProgress(articleIds: number[]) {
   const { user } = useAuth();
 

@@ -122,7 +122,6 @@ export class AudioCacheManager {
       // If not cached, download and cache it
       return await this.cacheAudio(url);
     } catch (error) {
-      console.error('CRITICAL: Audio caching failed:', error);
       await handleError(error as Error, {
         showToast: true,
         toastMessage: 'Audio caching failed. The app may experience slower audio loading.',

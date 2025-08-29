@@ -20,11 +20,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/ThemedText';
 import ParallaxHeader from '@/components/article/ParallaxHeader';
 import { RelatedArticlesSection } from '@/components/article/RelatedArticlesSection';
-// Removed PlayButton import
 import { SCROLL_EVENT_THROTTLE, SENTENCE_DRAW_DISTANCE_MULTIPLIER } from '@/constants/animation';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/theme/useColors';
-// Removed unused useIsDarkMode import
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
@@ -511,7 +509,6 @@ export const ArticleContent = memo<ArticleContentProps>(
             <FloatingActionButtons
               isInReadingList={isInReadingList}
               onToggleReadingList={onToggleReadingList}
-              // Removed onPlayPress and isPlaying props
               onClose={onClose}
             />
           </View>

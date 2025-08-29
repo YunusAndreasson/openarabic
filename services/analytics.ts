@@ -2,14 +2,12 @@
  * Analytics Service
  * Simple wrapper around Mixpanel for consistent analytics tracking
  *
- * Note: This implementation uses a simple console.log fallback
- * Replace with actual Mixpanel calls once you have your token configured
+ * Note: This implementation uses console.log for development tracking
  */
 
 import { MIXPANEL_TOKEN } from '@/constants/analytics';
 
-// Simple analytics service - logs events to console for now
-// Replace with real Mixpanel calls when you have your token
+// Simple analytics service - logs events to console
 export const analytics = {
   // Identify user with properties
   identify: async (userId: string, properties?: Record<string, unknown>): Promise<void> => {
@@ -18,12 +16,6 @@ export const analytics = {
         console.log('🔍 ANALYTICS DISABLED: identify()', { userId, properties });
         return;
       }
-
-      // TODO: Replace with actual Mixpanel implementation
-      // const Mixpanel = require('mixpanel-react-native');
-      // await Mixpanel.sharedInstanceWithToken(MIXPANEL_TOKEN);
-      // await Mixpanel.instance.identify(userId);
-      // if (properties) await Mixpanel.instance.set(properties);
 
       console.log('🔍 ANALYTICS: identify()', { userId, properties });
     } catch (error) {
@@ -39,11 +31,6 @@ export const analytics = {
         return;
       }
 
-      // TODO: Replace with actual Mixpanel implementation
-      // const Mixpanel = require('mixpanel-react-native');
-      // await Mixpanel.sharedInstanceWithToken(MIXPANEL_TOKEN);
-      // await Mixpanel.instance.track(event, properties);
-
       console.log('🔍 ANALYTICS: track()', { event, properties });
     } catch (error) {
       console.warn('Analytics track failed:', error);
@@ -57,11 +44,6 @@ export const analytics = {
         console.log('🔍 ANALYTICS: reset()');
         return;
       }
-
-      // TODO: Replace with actual Mixpanel implementation
-      // const Mixpanel = require('mixpanel-react-native');
-      // await Mixpanel.sharedInstanceWithToken(MIXPANEL_TOKEN);
-      // await Mixpanel.instance.reset();
 
       console.log('🔍 ANALYTICS: reset()');
     } catch (error) {

@@ -18,7 +18,6 @@ import { formatBytes } from '@/utils/cacheUtils';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
 
-// Hook to fetch complete user data from Supabase Auth
 const useUserWithCreationDate = () => {
   const { user } = useAuth();
   const [userWithCreatedAt, setUserWithCreatedAt] = useState<typeof user>(user);

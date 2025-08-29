@@ -137,14 +137,14 @@ const opacity = {
   disabled: 0.2, // Disabled backgrounds - Use for: disabled button states
   selection: 0.28, // Text selection - Use for: text selection highlights
   tooltip: 0.32, // Tooltips and shadows - Use for: tooltip backgrounds, light shadows
-  due: 0.42, // Due word indicators - Use for: vocabulary due indicators
+  due: 0.42,
   overlay: 0.52, // Strong overlays - Use for: modal content overlays
   backdrop: 0.68, // Modal backdrops - Use for: modal background overlays
   shadow: 0.75, // Text shadows - Use for: text shadow effects
   darkBackdrop: 0.85, // Dark mode backdrops - Use for: dark theme modal backgrounds
-  modal: 0.92, // Modal overlays - Use for: full modal backgrounds
+  modal: 0.92,
   header: 0.96, // Header overlays - Use for: navigation header backgrounds
-  full: 0.97, // Full modal overlays - Use for: maximum opacity overlays
+  full: 0.97,
 } as const;
 
 // Elevation system
@@ -462,4 +462,3 @@ export enum Theme {
 }
 
 export type ColorName = keyof ThemeColors;
-
