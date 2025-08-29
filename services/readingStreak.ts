@@ -32,7 +32,7 @@ export interface StreakHistoryData {
 export class ReadingStreakService {
   /**
    * Get daily reading activity for a user over a specified period
-   * Simplified: Any day where user creates a reading_progress entry counts as a reading day
+   * Considers both created_at and updated_at to capture all reading activity
    */
   static async getDailyReadingActivity(
     userId: string,
@@ -43,12 +43,11 @@ export class ReadingStreakService {
     startDate.setDate(startDate.getDate() - days);
 
     // Check if user has any article activity on each date
+    // Get all reading progress records and consider both created_at and updated_at dates
     const { data, error } = await supabase
       .from('reading_progress')
-      .select('created_at')
-      .eq('user_id', userId)
-      .gte('created_at', startDate.toISOString())
-      .lte('created_at', endDate.toISOString());
+      .select('created_at, updated_at')
+      .eq('user_id', userId);
 
     if (error) {
       throw new Error(`Failed to get reading activity: ${error.message}`);
@@ -67,14 +66,30 @@ export class ReadingStreakService {
       }
     }
 
-    // Mark dates with any activity (user opened articles)
+    // Ensure today's date is included (in case the loop didn't reach it)
+    const todayStr = endDate.toISOString().split('T')[0];
+    if (todayStr && !activityMap.has(todayStr)) {
+      activityMap.set(todayStr, false);
+    }
+
+    // Mark dates with any activity (user opened/updated articles)
     (data || []).forEach(record => {
-      if (record?.created_at) {
-        const date = new Date(record.created_at).toISOString().split('T')[0];
-        if (date) {
-          activityMap.set(date, true);
+      // Check both created_at and updated_at dates for activity within our date range
+      const datesToCheck = [record?.created_at, record?.updated_at].filter(Boolean);
+
+      datesToCheck.forEach(dateStr => {
+        if (dateStr) {
+          const date = new Date(dateStr);
+          const dateKey = date.toISOString().split('T')[0];
+
+          // Only count activity within our specified date range
+          if (date >= startDate && date <= endDate) {
+            if (dateKey && activityMap.has(dateKey)) {
+              activityMap.set(dateKey, true);
+            }
+          }
         }
-      }
+      });
     });
 
     return Array.from(activityMap.entries())
@@ -105,7 +120,8 @@ export class ReadingStreakService {
     }
 
     const sortedActiveDays = activeDays.sort((a, b) => a.date.localeCompare(b.date));
-    const lastReadingDate = new Date(sortedActiveDays[0]?.date || '');
+    const mostRecentDate = sortedActiveDays[sortedActiveDays.length - 1]?.date; // Get the most recent date
+    const lastReadingDate = new Date(mostRecentDate || '');
 
     // Calculate current streak
     let currentStreak = 0;
@@ -117,7 +133,6 @@ export class ReadingStreakService {
       .toISOString()
       .split('T')[0];
 
-    const mostRecentDate = sortedActiveDays[0]?.date;
     const hasRecentActivity =
       mostRecentDate && (mostRecentDate === todayStr || mostRecentDate === yesterdayStr);
 

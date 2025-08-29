@@ -176,12 +176,11 @@ export function useReadingProgress({
     return () => clearTimeout(timeoutId);
   }, [currentSentenceIndex, isActive, updateProgress, user?.id]);
 
-  // NEW: Track article opens to ensure daily activity is recorded
+  // IMMEDIATE ARTICLE OPEN TRACKING: Run as soon as component mounts
   useEffect(() => {
-    if (!isActive || !user?.id || articleId <= 0) return;
+    if (!user?.id || articleId <= 0) return;
 
-    // Record that the user opened this article today
-    // This ensures daily activity is tracked even if they don't read new sentences
+    // Record article open immediately when component mounts
     const recordArticleOpen = async () => {
       try {
         // Get current progress to see if we need to create/update a record
@@ -198,11 +197,13 @@ export function useReadingProgress({
           });
         } else {
           // If no progress exists, create initial progress record
+          // Use totalSentences if available, otherwise default to 1 (will be updated later)
+          const sentencesToUse = totalSentences > 0 ? totalSentences : 1;
           await readingProgressService.updateProgress({
             userId: user.id,
             articleId,
             lastSentenceRead: 0,
-            totalSentences,
+            totalSentences: sentencesToUse,
           });
         }
       } catch (error) {
@@ -217,11 +218,36 @@ export function useReadingProgress({
       }
     };
 
-    // Record article open after a short delay to avoid immediate updates
-    const openTimeoutId = setTimeout(recordArticleOpen, 1000);
+    // Execute immediately (no timeout) to ensure daily activity is tracked
+    recordArticleOpen();
+  }, [user?.id, articleId]); // Only depend on user and articleId to run immediately
 
-    return () => clearTimeout(openTimeoutId);
-  }, [isActive, user?.id, articleId, totalSentences]); // Only run when article opens
+  // ADDITIONAL: Track when article becomes active (fully loaded) - for additional updates
+  useEffect(() => {
+    if (!isActive || !user?.id || articleId <= 0) return;
+
+    // Additional update when article becomes fully active
+    const recordActiveArticleOpen = async () => {
+      try {
+        const currentProgress = await readingProgressService.getProgress(user.id, articleId);
+
+        if (currentProgress && totalSentences > 0) {
+          // Update with correct totalSentences when available
+          await readingProgressService.updateProgress({
+            userId: user.id,
+            articleId,
+            lastSentenceRead: currentProgress.last_sentence_read,
+            totalSentences, // Use actual total sentences now that article is loaded
+          });
+        }
+      } catch {
+        // Silent error - additional tracking failed
+      }
+    };
+
+    const activeTimeoutId = setTimeout(recordActiveArticleOpen, 500);
+    return () => clearTimeout(activeTimeoutId);
+  }, [isActive, user?.id, articleId, totalSentences]);
 
   // Also save progress immediately when component unmounts (article closed)
   useEffect(() => {
