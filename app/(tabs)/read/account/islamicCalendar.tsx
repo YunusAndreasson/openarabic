@@ -36,7 +36,7 @@ export default function IslamicCalendarScreen(): JSX.Element {
         style={styles.container}
       >
         <ScrollView
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={true}
           style={styles.scrollView}
           contentContainerStyle={[
             styles.scrollContent,
@@ -167,7 +167,11 @@ export default function IslamicCalendarScreen(): JSX.Element {
                             name="calendar"
                             size={LAYOUT.SPACING.MEDIUM}
                           />
-                          <ThemedText style={styles.dateText} type="caption" colorName="metadataText">
+                          <ThemedText
+                            style={styles.dateText}
+                            type="caption"
+                            colorName="metadataText"
+                          >
                             {event.gregorianDate.toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',

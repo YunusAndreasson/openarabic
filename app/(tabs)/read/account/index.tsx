@@ -159,7 +159,7 @@ const AccountScreen: FC = () => {
         ]}
         scrollViewProps={{
           style: styles.scrollView,
-          showsVerticalScrollIndicator: false,
+          showsVerticalScrollIndicator: true,
         }}
       >
         {/* Account Badge - Premium header section */}
@@ -758,7 +758,7 @@ const styles = StyleSheet.create({
   // Section Title Styles
   sectionTitle: {
     marginTop: LAYOUT.SPACING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.TINY,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: TYPOGRAPHY_HIERARCHY.WEIGHTS.SEMIBOLD,
     letterSpacing: TYPOGRAPHY_HIERARCHY.LETTER_SPACING.WIDE,

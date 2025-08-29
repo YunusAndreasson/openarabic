@@ -1,4 +1,4 @@
-import type { ViewProps, StyleProp, ViewStyle, ScrollView } from 'react-native';
+import type { ScrollView, StyleProp, ViewProps, ViewStyle } from 'react-native';
 
 /**
  * ThemedView is a flexible container component that automatically applies theme colors
