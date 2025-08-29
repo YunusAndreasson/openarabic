@@ -11,7 +11,7 @@ import { StyleSheet, View } from 'react-native';
 import BaseCard from '@common/BaseCard';
 
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useColors } from '@/hooks/theme/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -55,11 +55,7 @@ const StatCard = memo<StatCardProps>(({ label, value, color, icon, onPress }) =>
   }
 
   return (
-    <BaseCard
-      shadowSize="small"
-      style={styles.statCard}
-      onPress={onPress}
-          >
+    <BaseCard shadowSize="small" style={styles.statCard} onPress={onPress}>
       <View style={[styles.iconContainer, { backgroundColor: color + '14' }]}>
         <Ionicons name={icon} size={16} color={color} />
       </View>
@@ -155,9 +151,9 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   iconContainer: {
-    width: 32, // Fixed size instead of MIN_TOUCH_TARGET.SMALL
-    height: 32, // Fixed size instead of MIN_TOUCH_TARGET.SMALL
-    borderRadius: 16, // Fixed size instead of MIN_TOUCH_TARGET.SMALL / 2
+    width: MIN_TOUCH_TARGET.SMALL,
+    height: MIN_TOUCH_TARGET.SMALL,
+    borderRadius: MIN_TOUCH_TARGET.SMALL / 2,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: LAYOUT.SPACING.SMALL,

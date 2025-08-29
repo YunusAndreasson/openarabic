@@ -164,15 +164,15 @@ const styles = StyleSheet.create({
     opacity: LAYOUT.OPACITY.HIGH,
   },
   iconContainer: {
-    margin: 5,
+    margin: LAYOUT.SPACING.TINY,
   },
   badgeContainer: {
     position: 'absolute',
-    right: -6,
-    top: -3,
-    borderRadius: 12,
-    width: 24,
-    height: 24,
+    right: -LAYOUT.SPACING.TINY - 2, // -6px for proper positioning
+    top: -LAYOUT.SPACING.TINY + 1, // -3px for proper positioning
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    width: LAYOUT.COMPONENT.BADGE.SIZE,
+    height: LAYOUT.COMPONENT.BADGE.SIZE,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,

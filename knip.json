@@ -43,8 +43,7 @@
     "strip-ansi",
     "expo-asset",
     "@babel/plugin-transform-runtime",
-    "metro-react-native-babel-preset",
-    "mixpanel-react-native"
+    "metro-react-native-babel-preset"
   ],
   "ignoreExportsUsedInFile": false,
   "includeEntryExports": false,

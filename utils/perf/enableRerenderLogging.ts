@@ -43,6 +43,55 @@ type LogEntry = {
 };
 
 const LOG_DIR = `${FileSystem.documentDirectory ?? ''}rerender-logs/`;
+
+// Type definitions for performance logging
+interface PerformanceComponentData {
+  key: string;
+  name: string | undefined;
+  route: string | null;
+  renders: number;
+  wasted: number;
+  avgMs: number;
+  topPaths: string;
+}
+
+interface WhyDidYouRenderUpdateInfo {
+  displayName?: string;
+  options?: {
+    isPureComponent?: boolean;
+    isMemo?: boolean;
+  };
+  reason?: {
+    type?: string;
+    propsDifferences?: {
+      path: string;
+      kind: string;
+      type: string;
+    }[];
+    stateDifferences?: unknown[];
+    hookDifferences?: {
+      hookName?: string;
+    }[];
+    contextDifferences?: unknown[];
+  };
+  sinceLastRender?: {
+    totalTime: number;
+  };
+  actualDuration?: number;
+  ownerData?: {
+    displayName?: string;
+  }[];
+}
+
+interface WhyDidYouRenderDifference {
+  path?: string;
+  kind?: string;
+  type?: string;
+}
+
+interface WhyDidYouRenderHookDifference {
+  hookName?: string;
+}
 const SUMMARY_PATH = `${LOG_DIR}rerenders.summary.json`;
 const BUFFER_FLUSH_MS = 2500;
 const SUMMARY_FLUSH_EVERY = 50; // update summary after N events
@@ -115,7 +164,10 @@ function scheduleConsoleFlush(): void {
           .map(([p, c]) => `${p}(${c})`)
           .join(', '),
       }));
-      items.sort((a: any, b: any) => b.avgMs - a.avgMs || b.renders - a.renders);
+      items.sort(
+        (a: PerformanceComponentData, b: PerformanceComponentData) =>
+          b.avgMs - a.avgMs || b.renders - a.renders
+      );
       const top = items.slice(0, CONSOLE_MAX_COMPONENTS);
       // Compact single-line per component; easy to paste
       // Example: [Perf] ReviewCard@/(tabs)/practice avg=12.4ms r=42 w=18 keys=style.container(10),progress(8)
@@ -124,7 +176,7 @@ function scheduleConsoleFlush(): void {
       } else if (top.length) {
         // Performance data collected but not logged in production
         top.map(
-          (it: any) =>
+          (it: PerformanceComponentData) =>
             `${it.name}@${it.route ?? 'unknown'} avg=${it.avgMs.toFixed(1)}ms r=${it.renders} w=${
               it.wasted
             } keys=${it.topPaths}`
@@ -171,13 +223,6 @@ function updateConsoleWindow(entry: LogEntry): void {
   consoleWindow.set(key, agg);
 }
 
-function stableTypeOf(value: unknown): Change['type'] {
-  if (value === null) return 'null';
-  if (Array.isArray(value)) return 'array';
-  const t = typeof value;
-  return (['number', 'string', 'boolean', 'object'].includes(t) ? t : 'unknown') as Change['type'];
-}
-
 function hashShort(value: unknown): string {
   const s = JSON.stringify(value, (_k, v) => (typeof v === 'function' ? 'ƒ' : v));
   let h = 2166136261 >>> 0;
@@ -188,26 +233,24 @@ function hashShort(value: unknown): string {
   return (h >>> 0).toString(36);
 }
 
-function mapWhyDiff(d: any): Change {
-  const before = d?.prevValue;
-  const after = d?.nextValue;
-  const sameValue = JSON.stringify(before) === JSON.stringify(after);
-  const path = d?.pathString ?? 'unknown';
-  const kind: Change['kind'] = sameValue
-    ? 'ref-change-same-value'
-    : d?.diffType === 'deepEquals'
-    ? 'deep-change'
-    : d?.diffType === 'different'
-    ? 'value-change'
-    : d?.diffType === 'length'
-    ? 'length-change'
-    : 'unknown';
+function mapWhyDiff(d: WhyDidYouRenderDifference): Change {
+  const path = d?.path ?? 'unknown';
+  const kind: Change['kind'] =
+    d?.kind === 'ref-change-same-value'
+      ? 'ref-change-same-value'
+      : d?.kind === 'deep-change'
+      ? 'deep-change'
+      : d?.kind === 'value-change'
+      ? 'value-change'
+      : d?.kind === 'length-change'
+      ? 'length-change'
+      : 'unknown';
   return {
     path,
     kind,
-    type: stableTypeOf(after),
-    beforeHash: hashShort(before),
-    afterHash: hashShort(after),
+    type: (d?.type as Change['type']) ?? 'unknown',
+    beforeHash: 'unknown',
+    afterHash: 'unknown',
   };
 }
 
@@ -369,14 +412,16 @@ function printEntryToConsole(entry: LogEntry): void {
       .slice(0, 3)
       .join(',');
 
-    console.log(
-      '[PerfEvt]',
-      `${entry.component.name}@${entry.route.name ?? 'unknown'}`,
-      `reason=${entry.render.reasonType ?? 'unknown'}`,
-      keys ? `keys=${keys}` : '',
-      isWasted ? 'wasted' : '',
-      `dur=${dur.toFixed(1)}ms`
-    );
+    if (__DEV__) {
+      console.log(
+        '[PerfEvt]',
+        `${entry.component.name}@${entry.route.name ?? 'unknown'}`,
+        `reason=${entry.render.reasonType ?? 'unknown'}`,
+        keys ? `keys=${keys}` : '',
+        isWasted ? 'wasted' : '',
+        `dur=${dur.toFixed(1)}ms`
+      );
+    }
   } catch {
     // ignore
   }
@@ -407,7 +452,7 @@ export function enable(): void {
             /Provider$/,
             /Connect/,
           ],
-          notifier(updateInfo: any) {
+          notifier(updateInfo: WhyDidYouRenderUpdateInfo) {
             try {
               const route = getCurrentRouteInfo();
               const appVersion = Constants?.expoConfig?.version ?? null;
@@ -423,8 +468,8 @@ export function enable(): void {
                 mapWhyDiff
               );
               const hooksChanged: string[] = (updateInfo?.reason?.hookDifferences ?? [])
-                .map((d: any) => d?.hookName)
-                .filter(Boolean);
+                .map((d: WhyDidYouRenderHookDifference) => d?.hookName)
+                .filter((name): name is string => Boolean(name));
 
               const entry: LogEntry = {
                 v: 1,

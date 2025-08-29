@@ -163,3 +163,43 @@ export const COMPLETION_TITLE_DELAY = 400;
 
 /** Delay before completion subtitle appears */
 export const COMPLETION_SUBTITLE_DELAY = 600;
+
+/**
+ * General timing constants for delays, timeouts, and intervals
+ */
+export const TIMING_CONSTANTS = {
+  /** Quick delays for UI feedback */
+  QUICK_DELAY: 100,
+
+  /** Standard medium delay */
+  MEDIUM_DELAY: 300,
+
+  /** One second in milliseconds */
+  SECOND: 1000,
+
+  /** Two and a half seconds */
+  BUFFER_FLUSH: 2500,
+
+  /** Five seconds */
+  LONG_DELAY: 5000,
+
+  /** Ten seconds */
+  VERY_LONG_DELAY: 10000,
+
+  /** Conversion multipliers */
+  MILLISECONDS_PER_SECOND: 1000,
+  SECONDS_PER_MINUTE: 60,
+
+  /** Common animation delays */
+  MOUNT_DELAY: 100,
+  DEBOUNCE_DELAY: 300,
+  FOCUS_DELAY: 100,
+
+  /** Audio-related delays */
+  AUDIO_FADE_DURATION: 300,
+  AUDIO_BUFFER_DELAY: 100,
+
+  /** Network request timeouts */
+  NETWORK_TIMEOUT: 10000,
+  RETRY_DELAY_BASE: 1000,
+} as const;

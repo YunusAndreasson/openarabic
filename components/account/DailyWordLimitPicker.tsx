@@ -195,8 +195,8 @@ const styles = StyleSheet.create({
     borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   indicator: {
-    width: 40,
-    height: 4,
+    width: LAYOUT.COMPONENT.PROGRESS_BAR_WIDTH,
+    height: LAYOUT.PROGRESS_BAR.HEIGHT,
   },
   container: {
     paddingBottom: LAYOUT.SPACING.SMALL,

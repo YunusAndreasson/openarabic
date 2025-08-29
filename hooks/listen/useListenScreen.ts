@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { TIMING_CONSTANTS } from '@/constants/animation';
 import { AUDIO_STATES } from '@/constants/audio';
 import { useAppPreloader } from '@/hooks/app/useAppPreloader';
 // Use direct service access to avoid frequent parent re-renders from time updates
@@ -14,6 +15,7 @@ import { readingListService } from '@/services/readingList';
 import { simpleAudioService } from '@/services/simpleAudioService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { removeFromCustomOrder } from '@/store/listenSlice';
+import type { Article } from '@/types/articles.types';
 import { handleError } from '@/utils/errorHandling';
 import { selectionFeedback } from '@/utils/haptics';
 import { generateImageUrl } from '@/utils/imageUtils';
@@ -74,10 +76,11 @@ export const useListenScreen = () => {
       return readingListService.getReadingList(user.id);
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    staleTime: 5 * TIMING_CONSTANTS.SECONDS_PER_MINUTE * TIMING_CONSTANTS.MILLISECONDS_PER_SECOND,
+    gcTime: 10 * TIMING_CONSTANTS.SECONDS_PER_MINUTE * TIMING_CONSTANTS.MILLISECONDS_PER_SECOND,
     retry: 2,
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 5000),
+    retryDelay: attemptIndex =>
+      Math.min(TIMING_CONSTANTS.RETRY_DELAY_BASE * 2 ** attemptIndex, TIMING_CONSTANTS.LONG_DELAY),
     placeholderData: [],
   });
   const { data: readingList = [], isLoading: isReadingListLoading } = readingListQuery;
@@ -131,8 +134,8 @@ export const useListenScreen = () => {
       return enhancedAudioService.getReadingListEnhancedTracks(user.id, audioPreference);
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // Standard stale time is fine now
-    gcTime: 10 * 60 * 1000,
+    staleTime: 5 * TIMING_CONSTANTS.SECONDS_PER_MINUTE * TIMING_CONSTANTS.MILLISECONDS_PER_SECOND, // Standard stale time is fine now
+    gcTime: 10 * TIMING_CONSTANTS.SECONDS_PER_MINUTE * TIMING_CONSTANTS.MILLISECONDS_PER_SECOND,
     placeholderData: [],
   });
   const { data: enhancedTracks = [], error: enhancedTracksError } = enhancedTracksQuery;
@@ -155,8 +158,22 @@ export const useListenScreen = () => {
     return !isDataCached && isReadingListLoading && sortedReadingList.length === 0;
   }, [isDataCached, isReadingListLoading, sortedReadingList.length]);
 
-  useScreenFocusRefresh(queryClient, 'readingList', user?.id, 1000 * 60 * 5, true, true);
-  useScreenFocusRefresh(queryClient, 'enhancedAudioTracks', user?.id, 1000 * 60 * 5, true, true);
+  useScreenFocusRefresh(
+    queryClient,
+    'readingList',
+    user?.id,
+    TIMING_CONSTANTS.MILLISECONDS_PER_SECOND * TIMING_CONSTANTS.SECONDS_PER_MINUTE * 5,
+    true,
+    true
+  );
+  useScreenFocusRefresh(
+    queryClient,
+    'enhancedAudioTracks',
+    user?.id,
+    TIMING_CONSTANTS.MILLISECONDS_PER_SECOND * TIMING_CONSTANTS.SECONDS_PER_MINUTE * 5,
+    true,
+    true
+  );
 
   const isCurrentlyPlaying = audioState === AUDIO_STATES.PLAYING;
 
@@ -184,11 +201,11 @@ export const useListenScreen = () => {
         // STABILIZATION: Debounce playback mode change
         playbackModeTimeoutRef.current = setTimeout(() => {
           setPlaybackMode('none');
-        }, 100);
+        }, TIMING_CONSTANTS.QUICK_DELAY);
       } catch {
         playbackModeTimeoutRef.current = setTimeout(() => {
           setPlaybackMode('none');
-        }, 100);
+        }, TIMING_CONSTANTS.QUICK_DELAY);
       }
     } else if (currentTracks.length) {
       try {
@@ -212,7 +229,7 @@ export const useListenScreen = () => {
                 })
                 .catch(() => {});
 
-              const articleInCache = queryClient.getQueryData<any>([
+              const articleInCache = queryClient.getQueryData<Article>([
                 'article',
                 articleIdToPrefetch,
               ]);
@@ -227,19 +244,19 @@ export const useListenScreen = () => {
             // Playlist is complete, reset playback mode
             playbackModeTimeoutRef.current = setTimeout(() => {
               setPlaybackMode('none');
-            }, 100);
+            }, TIMING_CONSTANTS.QUICK_DELAY);
           }
         });
 
         if (!success) {
           playbackModeTimeoutRef.current = setTimeout(() => {
             setPlaybackMode('none');
-          }, 100);
+          }, TIMING_CONSTANTS.QUICK_DELAY);
         }
       } catch (error) {
         playbackModeTimeoutRef.current = setTimeout(() => {
           setPlaybackMode('none');
-        }, 100);
+        }, TIMING_CONSTANTS.QUICK_DELAY);
         handleError(error as Error);
       }
     }
@@ -296,7 +313,7 @@ export const useListenScreen = () => {
         // STABILIZATION: Debounce playback mode change
         playbackModeTimeoutRef.current = setTimeout(() => {
           setPlaybackMode('none');
-        }, 100);
+        }, TIMING_CONSTANTS.QUICK_DELAY);
         return;
       }
 
@@ -313,7 +330,7 @@ export const useListenScreen = () => {
             queryFn: () => articlesService.getArticleById(articleId),
           })
           .catch(() => {});
-        const cachedArticle = queryClient.getQueryData<any>(['article', articleId]);
+        const cachedArticle = queryClient.getQueryData<Article>(['article', articleId]);
         const cachedImg = generateImageUrl(cachedArticle?.image_url);
         if (cachedImg) {
           Image.prefetch(cachedImg).catch(() => {});
@@ -330,17 +347,17 @@ export const useListenScreen = () => {
           if (!success) {
             playbackModeTimeoutRef.current = setTimeout(() => {
               setPlaybackMode('none');
-            }, 100);
+            }, TIMING_CONSTANTS.QUICK_DELAY);
           }
         } else {
           playbackModeTimeoutRef.current = setTimeout(() => {
             setPlaybackMode('none');
-          }, 100);
+          }, TIMING_CONSTANTS.QUICK_DELAY);
         }
       } catch (error) {
         playbackModeTimeoutRef.current = setTimeout(() => {
           setPlaybackMode('none');
-        }, 100);
+        }, TIMING_CONSTANTS.QUICK_DELAY);
         handleError(error as Error);
       }
     },

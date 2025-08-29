@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
   leftSection: {
-    width: 96, // slightly reduced to give Arabic more room
+    width: LAYOUT.CARD.WIDTH.DICTIONARY_LEFT_SECTION, // slightly reduced to give Arabic more room
     flexShrink: 0,
     paddingRight: LAYOUT.SPACING.SMALL,
     justifyContent: 'flex-start',

@@ -1,53 +1,105 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * Analytics Service
- * Simple wrapper around Mixpanel for consistent analytics tracking
+ * Production-ready Mixpanel integration with silent operation
  *
- * Note: This implementation uses console.log for development tracking
+ * Features:
+ * - Lazy initialization (only when first analytics call is made)
+ * - Automatic fallback when Mixpanel is unavailable
+ * - Silent success operation (no production logging)
+ * - Error logging only in development mode
+ * - Type-safe interface
  */
+
+import type { MixpanelProperties } from 'mixpanel-react-native';
 
 import { MIXPANEL_TOKEN } from '@/constants/analytics';
 
-// Simple analytics service - logs events to console
+// Mixpanel instance and initialization state
+let mixpanelInstance: any = null;
+let isInitialized = false;
+
+const initializeMixpanel = async (): Promise<void> => {
+  if (isInitialized || !MIXPANEL_TOKEN) {
+    return; // Already initialized or no token
+  }
+
+  try {
+    const { Mixpanel } = require('mixpanel-react-native');
+
+    // Official v3.1.2 initialization pattern
+    const trackAutomaticEvents = false;
+    mixpanelInstance = new Mixpanel(MIXPANEL_TOKEN.trim(), trackAutomaticEvents);
+    await mixpanelInstance.init();
+
+    isInitialized = true;
+    if (__DEV__) {
+      console.log('Mixpanel initialized successfully');
+    }
+  } catch (error) {
+    console.error(
+      'Mixpanel initialization failed:',
+      error instanceof Error ? error.message : String(error)
+    );
+  }
+};
+
+// Simple analytics service with Mixpanel integration
 export const analytics = {
   // Identify user with properties
-  identify: async (userId: string, properties?: Record<string, unknown>): Promise<void> => {
+  identify: async (userId: string, properties?: MixpanelProperties): Promise<void> => {
     try {
-      if (!MIXPANEL_TOKEN) {
-        console.log('🔍 ANALYTICS DISABLED: identify()', { userId, properties });
-        return;
-      }
+      await initializeMixpanel();
 
-      console.log('🔍 ANALYTICS: identify()', { userId, properties });
+      if (mixpanelInstance?.identify) {
+        await mixpanelInstance.identify(userId);
+        if (properties) {
+          const people = await mixpanelInstance.getPeople();
+          if (people) {
+            await people.set(properties);
+          }
+        }
+      }
+      // Silent success - no logging needed for normal operation
     } catch (error) {
-      console.warn('Analytics identify failed:', error);
+      // Only log errors in development
+      if (__DEV__) {
+        console.warn(`Analytics: Identify failed for user ${userId}:`, error);
+      }
     }
   },
 
   // Track custom events
-  track: async (event: string, properties?: Record<string, unknown>): Promise<void> => {
+  track: async (event: string, properties?: MixpanelProperties): Promise<void> => {
     try {
-      if (!MIXPANEL_TOKEN) {
-        console.log('🔍 ANALYTICS DISABLED: track()', { event, properties });
-        return;
-      }
+      await initializeMixpanel();
 
-      console.log('🔍 ANALYTICS: track()', { event, properties });
+      if (mixpanelInstance?.track) {
+        await mixpanelInstance.track(event, properties);
+      }
+      // Silent success - no logging needed for normal operation
     } catch (error) {
-      console.warn('Analytics track failed:', error);
+      // Only log errors in development
+      if (__DEV__) {
+        console.warn(`Analytics: Track failed for "${event}":`, error);
+      }
     }
   },
 
   // Reset user (for logout)
   reset: async (): Promise<void> => {
     try {
-      if (MIXPANEL_TOKEN === 'YOUR_MIXPANEL_TOKEN_HERE') {
-        console.log('🔍 ANALYTICS: reset()');
-        return;
-      }
+      await initializeMixpanel();
 
-      console.log('🔍 ANALYTICS: reset()');
+      if (mixpanelInstance?.reset) {
+        await mixpanelInstance.reset();
+      }
+      // Silent success - no logging needed for normal operation
     } catch (error) {
-      console.warn('Analytics reset failed:', error);
+      // Only log errors in development
+      if (__DEV__) {
+        console.warn('Analytics: Reset failed:', error);
+      }
     }
   },
 

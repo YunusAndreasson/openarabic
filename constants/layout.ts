@@ -215,6 +215,9 @@ export const LAYOUT = {
     IMAGE: {
       MINI_PLAYER: TOUCH_TARGETS.LARGE + SPACING_SCALE.SMALL, // 48 + 8 = 56 (increased from 40 for better balance)
     },
+    WIDTH: {
+      DICTIONARY_LEFT_SECTION: BASE_UNIT * 24, // 96 - slightly reduced to give Arabic more room
+    },
   },
 
   INPUT: {
@@ -279,6 +282,14 @@ export const LAYOUT = {
   /** Standard height for thin progress bars */
   PROGRESS_BAR: {
     HEIGHT: BASE_UNIT, // 4 - responsive to base unit (changed from 0.75 to avoid fractional pixels)
+  },
+
+  /** Common component dimensions */
+  COMPONENT: {
+    BADGE: {
+      SIZE: BASE_UNIT * 6, // 24 - standard badge size
+    },
+    PROGRESS_BAR_WIDTH: BASE_UNIT * 10, // 40 - standard progress bar width
   },
 
   /** Common sizes for bottom sheet UI elements */

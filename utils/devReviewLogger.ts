@@ -4,6 +4,8 @@
  In production builds this is a no-op.
 */
 
+import { getEnvVar } from '@/utils/env';
+
 type Primitive = string | number | boolean | null | undefined;
 
 interface LogContext {
@@ -24,7 +26,7 @@ interface StartSessionParams {
 }
 
 const isDev: boolean =
-  typeof __DEV__ !== 'undefined' ? __DEV__ === true : process.env.NODE_ENV !== 'production';
+  typeof __DEV__ !== 'undefined' ? __DEV__ === true : getEnvVar('NODE_ENV') !== 'production';
 
 let currentContext: LogContext | null = null;
 let startTimestamp: number | null = null;
