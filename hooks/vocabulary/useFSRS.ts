@@ -14,7 +14,6 @@ import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { FSRSStateTracking, UseFSRSOptions, UseFSRSResult } from '@/types/fsrs.types';
 import type { WordConfidence } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { devReviewLogger } from '@/utils/devReviewLogger';
 import { handleError } from '@/utils/errorHandling';
 import {
   calculateWordPriority,
@@ -178,15 +177,7 @@ export function useFSRS({
     stateTrackingRef.current.queueInitialized = true;
     lastQueueSignatureRef.current = signature;
 
-    // Dev logging: session start/context
-    devReviewLogger.startSession({
-      userId: userId ?? undefined,
-      mode,
-      useAllWords,
-      sessionCooldownHours: _sessionCooldownHours,
-      dueCount: effectiveDueWords.length,
-      signature,
-    });
+    // Development logging removed - session start
 
     // Clear any existing timeouts before setting new ones
     if (initTimeoutRef.current) {
@@ -224,13 +215,7 @@ export function useFSRS({
         const ordered = queueRef.current.toArray();
         setWordQueue(ordered);
 
-        devReviewLogger.log('queue.initialized', {
-          totalWords: countersRef.current.totalWords,
-          orderedCount: ordered.length,
-          prioritiesPreview: ordered
-            .slice(0, 5)
-            .map(w => ({ id: w.root_id, stability: w.fsrs_stability, reps: w.fsrs_reps })),
-        });
+        // Development logging removed - queue initialized
 
         // FIXED: Check if any words are actually available (not in cooldown)
         const first = getNextWordWithSpacing();
@@ -238,12 +223,7 @@ export function useFSRS({
         if (first) {
           // We have available words, start session
           setCurrentWord(first);
-          devReviewLogger.log('word.next', {
-            reason: 'first-available',
-            rootId: first.root_id,
-            stability: first.fsrs_stability,
-            reps: first.fsrs_reps,
-          });
+          // Development logging removed - word next
         } else {
           // FIXED: All words are in cooldown or spacing, complete session immediately
           setIsComplete(true);
@@ -251,9 +231,7 @@ export function useFSRS({
             stateTrackingRef.current.completionTriggered = true;
             onComplete();
           }
-          devReviewLogger.warn('session.complete-immediate', {
-            reason: 'no-available-words-after-init',
-          });
+          // Development logging removed - session complete immediate
         }
       } else {
         // FIXED: Only complete if there are truly no words available
@@ -262,9 +240,7 @@ export function useFSRS({
           stateTrackingRef.current.completionTriggered = true;
           onComplete();
         }
-        devReviewLogger.warn('session.complete-immediate', {
-          reason: 'no-due-words',
-        });
+        // Development logging removed - no due words
       }
     }, 0);
 
@@ -319,19 +295,7 @@ export function useFSRS({
 
       stateTrackingRef.current.isProcessingUpdate = true;
 
-      devReviewLogger.ensureStarted({
-        userId: userId ?? undefined,
-        mode,
-        useAllWords,
-        sessionCooldownHours: _sessionCooldownHours,
-      });
-      devReviewLogger.log('word.update.begin', {
-        rootId,
-        confidence,
-        currentWordId: currentWord.root_id,
-        currentStability: currentWord.fsrs_stability,
-        currentReps: currentWord.fsrs_reps,
-      });
+      // Development logging removed - word update begin
 
       const card = convertToFSRSCard(currentWord);
       const now = new Date();
@@ -419,14 +383,7 @@ export function useFSRS({
           : 0;
       setProgress(newProgress);
 
-      devReviewLogger.log('progress.updated', {
-        processedWords: countersRef.current.processedWords,
-        knownWords: countersRef.current.knownWords,
-        totalWords: totalWordsInSession,
-        progress: newProgress,
-        spacingQueueSize: spacingQueueRef.current.spacedWords.length,
-        remainingQueueSize: remaining.length,
-      });
+      // Development logging removed - progress updated
 
       // FIXED: Ensure forward progress when only spaced words remain (avoid deadlock)
       // If there's no next item, try to move any ready or nearly-ready spaced words back to the queue.
@@ -447,10 +404,7 @@ export function useFSRS({
           );
 
           nextItem = getNextWordWithSpacing();
-          devReviewLogger.log('word.next', {
-            reason: 'ready-spaced-words',
-            nextId: nextItem?.root_id ?? null,
-          });
+          // Development logging removed - word next from spaced
         }
 
         // If still none, but the session isn't fully known yet, requeue the smallest spacing candidate
@@ -474,11 +428,7 @@ export function useFSRS({
                 id => id !== candidate.word.root_id
               );
               nextItem = candidate.word;
-              devReviewLogger.log('word.next', {
-                reason: 'force-repeat-override',
-                candidateId: candidate.word.root_id,
-                nextId: nextItem?.root_id ?? null,
-              });
+              // Development logging removed - force repeat override
             }
           }
 
@@ -489,10 +439,7 @@ export function useFSRS({
               setIsComplete(true);
               if (onComplete) onComplete();
             }, COMPLETION_DELAY_MS);
-            devReviewLogger.warn('session.completion-triggered', {
-              reason: allKnown ? 'all-known' : 'no-next-item',
-              spacingQueueSize: spacingQueueRef.current.spacedWords.length,
-            });
+            // Development logging removed - session completion triggered
           }
         }
       }
@@ -500,12 +447,7 @@ export function useFSRS({
       setCurrentWord(nextItem || null);
       setWordQueue(remaining);
 
-      devReviewLogger.log('word.update.end', {
-        currentRootId: rootId,
-        nextRootId: nextItem?.root_id ?? null,
-        remainingQueueSize: remaining.length,
-        spacingQueueSize: spacingQueueRef.current.spacedWords.length,
-      });
+      // Development logging removed - word update end
 
       // Persist update; errors won't block UI progression
       try {
@@ -575,7 +517,7 @@ export function useFSRS({
       // Reset state
       resetQueue();
 
-      devReviewLogger.endSession('unmounted');
+      // Development logging removed
     };
   }, [resetQueue]);
 

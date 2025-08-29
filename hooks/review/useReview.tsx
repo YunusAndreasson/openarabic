@@ -17,7 +17,6 @@ import { useFSRS, useWordSizing } from '@/hooks/vocabulary';
 import { audioCache } from '@/services/audioCache';
 import type { SessionMetrics } from '@/types/review.types';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { devReviewLogger } from '@/utils/devReviewLogger';
 import { handleError } from '@/utils/errorHandling';
 import { generateAudioUrl } from '@/utils/imageUtils';
 
@@ -179,10 +178,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     if (stateRefs.current.completionTriggered) return;
     stateRefs.current.completionTriggered = true;
 
-    devReviewLogger.warn('ui.completion.transition', {
-      reason: 'triggerCompletionTransition',
-      progress: stateRefs.current.maxProgress,
-    });
+    // UI completion transition
 
     // Stop any playing audio to free resources
     audioPlayerRef.current.stop().catch(() => {});
@@ -247,7 +243,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     if (currentWordKey !== 'none' && stateRefs.current.completionTriggered) {
       stateRefs.current.completionTriggered = false;
       setIsTransitioningToCompletion(false);
-      devReviewLogger.log('ui.completion.reset', { reason: 'new-word', currentWordKey });
+      // UI completion reset for new word
     }
   }, [currentWordKey]);
 
@@ -317,12 +313,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       try {
         // If struggling, treat it more like 'unknown' than 'vague'
         const effectiveConfidence = isStruggling ? 'unknown' : confidence;
-        devReviewLogger.log('word.process.begin', {
-          rootId: currentWord.root_id,
-          confidence,
-          effectiveConfidence,
-          isStruggling,
-        });
+        // Word processing begin
         await updateWord(currentWord.root_id, effectiveConfidence);
 
         if (!stateRefs.current.isUpdatingWord) return;
@@ -332,24 +323,17 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
         if (isComplete) {
           // Session is already complete, trigger completion transition
           triggerCompletionTransition();
-          devReviewLogger.warn('word.process.complete-immediate', {
-            rootId: currentWord.root_id,
-          });
+          // Word process complete immediately
         } else {
           // Continue with normal flow
           setTimeout(() => fadeIn(), TIMING_CONFIG.FAST.duration);
-          devReviewLogger.log('word.process.done', {
-            rootId: currentWord.root_id,
-            nextAfterFadeMs: TIMING_CONFIG.FAST.duration,
-          });
+          // Word process done
         }
       } catch (error) {
         handleError(error instanceof Error ? error : new Error(String(error)));
         if (!stateRefs.current.isUpdatingWord) return;
         fadeIn();
-        devReviewLogger.error('word.process.error', {
-          rootId: currentWord.root_id,
-        });
+        // Word process error logged
       } finally {
         stateRefs.current.isUpdatingWord = false;
         setIsUpdatingUI(false);
@@ -385,7 +369,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       return success;
     } catch (error) {
       handleError(error instanceof Error ? error : new Error(String(error)));
-      devReviewLogger.warn('audio.play.error', { url });
+      // Development logging removed
       return false;
     }
   }, []);
@@ -482,10 +466,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
 
           // Update UI with meaning if needed
           stateRefs.current.meaningTimeout = displayMeaning(confidence, isStruggling);
-          devReviewLogger.log('meaning.display', {
-            confidence,
-            isStruggling,
-          });
+          // Meaning display logged
 
           // Play English feedback audio for vague/unknown responses
           if (
@@ -495,7 +476,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
             const englishAudioUrl = generateAudioUrl(currentWord.root.audio_url_en);
             if (englishAudioUrl) {
               playAudio(englishAudioUrl);
-              devReviewLogger.log('audio.play.english', { url: englishAudioUrl });
+              // Development logging removed
             }
           }
 
@@ -510,10 +491,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
               () => {
                 // Process feedback after meaning display timeout
                 processFeedback(confidence, isStruggling, controller);
-                devReviewLogger.log('meaning.timeout.elapsed', {
-                  confidence,
-                  isStruggling,
-                });
+                // Meaning timeout elapsed
               },
               isStruggling
                 ? TRANSITION_DELAYS.meaningDisplay.struggling
@@ -522,7 +500,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
           } else {
             // For "known" responses, process immediately with minimum delay
             processFeedback(confidence, isStruggling, controller);
-            devReviewLogger.log('process.immediate', { confidence, isStruggling });
+            // Development logging removed
           }
         }, TRANSITION_DELAYS.fadeAnimation);
       }, TRANSITION_DELAYS.initial);
@@ -550,10 +528,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
     if (isComplete) {
       // Ensure any remaining audio is stopped
       audioPlayerRef.current.stop().catch(() => {});
-      devReviewLogger.log('ui.completion.isComplete.effect', {
-        currentWordId: currentWord?.root_id ?? null,
-        progress,
-      });
+      // UI completion isComplete effect
     }
   }, [isComplete, isTransitioningToCompletion, triggerCompletionTransition]);
 
@@ -573,10 +548,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
         stateRefs.current.maxProgress = safeProgress;
         setProgressAnimationKey(prev => prev + 1);
         timeRefs.current.lastProgressUpdate = now;
-        devReviewLogger.log('ui.progress.updated', {
-          progress: safeProgress,
-          isComplete,
-        });
+        // UI progress updated
       }
 
       // Only update if not already at 100% to prevent cycles
@@ -765,7 +737,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       // Play audio immediately since it's already cached
       playAudio(audioUrl)
         .then(() => {
-          devReviewLogger.log('audio.ready', { wordId, audioUrl });
+          // Development logging removed
         })
         .catch(handleError);
     }
@@ -800,9 +772,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
           !stateRefs.current.isUpdatingWord &&
           !currentWord
         ) {
-          devReviewLogger.warn('ui.watchdog.completion', {
-            reason: 'no-current-word',
-          });
+          // UI watchdog completion warning
           triggerCompletionTransition();
         }
       }, 300);
@@ -814,32 +784,16 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
   const handleSwipeLeft = useCallback(() => {
     if (isComplete || stateRefs.current.isUpdatingWord || !currentWord || !isCurrentWordAudioReady)
       return;
-    devReviewLogger.ensureStarted();
-    devReviewLogger.log('gesture.swipe-left', {
-      currentWordId: currentWord.root_id,
-      stability: currentWord.fsrs_stability,
-      reps: currentWord.fsrs_reps,
-      isUpdatingWord: stateRefs.current.isUpdatingWord,
-      completionTriggered: stateRefs.current.completionTriggered,
-      isComplete,
-      isAudioReady: isCurrentWordAudioReady,
-    });
+    // Development logging removed
+    // Gesture swipe left
     handleKnowledgeResponse('unknown');
   }, [handleKnowledgeResponse, isComplete, currentWord, isCurrentWordAudioReady]);
 
   const handleSwipeRight = useCallback(() => {
     if (isComplete || stateRefs.current.isUpdatingWord || !currentWord || !isCurrentWordAudioReady)
       return;
-    devReviewLogger.ensureStarted();
-    devReviewLogger.log('gesture.swipe-right', {
-      currentWordId: currentWord.root_id,
-      stability: currentWord.fsrs_stability,
-      reps: currentWord.fsrs_reps,
-      isUpdatingWord: stateRefs.current.isUpdatingWord,
-      completionTriggered: stateRefs.current.completionTriggered,
-      isComplete,
-      isAudioReady: isCurrentWordAudioReady,
-    });
+    // Development logging removed
+    // Gesture swipe right
     handleKnowledgeResponse('known');
   }, [handleKnowledgeResponse, isComplete, currentWord, isCurrentWordAudioReady]);
 
@@ -897,9 +851,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
         }
       }
       mounted.current = false;
-      devReviewLogger.endSession('closed', {
-        progress: stateRefs.current.maxProgress,
-      });
+      // Session ended (closed)
     }, 100);
   }, [invalidateQueries, user?.id, queryClient, onClose, fromRemember, router]);
 
@@ -967,7 +919,7 @@ export function useReview({ fromRemember, mode, onClose }: UseReviewProps = {}):
       timeRefs.current.lastVagueTime = null;
       timeRefs.current.lastProgressUpdate = Date.now();
 
-      devReviewLogger.endSession('unmounted');
+      // Development logging removed
     };
   }, [fadeIn]);
 
