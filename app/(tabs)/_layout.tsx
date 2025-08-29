@@ -44,8 +44,8 @@ const IconWithBadge = memo(
     );
 
     const badgeTextStyle = useMemo(
-      () => [styles.badgeText, { color: colors.background }],
-      [colors.background]
+      () => [styles.badgeText, { color: colors.white }],
+      [colors.white]
     );
 
     return (
@@ -58,9 +58,7 @@ const IconWithBadge = memo(
         />
         {badgeCount > 0 && (
           <View style={badgeContainerStyle}>
-            <Text style={badgeTextStyle}>
-              {badgeCount > 99 ? '99+' : badgeCount}
-            </Text>
+            <Text style={badgeTextStyle}>{badgeCount > 99 ? '99+' : badgeCount}</Text>
           </View>
         )}
       </View>
