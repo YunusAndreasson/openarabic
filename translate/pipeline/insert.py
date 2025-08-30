@@ -126,16 +126,30 @@ def generate_article_audio(
         if not audio_urls:
             raise RuntimeError("Failed to create article audio files")
 
-        # Update database with article-level audio URLs
+        # Update database with article-level audio URLs and timestamps
         try:
-            get_supabase_client().table("articles").update(
-                {
-                    "audio_url": audio_urls["arabic_url"],
-                    "audio_url_bilingual": audio_urls["bilingual_url"],
-                }
-            ).eq("id", article_id).execute()
+            update_data = {
+                "audio_url": audio_urls["arabic_url"],
+                "audio_url_bilingual": audio_urls["bilingual_url"],
+            }
 
-            logger.info("Article audio URLs updated in database successfully")
+            # Add word timestamps if available
+            word_timestamps = audio_urls.get("word_timestamps")
+            if word_timestamps:
+                update_data["word_timestamps"] = word_timestamps
+                logger.info(
+                    f"Updating database with {len(word_timestamps)} word timestamps"
+                )
+            else:
+                logger.warning("No word timestamps available for database update")
+
+            get_supabase_client().table("articles").update(update_data).eq(
+                "id", article_id
+            ).execute()
+
+            logger.info(
+                "Article audio URLs and timestamps updated in database successfully"
+            )
 
         except Exception as e:
             raise RuntimeError(f"Failed to update article audio URLs: {e}") from e
@@ -269,6 +283,20 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
             if audio_urls:
                 # Get the Arabic audio URL for the article
                 article_audio_url = audio_urls["arabic_url"]
+
+                # Get word timestamps if available
+                word_timestamps: list[dict[str, Any]] = audio_urls.get(
+                    "word_timestamps", []
+                )
+                if word_timestamps:
+                    logger.info(
+                        f"Generated article audio with {len(word_timestamps)} word timestamps"
+                    )
+                else:
+                    logger.warning(
+                        "Generated article audio but no word timestamps available"
+                    )
+
                 logger.info(f"Generated article audio: {article_audio_url}")
             else:
                 raise RuntimeError("Failed to create article audio files")
@@ -281,7 +309,7 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
             logger.error(f"Audio generation failed: {e}")
             raise RuntimeError(f"Audio generation is mandatory and failed: {e}") from e
 
-    # Create ArticleData object with audio_url
+    # Create ArticleData object with audio_url and timestamps
     article_data = ArticleData(
         title=data["metadata"]["title"],
         summary=data["metadata"]["summary"],
@@ -291,6 +319,9 @@ def process_json_file(file_path: str, category_id: int = None) -> int:
         content_hash=content_hash,
         image_url=image_url,
         audio_url=article_audio_url,  # This will be None if AUDIO_AVAILABLE is False
+        word_timestamps=word_timestamps
+        if AUDIO_AVAILABLE and "word_timestamps" in locals() and word_timestamps
+        else [],
     )
 
     try:

@@ -28,10 +28,7 @@ from data.config import (
 )
 from pipeline.split_file import split_file as split_text
 from pipeline.translate import translate_file as translate_text
-from utils.progress_tracker import (
-    progress_tracker,
-    suppress_verbose_logging,
-)
+from utils.progress_tracker import suppress_verbose_logging
 from utils.responses_api import load_api_keys, token_tracker
 from utils.subprocess_utils import run_pipeline_step
 
@@ -134,6 +131,7 @@ Pipeline Phases:
   1. Split: Split input files from 0_inbox into sentences
   2. Translate: Translate split sentences to English
   3. Insert: Process through ElevenLabs and insert into database
+  4. Word Audio: Cut and upload individual word audio clips
 
 Examples:
   python main.py --split                    # Split all files from inbox
@@ -142,6 +140,9 @@ Examples:
   python main.py --split --translate        # Split then translate
   python main.py --translate --insert       # Translate then insert
   python main.py --split --translate --insert  # Full pipeline
+  python main.py --full                     # Complete pipeline (recommended)
+  python main.py --auto                     # Same as --full
+  python main.py --process-word-audio 123   # Process word audio for article 123
         """,
     )
 
@@ -171,11 +172,48 @@ Examples:
         help=f"Batch size for translation (default: {DEFAULT_BATCH_SIZE})",
     )
 
+    parser.add_argument(
+        "--process-word-audio",
+        type=int,
+        help="Process word-level audio for a specific article ID",
+    )
+
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help="Run the complete pipeline: split -> translate -> insert -> word-audio",
+    )
+
+    parser.add_argument(
+        "--auto",
+        action="store_true",
+        help="Alias for --full: run complete pipeline automatically",
+    )
+
     args = parser.parse_args()
 
-    if not any([args.split, args.translate, args.insert]):
+    if not any(
+        [
+            args.split,
+            args.translate,
+            args.insert,
+            args.process_word_audio,
+            args.full,
+            args.auto,
+        ]
+    ):
         parser.print_help()
         sys.exit(1)
+
+    # Handle --full and --auto arguments
+    if args.full or args.auto:
+        logger.info(
+            "🚀 Starting FULL PIPELINE (split -> translate -> insert -> word-audio)"
+        )
+        args.split = True
+        args.translate = True
+        args.insert = True
+        args.process_word_audio = None  # Will be handled after insert
 
     if args.batch_size < 1 or args.batch_size > 15:
         raise ValueError(f"Batch size must be between 1 and 15, got: {args.batch_size}")
@@ -185,29 +223,27 @@ Examples:
 
     # Only run split phase if specifically requested
     if args.split:
-        # Phase start is now handled by progress bars
+        logger.info("📄 PHASE 1: SPLIT - Splitting input files into sentences")
 
         input_files = find_input_files_in_inbox()
         if not input_files:
-            logger.error(f"No input files found in inbox directory: {INBOX_DIR}")
+            logger.error(f"❌ No input files found in inbox directory: {INBOX_DIR}")
             raise FileNotFoundError(
                 f"No input files found in inbox directory: {INBOX_DIR}"
             )
 
-        # Start progress tracking for split phase
-        progress_tracker.start_phase(
-            "Split", len(input_files), "Processing input files"
-        )
+        logger.info(f"📁 Found {len(input_files)} files to process")
 
-        for _i, (input_file, author_folder, author_name) in enumerate(input_files):
-            progress_tracker.set_description(f"Processing {author_name}")
+        for i, (input_file, author_folder, author_name) in enumerate(input_files, 1):
+            logger.info(f"   {i}/{len(input_files)} - Processing {author_name}")
             run_split_file(input_file, author_folder)
-            progress_tracker.update(1)
 
-        progress_tracker.finish_phase()
+        logger.info("✅ Split phase completed successfully")
 
     # Only run translate phase if specifically requested
     if args.translate:
+        logger.info("🌍 PHASE 2: TRANSLATE - Translating sentences to English")
+
         # Find all split files in the split directory
         split_files = []
         if os.path.exists(SPLIT_DIR):
@@ -220,16 +256,13 @@ Examples:
                     split_files.append((split_file, author_number, author_name))
 
         if not split_files:
-            logger.error(f"No split files found in: {SPLIT_DIR}")
+            logger.error(f"❌ No split files found in: {SPLIT_DIR}")
             raise FileNotFoundError(f"No split files found in: {SPLIT_DIR}")
 
-        # Phase start is now handled by progress bars
+        logger.info(f"📄 Found {len(split_files)} split files to translate")
 
-        # Start progress tracking for translation phase
-        progress_tracker.start_phase("Translate", len(split_files), "Translating files")
-
-        for _i, (split_file, author_number, author_name) in enumerate(split_files):
-            progress_tracker.set_description(f"Translating {author_name}")
+        for i, (split_file, author_number, author_name) in enumerate(split_files, 1):
+            logger.info(f"   {i}/{len(split_files)} - Translating {author_name}")
 
             # Create translation output filename
             split_path = Path(split_file)
@@ -244,12 +277,15 @@ Examples:
             os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
             run_translation(split_file, output_file, args.batch_size)
-            progress_tracker.update(1)
 
-        progress_tracker.finish_phase()
+        logger.info("✅ Translate phase completed successfully")
 
     # Only run insert phase if specifically requested
     if args.insert:
+        logger.info(
+            "💾 PHASE 3: INSERT - Processing through ElevenLabs and inserting into database"
+        )
+
         # Delegate insertion of all files to the insert script in a single run.
         # Note: The insert script discovers and processes all files in TRANSLATE_DIR
         # and archives them. Calling it once avoids double-processing and missing-file races.
@@ -259,11 +295,72 @@ Examples:
             cwd=os.path.dirname(os.path.abspath(__file__)),
         )
 
+        logger.info("✅ Insert phase completed successfully")
+
+        # Handle word audio processing for full pipeline
+        if args.full or args.auto:
+            logger.info(
+                "🎵 PHASE 4: WORD AUDIO - Cutting and uploading individual word audio clips"
+            )
+
+            # Import and run word audio processing for the latest inserted articles
+            try:
+                from audio.audio_utils import process_word_audio_for_latest_articles
+
+                # Process word audio for articles inserted in this session
+                success = process_word_audio_for_latest_articles()
+                if success:
+                    logger.info("✅ Word audio processing completed successfully")
+                else:
+                    logger.warning("⚠️ Word audio processing completed with some issues")
+
+            except ImportError as e:
+                logger.warning(f"⚠️ Word audio processing not available: {e}")
+            except Exception as e:
+                logger.error(f"❌ Error during word audio processing: {e}")
+
+    # Only run word audio processing if specifically requested
+    if args.process_word_audio:
+        logger.info(
+            f"🎵 WORD AUDIO - Processing word-level audio for article {args.process_word_audio}"
+        )
+
+        # Import word audio processing function
+        try:
+            import tempfile
+
+            from audio.audio_utils import process_word_audio_for_article
+
+            # Create temporary directory for word audio processing
+            with tempfile.TemporaryDirectory() as temp_dir:
+                success = process_word_audio_for_article(
+                    article_id=args.process_word_audio, output_dir=temp_dir
+                )
+
+                if success:
+                    logger.info(
+                        f"✅ Successfully processed word audio for article {args.process_word_audio}"
+                    )
+                else:
+                    logger.error(
+                        f"❌ Failed to process word audio for article {args.process_word_audio}"
+                    )
+
+        except ImportError as e:
+            logger.error(f"❌ Word audio processing not available: {e}")
+        except Exception as e:
+            logger.error(f"❌ Error processing word audio: {e}")
+
+    # Final pipeline completion message
+    if args.full or args.auto:
+        logger.info("🎉 FULL PIPELINE COMPLETED SUCCESSFULLY!")
+        logger.info("   📄 Split → 🌍 Translate → 💾 Insert → 🎵 Word Audio")
+    elif any([args.split, args.translate, args.insert, args.process_word_audio]):
+        logger.info("✅ Pipeline phases completed successfully")
+
     # Report token usage statistics
     if token_tracker.api_calls > 0:
         pass  # Token usage reporting removed to reduce noise
-
-    # Pipeline completion is now handled by progress bars
 
 
 __all__ = [

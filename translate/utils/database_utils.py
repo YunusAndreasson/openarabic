@@ -11,6 +11,7 @@ try:
         create_article_audio,
         generate_audio_filename,
         generate_speech,
+        generate_speech_with_timestamps,
     )
     from audio.root_audio import get_or_generate_root_audio
     from data.config import (
@@ -24,6 +25,7 @@ except (ImportError, OSError):
     create_article_audio = None
     generate_audio_filename = None
     generate_speech = None
+    generate_speech_with_timestamps = None
     get_or_generate_root_audio = None
     VoiceSettings = None
     ARABIC_VOICE_ID = None
@@ -167,6 +169,8 @@ def get_or_create_root(
 def insert_sentence_words(
     sentence_id: int,
     translation: dict[str, Any],
+    word_timestamps: list[dict[str, Any]] | None = None,
+    word_audio_urls: list[str] | None = None,
 ) -> dict[str, Any]:
     """
     Insert words from a sentence with their roots and relationships.
@@ -200,10 +204,67 @@ def insert_sentence_words(
             "grammar_note": word.get("notes"),
         }
 
+        # Add audio URL if available
+        if word_audio_urls and position < len(word_audio_urls):
+            word_data["audio_url"] = word_audio_urls[position]
+
         words_data.append(word_data)
 
+    # Insert words first (without timestamps to avoid client issues)
+    inserted_words = []
     if words_data:
-        get_supabase_client().table("sentence_words").insert(words_data).execute()
+        try:
+            result = (
+                get_supabase_client()
+                .table("sentence_words")
+                .insert(words_data)
+                .execute()
+            )
+            if result.data:
+                inserted_words = result.data
+        except Exception as e:
+            logger.error(f"Failed to insert words for sentence {sentence_id}: {e}")
+            return {"total_words": 0}
+
+            # Update database with timestamp information
+        if word_timestamps and inserted_words:
+            logger.info(
+                f"Updating database with timestamps for {len(inserted_words)} words in sentence {sentence_id}"
+            )
+
+            # Update each word with its timestamp information
+            timestamp_updates = []
+            for i, inserted_word in enumerate(inserted_words):
+                if i < len(word_timestamps):
+                    timestamp_updates.append(
+                        {
+                            "id": inserted_word["id"],
+                            "start_time": word_timestamps[i].get("start_time", 0),
+                            "end_time": word_timestamps[i].get("end_time", 0),
+                            "duration": word_timestamps[i].get("duration", 0),
+                        }
+                    )
+
+            # Batch update all words with timestamps
+            if timestamp_updates:
+                try:
+                    supabase_client = get_supabase_client()
+                    for update_data in timestamp_updates:
+                        supabase_client.table("sentence_words").update(
+                            {
+                                "start_time": update_data["start_time"],
+                                "end_time": update_data["end_time"],
+                                "duration": update_data["duration"],
+                            }
+                        ).eq("id", update_data["id"]).execute()
+
+                    logger.info(
+                        f"Successfully updated {len(timestamp_updates)} words with timestamps in sentence {sentence_id}"
+                    )
+                except Exception as update_error:
+                    logger.error(
+                        f"Failed to update word timestamps in database for sentence {sentence_id}: {update_error}"
+                    )
 
     return {
         "total_words": total_words,
@@ -276,13 +337,29 @@ def insert_article_sentences(
             arabic_text = translation.get("tashkeel") or translation["original"]
             english_text = translation["full_translation"]
 
-            # Generate Arabic audio for this sentence
+            # Generate Arabic audio for this sentence WITH TIMESTAMPS
             arabic_filename = generate_audio_filename()
-            arabic_response = generate_speech(
-                text=arabic_text,
-                voice_id=ARABIC_VOICE_ID,
-                voice_settings=VoiceSettings(**ARABIC_VOICE_SETTINGS),
-            )
+
+            # Check if timestamp functionality is available
+            if generate_speech_with_timestamps and VoiceSettings and ARABIC_VOICE_ID:
+                arabic_response = generate_speech_with_timestamps(
+                    text=arabic_text,
+                    voice_id=ARABIC_VOICE_ID,
+                    voice_settings=VoiceSettings(**ARABIC_VOICE_SETTINGS),
+                    sentence_id=idx + 1,  # Use position for logging before DB insert
+                )
+            else:
+                # Fallback to regular speech generation without timestamps
+                logger.warning(
+                    f"Timestamp functionality not available, falling back to regular speech generation for sentence {idx + 1}"
+                )
+                arabic_response = generate_speech(
+                    text=arabic_text,
+                    voice_id=ARABIC_VOICE_ID,
+                    voice_settings=VoiceSettings(**ARABIC_VOICE_SETTINGS)
+                    if VoiceSettings
+                    else None,
+                )
 
             arabic_audio_url = None
             if arabic_response and arabic_response.get("audio"):
@@ -390,9 +467,17 @@ def insert_article_sentences(
             sentence_id = result.data[0]["id"]
 
             if translation.get("word_by_word"):
+                # Extract word timestamps from the Arabic audio response
+                sentence_word_timestamps = (
+                    arabic_response.get("word_timestamps", [])
+                    if arabic_response
+                    else []
+                )
+
                 insert_sentence_words(
                     sentence_id,
                     translation,
+                    word_timestamps=sentence_word_timestamps,
                 )
 
         # Create streamlined article audio files

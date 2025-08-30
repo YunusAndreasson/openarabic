@@ -199,19 +199,13 @@ def generate_speech(
             voice_settings=voice_settings,
         )
 
-        # Debug the response
-        logger.debug(f"TTS Response type: {type(response)}")
-
         # Handle generator response (new ElevenLabs API format)
         if hasattr(response, "__iter__") and not hasattr(response, "audio"):
-            logger.debug("Response is a generator, iterating to get audio data")
             try:
                 # Collect all chunks from the generator and concatenate them
                 audio_chunks = []
-                chunk_count = 0
 
                 for audio_chunk in response:
-                    chunk_count += 1
                     # Check for audio data in the chunk
                     if hasattr(audio_chunk, "audio") and audio_chunk.audio:
                         chunk_data = audio_chunk.audio
@@ -224,21 +218,15 @@ def generate_speech(
                         chunk_data = audio_chunk
                     else:
                         logger.error(
-                            f"No audio data found in chunk {chunk_count}. Available attributes: {[attr for attr in dir(audio_chunk) if not attr.startswith('_')]}"
+                            f"No audio data found in chunk. Available attributes: {[attr for attr in dir(audio_chunk) if not attr.startswith('_')]}"
                         )
                         return None
 
                     audio_chunks.append(chunk_data)
-                    logger.debug(
-                        f"Collected chunk {chunk_count}: {len(chunk_data)} bytes"
-                    )
 
                 # Concatenate all chunks
                 if audio_chunks:
                     audio_data = b"".join(audio_chunks)
-                    logger.debug(
-                        f"Concatenated {chunk_count} chunks into {len(audio_data)} bytes"
-                    )
                 else:
                     logger.error("No audio chunks collected")
                     return None
@@ -249,15 +237,12 @@ def generate_speech(
         else:
             # Handle old response format
             if hasattr(response, "audio"):
-                logger.debug(f"Audio data present: {response.audio is not None}")
                 if response.audio:
-                    logger.debug(f"Audio data length: {len(response.audio)} bytes")
                     audio_data = response.audio
                 else:
                     logger.error("No audio data in response")
                     return None
             else:
-                logger.debug("No 'audio' attribute in response")
                 logger.error("No audio data in response")
                 return None
 
@@ -275,6 +260,251 @@ def generate_speech(
 
     except Exception as e:
         logger.error(f"Speech generation failed: {e}")
+        return None
+
+
+def extract_word_timestamps(
+    text: str, alignment: Any, sentence_id: int | None = None
+) -> list[dict[str, Any]]:
+    """
+    Extract word-level timestamps from ElevenLabs character-level alignment data.
+
+    Args:
+        text: The Arabic text used for TTS (should include diacritics)
+        alignment: The alignment object from ElevenLabs response
+        sentence_id: Optional sentence ID for logging context
+
+    Returns:
+        List of word timestamp dictionaries, empty list if extraction fails
+    """
+    try:
+        # Validate inputs
+        if not text or not text.strip():
+            logger.warning(
+                f"Empty text provided for timestamp extraction (sentence_id: {sentence_id})"
+            )
+            return []
+
+        if not alignment:
+            logger.warning(
+                f"No alignment data provided for timestamp extraction (sentence_id: {sentence_id})"
+            )
+            return []
+
+        # Extract character timing arrays
+        char_starts = getattr(alignment, "character_start_times_seconds", None)
+        char_ends = getattr(alignment, "character_end_times_seconds", None)
+
+        if not char_starts or not char_ends:
+            logger.warning(
+                f"Missing character timing arrays in alignment (sentence_id: {sentence_id})"
+            )
+            return []
+
+        if len(char_starts) != len(char_ends):
+            logger.warning(
+                f"Mismatched character timing arrays lengths: {len(char_starts)} vs {len(char_ends)} (sentence_id: {sentence_id})"
+            )
+            return []
+
+        # Split text into words (preserving Arabic word boundaries)
+        arabic_words = text.strip().split()
+        word_count = len(arabic_words)
+
+        if word_count == 0:
+            logger.warning(
+                f"No words found in text for timestamp extraction (sentence_id: {sentence_id})"
+            )
+            return []
+
+        # Extract timestamps for words
+
+        word_timestamps = []
+        char_index = 0
+
+        for word_idx, word in enumerate(arabic_words):
+            word_length = len(word)
+
+            # Validate we have enough characters remaining
+            if char_index + word_length > len(char_starts):
+                logger.warning(
+                    f"Word '{word}' (index {word_idx}) exceeds available characters. "
+                    f"Word length: {word_length}, Remaining chars: {len(char_starts) - char_index} "
+                    f"(sentence_id: {sentence_id})"
+                )
+                break
+
+            try:
+                # Get timing for this word
+                start_time = float(char_starts[char_index])
+                end_time = float(char_ends[char_index + word_length - 1])
+                duration = round(end_time - start_time, 3)
+
+                # Validate timing values
+                if start_time < 0 or end_time < 0 or duration < 0:
+                    logger.warning(
+                        f"Invalid timing values for word '{word}': "
+                        f"start={start_time}, end={end_time}, duration={duration} "
+                        f"(sentence_id: {sentence_id})"
+                    )
+                    continue
+
+                word_data = {
+                    "word": word,
+                    "start_time": round(start_time, 3),
+                    "end_time": round(end_time, 3),
+                    "duration": duration,
+                    "word_index": word_idx,
+                    "char_start_index": char_index,
+                    "char_end_index": char_index + word_length - 1,
+                }
+
+                word_timestamps.append(word_data)
+
+            except (ValueError, IndexError) as e:
+                logger.warning(
+                    f"Failed to extract timing for word '{word}' (index {word_idx}): {e} "
+                    f"(sentence_id: {sentence_id})"
+                )
+                continue
+
+            # Move to next word (skip the space character)
+            char_index += word_length + 1
+
+        extracted_count = len(word_timestamps)
+        if extracted_count != word_count:
+            logger.warning(
+                f"Extracted {extracted_count}/{word_count} word timestamps "
+                f"(sentence_id: {sentence_id})"
+            )
+        else:
+            logger.info(
+                f"Successfully extracted {extracted_count} word timestamps "
+                f"(sentence_id: {sentence_id})"
+            )
+
+        return word_timestamps
+
+    except Exception as e:
+        logger.error(
+            f"Critical error during word timestamp extraction: {e} "
+            f"(sentence_id: {sentence_id})"
+        )
+        return []
+
+
+def generate_speech_with_timestamps(
+    text: str,
+    voice_id: str,
+    voice_settings: VoiceSettings | None = None,
+    sentence_id: int | None = None,
+) -> dict[str, Any] | None:
+    """
+    Generate speech using ElevenLabs API with timestamp extraction.
+
+    Args:
+        text: The text to convert to speech
+        voice_id: The voice ID to use
+        voice_settings: Optional voice settings
+        sentence_id: Optional sentence ID for logging context
+
+    Returns:
+        Dictionary with audio data, metadata, and word timestamps, or None if failed
+    """
+    try:
+        client = _get_eleven_labs_client()
+
+        # Use default voice settings if none provided
+        if voice_settings is None:
+            voice_settings = VoiceSettings(**DEFAULT_VOICE_SETTINGS)
+        elif isinstance(voice_settings, dict):
+            voice_settings = VoiceSettings(**voice_settings)
+
+        logger.info(
+            f"Generating speech with timestamps for sentence {sentence_id}: '{text[:50]}...'"
+        )
+
+        # Generate speech with timestamps
+        response = client.text_to_speech.convert_with_timestamps(
+            text=text,
+            voice_id=voice_id,
+            model_id=ELEVENLABS_TTS_MODEL_ID,
+            voice_settings=voice_settings,
+        )
+
+        # Extract audio data
+        audio_data = None
+
+        # Handle different response formats
+        if hasattr(response, "audio_base_64") and response.audio_base_64:
+            # Direct response with base64 encoded audio
+            import base64
+
+            audio_data = base64.b64decode(response.audio_base_64)
+        elif hasattr(response, "audio") and response.audio:
+            # Direct response with raw audio
+            audio_data = response.audio
+        elif hasattr(response, "__iter__") and not hasattr(response, "audio"):
+            # Generator response (fallback)
+            audio_chunks = []
+
+            for audio_chunk in response:
+                if hasattr(audio_chunk, "audio") and audio_chunk.audio:
+                    chunk_data = audio_chunk.audio
+                elif hasattr(audio_chunk, "data") and audio_chunk.data:
+                    chunk_data = audio_chunk.data
+                elif hasattr(audio_chunk, "content") and audio_chunk.content:
+                    chunk_data = audio_chunk.content
+                elif isinstance(audio_chunk, bytes):
+                    chunk_data = audio_chunk
+                else:
+                    continue
+
+                audio_chunks.append(chunk_data)
+
+            if audio_chunks:
+                audio_data = b"".join(audio_chunks)
+            else:
+                logger.error("No audio chunks collected")
+                return None
+        else:
+            logger.error("No audio data in response")
+            return None
+
+        # Validate audio data
+        if not validate_mp3(audio_data):
+            logger.error("Invalid MP3 data received")
+            return None
+
+        # Extract word timestamps
+        word_timestamps = []
+        if hasattr(response, "alignment") and response.alignment:
+            word_timestamps = extract_word_timestamps(
+                text, response.alignment, sentence_id
+            )
+        else:
+            logger.warning(f"No alignment data in response for sentence {sentence_id}")
+
+        result = {
+            "audio": audio_data,
+            "duration": getattr(response, "duration", 0.0),
+            "voice_id": voice_id,
+            "text": text,
+            "word_timestamps": word_timestamps,
+            "timestamp_count": len(word_timestamps),
+        }
+
+        logger.info(
+            f"Successfully generated speech with {len(word_timestamps)} word timestamps "
+            f"for sentence {sentence_id}"
+        )
+
+        return result
+
+    except Exception as e:
+        logger.error(
+            f"Speech generation with timestamps failed for sentence {sentence_id}: {e}"
+        )
         return None
 
 
@@ -665,31 +895,51 @@ def create_article_audio(
                 logger.warning("Failed to generate summary audio")
 
         # Process each sentence
+        all_word_timestamps = []
+
         for i, sentence in enumerate(sentences):
             arabic_text = sentence.get("arabic_text", "")
             english_text = sentence.get("english_text", "")
             tashkeel_text = sentence.get("tashkeel", arabic_text)
+            sentence_id = sentence.get("id")  # Get sentence ID for tracking
 
             if not arabic_text or not english_text:
                 logger.warning(f"Skipping sentence {i + 1} - missing text")
                 continue
 
-            logger.info(f"Processing sentence {i + 1}/{len(sentences)}")
+            logger.info(
+                f"Processing sentence {i + 1}/{len(sentences)} (ID: {sentence_id})"
+            )
 
-            # Generate Arabic audio for this sentence
-            arabic_response = generate_speech(
+            # Generate Arabic audio for this sentence WITH TIMESTAMPS
+            arabic_response = generate_speech_with_timestamps(
                 text=tashkeel_text,
                 voice_id=ARABIC_VOICE_ID,
                 voice_settings=VoiceSettings(**DEFAULT_VOICE_SETTINGS),
+                sentence_id=sentence_id,
             )
             if not arabic_response or not arabic_response.get("audio"):
-                logger.error(f"Failed to generate Arabic audio for sentence {i + 1}")
+                logger.error(
+                    f"Failed to generate Arabic audio for sentence {i + 1} (ID: {sentence_id})"
+                )
                 continue
 
             arabic_audio = arabic_response["audio"]
             arabic_segments.append(arabic_audio)
 
-            # Generate English audio for bilingual version
+            # Collect word timestamps from this sentence
+            sentence_timestamps = arabic_response.get("word_timestamps", [])
+            if sentence_timestamps:
+                logger.info(
+                    f"Collected {len(sentence_timestamps)} word timestamps for sentence {i + 1}"
+                )
+                all_word_timestamps.extend(sentence_timestamps)
+            else:
+                logger.warning(
+                    f"No word timestamps collected for sentence {i + 1} (ID: {sentence_id})"
+                )
+
+            # Generate English audio for bilingual version (without timestamps for now)
             english_response = generate_speech(
                 text=english_text,
                 voice_id=ENGLISH_VOICE_ID,
@@ -705,7 +955,9 @@ def create_article_audio(
             bilingual_segments.append(english_audio)
             bilingual_segments.append(arabic_audio)
 
-            logger.info(f"Sentence {i + 1} audio generated successfully")
+            logger.info(
+                f"Sentence {i + 1} audio generated successfully with {len(sentence_timestamps)} timestamps"
+            )
 
         if not arabic_segments:
             logger.error("No Arabic audio segments generated")
@@ -790,9 +1042,405 @@ def create_article_audio(
             if os.path.exists(temp_file):
                 os.remove(temp_file)
 
+        # Validate collected timestamps
+        if all_word_timestamps:
+            logger.info(f"Total word timestamps collected: {len(all_word_timestamps)}")
+        else:
+            logger.warning("No word timestamps were collected for this article")
+
+        # Add timestamps to return data
+        result = urls.copy()
+        result["word_timestamps"] = all_word_timestamps
+        result["timestamp_count"] = len(all_word_timestamps)
+
         logger.info("Article audio creation completed successfully")
-        return urls
+        return result
 
     except Exception as e:
         logger.error(f"Error creating article audio: {str(e)}")
         return None
+
+
+def generate_word_audio_with_google_tts(
+    word_data_list: list[dict[str, Any]],
+    sentence_id: int,
+    output_dir: str,
+) -> list[dict[str, Any]]:
+    """
+    Generate individual word audio using Google Cloud TTS.
+
+    Args:
+        word_data_list: List of word data dictionaries with 'word_form', 'position', etc.
+        sentence_id: The sentence ID for generating unique filenames
+        output_dir: Directory to save temporary audio files
+
+    Returns:
+        List of dictionaries with word data including audio URLs
+    """
+    if not word_data_list:
+        logger.warning("No word data provided for audio generation")
+        return []
+
+    os.makedirs(output_dir, exist_ok=True)
+    word_audio_results = []
+
+    logger.info(
+        f"Generating {len(word_data_list)} word audio clips using Google TTS for sentence {sentence_id}"
+    )
+
+    for word_data in word_data_list:
+        try:
+            word_form = word_data.get("word_form", "").strip()
+            position = word_data.get("position", 0)
+
+            if not word_form:
+                logger.warning(f"Empty word form for position {position}, skipping")
+                continue
+
+            # Create filename for this word
+            filename = f"w{sentence_id}_{position:02d}.mp3"
+
+            logger.debug(
+                f"Generating audio for word '{word_form}' (position {position})"
+            )
+
+            # Generate audio using Google TTS (similar to study words)
+            result = generate_arabic_word_audio(word_form, filename)
+
+            if result and result.get("url"):
+                word_audio_results.append(
+                    {
+                        "audio_filename": filename,
+                        "audio_url": result["url"],
+                        "position": position,
+                        "word_form": word_form,
+                        "sentence_id": sentence_id,
+                        "cached": result.get("cached", False),
+                    }
+                )
+
+                if result.get("cached"):
+                    logger.debug(f"Used cached audio for word '{word_form}'")
+                else:
+                    logger.debug(f"Generated new audio for word '{word_form}'")
+
+            else:
+                logger.warning(
+                    f"Failed to generate audio for word '{word_form}' at position {position}"
+                )
+
+        except Exception as e:
+            logger.error(
+                f"Error generating audio for word at position {word_data.get('position', 'unknown')}: {e}"
+            )
+            continue
+
+    logger.info(
+        f"Successfully generated {len(word_audio_results)}/{len(word_data_list)} word audio clips for sentence {sentence_id}"
+    )
+    return word_audio_results
+
+
+def cut_word_audio_clips(
+    _audio_file_path: str,
+    _word_timestamps: list[dict[str, Any]],
+    _output_dir: str,
+    _word_prefix: str = "word",
+    sentence_id: int | None = None,
+) -> list[dict[str, Any]]:
+    """
+    DEPRECATED: This function is no longer used.
+    Word audio is now generated using Google TTS instead of cutting from ElevenLabs audio.
+
+    Cut individual word audio clips from sentence audio using ffmpeg.
+
+    Args:
+        audio_file_path: Path to the source sentence audio file
+        word_timestamps: List of word timestamp dictionaries with start_time, end_time
+        output_dir: Directory to save word audio clips
+        word_prefix: Prefix for word audio filenames
+
+    Returns:
+        List of dictionaries with word data including audio file paths
+    """
+    logger.warning(
+        "cut_word_audio_clips is deprecated. Use generate_word_audio_with_google_tts instead."
+    )
+    return []
+
+
+def process_word_audio_for_latest_articles() -> bool:
+    """
+    Process word audio for the most recently inserted articles.
+    This is used in the full pipeline to automatically process word audio after insertion.
+    """
+    logger.info("🔍 Finding latest articles for word audio processing")
+
+    try:
+        # Query for the latest articles (most recently inserted)
+        import os
+
+        from dotenv import load_dotenv
+
+        from supabase import create_client
+
+        load_dotenv()
+
+        supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
+
+        # Get the 3 most recent articles that don't have word audio processed yet
+        result = (
+            supabase.table("articles")
+            .select("id, title")
+            .order("created_at", desc=True)
+            .limit(3)
+            .execute()
+        )
+
+        if not result.data:
+            logger.warning("No articles found for word audio processing")
+            return False
+
+        logger.info(f"📝 Processing word audio for {len(result.data)} latest articles")
+
+        success_count = 0
+        for article in result.data:
+            article_id = article["id"]
+            article_title = article["title"]
+
+            logger.info(
+                f"🎵 Processing word audio for article {article_id}: {article_title}"
+            )
+
+            try:
+                import tempfile
+
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    success = process_word_audio_for_article(
+                        article_id=article_id, output_dir=temp_dir
+                    )
+
+                    if success:
+                        logger.info(
+                            f"✅ Successfully processed word audio for article {article_id}"
+                        )
+                        success_count += 1
+                    else:
+                        logger.warning(
+                            f"⚠️ Failed to process word audio for article {article_id}"
+                        )
+
+            except Exception as e:
+                logger.error(
+                    f"❌ Error processing word audio for article {article_id}: {e}"
+                )
+
+        logger.info(
+            f"📊 Word audio processing complete: {success_count}/{len(result.data)} articles successful"
+        )
+        return success_count > 0
+
+    except Exception as e:
+        logger.error(f"❌ Failed to process word audio for latest articles: {e}")
+        return False
+
+
+def process_word_audio_for_sentences(
+    sentences: list[dict],
+    _arabic_audio_path: str,
+    output_dir: str,
+    sentence_id_offset: int = 0,
+) -> dict[int, list[dict[str, Any]]]:
+    """
+    Process word-level audio for multiple sentences.
+
+    Args:
+        sentences: List of sentence data with word timestamps
+        arabic_audio_path: Path to the Arabic sentence audio file
+        output_dir: Directory to save word audio clips
+        sentence_id_offset: Offset for sentence IDs in logging
+
+    Returns:
+        Dictionary mapping sentence indices to word audio data
+    """
+    word_audio_by_sentence = {}
+
+    for sentence_idx, sentence in enumerate(sentences):
+        sentence_id = sentence.get("id") or (sentence_idx + sentence_id_offset + 1)
+        word_data_list = sentence.get("word_timestamps", [])
+
+        if not word_data_list:
+            logger.debug(f"No word data for sentence {sentence_id}")
+            continue
+
+        logger.info(
+            f"Processing word audio for sentence {sentence_id} with {len(word_data_list)} words"
+        )
+
+        # Generate word audio using Google TTS
+        word_audio_data = generate_word_audio_with_google_tts(
+            word_data_list=word_data_list,
+            sentence_id=sentence_id,
+            output_dir=output_dir,
+        )
+
+        if word_audio_data:
+            # Word audio is already uploaded by Google TTS, use data directly
+            # Store by sentence index
+            word_audio_by_sentence[sentence_idx] = word_audio_data
+
+            logger.info(
+                f"Processed {len(word_audio_data)} word audio clips for sentence {sentence_id}"
+            )
+        else:
+            logger.warning(f"No word audio clips generated for sentence {sentence_id}")
+
+    return word_audio_by_sentence
+
+
+def process_word_audio_for_article(article_id: int, output_dir: str) -> bool:
+    """
+    Process word-level audio for all sentences in an article.
+
+    This function should be called after the main pipeline has completed
+    and sentence audio files are available.
+
+    Args:
+        article_id: The article ID to process
+        output_dir: Directory to save temporary word audio files
+
+    Returns:
+        True if processing was successful
+    """
+    try:
+        client = get_supabase_client()
+        os.makedirs(output_dir, exist_ok=True)
+
+        logger.info(f"Processing word audio for article {article_id}")
+
+        # Get article sentences with word timestamps
+        sentences_result = (
+            client.table("article_sentences")
+            .select("id, arabic, audio_url")
+            .eq("article_id", article_id)
+            .execute()
+        )
+
+        if not sentences_result.data:
+            logger.warning(f"No sentences found for article {article_id}")
+            return False
+
+        total_sentences = len(sentences_result.data)
+        processed_sentences = 0
+
+        for sentence in sentences_result.data:
+            sentence_id = sentence["id"]
+
+            # Get word timestamps for this sentence
+            words_result = (
+                client.table("sentence_words")
+                .select("id, position, word_form, start_time, end_time")
+                .eq("sentence_id", sentence_id)
+                .order("position")
+                .execute()
+            )
+
+            # Filter out NULL timestamps in Python
+            if words_result.data:
+                words_result.data = [
+                    word
+                    for word in words_result.data
+                    if word.get("start_time") is not None
+                ]
+
+            if not words_result.data:
+                logger.debug(f"No word timestamps found for sentence {sentence_id}")
+                continue
+
+            word_data_list = []
+            for word in words_result.data:
+                word_data_list.append(
+                    {
+                        "word_form": word["word_form"],
+                        "start_time": word["start_time"],
+                        "end_time": word["end_time"],
+                        "word_id": word["id"],
+                        "position": word["position"],
+                    }
+                )
+
+            if not word_data_list:
+                logger.debug(f"No valid word data for sentence {sentence_id}")
+                continue
+
+            # Generate word audio using Google TTS (no need to download sentence audio)
+            word_audio_data = generate_word_audio_with_google_tts(
+                word_data_list=word_data_list,
+                sentence_id=sentence_id,
+                output_dir=output_dir,
+            )
+
+            if word_audio_data:
+                # Word audio is already uploaded by Google TTS, use data directly
+                uploaded_word_data = word_audio_data
+
+                # Update database with word audio URLs
+                word_audio_urls = []
+                for uploaded_word in uploaded_word_data:
+                    audio_url = uploaded_word.get("audio_url")
+                    position = uploaded_word.get("position")
+                    logger.debug(
+                        f"Processing uploaded word: position={position}, audio_url={audio_url}"
+                    )
+                    if audio_url and position is not None:
+                        word_audio_urls.append((position, audio_url))
+                        logger.debug(f"Added word audio URL for update: {audio_url}")
+                    else:
+                        logger.warning(
+                            f"Missing audio_url or position for word: position={position}, audio_url={audio_url}"
+                        )
+
+                # Update words in database
+                for position, audio_url in word_audio_urls:
+                    try:
+                        logger.debug(
+                            f"Updating word audio URL for sentence {sentence_id}, position {position}: {audio_url}"
+                        )
+                        result = (
+                            client.table("sentence_words")
+                            .update({"audio_url": audio_url})
+                            .eq("sentence_id", sentence_id)
+                            .eq("position", position)
+                            .execute()
+                        )
+
+                        # Check if the update actually affected any rows
+                        if result.data:
+                            logger.debug(
+                                f"Successfully updated {len(result.data)} word(s) with audio URL"
+                            )
+                        else:
+                            logger.warning(
+                                f"No words were updated for sentence {sentence_id}, position {position}"
+                            )
+
+                    except Exception as e:
+                        logger.error(
+                            f"Failed to update word audio URL for position {position}: {e}"
+                        )
+
+                logger.info(
+                    f"Updated {len(word_audio_urls)} word audio URLs for sentence {sentence_id}"
+                )
+                processed_sentences += 1
+
+            # No cleanup needed for Google TTS approach (no temporary sentence audio files)
+
+        logger.info(
+            f"Successfully processed word audio for {processed_sentences}/{total_sentences} sentences in article {article_id}"
+        )
+        return processed_sentences > 0
+
+    except Exception as e:
+        logger.error(f"Error processing word audio for article {article_id}: {e}")
+        return False

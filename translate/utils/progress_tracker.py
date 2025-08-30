@@ -1,87 +1,64 @@
 """
 Progress tracking utilities for the translation pipeline.
-Provides clean TQDM progress bars with phase information and minimal logging.
+Provides clean logging with phase information and minimal output.
 """
 
 import logging
-import sys
-
-from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
 
 class PipelineProgressTracker:
-    """Tracks progress across the entire translation pipeline with clean TQDM bars."""
+    """Tracks progress across the entire translation pipeline with clean logging."""
 
     def __init__(self) -> None:
         self.current_phase = None
-        self.current_pbar = None
+        self.current_total = 0
+        self.current_count = 0
         self._finished = False
 
     def start_phase(self, phase_name: str, total: int, description: str = None) -> None:
-        """Start a new pipeline phase with a progress bar."""
-        if self.current_pbar:
-            self.current_pbar.close()
+        """Start a new pipeline phase with logging."""
+        if self.current_phase:
+            self.finish_phase()
 
         self.current_phase = phase_name
+        self.current_total = total
+        self.current_count = 0
         self._finished = False
-        desc = description or f"Phase: {phase_name}"
 
-        self.current_pbar = tqdm(
-            total=total,
-            desc=desc,
-            unit="items",
-            bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]",
-            ncols=100,
-            colour="green",
-            leave=False,
-            file=sys.stdout,
-            disable=not sys.stdout.isatty(),
-            dynamic_ncols=True,
-        )
+        logger.info(f"🚀 Starting {phase_name} phase - Processing {total} items")
+        if description:
+            logger.info(f"   {description}")
 
     def update(self, n: int = 1, description: str = None) -> None:
-        """Update the current progress bar."""
-        if self.current_pbar:
-            if description:
-                self.current_pbar.set_description(
-                    f"Phase: {self.current_phase} - {description}"
-                )
-            self.current_pbar.update(n)
+        """Update the current progress counter."""
+        self.current_count += n
+
+        if description:
+            logger.debug(
+                f"   {description} ({self.current_count}/{self.current_total})"
+            )
 
     def set_description(self, description: str) -> None:
-        """Set the description for the current progress bar."""
-        if self.current_pbar:
-            self.current_pbar.set_description(
-                f"Phase: {self.current_phase} - {description}"
-            )
+        """Set the description for the current phase."""
+        logger.debug(f"   {description}")
 
     def finish_phase(self, success: bool = True) -> None:
         """Finish the current phase."""
-        if self.current_pbar and self.current_phase and not self._finished:
+        if self.current_phase and not self._finished:
             if success:
-                # Show completion with checkmark
-                self.current_pbar.set_description(
-                    f"✅ Phase: {self.current_phase} - Completed"
+                logger.info(
+                    f"✅ Completed {self.current_phase} phase - {self.current_count}/{self.current_total} items processed"
                 )
-                # Force a final update to show the completion
-                self.current_pbar.refresh()
-                # Log completion message
-                logger.info(f"✅ Phase: {self.current_phase} - Completed")
             else:
-                self.current_pbar.set_description(
-                    f"❌ Phase: {self.current_phase} - Failed"
+                logger.error(
+                    f"❌ Failed {self.current_phase} phase - {self.current_count}/{self.current_total} items processed"
                 )
-                logger.error(f"❌ Failed {self.current_phase} phase")
 
-            self.current_pbar.close()
-            self.current_pbar = None
             self.current_phase = None
-            self._finished = True
-        elif self.current_phase and not self._finished:
-            # Phase was already finished, just clear the state
-            self.current_phase = None
+            self.current_total = 0
+            self.current_count = 0
             self._finished = True
 
 
@@ -97,4 +74,3 @@ def suppress_verbose_logging() -> None:
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
     logging.getLogger("httpx._client").setLevel(logging.WARNING)
-    logging.getLogger("tqdm").setLevel(logging.WARNING)

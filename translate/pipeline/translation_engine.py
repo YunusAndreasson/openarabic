@@ -154,17 +154,11 @@ def _validate_word_data(word_data: dict[str, Any]) -> dict[str, Any]:
             pass  # Allow this case
         elif pos == "verb":
             # For verbs, identical fields might be correct (e.g., past tense like بَاعَ)
-            # Only warn about obvious AI fallbacks, don't block
-            logger.warning(
-                f"Word '{word_data.get('arabic', '')}' has identical essential/arabic fields. "
-                f"This might be correct for past tense verbs, but verify it's not an AI fallback."
-            )
+            # No warning needed - this is acceptable
+            pass
         else:
-            # For other parts of speech, log warning but don't block
-            logger.warning(
-                f"Word '{word_data.get('arabic', '')}' has identical essential/arabic fields. "
-                f"Verify this is correct for {pos} words."
-            )
+            # For other parts of speech, allow identical fields without warning
+            pass
 
     return {
         "arabic": word_data.get("arabic", ""),
@@ -702,17 +696,11 @@ def batch_translate_words(
                                     )
                                 elif pos == "verb":
                                     # For verbs, identical fields might be correct (e.g., past tense like بَاعَ)
-                                    # Only warn about obvious AI fallbacks, don't block
-                                    logger.warning(
-                                        f"Word '{word_option.arabic}' has identical essential/arabic fields. "
-                                        f"This might be correct for past tense verbs, but verify it's not an AI fallback."
-                                    )
+                                    # No warning needed - this is acceptable
+                                    pass
                                 else:
-                                    # For other parts of speech, log warning but don't block
-                                    logger.warning(
-                                        f"Word '{word_option.arabic}' has identical essential/arabic fields. "
-                                        f"Verify this is correct for {pos} words."
-                                    )
+                                    # For other parts of speech, allow identical fields without warning
+                                    pass
 
                             word_translations_options.append(word_option)
 
@@ -1025,17 +1013,11 @@ def batch_translate_root_words_with_google_cloud(
                     )
                 elif pos == "verb":
                     # For verbs, identical fields might be correct (e.g., past tense like بَاعَ)
-                    # Only warn about obvious AI fallbacks, don't block
-                    logger.warning(
-                        f"Google Cloud translation: '{original_text}' has identical essential/arabic fields. "
-                        f"This might be correct for past tense verbs, but verify it's not an AI fallback."
-                    )
+                    # No warning needed - this is acceptable
+                    pass
                 else:
-                    # For other parts of speech, log warning but don't block
-                    logger.warning(
-                        f"Google Cloud translation: '{original_text}' has identical essential/arabic fields. "
-                        f"Verify this is correct for {pos} words."
-                    )
+                    # For other parts of speech, allow identical fields without warning
+                    pass
 
             results.append(WordTranslationResult(word_translations=[word_option]))
 
