@@ -23,3 +23,15 @@ export function useIsDarkMode(): boolean {
   // Return whether the theme is dark
   return theme === Theme.Dark;
 }
+
+/**
+ * Hook to get the current theme enum
+ * @returns the current theme (light/dark/sepia)
+ */
+export function useCurrentTheme(): Theme {
+  // Get theme from Redux store with error handling for missing context
+  const theme = useAppSelectorMemo(state => state?.theme?.theme);
+
+  // Return theme or fallback to light
+  return theme || Theme.Light;
+}

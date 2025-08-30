@@ -28,14 +28,16 @@ const basePalette = {
     primaryDark: '#7FA08A', // Balanced sage tint - dark mode
   },
 
-  // Educational Chart Colors - Unified sage-green system for visual cohesion
+  // Educational Chart Colors - Unified system with sepia variants
   charts: {
     // Supporting chart elements only - main colors use tint directly
     ui: {
       grid: '#E8F1EC', // Subtle grid lines (light mode)
       gridDark: '#2A352D', // Subtle grid lines (dark mode)
+      gridSepia: '#F5E6D3', // Warm sepia grid lines
       threshold: '#9AB5A4', // Reference lines for targets
       thresholdDark: '#748A7C', // Reference lines for dark mode
+      thresholdSepia: '#B8926A', // Warm sepia reference lines
     },
   },
 
@@ -152,8 +154,8 @@ const elevation = {
   light: {
     level0: basePalette.sage.lighter, // Background - matches background color
     level1: basePalette.sage.lightest, // Cards - use palette reference for consistency
-    level2: basePalette.pure.white, // Raised elements - use palette reference for consistency
-    level3: basePalette.pure.white, // Floating elements - use branded white instead of hardcoded
+    level2: basePalette.pure.white, // Raised elements - use tinted white for brand consistency
+    level3: basePalette.pure.white, // Floating elements - use tinted white for brand consistency
   },
   dark: {
     level0: basePalette.sage.darkest, // Background - matches current background
@@ -237,10 +239,10 @@ const lightColors: ThemeColors = {
   captionText: textHierarchy.light.caption,
 
   // Interactive elements
-  tint: basePalette.tint.primary,
-  tintBackground: applyOpacity(basePalette.tint.primary, opacity.medium), // Common tint + 0.08 pattern
+  tint: basePalette.tint.primaryDark, // Use same sage green as dark mode for consistency
+  tintBackground: applyOpacity(basePalette.tint.primaryDark, opacity.medium), // Common tint + 0.08 pattern
   tabIconDefault: basePalette.forest.lighter,
-  tabIconSelected: basePalette.tint.primary,
+  tabIconSelected: basePalette.tint.primaryDark,
   icon: basePalette.forest.light,
   disabled: basePalette.forest.lighter,
 
@@ -248,8 +250,8 @@ const lightColors: ThemeColors = {
   transparent: basePalette.pure.transparent,
   overlay: applyOpacity(basePalette.sage.lighter, opacity.modal),
   modalOverlay: applyOpacity(basePalette.sage.lighter, opacity.full),
-  borderOverlay: applyOpacity(basePalette.tint.primary, opacity.border),
-  buttonOverlay: applyOpacity(basePalette.tint.primary, opacity.medium),
+  borderOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.border),
+  buttonOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.medium),
   backdropOverlay: applyOpacity(basePalette.forest.dark, opacity.backdrop),
 
   // Elevation system - enhanced contrast
@@ -264,17 +266,17 @@ const lightColors: ThemeColors = {
   wordTooltipText: basePalette.forest.darkest,
   wordTooltipBorder: basePalette.sage.light,
   wordTooltipShadow: applyOpacity(basePalette.forest.dark, opacity.active),
-  wordSelectionUnderline: applyOpacity(basePalette.tint.primary, opacity.selection),
+  wordSelectionUnderline: applyOpacity(basePalette.tint.primaryDark, opacity.selection),
   wordDueUnderline: applyOpacity(basePalette.semantic.warning, opacity.due),
 
   // Navigation - adjusted for new background
-  navigationRipple: applyOpacity(basePalette.tint.primary, opacity.strong),
+  navigationRipple: applyOpacity(basePalette.tint.primaryDark, opacity.strong),
   headerOverlay: applyOpacity(basePalette.sage.lighter, opacity.header),
   tabBarOverlay: applyOpacity(basePalette.sage.lighter, opacity.modal),
 
   // UI semantics
-  progressIndicator: basePalette.tint.primary,
-  progressBackground: applyOpacity(basePalette.tint.primary, opacity.progress),
+  progressIndicator: basePalette.tint.primaryDark,
+  progressBackground: applyOpacity(basePalette.tint.primaryDark, opacity.progress),
   interactiveSecondary: basePalette.forest.light,
   completionSuccess: basePalette.semantic.success,
 
@@ -283,7 +285,7 @@ const lightColors: ThemeColors = {
   chartThreshold: basePalette.charts.ui.threshold,
 
   // Utility colors - enhanced contrast
-  textOverlay: applyOpacity(basePalette.tint.primary, opacity.subtle),
+  textOverlay: applyOpacity(basePalette.tint.primaryDark, opacity.subtle),
   textShadowDark: applyOpacity(basePalette.forest.dark, opacity.shadow),
   textShadowLight: applyOpacity(basePalette.pure.white, opacity.shadow),
   modalIndicator: basePalette.forest.lighter,
@@ -441,8 +443,8 @@ const sepiaColors: ThemeColors = {
   completionSuccess: basePalette.autumn.semantic.success,
 
   // Chart UI colors - warm sepia charts
-  chartGrid: basePalette.autumn.paper.light,
-  chartThreshold: basePalette.autumn.lighter,
+  chartGrid: basePalette.charts.ui.gridSepia,
+  chartThreshold: basePalette.charts.ui.thresholdSepia,
 
   // Utility colors - sepia utilities
   textOverlay: applyOpacity(basePalette.autumn.accent.primary, opacity.subtle),

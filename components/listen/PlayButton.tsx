@@ -5,10 +5,11 @@ import { Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ICON_BUTTON_PRESS_SCALE } from '@/constants/animation';
+import { Theme } from '@/constants/colors';
 import { LAYOUT, MIN_TOUCH_TARGET } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import { useCurrentTheme, useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { BaseIconButtonProps } from '@/types/ui/button.types';
 import { selectionFeedback } from '@/utils/haptics';
 
@@ -33,6 +34,7 @@ const PlayButton: FC<PlayButtonProps> = ({
 }) => {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
+  const currentTheme = useCurrentTheme();
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     scaleAmount: ICON_BUTTON_PRESS_SCALE,
   });
@@ -46,8 +48,14 @@ const PlayButton: FC<PlayButtonProps> = ({
   }, [disabled, onPress, hapticFeedback]);
 
   const backgroundColor = colors.tint;
-  // Use dark icon in dark mode per design preference, otherwise default to theme text
-  const resolvedIconColor = iconColor || (isDarkMode ? colors.black : colors.text);
+  // Use appropriate icon color for each theme for optimal contrast
+  const resolvedIconColor =
+    iconColor ||
+    (currentTheme === Theme.Sepia
+      ? colors.white // Use white icon for sepia theme for better contrast on amber background
+      : isDarkMode
+      ? colors.black
+      : colors.text);
 
   return (
     <Pressable

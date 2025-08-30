@@ -11,11 +11,12 @@ import DeleteButton from '@/components/listen/DeleteButton';
 import DragHandle, { type DragHandleProps } from '@/components/listen/DragHandle';
 import PlayButton from '@/components/listen/PlayButton';
 import { ARTICLE_CARD_SPRING, CARD_DRAG_SCALE, WORD_PRESS_SCALE } from '@/constants/animation';
+import { Theme } from '@/constants/colors';
 import { getEnhancedOpacity, LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { STRINGS } from '@/constants/strings';
 import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import { useCurrentTheme, useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import { difficultyLevelToLabel } from '@/utils/articles/difficulty';
 
 // Playlist thumbnail size for elegant music app aesthetic
@@ -58,9 +59,11 @@ export const ListenListItemCard: FC<ListenListItemCardProps> = memo(
     shouldAnimateOnMount = true,
   }) => {
     const isDarkMode = useIsDarkMode();
+    const currentTheme = useCurrentTheme();
     const colors = useColors();
-    // Play button icon should be dark in both modes
-    const playIconColor = isDarkMode ? colors.black : colors.text;
+    // Play button icon should be dark in both modes, but white in sepia for better contrast
+    const playIconColor =
+      currentTheme === Theme.Sepia ? colors.white : isDarkMode ? colors.black : colors.text;
 
     const { animatedStyle, startAnimation, setValue } = useTransformAnimation({
       type: 'scale',

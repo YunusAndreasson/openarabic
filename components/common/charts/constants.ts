@@ -64,12 +64,12 @@ export const CHART_VISUAL = {
 export const DAYS_7 = 7; // Weekly view for better mobile experience and cognitive load
 
 // Standardized performance thresholds used across all charts
-// Simplified: Back to clean 4-zone system with unified sage green theme
+// Aligned with MEMORY_CAPACITY_THRESHOLDS for gauge consistency
 export const PERFORMANCE_THRESHOLDS = {
-  EXCELLENT: 80, // Green zone - excellent performance
-  GOOD: 60, // Good performance
-  FAIR: 40, // Fair performance
-  POOR: 0, // Poor performance
+  EXCELLENT: 75, // Green zone - excellent performance (75%+)
+  GOOD: 70, // Yellow zone - good performance (70-74%)
+  FAIR: 40, // Orange zone - fair performance (40-69%)
+  POOR: 0, // Red zone - poor performance (<40%)
 } as const;
 
 // Standardized chart layout constants for consistent alignment

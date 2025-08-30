@@ -5,10 +5,11 @@ import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from 'react-nat
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { DEFAULT_ANIMATION_DURATION } from '@/constants/animation';
+import { Theme } from '@/constants/colors';
 import { LAYOUT, TYPOGRAPHY_HIERARCHY } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/theme/useColors';
-import { useIsDarkMode } from '@/hooks/theme/useThemeDetection';
+import { useCurrentTheme, useIsDarkMode } from '@/hooks/theme/useThemeDetection';
 import type { ButtonSize, ButtonTextWeight, ThemedButtonProps } from '@/types/ui/button.types';
 import { selectionFeedback } from '@/utils/haptics';
 
@@ -77,6 +78,7 @@ function ThemedButtonComponent({
 }: ThemedButtonProps): JSX.Element {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
+  const currentTheme = useCurrentTheme();
 
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     type: 'card',
@@ -98,7 +100,9 @@ function ThemedButtonComponent({
   const textColor = disabled
     ? colors.secondaryText
     : variant === 'filled'
-    ? isDarkMode
+    ? currentTheme === Theme.Sepia
+      ? colors.white // Use white text for sepia theme filled buttons for better contrast
+      : isDarkMode
       ? colors.black
       : colors.text
     : colors.tint;
@@ -185,7 +189,15 @@ function ThemedButtonComponent({
             <ThemedText
               skipDefaultColor
               colorName={
-                disabled ? 'black' : variant === 'filled' ? (isDarkMode ? 'black' : 'text') : 'tint'
+                disabled
+                  ? 'black'
+                  : variant === 'filled'
+                  ? currentTheme === Theme.Sepia
+                    ? 'white'
+                    : isDarkMode
+                    ? 'black'
+                    : 'text'
+                  : 'tint'
               }
               style={[buttonTextStyle, textOpacityStyle]}
               type={getTextType(size, textWeight)}
