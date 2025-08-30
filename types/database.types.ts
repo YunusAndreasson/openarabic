@@ -68,6 +68,7 @@ export type Database = {
           image_url: string
           summary: string
           title: string
+          word_timestamps: Json | null
         }
         Insert: {
           audio_url: string
@@ -81,6 +82,7 @@ export type Database = {
           image_url: string
           summary: string
           title: string
+          word_timestamps?: Json | null
         }
         Update: {
           audio_url?: string
@@ -94,6 +96,7 @@ export type Database = {
           image_url?: string
           summary?: string
           title?: string
+          word_timestamps?: Json | null
         }
         Relationships: [
           {
@@ -267,35 +270,47 @@ export type Database = {
       }
       sentence_words: {
         Row: {
+          audio_url: string | null
           difficulty_level: number
+          duration: number | null
+          end_time: number | null
           english: string
           grammar_note: string | null
           id: number
           position: number
           root_id: number
           sentence_id: number
+          start_time: number | null
           word_form: string
           word_type_id: number
         }
         Insert: {
+          audio_url?: string | null
           difficulty_level?: number
+          duration?: number | null
+          end_time?: number | null
           english: string
           grammar_note?: string | null
           id?: number
           position: number
           root_id: number
           sentence_id: number
+          start_time?: number | null
           word_form: string
           word_type_id: number
         }
         Update: {
+          audio_url?: string | null
           difficulty_level?: number
+          duration?: number | null
+          end_time?: number | null
           english?: string
           grammar_note?: string | null
           id?: number
           position?: number
           root_id?: number
           sentence_id?: number
+          start_time?: number | null
           word_form?: string
           word_type_id?: number
         }
@@ -330,14 +345,13 @@ export type Database = {
           fsrs_due: string | null
           fsrs_elapsed_days: number | null
           fsrs_lapses: number | null
-          fsrs_last_review: string | null
+          fsrs_last_review: string
           fsrs_learning_steps: number | null
           fsrs_reps: number | null
           fsrs_scheduled_days: number | null
           fsrs_stability: number | null
           fsrs_state: number | null
           root_id: number
-          success_streak: number
           user_id: string
         }
         Insert: {
@@ -346,14 +360,13 @@ export type Database = {
           fsrs_due?: string | null
           fsrs_elapsed_days?: number | null
           fsrs_lapses?: number | null
-          fsrs_last_review?: string | null
+          fsrs_last_review?: string
           fsrs_learning_steps?: number | null
           fsrs_reps?: number | null
           fsrs_scheduled_days?: number | null
           fsrs_stability?: number | null
           fsrs_state?: number | null
           root_id: number
-          success_streak?: number
           user_id: string
         }
         Update: {
@@ -362,14 +375,13 @@ export type Database = {
           fsrs_due?: string | null
           fsrs_elapsed_days?: number | null
           fsrs_lapses?: number | null
-          fsrs_last_review?: string | null
+          fsrs_last_review?: string
           fsrs_learning_steps?: number | null
           fsrs_reps?: number | null
           fsrs_scheduled_days?: number | null
           fsrs_stability?: number | null
           fsrs_state?: number | null
           root_id?: number
-          success_streak?: number
           user_id?: string
         }
         Relationships: [
@@ -493,7 +505,6 @@ export type Database = {
           p_learning_steps: number
           p_rating: number
           p_root_id: number
-          p_success_streak?: number
           p_user_id: string
         }
         Returns: boolean

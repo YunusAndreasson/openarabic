@@ -50,6 +50,7 @@ const DETAIL_VIEW_COLUMNS = `
       root_id,
       sentence_id,
       word_type_id,
+      audio_url,
       root:roots(id, letters, meaning),
       word_type:word_types(id, name)
     )
